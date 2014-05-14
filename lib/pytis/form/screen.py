@@ -2003,6 +2003,15 @@ class Browser(wx.Panel, CommandHandler):
                 history = self._webview.get_back_forward_list()
                 history.add_item(webkit.WebHistoryItem(uri, uri))
             return True
+        elif uri.startswith('form:'):
+            spec_name = uri[5:]
+            view_spec = config.resolver.get(spec_name, 'view_spec')
+            if view_spec.bindings():
+                cls = pytis.form.MultiBrowseDualForm
+            else:
+                cls = pytis.form.BrowseForm
+            pytis.form.run_form(cls, spec_name)
+            return True
         else:
             return False
         
