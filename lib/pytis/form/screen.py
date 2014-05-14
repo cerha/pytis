@@ -1979,12 +1979,6 @@ class Browser(wx.Panel, CommandHandler):
             # confuses the location bar and may also generate invalid
             # restriction messages so we beter ignore it now.
             return False
-        restricted_navigation_uri = self._restricted_navigation_uri
-        if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
-                not uri.startswith(restricted_navigation_uri):
-            decision.ignore()
-            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
-            return True
         elif uri.startswith('help:'):
             if self._last_help_uri == uri \
                     and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
@@ -2013,7 +2007,14 @@ class Browser(wx.Panel, CommandHandler):
             pytis.form.run_form(cls, spec_name)
             return True
         else:
-            return False
+            restricted_navigation_uri = self._restricted_navigation_uri
+            if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
+               not uri.startswith(restricted_navigation_uri):
+                decision.ignore()
+                pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
+                return True
+            else:
+                return False
         
     def _on_resource_request(self, webview, frame, resource, req, response):
         def redirect(lcg_resource):
