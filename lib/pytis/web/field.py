@@ -241,6 +241,7 @@ class Field(object):
         self._key = row.data().key()[0].id()
         self._not_null = t.not_null() and not isinstance(t, pd.Boolean) and \
             (row.new() or not isinstance(t, (pd.Password, pd.Binary)))
+        self._big = isinstance(t, (pd.Big, pd.Large))
         # All public attributes must be treated as read-only!
         self.id = fid
         self.type = t
@@ -397,7 +398,9 @@ class Field(object):
                 self._format_cache[field_value] = (value, info,)
             except TypeError: # catch unhashable keys
                 pass
-        if value and self._uri_provider:
+        if self._uri_provider and (value or self._big):
+            # Big values are not present in the select (value is None) but they may still
+            # return URI (typically images).
             g = context.generator()
             src = self._uri_provider(self._row, UriType.IMAGE, self.id)
             if src:
@@ -405,25 +408,26 @@ class Field(object):
                     value += ' (' + info + ')'
                     info = None
                 value = g.img(src, alt=value) #, cls=cls)
-            link = self._uri_provider(self._row, UriType.LINK, self.id)
-            if link:
-                if isinstance(link, collections.Callable):
-                    kwargs = None # Ignore array item links here
-                elif isinstance(link, basestring):
-                    kwargs = dict(href=link)
-                else:
-                    kwargs = dict(href=link.uri(), title=link.title(), target=link.target())
-                if kwargs:
-                    tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
-                    if tooltip_uri:
-                        kwargs = dict(
-                            kwargs,
-                            onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
-                            onmouseout="pytis.hide_tooltip(this)",
-                        )
-                    value = g.a(value, **kwargs)
-            if info is not None:
-                value += ' (' + info + ')'
+            if value:
+                link = self._uri_provider(self._row, UriType.LINK, self.id)
+                if link:
+                    if isinstance(link, collections.Callable):
+                        kwargs = None # Ignore array item links here
+                    elif isinstance(link, basestring):
+                        kwargs = dict(href=link)
+                    else:
+                        kwargs = dict(href=link.uri(), title=link.title(), target=link.target())
+                    if kwargs:
+                        tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
+                        if tooltip_uri:
+                            kwargs = dict(
+                                kwargs,
+                                onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
+                                onmouseout="pytis.hide_tooltip(this)",
+                            )
+                        value = g.a(value, **kwargs)
+                if info is not None:
+                    value += ' (' + info + ')'
         return value
 
     def editor(self, context):
