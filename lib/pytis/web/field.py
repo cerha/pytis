@@ -683,6 +683,7 @@ class HtmlField(MultilineField):
                                                           exercises.WrittenAnswers,
                                                           exercises.NumberedCloze,
                                                           exercises.Cloze,
+                                                          exercises.ModelCloze,
                                                           )]
             content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
