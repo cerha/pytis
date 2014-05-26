@@ -129,13 +129,17 @@ class _PytisSchemaHandler(object):
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
     def visit_view(self, view, create_ok=False):
-        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS\n' % (view.schema, view.name,)
+        replace = 'OR REPLACE ' if view._REPLACE_ON_CREATE else ''
+        command = 'CREATE %s%s "%s"."%s" AS\n' % (replace, view._DB_OBJECT, view.schema, view.name,)
         with _local_search_path(self._set_search_path(view.search_path())):
             query = view.query()
             query.pytis_prefix = command
             self.connection.execute(query)
             view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst,
                                        _ddl_runner=self)
+
+    def visit_materialized_view(self, view, create_ok=False):
+        self.visit_view(view, create_ok=create_ok)
 
     def visit_type(self, type_, create_ok=False):
         with _local_search_path(self._set_search_path(type_.search_path())):
@@ -251,9 +255,12 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
     def visit_view(self, view, create_ok=False):
-        command = 'DROP VIEW "%s"."%s"' % (view.schema, view.name,)
+        command = 'DROP %s "%s"."%s"' % (view._DB_OBJECT, view.schema, view.name,)
         self.connection.execute(command)
 
+    def visit_materialized_view(self, view, create_ok=False):
+        self.visit_view(view, create_ok=create_ok)
+        
     def visit_type(self, type_, create_ok=False):
         command = 'DROP TYPE "%s"."%s"' % (type_.schema, type_.name,)
         self.connection.execute(command)
@@ -2514,52 +2521,12 @@ class _SQLQuery(SQLObject):
             else:
                 included.append(c)
         return included
+
+class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     
-class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
-    """View specification.
-
-    Views are similar to tables in that they have columns.  But unlike tables
-    view columns are not defined in the view specification directly, they are
-    defined implicitly by included tables and their columns.
-
-    The primary specification element of this class is 'query()' class method
-    which returns the expression defining the view.  The method must return an
-    'sqlalchemy.ClauseElement' instance (as all the SQLAlchemy expressions do).
-
-    Special specification element is 'join_columns()' class method returning
-    tuple of tuples of equivalent columns ('sqlalchemy.Column' instances).  If
-    the view is made by joining some relations, duplicate join columns are
-    excluded from the view and there are modification rules defined for the
-    view then it is necessary to enumerate all equivalent relation columns in
-    'join_columns()' tuples in order to make gensqlalchemy generate complete
-    and correct rules.
-
-    The expression in 'query()' method is typically constructed using means
-    provided by SQLAlchemy.  The class defines a few additional utility class
-    methods which may be useful for constructing the expression:
-    'SQLView._exclude()', 'SQLView._alias()', 'SQLView._reorder()'.  See their
-    documentation strings for more information.
-
-    Properties:
-
-      primary_column -- name (label) of the "key" column; basestring.  It can
-        be left 'None' in most cases.  It must be defined only when the view is
-        a part of another view which defines update or delete rules modifying
-        the view.  The primary column is the view column uniquely identifying
-        the view rows.
-
-    """
-    _DB_OBJECT = 'VIEW'
-
-    @classmethod
-    def join_columns(class_):
-        return ()
-        
     @classmethod
     def query(class_):
         return None
-
-    __visit_name__ = 'view'
 
     primary_column = None
 
@@ -2597,32 +2564,6 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
 
     def _pytis_query_objects(self):
         return [self.query()]
-        
-    def _equivalent_rule_columns(self, column):
-        equivalents = []
-        if column is not None:
-            equivalents = [column]
-        for equivalent_columns in self.join_columns():
-            if column in equivalent_columns:
-                for c in equivalent_columns:
-                    if c is not column:
-                        equivalents.append(c)
-        return equivalents
-    
-    def _hidden_rule_columns(self, tabular):
-        hidden_columns = []
-        original_columns = self._original_columns()
-        for equivalent_columns in self.join_columns():
-            alias = None
-            for c in equivalent_columns:
-                if c in original_columns:
-                    alias = c.name
-                    break
-            if alias:
-                for c in equivalent_columns:
-                    if c.table is tabular and c not in original_columns:
-                        hidden_columns.append(c.label(alias))
-        return hidden_columns
 
     @classmethod
     def _alias(cls, columns, **aliases):
@@ -2665,9 +2606,6 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     
     def _original_columns(self):
         return self.query().inner_columns
-
-    def _default_rule_commands(self):
-        return ('NOTHING',)
     
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -2695,9 +2633,101 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
             return Column(c.name, _alchemy2pytis_type(c.type), original_column=original_column(c))
         fields = [make_column(c) for c in query.c]
         return fields
+    
+class SQLView(_SQLBaseView):
+    """View specification.
+
+    Views are similar to tables in that they have columns.  But unlike tables
+    view columns are not defined in the view specification directly, they are
+    defined implicitly by included tables and their columns.
+
+    The primary specification element of this class is 'query()' class method
+    which returns the expression defining the view.  The method must return an
+    'sqlalchemy.ClauseElement' instance (as all the SQLAlchemy expressions do).
+
+    Special specification element is 'join_columns()' class method returning
+    tuple of tuples of equivalent columns ('sqlalchemy.Column' instances).  If
+    the view is made by joining some relations, duplicate join columns are
+    excluded from the view and there are modification rules defined for the
+    view then it is necessary to enumerate all equivalent relation columns in
+    'join_columns()' tuples in order to make gensqlalchemy generate complete
+    and correct rules.
+
+    The expression in 'query()' method is typically constructed using means
+    provided by SQLAlchemy.  The class defines a few additional utility class
+    methods which may be useful for constructing the expression:
+    'SQLView._exclude()', 'SQLView._alias()', 'SQLView._reorder()'.  See their
+    documentation strings for more information.
+
+    Properties:
+
+      primary_column -- name (label) of the "key" column; basestring.  It can
+        be left 'None' in most cases.  It must be defined only when the view is
+        a part of another view which defines update or delete rules modifying
+        the view.  The primary column is the view column uniquely identifying
+        the view rows.
+
+    """
+    _DB_OBJECT = 'VIEW'
+    _REPLACE_ON_CREATE = True
+
+    @classmethod
+    def join_columns(class_):
+        return ()
+
+    __visit_name__ = 'view'
+        
+    def _equivalent_rule_columns(self, column):
+        equivalents = []
+        if column is not None:
+            equivalents = [column]
+        for equivalent_columns in self.join_columns():
+            if column in equivalent_columns:
+                for c in equivalent_columns:
+                    if c is not column:
+                        equivalents.append(c)
+        return equivalents
+    
+    def _hidden_rule_columns(self, tabular):
+        hidden_columns = []
+        original_columns = self._original_columns()
+        for equivalent_columns in self.join_columns():
+            alias = None
+            for c in equivalent_columns:
+                if c in original_columns:
+                    alias = c.name
+                    break
+            if alias:
+                for c in equivalent_columns:
+                    if c.table is tabular and c not in original_columns:
+                        hidden_columns.append(c.label(alias))
+        return hidden_columns
+
+    def _default_rule_commands(self):
+        return ('NOTHING',)
 
 @compiles(SQLView)
 def visit_view(element, compiler, **kw):
+    return '"%s"."%s"' % (element.schema, element.name,)
+
+class SQLMaterializedView(_SQLBaseView):
+    """Materialized view specification.
+
+    Specifications of materialized views are similar to view specifications.
+    The primary difference is that materialized views can't have rules so rule
+    related facilities are not available.
+
+    """
+    _DB_OBJECT = 'MATERIALIZED VIEW'
+    _REPLACE_ON_CREATE = False
+
+    __visit_name__ = 'materialized_view'
+
+    def _default_rule_commands(self):
+        return None
+
+@compiles(SQLMaterializedView)
+def visit_materialized_view(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
 class SQLType(_SQLTabular):

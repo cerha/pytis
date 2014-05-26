@@ -225,6 +225,10 @@ class Baz2Dup(sql.SQLView):
         return sqlalchemy.select([sql.c.Baz.id], from_obj=[sql.t.Baz],
                                  whereclause=(sql.c.Baz.id <= 0))
 
+class MaterializedView(sql.SQLMaterializedView, Baz):
+    """Materialized views are mostly just specialized views."""
+    name = 'mview'
+
 class AliasView(sql.SQLView):
     name = 'aliased'
     @classmethod
