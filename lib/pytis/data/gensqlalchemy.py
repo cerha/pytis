@@ -89,7 +89,7 @@ import pytis.data
 import pytis.util
 
 
-## SQLAlchemy extensions
+# SQLAlchemy extensions
 
 G_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
@@ -587,7 +587,7 @@ def visit_TIMESTAMP(element, compiler, **kwargs):
                                (element.timezone and "WITH" or "WITHOUT") + " TIME ZONE",)
 
 
-## Columns
+# Columns
         
 class Column(pytis.data.ColumnSpec):
     """Specification of a database column.
@@ -819,7 +819,7 @@ class Argument(Column):
         super(Argument, self).__init__(name, type_, *args, **kwargs)
     
 
-## Utilities
+# Utilities
     
 def _error(message, error=True):
     prefix = (u'Error' if error else u'Warning')
@@ -1486,7 +1486,7 @@ class SQLSchematicObject(SQLObject):
             search_path = [_enforced_schema] + search_path
         return search_path
 
-## gensql abbreviations -- do not use in new code!
+# gensql abbreviations -- do not use in new code!
 
 def gA(table, **kwargs):
     return Arguments(object_by_reference(table), **kwargs)
@@ -1512,7 +1512,7 @@ def _alchemy2pytis_type(atype):
     raise Exception("Unrecognized SQLAlchemy type", atype)
     
 
-## Database objects
+# Database objects
 
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
     """Schema specification.
@@ -3112,9 +3112,9 @@ class SQLPyFunction(SQLFunctional):
             for n in names:
                 obj = getattr(self.Util, n)
                 obj_type = type(obj)
-                if obj_type == types.FunctionType:
+                if issubclass(obj_type, types.FunctionType):
                     output_method(n, obj, 12)
-                elif obj_type == types.TypeType:
+                elif issubclass(obj_type, types.TypeType):
                     output_class(n, obj, 12)
                 else:
                     output_attribute(n, obj, 12)
@@ -3353,7 +3353,7 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
         _warn("Can't drop raw object: %s" % (self.name,))
 
 
-## Specification processing
+# Specification processing
 
 def _db_dependencies(metadata):
     connection = metadata.pytis_engine.connect()
@@ -3377,7 +3377,6 @@ def _db_dependencies(metadata):
     pg_type = load(("select pg_type.oid, nspname, typname "
                     "from pg_type join pg_namespace on typnamespace=pg_namespace.oid"), 'TYPE')
     pg_proc = load(("select pg_proc.oid, nspname, proname, '' "
-                    #"pg_catalog.pg_get_function_identity_arguments(pg_proc.oid) "
                     "from pg_proc join pg_namespace on pronamespace=pg_namespace.oid"), 'FUNCTION',
                    lambda row: '"%s"."%s"(%s)' % row)
     pg_trigger = load(("select pg_trigger.oid, tgname, nspname, relname "
@@ -3829,3 +3828,7 @@ def specifications():
 
 # Make sure _metadata and _engine are initialized to prevent crashes
 clear()
+
+# Local Variables:
+# flycheck-flake8rc: "../../../tools/flake8.noredef"
+# End:
