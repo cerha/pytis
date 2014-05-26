@@ -137,6 +137,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             self.connection.execute(query)
             view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst,
                                        _ddl_runner=self)
+            if hasattr(view, 'indexes'):
+                for index in view.indexes:
+                    self.traverse_single(index)
 
     def visit_materialized_view(self, view, create_ok=False):
         self.visit_view(view, create_ok=create_ok)
@@ -1938,8 +1941,140 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         
         """
         return ()
+
+class _SQLIndexable(SQLObject):
     
-class SQLTable(_SQLTabular):
+    index_columns = ()
+
+    def _init(self, *args, **kwargs):
+        super(_SQLIndexable, self)._init(*args, **kwargs)
+        if self._is_true_specification():
+            self._create_special_indexes()
+    
+    def _create_special_indexes(self):
+        args = ()
+        for index in self.index_columns:
+            ikwargs = {}
+            if isinstance(index, Arguments):
+                index_content = index.args()
+                index_kwargs = index.kwargs()
+                method = index_kwargs.get('method')
+                if method:
+                    ikwargs['postgresql_using'] = method
+                if index_kwargs.get('unique'):
+                    ikwargs['unique'] = True
+            else:
+                index_content = index
+                method = None
+            columns = []
+            colnames = []
+            for i in range(len(index_content)):
+                c = index_content[i]
+                if isinstance(c, basestring):
+                    columns.append(getattr(self.c, c))
+                    colnames.append(c)
+                else:
+                    columns.append(c)
+                    colnames.append(str(i))
+            index_name = string.join(colnames, '_')
+            if method:
+                index_name += '_' + method
+            index = sqlalchemy.Index('%s_%s_idx' % (self.name, index_name,),
+                                     *columns, **ikwargs)
+            sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
+        return args
+
+    def _pytis_index_signature(self, index):
+        return (index.name, index.unique, tuple([c.name for c in index.columns]))
+
+    def _pytis_unique_indexes(self):
+        indexes = set()
+        for unique in self.unique:
+            name = (self.pytis_name(real=True) + '_' + string.join(unique, '_'))[:59] + '_key'
+            columns = [getattr(self.c, c) for c in unique]
+            indexes.add(sqlalchemy.Index(name, *columns, unique=True))
+        return indexes
+
+    def _pytis_upgrade_indexes(self, metadata, db_table):
+        changed = False
+        db_indexes = dict([(i.name, i,) for i in db_table.indexes])
+        new_index_columns = {}
+        for i in self.indexes:
+            try:
+                del db_indexes[i.name]
+            except KeyError:
+                if len(i.columns) == 1:
+                    for c in i.columns:
+                        new_index_columns[c.name] = i
+                else:
+                    i.create(_engine)
+                    changed = True
+        index_names = set([i.name for i in self.indexes])
+        db_index_columns = {}
+        for i in db_indexes.values():
+            if len(i.columns) == 1:
+                for c in i.columns:
+                    db_index_columns[c.name] = i
+            else:
+                i.drop(_engine)
+                changed = True
+        for c in self.c:
+            if c.pytis_orig_table != self.name:
+                continue
+            if not c.primary_key and not c.unique:
+                index = c.index
+                if index:
+                    try:
+                        del db_index_columns[c.name]
+                    except KeyError:
+                        if isinstance(index, dict):
+                            method = ''
+                            kwargs = index
+                            if 'method' in index:
+                                method = index[method] + '_'
+                            name = '%s_%s_%sidx' % (self.pytis_name(real=True), c.name, method,)
+                        else:
+                            kwargs = {}
+                            name = 'ix_%s_%s_%s' % (self.schema, self.pytis_name(real=True),
+                                                    c.name,)
+                        if name not in index_names:
+                            sqlalchemy.Index(name, c, **kwargs).create(_engine)
+                            changed = True
+                    try:
+                        del new_index_columns[c.name]
+                    except KeyError:
+                        pass
+        for i in new_index_columns.values():
+            i.create(_engine)
+            changed = True
+        for i in db_index_columns.values():
+            i.drop(_engine)
+            changed = True
+        return changed
+        
+    def pytis_changed(self, metadata, strict=True):
+        # Not everything covered here, but we don't support all features in upgrade
+        if super(_SQLIndexable, self).pytis_changed(metadata, strict=strict):
+            return True
+        db_table = self._pytis_db_table(metadata)
+        constraints = self._pytis_simplified_constraints(self.constraints)
+        db_constraints = self._pytis_simplified_constraints(db_table.constraints)
+        if constraints.keys() != db_constraints.keys():
+            return True
+        # Unique constraints are represented as indexes in the database
+        indexes = copy.copy(self.indexes).union(self._pytis_unique_indexes())
+        # SQLAlchemy doesn't compare some objects correctly
+        # (e.g. sqlalchemy.String() != sqlalchemy.String()) so we have to make
+        # our own index comparison.
+        index_list = [self._pytis_index_signature(i) for i in indexes]
+        index_list.sort()
+        db_index_list = [self._pytis_index_signature(i) for i in db_table.indexes]
+        db_index_list.sort()
+        if index_list != db_index_list:
+            return True
+        return False
+
+class SQLTable(_SQLIndexable, _SQLTabular):
     """Regular table specification.
 
     Properties:
@@ -2003,7 +2138,6 @@ class SQLTable(_SQLTabular):
     unique = ()
     foreign_keys = ()
     with_oids = False
-    index_columns = ()
     triggers = ()
     
     def __new__(cls, metadata, search_path):
@@ -2060,7 +2194,6 @@ class SQLTable(_SQLTabular):
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
         if self._is_true_specification():
-            self._create_special_indexes()
             self._create_triggers()
 
     @property
@@ -2139,17 +2272,6 @@ class SQLTable(_SQLTabular):
         for c in constraints:
             simplify(c)
         return simplified
-
-    def _pytis_index_signature(self, index):
-            return (index.name, index.unique, tuple([c.name for c in index.columns]))
-
-    def _pytis_unique_indexes(self):
-        indexes = set()
-        for unique in self.unique:
-            name = (self.pytis_name(real=True) + '_' + string.join(unique, '_'))[:59] + '_key'
-            columns = [getattr(self.c, c) for c in unique]
-            indexes.add(sqlalchemy.Index(name, *columns, unique=True))
-        return indexes
         
     def pytis_changed(self, metadata, strict=True):
         # Not everything covered here, but we don't support all features in upgrade
@@ -2160,17 +2282,6 @@ class SQLTable(_SQLTabular):
         db_constraints = self._pytis_simplified_constraints(db_table.constraints)
         if constraints.keys() != db_constraints.keys():
             return True
-        # Unique constraints are represented as indexes in the database
-        indexes = copy.copy(self.indexes).union(self._pytis_unique_indexes())
-        # SQLAlchemy doesn't compare some objects correctly
-        # (e.g. sqlalchemy.String() != sqlalchemy.String()) so we have to make
-        # our own index comparison.
-        index_list = [self._pytis_index_signature(i) for i in indexes]
-        index_list.sort()
-        db_index_list = [self._pytis_index_signature(i) for i in db_table.indexes]
-        db_index_list.sort()
-        if index_list != db_index_list:
-            return True
         return False
 
     def _pytis_upgrade(self, metadata):
@@ -2180,27 +2291,8 @@ class SQLTable(_SQLTabular):
         for c in db_table.c:
             if c.name not in self.c:
                 _engine.execute(alembic.ddl.base.DropColumn(table_name, c, self.schema))
-        db_indexes = dict([(i.name, i,) for i in db_table.indexes])
-        new_index_columns = {}
-        for i in self.indexes:
-            try:
-                del db_indexes[i.name]
-            except KeyError:
-                if len(i.columns) == 1:
-                    for c in i.columns:
-                        new_index_columns[c.name] = i
-                else:
-                    i.create(_engine)
-                    changed = True
-        index_names = set([i.name for i in self.indexes])
-        db_index_columns = {}
-        for i in db_indexes.values():
-            if len(i.columns) == 1:
-                for c in i.columns:
-                    db_index_columns[c.name] = i
-            else:
-                i.drop(_engine)
-                changed = True
+        if self._pytis_upgrade_indexes(metadata, db_table):
+            changed = True
         for c in self.c:
             if c.pytis_orig_table != self.name:
                 continue
@@ -2229,35 +2321,6 @@ class SQLTable(_SQLTabular):
                                                           existing_nullable=orig_c.nullable)
                     _engine.execute(ddl)
                     changed = True
-                if not c.primary_key and not c.unique:
-                    index = c.index
-                    if index:
-                        try:
-                            del db_index_columns[c.name]
-                        except KeyError:
-                            if isinstance(index, dict):
-                                method = ''
-                                kwargs = index
-                                if 'method' in index:
-                                    method = index[method] + '_'
-                                name = '%s_%s_%sidx' % (self.pytis_name(real=True), c.name, method,)
-                            else:
-                                kwargs = {}
-                                name = 'ix_%s_%s_%s' % (self.schema, self.pytis_name(real=True),
-                                                        c.name,)
-                            if name not in index_names:
-                                sqlalchemy.Index(name, c, **kwargs).create(_engine)
-                                changed = True
-                        try:
-                            del new_index_columns[c.name]
-                        except KeyError:
-                            pass
-        for i in new_index_columns.values():
-            i.create(_engine)
-            changed = True
-        for i in db_index_columns.values():
-            i.drop(_engine)
-            changed = True
         constraints = self._pytis_simplified_constraints(self.constraints)
         db_constraints = self._pytis_simplified_constraints(db_table.constraints)
         for k in constraints.keys():
@@ -2300,35 +2363,7 @@ class SQLTable(_SQLTabular):
                 index = sqlalchemy.Index('%s_%s_%s_idx' % (self.name, column_name, method,),
                                          getattr(self.c, column_name), postgresql_using=method)
                 sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
-        for index in self.index_columns:
-            ikwargs = {}
-            if isinstance(index, Arguments):
-                index_content = index.args()
-                index_kwargs = index.kwargs()
-                method = index_kwargs.get('method')
-                if method:
-                    ikwargs['postgresql_using'] = method
-                if index_kwargs.get('unique'):
-                    ikwargs['unique'] = True
-            else:
-                index_content = index
-                method = None
-            columns = []
-            colnames = []
-            for i in range(len(index_content)):
-                c = index_content[i]
-                if isinstance(c, basestring):
-                    columns.append(getattr(self.c, c))
-                    colnames.append(c)
-                else:
-                    columns.append(c)
-                    colnames.append(str(i))
-            index_name = string.join(colnames, '_')
-            if method:
-                index_name += '_' + method
-            index = sqlalchemy.Index('%s_%s_idx' % (self.name, index_name,),
-                                     *columns, **ikwargs)
-            sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
+        super(SQLTable, self)._create_special_indexes()
         return args
 
     def _create_triggers(self):
@@ -2710,12 +2745,24 @@ class SQLView(_SQLBaseView):
 def visit_view(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
-class SQLMaterializedView(_SQLBaseView):
+class SQLMaterializedView(_SQLIndexable, _SQLBaseView):
     """Materialized view specification.
 
     Specifications of materialized views are similar to view specifications.
     The primary difference is that materialized views can't have rules so rule
     related facilities are not available.
+
+    Properties:
+
+      index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
+        tuples or 'Arguments' instances contains names of columns or SQLAlchemy
+        expressions to include within a single index.  An additional keyword
+        argument 'method' may be provided in an 'Arguments' whose value
+        determines indexing method to be used for this index.  The optional
+        argument 'unique' in 'Arguments' marks the index as unique if the
+        argument value is true.  Use 'index_columns' only for multicolumn indexes
+        and functional indexes, plain single column indexes should be specified
+        directly in the corresponding 'Column' specifications.
 
     """
     _DB_OBJECT = 'MATERIALIZED VIEW'

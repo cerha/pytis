@@ -226,8 +226,13 @@ class Baz2Dup(sql.SQLView):
                                  whereclause=(sql.c.Baz.id <= 0))
 
 class MaterializedView(sql.SQLMaterializedView, Baz):
-    """Materialized views are mostly just specialized views."""
+    """Materialized views are mostly just specialized views.
+
+    They may not have rules but their columns may be indexed.
+
+    """
     name = 'mview'
+    index_columns = (('description',),)
 
 class AliasView(sql.SQLView):
     name = 'aliased'
