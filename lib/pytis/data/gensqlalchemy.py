@@ -1494,24 +1494,19 @@ gL = sqlalchemy.sql.literal_column
 gO = object_by_path
 gR = RawCondition
 
-def _alchemy2pytis_type(column, original_column):
-    atype = column.type
+def _alchemy2pytis_type(atype):
     if hasattr(atype, 'pytis_orig_type'):
         return atype.pytis_orig_type
-    if column.primary_key or original_column is not None and original_column.primary_key:
-        kwargs = dict(not_null=True)
-    else:
-        kwargs = dict()
     if isinstance(atype, sqlalchemy.Integer):
-        return pytis.data.Integer(**kwargs)
+        return pytis.data.Integer()
     elif isinstance(atype, sqlalchemy.String):
-        return pytis.data.String(**kwargs)
+        return pytis.data.String()
     elif isinstance(atype, sqlalchemy.Boolean):
-        return pytis.data.Boolean(**kwargs)
+        return pytis.data.Boolean()
     elif isinstance(atype, sqlalchemy.Date):
-        return pytis.data.Date(**kwargs)
+        return pytis.data.Date()
     elif isinstance(atype, sqlalchemy.Numeric):
-        return pytis.data.Float(digits=atype.precision, precision=atype.scale, **kwargs)
+        return pytis.data.Float(digits=atype.precision, precision=atype.scale)
     elif isinstance(atype, sqlalchemy.types.NullType):
         return None
     raise Exception("Unrecognized SQLAlchemy type", atype)
@@ -2697,9 +2692,7 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                         result = original_column(base_column)
             return result
         def make_column(c):
-            orig_col = original_column(c)
-            type_ = _alchemy2pytis_type(c, orig_col)
-            return Column(c.name, type_, original_column=orig_col)
+            return Column(c.name, _alchemy2pytis_type(c.type), original_column=original_column(c))
         fields = [make_column(c) for c in query.c]
         return fields
 
