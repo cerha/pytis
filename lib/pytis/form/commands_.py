@@ -2,7 +2,7 @@
 
 # Definice uživatelských příkazů
 # 
-# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -225,6 +225,8 @@ Command(BrowsableShowForm, 'NEXT_RECORD',
         "Přechod na další záznam vpřed/vzad (arg. 'back')")
 Command(DualForm, 'OTHER_FORM',
         "Přechod mezi podformuláři duálního formuláře")
+Command(DualForm, 'RESPLIT',
+        "Toggle the splitter orientation between vertical/horizontal")
 Command(MultiForm, 'NEXT_FORM',
         "Advance to next/previous tab in a multi-form (arg. 'back')")
 Command(MultiSideForm, 'TOGGLE_SIDEFORM',
@@ -390,6 +392,7 @@ DEFAULT_KEYMAP = (
     ('Next',             BrowsableShowForm.COMMAND_NEXT_RECORD),
     ('Prior',            BrowsableShowForm.COMMAND_NEXT_RECORD(back=True)),
     ('Ctrl-Tab',         DualForm.COMMAND_OTHER_FORM),
+    ('Ctrl-.',           DualForm.COMMAND_RESPLIT),
     ('Alt-Right',        MultiForm.COMMAND_NEXT_FORM),
     ('Alt-Left',         MultiForm.COMMAND_NEXT_FORM(back=True)),
     ('Ctrl-Backspace',   InputField.COMMAND_RESET),

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -193,6 +193,15 @@ class DualForm(Form, Refreshable):
         
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))
+
+    def _cmd_resplit(self):
+        mode = self._splitter.GetSplitMode()
+        self._splitter.Unsplit()
+        if mode == 1:
+            self._splitter.SplitVertically(self._main_form, self._side_form)
+        else:
+            self._splitter.SplitHorizontally(self._main_form, self._side_form)
+        self._select_form(self._active_form)
 
     def main_form(self):
         """Return the instance of the upper (main) form."""
