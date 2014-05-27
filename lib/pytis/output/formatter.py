@@ -395,6 +395,8 @@ class LCGFormatter(object):
                     value = None
                 elif isinstance(a, list): # presentation style
                     value = a
+                elif isinstance(a, lcg.Content):
+                    value = a
                 else:
                     value = a.lcg()
                 parameters[p] = {None: value}
