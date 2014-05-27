@@ -671,7 +671,6 @@ class Column(pytis.data.ColumnSpec):
             origin must be known for some reason.
           
         """
-        pytis.data.ColumnSpec.__init__(self, name, type)
         assert label is None or isinstance(label, basestring), label
         assert doc is None or isinstance(doc, basestring), doc
         assert isinstance(unique, bool), unique
@@ -681,6 +680,10 @@ class Column(pytis.data.ColumnSpec):
         assert isinstance(out, bool), out
         assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
             original_column
+        if (((primary_key or original_column is not None and original_column.primary_key)
+             and (not type.not_null() or not type.unique()))):
+            type = type.clone(type.__class__(not_null=True, unique=True))
+        pytis.data.ColumnSpec.__init__(self, name, type)
         self._label = label
         self._doc = doc
         self._unique = unique
