@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -278,6 +278,8 @@ class Resolver(object):
         """Reload all specification modules and clear all caches."""
         # TODO: It only works when search path is set!
         self.clear()
+        import pytis.data.gensqlalchemy
+        pytis.data.gensqlalchemy.clear()
         for name in sys.modules:
             for prefix in self._search:
                 if (((name == prefix or name.startswith(prefix + '.')) and
