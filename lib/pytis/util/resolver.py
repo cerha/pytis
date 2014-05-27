@@ -282,6 +282,7 @@ class Resolver(object):
         pytis.data.gensqlalchemy.clear()
         for name in sys.modules:
             for prefix in self._search:
-                if (((name == prefix or name.startswith(prefix + '.')) and
-                     sys.modules[name] is not None)):
+                if ((not prefix.startswith('pytis.')
+                     and (name == prefix or name.startswith(prefix + '.'))
+                     and sys.modules[name] is not None)):
                     reload(sys.modules[name])
