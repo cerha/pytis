@@ -433,8 +433,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._release_data()
 
     def restore(self):
-        for id, message in self._saved_state:
-            set_status(id, message, log_=False)
+        for id, message_ in self._saved_state:
+            set_status(id, message_, log_=False)
 
     def data(self):
         """Return a new instance of the data object used by the form."""
@@ -513,8 +513,8 @@ class InnerForm(Form):
             print_spec = []
         # Default print currently disabled, since on a huge table it may extensively consume
         # resources and no one is using it anyway...
-        #if not print_spec:
-        #    print_spec = ((_("Default"), os.path.join('output', name)),)
+        # if not print_spec:
+        #     print_spec = ((_("Default"), os.path.join('output', name)),)
         db_print_spec = []
         condition = pytis.data.EQ('module', pytis.data.Value(pytis.data.String(), name))
         i = 1
@@ -933,7 +933,7 @@ class LookupForm(InnerForm):
         self._init_select(async_count=True)
         
     def __getattr__(self, name):
-        ## Compatibility with contingent external code using the old attribute
+        # Compatibility with contingent external code using the old attribute
         if name == '_lf_select_count':
             return self._lf_count()
         try:
@@ -1804,7 +1804,7 @@ class RecordForm(LookupForm):
                     # TODO: Tím bychom přepsali zprávu nastavenou uvnitř
                     # 'check()'.  Pokud ale žádná zpráva nebyla nastavena,
                     # uživatel netuší...
-                    #message(_(u"Kontrola integrity selhala!"))
+                    # message(_(u"Kontrola integrity selhala!"))
                 log(EVENT, 'Kontrola integrity selhala:', failed_id)
                 return failed_id
         return None
@@ -1999,6 +1999,10 @@ class RecordForm(LookupForm):
             return True
         else:
             return False
+
+    def _cmd_refresh_db(self):
+        self._data.refresh()
+        self.refresh()
         
     def _can_context_action(self, action):
         if action.secondary_context() is not None and self._secondary_context_form() is None:
@@ -2225,7 +2229,7 @@ class RecordForm(LookupForm):
         return Iterator(self._table)
     
 
-### Editační formulář
+# Editační formulář
 
 
 class EditForm(RecordForm, TitledForm, Refreshable):

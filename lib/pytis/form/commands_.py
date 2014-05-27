@@ -149,6 +149,8 @@ Command(RecordForm, 'CONTEXT_ACTION',
         "Vyvolání akce nad aktuálním řádkem formuláře (mandatory arg. 'action')")
 Command(RecordForm, 'OPEN_EDITOR',
         "Open StructuredTextEditor form for field given by the argument 'field_id'")
+Command(RecordForm, 'REFRESH_DB',
+        "Refresh the underlying database object")
 Command(ListForm, 'ACTIVATE',
         "Aktivační funkce pro aktuální řádek formuláře (arg. 'alternate')")
 Command(ListForm, 'FIRST_COLUMN',
@@ -340,6 +342,7 @@ DEFAULT_KEYMAP = (
     ('Alt-F6',           RecordForm.COMMAND_IMPORT_INTERACTIVE),
     ('F5',               RecordForm.COMMAND_EDIT_RECORD),
     ('F8',               RecordForm.COMMAND_DELETE_RECORD),
+    ('Ctrl-F10',         RecordForm.COMMAND_REFRESH_DB),
     ('Ctrl-f',           LookupForm.COMMAND_FILTER),
     ('Ctrl-Shift-f',     LookupForm.COMMAND_UNFILTER),
     ('F4',               LookupForm.COMMAND_SORT),

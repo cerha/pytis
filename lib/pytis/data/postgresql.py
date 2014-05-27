@@ -1697,6 +1697,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              % (schema, main_table_name,))
         self._pdbb_command_delete = \
             'delete from %s where %%s' % main_table
+        self._pdbb_command_refresh = 'refresh materialized view %s' % (main_table,)
         self._pdbb_command_isolation = 'set transaction isolation level %s%s'
         self._pdbb_command_notify = \
             'notify "__modif_%s"' % (main_table.lower(),)
@@ -3624,6 +3625,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             transaction._trans_notify(self)
         log(ACTION, 'Rows deleted:', result)
         return result
+
+    def refresh(self):
+        """Refresh materialized view.
+
+        This method may be invoked only on materialized views.
+
+        """
+        self.close()
+        self._pg_query(self._pdbb_command_refresh)
 
     # Locking
 
