@@ -327,6 +327,9 @@ class PostgreSQLAccessor(object_2_5):
             self._postgresql_query(connection, query, False, query_args=query_args)
         except DBUserException:
             self._postgresql_query(connection, "rollback to __pytis_init_crypto", False)
+            # Prevent logging pytis_crypto_unlock_current_user_passwords
+            # failures all the time:
+            config.dbconnection.set_crypto_password(None)
 
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:
