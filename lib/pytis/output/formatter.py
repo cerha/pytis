@@ -763,3 +763,11 @@ class PrintSpecification(object):
           
         """
         return None
+
+    def style(self):
+        """Return style specification of the document.
+
+        Returns textual style specification as basestring.
+
+        """
+        return None
