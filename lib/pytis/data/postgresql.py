@@ -1320,16 +1320,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         else:
                             type_ = self.find_column(id_).type()
                             assert type_ is not None
-                        b = DBColumnBinding(name, '', b.column(), type_=type_)
-                        self._bindings = bindings = bindings + (b,)
-                        filtered_bindings.append(b)
+                        cb = DBColumnBinding(name, '', b.column(), type_=type_)
+                        self._bindings = bindings = bindings + (cb,)
+                        filtered_bindings.append(cb)
                         self._columns = self._columns + (ColumnSpec(name, type_),)
             for g in function_column_groups:
                 name, type_ = g[0], g[1]
                 self._columns = self._columns + (ColumnSpec(name, type_),)
-                b = DBColumnBinding(name, '', name, type_=type_)
-                self._bindings = bindings = bindings + (b,)
-                filtered_bindings.append(b)
+                cb = DBColumnBinding(name, '', name, type_=type_)
+                self._bindings = bindings = bindings + (cb,)
+                filtered_bindings.append(cb)
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
                                                  full_text_handler=self._pdbb_full_text_handler,
@@ -2939,7 +2939,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if dbvalue is None:
                     v = None
                 else:
-                    #TODO: This belongs elsewhere (if moving, move also from _pg_select_aggregate)
+                    # TODO: This belongs elsewhere (if moving, move also from _pg_select_aggregate)
                     v = unicode(dbvalue, 'utf-8')
                 value = Value(type_, v)
             elif typid == 2:            # time
@@ -3063,7 +3063,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     # Veřejné metody a jimi přímo volané abstraktní metody
 
     def row(self, key, columns=None, transaction=None, arguments={}):
-        #log(EVENT, 'Zjištění obsahu řádku:', key)
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return None
         if __debug__:
@@ -3091,7 +3090,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if transaction is None and self._pg_select_transaction is None:
             self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
-        #log(EVENT, 'Vrácený obsah řádku', result)
         return result
 
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
