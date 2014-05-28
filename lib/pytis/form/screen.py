@@ -1826,6 +1826,10 @@ class DualFormSwitcher(wx.BitmapButton):
         self._bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR) or
                          get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
                          get_icon('dual-form-active-down', type=wx.ART_TOOLBAR) or
+                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
+                         get_icon('dual-form-active-left', type=wx.ART_TOOLBAR) or
+                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
+                         get_icon('dual-form-active-right', type=wx.ART_TOOLBAR) or
                          get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),)
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
@@ -1847,6 +1851,8 @@ class DualFormSwitcher(wx.BitmapButton):
                 i = 0
             else:
                 i = 1
+            if dualform.is_vertical():
+                i += 2
             new_bitmap = self._bitmaps[i]
             if self._current_bitmap != new_bitmap:
                 self._current_bitmap = new_bitmap

@@ -195,12 +195,12 @@ class DualForm(Form, Refreshable):
         self._select_form(self._other_form(self._active_form))
 
     def _cmd_resplit(self):
-        mode = self._splitter.GetSplitMode()
+        is_vertical = self.is_vertical()
         self._splitter.Unsplit()
-        if mode == 1:
-            self._splitter.SplitVertically(self._main_form, self._side_form)
-        else:
+        if is_vertical:
             self._splitter.SplitHorizontally(self._main_form, self._side_form)
+        else:
+            self._splitter.SplitVertically(self._main_form, self._side_form)
         self._select_form(self._active_form)
 
     def main_form(self):
@@ -218,6 +218,10 @@ class DualForm(Form, Refreshable):
     def inactive_form(self):
         """Vrať neaktivní formulář tohoto duálního formuláře."""
         return self._other_form(self._active_form)
+
+    def is_vertical(self):
+        """Return True if the dual form is split vertically, False if horizontally."""
+        return self._splitter.GetSplitMode() == 2
 
     def show(self):
         # Musíme volat show obou podformulářů, protože splitter je nevolá a
