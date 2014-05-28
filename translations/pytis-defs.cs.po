@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-14 16:54+0100\n"
+"POT-Creation-Date: 2014-05-28 10:15+0200\n"
 "PO-Revision-Date: 2014-01-14 16:54+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -16,6 +16,69 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+
+#: ../lib/pytis/defs/crypto.py:34
+msgid "Změna administrátorského hesla"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:38
+msgid "Stávající heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:40
+msgid "Nové heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:55
+msgid "Použijte, prosím, kombinaci malých a velkých znaků a číslic."
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:61
+msgid "Šifrovací oblasti"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:63 ../lib/pytis/defs/crypto.py:112
+#: ../lib/pytis/defs/menu.py:384 ../lib/pytis/defs/statistics.py:41
+#: ../lib/pytis/defs/statistics.py:59 ../lib/pytis/defs/statistics.py:82
+#: ../lib/pytis/cms/cms.py:386
+msgid "Uživatelé"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:66
+msgid "Změnit heslo administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:80
+msgid "Nebyl nalezen klíč administrátora pro tuto oblast"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:87
+msgid "Chybné heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:96
+msgid "Heslo se změnit nepodařilo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:98
+msgid "Heslo bylo změněno"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:115
+msgid "E-mailová adresa administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:117
+msgid "Heslo administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:155
+msgid "Uživatele lze jen přidávat a odebírat"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:160
+msgid "Administrátory mazat nelze"
+msgstr ""
 
 #: ../lib/pytis/defs/help.py:33 ../lib/pytis/defs/help.py:71
 #: ../lib/pytis/cms/cms.py:283
@@ -33,7 +96,7 @@ msgid "Title"
 msgstr "Název"
 
 #: ../lib/pytis/defs/help.py:47 ../lib/pytis/defs/printing.py:45
-#: ../lib/pytis/defs/printing.py:78 ../lib/pytis/defs/printing.py:87
+#: ../lib/pytis/defs/printing.py:78 ../lib/pytis/defs/printing.py:88
 msgid "Help"
 msgstr "Nápověda"
 
@@ -41,7 +104,7 @@ msgstr "Nápověda"
 msgid "Fullname"
 msgstr "Fullname"
 
-#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/logging.py:44
+#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/logging.py:45
 #: ../lib/pytis/defs/profiles.py:38 ../lib/pytis/defs/profiles.py:69
 msgid "Specification Name"
 msgstr "Název specifikace"
@@ -136,30 +199,30 @@ msgstr "Tato položka nemá editovatelnou nápovědu."
 msgid "Identifier"
 msgstr "Identifikátor"
 
-#: ../lib/pytis/defs/logging.py:38
+#: ../lib/pytis/defs/logging.py:39
 #, fuzzy
 msgid "User Actions Log"
 msgstr "Akce"
 
-#: ../lib/pytis/defs/logging.py:41
+#: ../lib/pytis/defs/logging.py:42
 msgid "Time"
 msgstr "Čas"
 
-#: ../lib/pytis/defs/logging.py:42 ../lib/pytis/defs/logging.py:80
-#: ../lib/pytis/defs/logging.py:91 ../lib/pytis/defs/printing.py:77
+#: ../lib/pytis/defs/logging.py:43 ../lib/pytis/defs/logging.py:81
+#: ../lib/pytis/defs/logging.py:93 ../lib/pytis/defs/printing.py:77
 #: ../lib/pytis/defs/profiles.py:35 ../lib/pytis/defs/profiles.py:68
 #: ../lib/pytis/cms/cms.py:594
 msgid "User"
 msgstr "Uživatel"
 
-#: ../lib/pytis/defs/logging.py:46 ../lib/pytis/defs/profiles.py:40
+#: ../lib/pytis/defs/logging.py:47 ../lib/pytis/defs/profiles.py:40
 #: ../lib/pytis/defs/statistics.py:35 ../lib/pytis/defs/statistics.py:52
 #: ../lib/pytis/defs/statistics.py:72 ../lib/pytis/defs/statistics.py:98
 #: ../lib/pytis/defs/statistics.py:113
 msgid "Form Class"
 msgstr "Třída formuláře"
 
-#: ../lib/pytis/defs/logging.py:48 ../lib/pytis/defs/menu.py:223
+#: ../lib/pytis/defs/logging.py:49 ../lib/pytis/defs/menu.py:223
 #: ../lib/pytis/defs/menu.py:237 ../lib/pytis/defs/menu.py:329
 #: ../lib/pytis/defs/menu.py:489 ../lib/pytis/defs/menu.py:655
 #: ../lib/pytis/defs/menu.py:752 ../lib/pytis/defs/menu.py:831
@@ -168,55 +231,55 @@ msgstr "Třída formuláře"
 msgid "Action"
 msgstr "Akce"
 
-#: ../lib/pytis/defs/logging.py:49
+#: ../lib/pytis/defs/logging.py:50
 msgid "Information"
 msgstr "Informace"
 
-#: ../lib/pytis/defs/logging.py:66
+#: ../lib/pytis/defs/logging.py:67
 msgid "Overview of Changes"
 msgstr "Přehled změn"
 
-#: ../lib/pytis/defs/logging.py:76
+#: ../lib/pytis/defs/logging.py:77
 msgid "From"
 msgstr "Od"
 
-#: ../lib/pytis/defs/logging.py:78
+#: ../lib/pytis/defs/logging.py:79
 msgid "To"
 msgstr "Do"
 
-#: ../lib/pytis/defs/logging.py:81 ../lib/pytis/defs/logging.py:93
+#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/logging.py:95
 msgid "Tabulka"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/logging.py:96
+#: ../lib/pytis/defs/logging.py:83 ../lib/pytis/defs/logging.py:98
 msgid "Klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:83
+#: ../lib/pytis/defs/logging.py:84
 msgid "Řádek obsahuje"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:84 ../lib/pytis/defs/logging.py:92
+#: ../lib/pytis/defs/logging.py:85 ../lib/pytis/defs/logging.py:94
 msgid "Schema"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:89
+#: ../lib/pytis/defs/logging.py:91
 msgid "ID"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:90 ../lib/pytis/cms/cms.py:592
+#: ../lib/pytis/defs/logging.py:92 ../lib/pytis/cms/cms.py:592
 msgid "Datum a čas"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:94
+#: ../lib/pytis/defs/logging.py:96
 msgid "Operace"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:95
+#: ../lib/pytis/defs/logging.py:97
 msgid "ID klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:97
+#: ../lib/pytis/defs/logging.py:99
 msgid "Řádek"
 msgstr ""
 
@@ -476,12 +539,6 @@ msgstr ""
 msgid "Chystané změny"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:384 ../lib/pytis/defs/statistics.py:41
-#: ../lib/pytis/defs/statistics.py:59 ../lib/pytis/defs/statistics.py:82
-#: ../lib/pytis/cms/cms.py:386
-msgid "Uživatelé"
-msgstr ""
-
 #: ../lib/pytis/defs/menu.py:391
 msgid "Nastavení"
 msgstr ""
@@ -739,7 +796,7 @@ msgstr ""
 msgid "Patička"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:75 ../lib/pytis/defs/printing.py:86
+#: ../lib/pytis/defs/printing.py:75 ../lib/pytis/defs/printing.py:87
 msgid "Styl"
 msgstr ""
 
@@ -751,24 +808,24 @@ msgstr ""
 msgid "Hlavičky a patičky"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:90
+#: ../lib/pytis/defs/printing.py:91
 msgid "Můžete mazat pouze své vlastní záznamy."
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:93
+#: ../lib/pytis/defs/printing.py:94
 #, python-format
 msgid "Opravdu chcete vymazat tiskovou sestavu %s?"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:102
+#: ../lib/pytis/defs/printing.py:103
 msgid "Tento název šablony již existuje"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:122
+#: ../lib/pytis/defs/printing.py:123
 msgid "Tisková sestava neexistuje: "
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:127
+#: ../lib/pytis/defs/printing.py:128
 msgid "Tisková sestava se vyskytuje ve více exemplářích: "
 msgstr ""
 

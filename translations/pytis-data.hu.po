@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-13 17:02+0100\n"
+"POT-Creation-Date: 2014-05-28 10:15+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -49,11 +49,11 @@ msgstr ""
 msgid "Too many database connections"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:695
+#: ../lib/pytis/data/dbdata.py:707
 msgid "Database error"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:763
+#: ../lib/pytis/data/dbdata.py:775
 msgid "Invalid user name or password"
 msgstr ""
 
@@ -74,7 +74,7 @@ msgstr ""
 msgid "Characters present in data not representable in database encoding"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3669
+#: ../lib/pytis/data/postgresql.py:3690
 msgid "Invalid database counter value"
 msgstr ""
 
@@ -134,7 +134,7 @@ msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:961 ../lib/pytis/data/types_.py:2010
+#: ../lib/pytis/data/types_.py:961 ../lib/pytis/data/types_.py:2012
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr ""
@@ -160,77 +160,77 @@ msgid "Please use mix of letters and non-letters in your password"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1122 ../lib/pytis/data/types_.py:1156
-#: ../lib/pytis/data/types_.py:1192 ../lib/pytis/data/types_.py:1821
+#: ../lib/pytis/data/types_.py:1122 ../lib/pytis/data/types_.py:1158
+#: ../lib/pytis/data/types_.py:1194 ../lib/pytis/data/types_.py:1823
 msgid "Invalid format"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1142
+#: ../lib/pytis/data/types_.py:1144
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr ""
-
-#. User input validation error message.
-#: ../lib/pytis/data/types_.py:1158
-#, python-format
-msgid "Invalid inet address mask: %(mask)s"
 msgstr ""
 
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1160
 #, python-format
+msgid "Invalid inet address mask: %(mask)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1162
+#, python-format
 msgid "Invalid inet address value %(addr)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1318
+#: ../lib/pytis/data/types_.py:1320
 msgid "Invalid date or time format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1319
+#: ../lib/pytis/data/types_.py:1321
 msgid "Invalid date or time"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1320
+#: ../lib/pytis/data/types_.py:1322
 msgid "Date outside the allowed range"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1975
+#: ../lib/pytis/data/types_.py:1977
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2056
+#: ../lib/pytis/data/types_.py:2058
 #, python-format
 msgid "Not a buffer object: %r"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2192
+#: ../lib/pytis/data/types_.py:2194
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2194
+#: ../lib/pytis/data/types_.py:2196
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2196
+#: ../lib/pytis/data/types_.py:2198
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2212
+#: ../lib/pytis/data/types_.py:2214
 msgid "Invalid graphics format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2317
+#: ../lib/pytis/data/types_.py:2319
 msgid "Invalid hierarchical value format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2319
+#: ../lib/pytis/data/types_.py:2321
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2321
+#: ../lib/pytis/data/types_.py:2323
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
