@@ -278,8 +278,6 @@ class Resolver(object):
         """Reload all specification modules and clear all caches."""
         # TODO: It only works when search path is set!
         self.clear()
-        import pytis.data.gensqlalchemy
-        pytis.data.gensqlalchemy.clear()
         for name in sys.modules:
             for prefix in self._search:
                 if ((not prefix.startswith('pytis.')
