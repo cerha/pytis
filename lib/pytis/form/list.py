@@ -71,8 +71,9 @@ import _grid
 import config
 
 _ = pytis.util.translations('pytis-wx')
-    
-### Formuláře
+
+
+# Forms
 
 
 class ListForm(RecordForm, TitledForm, Refreshable):
@@ -259,7 +260,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
-        #g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
+        # g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
         g.SetMargins(0, 0)
         g.DisableDragGridSize()
         g.DisableDragRowSize()
@@ -363,7 +364,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if row_count != old_row_count or insert_column is not None or delete_column is not None \
                 or init_columns:
             # Force scrollbar update by generating a size event.
-            #g.SetSize(g.GetSize())
+            # g.SetSize(g.GetSize())
             g.FitInside()
             
     def _update_grid_length(self, g, row_count, current_row):
@@ -409,7 +410,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     e = _grid.InputFieldCellEditor(self._parent, editing.the_row, c.id(),
                                                    self, registration)
                     self._editors.append(e)
-                    #self._grid.SetCellEditor(row, col, e)
+                    # self._grid.SetCellEditor(row, col, e)
                     attr.SetEditor(e)
             else:
                 attr.SetReadOnly()
@@ -564,7 +565,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             MItem(_("Copy cell content"),
                   command=ListForm.COMMAND_COPY_CELL,
                   help=_("Copy the value into the clipboard.")),
-            #MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
+            # MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
         )
 
     def _lf_sfs_columns(self):
@@ -727,7 +728,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # development workstation and Ubuntu notebook) and didn't apear at any
         # other tested system.  So the work around below is left commanted out
         # just in case the problem re-appears somewhere...
-        #return filter(lambda row: g.IsInSelection(row, 0), range(g.GetNumberRows()))
+        # return filter(lambda row: g.IsInSelection(row, 0), range(g.GetNumberRows()))
         #
         # One would say that g.GetSelectedRows() is what we want, but it always
         # returns an empty list, so we must construct the list ourselves using
@@ -1305,15 +1306,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._remember_column_size(event.GetRowOrCol())
         self._grid.FitInside()
         # Mohli bychom rozšířit poslední sloupec, ale jak ho potom zase zúžit?
-        #if config.stretch_tables:
-        #    g = self._grid
-        #    n = g.GetNumberCols()
-        #    w = functools.reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
-        #    x = g.GetSize().x
-        #    if w < x:
-        #        col = n-1
-        #        g.SetColSize(col, g.GetColSize(col) + (x - w))
-        #        self._remember_column_size(col)
+        # if config.stretch_tables:
+        #     g = self._grid
+        #     n = g.GetNumberCols()
+        #     w = functools.reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
+        #     x = g.GetSize().x
+        #     if w < x:
+        #         col = n-1
+        #         g.SetColSize(col, g.GetColSize(col) + (x - w))
+        #         self._remember_column_size(col)
         event.Skip()
 
     def _remember_column_size(self, col):
@@ -1335,10 +1336,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return ((x, y), (x + r, y + r), (x + r, y + l), (x + r + 2, y + l),
                     (x + r + 2, y + r), (x + r * 2 + 2, y), (x, y))
         g = self._grid
-        #t = self._table
+        # t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
         dc.SetTextForeground(wx.BLACK)
-        #dc.SetFont(g.GetFont())
+        # dc.SetFont(g.GetFont())
         x = - self._scroll_x_offset()
         row_height = self._row_height
         total_width = dc.GetSize().GetWidth()
@@ -2011,8 +2012,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._create_search_panel(full=full, prefill=prefill)
         else:
             self._search_panel_controls[1].SetFocus()
-        #self._selection_callback = self.get_callback(self.CALL_SELECTION)
-        #self.set_callback(self.CALL_SELECTION, None)
+        # self._selection_callback = self.get_callback(self.CALL_SELECTION)
+        # self.set_callback(self.CALL_SELECTION, None)
         
     def _cmd_search(self, next=False, back=False):
         if next and self._search_panel is not None:
@@ -3450,7 +3451,7 @@ class SideBrowseForm(BrowseForm):
                 return value.value()
             else:
                 return value
-        #log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
+        # log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
         self._main_form_row = row
         if self._xarguments is not None:
             self._selection_arguments = self._xarguments(row)
