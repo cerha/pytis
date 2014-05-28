@@ -49,7 +49,7 @@ from form import BrowsableShowForm, EditForm, Form, InnerForm, LookupForm, Recor
 from inputfield import FileField, GenericCodebookField, InputField, Invocable, \
     ListField, SpinnableField, StructuredTextField, TextField
 from list import BrowseForm, FoldableForm, ListForm
-from screen import Browser, DualFormSwitcher, ProfileSelector
+from screen import Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector
 from application import Application
 
 _ = pytis.util.translations('pytis-wx')
@@ -620,6 +620,11 @@ class UICommands(object):
         _("Switch the active form"),
         _("Switch between the top and the bottom form of a dual form."),
         ctrl=DualFormSwitcher)
+    RESPLIT = UICommand(
+        DualForm.COMMAND_RESPLIT(),
+        _("Switch splitter orientation"),
+        _("Switch between horizontal and vertical arrangement of the main form and side form."),
+        ctrl=DualFormResplitter)
     LEAVE_FORM = UICommand(
         Form.COMMAND_LEAVE_FORM(),
         _("Close form"),
@@ -633,6 +638,7 @@ TOOLBAR_COMMANDS = ((UICommands.NEW_RECORD,
                     (UICommands.EXPORT_FILE,
                      UICommands.PRINT_MENU,
                      UICommands.OTHER_FORM,
+                     UICommands.RESPLIT,
                      ),
                     (UICommands.INCREMENTAL_SEARCH,
                      UICommands.SEARCH,

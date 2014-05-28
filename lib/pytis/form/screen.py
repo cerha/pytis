@@ -1811,26 +1811,23 @@ class TextHeadingSelector(wx.Choice):
         cmd.invoke(level=event.GetSelection(), **kwargs)
 
             
-class DualFormSwitcher(wx.BitmapButton):
-    """Special toolbar control for DualForm.COMMAND_OTHER_FORM.
+class FormStateToolbarControl(wx.BitmapButton):
+    """Special toolbar control for form commands with current state indication.
 
-    The only reason for implementing a custom toolbar control is the ability to
-    switch the bitmap displayed on the button according to the current form to
-    indicate whether the upper or the lower form in the dual form is active..
+    A custom toolbar control indicating the current form state by changing the
+    visible icon.  Available icons are defined by '_ICONS' and the currently
+    displayed icon is returned by '_current_icon_index()'.
 
     """
-    
+    _ICONS = ()
+    """Sequence of all possible icons as values for the first argument to 'get_icon()'."""
+
     def __init__(self, parent, uicmd):
         self._toolbar = parent
         self._uicmd = uicmd
-        self._bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR) or
-                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
-                         get_icon('dual-form-active-down', type=wx.ART_TOOLBAR) or
-                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
-                         get_icon('dual-form-active-left', type=wx.ART_TOOLBAR) or
-                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
-                         get_icon('dual-form-active-right', type=wx.ART_TOOLBAR) or
-                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),)
+        self._bitmaps = [get_icon(icon, type=wx.ART_TOOLBAR) or
+                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
+                         for icon in self._ICONS]
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
@@ -1840,25 +1837,62 @@ class DualFormSwitcher(wx.BitmapButton):
     def _on_click(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         cmd.invoke(**kwargs)
-        
+
     def _on_update_ui(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if enabled:
-            dualform = pytis.form.current_form(inner=False)
-            if dualform.active_form() == dualform.main_form():
-                i = 0
-            else:
-                i = 1
-            if dualform.is_vertical():
-                i += 2
-            new_bitmap = self._bitmaps[i]
+            form = pytis.form.current_form(inner=False)
+            new_bitmap = self._bitmaps[self._current_icon_index(form)]
             if self._current_bitmap != new_bitmap:
                 self._current_bitmap = new_bitmap
                 self.SetBitmapLabel(new_bitmap)
                 self._toolbar.Realize()
+
+    def _current_icon_index(self, form):
+        """Implement this method to return the index of the active icon in _ICONS.""" 
+        pass
             
+
+class DualFormSwitcher(FormStateToolbarControl):
+    """Special toolbar control for DualForm.COMMAND_OTHER_FORM.
+
+    The current icon indicates whether the current form is the main form or the
+    side form and takes the dual form split mode into account.
+
+    """
+    _ICONS = ('dual-form-active-up',
+              'dual-form-active-down',
+              'dual-form-active-left',
+              'dual-form-active-right',)
+
+    def _current_icon_index(self, form):
+        if form.active_form() == form.main_form():
+            i = 0
+        else:
+            i = 1
+        if form.is_vertical():
+            i += 2
+        return i
+
+
+class DualFormResplitter(FormStateToolbarControl):
+    """Special toolbar control for DualForm.COMMAND_RESPLIT.
+
+    The current icon indicates whether the form is currently split vertically or horizontally.
+    
+    """
+    
+    _ICONS = ('Dual-form-split-horizontally',
+              'dual-form-split-vertically',)
+
+    def _current_icon_index(self, form):
+        if form.is_vertical():
+            return 0
+        else:
+            return 1
+
 
 class LocationBar(wx.TextCtrl):
     """Toolbar control for browser location display and entry."""
