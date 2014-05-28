@@ -83,7 +83,7 @@ def init_colors():
         wxcolour = wx.TheColourDatabase.FindColour(name)
         _WX_COLOR_DB[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
     
-### Pomocné funkce
+# Utility functions
 
 def beep():
     """Pípni."""
@@ -143,11 +143,11 @@ def copy_to_clipboard(text):
     # run.  It works when run natively on linux and also with newer versions of
     # nx, but it doesn't work when pytis is used on Windows through an X
     # server or on Cygwin.
-    #clipboard = wx.TheClipboard
-    #if clipboard.Open():
-    #    clipboard.SetData(wx.TextDataObject(text))
-    #    clipboard.Flush()
-    #    clipboard.Close()
+    # clipboard = wx.TheClipboard
+    # if clipboard.Open():
+    #     clipboard.SetData(wx.TextDataObject(text))
+    #     clipboard.Flush()
+    #     clipboard.Close()
     # The following solution is is quite a hack, but it works consistently...
     ctrl = wx.TextCtrl(pytis.form.wx_frame(), -1, text)
     ctrl.SetSelection(0, len(text))
@@ -203,7 +203,7 @@ def hotkey_string(hotkey):
     return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
 
 
-### Pomocné třídy
+# Utility classes
 
 
 class Restorable:
@@ -530,7 +530,8 @@ def color2wx(color):
     """
     return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.NamedColour(color)
 
-### Univerzální handlery
+    
+# Common handlers
 
 
 class Keymap:
@@ -910,12 +911,10 @@ class CallbackHandler:
             return True
             
 
-#=============================#
-# Specializované prvky        #
-#=============================#
+# Specialized gadgets
 
 
-### Menu
+# Menu
 
 
 class _MenuObject(object):
@@ -1194,7 +1193,7 @@ class MItem(_TitledMenuObject):
                 return ('%s/%s/%s' % (command, form_name, command_proc,))
         elif command == 'HANDLED_ACTION':
             handler = args.pop('handler', None)
-            if not args and type(handler) == types.FunctionType:
+            if not args and isinstance(handler, types.FunctionType):
                 name = modulify(handler, handler.func_name)
                 return ('handle/%s/%s' % (name, command_proc,))
         elif command == 'RUN_PROCEDURE':
@@ -1339,7 +1338,7 @@ class RadioItem(CheckItem):
     """Položka menu tvořící přepínatelnou skupinu."""
     # wx.ITEM_RADIO způsobuje SEGFAULT.  CheckItem se však, zdá se, chová úplně
     # stejně, takže to vlastně vůbec nevadí...
-    #_WX_KIND = wx.ITEM_RADIO
+    # _WX_KIND = wx.ITEM_RADIO
     pass
 
 
@@ -1391,7 +1390,7 @@ class MenuBar(wx.MenuBar):
                 else:
                     self._keys[k] = cmd
                     
-### Status bar
+# Status bar
 
 
 class StatusBar(wx.StatusBar):
@@ -1591,7 +1590,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.InsertStringItem(i, label)
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
-            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL,
+                                        wx.BOLD))
         self.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):
@@ -1964,16 +1964,16 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.add(webview)
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
-                #webview.connect('notify::title', self._on_title_changed)
+                # webview.connect('notify::title', self._on_title_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
                 webview.connect('resource-request-starting', self._on_resource_request)
-                #webview.connect('load-error', self._on_load_error)
-                #features = webview.get_window_features()
-                #features.set_property('statusbar_visible', True)
-                #features.set_property('locationbar-visible', True)
+                # webview.connect('load-error', self._on_load_error)
+                # features = webview.get_window_features()
+                # features.set_property('statusbar_visible', True)
+                # features.set_property('locationbar-visible', True)
                 settings = webview.get_settings()
                 settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
-                #settings.props.enable_developer_extras = True # Doesn't work...
+                # settings.props.enable_developer_extras = True # Doesn't work...
                 webview.set_settings(settings)
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
@@ -2479,7 +2479,8 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
         ctrl.SetToolTipString(tooltip)
     if update:
         # Bug: 'parent' is undefined!
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
+        # pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
+        pass
     if not enabled:
         ctrl.Enable(False)
     if width:
@@ -2566,9 +2567,9 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
             if hotkey:
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
-        #if update:
-        #    pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
-        #                lambda e: e.Enable(cmd.enabled(**args)))
+        # if update:
+        #     pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
+        #                 lambda e: e.Enable(cmd.enabled(**args)))
     if callback:
         pytis.form.wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
