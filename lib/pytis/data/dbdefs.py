@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013 Brailcom, o.p.s.
+# Copyright (C) 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -138,6 +138,17 @@ def stype(expr, **kwargs):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.String(**kwargs))
+
+def is_(column, other):
+    """Like SQLAlchemy 'is_()' method, but casted to boolean.
+
+    Arguments:
+
+      column -- SQLAlchemy column instance to compare
+      other -- object to compare the column to
+
+    """
+    return sqlalchemy.cast(column.is_(other), sqlalchemy.Boolean())
 
 def if_(condition, then_, else_):
     """Return simple conditional expression.
