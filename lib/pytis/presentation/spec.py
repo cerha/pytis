@@ -5267,20 +5267,28 @@ class Specification(object):
         
     @classmethod
     def _codebook_by_db_spec_name(class_, db_spec_name):
-        specification_list = class_._specifications_by_db_spec_name.get(db_spec_name)
-        if specification_list is None:
+        specification_names = class_._specifications_by_db_spec_name.get(db_spec_name)
+        if not specification_names:
             return None
-        specification_list = [s for s in specification_list if s.cb is not None]
-        if not specification_list:
-            return None
-        if len(specification_list) > 1:
+        elif len(specification_names) != 1:
             log(OPERATIONAL, "Multiple codebook candidates, no codebook assigned: ",
-                (db_spec_name, specification_list,))
+                (db_spec_name, specification_names,))
             return None
-        specification = specification_list[0]
-        return specification._spec_name()
+        else:
+            return specification_names[0]
 
     @classmethod
     def add_specification_by_db_spec_name(class_, db_spec_name, specification):
-        mapping = class_._specifications_by_db_spec_name
-        mapping[db_spec_name] = mapping.get(db_spec_name, []) + [specification]
+        if specification.cb is not None:
+            # Note, we can not store specification classes here
+            # because they may become obsolete after reloading the
+            # resolver.  We are only interested in specification
+            # names, so we store just the names.
+            mapping = class_._specifications_by_db_spec_name
+            try:
+                specification_names = mapping[db_spec_name]
+            except:
+                specification_names = mapping[db_spec_name] = []
+            name = specification._spec_name()
+            if name not in specification_names:
+                specification_names.append(name)
