@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -233,7 +233,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         The arguments are the same as for the 'InputField' constructor.
         
         """
-        #assert isinstance(parent, wx.Window)
+        # assert isinstance(parent, wx.Window)
         assert isinstance(row, PresentedRow)
         assert isinstance(id, basestring)
         assert isinstance(inline, bool)
@@ -296,7 +296,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _defocus = classmethod(_defocus)
 
     def _focus(cls, field):
-        #import weakref
+        # import weakref
         current = cls.focused()
         cls._focused_field = field #weakref.ref(field)
         if current is not None:
@@ -540,7 +540,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             del(self._unregistered_widgets[control])
 
     def _unregister_skip_navigation_callback(self):
-        #self._ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
+        # self._ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
         # The disconnect above doeasn't work, so here is a nasty workaround.
         self._unregistered_widgets[self._ctrl] = True
 
@@ -576,7 +576,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._ctrl.Enable(True)
 
     def _disable(self):
-        #if not self._readonly:
+        # if not self._readonly:
         # There is currently no way to disable a wx control without graying it out, which we don't
         # want in show forms, so we leave it editable relying on the fact, that there is no way to
         # save the changed in a readonly form.  This situation is fixed for TextFields below.
@@ -1641,10 +1641,10 @@ class ListField(GenericCodebookField):
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
             
-    #def _on_kill_focus(self, event):
-    #    if self._selected_item is not None:
-    #        self._list.EnsureVisible(self._selected_item)
-    #    return super(ListField, self)._on_kill_focus(event)
+    # def _on_kill_focus(self, event):
+    #     if self._selected_item is not None:
+    #         self._list.EnsureVisible(self._selected_item)
+    #     return super(ListField, self)._on_kill_focus(event)
         
     def _reload_enumeration(self):
         if self._last_set_invalid_value is not None:
@@ -2076,7 +2076,7 @@ class StructuredTextField(TextField):
                                              SMALL_THUMBNAIL_SIZE)),
                        ('large-thumbnail', _("Larger preview (%d px), click to enlarge" %
                                              LARGE_THUMBNAIL_SIZE)),
-                       #('custom-thumbnail', _("Vlastní velikost náhledu")),
+                       # ('custom-thumbnail', _("Vlastní velikost náhledu")),
                        ('full-size', _("Full size (appropriate for screenshot etc.)")))
         @classmethod
         def matching_size(cls, thumbnail):
@@ -2209,12 +2209,12 @@ class StructuredTextField(TextField):
                  ),
             )
         commands += (
-            #(UICommand(self.COMMAND_UNDO(),
-            #           _(u"Zpět"),
-            #           _(u"Vrátit zpět poslední akci.")),
-            # UICommand(self.COMMAND_REDO(),
-            #           _(u"Znovu"),
-            #           _(u"Provést znovu poslední akci vzatou zpět.")),
+            # (UICommand(self.COMMAND_UNDO(),
+            #            _(u"Zpět"),
+            #            _(u"Vrátit zpět poslední akci.")),
+            #  UICommand(self.COMMAND_REDO(),
+            #            _(u"Znovu"),
+            #            _(u"Provést znovu poslední akci vzatou zpět.")),
             # ),
 
             (UICommand(self.COMMAND_CUT(),
@@ -2227,12 +2227,12 @@ class StructuredTextField(TextField):
                        _("Paste"),
                        _("Paste text from clipboard.")),
              ),
-            #(UICommand(self.COMMAND_SEARCH(),
-            #           _(u"Hledat"),
-            #           _(u"Vyhledat řetězec v textu políčka.")),
-            # UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
-            #           _(u"Hledat a nahradit"),
-            #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
+            # (UICommand(self.COMMAND_SEARCH(),
+            #            _(u"Hledat"),
+            #            _(u"Vyhledat řetězec v textu políčka.")),
+            #  UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
+            #            _(u"Hledat a nahradit"),
+            #            _(u"Vyhledat na nahradit řetězec v textu políčka.")),
             # ),
             (UICommand(self.COMMAND_HEADING(_command_handler=self),
                        _("Heading level"),
@@ -2317,8 +2317,8 @@ class StructuredTextField(TextField):
         # wx.stc.StyledTextCtrl as it has some strange bugs in caret
         # positioning etc.  Once this is resolved, we can re-enable usiong the
         # derived TextCtrl class defined above.
-        #ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
-        #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
+        # ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
+        # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
@@ -2593,14 +2593,14 @@ class StructuredTextField(TextField):
                   computer=computer(self._resize_computer)),
             Field('align', _("Alignment"), not_null=True,
                   enumerator=self.ImageAlignments),
-            #Field('title', _(u"Název"), width=50,
-            #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
-            #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
-            #              u"předchozím políčku.")),
+            # Field('title', _(u"Název"), width=50,
+            #       descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
+            #               u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
+            #               u"předchozím políčku.")),
             Field('tooltip', _("Tooltip"), width=50,
                   descr=_("Enter the text displayed in baloon help above "
                           "the image when the mouse moves over.")),
-            )
+        )
         button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
         Columns = pytis.presentation.ColumnLayout
         row = run_form(pytis.form.InputForm, title=_("Insert Image"), fields=fields,
@@ -2643,7 +2643,7 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_("Enter the text displayed in baloon help above the "
                           "link when the mouse moves over.")),
-            )
+        )
         button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
         row = run_form(pytis.form.InputForm, title=_("Insert attachment"), fields=fields,
                        prefill=dict(filename=filename,
@@ -2669,7 +2669,7 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_("Enter the text displayed in baloon help above the link "
                           "when the mouse moves over.")),
-            )
+        )
         row = run_form(pytis.form.InputForm, title=_("Link properties"), fields=fields,
                        prefill=dict(target=link.target(),
                                     title=link.title(),
