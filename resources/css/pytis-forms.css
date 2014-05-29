@@ -172,6 +172,7 @@
 
 .pytis-form.list-view div.list-item {
     margin-bottom: 1.1em;
+    overflow: auto; /* force floating image containment by Block Formatting Context */
 }
 .pytis-form.list-view div.tree-indent {
     padding-left: 0.7em;
