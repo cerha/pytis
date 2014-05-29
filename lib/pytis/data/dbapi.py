@@ -47,6 +47,7 @@ _ = translations('pytis-data')
 class _DBAPIAccessor(PostgreSQLAccessor):
 
     _query_callback = (None,)
+    _last_server_errors = {}
 
     @classmethod
     def set_query_callback(class_, callback):
@@ -58,7 +59,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     @classmethod
     def _postgresql_open_connection(class_, connection_data):
         # Prepare connection data
-        kwargs = {}
+        kwargs = dict(connect_timeout=10)
         for option, accessor in (('user', DBConnection.user),
                                  ('password', DBConnection.password),
                                  ('database', DBConnection.database),
@@ -70,6 +71,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             value = accessor(connection_data)
             if value is not None:
                 kwargs[option] = value
+        connection_key = tuple(kwargs.items())
+        if class_._last_server_errors.get(connection_key, 0) + 60 > time.time():
+            raise DBSystemException(_(u"Waiting for server recovery"))
         # Open the connection
         try:
             connection = dbapi.connect(**kwargs)
@@ -80,6 +84,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if ((msg.find('password') != -1 or
                      msg.find('authentication failed') != -1)):
                     raise DBLoginException()
+            class_._last_server_errors[connection_key] = time.time()
             raise DBSystemException(_(u"Can't connect to database"), e)
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         connection_instance = class_._postgresql_Connection(connection, connection_data)
@@ -179,13 +184,16 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             raise DBUserException(None, e, e.args, query)
         except dbapi.ProgrammingError as e:
             if e.args:
-                if e.args[0].find('could not obtain lock') != -1:
+                position = e.args[0].find
+                if position('could not obtain lock') != -1:
                     raise DBLockException()
-                elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
+                elif position('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
-                elif e.args[0].find('error: Connection timed out') != -1:
+                elif (position('error: Connection timed out') != -1 or
+                      position('timeout expired') != -1):
+                    
                     raise DBSystemException(_(u"Database connection timeout"), e, e.args, query)
-                elif e.args[0].find('server closed the connection unexpectedly') != -1:
+                elif position('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
                 else:
                     log(OPERATIONAL, "Transaction commands:",
@@ -401,7 +409,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 self._notif_invoke_callbacks(notifications)
 
 
-### Defaults
+# Defaults
 
 
 class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
@@ -434,7 +442,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
             self._pg_add_notifications()
 
 
-### Exportované proměnné/třídy
+# Exportované proměnné/třídy
 
 
 DBDataDefault = DBDataDefaultClass
