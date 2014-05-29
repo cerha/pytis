@@ -1884,7 +1884,7 @@ class DualFormResplitter(FormStateToolbarControl):
     
     """
     
-    _ICONS = ('Dual-form-split-horizontally',
+    _ICONS = ('dual-form-split-horizontally',
               'dual-form-split-vertically',)
 
     def _current_icon_index(self, form):
