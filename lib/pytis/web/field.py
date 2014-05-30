@@ -164,7 +164,6 @@ class Field(object):
     
     """
     _HANDLER = 'pytis.Field'
-    _URL_MATCHER = re.compile(r'(https?://.+?)(?=[\),.:;?!\]]?\.*(\s|&nbsp;|&lt;|&gt;|<br/?>|$))')
 
     @staticmethod
     def create(row, spec, form, uri_provider, multirow=False):
@@ -265,43 +264,14 @@ class Field(object):
         """
         value = self._row.format(self.id, export=localizable_export)
         if value and not isinstance(value, lcg.Localizable):
-            g = context.generator()
-            # Preserve linebreaks and indentation in multiline text.
-            nbsp = '&nbsp;'
-            len_nbsp = len(nbsp)
-            def convert_line(line):
-                line_length = len(line)
-                i = 0
-                while i < line_length and line[i] == ' ':
-                    i += 1
-                if i > 0:
-                    line = nbsp * i + line[i:]
-                    line_length += (len_nbsp - 1) * i
-                    i = len_nbsp * i
-                while i < line_length:
-                    if line[i] == ' ':
-                        j = i + 1
-                        while j < line_length and line[j] == ' ':
-                            j += 1
-                        if j > i + 1:
-                            line = line[:i] + nbsp * (j - i) + line[j:]
-                            line_length += (len_nbsp - 1) * (j - i)
-                            i += len_nbsp * (j - i)
-                        else:
-                            i += 1
-                    else:
-                        i += 1
-                return line
-            # Join lines and substitute links for HTML links
-            lines = g.escape(value).splitlines()
-            converted_text = '<br>\n'.join(convert_line(l) for l in lines)
-            value = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
-            len_lines = len(lines)
-            if len_lines > 1:
+            numlines = len(value.splitlines())
+            value = lcg.format_text(value) 
+            if numlines > 1:
+                g = context.generator()
                 height = self.spec.height()
                 cls = 'multiline'
                 style = None
-                if self._showform and height > 1 and len_lines > height + 2:
+                if self._showform and height > 1 and numlines > height + 2:
                     style = 'height: %dem;' % int(height * 1.4)
                     cls += ' scrolled'
                 value = g.div(value, cls=cls, style=style)
