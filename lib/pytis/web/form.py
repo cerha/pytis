@@ -957,8 +957,8 @@ class BrowseForm(LayoutForm):
 
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
                  columns=None, sorting=None, grouping=None, message=None,
-                 limits=(25, 50, 100, 200, 500), limit=50, offset=0,
-                 search=None, allow_text_search=None, text_search_condition=None,
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, 
+                 allow_text_search=None, text_search_condition=None, permanent_text_search=False,
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
@@ -1050,6 +1050,12 @@ class BrowseForm(LayoutForm):
             default condition is created by splitting the search string into
             separate words by blank characters.  Matching records must contain
             all the words in any of its string columns.
+          permanent_text_search -- set to True to make the text search
+            permanent.  The search string for given form will be saved in
+            browser's cookies to make the searching permanent until the user
+            explicitly cancels the search using the Cancel button.  Query
+            fields, profiles and filters normally behave this way.  Text search
+            does not by default, but you may turn it on using this argument.
           filter -- filter condition as a 'pytis.data.Operator' instance.  This
             condition will be appended to 'condition', but the difference is
             that 'condition' is invisible to the user, but 'filter' may be
@@ -1107,6 +1113,7 @@ class BrowseForm(LayoutForm):
             uri_provider_ = None
         super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
         assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
+        assert isinstance(permanent_text_search, bool), permanent_text_search
         data = self._row.data()
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
@@ -1218,7 +1225,16 @@ class BrowseForm(LayoutForm):
         self._search = search
         # Determine the current text search condition.
         if allow_text_search or allow_text_search is None:
-            text_search_string = param('query', unicode)
+            if req.param('list-form-controls-submitted'):
+                text_search_string = param('query', unicode)
+            else:
+                text_search_string = None
+            if permanent_text_search:
+                cookie = 'pytis-search-string-%s' % (self._name)
+                if req.param('list-form-controls-submitted'):
+                    req.set_cookie(cookie, text_search_string)
+                else:
+                    text_search_string = req.cookie(cookie)
             show_search_field = bool(text_search_string or param('show-search-field', bool)
                                      or allow_text_search)
             allow_search_field = True
