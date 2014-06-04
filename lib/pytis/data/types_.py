@@ -1311,6 +1311,9 @@ class _CommonDateTime(Type):
         and/or time in the form accepted by `time.strftime()'.
       mindate, maxdate -- limits of acceptable date/time
       utc -- specifies whether timestamp in the database is in UTC
+      without_timezone -- iff true then use WITHOUT TIMEZONE when declaring the
+        type in the database.  This is only to support legacy tables, all new
+        database objects should be created WITH TIMEZONE.
 
     """
     
@@ -1326,7 +1329,7 @@ class _CommonDateTime(Type):
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
     
-    def _init(self, format, utc=True, **kwargs):
+    def _init(self, format, utc=True, without_timezone=False, **kwargs):
         assert format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
         self._format = format
@@ -1336,6 +1339,7 @@ class _CommonDateTime(Type):
         else:
             self._timezone = self.LOCAL_TZINFO
         self._check_matcher = {}
+        self._without_timezone = without_timezone
         super(_CommonDateTime, self)._init(**kwargs)
         
     def _check_format(self, format, string):
@@ -1648,7 +1652,8 @@ class DateTime(_CommonDateTime):
         return class_.datetime()
     
     def sqlalchemy_type(self):
-        return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._utc), precision=0)
+        return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
+                                                        precision=0)
 
 class DateTimeRange(Range, Integer):
     def sqlalchemy_type(self):
@@ -1805,7 +1810,7 @@ class Time(_CommonDateTime):
         return dt.astimezone(tz).timetz()
     
     def sqlalchemy_type(self):
-        return sqlalchemy.Time(timezone=(not self._utc))
+        return sqlalchemy.Time(timezone=(not self._without_timezone))
             
 
 class TimeInterval(Type):

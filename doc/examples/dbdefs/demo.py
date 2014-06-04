@@ -122,6 +122,13 @@ class FunctionallyIndexed(sql.SQLTable):
                                      sqlalchemy.literal_column('-1', type_=sqlalchemy.Integer()))
         return (sql.a('x', y, unique=True),)
 
+class DateTable(sql.SQLTable):
+    name = 'date_table'
+    fields = (sql.Column('world_timestamp', pytis.data.DateTime(utc=True)),
+              sql.Column('local_timestamp', pytis.data.DateTime(utc=False)),
+              sql.Column('ambigous_timestamp', pytis.data.DateTime(without_timezone=True)),
+              )
+
 class LogTable(sql.SQLTable):
     name = 'log_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
