@@ -2203,8 +2203,9 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     def columns(self):
         columns = super(SQLTable, self).columns
         if self._pytis_create_p:
+            all_columns = columns
             columns = sqlalchemy.sql.ColumnCollection()
-            for c in columns:
+            for c in all_columns:
                 if not c.info['inherited']:
                     columns.add(c)
         return columns
