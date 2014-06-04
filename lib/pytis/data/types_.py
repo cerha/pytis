@@ -1654,6 +1654,18 @@ class DateTime(_CommonDateTime):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
                                                         precision=0)
+class LocalDateTime(DateTime):
+    "Datetime stored as UTC in database but presented as local time by default."
+    
+    def _export(self, value, local=None, format=None):
+        if local is None:
+            local = True
+        return super(LocalDateTime, self)._export(value, local=local, format=format)
+
+    def _validate(self, string, format=None, local=None):
+        if local is None:
+            local = True
+        return super(LocalDateTime, self)._validate(string, format=format, local=local)
 
 class DateTimeRange(Range, Integer):
     def sqlalchemy_type(self):
@@ -1811,7 +1823,20 @@ class Time(_CommonDateTime):
     
     def sqlalchemy_type(self):
         return sqlalchemy.Time(timezone=(not self._without_timezone))
-            
+    
+class LocalTime(Time):
+    "Time stored as UTC in database but presented as local time by default."
+    
+    def _export(self, value, local=None, format=None):
+        if local is None:
+            local = True
+        return super(LocalTime, self)._export(value, local=local, format=format)
+
+    def _validate(self, string, format=None, local=None):
+        if local is None:
+            local = True
+        return super(LocalTime, self)._validate(string, format=format, local=local)
+
 
 class TimeInterval(Type):
     """Amount of time between two moments.
