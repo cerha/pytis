@@ -103,6 +103,13 @@ class DualForm(Form, Refreshable):
         self._splitter_position_initialized = False
 
     def _initial_orientation(self):
+        saved_orientation = self._get_saved_setting('sash_orientation')
+        if saved_orientation is not None:
+            return saved_orientation
+        else:
+            return self._default_orientation()
+
+    def _default_orientation(self):
         return self._view.orientation()
 
     def _create_view_spec(self):
@@ -199,8 +206,11 @@ class DualForm(Form, Refreshable):
         self._splitter.Unsplit()
         if is_vertical:
             self._splitter.SplitHorizontally(self._main_form, self._side_form)
+            new_orientation = Orientation.HORIZONTAL
         else:
             self._splitter.SplitVertically(self._main_form, self._side_form)
+            new_orientation = Orientation.VERTICAL
+        self._set_saved_setting('sash_orientation', new_orientation)
         self._select_form(self._active_form)
 
     def main_form(self):
@@ -480,7 +490,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
     def _create_view_spec(self):
         return None
     
-    def _initial_orientation(self):
+    def _default_orientation(self):
         return Orientation.HORIZONTAL
     
     def _initial_sash_position(self, size):
@@ -614,7 +624,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
         self._orientation = orientation
         super(DescriptiveDualForm, self)._init_attributes(**kwargs)
         
-    def _initial_orientation(self):
+    def _default_orientation(self):
         return self._orientation
         
     def _create_view_spec(self):
@@ -1186,7 +1196,7 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _create_data_object(self):
         return None
     
-    def _initial_orientation(self):
+    def _default_orientation(self):
         return self._main_form.orientation()
         
     def _default_sash_position(self, total_size):
