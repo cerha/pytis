@@ -3424,6 +3424,14 @@ class Field(object):
         """
         assert isinstance(field, Field), field
         kwargs = dict(self._kwargs, **field._kwargs)
+        if 'type' in self._kwargs and 'type' in field._kwargs:
+            t1 = self._kwargs['type']
+            if type(t1) == type(pytis.data.Type):
+                t1 = t1()
+            t2 = field._kwargs['type']
+            if type(t2) == type(pytis.data.Type):
+                t1 = t2()
+            kwargs['type'] = t1.clone(t2)
         new_field = Field(**kwargs)
         if kwargs.get('codebook') is not None:
             type_ = kwargs.get('type') or field.type()
