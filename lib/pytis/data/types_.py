@@ -295,7 +295,7 @@ class Type(object):
         instance's class.
 
         """
-        assert isinstance(other, self.__class__), other
+        assert isinstance(other, self.__class__), '%s, %s' % (self, other)
         kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
         return other.__class__(**kwargs)
             
