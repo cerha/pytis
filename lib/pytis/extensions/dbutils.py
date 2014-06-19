@@ -23,19 +23,20 @@ import pytis.util
 
 import config
 
+
 def data_object(spec):
     """Vrať sestavený datový objekt na základě názvu specifikace.
 
     Argumentem je název specifikace datového objektu nebo přímo instance třídy
     'pytis.data.DataFactory'
-    
+
     """
     if isinstance(spec, basestring):
         spec = pytis.util.resolver().get(spec, 'data_spec')
     def conn_spec():
         return config.dbconnection
     success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
-    #if not success:
+    # if not success:
     #    errmsg = "Nepodařilo se vytvořit datový objekt pro %s!" % (spec)
     #    raise ProgramError(errmsg)
     return data
@@ -53,9 +54,9 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
         'pytis.data.DataFactory'
       condition, sort, transaction -- argumenty volání
         'pytis.data.postgresql.select()'.
-        
+
     Vrací všechny řádky vrácené z databáze jako list.
-    
+
     """
     data = data_object(spec)
     data.select(condition=condition, sort=sort, transaction=transaction,
@@ -80,9 +81,9 @@ def dbinsert(spec, row, transaction=None):
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
         pytis.data.Row
       transaction -- instance pytis.data.DBTransactionDefault
-        
+
     Vrací počet vložených řádků.
-    
+
     """
     assert isinstance(row, pytis.data.Row) or isinstance(row, (tuple, list,)), \
         ("Argument must be a sequence or Row instance.", row)
@@ -114,7 +115,7 @@ def dbupdate(row, values=(), transaction=None):
         kde 'id' je řetězcový identifikátor políčka a value je
         instance, kterou se bude políčko aktualizovat
       transaction -- instance pytis.data.DBTransactionDefault
-    
+
     """
     data = row.data()
     updaterow = row.row()
@@ -140,9 +141,9 @@ def dbupdate_many(spec, condition=None, update_row=None,
       condition -- podmínka updatovaní.
       update_row -- řádek kterým se provede update,
       transaction -- instance pytis.data.DBTransactionDefault
-        
+
     Vrací počet updatovaných řádků.
-    
+
     """
     if not isinstance(condition, pytis.data.Operator):
         errmsg = "Nebyla předána podmínka pro update_many."
@@ -158,7 +159,7 @@ def dbfunction(name, *args, **kwargs):
     """Zavolej databázovou funkci a vrať výsledek jako Pythonovou hodnotu.
 
     If the database call fails, return None.
-    
+
     Argumenty:
 
       name -- název funkce.
@@ -172,7 +173,7 @@ def dbfunction(name, *args, **kwargs):
         computeru políčka, které je závislé na jiných políčkách, která ještě
         nejsou vyplněna.
       transaction -- instance pytis.data.DBTransactionDefault
-      
+
     """
     proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
     transaction = kwargs.get('transaction')
@@ -199,7 +200,7 @@ def enum(name, **kwargs):
     Takto vytvořený enumerátor lze použít jako argument 'enumerator'
     konstruktoru datového typu.  Argument 'name' je řetězec určující název
     specifikace, ze které bude získán datový objekt enumerátoru.
-    
+
     """
     data_spec = pytis.util.resolver().get(name, 'data_spec')
     return pytis.data.DataEnumerator(data_spec, **kwargs)
@@ -217,9 +218,10 @@ def is_in_groups(groups):
     else:
         return True
 
+
 def load_field(field, spec_name, column, condition):
     """Return a function loading row field value from given DB table column.
-    
+
     Arguments:
       field -- field identifier of the field to be loaded
       spec_name -- name of the Pytis specification of the table to load the
@@ -227,7 +229,7 @@ def load_field(field, spec_name, column, condition):
       column -- name of the table column containing the value to load
       condition -- condition identifying the table row containing the value to
         load as a 'pytis.data.Operator' instance.
-    
+
     The returned value is a function of one argument -- the PresentedRow
     instance to be updated.  When called, the function loads the value from the
     table into the 'field' of the passed 'PresentedRow' instance.
@@ -245,9 +247,10 @@ def load_field(field, spec_name, column, condition):
             query_fields_row[field] = pytis.data.Value(t, row[column].value())
     return load
 
+
 def save_field(field, spec_name, column, condition):
     """Return a function saving row field value into given DB table column.
-    
+
     Arguments:
       field -- field identifier of the field to be saved
       spec_name -- name of the Pytis specification of the table to save the
@@ -255,7 +258,7 @@ def save_field(field, spec_name, column, condition):
       column -- name of the table column containing the value to save
       condition -- condition identifying the table row for saving the vaule as
         a 'pytis.data.Operator' instance.
-    
+
     The returned value is a function of one argument -- the PresentedRow
     instance to be saved.  When called, the function saves the current value of
     its 'field' into the given table.
@@ -264,13 +267,12 @@ def save_field(field, spec_name, column, condition):
     'QueryFields' 'save' function.
 
     """
-    def save(qery_fields_row):
+    def save(query_fields_row):
         rows = dbselect(spec_name, condition=condition)
         assert len(rows) in (0, 1)
         if len(rows) == 1:
             row = rows[0]
-            row[column] = pytis.data.Value(row[column].type(), qery_fields_row[field].value())
+            row[column] = pytis.data.Value(row[column].type(), query_fields_row[field].value())
             data = data_object(spec_name)
             data.update_many(condition, row)
     return save
-
