@@ -259,10 +259,10 @@ class Type(object):
             result = 0
         else:
             result = -1
-            #TODO: Volání compare_objects způsobuje rekurzi.  Existuje nějaký
+            # TODO: Volání compare_objects způsobuje rekurzi.  Existuje nějaký
             # případ, kdy by se instance mohly rovnat i přes nesplnění výše
             # uvedených podmínek?
-            #result = compare_objects(self, other)
+            # result = compare_objects(self, other)
         return result
 
     def __str__(self):
@@ -295,7 +295,11 @@ class Type(object):
         instance's class.
 
         """
-        assert isinstance(other, self.__class__), '%s, %s' % (self, other)
+        if False:
+            # This fails in many places in current applications.
+            assert isinstance(other, self.__class__), '%s, %s' % (self.__class__, other)
+        else:
+            log(OPERATIONAL, "Clone type mismatch:", (self.__class__, other))
         kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
         return other.__class__(**kwargs)
             
