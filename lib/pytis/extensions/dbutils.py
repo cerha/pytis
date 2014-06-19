@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -216,3 +216,61 @@ def is_in_groups(groups):
         return False
     else:
         return True
+
+def load_field(field, spec_name, column, condition):
+    """Return a function loading row field value from given DB table column.
+    
+    Arguments:
+      field -- field identifier of the field to be loaded
+      spec_name -- name of the Pytis specification of the table to load the
+        value from
+      column -- name of the table column containing the value to load
+      condition -- condition identifying the table row containing the value to
+        load as a 'pytis.data.Operator' instance.
+    
+    The returned value is a function of one argument -- the PresentedRow
+    instance to be updated.  When called, the function loads the value from the
+    table into the 'field' of the passed 'PresentedRow' instance.
+
+    This function is designed to simplify the definition of a specific case of
+    'QueryFields' 'load' function.
+
+    """
+    def load(query_fields_row):
+        rows = dbselect(spec_name, condition=condition)
+        assert len(rows) in (0, 1)
+        if len(rows) == 1:
+            row = rows[0]
+            t = query_fields_row.type(field)
+            query_fields_row[field] = pytis.data.Value(t, row[column].value())
+    return load
+
+def save_field(field, spec_name, column, condition):
+    """Return a function saving row field value into given DB table column.
+    
+    Arguments:
+      field -- field identifier of the field to be saved
+      spec_name -- name of the Pytis specification of the table to save the
+        value to
+      column -- name of the table column containing the value to save
+      condition -- condition identifying the table row for saving the vaule as
+        a 'pytis.data.Operator' instance.
+    
+    The returned value is a function of one argument -- the PresentedRow
+    instance to be saved.  When called, the function saves the current value of
+    its 'field' into the given table.
+
+    This function is designed to simplify the definition of a specific case of
+    'QueryFields' 'save' function.
+
+    """
+    def save(qery_fields_row):
+        rows = dbselect(spec_name, condition=condition)
+        assert len(rows) in (0, 1)
+        if len(rows) == 1:
+            row = rows[0]
+            row[column] = pytis.data.Value(row[column].type(), qery_fields_row[field].value())
+            data = data_object(spec_name)
+            data.update_many(condition, row)
+    return save
+
