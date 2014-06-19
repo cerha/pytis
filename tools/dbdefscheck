@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+import optparse
+import string
+import sys
+
+import pytis.data.gensqlalchemy as sql
+import pytis.util
+
+def check():
+    import config
+    resolver = config.resolver
+    errors = []
+    def error(message, data=None):
+        if data is not None:
+            if not isinstance(data, basestring):
+                data = data.__class__.__name__
+            message += ": " + data
+        errors.append(message)
+    def function(name, args):
+        return '%s(%s)' % (name, string.join(args, ','),)
+    # Read in form specifications
+    spec_objects = set()
+    for name, spec in resolver.walk():
+        spec = spec(resolver)
+        table = spec.table
+        if table is not None:
+            if not isinstance(table, basestring):
+                table = table.pytis_name(real=True)
+            arguments = spec.arguments
+            if arguments is not None:
+                table = function(table, [a.type().__class__.__name__ for a in arguments])
+            spec_objects.add(table)
+    # Read in database specifications
+    for m in config.search_modules:
+        if m.endswith('.defs'):
+            pytis.util.load_module(m[:-4] + 'dbdefs')
+    dbdefs = sql.specification_instances()
+    def spec_table(s):
+        if not isinstance(s, sql.SQLObject):
+            return None
+        table = s.pytis_name(real=True)
+        if table is None:
+            return None
+        if isinstance(s, sql.SQLFunctional):
+            arguments = s.arguments
+            if arguments and not isinstance(arguments[0], basestring):
+                table = function(table, [a.type().__class__.__name__ for a in arguments])
+        return table
+    db_objects = set()
+    dependencies = set()
+    for s in dbdefs:
+        for d in s.depends_on:
+            t = spec_table(d)
+            if t is not None:
+                dependencies.add(t)
+        for d in s.pytis_dependencies():
+            t = spec_table(d)
+            if t is not None:
+                dependencies.add(t)
+        if isinstance(s, sql.SQLRaw):
+            error("Can't check raw object", s)
+            continue
+        table = spec_table(s)
+        db_objects.add(table)
+    # Compare specifications
+    for o in spec_objects:
+        if o not in db_objects:
+            error("Form specification without database object", o)
+    for o in db_objects:
+        if o not in spec_objects:
+            if o not in dependencies:
+                error("Unused database object", o)
+    # Output report
+    for e in errors:
+        print e
+
+def run():
+    parser = optparse.OptionParser()
+    parser.add_option("--config", default=None, action="store", dest="config")
+    options, args = parser.parse_args(args=sys.argv[1:])
+    if len(args) > 0:
+        parser.print_help()
+        sys.exit(1)
+    pytis.util.set_configuration_file(options.config)
+    check()
+
+if __name__ == '__main__':
+    run()

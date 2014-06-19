@@ -3909,6 +3909,12 @@ def specifications():
     "Return all loaded specification classes."
     return _PytisBaseMetaclass.specifications()
 
+def specification_instances():
+    "Return all instances of loaded specification classes."
+    for o, f in _PytisSchematicMetaclass.init_function_list:
+        _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
+    return _PytisSimpleMetaclass.objects + _PytisSchematicMetaclass.objects
+
 # Make sure _metadata and _engine are initialized to prevent crashes
 clear()
 
