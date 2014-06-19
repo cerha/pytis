@@ -476,6 +476,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if self._get_saved_setting('query-fields-minimized', False):
                 self._toggle_query_fields_minimization()
             self._update_query_fields_panel_button_bitmaps()
+            load = self._view.query_fields().load()
+            if load:
+                load(self._query_fields_row())
             form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
             self._query_fields_form = None
@@ -484,6 +487,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._query_fields_apply_button.Enable(True)
 
     def _on_apply_query_fields(self, event):
+        save = self._view.query_fields().save()
+        if save:
+            save(self._query_fields_row())
         event.GetEventObject().Enable(False)
         self.refresh(interactive=True)
         self._grid.SetFocus()

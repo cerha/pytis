@@ -1231,7 +1231,7 @@ class QueryFields(object):
 
 
     """
-    def __init__(self, fields, autoapply=False, layout=None, **kwargs):
+    def __init__(self, fields, autoapply=False, layout=None, load=None, save=None, **kwargs):
         """Arguments:
 
         fields -- field specifications as in ViewSpec
@@ -1239,11 +1239,15 @@ class QueryFields(object):
           default values automatically when the form is opened.  Otherwise, the
           form is initially displayed empty and query field values must be
           applied manually when the fields are filled.
-        layout -- form layout as in ViewSpac, with the difference, that a tuple
+        layout -- form layout as in ViewSpec, with the difference, that a tuple
           or list is converted to a horizontal group containing all fields
           (ViewSpec default layout is vertical).
+        load -- callable for loading query field values as a function of one
+          argument which is the query fields PresentedRow instance.
+        save -- function for saving query field values as a function of one
+          argument which is the query fields PresentedRow instance.
         kwargs -- other ViewSpec constructor arguments
-        
+
         """
         assert fields and isinstance(fields, (tuple, list)), fields
         if __debug__:
@@ -1252,15 +1256,25 @@ class QueryFields(object):
         if layout is None:
             layout = HGroup(*[f.id() for f in fields])
         self._autoapply = autoapply
+        self._load = load
+        self._save = save
         self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
 
     def fields(self):
-        """Return value of 'fields' passed to the constructor."""
+        """Return value of the argument 'fields' passed to the constructor."""
         return self._view_spec_kwargs['fields']
 
     def autoapply(self):
-        """Return value of 'autoapply' passed to the constructor."""
+        """Return value of the argument 'autoapply' passed to the constructor."""
         return self._autoapply
+
+    def load(self):
+        """Return value of the argument 'load' passed to the constructor."""
+        return self._load
+
+    def save(self):
+        """Return value of the argument 'save' passed to the constructor."""
+        return self._save
 
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""
