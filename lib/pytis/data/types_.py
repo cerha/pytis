@@ -295,11 +295,7 @@ class Type(object):
         instance's class.
 
         """
-        if False:
-            # This fails in many places in current applications.
-            assert isinstance(other, self.__class__), '%s, %s' % (self.__class__, other)
-        else:
-            log(OPERATIONAL, "Clone type mismatch:", (self.__class__, other))
+        assert isinstance(other, self.__class__), '%s, %s' % (self.__class__, other)
         kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
         return other.__class__(**kwargs)
             
