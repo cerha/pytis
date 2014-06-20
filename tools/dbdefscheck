@@ -7,6 +7,8 @@ import sys
 import pytis.data.gensqlalchemy as sql
 import pytis.util
 
+_wiking_resolver = None
+
 def check():
     import config
     resolver = config.resolver
@@ -31,6 +33,17 @@ def check():
             if arguments is not None:
                 table = function(table, [a.type().__class__.__name__ for a in arguments])
             spec_objects.add(table)
+    # Read in Wiking specifications
+    if _wiking_resolver is not None:
+        import wiking
+        for m in _wiking_resolver.available_modules():
+            if issubclass(m, wiking.PytisModule) and hasattr(m, 'Spec'):
+                s = m.Spec(m)
+                table = s.table
+                arguments = s.arguments
+                if arguments is not None:
+                    table = function(table, [a.type().__class__.__name__ for a in arguments])
+                spec_objects.add(table)
     # Read in database specifications
     for m in config.search_modules:
         if m.endswith('.defs'):
@@ -78,11 +91,20 @@ def check():
 def run():
     parser = optparse.OptionParser()
     parser.add_option("--config", default=None, action="store", dest="config")
+    parser.add_option("--wiking-config", default=None, action="store", dest="wconfig")
     options, args = parser.parse_args(args=sys.argv[1:])
     if len(args) > 0:
         parser.print_help()
         sys.exit(1)
     pytis.util.set_configuration_file(options.config)
+    if options.wconfig is not None:
+        import wiking
+        config_file = options.wconfig
+        cfg = wiking.Configuration()
+        cfg.config_file = config_file
+        cfg.read_configuration_file(config_file)
+        global _wiking_resolver
+        _wiking_resolver = wiking.cfg.resolver = wiking.WikingResolver(cfg.modules)
     check()
 
 if __name__ == '__main__':
