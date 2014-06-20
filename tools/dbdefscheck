@@ -6,6 +6,7 @@ import re
 import string
 import sys
 
+import pytis.data
 import pytis.data.gensqlalchemy as sql
 import pytis.util
 
@@ -26,6 +27,11 @@ def check():
     spec_objects = set()
     modules_seen = set()
     functions = set()
+    def argument_type(argument):
+        t = argument.type()
+        if isinstance(t, pytis.data.Type):
+            t = t.__class__
+        return t.__name__
     # Read in form specifications
     for name, spec in resolver.walk():
         module = inspect.getmodule(spec)
@@ -52,7 +58,7 @@ def check():
                 table = s.table
                 arguments = s.arguments
                 if arguments is not None:
-                    table = function(table, [a.type().__class__.__name__ for a in arguments])
+                    table = function(table, [argument_type(a) for a in arguments])
                 spec_objects.add(table)
     # Inspect module source code
     dbfunction_regexp = re.compile(r'''\bdbfunction *\( *['"]([^'"]+)['"]''')
