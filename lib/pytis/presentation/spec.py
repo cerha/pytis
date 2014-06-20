@@ -3444,7 +3444,7 @@ class Field(object):
                 t1 = t1()
             t2 = field._kwargs['type']
             if type(t2) == type(pytis.data.Type):
-                t1 = t2()
+                t2 = t2()
             kwargs['type'] = t1.clone(t2)
         new_field = Field(**kwargs)
         if kwargs.get('codebook') is not None:
