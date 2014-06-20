@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import inspect
 import optparse
+import re
 import string
 import sys
 
@@ -21,9 +23,14 @@ def check():
         errors.append(message)
     def function(name, args):
         return '%s(%s)' % (name, string.join(args, ','),)
-    # Read in form specifications
     spec_objects = set()
+    modules_seen = set()
+    functions = set()
+    # Read in form specifications
     for name, spec in resolver.walk():
+        module = inspect.getmodule(spec)
+        if module is not None:
+            modules_seen.add(module)
         spec = spec(resolver)
         table = spec.table
         if table is not None:
@@ -37,6 +44,9 @@ def check():
     if _wiking_resolver is not None:
         import wiking
         for m in _wiking_resolver.available_modules():
+            module = inspect.getmodule(m)
+            if module is not None:
+                modules_seen.add(module)
             if issubclass(m, wiking.PytisModule) and hasattr(m, 'Spec'):
                 s = m.Spec(m)
                 table = s.table
@@ -44,6 +54,19 @@ def check():
                 if arguments is not None:
                     table = function(table, [a.type().__class__.__name__ for a in arguments])
                 spec_objects.add(table)
+    # Inspect module source code
+    dbfunction_regexp = re.compile(r'''\bdbfunction *\( *['"]([^'"]+)['"]''')
+    for m in modules_seen:
+        try:
+            source = inspect.getsource(m)
+        except IOError:
+            continue
+        while True:
+            match = dbfunction_regexp.search(source)
+            if match is None:
+                break
+            functions.add(match.group(1))
+            source = source[match.end():]
     # Read in database specifications
     for m in config.search_modules:
         if m.endswith('.defs'):
@@ -81,8 +104,9 @@ def check():
         if o not in db_objects:
             error("Form specification without database object", o)
     for o in db_objects:
-        if o not in spec_objects:
-            if o not in dependencies:
+        if o not in spec_objects and o not in dependencies:
+            pos = o.find('(')
+            if pos == -1 or o[:pos] not in functions:
                 error("Unused database object", o)
     # Output report
     for e in errors:
