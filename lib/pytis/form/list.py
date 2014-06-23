@@ -450,7 +450,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 wx_button(panel, label=_("Apply"),
                           tooltip=_("Reload form data with current query field values."),
                           enabled=not query_fields.autoapply(),
-                          callback=self._on_apply_query_fields)
+                          callback=lambda e: self._apply_query_fields())
             self._query_fields_panel_buttons = panel_buttons = (
                 wx_button(panel, label=_("Minimize"),
                           tooltip=_("Minimize/maximize query panel."),
@@ -482,15 +482,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
             self._query_fields_form = None
+            self._query_fields_apply_button = None
+        self._unapplied_query_field_changes = False
+
 
     def _on_query_fields_changed(self):
         self._query_fields_apply_button.Enable(True)
 
-    def _on_apply_query_fields(self, event):
+    def _apply_query_fields(self):
         save = self._view.query_fields().save()
         if save:
             save(self._query_fields_row())
-        event.GetEventObject().Enable(False)
+        self._query_fields_apply_button.Enable(False)
         self.refresh(interactive=True, reload_query_fields=False)
         self._grid.SetFocus()
 
@@ -500,6 +503,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             load = query_fields.load()
             load(self._query_fields_row())
         return super(ListForm, self).refresh(**kwargs)
+
+    def restore(self):
+        if self._query_fields_apply_button and self._query_fields_apply_button.Enabled:
+            self._unapplied_query_field_changes = True
+        return super(ListForm, self).restore()
 
     def _update_query_fields_panel_button_bitmaps(self):
         sizer = self._top_level_sizer
@@ -1059,6 +1067,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
              self._last_updated_row_count != self._table.number_of_rows(timeout=0.3))):
             self._update_grid()
             self._show_position()
+        if self._unapplied_query_field_changes:
+            self._unapplied_query_field_changes = False
+            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
+                self._apply_query_fields()
         # V budoucnu by zde mohlo být přednačítání dalších řádků nebo dat
         event.Skip()
         return False
