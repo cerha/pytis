@@ -491,8 +491,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if save:
             save(self._query_fields_row())
         event.GetEventObject().Enable(False)
-        self.refresh(interactive=True)
+        self.refresh(interactive=True, reload_query_fields=False)
         self._grid.SetFocus()
+
+    def refresh(self, reload_query_fields=True, **kwargs):
+        query_fields = self._view.query_fields()
+        if query_fields and query_fields.load() and reload_query_fields:
+            load = query_fields.load()
+            load(self._query_fields_row())
+        return super(ListForm, self).refresh(**kwargs)
 
     def _update_query_fields_panel_button_bitmaps(self):
         sizer = self._top_level_sizer
