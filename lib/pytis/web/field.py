@@ -426,6 +426,10 @@ class TextField(Field):
             value = self._exported_value()
         maxlen = self._maxlen()
         size = self.spec.width(maxlen)
+        if kwargs['name'] == 'login':
+            # HACK: This makes the Safari's password suggestion work in forms, which 
+            # call the login name field 'login' instead of 'username' (Wiking).
+            kwargs['id'] += '-username'
         return dict(kwargs, value=value, size=size, maxlength=maxlen)
 
     def _editor(self, context, **kwargs):
