@@ -480,7 +480,9 @@ class PasswordField(StringField):
         g = context.generator()
         result = g.field(password=True, **kwargs)
         if self.type.verify():
-            kwargs['id'] += '-verify-pasword'
+            # Note, the 'confirm' substring in the id is important for Safari's password
+            # suggestion functionality.
+            kwargs['id'] += '-confirm-password'
             result += g.br() + g.field(password=True, **kwargs)
         return result
 
