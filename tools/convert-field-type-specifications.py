@@ -82,6 +82,8 @@ class FieldLocator(ast.NodeVisitor):
                 args.append(arg)
                 previous = arg
             self._found.append((node, args))
+        else:
+            self.generic_visit(node)
 
     def search_fields(self, lines, filename):
         self._found = []
