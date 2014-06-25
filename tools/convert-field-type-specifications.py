@@ -61,9 +61,20 @@ class Arg(object):
     
 class FieldLocator(ast.NodeVisitor):
     
+    def visit_FunctionDef(self, node):
+        if node.name == '_customize_fields':
+            self._inside_customize_fields = True
+            self.generic_visit(node)
+            self._inside_customize_fields = False
+        else:
+            self.generic_visit(node)
+
     def visit_Call(self, node):
-        f = node.func
-        if hasattr(f, 'id') and f.id == 'Field' or hasattr(f, 'attr') and f.attr == 'Field':
+        def fname_in(*names):
+            f = node.func
+            return hasattr(f, 'id') and f.id in names or hasattr(f, 'attr') and f.attr in names
+        if ((fname_in('Field') or
+             fname_in('modify', 'modify_many', 'modify_except') and self._inside_customize_fields)):
             args = []
             previous = None
             for kw in node.keywords:
@@ -75,6 +86,7 @@ class FieldLocator(ast.NodeVisitor):
     def search_fields(self, lines, filename):
         self._found = []
         self._lines = lines
+        self._inside_customize_fields = False
         self.visit(ast.parse(''.join(lines), filename))
         return self._found
 
