@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, re, ast, cStringIO, os
+import sys
+import ast
+import cStringIO
+import os
 from pytis.extensions.ast_unparser import Unparser
 from pytis.util import find
 
@@ -29,21 +32,21 @@ class Arg(object):
         self.value = kw.value
         ln = kw.value.lineno - 1
         offset = kw.value.col_offset
-        while lines[ln][offset-1] != '=':
+        while lines[ln][offset - 1] != '=':
             # First step back up to the keyword argument assignment sign as
             # there may be parens prior to the actual value.
             ln, offset = self._step_back(ln, offset, lines)
-        while lines[ln][offset-1] not in ',(':
+        while lines[ln][offset - 1] not in ',(':
             # Lookup the end of the previous argument or the beginning paren
             # starting at the beginning of the current argument's value.
             ln, offset = self._step_back(ln, offset, lines)
-        if lines[ln][offset-1] == ',':
+        if lines[ln][offset - 1] == ',':
             offset -= 1
         self.start = Position(ln, offset)
         if previous:
             previous.end = Position(ln, offset)
         if isinstance(self.value, (ast.Attribute, ast.Num, ast.Str, ast.Name)):
-            # This will be replaced by the start point of the next arg except for the last arg.  
+            # This will be replaced by the start point of the next arg except for the last arg.
             self.end = Position(kw.value.lineno - 1, kw.value.col_offset + len(unparse(self.value)))
         else:
             # If this is the last arg, we don't know how to determine the end.
@@ -69,11 +72,9 @@ class FieldLocator(ast.NodeVisitor):
                 previous = arg
             self._found.append((node, args))
 
-                
-                
     def search_fields(self, lines, filename):
         self._found = []
-        self._lines = lines 
+        self._lines = lines
         self.visit(ast.parse(''.join(lines), filename))
         return self._found
 
@@ -96,10 +97,11 @@ def convert(filename):
                 if arg.end is None:
                     # The end of the last argument may not be always obvious!
                     print "Warning: %s line %d: Can't determine end of %s" % \
-                        (filename, arg.start.ln+1, unparse(arg.kw))
+                        (filename, arg.start.ln + 1, unparse(arg.kw))
                 else:
-                    lines[arg.start.ln] = lines[arg.start.ln][:arg.start.offset] + lines[arg.end.ln][arg.end.offset:]
-                    for ln in range(arg.start.ln+1, arg.end.ln+1):
+                    lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
+                                           lines[arg.end.ln][arg.end.offset:])
+                    for ln in range(arg.start.ln + 1, arg.end.ln + 1):
                         lines_to_delete.append(ln)
                     if type_arg and type_arg.end.ln == arg.end.ln:
                         type_arg.end.ln = arg.start.ln
@@ -108,7 +110,7 @@ def convert(filename):
         if type_arg:
             ln, offset = type_arg.end.ln, type_arg.end.offset
             assert lines[ln][:offset].endswith(unparse(type_arg.value))
-            insert = '('+ unparsed_type_args +')'
+            insert = '(' + unparsed_type_args + ')'
         elif type_args:
             ln, offset = type_args[0].start.ln, type_args[0].start.offset
             argnames = [a.name for a in type_args]
@@ -138,24 +140,24 @@ def convert(filename):
                 print "%s line %d: Can't determine data type of field %s (%s)" % \
                     (filename, node.lineno, field_id, unparsed_type_args)
                 sys.exit(1)
-                #insert = ', '+ unparsed_type_args
+                #insert = ', ' + unparsed_type_args
             else:
-                insert = ', '+ unparsed_type_args
+                insert = ', ' + unparsed_type_args
         else:
             insert = None
         if insert:
             lines[ln] = lines[ln][:offset] + insert + lines[ln][offset:]
         
     for i, ln in enumerate(sorted(lines_to_delete)):
-        del lines[ln-i]
+        del lines[ln - i]
     new_text = ''.join(lines)
     if new_text != original_text:
         try:
             ast.parse(new_text)
         except SyntaxError as e:
             print "Invalid syntax after conversion at %s, line %d:" % (filename, e.lineno)
-            print ''.join(['%d: %s' % (ln, lines[ln])
-                           for ln in range(max(0, e.lineno-6), min(e.lineno+2, len(lines)-1))])
+            print ''.join(['%d: %s' % (ln, lines[ln]) for ln
+                           in range(max(0, e.lineno - 6), min(e.lineno + 2, len(lines) - 1))])
             sys.exit(1)
         else:
             #print ''.join(['%d: %s' % (ln, lines[ln]) for ln in range(len(lines))])
@@ -171,4 +173,3 @@ def run(filename):
 if __name__ == '__main__':
     for filename in sys.argv[1:]:
         run(filename)
-        
