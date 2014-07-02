@@ -115,8 +115,8 @@ def convert(filename):
         type_arg = None
         type_args = []
         for arg in reversed(args):
-            #print "  -", arg.start, arg.end, unparse(arg.kw)
-            if arg.name == 'type' and isinstance(arg.value, (ast.Name, ast.Attribute)):
+            #print "  -", arg.start, arg.end, unparse(arg.kw), arg.name, arg.value
+            if arg.name == 'type' and isinstance(arg.value, (ast.Name, ast.Attribute, ast.Call)):
                 type_arg = arg
             elif arg.name in TYPE_KWARGS:
                 type_args.insert(0, arg)
@@ -133,10 +133,26 @@ def convert(filename):
                         type_arg.end.ln = arg.start.ln
                         type_arg.end.offset -= arg.end.offset - arg.start.offset
         unparsed_type_args = ', '.join([unparse(a.kw) for a in type_args])
-        if type_arg:
-            ln, offset = type_arg.end.ln, type_arg.end.offset
-            assert lines[ln][:offset].endswith(unparse(type_arg.value))
-            insert = '(' + unparsed_type_args + ')'
+        if type_arg and (unparsed_type_args or not isinstance(type_arg.value, ast.Call)):
+            if not type_arg.end:
+                field_id = node.args and unparse(node.args[0]) or '?'
+                print ("File %s, line %d\n"
+                       "  Can't detect end of '%s' field type specification.\n"
+                       "  Please reformat the source code (should not be the last argument).") % \
+                    (filename, node.lineno, field_id)
+                insert = None
+            else:
+                ln, offset = type_arg.end.ln, type_arg.end.offset
+                assert lines[ln][:offset].endswith(unparse(type_arg.value)), \
+                    "%s line %d: '%s', '%s' " % (filename, ln, lines[ln][:offset],
+                                                 unparse(type_arg.value))
+                if isinstance(type_arg.value, ast.Call):
+                    offset -= 1
+                    insert = unparsed_type_args
+                    if lines[ln][offset - 1] != '(':
+                        insert = ', ' + insert
+                else:
+                    insert = '(' + unparsed_type_args + ')'
         elif type_args:
             ln, offset = type_args[0].start.ln, type_args[0].start.offset
             argnames = [a.name for a in type_args]
