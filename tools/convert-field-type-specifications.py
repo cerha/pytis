@@ -112,7 +112,7 @@ def convert(filename):
                 type_args.insert(0, arg)
                 if arg.end is None:
                     # The end of the last argument may not be always obvious!
-                    print "Warning: %s line %d: Can't determine end of %s" % \
+                    print "File %s, line %d\n  Can't determine end of %s" % \
                         (filename, arg.start.ln + 1, unparse(arg.kw))
                 else:
                     lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
@@ -153,7 +153,7 @@ def convert(filename):
                 insert = ', type=%s(%s)' % (type_cls, unparsed_type_args)
             elif [name for name in argnames if name not in ('not_null', 'unique')]:
                 field_id = node.args and unparse(node.args[0]) or '?'
-                print "%s line %d: Can't determine data type of field %s (%s)" % \
+                print "File %s, line %d\n  Can't determine data type of field %s (%s)" % \
                     (filename, node.lineno, field_id, unparsed_type_args)
                 sys.exit(1)
                 #insert = ', ' + unparsed_type_args
@@ -171,7 +171,7 @@ def convert(filename):
         try:
             ast.parse(new_text)
         except SyntaxError as e:
-            print "Invalid syntax after conversion at %s, line %d:" % (filename, e.lineno)
+            print "File %s, line %d\n  Invalid syntax after conversion:" % (filename, e.lineno)
             print ''.join(['%d: %s' % (ln, lines[ln]) for ln
                            in range(max(0, e.lineno - 6), min(e.lineno + 2, len(lines) - 1))])
             sys.exit(1)
