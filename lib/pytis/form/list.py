@@ -1112,7 +1112,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Return the tooltip string for given grid cell.
         record = self._table.row(row)
         if record:
-            tooltip = record.display(self._columns[col].id()) or None
+            cid = self._columns[col].id()
+            tooltip = record.display(cid) or None
+            if not tooltip and isinstance(record.type(cid), pytis.data.String):
+                value = record[cid].value()
+                if value:
+                    width, height = self._grid.GetTextExtent(value)
+                    one_line_height = self._grid.GetTextExtent('X')[1]
+                    if width > self._grid.GetColSize(col) or height > one_line_height:
+                        # If the value doesn't fit the cell, show it in tooltip.
+                        tooltip = value
             return tooltip
         else:
             return None
