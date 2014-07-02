@@ -147,6 +147,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._grid = None
         self._group_by_columns = ()
         self._aggregation_columns = ()
+        self._last_grid_mouse_position = (None, None, None)
+        self._last_cell_tooltip_position = (None, None)
 
     def _default_columns(self):
         """Return the default form columns as a sequence of field identifiers (strings)."""
@@ -281,6 +283,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN, g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_left_click)
+        wx_callback(wx.EVT_MOTION, g.GetGridWindow(), self._on_mouse_move)
         wx_callback(wx.EVT_MOUSEWHEEL, g, self._on_wheel)
         wx_callback(wx.EVT_IDLE, g, self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
@@ -1048,6 +1051,36 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._selection_candidate = None
             self._grid.MakeCellVisible(row, col)
             self._grid.Refresh()
+        x, y, timestamp = self._last_grid_mouse_position
+        if timestamp is not None:
+            now = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
+            delay = now - timestamp
+            gw = self._grid.GetGridWindow() 
+            if delay > 10:
+                # Adding 10ms delay helps to keep the tooltip close to the current
+                # mouse position.  Without it the tooltip stays at the same place
+                # where it first appeared and only changes the contents when moving
+                # the mouse over cells.  The unpleasant effect is that tooltips
+                # take longer to appear (the tooltip delay adds to the 10ms delay
+                # and also to the idle event delay), which is sometimes noticable.
+                # The delay might be also usefull when implementing tooltips by a
+                # custom widget...
+                row, col = self._grid.XYToCell(x, y)
+                if (row, col) != self._last_cell_tooltip_position:
+                    value = self._get_cell_tooltip_string(row, col)
+                    if value:
+                        tooltip = gw.GetToolTip()
+                        if tooltip is None:
+                            tooltip = wx.ToolTip(value)
+                            gw.SetToolTip(tooltip)
+                        elif tooltip.GetTip() != value:
+                            tooltip.SetTip(value)
+                    else:
+                        gw.SetToolTip(None)
+                    self._last_cell_tooltip_position = row, col
+            else:
+                gw.SetToolTip(None)
+                self._last_cell_tooltip_position = (None, None)
         if self._selection_callback_candidate is not None:
             if self._selection_callback_tick > 0:
                 self._selection_callback_tick -= 1
@@ -1075,14 +1108,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         event.Skip()
         return False
 
+    def _get_cell_tooltip_string(self, row, col):
+        # Return the tooltip string for given grid cell.
+        record = self._table.row(row)
+        if record:
+            tooltip = record.display(self._columns[col].id()) or None
+            return tooltip
+        else:
+            return None
+
     def _post_selection_hook(self, the_row):
         if focused_window() is self:
             # TODO: viz poznámka v _select_cell.
             self._show_position()
-            # Zobraz hodnotu displeje z číselníku ve stavové řádce.
-            row, col = self._current_cell()
-            if row >= 0 and col >= 0:
-                message(self._table.row(row).display(self._columns[col].id()))
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1274,7 +1312,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._column_to_move = None
         event.GetEventObject().Refresh()
         event.Skip()
-        
+
+    def _on_mouse_move(self, event):
+        x, y = self._grid.CalcUnscrolledPosition(event.GetX(), event.GetY())
+        last_x, last_y, last_time = self._last_grid_mouse_position
+        if last_x != x or last_y != y:
+            timestamp = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
+            self._last_grid_mouse_position = x, y, timestamp
+        event.Skip()
+
     def _on_label_mouse_move(self, event):
         def nearest_column(x):
             g = self._grid
