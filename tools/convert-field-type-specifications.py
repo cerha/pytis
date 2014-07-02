@@ -31,9 +31,9 @@ class Arg(object):
     def __init__(self, lines, kw, previous):
         self.kw = kw
         self.name = kw.arg
-        self.value = kw.value
-        ln = kw.value.lineno - 1
-        offset = kw.value.col_offset
+        self.value = value = kw.value
+        ln = value.lineno - 1
+        offset = value.col_offset
         while lines[ln][offset - 1] != '=':
             # First step back up to the keyword argument assignment sign as
             # there may be parens prior to the actual value.
@@ -47,11 +47,18 @@ class Arg(object):
         self.start = Position(ln, offset)
         if previous:
             previous.end = Position(ln, offset)
-        if isinstance(self.value, (ast.Attribute, ast.Num, ast.Str, ast.Name)):
+        if isinstance(value, (ast.Attribute, ast.Num, ast.Str, ast.Name)):
             # This will be replaced by the start point of the next arg except for the last arg.
-            self.end = Position(kw.value.lineno - 1, kw.value.col_offset + len(unparse(self.value)))
+            self.end = Position(value.lineno - 1, value.col_offset + len(unparse(value)))
+        elif ((isinstance(value, (ast.Call, ast.Tuple)) and
+               lines[value.lineno - 1][value.col_offset:].startswith(unparse(value)))):
+            # Simple calls (typically without arguments) can be determined like this.
+            self.end = Position(value.lineno - 1, value.col_offset + len(unparse(value)))
+        elif ((isinstance(value, ast.Tuple) and
+               lines[value.lineno - 1][value.col_offset - 1:].startswith(unparse(value)))):
+            # Tuples seem to have coll_offset after the initial paren.
+            self.end = Position(value.lineno - 1, value.col_offset - 1 + len(unparse(value)))
         else:
-            # If this is the last arg, we don't know how to determine the end.
             self.end = None
 
     def _step_back(self, ln, offset, lines):
