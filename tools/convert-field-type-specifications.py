@@ -46,6 +46,9 @@ class Arg(object):
             offset -= 1
         self.start = Position(ln, offset)
         if previous:
+            while lines[ln].lstrip().startswith('#'):
+                ln -= 1
+                offset = len(lines[ln].rstrip().rstrip(','))
             previous.end = Position(ln, offset)
         if isinstance(value, (ast.Attribute, ast.Num, ast.Str, ast.Name)):
             # This will be replaced by the start point of the next arg except for the last arg.
