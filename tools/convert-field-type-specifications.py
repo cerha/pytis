@@ -13,6 +13,8 @@ TYPE_KWARGS = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen', 'minimum
                'validation_messages', 'inner_type',
                'minsize', 'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',)
 
+make_changes = True
+
 def unparse(node):
     x = cStringIO.StringIO()
     Unparser(node, x)
@@ -175,7 +177,8 @@ def convert(filename):
             sys.exit(1)
         else:
             #print ''.join(['%d: %s' % (ln, lines[ln]) for ln in range(len(lines))])
-            open(filename, 'w').write(new_text)
+            if make_changes:
+                open(filename, 'w').write(new_text)
 
 def run(filename):
     if os.path.isfile(filename) and filename.endswith('.py'):
@@ -185,5 +188,8 @@ def run(filename):
             run(os.path.join(filename, x))
 
 if __name__ == '__main__':
-    for filename in sys.argv[1:]:
-        run(filename)
+    for arg in sys.argv[1:]:
+        if arg in ('-n', '--no-act'):
+            make_changes = False
+        else:
+            run(arg)
