@@ -155,8 +155,7 @@ def convert(filename):
                 field_id = node.args and unparse(node.args[0]) or '?'
                 print "File %s, line %d\n  Can't determine data type of field %s (%s)" % \
                     (filename, node.lineno, field_id, unparsed_type_args)
-                sys.exit(1)
-                #insert = ', ' + unparsed_type_args
+                insert = None
             else:
                 insert = ', ' + unparsed_type_args
         else:
