@@ -1130,6 +1130,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if focused_window() is self:
             # TODO: viz poznámka v _select_cell.
             self._show_position()
+            # Show display value in status line (this is also shown in tooltips,
+            # but tooltips are not useful when using keyboard only).
+            row, col = self._current_cell()
+            if row >= 0 and col >= 0:
+                message(self._table.row(row).display(self._columns[col].id()))
     
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
