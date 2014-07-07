@@ -87,7 +87,7 @@ def read_password(repeat=False, prompt="Password: "):
     return password, encrypted_password
 
 def check_password(key, password, connection_data):
-    return pytis.extensions.check_password(key, password, connection_data)
+    return pytis.extensions.check_crypto_password(key, password, connection_data)
 
 def admin_key(area, connection_data):
     return pytis.extensions.crypto_admin_key(area, admin_user, connection_data)
