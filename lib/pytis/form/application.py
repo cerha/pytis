@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -231,8 +231,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         else:
                             run_dialog(pytis.form.Error, _("Invalid password"))
                 if crypto_password:
-                    config.dbconnection.set_crypto_password(crypto_password)
-                    config.dbconnection = config.dbconnection # mark as changed
+                    pytis.data.DBFunctionDefault('pytis_crypto_unlock_current_user_passwords',
+                                                 lambda: config.dbconnection)\
+                              .reset_crypto_password(crypto_password)
         decrypted_names = set()
         if count > 0 and crypto_password and data is not None:
             crypto_password_value = pytis.data.sval(crypto_password)
@@ -911,7 +912,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 parent = self._modals.top() or self._frame
                 kwargs['guardian'] = self._modals.top() or self
             else:
-                #assert self._modals.empty()
+                # assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
             args = (parent, config.resolver, name)

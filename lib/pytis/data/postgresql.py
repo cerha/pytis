@@ -559,6 +559,22 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
     def _pg_flush_connections(self):
         self._pg_connection_pool().flush(self._postgresql_close_connection)
+
+    def reset_crypto_password(self, password):
+        """Set crypto password to 'password' in all database connections.
+
+        This method closes all connections as a side effect so use it
+        with caution.
+
+        Arguments:
+
+          password -- new crypto password; basestring
+
+        """
+        import config
+        config.dbconnection.set_crypto_password(password)
+        config.dbconnection = config.dbconnection # mark as changed
+        self._pg_flush_connections()
         
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
