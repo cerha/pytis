@@ -2091,6 +2091,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         # data object opportunity to call database queries.
                         if not self._pg_urgent:
                             time.sleep(0.1)
+                    args = dict(selection=selection, number=0)
+                    query = data._pdbb_command_move_absolute.format(args)
+                    data._pg_query(query, transaction=transaction)
                     self._pg_finished = True
                 finally:
                     self._pg_terminate_event.set()
@@ -3380,6 +3383,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Přeskočení řádků:', (direction, count))
         assert isinstance(count, int) and count >= 0, ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
+        if self._pg_select_transaction is None:
+            if not self._pg_restore_select():
+                raise ProgramError('Not within select')
         result = self._pg_buffer.skip(count, direction,
                                       self._pg_number_of_rows)
         if count > 0:
