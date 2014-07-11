@@ -2363,16 +2363,23 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """Inicalizuj dialog nastavením hodnot políček."""
         if self._focus_field:
             if isinstance(self._focus_field, collections.Callable):
-                focused = self._focus_field(self._row)
+                field_id = self._focus_field(self._row)
+                assert field_id is None or isinstance(field_id, basestring), \
+                    "Invalid result of focus_field() function: %s" % field_id
             else:
-                focused = self._focus_field
-            if find(focused, self._fields, key=lambda f: f.id()):
-                f = self._field(focused)
+                field_id = self._focus_field
+            if field_id is None:
+                field = None
+            elif find(field_id, self._fields, key=lambda f: f.id()):
+                field = self._field(field_id)
+            else:
+                log(OPERATIONAL, "Unknown field returned by focus_field:", field_id)
+                field = None
         else:
-            f = find(True, self._fields, key=lambda f: f.enabled())
-            if f is None:
-                f = self._fields[0]
-        f.set_focus()
+            field = find(True, self._fields, key=lambda f: f.enabled())
+        if field is None:
+            field = self._fields[0]
+        field.set_focus()
 
     def _create_form_parts(self, sizer):
         # Create all parts and add them to top-level sizer.

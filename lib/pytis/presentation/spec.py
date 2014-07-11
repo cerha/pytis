@@ -1438,7 +1438,8 @@ class ViewSpec(object):
           focus_field -- identifier of the field, which should automatically
             gain focus when a form is open.  You may also pass a function of
             one argument ('PresentedRow' instance), which returns the field
-            identifier.
+            identifier.  When None, or None is returned by the function, the
+            first form field is focused by default.
             
           description -- brief description of the view.  A short text (one or
             two sentences) without formatting.  Use the 'help' argument below
