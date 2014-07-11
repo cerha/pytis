@@ -1597,6 +1597,9 @@ class ListField(GenericCodebookField):
     _DEFAULT_HEIGHT = 6
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
+    CALL_LIST_CHANGE = 'CALL_LIST_CHANGE'
+    """Callback called on list modification (codebook values inserted/edited/deleted)."""
+
     def _create_ctrl(self, parent):
         # Načtu specifikace.
         view_spec = config.resolver.get(self._cb_name, 'view_spec')
@@ -1786,6 +1789,7 @@ class ListField(GenericCodebookField):
             run_form(pytis.form.PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
                      transaction=self._row.transaction())
         self._reload_enumeration()
+        self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
 
     def _can_delete_selected(self):
@@ -1800,18 +1804,21 @@ class ListField(GenericCodebookField):
                      self._row[self._id].export())
         delete_record(view, data, transaction, row, question=question)
         self._reload_enumeration()
+        self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
         
     def _cmd_new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()
+        self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
 
     def _cmd_invoke_codebook_form(self):
         super(ListField, self)._cmd_invoke_codebook_form()
         self._reload_enumeration()
+        self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
-        
+
 
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
