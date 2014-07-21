@@ -168,6 +168,25 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             query_prefix, query_suffix = \
                 function._pytis_header_footer(result_type=result_type, search_path=search_path,
                                               suffix=suffix)
+            cost = function.execution_cost
+            if cost is not None:
+                assert isinstance(cost, int) and cost > 0, cost
+                query_suffix += ' COST %s' % (cost,)
+            rows = function.expected_rows
+            if rows is not None:
+                assert isinstance(rows, int) and rows > 0 and function.multirow, rows
+                query_suffix += ' ROWS %s' % (rows,)
+            for name, value in function.set_parameters:
+                assert isinstance(name, basestring), name
+                if value is None:
+                    str_value = 'FROM CURRENT'
+                elif name.lower() == 'time zone':
+                    str_value = str(value)
+                elif isinstance(value, (int, long, float, basestring,)):
+                    str_value = 'TO %s' % (value,)
+                else:
+                    raise Exception("Unrecognized function parameter value", value)
+                query_suffix += ' SET %s %s' % (name, str_value,)
             body = function.body()
             if isinstance(body, basestring):
                 body = body.strip()
@@ -2847,6 +2866,17 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         in the function definition.  This is useful to set if the function
         returns the same values for the same input data and without any side
         effects.
+      execution_cost -- 'cost' parameter of a PostgreSQL function; positive
+        integer or 'None'
+      expected_rows -- 'rows' parameter of a PostgreSQL function; positive
+        integer or 'None'
+      set_parameters -- parameters to be saved and possibly set on entering the
+        function.  It corresponds to 'set' parameter of PostgreSQL function.
+        It's a sequence of pairs (PARAMETER, VALUE) where PARAMETER is the
+        parameter name (basestring) and VALUE is its value (number or
+        basestring).  VALUE must be properly surrounded by quotes if it should
+        be output as a string.  VALUE may be also 'None' in which case
+        'FROM CURRENT' is used.
       sql_directory -- name of the directory where SQL files with function body
         definitions are stored; the name is relative to the processed module
         file name
@@ -2874,6 +2904,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     multirow = False
     security_definer = False
     stability = 'volatile'
+    execution_cost = None
+    expected_rows = None
+    set_parameters = ()
     sql_directory = 'sql'
     function_name = None        # obsolete
 

@@ -124,6 +124,8 @@ class FunctionallyIndexed(sql.SQLTable):
 
 class DateTable(sql.SQLTable):
     name = 'date_table'
+    schemas = (('public',),
+               (Private,),)
     fields = (sql.Column('world_timestamp', pytis.data.DateTime(utc=True)),
               sql.Column('local_timestamp', pytis.data.DateTime(utc=False)),
               sql.Column('ambigous_timestamp', pytis.data.DateTime(without_timezone=True)),
@@ -370,6 +372,8 @@ class RowSelectFunc(sql.SQLFunction):
                    )
     multirow = True
     stability = 'stable'
+    execution_cost = 10
+    expected_rows = 4
 
     def body(self):
         foo = sql.t.Foo
@@ -377,6 +381,18 @@ class RowSelectFunc(sql.SQLFunction):
                                  whereclause=(foo.c.n >= ival('$1')))
 
     depends_on = (Foo,)
+
+class PrivateDateTable(sql.SQLFunction):
+    "Demonstration of 'set_parameters' attribute."
+    name = 'private_date_table'
+    arguments = ()
+    result_type = DateTable
+    multirow = True
+    stability = 'stable'
+    set_parameters = (('TIME ZONE', "'PST8PDT'"),
+                      ('search_path', 'private'),)
+    def body(class_):
+        return "select * from date_table"
 
 class PyFunc(sql.SQLPyFunction):
     name = 'times'
