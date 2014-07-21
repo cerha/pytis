@@ -601,12 +601,19 @@ def visit_create_table(element, compiler, **kwargs):
         result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), string.join(inherited, ', '),)
     return result
 
+_ANY_REGEXP = re.compile('.*')
 @compiles(sqlalchemy.sql.expression.Alias)
 def visit_alias(element, compiler, **kwargs):
+    orig_legal_characters = compiler.preparer.legal_characters
     if element.description.find('(') >= 0:
         # Column aliases may not be quoted
+        compiler.preparer.legal_characters = _ANY_REGEXP
+        # For older versions of SQLAlchemy:
         element.quote = False
-    return compiler.visit_alias(element, **kwargs)
+    try:
+        return compiler.visit_alias(element, **kwargs)
+    finally:
+        element.legal_characters = orig_legal_characters
 
 @compiles(sqlalchemy.dialects.postgresql.TIMESTAMP)
 def visit_TIMESTAMP(element, compiler, **kwargs):
