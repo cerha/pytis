@@ -1016,10 +1016,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # si ho uložíme a pak zase obnovíme.
             focused = wx_focused_window()
             wx_yield_()
-            spec = config.resolver.get(spec_name, 'proc_spec')
-            assert isinstance(spec, dict), spec
-            assert proc_name in spec, (proc_name, spec)
-            proc = spec[proc_name]
+            try:
+                proc = config.resolver.get_object(spec_name, proc_name)
+            except ResolverError:
+                # Legacy procedure definitions
+                spec = config.resolver.get(spec_name, 'proc_spec')
+                assert isinstance(spec, dict), spec
+                assert proc_name in spec, (proc_name, spec)
+                proc = spec[proc_name]
             if block_refresh_:
                 result = block_refresh(proc, *args, **kwargs)
             else:

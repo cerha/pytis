@@ -219,6 +219,7 @@ class Resolver(object):
         """Return the result of calling 'method_name' on specification instance 'name'.
 
         Arguments:
+        
           name -- string name of the specification
           method_name -- string name of the method to call
           kwargs -- optional keyword arguments to be passed to the
@@ -226,6 +227,22 @@ class Resolver(object):
 
         """
         return self._method_result_cache[(name, tuple(kwargs.items()), method_name)]
+
+    def get_object(self, spec_name, object_name):
+        """Return given object from specification.
+
+        Arguments:
+        
+          spec_name -- name of the specification; string
+          object_name -- name of the object in the specification; string
+
+        """
+        specification = self._get_specification((spec_name, (),))
+        try:
+            object = getattr(specification, object_name)
+        except AttributeError:
+            raise ResolverError("No attribute %s in specification %s" % (object_name, spec_name,))
+        return object
 
     def walk(self, cls=None):
         """Return all 'cls' subclasses defined in current search path.
