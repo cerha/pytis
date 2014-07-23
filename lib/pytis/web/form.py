@@ -646,8 +646,9 @@ class ShowForm(_SingleRecordForm):
     _ALIGN_NUMERIC_FIELDS = True
 
     def _export_form(self, context, form_id):
+        uri = self._req.make_uri(self._req.uri())
         return (super(ShowForm, self)._export_form(context, form_id) +
-                self._export_actions(context, self._row, self._req.uri()))
+                self._export_actions(context, self._row, uri))
 
 
 class EditForm(_SingleRecordForm, _SubmittableForm):
