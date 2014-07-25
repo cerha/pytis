@@ -3648,7 +3648,7 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         connection_data = dict(user=config.dbuser,
                                password=(':' + config.dbpass if config.dbpass else ''),
                                host=(config.dbhost or ''),
-                               port=(':' + config.dbport if config.dbport else ''),
+                               port=(':' + str(config.dbport) if config.dbport else ''),
                                dbname=config.dbname)
         connection_string = ('postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' %
                              connection_data)
