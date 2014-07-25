@@ -31,6 +31,9 @@ class Counter(sql.SQLSequence):
     name = 'counter'
     access_rights = (('ALL', 'counter-users',),)
 
+
+# Tables
+
 class Foo(sql.SQLTable):
     """Foo table."""
     name = 'foo'
@@ -206,6 +209,17 @@ class Circular2(sql.SQLTable):
               sql.Column('x', pytis.data.Integer(), references=sql.r.Circular1.id),
               )
 
+class TableWithLongNames(sql.SQLTable):
+    "Just a test of name length limits."
+    name = 'table_with_long_name_names'
+    fields = (sql.Column('column_with_a_long_name', pytis.data.String()),
+              sql.Column('another_column_with_a_long_name', pytis.data.String()),
+              )
+    index_columns = (('column_with_a_long_name', 'another_column_with_a_long_name',),)
+
+
+# Views
+
 class Baz(sql.SQLView):
     """Baz view."""
     name = 'baz'
@@ -327,6 +341,9 @@ class BogusView(sql.SQLView):
         foo, bar = sql.t.Foo, sql.t.Bar
         return sqlalchemy.select([foo], from_obj=[sql.FullOuterJoin(foo, bar,
                                                                     foo.c.id == bar.c.id)])
+
+
+# Functions
 
 class Func(sql.SQLFunction):
     name = 'plus'
@@ -519,6 +536,9 @@ class SumFunction(sql.SQLFunction, sql.SQLAggregate):
     initial_value = 0
     def body(self):
         return 'SELECT $1 + $2'
+
+
+# Miscellaneous
 
 class SomeType(sql.SQLType):
     name = 'some_type'

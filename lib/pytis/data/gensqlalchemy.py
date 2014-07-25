@@ -2008,8 +2008,8 @@ class _SQLIndexable(SQLObject):
             index_name = string.join(colnames, '_')
             if method:
                 index_name += '_' + method
-            index = sqlalchemy.Index('%s_%s_idx' % (self.name, index_name,),
-                                     *columns, **ikwargs)
+            index_name = ('%s_%s' % (self.name, index_name,))[:59]
+            index = sqlalchemy.Index('%s_idx' % (index_name,), *columns, **ikwargs)
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         return args
 
