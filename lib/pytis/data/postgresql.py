@@ -3062,7 +3062,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     stop_check=self._pg_stop_check,
                     timeout_callback=self._pg_timeout_callback)
         if row_number >= 0:
-            self.skip(row_number)
+            self.skip(row_number + 1)
         return True
 
     def _pg_number_of_rows_(self, min_value=None):

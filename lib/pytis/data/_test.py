@@ -1406,6 +1406,17 @@ class DBDataDefault(_DBTest):
         assert self.funcdata.fetchone() is None
         assert self.funcdata.select(arguments=UNKNOWN_ARGUMENTS) == 0
         assert self.funcdata.search(None, arguments=UNKNOWN_ARGUMENTS) == 0
+    def test_restore_select(self):
+        d = self.dcosi
+        condition = pytis.data.EQ('id', pytis.data.ival(3))
+        d.select()
+        result = d.search(condition)
+        assert result == 2
+        d.skip(result)
+        d.close()
+        result = d.search(condition)
+        assert result == 0
+        d.close()
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
