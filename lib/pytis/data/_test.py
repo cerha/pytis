@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1117,7 +1117,6 @@ class DBDataDefault(_DBTest):
         funcdata = pytis.data.DBDataDefault((key, col,), key, conn, arguments=(key,))
         # atributy
         self.data = d
-        #self.mdata = md
         self.dstat = dstat
         self.dstat1 = dstat1
         self.dosnova = dosnova
@@ -1136,7 +1135,6 @@ class DBDataDefault(_DBTest):
         self.view7 = view7
         self.rudeview = rudeview
         self.funcdata = funcdata
-        #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
         row = []
@@ -1956,7 +1954,8 @@ class DBMultiData(DBDataDefault):
         lines((2, 3, 4))
         assert d.delete(pytis.data.Integer().validate('4')[0]) == 1, 'column not deleted'
         lines((2, 3))
-#tests.add(DBMultiData)
+if False:
+    tests.add(DBMultiData)
 
 
 class DBDataFetchBuffer(_DBBaseTest):
@@ -2033,8 +2032,8 @@ class DBDataFetchBuffer(_DBBaseTest):
         # small table
         # Z neznámého důvodu to při ukončení vytuhne (testy ale proběhnou bez
         # problémů...  TODO: Co s tím??
-        #self._check_skip_fetch(d2, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
-        #self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
+        # self._check_skip_fetch(d2, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
+        # self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
 tests.add(DBDataFetchBuffer)
 
 
@@ -2607,12 +2606,13 @@ class TutorialTest(_DBBaseTest):
                             ('9', u'pěkný řádek', 'devet')):
                 new_row_data.append((c.id(), c.type().validate(v)[0]))
             # TODO: Momenálně nechodí.  Opravit.
-            #new_row = pytis.data.Row(new_row_data)
-            #assert tab_data.insert(new_row)[1], 'line not inserted'
-            #assert tab_data.delete(new_key), 'line not deleted'
-            #result, success = tab_data.update(old_key, new_row)
-            #assert result and success, 'line not updated'
-            #assert tab_data.row(new_key), 'new line not found'
+            if False:
+                new_row = pytis.data.Row(new_row_data)
+                assert tab_data.insert(new_row)[1], 'line not inserted'
+                assert tab_data.delete(new_key), 'line not deleted'
+                result, success = tab_data.update(old_key, new_row)
+                assert result and success, 'line not updated'
+                assert tab_data.row(new_key), 'new line not found'
         finally:
             # shut down
             cis_data.sleep()
@@ -2742,7 +2742,8 @@ class ThreadTest(_DBBaseTest):
             else:
                 end = True
             time.sleep(1)
-#tests.add(ThreadTest)
+if False:
+    tests.add(ThreadTest)
 
 class OperatorTest(_DBBaseTest):
     def setUp(self):
