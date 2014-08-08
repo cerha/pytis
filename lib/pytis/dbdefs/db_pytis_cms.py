@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
+from pytis.dbdefs.db_pytis_base import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
 
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
@@ -356,7 +356,7 @@ class X186(sql.SQLRaw):
     def sql(class_):
         return ("create or replace rule session_delete as on delete to cms_session do "
                 "( update cms_session_log_data set end_time=old.last_access "
-                "WHERE session_id=old.session_id;);)")
+                "WHERE session_id=old.session_id;)")
     depends_on = (CmsSession, CmsSessionLogData,)
 
 class CmsUsers(sql.SQLTable):

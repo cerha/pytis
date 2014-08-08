@@ -57,7 +57,7 @@ class NewAdminPasswd(Specification):
 
 class CryptoAreas(Specification):
     public = True
-    table = dbdefs.CPytisCryptoNames
+    table = dbdefs.db_pytis_crypto.CPytisCryptoNames
     title = _(u"Šifrovací oblasti")
     sorting = (('name', pytis.data.ASCENDENT,),)
     bindings = (Binding('users', _(u"Uživatelé"), 'crypto.Users', binding_column='name'),)
@@ -108,7 +108,7 @@ class CryptoAreas(Specification):
 
 class Users(Specification):
     public = True
-    table = dbdefs.EPytisCryptoKeys
+    table = dbdefs.db_pytis_crypto.EPytisCryptoKeys
     title = _(u"Uživatelé")
 
     def _customize_fields(self, fields):

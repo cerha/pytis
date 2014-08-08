@@ -5,8 +5,8 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XDeletes, \
-    XInserts, XUpdates, default_access_rights, pytis_schemas
+from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
+    XDeletes, XInserts, XUpdates, default_access_rights, pytis_schemas
 
 class PartitioningTrigger(Base_PyTriggerFunction):
     name = 'partitioning_trigger'
@@ -170,7 +170,8 @@ class GenMirrorSpec(Base_PyFunction):
                    union all
                    (select '       )')
                    union all
-                   (SELECT '    columns = (' || array_to_string(array_agg('''' || a.attname || ''''), ', ') || ')'
+                   (SELECT '    columns = (' ||
+                      array_to_string(array_agg('''' || a.attname || ''''), ', ') || ')'
                    FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c
                    WHERE pg_catalog.pg_table_is_visible(c.oid)
                    AND c.relname = '%s'
@@ -181,7 +182,8 @@ class GenMirrorSpec(Base_PyFunction):
                """ % (table, table)
             q = plpy.execute(q)
             fields = "\n".join([r["fields"] for r in q])
-            spec = ('class %s(Specification):\n    public = True\n\n    table = %s%s%s\n    title = _("%s")\n\n'
+            spec = ('class %s(Specification):\n    public = True\n\n    table = %s%s%s\n'
+                    '    title = _("%s")\n\n'
                     ) % (class_name, "'", table, "'", class_name)
             specs.append(spec + fields)
         return "\n\n\n".join(specs)
@@ -649,20 +651,29 @@ begin
       tablename := concat(tablename, 'x');
       dtablename := concat(dtablename, 'x');
     end loop;
-    execute concat('create table public.', tablename, ' as select * from public.t_changes where id<=', n_id);
-    execute concat('create table public.', dtablename, ' as select * from public.t_changes_detail where id<=', n_id);
+    execute concat('create table public.', tablename, '
+                    as select * from public.t_changes where id<=', n_id);
+    execute concat('create table public.', dtablename, '
+                    as select * from public.t_changes_detail where id<=', n_id);
     delete from public.t_changes where id<=n_id;
     execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
-    execute concat('create unique index ', tablename, '__timestamp__index on public.', tablename, ' (timestamp)');
-    execute concat('create unique index ', tablename, '__username__index on public.', tablename, ' (username)');
-    execute concat('create unique index ', tablename, '__tablename__index on public.', tablename, ' (tablename)');
-    execute concat('create unique index ', tablename, '__key_value__index on public.', tablename, ' (key_value)');
-    execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, ' (id)');
+    execute concat('create unique index ', tablename, '__timestamp__index on public.', tablename, '
+                    (timestamp)');
+    execute concat('create unique index ', tablename, '__username__index on public.', tablename, '
+                    (username)');
+    execute concat('create unique index ', tablename, '__tablename__index on public.', tablename, '
+                    (tablename)');
+    execute concat('create unique index ', tablename, '__key_value__index on public.', tablename, '
+                    (key_value)');
+    execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, '
+                    (id)');
   end loop;
 end;
 $$ language plpgsql;
 
-create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text, key_value_ text, detail_ text, search_path_ text) returns setof v_changes as $$
+create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text,
+                                       key_value_ text, detail_ text, search_path_ text)
+        returns setof v_changes as $$
 declare
   date_to_1 date;
   tablename text;
@@ -680,7 +691,9 @@ begin
                             v.tablename = coalesce(tablename_, v.tablename) and
                             v.key_value::text = coalesce(key_value_, v.key_value) and
                             v.detail like '%'||coalesce(detail_, '%')||'%' and
-                            (search_path_ is null or schemaname in (select * from regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
+                            (search_path_ is null or schemaname in
+                              (select * from
+                                 regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
   for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
                           where nspname = 'public' and
                                 relname ~ '^t_changes_......_......x*$' and
@@ -688,15 +701,20 @@ begin
                                 substring(relname from 18 for 6) >= to_char(date_from, 'YYMMDD')
   loop
     return query
-      execute concat('select t.*, detail ',
-                             'from public.', tablename, ' t join ',
-                             'public.t_changes_detail_', substring(tablename from 11), ' d using(id) ',
-                             'where $1 <= t.timestamp and t.timestamp < $2 and ',
-                                   't.username = coalesce($3, t.username) and ',
-                                   't.tablename = coalesce($4, t.tablename) and ',
-                                   't.key_value::text = coalesce($5, t.key_value) and ',
-                                   'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
-                                   '($7 is null or schemaname in (select * from regexp_split_to_table(coalesce($7, ''''), '' *, *'')))')
+      execute concat(
+               'select t.*, detail ',
+                       'from public.', tablename, ' t join ',
+                       'public.t_changes_detail_', substring(tablename from 11),
+                       ' d using(id) ',
+                       'where $1 <= t.timestamp and t.timestamp < $2 and ',
+                             't.username = coalesce($3, t.username) and ',
+                             't.tablename = coalesce($4, t.tablename) and ',
+                             't.key_value::text = coalesce($5, t.key_value) and ',
+                             'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
+                             '($7 is null or
+                               schemaname in (select * from regexp_
+                                                split_to_table(coalesce($7,
+                                                                         ''''), '' *, *'')))')
               using date_from, date_to_1, username_, tablename_, key_value_, detail_, search_path_;
   end loop;
 end;

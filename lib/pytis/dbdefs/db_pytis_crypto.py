@@ -5,8 +5,10 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, PytisBasicCryptoFunctions, \
-    XChanges, default_access_rights
+from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, \
+    default_access_rights
+from pytis.dbdefs.db_pytis_common import XChanges
+from pytis.dbdefs.db_pytis_crypto_basic import PytisBasicCryptoFunctions
 import pytis.util
 
 _ = pytis.util.translations('pytis-wx')

@@ -5,8 +5,9 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XChanges, \
+from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
     default_access_rights
+from pytis.dbdefs.db_pytis_common import XChanges
 
 class EPytisDisabledDmpTriggers(sql.SQLTable):
     """This table allows disabling some trigger calls.
@@ -389,7 +390,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
     @staticmethod
     def e_pytis_menu_trigger():
         class Menu(EPytisMenuTrigger.Util.BaseTriggerObject):
-            ## BEFORE
+            # BEFORE
             def _maybe_new_action(self, old=None):
                 if ((not self._new['name'] and self._new['title'] and
                      (old is None or not old['title']))):
@@ -442,7 +443,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                                     1)
                 if data:
                     self._return_code = self._RETURN_CODE_SKIP
-            ## AFTER
+            # AFTER
             def _update_positions(self, new=None, old=None):
                 if ((old and new and
                      old['position'] == new['position'] and
@@ -558,7 +559,8 @@ class EPytisMenuSpecialTriggers(sql.SQLRaw):
         return """
 create or replace function e_pytis_menu_check_positions() returns void as $$
 begin
-  if (select count(*)>0 from (select position from e_pytis_menu intersect select next_position from e_pytis_menu) positions) then
+  if (select count(*)>0 from (select position from e_pytis_menu intersect
+                               select next_position from e_pytis_menu) positions) then
     raise exception 'position / next_position conflict';
   end if;
 end;
@@ -636,9 +638,13 @@ class UpdateEPytisMenuTranslations(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create or replace function update_e_pytis_menu_translations(int, text, text, text, text) returns int as $$
-  update e_pytis_menu_translations set language=$2, t_title=$3, dirty=(dirty and $3=$4) where menuid=$1 and language=$2;
-  insert into e_pytis_menu_translations (menuid, language, t_title, dirty) (select $1, $2, $3, false where (select count(*)=0 from e_pytis_menu_translations where menuid=$1 and language=$2)) returning menuid;
+create or replace function update_e_pytis_menu_translations(int, text, text, text, text)
+        returns int as $$
+  update e_pytis_menu_translations set language=$2, t_title=$3, dirty=(dirty and $3=$4)
+        where menuid=$1 and language=$2;
+  insert into e_pytis_menu_translations (menuid, language, t_title, dirty)
+        (select $1, $2, $3, false where (select count(*)=0 from e_pytis_menu_translations
+                where menuid=$1 and language=$2)) returning menuid;
 $$ language sql;
 """
     depends_on = (EPytisMenuTranslations,)
@@ -1081,7 +1087,8 @@ class EPytisRoleMembersTriggers(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
+create trigger e_pytis_role_members_all_after after insert or update or delete
+        on e_pytis_role_members
 for each row execute procedure e_pytis_role_members_trigger();
 """
     depends_on = (EPytisRoleMembersTrigger, EPytisRoleMembers,)
@@ -1125,7 +1132,8 @@ class EPytisActionRightsTriggers(sql.SQLRaw):
         return """
 create trigger e_pytis_action_rights_all_before before insert on e_pytis_action_rights
 for each row execute procedure e_pytis_action_rights_trigger();
-create trigger e_pytis_action_rights_all_after after insert or update or delete on e_pytis_action_rights
+create trigger e_pytis_action_rights_all_after after insert or update or delete
+        on e_pytis_action_rights
 for each statement execute procedure e_pytis_action_rights_trigger();
 """
     depends_on = (EPytisActionRightsTrigger, EPytisActionRights,)
@@ -1427,11 +1435,11 @@ class PytisComputeSummaryRights(Base_PyFunction):
                 forbidden_rights.update(raw_default.forbidden.difference(allowed_rights))
                 allowed_rights.update(raw_default.allowed.difference(forbidden_rights))
                 for r, c in (allowed_rights.union(max_rights)):
-                    if not c in columns:
+                    if c not in columns:
                         columns[c] = set()
                     columns[c].add(r)
                 for r, c in forbidden_rights:
-                    if not c in columns:
+                    if c not in columns:
                         columns[c] = set()
                 if not max_rights:
                     for r in item_rights.values():
@@ -1719,10 +1727,12 @@ class CPytisMenuActionsTriggers(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete on c_pytis_menu_actions
+create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete
+        on c_pytis_menu_actions
 for each statement execute procedure c_pytis_menu_actions_trigger();
 
-create trigger c_pytis_menu_actions_all_trigger_before before insert or update on c_pytis_menu_actions
+create trigger c_pytis_menu_actions_all_trigger_before before insert or update
+        on c_pytis_menu_actions
 for each row execute procedure c_pytis_menu_actions_trigger_before();
 """
     depends_on = (CPytisMenuActionsTrigger, CPytisMenuActionsTriggerBefore, CPytisMenuActions,)

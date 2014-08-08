@@ -5,8 +5,9 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, EPytisMenu, PytisViewUserMenu, XChanges, \
-    default_access_rights
+from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights
+from pytis.dbdefs.db_pytis_common import XChanges
+from pytis.dbdefs.db_pytis_menu import EPytisMenu, PytisViewUserMenu
 
 class EPytisHelpPages(Base_LogSQLTable):
     """Structure of static help pages."""
@@ -29,7 +30,8 @@ class EPytisHelpPagesUniquePosition(sql.SQLRaw):
     name = 'e_pytis_help_pages_unique_position'
     @classmethod
     def sql(class_):
-        return """create unique index e_pytis_help_pages_unique_position on e_pytis_help_pages (ord, coalesce(parent, 0));"""
+        return ("create unique index e_pytis_help_pages_unique_position on "
+                "e_pytis_help_pages (ord, coalesce(parent, 0));")
     depends_on = (EPytisHelpPages,)
 
 class FPytisHelpPagePosition(sql.SQLFunction):
@@ -190,7 +192,7 @@ class EvPytisHelp(sql.SQLView):
         return ("""(
        insert into e_pytis_help_pages (page_id, title, description, content, parent, position, ord)
        values (new.page_id, new.title, new.description, new.content, new.parent, '',
-               coalesce(new.ord, (select max(ord)+100 from e_pytis_help_pages 
+               coalesce(new.ord, (select max(ord)+100 from e_pytis_help_pages
                                   where coalesce(parent, 0)=coalesce(new.parent, 0)), 100));
        update e_pytis_help_pages SET position = f_pytis_help_page_position(page_id);
        )""",)
@@ -206,7 +208,8 @@ class EvPytisHelp(sql.SQLView):
        update e_pytis_help_pages set position = f_pytis_help_page_position(page_id);
        insert into e_pytis_help_menu (fullname, content, changed)
          select old.fullname, new.menu_help, true
-         where new.menu_help is not null and old.fullname not in (select fullname from e_pytis_help_menu);
+         where new.menu_help is not null and
+               old.fullname not in (select fullname from e_pytis_help_menu);
        update e_pytis_help_menu set
          content = new.menu_help,
          changed = coalesce(new.menu_help, '') != coalesce(old.menu_help, '')

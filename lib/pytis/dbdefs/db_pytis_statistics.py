@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import XChanges, default_access_rights, pytis_schemas
+from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
+from pytis.dbdefs.db_pytis_common import XChanges
 
 class FUserCfg(sql.SQLRaw):
     name = 'f_user_cfg'
