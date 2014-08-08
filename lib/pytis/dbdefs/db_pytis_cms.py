@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import cms_rights, cms_schemas
+from pytis.dbdefs import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
 
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
@@ -53,7 +53,8 @@ class CmsMenuStructureUniqueTreeOrder(sql.SQLRaw):
     schemas = cms_schemas.value(globals())
     @classmethod
     def sql(class_):
-        return """CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order ON cms_menu_structure (ord, coalesce(parent, 0));"""
+        return ("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
+                "ON cms_menu_structure (ord, coalesce(parent, 0));")
     depends_on = (CmsMenuStructure,)
 
 class CmsMenuStructureTreeOrder(sql.SQLFunction):
@@ -268,4 +269,165 @@ class CmsThemes(sql.SQLTable):
               )
     with_oids = True
     depends_on = ()
+    access_rights = cms_rights.value(globals())
+
+class CmsUsersTable(sql.SQLTable):
+    name = 'cms_users_table'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),)
+    with_oids = True
+    depends_on = ()
+    access_rights = ()
+
+class CmsUserRoleAssignment(sql.SQLTable):
+    """Binding table assigning CMS roles to CMS users."""
+    name = 'cms_user_role_assignment'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('user_role_id', pytis.data.Serial()),
+              sql.Column('uid', pytis.data.Integer(not_null=True),
+                         references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
+              sql.Column('role_id', pytis.data.Integer(not_null=True),
+                         references=sql.gA('cms_roles', ondelete='CASCADE')),
+              )
+    with_oids = True
+    unique = (('uid', 'role_id',),)
+    depends_on = (CmsRoles,)
+    access_rights = cms_rights.value(globals())
+
+class CmsSession(sql.SQLTable):
+    """Web user session information for authentication and login history."""
+    name = 'cms_session'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('session_id', pytis.data.Serial()),
+              sql.Column('uid', pytis.data.Integer(not_null=True),
+                         references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
+              sql.Column('session_key', pytis.data.String(not_null=True)),
+              sql.Column('last_access', pytis.data.DateTime(not_null=True)),
+              )
+    with_oids = True
+    unique = (('uid', 'session_key',),)
+    depends_on = ()
+    access_rights = cms_rights_rw.value(globals())
+
+class CmsSessionLogData(sql.SQLTable):
+    """Log of web user logins (underlying data)."""
+    name = 'cms_session_log_data'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
+              sql.Column('session_id', pytis.data.Integer(not_null=False),
+                         references=sql.gA('cms_session', ondelete='SET NULL')),
+              sql.Column('uid', pytis.data.Integer(not_null=False),
+                         references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
+              sql.Column('login', pytis.data.String(not_null=True)),
+              sql.Column('success', pytis.data.Boolean(not_null=True), default=False),
+              sql.Column('start_time', pytis.data.DateTime(not_null=True)),
+              sql.Column('end_time', pytis.data.DateTime(not_null=False)),
+              sql.Column('ip_address', pytis.data.String(not_null=True)),
+              sql.Column('user_agent', pytis.data.String(not_null=False)),
+              sql.Column('referer', pytis.data.String(not_null=False)),
+              )
+    with_oids = True
+    depends_on = ()
+    access_rights = cms_rights_rw.value(globals())
+
+class CmsAccessLogData(sql.SQLTable):
+    """Log of cms page access."""
+    name = 'cms_access_log_data'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
+              sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
+              sql.Column('uri', pytis.data.String(not_null=True)),
+              sql.Column('uid', pytis.data.Integer(not_null=False),
+                         references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
+              sql.Column('modname', pytis.data.String(not_null=False)),
+              sql.Column('action', pytis.data.String(not_null=False)),
+              sql.Column('ip_address', pytis.data.String(not_null=True)),
+              sql.Column('user_agent', pytis.data.String(not_null=False)),
+              sql.Column('referer', pytis.data.String(not_null=False)),
+              )
+    with_oids = True
+    depends_on = ()
+    access_rights = cms_rights_rw.value(globals())
+
+class X186(sql.SQLRaw):
+    name = '@186'
+    schemas = cms_schemas.value(globals())
+    @classmethod
+    def sql(class_):
+        return ("create or replace rule session_delete as on delete to cms_session do "
+                "( update cms_session_log_data set end_time=old.last_access "
+                "WHERE session_id=old.session_id;);)")
+    depends_on = (CmsSession, CmsSessionLogData,)
+
+class CmsUsers(sql.SQLTable):
+    name = 'pytis_cms_users'
+    schemas = cms_schemas.value(globals())
+    fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),
+              sql.Column('login', pytis.data.String(not_null=True), unique=True),
+              sql.Column('fullname', pytis.data.String(not_null=True)),
+              sql.Column('passwd', pytis.data.String(not_null=True)),
+              )
+    with_oids = True
+    depends_on = ()
+    access_rights = ()
+
+class CmsUserRoles(sql.SQLView):
+    name = 'cms_user_roles'
+    schemas = cms_schemas.value(globals())
+    @classmethod
+    def query(cls):
+        a_ = sql.t.CmsUserRoleAssignment.alias('a')
+        u = sql.t.CmsUsers.alias('u')
+        r_ = sql.t.CmsRoles.alias('r')
+        return sqlalchemy.select(
+            cls._exclude(a_) +
+            cls._exclude(r_, 'role_id') +
+            [u.c.login.label('login'),
+             u.c.fullname.label('fullname')],
+            from_obj=[a_.join(u, sql.gR('a.uid = u.uid')).join(r_, sql.gR('a.role_id = r.role_id'))]
+        )
+
+    def on_insert(self):
+        return ("INSERT INTO cms_user_role_assignment (user_role_id, uid, role_id) "
+                "VALUES (new.user_role_id, new.uid, new.role_id) "
+                "RETURNING user_role_id, uid, role_id, NULL::text, NULL::text, NULL::text, "
+                "NULL::text, NULL::text",)
+    def on_update(self):
+        return ("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id "
+                "WHERE user_role_id=old.user_role_id",)
+    def on_delete(self):
+        return ("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id",)
+    depends_on = (CmsUserRoleAssignment, CmsUsers, CmsRoles,)
+    access_rights = cms_rights.value(globals())
+
+class CmsSessionLog(sql.SQLView):
+    """Log of web user logins (user visible information)."""
+    name = 'cms_session_log'
+    schemas = cms_schemas.value(globals())
+    @classmethod
+    def query(cls):
+        l = sql.t.CmsSessionLogData.alias('l')
+        s = sql.t.CmsSession.alias('s')
+        u = sql.t.CmsUsers.alias('u')
+        return sqlalchemy.select(
+            cls._exclude(l, 'end_time') +
+            [u.c.fullname.label('fullname'),
+             sql.gL("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
+             sql.gL("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
+            from_obj=[l.outerjoin(s, sql.gR('l.session_id = s.session_id')).
+                      join(u, sql.gR('l.uid = u.uid'))]
+        )
+
+    def on_insert(self):
+        return ("""INSERT INTO cms_session_log_data (session_id, uid, login, success,
+                                                    start_time, ip_address, user_agent, referer)
+               VALUES (new.session_id, new.uid, new.login, new.success,
+                       new.start_time, new.ip_address, new.user_agent, new.referer)
+               RETURNING log_id, session_id, uid, login, success,
+                         start_time, ip_address, user_agent, referer,
+                         NULL::text, NULL::interval, NULL::boolean""",)
+    update_order = (CmsSessionLogData,)
+    no_update_columns = ('duration', 'active',)
+    delete_order = (CmsSessionLogData,)
+    depends_on = (CmsSession, CmsSessionLogData, CmsUsers,)
     access_rights = cms_rights.value(globals())

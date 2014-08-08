@@ -19,7 +19,3 @@ from db_pytis_crypto import *
 from db_pytis_help import *
 from db_pytis_http_attachment_storage import *
 from db_pytis_cms import *
-from db_pytis_cms_user import *
-from db_pytis_cms_1 import *
-from db_pytis_cms_user_1 import *
-from db_pytis_cms_2 import *
