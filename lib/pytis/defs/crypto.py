@@ -23,7 +23,7 @@ import pytis.data
 import pytis.extensions
 from pytis.presentation import Specification, Field, Binding
 from pytis.util import rsa_encrypt, translations
-from pytis import dbdefs
+from pytis.dbdefs import db_pytis_crypto
 
 _ = translations('pytis')
 
@@ -57,7 +57,7 @@ class NewAdminPasswd(Specification):
 
 class CryptoAreas(Specification):
     public = True
-    table = dbdefs.db_pytis_crypto.CPytisCryptoNames
+    table = db_pytis_crypto.CPytisCryptoNames
     title = _(u"Šifrovací oblasti")
     sorting = (('name', pytis.data.ASCENDENT,),)
     bindings = (Binding('users', _(u"Uživatelé"), 'crypto.Users', binding_column='name'),)
@@ -108,7 +108,7 @@ class CryptoAreas(Specification):
 
 class Users(Specification):
     public = True
-    table = dbdefs.db_pytis_crypto.EPytisCryptoKeys
+    table = db_pytis_crypto.EPytisCryptoKeys
     title = _(u"Uživatelé")
 
     def _customize_fields(self, fields):
