@@ -1037,6 +1037,9 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
+    def _ctrl_style(self):
+        return super(NumericField, self)._ctrl_style() | wx.TE_RIGHT
+
     def _create_ctrl(self, parent):
         self._slider = None
         return super(NumericField, self)._create_ctrl(parent)
