@@ -1609,9 +1609,13 @@ class ListField(GenericCodebookField):
         list = wx.ListCtrl(parent, -1, style=style)
         # Nastavím záhlaví sloupců.
         total_width = 0
-        for i, id in enumerate(columns):
-            col = view_spec.field(id)
-            list.InsertColumn(i, col.column_label())
+        for i, cid in enumerate(columns):
+            col = view_spec.field(cid)
+            if isinstance(col.type(), pytis.data.Number):
+                attr = wx.LIST_FORMAT_RIGHT
+            else:
+                attr = wx.LIST_FORMAT_LEFT
+            list.InsertColumn(i, col.column_label(), attr)
             width = col.column_width()
             if width < len(col.column_label()):
                 width = len(col.column_label())
