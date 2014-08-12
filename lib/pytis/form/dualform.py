@@ -483,7 +483,8 @@ class AggregationDualForm(PostponedSelectionDualForm):
             return tuple([c for c in super(AggregationDualForm._SideForm, self)._default_columns()
                           if c not in self._main_form.group_by_columns()])
         def _create_query_fields_panel(self, sizer):
-            pass
+            self._query_fields_form = None
+            self._query_fields_apply_button = None
         def _current_arguments(self):
             return self._main_form.side_form_arguments()
 
