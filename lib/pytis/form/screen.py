@@ -1922,6 +1922,36 @@ class LocationBar(wx.TextCtrl):
         cmd.invoke(uri=uri, **kwargs)
 
 
+class HelpProc(object):
+    """Special class to mark procedures allowed to be called from pytis help.
+    
+    Don't use directly, just mark the procedure using the 'help_proc' decorator.
+    
+    """
+    def __init__(self, func):
+        self._func = func
+
+    def __call__(self):
+        self._func()
+
+
+def help_proc(func):
+    """Decorator to mark functions allowed to be run from Pytis help.
+    
+    Use this decorator on Python functions which are allowed to be called from
+    within the Pytis help content using the link in the form:
+
+    [call:module_name.procedure_name Link label]
+
+    Note that module_name is a full Python module name and not a specification
+    name and thus it is not limited to Pytis resolver modules.  Thus help
+    procedures can be located in any Python module, they just must be marked by
+    this decorator.
+
+    """
+    return HelpProc(func)
+
+
 class Browser(wx.Panel, CommandHandler):
     """Web Browser widget.
     
@@ -2045,6 +2075,20 @@ class Browser(wx.Panel, CommandHandler):
             else:
                 cls = pytis.form.BrowseForm
             pytis.form.run_form(cls, spec_name)
+            return True
+        elif uri.startswith('call:'):
+            try:
+                module_name, proc_name = uri[5:].rsplit('.', 1)
+                module = __import__(module_name)
+                for component in module_name.split('.')[1:]:
+                    module = getattr(module, component)                   
+                proc = getattr(module, proc_name)
+                if not isinstance(proc, HelpProc):
+                    raise ProgramError("Unable to call '%s' from help. "
+                                       "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
+                proc()
+            except:
+                top_level_exception()
             return True
         else:
             restricted_navigation_uri = self._restricted_navigation_uri
