@@ -485,6 +485,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
         def _create_query_fields_panel(self, sizer):
             self._query_fields_form = None
             self._query_fields_apply_button = None
+            self._unapplied_query_field_changes = False
         def _current_arguments(self):
             return self._main_form.side_form_arguments()
 
