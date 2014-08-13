@@ -21,7 +21,7 @@
 This module provides an implementation of Pytis forms which can be used for web
 interfaces to Pytis informations systems.  The intention is to be able to
 generate web forms from the same specification as GUI forms implemented by the
-`pytis.forms' package.
+`pytis.form' package.
 
 Pytis currently does not include support running the actual web application.
 Application framework which makes use of pytis web forms is implemented
