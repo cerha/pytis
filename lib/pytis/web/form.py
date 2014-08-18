@@ -405,8 +405,8 @@ class LayoutForm(FieldForm):
                             field = self._fields[fid]
                             # Nested horizontal group which starts with a
                             # labeled field will be aligned within the current
-                            # vertical group if possible.
-                            if not field.spec.compact():
+                            # vertical group if possible and not specifically disabled.
+                            if not field.spec.compact() and group.align_hgroups():
                                 label = self._export_field_label(context, field)
                                 break
                 exported_group = self._export_group(context, item, inner=True, id=subgroup_id,

@@ -979,7 +979,8 @@ class GroupSpec(object):
 
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
-                 gap=2, space=1, border=3, border_style=BorderStyle.ALL):
+                 gap=2, space=1, border=3, border_style=BorderStyle.ALL,
+                 align_hgroups=True):
         """Arguments:
 
           items -- contents of the group as a sequence of layout items (see
@@ -996,6 +997,15 @@ class GroupSpec(object):
           gap, space, border, border_style -- Depracated and unsupported by
             some form types (particularly by web forms).
 
+          align_hgroups -- align contained horizontal groups so that their
+            first field aligns with the fields of this group.  Contained
+            horizontal groups within a vertical group of labeled fields are by
+            default aligned with its parent group so that the label of the
+            first field of the nested group is aligned with the labels of the
+            fields of the parent group.  This option, when applied on the
+            parent group, makes it possible to disable this alignment when it
+            is not desired.  It is currently only implemented for web forms.
+
         """
         assert is_sequence(items), items
         assert label is None or isinstance(label, basestring)
@@ -1003,6 +1013,7 @@ class GroupSpec(object):
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
+        assert isinstance(align_hgroups, bool), align_hgroups
         self._allowed_item_types = (Button, Text, str, unicode)
         if __debug__:
             allowed_item_types = (GroupSpec, Button, Text, basestring)
@@ -1029,6 +1040,7 @@ class GroupSpec(object):
         self._space = space
         self._border = border
         self._border_style = border_style
+        self._align_hgroups = align_hgroups
 
     def items(self):
         """Return the group contents as a tuple."""
@@ -1067,6 +1079,9 @@ class GroupSpec(object):
     def border_style(self):
         """Vrať styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
         return self._border_style
+
+    def align_hgroups(self):
+        return self._align_hgroups
 
 
 class FieldSet(GroupSpec):
