@@ -76,7 +76,7 @@ pytis.hide_tooltip = function(element) {
     }
 };
 
-pytis.BrowseFormHandler = Class.create({
+pytis.BrowseForm = Class.create({
     /* Handles asynchronous load of a Pytis browse form.
 
     The form content is loaded through an AJAX request after the page is
@@ -371,21 +371,16 @@ pytis.BrowseFormHandler = Class.create({
     }
 });
 
-pytis.FormHandler = Class.create({
-    initialize: function(form_id, fields, state) {
+pytis.Form = Class.create({
+    initialize: function(form_id, fields) {
 	/* form_id ... HTML id of the pytis form top level element (string)
 	 * fields ... array of form fields as pytis.Field instances
-	 * state ... initial state of form's runtime filters and arguments as
-	 *    an associative array (hash) keyed by field id where value is a
-	 *    string representation of the filter and arguments for server side
-	 *    comparisons.
 	 */
-	var form = $(form_id).down('form');
-	var i, field;
+	var form = $(form_id).down('form') || $(form_id).up('form');
 	this._form = form;
 	this._fields = new Hash();
-	this._state = state;
 	var observe = false;
+	var i, field;
 	for (i=0; i<fields.length; i++) {
 	    field = fields[i];
 	    this._fields.set(field.id(), field);
@@ -417,11 +412,16 @@ pytis.FormHandler = Class.create({
 		 && (values.hasOwnProperty(id) || last_values.hasOwnProperty(id)) 
 		 && values[id] !== last_values[id])) {
 		document.body.style.cursor = "wait";
-		var state = (this._state ? new Hash(this._state).toQueryString() : null);
+		var states = new Hash();
+		this._fields.each(function(x) {
+		    if (x.value.state()) {
+			states.set(x.key, x.value.state())
+		    }
+		});
 		this._form.request({
 		    parameters: {_pytis_form_update_request: ++this._last_request_number,
 				 _pytis_form_changed_field: id,
- 				 _pytis_form_state: state},
+ 				 _pytis_form_state: states ? states.toQueryString() : null},
 		    onSuccess: this.update.bind(this)
 		});
 		throw $break;
@@ -461,7 +461,7 @@ pytis.FormHandler = Class.create({
 				field.set_editability(cdata.editable);
 			    }
 			    if (cdata.state !== undefined) {
-				this._state[field.id()] = cdata.state;
+				field.set_state(cdata.state);
 			    }
                         } catch (e) {
                             console.log(e);
@@ -478,8 +478,7 @@ pytis.FormHandler = Class.create({
 });
 
 pytis.Field = Class.create({
-    initialize: function(form_id, field_id, id, active, required) {
-
+    initialize: function(form_id, field_id, id, state, active, required) {
 	/* form_id ... HTML id of the pytis form element to which the field
 	 *    belongs.
 	 * field_id ... HTML id of the form field element.  The element is
@@ -488,15 +487,18 @@ pytis.Field = Class.create({
 	 *    checklist.
 	 * id ... pytis field id (string) typically used as form control
 	 *    'name'.
+	 * state ... string representation of runtime filters and arguments
+	 *    initial state used for server side comparisons.
 	 * active ... boolean flag; True if this field may trigger changes of
 	 *    other fields.  The changes in this field will be observed and
 	 *    sent for server processing.
 	 * required ... boolean flag; True if this field is required (not null).
 	 */
-	this._form = $(form_id).down('form');
 	this._element = $(field_id);
+	this._form = this._element.up('form');
 	this._ctrl = this._form[id];
 	this._id = id;
+	this._state = state;
 	this._active = active;
 	if (required && this._ctrl && this._ctrl.length === undefined) {
 	    // TODO: handle aria-required also for compound fields (radio group, checklist).
@@ -508,6 +510,15 @@ pytis.Field = Class.create({
 
     id: function() {
 	return this._id;
+    },
+
+    element: function() {
+	return this._element;
+    },
+
+    state: function() {
+	// Return the last runtime filter/arguments state string representation.
+	return this._state;
     },
 
     active: function() {
@@ -533,6 +544,11 @@ pytis.Field = Class.create({
             }
 	}
 	this._set_editability(value);
+    },
+
+    set_state: function(value) {
+	// Set runtime filter/arguments state string representation.
+	this._state = value;
     },
 
     _set_editability: function(value) {
@@ -703,8 +719,8 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 });
 
 pytis.HtmlField = Class.create(pytis.Field, {
-    initialize: function($super, form_id, field_id, id, active, required) {
-	$super(form_id, field_id, id, active, required);
+    initialize: function($super, form_id, field_id, id, state, active, required) {
+	$super(form_id, field_id, id, state, active, required);
         if (CKEDITOR !== undefined) {
 	    // The function pytis.HtmlField.plugin is defined in pytis-ckeditor.js.
 	    CKEDITOR.plugins.add('pytis-attachments', {init: pytis.HtmlField.plugin});
@@ -751,8 +767,8 @@ pytis.DateTimeField = Class.create(pytis.Field, {
 
 pytis.FileUploadField = Class.create(pytis.Field, {
 
-    initialize: function($super, form_id, field_id, id, active, required) {
-	$super(form_id, field_id, id, active, required);
+    initialize: function($super, form_id, field_id, id, state, active, required) {
+	$super(form_id, field_id, id, state, active, required);
 	// Observe file field changes separately as they are 1) ignored by
 	// form.observe (by Prototype.js, not sure why) and 2) only "active"
 	// fields are currently observed by pytis form updated (field is active

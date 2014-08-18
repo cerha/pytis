@@ -3006,23 +3006,11 @@ class _VirtualEditForm(EditForm):
     
     def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
                    prefill=None, **kwargs):
-        class Spec(Specification):
-            data_cls = pytis.data.RestrictedMemData
-        for key, value in kwargs.items():
-            if isinstance(value, collections.Callable):
-                # This is necessary to avoid calling functions (such as 'check'
-                # or 'row_style') as methods.
-                function = value
-                if len(argument_names(function)) > 0:
-                    # This is an ugly hack.  It is necessary to make the introspection
-                    # in Specification.__init__ work.  It actually makes sure that the
-                    # condition len(argument_names(value)) == 0 returns the same results
-                    # for 'value' and for 'function'.
-                    value = lambda self, x, *args, **kwargs: function(x, *args, **kwargs)
-                else:
-                    value = lambda self, *args, **kwargs: function(*args, **kwargs)
-            setattr(Spec, key, value)
-        self._specification = Spec(resolver)
+        self._specification = Specification.create_from_kwargs(
+            resolver,
+            data_cls=pytis.data.RestrictedMemData,
+            **kwargs
+        )
         if isinstance(self, PopupEditForm):
             additional_kwargs = dict(multi_insert=False)
         else:

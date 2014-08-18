@@ -7,6 +7,30 @@
     margin: 0.4em 0;
     padding: 0.4em 0.6em;
 }
+.pytis-form.query-fields-form > table {
+    border-collapse: collapse;
+    border: none;
+    border-spacing: 0;
+}
+.pytis-form.query-fields-form > table > tbody > tr > td {
+    padding: 0;
+}
+.pytis-form.query-fields-form .group {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+.pytis-form.query-fields-form .errors {
+    text-align: left;
+    margin: 0 0 0.3em 0;
+    padding: 2px 1px;
+}
+.pytis-form.query-fields-form td.apply-filters {
+    padding-left: 0.8em;
+    vertical-align: bottom;
+}
+
 .pytis-form .group div.group {
     border-width: 0;
     margin: 0;
@@ -32,6 +56,7 @@
 .pytis-form legend.empty { display: none; }
 
 .pytis-form table.horizontal-group.expanded { width: 100%; }
+.pytis-form.query-fields-form table.horizontal-group.expanded { width: auto; }
 .pytis-form .horizontal-group fieldset.group {
     margin: 0 0 0.4em 0;
     /* margin-bottom: 100%; ** this breaks fieldset border. */
@@ -81,23 +106,23 @@
     border: 1px solid #ddd;
 }
 
-.pytis-form.browse-form table {
+.pytis-form.browse-form table.data-table {
     border-collapse: collapse;
     border: 1px solid #ddd;
     margin-top: .3em;
 }
-.pytis-form.browse-form table td, .pytis-form.browse-form table th {
+.pytis-form.browse-form table.data-table td, .pytis-form.browse-form table.data-table th {
     padding: 2pt;
     vertical-align: top;
     border: 1px solid #ddd;
 }
-.pytis-form.browse-form table th.column-heading { 
+.pytis-form.browse-form table.data-table th.column-heading { 
     background-color: #eee;
 }
-.pytis-form.browse-form table th.column-heading.sortable-column { 
+.pytis-form.browse-form table.data-table th.column-heading.sortable-column { 
     cursor: pointer;
 }
-.pytis-form.browse-form table th span.sort-indicator {
+.pytis-form.browse-form table.data-table th span.sort-indicator {
     display: inline-block;
     float: right;
     padding: 3px 2px;
@@ -106,32 +131,32 @@
     background-position: right center;
     background-repeat: no-repeat;
 }
-.pytis-form.browse-form table th span.sort-direction-asc {
+.pytis-form.browse-form table.data-table th span.sort-direction-asc {
     background-image: url(sort-asc.png);
 }
 .pytis-form.browse-form table th span.sort-direction-desc {
     background-image: url(sort-desc.png);
 }
 
-.pytis-form.browse-form table td .tree-node {
+.pytis-form.browse-form table.data-table td .tree-node {
     white-space: nowrap;
 }
-.pytis-form.browse-form table tr { background-color: #f8fafb; }
-.pytis-form.browse-form table tr.even { background-color: #f1f3f2; }
-.pytis-form.browse-form table tr.group-heading th { text-align: left; }
+.pytis-form.browse-form table.data-table tr { background-color: #f8fafb; }
+.pytis-form.browse-form table.data-table tr.even { background-color: #f1f3f2; }
+.pytis-form.browse-form table.data-table tr.group-heading th { text-align: left; }
 
-.pytis-form.browse-form table td .popup-menu-ctrl-widget a {
+.pytis-form.browse-form table.data-table td .popup-menu-ctrl-widget a {
     display: block;
     float: right;
 }
-.pytis-form.browse-form table td pre {
+.pytis-form.browse-form table.data-table td pre {
     background-color: transparent;
     border: none;
 }
-.pytis-form.browse-form table span.tree-indent {
+.pytis-form.browse-form table.data-table span.tree-indent {
     padding-left: 0.6em;
 }
-.pytis-form.browse-form table tfoot td {
+.pytis-form.browse-form table.data-table tfoot td {
     background-color: #eee;
     border: 1px solid #ddd;
     padding: 0;
@@ -140,9 +165,8 @@
 
 .list-form-controls {
     margin: 0.8em 0;
-    padding: .2em;
+    padding: 0;
 }
-.list-form-controls .filter,
 .list-form-controls .paging-controls.one-page {
     text-align: right;
 }
@@ -208,6 +232,9 @@
 .pytis-form .field-label { 
     white-space: nowrap;
     font-weight: bold;
+}
+.pytis-form.query-fields-form .field-label {
+    font-weight: normal;
 }
 .pytis-form .field-label .not-null { color: #f00; line-height: 1em; }
 .pytis-form .field-label.disabled { color: #444; }

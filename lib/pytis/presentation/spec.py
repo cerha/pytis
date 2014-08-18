@@ -636,10 +636,8 @@ class Profile(object):
     user data.
 
     """
-    def __init__(self, id, title, filter=None, descr=None,
-                 sorting=None, columns=None, grouping=None,
-                 aggregations=None, folding=None, filter_sets=None,
-                 column_widths=None, errors=()):
+    def __init__(self, id, title, filter=None, descr=None, sorting=None, columns=None,
+                 grouping=None, aggregations=None, folding=None, column_widths=None, errors=()):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -663,7 +661,6 @@ class Profile(object):
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
           folding -- folding specification ('FoldableForm.Folding' instance)
             If None, the 'ViewSpec' folding applies.
-          filter_sets -- Deprecated: Use 'query_fields' instead.
           column_widths -- dictionary of table column widths keyed by string
             column identifiers with integer values representing pixel width.
             This is not designed to be used in specifications, but rather for
@@ -684,10 +681,6 @@ class Profile(object):
         assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
         assert columns is None or isinstance(columns, (tuple, list)), columns
         assert aggregations is None or isinstance(aggregations, (tuple, list)), aggregations
-        assert filter_sets is None or isinstance(filter_sets, (list, tuple)), filter_sets
-        if __debug__:
-            for fs in filter_sets or ():
-                assert isinstance(fs, FilterSet), fs
         self._id = id
         self._title = title
         self._descr = descr
@@ -697,7 +690,6 @@ class Profile(object):
         self._columns = columns and tuple(columns)
         self._aggregations = aggregations and tuple(aggregations)
         self._folding = folding
-        self._filter_sets = filter_sets and tuple(filter_sets)
         self._column_widths = column_widths
         self._errors = errors
     
@@ -746,9 +738,6 @@ class Profile(object):
 
     def folding(self):
         return self._folding
-
-    def filter_sets(self):
-        return self._filter_sets
 
     def column_widths(self):
         return self._column_widths
@@ -1254,7 +1243,9 @@ class QueryFields(object):
             for f in fields:
                 assert isinstance(f, Field), f
         if layout is None:
-            layout = HGroup(*[f.id() for f in fields])
+            layout = [f.id() for f in fields]
+        if isinstance(layout, (tuple, list)):
+            layout = HGroup(*layout)
         self._autoapply = autoapply
         self._load = load
         self._save = save
@@ -4976,8 +4967,8 @@ class Specification(object):
                  attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
-                              'add_specification_by_db_spec_name', 'ro_select',
-                              'oid', # for backward compatibility
+                              'add_specification_by_db_spec_name', 'create_from_kwargs',
+                              'ro_select', 'oid', # for backwards compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
@@ -5315,3 +5306,23 @@ class Specification(object):
             name = specification._spec_name()
             if name not in specification_names:
                 specification_names.append(name)
+
+    @classmethod
+    def create_from_kwargs(class_, resolver, **kwargs):
+        class Spec(class_):
+            pass
+        for key, value in kwargs.items():
+            if key != 'data_cls' and isinstance(value, collections.Callable):
+                # This is necessary to avoid calling functions (such as 'check'
+                # or 'row_style') as methods.
+                function = value
+                if len(argument_names(function)) > 0:
+                    # This is an ugly hack.  It is necessary to make the introspection
+                    # in Specification.__init__ work.  It actually makes sure that the
+                    # condition len(argument_names(value)) == 0 returns the same results
+                    # for 'value' and for 'function'.
+                    value = lambda self, x, *args, **kwargs: function(x, *args, **kwargs)
+                else:
+                    value = lambda self, *args, **kwargs: function(*args, **kwargs)
+            setattr(Spec, key, value)
+        return Spec(resolver)

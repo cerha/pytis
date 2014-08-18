@@ -405,11 +405,28 @@ class Field(object):
         kwargs = self._editor_kwargs(context)
         return self._editor(context, **kwargs)
 
-    def javascript(self, context, form_id, active):
+    def state(self):
+        """Return the string representation of field runtime filters and arguments state.
+
+        We rely on the fact, that a stringified 'pytis.data.Operator' uniquely
+        represents the corresponding runtime filter state.
+
+        """
+        if self.spec.runtime_filter() or self.spec.runtime_arguments():
+            state = 'f=%s;a=%s' % (
+                self._row.runtime_filter(self.id),
+                self._row.runtime_arguments(self.id),
+            )
+        else:
+            state = None
+        return state
+
+    def javascript(self, context, form_id, layout_fields):
         """Return JavaScript code for creation of field handler instance."""
         g = context.generator()
+        active = self._row.depends(self.id, layout_fields)
         return g.js_call("new %s" % self._HANDLER, form_id, self.html_id(),
-                         self.id, active, self.not_null())
+                         self.id, self.state(), active, self.not_null())
 
 
 class TextField(Field):

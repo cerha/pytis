@@ -296,6 +296,7 @@ class LayoutForm(FieldForm):
     """Form with fields arranged according to pytis layout specification."""
     _MAXLEN = 100
     _ALIGN_NUMERIC_FIELDS = False
+    _ALLOW_NOT_NULL_INDICATORS = True
     _EDITABLE = False
 
     class _GroupContent(object):
@@ -492,7 +493,7 @@ class LayoutForm(FieldForm):
             sign = ''
             if self._EDITABLE:
                 html_id = field.html_id()
-                if field.not_null():
+                if field.not_null() and self._ALLOW_NOT_NULL_INDICATORS:
                     sign = g.sup("*", cls="not-null")
                 if not self._row.editable(field.id):
                     cls += ' disabled'
@@ -722,18 +723,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _export_javascript(self, context, form_id):
         g = context.generator()
         layout_fields = self._layout.order()
-        js_fields = []
-        state = {}
-        for fid in layout_fields:
-            if self._row.visible(fid):
-                field = self._fields[fid]
-                active = self._row.depends(fid, layout_fields)
-                if field.spec.runtime_filter() or field.spec.runtime_arguments():
-                    # NOTE: The format here must be same as in EditForm.ajax_response()!
-                    state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
-                                            self._row.runtime_arguments(fid))
-                js_fields.append(field.javascript(context, form_id, active))
-        return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
+        fields = [self._fields[fid].javascript(context, form_id, layout_fields)
+                  for fid in layout_fields if self._row.visible(fid)]
+        return g.js_call('new pytis.Form', form_id, fields) + ';'
 
     def _export_footer(self, context, form_id):
         if self._show_footer:
@@ -880,10 +872,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     #lcg.log('-', fid, localized_value, req.param(fid), field.value());
                 if fid in field_states:
                     old_state = field_states[fid]
-                    # We rely on the fact, that a stringified
-                    # 'pytis.data.Operator' uniquely represents the
-                    # corresponding runtime filter state.
-                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
+                    new_state = field.state()
                     if new_state != old_state:
                         enumeration = [(value, localize(label))
                                        for value, label in row.enumerate(fid)]
@@ -921,6 +910,124 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         """
         self._error = (field_id, error)
 
+class QueryFieldsForm(EditForm):
+    """Special form for representation of browse form query fields (for internal use only)."""
+    _CSS_CLS = 'edit-form query-fields-form'
+    _ALLOW_NOT_NULL_INDICATORS = False
+    _SAVED_EMPTY_VALUE = '-'
+
+    class FormRecord(pytis.presentation.PresentedRow):
+
+        def __init__(self, req, *args, **kwargs):
+            self._req = req
+            super(QueryFieldsForm.FormRecord, self).__init__(*args, **kwargs)
+
+        def req(self):
+            return self._req
+
+    def __init__(self, query_fields, filter_sets, req, resolver, immediate_filters=True):
+        if query_fields:
+            kwargs = dict(query_fields.view_spec_kwargs())
+            fields = list(kwargs.pop('fields'))
+            layout = kwargs.pop('layout')
+        else:
+            kwargs = {}
+            fields = []
+            layout = pytis.presentation.HGroup()
+        if filter_sets:
+            fields[0:0] = [self._filter_set_field(fs) for fs in filter_sets]
+            ids = tuple([fs.id() for fs in filter_sets])
+            if not any(fsid in layout.order() for fsid in ids):
+                if layout.orientation() == pytis.presentation.Orientation.HORIZONTAL:
+                    layout = pytis.presentation.HGroup(*(ids + layout.items()))
+                else:
+                    layout = pytis.presentation.HGroup(ids, layout)
+        spec = pytis.presentation.Specification.create_from_kwargs(
+            resolver,
+            data_cls=pytis.data.RestrictedMemData,
+            fields=fields,
+            layout=layout,
+            **kwargs
+        )
+        view = spec.view_spec()
+        data = spec.data_spec().create()
+        row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
+        super(QueryFieldsForm, self).__init__(view, req, row)
+        self._immediate_filters = (immediate_filters and
+                                   all(row.type(f).enumerator() is not None
+                                       for f in self._field_order()))
+        if req.param('list-form-controls-submitted'):
+            self.validate(req)
+        if not self.is_ajax_request(req):
+            for field in self.fields():
+                if not row.visible(field.id):
+                    continue
+                cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
+                if req.param('list-form-controls-submitted'):
+                    error = row.validation_error(field.id)
+                    if not error:
+                        value = row[field.id].export()
+                        if value == '':
+                            value = self._SAVED_EMPTY_VALUE
+                        req.set_cookie(cookie, value)
+                else:
+                    saved_value = req.cookie(cookie)
+                    if saved_value is not None:
+                        if saved_value == self._SAVED_EMPTY_VALUE:
+                            saved_value = ''
+                        row.validate(field.id, saved_value)
+
+    def _filter_set_field(self, filter_set):
+        # Determine the current set of user selectable filters.
+        null_filter = pytis.util.find(None, filter_set, key=lambda f: f.condition())
+        if null_filter:
+            null_display = null_filter.title()
+            filters = [f for f in filter_set if f is not null_filter]
+        else:
+            # Translators: Label used in filter selection box for the
+            # option which disables filtering and thus results in all
+            # records to be displayed.
+            null_display = _("All items")
+            filters = filter_set
+        class Enum(pytis.presentation.Enumeration):
+            enumeration = [(f.id(), f.title()) for f in filters]
+        return pytis.presentation.Field(filter_set.id(), filter_set.title(),
+                                        null_display=null_display, not_null=False,
+                                        enumerator=Enum, default=filter_set.default())
+
+    def _export_footer(self, context, form_id):
+        return None
+
+    def _export_form(self, context, form_id):
+        g = context.generator()
+        content = []
+        for field in self.fields():
+            error = self._row.validation_error(field.id)
+            if error:
+                content.append(g.div(g.strong(field.label) + ": " + error.message(), cls='errors'))
+        # Translators: Button for manual filter invocation.
+        submit_button = g.button(g.span(_("Change filters")),
+                                 type='submit', cls='apply-filters')
+        if self._immediate_filters:
+            # Hide the submit button, but leave it in place for non-Javascript browsers.
+            submit_button = g.noscript(submit_button)
+        content.append(g.table(g.tbody(g.tr((g.td(self._export_body(context, form_id)),
+                                             g.td(submit_button,
+                                                  cls='apply-filters')))),
+                               role='presentation'))
+        return content
+
+    def _export_javascript(self, context, form_id):
+        script = super(QueryFieldsForm, self)._export_javascript(context, form_id)
+        if self._immediate_filters:
+            script += ("$('%s').select('select, checkbox, radio').each(function (element) { "
+                       "element.onchange = function (e) { this.form.submit(); return true; }; "
+                       "});" % form_id)
+        return script
+
+    def fields(self):
+        return [self._fields[f] for f in self._field_order()]
+
     
 class FilterForm(EditForm):
     """Simple form for displaying a list of fields for advanced filtering."""
@@ -943,22 +1050,12 @@ class BrowseForm(LayoutForm):
     _HTTP_METHOD = 'GET'
     _SORTING_DIRECTIONS = {pytis.data.ASCENDENT: 'asc',
                            pytis.data.DESCENDANT: 'desc'}
-    _NULL_FILTER_ID = '-'
     _EXPORT_EMPTY_TABLE = False
     """Determines whether the table is present on output even if it contains no rows."""
 
-    class FormRecord(pytis.presentation.PresentedRow):
-
-        def __init__(self, req, *args, **kwargs):
-            self._req = req
-            super(BrowseForm.FormRecord, self).__init__(*args, **kwargs)
-
-        def req(self):
-            return self._req
-
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
                  columns=None, sorting=None, grouping=None, message=None,
-                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, 
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None,
                  allow_text_search=None, text_search_condition=None, permanent_text_search=False,
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
@@ -1132,16 +1229,13 @@ class BrowseForm(LayoutForm):
         # Process filter sets and profiles first.
         if filter_sets is None:
             filter_sets = self._view.filter_sets()
-        filter_sets = list(filter_sets)
         if profiles is None:
             profiles = self._view.profiles()
         elif not isinstance(profiles, Profiles):
             profiles = Profiles(*profiles)
         self._profiles = profiles
         self._filter = filter
-        self._filter_ids = {}
-        self._filter_sets = []
-        self._current_profile = None
+        self._filters = []
         if profiles:
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
@@ -1149,8 +1243,28 @@ class BrowseForm(LayoutForm):
                                    [Filter(p.id(), p.title(), p.filter())
                                     for p in profiles.unnest()],
                                    default=profiles.default())
-            self._init_filter_sets((filter_set,), req, param)
-            profile_id = self._filter_ids['profile']
+            filter_sets = (filter_set,) + tuple(filter_sets)
+        self._filter_sets = filter_sets
+        if query_fields is None:
+            query_fields = self._view.query_fields()
+        if query_fields or filter_sets:
+            self._query_fields_form = form = QueryFieldsForm(query_fields, filter_sets,
+                                                             req, self._row.resolver(),
+                                                             immediate_filters=immediate_filters)
+            query_fields_row = form.row()
+        else:
+            self._query_fields_form = None
+        self._current_profile = None
+        for filter_set in filter_sets:
+            filter_id = query_fields_row[filter_set.id()].value()
+            if filter_id:
+                matching_filter = pytis.util.find(filter_id, filter_set, key=lambda f: f.id())
+                if matching_filter:
+                    cond = matching_filter.condition()
+                    if cond:
+                        self._filters.append(cond)
+        if profiles:
+            profile_id = query_fields_row['profile'].value()
             if profile_id is not None:
                 profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
                 if profile:
@@ -1161,10 +1275,6 @@ class BrowseForm(LayoutForm):
                         sorting = profile.sorting()
                     if profile.grouping() is not None:
                         grouping = profile.grouping()
-                    profile_filter_sets = profile.filter_sets()
-                    if profile_filter_sets is not None:
-                        self._init_filter_sets(profile_filter_sets, req, param)
-        self._init_filter_sets(filter_sets, req, param)
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
@@ -1270,10 +1380,9 @@ class BrowseForm(LayoutForm):
         self._align = dict([(f.id, 'right') for f in cfields
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._message = message
-        self._init_query_fields(req, query_fields)
         provider_kwargs = dict(req=self._req)
-        if self._query_fields_row:
-            provider_kwargs['query_fields'] = self._query_fields_row
+        if query_fields:
+            provider_kwargs['query_fields'] = query_fields_row
         if condition_provider is None:
             condition_provider = self._view.condition_provider()
         if condition_provider:
@@ -1298,7 +1407,6 @@ class BrowseForm(LayoutForm):
             assert not arguments, "Arguments passed to a non-table function"
         self._condition = condition
         self._arguments = arguments
-        self._immediate_filters = immediate_filters
         self._top_actions = top_actions
         self._bottom_actions = bottom_actions
         self._row_actions = row_actions
@@ -1306,83 +1414,6 @@ class BrowseForm(LayoutForm):
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
-
-    def _init_query_fields(self, req, query_fields_spec):
-        query_fields = []
-        if query_fields_spec is None:
-            query_fields_spec = self._view.query_fields()
-        if query_fields_spec:
-            fields_specs = self._view.query_fields().fields()
-            columns = []
-            for fspec in fields_specs:
-                ftype = fspec.type() or pytis.data.String()
-                if type(ftype) == type(pytis.data.Type):
-                    ftype = ftype()
-                ftype = ftype.__class__(**fspec.type_kwargs()).clone(ftype)
-                columns.append(pytis.data.ColumnSpec(fspec.id(), ftype))
-            data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
-            row = self.FormRecord(self._req, fields_specs, data, None,
-                                  resolver=self._row.resolver(), new=True)
-            locale_data = req.localizer().locale_data()
-            for f in fields_specs:
-                if not row.visible(f.id()):
-                    continue
-                field = Field.create(row, f, self, self._uri_provider)
-                cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
-                if req.param('list-form-controls-submitted'):
-                    error = field.validate(req, locale_data)
-                    if not error:
-                        req.set_cookie(cookie, row[field.id].export())
-                else:
-                    saved_value = req.cookie(cookie)
-                    if saved_value is not None:
-                        row.validate(field.id, saved_value)
-                query_fields.append(field)
-        else:
-            row = None
-        self._query_fields = query_fields
-        self._query_fields_row = row
-
-    def _init_filter_sets(self, filter_sets, req, param):
-        for i, filter_set in enumerate(filter_sets):
-            filter_set_id = filter_set.id()
-            # Determine the current set of user selectable filters.
-            null_filter = pytis.util.find(None, filter_set, key=lambda f: f.condition())
-            if not null_filter:
-                # Translators: Label used in filter selection box for the
-                # option which disables filtering and thus results in all
-                # records to be displayed.
-                null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
-                filter_set = FilterSet(filter_set_id, filter_set.title(),
-                                       [null_filter] + [f for f in filter_set],
-                                       default=filter_set.default())
-            # Determine the currently selected filter.
-            filter_id = param('filter_%s' % (filter_set_id,), str)
-            if filter_id is not None:
-                req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
-                               self._name + ':' + filter_id)
-            else:
-                cookie = req.cookie('pytis-form-last-filter-%s' % (filter_set_id,))
-                if cookie and cookie.startswith(self._name + ':'):
-                    filter_id = cookie[len(self._name) + 1:]
-                elif filter_set.default():
-                    filter_id = filter_set.default()
-                else:
-                    filter_id = null_filter.id()
-            if filter_id:
-                matching_filter = pytis.util.find(filter_id, filter_set, key=lambda f: f.id())
-                # Append the current user selected filter to the filter passed
-                # as 'filter' argument.
-                if matching_filter:
-                    cond = matching_filter.condition()
-                    if self._filter and cond:
-                        self._filter = pd.AND(self._filter, cond)
-                    elif cond:
-                        self._filter = cond
-                else:
-                    filter_id = None
-            self._filter_ids[filter_set_id] = filter_id
-            self._filter_sets.append(filter_set)
 
     def _tree_level(self):
         if self._tree_order_column:
@@ -1531,7 +1562,8 @@ class BrowseForm(LayoutForm):
         conditions = [c for c in (self._condition,
                                   self._filter,
                                   self._text_search_condition,
-                                  condition)
+                                  condition,
+                                  ) + tuple(self._filters)
                       if c is not None]
         if len(conditions) == 0:
             return None
@@ -1564,7 +1596,7 @@ class BrowseForm(LayoutForm):
     def _export_javascript(self, context, form_id):
         g = context.generator()
         uri = self._uri_provider(None, UriType.LINK, None)
-        return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
+        return g.js_call("new pytis.BrowseForm", form_id, self._name, uri) + ';'
 
     def _set_row(self, row):
         # Please, don't think about passing reset=True here.  See PresentedRow.display()
@@ -1679,16 +1711,19 @@ class BrowseForm(LayoutForm):
             foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
         return g.table((g.thead(g.tr(headings)),
                         g.tfoot(foot_rows),
-                        g.tbody(rows)), border=1)
+                        g.tbody(rows)),
+                       border=1, cls='data-table')
     
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort') and self._user_sorting:
             sorting_column, direction = self._user_sorting
             kwargs = dict(kwargs, sort=sorting_column, dir=self._SORTING_DIRECTIONS[direction])
+        args = [('form_name', self._name)]
+        if self._query_fields_form:
+            row = self._query_fields_form.row()
+            args += [(key, row[key].export()) for key in row.keys()]
         # TODO: Excluding the 'submit' argument is actually a hack, since it is
         # defined in Wiking and should be transparent for the form.
-        args = [('form_name', self._name)]
-        args += [('filter_%s' % (k,), v,) for k, v in self._filter_ids.items()]
         args += [(k, v) for k, v in self._hidden if k != 'submit']
         return generator.uri(self._handler, *args, **kwargs)
 
@@ -1789,62 +1824,11 @@ class BrowseForm(LayoutForm):
         g = context.generator()
         html_id = form_id + (bottom and '-top' or '-bottom')
         content = []
-        # Construct a list of filters for export.
-        show_filters = (self._filter_sets and (count or
-                                               [v for v in self._filter_ids.values()
-                                                if v is not None])
-                        or self._query_fields)
         show_search_field = self._show_search_field
-        if show_filters and not bottom:
-            # Translators: Button for manual filter invocation.
-            submit_button = g.button(g.span(_("Change filters")), type='submit', 
-                                     cls='apply-filters')
-            if self._immediate_filters and not self._query_fields:
-                onchange = 'this.form.submit(); return true'
-                # Leave the submit button in place for non-Javascript browsers.
-                submit_button = g.noscript(submit_button)
-            else:
-                onchange = None
-            filter_content = []
-            for field in self._query_fields:
-                error = self._query_fields_row.validation_error(field.id)
-                if error:
-                    content.append(g.div(g.strong(field.label) + ": " + error.message(),
-                                         cls='errors'))
-                exported_field = self._export_field(context, field, editable=True)
-                if field.label:
-                    exported_label = g.label(field.label, field.html_id())
-                    if field.label_in_front():
-                        exported_label += ':'
-                else:
-                    exported_label = ''
-                if field.label_in_front():
-                    filter_content.extend((exported_label, exported_field, '&nbsp;&nbsp;'))
-                else:
-                    filter_content.extend((exported_field, exported_label))
-            for filter_set in self._filter_sets:
-                filter_set_id = filter_set.id()
-                filter_name = 'filter_%s' % (filter_set_id,)
-                filter_id = filter_name + '-' + html_id
-                filter_set_content = (
-                    g.label(filter_set.title() + ': ', filter_id),
-                    g.select(name=filter_name, id=filter_id,
-                             selected=self._filter_ids.get(filter_set_id),
-                             # Translators: Label of filter selection box.
-                             # Filtering limits the displayed form records by
-                             # certain criterias.
-                             title=(_("Filter") + ' ' +
-                                    # Translators: Tooltip text suggesting
-                                    # keyboard combination to use for selection
-                                    # without unexpected invocation of the
-                                    # option.
-                                    _("(Use ALT+arrow down to select)")),
-                             options=[(f.title(), f.id()) for f in filter_set],
-                             onchange=onchange),
-                )
-                filter_content.append(g.span(filter_set_content) + '&nbsp;&nbsp;')
-            filter_content.append(submit_button)
-            content.append(g.div(filter_content, cls="filter"))
+        if self._query_fields_form and not bottom:
+            #TODO: Hide when there are no records and no active filtering conditions?
+            #    and (count or [v for v in self._filter_ids.values() if v is not None])
+            content.append(self._query_fields_form.export(context))
         limit, limits = self._limit, self._limits
         if limit is not None and count > limits[0]:
             controls = ()
@@ -1908,8 +1892,7 @@ class BrowseForm(LayoutForm):
                      # Translators: Search button label.
                      g.button(g.span(_("Search")), type='submit', cls='search-button'),
                      g.button(g.span(_("Cancel")), type='submit', cls='cancel-search')),
-                    cls='query' + (show_filters and ' with-filter' or ''),
-                    style=not show_search_field and 'display:none' or None,
+                    cls='query', style=not show_search_field and 'display:none' or None,
                 )
                 content.insert(0, search_field)
             if self._name is not None:
@@ -1932,24 +1915,13 @@ class BrowseForm(LayoutForm):
             return super(BrowseForm, self).export(context)
         
     def heading_info(self):
-        active_filters = [(k, v) for k, v in self._filter_ids.items() if v is not None]
-        filter_labels = []
-        for filter_id, filter_value in active_filters:
-            for filter_set in self._filter_sets:
-                if filter_set.id() == filter_id:
-                    break
-            else:
-                continue
-            for filter in filter_set:
-                if filter.id() == filter_value:
-                    if filter.condition():
-                        filter_labels.append(filter.name())
-                    break
-        if filter_labels:
-            info = _("filtered by: ") + lcg.concat(filter_labels, separator=', ')
-        else:
-            info = None
-        return info
+        if self._query_fields_form:
+            row = self._query_fields_form.row()
+            names = [row.display(filter_set.id()) for filter_set in self._filter_sets
+                     if row[filter_set.id()].value() is not None]
+            if names:
+                return _("filtered by: ") + lcg.concat(names, separator=', ')
+        return None
 
     def query_field_values(self):
         """Return the current filter field values as a list of pairs (field_id, value).
@@ -1959,8 +1931,9 @@ class BrowseForm(LayoutForm):
         specification are returned.
 
         """
-        row = self._query_fields_row
-        return [(key, row[key]) for key in row.keys()]
+        row = self._query_fields_form.row()
+        fs_keys = [fs.id() for fs in self._filter_sets]
+        return [(key, row[key]) for key in row.keys() if key not in fs_keys]
 
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
@@ -1994,7 +1967,30 @@ class BrowseForm(LayoutForm):
     def text_search_string(self):
         """Return the current text of the search field or None if text search is not active."""
         return self._text_search_string
-        
+
+    def is_ajax_request(self, req):
+        """Return True if the request is an AJAX request.
+
+        If the current request is a pytis form update request, return True,
+        Otherwise return False.  If True is returned, the request should return
+        the result of the method 'ajax_response()'.
+
+        BrowseForm may emit ajax requests for query fields form updates.
+
+        """
+        if self._query_fields_form:
+            return self._query_fields_form.is_ajax_request(req)
+        else:
+            return False
+
+    def ajax_response(self, req):
+        """Return the AJAX request response as a JSON encoded data structure.
+
+        Same rules for the returned value apply as in 'EditForm.ajax_response()'.
+
+        """
+        return self._query_fields_form.ajax_response(req)
+
 
 class ListView(BrowseForm):
     """Listing with a customizable layout for each record.
@@ -2365,8 +2361,8 @@ class EditableBrowseForm(BrowseForm):
     def _export_javascript(self, context, form_id):
         g = context.generator()
         uri = self._uri_provider(None, UriType.LINK, None)
-        return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri,
-                         self._allow_insertion)
+        return g.js_call("new pytis.BrowseForm",
+                         form_id, self._name, uri, self._allow_insertion) + ';'
 
     def _removed_keys(self):
         param = '_pytis_removed_row_key_' + self._name
