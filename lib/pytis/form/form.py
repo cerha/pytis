@@ -3080,7 +3080,7 @@ class QueryFieldsForm(_VirtualEditForm):
     def _full_init(self, *args, **kwargs):
         fields = tuple(kwargs['fields'])
         kwargs['fields'] = fields + (
-            # Add hidden virtual field just for tracking chenges of other fields.
+            # Add hidden virtual field just for tracking changes of other fields.
             Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
                   computer=pytis.presentation.Computer(lambda r: True,
                                                        depends=[f.id() for f in fields])),
