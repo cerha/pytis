@@ -2117,6 +2117,9 @@ class SQLTable(_SQLIndexable, _SQLTabular):
       unique -- tuple of tuples defining unique constraints; each of the tuples
         contains names of the table columns (strings) creating a unique
         constraint
+      exclude_constraints -- tuple of table exclude constraint definitions;
+        each of the constraint definitions is a tuple of pairs
+        (COLUMN, OPERATOR).
       foreign_keys -- tuple of multicolumn foreign key constraints.  Each of
         the constraints is 'Arguments' instance with the first argument being a
         tuple of table column names and the second argument a tuple of the same
@@ -2165,6 +2168,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     init_values = ()
     check = ()
     unique = ()
+    exclude_constraints = ()
     foreign_keys = ()
     with_oids = False
     triggers = ()
@@ -2202,6 +2206,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
             args += (sqlalchemy.UniqueConstraint(*unique),)
+        for exclude in cls.exclude_constraints:
+            args += (sqlalchemy.dialects.postgresql.ExcludeConstraint(*exclude),)
         for foreign_key in cls.foreign_keys:
             columns, refcolumns = foreign_key.args()
             refcolumns = [c.get() if isinstance(c, ReferenceLookup.Reference) else c

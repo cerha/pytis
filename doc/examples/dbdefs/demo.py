@@ -134,6 +134,11 @@ class DateTable(sql.SQLTable):
               sql.Column('ambigous_timestamp', pytis.data.DateTime(without_timezone=True)),
               )
 
+class NonOverlappingRanges(sql.SQLTable):
+    name = 'non_overlapping_ranges'
+    fields = (sql.Column('d', pytis.data.DateRange()),)
+    exclude_constraints = ((('d', '&&'),),)
+
 class LogTable(sql.SQLTable):
     name = 'log_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
