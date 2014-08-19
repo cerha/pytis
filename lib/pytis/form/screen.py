@@ -1933,7 +1933,7 @@ class HelpProc(object):
 
     def __call__(self):
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
-        if  pytis.form.action_has_access(action):
+        if not pytis.form.action_has_access(action):
             msg = _(u"You don't have priviledges to invoke the action '%s'.\n"
                     u"Please contact the access rights administrator.") % (action,)
             run_dialog(pytis.form.Error, msg)
