@@ -1110,6 +1110,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _get_cell_tooltip_string(self, row, col):
         # Return the tooltip string for given grid cell.
+        if self._transaction and not self._transaction.open():
+            self.refresh()
         record = self._table.row(row)
         if record:
             cid = self._columns[col].id()
