@@ -4,21 +4,28 @@ Requirements:
 
   * Python 2.6 or later
   * PostgreSQL 8.4 or later
-  * python-psycopg2 library (for older versions - PyPgSQL Python library)
-  * python-wxgtk2.8 or later (only for GUI apps)
-  * python-imaging (only when using Image data types)  
+  * Python modules: 
+    - psycopg2
+    - sqlalchemy
+    - imaging (only when using Image data types)  
+  * For running GUI applications, you need also these Python modules:
+    - wxgtk2.8 (only for GUI apps)
+    - wxversion
+    - webkit
+    - magic
+  Typical Pytis application (such as Pytis Demo) also need:
+    - PostgreSQL extensions, such as ltree (postgresql-contrib)
+    - PL/Python procedural language (postgresql-plpython)
 
-On Debian-based system, you can install the requirements with this command
-    (strip the last one or two packages if not needed according to above notes):
-sudo apt-get install python postgresql python-psycopg2 python-egenix-mxdatetime python-wxgtk2.6 python-imaging
+Install all these on a Debian-based system:
 
-The simplest installation can be done using the provided Makefile.  Just run
-"make all && make install" within the package root directory.  Feel free to
-edit the Makefile and setup your own installation paths.
+apt-get install python postgresql python-psycopg2 python-sqlalchemy \
+ python-imaging python-wxgtk2.8 python-wxversion python-magic \
+ postgresql-contrib postgresql-plpython
 
-You can also run the development version directly out of your checked out tree,
-being able to check out a newer version at any time and using this new version
-right away.  The Makefile supports this setup by linking the necessary
-directories into your checked out tree.  You need to run "make all && make
-install-links" for the first time, and then just "make all" after each
-checkout.
+The currently supported model of using Pytis is running it directly out of the
+checked out tree, being able to check out a newer version at any time and using
+this new version right away.  You need to run 'make' after each checkout to
+update the generated files from the source files, but no actual installation is
+needed.  Pytis is a pure Python library so you just need to setup your
+PYTHONPATH and you are all done.
