@@ -391,6 +391,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if conn.port():
                     title += ":%s" % (conn.port(),)
             self._frame.SetTitle(title)
+        self._spec('post_init')
 
     def _spec(self, name, default=None, **kwargs):
         try:
