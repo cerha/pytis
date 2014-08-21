@@ -103,7 +103,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if cls.DESCR is not None:
             return cls.DESCR
         else:
-            return cls.__class__.__name__
+            return cls.__name__
     descr = classmethod(descr)
 
     def __init__(self, parent, resolver, name, full_init=True, **kwargs):
@@ -3291,6 +3291,8 @@ class WebForm(Form, Refreshable):
     The form shows a browser window as its main content.
 
     """
+    DESCR = _(u"document view")
+
     def _create_view_spec(self):
         # This is quite a hack.  The base Form class should be independent of
         # pytis specifications and data objects as it shows, that we want also
@@ -3300,14 +3302,29 @@ class WebForm(Form, Refreshable):
     def _create_data_object(self):
         return None
     
-    def _init_attributes(self, **kwargs):
+    def _init_attributes(self, title=None, content=None, **kwargs):
         super_(WebForm)._init_attributes(self, **kwargs)
-        self._async_browser_interaction = None
+        assert (content is not None) == (title is not None), \
+            "When 'content' specified, 'title' must be set too (and wice versa)."
+        self._title = title
+        self._content = content
         
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
         sizer.Add(browser.toolbar(self), 0, wx.EXPAND | wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
+        content = self._content
+        if content is not None:
+            if isinstance(content, basestring):
+                self._browser.load_html(content, restrict_navigation='-')
+            else:
+                self._browser.load_content(content)
 
     def _refresh(self, when=None, interactive=False):
         self._browser.reload()
+
+    def _can_help(self):
+        return False
+
+    def title(self):
+        return self._title or _("Document")

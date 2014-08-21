@@ -579,9 +579,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _update_window_menu(self):
         def wmitem(i, form):
+            info = form.__class__.__name__
+            if form.name():
+                info += '/' + form.name()
             return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
-                             help=_("Bring form window to the top (%s)",
-                                    form.__class__.__name__ + '/' + form.name()),
+                             help=_("Bring form window to the top (%s)", info),
                              command=Application.COMMAND_RAISE_FORM,
                              state=lambda: top_window() is form,
                              args={'form': form})
@@ -847,7 +849,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         config.resolver.reload()
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
-        if form_class is pytis.form.InputForm and name is None:
+        if form_class in (pytis.form.InputForm, WebForm) and name is None:
             return True
         if ((isinstance(self.current_form(), pytis.form.PopupForm) and
              not issubclass(form_class, pytis.form.PopupForm))):
@@ -956,7 +958,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.resize() # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
-                    if not isinstance(form, pytis.form.PrintForm):
+                    if not isinstance(form, (pytis.form.PrintForm, pytis.form.WebForm)):
                         item = (self._form_menu_item_title(form),
                                 dict(form_class=form_class, name=name))
                         self._update_recent_forms(item)
