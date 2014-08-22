@@ -50,7 +50,7 @@ from .event import UserBreakException, interrupt_init, interrupt_watcher, \
     top_level_exception, unlock_callbacks, wx_callback, yield_
 from .screen import Browser, CheckItem, KeyHandler, Keymap, \
     Menu, MenuBar, MItem, MSeparator, StatusBar, \
-    acceskey_prefix, beep, busy_cursor, get_icon, gtk, init_colors, mitem, wx_focused_window
+    acceskey_prefix, beep, busy_cursor, get_icon, init_colors, mitem, wx_focused_window
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -123,7 +123,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     except ResolverError:
                         return default
             self._specification = LegacyApplication()
-        if gtk is not None:
+        try:
+            import gtk
+        except ImportError:
+            pass
+        else:
             clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
             clipboard.connect("owner-change", self._on_clipboard_copy)
         init_colors()

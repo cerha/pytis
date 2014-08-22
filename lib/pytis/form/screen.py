@@ -32,19 +32,13 @@ import copy
 import os
 import string
 import types
-try:
-    import gtk
-    import gtk.gdk
-except ImportError:
-    gtk = None
-try:
-    import webkit
-except ImportError:
-    webkit = None
 import lcg
 
 import wx
 import wx.combo
+import wx.html2
+import config
+
 
 import wx.lib.agw.supertooltip as supertooltip
 if not hasattr(supertooltip.SuperToolTip, 'DoHideNow'):
@@ -63,23 +57,24 @@ from pytis.form import wx_callback
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
-import config
-if config.http_proxy is not None:
-    # Nasty way to set the proxy used by the webkit browser.  This should be
-    # much more elegant with newer pywebkitgtk versions as they will have a new
-    # method set_proxy(), but this version was not released yet..
-    import ctypes
-    libgobject = ctypes.CDLL('/usr/lib/libgobject-2.0.so.0')
-    libsoup = ctypes.CDLL('/usr/lib/libsoup-2.4.so.1')
-    libwebkit = ctypes.CDLL('/usr/lib/libwebkit-1.0.so.2')
-    proxy_uri = libsoup.soup_uri_new(config.http_proxy)
-    session = libwebkit.webkit_get_default_session()
-    libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
+#  import config
+# if config.http_proxy is not None:
+# Nasty way to set the proxy used by the webkit browser.  This should be
+# much more elegant with newer pywebkitgtk versions as they will have a new
+# method set_proxy(), but this version was not released yet..
+#    import ctypes
+#    libgobject = ctypes.CDLL('/usr/lib/libgobject-2.0.so.0')
+#    libsoup = ctypes.CDLL('/usr/lib/libsoup-2.4.so.1')
+#    libwebkit = ctypes.CDLL('/usr/lib/libwebkit-1.0.so.2')
+#    proxy_uri = libsoup.soup_uri_new(config.http_proxy)
+#    session = libwebkit.webkit_get_default_session()
+#    libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
 _ = pytis.util.translations('pytis-wx')
 
 _WX_COLORS = {}
 _WX_COLOR_DB = {}
+
 
 def init_colors():
     global _WX_COLORS, _WX_COLOR_DB
@@ -93,6 +88,7 @@ def init_colors():
         _WX_COLOR_DB[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
 
 # Utility functions
+
 
 def beep():
     """Pípni."""
@@ -123,6 +119,7 @@ def busy_cursor(enable):
         if wx.IsBusy():
             wx.EndBusyCursor()
 
+
 def is_busy_cursor():
     """Vrať pravdu, právě když je nastaven busy cursor."""
     return wx.IsBusy()
@@ -137,6 +134,7 @@ def modal(window):
     """
     return (window and
             (isinstance(window, pytis.form.Dialog) or isinstance(window, pytis.form.PopupForm)))
+
 
 def copy_to_clipboard(text):
     """Copy given text into system clipboard.
@@ -162,6 +160,7 @@ def copy_to_clipboard(text):
     ctrl.SetSelection(0, len(text))
     ctrl.Copy()
     ctrl.Destroy()
+
 
 def paste_from_clipboard(ctrl):
     """Paste text from clipboard to 'wx.TextCtrl' widget.
@@ -884,8 +883,8 @@ class KeyHandler:
             if __debug__:
                 log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
-            pytis.form.message('Prefixová klávesa: {} ({})'.format(
-                ' '.join(self._prefix_key_sequence), ', '.join(keydef.keys())))
+            pytis.form.message('Prefixová klávesa: %s (%s)' %
+                               (' '.join(self._prefix_key_sequence), ', '.join(keydef.keys()),))
             self._current_keymap = keydef
             return True
         else:
@@ -979,7 +978,6 @@ class CallbackHandler:
             callback(*args, **kwargs)
             return True
 
-
 # Specialized gadgets
 
 
@@ -1321,8 +1319,7 @@ class MItem(_TitledMenuObject):
 
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(),
-                    lambda e: self._command.invoke(**self._args))
+        wx_callback(wx.EVT_MENU, parent, item.GetId(), lambda e: self._command.invoke(**self._args))
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         self._create_icon(item)
         return item
@@ -1806,8 +1803,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.InsertStringItem(i, label)
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
-            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL,
-                                        wx.BOLD))
+            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL, wx.BOLD))
         self.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):
@@ -2244,8 +2240,6 @@ class Browser(wx.Panel, CommandHandler):
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
     The public methods may be used then to manipulate the browser content.
 
-    Implemented using Webkit GTK (http://webkitgtk.org/reference/webkitgtk-webkitwebview.html).
-
     """
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
 
@@ -2258,12 +2252,14 @@ class Browser(wx.Panel, CommandHandler):
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self._webview = None
-        self._async_queue = []
         self._resource_provider = None
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
         self._last_help_uri = None
+        self._webview = webview = wx.html2.WebView.New(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(webview, 1, wx.EXPAND)
+        self.SetSizer(sizer)
         # This can be actually anything what can be recognized later in
         # _on_resource_request() and what is recognized by webkit as a valid
         # URL.  We used the 'resource:' prefix before, but it doesn't work
@@ -2272,98 +2268,25 @@ class Browser(wx.Panel, CommandHandler):
         # localhost even though the URL suggests it.  They are loaded by
         # _on_resource_request().
         self._resource_base_uri = 'http://localhost/pytis-resources/'
-        wx_callback(wx.EVT_IDLE, self, self._on_idle)
+        wxid = webview.GetId()
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
+        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_load_finished)
+        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_load_error)
+        wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
 
-    def _on_idle(self, event):
-        if self._webview is None:
-            # Show must be called first in order to be able to obtain the GtkPizza
-            # widget below.  GtkPizza is a custom GTK widget implemented by
-            # wxWidgets.
-            self.GetParent().Show()
-            handle = self.GetHandle()
-            gtk_window = None if gtk is None else gtk.gdk.window_lookup(handle)
-            # The GTK window lookup will return None when called *before* the
-            # window is actually shown on the screen (because of some wx/GTK
-            # magic).  In this case we must wait and try again in next idle
-            # call.
-            if gtk_window:
-                # Reference to the GtkPizza widget must be kept to prevent a segfault.
-                self._gtk_pizza = gtk_pizza = gtk_window.get_user_data()
-                # GtkPizza's parant is a gtk.ScrolledWindow.
-                gtk_scrolled_window = gtk_pizza.parent
-                # Replace the GTK ScrolledWindow content by the webkit widget.
-                gtk_scrolled_window.remove(gtk_pizza)
-                self._webview = webview = webkit.WebView()
-                gtk_scrolled_window.add(webview)
-                gtk_scrolled_window.show_all()
-                webview.connect('notify::load-status', self._on_load_status_changed)
-                # webview.connect('notify::title', self._on_title_changed)
-                webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
-                webview.connect('resource-request-starting', self._on_resource_request)
-                # webview.connect('load-error', self._on_load_error)
-                # features = webview.get_window_features()
-                # features.set_property('statusbar_visible', True)
-                # features.set_property('locationbar-visible', True)
-                settings = webview.get_settings()
-                settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
-                # settings.props.enable_developer_extras = True # Doesn't work...
-                webview.set_settings(settings)
-                # Setting focus to the location bar TextCtrl is here mainly to allow
-                # leaving the form using the Escape key (implemented by hack in LocationBar)
-                # because wx keypresses are not correctly processed within the gtk embedded
-                # webkit widget.
-                location_bar = self.GetParent().FindWindowByName('location-bar')
-                if location_bar:
-                    location_bar.set_focus()
+    def _on_load_finished(self, event):
+        busy_cursor(False)
+        pytis.form.message(_("Document loaded."), log_=False)
+        if self._uri_change_callback:
+            self._uri_change_callback(event.GetURL())
 
-        if self._webview is not None:
-            # Perform webview interaction asyncronously to avoid blocking the
-            # main application.  This also allows the public methods load_uri
-            # and load_html() to be called before the vebview is actually
-            # created above.
-            while self._async_queue:
-                function = self._async_queue.pop(0)
-                function()
+    def _on_load_error(self, event):
+        busy_cursor(False)
+        pytis.form.message(_("Loading document failed."), log_=False)
 
-    def _on_load_status_changed(self, webview, signal):
-        status = webview.get_property('load-status')
-        if status == webkit.LOAD_FINISHED:
-            msg = _("Document loaded.")
-            busy = False
-            if self._uri_change_callback:
-                self._uri_change_callback(webview.get_property('uri'))
-        elif status == webkit.LOAD_FAILED:
-            msg = _("Loading document failed.")
-            busy = False
-        else:
-            msg = _("Loading document.")
-            busy = True
-        busy_cursor(busy)
-        pytis.form.message(msg, log_=False)
-
-    def _on_load_error(self, webview, frame, uri, gerror):
-        # For debugging only! (non portable hack)
-        import ctypes
-        ptr = int(str(gerror)[13:-1], 16)
-        ptrtype = ctypes.POINTER(ctypes.c_char_p)
-        msgptr = ctypes.cast(ptr + 8, ptrtype)
-        message = msgptr[0]
-        print "LOAD ERROR:", message
-        return False
-
-    def _parse_kwargs(self, uri):
-        def value(v):
-            v = [int(x) if x.isdigit() else x for x in v]
-            if len(v) == 1:
-                v = v[0]
-            return v
-        if '?' in uri:
-            import urlparse
-            uri, query = uri.split('?', 1)
-            kwargs = dict((k, value(v)) for k, v in urlparse.parse_qs(query).items())
-        else:
-            kwargs = {}
-        return uri, kwargs
+    def _on_title_changed(self, event):
+        pass
 
     def _on_navigation_request(self, webview, frame, req, action, decision):
         uri = req.get_uri()
@@ -2380,8 +2303,8 @@ class Browser(wx.Panel, CommandHandler):
             self._webview.execute_script(script)
             return True
         elif uri.startswith('help:'):
-            if self._last_help_uri == uri \
-                    and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
+            if self._last_help_uri == uri:
+                # and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
                 # Calling load_content() below triggers _on_navigation_request again,
                 # but the later call must be ignored to avoid recursion.
                 self._last_help_uri = None
@@ -2392,11 +2315,11 @@ class Browser(wx.Panel, CommandHandler):
                                     get_resource_uri=self._resource_uri,
                                     translations=pytis.util.translation_path())
             self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
-            if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
-                                       webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
-                                       webkit.WEB_NAVIGATION_REASON_OTHER,):
-                history = self._webview.get_back_forward_list()
-                history.add_item(webkit.WebHistoryItem(uri, uri))
+            #if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
+            #                           webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
+            #                           webkit.WEB_NAVIGATION_REASON_OTHER,):
+            #    history = self._webview.get_back_forward_list()
+            #    history.add_item(webkit.WebHistoryItem(uri, uri))
             return True
         elif uri.startswith('form:'):
             spec_name, kwargs = self._parse_kwargs(uri[5:])
@@ -2437,7 +2360,8 @@ class Browser(wx.Panel, CommandHandler):
     def _on_resource_request(self, webview, frame, resource, req, response):
         def redirect(lcg_resource):
             if lcg_resource and lcg_resource.src_file():
-                # Redirect the request to load the resource file from filesystem.
+                # Redirect the request to load the resource file from
+                # filesystem.
                 req.set_uri("file://" + lcg_resource.src_file())
         uri = resource.get_uri()
         # Note, when load_html() is performed, this method gets called with uri
@@ -2463,39 +2387,46 @@ class Browser(wx.Panel, CommandHandler):
             uri = self._resource_base_uri + resource.filename()
         return uri
 
+    def _parse_kwargs(self, uri):
+        def value(v):
+            v = [int(x) if x.isdigit() else x for x in v]
+            if len(v) == 1:
+                v = v[0]
+            return v
+        if '?' in uri:
+            import urlparse
+            uri, query = uri.split('?', 1)
+            kwargs = dict((k, value(v)) for k, v in urlparse.parse_qs(query).items())
+        else:
+            kwargs = {}
+        return uri, kwargs
+
     def _can_go_forward(self):
-        return self._webview.can_go_forward()
+        return self._webview.CanGoForward()
 
     def _cmd_go_forward(self):
-        self._webview.go_forward()
+        self._webview.GoForward()
 
     def _can_go_back(self):
-        return self._webview.can_go_back()
+        return self._webview.CanGoBack()
 
     def _cmd_go_back(self):
-        self._webview.go_back()
+        self._webview.GoBack()
 
     def _can_stop_loading(self):
-        status = self._webview.get_property('load-status')
-        return status not in (webkit.LOAD_FINISHED, webkit.LOAD_FAILED)
+        self._webview.IsBusy()
 
     def _cmd_stop_loading(self):
-        self._webview.stop_loading()
+        self._webview.Stop()
 
     def _cmd_reload(self):
         self.reload()
 
     def _cmd_load_uri(self, uri):
-        self._webview.load_uri(uri)
-
-    def can_command(self, command, **kwargs):
-        if self._webview is not None:
-            return super(Browser, self).can_command(command, **kwargs)
-        else:
-            return False
+        self._webview.LoadURL(uri)
 
     def reload(self):
-        self._webview.reload_bypass_cache()
+        self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
     def toolbar(self, parent):
         toolbar = wx.ToolBar(parent)
@@ -2524,18 +2455,14 @@ class Browser(wx.Panel, CommandHandler):
         self._uri_change_callback = callback
 
     def load_uri(self, uri, restrict_navigation=None):
-        def f():
-            self._resource_provider = None
-            self._restricted_navigation_uri = restrict_navigation
-            self._webview.load_uri(uri)
-        self._async_queue.append(f)
+        self._resource_provider = None
+        self._restricted_navigation_uri = restrict_navigation
+        self._webview.LoadURL(uri)
 
     def load_html(self, html, base_uri='', restrict_navigation=None, resource_provider=None):
-        def f():
-            self._resource_provider = resource_provider
-            self._restricted_navigation_uri = restrict_navigation
-            self._webview.load_html_string(html, base_uri)
-        self._async_queue.append(f)
+        self._resource_provider = resource_provider
+        self._restricted_navigation_uri = restrict_navigation
+        self._webview.SetPage(html, base_uri)
 
     def load_content(self, node, base_uri='', exporter=None):
         """Load browser content from lcg.ContentNode instance."""
@@ -2592,7 +2519,6 @@ class IN(pytis.data.Operator):
         self._spec_name = spec_name
         self._table_column_id = table_column_id
         self._profile_id = profile_id
-        import config
         resolver = config.resolver
         view_spec = resolver.get(spec_name, 'view_spec')
         data_factory = resolver.get(spec_name, 'data_spec')
@@ -2663,6 +2589,7 @@ def char2px(window, x, y):
 
     return dlg2px(window, 4 * x, 8 * y)
 
+
 def dlg2px(window, x, y=None):
     """Přepočítej znakový rozměr na pixely.
 
@@ -2697,6 +2624,7 @@ def dlg2px(window, x, y=None):
     else:
         return pxsize
 
+
 def acceskey_prefix(i):
     pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  ', 'w': ''}
     if i < 26:
@@ -2717,6 +2645,7 @@ def orientation2wx(orientation):
 
 # Pomocné funkce
 
+
 def make_fullname(form_class, spec_name):
     """Return a fullname string for given form class and specification name.
 
@@ -2736,6 +2665,7 @@ def make_fullname(form_class, spec_name):
         # 'pytis.form.list').
         module_name = 'pytis.form'
     return 'form/%s.%s/%s//' % (module_name, form_class.__name__, spec_name)
+
 
 def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
@@ -2899,6 +2829,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return button
 
+
 def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
               enabled=True, size=None, width=None, height=None, _combo=False):
     """Create and setup a choice control.
@@ -2953,6 +2884,7 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
         wx_callback(evt, ctrl, ctrl.GetId(), on_change)
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
+
 
 def wx_combo(parent, choices, **kwargs):
     """Create and setup a combo box control.
