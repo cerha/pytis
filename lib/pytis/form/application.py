@@ -286,11 +286,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
         for title, args in recent_forms:
-            if not self._is_valid_spec(args['name']) or not issubclass(args['form_class'],
-                                                                       pytis.form.Form):
+            if ((args['name'] is not None and self._is_valid_spec(args['name'])
+                 and issubclass(args['form_class'], pytis.form.Form))):
+                self._recent_forms.append((title, args))
+            else:
                 log(OPERATIONAL, "Ignoring recent form:", args)
-                continue
-            self._recent_forms.append((title, args))
         self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
         # Initialize the menubar.
         mb = self._create_menubar()
