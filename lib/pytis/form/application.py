@@ -286,7 +286,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
         for title, args in recent_forms:
-            if ((args['name'] is not None and self._is_valid_spec(args['name'])
+            if ((self._is_valid_spec(args['name'])
                  and issubclass(args['form_class'], pytis.form.Form))):
                 self._recent_forms.append((title, args))
             else:
@@ -403,7 +403,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _is_valid_spec(self, name):
         # Determine whether the specification name still exists.
-        if '::' in name:
+        if name is None:
+            return False
+        elif '::' in name:
             name, side_name = name.split('::')
         else:
             side_name = None
