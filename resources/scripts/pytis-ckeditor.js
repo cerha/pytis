@@ -577,6 +577,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                    msg = pytis._("Upload successful");
                                    cls = "ckeditor-success";
                                    field.update_attachment(reply['filename'], {'listed': false});
+				   dialog.getContentElement('main', 'identifier').setValue(reply['filename']);
                                } else {
                                    msg = reply['message'];
                                    cls = "ckeditor-error";
