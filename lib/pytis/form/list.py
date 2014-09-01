@@ -471,7 +471,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 panel_sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
             panel.SetSizer(panel_sizer)
             panel.SetAutoLayout(1)
-            position = self._get_saved_setting('query-fields-position', 'down')
+            position = self._get_saved_setting('query-fields-position', 'up')
             if position == 'up':
                 sizer.Insert(sizer.GetItemIndex(self._grid), panel, 0, wx.EXPAND)
             else:
