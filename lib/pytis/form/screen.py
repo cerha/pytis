@@ -1851,7 +1851,7 @@ class FormStateToolbarControl(wx.BitmapButton):
                 self._toolbar.Realize()
 
     def _current_icon_index(self, form):
-        """Implement this method to return the index of the active icon in _ICONS.""" 
+        """Implement this method to return the index of the active icon in _ICONS."""
         pass
             
 
@@ -1936,7 +1936,7 @@ class HelpProc(object):
         if not pytis.form.action_has_access(action):
             msg = _(u"You don't have priviledges to invoke the action '%s'.\n"
                     u"Please contact the access rights administrator.") % (action,)
-            run_dialog(pytis.form.Error, msg)
+            pytis.form.run_dialog(pytis.form.Error, msg)
         else:
             self._func()
 
@@ -2087,14 +2087,14 @@ class Browser(wx.Panel, CommandHandler):
                 module_name, proc_name = uri[5:].rsplit('.', 1)
                 module = __import__(module_name)
                 for component in module_name.split('.')[1:]:
-                    module = getattr(module, component)                   
+                    module = getattr(module, component)
                 proc = getattr(module, proc_name)
                 if not isinstance(proc, HelpProc):
                     raise ProgramError("Unable to call '%s' from help. "
                                        "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
                 proc()
             except:
-                top_level_exception()
+                pytis.form.top_level_exception()
             return True
         else:
             restricted_navigation_uri = self._restricted_navigation_uri
