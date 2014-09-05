@@ -1010,7 +1010,7 @@ class LookupForm(InnerForm):
             kwargs = self._provider_kwargs()
             if 'query_fields' in kwargs and kwargs['query_fields'] is None:
                 # If _query_fields_row() returs None, it means that the
-                # query fields are not initialized yet and autoapply is off.
+                # query fields are not initialized yet and autoinit is off.
                 # This happens during form initialization.  In this case we
                 # want to display an empty form without calling the provider
                 # functions at all.

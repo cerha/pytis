@@ -427,12 +427,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # initialization before the initial select when the form user
             # interface is not created yet.  Thus query fields are not yet
             # available as well.
-            if self._view.query_fields().autoapply() or self._query_field_values:
-                # If autoapply is on, we will construct the row from default
+            if self._view.query_fields().autoinit() or self._query_field_values:
+                # If autoinit is on, we will construct the row from default
                 # field values.
                 return super(ListForm, self)._query_fields_row()
             else:
-                # If autoapply is off, we return None, which avoids calling
+                # If autoinit is off, we return None, which avoids calling
                 # argument provider at all.  The form will appear initially
                 # empty and the user will need to submit query fields to see
                 # any data.
@@ -449,11 +449,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             form = QueryFieldsForm(panel, config.resolver, None, prefill=self._query_field_values,
                                    **query_fields.view_spec_kwargs())
             self._query_fields_form = form
-            self._query_fields_apply_button = apply_button = \
-                wx_button(panel, label=_("Apply"),
-                          tooltip=_("Reload form data with current query field values."),
-                          enabled=not query_fields.autoapply(),
-                          callback=lambda e: self._apply_query_fields())
+            if not query_fields.autoapply():
+                self._query_fields_apply_button = apply_button = wx_button(
+                    panel, label=_("Apply"),
+                    tooltip=_("Reload form data with current query field values."),
+                    enabled=not query_fields.autoinit(),
+                    callback=lambda e: self._apply_query_fields()
+                )
+            else:
+                self._query_fields_apply_button = apply_button = None
             self._query_fields_panel_buttons = panel_buttons = (
                 wx_button(panel, label=_("Minimize"),
                           tooltip=_("Minimize/maximize query panel."),
@@ -465,8 +469,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           callback=self._on_move_query_fields))
             panel_sizer = wx.BoxSizer()
             panel_sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
-            panel_sizer.Add((0, 0), 1)
-            panel_sizer.Add(apply_button, 0, wx.ALL | wx.ALIGN_BOTTOM | wx.FIXED_MINSIZE, 4)
+            if apply_button:
+                panel_sizer.Add((0, 0), 1)
+                panel_sizer.Add(apply_button, 0, wx.ALL | wx.ALIGN_BOTTOM | wx.FIXED_MINSIZE, 4)
             for button in panel_buttons:
                 panel_sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
             panel.SetSizer(panel_sizer)
@@ -490,15 +495,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
 
     def _on_query_fields_changed(self):
-        self._query_fields_apply_button.Enable(True)
+        if self._query_fields_apply_button:
+            self._query_fields_apply_button.Enable(True)
+        else:
+            self._apply_query_fields()
 
     def _apply_query_fields(self):
         save = self._view.query_fields().save()
         if save:
             save(self._query_fields_row())
-        self._query_fields_apply_button.Enable(False)
         self.refresh(interactive=True, reload_query_fields=False)
-        self._grid.SetFocus()
+        if self._query_fields_apply_button:
+            self._query_fields_apply_button.Enable(False)
+            self._grid.SetFocus()
 
     def refresh(self, reload_query_fields=True, **kwargs):
         query_fields = self._view.query_fields()

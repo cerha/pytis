@@ -1235,11 +1235,16 @@ class QueryFields(object):
 
 
     """
-    def __init__(self, fields, autoapply=False, layout=None, load=None, save=None, **kwargs):
+    def __init__(self, fields, autoapply=False, autoinit=False, layout=None, load=None,
+                 save=None, **kwargs):
         """Arguments:
 
         fields -- field specifications as in ViewSpec
-        autoapply -- if True, the query fields will be applied with their
+
+        autoapply -- if True, the query fields will be applied automatically
+          after each change in field values.  When False (the default), the
+          user needs to press a button to apply the field values explicitly.
+        autoinit -- if True, the query fields will be applied with their
           default values automatically when the form is opened.  Otherwise, the
           form is initially displayed empty and query field values must be
           applied manually when the fields are filled.
@@ -1262,6 +1267,7 @@ class QueryFields(object):
         if isinstance(layout, (tuple, list)):
             layout = HGroup(*layout)
         self._autoapply = autoapply
+        self._autoinit = autoinit
         self._load = load
         self._save = save
         self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
@@ -1273,6 +1279,10 @@ class QueryFields(object):
     def autoapply(self):
         """Return value of the argument 'autoapply' passed to the constructor."""
         return self._autoapply
+
+    def autoinit(self):
+        """Return value of the argument 'autoinit' passed to the constructor."""
+        return self._autoinit
 
     def load(self):
         """Return value of the argument 'load' passed to the constructor."""
