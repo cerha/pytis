@@ -1900,7 +1900,8 @@ class LocationBar(wx.TextCtrl):
     def __init__(self, parent, uicmd, editable=True, size=None):
         self._toolbar = parent
         self._uicmd = uicmd
-        wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER)
+        wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER,
+                             name='location-bar')
         self.SetEditable(editable)
         pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
         if editable:
@@ -1910,16 +1911,39 @@ class LocationBar(wx.TextCtrl):
             self.Refresh()
         browser = uicmd.args()['_command_handler']
         browser.set_uri_change_callback(lambda uri: self.SetValue(uri))
+        pytis.form.wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
+        self._want_focus = 0
 
     def _on_update_ui(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
-                
+        if self._want_focus:
+            self.SetFocus()
+            # Nasty hack - see set_focus for explanation.
+            self._want_focus -= 1
+            
     def _on_enter(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         uri = self.GetValue()
         cmd.invoke(uri=uri, **kwargs)
+
+    def _on_key_down(self, event):
+        # This is a hack to make the form at least respond to the Escape key
+        # (which is normally mapped to COMMAND_LEAVE_FORM).  When the webkit
+        # widget is replaced by wx.WebView, it should be hopefully possible
+        # to remove this hack and handle keys normally within the form.
+        code = event.GetKeyCode()
+        if code == wx.WXK_ESCAPE:
+            pytis.form.Form.COMMAND_LEAVE_FORM.invoke()
+        else:
+            event.Skip()
+
+    def set_focus(self):
+        # This is a total hack - calling SetFocus() is ignored at form startup, but
+        # calling it repeatedly in _on_update_ui seems to help finally.  Three times
+        # seems to work, so rather repeat it four times to be sure...
+        self._want_focus = 4
 
 
 class HelpProc(object):
@@ -1975,6 +1999,7 @@ class Browser(wx.Panel, CommandHandler):
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
         self._last_help_uri = None
+        self._toolbar = None
         pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
@@ -2011,6 +2036,15 @@ class Browser(wx.Panel, CommandHandler):
                 settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
                 # settings.props.enable_developer_extras = True # Doesn't work...
                 webview.set_settings(settings)
+                if self._toolbar:
+                    # Setting focus to the location bar TextCtrl is here mainly to allow 
+                    # leaving the form using the Escape key (implemented by hack in LocationBar)
+                    # because wx keypresses are not correctly processed within the gtk embedded
+                    # webkit widget.
+                    location_bar = self._toolbar.FindWindowByName('location-bar')
+                    if location_bar:
+                        location_bar.set_focus()
+
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
             # main application.  This also allows the public methods load_uri
@@ -2163,7 +2197,7 @@ class Browser(wx.Panel, CommandHandler):
         self._webview.reload_bypass_cache()
         
     def toolbar(self, parent):
-        toolbar = wx.ToolBar(parent)
+        self._toolbar = toolbar = wx.ToolBar(parent)
         for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
                                 _("Back"),
                                 _("Go back to the previous location in browser history.")),
