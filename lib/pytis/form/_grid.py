@@ -729,7 +729,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         except AttributeError:
             pass
         
-    def EndEdit(self, row, col, grid):
+    def EndEdit(self, row, col, grid, *args):
         field = self._field
         field.validate(interactive=False)
         field.widget().Enable(False)
