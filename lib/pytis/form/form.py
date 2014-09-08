@@ -39,7 +39,7 @@ from pytis.presentation import ActionContext, Button, Computer, Editable, Field,
     Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
     Text, TextFormat, ViewSpec
 from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED, \
-    argument_names, find, format_traceback, log, super_, xlist, xtuple
+    find, format_traceback, log, super_, xlist, xtuple
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
     MSeparator, Window, border_style2wx, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button

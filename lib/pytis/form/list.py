@@ -33,6 +33,7 @@ wxWindows.
 import collections
 import copy
 import cStringIO
+import datetime
 import functools
 import os
 import string
@@ -492,7 +493,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._query_fields_form = None
             self._query_fields_apply_button = None
         self._unapplied_query_field_changes = False
-
 
     def _on_query_fields_changed(self):
         if self._query_fields_apply_button:
@@ -1064,7 +1064,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if timestamp is not None:
             now = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
             delay = now - timestamp
-            gw = self._grid.GetGridWindow() 
+            gw = self._grid.GetGridWindow()
             if delay > 10:
                 # Adding 10ms delay helps to keep the tooltip close to the current
                 # mouse position.  Without it the tooltip stays at the same place
