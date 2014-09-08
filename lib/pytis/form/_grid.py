@@ -505,6 +505,8 @@ class DataTable(object):
             count, finished = self._row_count.count(min_value=min_value, timeout=timeout)
             if finished:
                 self._row_count = count
+        if self._edited_row is not None and self._edited_row.the_row.new():
+            count += 1
         if full_result:
             return count, finished
         else:
