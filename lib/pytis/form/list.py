@@ -361,7 +361,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     self._select_cell(row=0)
         else:
-            self._select_cell(row=original_row_number)
+            r = original_row_number if inserted_row_number is None else inserted_row_number
+            self._select_cell(row=r)
         # Závěrečné úpravy
         self._update_colors()
         self._resize_columns()
