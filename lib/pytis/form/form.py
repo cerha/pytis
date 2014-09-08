@@ -356,6 +356,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         except:
             pass
         self._data = None
+        if self._transaction is not None and self._transaction is not self._governing_transaction:
+            try:
+                self._transaction.rollback()
+            except:
+                pass
         
     # Zpracování příkazů
    
