@@ -2399,6 +2399,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
              not self._find_next_editable_cell())):
             log(EVENT, 'No editable column')
             return False
+        if self._transaction is not None:
+            self._transaction.set_point('inline')
         self._edit_cell()
         log(EVENT, 'Row inserted')
         return True
