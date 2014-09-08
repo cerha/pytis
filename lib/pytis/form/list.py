@@ -177,7 +177,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
              self._row.permitted(cid, pytis.data.Permission.VIEW))):
             return self._data.select_aggregate((operation, cid),
                                                condition=self._current_condition(),
-                                               transaction=self._transaction,
+                                               transaction=self._open_transaction(),
                                                arguments=self._current_arguments())
         return None
         
@@ -929,7 +929,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             key = editing.orig_row.columns(kc)
             op, args, kwargs = self._data.update, (key, rdata,), {}
         # Perform the operation.
-        success, result = db_operation(op, *args, **dict(kwargs, transaction=self._transaction))
+        success, result = db_operation(op, *args, **dict(kwargs,
+                                                         transaction=self._open_transaction()))
         if self._governing_transaction is None and self._transaction is not None:
             self._transaction.commit()
         self._transaction = self._governing_transaction

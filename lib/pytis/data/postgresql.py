@@ -3849,7 +3849,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     _trans_check_interval = None
 
     def __init__(self, connection_data, isolation=None, read_only=False, timeout_callback=None,
-                 **kwargs):
+                 ok_rollback_closed=False, **kwargs):
         """
         Arguments:
 
@@ -3862,6 +3862,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
           read_only -- whether the transaction is read-only; boolean
           timeout_callback -- function to be called on transaction timeout or 'None';
             the function is called with no arguments
+          ok_rollback_closed -- iff true, don't complain about rollbacking
+            closed transactions
 
         """
         super(DBPostgreSQLTransaction, self).__init__(
@@ -3877,6 +3879,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         self._trans_notifications = []
         self._pg_begin_transaction(isolation=isolation, read_only=read_only)
         self._open = True
+        assert isinstance(ok_rollback_closed, bool), ok_rollback_closed
+        self._ok_rollback_closed = ok_rollback_closed
         if timeout_callback is not None:
             self._pid = os.getpid()
             DBPostgreSQLTransaction._watched_transactions.add(self)
@@ -3913,7 +3917,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def rollback(self):
         """Rollback the transaction."""
         if not self._open:
-            log(EVENT, "Attempt to rollback closed transaction")
+            if not self._ok_rollback_transactions:
+                log(EVENT, "Attempt to rollback closed transaction")
             return
         self._pg_rollback_transaction()
         self._open = False

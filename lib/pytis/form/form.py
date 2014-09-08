@@ -266,6 +266,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _default_transaction(self):
         return None
+
+    def _open_transaction(self):
+        if ((self._transaction is not None and not self._transaction.open() and
+             self._transaction is not self._governing_transaction)):
+            self._transaction = self._default_transaction()
+        return self._transaction
         
     def _create_form_parts(self, sizer):
         pass
@@ -1081,7 +1087,7 @@ class LookupForm(InnerForm):
                            columns=self._select_columns(),
                            sort=self._lf_sorting,
                            arguments=self._current_arguments(),
-                           transaction=self._transaction, reuse=False,
+                           transaction=self._open_transaction(), reuse=False,
                            async_count=async_count,
                            timeout_callback=self._transaction_timeout_callback)
         
@@ -1129,7 +1135,7 @@ class LookupForm(InnerForm):
             start_row_number = row_number
         self._search_adjust_data_position(start_row_number)
         data = self._data
-        skip = data.search(condition, direction=direction, transaction=self._transaction)
+        skip = data.search(condition, direction=direction, transaction=self._open_transaction())
         if skip == 0:
             log(EVENT, 'Record not found')
             if report_failure:
@@ -1187,7 +1193,7 @@ class LookupForm(InnerForm):
     def _compute_aggregate(self, operation, column_id, condition):
         condition = self._current_condition(filter=condition)
         return self._data.select_aggregate((operation, column_id), condition,
-                                           transaction=self._transaction)
+                                           transaction=self._open_transaction())
 
     def _filtered_columns(self):
         columns = []
@@ -1699,7 +1705,7 @@ class RecordForm(LookupForm):
         condition = pytis.data.AND(cond, self._current_condition())
         def dbop(condition):
             data.select(condition, columns=self._select_columns(),
-                        transaction=self._transaction)
+                        transaction=self._open_transaction())
             return data.fetchone()
         success, row = db_operation(dbop, condition)
         self._init_select(async_count=True)
@@ -1708,7 +1714,7 @@ class RecordForm(LookupForm):
     def _find_row_by_key(self, key):
         cols = self._select_columns()
         success, row = db_operation(self._data.row, key, columns=cols,
-                                    transaction=self._transaction,
+                                    transaction=self._open_transaction(),
                                     arguments=self._current_arguments())
         if success and row:
             return row
@@ -1725,7 +1731,7 @@ class RecordForm(LookupForm):
         key = data.key()[0].id()
         def dbop():
             data.rewind()
-            return data.search(pytis.data.EQ(key, row[key]), transaction=self._transaction,
+            return data.search(pytis.data.EQ(key, row[key]), transaction=self._open_transaction(),
                                arguments=self._current_arguments())
         try:
             success, result = db_operation(dbop)
@@ -1783,7 +1789,8 @@ class RecordForm(LookupForm):
         return dict(arguments=self._current_arguments())
 
     def _lock_record(self, key):
-        success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
+        success, locked = db_operation(self._data.lock_row, key,
+                                       transaction=self._open_transaction())
         if success and locked is not None:
             log(EVENT, 'Record is locked')
             run_dialog(pytis.form.Message, _(u"The record is locked."))
@@ -2094,7 +2101,7 @@ class RecordForm(LookupForm):
                     return False
                 row_data = []
                 for id, type, val in zip(columns, types, values):
-                    value, error = type.validate(val, transaction=self._transaction)
+                    value, error = type.validate(val, transaction=self._open_transaction())
                     if error:
                         msg = (_("Error at line %d:", line_number) + '\n' +
                                _("Invalid value of column '%s':", id) + '\n' +
@@ -2118,7 +2125,7 @@ class RecordForm(LookupForm):
         """Create a new `RecordForm.Record' instance bound to this form."""
         fields = self._view.fields()
         data = self._create_data_object()
-        return self.Record(self, fields, data, row, transaction=self._transaction, **kwargs)
+        return self.Record(self, fields, data, row, transaction=self._open_transaction(), **kwargs)
     
     def select_row(self, position, quiet=False):
         """Vyber řádek dle 'position'.
@@ -2355,7 +2362,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if edit is None:
                     run_dialog(pytis.form.Error,
                                _("The time limit for form editation has elapsed."))
-        if self._transaction is not None:
+        if self._open_transaction() is not None:
             self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()
 
@@ -2574,7 +2581,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _commit_data(self, op, args):
         if op is not None:
-            success, result = db_op(op, args, dict(transaction=self._transaction),
+            success, result = db_op(op, args, dict(transaction=self._open_transaction()),
                                     in_transaction=(self._transaction is not None))
         else:
             success, result = True, (None, True)
@@ -2640,7 +2647,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
-        transaction = self._transaction
+        transaction = self._open_transaction()
         if transaction is not None:
             success, result = db_op(transaction.set_point, ('commitform',),
                                     in_transaction=True, quiet=True)
@@ -2806,7 +2813,8 @@ class PopupEditForm(PopupForm, EditForm):
             connection_name = config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
             connection_name = None
-        return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name)
+        return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name,
+                                               ok_rollback_closed=True)
         
     def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
