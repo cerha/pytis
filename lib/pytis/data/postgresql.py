@@ -3464,9 +3464,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             self._pg_select_transaction = None
         elif self._pg_select_transaction is not None: # inside user transaction
-            query = self._pdbb_command_close_select.format(args)
-            transaction = self._pg_select_transaction
-            self._pg_query(query, transaction=transaction)
+            if self._pg_select_transaction.open():
+                query = self._pdbb_command_close_select.format(args)
+                transaction = self._pg_select_transaction
+                self._pg_query(query, transaction=transaction)
         self._pg_select_transaction = None
         # Flush cached data
         self._pg_buffer.reset()
