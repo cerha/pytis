@@ -3918,7 +3918,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def rollback(self):
         """Rollback the transaction."""
         if not self._open:
-            if not self._ok_rollback_transactions:
+            if not self._ok_rollback_closed:
                 log(EVENT, "Attempt to rollback closed transaction")
             return
         self._pg_rollback_transaction()
