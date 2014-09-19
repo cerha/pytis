@@ -4011,4 +4011,11 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                     c = t._trans_connection()
                     if ((now - c.connection_info('transaction_start_time') > t._trans_max_time or
                          now - c.connection_info('last_query_time') > t._trans_max_idle_time)):
-                        callback()
+                        try:
+                            callback()
+                        except:
+                            # The callback may crash if the wx class is already inactive.
+                            try:
+                                del class_._watched_transactions[t]
+                            except KeyError:
+                                pass
