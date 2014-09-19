@@ -218,26 +218,24 @@ class DataTable(object):
             if result is None:
                 # In theory this shouldn't happen but it actually happens so we
                 # have to attempt some workaround here.
-                if require:
-                    raise Exception('Missing row', row)
-                else:
-                    data = self._data
-                    data.rewind()
+                data.rewind()
+                if row > 0:
+                    data.skip(row - 1, direction=pytis.data.FORWARD)
+                result = data.fetchone(direction=pytis.data.FORWARD)
+                if result is None:
+                    self._init_select()
                     if row > 0:
                         data.skip(row - 1, direction=pytis.data.FORWARD)
                     result = data.fetchone(direction=pytis.data.FORWARD)
                     if result is None:
-                        self._init_select()
-                        if row > 0:
-                            data.skip(row - 1, direction=pytis.data.FORWARD)
-                        result = data.fetchone(direction=pytis.data.FORWARD)
-                        if result is None:
-                            log(DEBUG, "Missing grid row")
-                            return None
-                        else:
-                            log(DEBUG, "Grid data count error")
+                        log(DEBUG, "Missing grid row")
+                        if require:
+                            raise Exception('Missing row', row)
+                        return None
                     else:
-                        log(DEBUG, "Grid data synchronization error")
+                        log(DEBUG, "Grid data count error")
+                else:
+                    log(DEBUG, "Grid data synchronization error")
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
             self._current_row = self._CurrentRow(row, the_row)
@@ -313,7 +311,7 @@ class DataTable(object):
                 self._group_value_cache = {values: False}
                 return False
 
-    ## Public methods
+    # Public methods
 
     def row(self, row):
         """Vrať řádek číslo 'row' jako instanci třídy 'PresentedRow'.
@@ -568,10 +566,10 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     # Povinné wx gridové metody
     
     def GetNumberRows(self):
-        ## We have to get only approximate number of rows here.  The reason is
-        ## that wx functions call this method on form creation.  Hopefully this
-        ## doesn't break anything.  Our code should use `number_of_rows'
-        ## directly anyway.
+        # We have to get only approximate number of rows here.  The reason is
+        # that wx functions call this method on form creation.  Hopefully this
+        # doesn't break anything.  Our code should use `number_of_rows'
+        # directly anyway.
         return self.number_of_rows(timeout=0)
     
     def GetNumberCols(self):
@@ -615,7 +613,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
 
     # Nepovinné wx gridové metody
 
-    #def GetColLabelValue(self, col):
+    # def GetColLabelValue(self, col):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
