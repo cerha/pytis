@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -492,7 +492,11 @@ class Question(MultiQuestion):
         super(Question, self)._create_dialog()
         if self._timeout_limit is not None:
             def destroy():
-                self._dialog.EndModal(-1000)
+                try:
+                    self._dialog.EndModal(-1000)
+                except:
+                    # The wx instance of `self' may already be inactive
+                    pass
             wx.FutureCall(self._timeout_limit * 1000, destroy)
         
     def _customize_result(self, result):
