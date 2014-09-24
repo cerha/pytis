@@ -16,24 +16,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/*jslint browser: true */
+/*jslint unparam: true */
+/*jslint regexp: true */
+/*jslint todo: true */
+/*global Class */
+/*global Element */
+/*global Hash */
+/*global pytis */
+/*global alert */
+/*global confirm */
+/*global $ */
+/*global CKEDITOR */
+/*global ck_get_ascendant */
+/*global ck_get_dom_subelement */
+/*global ck_language_combo */
+/*global embed_swf_object */
+/*global parseMath */
+/*global Node */
+"use strict";
 
 // Remember the base uri of the current script here for later use (hack).
 pytis.HtmlField.scripts = document.getElementsByTagName('script');
-pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.length-1].src.replace(/\/[^\/]+$/, '')
-
+pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.length-1]
+    .src.replace(/\/[^\/]+$/, '');
 
 pytis.HtmlField.plugin = function(editor) {
     // Construct dialog and add toolbar button
     var types = ['Image', 'Audio', 'Video', 'Resource', 'Exercise', 'MathML', 'IndexItem'];
+    var i, type, ltype, icon;
     editor.addMenuGroup('PytisGroup');
-    for (var i=0; i<types.length; i++){
-        var type = types[i];
-        var ltype = types[i].toLowerCase();
+    for (i=0; i<types.length; i++) {
+        type = types[i];
+        ltype = types[i].toLowerCase();
         /* Add dialog */
-        CKEDITOR.dialog.add('pytis-' + ltype, eval('pytis.HtmlField.' + ltype + '_dialog'));
+        CKEDITOR.dialog.add('pytis-' + ltype, pytis.HtmlField[ltype + '_dialog']);
         /* Add command */
         editor.addCommand('insertPytis' + type, new CKEDITOR.dialogCommand('pytis-' + ltype));
-        var icon = pytis.HtmlField.base_uri + '/editor-' + ltype + '.png';
+        icon = pytis.HtmlField.base_uri + '/editor-' + ltype + '.png';
         /* Add UI button */
         editor.ui.addButton('Pytis' + type, {
             label: pytis._(types[i]),
@@ -54,12 +74,12 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Create insertSpaceBefore and insertSpaceAfter menu items */
     function insert_space(direction, element) {
-	var element = ck_get_ascendant(editor, 'div') || ck_get_ascendant(editor, 'table');
+	var elem = ck_get_ascendant(editor, 'div') || ck_get_ascendant(editor, 'table');
 	var paragraph = new CKEDITOR.dom.element('p');
-	if (direction == 'before')
-	    paragraph.insertBefore(element);
-	else if (direction == 'after'){
-	    paragraph.insertAfter(element);
+	if (direction === 'before') {
+	    paragraph.insertBefore(elem);
+	} else if (direction === 'after') {
+	    paragraph.insertAfter(elem);
 	}
     }
     editor.addCommand('insertSpaceBefore', new CKEDITOR.command(
@@ -92,23 +112,25 @@ pytis.HtmlField.plugin = function(editor) {
      /* Add a common context menu listener handling all the attachment types */
     if (editor.contextMenu) {
 	editor.contextMenu.addListener(function(element) {
-            if (element)
+            if (element) {
 		element = element.getAscendant('a', true) || element.getAscendant('div', true)
 		|| element.getAscendant('span', true) || element.getAscendant('table', true);
-            if (element && !element.data('cke-realelement')){
+	    }
+            if (element && !element.data('cke-realelement')) {
 		var result = {};
-		for (var i=0; i<types.length; i++){
-                    if (element.hasClass('lcg-'+types[i].toLowerCase())){
+		for (i=0; i<types.length; i++) {
+                    if (element.hasClass('lcg-'+types[i].toLowerCase())) {
 			result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
                     }
 		}
-		if (((element.getName() == 'div') && (element.isReadOnly()))
-		    || element.getName() == 'table'){
-                    result['insertSpaceBefore'] = CKEDITOR.TRISTATE_OFF;
-                    result['insertSpaceAfter'] = CKEDITOR.TRISTATE_OFF;
+		if (((element.getName() === 'div') && (element.isReadOnly()))
+		    || element.getName() === 'table') {
+                    result.insertSpaceBefore = CKEDITOR.TRISTATE_OFF;
+                    result.insertSpaceAfter = CKEDITOR.TRISTATE_OFF;
                 }
-                if (element.hasClass('lcg-image'))
-                    result['figureCaption'] = CKEDITOR.TRISTATE_OFF;
+                if (element.hasClass('lcg-image')) {
+                    result.figureCaption = CKEDITOR.TRISTATE_OFF;
+		}
                 return result;
             }
 	});
@@ -120,10 +142,10 @@ pytis.HtmlField.plugin = function(editor) {
                           exec : function(editor)
                           {
                               var blockquote = ck_get_ascendant(editor, 'blockquote');
-			      if (blockquote){
+			      if (blockquote) {
 				  /* Check existing or create new footer */
 				  var footer = ck_get_dom_subelement(blockquote, ['footer']);
-				  if (!footer){
+				  if (!footer) {
                                       footer = CKEDITOR.dom.element.createFromHtml("<footer>—&nbsp;</footer>");
                                       blockquote.append(footer);
 				  }
@@ -136,11 +158,10 @@ pytis.HtmlField.plugin = function(editor) {
 			      }
                           }
                       });
-    var icon = pytis.HtmlField.base_uri + '/editor-quotation-source.png';
     editor.ui.addButton('BlockquoteFooter', {
         label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
-        icon: icon
+        icon: pytis.HtmlField.base_uri + '/editor-quotation-source.png'
     });
 
     /* Add support for reindent */
@@ -165,7 +186,7 @@ pytis.HtmlField.plugin = function(editor) {
                           exec : function(editor)
                           {
                               var object = ck_get_ascendant(editor, 'a');
-                              if (object){
+                              if (object) {
                                   var figure = new CKEDITOR.dom.element('figure');
                                   var caption = CKEDITOR.dom.element.createFromHtml("<figcaption>text...</figcaption>");
                                   figure.append(object);
@@ -231,42 +252,41 @@ pytis.HtmlField.plugin = function(editor) {
                          'munder', 'munderover', 'semantics', 'annotation'];
 
         var r_list = whitelist[0];
-        for (var i=1; i<whitelist.length; i++){
+        for (i=1; i<whitelist.length; i++) {
             r_list += "|" + whitelist[i];
         }
         evt.data.dataValue = evt.data.dataValue.replace(new RegExp("<(?!\\s*\\/?(" + r_list + ")\\b)[^>]+>", 'gi'), '');
     });
 
     /* Simplify table dialog */
-    CKEDITOR.on('dialogDefinition', function( ev )
-        {
-            var dialog_definition = ev.data.definition;
-            var dialog_name = ev.data.name;
-            if (dialog_name == 'table')
-            {
-                dialog_definition.removeContents('advanced');
-                var info_tab = dialog_definition.getContents('info');
-                var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight', 'txtCellSpace', 'txtCellPad',
-                                'txtSummary'];
-                for (var i=0; i<unwanted.length; i++){
-                    info_tab.remove(unwanted[i]);
-                }
+    CKEDITOR.on('dialogDefinition', function( ev ) {
+        var dialog_definition = ev.data.definition;
+        var dialog_name = ev.data.name;
+        if (dialog_name === 'table') {
+            dialog_definition.removeContents('advanced');
+            var info_tab = dialog_definition.getContents('info');
+            var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight', 'txtCellSpace', 'txtCellPad',
+                            'txtSummary'];
+            for (i=0; i<unwanted.length; i++) {
+                info_tab.remove(unwanted[i]);
             }
-        });
+        }
+    });
 
     editor.on('key', function(event) {
 	var format = null;
 	var keyCode = event.data.keyCode;
-        if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 49) // CTRL+SHIFT+1
+        if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 49) { // CTRL+SHIFT+1
 	    format = CKEDITOR.config.format_h1;
-        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 50) // CTRL+SHIFT+2
+        } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 50) { // CTRL+SHIFT+2
 	    format = CKEDITOR.config.format_h2;
-        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 51) // CTRL+SHIFT+3
+        } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 51) { // CTRL+SHIFT+3
 	    format = CKEDITOR.config.format_h3;
-        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 52) // CTRL+SHIFT+4
+        } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 52) { // CTRL+SHIFT+4
 	    format = CKEDITOR.config.format_h4;
-        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 53) // CTRL+SHIFT+5
+        } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 53) { // CTRL+SHIFT+5
 	    format = CKEDITOR.config.format_h5;
+	}
 	if (format) {
             this.fire('saveSnapshot');
 	    var style = new CKEDITOR.style(format);
@@ -275,8 +295,7 @@ pytis.HtmlField.plugin = function(editor) {
 	    this.fire('saveSnapshot');
         }
     });
-}
-
+};
 
 function ck_element (dialog, id) {
     /* Helper function to address a particular element in dialog definition by its id
@@ -292,41 +311,45 @@ function ck_element (dialog, id) {
      * Return value:
      *  Returns the element or nul if none is found
      */
+    var i, result;
     function ck_get_element_from_list (elements, id) {
-        for (var i = 0; i < elements.length; i++) {
-            if (elements[i].id == id){
-                return elements[i];
-            }
-            else if (elements[i].type == 'hbox' || elements[i].type == 'vbox'){
-                var el = ck_get_element_from_list(elements[i].children, id)
-                if (el)
+	var j, el;
+        for (j = 0; j < elements.length; j++) {
+            if (elements[j].id === id) {
+                return elements[j];
+	    }
+	    if (elements[j].type === 'hbox' || elements[j].type === 'vbox') {
+                el = ck_get_element_from_list(elements[j].children, id);
+                if (el) {
                     return el;
+		}
             }
         }
         return null;
     }
-    for (var i=0; i < dialog['contents'].length; i++){
-	var elements = dialog['contents'][i]['elements'];
-	var result = ck_get_element_from_list(elements, id);
-	if (result)
+    for (i=0; i < dialog.contents.length; i++) {
+	result = ck_get_element_from_list(dialog.contents[i].elements, id);
+	if (result) {
 	    return result;
+	}
     }
     return null;
 }
 
-function ck_get_ascendant(editor, tag){
+function ck_get_ascendant(editor, tag) {
     /* Get ascendant element of current editor selection or caret position by tag name
      *
      * Returns the ascendant element or null */
 
     var sel = editor.getSelection();
     var element = sel.getStartElement();
-    if (element)
+    if (element) {
         element = element.getAscendant(tag, true);
+    }
     return element;
 }
 
-function ck_get_dom_subelement (element, path){
+function ck_get_dom_subelement (element, path) {
     /* Get a subelement of the given element according to descent path
      *
      * element ... DOM element whose subelement should be returned
@@ -342,18 +365,16 @@ function ck_get_dom_subelement (element, path){
      */
 
     var ch = element.getChildren();
-    var item;
-    for (var i=0; i < ch.count(); i++){
+    var i, item;
+    for (i=0; i < ch.count(); i++) {
     	item = ch.getItem(i);
-    	if (typeof(item.getName) == 'function'){ // e.g. comments do not have a name
-    	    if ((item.getName() == path[0]) ||  // match element name
-    		((path[0][0] == '.') && item.hasClass(path[0].slice(1)))) // match element class
-    	    {
-    		if (path.length > 1){
+    	if (typeof(item.getName) === 'function') { // e.g. comments do not have a name
+    	    if ((item.getName() === path[0]) ||  // match element name
+    		((path[0][0] === '.') && item.hasClass(path[0].slice(1)))) { // match element class
+    		if (path.length > 1) {
     		    return ck_get_dom_subelement(item, path.slice(1));
-    		}else{
-    		    return item;
     		}
+    		return item;
     	    }
     	}
     }
@@ -371,23 +392,27 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type, keep_
 
     // Construct a list of Wiking attachments for this page
     var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
-    var attachments = pytis_field.list_attachments()
-    var options = field.getInputElement().$.options
+    var attachments = pytis_field.list_attachments();
+    var options = field.getInputElement().$.options;
     // Save field value before options update
-    if (keep_value)
-	var value = field.getValue();
+    var value;
+    if (keep_value) {
+	value = field.getValue();
+    }
+    var i, a, label;
     // Update options
     options.length = 0;
-    for (var i = 0; i < attachments.length; i++) {
-        var a = attachments[i];
-        if (a.type == attachment_type) {
-            var label = a.filename + (a.title ? ': ' + a.title : '');
+    for (i = 0; i < attachments.length; i++) {
+        a = attachments[i];
+        if (a.type === attachment_type) {
+            label = a.filename + (a.title ? ': ' + a.title : '');
             options.add(new Option(label, a.filename));
         }
     }
     // Restore former value
-    if (keep_value && value)
+    if (keep_value && value) {
         field.setValue(value);
+    }
 }
 
 function ck_dialog_update_media_preview (attachment, id) {
@@ -400,7 +425,7 @@ function ck_dialog_update_media_preview (attachment, id) {
     embed_swf_object(player_uri, id, 400, 400, flashvars, '9', '<p>Flash not available</p>', true);
 }
 
-function ck_set_protected_attribute(element, attribute, value){
+function ck_set_protected_attribute(element, attribute, value) {
     /* Set protected attribute on HTML element in editor
      *
      * CKEditor protects some HTML element attributes as 'href' and
@@ -470,19 +495,25 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 		       },
                        updatePreview: function(attachment) {
                            // Update preview (to be overriden in children)
+			   return undefined;
                        },
                        onChange: function(element) {
                            var filename = this.getValue();
+			   var i;
                            if (filename) {
                                var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-                               attachment = field.get_attachment(filename);
+                               var attachment = field.get_attachment(filename);
                                if (attachment) {
-                                   this['attachment'] = attachment;
+                                   this.attachment = attachment;
                                    var dialog = CKEDITOR.dialog.getCurrent();
                                    var fields = attachment_properties;
-                                   for (var i = 0; i < fields.length; i++) {
-                                       var pytis_field_name = fields[i];
-                                       if (pytis_field_name == 'description') pytis_field_name='descr';  /* Hack to overcome pytis attributes naming inconsistency */
+				   var pytis_field_name;
+                                   for (i = 0; i < fields.length; i++) {
+                                       pytis_field_name = fields[i];
+                                       if (pytis_field_name === 'description') {
+					   /* Hack to overcome pytis attributes naming inconsistency */
+					   pytis_field_name = 'descr';
+				       }
                                        dialog.setValueOf('main', fields[i], attachment[pytis_field_name]);
                                    }
                                    this.updatePreview(attachment);
@@ -493,8 +524,9 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            this.updateAttachmentList(false);
                            // Read identifier from the source
                            var resource = element.data('lcg-resource');
-                           if (resource)
+                           if (resource) {
                                this.setValue(resource);
+			   }
                        },
                        commit: function(element) {
                            if (this.attachment) {
@@ -544,22 +576,26 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                 */
                                var form = frameDocument.$.forms[0];
                                field._file_upload_form = form;
-                               if (form.getAttribute('action') != field._form.getAttribute('action')) {
+                               if (form.getAttribute('action') !== field._form.getAttribute('action')) {
                                    form.setAttribute('action', field._form.getAttribute('action'));
-                                   hidden_fields = {'_pytis_form_update_request': 1,
-                                                    '_pytis_attachment_storage_field': field._id,
-                                                    '_pytis_attachment_storage_request': 'insert'};
-                                   for (var i = 0; i < field._form.elements.length; i++) {
-                                       var e = field._form.elements[i];
-                                       if (e.type == 'hidden') // && e.name != 'submit')
-                                           hidden_fields[e.name] = e.value;
+                                   var hidden_fields = new Hash({
+				       '_pytis_form_update_request': 1,
+                                       '_pytis_attachment_storage_field': field._id,
+                                       '_pytis_attachment_storage_request': 'insert'
+				   });
+				   var i, elem;
+                                   for (i = 0; i < field._form.elements.length; i++) {
+                                       elem = field._form.elements[i];
+                                       if (elem.type === 'hidden') { // && e.name != 'submit')
+                                           hidden_fields.set(elem.name, elem.value);
+				       }
                                    }
-                                   for (var name in hidden_fields) {
-                                       Element.insert(form, new Element('input',
-                                                                        {'type': 'hidden',
-                                                                         'name': name,
-                                                                         'value': hidden_fields[name]}));
-                                   }
+                                   hidden_fields.each(function (item) {
+                                       Element.insert(form, 
+						      new Element('input', {'type': 'hidden',
+									    'name': item.key,
+									    'value': item.value}));
+                                   });
                                }
                            }
                        },
@@ -567,19 +603,19 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            var dialog = CKEDITOR.dialog.getCurrent();
                            var body_childs = $(this._.frameId).contentWindow.document.body.childNodes;
                            var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-                           if ((body_childs.length == 1) && (body_childs[0].tagName.toLowerCase() == 'pre')){
+                           if (body_childs.length === 1 && body_childs[0].tagName.toLowerCase() === 'pre') {
                                // This is a JSON reply
                                var reply = body_childs[0].innerHTML.evalJSON();
                                var msg, cls;
                                dialog.getContentElement('main', 'identifier').updateAttachmentList(true);
                                dialog.getContentElement('main', 'upload').reset();
-                               if (reply['success'] == true){
+                               if (reply.success) {
                                    msg = pytis._("Upload successful");
                                    cls = "ckeditor-success";
-                                   field.update_attachment(reply['filename'], {'listed': false});
-				   dialog.getContentElement('main', 'identifier').setValue(reply['filename']);
+                                   field.update_attachment(reply.filename, {'listed': false});
+				   dialog.getContentElement('main', 'identifier').setValue(reply.filename);
                                } else {
-                                   msg = reply['message'];
+                                   msg = reply.message;
                                    cls = "ckeditor-error";
                                }
                                $('ckeditor-upload-result').update("<p class=\""+cls+"\">"+msg+"</p>");
@@ -598,7 +634,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                // uses a hidden field named 'submit' for its internal
                                // purposes and this hidden field masks the submit method
                                // (not really clever...).
-                               var result = document.createElement('form').submit.call(field._file_upload_form);
+                               document.createElement('form').submit.call(field._file_upload_form);
 			   } else {
                                $('ckeditor-upload-result').update(pytis._("First select a file to be uploaded."));
 			   }
@@ -612,9 +648,9 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                   label: pytis._('Title'),
                   commit: function(element) {
 		      var value = this.getValue();
-		      if (value){
+		      if (value) {
 			  element.setText(this.getValue());
-		      }else{
+		      } else {
 			  var dialog = CKEDITOR.dialog.getCurrent();
 			  element.setText(dialog.getValueOf('main', 'identifier'));
 		      }
@@ -632,38 +668,44 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
         onShow: function() {
             // Check if editing an existing element or inserting a new one
             var element = ck_get_ascendant(editor, html_elements[0]);
-            if (!element || element.getName() != html_elements[0] || element.data('cke-realelement') || !element.hasClass(attachment_class)) {
+            if (!element || element.getName() !== html_elements[0] || element.data('cke-realelement') || !element.hasClass(attachment_class)) {
                 // The element doesn't exist yet, create it together with all its descendants
                 element = editor.document.createElement(html_elements[0]);
                 element.addClass(attachment_class);
                 var parent = element;
-                for (var i=1; i<html_elements.length; i++){
-                    var child = editor.document.createElement(html_elements[1]);
+		var i, child;
+                for (i = 1; i < html_elements.length; i++) {
+                    child = editor.document.createElement(html_elements[1]);
                     parent.append(child);
                     parent = child;
                 }
                 this.insertMode = true;
-            }
-            else
+            } else {
                 this.insertMode = false;
+	    }
             this.element = element;
             this.setupContent(this.element);
         },
         onOk: function(element) {
             // Update attachment attributes
             var dialog = CKEDITOR.dialog.getCurrent();
-            var filename = dialog.getValueOf('main', 'identifier')
+            var filename = dialog.getValueOf('main', 'identifier');
             var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-            attributes = {}
-            for (var i=0; i<=attachment_properties.length; i++) {
-		var value = dialog.getValueOf('main', attachment_properties[i]);
-	        if (attachment_properties[i] == 'thumbnail_size' && value == 'full')
+            var attributes = {};
+	    var i, value;
+            for (i=0; i<=attachment_properties.length; i++) {
+		value = dialog.getValueOf('main', attachment_properties[i]);
+	        if (attachment_properties[i] === 'thumbnail_size' && value === 'full') {
 		    value = null;
+		}
                 attributes[attachment_properties[i]] = value;
 	    }
-            var error = field.update_attachment(filename, attributes); // TODO: Display error message when error != null.
-            // Insert or update the HTML element
-            if (this.insertMode){
+
+	    // TODO: Display error message when error != null.
+            var error = field.update_attachment(filename, attributes);
+            
+	    // Insert or update the HTML element
+            if (this.insertMode) {
                 editor.insertElement(this.element);
             }
             this.commitContent(this.element);
@@ -673,20 +715,21 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 
 pytis.HtmlField.image_dialog = function(editor) {
 
-    dialog = pytis.HtmlField.attachment_dialog(
+    var dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Image"), 'Image', "lcg-image",
         ['title', 'description', 'thumbnail_size'],
         ['a', 'img']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
         if (attachment) {
-            if (attachment.thumbnail)
+            if (attachment.thumbnail) {
                 $('image-preview').src = attachment.thumbnail.uri;
-            else
+            } else {
                 $('image-preview').src = attachment.uri;
+	    }
             $('image-preview').alt = attachment.description;
         }
-    }
+    };
 
     ck_element(dialog, 'identifier').setup = function(element) {
         this.updateAttachmentList(false);
@@ -694,10 +737,11 @@ pytis.HtmlField.image_dialog = function(editor) {
         var img = element.getFirst();
         if (img) {
             var attachment = img.data('lcg-resource');
-            if (attachment)
+            if (attachment) {
                 this.setValue(attachment);
+	    }
         }
-    }
+    };
 
     ck_element(dialog, 'identifier').commit = function(element) {
         var attachment = this.attachment;
@@ -707,7 +751,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                 var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
 		// Append cache killer suffix to the uri to force reloading the displayed 
 		// image when thumbnail size is changed.
-		uri += (uri.indexOf('?') == -1 ? '?' : '&') + 'time=' + new Date().getTime();
+		uri += (uri.indexOf('?') === -1 ? '?' : '&') + 'time=' + new Date().getTime();
 		img.removeAttribute('width');
 		img.removeAttribute('height');
 		// This doesn't seem to work so the selection stays at the
@@ -720,23 +764,25 @@ pytis.HtmlField.image_dialog = function(editor) {
                 img.data('lcg-resource', attachment.filename);
             }
         }
-    }
+    };
 
     ck_element(dialog, 'preview').html = '<div class="preview-container"><img id="image-preview" src="" alt="" /></div>';
 
     ck_element(dialog, 'title').commit = function(element) {
         var img = element.getFirst();
-        if (img)
-            img.setAttribute('title', this.getValue());
-    }
+        if (img) {
+	    img.setAttribute('title', this.getValue());
+	}
+    };
 
     ck_element(dialog, 'description').commit = function(element) {
-        var img = element.getFirst()
-        if (img)
+        var img = element.getFirst();
+        if (img) {
             img.setAttribute('alt', this.getValue());
-    }
+	}
+    };
 
-    dialog['contents'][0].elements = dialog['contents'][0].elements.concat([
+    dialog.contents[0].elements = dialog.contents[0].elements.concat([
         {type: 'select',
          id: 'thumbnail_size',
          label: pytis._('Display as'),
@@ -756,12 +802,17 @@ pytis.HtmlField.image_dialog = function(editor) {
              var img = element.getFirst();
              var figure = element.getAscendant('figure');
              if (img) {
-                 if (figure) var align = figure.getAttribute('data-lcg-align');
-                 else var align = img.getAttribute('align');
-                 if (align)
+		 var align;
+                 if (figure) {
+		     align = figure.getAttribute('data-lcg-align'); 
+                 } else {
+		     align = img.getAttribute('align');
+		 }
+                 if (align) {
                      this.setValue(align);
-                 else
+                 } else {
                      this.setValue('inline');
+		 }
              }
          },
          commit: function(element) {
@@ -769,15 +820,17 @@ pytis.HtmlField.image_dialog = function(editor) {
              var img = element.getFirst();
 	     var figure = element.getAscendant('figure');
              if (img) {
-		 var align = this.getValue()
-                 if (align == 'inline'){
+		 var align = this.getValue();
+                 if (align === 'inline') {
                      img.removeAttribute('align');
-                     if (figure) figure.removeAttribute('data-lcg-align');
-                 }else{
-                     if (figure){
+                     if (figure) {
+			 figure.removeAttribute('data-lcg-align');
+		     }
+                 } else {
+                     if (figure) {
                          img.removeAttribute('align');
                          figure.setAttribute('data-lcg-align', align);
-                     }else{
+                     } else {
                          img.setAttribute('align', align);
                      }
                  }
@@ -799,38 +852,40 @@ pytis.HtmlField.image_dialog = function(editor) {
                       //[pytis._('No action'), 'noact'],
               setup: function(element) {
                   var link_type = element.data('lcg-link-type');
-                  if (link_type){
+                  if (link_type) {
                       this.setValue(link_type);
                   } else {
                       // Handle cases where type is not specified
                       var link = element.getAttribute('href');
-                      if (link && link.length > 0)
+                      if (link && link.length > 0) { 
                           this.setValue('external');
-                      else
+                      } else {
                           this.setValue('enlarge');
+		      }
                   }
                   this.onChange(element);
               },
               commit: function(element) {
                   var link_type = this.getValue();
                   element.data('lcg-link-type', link_type);
-                  if (link_type == 'enlarge') {
+                  if (link_type === 'enlarge') {
                       ck_set_protected_attribute(element, 'href', '#');
                   }
               },
               onChange: function(element) {
-                  var dialog = CKEDITOR.dialog.getCurrent();
+                  var dlg = CKEDITOR.dialog.getCurrent();
                   var fields = ['anchor-link', 'external-link'];
-                  for (var i = 0; i < fields.length; i++) {
-                      var image = dialog.getContentElement('main',  fields[i]);
+		  var i, image;
+                  for (i = 0; i < fields.length; i++) {
+                      image = dlg.getContentElement('main',  fields[i]);
                       image.getElement().getParent().hide();
                   }
-                  if (this.getValue() == 'anchor') {
-                      var image = dialog.getContentElement('main',  'anchor-link');
+                  if (this.getValue() === 'anchor') {
+                      image = dlg.getContentElement('main',  'anchor-link');
                       image.getElement().getParent().show();
                   }
-                  if (this.getValue() == 'external') {
-                      var image = dialog.getContentElement('main',  'external-link');
+                  if (this.getValue() === 'external') {
+                      image = dlg.getContentElement('main',  'external-link');
                       image.getElement().getParent().show();
                   }
               }
@@ -842,25 +897,26 @@ pytis.HtmlField.image_dialog = function(editor) {
               onShow: function (element) {
                   // Construct a list of anchors in this page
                   var anchorList = new CKEDITOR.dom.nodeList(editor.document.$.anchors);
-                  options = this.getInputElement().$.options;
-                           options.length = 0;
-                  for (var i = 0, count = anchorList.count(); i < count; i++) {
-                      var item = anchorList.getItem(i);
+                  var options = this.getInputElement().$.options;
+		  var i, count, item;
+                  options.length = 0;
+                  for (i = 0, count = anchorList.count(); i < count; i++) {
+                      item = anchorList.getItem(i);
                       options.add(new Option(item.getText() + " (" + item.getAttribute('name') + ")", item.getAttribute('name')));
                   }
               },
               setup: function(element) {
-                  var dialog = CKEDITOR.dialog.getCurrent();
-                  if (dialog.getValueOf('main', 'link-type') == 'anchor') {
+                  var dlg = CKEDITOR.dialog.getCurrent();
+                  if (dlg.getValueOf('main', 'link-type') === 'anchor') {
                       var link = element.getAttribute("href");
-                      if (link.substr(0, 1) == "#") {
+                      if (link.substr(0, 1) === "#") {
                           this.setValue(link.substr(1));
                       }
                   }
               },
               commit: function(element) {
-                  var dialog = CKEDITOR.dialog.getCurrent();
-                  if (dialog.getValueOf('main', 'link-type') == 'anchor') {
+                  var dlg = CKEDITOR.dialog.getCurrent();
+                  if (dlg.getValueOf('main', 'link-type') === 'anchor') {
                       ck_set_protected_attribute(element, 'href', "#" + this.getValue());
                   }
               }
@@ -869,68 +925,65 @@ pytis.HtmlField.image_dialog = function(editor) {
               id: 'external-link',
               label: pytis._('Link target (URL)'),
               setup: function(element) {
-                  var dialog = CKEDITOR.dialog.getCurrent();
-                  if (dialog.getValueOf('main', 'link-type') == 'external') {
+                  var dlg = CKEDITOR.dialog.getCurrent();
+                  if (dlg.getValueOf('main', 'link-type') === 'external') {
                       this.setValue(element.getAttribute("href"));
                   }
               },
               commit: function(element) {
-                  var dialog = CKEDITOR.dialog.getCurrent();
-                  if (dialog.getValueOf('main', 'link-type') == 'external'){
+                  var dlg = CKEDITOR.dialog.getCurrent();
+                  if (dlg.getValueOf('main', 'link-type') === 'external') {
                       ck_set_protected_attribute(element, 'href', this.getValue());
                   }
               }
              },
          ]}]);
     return dialog;
-}
+};
 
 pytis.HtmlField.audio_dialog = function(editor) {
 
-    dialog = pytis.HtmlField.attachment_dialog(
+    var dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Audio"), 'Audio', "lcg-audio",
         ['title', 'description'],
         ['a']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-	if (attachment)
+	if (attachment) {
 	    ck_dialog_update_media_preview(attachment, 'audio-preview');
-    }
+	}
+    };
 
     ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="audio-preview"></div></div>';
 
     return dialog;
-}
+};
 
 pytis.HtmlField.video_dialog = function(editor) {
-
-    dialog = pytis.HtmlField.attachment_dialog(
+    var dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Video"), 'Video', "lcg-video",
         ['title', 'description'],
         ['a']);
-
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-	if (attachment)
+	if (attachment) {
 	    ck_dialog_update_media_preview(attachment, 'video-preview');
-    }
-
+	}
+    };
     ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="video-preview"></div></div>';
-
     return dialog;
-}
+};
 
 pytis.HtmlField.resource_dialog = function(editor) {
-
-    dialog = pytis.HtmlField.attachment_dialog(
+    var dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Attachment"), 'Resource', "lcg-resource",
         ['title', 'description'],
         ['a']);
 
     return dialog;
-}
+};
 
 pytis.HtmlField.on_dialog = function(event) {
-    if (event.data.name == 'link') {
+    if (event.data.name === 'link') {
         event.data.definition.removeContents('advanced');
         event.data.definition.removeContents('target');
     }
@@ -947,8 +1000,9 @@ pytis.HtmlField.exercise_dialog = function(editor) {
      */
 
     var exercise_types = [];
-    for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
-	var item = editor.config.lcgExerciseTypes[i];
+    var i, item;
+    for (i=0; i<editor.config.lcgExerciseTypes.length; i++) {
+	item = editor.config.lcgExerciseTypes[i];
 	exercise_types[exercise_types.length] = [item[1], item[0]];
     }
 
@@ -985,9 +1039,10 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	onShow: function() {
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
-            if (element)
+            if (element) {
 		element = element.getAscendant('pre', true);
-            if (!element || element.getName() != 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
+	    }
+            if (!element || element.getName() !== 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
 		// Create a new exercise element
 		element = editor.document.createElement('pre',
 							{'attributes': {'contenteditable': 'false'},
@@ -1002,51 +1057,65 @@ pytis.HtmlField.exercise_dialog = function(editor) {
             this.setupContent(this.element);
 	},
 	onOk: function(element) {
-            if (this.insertMode){
+            if (this.insertMode) {
 		editor.insertElement(this.element);
             }
             this.commitContent(this.element);
 	},
     };
 
-    ck_element(dialog, 'type').setup = function(element){
+    ck_element(dialog, 'type').setup = function(element) {
 	// Using HTML 5 data attributes to store exercise type
 	this.setValue(element.data('type'));
-    }
+    };
 
-    ck_element(dialog, 'type').commit = function(element){
+    ck_element(dialog, 'type').commit = function(element) {
 	element.data('type', this.getValue());
-    }
+    };
 
-    ck_element(dialog, 'type').onChange = function(element){
-	for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
-	    var item = editor.config.lcgExerciseTypes[i];
-	    if (item[0] == this.getValue()) {
-		$('exercise-help').update(item[2]);
+    ck_element(dialog, 'type').onChange = function(element) {
+	var j, jtem;
+	for (j=0; j<editor.config.lcgExerciseTypes.length; j++) {
+	    jtem = editor.config.lcgExerciseTypes[j];
+	    if (jtem[0] === this.getValue()) {
+		$('exercise-help').update(jtem[2]);
 		return;
 	    }
 	}
 	$('exercise-help').update('');
-    }
+    };
 
-    ck_element(dialog, 'src').setup = function(element){
+    ck_element(dialog, 'src').setup = function(element) {
     	this.setValue(element.getHtml());
-    }
+    };
 
-    ck_element(dialog, 'src').commit = function(element){
+    ck_element(dialog, 'src').commit = function(element) {
     	element.setHtml(this.getValue());
-    }
+    };
 
-    ck_element(dialog, 'help').setup = function(element){
+    ck_element(dialog, 'help').setup = function(element) {
 	$('exercise-help').update('');
-    }
+    };
 
     return dialog;
 };
 
 pytis.HtmlField.mathml_dialog = function(editor) {
+    var name = pytis._("MathML");
+    var switch_method = function (method) {
+	var dialog = CKEDITOR.dialog.getCurrent();
+        var mathml = dialog.getContentElement('main',  'source-mathml-box');
+        var ascii = dialog.getContentElement('main',  'source-ascii-box');
 
-    name = pytis._("MathML");
+	if (method === 'mathml') {
+	    mathml.getElement().show();
+	    ascii.getElement().hide();
+	}
+	if (method === 'ascii') {
+	    mathml.getElement().hide();
+	    ascii.getElement().show();
+	}
+    };
 
     var dialog = {
         minWidth: 500,
@@ -1094,8 +1163,8 @@ pytis.HtmlField.mathml_dialog = function(editor) {
         onShow: function() {
             // Check if editing an existing element or inserting a new one
             var tag = 'span';
-            element = ck_get_ascendant(editor, tag);
-            if (!element || element.getName() != tag) {
+            var element = ck_get_ascendant(editor, tag);
+            if (!element || element.getName() !== tag) {
                 element = editor.document.createElement(
 		    tag,
 		    {'attributes': {'contenteditable': 'false'},
@@ -1105,130 +1174,115 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		// a reliable support for .setHtml()/.getHtml() in CKEditor or
 		// innerHTML in browsers, we would have no way to acces its contents
                 this.insertMode = true;
-            }
-            else{
+            } else {
                 this.insertMode = false;
 	    }
             this.element = element;
             this.setupContent(this.element);
 
-	    if (this.insertMode){
+	    if (this.insertMode) {
 		switch_method('ascii');
-	    }else{
-		if (this.getValueOf('main', 'source-ascii')){
+	    } else {
+		if (this.getValueOf('main', 'source-ascii')) {
 		    switch_method('ascii');
 		    this.setValueOf('main', 'source-mathml', "");
-		}else{
+		} else {
 		    switch_method('mathml');
 		}
 	    }
 
         },
         onOk: function(element) {
-            if (this.insertMode){
+            if (this.insertMode) {
                 editor.insertElement(this.element);
             }
             this.commitContent(this.element);
         }
     };
 
-    switch_method = function (method){
-	var dialog = CKEDITOR.dialog.getCurrent();
-        var mathml = dialog.getContentElement('main',  'source-mathml-box');
-        var ascii = dialog.getContentElement('main',  'source-ascii-box');
-
-	if (method == 'mathml'){
-	    mathml.getElement().show();
-	    ascii.getElement().hide();
-	}
-	if (method == 'ascii'){
-	    mathml.getElement().hide();
-	    ascii.getElement().show();
-	}
-    }
-
-    clean_mathml = function(mathml, annotation, source) {
-	var clean = mathml;
+    var clean_mathml = function(mathml, annotation, source) {
 	var production_args = "";
 	// Strip outer math tags, ignoring their attributes
 	var inner_mathml = mathml.replace(/<\/?math.*?>/gi, "");
 	// Rewrap in <math> tags with desired attributes and annotations
-	if (!source)
+	if (!source) {
 	    production_args = 'contenteditable="false" style="display:inline-block"';
-	if (annotation.length > 0){
+	}
+	if (annotation.length > 0) {
 	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
 		+ '<semantics>'
 		+ inner_mathml
 	        + '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>'
 		+ '</semantics>'
 		+ '</math>';
-	} else {
-	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
-		+ inner_mathml
-		+ '</math>'
 	}
-    }
+	return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
+	    + inner_mathml
+	    + '</math>';
+    };
 
-    update_mathml_from_ascii = function(element) {
-        function get_text(node){
+    var update_mathml_from_ascii = function(element) {
+        function get_text(node) {
             /* Convert MathML DOM node to text using a helper element */
             var helper = document.createElement('span');
             helper.appendChild(node);
             return helper.innerHTML;
         }
-        var dialog = CKEDITOR.dialog.getCurrent();
-        var mathml = get_text(parseMath(dialog.getValueOf('main', 'source-ascii'), false));
-        dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
-    }
+        var dlg = CKEDITOR.dialog.getCurrent();
+        var mathml = get_text(parseMath(dlg.getValueOf('main', 'source-ascii'), false));
+        dlg.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
+    };
 
 
     ck_element(dialog, 'source-mathml').setup = function(element) {
         this.setValue(clean_mathml(element.$.innerHTML, "", true));
-    }
+    };
 
     ck_element(dialog, 'source-mathml').commit = function(element) {
-        var dialog = CKEDITOR.dialog.getCurrent();
-	ascii_source = dialog.getValueOf('main', 'source-ascii');
+        var dlg = CKEDITOR.dialog.getCurrent();
+	var ascii_source = dlg.getValueOf('main', 'source-ascii');
      	element.$.innerHTML = clean_mathml(this.getValue(), ascii_source, false);
-    }
+    };
 
     ck_element(dialog, 'source-mathml').onChange = function(element) {
 	$('math-preview').innerHTML = clean_mathml(this.getValue(), "", false);
-    }
+    };
 
     ck_element(dialog, 'source-ascii').setup = function(element) {
-	annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
-	if (annotation){
+	var annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
+	if (annotation) {
 	    this.setValue(annotation.$.textContent.unescapeHTML());
 	}
-    }
+    };
 
     ck_element(dialog, 'source-ascii').onShow = function(element) {
-	if (this.getValue())
+	if (this.getValue()) {
             update_mathml_from_ascii(element);
-    }
+	}
+    };
 
     ck_element(dialog, 'source-ascii').onKeyUp = function(element) {
         update_mathml_from_ascii(element);
-    }
+    };
 
     ck_element(dialog, 'toggle-input').onClick = function(element) {
-	var dialog = CKEDITOR.dialog.getCurrent();
-        var mathml_box = dialog.getContentElement('main',  'source-mathml-box');
-        var ascii = dialog.getContentElement('main',  'source-ascii');
+	var dlg = CKEDITOR.dialog.getCurrent();
+        var mathml_box = dlg.getContentElement('main',  'source-mathml-box');
+        var ascii = dlg.getContentElement('main',  'source-ascii');
 
-	if (mathml_box.getElement().isVisible()){
+	if (mathml_box.getElement().isVisible()) {
 	    switch_method('ascii');
-	}else{
-	    if (ascii.getValue()){
+	} else {
+	    if (ascii.getValue()) {
 		var answer = confirm(pytis._("Editing MathML will destroy your ASCII formula. Continue?"));
-		if (answer == false)
+		if (answer === false) {
 		    return;
+		}
 		ascii.setValue("");
 	    }
 	    switch_method('mathml');
 	}
-    }
+    };
 
     return dialog;
 };
@@ -1238,21 +1292,19 @@ function ck_language_combo(editor, languages) {
     return {
         label: pytis._("Language"),
         title: pytis._("Language"),
-        className : 'cke_format',
-        multiSelect : false,
-        panel :
-        {
-            css : [ editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css' )],
+        className: 'cke_format',
+        multiSelect: false,
+        panel: {
+            css : [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css' )],
         },
-        init : function()
-        {
+        init : function() {
+	    var i;
             this.startGroup("Language");
-            for (var i=0; i<languages.length; i++){
+            for (i=0; i<languages.length; i++) {
                 this.add(languages[i][0], languages[i][1], languages[i][1]); //id, caption, title
             }
         },
-        onRender : function()
-        {
+        onRender : function() {
             /* Setup listener for updating language dropdown on selection change */
             editor.on('selectionChange', function(ev) {
                 var sel = editor.getSelection();
@@ -1260,27 +1312,29 @@ function ck_language_combo(editor, languages) {
                 this.setValue(element.getAttribute('lang') || 'default');
             }, this);
         },
-        onClick : function(value)
-        {
-            function child_of_ancestor(ancestor, node){
+        onClick : function(value) {
+            function child_of_ancestor(ancestor, node) {
                 /* Find the direct child of common ancestor which holds the anchor element. */
                 var parents = node.getParents();
                 var parent = null;
-                for (var i=parents.length-1; i>=0; i--){
-                    if (parents[i].$ == ancestor.$)
+		var i;
+                for (i = parents.length-1; i >= 0; i--) {
+                    if (parents[i].$ === ancestor.$) {
                         return parent;
+		    }
                     parent = parents[i];
                 }
                 return null;
             }
-            function remove_lang(element){
+            function remove_lang(element) {
                 /* Remove language attributes from element recursively */
-                if (element.type == Node.ELEMENT_NODE){
-                    el.removeAttribute('lang');
-                    el.removeClass('cke-explicit-language');
-                    children = el.getChildren();
-                    for (var i=0; i<children.length; i++){
-                        remove_lang(children);
+                if (element.type === Node.ELEMENT_NODE) {
+                    element.removeAttribute('lang');
+                    element.removeClass('cke-explicit-language');
+                    var children = element.getChildren();
+		    var i;
+                    for (i = 0; i < children.length; i++) {
+                        remove_lang(children[i]);
                     }
                 }
             }
@@ -1302,26 +1356,31 @@ function ck_language_combo(editor, languages) {
                                 'header', 'footer', 'ul', 'ol', 'li', 'pre',
                                 'section', 'tbody', 'tfoot', 'th', 'tr',
                                 'caption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-                for (var i=0; i<elements.length; i++)
-                    if (tag == elements[i]) return true;
+		var i;
+                for (i = 0; i < elements.length; i++) {
+                    if (tag === elements[i]) {
+			return true;
+		    }
+		}
                 return false;
             }
-
-            if (value != 'default'){
+	    var el;
+            if (value !== 'default') {
                 /* Mark any block elements in the selection with lang attribute.
                    Ignoring exact offsets inside start and end blocks is intentional. */
                 var block_elements = false;
-                var el = start_block;
-                while (el){
-                    if (el.type == Node.ELEMENT_NODE){
-                        if (block_element_with_lang(el.getName())){
+                el = start_block;
+                while (el) {
+                    if (el.type === Node.ELEMENT_NODE) {
+                        if (block_element_with_lang(el.getName())) {
                             el.setAttribute('lang', value);
                             el.addClass('cke-explicit-language');
                             block_elements = true;
                         }
                     }
-                    if (el.$ == end_block.$)
+                    if (el.$ === end_block.$) {
                         break;
+		    }
                     el = el.getNext();
                 }
                 /* If there are no blocks in this selection, mark/unmark inline with a span */
@@ -1330,17 +1389,19 @@ function ck_language_combo(editor, languages) {
                 }
             } else {
                 /* Default language means deletion of language marks */
-                var el = start_block;
-                while(el){
+                el = start_block;
+                while(el) {
                     remove_lang(el);
-                    if (el.$ == end_block.$) break;
+                    if (el.$ === end_block.$) {
+			break;
+		    }
                     el = el.getNext();
                 }
             }
             /* Save snapshot for Undo/Redo */
             editor.fire('saveSnapshot');
         }
-    }
+    };
 }
 
 pytis.HtmlField.indexitem_dialog = function(editor) {
@@ -1387,41 +1448,43 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
         onShow: function() {
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
-            if (element)
+            if (element) {
                 element = element.getAscendant('span', true);
-            if (!element || element.getName() != 'span' || element.data('cke-realelement') || !element.hasClass('lcg-indexitem')) {
+	    }
+            if (!element || element.getName() !== 'span' || element.data('cke-realelement') || !element.hasClass('lcg-indexitem')) {
                 var sel = editor.getSelection();
                 element = new CKEDITOR.dom.element('span');
                 element.addClass('lcg-indexitem');
                 element.setText(sel.getNative());
                 this.insertMode = true;
-            }else
+            } else {
                 this.insertMode = false;
+	    }
             this.element = element;
             this.setupContent(this.element);
         },
         onOk: function(element) {
-            if (this.insertMode){
+            if (this.insertMode) {
                 editor.insertElement(this.element);
             }
             this.commitContent(this.element);
         },
     };
-    ck_element(dialog, 'index').setup = function(element){
+    ck_element(dialog, 'index').setup = function(element) {
         this.setValue(element.data('lcg-index'));
-    }
-    ck_element(dialog, 'index').commit = function(element){
+    };
+    ck_element(dialog, 'index').commit = function(element) {
         element.data('lcg-index', this.getValue());
-    }
-    ck_element(dialog, 'item').setup = function(element){
-        if (element.data('lcg-item')){
+    };
+    ck_element(dialog, 'item').setup = function(element) {
+        if (element.data('lcg-item')) {
             this.setValue(element.data('lcg-item'));
-        }else{
+        } else {
             this.setValue(element.getText());
         }
-    }
-    ck_element(dialog, 'item').commit = function(element){
+    };
+    ck_element(dialog, 'item').commit = function(element) {
         element.data('lcg-item', this.getValue());
-    }
+    };
     return dialog;
 };
