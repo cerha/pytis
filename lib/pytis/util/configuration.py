@@ -2,7 +2,7 @@
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
 #
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -957,6 +957,16 @@ class Configuration(object):
         _DESCR = _("Maximum time in seconds to leave an idle transaction untouched.")
         _DEFAULT = None
         
+    class _Option_login_selection(Option):
+        """Selection of available login names for database login dialog.
+
+        When set, the login dialog will only allow selection from given
+        sequence of strings.  When None (the default), login name can be
+        entered into a text field.
+
+        """
+        _DEFAULT = None
+
     # Volby přizpůsobení uživatelského rozhraní
 
     class _Option_show_tooltips(BooleanOption):

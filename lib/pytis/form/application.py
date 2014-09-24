@@ -1478,10 +1478,16 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if config.dbconnection.password() is not None and _application:
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
+            if config.login_selection:
+                enumerator = pytis.data.FixedEnumerator(config.login_selection)
+                default_login = config.dbuser if config.dbuser in config.login_selection else None
+            else:
+                enumerator = None
+                default_login = config.dbuser
             login_result = run_form(pytis.form.InputForm, title=_("Log in for database access"),
                                     fields=(Field('login', _("Login"),
-                                                  width=24, not_null=True,
-                                                  default=config.dbuser),
+                                                  width=24, not_null=True, enumerator=enumerator,
+                                                  default=default_login),
                                             Field('password', _("Password"),
                                                   type=pytis.data.Password(verify=False),
                                                   width=24, not_null=True),),
