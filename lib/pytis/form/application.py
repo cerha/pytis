@@ -1536,7 +1536,7 @@ def run_dialog(*args, **kwargs):
         log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
 
 def current_form(inner=True):
-    """Vrať právě aktivní formulář (viz 'Application.currnt_form()')."""
+    """Vrať právě aktivní formulář (viz 'Application.current_form()')."""
     if _application is not None:
         return _application.current_form(inner=inner)
 

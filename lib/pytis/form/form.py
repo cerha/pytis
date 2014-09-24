@@ -1076,6 +1076,9 @@ class LookupForm(InnerForm):
     def _init_transaction_timeouts(self, data):
         if self._governing_transaction is None:
             def timeout_callback():
+                f = current_form(inner=False)
+                if isinstance(f, pytis.form.CodebookForm) and f is not self:
+                    f.close()
                 try:
                     data.close()
                     if self._transaction is not None:
