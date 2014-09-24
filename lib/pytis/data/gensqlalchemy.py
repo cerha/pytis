@@ -2038,6 +2038,12 @@ class _SQLIndexable(SQLObject):
                 else:
                     i.create(_engine)
                     changed = True
+        for c in self.c:
+            if c.unique:
+                try:
+                    del db_indexes['%s_%s_key' % (self.name, c.name,)]
+                except KeyError:
+                    pass
         index_names = set([i.name for i in self.indexes])
         db_index_columns = {}
         for i in db_indexes.values():
