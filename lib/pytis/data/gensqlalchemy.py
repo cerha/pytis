@@ -2026,6 +2026,10 @@ class _SQLIndexable(SQLObject):
             indexes.add(sqlalchemy.Index(name, *columns, unique=True))
         return indexes
 
+    def _pytis_auto_unique_indexes(self):
+        return set([sqlalchemy.Index('%s_%s_key' % (self.name, c.name,), c, unique=True)
+                    for c in self.c if c.unique])
+
     def _pytis_upgrade_indexes(self, metadata, db_table):
         changed = False
         db_indexes = dict([(i.name, i,) for i in db_table.indexes])
@@ -2040,12 +2044,11 @@ class _SQLIndexable(SQLObject):
                 else:
                     i.create(_engine)
                     changed = True
-        for c in self.c:
-            if c.unique:
-                try:
-                    del db_indexes['%s_%s_key' % (self.name, c.name,)]
-                except KeyError:
-                    pass
+        for i in self._pytis_auto_unique_indexes():
+            try:
+                del db_indexes[i.name]
+            except KeyError:
+                pass
         index_names = set([i.name for i in self.indexes])
         db_index_columns = {}
         for i in db_indexes.values():
@@ -2103,10 +2106,9 @@ class _SQLIndexable(SQLObject):
         # SQLAlchemy doesn't compare some objects correctly
         # (e.g. sqlalchemy.String() != sqlalchemy.String()) so we have to make
         # our own index comparison.
-        index_list = [self._pytis_index_signature(i) for i in indexes]
-        index_list.sort()
-        db_index_list = [self._pytis_index_signature(i) for i in db_table.indexes]
-        db_index_list.sort()
+        index_list = set([self._pytis_index_signature(i)
+                          for i in indexes.union(self._pytis_auto_unique_indexes())])
+        db_index_list = set([self._pytis_index_signature(i) for i in db_table.indexes])
         if index_list != db_index_list:
             return True
         return False
