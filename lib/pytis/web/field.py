@@ -617,6 +617,7 @@ class HtmlField(MultilineField):
                 Rule(['hr']),
                 # Tables and lists
                 Rule(['table', 'tr', 'td'], ['align']),
+                Rule(['table'], [R('data-lcg-transformations')]),
                 Rule(['thead', 'tfoot', 'caption']),
                 Rule(['th'], ['scope']),
                 Rule(['ul', 'ol', 'dl', 'li', 'dt', 'dd']),

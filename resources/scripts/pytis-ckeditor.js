@@ -244,19 +244,97 @@ pytis.HtmlField.plugin = function(editor) {
         evt.data.dataValue = evt.data.dataValue.replace(new RegExp("<(?!\\s*\\/?(" + r_list + ")\\b)[^>]+>", 'gi'), '');
     });
 
-    /* Simplify table dialog */
-    CKEDITOR.on('dialogDefinition', function( ev ) {
-        var dialog_definition = ev.data.definition;
-        var dialog_name = ev.data.name;
-        if (dialog_name === 'table') {
+    /* Simplify table dialog and add transformation options */
+    CKEDITOR.on('dialogDefinition', function(event) {
+        if (event.data.name === 'table' || event.data.name === 'tableProperties') {
+            var dialog_definition = event.data.definition;
             dialog_definition.removeContents('advanced');
             var info_tab = dialog_definition.getContents('info');
-            var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight', 'txtCellSpace', 'txtCellPad',
-                            'txtSummary'];
-            for (i=0; i<unwanted.length; i++) {
+            var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight',
+			    'txtCellSpace', 'txtCellPad', 'txtSummary'];
+            for (i = 0; i < unwanted.length; i++) {
                 info_tab.remove(unwanted[i]);
             }
-        }
+	    var setup_transformation = function(table) {
+		var regex = new RegExp('(?:^|\\s+)' + this.id + '(?=\\s|$)', '');
+		var transformations = table.getAttribute('data-lcg-transformations');
+		if (transformations === null) {
+		    // Use default transformations for tables which don't have the 
+		    // 'data-lcg-transformations' attribute. These were created before
+		    // the functionality was added so they deserve the defaults
+		    // unlike the tables which have the attribute, but it is empty
+		    // (no transformations allowed).
+		    transformations = 'facing transpose';
+		}
+		this.setValue(regex.test(transformations));
+	    };
+	    var commit_transformation = function(data, table) {
+		var transformations = table.getAttribute('data-lcg-transformations');
+		var regex;
+		if (this.getValue()) {
+		    regex = new RegExp('(?:^|\\s)' + this.id + '(?:\\s|$)', '');
+		    if (!transformations) {
+			transformations = this.id;
+		    } else if (!regex.test(transformations)) {
+			transformations += ' ' + this.id;
+		    }
+		} else {
+		    regex = new RegExp('(?:^|\\s+)' + this.id + '(?=\\s|$)', '');
+		    if (transformations && regex.test(transformations)) {
+			transformations = transformations.replace(regex, '').replace(/^\s+/, '');
+		    }
+		}
+		if (transformations) {
+		    table.setAttribute('data-lcg-transformations', transformations);
+		} else {
+		    table.removeAttribute('data-lcg-transformations');
+		}
+	    };
+            dialog_definition.addContents({
+		id: 'transformations',
+		label: pytis._("Braille Transformations"),
+		elements: [{
+		    type: 'vbox',
+		    children: [
+			{type: 'html',
+			 html: pytis._("Permitted table transformations used " +
+				       "for the Braille output when the table " +
+				       "doesn't fit the output media.")},
+			{type: 'checkbox',
+			 id: 'facing',
+			 label: pytis._("Spread across facing pages"),
+ 			 'default': true,
+			 setup: setup_transformation,
+			 commit: commit_transformation,
+			 value: '1'},
+			{type: 'checkbox',
+			 id: 'transpose',
+			 label: pytis._("Transpose (swap rows and columns)"),
+			 'default': true,
+			 setup: setup_transformation,
+			 commit: commit_transformation,
+			 value: '1'},
+			{type: 'checkbox',
+			 id: 'row-expand',
+			 label: pytis._("Expand by rows"),
+			 setup: setup_transformation,
+			 commit: commit_transformation,
+			 value: '1'},
+			{type: 'checkbox',
+			 id: 'column-expand',
+			 label: pytis._("Expand by columns"),
+			 setup: setup_transformation,
+			 commit: commit_transformation,
+			 value: '1'},
+			{type: 'checkbox',
+			 id: 'split',
+			 label: pytis._("Split vertically into several narrower tables"),
+			 setup: setup_transformation,
+			 commit: commit_transformation,
+			 value: '1'}
+		    ]}]
+	    });
+	}
     });
 
     editor.on('key', function(event) {
