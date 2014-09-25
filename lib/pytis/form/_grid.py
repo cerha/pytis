@@ -223,7 +223,7 @@ class DataTable(object):
                     data.skip(row - 1, direction=pytis.data.FORWARD)
                 result = data.fetchone(direction=pytis.data.FORWARD)
                 if result is None:
-                    self._init_select()
+                    self._form._init_select(grid_update=False)
                     if row > 0:
                         data.skip(row - 1, direction=pytis.data.FORWARD)
                     result = data.fetchone(direction=pytis.data.FORWARD)
