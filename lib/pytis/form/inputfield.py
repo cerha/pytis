@@ -199,7 +199,7 @@ class _Completer(wx.PopupWindow):
             listctrl.EnsureVisible(0)
 
 
-class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
+class InputField(object, KeyHandler, CommandHandler):
     """Abstraktní třída vstupního pole.
 
     Vstupní políčko není samo o sobě wx prvkem. Odpovídající prvky
@@ -210,9 +210,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     Tato třída není sama o sobě instanciovatelná! Odvozením další
     třídy a předefinováním dále popsaných metod však lze vytvořit políčka
     s libvolným chováním realizovaná libovolným UI prvkem.
-
-    Třída je 'CallbackHandler'. Argument callbackové funkce závisí na typu
-    callbacku a je zdokumentován v dokumentaci callbackové konstanty.
     
     """
 
@@ -347,7 +344,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert isinstance(id, basestring)
         assert isinstance(guardian, KeyHandler)
         assert isinstance(inline, bool)
-        CallbackHandler.__init__(self)
         spec = find(id, row.fields(), key=lambda f: f.id())
         self._row = row
         self._type = row.type(id)
@@ -1589,7 +1585,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._run_codebook_form(begin_search=begin_search)
     
 
-class ListField(GenericCodebookField):
+class ListField(GenericCodebookField, CallbackHandler):
     """Číselníkové políčko zobrazující data číselníku jako součást formuláře.
 
     Pokud je 'selection_type' číselníkového políčka ve specifikaci určen jako 'LIST', bude ve
@@ -1602,6 +1598,10 @@ class ListField(GenericCodebookField):
 
     CALL_LIST_CHANGE = 'CALL_LIST_CHANGE'
     """Callback called on list modification (codebook values inserted/edited/deleted)."""
+
+    def __init__(self, parent, row, id, **kwargs):
+        GenericCodebookField.__init__(self, parent, row, id, **kwargs)
+        CallbackHandler.__init__(self)
 
     def _create_ctrl(self, parent):
         # Načtu specifikace.
