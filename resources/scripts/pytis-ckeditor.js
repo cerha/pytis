@@ -82,27 +82,21 @@ pytis.HtmlField.plugin = function(editor) {
 	    paragraph.insertAfter(elem);
 	}
     }
-    editor.addCommand('insertSpaceBefore', new CKEDITOR.command(
-	editor,
-	{
-	    exec : function( editor )
-	    {
-		insert_space('before');
-	    }
-	}));
+    editor.addCommand('insertSpaceBefore', new CKEDITOR.command(editor, {
+	exec: function(editor) {
+	    insert_space('before');
+	}
+    }));
     editor.addMenuItem('insertSpaceBefore', {
 	label: pytis._("Insert space before"),
 	command: 'insertSpaceBefore',
 	group: 'PytisGroup',
     });
-    editor.addCommand('insertSpaceAfter', new CKEDITOR.command(
-	editor,
-	{
-	    exec : function( editor )
-	    {
-		insert_space('after');
-	    }
-	}));
+    editor.addCommand('insertSpaceAfter', new CKEDITOR.command(editor, {
+	exec: function(editor) {
+	    insert_space('after');
+	}
+    }));
     editor.addMenuItem('insertSpaceAfter', {
 	label: pytis._("Insert space after"),
 	command: 'insertSpaceAfter',
@@ -137,27 +131,25 @@ pytis.HtmlField.plugin = function(editor) {
     }
 
     /* Add support for blockquote foters */
-    editor.addCommand('blockquote-footer',
-                      {
-                          exec : function(editor)
-                          {
-                              var blockquote = ck_get_ascendant(editor, 'blockquote');
-			      if (blockquote) {
-				  /* Check existing or create new footer */
-				  var footer = ck_get_dom_subelement(blockquote, ['footer']);
-				  if (!footer) {
-                                      footer = CKEDITOR.dom.element.createFromHtml("<footer>—&nbsp;</footer>");
-                                      blockquote.append(footer);
-				  }
-				  /* Move caret to footer element */
-				  var range = new CKEDITOR.dom.range(editor.document);
-				  range.moveToElementEditablePosition(footer, true);
-				  editor.getSelection().selectRanges([range]);
-			      } else {
-				  alert(pytis._("Create the quotation first, then you can supply the source inside it."));
-			      }
-                          }
-                      });
+    editor.addCommand('blockquote-footer', {
+        exec: function(editor) {
+            var blockquote = ck_get_ascendant(editor, 'blockquote');
+	    if (blockquote) {
+		/* Check existing or create new footer */
+		var footer = ck_get_dom_subelement(blockquote, ['footer']);
+		if (!footer) {
+                    footer = CKEDITOR.dom.element.createFromHtml("<footer>—&nbsp;</footer>");
+                    blockquote.append(footer);
+		}
+		/* Move caret to footer element */
+		var range = new CKEDITOR.dom.range(editor.document);
+		range.moveToElementEditablePosition(footer, true);
+		editor.getSelection().selectRanges([range]);
+	    } else {
+		alert(pytis._("Create the quotation first, then you can supply the source inside it."));
+	    }
+        }
+    });
     editor.ui.addButton('BlockquoteFooter', {
         label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
@@ -165,40 +157,36 @@ pytis.HtmlField.plugin = function(editor) {
     });
 
     /* Add support for reindent */
-    editor.addCommand('reindent',
-                      {
-                          exec : function(editor)
-                          {
-			      var sel = editor.getSelection();
-			      var text = sel.getSelectedText();
-			      if (text) {
-				  var p = new CKEDITOR.dom.element('p');
-				  p.setText(text.replace(/-\s*[\n\r]+/gm, '')); // remove word breaks
-                                  editor.insertElement(p);
-			      }
-                          }
-                      });
-    editor.keystrokeHandler.keystrokes[CKEDITOR.CTRL + 32 /*space*/ ] = 'reindent';
+    editor.addCommand('reindent', {
+        exec: function(editor) {
+	    var sel = editor.getSelection();
+	    var text = sel.getSelectedText();
+	    if (text) {
+		var p = new CKEDITOR.dom.element('p');
+		p.setText(text.replace(/-\s*[\n\r]+/gm, '')); // remove word breaks
+                editor.insertElement(p);
+	    }
+        }
+    });
+    editor.keystrokeHandler.keystrokes[CKEDITOR.CTRL + 32 /*space*/] = 'reindent';
 
     /* Add support for figure captions */
-    editor.addCommand('figure-caption',
-                      {
-                          exec : function(editor)
-                          {
-                              var object = ck_get_ascendant(editor, 'a');
-                              if (object) {
-                                  var figure = new CKEDITOR.dom.element('figure');
-                                  var caption = CKEDITOR.dom.element.createFromHtml("<figcaption>text...</figcaption>");
-                                  figure.append(object);
-                                  figure.append(caption);
-                                  editor.insertElement(figure);
-                                  /* Move caret to caption element */
-                                  var range = new CKEDITOR.dom.range(editor.document);
-                                  range.moveToElementEditablePosition(caption, true);
-                                  editor.getSelection().selectRanges([range]);
-                              }
-                          }
-                      });
+    editor.addCommand('figure-caption', {
+        exec: function(editor) {
+            var object = ck_get_ascendant(editor, 'a');
+            if (object) {
+                var figure = new CKEDITOR.dom.element('figure');
+                var caption = CKEDITOR.dom.element.createFromHtml("<figcaption>text...</figcaption>");
+                figure.append(object);
+                figure.append(caption);
+                editor.insertElement(figure);
+                /* Move caret to caption element */
+                var range = new CKEDITOR.dom.range(editor.document);
+                range.moveToElementEditablePosition(caption, true);
+                editor.getSelection().selectRanges([range]);
+            }
+        }
+    });
     editor.addMenuItem('figureCaption', {
         label: pytis._("Add figure caption"),
         command: 'figure-caption',
@@ -206,22 +194,20 @@ pytis.HtmlField.plugin = function(editor) {
     });
 
     /* Add support for definition lists */
-    editor.addCommand('definition-list',
-                      {
-                          exec : function(editor)
-                          {
-                              var dl = new CKEDITOR.dom.element('dl');
-                              var dt = CKEDITOR.dom.element.createFromHtml('<dt>&nbsp;</dt>');
-                              var dd = CKEDITOR.dom.element.createFromHtml('<dd>&nbsp;</dd>');
-                              dl.append(dt);
-                              dl.append(dd);
-                              editor.insertElement(dl);
-                              /* Move caret to definition term element */
-                              var range = new CKEDITOR.dom.range(editor.document);
-                              range.moveToElementEditablePosition(dt, true);
-                              editor.getSelection().selectRanges([range]);
-                          }
-                      });
+    editor.addCommand('definition-list', {
+        exec: function(editor) {
+            var dl = new CKEDITOR.dom.element('dl');
+            var dt = CKEDITOR.dom.element.createFromHtml('<dt>&nbsp;</dt>');
+            var dd = CKEDITOR.dom.element.createFromHtml('<dd>&nbsp;</dd>');
+            dl.append(dt);
+            dl.append(dd);
+            editor.insertElement(dl);
+            /* Move caret to definition term element */
+            var range = new CKEDITOR.dom.range(editor.document);
+            range.moveToElementEditablePosition(dt, true);
+            editor.getSelection().selectRanges([range]);
+        }
+    });
     editor.ui.addButton('DefinitionList', {
         label: pytis._("Definition list"),
         command: 'definition-list',
@@ -474,19 +460,19 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
         title: attachment_name,
         contents: [
             // Main Tab
-            {id: 'main',
+	    {id: 'main',
              label: attachment_name,
              elements: [
-                 {type : 'hbox',
-                  widths : [ '60%', '40%'],
+                 {type: 'hbox',
+                  widths: ['60%', '40%'],
                   height: '150px',
-                  children :
+                  children:
                   [
                       {type: 'select',
                        size: 14,
                        id: 'identifier',
                        required: true,
-                       validate : CKEDITOR.dialog.validate.notEmpty( pytis._( "You must choose an object to include")),
+                       validate: CKEDITOR.dialog.validate.notEmpty(pytis._("You must choose an object to include")),
                        label: attachment_name,
                        className: 'attachment-selector',
                        items: [],
@@ -543,8 +529,8 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                   id: 'upload-result',
                   html: '<div id="ckeditor-upload-result"></div>'
                  },
-                 {type : 'hbox',
-                  children :
+                 {type: 'hbox',
+                  children:
                   [
                       {type: 'file',
                        id: 'upload',
@@ -838,9 +824,9 @@ pytis.HtmlField.image_dialog = function(editor) {
          }
 	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
         },
-        {type : 'hbox',
-         widths : [ '20%', '80%'],
-         children :
+        {type: 'hbox',
+         widths: ['20%', '80%'],
+         children:
          [
              {type: 'select',
               id: 'link-type',
@@ -1029,8 +1015,8 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 			    label: pytis._('Exercise Definition'),
 			   },
 		       ]},
-		      {type : 'html',
-		       id : 'help',
+		      {type: 'html',
+		       id: 'help',
 		       html: '<div id="exercise-help"></div>'
 		      }
 		  ]},
@@ -1125,9 +1111,9 @@ pytis.HtmlField.mathml_dialog = function(editor) {
             {id: 'main',
              label: name,
              elements: [
-		 {type : 'vbox',
-		  id : 'source-ascii-box',
-		  children :
+		 {type: 'vbox',
+		  id: 'source-ascii-box',
+		  children:
 		  [
                       {type: 'textarea',
                        id: 'source-ascii',
@@ -1137,9 +1123,9 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
 		      },
 		  ]},
-		 {type : 'vbox',
-		  id : 'source-mathml-box',
-		  children :
+		 {type: 'vbox',
+		  id: 'source-mathml-box',
+		  children:
 		  [
                       {type: 'textarea',
                        id: 'source-mathml',
@@ -1295,16 +1281,16 @@ function ck_language_combo(editor, languages) {
         className: 'cke_format',
         multiSelect: false,
         panel: {
-            css : [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css' )],
+            css: [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css')],
         },
-        init : function() {
+        init: function() {
 	    var i;
             this.startGroup("Language");
             for (i=0; i<languages.length; i++) {
                 this.add(languages[i][0], languages[i][1], languages[i][1]); //id, caption, title
             }
         },
-        onRender : function() {
+        onRender: function() {
             /* Setup listener for updating language dropdown on selection change */
             editor.on('selectionChange', function(ev) {
                 var sel = editor.getSelection();
@@ -1312,7 +1298,7 @@ function ck_language_combo(editor, languages) {
                 this.setValue(element.getAttribute('lang') || 'default');
             }, this);
         },
-        onClick : function(value) {
+        onClick: function(value) {
             function child_of_ancestor(ancestor, node) {
                 /* Find the direct child of common ancestor which holds the anchor element. */
                 var parents = node.getParents();
@@ -1422,14 +1408,14 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
             {id: 'main',
              label: pytis._("Index item"),
              elements: [
-                 {type : 'vbox',
-                  children :
+                 {type: 'vbox',
+                  children:
                   [
                       {type: 'select',
                        id: 'index',
                        label: pytis._('Index'),
                        required: true,
-                       validate : CKEDITOR.dialog.validate.notEmpty(pytis._("You must choose an index")),
+                       validate: CKEDITOR.dialog.validate.notEmpty(pytis._("You must choose an index")),
                        /* TODO: This needs to be editable and taken from CMS */
                        items: [[pytis._("Index of Terms"), 'term'],
                                [pytis._("Name Index"), 'name'],
@@ -1440,7 +1426,7 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
                        id: 'item',
                        label: pytis._('Item'),
                        required: true,
-                       validate : CKEDITOR.dialog.validate.notEmpty(pytis._("Index item cannot be empty.")),
+                       validate: CKEDITOR.dialog.validate.notEmpty(pytis._("Index item cannot be empty.")),
                       },
                   ]
                  },
