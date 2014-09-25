@@ -284,11 +284,7 @@ pytis.HtmlField.plugin = function(editor) {
 			transformations = transformations.replace(regex, '').replace(/^\s+/, '');
 		    }
 		}
-		if (transformations) {
-		    table.setAttribute('data-lcg-transformations', transformations);
-		} else {
-		    table.removeAttribute('data-lcg-transformations');
-		}
+		table.setAttribute('data-lcg-transformations', transformations || '');
 	    };
             dialog_definition.addContents({
 		id: 'transformations',
