@@ -2305,10 +2305,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                     name = string.join(components[-2:], '.')
                     targets.append(name)
                 targets.sort()
-                # We should add (constraint.onupdate, constraint.ondelete,),
-                # but SQLAlchemy introspections apparently don't detect cascades,
-                # so it would generate a lot of unnecessary updates.
-                s = (tuple(columns), tuple(targets),)
+                s = (tuple(columns), tuple(targets), (constraint.onupdate, constraint.ondelete,))
             else:
                 # Let's ignore other constraints for now
                 return
