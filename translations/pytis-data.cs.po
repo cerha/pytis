@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-05-28 10:15+0200\n"
+"POT-Creation-Date: 2014-09-25 12:41+0200\n"
 "PO-Revision-Date: 2014-01-14 17:09+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -21,28 +21,32 @@ msgstr ""
 msgid "Access denied"
 msgstr "Neoprávněný přístup"
 
-#: ../lib/pytis/data/dbapi.py:83
+#: ../lib/pytis/data/dbapi.py:76
+msgid "Waiting for server recovery"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:88
 msgid "Can't connect to database"
 msgstr "Nemohu se připojit do databáze"
 
-#: ../lib/pytis/data/dbapi.py:171
+#: ../lib/pytis/data/dbapi.py:176
 msgid "Database interface error"
 msgstr "Chyba v databázovém rozhraní"
 
-#: ../lib/pytis/data/dbapi.py:187
+#: ../lib/pytis/data/dbapi.py:195
 msgid "Database connection timeout"
 msgstr "Vypršel časový limit pro navázání databázového spojení"
 
-#: ../lib/pytis/data/dbapi.py:189 ../lib/pytis/data/dbapi.py:299
+#: ../lib/pytis/data/dbapi.py:197 ../lib/pytis/data/dbapi.py:307
 msgid "Database connection error"
 msgstr "Chyba databázového spojení"
 
-#: ../lib/pytis/data/dbapi.py:203 ../lib/pytis/data/pgsql.py:87
+#: ../lib/pytis/data/dbapi.py:211 ../lib/pytis/data/pgsql.py:87
 #: ../lib/pytis/data/pgsql.py:94
 msgid "Database operational error"
 msgstr "Chyba databázové operace"
 
-#: ../lib/pytis/data/dbapi.py:207 ../lib/pytis/data/pgsql.py:99
+#: ../lib/pytis/data/dbapi.py:215 ../lib/pytis/data/pgsql.py:99
 msgid "Database integrity violation"
 msgstr "Porušení integrity dat v databázi"
 
@@ -66,16 +70,16 @@ msgstr "Nelze se připojit k databázi"
 msgid "Query arguments unsupported by the pgsql backend"
 msgstr "Argumenty dotazu nejsou podporovány při použití pgsql backendu"
 
-#: ../lib/pytis/data/postgresql.py:275 ../lib/pytis/data/postgresql.py:361
-#: ../lib/pytis/data/postgresql.py:373
+#: ../lib/pytis/data/postgresql.py:275 ../lib/pytis/data/postgresql.py:364
+#: ../lib/pytis/data/postgresql.py:376
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:508
+#: ../lib/pytis/data/postgresql.py:511
 msgid "Characters present in data not representable in database encoding"
 msgstr "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
 
-#: ../lib/pytis/data/postgresql.py:3690
+#: ../lib/pytis/data/postgresql.py:3724
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -135,7 +139,7 @@ msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Nedodržena minimální délka %(minlen)s znaků"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:961 ../lib/pytis/data/types_.py:2012
+#: ../lib/pytis/data/types_.py:961 ../lib/pytis/data/types_.py:2042
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Maximální velikost %(maxlen)s překročena"
@@ -162,7 +166,7 @@ msgstr "Použijte ve svém hesle kombinaci písmenných a nepísmenných znaků"
 
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1122 ../lib/pytis/data/types_.py:1158
-#: ../lib/pytis/data/types_.py:1194 ../lib/pytis/data/types_.py:1823
+#: ../lib/pytis/data/types_.py:1194 ../lib/pytis/data/types_.py:1853
 msgid "Invalid format"
 msgstr "Neplatný formát"
 
@@ -183,55 +187,55 @@ msgstr "Neplatná maska inet adresy: %(mask)s"
 msgid "Invalid inet address value %(addr)s"
 msgstr "Neplatná hodnota inet adresy: %(addr)s"
 
-#: ../lib/pytis/data/types_.py:1320
+#: ../lib/pytis/data/types_.py:1323
 msgid "Invalid date or time format"
 msgstr "Chybný formát data nebo času"
 
-#: ../lib/pytis/data/types_.py:1321
+#: ../lib/pytis/data/types_.py:1324
 msgid "Invalid date or time"
 msgstr "Chybné datum nebo čas"
 
-#: ../lib/pytis/data/types_.py:1322
+#: ../lib/pytis/data/types_.py:1325
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/data/types_.py:1977
+#: ../lib/pytis/data/types_.py:2007
 msgid "Invalid boolean type input value"
 msgstr "Neplatná vstupní hodnota typu boolean"
 
-#: ../lib/pytis/data/types_.py:2058
+#: ../lib/pytis/data/types_.py:2088
 #, python-format
 msgid "Not a buffer object: %r"
 msgstr "Není to objekt typu buffer: %r"
 
-#: ../lib/pytis/data/types_.py:2194
+#: ../lib/pytis/data/types_.py:2224
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "Maximální rozměr %(maxsize)s pixelů překročen"
 
-#: ../lib/pytis/data/types_.py:2196
+#: ../lib/pytis/data/types_.py:2226
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
 
-#: ../lib/pytis/data/types_.py:2198
+#: ../lib/pytis/data/types_.py:2228
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2214
+#: ../lib/pytis/data/types_.py:2244
 msgid "Invalid graphics format"
 msgstr "Neplatný grafický formát"
 
-#: ../lib/pytis/data/types_.py:2319
+#: ../lib/pytis/data/types_.py:2349
 msgid "Invalid hierarchical value format"
 msgstr "Chybný formát hierarchické hodnoty"
 
-#: ../lib/pytis/data/types_.py:2321
+#: ../lib/pytis/data/types_.py:2351
 msgid "One of hierarchical value items is too long"
 msgstr "Jedna z položek hierarchické hodnoty je příliš dlouhá"
 
-#: ../lib/pytis/data/types_.py:2323
+#: ../lib/pytis/data/types_.py:2353
 msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-08-19 13:43+0200\n"
+"POT-Creation-Date: 2014-09-25 12:41+0200\n"
 "PO-Revision-Date: 2011-12-29 12:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: French <wiking@lists.freebsoft.org>\n"
@@ -21,36 +21,36 @@ msgstr ""
 msgid "Submit"
 msgstr "Envoyer"
 
-#: ../lib/pytis/web/field.py:712
+#: ../lib/pytis/web/field.py:713
 msgid "today"
 msgstr "aujourd'hui"
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:766 ../lib/pytis/web/field.py:848
+#: ../lib/pytis/web/field.py:767 ../lib/pytis/web/field.py:849
 msgid "Yes"
 msgstr "Oui"
 
-#: ../lib/pytis/web/field.py:766 ../lib/pytis/web/field.py:848
+#: ../lib/pytis/web/field.py:767 ../lib/pytis/web/field.py:849
 msgid "No"
 msgstr "Non"
 
-#: ../lib/pytis/web/field.py:798
+#: ../lib/pytis/web/field.py:799
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Taille minimale %(minlen)s n'est pas respectée"
 
-#: ../lib/pytis/web/field.py:802
+#: ../lib/pytis/web/field.py:803
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Taille maximale %(maxlen)s est dépassée"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:822
+#: ../lib/pytis/web/field.py:823
 msgid "image"
 msgstr "image"
 
-#: ../lib/pytis/web/field.py:824
+#: ../lib/pytis/web/field.py:825
 msgid "file"
 msgstr "fichier"
 
@@ -248,236 +248,266 @@ msgstr ""
 msgid "Remove this row"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:46
+#: ../resources/scripts/pytis-ckeditor.js:66
 msgid "Edit"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:74
+#: ../resources/scripts/pytis-ckeditor.js:91
 msgid "Insert space before"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:87
+#: ../resources/scripts/pytis-ckeditor.js:101
 msgid "Insert space after"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:135
+#: ../resources/scripts/pytis-ckeditor.js:149
 msgid "Create the quotation first, then you can supply the source inside it."
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:141
+#: ../resources/scripts/pytis-ckeditor.js:154
 msgid "Supply Quotation Source"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:182
+#: ../resources/scripts/pytis-ckeditor.js:191
 msgid "Add figure caption"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:205
+#: ../resources/scripts/pytis-ckeditor.js:212
 msgid "Definition list"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:212
+#: ../resources/scripts/pytis-ckeditor.js:219
 msgid "Default"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:213
+#: ../resources/scripts/pytis-ckeditor.js:220
 msgid "Czech"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:214
+#: ../resources/scripts/pytis-ckeditor.js:221
 msgid "English"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:215
+#: ../resources/scripts/pytis-ckeditor.js:222
 msgid "German"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:216
+#: ../resources/scripts/pytis-ckeditor.js:223
 msgid "Spanish"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:217
+#: ../resources/scripts/pytis-ckeditor.js:224
 msgid "French"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:218
+#: ../resources/scripts/pytis-ckeditor.js:225
 msgid "Russian"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:219
+#: ../resources/scripts/pytis-ckeditor.js:226
 msgid "Latin"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:464
+#: ../resources/scripts/pytis-ckeditor.js:295
+msgid "Braille Transformations"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:300
+msgid ""
+"Permitted table transformations used for the Braille output when the table "
+"doesn't fit the output media."
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:305
+msgid "Spread across facing pages"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:312
+msgid "Transpose (swap rows and columns)"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:319
+msgid "Expand by rows"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:325
+msgid "Expand by columns"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:331
+msgid "Split vertically into several narrower tables"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:553
 msgid "You must choose an object to include"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:577
+#: ../resources/scripts/pytis-ckeditor.js:677
 msgid "Upload successful"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:590
+#: ../resources/scripts/pytis-ckeditor.js:691
 msgid "Upload new file"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:602
+#: ../resources/scripts/pytis-ckeditor.js:703
 msgid "First select a file to be uploaded."
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:611
+#: ../resources/scripts/pytis-ckeditor.js:712
 msgid "Title"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:624
+#: ../resources/scripts/pytis-ckeditor.js:725
 msgid "Accessible description"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:676
+#: ../resources/scripts/pytis-ckeditor.js:783
 #, fuzzy
 msgid "Image"
 msgstr "image"
 
-#: ../resources/scripts/pytis-ckeditor.js:741
+#: ../resources/scripts/pytis-ckeditor.js:852
 msgid "Display as"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:742
+#: ../resources/scripts/pytis-ckeditor.js:853
 msgid "Full size"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:743
+#: ../resources/scripts/pytis-ckeditor.js:854
 msgid "Small preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:744
+#: ../resources/scripts/pytis-ckeditor.js:855
 msgid "Medium preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:745
+#: ../resources/scripts/pytis-ckeditor.js:856
 msgid "Large preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:749
+#: ../resources/scripts/pytis-ckeditor.js:860
 msgid "Text wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:750
+#: ../resources/scripts/pytis-ckeditor.js:861
 msgid "No wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:751
+#: ../resources/scripts/pytis-ckeditor.js:862
 msgid "Wrap right"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:752
+#: ../resources/scripts/pytis-ckeditor.js:863
 msgid "Wrap left"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:793
+#: ../resources/scripts/pytis-ckeditor.js:911
 msgid "Behavior"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:794
+#: ../resources/scripts/pytis-ckeditor.js:912
 msgid "Enlarge on click"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:796
+#: ../resources/scripts/pytis-ckeditor.js:914
 msgid "Link"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:797
+#: ../resources/scripts/pytis-ckeditor.js:915
 msgid "Link to anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:839
+#: ../resources/scripts/pytis-ckeditor.js:959
 msgid "Select the anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:869
+#: ../resources/scripts/pytis-ckeditor.js:990
 msgid "Link target (URL)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:890
+#: ../resources/scripts/pytis-ckeditor.js:1011
 msgid "Audio"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:907
+#: ../resources/scripts/pytis-ckeditor.js:1028
 msgid "Video"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:924
+#: ../resources/scripts/pytis-ckeditor.js:1042
 msgid "Attachment"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:957
+#: ../resources/scripts/pytis-ckeditor.js:1076
 msgid "Exercise"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:967
+#: ../resources/scripts/pytis-ckeditor.js:1086
 msgid "Exercise Type"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:974
+#: ../resources/scripts/pytis-ckeditor.js:1093
 msgid "Exercise Definition"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1048
+#: ../resources/scripts/pytis-ckeditor.js:1168
 msgid "MathML"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1067
+#: ../resources/scripts/pytis-ckeditor.js:1201
 msgid "Guide on "
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1079
+#: ../resources/scripts/pytis-ckeditor.js:1213
 msgid ""
 "To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from "
 "external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1084
+#: ../resources/scripts/pytis-ckeditor.js:1218
 msgid "Switch ASCII / MathML editing"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1223
+#: ../resources/scripts/pytis-ckeditor.js:1341
 msgid "Editing MathML will destroy your ASCII formula. Continue?"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1238
-#: ../resources/scripts/pytis-ckeditor.js:1239
+#: ../resources/scripts/pytis-ckeditor.js:1357
+#: ../resources/scripts/pytis-ckeditor.js:1358
 msgid "Language"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1358
-#: ../resources/scripts/pytis-ckeditor.js:1361
+#: ../resources/scripts/pytis-ckeditor.js:1484
+#: ../resources/scripts/pytis-ckeditor.js:1487
 msgid "Index item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1368
+#: ../resources/scripts/pytis-ckeditor.js:1494
 msgid "Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1370
+#: ../resources/scripts/pytis-ckeditor.js:1496
 msgid "You must choose an index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1372
+#: ../resources/scripts/pytis-ckeditor.js:1498
 msgid "Index of Terms"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1373
+#: ../resources/scripts/pytis-ckeditor.js:1499
 msgid "Name Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1374
+#: ../resources/scripts/pytis-ckeditor.js:1500
 msgid "Index of Places"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1379
+#: ../resources/scripts/pytis-ckeditor.js:1505
 msgid "Item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1381
+#: ../resources/scripts/pytis-ckeditor.js:1507
 msgid "Index item cannot be empty."
 msgstr ""
 
