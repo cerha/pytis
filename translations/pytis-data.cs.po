@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-09-25 12:41+0200\n"
-"PO-Revision-Date: 2014-01-14 17:09+0100\n"
+"PO-Revision-Date: 2014-09-25 12:48+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -23,7 +23,7 @@ msgstr "Neoprávněný přístup"
 
 #: ../lib/pytis/data/dbapi.py:76
 msgid "Waiting for server recovery"
-msgstr ""
+msgstr "Čekám na zotavení serveru"
 
 #: ../lib/pytis/data/dbapi.py:88
 msgid "Can't connect to database"

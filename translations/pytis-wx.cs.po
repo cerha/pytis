@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-09-25 12:41+0200\n"
-"PO-Revision-Date: 2014-08-19 13:47+0200\n"
+"PO-Revision-Date: 2014-09-25 12:48+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -1085,14 +1085,12 @@ msgid "First record"
 msgstr "První záznam"
 
 #: ../lib/pytis/form/form.py:3310
-#, fuzzy
 msgid "document view"
-msgstr "duální náhled"
+msgstr "náhled dokumentu"
 
 #: ../lib/pytis/form/form.py:3346
-#, fuzzy
 msgid "Document"
-msgstr "Dokument byl načten."
+msgstr "Dokument"
 
 #: ../lib/pytis/form/inputfield.py:73
 msgid "Invalid character!"
