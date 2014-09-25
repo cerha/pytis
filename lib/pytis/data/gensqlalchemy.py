@@ -2364,17 +2364,19 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                     changed = True
         constraints = self._pytis_simplified_constraints(self.constraints)
         db_constraints = self._pytis_simplified_constraints(db_table.constraints)
-        for c in db_constraints.values():
-            fdef = sqlalchemy.schema.DropConstraint(c)
-            _engine.execute(fdef)
-            changed = True
+        new_constraints = []
         for k in constraints.keys():
             try:
                 del db_constraints[k]
             except KeyError:
-                fdef = sqlalchemy.schema.AddConstraint(constraints[k])
-                _engine.execute(fdef)
+                new_constraints.append(sqlalchemy.schema.AddConstraint(constraints[k]))
                 changed = True
+        for c in db_constraints.values():
+            fdef = sqlalchemy.schema.DropConstraint(c)
+            _engine.execute(fdef)
+            changed = True
+        for fdef in new_constraints:
+            _engine.execute(fdef)
         return changed
             
     def _alter_table(self, alteration):
