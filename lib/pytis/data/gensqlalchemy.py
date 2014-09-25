@@ -1713,15 +1713,6 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     _PYTIS_TYPE_CAST_MATCHER = re.compile("^'?(.*[^'])'?::[a-z]+$")
     def _pytis_defaults_changed(self, column_1, column_2):
-        default_1 = column_1.server_default
-        default_2 = column_2.server_default
-        if (((default_1 is None and default_2 is not None) or
-             (default_1 is not None and default_2 is None))):
-            return True
-        if default_1 is None and default_2 is None:
-            return False
-        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
-                 isinstance(column_2.type, sqlalchemy.Boolean))
         def textify(default):
             for_update = ' FOR UPDATE' if default.for_update else ''
             if not isinstance(default, basestring):
@@ -1738,14 +1729,26 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 default = match.group(1)
             default += for_update
             return default
-        return textify(default_1) != textify(default_2)
+        default_1 = column_1.server_default
+        default_2 = column_2.server_default
+        if default_1 is None and default_2 is not None:
+            return ''
+        if default_1 is not None and default_2 is None:
+            return textify(default_1)
+        if default_1 is None and default_2 is None:
+            return None
+        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
+                 isinstance(column_2.type, sqlalchemy.Boolean))
+        t_default_1 = textify(default_1)
+        t_default_2 = textify(default_2)
+        return t_default_1 if t_default_1 != t_default_2 else None
 
     def _pytis_distinct_columns(self, db_column, spec_column):
         if (db_column.name != spec_column.name or
             self._pytis_ctype_changed(db_column, spec_column) or
             (not spec_column.primary_key and
              (db_column.nullable != spec_column.nullable or
-              self._pytis_defaults_changed(db_column, spec_column)))):
+              self._pytis_defaults_changed(db_column, spec_column) is not None))):
             return True
         
     def _pytis_columns_changed(self, metadata):
@@ -2348,13 +2351,17 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                                                       existing_type=orig_c.type)
                     _engine.execute(ddl)
                     changed = True
-                if not c.primary_key and self._pytis_defaults_changed(orig_c, c):
-                    server_default = orig_c.server_default
-                    ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
-                                                         schema=self.schema,
-                                                         existing_server_default=server_default)
-                    _engine.execute(ddl)
-                    changed = True
+                if not c.primary_key:
+                    defaults = self._pytis_defaults_changed(orig_c, c)
+                    if defaults is not None:
+                        if defaults:
+                            _gsql_output('-- original default: %s' % (defaults,))
+                        server_default = orig_c.server_default
+                        ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
+                                                             schema=self.schema,
+                                                             existing_server_default=server_default)
+                        _engine.execute(ddl)
+                        changed = True
                 if ((not orig_c.primary_key and not c.primary_key and
                      orig_c.nullable != c.nullable)):
                     ddl = alembic.ddl.base.ColumnNullable(table_name, c.name, c.nullable,
