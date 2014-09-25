@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-09-25 12:41+0200\n"
-"PO-Revision-Date: 2014-09-25 12:47+0200\n"
+"PO-Revision-Date: 2014-09-25 12:51+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -309,15 +309,13 @@ msgstr "latina"
 
 #: ../resources/scripts/pytis-ckeditor.js:295
 msgid "Braille Transformations"
-msgstr "Transformace pro Braille"
+msgstr "Transformace pro Braillský výstup"
 
 #: ../resources/scripts/pytis-ckeditor.js:300
 msgid ""
 "Permitted table transformations used for the Braille output when the table "
 "doesn't fit the output media."
-msgstr ""
-"Povolené transformace tabulky použitelné pro Braillský výstup pokud se tabulka\n"
-"v původní podobě nevejde na výstupní méduim."
+msgstr "Povolené transformace tabulky použitelné pro Braillský výstup pokud se tabulka v původní podobě nevejde na výstupní méduim."
 
 #: ../resources/scripts/pytis-ckeditor.js:305
 msgid "Spread across facing pages"
