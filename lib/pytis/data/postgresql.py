@@ -3472,6 +3472,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         # Flush cached data
         self._pg_buffer.reset()
 
+    def select_active(self):
+        return self._pg_select_transaction is not None
+        
     def insert(self, row, after=None, before=None, transaction=None):
         assert after is None or before is None, 'Both after and before specified'
         log(ACTION, 'Insert row:', (row, after, before))
