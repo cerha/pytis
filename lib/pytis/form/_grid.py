@@ -223,17 +223,11 @@ class DataTable(object):
                     data.skip(row - 1, direction=pytis.data.FORWARD)
                 result = data.fetchone(direction=pytis.data.FORWARD)
                 if result is None:
-                    self._form._init_select(grid_update=False)
-                    if row > 0:
-                        data.skip(row - 1, direction=pytis.data.FORWARD)
-                    result = data.fetchone(direction=pytis.data.FORWARD)
-                    if result is None:
-                        log(DEBUG, "Missing grid row")
-                        if require:
-                            raise Exception('Missing row', row)
-                        return None
-                    else:
-                        log(DEBUG, "Grid data count error")
+                    # This shouldn't happen at all but it still happens.
+                    log(DEBUG, "Missing grid row")
+                    if require:
+                        raise Exception('Missing row', row)
+                    return None
                 else:
                     log(DEBUG, "Grid data synchronization error")
             self._presented_row.set_row(result)
