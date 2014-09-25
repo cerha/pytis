@@ -1713,6 +1713,15 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     _PYTIS_TYPE_CAST_MATCHER = re.compile("^'?(.*[^'])'?::[a-z]+$")
     def _pytis_defaults_changed(self, column_1, column_2):
+        default_1 = column_1.server_default
+        default_2 = column_2.server_default
+        if default_1 is None and default_2 is None:
+            return None
+        if (((default_1 is None and default_2 is not None) or
+             (default_1 is not None and default_2 is None))):
+            return ''
+        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
+                 isinstance(column_2.type, sqlalchemy.Boolean))
         def textify(default):
             for_update = ' FOR UPDATE' if default.for_update else ''
             if not isinstance(default, basestring):
@@ -1729,16 +1738,6 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 default = match.group(1)
             default += for_update
             return default
-        default_1 = column_1.server_default
-        default_2 = column_2.server_default
-        if default_1 is None and default_2 is not None:
-            return ''
-        if default_1 is not None and default_2 is None:
-            return textify(default_1)
-        if default_1 is None and default_2 is None:
-            return None
-        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
-                 isinstance(column_2.type, sqlalchemy.Boolean))
         t_default_1 = textify(default_1)
         t_default_2 = textify(default_2)
         return t_default_1 if t_default_1 != t_default_2 else None
