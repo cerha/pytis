@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
 
 import unittest
 
-import pytis.data as pd, pytis.presentation as pp
-from pytis.form import * 
+import pytis.data as pd
+import pytis.presentation as pp
+from pytis.form import *
 
 tests = pytis.util.test.TestSuite()
 
@@ -73,7 +74,7 @@ class PresentedRow(unittest.TestCase):
         return pd.Value(col.type(), value)
     def _data_row(self, **values):
         return pd.Row([(c.id(), pd.Value(c.type(), values.get(c.id())))
-                               for c in self._columns])
+                       for c in self._columns])
     def test_init(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
@@ -128,7 +129,7 @@ class PresentedRow(unittest.TestCase):
     def test_computer(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3})
-        assert row.get('sum', lazy=True).value() == None
+        assert row.get('sum', lazy=True).value() is None
         assert row['sum'].value() == 8
         assert row.get('sum', lazy=True).value() == 8
         self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
@@ -197,7 +198,6 @@ class PresentedRow(unittest.TestCase):
                                  ('sum', None),
                                  ('inc', None)))
 
-        
     def test_editable(self):
         row = pp.PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
@@ -210,7 +210,7 @@ class PresentedRow(unittest.TestCase):
         changed = []
         def callback(id):
             def cb():
-                x = row[id].value()
+                row[id].value()
                 changed.append(id)
             return cb
         for id in ('a', 'b', 'c', 'd', 'sum', 'inc'):
@@ -270,7 +270,7 @@ class PresentedRow(unittest.TestCase):
         S = pd.String
         V = pd.Value
         rows = [pd.Row((('x', V(S(), x)), ('y', V(S(), y))))
-                for x,y in (('1','FIRST'), ('2','SECOND'), ('3','THIRD'))]
+                for x, y in (('1', 'FIRST'), ('2', 'SECOND'), ('3', 'THIRD'))]
         edata = pd.DataFactory(pd.MemData, (C('x', S()), C('y', S())), data=rows)
         enum = pd.DataEnumerator(edata)
         key = C('a', pd.Integer())
@@ -281,7 +281,7 @@ class PresentedRow(unittest.TestCase):
         data = pd.Data(columns, key)
         fields = (Field('a'),
                   Field('b', display='y'),
-                  Field('c', display=lambda x: '-'+x+'-'),
+                  Field('c', display=lambda x: '-' + x + '-'),
                   Field('d', display=lambda row: row['y'].value().lower()),
                   )
         row = pp.PresentedRow(fields, data, None,
@@ -292,16 +292,16 @@ class PresentedRow(unittest.TestCase):
         assert row.display('d') == 'first', row.display('d')
     def test_depends(self):
         row = pp.PresentedRow(self._fields, self._data, None)
-        any = ('a','b','c','d','e','sum','inc')
+        any = ('a', 'b', 'c', 'd', 'e', 'sum', 'inc')
         assert not row.depends('a', any)
-        assert not row.depends('b', ('a','b','c'))
+        assert not row.depends('b', ('a', 'b', 'c'))
         assert row.depends('b', ('d',))
-        assert row.depends('b', ('a','b','c','d'))
+        assert row.depends('b', ('a', 'b', 'c', 'd'))
         assert row.depends('c', ('d',))
         assert not row.depends('d', any)
         assert not row.depends('e', any)
         assert row.depends('sum', ('inc', 'd'))
-        assert not row.depends('sum', ('a','b','c','e','sum'))
+        assert not row.depends('sum', ('a', 'b', 'c', 'e', 'sum'))
         assert not row.depends('inc', any)
         
 tests.add(PresentedRow)
@@ -310,7 +310,9 @@ tests.add(PresentedRow)
 class PrettyTypes(unittest.TestCase):
     class CustomFoldable(pp.PrettyFoldable, pd.String):
         def _init(self, **kwargs):
-            super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order', subcount_column_id='tree_nsub', **kwargs)
+            super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
+                                                          subcount_column_id='tree_nsub',
+                                                          **kwargs)
     def test_instance(self):
         t = PrettyTypes.CustomFoldable(maxlen=5)
         assert t.maxlen() == 5
