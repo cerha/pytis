@@ -2034,7 +2034,9 @@ class _SQLIndexable(SQLObject):
         changed = False
         db_indexes = dict([(i.name, i,) for i in db_table.indexes])
         new_index_columns = {}
-        for i in self.indexes:
+        # Handle explicitly specified table indexes; either they are present in
+        # the database or they should be added there (later).
+        for i in self.indexes.union(self._pytis_unique_indexes()):
             try:
                 del db_indexes[i.name]
             except KeyError:
@@ -2044,11 +2046,14 @@ class _SQLIndexable(SQLObject):
                 else:
                     i.create(_engine)
                     changed = True
+        # Unique column constraints create indexes automatically, mark them as
+        # used and prevent dropping them from the database.
         for i in self._pytis_auto_unique_indexes():
             try:
                 del db_indexes[i.name]
             except KeyError:
                 pass
+        # The remaining multicolumn indexes can be dropped now.
         index_names = set([i.name for i in self.indexes])
         db_index_columns = {}
         for i in db_indexes.values():
@@ -2058,6 +2063,7 @@ class _SQLIndexable(SQLObject):
             else:
                 i.drop(_engine)
                 changed = True
+        # Handle explicitly requested column indexes.
         for c in self.c:
             if c.pytis_orig_table != self.name:
                 continue
@@ -2066,6 +2072,10 @@ class _SQLIndexable(SQLObject):
                 if index:
                     try:
                         del db_index_columns[c.name]
+                        try:
+                            del new_index_columns[c.name]
+                        except KeyError:
+                            pass
                     except KeyError:
                         if isinstance(index, dict):
                             method = ''
@@ -2080,15 +2090,13 @@ class _SQLIndexable(SQLObject):
                         if name not in index_names:
                             sqlalchemy.Index(name, c, **kwargs).create(_engine)
                             changed = True
-                    try:
-                        del new_index_columns[c.name]
-                    except KeyError:
-                        pass
-        for i in new_index_columns.values():
-            i.create(_engine)
-            changed = True
+        # All the remaining database indexes may be dropped now.
         for i in db_index_columns.values():
             i.drop(_engine)
+            changed = True
+        # Create the remaining new indexes from the specifications.
+        for i in new_index_columns.values():
+            i.create(_engine)
             changed = True
         return changed
         
