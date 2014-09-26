@@ -405,6 +405,16 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
             error = send_mail(email, admin_address, subject, text, key=gpg_key)
             if error:
                 return "failure when sending mail to the user: %s" % (error,)
+        else:
+            data = pytis.data.dbtable('e_pytis_crypto_keys', ('key_id', 'name', 'username', 'fresh'),
+                                      connection_data)
+            row = pytis.data.Row((('fresh', pytis.data.bval(False),),))
+            condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
+                                       pytis.data.EQ('username', pytis.data.sval(user)))
+            result = data.update_many(condition, row, transaction=transaction_)
+            if result != 1:
+                return "couldn't update fresh column for the new user key"
+            data.close()
         if transaction is None:
             transaction_.commit()
         transaction_ = None
