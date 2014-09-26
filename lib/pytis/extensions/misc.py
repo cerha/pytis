@@ -317,7 +317,7 @@ def crypto_admin_key(area, admin_user, connection_data):
       admin_user -- login name of the crypto area administrator; basestring
       connection_data -- database connection data; 'pytis.data.DBConnection'
         instance
-    
+
     """
     data = crypto_key_table(connection_data)
     condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(admin_user)),
@@ -326,7 +326,7 @@ def crypto_admin_key(area, admin_user, connection_data):
         return None, None
     row = data.fetchone()
     return row['key_id'], row['key']
-    
+
 def check_crypto_password(key, password, connection_data):
     """Return true iff the given key and password match.
 
@@ -343,7 +343,7 @@ def check_crypto_password(key, password, connection_data):
     return True if function.call(row)[0][0].value() else False
 
 def add_crypto_user(area, user, admin_user, admin_password, admin_address, connection_data,
-                    transaction=None):
+                    transaction=None, user_password=None):
     """Add new crypto user for the given area.
 
     If the action succeeds, return 'None'.  Otherwise return an error
@@ -360,6 +360,8 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
       connection_data -- database connection data; 'pytis.data.DBConnection'
         instance
       transaction -- transaction to use
+      user_password -- string to use as the password for given login name; in such a case
+        password will not be sent by email.
 
     """
     key_id, key = crypto_admin_key(area, admin_user, connection_data)
@@ -375,14 +377,18 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
         if data.select(condition) > 0:
             return "key already exists for the given user and area: %s %s" % (user, area,)
         data.close()
-        function = pytis.data.DBFunctionDefault('pytis_crypto_user_contact', connection_data)
-        row = pytis.data.Row((('username', pytis.data.sval(user),),))
-        result = function.call(row, transaction=transaction_)[0]
-        email, gpg_key = [v.value() for v in result]
-        if gpg_key is None:
-            return "crypto contact not found for user: %s" % (user,)
-        characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
-        user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
+        if user_password is None:
+            function = pytis.data.DBFunctionDefault('pytis_crypto_user_contact', connection_data)
+            row = pytis.data.Row((('username', pytis.data.sval(user),),))
+            result = function.call(row, transaction=transaction_)[0]
+            email, gpg_key = [v.value() for v in result]
+            if gpg_key is None:
+                return "crypto contact not found for user: %s" % (user,)
+            characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
+            user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
+            send_password = True
+        else:
+            send_password = False
         if not check_crypto_password(key, admin_password, connection_data):
             return "invalid password"
         function = pytis.data.DBFunctionDefault('pytis_crypto_copy_key', connection_data)
@@ -393,11 +399,12 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
                               ('to_psw', pytis.data.sval(user_password),),))
         if not function.call(row, transaction=transaction_)[0][0]:
             return "user key installation failed"
-        subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
-        text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
-        error = send_mail(email, admin_address, subject, text, key=gpg_key)
-        if error:
-            return "failure when sending mail to the user: %s" % (error,)
+        if send_password:
+            subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
+            text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
+            error = send_mail(email, admin_address, subject, text, key=gpg_key)
+            if error:
+                return "failure when sending mail to the user: %s" % (error,)
         if transaction is None:
             transaction_.commit()
         transaction_ = None
