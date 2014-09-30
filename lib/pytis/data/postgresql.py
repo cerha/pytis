@@ -2999,39 +2999,50 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 return False
         return self.row(key, transaction=transaction)
 
-    def _pg_value(self, value):
+    def _pg_value(self, value, _plain=False):
         v = value.value()
         t = value.type()
+        quote = False
         if v is None:
             result = 'NULL'
         elif isinstance(t, Boolean):
-            result = "'%s'" % (t.export(v),)
+            result = t.export(v)
+            quote = True
         elif is_anystring(v):
-            result = "'%s'" % (pg_escape(v),)
+            result = pg_escape(v)
+            quote = True
         # datetime strftime works only for years >= 1900, so we have to use
         # "manual" export
         elif isinstance(v, datetime.datetime):
-            result = ("'%d-%02d-%02d %02d:%02d:%02d'" %
+            result = ("%d-%02d-%02d %02d:%02d:%02d" %
                       (v.year, v.month, v.day, v.hour, v.minute, v.second,))
+            quote = True
         elif isinstance(v, datetime.date):
-            result = "'%d-%02d-%02d'" % (v.year, v.month, v.day,)
+            result = "%d-%02d-%02d" % (v.year, v.month, v.day,)
+            quote = True
         elif isinstance(v, datetime.time):
-            result = "'%s'" % (v.strftime('%H:%M:%S'),)
+            result = v.strftime('%H:%M:%S')
+            quote = True
         elif isinstance(v, datetime.timedelta):
-            result = "'%s days %s seconds'" % (v.days, v.seconds,)
+            result = "%s days %s seconds" % (v.days, v.seconds,)
+            quote = True
         elif isinstance(t, pytis.data.Range):
             t1 = t.base_type()
-            result = "'[%s, %s)'" % (self._pg_value(pytis.data.Value(t1, v[0])),
-                                     self._pg_value(pytis.data.Value(t1, v[1])),)
+            result = "[%s, %s)" % (self._pg_value(pytis.data.Value(t1, v[0])),
+                                   self._pg_value(pytis.data.Value(t1, v[1])),)
+            quote = True
         elif isinstance(t, Float):
             result = t.export(v, locale_format=False)
         elif isinstance(t, Array):
             sequence = t.export(v)
-            result = "'{%s}'" % (string.join(sequence, ', '),)
+            result = "{%s}" % (string.join(sequence, ', '),)
+            quote = True
         elif isinstance(t, Binary) and not str(v.buffer()):
             result = 'NULL'
         else:
             result = t.export(v)
+        if quote and not _plain:
+            result = "'" + result + "'"
         return result
 
     def _pg_key_condition(self, key):
