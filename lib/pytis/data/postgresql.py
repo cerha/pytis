@@ -3028,8 +3028,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             quote = True
         elif isinstance(t, pytis.data.Range):
             t1 = t.base_type()
-            result = "[%s, %s)" % (self._pg_value(pytis.data.Value(t1, v[0])),
-                                   self._pg_value(pytis.data.Value(t1, v[1])),)
+            result = "[%s, %s)" % (self._pg_value(pytis.data.Value(t1, v[0]), _plain=True),
+                                   self._pg_value(pytis.data.Value(t1, v[1]), _plain=True),)
             quote = True
         elif isinstance(t, Float):
             result = t.export(v, locale_format=False)
