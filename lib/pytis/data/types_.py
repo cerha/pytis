@@ -1667,7 +1667,7 @@ class LocalDateTime(DateTime):
             local = True
         return super(LocalDateTime, self)._validate(string, format=format, local=local)
 
-class DateTimeRange(Range, Integer):
+class DateTimeRange(Range, DateTime):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         if self._utc:
@@ -1748,7 +1748,7 @@ class Date(DateTime):
     def sqlalchemy_type(self):
         return sqlalchemy.Date()
 
-class DateRange(Range, Integer):
+class DateRange(Range, Date):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.DATERANGE()
