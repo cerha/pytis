@@ -246,88 +246,107 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Simplify table dialog and add transformation options */
     CKEDITOR.on('dialogDefinition', function(event) {
+	function has_transformation(table, transformation) {
+	    var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
+	    var transformations = table.getAttribute('data-lcg-transformations');
+	    if (transformations === null) {
+		// Use default transformations for tables which don't have the 
+		// 'data-lcg-transformations' attribute. These were created before
+		// the functionality was added so they deserve the defaults
+		// unlike the tables which have the attribute, but it is empty
+		// (no transformations allowed).
+		transformations = 'facing transpose';
+	    }
+	    return regex.test(transformations);
+	}
+	function add_transformation(table, transformation) {
+	    var regex = new RegExp('(?:^|\\s)' + transformation + '(?:\\s|$)', '');
+	    var transformations = table.getAttribute('data-lcg-transformations');
+	    if (!transformations) {
+		transformations = transformation;
+	    } else if (!regex.test(transformations)) {
+		transformations += ' ' + transformation;
+	    }
+	    table.setAttribute('data-lcg-transformations', transformations || '');
+	}
+	function remove_transformation(table, transformation) {
+	    var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
+	    var transformations = table.getAttribute('data-lcg-transformations');
+	    if (transformations && regex.test(transformations)) {
+		transformations = transformations.replace(regex, '').replace(/^\s+/, '');
+	    }
+	    table.setAttribute('data-lcg-transformations', transformations || '');
+	}
+	function setup_checkbox(table) {
+	    this.setValue(has_transformation(table, this.id));
+	}
+	function commit_checkbox(data, table) {
+	    if (this.getValue()) {
+		add_transformation(table, this.id);
+	    } else {
+		remove_transformation(table, this.id);
+	    }
+	}
+	function setup_radio(table) {
+	    ['row-expand', 'column-expand', 'split'].each(function(item) {
+		if (has_transformation(table, item)) {
+		    this.setValue(item);
+		}
+	    }.bind(this));
+	}
+	function commit_radio(data, table) {
+	    var transformation = this.getValue();
+	    ['row-expand', 'column-expand', 'split'].each(function(item) {
+		if (item === transformation) {
+		    add_transformation(table, item);
+		} else {
+		    remove_transformation(table, item);
+		}
+	    });
+	}	
         if (event.data.name === 'table' || event.data.name === 'tableProperties') {
             var dialog_definition = event.data.definition;
             dialog_definition.removeContents('advanced');
             var info_tab = dialog_definition.getContents('info');
-            var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight',
-			    'txtCellSpace', 'txtCellPad', 'txtSummary'];
-            for (i = 0; i < unwanted.length; i++) {
-                info_tab.remove(unwanted[i]);
-            }
-	    var setup_transformation = function(table) {
-		var regex = new RegExp('(?:^|\\s+)' + this.id + '(?=\\s|$)', '');
-		var transformations = table.getAttribute('data-lcg-transformations');
-		if (transformations === null) {
-		    // Use default transformations for tables which don't have the 
-		    // 'data-lcg-transformations' attribute. These were created before
-		    // the functionality was added so they deserve the defaults
-		    // unlike the tables which have the attribute, but it is empty
-		    // (no transformations allowed).
-		    transformations = 'facing transpose';
-		}
-		this.setValue(regex.test(transformations));
-	    };
-	    var commit_transformation = function(data, table) {
-		var transformations = table.getAttribute('data-lcg-transformations');
-		var regex;
-		if (this.getValue()) {
-		    regex = new RegExp('(?:^|\\s)' + this.id + '(?:\\s|$)', '');
-		    if (!transformations) {
-			transformations = this.id;
-		    } else if (!regex.test(transformations)) {
-			transformations += ' ' + this.id;
-		    }
-		} else {
-		    regex = new RegExp('(?:^|\\s+)' + this.id + '(?=\\s|$)', '');
-		    if (transformations && regex.test(transformations)) {
-			transformations = transformations.replace(regex, '').replace(/^\s+/, '');
-		    }
-		}
-		table.setAttribute('data-lcg-transformations', transformations || '');
-	    };
-            dialog_definition.addContents({
+            ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight',
+	     'txtCellSpace', 'txtCellPad', 'txtSummary'].each(function(item) {
+                 info_tab.remove(item);
+             });
+	    dialog_definition.addContents({
 		id: 'transformations',
 		label: pytis._("Braille Transformations"),
 		elements: [{
 		    type: 'vbox',
 		    children: [
 			{type: 'html',
-			 html: pytis._("Permitted table transformations used " +
-				       "for the Braille output when the table " +
-				       "doesn't fit the output media.")},
+			 html: pytis._("How should the table be transformed " +
+				       "for the Braille output when it doesn't fit " +
+				       "the output media in its original form?")},
 			{type: 'checkbox',
 			 id: 'facing',
-			 label: pytis._("Spread across facing pages"),
+			 label: pytis._("Can be spread across facing pages"),
  			 'default': true,
-			 setup: setup_transformation,
-			 commit: commit_transformation,
+			 setup: setup_checkbox,
+			 commit: commit_checkbox,
 			 value: '1'},
 			{type: 'checkbox',
 			 id: 'transpose',
-			 label: pytis._("Transpose (swap rows and columns)"),
+			 label: pytis._("Can be transposed (swap rows and columns)"),
 			 'default': true,
-			 setup: setup_transformation,
-			 commit: commit_transformation,
+			 setup: setup_checkbox,
+			 commit: commit_checkbox,
 			 value: '1'},
-			{type: 'checkbox',
-			 id: 'row-expand',
-			 label: pytis._("Expand by rows"),
-			 setup: setup_transformation,
-			 commit: commit_transformation,
-			 value: '1'},
-			{type: 'checkbox',
-			 id: 'column-expand',
-			 label: pytis._("Expand by columns"),
-			 setup: setup_transformation,
-			 commit: commit_transformation,
-			 value: '1'},
-			{type: 'checkbox',
-			 id: 'split',
-			 label: pytis._("Split vertically into several narrower tables"),
-			 setup: setup_transformation,
-			 commit: commit_transformation,
-			 value: '1'}
+			{type: 'radio',
+			 id: 'transform',
+			 label: pytis._("When this is not sufficient:"),
+			 items: [
+			     [pytis._("Expand to list by rows"), 'row-expand'],
+			     [pytis._("Expand to list by columns"), 'column-expand'],
+			     [pytis._("Split vertically into several narrower tables"), 'split']],
+			 setup: setup_radio,
+			 commit: commit_radio,
+			 buttonLayout: 'vertical'
+			}
 		    ]}]
 	    });
 	}
