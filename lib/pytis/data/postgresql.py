@@ -41,7 +41,7 @@ import pytis.data
 from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
     DBSystemException, DBUserException, DBConnection, DBConnectionPool, DBData, \
     ColumnSpec, DBColumnBinding, Row, Function, dbtable, reversed_sorting, \
-    Array, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
+    Array, Range, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
     Macaddr, Number, Serial, String, Time, TimeInterval, \
     Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT, DESCENDANT
 import pytis.util
@@ -2957,6 +2957,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         for id, typid, type_ in template:
             dbvalue = data_0[i]
             i += 1
+            if isinstance(type_, Range):
+                if not dbvalue:
+                    dbvalue = ('', '',)
+                else:
+                    dbvalue = tuple(dbvalue[1:-1].split(','))
             if typid == 0:              # string
                 if dbvalue is None:
                     v = None
@@ -2974,12 +2979,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             elif typid == 3:            # time interval
                 value, err = type_.validate(dbvalue, strict=False, format=type_.SQL_FORMAT)
                 assert err is None, (dbvalue, type_, err)
-            elif isinstance(type_, pytis.data.Range):
-                if not dbvalue:
-                    value, err = type_.validate(('', '',), strict=False)
-                else:
-                    values = dbvalue[1:-1].split(',')
-                    value, err = type_.validate((values[0], values[1],), strict=False)
             else:
                 value, err = type_.validate(dbvalue, strict=False)
                 assert err is None, (dbvalue, type_, err)
@@ -3026,7 +3025,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         elif isinstance(v, datetime.timedelta):
             result = "%s days %s seconds" % (v.days, v.seconds,)
             quote = True
-        elif isinstance(t, pytis.data.Range):
+        elif isinstance(t, Range):
             t1 = t.base_type()
             result = "[%s, %s)" % (self._pg_value(pytis.data.Value(t1, v[0]), _plain=True),
                                    self._pg_value(pytis.data.Value(t1, v[1]), _plain=True),)
