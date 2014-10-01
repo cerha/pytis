@@ -3258,6 +3258,12 @@ class ShowForm(EditForm):
     def changed(self):
         # Since the row is not reset when the current record changes, it would report a change...
         return False
+        
+    def _select_columns(self):
+        big_field_ids = [f.id() for f in self._view.fields()
+                         if isinstance(f.type(), pytis.data.Big)]
+        result = [c.id() for c in self._data.columns() if c.id() not in big_field_ids]
+        return result
 
         
 class BrowsableShowForm(ShowForm):
