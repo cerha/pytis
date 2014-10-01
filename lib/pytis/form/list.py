@@ -35,7 +35,6 @@ import copy
 import cStringIO
 import datetime
 import functools
-import os
 import string
 import time
 import types
@@ -61,12 +60,11 @@ from form import BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm, 
     RecordForm, Refreshable, ShowForm, TitledForm
 from output import print_form
 from screen import CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, \
-    busy_cursor, copy_to_clipboard, dlg2px, focused_window, get_icon, \
-    is_busy_cursor, microsleep, open_data_as_file, \
-    popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl
+    busy_cursor, copy_to_clipboard, dlg2px, file_menu_items, focused_window, get_icon, \
+    is_busy_cursor, microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl
 from search import sfs_columns
 from application import Application, \
-    aggregated_views_manager, block_refresh, current_form, db_operation, decrypted_names, \
+    aggregated_views_manager, block_refresh, current_form, db_operation, \
     message, refresh, run_dialog, run_form, set_status
 import _grid
 import config
@@ -3377,58 +3375,10 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
-        def file_field_data(row, field_id):
-            value = row[field_id]
-            if isinstance(value.type(), pytis.data.Binary):
-                if isinstance(value.type(), pytis.data.Big) and self._data.find_column(field_id):
-                    # Big values are not included in list form select.
-                    data_object = self.data()
-                    key_id = data_object.key()[0].id()
-                    data_object.select(condition=pytis.data.EQ(key_id, row[key_id]),
-                                       columns=(field_id,), transaction=row.transaction(),
-                                       arguments=self._current_arguments())
-                    complete_row = data_object.fetchone()
-                    data_object.close()
-                    if complete_row is None:
-                        binary_value = None
-                    else:
-                        binary_value = complete_row[field_id].value()
-                else:
-                    binary_value = value.value()
-                if binary_value is not None:
-                    data = binary_value.buffer()
-                else:
-                    data = None
-            else:
-                if value.value() is not None:
-                    data = value.export()
-                else:
-                    data = None
-            return data
-        def open_file(data, filename):
-            suffix = os.path.splitext(filename)[1]
-            open_data_as_file(data, suffix=suffix)
-        def can_open(fspec):
-            crypto_name = fspec.crypto_name()
-            def can_open_file(data, filename):
-                if crypto_name is None:
-                    return True
-                else:
-                    return crypto_name in decrypted_names()
-            return can_open_file
         menu = self._context_menu_static_part
         row = self.current_row()
-        file_open_mitems = [MItem(_('Open file "%s"', filename),
-                                  command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
-                                                                             data=data,
-                                                                             filename=filename,
-                                                                             enabled=can_open(f)),
-                                  help=_('Open the value of field "%s" as a file.', f.label()))
-                            for f, data, filename in
-                            [(f, file_field_data(row, f.id()), filename)
-                             for f, filename in [(f, row.filename(f.id())) for f in self._fields]
-                             if filename]
-                            if data]
+        select_arguments = self._current_arguments()
+        file_open_mitems = file_menu_items(self._fields, row, select_arguments)
         if file_open_mitems:
             menu += (MSeparator(),) + tuple(file_open_mitems)
         if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \

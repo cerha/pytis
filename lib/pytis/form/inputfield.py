@@ -47,7 +47,8 @@ from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
 from screen import CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector, \
-    char2px, dlg2px, mitem, open_data_as_file, paste_from_clipboard, popup_menu, wx_button
+    char2px, dlg2px, file_menu_items, mitem, open_data_as_file, paste_from_clipboard, popup_menu, \
+    wx_button
 from application import Application, create_data_object, \
     decrypted_names, delete_record, \
     global_keymap, message, new_record, run_dialog, run_form
@@ -323,17 +324,12 @@ class InputField(object, KeyHandler, CommandHandler):
         Arguments:
 
           parent -- wx parent for the created widgets.
-            
           row -- 'PresentedRow' instance.
-
           id -- field specification as a 'Field' instance.
-            
           inline -- if true, only the basic input widget is created.  The label and all surrounding
             widgets are omitted, so that the widget can be used in the inline editation mode in of
             a table cell.
-          
           guardian -- parent 'KeyHandler'.
-          
           readonly --
 
         This method should not be overriden by derived classes.  All field specific initialization
@@ -445,9 +441,13 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _menu(self):
         # Return a tuple of popup menu items ('MItem' instances).
-        return (UICommand(InputField.COMMAND_RESET(),
+        menu = (UICommand(InputField.COMMAND_RESET(),
                           _("Restore the original value"),
                           _("Discard all changes.")),)
+        file_open_mitems = file_menu_items([self._spec], self._row, {})
+        if file_open_mitems:
+            menu += tuple(file_open_mitems)
+        return menu
                         
     def _on_context_menu(self, event=None):
         def handler(uicmd):
@@ -456,8 +456,13 @@ class InputField(object, KeyHandler, CommandHandler):
             else:
                 return None
         self._set_focus()
-        menu = [uicmd and mitem(uicmd.clone(_command_handler=handler(uicmd))) or MSeparator()
-                for uicmd in self._menu()]
+        menu = []
+        for item in self._menu():
+            if item is None:
+                item = MSeparator()
+            elif isinstance(item, UICommand):
+                item = mitem(item.clone(_command_handler=handler(item)))
+            menu.append(item)
         if event:
             position = None
         else:

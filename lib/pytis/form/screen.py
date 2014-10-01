@@ -201,8 +201,64 @@ def paste_from_clipboard(ctrl):
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
     return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
-
 
+def file_menu_items(fields, row, select_arguments):
+    from application import Application, decrypted_names
+    def file_field_data(field_id):
+        value = row[field_id]
+        if isinstance(value.type(), pytis.data.Binary):
+            data = row.data()
+            if isinstance(value.type(), pytis.data.Big) and data.find_column(field_id):
+                # Big values are not included in list form select.
+                key_id = data.key()[0].id()
+                data.select(condition=pytis.data.EQ(key_id, row[key_id]),
+                            columns=(field_id,), transaction=row.transaction(),
+                            arguments=select_arguments)
+                complete_row = data.fetchone()
+                data.close()
+                if complete_row is None:
+                    binary_value = None
+                else:
+                    binary_value = complete_row[field_id].value()
+            else:
+                binary_value = value.value()
+            if binary_value is not None:
+                data = binary_value.buffer()
+            else:
+                data = None
+        else:
+            if value.value() is not None:
+                data = value.export()
+            else:
+                data = None
+        return data
+    def open_file(data, filename):
+        suffix = os.path.splitext(filename)[1]
+        open_data_as_file(data, suffix=suffix)
+    def can_open(fspec):
+        crypto_name = fspec.crypto_name()
+        def can_open_file(data, filename):
+            if crypto_name is None:
+                return True
+            else:
+                return crypto_name in decrypted_names()
+        return can_open_file
+    mitems = []
+    for f in fields:
+        fid = f.id()
+        filename = row.filename(fid)
+        if filename is not None:
+            data = file_field_data(fid)
+            if data is not None:
+                command = Application.COMMAND_HANDLED_ACTION(handler=open_file,
+                                                             data=data,
+                                                             filename=filename,
+                                                             enabled=can_open(f))
+                mitems.append(MItem(_('Open file "%s"', filename), command=command,
+                                    help=_('Open the value of field "%s" as a file.', f.label())))
+    return mitems
+        
+
 # Utility classes
 
 
@@ -2037,7 +2093,7 @@ class Browser(wx.Panel, CommandHandler):
                 # settings.props.enable_developer_extras = True # Doesn't work...
                 webview.set_settings(settings)
                 if self._toolbar:
-                    # Setting focus to the location bar TextCtrl is here mainly to allow 
+                    # Setting focus to the location bar TextCtrl is here mainly to allow
                     # leaving the form using the Escape key (implemented by hack in LocationBar)
                     # because wx keypresses are not correctly processed within the gtk embedded
                     # webkit widget.
