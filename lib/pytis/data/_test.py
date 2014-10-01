@@ -913,8 +913,9 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
-                  "create table rangetable (x int, r int4range)",
-                  "insert into rangetable values (1, '[10, 20)')",
+                  "create table rangetable (x int, r int4range, rdt tsrange)",
+                  ("insert into rangetable values "
+                   "(1, '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
                   "create view viewtest1 as select *, x||'%s%s'::text as foo "
                   "from viewtest2 where true",
                   "create rule viewtest1_update as on update to viewtest1 "
@@ -1094,7 +1095,8 @@ class DBDataDefault(_DBTest):
         key = B('x', 'rangetable', 'x')
         ranges = pytis.data.DBDataDefault(
             (key,
-             B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),),
+             B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
+             B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange()),),
             key,
             conn)
         # views
@@ -1622,16 +1624,28 @@ class DBDataDefault(_DBTest):
         assert value[0] == 10 and value[1] == 20, value
         new_value, err = pytis.data.IntegerRange().validate(('20', '30',))
         assert err is None, err
-        data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),)))
+        rdt_value, err = pytis.data.DateTimeRange().validate(('2014-02-01 00:00:00',
+                                                              '2014-02-01 00:00:02',))
+        assert err is None, err
+        data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),
+                                    ('rdt', rdt_value,),)))
         n = data.select(pytis.data.EQ('r', new_value))
         assert n == 1, n
-        value = data.fetchone()['r']
+        row = data.fetchone()
         data.close()
-        assert value == new_value, value
+        assert row['r'] == new_value, row['r'].value()
+        assert row['rdt'] == rdt_value, row['rdt'].value()
+        new_value, err = pytis.data.IntegerRange().validate(('40', '50',))
+        assert err is None, err
+        rdt_value, err = pytis.data.DateTimeRange().validate(('2014-03-01 00:00:00',
+                                                              '2014-03-01 00:00:02',))
+        assert err is None, err
+        data.update(pytis.data.ival(2), pytis.data.Row((('r', new_value,), ('rdt', rdt_value,),)))
         new_value, err = pytis.data.IntegerRange().validate(('', '',))
         assert err is None, err
         assert new_value.value() is None, new_value.value()
-        data.insert(pytis.data.Row((('x', pytis.data.ival(3),), ('r', new_value,),)))
+        data.insert(pytis.data.Row((('x', pytis.data.ival(3),), ('r', new_value,),
+                                    ('rdt', new_value,),)))
         row = data.row(pytis.data.ival(3))
         assert row is not None
         value = row[1].value()
