@@ -36,7 +36,8 @@ class PresentedRow(unittest.TestCase):
             key,
             pd.ColumnSpec('b', pd.Integer()),
             pd.ColumnSpec('c', pd.Integer()),
-            pd.ColumnSpec('d', pd.Integer()))
+            pd.ColumnSpec('d', pd.Integer()),
+            pd.ColumnSpec('r', pd.IntegerRange()))
         self._data = pd.Data(self._columns, key)
         def twice(row):
             # Just try if it is possible to access the original row.
@@ -53,18 +54,20 @@ class PresentedRow(unittest.TestCase):
             return sum is not None and sum + 1 or None
         def gt5(row):
             return row['sum'].value() > 5
-        self._fields = (pp.Field('a'),
-                        pp.Field('b'),
-                        pp.Field('c', default=lambda : 5),
-                        pp.Field('d', 
-                                 computer=pp.Computer(twice, depends=('c',)),
-                                 editable=pp.Computer(gt5, depends=('sum',))),
-                        pp.Field('e', type=pd.Integer(), virtual=True,
-                                 default=88),
-                        pp.Field('sum', type=pd.Integer(), virtual=True, 
-                                 computer=pp.Computer(sum, depends=('b','c'))),
-                        pp.Field('inc', type=pd.Integer(), virtual=True,
-                                 computer=pp.Computer(inc, depends=('sum',))))
+        self._fields = (
+            pp.Field('a'),
+            pp.Field('b'),
+            pp.Field('c', default=lambda: 5),
+            pp.Field('d', editable=pp.Computer(gt5, depends=('sum',)),
+                     computer=pp.Computer(twice, depends=('c',))),
+            pp.Field('e', type=pd.Integer(), virtual=True,
+                     default=88),
+            pp.Field('sum', type=pd.Integer(), virtual=True,
+                     computer=pp.Computer(sum, depends=('b', 'c'))),
+            pp.Field('inc', type=pd.Integer(), virtual=True,
+                     computer=pp.Computer(inc, depends=('sum',))),
+            pp.Field('r'),
+        )
         
     def _check_values(self, row, pairs):
         for k, v in pairs:
@@ -82,21 +85,23 @@ class PresentedRow(unittest.TestCase):
                                  ('c', 5),
                                  ('d', 10),
                                  ('e', 88),
-                                 ('sum', 0)))
+                                 ('sum', 0),
+                                 ('r', None)))
         row = pp.PresentedRow(self._fields, self._data, None, new=False)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', None),
                                  ('d', None),
                                  ('sum', None)))
-        data_row = self._data_row(a='xx', b=100, c=77, d=18)
+        data_row = self._data_row(a='xx', b=100, c=77, d=18, r=(1, 8))
         row = pp.PresentedRow(self._fields, self._data, data_row, new=True)
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 77),
                                  ('d', 18),
                                  ('e', 88),
-                                 ('sum', 177)))
+                                 ('sum', 177),
+                                 ('r', (1, 8))))
         row = pp.PresentedRow(self._fields, self._data, data_row, new=False)
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
@@ -105,6 +110,7 @@ class PresentedRow(unittest.TestCase):
                                  ('e', None),
                                  ('sum', 177)))
         row['c'] = self._value('c', 88)
+        row['r'] = self._value('r', (8, 9))
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 88),
@@ -156,10 +162,15 @@ class PresentedRow(unittest.TestCase):
         assert row.invalid_string('a') is None
         assert row.invalid_string('b') == '2.3'
         assert row.validate('b', '12') is None
+        assert row.invalid_string('b') is None
+        assert row.validate('r', ('2', '12')) is None
         self._check_values(row, (('b', 12),
                                  ('c', 8),
-                                 ('sum', 20)))
-        assert row.invalid_string('b') is None
+                                 ('sum', 20),
+                                 ('r', (2, 12))))
+        assert row.validate('r', ('2', 'x12')) is not None
+        self._check_values(row, (('r', (2, 12)),))
+        assert row.invalid_string('r') == ('2', 'x12')
     def test_set_row(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
@@ -265,6 +276,10 @@ class PresentedRow(unittest.TestCase):
     def test_keys(self):
         row = pp.PresentedRow(self._fields, self._data, None)
         assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
+    def test_format(self):
+        row = pp.PresentedRow(self._fields, self._data, None, singleline=True)
+        row['r'] = self._value('r', (8, 9))
+        assert row.format('r') == ('8', '9'), row.format('r')
     def test_display(self):
         C = pd.ColumnSpec
         S = pd.String
