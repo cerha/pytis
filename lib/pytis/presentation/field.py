@@ -607,6 +607,8 @@ class PresentedRow(object):
         if self._singleline and column.line_separator is not None:
             if svalue is None:
                 svalue = ''
+            elif isinstance(svalue, tuple): # For range types.
+                svalue = tuple(string.join(s.splitlines(), column.line_separator) for s in svalue)
             else:
                 svalue = string.join(svalue.splitlines(), column.line_separator)
         self._cache[key] = svalue
