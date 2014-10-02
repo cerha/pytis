@@ -2687,12 +2687,22 @@ class RangeField(InputField):
         return self._hbox(w1, w2)
     
     def _set_value(self, value):
-        for val, ctrl in zip(value, self._inputs):
-            ctrl.SetValue(val)
+        if self._inline:
+            if isinstance(value, tuple):
+                value = ' - '.join(value)
+            self._ctrl.SetValue(value)
+        else:
+            for val, ctrl in zip(value, self._inputs):
+                ctrl.SetValue(val)
         self._on_change()
 
     def _validate(self):
-        value = [ctrl.GetValue() for ctrl in self._inputs]
+        if self._inline:
+            value = re.split(r'\s*-\s*', self._ctrl.GetValue())
+            if len(value) != 2:
+                return pytis.data.ValidationError(_("Invalid range format."))
+        else:
+            value = [ctrl.GetValue() for ctrl in self._inputs]
         return self._row.validate(self.id(), tuple(value))
 
 
