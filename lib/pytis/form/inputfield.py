@@ -2689,7 +2689,10 @@ class RangeField(InputField):
     def _set_value(self, value):
         if self._inline:
             if isinstance(value, tuple):
-                value = ' - '.join(value)
+                if value == ('', ''):
+                    value = ''
+                else:
+                    value = ' - '.join(value)
             self._ctrl.SetValue(value)
         else:
             for val, ctrl in zip(value, self._inputs):
