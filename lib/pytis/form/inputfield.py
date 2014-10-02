@@ -522,6 +522,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self._update_background_color()
         
     def _current_ctrl(self):
+        # Note, there may be several active controls, for example in range fields...
         return self._last_focused_ctrl or self._controls[0][0]
 
     def _on_set_focus(self, event):
