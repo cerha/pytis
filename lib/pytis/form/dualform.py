@@ -448,13 +448,6 @@ class BrowseDualForm(SideBrowseDualForm):
     """
 
     def _create_main_form(self, parent, **kwargs):
-        #dualform = self
-        #class _MainBrowseForm(BrowseForm):
-        #    def title(self):
-        #        title = dualform._view.title()
-        #        if not title:
-        #            title = super(_MainBrowseForm, self).title()
-        #        return title
         return BrowseForm(parent, self._resolver, self._main_name, guardian=self, **kwargs)
 
     def _set_main_form_callbacks(self):
@@ -725,7 +718,6 @@ class MultiForm(Form, Refreshable):
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
-        #self.set_callback(self.CALL_USER_INTERACTION, lambda : self._select_form(self))
 
     def _on_tab_mouse_right(self, event):
         event.Skip()
@@ -775,7 +767,6 @@ class MultiForm(Form, Refreshable):
         if self._block_on_page_change:
             return
         if event:
-            #event.Skip()
             selection = event.GetSelection()
             old_selection = event.GetOldSelection()
         else:
