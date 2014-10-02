@@ -48,7 +48,7 @@ from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
 from screen import CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector, \
     char2px, dlg2px, file_menu_items, mitem, open_data_as_file, paste_from_clipboard, popup_menu, \
-    wx_button
+    wx_button, wx_focused_window
 from application import Application, create_data_object, \
     decrypted_names, delete_record, \
     global_keymap, message, new_record, run_dialog, run_form
@@ -261,6 +261,12 @@ class InputField(object, KeyHandler, CommandHandler):
                     SelectionType.RADIO: RadioBoxField,
                 }
                 field = mapping[selection_type]
+        elif isinstance(type, pytis.data.IntegerRange):
+            field = NumericRangeField
+        elif isinstance(type, pytis.data.DateRange):
+            field = DateRangeField
+        elif isinstance(type, pytis.data.DateTimeRange):
+            field = DateTimeRangeField
         elif isinstance(type, pytis.data.Image):
             field = ImageField
         elif isinstance(type, pytis.data.Binary):
@@ -347,7 +353,8 @@ class InputField(object, KeyHandler, CommandHandler):
         self._guardian = guardian
         self._id = id = spec.id()
         self._inline = inline
-        self._want_focus = False
+        self._want_focus = None
+        self._last_focused_ctrl = None
         if row.new():
             permission = pytis.data.Permission.INSERT
         else:
@@ -359,49 +366,54 @@ class InputField(object, KeyHandler, CommandHandler):
         self._readonly = readonly or denied or row.hidden_codebook(id)
         self._enabled = not readonly and row.editable(id)
         self._callback_registered = False
-        self._unregistered_widgets = {}
+        self._skipped_controls = {}
         self._needs_validation = False
         self._valid = False
         self._init_attributes()
+        self._call_on_idle = []
         self._ctrl = ctrl = self._create_ctrl(parent)
+        self._controls = [(ctrl, self._set_ctrl_editable, self._set_ctrl_color)]
+        self._init_ctrl(ctrl)
         if inline:
             self._label = None
             self._widget = ctrl
         else:
             self._label = self._create_label(parent)
-            self._widget = self._create_widget(parent)
-        KeyHandler.__init__(self, ctrl)
-        wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
-        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
-        wx_callback(wx.EVT_SET_FOCUS, ctrl, self._on_set_focus)
-        wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        if self._spec.descr() is not None:
-            ctrl.SetToolTipString(self._spec.descr())
+            self._widget = self._create_widget(parent, ctrl)
         if not self._enabled:
-            self._disable()
-            self._register_skip_navigation_callback()
+            self._set_editable(False)
         if not inline:
             row.register_callback(row.CALL_CHANGE, id, self._change_callback)
             row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
                                   self._editability_change_callback)
-        value = self._row.invalid_string(id)
+        value = row.invalid_string(id)
         if value is None:
             value = row.format(id, secure='')
         self._set_value(value)
-        self._call_on_idle = self._update_background_color
+        self._call_on_idle.append(self._update_background_color)
         
     def _init_attributes(self):
         pass
         
+    def _init_ctrl(self, ctrl):
+        KeyHandler.__init__(self, ctrl)
+        wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
+        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
+        wx_callback(wx.EVT_SET_FOCUS, ctrl, self._on_set_focus)
+        wx_callback(wx.EVT_RIGHT_DOWN, ctrl, lambda e: self._on_context_menu(ctrl))
+        wx_callback(wx.EVT_NAVIGATION_KEY, ctrl, self._on_navigation(ctrl))
+        if self._spec.descr() is not None:
+            ctrl.SetToolTipString(self._spec.descr())
+
     def __str__(self):
         try:
             return "<%s id='%s'>" % (self.__class__.__name__, self.id())
         except AttributeError:
             return "<%s (uninitialized)>" % self.__class__.__name__
         
-    def _skip_navigation_callback(self, widget):
+    def _on_navigation(self, widget):
         def cb(e):
-            if widget not in self._unregistered_widgets:
+            if widget in self._skipped_controls:
                 e.Skip()
                 flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
                 wx.CallAfter(lambda: widget.Navigate(flag))
@@ -409,6 +421,13 @@ class InputField(object, KeyHandler, CommandHandler):
                 e.Skip()
         return cb
             
+    def _hbox(self, *content):
+        # Helper function to group wx widgets into a horizontal box (sizer). 
+        hbox = wx.BoxSizer()
+        for x in content:
+            hbox.Add(x, 0, wx.FIXED_MINSIZE)
+        return hbox
+
     def _create_label(self, parent):
         # Return field label as 'wx.StaticText' instance.
         label = self.spec().label()
@@ -420,13 +439,13 @@ class InputField(object, KeyHandler, CommandHandler):
         # Return the actual control element for this field.
         raise ProgramError("This method must be overriden!")
 
-    def _create_widget(self, parent):
+    def _create_widget(self, parent, ctrl):
         # Create additional UI elements for the field control.  Return a wx
         # widget containing all UI elements for given field.  This class simply
         # returns the actual control, but derived classes may add extra buttons
         # etc. to create more sophisticated user interface.  This class is not
         # called in "inline" mode where additional controls are not allowed.
-        return self._ctrl
+        return ctrl
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -449,13 +468,12 @@ class InputField(object, KeyHandler, CommandHandler):
             menu += tuple(file_open_mitems)
         return menu
                         
-    def _on_context_menu(self, event=None):
+    def _on_context_menu(self, ctrl, position=None):
         def handler(uicmd):
             if issubclass(uicmd.command().handler(), (InputField, Invocable)):
                 return self
             else:
                 return None
-        self._set_focus()
         menu = []
         for item in self._menu():
             if item is None:
@@ -463,12 +481,8 @@ class InputField(object, KeyHandler, CommandHandler):
             elif isinstance(item, UICommand):
                 item = mitem(item.clone(_command_handler=handler(item)))
             menu.append(item)
-        if event:
-            position = None
-        else:
-            size = self._ctrl.GetSize()
-            position = (size.x / 3, size.y / 2)
-        popup_menu(self._ctrl, menu, position=position, keymap=global_keymap())
+        ctrl = self._last_focused_ctrl or self._controls[0][0]
+        popup_menu(ctrl, menu, position=position, keymap=global_keymap())
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())
@@ -485,10 +499,10 @@ class InputField(object, KeyHandler, CommandHandler):
                     self._on_validity_change()
                 self._on_change_hook()
         if self._want_focus and not self._has_focus():
-            self._set_focus()
-        if hasattr(self, '_call_on_idle') and self._call_on_idle is not None:
-            self._call_on_idle()
-            self._call_on_idle = None
+            self._set_focus(self._want_focus)
+        while self._call_on_idle:
+            callback = self._call_on_idle.pop()
+            callback()
         event.Skip()
         return True
 
@@ -509,8 +523,12 @@ class InputField(object, KeyHandler, CommandHandler):
         """
         self._update_background_color()
         
+    def _current_ctrl(self):
+        return self._last_focused_ctrl or self._controls[0][0]
+
     def _on_set_focus(self, event):
-        self._want_focus = False
+        self._last_focused_ctrl = event.GetEventObject()
+        self._want_focus = None
         last = InputField._last_focused()
         # TODO: Zkusit to přes `wx.Window.SetFocusFromKbd()'
         if last is not None and last is not self and last.enabled() and last._modified():
@@ -526,25 +544,6 @@ class InputField(object, KeyHandler, CommandHandler):
         event.Skip()
         return True
 
-    def _enable_event_handlers(self):
-        self._ctrl.SetEvtHandlerEnabled(True)
-
-    def _disable_event_handlers(self):
-        self._ctrl.SetEvtHandlerEnabled(False)
-
-    def _register_skip_navigation_callback(self):
-        control = self._ctrl
-        if not self._callback_registered:
-            wx_callback(wx.EVT_NAVIGATION_KEY, control, self._skip_navigation_callback(control))
-            self._callback_registered = True
-        if control in self._unregistered_widgets:
-            del(self._unregistered_widgets[control])
-
-    def _unregister_skip_navigation_callback(self):
-        # self._ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
-        # The disconnect above doeasn't work, so here is a nasty workaround.
-        self._unregistered_widgets[self._ctrl] = True
-
     def _change_callback(self):
         # Field value change signalization from PresentedRow.
         value = self._row.format(self.id(), secure=True)
@@ -554,14 +553,10 @@ class InputField(object, KeyHandler, CommandHandler):
     def _editability_change_callback(self):
         # Field editability change signalization from PresentedRow.
         if not self._denied and not self._readonly:
-            if self._row.editable(self.id()):
-                self._enabled = True
-                self._enable()
-                self._unregister_skip_navigation_callback()
-            else:
-                self._enabled = False
-                self._disable()
-                self._register_skip_navigation_callback()
+            self._enabled = enabled = self._row.editable(self.id())
+            self._set_editable(enabled)
+            # The change won't take effect for certain fields if we do it directly!
+            self._call_on_idle.append(self._update_background_color)
 
     def _on_change(self, event=None):
         # Called on user interaction (editation, selection).  The actual processing of the event
@@ -573,15 +568,24 @@ class InputField(object, KeyHandler, CommandHandler):
         if event:
             event.Skip()
 
-    def _enable(self):
-        self._ctrl.Enable(True)
+    def _set_editable(self, editable):
+        for ctrl, set_editable, set_color in self._controls:
+            set_editable(ctrl, editable)
+            if editable:
+                # ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
+                # The disconnect above doeasn't work, so here is a nasty workaround.
+                if ctrl in self._skipped_controls:
+                    del self._skipped_controls[ctrl]
+            else:
+                self._skipped_controls[ctrl] = True
 
-    def _disable(self):
-        # if not self._readonly:
-        # There is currently no way to disable a wx control without graying it out, which we don't
-        # want in show forms, so we leave it editable relying on the fact, that there is no way to
-        # save the changed in a readonly form.  This situation is fixed for TextFields below.
-        self._ctrl.Enable(False)
+    def _set_ctrl_editable(self, ctrl, editable):
+        ctrl.Enable(True)
+
+    def _set_ctrl_color(self, ctrl, color):
+        if hasattr(ctrl, 'SetOwnBackgroundColour'):
+            ctrl.SetOwnBackgroundColour(color)
+            ctrl.Refresh()
 
     def _update_background_color(self):
         if self._denied:
@@ -599,8 +603,8 @@ class InputField(object, KeyHandler, CommandHandler):
         self._set_background_color(color)
 
     def _set_background_color(self, color):
-        self._ctrl.SetOwnBackgroundColour(color)
-        self._ctrl.Refresh()
+        for ctrl, set_editable, set_color in self._controls:
+            set_color(ctrl, color)
 
     def _modified(self):
         # Returns always false for virtual fields
@@ -610,14 +614,14 @@ class InputField(object, KeyHandler, CommandHandler):
         size = dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
         return (size.width, size.height)
     
-    def _set_focus(self):
-        parent = self._ctrl.GetParent()
+    def _set_focus(self, ctrl):
+        parent = ctrl.GetParent()
         nb = parent.GetParent()
         if isinstance(nb, wx.Notebook) and nb.GetCurrentPage() != parent:
             for i in range(nb.GetPageCount()):
                 if nb.GetPage(i) == parent:
                     nb.SetSelection(i)
-        self._ctrl.SetFocus()
+        ctrl.SetFocus()
 
     def _has_focus(self):
         """Return true if the field currently has keyboard focus."""
@@ -625,7 +629,8 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _alive(self):
         try:
-            self._ctrl.GetId()
+            for ctrl, set_editable, set_color in self._controls:
+                ctrl.GetId()
             return True
         except wx.PyDeadObjectError:
             return False
@@ -639,7 +644,10 @@ class InputField(object, KeyHandler, CommandHandler):
         self.reset()
 
     def _cmd_context_menu(self):
-        self._on_context_menu()
+        ctrl = wx_focused_window()
+        for ctrl, set_editable, set_color in self._controls:
+            size = ctrl.GetSize()
+            self._on_context_menu(ctrl, position=(size.x / 3, size.y / 2))
 
     # Public methods
         
@@ -704,7 +712,7 @@ class InputField(object, KeyHandler, CommandHandler):
     def set_focus(self, reset=False):
         """Make the field active for user input."""
         InputField._last_focused() # Focus set programatically - forget the last focused field.
-        self._want_focus = True
+        self._want_focus = self._current_ctrl()
 
     def enabled(self):
         """Return true if the field is editable by the user.
@@ -730,7 +738,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def insert_text(self, text):
         """Insert given text into the field in the current place of the cursor."""
-        self._ctrl.WriteText(text)
+        self._controls[0][0].WriteText(text)
         
         
 class Unlabeled:
@@ -760,7 +768,7 @@ class TextField(InputField):
             size = self._px_size(parent, self.width(), self.height())
         else:
             size = None
-        control = wx.TextCtrl(parent, -1, '', style=self._ctrl_style(), size=size)
+        control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
         wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None:
@@ -778,6 +786,14 @@ class TextField(InputField):
         self._update_completions = None
         return control
 
+    def _set_ctrl_editable(self, ctrl, editable):
+        ctrl.SetEditable(editable)
+        if editable:
+            validator = _TextValidator(ctrl, filter=self._filter())
+        else:
+            validator = wx.DefaultValidator
+        ctrl.SetValidator(validator)
+
     def _create_button(self, parent, label, icon=None):
         return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
 
@@ -790,7 +806,7 @@ class TextField(InputField):
             return
         super(TextField, self).on_key_down(event)
 
-    def _ctrl_style(self):
+    def _text_ctrl_style(self):
         style = wx.TE_PROCESS_ENTER
         if self.height() > 1:
             style |= wx.TE_MULTILINE
@@ -883,18 +899,6 @@ class TextField(InputField):
         self._ctrl.SetValue(value)
         self._on_change() # call manually, since SetValue() doesn't emit an event.
 
-    def _enable(self):
-        control = self._ctrl
-        control.SetEditable(True)
-        control.SetValidator(_TextValidator(control, filter=self._filter()))
-        self._update_background_color()
-
-    def _disable(self):
-        self._ctrl.SetEditable(False)
-        self._ctrl.SetValidator(wx.DefaultValidator)
-        # The change won't take effect for certain fields if we do it directly!
-        self._call_on_idle = self._update_background_color
-
     def _menu(self):
         return super(TextField, self)._menu() + \
             (None,
@@ -910,30 +914,34 @@ class TextField(InputField):
     # Zpracování příkazů
     
     def _can_cut(self):
-        return self._ctrl.CanCut()
+        ctrl = self._current_ctrl()
+        return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
         
     def _cmd_cut(self):
-        self._ctrl.Cut()
+        self._current_ctrl().Cut()
         self._on_change()
         
     def _can_copy(self):
-        return self._ctrl.CanCopy()
+        ctrl = self._current_ctrl()
+        return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
 
     def _cmd_copy(self):
-        self._ctrl.Copy()
+        self._current_ctrl().Copy()
         
     def _can_paste(self):
-        return self._ctrl.CanPaste()
-        
+        ctrl = self._current_ctrl()
+        return hasattr(ctrl, 'CanPaste') and ctrl.CanPaste()
+    
     def _cmd_paste(self):
-        paste_from_clipboard(self._ctrl)
+        paste_from_clipboard(self._current_ctrl())
         self._on_change()
         
     def _can_select_all(self):
-        return bool(self._ctrl.GetValue())
+        ctrl = self._current_ctrl()
+        return hasattr(ctrl, 'SetSelection') and ctrl.GetValue()
 
     def _cmd_select_all(self):
-        self._ctrl.SetSelection(-1, -1)
+        return self._current_ctrl().SetSelection(-1, -1)
         
 
 class StringField(TextField):
@@ -946,20 +954,18 @@ class StringField(TextField):
 class PasswordField(StringField):
     _ORIGINAL_VALUE = u'\u2024' * 8
     
-    def _ctrl_style(self):
-        return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
+    def _text_ctrl_style(self):
+        return super(PasswordField, self)._text_ctrl_style() | wx.TE_PASSWORD
 
-    def _create_widget(self, parent):
-        result = super(PasswordField, self)._create_widget(parent)
+    def _create_widget(self, parent, ctrl):
+        widget = super(PasswordField, self)._create_widget(parent, ctrl)
         if self._type.verify():
-            self._ctrl2 = self._create_ctrl(parent)
-            sizer = wx.BoxSizer()
-            sizer.Add(result, 0, wx.FIXED_MINSIZE)
-            sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
-            result = sizer
+            self._ctrl2 = ctrl2 = self._create_ctrl(parent)
+            self._controls.append((ctrl2, self._set_ctrl_editable, self._set_ctrl_color))
+            widget = self._hbox(widget, ctrl2)
         else:
             self._ctrl2 = None
-        return result
+        return widget
     
     def _set_value(self, value):
         if value:
@@ -967,22 +973,6 @@ class PasswordField(StringField):
         super(PasswordField, self)._set_value(value)
         if self._ctrl2:
             self._ctrl2.SetValue(value)
-
-    def _enable(self):
-        super(PasswordField, self)._enable()
-        if self._ctrl2:
-            self._ctrl2.SetEditable(True)
-
-    def _disable(self):
-        super(PasswordField, self)._disable()
-        if self._ctrl2:
-            self._ctrl2.SetEditable(False)
-        
-    def _set_background_color(self, color):
-        super(PasswordField, self)._set_background_color(color)
-        if self._ctrl2:
-            self._ctrl2.SetOwnBackgroundColour(color)
-            self._ctrl2.Refresh()
 
     def _validate(self):
         value = self._get_value()
@@ -1038,51 +1028,32 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
-    def _ctrl_style(self):
-        return super(NumericField, self)._ctrl_style() | wx.TE_RIGHT
+    def _text_ctrl_style(self):
+        return super(NumericField, self)._text_ctrl_style() | wx.TE_RIGHT
 
-    def _create_ctrl(self, parent):
-        self._slider = None
-        return super(NumericField, self)._create_ctrl(parent)
-        
-    def _create_widget(self, parent):
-        result = super(NumericField, self)._create_widget(parent)
+    def _create_widget(self, parent, ctrl):
+        widget = super(NumericField, self)._create_widget(parent, ctrl)
         if self._spec.slider():
-            box = wx.BoxSizer()
-            self._slider = slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
-                                              minValue=self._type.minimum() or 0,
-                                              maxValue=(self._type.maximum() is None
-                                                       and 100 or self._type.maximum()),
-                                              size=(200, 25))
-            wx_callback(wx.EVT_SCROLL, slider, self._on_slider)
-            box.Add(result)
-            box.Add(slider)
-            result = box
-        return result
-    
-    def _on_slider(self, event):
-        self._set_value(str(self._slider.GetValue()))
-        
-    def _on_idle(self, event):
-        super(NumericField, self)._on_idle(event)
-        if self._slider:
-            value = self._row[self._id].value()
-            if value is None or self._row.invalid_string(self._id):
-                position = self._slider.GetMin()
-            else:
-                position = int(value)
-            self._slider.SetValue(position)
+            slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
+                               minValue=self._type.minimum() or 0,
+                               maxValue=(self._type.maximum() is None
+                                         and 100 or self._type.maximum()),
+                               size=(200, 25))
+            self._controls.append((slider, lambda c, e: c.Enable(e), lambda c, e: None))
+            def on_slider(event):
+                ctrl.SetValue(str(slider.GetValue()))
+                self._on_change()
+            wx_callback(wx.EVT_SCROLL, slider, on_slider)
+            def on_idle(event):
+                try:
+                    position = int(ctrl.GetValue())
+                except (ValueError, TypeError):
+                    position = slider.GetMin()
+                slider.SetValue(position)
+            wx_callback(wx.EVT_IDLE, slider, on_idle)
+            widget = self._hbox(widget, slider)
+        return widget
 
-    def _enable(self):
-        super(NumericField, self)._enable()
-        if self._slider:
-            self._slider.Enable(True)
-        
-    def _disable(self):
-        super(NumericField, self)._disable()
-        if self._slider:
-            self._slider.Enable(False)
-   
 
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
@@ -1102,8 +1073,7 @@ class CheckBoxField(Unlabeled, InputField):
 
     def _set_value(self, value):
         assert value in ('T', 'F', ''), ('Invalid value', value)
-        wxvalue = value == 'T' and True or False
-        self._ctrl.SetValue(wxvalue)
+        self._ctrl.SetValue(value == 'T')
         self._on_change() # call manually, since SetValue() doesn't emit an event.
         
 
@@ -1294,19 +1264,16 @@ class Invocable(object, CommandHandler):
         return InputField._get_command_handler_instance()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
-    def _create_widget(self, parent):
-        widget = super(Invocable, self)._create_widget(parent)
+    def _create_widget(self, parent, ctrl):
+        widget = super(Invocable, self)._create_widget(parent, ctrl)
         button = self._create_button(parent, '...', icon=self._INVOKE_ICON)
+        self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
         button.SetToolTipString(self._INVOKE_TITLE)
         self._invocation_button = button
-        sizer = wx.BoxSizer()
-        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
-        sizer.Add(button, 0, wx.FIXED_MINSIZE)
         wx_callback(wx.EVT_BUTTON, button, button.GetId(),
-                    lambda e: self._on_invoke_selection())
-        wx_callback(wx.EVT_NAVIGATION_KEY, button,
-                    self._skip_navigation_callback(button))
-        return sizer
+                    lambda e: self._on_invoke_selection(ctrl))
+        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button))
+        return self._hbox(widget, button)
 
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
@@ -1315,26 +1282,16 @@ class Invocable(object, CommandHandler):
     def _create_button(self, parent, label, icon=None):
         return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
 
-    def _disable(self):
-        if not self._inline:
-            self._invocation_button.Enable(False)
-        super(Invocable, self)._disable()
-    
-    def _enable(self):
-        if not self._inline:
-            self._invocation_button.Enable(True)
-        super(Invocable, self)._enable()
-    
     def _menu(self):
         return super(Invocable, self)._menu() + \
             (None,
              UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
     
-    def _on_invoke_selection(self, alternate=False):
+    def _on_invoke_selection(self, ctrl, alternate=False):
         raise ProgramError("This method must be overriden!")
     
     def _cmd_invoke_selection(self, **kwargs):
-        self._on_invoke_selection(**kwargs)
+        self._on_invoke_selection(self._ctrl, **kwargs)
         
     def _can_invoke_selection(self, **kwargs):
         return self.enabled()
@@ -1354,14 +1311,15 @@ class DateField(Invocable, TextField, SpinnableField):
     _INVOKE_HELP = _("Show the calendar for date selection.")
     _SPIN_STEP = datetime.timedelta(days=1)
     
-    def _on_invoke_selection(self, alternate=False):
-        if self._valid:
-            d = self._row[self._id].value()
-        else:
-            d = None
-        date = run_dialog(Calendar, d)
+    def _date_type(self):
+        return self._type
+
+    def _on_invoke_selection(self, ctrl, alternate=False):
+        t = self._date_type()
+        value, error = t.validate(ctrl.GetValue())
+        date = run_dialog(Calendar, value and value.value())
         if date is not None:
-            self._set_value(self._type.export(date))
+            ctrl.SetValue(t.export(date))
 
 
 class DateTimeField(DateField):
@@ -1374,11 +1332,10 @@ class DateTimeField(DateField):
     """
     _DEFAULT_WIDTH = 19
 
-    def _on_invoke_selection(self, alternate=False):
-        if self._valid:
-            dt = self._row[self._id].value()
-        else:
-            dt = None
+    def _on_invoke_selection(self, ctrl, alternate=False):
+        t = self._date_type()
+        value, error = t.validate(ctrl.GetValue())
+        dt = value and value.value()
         date = run_dialog(Calendar, dt)
         if date is not None:
             if dt:
@@ -1386,8 +1343,8 @@ class DateTimeField(DateField):
             else:
                 kwargs = {}
             dt = datetime.datetime(year=date.year, month=date.month, day=date.day,
-                                   tzinfo=self._type.timezone(), **kwargs)
-            self._set_value(self._type.export(dt))
+                                   tzinfo=t.timezone(), **kwargs)
+            ctrl.SetValue(t.export(dt))
 
             
 class TimeField(TextField, SpinnableField):
@@ -1406,7 +1363,7 @@ class ColorSelectionField(Invocable, TextField):
     _INVOKE_TITLE = _("Select Color")
     _INVOKE_HELP = _("Show the color selection dialog.")
     
-    def _on_invoke_selection(self, alternate=False):
+    def _on_invoke_selection(self, ctrl, alternate=False):
         color = run_dialog(ColorSelector, self._get_value())
         if color is not None:
             self._set_value(color)
@@ -1505,19 +1462,16 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     _INVOKE_HELP = _("Show the selection of available codebook values.")
 
     def _init_attributes(self):
-        self._insert_button = None
         self._display = None
         super(CodebookField, self)._init_attributes()
         
-    def _create_widget(self, parent):
+    def _create_widget(self, parent, ctrl):
         """Zavolej '_create_widget()' třídy Invocable a přidej displej."""
-        widget = super(CodebookField, self)._create_widget(parent)
+        widget = super(CodebookField, self)._create_widget(parent, ctrl)
         spec = self.spec()
         cb_spec = self._cb_spec
         if cb_spec.display() is None and not spec.allow_codebook_insert():
             return widget
-        sizer = wx.BoxSizer()
-        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
         if cb_spec.display():
             display_size = spec.display_size()
             if display_size is None:
@@ -1527,17 +1481,15 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
-                wx_callback(wx.EVT_NAVIGATION_KEY, display,
-                            self._skip_navigation_callback(display))
-                sizer.Add(display, 0, wx.FIXED_MINSIZE)
+                wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display))
+                self._controls.append((display, lambda c, e: None, lambda c, e: None))
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
             button.SetToolTipString(_("Insert a new codebook value."))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
-            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
-            sizer.Add(button, 0, wx.FIXED_MINSIZE)
-            self._insert_button = button
-        return sizer
+            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button))
+            self._controls.append((button, lambda b, e: b.Enable(e), lambda b, e: None))
+        return self._hbox(*[x[0] for x in self._controls])
 
     def _menu(self):
         return super(CodebookField, self)._menu() + \
@@ -1551,16 +1503,6 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         except AttributeError:
             return None
 
-    def _disable(self):
-        if self._insert_button:
-            self._insert_button.Enable(False)
-        super(CodebookField, self)._disable()
-    
-    def _enable(self):
-        if self._insert_button:
-            self._insert_button.Enable(True)
-        super(CodebookField, self)._enable()
-        
     def _set_value(self, value):
         super(CodebookField, self)._set_value(value)
         self._update_display()
@@ -1577,7 +1519,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 display = ''
             self._display.SetValue(display)
         
-    def _on_invoke_selection(self, alternate=False):
+    def _on_invoke_selection(self, ctrl, alternate=False):
         value_column = self._type.enumerator().value_column()
         value = self._get_value()
         if ((not self._valid and value and self._modified() and
@@ -1695,9 +1637,6 @@ class ListField(GenericCodebookField, CallbackHandler):
                 list.SetStringItem(i, j, exported_value)
         self._set_selection(select_item)
 
-    def _disable(self):
-        self._update_background_color()
-    
     def _set_selection(self, i):
         list = self._list
         if self._selected_item is not None:
@@ -1901,7 +1840,7 @@ class FileField(Invocable, InputField):
     def _on_filename_dclick(self, event):
         FileField.COMMAND_OPEN.invoke(_command_handler=self)
         
-    def _on_invoke_selection(self, alternate=False):
+    def _on_invoke_selection(self, ctrl, alternate=False):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
 
     def _filename_extension(self):
@@ -2034,10 +1973,6 @@ class ImageField(FileField):
                          size=(self.width() + 10, self.height() + 10),
                          callback=lambda e: self._on_button())
 
-    def _disable(self):
-        super(ImageField, self)._disable()
-        self._ctrl.Enable(True)
-        
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
         return (x + 4, x + 2)
@@ -2336,13 +2271,13 @@ class StructuredTextField(TextField):
         # wx.stc.StyledTextCtrl as it has some strange bugs in caret
         # positioning etc.  Once this is resolved, we can re-enable usiong the
         # derived TextCtrl class defined above.
-        # ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
+        # ctrl = TextCtrl(parent, -1, style=self._text_ctrl_style())
         # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
             size = None
-        ctrl = wx.TextCtrl(parent, -1, style=self._ctrl_style(), size=size)
+        ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(), size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
@@ -2352,8 +2287,8 @@ class StructuredTextField(TextField):
         self._storage = self._row.attachment_storage(self._id)
         return ctrl
         
-    def _create_widget(self, parent):
-        widget = super(StructuredTextField, self)._create_widget(parent)
+    def _create_widget(self, parent, ctrl):
+        widget = super(StructuredTextField, self)._create_widget(parent, ctrl)
         toolbar = wx.ToolBar(parent)
         commands = self._commands()
         for group in commands:
@@ -2745,3 +2680,42 @@ class StructuredTextField(TextField):
             return len(match.group('level'))
         else:
             return 0
+
+
+class RangeField(InputField):
+    
+    def _create_widget(self, parent, ctrl):
+        w1 = super(RangeField, self)._create_widget(parent, ctrl)
+        ctrl2 = self._create_ctrl(parent)
+        self._controls.append((ctrl2, self._set_ctrl_editable, self._set_ctrl_color))
+        self._init_ctrl(ctrl2)
+        w2 = super(RangeField, self)._create_widget(parent, ctrl2)
+        self._inputs = (ctrl, ctrl2)
+        return self._hbox(w1, w2)
+    
+    def _set_value(self, value):
+        for val, ctrl in zip(value, self._inputs):
+            ctrl.SetValue(val)
+        self._on_change()
+
+    def _validate(self):
+        value = [ctrl.GetValue() for ctrl in self._inputs]
+        return self._row.validate(self.id(), tuple(value))
+
+
+class NumericRangeField(RangeField, NumericField):
+    pass
+
+
+class DateRangeField(RangeField, DateField):
+
+    def _date_type(self):
+        return self._type.base_type()
+
+
+class DateTimeRangeField(RangeField, DateTimeField):
+
+    def _date_type(self):
+        return self._type.base_type()
+
+
