@@ -411,14 +411,12 @@ class InputField(object, KeyHandler, CommandHandler):
         except AttributeError:
             return "<%s (uninitialized)>" % self.__class__.__name__
         
-    def _on_navigation(self, widget):
+    def _on_navigation(self, widget, skip=False):
         def cb(e):
-            if widget in self._skipped_controls:
-                e.Skip()
+            e.Skip()
+            if skip or widget in self._skipped_controls:
                 flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
                 wx.CallAfter(lambda: widget.Navigate(flag))
-            else:
-                e.Skip()
         return cb
             
     def _hbox(self, *content):
@@ -1272,7 +1270,7 @@ class Invocable(object, CommandHandler):
         self._invocation_button = button
         wx_callback(wx.EVT_BUTTON, button, button.GetId(),
                     lambda e: self._on_invoke_selection(ctrl))
-        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button))
+        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
         return self._hbox(widget, button)
 
     def _button_size(self, parent):
@@ -1481,13 +1479,13 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
-                wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display))
+                wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
                 self._controls.append((display, lambda c, e: None, lambda c, e: None))
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
             button.SetToolTipString(_("Insert a new codebook value."))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
-            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button))
+            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             self._controls.append((button, lambda b, e: b.Enable(e), lambda b, e: None))
         return self._hbox(*[x[0] for x in self._controls])
 
