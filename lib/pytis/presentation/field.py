@@ -107,6 +107,7 @@ class PresentedRow(object):
             self.secret_computer = False # Set dynamically during initialization.
             self.attachment_storage = f.attachment_storage()
             self.filename = f.filename()
+            self.is_range = isinstance(type, pytis.data.Range)
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
     
@@ -558,7 +559,8 @@ class PresentedRow(object):
         """Return the 'resolver' passed to the constructor."""
         return self._resolver
 
-    def format(self, key, pretty=False, form=None, secure=False, export=None, **kwargs):
+    def format(self, key, pretty=False, form=None, secure=False, export=None, single=True,
+               **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
@@ -572,12 +574,18 @@ class PresentedRow(object):
             its column is secret; if a basestring, secret values are replaced by
             the string (this is useful for editable secret fields, to display an
             empty string there)
+          single -- always export as a single string (bool).  If true, the method
+            returns a single string also for Range types.  Otherwise range
+            values are returned as a tuple of two separately formatted values.
+          export -- custom export function to use instead of 'Value.export()'
+            (callable of one argument, the internal field value)
           kwargs -- keyword arguments passed to the 'export()' method of the field's
             'Value' instance.
-        
+
         """
+        cache_key = (key, single, secure, pretty)
         try:
-            return self._cache[key]
+            return self._cache[cache_key]
         except KeyError:
             pass
         try:
@@ -607,11 +615,16 @@ class PresentedRow(object):
         if self._singleline and column.line_separator is not None:
             if svalue is None:
                 svalue = ''
-            elif isinstance(svalue, tuple): # For range types.
+            elif column.is_range:
                 svalue = tuple(string.join(s.splitlines(), column.line_separator) for s in svalue)
             else:
                 svalue = string.join(svalue.splitlines(), column.line_separator)
-        self._cache[key] = svalue
+        if single and column.is_range:
+            if svalue == ('', ''):
+                svalue = ''
+            else:
+                svalue = ' - '.join(svalue)
+        self._cache[cache_key] = svalue
         return svalue
 
     def set_row(self, row, reset=False, prefill=None):

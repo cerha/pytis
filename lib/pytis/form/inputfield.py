@@ -388,7 +388,7 @@ class InputField(object, KeyHandler, CommandHandler):
                                   self._editability_change_callback)
         value = row.invalid_string(id)
         if value is None:
-            value = row.format(id, secure='')
+            value = row.format(id, single=False, secure='')
         self._set_value(value)
         self._call_on_idle.append(self._update_background_color)
         
@@ -545,7 +545,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _change_callback(self):
         # Field value change signalization from PresentedRow.
-        value = self._row.format(self.id(), secure=True)
+        value = self._row.format(self.id(), single=False, secure=True)
         if self._get_value() != value:
             self._set_value(value)
 
