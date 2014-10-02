@@ -28,7 +28,6 @@ import copy
 import re
 import wx
 
-import pytis.data
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 from dialog import MultiQuestion
@@ -608,9 +607,6 @@ class DescriptiveDualForm(BrowseShowDualForm):
             # been selected in the main form but still before the other row
             # gets replaced in the side form.
             pass
-        def _select_columns(self):
-            return [c.id() for c in self._data.columns()
-                    if not isinstance(c.type(), pytis.data.Big)]
         def _query_fields_row(self):
             return self._main_form._query_fields_row()
 
