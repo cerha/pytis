@@ -2145,6 +2145,11 @@ class Browser(wx.Panel, CommandHandler):
             # confuses the location bar and may also generate invalid
             # restriction messages so we beter ignore it now.
             return False
+        elif uri.startswith('#'):
+            script = ("var x = document.getElementById('%s'); "
+                      "if (x) { x.scrollIntoView() };")  % uri[1:]
+            self._webview.execute_script(script)
+            return True
         elif uri.startswith('help:'):
             if self._last_help_uri == uri \
                     and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
