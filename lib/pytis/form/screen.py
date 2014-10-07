@@ -2193,8 +2193,9 @@ class Browser(wx.Panel, CommandHandler):
             return True
         else:
             restricted_navigation_uri = self._restricted_navigation_uri
-            if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
-               not uri.startswith(restricted_navigation_uri):
+            if ((not uri.startswith('resource:')
+                 and restricted_navigation_uri is not None
+                 and not uri.startswith(restricted_navigation_uri))):
                 decision.ignore()
                 pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
                 return True
