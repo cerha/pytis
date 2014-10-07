@@ -1479,10 +1479,14 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
             if config.login_selection:
-                enumerator = pytis.data.FixedEnumerator(config.login_selection)
+                enumerator = pytis.data.FixedEnumerator([x[0] if isinstance(x, tuple) else x 
+                                                         for x in config.login_selection])
+                passwords = dict([x for x in config.login_selection if isinstance(x, tuple)])
+                computer = pytis.presentation.computer(lambda r, login: passwords.get(login))
                 default_login = config.dbuser if config.dbuser in config.login_selection else None
             else:
                 enumerator = None
+                computer = None
                 default_login = config.dbuser
             login_result = run_form(pytis.form.InputForm, title=_("Log in for database access"),
                                     fields=(Field('login', _("Login"),
@@ -1490,6 +1494,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                                                   default=default_login),
                                             Field('password', _("Password"),
                                                   type=pytis.data.Password(verify=False),
+                                                  computer=computer,
                                                   width=24, not_null=True),),
                                     focus_field='password')
             if not login_result:

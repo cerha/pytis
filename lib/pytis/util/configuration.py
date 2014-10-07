@@ -960,9 +960,10 @@ class Configuration(object):
     class _Option_login_selection(Option):
         """Selection of available login names for database login dialog.
 
-        When set, the login dialog will only allow selection from given
-        sequence of strings.  When None (the default), login name can be
-        entered into a text field.
+        When set, the login dialog will only allow selection from given login
+        names.  When None (the default), login name can be entered into a text
+        field.  The value is a sequence of strings (login names) or tuples of
+        two strings (login name and password).
 
         """
         _DEFAULT = None
