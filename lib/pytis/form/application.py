@@ -1499,9 +1499,14 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if config.login_selection:
                 enumerator = pytis.data.FixedEnumerator([x[0] if isinstance(x, tuple) else x
                                                          for x in config.login_selection])
-                passwords = dict([x for x in config.login_selection if isinstance(x, tuple)])
-                computer = pytis.presentation.computer(lambda r, login: passwords.get(login))
-                default_login = config.dbuser if config.dbuser in config.login_selection else None
+                passwords = dict(
+                    [x for x in config.login_selection if isinstance(x, tuple)])
+                computer = pytis.presentation.computer(
+                    lambda r, login: passwords.get(login))
+                if config.dbuser in passwords or config.dbuser in config.login_selection:
+                    default_login = config.dbuser
+                else:
+                    default_login = None
             else:
                 enumerator = None
                 computer = None
