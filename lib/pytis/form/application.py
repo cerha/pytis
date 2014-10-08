@@ -43,10 +43,10 @@ from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     argument_names, find, format_traceback, identity, log, rsa_encrypt
 import config
 
-from command import CommandHandler
-from event import UserBreakException, interrupt_init, interrupt_watcher, \
+from .command import CommandHandler
+from .event import UserBreakException, interrupt_init, interrupt_watcher, \
     top_level_exception, unlock_callbacks, wx_callback, yield_
-from screen import CheckItem, HelpBrowserFrame, KeyHandler, Keymap, \
+from .screen import CheckItem, HelpBrowserFrame, KeyHandler, Keymap, \
     Menu, MenuBar, MItem, MSeparator, StatusBar, \
     acceskey_prefix, beep, busy_cursor, get_icon, gtk, init_colors, mitem, wx_focused_window
 
@@ -54,7 +54,9 @@ _ = pytis.util.translations('pytis-wx')
 
 _application = None
 
+
 class Application(wx.App, KeyHandler, CommandHandler):
+
     """Aplikace systému Pytis.
 
     Pro každou aplikaci systému Pytis existuje po celou dobu jejího běhu jedno
@@ -68,11 +70,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
       menu -- specifikace hlavního menu aplikace ve formátu specifikačního
         argumentu konstruktoru třídy 'pytis.form.screen.MenuBar'.
-        
+
       status_fields -- specifikace polí stavové řádky aplikace ve formátu
         specifikačního argumentu konstruktoru třídy
         'pytis.form.screen.StatusBar'.
-        
+
       keymap -- specifikace přiřazení kláves příkazům jako sekvence trojic
         (KEY, COMMAND, ARGS), kde KEY je definice klávesové zkratky, COMMAND je
         instance třídy 'Command' a ARGS je slovník argumentů, které mají být
@@ -85,7 +87,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     Start uživatelského rozhraní spočívá ve vytvoření instance této třídy a
     volání její metody 'run()'.
-    
+
     """
     _menubar_forms = {}
     _log_login = True
@@ -93,7 +95,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _WINDOW_MENU_TITLE = _("&Windows")
 
     _STATE_RECENT_FORMS = 'recent_forms'
-    _STATE_STARTUP_FORMS = 'saved_startup_forms' # Avoid name conflict with config.startup_forms!
+    _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
 
     def _get_command_handler_instance(cls):
@@ -159,6 +161,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         global _application
         _application = self
         # Initialize login and password.
+
         def test():
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id)
                         for id in ('tablename',)]
@@ -240,6 +243,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             while True:
                 established_names = set()
                 fresh_names = set()
+
                 def process(row):
                     name = row['name'].value()
                     (fresh_names if row['fresh'].value() else established_names).add(name)
@@ -347,6 +351,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._saved_startup_forms.append(list(pair) + [None])
                     continue
             log(OPERATIONAL, "Ignoring saved startup form:", pair)
+
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
             msg = _("Opening form: %s (%d/%d)")
@@ -367,7 +372,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if len(startup_forms) > 1:
             run_dialog(pytis.form.ProgressDialog, run_startup_forms, args=(startup_forms,),
                        title=_("Opening saved forms"),
-                       message=_("Opening form") + ' ' * 40) #, can_abort=True)
+                       message=_("Opening form") + ' ' * 40)  # , can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
             # lines raise the previous form and then back the top form, which
             # fixes the problem.  Running a Message dialog instead also helps,
@@ -478,7 +483,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for row in menu_rows:
             menuid, name, title, action, position, help, hotkey = \
                 [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6,)]
-            if not parents: # the top pseudonode, should be the first one
+            if not parents:  # the top pseudonode, should be the first one
                 parents.append((position or '', menu_template,))
                 current_template = menu_template
             else:
@@ -491,9 +496,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     continue
                 current_template = parents[-1][1]
-                if not title: # separator
+                if not title:  # separator
                     current_template.append(None)
-                elif name: # terminal item
+                elif name:  # terminal item
                     current_template.append((name, title, action, help, hotkey,))
                 else:          # non-terminal item
                     upper_template = parents[-1][1]
@@ -502,13 +507,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     parents.append((position, current_template,))
         # Done, return the menu structure
         return menu_template
-        
+
     def _build_menu(self, menu_prototype, connection_data):
         menu_template = self._dynamic_menu(connection_data)
         if not menu_template:
             return list(menu_prototype)
+
         def build(template):
             used_letters = []
+
             def add_key(title):
                 # This actually works only for the top menubar, other
                 # accelerators are assigned by wx independently.  But it's OK
@@ -621,7 +628,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     menu.AppendSeparator()
                 else:
                     menu.AppendItem(item.create(self._frame, menu))
-                
+
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,
                        help=_("Open the form (%s)",
@@ -633,7 +640,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                            help=_("Clear the menu of recent forms"),
                            command=Application.COMMAND_CLEAR_RECENT_FORMS))
         return items
-        
+
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
@@ -653,6 +660,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # avoiding any non-alphanumeric characters.
         import re
         import unicodedata
+
         def safe_char(match):
             base_name = re.sub(" WITH .*", '', unicodedata.name(match.group(0)))
             base_char = unicodedata.lookup(base_name)
@@ -677,11 +685,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _set_state_param(self, name, value):
         self._saved_state[name] = value
-        
+
     def _unset_state_param(self, name):
         if name in self._saved_state:
             del self._saved_state[name]
-            
+
     def _cleanup(self):
         # Zde ignorujeme všemožné výjimky, aby i při poměrně značně havarijní
         # situaci bylo možno aplikaci ukončit.
@@ -781,13 +789,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _on_clipboard_copy(self, clipboard, event):
         """Handle event of text copied into system clipboard.
-        
+
         This method propagates all local clipboard changes into the remote
         windows clipboard when pytis.windows is available.  Don't use it to
         copy things to the clipboard.  Copy them to the local system clipboard
         (eg. through standard wx methods of wx controls or using the function
         copy_to_clipboard() when no aplicable control is available).
-        
+
         """
         # Beware, the `event' here is not a wx event, but a GTK event!
         if pytis.windows.windows_available():
@@ -808,25 +816,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _cmd_break(self):
         message(_("Stopped..."), beep_=True)
-        
+
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
-        
+
     def _cmd_handled_action(self, handler=None, enabled=None, **kwargs):
         return handler(**kwargs)
-        
+
     def _cmd_raise_form(self, form):
         self._raise_form(form)
-        
+
     def _can_raise_recent_form(self):
         return len(self._windows.mru()) > 1
-        
+
     def _cmd_raise_recent_form(self):
         self._raise_form(self._windows.mru()[1])
-       
+
     def _can_raise_next_form(self):
         return len(self._windows.items()) > 1
-    
+
     def _cmd_raise_next_form(self):
         self._raise_form(self._windows.next())
 
@@ -852,7 +860,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         config.resolver.reload()
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
-        if form_class in (pytis.form.InputForm, WebForm) and name is None:
+        if form_class in (pytis.form.InputForm, pytis.form.WebForm) and name is None:
             return True
         if ((isinstance(self.current_form(), pytis.form.PopupForm) and
              not issubclass(form_class, pytis.form.PopupForm))):
@@ -891,7 +899,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(ACTION, 'Vytvářím nový formulář:', (form_class, name, kwargs))
             message(_("Opening form..."), root=True)
             assert issubclass(form_class, pytis.form.Form)
-            assert name is None or isinstance(name, basestring) # May be None for InputForm.
+            assert name is None or isinstance(name, basestring)  # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
             # some time consuming _on_idle methods.
             busy_cursor(True)
@@ -936,7 +944,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.show()
                     busy_cursor(False)
                     try:
-                        form_str = str(form) # Dead form doesn't speak...
+                        form_str = str(form)  # Dead form doesn't speak...
                         result = form.run()
                         log(EVENT, "Modal form closed:", form_str)
                         log(EVENT, "Return value:", result)
@@ -958,7 +966,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     message('', root=True)
-                    form.resize() # Needed in wx 2.8.x.
+                    form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
                     if not isinstance(form, (pytis.form.PrintForm, pytis.form.WebForm)):
@@ -979,7 +987,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except ResolverError:
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
-    
+
     def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                         block_on_new_record=False, transaction=None, spec_kwargs={}):
         # Dokumentace viz funkce new_record().
@@ -1008,7 +1016,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
-    
+
     def _cmd_run_procedure(self, spec_name, proc_name, args=(),
                            block_refresh_=False, enabled=None, **kwargs):
         # Dokumentace viz funkce run_procedure().
@@ -1059,7 +1067,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         init_access_rights(config.dbconnection)
         self._create_menubar()
         self._update_window_menu()
-        
+
     def _cmd_custom_debug(self):
         if __debug__:
             config.custom_debug()
@@ -1069,16 +1077,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         tool = wx.lib.inspection.InspectionTool()
         tool.Init(app=self)
         tool.Show()
-        
+
     def _cmd_exit(self):
         self._frame.Close()
-        
+
     def _can_nothing(self, enabled=True):
         return enabled
-    
+
     def _cmd_nothing(self, enabled=True):
         pass
-        
+
     # Veřejné metody
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
@@ -1088,7 +1096,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
           dialog_or_class_ -- třída dialogu (odvozená od třídy 'Dialog'), nebo
             přímo instance.  Pokud jde o třídu, bude vytvořena nová instance a
             ta bude následně spuštěna.
-          
+
         Jako první argument konstruktoru dialogové třídy ('parent') bude
         doplněno aktuální (vrchní) okno aplikace.  Ostatní argumenty jsou
         předány tak, jak jsou.  Více o dialogových třídách a jejich argumentech
@@ -1098,7 +1106,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         Dialog je spuštěn (metodou 'run()') a jeho návratová hodnota je také
         návratovou hodnotou této metody.
-        
+
         """
         if not isinstance(dialog_or_class_, pytis.form.Dialog):
             class_ = dialog_or_class_
@@ -1127,7 +1135,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
         top = self
         return result
-    
+
     def run(self):
         """Spusť běh uživatelského rozhraní.
 
@@ -1144,6 +1152,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         TIME_SLICE = 0.2
         timeout = [time.time() + TIME_SLICE]
         pid = os.getpid()
+
         def log_wrapper():
             if THREADING_BROKEN:
                 if pid == os.getpid() and time.time() > timeout[0]:
@@ -1156,7 +1165,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def top_window(self):
         """Vrať momentálně aktivní okno aplikace.
-        
+
         """
         if not self._modals.empty():
             return self._modals.top()
@@ -1165,11 +1174,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def current_form(self, inner=True):
         """Vrať právě aktivní formulář aplikace, pokud existuje.
-        
+
         Pokud není otevřen žádný formulář, nebo aktivním oknem není formulář,
         vrací None.  Pokud je aktivním formulářem duální formulář, bude vrácen
         jeho aktivní podformulář, právě pokud je argument 'inner' pravdivý.
-        
+
         """
         form = self.top_window()
         if not isinstance(form, pytis.form.Form):
@@ -1178,24 +1187,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
             while isinstance(form, (pytis.form.DualForm, pytis.form.MultiForm)):
                 form = form.active_form()
         return form
-        
+
     def set_status(self, id, message, timeout=None, root=False, log_=True):
         """Nastav v poli stavové řádky daného 'id' zprávu 'message'.
-        
+
         Argumenty:
-        
+
           id -- identifikátor pole stavové řádky.
-          
+
           message -- string, který má být zobrazen, nebo 'None'; je-li 'None',
             bude předchozí hlášení smazáno.
-            
+
           timeout -- není-li 'None', zpráva zmizí po zadaném počtu sekund.
-          
+
           root -- je-li pravdivé, bude zpráva zobrazena vždy v hlavním okně
             aplikace.  Pokud ne, je zpráva zobrazena ve stavové řádce hlavního
             okna aplikace až v případě, že není otevřeno žádné modální okno,
             nebo se zobrazení zprávy v modálním okně nepodařilo.
-            
+
           log_ -- pokud je pravda, bude událost zalogována.
 
         Zobrazení není garantováno, nemusí se zobrazit například v případě, kdy
@@ -1209,12 +1218,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         modal = self._modals.top()
         if root or not isinstance(modal, pytis.form.Form) or not modal.set_status(id, message):
             return self._statusbar.message(id, message, timeout=timeout)
-            
+
     def get_status(self, id):
         """Vrať text pole 'id' stavového řádku hlavního okna aplikace.
 
         Pokud stavový řádek dané pole neobsahuje, vrať None.
-        
+
         """
         return self._statusbar.get_message(id)
 
@@ -1223,7 +1232,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         form = self._windows.active()
         if form:
             form.save()
-            
+
     def restore(self):
         """Obnov stav aplikace."""
         form = self._windows.active()
@@ -1273,9 +1282,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
+
 class DbActionLogger(object):
+
     """Log user actions into the database."""
-    
+
     def __init__(self, dbconnection, username):
         factory = config.resolver.get('pytis.defs.logging.FormActionLog', 'data_spec')
         self._data = factory.create(connection_data=config.dbconnection)
@@ -1284,7 +1295,7 @@ class DbActionLogger(object):
     def _values(self, **kwargs):
         return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
                 for key, value in [('username', self._username)] + kwargs.items()]
-    
+
     def log(self, spec_name, form_name, action, info=None):
         rdata = (('timestamp', pytis.data.dtval(pytis.data.DateTime.datetime())),
                  ('username', pytis.data.sval(self._username)),
@@ -1302,16 +1313,16 @@ class DbActionLogger(object):
 
 def run_form(form_class, name=None, **kwargs):
     """Vytvoř formulář a spusť jej v aplikaci.
-    
+
     Argumenty:
-    
+
       form_class -- třída vytvářeného formuláře (odvozená od třídy 'Form').
-        
+
       name -- název specifikace pro resolverů řetězec.
 
       kwargs -- klíčové arguementy, které mají být předány konstruktoru
         formuláře.  Argumenty 'parent' a 'resolver' budou doplněny automaticky.
-        
+
     Vytvořený formulář bude zobrazen v okně aplikace, nebo v novém modálním
     okně (pokud jde o modální formulář odvozený od třídy 'PopupForm').  Okno
     nemodálního formuláře zůstává po návratu této funkce v aplikaci otevřeno
@@ -1330,13 +1341,14 @@ def run_form(form_class, name=None, **kwargs):
         return False
     return cmd.invoke(**kwargs)
 
+
 def run_procedure(spec_name, proc_name, *args, **kwargs):
     """Spusť proceduru.
-    
+
     Argumenty:
-    
+
       spec_name -- jméno specifikace pro resolver.
-    
+
       proc_name -- jméno procedury, která má být spuštěna.  Jde o klíč do
         slovníku, který je vracen specifikační funkcí 'proc_spec'.
 
@@ -1353,18 +1365,19 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
                                                     proc_name=proc_name,
                                                     args=args, **kwargs)
 
+
 def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
                block_on_new_record=False, transaction=None, spec_kwargs={}):
     """Start an interactive form for new record insertion.
-        
+
     Arguments:
-        
+
       name -- specification name for resolver.
-      
+
       prefill -- A dictionary of values to be prefilled in the form.  Keys are field identifiers
         and values are either 'pytis.data.Value' instances or the corresponding Python internal
         values directly.
-            
+
       inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.  The
         form is then gradually prefilled by values of these rows and the user can individually
         accept or skip each row.
@@ -1372,16 +1385,17 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
       multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
         False value will disable this feature and the `Next' button will not be present on the
         form.
-            
+
       block_on_new_record -- If true, the 'on_new_record' procedure will be blocked.  This makes it
         possible to call 'new_record' from within the 'on_new_record' procedure without recursion..
 
       transaction -- transaction for data operations.
 
       spec_kwargs -- a dictionary of keyword arguments passed to the specification.
-            
+
     """
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
+
 
 def delete_record(view, data, transaction, record,
                   question=_("Are you sure to delete the record permanently?")):
@@ -1422,17 +1436,21 @@ def delete_record(view, data, transaction, record,
     else:
         return False
 
+
 def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to třeba."""
     Application.COMMAND_REFRESH.invoke(interactive=False)
+
 
 def exit():
     """Ukonči uživatelské rozhraní aplikace."""
     return Application.COMMAND_EXIT.invoke()
 
+
 def db_operation(operation, *args, **kwargs):
     in_transaction = (kwargs.get('transaction') is not None)
     return db_op(operation, args, kwargs, in_transaction=in_transaction)
+
 
 def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
     """Invoke database operation with handling possible exceptions.
@@ -1479,7 +1497,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
             if config.login_selection:
-                enumerator = pytis.data.FixedEnumerator([x[0] if isinstance(x, tuple) else x 
+                enumerator = pytis.data.FixedEnumerator([x[0] if isinstance(x, tuple) else x
                                                          for x in config.login_selection])
                 passwords = dict([x for x in config.login_selection if isinstance(x, tuple)])
                 computer = pytis.presentation.computer(lambda r, login: passwords.get(login))
@@ -1501,7 +1519,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 return FAILURE
             config.dbconnection.update_login_data(user=login_result['login'].value(),
                                                   password=login_result['password'].value())
-            config.dbconnection = config.dbconnection # mark as changed
+            config.dbconnection = config.dbconnection  # mark as changed
         except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
@@ -1522,11 +1540,12 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                                   icon=pytis.form.Question.ICON_ERROR):
                     return FAILURE
 
+
 def delete_record_question(msg=None):
     """Zeptej se uživatele, zda má být opravdu smazán záznam.
 
     Vrať pravdu, právě když uživatel odpoví kladně.
-    
+
     """
     log(EVENT, 'Record deletion dialog')
     if msg is None:
@@ -1539,6 +1558,7 @@ def delete_record_question(msg=None):
 
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.
 
+
 def run_dialog(*args, **kwargs):
     """Zobraz dialog v okně aplikace (viz 'Application.run_dialog()')."""
     if _application is not None:
@@ -1546,15 +1566,18 @@ def run_dialog(*args, **kwargs):
     else:
         log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
 
+
 def current_form(inner=True):
     """Vrať právě aktivní formulář (viz 'Application.current_form()')."""
     if _application is not None:
         return _application.current_form(inner=inner)
 
+
 def top_window():
     """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
     if _application is not None:
         return _application.top_window()
+
 
 def set_status(id, message, log_=True):
     """Nastav pole 'id' stavové řádky (viz 'Application.set_status()')."""
@@ -1563,9 +1586,11 @@ def set_status(id, message, log_=True):
     else:
         log(OPERATIONAL, "Attempt to set status-line:", (id, message))
 
+
 def get_status(id):
     """Vrať text pole 'id' stavové řádky. (viz 'Application.get_status()')"""
     return _application.get_status(id)
+
 
 def recent_forms_menu():
     """Vrať menu posledně otevřených formulářů jako instanci 'pytis.form.Menu'.
@@ -1573,7 +1598,7 @@ def recent_forms_menu():
     Tato funkce je určena pro využití při definici menu aplikace.  Pokud menu posledně otevřených
     formulářů tímto způsobem do hlavního menu aplikace přidáme, bude jej aplikace dále
     obhospodařovat.  Toto menu lze do hlavního menu umístit pouze jednou.
-        
+
     """
     if _application:
         return _application.recent_forms_menu()
@@ -1581,31 +1606,38 @@ def recent_forms_menu():
         # This may happen when generating help.
         return ()
 
+
 def wx_frame():
     """Vrať instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
+
 
 def profile_manager():
     """Return 'Application.profile_manager()' of the current application instance."""
     return _application.profile_manager()
 
+
 def form_settings_manager():
     """Return 'Application.form_settings_manager()' of the current application instance."""
     return _application.form_settings_manager()
+
 
 def aggregated_views_manager():
     """Return 'Application.aggregated_views_manager()' of the current application instance."""
     return _application.aggregated_views_manager()
 
+
 def decrypted_names():
     """Return set of encryption names the user has access to."""
     return _application.decrypted_names()
+
 
 def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
     return _application.log(spec_name, form_name, action, info=info)
 
 # Ostatní funkce.
+
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
@@ -1624,7 +1656,7 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         aplikace až v případě, že není otevřeno žádné modální okno, nebo se
         zobrazení zprávy v modálním okně nepodařilo.
       log_ -- pokud je pravda, bude zpráva také zalogována.
-        
+
     Pro zobrazení zprávy ve stavové řádce platí stejná pravidla, jako v případě
     metody 'Application.set_status()'.
 
@@ -1637,6 +1669,7 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         if message and message[-1] == ':':
             message = message[:-1]
         _application.set_status('message', message, timeout=timeout, root=root)
+
 
 def create_data_object(name, spec_kwargs={}, kwargs={}):
     """Create a data object for given specification.
@@ -1651,7 +1684,7 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
         if the data class is derived from 'pytis.data.DBData'.
 
     Raises 'ResolverError' or 'ProgramError' if data object creation fails.
-    
+
     """
     factory = config.resolver.get(name, 'data_spec', **spec_kwargs)
     assert isinstance(factory, pytis.data.DataFactory)
@@ -1663,7 +1696,8 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
         raise ProgramError("Unable to create data object:", name)
     log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
     return data_object
-        
+
+
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
     try:
@@ -1671,17 +1705,19 @@ def global_keymap():
     except AttributeError:
         return Keymap()
 
+
 def block_refresh(function, *args, **kwargs):
     """Zablokuj veškerý refresh po dobu provádění funkce 'function'.
-    
+
     Vrací: výsledek vrácený volanou funkcí.
-    
+
     """
     return pytis.form.Refreshable.block_refresh(function, *args, **kwargs)
 
 _access_rights = None
 _access_dbconnection = None
 _user_roles = ()
+
 
 def _dump_rights():
     import pytis.extensions
@@ -1694,6 +1730,7 @@ def _dump_rights():
     output = sys.stderr
     output.write("--- BEGIN list of registered rights ---\n")
     output.write("# source shortname right column permitted\n")
+
     def find_columns(spec_name):
         try:
             specification = resolver.specification(spec_name)
@@ -1728,6 +1765,7 @@ def _dump_rights():
                              (spec_name, permission, c, permitted,))
     output.write("--- END list of registered rights ---\n")
 
+
 def init_access_rights(connection_data):
     """Read application access rights from the database.
 
@@ -1736,7 +1774,7 @@ def init_access_rights(connection_data):
     Arguments:
 
       connection_data -- 'pytis.data.DBConnection' instance
-    
+
     """
     global _access_rights, _user_roles, _access_dbconnection
     _access_dbconnection = connection_data
@@ -1762,6 +1800,7 @@ def init_access_rights(connection_data):
     rights_data = pytis.data.dbtable('pytis_view_user_rights',
                                      (('shortname', S,), ('rights', S,), ('columns', S,),),
                                      connection_data, arguments=())
+
     def process(row):
         shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
         if columns_string:
@@ -1786,12 +1825,13 @@ def init_access_rights(connection_data):
     config.resolver.clear()
     if config.debug:
         _dump_rights()
-    
+
+
 def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given form specification.
 
     Arguments:
-    
+
       name -- specification name as a string.  May also be a dual name
         (containing `::').  In such a case, the permission is checked for both
         names and 'column=None' is assumed regardless of the actual 'column'
@@ -1826,6 +1866,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
                 return False
     result = action_has_access('form/' + name, perm=perm, column=column)
     return result
+
 
 def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     """Return true iff 'action' has 'perm' permission.
@@ -1862,6 +1903,8 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
     return result
 
 _yield_lock = None
+
+
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontě.
 
@@ -1887,13 +1930,15 @@ def wx_yield_(full=False):
         _yield_lock.release()
 
 _yield_blocked = False
+
+
 def block_yield(block=False):
     """Block or unblock processing of application events.
 
     Arguments:
 
       block -- if true, block processing of application events, otherwise unblock it
-      
+
     """
     global _yield_blocked
     _yield_blocked = block
