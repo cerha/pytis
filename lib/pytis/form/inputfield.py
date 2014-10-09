@@ -420,7 +420,7 @@ class InputField(object, KeyHandler, CommandHandler):
         return cb
             
     def _hbox(self, *content):
-        # Helper function to group wx widgets into a horizontal box (sizer). 
+        # Helper function to group wx widgets into a horizontal box (sizer).
         hbox = wx.BoxSizer()
         for x in content:
             hbox.Add(x, 0, wx.FIXED_MINSIZE)
@@ -1819,13 +1819,12 @@ class FileField(Invocable, InputField):
         self._on_file_changed()
         
     def _on_file_changed(self):
-        if self._buffer is None:
-            display = ""
-        else:
-            filename = self._row.filename(self._id)
+        filename = self._row.filename(self._id)
+        display = filename or ''
+        if self._buffer is not None:
             bytesize = format_byte_size(len(self._buffer))
-            if filename:
-                display = '%s (%s)' % (filename, bytesize)
+            if display:
+                display = '%s (%s)' % (display, bytesize)
             else:
                 display = bytesize
         self._ctrl.SetValue(display)
@@ -2723,5 +2722,3 @@ class DateTimeRangeField(RangeField, DateTimeField):
 
     def _date_type(self):
         return self._type.base_type()
-
-
