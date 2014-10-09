@@ -36,7 +36,7 @@ import wx.html
 
 import pytis.data
 import pytis.form
-from pytis.presentation import Field, Specification
+from pytis.presentation import Field, Specification, computer
 import pytis.util
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     ProgramError, ResolverError, Stack, XStack, \
@@ -1497,29 +1497,28 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
             if config.login_selection:
-                enumerator = pytis.data.FixedEnumerator([x[0] if isinstance(x, tuple) else x
-                                                         for x in config.login_selection])
-                passwords = dict(
-                    [x for x in config.login_selection if isinstance(x, tuple)])
-                computer = pytis.presentation.computer(
-                    lambda r, login: passwords.get(login))
-                if config.dbuser in passwords or config.dbuser in config.login_selection:
-                    default_login = config.dbuser
-                else:
-                    default_login = None
+                logins = [x[0] if isinstance(x, tuple) else x
+                          for x in config.login_selection]
+                passwords = dict([x for x in config.login_selection
+                                  if isinstance(x, tuple)])
+                login_enumerator = pytis.data.FixedEnumerator(logins)
+                password_computer = computer(lambda r, login: passwords.get(login))
+                password_editable = computer(lambda r, login: login not in passwords)
+                default_login = config.dbuser if config.dbuser in logins else None
             else:
-                enumerator = None
-                computer = None
+                login_enumerator = None
+                password_computer = None
+                password_editable = None
                 default_login = config.dbuser
-            login_result = run_form(pytis.form.InputForm, title=_("Log in for database access"),
-                                    fields=(Field('login', _("Login"),
-                                                  width=24, not_null=True, enumerator=enumerator,
-                                                  default=default_login),
-                                            Field('password', _("Password"),
-                                                  type=pytis.data.Password(verify=False),
-                                                  computer=computer,
-                                                  width=24, not_null=True),),
-                                    focus_field='password')
+            login_result = run_form(
+                pytis.form.InputForm, title=_("Log in for database access"),
+                fields=(Field('login', _("Login"), width=24, not_null=True,
+                              enumerator=login_enumerator, default=default_login),
+                        Field('password', _("Password"), type=pytis.data.Password(verify=False),
+                              editable=password_editable, computer=password_computer,
+                              width=24, not_null=True),),
+                focus_field='password',
+            )
             if not login_result:
                 return FAILURE
             config.dbconnection.update_login_data(user=login_result['login'].value(),
