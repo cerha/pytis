@@ -3260,10 +3260,14 @@ class ShowForm(EditForm):
         return False
         
     def _select_columns(self):
-        big_field_ids = [f.id() for f in self._view.fields()
-                         if (isinstance(f.type(), pytis.data.Big) if
-                             isinstance(f.type(), pytis.data.Type) else
-                             issubclass(f.type(), pytis.data.Big))]
+        big_field_ids = []
+        for f in self._view.fields():
+            t = f.type()
+            if isinstance(t, pytis.data.Type):
+                if isinstance(t, pytis.data.Big):
+                    big_field_ids.append(f.id())
+            elif t is not None and issubclass(t, pytis.data.Big):
+                big_field_ids.append(f.id())
         result = [c.id() for c in self._data.columns() if c.id() not in big_field_ids]
         return result
 
