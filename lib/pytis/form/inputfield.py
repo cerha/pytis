@@ -2134,7 +2134,7 @@ class StructuredTextField(TextField):
     _HEADING_MATCHER = re.compile(r'^(?P<level>=+) (?P<title>.*) (?P=level)' +
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
 
-    def _commands(self):
+    def _toolbar_commands(self):
         commands = ()
         if isinstance(self._guardian, pytis.form.StructuredTextEditor):
             # Add form commands only in a standalone editor, not in ordinary forms.
@@ -2282,7 +2282,7 @@ class StructuredTextField(TextField):
     def _create_widget(self, parent, ctrl):
         widget = super(StructuredTextField, self)._create_widget(parent, ctrl)
         toolbar = wx.ToolBar(parent)
-        commands = self._commands()
+        commands = self._toolbar_commands()
         for group in commands:
             if group != commands[0]:
                 toolbar.AddSeparator()
