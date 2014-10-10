@@ -2744,9 +2744,9 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
         ctrl.SetMinSize((ctrl.GetSize().width, height))
 
 
-def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False, fullsize=False,
-              command=None, callback=None, enabled=True, update=False, tooltip=None, size=None,
-              width=None, height=None):
+def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
+              fullsize=False, command=None, callback=None, enabled=True, update=False,
+              tooltip=None, size=None, width=None, height=None):
     """Create and setup a button.
 
     This is a convenience helper to allow simple button creation and setup in one step.
