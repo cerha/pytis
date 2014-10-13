@@ -463,7 +463,7 @@ class PresentedRow(object):
     def _compute_editability(self, key):
         # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
         func = self._coldict[key].editable.function()
-        self._editable[key] = result = func(self)
+        self._editable[key] = result = bool(func(self))
         self._editability_dirty[key] = False
         return result
     
