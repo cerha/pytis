@@ -2344,8 +2344,6 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         for c in db_table.c:
             if c.name not in self.c:
                 _engine.execute(alembic.ddl.base.DropColumn(table_name, c, self.schema))
-        if self._pytis_upgrade_indexes(metadata, db_table):
-            changed = True
         for c in self.c:
             if c.pytis_orig_table != self.name:
                 continue
@@ -2378,6 +2376,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                                                           existing_nullable=orig_c.nullable)
                     _engine.execute(ddl)
                     changed = True
+        if self._pytis_upgrade_indexes(metadata, db_table):
+            changed = True
         constraints = self._pytis_simplified_constraints(self.constraints)
         db_constraints = self._pytis_simplified_constraints(db_table.constraints)
         new_constraints = []
