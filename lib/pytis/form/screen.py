@@ -2292,6 +2292,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())
 
     def _on_navigating(self, event):
+        # TODO: This would probably be better implemented using wx WebView
+        # specific sheme handlers (WebView.RegisterHandler()), but they
+        # currently don't seem to work in wx Python.
+        # See https://groups.google.com/forum/#!topic/wxpython-users/IYhprRa4KJs
         uri = event.GetURL()
         if uri.startswith('#'):
             event.Veto()
@@ -2300,59 +2304,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             self._webview.RunScript(script)
         elif uri.startswith('help:'):
             event.Veto()
-            from pytis.help import HelpGenerator, HelpExporter
-            node = HelpGenerator().help_page(uri[5:])
-            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
-            self.load_content(node, base_uri=uri, exporter=exporter)
-        elif ((self._restricted_navigation_uri is not None
-               and not uri.startswith(self._restricted_navigation_uri))):
-            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
-            event.Veto()
-        else:
-            event.Skip()
-
-    def _on_navigated(self, event):
-        pass
-
-    def _on_navigation_request(self, webview, frame, req, action, decision):
-        # TODO: This is the original method from webkit GTK implementation.
-        # It should be completely transformed into the new method _on_navigating
-        # or preferably using wx WebView specific sheme handlers,
-        # (WebView.RegisterHandler()), which currently don't seem to work
-        # in wx python.
-        uri = req.get_uri()
-        if uri == 'about:blank':
-            # This URI gets loaded several times while other document is
-            # loaded.  It is unknown what originates such request and how to
-            # distinguish it form a real request to 'about:blank'.  But it
-            # confuses the location bar and may also generate invalid
-            # restriction messages so we beter ignore it now.
-            return False
-        elif uri.startswith('#'):
-            script = ("var x = document.getElementById('%s'); "
-                      "if (x) { x.scrollIntoView() };") % uri[1:]
-            self._webview.execute_script(script)
-            return True
-        elif uri.startswith('help:'):
-            if self._last_help_uri == uri:
-                # and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
-                # Calling load_content() below triggers _on_navigation_request again,
-                # but the later call must be ignored to avoid recursion.
-                self._last_help_uri = None
-                return False
-            self._last_help_uri = uri
             from pytis.help import help_page, HelpExporter
             exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
                                     get_resource_uri=self._resource_uri,
                                     translations=pytis.util.translation_path())
             self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
-            #if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
-            #                           webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
-            #                           webkit.WEB_NAVIGATION_REASON_OTHER,):
-            #    history = self._webview.get_back_forward_list()
-            #    history.add_item(webkit.WebHistoryItem(uri, uri))
-            return True
         elif uri.startswith('form:'):
+            event.Veto()
             spec_name, kwargs = self._parse_kwargs(uri[5:])
             view_spec = config.resolver.get(spec_name, 'view_spec')
             if view_spec.bindings():
@@ -2375,24 +2333,22 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
                 proc(**kwargs)
             except:
                 pytis.form.top_level_exception()
-            return True
+        elif ((self._restricted_navigation_uri is not None
+               and not uri.startswith(self._restricted_navigation_uri))):
+            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
+            log(OPERATIONAL, "Restricted to :", restricted_navigation_uri)
+            event.Veto()
         else:
-            restricted_navigation_uri = self._restricted_navigation_uri
-            if ((not uri.startswith(self._resource_base_uri) and
-                 restricted_navigation_uri is not None and not
-                 uri.startswith(restricted_navigation_uri))):
-                decision.ignore()
-                pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
-                log(OPERATIONAL, "Restricted to :", restricted_navigation_uri)
-                return True
-            else:
-                return False
+            event.Skip()
+
+    def _on_navigated(self, event):
+        pass
 
     def _on_resource_request(self, webview, frame, resource, req, response):
         # TODO: This is the original method from webkit GTK implementation.
-        # It should be implemented using wx WebView specific sheme handlers
-        # (WebView.RegisterHandler()), which currently don't seem to work
-        # in wx python.
+        # It should be probably implemented using wx WebView specific sheme
+        # handlers (WebView.RegisterHandler()), which currently don't seem
+        # to work in wx Python.
         def redirect(lcg_resource):
             if lcg_resource and lcg_resource.src_file():
                 # Redirect the request to load the resource file from
