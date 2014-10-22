@@ -2520,8 +2520,8 @@ class StructuredTextField(TextField):
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX),
-            Field('preview', _("Preview"), codebook='cms.Attachments', compact=True,
-                  computer=computer(self._image_preview_computer), width=200, height=200,
+            Field('preview', _("Preview"), compact=True, width=200, height=200,
+                  computer=computer(self._image_preview_computer),
                   editable=pytis.presentation.Editable.NEVER,
                   type=pytis.data.Image(not_null=True, maxlen=5 * 1024 * 1024),
                   descr=_("Choose one of available files "
