@@ -2288,7 +2288,35 @@ class Browser(wx.Panel, CommandHandler):
     def _on_title_changed(self, event):
         pass
 
+    def _on_navigating(self, event):
+        uri = event.GetURL()
+        if uri.startswith('#'):
+            event.Veto()
+            script = ("var x = document.getElementById('%s'); "
+                      "if (x) { x.scrollIntoView() };") % uri[1:]
+            self._webview.RunScript(script)
+        elif uri.startswith('help:'):
+            event.Veto()
+            from pytis.help import HelpGenerator, HelpExporter
+            node = HelpGenerator().help_page(uri[5:])
+            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
+            self.load_content(node, base_uri=uri, exporter=exporter)
+        elif ((self._restricted_navigation_uri is not None
+               and not uri.startswith(self._restricted_navigation_uri))):
+            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
+            event.Veto()
+        else:
+            event.Skip()
+
+    def _on_navigated(self, event):
+        pass
+
     def _on_navigation_request(self, webview, frame, req, action, decision):
+        # TODO: This is the original method from webkit GTK implementation.
+        # It should be completely transformed into the new method _on_navigating
+        # or preferably using wx WebView specific sheme handlers,
+        # (WebView.RegisterHandler()), which currently don't seem to work
+        # in wx python.
         uri = req.get_uri()
         if uri == 'about:blank':
             # This URI gets loaded several times while other document is
@@ -2358,6 +2386,10 @@ class Browser(wx.Panel, CommandHandler):
                 return False
 
     def _on_resource_request(self, webview, frame, resource, req, response):
+        # TODO: This is the original method from webkit GTK implementation.
+        # It should be implemented using wx WebView specific sheme handlers
+        # (WebView.RegisterHandler()), which currently don't seem to work
+        # in wx python.
         def redirect(lcg_resource):
             if lcg_resource and lcg_resource.src_file():
                 # Redirect the request to load the resource file from
