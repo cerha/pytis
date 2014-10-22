@@ -1158,6 +1158,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             frame.SetSize((800, 600))
             frame.SendSizeEvent()
             frame.SetTitle(_("Help"))
+            browser.set_callback(browser.CALL_TITLE_CHANGED, frame.SetTitle)
         browser.GetParent().Raise()
         browser.load_uri('help:' + topic)
 
