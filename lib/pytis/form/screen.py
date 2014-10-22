@@ -2223,7 +2223,7 @@ def help_proc(func):
     Use this decorator on Python functions which are allowed to be called from
     within the Pytis help content using the link in the form:
 
-    [call:module_name.procedure_name Link label]
+    [call:module_name.procedure_name?argument=value Link label]
 
     Note that module_name is a full Python module name and not a specification
     name and thus it is not limited to Pytis resolver modules.  Thus help
@@ -2272,6 +2272,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         # localhost even though the URL suggests it.  They are loaded by
         # _on_resource_request().
         self._resource_base_uri = 'http://localhost/pytis-resources/'
+        self._custom_scheme_handlers = {
+            'help': self._help_handler,
+            'form': self._form_handler,
+            'call': self._call_handler,
+        }
         wxid = webview.GetId()
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
@@ -2292,54 +2297,60 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())
 
     def _on_navigating(self, event):
-        # TODO: This would probably be better implemented using wx WebView
-        # specific sheme handlers (WebView.RegisterHandler()), but they
-        # currently don't seem to work in wx Python.
-        # See https://groups.google.com/forum/#!topic/wxpython-users/IYhprRa4KJs
         uri = event.GetURL()
         if uri.startswith('#'):
-            event.Veto()
             script = ("var x = document.getElementById('%s'); "
                       "if (x) { x.scrollIntoView() };") % uri[1:]
             self._webview.RunScript(script)
-        elif uri.startswith('help:'):
             event.Veto()
-            from pytis.help import help_page, HelpExporter
-            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
-                                    get_resource_uri=self._resource_uri,
-                                    translations=pytis.util.translation_path())
-            self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
-        elif uri.startswith('form:'):
-            event.Veto()
-            spec_name, kwargs = self._parse_kwargs(uri[5:])
-            view_spec = config.resolver.get(spec_name, 'view_spec')
-            if view_spec.bindings():
-                cls = pytis.form.MultiBrowseDualForm
-            else:
-                cls = pytis.form.BrowseForm
-            pytis.form.run_form(cls, spec_name, **kwargs)
-            return True
-        elif uri.startswith('call:'):
-            try:
-                module_name, proc_name = uri[5:].rsplit('.', 1)
-                proc_name, kwargs = self._parse_kwargs(proc_name)
-                module = __import__(module_name)
-                for component in module_name.split('.')[1:]:
-                    module = getattr(module, component)
-                proc = getattr(module, proc_name)
-                if not isinstance(proc, HelpProc):
-                    raise ProgramError("Unable to call '%s' from help. "
-                                       "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
-                proc(**kwargs)
-            except:
-                pytis.form.top_level_exception()
-        elif ((self._restricted_navigation_uri is not None
-               and not uri.startswith(self._restricted_navigation_uri))):
+            return
+        if ':' in uri:
+            # TODO: This would probably be better implemented using wx.WebView
+            # sheme handlers support (WebView.RegisterHandler()), but it currently
+            # doesn't seem to work in wx Python.
+            # See https://groups.google.com/forum/#!topic/wxpython-users/IYhprRa4KJs
+            scheme, link = uri.split(':', 1)
+            name, kwargs = self._parse_kwargs(link)
+            if scheme in self._custom_scheme_handlers:
+                handler = self._custom_scheme_handlers[scheme]
+                handler(uri, name, **kwargs)
+                event.Veto()
+                return
+        if ((self._restricted_navigation_uri is not None
+             and not uri.startswith(self._restricted_navigation_uri))):
             pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
             log(OPERATIONAL, "Restricted to :", restricted_navigation_uri)
             event.Veto()
+        event.Skip()
+
+    def _help_handler(self, uri, name):
+        from pytis.help import help_page, HelpExporter
+        exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
+                                get_resource_uri=self._resource_uri,
+                                translations=pytis.util.translation_path())
+        self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
+
+    def _form_handler(self, uri, name, **kwargs):
+        view_spec = config.resolver.get(name, 'view_spec')
+        if view_spec.bindings():
+            cls = pytis.form.MultiBrowseDualForm
         else:
-            event.Skip()
+            cls = pytis.form.BrowseForm
+        pytis.form.run_form(cls, name, **kwargs)
+
+    def _call_handler(self, uri, name, **kwargs):
+        try:
+            module_name, proc_name = name.rsplit('.', 1)
+            module = __import__(module_name)
+            for component in module_name.split('.')[1:]:
+                module = getattr(module, component)
+            proc = getattr(module, proc_name)
+            if not isinstance(proc, HelpProc):
+                raise ProgramError("Unable to call '%s' from help. "
+                                   "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
+            proc(**kwargs)
+        except:
+            pytis.form.top_level_exception()
 
     def _on_navigated(self, event):
         pass
@@ -2348,7 +2359,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         # TODO: This is the original method from webkit GTK implementation.
         # It should be probably implemented using wx WebView specific sheme
         # handlers (WebView.RegisterHandler()), which currently don't seem
-        # to work in wx Python.
+        # to work in wx Python.  Resource requests are not considered to be
+        # navigation events, so _on_navigating is not called for them and
+        # thus resource loading currently don't work at all in this branch.
         def redirect(lcg_resource):
             if lcg_resource and lcg_resource.src_file():
                 # Redirect the request to load the resource file from
