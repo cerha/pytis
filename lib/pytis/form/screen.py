@@ -2291,6 +2291,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
     def _on_load_error(self, event):
         busy_cursor(False)
+        log(OPERATIONAL, "Failed loading '%s':" % event.GetURL(), event.GetString())
         pytis.form.message(_("Loading document failed."), log_=False)
 
     def _on_title_changed(self, event):
