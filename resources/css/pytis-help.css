@@ -51,7 +51,7 @@ h5,h6,h7,h8,h9 { font-size: 1.1em; }
 .popup-menu-ctrl-widget .popup-arrow,
 .popup-menu-widget a.close-menu,
 .collapsible-pane-widget .collapsible-pane-heading .icon {
-    background-image: url(http://localhost/pytis-resources/lcg-icons.png);
+    background-image: lcg-icons.png;
 }
 .foldable-tree-widget li .icon {
     position: relative;

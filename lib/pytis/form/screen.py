@@ -32,13 +32,16 @@ import copy
 import os
 import string
 import types
-import lcg
-
 import wx
 import wx.combo
 import wx.html2
-import config
+import SocketServer
+import SimpleHTTPServer
+import thread
+import mimetypes
+import weakref
 
+import lcg
 
 import wx.lib.agw.supertooltip as supertooltip
 if not hasattr(supertooltip.SuperToolTip, 'DoHideNow'):
@@ -56,6 +59,8 @@ from pytis.util import DEBUG, EVENT, OPERATIONAL, \
 from pytis.form import wx_callback
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
+
+import config
 
 #  import config
 # if config.http_proxy is not None:
@@ -2255,6 +2260,43 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
     CALL_URI_CHANGED = 'CALL_URI_CHANGED'
     """Callback called when the current uri changes (called with the uri as the argument)."""
 
+    class ResourceServer(SocketServer.TCPServer):
+        def __init__(self, browser_ref):
+            self._browser_ref = browser_ref
+            SocketServer.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
+
+        def find_resource(self, uri):
+            browser = self._browser_ref()
+            if browser:
+                return browser.find_resource(uri)
+            else:
+                return None
+
+    class ResourceHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            uri = self.path
+            if uri != '/favicon.ico':
+                resource = self.server.find_resource(uri[1:])
+                if resource:
+                    path = resource.src_file()
+                    if path:
+                        self._send_file(path)
+                        return
+            self.send_error(404, 'Not found: %s' % uri)
+
+        def _send_file(self, path):
+            mime_type, encoding = mimetypes.guess_type(path)
+            self.send_response(200)
+            self.send_header("Content-type", mime_type or 'application/octet-stream')
+            self.end_headers()
+            with open(path) as f:
+                while True:
+                    # Read the file in 0.5MB chunks.
+                    data = f.read(524288)
+                    if not data:
+                        break
+                    self.wfile.write(data)
+
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
@@ -2283,6 +2325,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_load_finished)
         wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_load_error)
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
+        self._httpd = httpd = self.ResourceServer(weakref.ref(self))
+        thread.start_new_thread(httpd.serve_forever, ())
+        self._resource_base_uri =  'http://localhost:%d/' % httpd.socket.getsockname()[1]
+
+    def __del__(self):
+        self._httpd.shutdown()
 
     def _on_load_finished(self, event):
         busy_cursor(False)
@@ -2356,36 +2404,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
     def _on_navigated(self, event):
         pass
 
-    def _on_resource_request(self, webview, frame, resource, req, response):
-        # TODO: This is the original method from webkit GTK implementation.
-        # It should be probably implemented using wx WebView specific sheme
-        # handlers (WebView.RegisterHandler()), which currently don't seem
-        # to work in wx Python.  Resource requests are not considered to be
-        # navigation events, so _on_navigating is not called for them and
-        # thus resource loading currently don't work at all in this branch.
-        def redirect(lcg_resource):
-            if lcg_resource and lcg_resource.src_file():
-                # Redirect the request to load the resource file from
-                # filesystem.
-                req.set_uri("file://" + lcg_resource.src_file())
-        uri = resource.get_uri()
-        # Note, when load_html() is performed, this method gets called with uri
-        # equal to base_uri passed to load_html().
-        if uri.startswith(self._resource_base_uri) and self._resource_provider is not None:
-            # Try searching the existing resources by URI first.
-            for lcg_resource in self._resource_provider.resources():
-                if self._resource_uri(lcg_resource) == uri:
-                    return redirect(lcg_resource)
-                if isinstance(lcg_resource, lcg.Image):
-                    thumbnail = lcg_resource.thumbnail()
-                    if thumbnail and self._resource_uri(thumbnail) == uri:
-                        return redirect(thumbnail)
-            # If URI doesn't match any existing resource, try locating the
-            # resource using the standard resource provider's algorithm
-            # (including searching resource directories).
-            uri = uri[len(self._resource_base_uri):]
-            return redirect(self._resource_provider.resource(uri))
-
     def _resource_uri(self, resource):
         uri = resource.uri()
         if uri is None:
@@ -2455,6 +2473,22 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             uicmd.create_toolbar_ctrl(toolbar)
         toolbar.Realize()
         return toolbar
+
+    def find_resource(self, uri):
+        if self._resource_provider:
+            # Try searching the existing resources by URI first.
+            for resource in self._resource_provider.resources():
+                if self._resource_uri(resource) == uri:
+                    return resource
+                if isinstance(resource, lcg.Image):
+                    thumbnail = resource.thumbnail()
+                    if thumbnail and self._resource_uri(thumbnail) == uri:
+                        return thumbnail
+            # If URI doesn't match any existing resource, try locating the
+            # resource using the standard resource provider's algorithm
+            # (including searching resource directories).
+            return self._resource_provider.resource(uri)
+        return None
 
     def load_uri(self, uri, restrict_navigation=None):
         self._resource_provider = None
