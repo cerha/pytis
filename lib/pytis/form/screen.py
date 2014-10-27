@@ -2536,12 +2536,41 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         self._webview.LoadURL(uri)
 
     def load_html(self, html, base_uri='', restrict_navigation=None, resource_provider=None):
+        """Load browser content from given HTML string.
+
+        Arguments:
+          html -- HTML document to be loaded into the browser.
+          base_uri -- base uri of the document.  Relative URIs within the
+            document are relative to this URI.  Browser policies may also
+            restrict loading further resources according to this URI.
+          restrict_navigation -- URI prefix to restrict further navigation.
+            The user will not be able to navigate to URIs outside given prefix.
+          resource_provider -- 'lcg.ResourceProvider' instance providing
+            external resources for the loaded document (images, scripts,
+            stylesheets).  The HTML may refer to these resources and the
+            browser will be able to load them if they can be obtained from the
+            provider.
+
+        """
         self._resource_provider = resource_provider
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
 
     def load_content(self, node, base_uri='', exporter=None):
-        """Load browser content from lcg.ContentNode instance."""
+        """Load browser content from 'lcg.ContentNode' instance.
+
+        Arguments:
+          node -- 'lcg.ContentNode' instance representing the document to be
+            loaded into the browser.  The node content will be exported into
+            HTML and displayed.
+          base_uri -- base uri of the document.  Relative URIs within the
+            document are relative to this URI.  Browser policies may also
+            restrict loading further resources according to this URI.
+          exporter -- lcg.HtmlExporter is used by default for exporting the
+            node's contents into HTML.  You may pass another exporter instance
+            if you want to customize the export.
+
+        """
         if exporter is None:
             exporter = self.Exporter(styles=('default.css',),
                                      get_resource_uri=self._resource_uri,
