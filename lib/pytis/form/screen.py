@@ -62,6 +62,13 @@ from .managers import FormProfileManager
 
 import config
 
+for const in ('EVT_WEBVIEW_NAVIGATING', 'EVT_WEBVIEW_NAVIGATED', 'EVT_WEBVIEW_LOADED',
+              'EVT_WEBVIEW_ERROR', 'EVT_WEBVIEW_TITLE_CHANGED', 'WEBVIEW_RELOAD_NO_CACHE'):
+    # wxPython on MAC OS X uses a different naming scheme.  We don't want
+    # to care about it later, so we just duplicate the used identifiers here.
+    if not hasattr(wx.html2, const):
+        setattr(wx.html2, const, getattr(wx.html2, const.replace('WEBVIEW', 'WEB_VIEW')))
+
 #  import config
 # if config.http_proxy is not None:
 # Nasty way to set the proxy used by the webkit browser.  This should be
