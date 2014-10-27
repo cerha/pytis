@@ -2342,8 +2342,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         wxid = webview.GetId()
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
-        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_load_finished)
-        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_load_error)
+        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_loaded)
+        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_error)
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
@@ -2362,12 +2362,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             self._help_exporter_instance = exporter
         return exporter
 
-    def _on_load_finished(self, event):
+    def _on_loaded(self, event):
         busy_cursor(False)
         pytis.form.message(_("Document loaded."), log_=False)
         self._run_callback(self.CALL_URI_CHANGED, event.GetURL())
 
-    def _on_load_error(self, event):
+    def _on_error(self, event):
         busy_cursor(False)
         log(OPERATIONAL, "Failed loading '%s':" % event.GetURL(), event.GetString())
         pytis.form.message(_("Loading document failed."), log_=False)
