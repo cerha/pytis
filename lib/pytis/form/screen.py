@@ -2338,6 +2338,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             'form': self._form_handler,
             'call': self._call_handler,
         }
+        self._help_exporter_instance = None
         wxid = webview.GetId()
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
@@ -2350,6 +2351,16 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
     def __del__(self):
         self._httpd.shutdown()
+
+    def _help_exporter(self):
+        from pytis.help import HelpExporter
+        exporter = self._help_exporter_instance
+        if exporter is None:
+            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
+                                    get_resource_uri=self._resource_uri,
+                                    translations=pytis.util.translation_path())
+            self._help_exporter_instance = exporter
+        return exporter
 
     def _on_load_finished(self, event):
         busy_cursor(False)
@@ -2393,10 +2404,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
     def _help_handler(self, uri, name):
         from pytis.help import help_page, HelpExporter
-        exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
-                                get_resource_uri=self._resource_uri,
-                                translations=pytis.util.translation_path())
-        self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
+        self.load_content(help_page(uri), base_uri=uri, exporter=self._help_exporter())
 
     def _form_handler(self, uri, name, **kwargs):
         view_spec = config.resolver.get(name, 'view_spec')
