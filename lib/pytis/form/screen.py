@@ -2261,6 +2261,25 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
     """Callback called when the current uri changes (called with the uri as the argument)."""
 
     class ResourceServer(SocketServer.TCPServer):
+        """HTTP server to handle external resources for the current browser document.
+
+        An instance of HTTP server is run for each browser instance.  The
+        server runs in a separate thread and is shutdown when the browser is
+        deallocated (see Browser.__del__).  Its purpose is to serve external
+        resources (images, scripts, css, ...) for the current document loaded
+        within the browser.  The resources are part of the 'lcg.Content'
+        instance when the document is loaded throuch 'load_content()' or may be
+        passed separately through 'resource_provider' argument when the
+        document is loaded through 'load_html'.  Resources are not handled when
+        a document is loaded through 'load_uri()' as it is assumed that network
+        document's resources are loaded through their network URIs.
+
+        Note, it might be possible to load resources through a custom handler
+        registered by 'wx.WebView.RegisterHandler', but it currently doesn't
+        work in wx Python and it is too wx.WebView specific.  This solution
+        should be generic and work with any browser technology.
+
+        """
         def __init__(self, browser_ref):
             self._browser_ref = browser_ref
             SocketServer.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
@@ -2475,6 +2494,19 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         return toolbar
 
     def find_resource(self, uri):
+        """Return the 'lcg.Resource' instance for given URI within the current document.
+
+        Returns None when there is no matching resource within the currently
+        loaded document.  Aplicable only for documents loaded through
+        'load_content' (where the resources are included within the
+        'lcg.ContentNode' instance) or 'load_html()' when its
+        'resource_provider' argument was passed.  Otherwise it will always
+        return None.
+
+        This method is actually only meant to be used internally by the built
+        in resource server (see Browser.ResourceServer).
+
+        """
         if self._resource_provider:
             # Try searching the existing resources by URI first.
             for resource in self._resource_provider.resources():
