@@ -1387,7 +1387,7 @@ class LookupForm(InnerForm):
         elif profile_id == '__constructor_profile__':
             profile = self._initial_profile
         else:
-            profile = find(profile_id, self._view.profiles.unnest(), key=lambda p: p.id())
+            profile = find(profile_id, self._view.profiles().unnest(), key=lambda p: p.id())
         profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
