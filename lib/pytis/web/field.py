@@ -23,7 +23,7 @@ import pytis.util
 
 from pytis.presentation import SelectionType, TextFormat, Orientation
 
-_ = lcg.TranslatableTextFactory('pytis')
+_ = pytis.util.translations('pytis-web')
 
 
 class UriType(object):

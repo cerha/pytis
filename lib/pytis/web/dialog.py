@@ -23,8 +23,9 @@ This module implements web-based dialogs.
 """
 
 import lcg
+import pytis.util
 
-_ = lcg.TranslatableTextFactory('pytis')
+_ = pytis.util.translations('pytis-web')
 
 class Dialog(lcg.Content):
 
