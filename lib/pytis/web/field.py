@@ -17,7 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import collections
-import re
 import lcg
 import pytis.data as pd
 import pytis.util
@@ -265,7 +264,7 @@ class Field(object):
         value = self._row.format(self.id, export=localizable_export)
         if value and not isinstance(value, lcg.Localizable):
             numlines = len(value.splitlines())
-            value = lcg.format_text(value) 
+            value = lcg.format_text(value)
             if numlines > 1:
                 g = context.generator()
                 height = self.spec.height()
@@ -444,7 +443,7 @@ class TextField(Field):
         maxlen = self._maxlen()
         size = self.spec.width(maxlen)
         if kwargs['name'] == 'login':
-            # HACK: This makes the Safari's password suggestion work in forms, which 
+            # HACK: This makes the Safari's password suggestion work in forms, which
             # call the login name field 'login' instead of 'username' (Wiking).
             kwargs['id'] += '-username'
         return dict(kwargs, value=value, size=size, maxlength=maxlen)
