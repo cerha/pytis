@@ -13,6 +13,10 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-wx')
 
+crypto_select_rights = sql.SQLFlexibleValue('app_crypto_select_rights',
+                                            environment='GSQL_CRYPTO_SELECT_RIGHTS',
+                                            default=(('select', 'pytis',),))
+
 class CPytisCryptoNames(Base_LogSQLTable):
     """Codebook of encryption areas defined in the application."""
     name = 'c_pytis_crypto_names'
@@ -182,7 +186,7 @@ class PytisCryptoDbKeys(sql.SQLTable):
               )
     with_oids = True
     depends_on = ()
-    access_rights = ()
+    access_rights = crypto_select_rights.value(globals())
 
 class PytisCryptoTKeyPair(sql.SQLType):
     name = 'pytis_crypto_t_key_pair'
