@@ -316,6 +316,28 @@ class Application(wx.App, KeyHandler, CommandHandler):
         wx.CallAfter(self._init)
         return True
 
+    def _frame_title(self, title=None):
+        if not title:
+            title = config.application_name
+        if __debug__:
+            try:
+                release_version = wx.RELEASE_NUMBER
+            except AttributeError:
+                # *Some* wx 2.8 versions have the constant renemed!
+                release_version = wx.RELEASE_VERSION
+                title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
+            conn = config.dbconnection
+            if conn:
+                # Pozor, pokud během inicializace aplikace nedojde k připojení k
+                # databázi (není vyvolána žádná databázová operace), nemusí být
+                # hodnoty správně.
+                title += " %s@%s" % (conn.user(), conn.database())
+                if conn.host():
+                    title += " " + conn.host()
+                    if conn.port():
+                        title += ":%s" % (conn.port(),)
+        self._frame.SetTitle(title)
+
     def _init(self):
         # Run application specific initialization.
         self._spec('init')
@@ -384,18 +406,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(mru_windows[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
-        conn = config.dbconnection
-        if conn:
-            # Pozor, pokud během inicializace aplikace nedojde k připojení k
-            # databázi (není vyvolána žádná databázová operace), nemusí být
-            # hodnoty správně.
-            title = self._frame.GetTitle()
-            title += " %s@%s" % (conn.user(), conn.database())
-            if conn.host():
-                title += " " + conn.host()
-                if conn.port():
-                    title += ":%s" % (conn.port(),)
-            self._frame.SetTitle(title)
+        self._frame_title()
         self._spec('post_init')
 
     def _spec(self, name, default=None, **kwargs):
@@ -578,7 +589,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
         return mb
-
+        
 # Ostatní metody
 
     def _form_menu_item_title(self, form):
@@ -1639,6 +1650,10 @@ def decrypted_names():
 def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
     return _application.log(spec_name, form_name, action, info=info)
+
+def frame_title(title):
+    """Set title of the main application frame"""
+    _application._frame_title(title)
 
 # Ostatní funkce.
 
