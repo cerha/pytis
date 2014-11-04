@@ -2821,7 +2821,7 @@ class Enumeration(object):
     selection_type = SelectionType.CHOICE
     """Overrides Field's 'selection_type' attribute."""
     
-    orientation = SelectionType.CHOICE
+    orientation = Orientation.VERTICAL
     """Overrides Field's 'orientaion' attribute."""
     
     null_display = None
