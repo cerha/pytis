@@ -83,7 +83,7 @@ def get_menu_forms():
         for shortname, fullname in data.select_map(get_values):
             if ((shortname and shortname[:5] == 'form/' and
                  fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm')):
-                forms.append((fullname.split('/')[1], shortname[5:]))
+                forms.append((eval(fullname.split('/')[1]), shortname[5:]))
     return forms
 
 
