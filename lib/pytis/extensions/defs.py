@@ -51,16 +51,16 @@ def get_form_defs(resolver, messages=None):
             add_message(messages, DMPMessage.NOTE_MESSAGE,
                         "Private specification, ignored", (name,))
     return specification_names
-    
-def get_menu_defs():
-    """Return sequence of names of all specifications present in application menu.
+
+def get_menu_forms():
+    """Return sequence of all forms present in application menu as tuples (form_class, specname).
     """
     def flatten_menus(queue, found, level=0):
         if queue:
             head, tail = queue[0], queue[1:]
             found.append(head)
             if isinstance(head, pytis.form.Menu):
-                flatten_menus(head.items(), found, level=level+1)
+                flatten_menus(head.items(), found, level=level + 1)
             result = flatten_menus(tail, found, level=level)
         else:
             result = found
@@ -71,21 +71,27 @@ def get_menu_defs():
         data = None
     if data is None:
         resolver = pytis.util.resolver()
-        specs = [item.args()['name']
+        forms = [(item.args()['form_class'], item.args()['name'])
                  for item in flatten_menus(resolver.get('application', 'menu'), [])
                  if (isinstance(item, pytis.form.MItem)
                      and item.command() == pytis.form.Application.COMMAND_RUN_FORM
                      and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
     else:
-        specs = []
+        forms = []
         def get_values(row):
             return row['shortname'].value(), row['fullname'].value()
         for shortname, fullname in data.select_map(get_values):
             if ((shortname and shortname[:5] == 'form/' and
                  fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm')):
-                specs.append(shortname[5:])
-    return pytis.util.remove_duplicates(specs)
+                forms.append((fullname.split('/')[1], shortname[5:]))
+    return forms
 
+
+def get_menu_defs():
+    """Return sequence of names of all specifications present in application menu.
+    """
+    forms = get_menu_forms()
+    return pytis.util.remove_duplicates([f[1] for f in forms])
 
 def _get_default_select(spec):
     def init_select(view, data):
