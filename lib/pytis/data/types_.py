@@ -1386,7 +1386,7 @@ class _CommonDateTime(Type):
             utc flag of the type
           
         """
-        assert isinstance(string, basestring)
+        assert isinstance(string, basestring), string
         if format is None:
             format = self._format
         if local is None:
