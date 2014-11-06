@@ -43,7 +43,7 @@ from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, 
     Profiles, FilterSet, Filter
 import pytis.util
 
-from pytis.web import Field, UriType, Link, localizable_export
+from field import Field, DateTimeField, UriType, Link, localizable_export
 
 _ = pytis.util.translations('pytis-web')
 
@@ -52,8 +52,24 @@ class BadRequest(Exception):
     """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
     pass
     
+class Exporter(lcg.Content):
+    """Helper class to simplify returning exported content in AJAX responses.
+
+    The constructor's 'exporter' argument is be a callable object of one
+    argument -- the LCG's export context (lcg.HtmlExporter.Context instance).
+
+    """
+    def __init__(self, exporter, **kwargs):
+        self._exporter = exporter
+        super(Exporter, self).__init__(**kwargs)
+
+    def export(self, context):
+        return self._exporter(context)
+        return CellContent()
+
 
 class Form(lcg.Content):
+
     """Pytis HTML form as an LCG Content element.
 
     The form instance behaves as any other LCG Content element.  The HTML
@@ -703,18 +719,20 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 super(EditForm, self)._export_form(context, form_id) +
                 self._export_footer(context, form_id))
     
+    def _export_error(self, context, form_id, fid, message):
+        if fid:
+            field = self._fields.get(fid)
+            content = g.strong(field and field.label or fid) + ": " + message
+        else:
+            content = message
+        return g.p(content)
+
     def _export_errors(self, context, form_id):
         g = context.generator()
-        def export_error(fid, message):
-            if fid:
-                field = self._fields.get(fid)
-                content = g.strong(field and field.label or fid) + ": " + message
-            else:
-                content = message
-            return g.p(content)
-        content = [export_error(fid, message) for fid, message in self._last_validation_errors]
+        content = [self._export_error(context, form_id, fid, message) 
+                   for fid, message in self._last_validation_errors]
         if self._error:
-            content.append(export_error(*self._error))
+            content.append(self._export_error(*self._error))
         if content:
             return [g.div(content, cls='errors')]
         else:
@@ -1028,7 +1046,27 @@ class QueryFieldsForm(EditForm):
     def fields(self):
         return [self._fields[f] for f in self._field_order()]
 
-    
+
+class InlineEditForm(EditForm):
+    """Special form for representation of browse form inline edit fields (for internal use only)."""
+
+    def __init__(self, view_spec, req, row, uri, field_id):
+        super(InlineEditForm, self).__init__(view_spec, req, row, layout=GroupSpec((field_id,)),
+                                             handler=uri)
+
+    def _export_body(self, context, form_id):
+        field = self._fields[self._layout.order()[0]]
+        return self._export_field(context, field, editable=True)
+
+    def _export_submit(self, context):
+        g = context.generator()
+        return g.button(g.span(_("Save")), type='submit', name='save-edited-cell', value='1',
+                        cls='save-edited-cell')
+
+    def _export_error(self, context, form_id, fid, message):
+        return message
+
+
 class FilterForm(EditForm):
     """Simple form for displaying a list of fields for advanced filtering."""
     # This form is currently only used in Wiking Biblio CatalogNews module.
@@ -1060,6 +1098,7 @@ class BrowseForm(LayoutForm):
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
+                 cell_editable=None,
                  **kwargs):
         """Arguments:
 
@@ -1196,6 +1235,10 @@ class BrowseForm(LayoutForm):
             can be returned to the client more promptly.  If allowed, the
             application must also support the asynchronous requests (the
             parameter '_pytis_async_load_request' is added for such requests).
+          cell_editable -- function of two arguments (the form row as a
+            'PresentedRow' instance and the column's field id) returning
+            boolean, indicating whether the cell is editable inline.  By
+            default, no cells are editable inline.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1411,6 +1454,7 @@ class BrowseForm(LayoutForm):
         self._bottom_actions = bottom_actions
         self._row_actions = row_actions
         self._async_load = async_load
+        self._cell_editable = cell_editable or (lambda x: False)
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
@@ -1440,17 +1484,17 @@ class BrowseForm(LayoutForm):
             return ''
 
     def _export_cell(self, context, row, n, field, editable=False):
-        value = self._export_field(context, field, editable=editable)
+        g = context.generator()
+        content = self._export_field(context, field, editable=editable)
         if field.id == self._column_fields[0].id:
-            g = context.generator()
             tree_level = self._tree_level()
             if tree_level is not None and tree_level > 0:
                 indent = tree_level * g.span(2 * '&nbsp;', cls='tree-indent')
-                value = indent + '&bull;&nbsp;' + g.span(value, cls='tree-node')
+                content = indent + '&bull;&nbsp;' + g.span(content, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
-                value += self._export_popup_ctrl(context, row, 'tr')
-        return value
+                content += self._export_popup_ctrl(context, row, 'tr')
+        return content
 
     def _style(self, style):
         def color(c):
@@ -1470,7 +1514,7 @@ class BrowseForm(LayoutForm):
         ) if attr() is not None]
         return '; '.join(styles)
     
-    def _field_style(self, field, row):
+    def _field_style(self, context, field, row):
         field_style = field.style
         if isinstance(field_style, collections.Callable):
             field_style = field_style(row)
@@ -1482,6 +1526,19 @@ class BrowseForm(LayoutForm):
             style = self._style(field_style)
             if style:
                 kwargs['style'] = style
+        if self._cell_editable(row, field.id):
+            if 'cls' in kwargs:
+                kwargs['cls'] += ' editable-cell'
+            else:
+                kwargs['cls'] = 'editable-cell'
+            if isinstance(field, DateTimeField):
+                # This is a quick hack to make date fields inline editable
+                # (their UI depends on those additional resources).  Better
+                # might be adding these resources dynamically on AJAX response
+                # (as the ajax response export actually knows about the
+                # dependencies) or at least asking the field instance.
+                context.resource('calendarview.js')
+                context.resource('calendarview.css')
         return kwargs
 
     def _row_attr(self, row, n):
@@ -1508,7 +1565,7 @@ class BrowseForm(LayoutForm):
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
         cells = [g.td(self._export_cell(context, row, n, field), align=self._align.get(field.id),
-                      **self._field_style(field, row))
+                      **self._field_style(context, field, row))
                  for field in self._column_fields]
         return g.tr(cells, id=row_id, **self._row_attr(row, n))
 
@@ -1989,7 +2046,29 @@ class BrowseForm(LayoutForm):
         Same rules for the returned value apply as in 'EditForm.ajax_response()'.
 
         """
-        return self._query_fields_form.ajax_response(req)
+        if req.param('_pytis_edit_cell'):
+            column_id, key_value = req.param('_pytis_column_id'), req.param('_pytis_row_key')
+            data = self._row.data()
+            key_type = data.find_column(self._key).type()
+            key, error = key_type.validate(key_value)
+            row = data.row(key)
+            self._row.set_row(row)
+            if not self._cell_editable(self._row, column_id):
+                raise BadRequest()
+            form = InlineEditForm(self._view, req, self._row, self._handler, column_id)
+            if req.param('save-edited-cell'):
+                # The cell edit form was submitted.
+                if form.validate(req):
+                    # Update all columns as other columns may change due to computer dependencies.
+                    rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
+                    data.update(key, pytis.data.Row(rowdata))
+                    def export_cell(context):
+                        return self._export_field(context, self._fields[column_id], editable=False)
+                    return Exporter(export_cell)
+            # Show the form inside the cell.
+            return form
+        else:
+            return self._query_fields_form.ajax_response(req)
 
 
 class ListView(BrowseForm):
@@ -2414,10 +2493,7 @@ class EditableBrowseForm(BrowseForm):
             self._group = True
             self._last_group = None
             return self._export_row(context, self._row, 0, None)
-        class TableRow(lcg.Content):
-            def export(self, context):
-                return export_row(context)
-        return TableRow()
+        return Exporter(export_row)
 
     def validate(self, req):
         """Validate the submitted form and return True if no errors are found.

@@ -131,6 +131,114 @@ pytis.BrowseForm = Class.create({
 	    insert_button.observe('click', this.on_insert_new_row.bind(this));
 	    this.form.insert(insert_button);
 	}
+	this.form.select('td.editable-cell').each(function (element) {
+	    element.on('dblclick', this.on_edit_cell.bind(this));
+	}.bind(this));
+    },
+
+    on_edit_cell: function(event) {
+	var td = (event.element().nodeName == 'TD' ? event.element() : event.element().up('td'));
+	this.send_edit_cell_request(td);
+	event.stop();
+    },
+
+    send_ajax_request: function(form, parameters, on_success) {
+	document.body.style.cursor = "wait";
+	form.request({
+	    parameters: parameters,
+	    onSuccess: function(transport) {
+		try {
+		    on_success.bind(this)(transport);
+		} catch (e) {
+		    // Errors in asynchronous handlers are otherwise silently
+		    // ignored.  This will only work in some browsers,
+		    // but it is only useful for debugging anyway...
+		    console.log(e);
+		} finally {
+		    document.body.style.cursor = "default";
+		}
+	    }.bind(this),
+	    onFailure: function(transport) {
+		document.body.style.cursor = "default";
+	    }.bind(this)
+	});
+    },
+
+    send_edit_cell_request: function(element) {
+	var form = element.down('form');
+	if (!form) {
+	    // If the cell edit form is not present, we must ask for it through
+	    // the BrowseForm's controls form.
+	    form = this.form.down('form');
+	}
+	var parameters = {_pytis_form_update_request: 1,
+			  _pytis_edit_cell: 1,
+			  _pytis_row_key: this.pytis_row_key(element),
+			  _pytis_column_id: this.pytis_column_id(element)};
+	this.send_ajax_request(form, parameters, function(transport) {
+	    element.update(transport.responseText);
+	    var form = element.down('form');
+	    if (form) {
+		form.down('button.save-edited-cell').on('click',  function(event) {
+		    this.send_edit_cell_request(element);
+		    event.stop();
+		}.bind(this));
+		form[this.pytis_column_id(element)].focus();
+	    }
+	}.bind(this));
+    },
+
+    pytis_row_key: function(element) {
+	// Return pytis row key value for given HTML element inside the pytis table form.
+	// The returned value is actually the value of the referer column.
+	// Returns null if the element is not inside a pytis table or
+	// if the table doesn't contain necessary information.
+	var tr = element.up('tr');
+	if (tr) {
+	    var td = tr.down('td');
+	    if (td) {
+		var a = td.down('a');
+		// The first cell's link usually points to the current record
+		// through its referer value.  Thus we use it for now.  It seems
+		// a little fuzzy however, so we should probably add row key or
+		// referer to html somewhere (e.g. <tr data-pytis-key='...'>).
+		if (a && a.href) {
+		    var path = a.href.split('/');
+		    return path[path.length - 1];
+		}
+	    }
+	}
+	return null;
+    },
+
+    pytis_column_id: function(element) {
+	// Return pytis column id for given HTML element inside the pytis table form.
+	/* The method works with with class names of table th elements, but this
+           may be unreliable in some cases, so better we might pass column names
+           explicitly to the JavaScript form class constructor or something
+           similar...
+	*/
+	var td = (element.nodeName == 'TD' ? element : element.up('td'));
+	var tr = element.up('tr');
+	var table = element.up('table');
+	if (td && tr && table) {
+	    var thead = table.down('thead');
+	    if (thead) {
+		var hr = thead.down('tr');
+		if (hr) {
+		    var th = hr.childElements()[tr.childElements().indexOf(td)];
+		    if (th) {
+			var cls = th.classNames().find(function(x) {
+			    return x.match('^column-id-')
+			});
+			if (cls) {
+			    return cls.substr(10, cls.length);
+			}
+		    }
+		}
+	    }
+	}
+	return null;
     },
 
     load_form_data: function(parameters) {
@@ -318,27 +426,11 @@ pytis.BrowseForm = Class.create({
 	var parameters = {'_pytis_form_update_request': 1,
 			  '_pytis_insert_new_row': 1};
 	if (form) {
-	    form.request({
-		parameters: parameters,
-		onSuccess: function(transport) {
-		    try {
-			var tbody = this.form.down('tbody');
-			tbody.insert(transport.responseText);
-			form['_pytis_inserted_rows_' + this.form_name].value++;
-			this.bind_row_controls(tbody);
-			document.body.style.cursor = "default";
-		    } catch (e) {
-			// Errors in asynchronous handlers are otherwise silently
-			// ignored.  This will only work in Firefox with Firebug,
-			// but it is only useful for debugging anyway...
-			console.log(e);
-		    } finally {
-			document.body.style.cursor = "default";
-		    }
-		}.bind(this),
-		onFailure: function(transport) {
-		    document.body.style.cursor = "default";
-		}.bind(this)
+	    this.send_ajax_request(form, parameters, function(transport) {
+		var tbody = this.form.down('tbody');
+		tbody.insert(transport.responseText);
+		form['_pytis_inserted_rows_' + this.form_name].value++;
+		this.bind_row_controls(tbody);
 	    });
 	}
 	event.stop();

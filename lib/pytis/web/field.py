@@ -699,9 +699,9 @@ class DateTimeField(TextField):
     def _editor(self, context, **kwargs):
         result = super(DateTimeField, self)._editor(context, **kwargs)
         g = context.generator()
-        result += g.script_write(g.button('...', id='%s-button' % kwargs['id'], type='button',
-                                          cls='selection-invocation calendar-invocation',
-                                          disabled=kwargs['disabled']))
+        result += g.button('...', id='%s-button' % kwargs['id'], type='button',
+                           cls='selection-invocation calendar-invocation',
+                           disabled=kwargs['disabled'])
         context.resource('prototype.js')
         context.resource('calendarview.js')
         context.resource('calendarview.css')
