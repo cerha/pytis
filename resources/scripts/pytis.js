@@ -165,9 +165,9 @@ pytis.BrowseForm = Class.create({
     send_edit_cell_request: function(element) {
 	var form = element.down('form');
 	if (!form) {
-	    // If the cell edit form is not present, we must ask for it through
-	    // the BrowseForm's controls form.
-	    form = this.form.down('form');
+	    // If the cell edit form is not present yet, let's create an empty
+	    // form just for sending the request.
+	    form = new Element('form', {action: this.uri, method: 'GET'});
 	}
 	var parameters = {_pytis_form_update_request: 1,
 			  _pytis_edit_cell: 1,
