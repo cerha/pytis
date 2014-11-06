@@ -190,23 +190,11 @@ pytis.BrowseForm = Class.create({
 
     pytis_row_key: function(element) {
 	// Return pytis row key value for given HTML element inside the pytis table form.
-	// The returned value is actually the value of the referer column.
 	// Returns null if the element is not inside a pytis table or
 	// if the table doesn't contain necessary information.
 	var tr = element.up('tr');
 	if (tr) {
-	    var td = tr.down('td');
-	    if (td) {
-		var a = td.down('a');
-		// The first cell's link usually points to the current record
-		// through its referer value.  Thus we use it for now.  It seems
-		// a little fuzzy however, so we should probably add row key or
-		// referer to html somewhere (e.g. <tr data-pytis-key='...'>).
-		if (a && a.href) {
-		    var path = a.href.split('/');
-		    return path[path.length - 1];
-		}
-	    }
+	    return tr.getAttribute('data-pytis-row-key');
 	}
 	return null;
     },

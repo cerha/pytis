@@ -1560,6 +1560,7 @@ class BrowseForm(LayoutForm):
         attr = dict(cls=' '.join(cls))
         if style:
             attr['style'] = style
+        attr['data-pytis-row-key'] = row[self._key].export()
         return attr
     
     def _export_row(self, context, row, n, row_id):
