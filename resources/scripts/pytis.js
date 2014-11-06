@@ -122,6 +122,7 @@ pytis.BrowseForm = Class.create({
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
 	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
 	    this.bind_table_headings(this.form.down('table'));
+	    this.bind_table_cells(this.form.down('table.data-table'));
 	    this.bind_row_controls(this.form.down('tbody'));
 	}
 	if (allow_insertion) {
@@ -131,9 +132,6 @@ pytis.BrowseForm = Class.create({
 	    insert_button.observe('click', this.on_insert_new_row.bind(this));
 	    this.form.insert(insert_button);
 	}
-	this.form.select('td.editable-cell').each(function (element) {
-	    element.on('dblclick', this.on_edit_cell.bind(this));
-	}.bind(this));
     },
 
     on_edit_cell: function(event) {
@@ -245,6 +243,7 @@ pytis.BrowseForm = Class.create({
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
 		    this.bind_table_headings(container.down('table'));
+		    this.bind_table_cells(container.down('tbody'));
 		    for (i=0; i<this.on_load_callbacks.length; i++) {
 			callback = this.on_load_callbacks[i];
 			callback(this.form);
@@ -320,6 +319,14 @@ pytis.BrowseForm = Class.create({
 		if (th.hasClassName('sortable-column')) {
 		    th.observe('click', this.on_table_heading_clicked.bind(this));
 		}
+	    }.bind(this));
+	}
+    },
+
+    bind_table_cells: function(table) {
+	if (table) {
+	    table.select('td.editable-cell').each(function (element) {
+		element.on('dblclick', this.on_edit_cell.bind(this));
 	    }.bind(this));
 	}
     },
@@ -424,6 +431,7 @@ pytis.BrowseForm = Class.create({
 		var tbody = this.form.down('tbody');
 		tbody.insert(transport.responseText);
 		form['_pytis_inserted_rows_' + this.form_name].value++;
+		this.bind_table_cells(tbody.up('table'));
 		this.bind_row_controls(tbody);
 	    });
 	}
