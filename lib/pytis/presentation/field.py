@@ -583,7 +583,7 @@ class PresentedRow(object):
             'Value' instance.
 
         """
-        cache_key = (key, single, secure, pretty)
+        cache_key = (key, single, secure, pretty, export)
         try:
             return self._cache[cache_key]
         except KeyError:
