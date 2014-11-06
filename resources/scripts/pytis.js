@@ -241,7 +241,10 @@ pytis.BrowseForm = Class.create({
 	return null;
     },
 
-    load_form_data: function(parameters) {
+    load_form_data: function(parameters, busy_cursor) {
+	if (busy_cursor) {
+	    document.body.style.cursor = "wait";
+	}
 	parameters._pytis_async_load_request = 1;
 	new Ajax.Request(this.uri, {
 	    method: 'get',
@@ -258,19 +261,24 @@ pytis.BrowseForm = Class.create({
 			callback = this.on_load_callbacks[i];
 			callback(this.form);
 		    }
-		    document.body.style.cursor = "default";
 		    if (container.down('#found-record')) {
 			window.location.hash = '#found-record';
 		    }
 		} catch (e) {
 		    // Errors in asynchronous handlers are otherwise silently
-		    // ignored.  This will only work in Firefox with Firebug,
+		    // ignored.  This will only work in some browsers,
 		    // but it is only useful for debugging anyway...
 		    console.log(e);
+		} finally {
+		    if (busy_cursor) {
+			document.body.style.cursor = "default";
+		    }
 		}
 	    }.bind(this),
 	    onFailure: function(transport) {
-		document.body.style.cursor = "default";
+		if (busy_cursor) {
+		    document.body.style.cursor = "default";
+		}
 		var msg = (pytis._("Failed loading form:") +' '+ 
 			   transport.status +' '+ transport.statusText);
 		var tb_start = transport.responseText.search('here is the original traceback:');
@@ -344,9 +352,8 @@ pytis.BrowseForm = Class.create({
 	    }
 	});
 	parameters[ctrl.name] = ctrl.value;
-	document.body.style.cursor = "wait";
 	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
-	this.load_form_data(parameters);
+	this.load_form_data(parameters, true);
     },
 
     bind_search_controls: function(panel) {
@@ -381,9 +388,8 @@ pytis.BrowseForm = Class.create({
 	    }
 	    var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
 	    if (this.async_load) {
-		document.body.style.cursor = "wait";
 		this.form.select('form.list-form-controls').each(function(f) { f.disable(); });
-		this.load_form_data(parameters);
+		this.load_form_data(parameters, true);
 	    } else {
 		window.location.search = new Hash(parameters).toQueryString();
 	    }
@@ -507,7 +513,7 @@ pytis.Form = Class.create({
 		var states = new Hash();
 		this._fields.each(function(x) {
 		    if (x.value.state()) {
-			states.set(x.key, x.value.state())
+			states.set(x.key, x.value.state());
 		    }
 		});
 		this._form.request({
