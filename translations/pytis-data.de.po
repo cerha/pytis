@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-09-25 12:41+0200\n"
+"POT-Creation-Date: 2014-11-07 11:17+0100\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -79,7 +79,7 @@ msgstr ""
 msgid "Characters present in data not representable in database encoding"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3724
+#: ../lib/pytis/data/postgresql.py:3737
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Falsches Datum oder Zeit "
