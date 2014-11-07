@@ -1,5 +1,24 @@
 /* Generic pytis forms styles */
 
+.pytis-form.edit-form .errors,
+.pytis-form.query-fields-form .errors {
+    color: #000;
+    background-color: #fed;
+    border: 1px solid #fcb;
+    border-width: 1px 0;
+    margin: 0.6em 0;
+    text-align: left;
+    padding: 0 3px;
+}
+.pytis-form.edit-form .errors div,
+.pytis-form.query-fields-form .errors div {
+    margin: 2px 0;
+}
+.pytis-form.edit-form .errors a,
+.pytis-form.query-fields-form .errors a {
+    color: #000;
+}
+
 .pytis-form .group, .pytis-form div.submit, .pytis-form .paging-controls {
     background-color: #eee;
     border: 1px solid #ddd;
@@ -24,7 +43,6 @@
 .pytis-form.query-fields-form .errors {
     text-align: left;
     margin: 0 0 0.3em 0;
-    padding: 2px 1px;
 }
 .pytis-form.query-fields-form td.apply-filters {
     padding-left: 0.8em;
