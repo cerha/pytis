@@ -43,7 +43,7 @@ from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, 
     Profiles, FilterSet, Filter
 import pytis.util
 
-from field import Field, DateTimeField, UriType, Link, localizable_export
+from field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
 
 _ = pytis.util.translations('pytis-web')
 
@@ -722,7 +722,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         g = context.generator()
         if fid:
             field = self._fields.get(fid)
-            content = g.strong(field and field.label or fid) + ": " + message
+            if field:
+                href = '#' + field.html_id()
+                if isinstance(field, RadioField):
+                    # HACK: The first radio field in the radio group is the control
+                    # which may get focus...
+                    href += '-0'
+                label = g.a(field.label, href=href)
+            else:
+                label = fid
+            content = g.strong(label) + ": " + message
         else:
             content = message
         return g.p(content)
