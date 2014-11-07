@@ -240,23 +240,23 @@
 .pytis-form .field-label.disabled { color: #444; }
 .pytis-form .field-label.disabled .not-null { display: none; }
 
-.pytis-form div.radio-group div { 
+.pytis-form .radio-group {
+    margin-bottom: 0.3em;
+}
+.pytis-form .radio-group div, .pytis-form .radio-group span {
     white-space: nowrap;
 }
-.pytis-form div.radio-group input { 
+.pytis-form .radio-group input {
     vertical-align: baseline;
     margin-right: 0.2em;
 }
-.pytis-form div.radio-group label { 
+.pytis-form .radio-group label {
     font-weight: normal;
     display: inline-block;
     margin: 0.3em 0 0.1em 0.1em;
 }
-.pytis-form div.radio-group { 
-    margin-bottom: 0.3em;
-}
 
-.pytis-form .group table { 
+.pytis-form .group table {
     border-collapse: collapse;
 }
 .pytis-form.show-form td.ctrl, .pytis-form.list-view td.ctrl { 
