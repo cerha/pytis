@@ -408,6 +408,9 @@
     border-width: 1px;
     margin: 1px 0;
 }
+.pytis-form.browse-form td.editable-cell form {
+    white-space: nowrap;
+}
 /* Border-less table:
 .pytis-form.browse-form.mapping table {
     border-collapse: separate;
