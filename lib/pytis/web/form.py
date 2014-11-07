@@ -65,7 +65,6 @@ class Exporter(lcg.Content):
 
     def export(self, context):
         return self._exporter(context)
-        return CellContent()
 
 
 class Form(lcg.Content):
@@ -720,6 +719,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 self._export_footer(context, form_id))
     
     def _export_error(self, context, form_id, fid, message):
+        g = context.generator()
         if fid:
             field = self._fields.get(fid)
             content = g.strong(field and field.label or fid) + ": " + message
@@ -729,7 +729,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _export_errors(self, context, form_id):
         g = context.generator()
-        content = [self._export_error(context, form_id, fid, message) 
+        content = [self._export_error(context, form_id, fid, message)
                    for fid, message in self._last_validation_errors]
         if self._error:
             content.append(self._export_error(*self._error))
