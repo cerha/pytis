@@ -244,8 +244,8 @@
     white-space: nowrap;
 }
 .pytis-form div.radio-group input { 
-    float: left;
-    vertical-align: top;
+    vertical-align: baseline;
+    margin-right: 0.2em;
 }
 .pytis-form div.radio-group label { 
     font-weight: normal;
