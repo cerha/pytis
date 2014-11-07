@@ -734,7 +734,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             content = g.strong(label) + ": " + message
         else:
             content = message
-        return g.p(content)
+        return g.div(content)
 
     def _export_errors(self, context, form_id):
         g = context.generator()
@@ -1027,11 +1027,7 @@ class QueryFieldsForm(EditForm):
 
     def _export_form(self, context, form_id):
         g = context.generator()
-        content = []
-        for field in self.fields():
-            error = self._row.validation_error(field.id)
-            if error:
-                content.append(g.div(g.strong(field.label) + ": " + error.message(), cls='errors'))
+        content = self._export_errors(context, form_id)
         # Translators: Button for manual filter invocation.
         submit_button = g.button(g.span(_("Change filters")),
                                  type='submit', cls='apply-filters')
