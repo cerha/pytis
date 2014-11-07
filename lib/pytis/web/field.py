@@ -880,7 +880,7 @@ class EnumerationField(Field):
 class RadioField(EnumerationField):
     _HANDLER = 'pytis.RadioField'
     
-    def _editor(self, context, id=None, **kwargs):
+    def _editor(self, context, id, **kwargs):
         g = context.generator()
         value = self._value()
         radios = []
@@ -928,7 +928,7 @@ class ChecklistField(EnumerationField):
     def _format(self, context):
         return self._editor(context, id=self.html_id(), readonly=True)
         
-    def _editor(self, context, id=None, name=None, disabled=None, readonly=False, cls=None):
+    def _editor(self, context, id, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
         values = [v.value() for v in self._value().value() or ()]
         # URI provider must return a function of the array value for array fields.
