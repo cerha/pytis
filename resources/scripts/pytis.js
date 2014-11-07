@@ -135,7 +135,7 @@ pytis.BrowseForm = Class.create({
     },
 
     on_edit_cell: function(event) {
-	var td = (event.element().nodeName == 'TD' ? event.element() : event.element().up('td'));
+	var td = (event.element().nodeName === 'TD' ? event.element() : event.element().up('td'));
 	this.send_edit_cell_request(td);
 	event.stop();
     },
@@ -175,13 +175,13 @@ pytis.BrowseForm = Class.create({
 			  _pytis_column_id: this.pytis_column_id(element)};
 	this.send_ajax_request(form, parameters, function(transport) {
 	    element.update(transport.responseText);
-	    var form = element.down('form');
-	    if (form) {
-		form.down('button.save-edited-cell').on('click',  function(event) {
+	    var edit_form = element.down('form');
+	    if (edit_form) {
+		edit_form.down('button.save-edited-cell').on('click',  function(event) {
 		    this.send_edit_cell_request(element);
 		    event.stop();
 		}.bind(this));
-		form[this.pytis_column_id(element)].focus();
+		edit_form[this.pytis_column_id(element)].focus();
 	    }
 	}.bind(this));
     },
@@ -204,7 +204,7 @@ pytis.BrowseForm = Class.create({
            explicitly to the JavaScript form class constructor or something
            similar...
 	*/
-	var td = (element.nodeName == 'TD' ? element : element.up('td'));
+	var td = (element.nodeName === 'TD' ? element : element.up('td'));
 	var tr = element.up('tr');
 	var table = element.up('table');
 	if (td && tr && table) {
@@ -215,7 +215,7 @@ pytis.BrowseForm = Class.create({
 		    var th = hr.childElements()[tr.childElements().indexOf(td)];
 		    if (th) {
 			var cls = th.classNames().find(function(x) {
-			    return x.match('^column-id-')
+			    return x.match('^column-id-');
 			});
 			if (cls) {
 			    return cls.substr(10, cls.length);
