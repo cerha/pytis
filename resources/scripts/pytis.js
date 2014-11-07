@@ -326,6 +326,7 @@ pytis.BrowseForm = Class.create({
     bind_table_cells: function(table) {
 	if (table) {
 	    table.select('td.editable-cell').each(function (element) {
+		element.setAttribute('title', pytis._("Double click the cell to edit the value."));
 		element.on('dblclick', this.on_edit_cell.bind(this));
 	    }.bind(this));
 	}
