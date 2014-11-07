@@ -404,7 +404,10 @@
     padding-left: 2px;
     padding-right: 3px;
 }
-
+.pytis-form.browse-form td.editable-cell .errors {
+    border-width: 1px;
+    margin: 1px 0;
+}
 /* Border-less table:
 .pytis-form.browse-form.mapping table {
     border-collapse: separate;
