@@ -2036,7 +2036,9 @@ class BrowseForm(LayoutForm):
         BrowseForm may emit ajax requests for query fields form updates.
 
         """
-        if self._query_fields_form:
+        if req.param('_pytis_form_update_request') and req.param('_pytis_edit_cell'):
+            return True
+        elif self._query_fields_form:
             return self._query_fields_form.is_ajax_request(req)
         else:
             return False
