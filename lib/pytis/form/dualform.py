@@ -856,6 +856,12 @@ class MultiForm(Form, Refreshable):
 
     def _on_size(self, event):
         size = event.GetSize()
+        # The active_form() call below is necessary to finish active
+        # form initialization before resizing the notebook.  Otherwise
+        # some forms in some cases don't size properly.  It was unclear
+        # which forms under which conditions make troubles, but it was
+        # often the case with web forms.
+        self.active_form()
         self._notebook.SetSize(size)
 
     def _cmd_next_form(self, back=False):
