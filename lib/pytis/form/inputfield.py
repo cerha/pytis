@@ -1316,6 +1316,13 @@ class ListBoxField(EnumerationField):
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
         return control
 
+    def _set_ctrl_color(self, ctrl, color):
+        for i in range(ctrl.Count):
+            # This doesn't seem to have any effect.  ctrl.SetOwnBackgroundColour() works,
+            # but also overrides the selection color, so the current item becomes invisible.
+            ctrl.SetItemBackgroundColour(i, wx.Colour(255, 000, 000)) #color)
+        ctrl.Refresh()
+
     def _update_size(self, ctrl):
         width = ctrl.GetBestSize().width
         min_char_width = self.spec().width(None)
