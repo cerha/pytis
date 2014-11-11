@@ -339,7 +339,7 @@ class Window(wx.Panel, Restorable):
 
         """
         assert isinstance(parent, wx.Window), parent
-        wx.Panel.__init__(self, parent, wx.NewId())
+        wx.Panel.__init__(self, parent, -1)
         self._parent = parent
         self._hide_form_requested = False
 
