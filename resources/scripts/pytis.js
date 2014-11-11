@@ -243,7 +243,7 @@ pytis.BrowseForm = Class.create({
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
 		    this.bind_table_headings(container.down('table'));
-		    this.bind_table_cells(container.down('tbody'));
+		    this.bind_table_cells(container.down('table.data-table'));
 		    for (i=0; i<this.on_load_callbacks.length; i++) {
 			callback = this.on_load_callbacks[i];
 			callback(this.form);
