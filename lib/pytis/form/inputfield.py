@@ -1230,6 +1230,9 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
             label = label + ':'
         # Radio Box enumeration is STATIC.
         enumeration = self._row.enumerate(self.id())
+        if not (self._type.not_null() and self._row[self._id].value() is not None):
+            null_display = self._spec.null_display() or _("Undefined")
+            enumeration.insert(0, (None, null_display))
         self._radio_values = [self._type.export(value) for value, label_ in enumeration]
         control = wx.RadioBox(parent, -1, label, style=style, majorDimension=dimension,
                               choices=[label_ for value, label_ in enumeration])
@@ -1237,22 +1240,11 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         return control
 
     def _get_value(self):
-        i = self._ctrl.GetSelection()
-        if i == wx.NOT_FOUND:
-            value = None
-        else:
-            value = self._radio_values[i]
-        return value
+        return self._radio_values[self._ctrl.GetSelection()]
 
     def _set_value(self, value):
-        assert isinstance(value, basestring), value
-        try:
-            selection = self._radio_values.index(value)
-        except ValueError:
-            selection = wx.NOT_FOUND
-        self._ctrl.SetSelection(selection)
-        self._on_change()  # call manually, since SetSelection() doesn't emit an event.
-
+        self._ctrl.SetSelection(self._radio_values.index(value))
+        self._on_change() # call manually, since SetSelection() doesn't emit an event.
 
 class EnumerationField(GenericEnumerationField):
     """Common base class for fields based on 'wx.ControlWithItems'."""
