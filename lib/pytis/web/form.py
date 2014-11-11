@@ -741,7 +741,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         content = [self._export_error(context, form_id, fid, message)
                    for fid, message in self._last_validation_errors]
         if self._error:
-            content.append(self._export_error(*self._error))
+            content.append(self._export_error(context, form_id, *self._error))
         if content:
             return [g.div(content, cls='errors')]
         else:
