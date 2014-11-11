@@ -26,7 +26,6 @@ import pytis.presentation
 import pytis.util
 import config
 
-
 def get_form_defs(resolver, messages=None):
     """Return sequence of names of all public form specifications in the application.
 
@@ -82,11 +81,10 @@ def get_menu_forms():
             return row['shortname'].value(), row['fullname'].value()
         for shortname, fullname in data.select_map(get_values):
             if ((shortname and shortname[:5] == 'form/' and
-                 fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm')):
-                formclass = getattr(pytis.form, fullname.split('/')[1])
+                 fullname.startswith('pytis.form'))):
+                formclass = getattr(pytis.form, fullname.split('/')[1].split('.')[-1])
                 forms.append((formclass, shortname[5:]))
     return forms
-
 
 def get_menu_defs():
     """Return sequence of names of all specifications present in application menu.
