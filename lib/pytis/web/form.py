@@ -1103,7 +1103,7 @@ class BrowseForm(LayoutForm):
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
-                 cell_editable=None,
+                 cell_editable=None, on_update_row=None,
                  **kwargs):
         """Arguments:
 
@@ -1244,6 +1244,15 @@ class BrowseForm(LayoutForm):
             'PresentedRow' instance and the column's field id) returning
             boolean, indicating whether the cell is editable inline.  By
             default, no cells are editable inline.
+          on_update_row -- callback to perform the row update operation after
+            cell editation.  If None, the row is saved using the the standard
+            'update()' method on forms's data object.  If not None, it must be
+            a function of one argument -- the PresentedRow instance.  This
+            function is called instead of of the standard update and is
+            responsible for saving the changed row.  The return value is None
+            on success or a tuple (FIELD_ID, ERROR) on error, where FIELD_ID is
+            the id of the field causing the error or None when the error is not
+            related to a particular field and ERROR is the error message string.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1460,6 +1469,7 @@ class BrowseForm(LayoutForm):
         self._row_actions = row_actions
         self._async_load = async_load
         self._cell_editable = cell_editable or (lambda x: False)
+        self._on_update_row = on_update_row
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
@@ -2067,17 +2077,23 @@ class BrowseForm(LayoutForm):
             if req.param('save-edited-cell'):
                 # The cell edit form was submitted.
                 if form.validate(req):
-                    # Update all columns as other columns may
-                    # change due to computer dependencies.
-                    rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
-                    try:
-                        data.update(key, pytis.data.Row(rowdata))
-                    except pd.DBException as e:
-                        if e.exception():
-                            error = unicode(e.exception()).strip()
+                    if self._on_update_row:
+                        error = self._on_update_row(self._row)
+                    else:
+                        # Update all columns as other columns may
+                        # change due to computer dependencies.
+                        rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
+                        try:
+                            data.update(key, pytis.data.Row(rowdata))
+                        except pd.DBException as e:
+                            if e.exception():
+                                error = (None, unicode(e.exception()).strip())
+                            else:
+                                error = (None, e.message())
                         else:
-                            error = e.message()
-                        form.set_error(None, error)
+                            error = None
+                    if error:
+                        form.set_error(*error)
                     else:
                         def export_cell(context):
                             return self._export_field(context, self._fields[column_id],
