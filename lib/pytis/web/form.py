@@ -2058,7 +2058,7 @@ class BrowseForm(LayoutForm):
             column_id, key_value = req.param('_pytis_column_id'), req.param('_pytis_row_key')
             data = self._row.data()
             key_type = data.find_column(self._key).type()
-            key, error = key_type.validate(key_value)
+            key, err = key_type.validate(key_value)
             row = data.row(key)
             self._row.set_row(row)
             if not self._cell_editable(self._row, column_id):
@@ -2067,12 +2067,22 @@ class BrowseForm(LayoutForm):
             if req.param('save-edited-cell'):
                 # The cell edit form was submitted.
                 if form.validate(req):
-                    # Update all columns as other columns may change due to computer dependencies.
+                    # Update all columns as other columns may
+                    # change due to computer dependencies.
                     rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
-                    data.update(key, pytis.data.Row(rowdata))
-                    def export_cell(context):
-                        return self._export_field(context, self._fields[column_id], editable=False)
-                    return Exporter(export_cell)
+                    try:
+                        data.update(key, pytis.data.Row(rowdata))
+                    except pd.DBException as e:
+                        if e.exception():
+                            error = unicode(e.exception()).strip()
+                        else:
+                            error = e.message()
+                        form.set_error(None, error)
+                    else:
+                        def export_cell(context):
+                            return self._export_field(context, self._fields[column_id],
+                                                      editable=False)
+                        return Exporter(export_cell)
             # Show the form inside the cell.
             return form
         else:
