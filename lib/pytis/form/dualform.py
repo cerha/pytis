@@ -997,11 +997,7 @@ class MultiSideForm(MultiForm):
             else:
                 get_content = binding.content()
                 def load_content(row):
-                    content = get_content(row)
-                    if isinstance(content, basestring):
-                        self._browser.load_html(content, restrict_navigation='-')
-                    else:
-                        self._browser.load_content(content)
+                    self.load_content(get_content(row))
             self._load_content = load_content
             super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):

@@ -3343,16 +3343,19 @@ class WebForm(Form, Refreshable):
         sizer.Add(browser, 1, wx.EXPAND)
         content = self._content
         if content is not None:
-            if isinstance(content, basestring):
-                self._browser.load_html(content, restrict_navigation='-')
-            else:
-                self._browser.load_content(content)
+            self.load_content(content)
 
     def _refresh(self, when=None, interactive=False):
         self._browser.reload()
 
     def _can_help(self):
         return False
+
+    def load_content(self, content):
+        if isinstance(content, basestring):
+            self._browser.load_html(content, restrict_navigation='-')
+        else:
+            self._browser.load_content(content)
 
     def title(self):
         return self._title or _("Document")

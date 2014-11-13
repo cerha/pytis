@@ -939,6 +939,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.select_binding(kwargs['binding'])
                 if 'profile_id' in kwargs and kwargs['profile_id'] is not None:
                     form.apply_profile(kwargs['profile_id'])
+                if isinstance(form, pytis.form.WebForm) and 'content' in kwargs:
+                    form.load_content(kwargs['content'])
                 return result
             if issubclass(form_class, pytis.form.PopupForm):
                 parent = self._modals.top() or self._frame
