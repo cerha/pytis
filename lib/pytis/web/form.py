@@ -1321,17 +1321,16 @@ class BrowseForm(LayoutForm):
                     if cond:
                         self._filters.append(cond)
         if profiles:
-            profile_id = query_fields_row['profile'].value()
-            if profile_id is not None:
-                profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
-                if profile:
-                    self._current_profile = profile
-                    if profile.columns() is not None:
-                        columns = profile.columns()
-                    if profile.sorting() is not None:
-                        sorting = profile.sorting()
-                    if profile.grouping() is not None:
-                        grouping = profile.grouping()
+            profile_id = query_fields_row['profile'].value() or profiles.default()
+            profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
+            if profile:
+                self._current_profile = profile
+                if profile.columns() is not None:
+                    columns = profile.columns()
+                if profile.sorting() is not None:
+                    sorting = profile.sorting()
+                if profile.grouping() is not None:
+                    grouping = profile.grouping()
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
@@ -1345,7 +1344,6 @@ class BrowseForm(LayoutForm):
         if sorting is None:
             sorting = ((self._key, pytis.data.ASCENDENT),)
         self._sorting = sorting
-
         # Determine the current grouping.
         if grouping is None:
             grouping = self._view.grouping()
