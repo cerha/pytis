@@ -2342,7 +2342,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                operation)
 
     def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None, arguments={}):
-        cond_string = self._pdbb_condition2sql(condition)
+        cond_string = self._pdbb_condition2sql(condition).replace('%', '%%')
         colnames = [self._pdbb_btabcol(self._db_column_binding(cid)) for cid in colids]
         function = self._pg_aggregate_name(operation)
         function_list = ['%s (%s)' % (function, cname,) for cname in colnames]
