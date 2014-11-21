@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-11-21 16:19'
+_VERSION = '2014-11-21 17:18'
 
 import hashlib
 import os
@@ -26,6 +26,7 @@ import socket
 import string
 import sys
 import tempfile
+import threading
 import time
 
 import rpyc
@@ -461,17 +462,33 @@ class PytisAdminService(PytisService):
 
 class PasswordAuthenticator(object):
 
-    def __init__(self, password=None):
+    _MAX_CHALLENGES = 10000
+
+    def __init__(self, password=None, ssh_tunnel=None):
         if password is None:
             password = hashlib.sha256(os.urandom(16)).hexdigest()
         self._password = password
+        self._challenges = set()
+        self._lock = threading.Lock()
+        self._ssh_tunnel = ssh_tunnel
     
     def __call__(self, sock):
         n = len(self._password)
         challenge = sock.recv(n)
         hash = sock.recv(n)
-        if hash != self.password_hash(challenge):
+        if challenge in self._challenges or hash != self.password_hash(challenge):
             raise rpyc.utils.authenticators.AuthenticationError("Invalid password")
+        if len(self._challenges) >= self._MAX_CHALLENGES:
+            raise rpyc.utils.authenticators.AuthenticationError("Too many connection attempts")
+        if ((self._ssh_tunnel is not None and
+             (self._ssh_tunnel[0] is None or not self._ssh_tunnel[0].alive()))):
+            raise rpyc.utils.authenticators.AuthenticationError("Unknown connection source")
+        lock = self._lock
+        lock.acquire()
+        try:
+            self._challenges.add(challenge)
+        finally:
+            lock.release()
         return sock, None
 
     def password(self):
