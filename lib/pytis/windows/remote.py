@@ -21,8 +21,10 @@ import os
 import pwd
 import re
 import subprocess
+import sys
+import time
 
-from pytis.util import DEBUG, UNDEFINED, log, translations
+from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
 import config
 
 _ = translations('pytis-wx')
@@ -100,6 +102,48 @@ def windows_available():
         log(DEBUG, "RPC exception:", e)
         return False
 
+def _connect():
+    application = os.path.basename(sys.argv[0].split()[0])
+    pytis_x2go_file = os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (application,)))
+    if os.path.exists(pytis_x2go_file):
+        for i in range(3):
+            try:
+                f = open(pytis_x2go_file).read()
+            except Exception as e:
+                log(OPERATIONAL, "Can't read pytis X2Go file", e)
+                return None
+            data = ''
+            while True:
+                d = f.read()
+                if d is None:
+                    break
+                data += d
+            items = data.split(':')
+            if items[0] != '0':
+                log(OPERATIONAL, "Unknown pytis X2Go format")
+                return None
+            if len(items) != 4:
+                log(OPERATIONAL, "Incomplete or invalid X2Go file")
+                time.sleep(1)
+                continue
+            try:
+                port = int(items[1])
+            except ValueError:
+                log(OPERATIONAL, "Invalid port number in X2Go file", items[1])
+                return None
+            password = items[2]
+    else:
+        port = config.rpc_local_port
+        password = None
+    if password is None:
+        import rpyc
+        connection = rpyc.connect('localhost', port)
+    else:
+        import pytisproc
+        authenticator = pytisproc.PasswordAuthenticator(password)
+        connection = authenticator.connect()
+    return connection
+
 _connection = None
 def _request(request, *args, **kwargs):
     global _connection
@@ -108,8 +152,7 @@ def _request(request, *args, **kwargs):
     try:
         _connection.root.request
     except:
-        import rpyc
-        _connection = rpyc.connect('localhost', config.rpc_local_port)
+        _connection = _connect()
     return _connection.root.request(target_ip, user_name, request, *args, **kwargs)
 
 def version():

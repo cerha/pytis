@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,17 +17,34 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-02-25 17:35'
+_VERSION = '2014-11-21 16:19'
 
+import hashlib
 import os
-import rpyc
+import random
+import socket
+import string
 import sys
 import tempfile
 import time
 
+import rpyc
+
 class PytisService(rpyc.Service):
 
     registration = None
+
+    def exposed_authenticate_server(self, challenge):
+        """Return password hash based on 'challenge'.
+
+        This method serves for the purpose of the server authentication.
+
+        Arguments:
+
+          challenge -- string to use as the challenge
+
+        """
+        return self._authenticator.password_hash(challenge)
 
     def exposed_echo(self, text):
         """Return 'text'.
@@ -441,6 +458,46 @@ class PytisAdminService(PytisService):
                 pass
         os.remove(file_name)
         os.rename(new_file_name, file_name)
+
+class PasswordAuthenticator(object):
+
+    def __init__(self, password=None):
+        if password is None:
+            password = hashlib.sha256(os.urandom(16)).hexdigest()
+        self._password = password
+    
+    def __call__(self, sock):
+        n = len(self._password)
+        challenge = sock.recv(n)
+        hash = sock.recv(n)
+        if hash != self.password_hash(challenge):
+            raise rpyc.utils.authenticators.AuthenticationError("Invalid password")
+        return sock, None
+
+    def password(self):
+        return self._password
+
+    def challenge(self):
+        chars = '0123456789abcdef'
+        r = random.SystemRandom()
+        return string.join([r.choice(chars) for i in range(len(self._password))], '')
+
+    def password_hash(self, challenge):
+        token = string.join([chr(ord(x) ^ ord(y)) for x, y in zip(self._password, challenge)], '')
+        return hashlib.sha256(token).hexdigest()
+
+    def connect(self, host, port):
+        challenge = self.challenge()
+        hash_ = self.password_hash(challenge)
+        c = rpyc.connect(host, port)
+        fd = c.fileno()
+        s = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        s.send(challenge + hash_)
+        server_challenge = self.challenge()
+        server_hash = c.root.authenticate_server(server_challenge)
+        if server_hash != self.password_hash(server_challenge):
+            raise rpyc.utils.authenticators.AuthenticationError("Invalid server authentication")
+        return c
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"

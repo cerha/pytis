@@ -135,6 +135,9 @@ class ReverseTunnel(threading.Thread):
             thread.setDaemon(True)
             thread.start()
 
+    def pytis_forward_port(self):
+        return self._actual_ssh_forward_port
+
     def run(self):
         self._actual_ssh_port = None
         # Get parameters

@@ -1,0 +1,277 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2011, 2012, 2014 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# ATTENTION: This should be updated on each code change.
+_VERSION = '2014-11-21 16:20'
+
+import imp
+import os
+import platform
+import threading
+import time
+
+import rpyc
+import x2go
+
+import pytis.windows
+
+def on_windows():
+    return platform.system() == 'Windows'
+
+_NONE = object()
+
+class ClientException(Exception):
+    pass
+
+class Configuration(object):
+
+    _CONFIGURATION_FILE = 'config.py'
+    _RPYC_FILE = 'rpyc'
+
+    def __init__(self):
+        self._directory = self._configuration_directory()
+        self._configuration = self._read_configuration()
+
+    def _configuration_directory(self):
+        basename = '_pytis_x2go' if on_windows() else '.pytis-x2go'
+        dirname = os.path.expanduser(os.path.join('~', basename))
+        if not os.access(dirname, os.F_OK):
+            try:
+                os.mkdir(dirname, 0700)
+            except Exception as e:
+                raise ClientException("Can't create client directory: %s" % (dirname,), e)
+        elif not os.access(dirname, os.R_OK | os.W_OK | os.X_OK):
+            raise ClientException("Client directory not accessible: %s" % (dirname,))
+        return dirname
+
+    def _configuration_file(self, filename):
+        return os.path.join(self._configuration_directory(), filename)
+
+    def _read_configuration(self):
+        filename = self._configuration_file(self._CONFIGURATION_FILE)
+        if not os.access(filename, os.F_OK):
+            try:
+                open(filename, 'w').close()
+            except Exception as e:
+                raise ClientException("Can't create client configuration file: %s" % (filename,), e)
+        elif not os.access(filename, os.R_OK | os.W_OK):
+            raise ClientException("Client configuration not accessible: %s" % (filename,))
+        try:
+            configuration = imp.load_source('_config', filename)
+        except Exception as e:
+            raise ClientException("Error when loading client configuration: %s" % (filename,), e)
+        return configuration
+    
+    def get(self, key, type_, default=_NONE):
+        args = () if default is _NONE else (default,)
+        try:
+            value = getattr(self._configuration, key, *args)
+        except AttributeError:
+            raise ClientException("Configuration parameter not available: %s" % (key,))
+        if not isinstance(value, type_) and value != default:
+            raise ClientException("Invalid configuration parameter type: %s = %r (is not %s)" %
+                                  (key, value, type_,))
+        return value
+
+    def rpyc_file(self):
+        return self._configuration_file(self._RPYC_FILE)
+
+class RpycInfo(object):
+
+    def __init__(self, configuration, port=None, password=None):
+        self._filename = configuration.rpyc_file()
+        self._port = port
+        self._password = password
+
+    def read(self):
+        try:
+            f = open(self._filename)
+            port = int(f.next().rstrip())
+            password = f.next().rstrip()
+        except Exception as e:
+            raise ClientException("Can't read RPyC info file: %s" % (self._filename,), e)
+        self._port = int(port)
+        self._password = password
+
+    def store(self):
+        try:
+            f = open(self._filename, 'w')
+            f.write('%s\n%s' % (self._port, self._password,))
+            f.close()
+        except Exception as e:
+            raise ClientException("Error when writing RPyC info file: %s" % (self._filename,), e)
+        
+    def port(self):
+        return self._port
+
+    def password(self):
+        return self._password
+
+class PytisClient(x2go.X2GoClient):
+
+    _DEFAULT_RPYC_PORT = 10000
+    _MAX_RPYC_PORT_ATTEMPTS = 100
+        
+    def pytis_setup(self, s_uuid, configuration):
+        # Configuration transfer to the server
+        session = self.get_session(s_uuid)
+        control_session = session.control_session
+        command = configuration.get('command', basestring)
+        application = os.path.basename(command.split()[0])
+        # It would be better to use self.info_backend or
+        # self.get_session_info(s_uuid) as the source of remote_container
+        # (instead of _x2go_remote_home + '/.x2go') and agent_pid (instead of
+        # application) but this information is often unavailable here for
+        # unclear reasons.
+        server_file_name = '%s/.x2go/ssh/pytis.%s' % (control_session._x2go_remote_home,
+                                                      application)
+        class ServerInfo(object):
+            def __init__(self):
+                self._port = None
+                self._password = None
+                self._lock = threading.Lock()
+            def _set(self, attr, value):
+                lock = self._lock
+                lock.acquire()
+                try:
+                    setattr(self, attr, value)
+                finally:
+                    lock.release()
+            def set_port(self, port):
+                self._set('_port', port)
+            def set_password(self, password):
+                self._set('_password', password)
+            def write(self):
+                lock = self._lock
+                lock.acquire()
+                try:
+                    if self._port is None or self._password is None:
+                        return
+                    data = '0:%s:%s:' % (self._port, self._password,)
+                    control_session._x2go_sftp_write(server_file_name, data)
+                finally:
+                    lock.release()
+        server_info = ServerInfo()
+        # RPyC server
+        import pytis.windows.pytisproc as pytisproc
+        rpyc_thread = [None]
+        rpyc_port = [None]
+        def check_rpyc_server():
+            while True:
+                # Look for a running RPyC instance
+                rpyc_info = RpycInfo(configuration)
+                running = True
+                try:
+                    rpyc_info.read()
+                except ClientException as e:
+                    running = False
+                # Check whether it's our instance
+                if running:
+                    # We must be careful here not to send the password to an RPyC instance
+                    # of another user.
+                    port = rpyc_info.port()
+                    password = rpyc_info.password()
+                    authenticator = pytisproc.PasswordAuthenticator(password)
+                    try:
+                        authenticator.connect('localhost', port)
+                    except Exception as e:
+                        running = False
+                # If no running RPyC instance was found then start one
+                if not running:
+                    authenticator = pytisproc.PasswordAuthenticator()
+                    default_port = self._DEFAULT_RPYC_PORT
+                    port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
+                    for port in range(default_port, port_limit):
+                        try:
+                            server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
+                                                                      hostname='localhost',
+                                                                      port=port,
+                                                                      authenticator=authenticator)
+                            break
+                        except:
+                            pass
+                    else:
+                        raise ClientException("No free port found for RPyC in the range %s-%s" %
+                                              (default_port, port_limit - 1,))
+                    rpyc_port[0] = port
+                    rpyc_info = RpycInfo(configuration, port=port,
+                                         password=authenticator.password())
+                    rpyc_info.store()
+                    thread = threading.Thread(target=server.start)
+                    thread.start()
+                    rpyc_thread[0] = thread
+                    server_info.set_password(password)
+                    server_info.write()
+                time.sleep(2)
+        threading.Thread(target=check_rpyc_server).start()
+        # ssh tunnel
+        def check_ssh_tunnel():
+            while True:
+                while rpyc_port[0] is None:
+                    time.sleep(0.1)
+                tunnel = pytis.windows.ReverseTunnel(configuration.get('server', basestring),
+                                                     rpyc_port[0],
+                                                     ssh_user=configuration.get('username',
+                                                                                basestring))
+                tunnel.start()
+                port = tunnel.pytis_forward_port()
+                server_info.set_port(port)
+                server_info.write()
+                while True:
+                    if tunnel.is_alive():
+                        time.sleep(1)
+                    else:
+                        t = rpyc_thread[0]
+                        if t is not None:
+                            # We must restart RPyC as well in order to prevent password leak
+                            rpyc_port[0] = None
+                            try:
+                                t.stop()
+                            except:
+                                pass
+                        break
+        threading.Thread(target=check_ssh_tunnel).start()
+
+    @classmethod
+    def run(class_):
+        configuration = Configuration()
+        server = configuration.get('server', basestring)
+        port = configuration.get('port', int, 22)
+        username = configuration.get('username', basestring)
+        command = configuration.get('command', basestring)
+        client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
+        s_uuid = client.register_session(server, port=port, username=username, cmd=command,
+                                         add_to_known_hosts=True)
+        client.connect_session(s_uuid)
+        client.clean_sessions(s_uuid)
+        client.pytis_setup(s_uuid, configuration)
+        client.start_session(s_uuid)
+        try:
+            while client.session_ok(s_uuid):
+                time.sleep(2)
+        except KeyboardInterrupt:
+            pass
+        client.terminate_session(s_uuid)
+           
+if __name__ == '__main__':
+    PytisClient.run()
+
+# Local Variables:
+# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
+# End:
