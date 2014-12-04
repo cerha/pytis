@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-11-21 17:18'
+_VERSION = '2014-12-04 21:11'
 
 import hashlib
 import os
@@ -34,6 +34,7 @@ import rpyc
 class PytisService(rpyc.Service):
 
     registration = None
+    authenticator = None
 
     def exposed_authenticate_server(self, challenge):
         """Return password hash based on 'challenge'.
@@ -45,7 +46,7 @@ class PytisService(rpyc.Service):
           challenge -- string to use as the challenge
 
         """
-        return self._authenticator.password_hash(challenge)
+        return self.authenticator.password_hash(challenge)
 
     def exposed_echo(self, text):
         """Return 'text'.
@@ -480,8 +481,7 @@ class PasswordAuthenticator(object):
             raise rpyc.utils.authenticators.AuthenticationError("Invalid password")
         if len(self._challenges) >= self._MAX_CHALLENGES:
             raise rpyc.utils.authenticators.AuthenticationError("Too many connection attempts")
-        if ((self._ssh_tunnel is not None and
-             (self._ssh_tunnel[0] is None or not self._ssh_tunnel[0].alive()))):
+        if self._ssh_tunnel is not None and not self._ssh_tunnel.value:
             raise rpyc.utils.authenticators.AuthenticationError("Unknown connection source")
         lock = self._lock
         lock.acquire()

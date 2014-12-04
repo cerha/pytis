@@ -20,6 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import getpass
+import multiprocessing
 import os
 import select
 import socket
@@ -31,10 +32,10 @@ import paramiko
 from pytis.util import log, EVENT, OPERATIONAL
 
 
-class ReverseTunnel(threading.Thread):
-    """Thread running reverse ssh forward connection.
+class ReverseTunnel(multiprocessing.Process):
+    """Process running reverse ssh forward connection.
 
-    Parameters are given in the constructor.  The thread can be started using
+    Parameters are given in the constructor.  The process can be started using
     'start()' method.
 
     """
