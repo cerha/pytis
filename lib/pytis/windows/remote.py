@@ -133,6 +133,8 @@ def _connect():
                 log(OPERATIONAL, "Invalid port number in X2Go file", items[1])
                 return None
             password = items[2]
+            os.remove(pytis_x2go_file)
+            break
     else:
         port = config.rpc_local_port
         password = None
