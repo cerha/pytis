@@ -55,8 +55,9 @@ class ReverseTunnel(multiprocessing.Process):
           ssh_user -- ssh user on 'ssh_host' to connect to; basestring or
             'None in which case the current user is used
           ssh_forward_port -- forwarding port on the 'ssh_host' to bind to;
-            integer or 'None' (in which case an arbitrary free port is
-            selected); this is the starting point of the tunnel
+            integer 'multiprocessing.Value' instance (if None or if the value
+            is 0 then an arbitrary free port is selected); this is the starting
+            point of the tunnel
           forward_host -- host to forward the connection to; basestring;
             the target point of the tunnel will be there
           key_filename -- name of the file containing the ssh key to use for
@@ -69,20 +70,10 @@ class ReverseTunnel(multiprocessing.Process):
         self._forward_port = forward_port
         self._ssh_port = ssh_port
         self._ssh_user = ssh_user
-        self._ssh_forward_port = ssh_forward_port
+        self._ssh_forward_port = None if ssh_forward_port is None else ssh_forward_port.value
         self._forward_host = forward_host
         self._key_filename = key_filename
-        self._actual_ssh_forward_port = None
-
-    def forward_port(self):
-        """Return the actual target port of the forwarded connection.
-
-        This is the ssh_forward_port specified in the constructor or the actual
-        port in case none was specified or 'None' when the tunnel hasn't been
-        established yet.
-        
-        """
-        return self._actual_ssh_forward_port
+        self._actual_ssh_forward_port = ssh_forward_port
         
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -113,7 +104,7 @@ class ReverseTunnel(multiprocessing.Process):
         forward_host = self._forward_host
         forward_port = self._forward_port
         port = self._ssh_forward_port
-        if port is None:
+        if not port:
             port = self._DEFAULT_SSH_FORWARD_PORT
         port_limit = port + self._MAX_SSH_FORWARD_ATTEMPTS
         for p in range(port, port_limit):
@@ -125,9 +116,9 @@ class ReverseTunnel(multiprocessing.Process):
         else:
             log(OPERATIONAL, "No free port found in the range %s-%s" % (port, port_limit - 1,))
             return
-        self._actual_ssh_forward_port = p
-        log(EVENT, 'Remote port %d forwarded to %s:%d' %
-            (self._actual_ssh_forward_port, forward_host, forward_port,))
+        if self._actual_ssh_forward_port is not None:
+            self._actual_ssh_forward_port.value = p
+        log(EVENT, 'Remote port %d forwarded to %s:%d' % (p, forward_host, forward_port,))
         while True:
             chan = transport.accept(1000)
             if chan is None:
@@ -135,9 +126,6 @@ class ReverseTunnel(multiprocessing.Process):
             thread = threading.Thread(target=self._handler, args=(chan, forward_host, forward_port))
             thread.setDaemon(True)
             thread.start()
-
-    def pytis_forward_port(self):
-        return self._actual_ssh_forward_port
 
     def run(self):
         self._actual_ssh_port = None

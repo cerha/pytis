@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-04 21:14'
+_VERSION = '2014-12-05 17:48'
 
 import imp
 import multiprocessing
@@ -128,7 +128,12 @@ class PytisClient(x2go.X2GoClient):
 
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
-        
+
+    def __init__(self, *args, **kwargs):
+        super(PytisClient, self).__init__(*args, **kwargs)
+        self._pytis_port_queue = multiprocessing.Queue()
+        self._pytis_password_queue = multiprocessing.Queue()
+    
     def pytis_setup(self, s_uuid, configuration):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
@@ -146,29 +151,34 @@ class PytisClient(x2go.X2GoClient):
             def __init__(self):
                 self._port = None
                 self._password = None
-                self._lock = threading.Lock()
-            def _set(self, attr, value):
-                lock = self._lock
-                lock.acquire()
-                try:
-                    setattr(self, attr, value)
-                finally:
-                    lock.release()
             def set_port(self, port):
-                self._set('_port', port)
+                self._port = port
             def set_password(self, password):
-                self._set('_password', password)
+                self._password = password
             def write(self):
-                lock = self._lock
-                lock.acquire()
-                try:
-                    if self._port is None or self._password is None:
-                        return
-                    data = '0:%s:%s:' % (self._port, self._password,)
-                    control_session._x2go_sftp_write(server_file_name, data)
-                finally:
-                    lock.release()
-        server_info = ServerInfo()
+                if self._port is None or self._password is None:
+                    return
+                data = '0:%s:%s:' % (self._port, self._password,)
+                control_session._x2go_sftp_write(server_file_name, data)
+        self._pytis_server_info = ServerInfo()
+
+    def pytis_handle_queues(self):
+        def get(queue):
+            value = None
+            while not queue.empty():
+                value = queue.get()
+            return value
+        password = get(self._pytis_password_queue)
+        port = get(self._pytis_port_queue)
+        if password is not None or port is not None:
+            info = self._pytis_server_info
+            if password is not None:
+                info.set_password(password)
+            if port is not None:
+                info.set_port(port)
+            info.write()
+
+    def pytis_start_processes(self, configuration):
         # RPyC server
         import pytis.windows.pytisproc as pytisproc
         rpyc_stop_queue = multiprocessing.Queue()
@@ -226,8 +236,7 @@ class PytisClient(x2go.X2GoClient):
                     rpyc_info.store()
                     process = multiprocessing.Process(target=server.start)
                     process.start()
-                    server_info.set_password(rpyc_info.password())
-                    server_info.write()
+                    self._pytis_password_queue.put(rpyc_info.password())
                 time.sleep(1)
         multiprocessing.Process(target=check_rpyc_server).start()
         # ssh tunnel
@@ -235,15 +244,16 @@ class PytisClient(x2go.X2GoClient):
             while True:
                 while rpyc_port.value == 0:
                     time.sleep(0.1)
+                port = multiprocessing.Value('i', 0)
                 tunnel = pytis.windows.ReverseTunnel(configuration.get('server', basestring),
-                                                     rpyc_port.value,
+                                                     rpyc_port.value, ssh_forward_port=port,
                                                      ssh_user=configuration.get('username',
                                                                                 basestring))
                 ssh_tunnel_alive.value = True
                 tunnel.start()
-                port = tunnel.pytis_forward_port()
-                server_info.set_port(port)
-                server_info.write()
+                while not port.value and tunnel.is_alive():
+                    time.sleep(0.1)
+                self._pytis_port_queue.put(port.value)
                 while True:
                     if tunnel.is_alive():
                         time.sleep(1)
@@ -264,13 +274,15 @@ class PytisClient(x2go.X2GoClient):
         client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
         s_uuid = client.register_session(server, port=port, username=username, cmd=command,
                                          add_to_known_hosts=True)
+        client.pytis_start_processes(configuration)
         client.connect_session(s_uuid)
         client.clean_sessions(s_uuid)
         client.pytis_setup(s_uuid, configuration)
         client.start_session(s_uuid)
         try:
             while client.session_ok(s_uuid):
-                time.sleep(2)
+                client.pytis_handle_queues()
+                time.sleep(0.1)
         except KeyboardInterrupt:
             pass
         client.terminate_session(s_uuid)
