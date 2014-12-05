@@ -18,13 +18,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-05 17:48'
+_VERSION = '2014-12-05 18:08'
 
 import imp
 import multiprocessing
 import os
 import platform
-import threading
 import time
 
 import rpyc

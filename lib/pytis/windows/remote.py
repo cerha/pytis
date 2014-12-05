@@ -102,20 +102,21 @@ def windows_available():
         log(DEBUG, "RPC exception:", e)
         return False
 
+_direct_connection = False
 def _connect():
     application = os.path.basename(sys.argv[0].split()[0])
     pytis_x2go_file = os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (application,)))
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
             try:
-                f = open(pytis_x2go_file).read()
+                f = open(pytis_x2go_file)
             except Exception as e:
                 log(OPERATIONAL, "Can't read pytis X2Go file", e)
                 return None
             data = ''
             while True:
                 d = f.read()
-                if d is None:
+                if not d:
                     break
                 data += d
             items = data.split(':')
@@ -135,25 +136,40 @@ def _connect():
     else:
         port = config.rpc_local_port
         password = None
+    global _direct_connection
     if password is None:
+        _direct_connection = False
         import rpyc
         connection = rpyc.connect('localhost', port)
     else:
+        _direct_connection = True
         import pytisproc
         authenticator = pytisproc.PasswordAuthenticator(password)
-        connection = authenticator.connect()
+        connection = authenticator.connect('localhost', port)
     return connection
 
 _connection = None
 def _request(request, *args, **kwargs):
-    global _connection
-    target_ip = client_ip()
-    user_name = pwd.getpwuid(os.getuid())[0]
-    try:
-        _connection.root.request
-    except:
+    global _connection, _direct_connection
+    if _connection is None:
+        # Make sure _direct_connection is initialized before first use
         _connection = _connect()
-    return _connection.root.request(target_ip, user_name, request, *args, **kwargs)
+    if _direct_connection:
+        try:
+            _connection.root.echo
+        except:
+            _connection = _connect()
+        r = getattr(_connection.root, request)
+    else:
+        target_ip = client_ip()
+        user_name = pwd.getpwuid(os.getuid())[0]
+        try:
+            r = _connection.root.request
+        except:
+            _connection = _connect()
+            r = _connection.root.request
+        args = args + (target_ip, user_name, request,)
+    return r(*args, **kwargs)
 
 def version():
     try:
