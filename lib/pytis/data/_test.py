@@ -1267,6 +1267,13 @@ class DBDataDefault(_DBTest):
         # ANY_OF
         nrows_test(pytis.data.ANY_OF('popis', sval('specialni'), sval('zvlastni'),
                                      sval('podivny'), sval(None)), 3)
+    def test_select_special_characters(self):
+        d = self.dcosi
+        for v in ("'...", "\\'...", "'...\x00", "'...\n"):
+            condition = pytis.data.AND(pytis.data.EQ('popis', pytis.data.sval(v)))
+            d.select(condition)
+            assert d.fetchone() is None, 'too many lines'
+            d.close()
     def test_select_sorting(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT

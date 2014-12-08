@@ -73,7 +73,7 @@ _ = pytis.util.translations('pytis-data')
 
 
 def pg_escape(string_, standard=False):
-    result = string_.replace("'", "''")
+    result = string_.replace('\x00', '\\0').replace("'", "''")
     return result
 
 
