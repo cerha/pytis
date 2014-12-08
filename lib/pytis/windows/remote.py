@@ -104,8 +104,8 @@ def windows_available():
 
 _direct_connection = False
 def _connect():
-    application = os.path.basename(sys.argv[0].split()[0])
-    pytis_x2go_file = os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (application,)))
+    session_id = os.getenv('X2GO_SESSION')
+    pytis_x2go_file = os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (session_id,)))
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
             try:

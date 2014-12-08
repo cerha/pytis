@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-05 18:08'
+_VERSION = '2014-12-08 19:03'
 
 import imp
 import multiprocessing
@@ -137,15 +137,14 @@ class PytisClient(x2go.X2GoClient):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
         control_session = session.control_session
-        command = configuration.get('command', basestring)
-        application = os.path.basename(command.split()[0])
         # It would be better to use self.info_backend or
         # self.get_session_info(s_uuid) as the source of remote_container
         # (instead of _x2go_remote_home + '/.x2go') and agent_pid (instead of
         # application) but this information is often unavailable here for
         # unclear reasons.
+        session_id = self.session_registry(s_uuid).terminal_session.session_info.name
         server_file_name = '%s/.x2go/ssh/pytis.%s' % (control_session._x2go_remote_home,
-                                                      application)
+                                                      session_id,)
         class ServerInfo(object):
             def __init__(self):
                 self._port = None
@@ -276,8 +275,8 @@ class PytisClient(x2go.X2GoClient):
         client.pytis_start_processes(configuration)
         client.connect_session(s_uuid)
         client.clean_sessions(s_uuid)
-        client.pytis_setup(s_uuid, configuration)
         client.start_session(s_uuid)
+        client.pytis_setup(s_uuid, configuration)
         try:
             while client.session_ok(s_uuid):
                 client.pytis_handle_queues()
