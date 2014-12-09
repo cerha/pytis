@@ -18,12 +18,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-08 19:03'
+_VERSION = '2014-12-09 10:55'
 
 import imp
 import multiprocessing
 import os
 import platform
+import sys
 import time
 
 import rpyc
@@ -132,6 +133,7 @@ class PytisClient(x2go.X2GoClient):
         super(PytisClient, self).__init__(*args, **kwargs)
         self._pytis_port_queue = multiprocessing.Queue()
         self._pytis_password_queue = multiprocessing.Queue()
+        self._pytis_terminate = multiprocessing.Value('b', False)
     
     def pytis_setup(self, s_uuid, configuration):
         # Configuration transfer to the server
@@ -185,6 +187,10 @@ class PytisClient(x2go.X2GoClient):
         def check_rpyc_server():
             process = None
             while True:
+                if self._pytis_terminate.value:
+                    if process is not None:
+                        process.terminate()
+                    sys.exit()
                 # Look for a running RPyC instance
                 running = True
                 rpyc_info = RpycInfo(configuration)
@@ -253,6 +259,9 @@ class PytisClient(x2go.X2GoClient):
                     time.sleep(0.1)
                 self._pytis_port_queue.put(port.value)
                 while True:
+                    if self._pytis_terminate.value:
+                        tunnel.terminate()
+                        sys.exit()
                     if tunnel.is_alive():
                         time.sleep(1)
                     else:
@@ -261,6 +270,12 @@ class PytisClient(x2go.X2GoClient):
                         rpyc_stop_queue.put(True)
                         break
         multiprocessing.Process(target=check_ssh_tunnel).start()
+
+    def terminate_session(self, *args, **kwargs):
+        try:
+            return super(PytisClient, self).terminate_session(*args, **kwargs)
+        finally:
+            self._pytis_terminate.value = True
 
     @classmethod
     def run(class_):
