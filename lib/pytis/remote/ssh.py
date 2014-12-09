@@ -135,7 +135,9 @@ class ReverseTunnel(multiprocessing.Process):
         forward_host = self._forward_host
         forward_port = self._forward_port
         user = self._ssh_user or getpass.getuser()
-        key_filename = self._key_filename or os.path.expanduser('~/.ssh/id_rsa')
+        key_filename = self._key_filename
+        if key_filename is None and not os.getenv('SSH_AGENT_PID'):
+            key_filename = os.path.expanduser('~/.ssh/id_rsa')
         # Create client
         client = paramiko.SSHClient()
         client.load_system_host_keys()
