@@ -21,7 +21,6 @@ import os
 import pwd
 import re
 import subprocess
-import sys
 import time
 
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
