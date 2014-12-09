@@ -17,13 +17,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-04 21:11'
+_VERSION = '2014-12-09 10:14'
 
 import hashlib
 import os
 import random
 import socket
 import string
+import subprocess
 import sys
 import tempfile
 import threading
@@ -149,6 +150,10 @@ class PytisUserService(PytisService):
 
         """
         assert isinstance(path, basestring), path
+        if sys.platform == "win32":
+            os.startfile(path)
+        else:
+            subprocess.call(['xdg-open', path])
         os.startfile(path)
 
     def _open_file(self, filename, encoding, mode):
