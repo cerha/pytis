@@ -205,13 +205,12 @@ def set_clipboard_text(text):
 
 def launch_file(path):
     assert isinstance(path, basestring), path
-    wpath = path.replace('/', '\\')
     try:
-        return _request('launch_file', wpath)
+        return _request('launch_file', path)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
-                                                  filename=wpath, error=e))
+                                                  filename=path, error=e))
 
 def launch_url(url):
     assert isinstance(url, basestring), url
