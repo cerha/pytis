@@ -2086,7 +2086,10 @@ def translations(domain, origin='en'):
     translate the strings later when a particular client is served).
 
     """
-    import lcg
+    try:
+        import lcg
+    except ImportError:
+        return identity
     lang = environment_language(default=origin)
     path = translation_path()
     return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
