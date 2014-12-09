@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-09 15:51'
+_VERSION = '2014-12-09 19:01'
 
 import hashlib
 import os
@@ -153,7 +153,6 @@ class PytisUserService(PytisService):
             os.startfile(path)
         else:
             subprocess.call(['xdg-open', path])
-        os.startfile(path)
 
     def _open_file(self, filename, encoding, mode):
         class Wrapper(object):
