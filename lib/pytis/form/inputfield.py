@@ -42,7 +42,7 @@ from pytis.presentation import AttachmentStorage, CodebookSpec, Field, Orientati
     TextFilter, TextFormat, computer
 from pytis.util import EVENT, Popen, ProgramError, ResolverError, \
     dev_null_stream, find, format_byte_size, log
-import pytis.windows
+import pytis.remote
 from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
@@ -1889,9 +1889,9 @@ class FileField(Invocable, InputField):
         else:
             template = None
         msg = _("Select the file for field '%s'", self.spec().label())
-        if pytis.windows.windows_available():
+        if pytis.remote.client_available():
             import ntpath
-            f = pytis.windows.open_selected_file(template=template)
+            f = pytis.remote.open_selected_file(template=template)
             if f is None:
                 return
             filename = ntpath.split(f.name())[-1]
@@ -1924,8 +1924,8 @@ class FileField(Invocable, InputField):
         
     def _cmd_save(self):
         default_filename = self._row.filename(self._id)
-        if pytis.windows.windows_available():
-            f = pytis.windows.make_selected_file(filename=default_filename)
+        if pytis.remote.client_available():
+            f = pytis.remote.make_selected_file(filename=default_filename)
         else:
             msg = _("Save value of %s") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
@@ -2425,9 +2425,9 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        if pytis.windows.windows_available():
+        if pytis.remote.client_available():
             import ntpath
-            file_object = pytis.windows.open_selected_file()
+            file_object = pytis.remote.open_selected_file()
             if file_object is None:
                 return
             filename = ntpath.split(file_object.name())[-1]

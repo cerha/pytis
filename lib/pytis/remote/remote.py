@@ -91,8 +91,8 @@ def client_ip():
     """
     return x2go_ip() or nx_ip()
 
-def windows_available():
-    """Return true, iff Windows client is available."""
+def client_available():
+    """Return true, iff remote client is available."""
     if not config.rpc_communication_enabled or client_ip() is None:
         log(DEBUG, "RPC unavailable")
         return False

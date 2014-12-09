@@ -52,7 +52,7 @@ from pytis.presentation import Action, ActionGroup, AggregatedView, \
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     Attribute, ProgramError, ResolverError, SimpleCache, Structure, \
     UNDEFINED, compare_objects, find, form_view_data, log, sameclass
-import pytis.windows
+import pytis.remote
 from dialog import AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question
 from event import UserBreakException, wx_callback
 from form import BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm, \
@@ -2196,11 +2196,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
         filename = None
         remote = False
-        if pytis.windows.windows_available():
-            client_ip = pytis.windows.client_ip()
+        if pytis.remote.client_available():
+            client_ip = pytis.remote.client_ip()
             log(EVENT, 'Windows service on %s available' % client_ip)
             try:
-                filename = pytis.windows.make_temporary_file(suffix=('.' + fileformat.lower()))
+                filename = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
             except:
                 pass
             export_file = filename
@@ -2232,7 +2232,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
-            pytis.windows.launch_file(filename.name())
+            pytis.remote.launch_file(filename.name())
 
     def _cmd_export_csv(self, filename):
         log(EVENT, 'Called CSV export')

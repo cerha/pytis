@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2011, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -36,10 +36,10 @@ class ProxyService(rpyc.Service):
         self._connections = {}
 
     def _new_pytis_connection(self, ip, port):
-        pytis.util.log(pytis.util.EVENT, 'New windows connection requested:', (ip, port,))
+        pytis.util.log(pytis.util.EVENT, 'New remote connection requested:', (ip, port,))
         connection = rpyc.ssl_connect(ip, port, keyfile=config.rpc_key_file,
                                       certfile=config.rpc_certificate_file)
-        pytis.util.log(pytis.util.EVENT, 'New windows connection created:', (ip, port,))
+        pytis.util.log(pytis.util.EVENT, 'New remote connection created:', (ip, port,))
         return connection
 
     def exposed_request(self, target_ip, user_name, request, *args, **kwargs):

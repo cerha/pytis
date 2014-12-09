@@ -133,7 +133,7 @@ def copy_to_clipboard(text):
     """Copy given text into system clipboard.
 
     Even though this function itself doesn't handle windows clipboard, the text
-    will be automatically propagated if pytis.windows is available thanks to
+    will be automatically propagated if pytis.remote is available thanks to
     the 'Application._on_clipboard_copy' callback.
 
     """
@@ -164,10 +164,10 @@ def paste_from_clipboard(ctrl):
     
     """
     assert isinstance(ctrl, wx.TextCtrl)
-    if pytis.windows.windows_available() and not pytis.windows.x2go_ip():
-        nx_ip = pytis.windows.nx_ip()
+    if pytis.remote.client_available() and not pytis.remote.x2go_ip():
+        nx_ip = pytis.remote.nx_ip()
         log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
-        text = pytis.windows.get_clipboard_text()
+        text = pytis.remote.get_clipboard_text()
     else:
         log(EVENT, 'Paste from clipboard')
         if not wx.TheClipboard.IsOpened():  # may crash, otherwise
@@ -2527,19 +2527,19 @@ def mitem(uicmd):
 
 def open_data_as_file(data, suffix):
     remote_file = None
-    if pytis.windows.windows_available():
+    if pytis.remote.client_available():
         try:
-            remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+            remote_file = pytis.remote.make_temporary_file(suffix=suffix)
         except:
             pass
     if remote_file:
-        client_ip = pytis.windows.client_ip()
+        client_ip = pytis.remote.client_ip()
         log(OPERATIONAL, "Launching file on Windows at %s:" % client_ip, remote_file.name())
         try:
             remote_file.write(data)
         finally:
             remote_file.close()
-        pytis.windows.launch_file(remote_file.name())
+        pytis.remote.launch_file(remote_file.name())
     else:
         import mailcap
         import mimetypes

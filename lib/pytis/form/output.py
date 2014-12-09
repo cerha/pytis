@@ -2,7 +2,7 @@
 
 # Formulář s tiskovým preview a tiskem
 #
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import lcg
 from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, wx_callback
 import pytis.output
 import pytis.util
-import pytis.windows
+import pytis.remote
 import config
 
 _ = pytis.util.translations('pytis-wx')
@@ -377,11 +377,11 @@ def run_viewer(file_):
     import subprocess
     file_name = file_.name
     viewer = config.postscript_viewer
-    remote = (config.rpc_remote_view and pytis.windows.windows_available())
+    remote = (config.rpc_remote_view and pytis.remote.client_available())
     if remote:
         suffix = (os.path.splitext(file_name)[1] or '.pdf')
         try:
-            remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+            remote_file = pytis.remote.make_temporary_file(suffix=suffix)
         except:
             remote = False
     if remote:
@@ -395,7 +395,7 @@ def run_viewer(file_):
             f.close()
         finally:
             remote_file.close()
-        pytis.windows.launch_file(remote_file.name())
+        pytis.remote.launch_file(remote_file.name())
     elif viewer:
         call_args = viewer.split()
         subprocess.call(call_args + [file_name])

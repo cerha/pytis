@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-09 10:14'
+_VERSION = '2014-12-09 15:51'
 
 import hashlib
 import os
@@ -145,8 +145,7 @@ class PytisUserService(PytisService):
         Arguments:
 
           path -- path to the file to be started with its associated
-            application; basestring.  Note that path must be given in the
-            Windows form, i.e. use backslashes to separate path elements.
+            application; basestring.
 
         """
         assert isinstance(path, basestring), path
