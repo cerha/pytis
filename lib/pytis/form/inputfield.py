@@ -1890,11 +1890,16 @@ class FileField(Invocable, InputField):
             template = None
         msg = _("Select the file for field '%s'", self.spec().label())
         if pytis.remote.client_available():
-            import ntpath
             f = pytis.remote.open_selected_file(template=template)
             if f is None:
                 return
-            filename = ntpath.split(f.name())[-1]
+            fname = f.name()
+            if '\\' in fname:
+                import ntpath
+                p = ntpath
+            else:
+                p = os.path
+            filename = p.split(fname)[-1]
             try:
                 load(f, filename)
             finally:
@@ -2426,11 +2431,16 @@ class StructuredTextField(TextField):
 
     def _load_new_file(self, row):
         if pytis.remote.client_available():
-            import ntpath
             file_object = pytis.remote.open_selected_file()
             if file_object is None:
                 return
-            filename = ntpath.split(file_object.name())[-1]
+            fname = file_object.name()
+            if '\\' in fname:
+                import ntpath
+                p = ntpath
+            else:
+                p = os.path
+            filename = p.split(fname)[-1]
         else:
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.OPEN,
                                 defaultDir=self._last_load_dir or '')
