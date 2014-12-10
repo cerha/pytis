@@ -18,15 +18,19 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-09 15:54'
+_VERSION = '2014-12-10 19:53'
 
+import argparse
 import imp
 import multiprocessing
 import os
 import platform
+import re
+import subprocess
 import sys
 import time
 
+import paramiko
 import rpyc
 import x2go
 
@@ -89,6 +93,9 @@ class Configuration(object):
             raise ClientException("Invalid configuration parameter type: %s = %r (is not %s)" %
                                   (key, value, type_,))
         return value
+
+    def set(self, key, value):
+        setattr(self, key, value)
 
     def rpyc_file(self):
         return self._configuration_file(self._RPYC_FILE)
@@ -249,10 +256,9 @@ class PytisClient(x2go.X2GoClient):
                 while rpyc_port.value == 0:
                     time.sleep(0.1)
                 port = multiprocessing.Value('i', 0)
-                tunnel = pytis.remote.ReverseTunnel(configuration.get('server', basestring),
+                tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
                                                     rpyc_port.value, ssh_forward_port=port,
-                                                    ssh_user=configuration.get('username',
-                                                                               basestring))
+                                                    ssh_user=configuration.get('user', basestring))
                 ssh_tunnel_alive.value = True
                 tunnel.start()
                 while not port.value and tunnel.is_alive():
@@ -278,11 +284,77 @@ class PytisClient(x2go.X2GoClient):
             self._pytis_terminate.value = True
 
     @classmethod
-    def run(class_):
-        configuration = Configuration()
-        server = configuration.get('server', basestring)
-        port = configuration.get('port', int, 22)
-        username = configuration.get('username', basestring)
+    def _pytis_select_broker_session(class_, broker_address):
+        try:
+            user, host = broker_address.split('@')
+        except:
+            raise Exception("Invalid broker address", broker_address)
+        # Fetch session list
+        section_regexp = re.compile('^[[](.+)[]]$')
+        value_regexp = re.compile('^([^ \t=]+) *= *(.*)$')
+        sessions = {}
+        text = ''
+        configuration = None
+        in_config = False
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.connect(host, username=user)
+        command = '/usr/bin/x2gobroker-ssh --task listsessions'
+        __stdin, stdout, __stderr = client.exec_command(command)
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            text += line
+            line = line.strip()
+            if not line:
+                continue
+            if line == 'START_USER_SESSIONS':
+                in_config = True
+            elif line == 'END_USER_SESSIONS':
+                in_config = False
+            elif not in_config:
+                continue
+            m = section_regexp.match(line)
+            if m is not None:
+                configuration = sessions[m.group(1)] = Configuration()
+                continue
+            m = value_regexp.match(line)
+            if m is not None:
+                if configuration is None:
+                    raise Exception("Invalid session list format", text)
+                key, value = m.groups()
+                if key in ('sshport',):
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        raise Exception("Invalid session list format", text)
+                configuration.set(key, value)
+        print '???', text
+        # Select session
+        if on_windows():
+            raise Exception("Session selection not implemented")
+        else:
+            args = (['zenity', '--list', '--text', "Select session", '--column', "Session"] +
+                    sessions.keys())
+            try:
+                output = subprocess.check_output(args)
+            except subprocess.CalledProcessError:
+                return None
+            name = output.rstrip('\r\n')
+            return sessions[name]
+
+    @classmethod
+    def run(class_, broker_address=None):
+        if broker_address:
+            configuration = class_._pytis_select_broker_session(broker_address)
+            if configuration is None:
+                return
+        else:
+            configuration = Configuration()
+        server = configuration.get('host', basestring)
+        port = configuration.get('sshport', int, 22)
+        username = configuration.get('user', basestring)
         command = configuration.get('command', basestring)
         client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
         s_uuid = client.register_session(server, port=port, username=username, cmd=command,
@@ -301,7 +373,10 @@ class PytisClient(x2go.X2GoClient):
         client.terminate_session(s_uuid)
            
 if __name__ == '__main__':
-    PytisClient.run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--broker', help='ssh broker address (user@host)')
+    args = parser.parse_args()
+    PytisClient.run(args.broker)
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
