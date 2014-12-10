@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-09 19:01'
+_VERSION = '2014-12-10 14:29'
 
 import hashlib
 import os
@@ -36,6 +36,34 @@ class PytisService(rpyc.Service):
 
     registration = None
     authenticator = None
+
+    def _pytis_on_windows(self):
+        return sys.platform == 'win32'
+
+    def _pytis_file_dialog(self, directory=None, filename=None, template=None, save=False):
+        args = ['zenity', '--file-selection']
+        patterns = []
+        if filename is not None:
+            __name, ext = os.path.splitext(filename)
+            if ext:
+                patterns.append('*' + ext)
+        if directory is not None:
+            filename = os.path.join(directory, filename or '')
+        if filename is not None:
+            args.extend(('--filename', filename,))
+        if template is not None:
+            patterns.append(template)
+        if patterns and '*' not in patterns:
+            patterns.append('*')
+        for p in patterns:
+            args.extend(('--file-filter', p,))
+        if save:
+            args.append('--save')
+        try:
+            output = subprocess.check_output(args)
+        except subprocess.CalledProcessError:
+            return None
+        return output.rstrip('\r\n')
 
     def exposed_authenticate_server(self, challenge):
         """Return password hash based on 'challenge'.
@@ -149,7 +177,7 @@ class PytisUserService(PytisService):
 
         """
         assert isinstance(path, basestring), path
-        if sys.platform == "win32":
+        if self._pytis_on_windows():
             os.startfile(path)
         else:
             subprocess.call(['xdg-open', path])
@@ -198,26 +226,29 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        import win32ui
-        import win32con
-        extension = None
-        if template:
-            file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
-                           (template, template,))
-            filename = template
-            if template.find('.') != -1:
-                extension = template.split('.')[-1]
+        if self._pytis_on_windows():
+            import win32ui
+            import win32con
+            extension = None
+            if template:
+                file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
+                               (template, template,))
+                filename = template
+                if template.find('.') != -1:
+                    extension = template.split('.')[-1]
+            else:
+                file_filter = u"Všechny soubory (*.*)|*.*||"
+                filename = "*.*"
+            parent = win32ui.FindWindow(None, None)
+            flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
+            dialog = win32ui.CreateFileDialog(1, extension, "%s" % filename, flags,
+                                              file_filter, parent)
+            result = dialog.DoModal()
+            if result != 1:
+                return None
+            filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
         else:
-            file_filter = u"Všechny soubory (*.*)|*.*||"
-            filename = "*.*"
-        parent = win32ui.FindWindow(None, None)
-        dialog = win32ui.CreateFileDialog(1, extension, "%s" % filename,
-                                          win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
-                                          file_filter, parent)
-        result = dialog.DoModal()
-        if result != 1:
-            return None
-        filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
+            filename = self._pytis_file_dialog(template=template)
         if filename is None:
             return None
         class Wrapper(object):
@@ -249,39 +280,45 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        import win32ui
-        import win32con
-        file_filter = u"Všechny soubory (*.*)|*.*||"
-        extension = None
-        if filename:
-            name, ext = os.path.splitext(filename)
-            if ext:
-                template = "*" + ext
-                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                               (template, template, file_filter))
-                extension = ext[1:]
+        if self._pytis_on_windows():
+            import win32ui
+            import win32con
+            file_filter = u"Všechny soubory (*.*)|*.*||"
+            extension = None
+            if filename:
+                name, ext = os.path.splitext(filename)
+                if ext:
+                    template = "*" + ext
+                    file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
+                                   (template, template, file_filter))
+                    extension = ext[1:]
+            else:
+                filename = "*.*"
+                if template:
+                    file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
+                                   (template, template, file_filter))
+            # This hack with finding non-specified windows is used so that
+            # we get some parent window for CreateFileDialog.
+            # Without this parent windows the method DoModal doesn't show
+            # the dialog window on top...
+            parent = win32ui.FindWindow(None, None)
+            flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
+            dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename, flags,
+                                              file_filter, parent)
+            if directory:
+                dialog.SetOFNInitialDir(directory)
+            result = dialog.DoModal()
+            if result != 1:
+                return None
+            filename = dialog.GetPathName()
+            if filename is None:
+                return None
+            filename = unicode(filename, sys.getfilesystemencoding())
         else:
-            filename = "*.*"
-            if template:
-                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                               (template, template, file_filter))
-        # This hack with finding non-specified windows is used so that
-        # we get some parent window for CreateFileDialog.
-        # Without this parent windows the method DoModal doesn't show
-        # the dialog window on top...
-        parent = win32ui.FindWindow(None, None)
-        dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename,
-                                          win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
-                                          file_filter, parent)
-        if directory:
-            dialog.SetOFNInitialDir(directory)
-        result = dialog.DoModal()
-        if result != 1:
-            return None
-        filename = dialog.GetPathName()
-        if filename is None:
-            return None
-        filename = unicode(filename, sys.getfilesystemencoding())
+            filename = self._pytis_file_dialog(directory=directory, filename=filename,
+                                               template=template, save=True)
+            if filename is None:
+                return None
         return self._open_file(filename, encoding, mode)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb'):
