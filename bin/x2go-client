@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-11 13:37'
+_VERSION = '2014-12-11 13:56'
 
 import argparse
 import imp
@@ -340,9 +340,30 @@ class PytisClient(x2go.X2GoClient):
                 output = subprocess.check_output(args)
             except subprocess.CalledProcessError:
                 return None
-            name = output.rstrip('\r\n')
-            return sessions[name]
-
+            session_name = output.rstrip('\r\n')
+            configuration = sessions[session_name]
+        # Fetch additional session parameters
+        server_regexp = re.compile('^SERVER:(.*):(.*)$')
+        text = ''
+        command = '/usr/bin/x2gobroker-ssh --task selectsession --sid ' + session_name
+        __stdin, stdout, __stderr = client.exec_command(command)
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            text += line
+            line = line.strip()
+            m = server_regexp.match(line)
+            if m is not None:
+                host, port = m.groups()
+                try:
+                    port = int(port)
+                except ValueError:
+                    raise Exception("Invalid session format", text)
+                configuration.set('host', host)
+                configuration.set('sshport', port)
+        return configuration
+        
     @classmethod
     def run(class_, broker_address=None):
         if broker_address:
