@@ -169,7 +169,7 @@ def _request(request, *args, **kwargs):
         except:
             _connection = _connect()
             r = _connection.root.request
-        args = args + (target_ip, user_name, request,)
+        args = (target_ip, user_name, request,) + args
     return r(*args, **kwargs)
 
 def version():
