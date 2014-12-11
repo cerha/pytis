@@ -43,7 +43,8 @@ class ReverseTunnel(multiprocessing.Process):
     _MAX_SSH_FORWARD_ATTEMPTS = 100
 
     def __init__(self, ssh_host, forward_port, ssh_port=22, ssh_user=None,
-                 ssh_forward_port=None, forward_host='localhost', key_filename=None):
+                 ssh_forward_port=None, forward_host='localhost', key_filename=None,
+                 ssh_password=None):
         """
         Arguments:
 
@@ -54,6 +55,8 @@ class ReverseTunnel(multiprocessing.Process):
           ssh_port -- ssh port on 'ssh_host' to connect to; integer
           ssh_user -- ssh user on 'ssh_host' to connect to; basestring or
             'None in which case the current user is used
+          ssh_password -- ssh password for 'ssh_user' on 'ssh_host'; basestring
+            or 'None'
           ssh_forward_port -- forwarding port on the 'ssh_host' to bind to;
             integer 'multiprocessing.Value' instance (if None or if the value
             is 0 then an arbitrary free port is selected); this is the starting
@@ -70,6 +73,7 @@ class ReverseTunnel(multiprocessing.Process):
         self._forward_port = forward_port
         self._ssh_port = ssh_port
         self._ssh_user = ssh_user
+        self._ssh_password = ssh_password
         self._ssh_forward_port = None if ssh_forward_port is None else ssh_forward_port.value
         self._forward_host = forward_host
         self._key_filename = key_filename
@@ -135,9 +139,12 @@ class ReverseTunnel(multiprocessing.Process):
         forward_host = self._forward_host
         forward_port = self._forward_port
         user = self._ssh_user or getpass.getuser()
+        password = self._ssh_password
         key_filename = self._key_filename
         if key_filename is None and not os.getenv('SSH_AGENT_PID'):
             key_filename = os.path.expanduser('~/.ssh/id_rsa')
+            if not os.path.exists(key_filename):
+                key_filename = None
         # Create client
         client = paramiko.SSHClient()
         client.load_system_host_keys()
@@ -145,9 +152,10 @@ class ReverseTunnel(multiprocessing.Process):
         # Connect to the ssh host
         log(EVENT, 'Connecting to ssh host %s:%d' % (ssh_host, ssh_port,))
         try:
-            client.connect(ssh_host, ssh_port, user, key_filename=key_filename, look_for_keys=True)
+            client.connect(ssh_host, ssh_port, user, #key_filename=key_filename, look_for_keys=True,
+                           password=password)
         except Exception as e:
-            log(OPERATIONAL, 'Failed to connect to %s:%d: %r' % (ssh_host, ssh_port, e,))
+            log(OPERATIONAL, 'Failed to connect to %s@%s:%d: %r' % (user, ssh_host, ssh_port, e,))
             return
         # Forward
         log(EVENT, 'Forwarding remote port %d+ to %s:%d' %

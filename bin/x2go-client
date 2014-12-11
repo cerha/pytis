@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-11 14:34'
+_VERSION = '2014-12-11 18:24'
 
 import argparse
 import imp
@@ -252,13 +252,18 @@ class PytisClient(x2go.X2GoClient):
         multiprocessing.Process(target=check_rpyc_server).start()
         # ssh tunnel
         def check_ssh_tunnel():
+            try:
+                password = configuration.get('password', basestring)
+            except ClientException:
+                password = None
             while True:
                 while rpyc_port.value == 0:
                     time.sleep(0.1)
                 port = multiprocessing.Value('i', 0)
                 tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
                                                     rpyc_port.value, ssh_forward_port=port,
-                                                    ssh_user=configuration.get('user', basestring))
+                                                    ssh_user=configuration.get('user', basestring),
+                                                    ssh_password=password)
                 ssh_tunnel_alive.value = True
                 tunnel.start()
                 while not port.value and tunnel.is_alive():
@@ -284,6 +289,48 @@ class PytisClient(x2go.X2GoClient):
             self._pytis_terminate.value = True
 
     @classmethod
+    def _pytis_dialog(class_, *args, **kwargs):
+        if on_windows():
+            raise Exception("Session selection not implemented")
+        else:
+            return class_._pytis_gnu_dialog(*args, **kwargs)
+
+    @classmethod
+    def _pytis_gnu_dialog(class_, kind, title, *args):
+        dialog = ['zenity']
+        if title:
+            dialog.extend(['--text', title])
+        if kind == 'list':
+            dialog.extend(['--list', '--column'])
+            dialog.extend(args)
+        elif kind == 'password':
+            dialog.append('--password')
+        else:
+            raise Exception("Unsupported dialog kind", kind)
+        try:
+            output = subprocess.check_output(dialog)
+        except subprocess.CalledProcessError:
+            return None
+        return output.rstrip('\r\n')
+
+    @classmethod
+    def _pytis_ssh_connect(class_, parameters):
+        if not parameters['password']:
+            parameters['password'] = 'X'
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        while True:
+            try:
+                client.connect(**parameters)
+                break
+            except paramiko.ssh_exception.AuthenticationException:
+                password = class_._pytis_dialog('password', None)
+                if not password:
+                    return None
+                parameters['password'] = password
+        return client
+
+    @classmethod
     def _pytis_select_broker_session(class_, broker_url):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<user>[a-zA-Z0-9_\.-]+)'
@@ -306,10 +353,11 @@ class PytisClient(x2go.X2GoClient):
         text = ''
         configuration = None
         in_config = False
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.connect(broker_parameters['host'], port=port,
-                       username=broker_parameters['user'], password=password)
+        parameters = dict(hostname=broker_parameters['host'], port=port,
+                          username=broker_parameters['user'], password=password)
+        client = class_._pytis_ssh_connect(parameters)
+        if client is None:
+            return
         command = '/usr/bin/x2gobroker-ssh --task listsessions'
         __stdin, stdout, __stderr = client.exec_command(command)
         while True:
@@ -342,17 +390,8 @@ class PytisClient(x2go.X2GoClient):
                         raise Exception("Invalid session list format", text)
                 configuration.set(key, value)
         # Select session
-        if on_windows():
-            raise Exception("Session selection not implemented")
-        else:
-            args = (['zenity', '--list', '--text', "Select session", '--column', "Session"] +
-                    sessions.keys())
-            try:
-                output = subprocess.check_output(args)
-            except subprocess.CalledProcessError:
-                return None
-            session_name = output.rstrip('\r\n')
-            configuration = sessions[session_name]
+        session_name = class_._pytis_dialog('list', "Select session", "Session", *sessions.keys())
+        configuration = sessions[session_name]
         # Fetch additional session parameters
         server_regexp = re.compile('^SERVER:(.*):(.*)$')
         text = ''
@@ -373,10 +412,13 @@ class PytisClient(x2go.X2GoClient):
                     raise Exception("Invalid session format", text)
                 configuration.set('host', host)
                 configuration.set('sshport', port)
+        # Finish configuration and return it
+        configuration.set('password', parameters['password'])
         return configuration
         
     @classmethod
     def run(class_, broker_url=None):
+        # Get parameters
         if broker_url:
             configuration = class_._pytis_select_broker_session(broker_url)
             if configuration is None:
@@ -387,11 +429,24 @@ class PytisClient(x2go.X2GoClient):
         port = configuration.get('sshport', int, 22)
         username = configuration.get('user', basestring)
         command = configuration.get('command', basestring)
+        try:
+            password = configuration.get('password', basestring)
+        except ClientException:
+            password = None
+        parameters = dict(hostname=server, port=port, username=username, password=password)
+        # Check connection parameters and update password
+        client = class_._pytis_ssh_connect(parameters)
+        if client is None:
+            return
+        client = None
+        password = parameters['password']
+        configuration.set('password', password)
+        # Run
         client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
-        s_uuid = client.register_session(server, port=port, username=username, cmd=command,
-                                         add_to_known_hosts=True)
+        s_uuid = client.register_session(server, port=port, username=username,
+                                         cmd=command, add_to_known_hosts=True)
         client.pytis_start_processes(configuration)
-        client.connect_session(s_uuid)
+        client.connect_session(s_uuid, username=username, password=password)
         client.clean_sessions(s_uuid)
         client.start_session(s_uuid)
         client.pytis_setup(s_uuid, configuration)
