@@ -768,7 +768,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             safelog("Saving changed configuration failed:", str(e))
         try:
             if self._help_browser is not None:
-                self._help_browser.GetFrame().Close()
+                self._help_browser.Close()
         except Exception as e:
             safelog(str(e))
         return True
