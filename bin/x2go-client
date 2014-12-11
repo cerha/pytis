@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-11 13:56'
+_VERSION = '2014-12-11 14:34'
 
 import argparse
 import imp
@@ -284,11 +284,21 @@ class PytisClient(x2go.X2GoClient):
             self._pytis_terminate.value = True
 
     @classmethod
-    def _pytis_select_broker_session(class_, broker_address):
-        try:
-            user, host = broker_address.split('@')
-        except:
-            raise Exception("Invalid broker address", broker_address)
+    def _pytis_select_broker_session(class_, broker_url):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<user>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<host>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|/(?P<path>.*)$)'), broker_url)
+        if match is None:
+            raise Exception("Invalid broker address", broker_url)
+        broker_parameters = match.groupdict()
+        protocol = broker_parameters['protocol']
+        if protocol != 'ssh':
+            raise Exception("Unsupported broker protocol", protocol)
+        password = broker_parameters.get('password')
+        port = int(broker_parameters.get('port') or '22')
         # Fetch session list
         section_regexp = re.compile('^[[](.+)[]]$')
         value_regexp = re.compile('^([^ \t=]+) *= *(.*)$')
@@ -298,7 +308,8 @@ class PytisClient(x2go.X2GoClient):
         in_config = False
         client = paramiko.SSHClient()
         client.load_system_host_keys()
-        client.connect(host, username=user)
+        client.connect(broker_parameters['host'], port=port,
+                       username=broker_parameters['user'], password=password)
         command = '/usr/bin/x2gobroker-ssh --task listsessions'
         __stdin, stdout, __stderr = client.exec_command(command)
         while True:
@@ -365,9 +376,9 @@ class PytisClient(x2go.X2GoClient):
         return configuration
         
     @classmethod
-    def run(class_, broker_address=None):
-        if broker_address:
-            configuration = class_._pytis_select_broker_session(broker_address)
+    def run(class_, broker_url=None):
+        if broker_url:
+            configuration = class_._pytis_select_broker_session(broker_url)
             if configuration is None:
                 return
         else:
@@ -394,9 +405,9 @@ class PytisClient(x2go.X2GoClient):
            
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--broker', help='ssh broker address (user@host)')
+    parser.add_argument('--broker-url')
     args = parser.parse_args()
-    PytisClient.run(args.broker)
+    PytisClient.run(args.broker_url)
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
