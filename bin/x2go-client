@@ -95,7 +95,7 @@ class Configuration(object):
         return value
 
     def set(self, key, value):
-        setattr(self, key, value)
+        setattr(self._configuration, key, value)
 
     def rpyc_file(self):
         return self._configuration_file(self._RPYC_FILE)
