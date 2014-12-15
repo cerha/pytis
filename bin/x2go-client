@@ -349,7 +349,7 @@ class PytisClient(x2go.X2GoClient):
         # Fetch session list
         section_regexp = re.compile('^[[](.+)[]]$')
         value_regexp = re.compile('^([^ \t=]+) *= *(.*)$')
-        sessions = {}
+        sessions = ''
         text = ''
         configuration = None
         in_config = False
@@ -365,33 +365,25 @@ class PytisClient(x2go.X2GoClient):
             if not line:
                 break
             text += line
-            line = line.strip()
-            if not line:
-                continue
-            if line == 'START_USER_SESSIONS':
+            if line.strip() == 'START_USER_SESSIONS':
                 in_config = True
-            elif line == 'END_USER_SESSIONS':
+                continue
+            elif line.strip() == 'END_USER_SESSIONS':
                 in_config = False
-            elif not in_config:
-                continue
-            m = section_regexp.match(line)
-            if m is not None:
-                configuration = sessions[m.group(1)] = Configuration()
-                continue
-            m = value_regexp.match(line)
-            if m is not None:
-                if configuration is None:
-                    raise Exception("Invalid session list format", text)
-                key, value = m.groups()
-                if key in ('sshport',):
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        raise Exception("Invalid session list format", text)
-                configuration.set(key, value)
+            if in_config:
+                sessions += line
+        import ConfigParser
+        import StringIO
+        config = ConfigParser.ConfigParser()
+        config.readfp(StringIO.StringIO(sessions))
         # Select session
-        session_name = class_._pytis_dialog('list', "Select session", "Session", *sessions.keys())
-        configuration = sessions[session_name]
+        sections = config.sections()
+        session_name = class_._pytis_dialog('list', "Select session", "Session", *sections)
+        if not session_name:
+            raise Exception("No session selected.")
+        configuration = Configuration()
+        for o in config.options(session_name):
+            configuration.set(o, config.get(session_name, o))
         # Fetch additional session parameters
         server_regexp = re.compile('^SERVER:(.*):(.*)$')
         text = ''
