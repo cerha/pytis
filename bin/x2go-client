@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-16 16:29'
+_VERSION = '2014-12-16 17:31'
 
 import argparse
 import imp
@@ -296,14 +296,15 @@ class PytisClient(x2go.X2GoClient):
     @classmethod
     def _pytis_dialog(class_, *args, **kwargs):
         if on_windows():
-            raise Exception("Session selection not implemented")
+            zenity = os.path.join(sys.path[0], 'zenity.exe')
         else:
-            return class_._pytis_gnu_dialog(*args, **kwargs)
+            zenity = 'zenity'
+        return class_._pytis_zenity_dialog(zenity, *args, **kwargs)
 
     @classmethod
-    def _pytis_gnu_dialog(class_, kind, title, options=None, filename=None,
-                          ok_label=None, cancel_label=None):
-        dialog = ['zenity']
+    def _pytis_zenity_dialog(class_, zenity, kind, title, options=None, filename=None,
+                             ok_label=None, cancel_label=None):
+        dialog = [zenity]
         if title:
             dialog.extend(['--text', title])
         if ok_label:
