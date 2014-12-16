@@ -152,8 +152,8 @@ class ReverseTunnel(multiprocessing.Process):
         # Connect to the ssh host
         log(EVENT, 'Connecting to ssh host %s:%d' % (ssh_host, ssh_port,))
         try:
-            client.connect(ssh_host, ssh_port, user, #key_filename=key_filename, look_for_keys=True,
-                           password=password)
+            client.connect(hostname=ssh_host, port=ssh_port, username=user,
+                           key_filename=key_filename, password=password)
         except Exception as e:
             log(OPERATIONAL, 'Failed to connect to %s@%s:%d: %r' % (user, ssh_host, ssh_port, e,))
             return
