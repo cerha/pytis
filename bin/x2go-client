@@ -319,6 +319,8 @@ class PytisClient(x2go.X2GoClient):
             parameters['password'] = 'X'
         client = paramiko.SSHClient()
         client.load_system_host_keys()
+        if parameters.get('_add_to_known_hosts'):
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         while True:
             try:
                 client.connect(**parameters)
@@ -331,7 +333,7 @@ class PytisClient(x2go.X2GoClient):
         return client
 
     @classmethod
-    def _pytis_select_broker_session(class_, broker_url):
+    def _pytis_select_broker_session(class_, broker_url, add_to_known_hosts):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<user>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
@@ -352,7 +354,8 @@ class PytisClient(x2go.X2GoClient):
         configuration = None
         in_config = False
         parameters = dict(hostname=broker_parameters['host'], port=port,
-                          username=broker_parameters['user'], password=password)
+                          username=broker_parameters['user'], password=password,
+                          _add_to_known_hosts=add_to_known_hosts)
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
             return
@@ -407,10 +410,10 @@ class PytisClient(x2go.X2GoClient):
         return configuration
         
     @classmethod
-    def run(class_, broker_url=None):
+    def run(class_, broker_url=None, add_to_known_hosts=False):
         # Get parameters
         if broker_url:
-            configuration = class_._pytis_select_broker_session(broker_url)
+            configuration = class_._pytis_select_broker_session(broker_url, add_to_known_hosts)
             if configuration is None:
                 return
         else:
@@ -423,7 +426,8 @@ class PytisClient(x2go.X2GoClient):
             password = configuration.get('password', basestring)
         except ClientException:
             password = None
-        parameters = dict(hostname=server, port=port, username=username, password=password)
+        parameters = dict(hostname=server, port=port, username=username, password=password,
+                          _add_to_known_hosts=add_to_known_hosts)
         # Check connection parameters and update password
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
@@ -434,7 +438,7 @@ class PytisClient(x2go.X2GoClient):
         # Run
         client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
         s_uuid = client.register_session(server, port=port, username=username,
-                                         cmd=command, add_to_known_hosts=True)
+                                         cmd=command, add_to_known_hosts=add_to_known_hosts)
         client.pytis_start_processes(configuration)
         client.connect_session(s_uuid, username=username, password=password)
         client.clean_sessions(s_uuid)
@@ -451,8 +455,9 @@ class PytisClient(x2go.X2GoClient):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--broker-url')
+    parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
-    PytisClient.run(args.broker_url)
+    PytisClient.run(args.broker_url, args.add_to_known_hosts)
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
