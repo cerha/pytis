@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-16 17:31'
+_VERSION = '2014-12-16 18:27'
 
 import argparse
 import imp
@@ -341,12 +341,18 @@ class PytisClient(x2go.X2GoClient):
         client.load_system_host_keys()
         if parameters.get('_add_to_known_hosts'):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        selected_method = None
         while True:
             connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
             try:
                 client.connect(**connect_parameters)
                 break
-            except paramiko.ssh_exception.AuthenticationException:
+            except paramiko.ssh_exception.AuthenticationException as e:
+                if selected_method == 'publickey':
+                    password = class_._pytis_dialog('password', "Key password")
+                    if password is not None:
+                        parameters['password'] = password
+                        continue
                 if not methods:
                     try:
                         methods = client.get_transport().auth_none(parameters['username'])
@@ -357,20 +363,20 @@ class PytisClient(x2go.X2GoClient):
                         answer = class_._pytis_dialog('question', "Default authentication failed",
                                                       ok_label="Login using password",
                                                       cancel_label="Login using a key file")
-                        m = 'publickey' if answer is None else 'password'
+                        selected_method = 'publickey' if answer is None else 'password'
                     else:
-                        m = 'password'
+                        selected_method = 'password'
                 elif 'publickey' in methods:
-                    m = 'publickey'
+                    selected_method = 'publickey'
                 else:
                     raise Exception("No supported ssh connection method available")
-                parameters['_method'] = m
-                if m == 'password':
+                parameters['_method'] = selected_method
+                if selected_method == 'password':
                     password = class_._pytis_dialog('password', "Login password")
                     if not password:
                         return None
                     parameters['password'] = password
-                elif m == 'publickey':
+                elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     key_filename = class_._pytis_dialog('file', "Select ssh key file",
                                                         filename=ssh_directory)
