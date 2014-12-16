@@ -347,8 +347,6 @@ class PytisClient(x2go.X2GoClient):
         password = broker_parameters.get('password')
         port = int(broker_parameters.get('port') or '22')
         # Fetch session list
-        section_regexp = re.compile('^[[](.+)[]]$')
-        value_regexp = re.compile('^([^ \t=]+) *= *(.*)$')
         sessions = ''
         text = ''
         configuration = None
