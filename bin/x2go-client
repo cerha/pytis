@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-16 18:27'
+_VERSION = '2014-12-16 18:39'
 
 import argparse
 import imp
@@ -410,7 +410,8 @@ class PytisClient(x2go.X2GoClient):
         in_config = False
         parameters = dict(hostname=broker_parameters['host'], port=port,
                           username=broker_parameters['user'], password=password,
-                          _add_to_known_hosts=add_to_known_hosts)
+                          _add_to_known_hosts=add_to_known_hosts,
+                          key_filename=os.path.expanduser('~/.ssh/id_rsa'))
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
             return
