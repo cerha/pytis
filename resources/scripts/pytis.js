@@ -281,7 +281,7 @@ pytis.BrowseForm = Class.create({
 		}
 		this.ajax_container.update('<div class="form-load-error">' + msg + '</div>' +
 					   traceback);
-	    }.bind(this),
+	    }.bind(this)
 	});
     },
 
