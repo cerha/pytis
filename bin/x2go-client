@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-16 18:39'
+_VERSION = '2014-12-17 15:47'
 
 import argparse
 import imp
@@ -26,7 +26,6 @@ import multiprocessing
 import os
 import platform
 import re
-import subprocess
 import sys
 import time
 
@@ -328,7 +327,7 @@ class PytisClient(x2go.X2GoClient):
                                                  title='',
                                                  ok_label="Login using password",
                                                  cancel_label="Login using a key file")
-                        selected_method = 'publickey' if not answer else 'password'  # 
+                        selected_method = 'publickey' if not answer else 'password'
                     else:
                         selected_method = 'password'
                 elif 'publickey' in methods:
@@ -410,7 +409,7 @@ class PytisClient(x2go.X2GoClient):
             else:
                 data.append([s, ''])
         answer = zenity.List(['Session id', 'Session name'], title="Select session",
-                               data=data)
+                             data=data)
         session_name = answer[0]
         if not session_name:
             raise Exception("No session selected.")
