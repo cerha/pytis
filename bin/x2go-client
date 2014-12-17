@@ -136,6 +136,7 @@ class PytisClient(x2go.X2GoClient):
 
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
+    _DEFAULT_KEY_FILENAME = os.path.expanduser('~/.ssh/id_rsa')
 
     def __init__(self, *args, **kwargs):
         super(PytisClient, self).__init__(*args, **kwargs)
@@ -376,7 +377,7 @@ class PytisClient(x2go.X2GoClient):
         parameters = dict(hostname=broker_parameters['host'], port=port,
                           username=broker_parameters['user'], password=password,
                           _add_to_known_hosts=add_to_known_hosts,
-                          key_filename=os.path.expanduser('~/.ssh/id_rsa'))
+                          key_filename=class_._DEFAULT_KEY_FILENAME)
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
             return
@@ -442,7 +443,8 @@ class PytisClient(x2go.X2GoClient):
         return configuration
         
     @classmethod
-    def run(class_, broker_url=None, add_to_known_hosts=False):
+    def run(class_, broker_url=None, server=None, username=None, command=None,
+            key_filename=None, add_to_known_hosts=False):
         # Get parameters
         if on_windows():
             zenity.zen_exec = os.path.join(sys.path[0], 'zenity.exe')
@@ -454,18 +456,30 @@ class PytisClient(x2go.X2GoClient):
                 return
         else:
             configuration = Configuration()
-        server = configuration.get('host', basestring)
+        if server is None:
+            server = configuration.get('host', basestring)
+        else:
+            configuration.set('host', server)
         port = configuration.get('sshport', int, 22)
-        username = configuration.get('user', basestring)
-        command = configuration.get('command', basestring)
+        if username is None:
+            username = configuration.get('user', basestring)
+        else:
+            configuration.set('user', username)
+        if command is None:
+            command = configuration.get('command', basestring)
+        else:
+            command = configuration.set('command', command)
         try:
             password = configuration.get('password', basestring)
         except ClientException:
             password = None
-        try:
-            key_filename = configuration.get('key_filename', basestring)
-        except ClientException:
-            key_filename = None
+        if key_filename is None:
+            try:
+                key_filename = configuration.get('key_filename', basestring)
+            except ClientException:
+                key_filename = class_._DEFAULT_KEY_FILENAME
+        else:
+            configuration.set('key_filename', key_filename)
         parameters = dict(hostname=server, port=port, username=username, password=password,
                           key_filename=key_filename, _add_to_known_hosts=add_to_known_hosts)
         # Check connection parameters and update password
@@ -499,9 +513,14 @@ class PytisClient(x2go.X2GoClient):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--broker-url')
+    parser.add_argument('--server')
+    parser.add_argument('--username')
+    parser.add_argument('--command')
+    parser.add_argument('--ssh-privkey')
     parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
-    PytisClient.run(args.broker_url, args.add_to_known_hosts)
+    PytisClient.run(args.broker_url, args.server, args.username, args.command,
+                    args.ssh_privkey, args.add_to_known_hosts)
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
