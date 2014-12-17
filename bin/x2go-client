@@ -33,6 +33,7 @@ import time
 import paramiko
 import rpyc
 import x2go
+import PyZenity as zenity
 
 import pytis.remote
 
@@ -294,45 +295,6 @@ class PytisClient(x2go.X2GoClient):
             self._pytis_terminate.value = True
 
     @classmethod
-    def _pytis_dialog(class_, *args, **kwargs):
-        if on_windows():
-            zenity = os.path.join(sys.path[0], 'zenity.exe')
-        else:
-            zenity = 'zenity'
-        return class_._pytis_zenity_dialog(zenity, *args, **kwargs)
-
-    @classmethod
-    def _pytis_zenity_dialog(class_, zenity, kind, title, options=None, filename=None,
-                             ok_label=None, cancel_label=None):
-        dialog = [zenity]
-        if title:
-            dialog.extend(['--text', title])
-        if ok_label:
-            dialog.extend(['--ok-label', ok_label])
-        if cancel_label:
-            dialog.extend(['--cancel-label', cancel_label])
-        if kind == 'list':
-            dialog.extend(['--list', '--column', title])
-            dialog.extend(options)
-        elif kind == 'password':
-            dialog.append('--password')
-        elif kind == 'file':
-            dialog.append('--file-selection')
-            if filename:
-                dialog.extend(['--filename', filename])
-        elif kind == 'question':
-            dialog.extend(['--question', '--text', title])
-            if ok_label and cancel_label:
-                dialog.append('--default-cancel')
-        else:
-            raise Exception("Unsupported dialog kind", kind)
-        try:
-            output = subprocess.check_output(dialog)
-        except subprocess.CalledProcessError:
-            return None
-        return output.rstrip('\r\n')
-
-    @classmethod
     def _pytis_ssh_connect(class_, parameters):
         if not parameters['password']:
             parameters['password'] = 'X'
@@ -349,7 +311,8 @@ class PytisClient(x2go.X2GoClient):
                 break
             except paramiko.ssh_exception.AuthenticationException as e:
                 if selected_method == 'publickey':
-                    password = class_._pytis_dialog('password', "Key password")
+                    password = zenity.GetText(text="Key Password", password=True,
+                                              title="")
                     if password is not None:
                         parameters['password'] = password
                         continue
@@ -360,10 +323,11 @@ class PytisClient(x2go.X2GoClient):
                         methods = e.args[1]
                 if 'password' in methods:
                     if 'publickey' in methods:
-                        answer = class_._pytis_dialog('question', "Default authentication failed",
-                                                      ok_label="Login using password",
-                                                      cancel_label="Login using a key file")
-                        selected_method = 'publickey' if answer is None else 'password'
+                        answer = zenity.Question("Default authentication failed",
+                                                 title='',
+                                                 ok_label="Login using password",
+                                                 cancel_label="Login using a key file")
+                        selected_method = 'publickey' if not answer else 'password'  # 
                     else:
                         selected_method = 'password'
                 elif 'publickey' in methods:
@@ -372,14 +336,15 @@ class PytisClient(x2go.X2GoClient):
                     raise Exception("No supported ssh connection method available")
                 parameters['_method'] = selected_method
                 if selected_method == 'password':
-                    password = class_._pytis_dialog('password', "Login password")
+                    password = zenity.GetText(text="Login Password", password=True,
+                                              title="Password input")
                     if not password:
                         return None
                     parameters['password'] = password
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
-                    key_filename = class_._pytis_dialog('file', "Select ssh key file",
-                                                        filename=ssh_directory)
+                    key_filename = zenity.GetFilename(title="Select ssh key file",
+                                                      filename=ssh_directory)
                     if key_filename is None:
                         return None
                     parameters['key_filename'] = key_filename
@@ -415,7 +380,8 @@ class PytisClient(x2go.X2GoClient):
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
             return
-        command = '/usr/bin/x2gobroker-ssh --task listsessions'
+        broker_path = os.path.join('/', broker_parameters.get('path', '/usr/bin/x2gobroker'))
+        command = "%s --task listsessions" % broker_path
         __stdin, stdout, __stderr = client.exec_command(command)
         while True:
             line = stdout.readline()
@@ -431,20 +397,29 @@ class PytisClient(x2go.X2GoClient):
                 sessions += line
         import ConfigParser
         import StringIO
-        config = ConfigParser.ConfigParser()
-        config.readfp(StringIO.StringIO(sessions))
+        parser = ConfigParser.ConfigParser()
+        parser.readfp(StringIO.StringIO(sessions))
         # Select session
-        sections = config.sections()
-        session_name = class_._pytis_dialog('list', "Select session", options=sections)
+        sections = parser.sections()
+        data = []
+        for s in sections:
+            name = parser.get(s, 'name')
+            if name:
+                data.append([s, name])
+            else:
+                data.append([s, ''])
+        answer = zenity.List(['Session id', 'Session name'], title="Select session",
+                               data=data)
+        session_name = answer[0]
         if not session_name:
             raise Exception("No session selected.")
         configuration = Configuration()
-        for o in config.options(session_name):
-            configuration.set(o, config.get(session_name, o))
+        for o in parser.options(session_name):
+            configuration.set(o, parser.get(session_name, o))
         # Fetch additional session parameters
         server_regexp = re.compile('^SERVER:(.*):(.*)$')
         text = ''
-        command = '/usr/bin/x2gobroker-ssh --task selectsession --sid ' + session_name
+        command = "%s --task selectsession --sid %s" % (broker_path, session_name)
         __stdin, stdout, __stderr = client.exec_command(command)
         while True:
             line = stdout.readline()
@@ -469,6 +444,10 @@ class PytisClient(x2go.X2GoClient):
     @classmethod
     def run(class_, broker_url=None, add_to_known_hosts=False):
         # Get parameters
+        if on_windows():
+            zenity.zen_exec = os.path.join(sys.path[0], 'zenity.exe')
+        else:
+            zenity.zen_exec = 'zenity'
         if broker_url:
             configuration = class_._pytis_select_broker_session(broker_url, add_to_known_hosts)
             if configuration is None:
