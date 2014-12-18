@@ -18,15 +18,19 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-17 15:47'
+_VERSION = '2014-12-18 15:20'
 
 import argparse
+import copy
 import imp
 import multiprocessing
 import os
 import platform
 import re
+import shutil
 import sys
+import tarfile
+import tempfile
 import time
 
 import paramiko
@@ -38,6 +42,9 @@ import pytis.remote
 
 def on_windows():
     return platform.system() == 'Windows'
+
+def run_directory():
+    return sys.path[0]
 
 _NONE = object()
 
@@ -353,35 +360,41 @@ class PytisClient(x2go.X2GoClient):
         return client
 
     @classmethod
-    def _pytis_select_broker_session(class_, broker_url, add_to_known_hosts):
+    def _pytis_parse_url(class_, url, add_to_known_hosts=False):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<user>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
                           '(?P<host>[a-zA-Z0-9\.-]+)'
                           '(|:(?P<port>[0-9]+))'
-                          '($|/(?P<path>.*)$)'), broker_url)
+                          '($|/(?P<path>.*)$)'), url)
         if match is None:
-            raise Exception("Invalid broker address", broker_url)
-        broker_parameters = match.groupdict()
-        protocol = broker_parameters['protocol']
+            raise Exception("Invalid broker address", url)
+        parameters = match.groupdict()
+        protocol = parameters['protocol']
         if protocol != 'ssh':
             raise Exception("Unsupported broker protocol", protocol)
-        password = broker_parameters.get('password')
-        port = int(broker_parameters.get('port') or '22')
+        password = parameters.get('password')
+        port = int(parameters.get('port') or '22')
+        ssh_parameters = dict(hostname=parameters['host'], port=port,
+                              username=parameters['user'], password=password,
+                              _add_to_known_hosts=add_to_known_hosts,
+                              key_filename=class_._DEFAULT_KEY_FILENAME)
+        path = parameters.get('path')
+        return ssh_parameters, path
+
+    @classmethod
+    def _pytis_select_broker_session(class_, broker_url, add_to_known_hosts):
+        parameters, path = class_._pytis_parse_url(broker_url, add_to_known_hosts)
         # Fetch session list
         sessions = ''
         text = ''
         configuration = None
         in_config = False
-        parameters = dict(hostname=broker_parameters['host'], port=port,
-                          username=broker_parameters['user'], password=password,
-                          _add_to_known_hosts=add_to_known_hosts,
-                          key_filename=class_._DEFAULT_KEY_FILENAME)
         client = class_._pytis_ssh_connect(parameters)
         if client is None:
             return
-        broker_path = os.path.join('/', broker_parameters.get('path', '/usr/bin/x2gobroker'))
-        command = "%s --task listsessions" % broker_path
+        broker_path = os.path.join('/', path or '/usr/bin/x2gobroker')
+        command = "%s --task listsessions" % (broker_path,)
         __stdin, stdout, __stderr = client.exec_command(command)
         while True:
             line = stdout.readline()
@@ -399,18 +412,29 @@ class PytisClient(x2go.X2GoClient):
         import StringIO
         parser = ConfigParser.ConfigParser()
         parser.readfp(StringIO.StringIO(sessions))
-        # Select session
+        # Get sessions
         sections = parser.sections()
         data = []
         for s in sections:
             name = parser.get(s, 'name')
-            if name:
+            if name == 'pytis-client-upgrade':
+                continue
+            elif name:
                 data.append([s, name])
             else:
                 data.append([s, ''])
+        # Check for upgrade
+        version = parser.get('pytis-client-upgrade', 'version')
+        if version and version > _VERSION:
+            upgrade_url = parser.get('pytis-client-upgrade', 'url')
+            if upgrade_url:
+                if zenity.Question("New pytis client version available. Install?",
+                                   title='', ok_label="Yes", cancel_label="No"):
+                    class_._pytis_upgrade(copy.copy(parameters), upgrade_url)
+        # Select session
         answer = zenity.List(['Session id', 'Session name'], title="Select session",
                              data=data)
-        session_name = answer[0]
+        session_name = answer and answer[0]
         if not session_name:
             raise Exception("No session selected.")
         configuration = Configuration()
@@ -440,13 +464,39 @@ class PytisClient(x2go.X2GoClient):
         configuration.set('password', parameters['password'])
         configuration.set('key_filename', parameters['key_filename'])
         return configuration
+
+    @classmethod
+    def _pytis_upgrade(class_, parameters, upgrade_url):
+        upgrade_parameters, path = class_._pytis_parse_url(upgrade_url,
+                                                           parameters.get('add_to_known_hosts'))
+        parameters.update(upgrade_parameters)
+        client = class_._pytis_ssh_connect(parameters)
+        if client is None:
+            zenity.Error("Couldn't connect to upgrade server")
+            return
+        install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
+        old_install_directory = install_directory + '.old'
+        tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
+        pytis_directory = os.path.join(tmp_directory, 'pytis')
+        sftp = client.open_sftp()
+        f = sftp.open(path)
+        tarfile.open(fileobj=f).extractall(path=tmp_directory)
+        if not os.path.isdir(pytis_directory):
+            zenity.Error("Package unpacking failed")
+            return
+        os.rename(install_directory, old_install_directory)
+        os.rename(pytis_directory, install_directory)
+        os.rmdir(tmp_directory)
+        shutil.rmtree(old_install_directory)
+        zenity.InfoMessage("Pytis successfully upgraded. Restart the application.")
+        sys.exit(0)
         
     @classmethod
     def run(class_, broker_url=None, server=None, username=None, command=None,
             key_filename=None, add_to_known_hosts=False):
         # Get parameters
         if on_windows():
-            zenity.zen_exec = os.path.join(sys.path[0], 'zenity.exe')
+            zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
         else:
             zenity.zen_exec = 'zenity'
         if broker_url:
@@ -518,8 +568,8 @@ if __name__ == '__main__':
     parser.add_argument('--ssh-privkey')
     parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
-    PytisClient.run(args.broker_url, args.server, args.username, args.command,
-                    args.ssh_privkey, args.add_to_known_hosts)
+    PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
+                    args.add_to_known_hosts)
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
