@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-18 15:20'
+_VERSION = '2014-12-18 15:49'
 
 import argparse
 import copy
@@ -38,13 +38,15 @@ import rpyc
 import x2go
 import PyZenity as zenity
 
+def run_directory():
+    return sys.path[0]
+
+sys.path.append(os.path.join(run_directory(), '..', 'lib'))
+
 import pytis.remote
 
 def on_windows():
     return platform.system() == 'Windows'
-
-def run_directory():
-    return sys.path[0]
 
 _NONE = object()
 
