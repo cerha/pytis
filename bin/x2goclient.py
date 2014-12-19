@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 21:18'
+_VERSION = '2014-12-19 21:58'
 
 import argparse
 import copy
@@ -330,10 +330,10 @@ class PytisClient(x2go.X2GoClient):
         while True:
             connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
             try:
-                client.connect(**connect_parameters)
+                client.connect(look_for_keys=False, **connect_parameters)
                 break
             except paramiko.ssh_exception.AuthenticationException as e:
-                if selected_method == 'publickey':
+                if selected_method != 'password' and parameters.get('key_filename') is not None:
                     password = zenity.GetText(text=_("Key password"), password=True,
                                               title="")
                     if password is not None:
@@ -344,6 +344,10 @@ class PytisClient(x2go.X2GoClient):
                         methods = client.get_transport().auth_none(parameters['username'])
                     except paramiko.ssh_exception.BadAuthenticationType as e:
                         methods = e.args[1]
+                if 'publickey' in methods and parameters.get('key_filename') is None:
+                    if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
+                        parameters['key_filename'] = class_._DEFAULT_KEY_FILENAME
+                        continue
                 if 'password' in methods:
                     if 'publickey' in methods:
                         answer = zenity.Question(_("Default authentication failed"),
