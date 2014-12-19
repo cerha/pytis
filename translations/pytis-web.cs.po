@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-07 11:17+0100\n"
+"POT-Creation-Date: 2014-12-19 19:41+0100\n"
 "PO-Revision-Date: 2014-11-07 11:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
 #. Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:563
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:562
 msgid "Submit"
 msgstr "Odeslat"
 
@@ -55,102 +55,102 @@ msgstr "obrázek"
 msgid "file"
 msgstr "soubor"
 
-#: ../lib/pytis/web/form.py:284 ../lib/pytis/web/form.py:286
+#: ../lib/pytis/web/form.py:283 ../lib/pytis/web/form.py:285
 msgid "Print"
 msgstr "Tisknout"
 
-#: ../lib/pytis/web/form.py:288
+#: ../lib/pytis/web/form.py:287
 msgid "Export the contents of this field into PDF"
 msgstr "Exportovat obsah tohoto políčka do PDF"
 
-#: ../lib/pytis/web/form.py:590
+#: ../lib/pytis/web/form.py:589
 msgid "Submit the form"
 msgstr "Odeslat formulář"
 
-#: ../lib/pytis/web/form.py:593 ../lib/pytis/web/form.py:1952
+#: ../lib/pytis/web/form.py:592 ../lib/pytis/web/form.py:1965
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/web/form.py:595
+#: ../lib/pytis/web/form.py:594
 msgid "Reset"
 msgstr "Vrátit původní hodnoty"
 
-#: ../lib/pytis/web/form.py:595
+#: ../lib/pytis/web/form.py:594
 msgid "Undo all changes"
 msgstr "Zrušit všechny provedené změny"
 
-#: ../lib/pytis/web/form.py:608
+#: ../lib/pytis/web/form.py:607
 msgid "Integrity check failed."
 msgstr "Kontrola integrity selhala."
 
-#: ../lib/pytis/web/form.py:655
+#: ../lib/pytis/web/form.py:654
 msgid "Invalid subform values."
 msgstr "Neplatné hodnoty vnořeného formuláře."
 
-#: ../lib/pytis/web/form.py:754
+#: ../lib/pytis/web/form.py:763
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1008
+#: ../lib/pytis/web/form.py:1017
 msgid "All items"
 msgstr "Všechny položky"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1027
+#: ../lib/pytis/web/form.py:1032
 msgid "Change filters"
 msgstr "Změnit filtry"
 
-#: ../lib/pytis/web/form.py:1063
+#: ../lib/pytis/web/form.py:1068
 msgid "Save"
 msgstr "Uložit"
 
-#: ../lib/pytis/web/form.py:1077
+#: ../lib/pytis/web/form.py:1082
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:1079
+#: ../lib/pytis/web/form.py:1084
 msgid "Apply Filter"
 msgstr "Aplikovat filtr"
 
-#: ../lib/pytis/web/form.py:1285
+#: ../lib/pytis/web/form.py:1299
 msgid "Profile"
 msgstr "Profil"
 
-#: ../lib/pytis/web/form.py:1480
+#: ../lib/pytis/web/form.py:1493
 msgid "Popup the menu of actions for this record"
 msgstr "Zobrazit menu akcí pro tento záznam"
 
-#: ../lib/pytis/web/form.py:1581
+#: ../lib/pytis/web/form.py:1594
 msgid "Sum"
 msgstr "Součet"
 
-#: ../lib/pytis/web/form.py:1582
+#: ../lib/pytis/web/form.py:1595
 msgid "Average"
 msgstr "Průměr"
 
-#: ../lib/pytis/web/form.py:1583
+#: ../lib/pytis/web/form.py:1596
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1584
+#: ../lib/pytis/web/form.py:1597
 msgid "Maximum"
 msgstr "Maximum"
 
-#: ../lib/pytis/web/form.py:1636
+#: ../lib/pytis/web/form.py:1649
 msgid "Loading form data..."
 msgstr "Načítám data formuláře..."
 
-#: ../lib/pytis/web/form.py:1742
+#: ../lib/pytis/web/form.py:1755
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1750
+#: ../lib/pytis/web/form.py:1763
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
@@ -170,13 +170,13 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1849
+#: ../lib/pytis/web/form.py:1862
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1854
+#: ../lib/pytis/web/form.py:1867
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Přejít na první záznam začínající na „%s“"
@@ -185,7 +185,7 @@ msgstr "Přejít na první záznam začínající na „%s“"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1867
+#: ../lib/pytis/web/form.py:1880
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -195,59 +195,59 @@ msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1873
+#: ../lib/pytis/web/form.py:1886
 msgid "No records."
 msgstr "Žádné záznamy."
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1904 ../lib/pytis/web/form.py:1951
+#: ../lib/pytis/web/form.py:1917 ../lib/pytis/web/form.py:1964
 msgid "Search"
 msgstr "Hledat"
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1911 ../lib/pytis/web/form.py:1913
+#: ../lib/pytis/web/form.py:1924 ../lib/pytis/web/form.py:1926
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:1914 ../lib/pytis/web/form.py:1933
+#: ../lib/pytis/web/form.py:1927 ../lib/pytis/web/form.py:1946
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
-#: ../lib/pytis/web/form.py:1920
+#: ../lib/pytis/web/form.py:1933
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/web/form.py:1921
+#: ../lib/pytis/web/form.py:1934
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1923
+#: ../lib/pytis/web/form.py:1936
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/web/form.py:1924
+#: ../lib/pytis/web/form.py:1937
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1930 ../lib/pytis/web/form.py:1932
+#: ../lib/pytis/web/form.py:1943 ../lib/pytis/web/form.py:1945
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:1937
+#: ../lib/pytis/web/form.py:1950
 msgid "Go"
 msgstr "Jdi"
 
-#: ../lib/pytis/web/form.py:1946
+#: ../lib/pytis/web/form.py:1959
 msgid "Search expression"
 msgstr "Hledaný výraz"
 
-#: ../lib/pytis/web/form.py:1981
+#: ../lib/pytis/web/form.py:1994
 msgid "filtered by: "
 msgstr "s filtry: "
 
-#: ../lib/pytis/web/form.py:2381 ../lib/pytis/web/form.py:2383
+#: ../lib/pytis/web/form.py:2410 ../lib/pytis/web/form.py:2412
 msgid "Remove this row"
 msgstr "Odstranit tento řádek"
 

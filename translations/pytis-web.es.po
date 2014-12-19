@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-07 11:17+0100\n"
+"POT-Creation-Date: 2014-12-19 19:41+0100\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n!=1;\n"
 
 #. Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:563
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:562
 msgid "Submit"
 msgstr "Confirmar"
 
@@ -54,106 +54,106 @@ msgstr "imágen"
 msgid "file"
 msgstr "archivo"
 
-#: ../lib/pytis/web/form.py:284 ../lib/pytis/web/form.py:286
+#: ../lib/pytis/web/form.py:283 ../lib/pytis/web/form.py:285
 msgid "Print"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:288
+#: ../lib/pytis/web/form.py:287
 msgid "Export the contents of this field into PDF"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:590
+#: ../lib/pytis/web/form.py:589
 msgid "Submit the form"
 msgstr "Envia el formulario"
 
-#: ../lib/pytis/web/form.py:593 ../lib/pytis/web/form.py:1952
+#: ../lib/pytis/web/form.py:592 ../lib/pytis/web/form.py:1965
 msgid "Cancel"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:595
+#: ../lib/pytis/web/form.py:594
 msgid "Reset"
 msgstr "Reset"
 
-#: ../lib/pytis/web/form.py:595
+#: ../lib/pytis/web/form.py:594
 msgid "Undo all changes"
 msgstr "Descartar todas las modificaciones"
 
-#: ../lib/pytis/web/form.py:608
+#: ../lib/pytis/web/form.py:607
 msgid "Integrity check failed."
 msgstr ""
 
-#: ../lib/pytis/web/form.py:655
+#: ../lib/pytis/web/form.py:654
 #, fuzzy
 msgid "Invalid subform values."
 msgstr "Valor no válido"
 
-#: ../lib/pytis/web/form.py:754
+#: ../lib/pytis/web/form.py:763
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Campos marcados con asterisco son obligatorios."
 
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1008
+#: ../lib/pytis/web/form.py:1017
 msgid "All items"
 msgstr "Todos los registros"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1027
+#: ../lib/pytis/web/form.py:1032
 msgid "Change filters"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1063
+#: ../lib/pytis/web/form.py:1068
 msgid "Save"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1077
+#: ../lib/pytis/web/form.py:1082
 msgid "Filter"
 msgstr "Filtro"
 
-#: ../lib/pytis/web/form.py:1079
+#: ../lib/pytis/web/form.py:1084
 #, fuzzy
 msgid "Apply Filter"
 msgstr "Filtro"
 
-#: ../lib/pytis/web/form.py:1285
+#: ../lib/pytis/web/form.py:1299
 #, fuzzy
 msgid "Profile"
 msgstr "archivo"
 
-#: ../lib/pytis/web/form.py:1480
+#: ../lib/pytis/web/form.py:1493
 msgid "Popup the menu of actions for this record"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1581
+#: ../lib/pytis/web/form.py:1594
 #, fuzzy
 msgid "Sum"
 msgstr "Confirmar"
 
-#: ../lib/pytis/web/form.py:1582
+#: ../lib/pytis/web/form.py:1595
 msgid "Average"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1583
+#: ../lib/pytis/web/form.py:1596
 msgid "Minimum"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1584
+#: ../lib/pytis/web/form.py:1597
 msgid "Maximum"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1636
+#: ../lib/pytis/web/form.py:1649
 msgid "Loading form data..."
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1742
+#: ../lib/pytis/web/form.py:1755
 msgid "Total records:"
 msgstr "Registros en total:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1750
+#: ../lib/pytis/web/form.py:1763
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Mostrados %(first)s-%(last)s registros de %(total)s en total"
@@ -173,13 +173,13 @@ msgstr "Mostrados %(first)s-%(last)s registros de %(total)s en total"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1849
+#: ../lib/pytis/web/form.py:1862
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s sobre \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1854
+#: ../lib/pytis/web/form.py:1867
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Ir al primer registro que empieza con \"%s\""
@@ -188,7 +188,7 @@ msgstr "Ir al primer registro que empieza con \"%s\""
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1867
+#: ../lib/pytis/web/form.py:1880
 #, fuzzy, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -199,59 +199,59 @@ msgstr[1] ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1873
+#: ../lib/pytis/web/form.py:1886
 msgid "No records."
 msgstr "Ningún registro."
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1904 ../lib/pytis/web/form.py:1951
+#: ../lib/pytis/web/form.py:1917 ../lib/pytis/web/form.py:1964
 msgid "Search"
 msgstr "Buscar"
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1911 ../lib/pytis/web/form.py:1913
+#: ../lib/pytis/web/form.py:1924 ../lib/pytis/web/form.py:1926
 msgid "Page"
 msgstr "Página"
 
-#: ../lib/pytis/web/form.py:1914 ../lib/pytis/web/form.py:1933
+#: ../lib/pytis/web/form.py:1927 ../lib/pytis/web/form.py:1946
 msgid "(Use ALT+arrow down to select)"
 msgstr "(Usa ALT+flecha abajo para elegir)"
 
-#: ../lib/pytis/web/form.py:1920
+#: ../lib/pytis/web/form.py:1933
 msgid "Previous"
 msgstr "Anterior"
 
-#: ../lib/pytis/web/form.py:1921
+#: ../lib/pytis/web/form.py:1934
 msgid "Go to previous page"
 msgstr "Ir a la página anterior"
 
-#: ../lib/pytis/web/form.py:1923
+#: ../lib/pytis/web/form.py:1936
 msgid "Next"
 msgstr "Siguiente"
 
-#: ../lib/pytis/web/form.py:1924
+#: ../lib/pytis/web/form.py:1937
 msgid "Go to next page"
 msgstr "Ir a la página siguiente"
 
-#: ../lib/pytis/web/form.py:1930 ../lib/pytis/web/form.py:1932
+#: ../lib/pytis/web/form.py:1943 ../lib/pytis/web/form.py:1945
 msgid "Records per page"
 msgstr "Registros por página"
 
-#: ../lib/pytis/web/form.py:1937
+#: ../lib/pytis/web/form.py:1950
 msgid "Go"
 msgstr "Ir"
 
-#: ../lib/pytis/web/form.py:1946
+#: ../lib/pytis/web/form.py:1959
 msgid "Search expression"
 msgstr "Parámetro de búsqueda"
 
-#: ../lib/pytis/web/form.py:1981
+#: ../lib/pytis/web/form.py:1994
 msgid "filtered by: "
 msgstr ""
 
-#: ../lib/pytis/web/form.py:2381 ../lib/pytis/web/form.py:2383
+#: ../lib/pytis/web/form.py:2410 ../lib/pytis/web/form.py:2412
 msgid "Remove this row"
 msgstr ""
 
