@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 20:46'
+_VERSION = '2014-12-19 21:18'
 
 import argparse
 import copy
@@ -556,6 +556,8 @@ class PytisClient(x2go.X2GoClient):
         client = None
         password = parameters['password']
         configuration.set('password', password)
+        key_filename = parameters['key_filename']
+        configuration.set('key_filename', key_filename)
         # Run
         client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
         s_uuid = client.register_session(server, port=port, username=username,
