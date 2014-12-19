@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 15:01'
+_VERSION = '2014-12-19 15:48'
 
 import argparse
 import copy
@@ -97,9 +97,11 @@ class Configuration(object):
         elif not os.access(filename, os.R_OK | os.W_OK):
             raise ClientException(_("Client configuration not accessible: %s") % (filename,))
         try:
-            configuration = imp.load_source('_config', filename)
+            c = imp.load_source('_config', filename)
         except Exception as e:
             raise ClientException(_("Error when loading client configuration: %s") % (filename,), e)
+        configuration = copy.copy(c.__dict__)
+        del sys.modules['_config']
         return configuration
     
     def get(self, key, type_, default=_NONE):
