@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 15:57'
+_VERSION = '2014-12-19 17:43'
 
 import argparse
 import copy
@@ -247,10 +247,10 @@ class PytisClient(x2go.X2GoClient):
                 port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
                 for port in range(default_port, port_limit):
                     try:
-                        server = rpyc.utils.server.ForkingServer(pytisproc.PytisUserService,
-                                                                 hostname='localhost',
-                                                                 port=port,
-                                                                 authenticator=authenticator)
+                        server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
+                                                                  hostname='localhost',
+                                                                  port=port,
+                                                                  authenticator=authenticator)
                         break
                     except:
                         pass
