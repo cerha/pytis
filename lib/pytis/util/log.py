@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,6 @@ import re
 import socket
 import string
 import sys
-import syslog
 import time
 
 from util import ProgramError, deepstr, positive_id, some
@@ -96,7 +95,7 @@ class Logger(object):
                 if isinstance(c, basestring):
                     pos = string.rfind(c, '.')
                     if pos:
-                        mod, cls = c[:pos], c[pos+1:]
+                        mod, cls = c[:pos], c[pos + 1:]
                         imp = __import__(mod, None, None, [cls])
                         class_[i] = imp.__dict__[cls]
                     else:
@@ -182,8 +181,8 @@ class Logger(object):
                 data_string = u'=%s%s' % (prefix, printable)
             else:
                 datalines[0] = u'<%s' % datalines[0]
-                datalines[n-1] = u'>%s' % datalines[n-1]
-                datalines[1:n-1] = map(lambda l: u' %s' % l, datalines[1:n-1])
+                datalines[n - 1] = u'>%s' % datalines[n - 1]
+                datalines[1:n - 1] = map(lambda l: u' %s' % l, datalines[1:n - 1])
                 data_string = string.join(datalines, '\n')
             try:
                 formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
@@ -258,22 +257,9 @@ class SyslogLogger(Logger):
     """Logger posílající hlášení syslogu."""
 
     _MAX_MESSAGE_LENGTH = 1020
-
-    FACILITY_LOCAL0 = syslog.LOG_LOCAL0
-    FACILITY_LOCAL1 = syslog.LOG_LOCAL1
-    FACILITY_LOCAL2 = syslog.LOG_LOCAL2
-    FACILITY_LOCAL3 = syslog.LOG_LOCAL3
-    FACILITY_LOCAL4 = syslog.LOG_LOCAL4
-    FACILITY_LOCAL5 = syslog.LOG_LOCAL5
-    FACILITY_LOCAL6 = syslog.LOG_LOCAL6
-    FACILITY_LOCAL7 = syslog.LOG_LOCAL7
     
     def __init__(self, facility=None):
         super(SyslogLogger, self).__init__()
-        if __debug__:
-            facilities = [getattr(SyslogLogger, "FACILITY_LOCAL%d" % i)
-                          for i in range(8)]
-            assert facility is None or facility in facilities
         self._facility = facility
         
     def _prefix(self, kind, message, data):
@@ -284,6 +270,7 @@ class SyslogLogger(Logger):
         return prefix
 
     def _send(self, kind, formatted):
+        import syslog
         if kind == OPERATIONAL:
             priority = syslog.LOG_ERR
         elif kind == ACTION:
