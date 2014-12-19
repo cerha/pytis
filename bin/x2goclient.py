@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 20:38'
+_VERSION = '2014-12-19 20:46'
 
 import argparse
 import copy
@@ -36,14 +36,14 @@ import tarfile
 import tempfile
 import time
 
-import paramiko
-import rpyc
-import x2go
-
 def run_directory():
     return sys.path[0]
 
 sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
+
+import paramiko
+import rpyc
+import x2go
 
 import PyZenity as zenity
 
