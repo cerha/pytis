@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 14:18'
+_VERSION = '2014-12-19 14:24'
 
 import argparse
 import copy
@@ -205,107 +205,109 @@ class PytisClient(x2go.X2GoClient):
                 info.set_port(port)
             info.write()
 
+    def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive):
+        import pytis.remote.pytisproc as pytisproc
+        process = None
+        while True:
+            if self._pytis_terminate.value:
+                if process is not None:
+                    process.terminate()
+                sys.exit()
+            # Look for a running RPyC instance
+            running = True
+            rpyc_info = RpycInfo(configuration)
+            try:
+                rpyc_info.read()
+            except ClientException:
+                running = False
+            if running:
+                # Check whether it's our instance
+                # We must be careful here not to send the password to an RPyC instance
+                # of another user.
+                port = rpyc_info.port()
+                password = rpyc_info.password()
+                authenticator = pytisproc.PasswordAuthenticator(password,
+                                                                ssh_tunnel=ssh_tunnel_alive)
+                try:
+                    authenticator.connect('localhost', port)
+                except:
+                    running = False
+            if not rpyc_stop_queue.empty():
+                while not rpyc_stop_queue.empty():
+                    rpyc_stop_queue.get()
+                if running and process is not None:
+                    process.terminate()
+                running = False
+            # If no running RPyC instance was found then start one
+            if not running:
+                authenticator = pytisproc.PasswordAuthenticator()
+                default_port = self._DEFAULT_RPYC_PORT
+                port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
+                for port in range(default_port, port_limit):
+                    try:
+                        server = rpyc.utils.server.ForkingServer(pytisproc.PytisUserService,
+                                                                 hostname='localhost',
+                                                                 port=port,
+                                                                 authenticator=authenticator)
+                        break
+                    except:
+                        pass
+                else:
+                    raise ClientException(_("No free port found for RPyC in the range %s-%s") %
+                                          (default_port, port_limit - 1,))
+                server.service.authenticator = authenticator
+                rpyc_port.value = port
+                rpyc_info = RpycInfo(configuration, port=port,
+                                     password=authenticator.password())
+                rpyc_info.store()
+                process = multiprocessing.Process(target=server.start)
+                process.start()
+                self._pytis_password_queue.put(rpyc_info.password())
+            time.sleep(1)
+
+    def _check_ssh_tunnel(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive):
+        try:
+            password = configuration.get('password', basestring)
+        except ClientException:
+            password = None
+        try:
+            key_filename = configuration.get('key_filename', basestring)
+        except ClientException:
+            key_filename = None
+        while True:
+            while rpyc_port.value == 0:
+                time.sleep(0.1)
+            port = multiprocessing.Value('i', 0)
+            tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
+                                                rpyc_port.value, ssh_forward_port=port,
+                                                ssh_user=configuration.get('user', basestring),
+                                                ssh_password=password,
+                                                key_filename=key_filename)
+            ssh_tunnel_alive.value = True
+            tunnel.start()
+            while not port.value and tunnel.is_alive():
+                time.sleep(0.1)
+            self._pytis_port_queue.put(port.value)
+            while True:
+                if self._pytis_terminate.value:
+                    tunnel.terminate()
+                    sys.exit()
+                if tunnel.is_alive():
+                    time.sleep(1)
+                else:
+                    ssh_tunnel_alive.value = False
+                    # We must restart RPyC as well in order to prevent password leak
+                    rpyc_stop_queue.put(True)
+                    break
+
     def pytis_start_processes(self, configuration):
         # RPyC server
-        import pytis.remote.pytisproc as pytisproc
         rpyc_stop_queue = multiprocessing.Queue()
         rpyc_port = multiprocessing.Value('i', 0)
         ssh_tunnel_alive = multiprocessing.Value('b', False)
-        def check_rpyc_server():
-            process = None
-            while True:
-                if self._pytis_terminate.value:
-                    if process is not None:
-                        process.terminate()
-                    sys.exit()
-                # Look for a running RPyC instance
-                running = True
-                rpyc_info = RpycInfo(configuration)
-                try:
-                    rpyc_info.read()
-                except ClientException:
-                    running = False
-                if running:
-                    # Check whether it's our instance
-                    # We must be careful here not to send the password to an RPyC instance
-                    # of another user.
-                    port = rpyc_info.port()
-                    password = rpyc_info.password()
-                    authenticator = pytisproc.PasswordAuthenticator(password,
-                                                                    ssh_tunnel=ssh_tunnel_alive)
-                    try:
-                        authenticator.connect('localhost', port)
-                    except:
-                        running = False
-                if not rpyc_stop_queue.empty():
-                    while not rpyc_stop_queue.empty():
-                        rpyc_stop_queue.get()
-                    if running and process is not None:
-                        process.terminate()
-                    running = False
-                # If no running RPyC instance was found then start one
-                if not running:
-                    authenticator = pytisproc.PasswordAuthenticator()
-                    default_port = self._DEFAULT_RPYC_PORT
-                    port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
-                    for port in range(default_port, port_limit):
-                        try:
-                            server = rpyc.utils.server.ForkingServer(pytisproc.PytisUserService,
-                                                                     hostname='localhost',
-                                                                     port=port,
-                                                                     authenticator=authenticator)
-                            break
-                        except:
-                            pass
-                    else:
-                        raise ClientException(_("No free port found for RPyC in the range %s-%s") %
-                                              (default_port, port_limit - 1,))
-                    server.service.authenticator = authenticator
-                    rpyc_port.value = port
-                    rpyc_info = RpycInfo(configuration, port=port,
-                                         password=authenticator.password())
-                    rpyc_info.store()
-                    process = multiprocessing.Process(target=server.start)
-                    process.start()
-                    self._pytis_password_queue.put(rpyc_info.password())
-                time.sleep(1)
-        multiprocessing.Process(target=check_rpyc_server).start()
-        # ssh tunnel
-        def check_ssh_tunnel():
-            try:
-                password = configuration.get('password', basestring)
-            except ClientException:
-                password = None
-            try:
-                key_filename = configuration.get('key_filename', basestring)
-            except ClientException:
-                key_filename = None
-            while True:
-                while rpyc_port.value == 0:
-                    time.sleep(0.1)
-                port = multiprocessing.Value('i', 0)
-                tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
-                                                    rpyc_port.value, ssh_forward_port=port,
-                                                    ssh_user=configuration.get('user', basestring),
-                                                    ssh_password=password,
-                                                    key_filename=key_filename)
-                ssh_tunnel_alive.value = True
-                tunnel.start()
-                while not port.value and tunnel.is_alive():
-                    time.sleep(0.1)
-                self._pytis_port_queue.put(port.value)
-                while True:
-                    if self._pytis_terminate.value:
-                        tunnel.terminate()
-                        sys.exit()
-                    if tunnel.is_alive():
-                        time.sleep(1)
-                    else:
-                        ssh_tunnel_alive.value = False
-                        # We must restart RPyC as well in order to prevent password leak
-                        rpyc_stop_queue.put(True)
-                        break
-        multiprocessing.Process(target=check_ssh_tunnel).start()
+        args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive,)
+        multiprocessing.Process(target=self._check_rpyc_server, args=args).start()
+        multiprocessing.Process(target=self._check_ssh_tunnel, args=args).start()
 
     def terminate_session(self, *args, **kwargs):
         try:
