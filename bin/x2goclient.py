@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 14:10'
+_VERSION = '2014-12-19 14:18'
 
 import argparse
 import copy
@@ -439,7 +439,10 @@ class PytisClient(x2go.X2GoClient):
             else:
                 data.append([s, ''])
         # Check for upgrade
-        version = parser.get('pytis-client-upgrade', 'version')
+        try:
+            version = parser.get('pytis-client-upgrade', 'version')
+        except ConfigParser.NoSectionError:
+            version = None
         if version and version > _VERSION:
             upgrade_url = parser.get('pytis-client-upgrade', 'url')
             if upgrade_url:
