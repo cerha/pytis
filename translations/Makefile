@@ -39,7 +39,7 @@ pytis-wx.pot: $(shell find ../lib/pytis/form -name "*.py") $(shell find ../lib/p
 pytis-defs.pot: $(shell find ../lib/pytis/defs -name "*.py") $(shell find ../lib/pytis/cms -name "*.py")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/defs ../lib/pytis/cms -o pytis-defs.pot
 
-pytis-x2go.pot: ../bin/x2go-client
+pytis-x2go.pot: ../bin/x2goclient.py
 	pygettext -d pytis-x2go $<
 
 $(shell ls pytis-data.*.po): pytis-data.%.po: pytis-data.pot
