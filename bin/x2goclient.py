@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 14:24'
+_VERSION = '2014-12-19 15:01'
 
 import argparse
 import copy
@@ -579,8 +579,8 @@ class PytisClient(x2go.X2GoClient):
         except KeyboardInterrupt:
             pass
         client.terminate_session(s_uuid)
-           
-if __name__ == '__main__':
+
+def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('--broker-url')
     parser.add_argument('--server')
@@ -591,6 +591,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
                     args.add_to_known_hosts)
+    
+if __name__ == '__main__':
+    run()
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
