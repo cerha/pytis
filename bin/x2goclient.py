@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 17:43'
+_VERSION = '2014-12-19 18:38'
 
 import argparse
 import copy
@@ -539,7 +539,7 @@ class PytisClient(x2go.X2GoClient):
         if command is None:
             command = configuration.get('command', basestring)
         else:
-            command = configuration.set('command', command)
+            configuration.set('command', command)
         try:
             password = configuration.get('password', basestring)
         except ClientException:
