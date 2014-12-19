@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 18:38'
+_VERSION = '2014-12-19 20:38'
 
 import argparse
 import copy
@@ -391,13 +391,9 @@ class PytisClient(x2go.X2GoClient):
             raise Exception(_("Unsupported broker protocol"), protocol)
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
-        key_filename = class_._DEFAULT_KEY_FILENAME
-        if not os.access(key_filename, os.R_OK):
-            key_filename = None
         ssh_parameters = dict(hostname=parameters['host'], port=port,
                               username=parameters['user'], password=password,
-                              _add_to_known_hosts=add_to_known_hosts,
-                              key_filename=key_filename)
+                              _add_to_known_hosts=add_to_known_hosts)
         path = parameters.get('path')
         return ssh_parameters, path
 
@@ -548,8 +544,7 @@ class PytisClient(x2go.X2GoClient):
             try:
                 key_filename = configuration.get('key_filename', basestring)
             except ClientException:
-                if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
-                    key_filename = class_._DEFAULT_KEY_FILENAME
+                pass
         else:
             configuration.set('key_filename', key_filename)
         parameters = dict(hostname=server, port=port, username=username, password=password,
