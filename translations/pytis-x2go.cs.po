@@ -1,0 +1,138 @@
+# Pytis translations
+# Copyright (C) 2014 Brailcom, o.p.s.
+# This file is distributed under the same license as the Pytis package.
+# Tomas Cerha <cerha@brailcom.org>, 2006.
+# Milan Zamazal <pdm@brailcom.org>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2014-12-19 13:54+CET\n"
+"PO-Revision-Date: 2014-12-19 11:02+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Czech <wiking@lists.freebsoft.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+
+#: ../bin/x2go-client:82
+msgid "Can't create client directory: %s"
+msgstr "Nelze vytvořit klientský adresář: %s"
+
+#: ../bin/x2go-client:84
+msgid "Client directory not accessible: %s"
+msgstr "Klientský adresář není přístupný: %s"
+
+#: ../bin/x2go-client:96
+msgid "Can't create client configuration file: %s"
+msgstr "Nelze vytvořit klientský konfigurační soubor: %s"
+
+#: ../bin/x2go-client:99
+msgid "Client configuration not accessible: %s"
+msgstr "Klientská konfigurace není přístupná: %s"
+
+#: ../bin/x2go-client:103
+msgid "Error when loading client configuration: %s"
+msgstr "Chyba při načítání klientské konfigurace: %s"
+
+#: ../bin/x2go-client:111
+msgid "Configuration parameter not available: %s"
+msgstr "Nedostupný konfigurační parametr: %s"
+
+#: ../bin/x2go-client:113
+msgid "Invalid configuration parameter type: %s = %r (is not %s)"
+msgstr "Chybný typ konfiguračního parametru: %s = %r (není %s)"
+
+#: ../bin/x2go-client:136
+msgid "Can't read RPyC info file: %s"
+msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
+
+#: ../bin/x2go-client:146
+msgid "Error when writing RPyC info file: %s"
+msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
+
+#: ../bin/x2go-client:262
+msgid "No free port found for RPyC in the range %s-%s"
+msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
+
+#: ../bin/x2go-client:334
+msgid "Key password"
+msgstr "Heslo ke klíči"
+
+#: ../bin/x2go-client:346
+msgid "Default authentication failed"
+msgstr "Výchozí autentizace selhala"
+
+#: ../bin/x2go-client:348
+msgid "Login using password"
+msgstr "Přihlášení heslem"
+
+#: ../bin/x2go-client:349
+msgid "Login using a key file"
+msgstr "Přihlášení klíčem"
+
+#: ../bin/x2go-client:356
+msgid "No supported ssh connection method available"
+msgstr "Není dostupná žádná metoda spojení přes ssh"
+
+#: ../bin/x2go-client:359
+msgid "Login password"
+msgstr "Přihlášovací heslo"
+
+#: ../bin/x2go-client:360
+msgid "Password input"
+msgstr "Zadání hesla"
+
+#: ../bin/x2go-client:366
+msgid "Select ssh key file"
+msgstr "Vyberte ssh klíč"
+
+#: ../bin/x2go-client:372
+msgid "Program error"
+msgstr "Chyba programu"
+
+#: ../bin/x2go-client:384
+msgid "Invalid broker address"
+msgstr "Chybná adresa brokeru"
+
+#: ../bin/x2go-client:388
+msgid "Unsupported broker protocol"
+msgstr "Nepodporovaný protokol pro přístup na broker"
+
+#: ../bin/x2go-client:447
+msgid "New pytis client version available. Install?"
+msgstr "Je dostupná nová verze pytisového klienta. Nainstalovat?"
+
+#: ../bin/x2go-client:448
+msgid "No"
+msgstr "Ne"
+
+#: ../bin/x2go-client:448
+msgid "Yes"
+msgstr "Ano"
+
+#: ../bin/x2go-client:451
+msgid "Select session"
+msgstr "Vyberte sezení"
+
+#: ../bin/x2go-client:455
+msgid "No session selected."
+msgstr "Nebylo vybráno žádné sezení."
+
+#: ../bin/x2go-client:476
+msgid "Invalid session format"
+msgstr "Chybný formát sezení"
+
+#: ../bin/x2go-client:491
+msgid "Couldn't connect to upgrade server"
+msgstr "Nelze se připojit na aktualizační server"
+
+#: ../bin/x2go-client:501
+msgid "Package unpacking failed"
+msgstr "Selhalo rozbalení balíku"
+
+#: ../bin/x2go-client:507
+msgid "Pytis successfully upgraded. Restart the application."
+msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
