@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 15:48'
+_VERSION = '2014-12-19 15:57'
 
 import argparse
 import copy
@@ -107,8 +107,8 @@ class Configuration(object):
     def get(self, key, type_, default=_NONE):
         args = () if default is _NONE else (default,)
         try:
-            value = getattr(self._configuration, key, *args)
-        except AttributeError:
+            value = self._configuration.get(key, *args)
+        except KeyError:
             raise ClientException(_("Configuration parameter not available: %s") % (key,))
         if not isinstance(value, type_) and value != default:
             raise ClientException(_("Invalid configuration parameter type: %s = %r (is not %s)") %
@@ -116,7 +116,7 @@ class Configuration(object):
         return value
 
     def set(self, key, value):
-        setattr(self._configuration, key, value)
+        self._configuration[key] = value
 
     def rpyc_file(self):
         return self._configuration_file(self._RPYC_FILE)
