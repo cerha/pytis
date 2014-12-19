@@ -1909,7 +1909,43 @@ class FormStateToolbarControl(wx.BitmapButton):
     def _current_icon_index(self, form):
         """Implement this method to return the index of the active icon in _ICONS."""
         pass
-            
+
+
+class KeyboardSwitcher(wx.BitmapButton):
+    """Special toolbar control for keyboard layout switching and indication.
+
+
+    """
+    _ICONS = ()
+    """Sequence of all possible icons as values for the first argument to 'get_icon()'."""
+
+    def __init__(self, parent, uicmd):
+        self._toolbar = parent
+        layouts = config.keyboard_layouts
+        self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
+                               get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
+                              for title, icon, command in layouts])
+        self._menu = [MItem(title,
+                            command=Application.COMMAND_HANDLED_ACTION(
+                                handler=self._switch_layout,
+                                system_command=system_command,
+                                icon=icon,
+                            ))
+                      for title, icon, system_command in layouts]
+        icon, system_command = layouts[0][1:]
+        os.system(system_command)
+        wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
+                                 style=wx.BU_EXACTFIT | wx.NO_BORDER)
+        pytis.form.wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+
+    def _on_click(self, event):
+        popup_menu(self._toolbar, self._menu)
+
+    def _switch_layout(self, system_command, icon):
+        os.system(system_command)
+        self.SetBitmapLabel(self._bitmaps[icon])
+        self._toolbar.Realize()
+
 
 class DualFormSwitcher(FormStateToolbarControl):
     """Special toolbar control for DualForm.COMMAND_OTHER_FORM.

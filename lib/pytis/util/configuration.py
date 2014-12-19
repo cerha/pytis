@@ -1020,6 +1020,19 @@ class Configuration(object):
         u"""Seznam formulářů, které mají být otevřeny po spuštění aplikace."""
         _DEFAULT = None
 
+    class _Option_keyboard_layouts(Option):
+        """Sequence of keyboard layout specifications for built-in layout swither.
+        
+        The sequence consists of triplets (title, icon, command), where 'title'
+        is the label for the UI layout selector (basestring), 'icon' is the
+        corresponding icon identifier for 'pytis.form.get_icon()' -- name of a
+        file located in 'config.icon_dir' without the '.png' suffix
+        (basestring) and 'command' is the system command to be invoked to
+        switch to given layout (basestring).
+
+        """
+        _DEFAULT = ()
+
     class _Option_row_edit_fg_color(ColorOption):
         u"""Barva textu editovaného řádku tabulkového formuláře."""
         _DEFAULT = '#ffffff'

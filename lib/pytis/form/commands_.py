@@ -49,8 +49,9 @@ from form import BrowsableShowForm, EditForm, Form, InnerForm, LookupForm, Recor
 from inputfield import FileField, GenericCodebookField, InputField, Invocable, \
     ListField, SpinnableField, StructuredTextField, TextField
 from list import BrowseForm, FoldableForm, ListForm
-from screen import Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector
+from screen import Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector, KeyboardSwitcher
 from application import Application
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -620,6 +621,11 @@ class UICommands(object):
         _("Switch the active form"),
         _("Switch between the top and the bottom form of a dual form."),
         ctrl=DualFormSwitcher)
+    SWITCH_KEYBOARD_LAYOUT = UICommand(
+        Application.COMMAND_NOTHING(),
+        _("Switch the current keyboard layout"),
+        _("Switch between keyboard layouts defined in configuration."),
+        ctrl=KeyboardSwitcher)
     RESPLIT = UICommand(
         DualForm.COMMAND_RESPLIT(),
         _("Switch splitter orientation"),
@@ -631,33 +637,34 @@ class UICommands(object):
         _("Close the current form window."))
 
 
-TOOLBAR_COMMANDS = ((UICommands.NEW_RECORD,
-                     UICommands.EDIT_RECORD,
-                     UICommands.DELETE_RECORD,
-                     ),
-                    (UICommands.EXPORT_FILE,
-                     UICommands.PRINT_MENU,
-                     UICommands.OTHER_FORM,
-                     UICommands.RESPLIT,
-                     ),
-                    (UICommands.INCREMENTAL_SEARCH,
-                     UICommands.SEARCH,
-                     UICommands.SEARCH_PREVIOUS,
-                     UICommands.SEARCH_NEXT,
-                     UICommands.JUMP,
-                     ),
-                    (UICommands.AGGREGATION_MENU,
-                     ),
-                    (UICommands.FILTER,
-                     UICommands.PROFILE_MENU,
-                     ),
-                    (UICommands.PYTIS_HELP,
-                     UICommands.HELP,
-                     UICommands.DESCRIBE,
-                     ),
-                    (UICommands.LEAVE_FORM,
-                     ),
-                    )
+TOOLBAR_COMMANDS = ((
+    UICommands.NEW_RECORD,
+    UICommands.EDIT_RECORD,
+    UICommands.DELETE_RECORD,
+), (
+    UICommands.EXPORT_FILE,
+    UICommands.PRINT_MENU,
+    UICommands.OTHER_FORM,
+    UICommands.RESPLIT,
+), (
+    UICommands.INCREMENTAL_SEARCH,
+    UICommands.SEARCH,
+    UICommands.SEARCH_PREVIOUS,
+    UICommands.SEARCH_NEXT,
+    UICommands.JUMP,
+), (
+    UICommands.AGGREGATION_MENU,
+), (
+    UICommands.FILTER,
+    UICommands.PROFILE_MENU,
+), (
+    UICommands.PYTIS_HELP,
+    UICommands.HELP,
+    UICommands.DESCRIBE,
+), (
+    (UICommands.SWITCH_KEYBOARD_LAYOUT,) if config.keyboard_layouts else ()) + (
+    UICommands.LEAVE_FORM,
+))
 
 FORM_MENU_COMMANDS = ((UICommands.INCREMENTAL_SEARCH,
                        UICommands.SEARCH,
