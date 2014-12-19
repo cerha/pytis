@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-18 15:49'
+_VERSION = '2014-12-19 12:01'
 
 import argparse
 import copy
@@ -40,7 +40,7 @@ import x2go
 def run_directory():
     return sys.path[0]
 
-sys.path.append(os.path.join(os.path.split(run_directory())[0], 'lib'))
+sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
 
 import PyZenity as zenity
 
@@ -350,7 +350,7 @@ class PytisClient(x2go.X2GoClient):
                                               title="Password input")
                     if not password:
                         return None
-                    parameters['password'] = password.strip()
+                    parameters['password'] = password.rstrip('\r\n')
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     key_filename = zenity.GetFilename(title="Select ssh key file",
