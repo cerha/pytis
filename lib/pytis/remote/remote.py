@@ -18,11 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
 import re
 import subprocess
 import time
-
+import getpass
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
 import config
 
@@ -34,11 +33,12 @@ _ipv6_regexp = r'.*:.*:.*'
 _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _nx_ip = UNDEFINED
 _x2go_ip = None
+
 def nx_ip():
     """Return IP address of the nx client, as a string.
 
     If pytis is not run from an nx client, return 'None'.
-    
+
     """
     global _nx_ip
     if _nx_ip is not UNDEFINED:
@@ -163,7 +163,7 @@ def _request(request, *args, **kwargs):
         r = getattr(_connection.root, request)
     else:
         target_ip = client_ip()
-        user_name = pwd.getpwuid(os.getuid())[0]
+        user_name = getpass.getuser()
         try:
             r = _connection.root.request
         except:

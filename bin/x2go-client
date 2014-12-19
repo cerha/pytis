@@ -36,12 +36,13 @@ import time
 import paramiko
 import rpyc
 import x2go
-import PyZenity as zenity
 
 def run_directory():
     return sys.path[0]
 
-sys.path.append(os.path.join(run_directory(), '..', 'lib'))
+sys.path.append(os.path.join(os.path.split(run_directory())[0], 'lib'))
+
+import PyZenity as zenity
 
 import pytis.remote
 
@@ -302,7 +303,7 @@ class PytisClient(x2go.X2GoClient):
             return super(PytisClient, self).terminate_session(*args, **kwargs)
         finally:
             self._pytis_terminate.value = True
-
+            
     @classmethod
     def _pytis_ssh_connect(class_, parameters):
         if not parameters['password']:
@@ -349,7 +350,7 @@ class PytisClient(x2go.X2GoClient):
                                               title="Password input")
                     if not password:
                         return None
-                    parameters['password'] = password
+                    parameters['password'] = password.strip()
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     key_filename = zenity.GetFilename(title="Select ssh key file",
@@ -377,10 +378,14 @@ class PytisClient(x2go.X2GoClient):
             raise Exception("Unsupported broker protocol", protocol)
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
+        if os.path.exists(class_._DEFAULT_KEY_FILENAME):
+            key_filename = class_._DEFAULT_KEY_FILENAME
+        else:
+            key_filename = None
         ssh_parameters = dict(hostname=parameters['host'], port=port,
                               username=parameters['user'], password=password,
                               _add_to_known_hosts=add_to_known_hosts,
-                              key_filename=class_._DEFAULT_KEY_FILENAME)
+                              key_filename=key_filename)
         path = parameters.get('path')
         return ssh_parameters, path
 
@@ -528,7 +533,8 @@ class PytisClient(x2go.X2GoClient):
             try:
                 key_filename = configuration.get('key_filename', basestring)
             except ClientException:
-                key_filename = class_._DEFAULT_KEY_FILENAME
+                if os.path.exists(class_._DEFAULT_KEY_FILENAME):
+                    key_filename = class_._DEFAULT_KEY_FILENAME
         else:
             configuration.set('key_filename', key_filename)
         parameters = dict(hostname=server, port=port, username=username, password=password,
