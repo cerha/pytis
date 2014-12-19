@@ -357,7 +357,7 @@ class PytisClient(x2go.X2GoClient):
                                                       filename=ssh_directory)
                     if key_filename is None:
                         return None
-                    parameters['key_filename'] = key_filename
+                    parameters['key_filename'] = key_filename[0]
                 else:
                     raise Exception("Program error")
         return client
@@ -378,9 +378,8 @@ class PytisClient(x2go.X2GoClient):
             raise Exception("Unsupported broker protocol", protocol)
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
-        if os.path.exists(class_._DEFAULT_KEY_FILENAME):
-            key_filename = class_._DEFAULT_KEY_FILENAME
-        else:
+        key_filename = class_._DEFAULT_KEY_FILENAME
+        if not os.access(key_filename, os.R_OK):
             key_filename = None
         ssh_parameters = dict(hostname=parameters['host'], port=port,
                               username=parameters['user'], password=password,
@@ -533,7 +532,7 @@ class PytisClient(x2go.X2GoClient):
             try:
                 key_filename = configuration.get('key_filename', basestring)
             except ClientException:
-                if os.path.exists(class_._DEFAULT_KEY_FILENAME):
+                if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
                     key_filename = class_._DEFAULT_KEY_FILENAME
         else:
             configuration.set('key_filename', key_filename)
