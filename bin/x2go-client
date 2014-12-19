@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 14:04'
+_VERSION = '2014-12-19 14:10'
 
 import argparse
 import copy
@@ -49,8 +49,9 @@ import PyZenity as zenity
 
 import pytis.remote
 
-t = gettext.translation('pytis-x2go', os.path.normpath(os.path.join(run_directory(),
-                                                                    '..', 'translations')))
+t = gettext.translation('pytis-x2go',
+                        os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
+                        fallback=True)
 _ = t.ugettext
 
 def on_windows():
