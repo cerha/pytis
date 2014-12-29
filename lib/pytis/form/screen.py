@@ -69,18 +69,22 @@ for const in ('EVT_WEBVIEW_NAVIGATING', 'EVT_WEBVIEW_NAVIGATED', 'EVT_WEBVIEW_LO
     if not hasattr(wx.html2, const):
         setattr(wx.html2, const, getattr(wx.html2, const.replace('WEBVIEW', 'WEB_VIEW')))
 
-#  import config
-# if config.http_proxy is not None:
-# Nasty way to set the proxy used by the webkit browser.  This should be
-# much more elegant with newer pywebkitgtk versions as they will have a new
-# method set_proxy(), but this version was not released yet..
-#    import ctypes
-#    libgobject = ctypes.CDLL('/usr/lib/libgobject-2.0.so.0')
-#    libsoup = ctypes.CDLL('/usr/lib/libsoup-2.4.so.1')
-#    libwebkit = ctypes.CDLL('/usr/lib/libwebkit-1.0.so.2')
-#    proxy_uri = libsoup.soup_uri_new(config.http_proxy)
-#    session = libwebkit.webkit_get_default_session()
-#    libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
+import config
+if config.http_proxy is not None:
+    # On Linux, proxy can be set through webkitgtk library (used by the GTK wx.html2.WebView
+    # implementation).  Setting up http_proxy will currently fail on other platforms.
+    import ctypes
+    try:
+        libgobject = ctypes.CDLL('libgobject-2.0.so.0')
+        libsoup = ctypes.CDLL('libsoup-2.4.so.1')
+        libwebkitgtk = ctypes.CDLL('libwebkitgtk-1.0.so.0')
+    except OSError as e:
+        raise ProgramError("HTTP proxy is only supported on Linux with specific libraries. "
+                           "Install the missing libraries or unset http_proxy: %s" % e)
+    else:
+        proxy_uri = libsoup.soup_uri_new(config.http_proxy)
+        session = libwebkitgtk.webkit_get_default_session()
+        libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
 _ = pytis.util.translations('pytis-wx')
 
