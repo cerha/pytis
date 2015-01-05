@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -2137,7 +2137,9 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         constraint
       exclude_constraints -- tuple of table exclude constraint definitions;
         each of the constraint definitions is a tuple of pairs
-        (COLUMN, OPERATOR).
+        (COLUMN, OPERATOR), the pairs being optionally followed by a keyword
+        argument dictionary to pass to SQLAlchemy 'ExcludeConstraints'
+        constructor
       foreign_keys -- tuple of multicolumn foreign key constraints.  Each of
         the constraints is 'Arguments' instance with the first argument being a
         tuple of table column names and the second argument a tuple of the same
@@ -2225,7 +2227,12 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         for unique in cls.unique:
             args += (sqlalchemy.UniqueConstraint(*unique),)
         for exclude in cls.exclude_constraints:
-            args += (sqlalchemy.dialects.postgresql.ExcludeConstraint(*exclude),)
+            if isinstance(exclude[-1], dict):
+                kw = exclude[-1]
+                exclude = exclude[:-1]
+            else:
+                kw = {}
+            args += (sqlalchemy.dialects.postgresql.ExcludeConstraint(*exclude, **kw),)
         for foreign_key in cls.foreign_keys:
             columns, refcolumns = foreign_key.args()
             refcolumns = [c.get() if isinstance(c, ReferenceLookup.Reference) else c

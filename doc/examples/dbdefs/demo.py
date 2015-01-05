@@ -136,8 +136,10 @@ class DateTable(sql.SQLTable):
 
 class NonOverlappingRanges(sql.SQLTable):
     name = 'non_overlapping_ranges'
-    fields = (sql.Column('d', pytis.data.DateRange()),)
-    exclude_constraints = ((('d', '&&'),),)
+    fields = (sql.Column('d', pytis.data.DateRange()),
+              sql.Column('d2', pytis.data.DateRange()),)
+    exclude_constraints = ((('d', '&&'),),
+                           (('d2', '&&'), dict(deferrable=True)),)
 
 class LogTable(sql.SQLTable):
     name = 'log_table'
