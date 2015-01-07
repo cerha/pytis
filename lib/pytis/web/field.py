@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2014 Brailcom, o.p.s.
+# Copyright (C) 2006-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -311,7 +311,7 @@ class Field(object):
         """
         return None
 
-    def _validate(self, value, req, locale_data, **kwargs):
+    def _validate(self, value, locale_data, **kwargs):
         return self._row.validate(self.id, value, **kwargs)
 
     def name(self):
@@ -350,7 +350,7 @@ class Field(object):
 
         """
         value = req.param(self.name())
-        return self._validate(value, req, locale_data)
+        return self._validate(value, locale_data)
 
     def format(self, context):
         """Return the exported read-only field representation."""
@@ -454,7 +454,7 @@ class TextField(Field):
     
 class NumericField(TextField):
 
-    def _validate(self, value, req, locale_data, **kwargs):
+    def _validate(self, value, locale_data, **kwargs):
         if value:
             # Convert the value to 'C' locale formatting before validation.
             if isinstance(self.type, pd.Monetary):
@@ -467,7 +467,7 @@ class NumericField(TextField):
                 value = value.replace(thousands_sep, '')
             if decimal_point != '.':
                 value = value.replace(decimal_point, '.')
-        return super(NumericField, self)._validate(value, req, locale_data, **kwargs)
+        return super(NumericField, self)._validate(value, locale_data, **kwargs)
 
     
 class StringField(TextField):
@@ -479,7 +479,7 @@ class StringField(TextField):
 class PasswordField(StringField):
     _HANDLER = 'pytis.PasswordField'
     
-    def _validate(self, value, req, locale_data, **kwargs):
+    def _validate(self, value, locale_data, **kwargs):
         if not value and not self._row.new():
             # Keep the original password when the field is empty.
             return None
@@ -488,7 +488,7 @@ class PasswordField(StringField):
                 value, kwargs['verify'] = value
             else:
                 kwargs['verify'] = ''
-        return super(PasswordField, self)._validate(value, req, locale_data, **kwargs)
+        return super(PasswordField, self)._validate(value, locale_data, **kwargs)
 
     def _format(self, context):
         if self._showform:
@@ -685,7 +685,7 @@ class HtmlField(MultilineField):
 class DateTimeField(TextField):
     _HANDLER = 'pytis.DateTimeField'
     
-    def _datetime_format(self, locale_data):
+    def datetime_format(self, locale_data):
         if hasattr(self.type, 'exact') and not self.type.exact(): # for wiking.DateTime
             time_format = locale_data.time_format
         else:
@@ -708,7 +708,7 @@ class DateTimeField(TextField):
         locale_data = context.locale_data()
         js_values = dict(
             id=kwargs['id'],
-            format=self._datetime_format(locale_data),
+            format=self.datetime_format(locale_data),
             today=context.localize(_(u"today")),
             day_names=g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
                                   for i in (6, 0, 1, 2, 3, 4, 5)]),
@@ -727,15 +727,15 @@ class DateTimeField(TextField):
            """ % js_values)
         return result
 
-    def _validate(self, value, req, locale_data, **kwargs):
-        return super(DateTimeField, self)._validate(value, req, locale_data,
-                                                    format=self._datetime_format(locale_data),
+    def _validate(self, value, locale_data, **kwargs):
+        return super(DateTimeField, self)._validate(value, locale_data,
+                                                    format=self.datetime_format(locale_data),
                                                     **kwargs)
 
     
 class DateField(DateTimeField):
 
-    def _datetime_format(self, locale_data):
+    def datetime_format(self, locale_data):
         return locale_data.date_format
 
     def _maxlen(self):
@@ -745,7 +745,7 @@ class DateField(DateTimeField):
 
 class TimeField(DateTimeField):
 
-    def _datetime_format(self, locale_data):
+    def datetime_format(self, locale_data):
         return locale_data.exact_time_format
 
 
@@ -768,10 +768,10 @@ class CheckboxField(Field):
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
 
-    def _validate(self, value, req, locale_data, **kwargs):
+    def _validate(self, value, locale_data, **kwargs):
         if value is None:
             value = 'F'
-        return super(CheckboxField, self)._validate(value, req, locale_data, **kwargs)
+        return super(CheckboxField, self)._validate(value, locale_data, **kwargs)
 
     def label_in_front(self):
         return False
@@ -780,19 +780,14 @@ class CheckboxField(Field):
 class FileUploadField(Field):
     _HANDLER = 'pytis.FileUploadField'
 
-    def _validate(self, value, req, locale_data, **kwargs):
-        if value is not None:
-            kwargs = dict(kwargs, filename=value.filename(), mime_type=value.mime_type())
-            value = value.file()
-        else:
-            try:
-                # Handle AJAX request for validation of file size (only
-                # size is sent by the form to prevent uploading potentially
-                # large files through AJAX requests before form submission).
-                size = int(req.param('_pytis_file_size_' + self.name()))
-            except (ValueError, TypeError):
-                pass
-            else:
+    def validate(self, req, locale_data):
+        if req.param(self.name()) is None:
+            # Handle AJAX request for validation of file size (only
+            # size is sent by the form to prevent uploading potentially
+            # large files through AJAX requests before form submission).
+            size = req.param('_pytis_file_size_' + self.name())
+            if size and size.isdigit():
+                size = int(size)
                 if self.type.minlen() is not None and size < self.type.minlen():
                     error = _(u"Minimal size %(minlen)s not satisfied",
                               minlen=pytis.util.format_byte_size(self.type.minlen()))
@@ -802,11 +797,17 @@ class FileUploadField(Field):
                               maxlen=pytis.util.format_byte_size(self.type.maxlen()))
                     return pd.ValidationError(error)
                 return None
-            if not self._row.new():
-                # The original file is kept if no file is uploaded to replace it,
-                # so empty field is ok.
-                return None
-        return super(FileUploadField, self)._validate(value, req, locale_data, **kwargs)
+        return super(FileUploadField, self).validate(req, locale_data)
+
+    def _validate(self, value, locale_data, **kwargs):
+        if value is not None:
+            kwargs = dict(kwargs, filename=value.filename(), mime_type=value.mime_type())
+            value = value.file()
+        elif not self._row.new():
+            # The original file is kept if no file is uploaded to replace it,
+            # so empty field is ok.
+            return None
+        return super(FileUploadField, self)._validate(value, locale_data, **kwargs)
 
     def _format(self, context):
         buf = self._value().value()
@@ -918,12 +919,12 @@ class ChoiceField(EnumerationField):
 class ChecklistField(EnumerationField):
     _HANDLER = 'pytis.ChecklistField'
 
-    def _validate(self, value, req, locale_data, **kwargs):
+    def _validate(self, value, locale_data, **kwargs):
         if value:
             value = pytis.util.xtuple(value)
         else:
             value = ()
-        return super(ChecklistField, self)._validate(value, req, locale_data, **kwargs)
+        return super(ChecklistField, self)._validate(value, locale_data, **kwargs)
     
     def _format(self, context):
         return self._editor(context, id=self.html_id(), readonly=True)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2014 Brailcom, o.p.s.
+# Copyright (C) 2006-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1411,11 +1411,27 @@ class BrowseForm(LayoutForm):
             if text_search_condition:
                 text_search_condition_ = text_search_condition(text_search_string)
             else:
+                locale_data = self._req.localizer().locale_data()
+                def search_condition(field, string):
+                    t = field.type
+                    if isinstance(t, (pd.Password, pd.Binary, pd.Big, pd.Boolean)):
+                        return None
+                    if isinstance(t, pd.String):
+                        return pd.WM(field.id, pd.WMValue(f.type, '*' + string + '*'))
+                    if isinstance(field, DateTimeField):
+                        kwargs = dict(format=field.datetime_format(locale_data))
+                    else:
+                        kwargs = dict()
+                    value, error = t.validate(string, strict=False, **kwargs)
+                    if not error:
+                        return pd.EQ(field.id, value)
+                    else:
+                        return None
                 text_search_condition_ = pd.AND(*[
-                    pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*' + word + '*'))
-                            for f in self._fields.values()
-                            if isinstance(f.type, pd.String) and not f.virtual])
-                    for word in text_search_string.split()
+                    pd.OR(*[c for c in [search_condition(f, substring)
+                                        for f in self._fields.values() if not f.virtual]
+                            if c is not None])
+                    for substring in text_search_string.split()
                 ])
         else:
             text_search_condition_ = None
