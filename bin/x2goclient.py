@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-08 18:09'
+_VERSION = '2015-01-08 20:42'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -61,6 +61,9 @@ _ = t.ugettext
 
 def on_windows():
     return platform.system() == 'Windows'
+
+if on_windows():
+    os.environ[str('NXPROXY_BINARY')] = str(os.path.join(run_directory(), 'nxproxy', 'nxproxy.exe'))
 
 _NONE = object()
 
@@ -575,7 +578,7 @@ class PytisClient(x2go.X2GoClient):
         key_filename = parameters['key_filename']
         configuration.set('key_filename', key_filename)
         # Run
-        client = class_(use_cache=False, loglevel=x2go.log.loglevel_DEBUG)
+        client = class_(use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
         s_uuid = client.register_session(server, port=port, username=username,
                                          key_filename=key_filename,
                                          cmd=command, add_to_known_hosts=add_to_known_hosts)
@@ -604,7 +607,7 @@ def run():
     parser.add_argument('--ssh-privkey')
     parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
-    gevent.signal(signal.SIGQUIT, gevent.kill)
+    gevent.signal(signal.SIGTERM, gevent.kill)
     PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
                     args.add_to_known_hosts)
     
