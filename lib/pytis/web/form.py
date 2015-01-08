@@ -1416,6 +1416,10 @@ class BrowseForm(LayoutForm):
                     t = field.type
                     if isinstance(t, (pd.Password, pd.Binary, pd.Big, pd.Boolean)):
                         return None
+                    if isinstance(t.enumerator(), pd.FixedEnumerator):
+                        for value, label in self._row.enumerate(field.id):
+                            if req.localizer().localize(label) == string:
+                                return pd.EQ(field.id, pd.Value(t, value))
                     if isinstance(t, pd.String):
                         return pd.WM(field.id, pd.WMValue(f.type, '*' + string + '*'))
                     if isinstance(field, DateTimeField):
