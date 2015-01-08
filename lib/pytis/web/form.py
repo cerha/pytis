@@ -36,6 +36,7 @@ http://www.freebsoft.org/lcg.
 import collections
 import lcg
 import copy
+import re
 
 import pytis.data as pd
 
@@ -1094,6 +1095,7 @@ class BrowseForm(LayoutForm):
     _SORTING_DIRECTIONS = {pytis.data.ASCENDENT: 'asc',
                            pytis.data.DESCENDANT: 'desc'}
     _EXPORT_EMPTY_TABLE = False
+    _SEARCH_STRING_SPLITTER = re.compile('([^\s"]+)|"([^"]*)"|„([^„”]*)”')
     """Determines whether the table is present on output even if it contains no rows."""
 
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
@@ -1432,10 +1434,10 @@ class BrowseForm(LayoutForm):
                     else:
                         return None
                 text_search_condition_ = pd.AND(*[
-                    pd.OR(*[c for c in [search_condition(f, substring)
+                    pd.OR(*[c for c in [search_condition(f, g1 or g2 or g3)
                                         for f in self._fields.values() if not f.virtual]
                             if c is not None])
-                    for substring in text_search_string.split()
+                    for g1, g2, g3 in self._SEARCH_STRING_SPLITTER.findall(text_search_string)
                 ])
         else:
             text_search_condition_ = None
