@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2014 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2014, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,27 +20,32 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-19 21:58'
+_VERSION = '2015-01-08 18:09'
+
+import gevent.monkey
+gevent.monkey.patch_all()
 
 import argparse
 import copy
 import gettext
 import imp
-import multiprocessing
 import os
 import platform
 import re
 import shutil
+import signal
 import sys
 import tarfile
 import tempfile
-import time
 
 def run_directory():
     return sys.path[0]
 
 sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
 
+import gevent
+import gevent.event
+import gevent.queue
 import paramiko
 import rpyc
 import x2go
@@ -160,9 +165,9 @@ class PytisClient(x2go.X2GoClient):
 
     def __init__(self, *args, **kwargs):
         super(PytisClient, self).__init__(*args, **kwargs)
-        self._pytis_port_queue = multiprocessing.Queue()
-        self._pytis_password_queue = multiprocessing.Queue()
-        self._pytis_terminate = multiprocessing.Value('b', False)
+        self._pytis_port_value = gevent.event.AsyncResult()
+        self._pytis_password_value = gevent.event.AsyncResult()
+        self._pytis_terminate = gevent.event.Event()
     
     def pytis_setup(self, s_uuid, configuration):
         # Configuration transfer to the server
@@ -180,8 +185,12 @@ class PytisClient(x2go.X2GoClient):
             def __init__(self):
                 self._port = None
                 self._password = None
+            def port(self):
+                return self._port
             def set_port(self, port):
                 self._port = port
+            def password(self):
+                return self._password
             def set_password(self, password):
                 self._password = password
             def write(self):
@@ -191,30 +200,26 @@ class PytisClient(x2go.X2GoClient):
                 control_session._x2go_sftp_write(server_file_name, data)
         self._pytis_server_info = ServerInfo()
 
-    def pytis_handle_queues(self):
-        def get(queue):
-            value = None
-            while not queue.empty():
-                value = queue.get()
-            return value
-        password = get(self._pytis_password_queue)
-        port = get(self._pytis_port_queue)
-        if password is not None or port is not None:
-            info = self._pytis_server_info
-            if password is not None:
-                info.set_password(password)
-            if port is not None:
-                info.set_port(port)
+    def pytis_handle_info(self):
+        try:
+            password = self._pytis_password_value.get_nowait()
+            port = self._pytis_port_value.get_nowait()
+        except gevent.Timeout:
+            return
+        info = self._pytis_server_info
+        if password != info.password() or port != info.port():
+            info.set_password(password)
+            info.set_port(port)
             info.write()
 
-    def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive):
+    def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
         process = None
         while True:
-            if self._pytis_terminate.value:
+            if self._pytis_terminate.is_set():
                 if process is not None:
-                    process.terminate()
-                sys.exit()
+                    process.kill()
+                return
             # Look for a running RPyC instance
             running = True
             rpyc_info = RpycInfo(configuration)
@@ -229,7 +234,7 @@ class PytisClient(x2go.X2GoClient):
                 port = rpyc_info.port()
                 password = rpyc_info.password()
                 authenticator = pytisproc.PasswordAuthenticator(password,
-                                                                ssh_tunnel=ssh_tunnel_alive)
+                                                                ssh_tunnel_dead=ssh_tunnel_dead)
                 try:
                     authenticator.connect('localhost', port)
                 except:
@@ -238,7 +243,7 @@ class PytisClient(x2go.X2GoClient):
                 while not rpyc_stop_queue.empty():
                     rpyc_stop_queue.get()
                 if running and process is not None:
-                    process.terminate()
+                    process.kill()
                 running = False
             # If no running RPyC instance was found then start one
             if not running:
@@ -258,16 +263,15 @@ class PytisClient(x2go.X2GoClient):
                     raise ClientException(_("No free port found for RPyC in the range %s-%s") %
                                           (default_port, port_limit - 1,))
                 server.service.authenticator = authenticator
-                rpyc_port.value = port
+                rpyc_port.set(port)
                 rpyc_info = RpycInfo(configuration, port=port,
                                      password=authenticator.password())
                 rpyc_info.store()
-                process = multiprocessing.Process(target=server.start)
-                process.start()
-                self._pytis_password_queue.put(rpyc_info.password())
-            time.sleep(1)
+                gevent.spawn(server.start)
+                self._pytis_password_value.set(rpyc_info.password())
+            gevent.sleep(1)
 
-    def _check_ssh_tunnel(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive):
+    def _check_ssh_tunnel(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         try:
             password = configuration.get('password', basestring)
         except ClientException:
@@ -277,45 +281,53 @@ class PytisClient(x2go.X2GoClient):
         except ClientException:
             key_filename = None
         while True:
-            while rpyc_port.value == 0:
-                time.sleep(0.1)
-            port = multiprocessing.Value('i', 0)
+            while not rpyc_port.ready():
+                if self._pytis_terminate.is_set():
+                    return
+                gevent.sleep(0.1)
+            current_rpyc_port = rpyc_port.get()
+            port = gevent.event.AsyncResult()
             tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
-                                                rpyc_port.value, ssh_forward_port=port,
+                                                current_rpyc_port, ssh_forward_port=0,
                                                 ssh_user=configuration.get('user', basestring),
                                                 ssh_password=password,
-                                                key_filename=key_filename)
-            ssh_tunnel_alive.value = True
+                                                key_filename=key_filename,
+                                                ssh_forward_port_result=port)
             tunnel.start()
-            while not port.value and tunnel.is_alive():
-                time.sleep(0.1)
-            self._pytis_port_queue.put(port.value)
+            while not tunnel.ready():
+                if port.wait(0.1) is not None:
+                    self._pytis_port_value.set(port.get())
+                    break
             while True:
-                if self._pytis_terminate.value:
-                    tunnel.terminate()
-                    sys.exit()
-                if tunnel.is_alive():
-                    time.sleep(1)
-                else:
-                    ssh_tunnel_alive.value = False
+                if self._pytis_terminate.is_set():
+                    tunnel.kill()
+                    return
+                if tunnel.ready():
+                    ssh_tunnel_dead.set()
                     # We must restart RPyC as well in order to prevent password leak
                     rpyc_stop_queue.put(True)
                     break
+                elif rpyc_port.get() != current_rpyc_port:
+                    tunnel.kill()
+                    break
+                else:
+                    gevent.sleep(1)
 
     def pytis_start_processes(self, configuration):
         # RPyC server
-        rpyc_stop_queue = multiprocessing.Queue()
-        rpyc_port = multiprocessing.Value('i', 0)
-        ssh_tunnel_alive = multiprocessing.Value('b', False)
-        args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_alive,)
-        multiprocessing.Process(target=self._check_rpyc_server, args=args).start()
-        multiprocessing.Process(target=self._check_ssh_tunnel, args=args).start()
+        rpyc_stop_queue = gevent.queue.Queue()
+        rpyc_port = gevent.event.AsyncResult()
+        ssh_tunnel_dead = gevent.event.Event()
+        self._pytis_terminate.clear()
+        args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
+        gevent.spawn(self._check_rpyc_server, *args)
+        gevent.spawn(self._check_ssh_tunnel, *args)
 
     def terminate_session(self, *args, **kwargs):
         try:
             return super(PytisClient, self).terminate_session(*args, **kwargs)
         finally:
-            self._pytis_terminate.value = True
+            self._pytis_terminate.set()
             
     @classmethod
     def _pytis_ssh_connect(class_, parameters):
@@ -577,8 +589,8 @@ class PytisClient(x2go.X2GoClient):
         client.pytis_setup(s_uuid, configuration)
         try:
             while client.session_ok(s_uuid):
-                client.pytis_handle_queues()
-                time.sleep(0.1)
+                client.pytis_handle_info()
+                gevent.sleep(0.1)
         except KeyboardInterrupt:
             pass
         client.terminate_session(s_uuid)
@@ -592,6 +604,7 @@ def run():
     parser.add_argument('--ssh-privkey')
     parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
+    gevent.signal(signal.SIGQUIT, gevent.kill)
     PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
                     args.add_to_known_hosts)
     

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2014-12-10 14:29'
+_VERSION = '2015-01-08 17:01'
 
 import hashlib
 import os
@@ -505,13 +505,13 @@ class PasswordAuthenticator(object):
 
     _MAX_CHALLENGES = 10000
 
-    def __init__(self, password=None, ssh_tunnel=None):
+    def __init__(self, password=None, ssh_tunnel_dead=None):
         if password is None:
             password = hashlib.sha256(os.urandom(16)).hexdigest()
         self._password = password
         self._challenges = set()
         self._lock = threading.Lock()
-        self._ssh_tunnel = ssh_tunnel
+        self._ssh_tunnel_dead = ssh_tunnel_dead
     
     def __call__(self, sock):
         n = len(self._password)
@@ -521,7 +521,7 @@ class PasswordAuthenticator(object):
             raise rpyc.utils.authenticators.AuthenticationError("Invalid password")
         if len(self._challenges) >= self._MAX_CHALLENGES:
             raise rpyc.utils.authenticators.AuthenticationError("Too many connection attempts")
-        if self._ssh_tunnel is not None and not self._ssh_tunnel.value:
+        if self._ssh_tunnel_dead is not None and self._ssh_tunnel_dead.ready():
             raise rpyc.utils.authenticators.AuthenticationError("Unknown connection source")
         lock = self._lock
         lock.acquire()

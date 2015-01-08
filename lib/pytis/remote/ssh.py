@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Brailcom, o.p.s.
+# Copyright (C) 2014, 2015 Brailcom, o.p.s.
 # Copyright (C) 2008 Robey Pointer <robeypointer@gmail.com>
 #
 # COPYRIGHT NOTICE
@@ -20,19 +20,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import getpass
-import multiprocessing
 import os
 import select
 import socket
 import sys
-import threading
 
+import gevent
+import gevent.event
 import paramiko
 
 from pytis.util import log, EVENT, OPERATIONAL
 
 
-class ReverseTunnel(multiprocessing.Process):
+class ReverseTunnel(gevent.Greenlet):
     """Process running reverse ssh forward connection.
 
     Parameters are given in the constructor.  The process can be started using
@@ -44,7 +44,7 @@ class ReverseTunnel(multiprocessing.Process):
 
     def __init__(self, ssh_host, forward_port, ssh_port=22, ssh_user=None,
                  ssh_forward_port=None, forward_host='localhost', key_filename=None,
-                 ssh_password=None):
+                 ssh_password=None, ssh_forward_port_result=None):
         """
         Arguments:
 
@@ -58,15 +58,15 @@ class ReverseTunnel(multiprocessing.Process):
           ssh_password -- ssh password for 'ssh_user' on 'ssh_host'; basestring
             or 'None'
           ssh_forward_port -- forwarding port on the 'ssh_host' to bind to;
-            integer 'multiprocessing.Value' instance (if None or if the value
-            is 0 then an arbitrary free port is selected); this is the starting
-            point of the tunnel
+            integer (if None or if the value is 0 then an arbitrary free port
+            is selected); this is the starting point of the tunnel
           forward_host -- host to forward the connection to; basestring;
             the target point of the tunnel will be there
           key_filename -- name of the file containing the ssh key to use for
             connection to 'ssh_host'; basestring or 'None' in which case
             '~/.ssh/id_rsa' is used
-
+          ssh_forward_port_result -- optional instance providing 'set' method
+            to put the actual ssh forward port value (integer) into
         """
         super(ReverseTunnel, self).__init__()
         self._ssh_host = ssh_host
@@ -74,10 +74,10 @@ class ReverseTunnel(multiprocessing.Process):
         self._ssh_port = ssh_port
         self._ssh_user = ssh_user
         self._ssh_password = ssh_password
-        self._ssh_forward_port = None if ssh_forward_port is None else ssh_forward_port.value
+        self._ssh_forward_port = ssh_forward_port
         self._forward_host = forward_host
         self._key_filename = key_filename
-        self._actual_ssh_forward_port = ssh_forward_port
+        self._actual_ssh_forward_port = ssh_forward_port_result
         
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -121,15 +121,13 @@ class ReverseTunnel(multiprocessing.Process):
             log(OPERATIONAL, "No free port found in the range %s-%s" % (port, port_limit - 1,))
             return
         if self._actual_ssh_forward_port is not None:
-            self._actual_ssh_forward_port.value = p
+            self._actual_ssh_forward_port.set(p)
         log(EVENT, 'Remote port %d forwarded to %s:%d' % (p, forward_host, forward_port,))
         while True:
             chan = transport.accept(1000)
             if chan is None:
                 continue
-            thread = threading.Thread(target=self._handler, args=(chan, forward_host, forward_port))
-            thread.setDaemon(True)
-            thread.start()
+            gevent.spawn(self._handler, chan, forward_host, forward_port)
 
     def run(self):
         self._actual_ssh_port = None
@@ -162,6 +160,9 @@ class ReverseTunnel(multiprocessing.Process):
             (self._ssh_forward_port or self._DEFAULT_SSH_FORWARD_PORT, forward_host, forward_port,))
         self._reverse_forward_tunnel(client.get_transport())
 
+    def _run(self):
+        return self.run()
+
 
 # Just for testing:
 if __name__ == '__main__':
@@ -174,11 +175,18 @@ if __name__ == '__main__':
     def arg(n, default):
         a = args[n:n + 1]
         return a[0] if a else default
+    import gevent.monkey
+    gevent.monkey.patch_all()
+    forward_port = gevent.event.AsyncResult()
+    def forward_port_callback(value):
+        print "ssh forward port:", value.get()
+    forward_port.rawlink(forward_port_callback)
     tunnel = ReverseTunnel(args[0], int(args[1]),
                            ssh_port=int(arg(2, '22')),
                            ssh_user=(arg(3, None)),
                            ssh_forward_port=int(arg(4, '10000')),
                            forward_host=(arg(5, 'localhost')),
-                           key_filename=(arg(6, None)))
+                           key_filename=(arg(6, None)),
+                           ssh_forward_port_result=forward_port)
     tunnel.start()
     tunnel.join()
