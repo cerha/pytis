@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-08 20:42'
+_VERSION = '2015-01-09 11:42'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -607,7 +607,8 @@ def run():
     parser.add_argument('--ssh-privkey')
     parser.add_argument('--add-to-known-hosts', action='store_true')
     args = parser.parse_args()
-    gevent.signal(signal.SIGTERM, gevent.kill)
+    quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
+    gevent.signal(quit_signal, gevent.kill)
     PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
                     args.add_to_known_hosts)
     
