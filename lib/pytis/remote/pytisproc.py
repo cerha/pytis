@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-08 17:01'
+_VERSION = '2015-01-09 18:15'
 
 import hashlib
 import os
@@ -547,8 +547,13 @@ class PasswordAuthenticator(object):
         challenge = self.challenge()
         hash_ = self.password_hash(challenge)
         c = rpyc.connect(host, port)
-        fd = c.fileno()
-        s = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        if hasattr(socket, 'fromfd'):
+            fd = c.fileno()
+            s = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            # There is no socket.fromfd in Python 2.x on Windows, so let's use
+            # the original hidden socket.
+            s = c._channel.stream.sock
         s.send(challenge + hash_)
         server_challenge = self.challenge()
         server_hash = c.root.authenticate_server(server_challenge)
