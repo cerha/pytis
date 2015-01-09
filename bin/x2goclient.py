@@ -37,6 +37,7 @@ import signal
 import sys
 import tarfile
 import tempfile
+import types
 
 def run_directory():
     return sys.path[0]
@@ -49,9 +50,7 @@ import gevent.queue
 import paramiko
 import rpyc
 import x2go
-
 import PyZenity as zenity
-
 import pytis.remote
 
 t = gettext.translation('pytis-x2go',
@@ -74,10 +73,12 @@ class Configuration(object):
 
     _CONFIGURATION_FILE = 'config.py'
     _RPYC_FILE = 'rpyc'
+    _default_session_profile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
 
     def __init__(self):
         self._directory = self._configuration_directory()
         self._configuration = self._read_configuration()
+        self._session_params = {}
 
     def _configuration_directory(self):
         basename = '_pytis_x2go' if on_windows() else '.pytis-x2go'
@@ -111,7 +112,7 @@ class Configuration(object):
         configuration = copy.copy(c.__dict__)
         del sys.modules['_config']
         return configuration
-    
+
     def get(self, key, type_, default=_NONE):
         args = () if default is _NONE else (default,)
         try:
@@ -122,6 +123,43 @@ class Configuration(object):
             raise ClientException(_("Invalid configuration parameter type: %s = %r (is not %s)") %
                                   (key, value, type_,))
         return value
+
+    def _get_profile_option_type(self, option):
+        "Get the data type for a specific session profile option."
+        try:
+            return type(self._default_session_profile[option])
+        except KeyError:
+            return types.StringType
+
+    def get_session_params(self):
+        if self._session_params:
+            return x2go.utils._convert_SessionProfileOptions_2_SessionParams(self._session_params)
+        else:
+            return {}
+
+    def set_session_params(self, session_name, parser):
+        for param in self._default_session_profile:
+            if parser.has_option(session_name, param):
+                option_type = self._get_profile_option_type(param)
+                if isinstance(option_type, types.BooleanType):
+                    val = parser.getboolean(session_name, param)
+                elif isinstance(option_type, types.IntType):
+                    val = parser.getint(session_name, param)
+                elif isinstance(option_type, types.ListType):
+                    _val = parser.get(session_name, param)
+                    _val = _val.strip()
+                    if _val.startswith('[') and _val.endswith(']'):
+                        val = eval(_val)
+                    elif ',' in _val:
+                        _val = [v.strip() for v in _val.split(',')]
+                    else:
+                        val = [_val]
+                else:
+                    _val = parser.get(session_name, param)
+                    val = _val.decode('UTF8')
+            else:
+                val = self._default_session_profile[param]
+            self._session_params[param] = val
 
     def set(self, key, value):
         self._configuration[key] = value
@@ -153,7 +191,7 @@ class RpycInfo(object):
             f.close()
         except Exception as e:
             raise ClientException(_("Error when writing RPyC info file: %s") % (self._filename,), e)
-        
+
     def port(self):
         return self._port
 
@@ -171,7 +209,7 @@ class PytisClient(x2go.X2GoClient):
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
-    
+
     def pytis_setup(self, s_uuid, configuration):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
@@ -475,8 +513,7 @@ class PytisClient(x2go.X2GoClient):
         if not session_name:
             raise Exception(_("No session selected."))
         configuration = Configuration()
-        for o in parser.options(session_name):
-            configuration.set(o, parser.get(session_name, o))
+        configuration.set_session_params(session_name, parser)
         # Fetch additional session parameters
         server_regexp = re.compile('^SERVER:(.*):(.*)$')
         text = ''
@@ -499,7 +536,6 @@ class PytisClient(x2go.X2GoClient):
                 configuration.set('sshport', port)
         # Finish configuration and return it
         configuration.set('password', parameters['password'])
-        configuration.set('key_filename', parameters['key_filename'])
         return configuration
 
     @classmethod
@@ -527,7 +563,7 @@ class PytisClient(x2go.X2GoClient):
         shutil.rmtree(old_install_directory)
         zenity.InfoMessage(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
-        
+
     @classmethod
     def run(class_, broker_url=None, server=None, username=None, command=None,
             key_filename=None, add_to_known_hosts=False):
@@ -588,6 +624,8 @@ class PytisClient(x2go.X2GoClient):
         session.sshproxy_params['look_for_keys'] = False
         client.connect_session(s_uuid, username=username, password=password)
         client.clean_sessions(s_uuid)
+        session_params = configuration.get_session_params()
+        client.get_session(s_uuid).update_params(session_params)
         client.start_session(s_uuid)
         client.pytis_setup(s_uuid, configuration)
         try:
@@ -611,7 +649,7 @@ def run():
     gevent.signal(quit_signal, gevent.kill)
     PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
                     args.add_to_known_hosts)
-    
+
 if __name__ == '__main__':
     run()
 
