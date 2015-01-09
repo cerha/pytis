@@ -369,6 +369,21 @@ class PytisClient(x2go.X2GoClient):
             return super(PytisClient, self).terminate_session(*args, **kwargs)
         finally:
             self._pytis_terminate.set()
+
+    @classmethod
+    def _ssh_server_methods(class_, host, port):
+        import socket
+        s = socket.socket()
+        s.connect((host, port))
+        transport = paramiko.Transport(s)
+        transport.connect()
+        try:
+            transport.auth_none('')
+        except paramiko.ssh_exception.BadAuthenticationType as e:
+            methods = e.allowed_types
+        transport.close()
+        s.close()
+        return methods
             
     @classmethod
     def _pytis_ssh_connect(class_, parameters):
@@ -393,10 +408,8 @@ class PytisClient(x2go.X2GoClient):
                         parameters['password'] = password
                         continue
                 if not methods:
-                    try:
-                        methods = client.get_transport().auth_none(parameters['username'])
-                    except paramiko.ssh_exception.BadAuthenticationType as e:
-                        methods = e.args[1]
+                    methods = class_._ssh_server_methods(parameters['hostname'],
+                                                         parameters['port'])
                 if 'publickey' in methods and parameters.get('key_filename') is None:
                     if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
                         parameters['key_filename'] = class_._DEFAULT_KEY_FILENAME
