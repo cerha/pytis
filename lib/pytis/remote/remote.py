@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -101,38 +101,62 @@ def client_available():
         log(DEBUG, "RPC exception:", e)
         return False
 
+def x2go_session_id():
+    return os.getenv('X2GO_SESSION')
+
+def pytis_x2go_info_file(session_id):
+    return os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (session_id,)))
+
+class X2GoInfoException(Exception):
+    pass
+class X2GoInfoSoftException(X2GoInfoException):
+    pass
+class X2GoInfoHardException(X2GoInfoException):
+    pass
+
+def parse_x2go_info_file(filename):
+    try:
+        f = open(filename)
+    except Exception as e:
+        log(OPERATIONAL, "Can't read pytis X2Go file", e)
+        return None
+    data = ''
+    while True:
+        d = f.read()
+        if not d:
+            break
+        data += d
+    items = data.split(':')
+    if len(items) != 4:
+        raise X2GoInfoSoftException("Incomplete or invalid X2Go file")
+    if items[0] != '0':
+        raise X2GoInfoHardException("Unknown pytis X2Go format")
+    access_data = {}
+    try:
+        access_data['port'] = int(items[1])
+    except ValueError:
+        raise X2GoInfoHardException("Invalid port number in X2Go file", items[1])
+    access_data['password'] = items[2]
+    return access_data
+
 _direct_connection = False
 def _connect():
-    session_id = os.getenv('X2GO_SESSION')
-    pytis_x2go_file = os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (session_id,)))
+    session_id = x2go_session_id()
+    pytis_x2go_file = pytis_x2go_info_file(session_id)
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
             try:
-                f = open(pytis_x2go_file)
-            except Exception as e:
-                log(OPERATIONAL, "Can't read pytis X2Go file", e)
-                return None
-            data = ''
-            while True:
-                d = f.read()
-                if not d:
-                    break
-                data += d
-            items = data.split(':')
-            if items[0] != '0':
-                log(OPERATIONAL, "Unknown pytis X2Go format")
-                return None
-            if len(items) != 4:
-                log(OPERATIONAL, "Incomplete or invalid X2Go file")
+                access_data = parse_x2go_info_file(pytis_x2go_file)
+            except X2GoInfoSoftException as e:
+                log(OPERATIONAL, *e.args)
                 time.sleep(1)
                 continue
-            try:
-                port = int(items[1])
-            except ValueError:
-                log(OPERATIONAL, "Invalid port number in X2Go file", items[1])
+            except X2GoInfoHardException as e:
+                log(OPERATIONAL, *e.args)
                 return None
-            password = items[2]
             os.remove(pytis_x2go_file)
+            port = access_data['port']
+            password = access_data['password']
             break
     else:
         port = config.rpc_local_port

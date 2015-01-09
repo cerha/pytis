@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -25,7 +25,10 @@ except ImportError as e:
 from remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     get_clipboard_text, set_clipboard_text, \
     launch_file, launch_url, make_selected_file, make_temporary_file, \
-    open_file, open_selected_file, select_directory, select_file
+    open_file, open_selected_file, select_directory, select_file, \
+    x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, \
+    X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException
+
 try:
     from ssh import ReverseTunnel
 except ImportError as e:
