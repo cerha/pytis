@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-09 11:42'
+_VERSION = '2015-01-12 15:47'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -401,7 +401,7 @@ class PytisClient(x2go.X2GoClient):
             try:
                 client.connect(look_for_keys=False, **connect_parameters)
                 break
-            except paramiko.ssh_exception.AuthenticationException as e:
+            except paramiko.ssh_exception.AuthenticationException:
                 if selected_method != 'password' and parameters.get('key_filename') is not None:
                     password = zenity.GetText(text=_("Key password"), password=True,
                                               title="")
@@ -602,7 +602,8 @@ class PytisClient(x2go.X2GoClient):
         else:
             configuration.set('user', username)
         if command is None:
-            command = configuration.get('command', basestring, x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
+            command = configuration.get('command', basestring,
+                                        x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
         else:
             configuration.set('command', command)
         try:
