@@ -597,11 +597,11 @@ class PytisClient(x2go.X2GoClient):
             configuration.set('host', server)
         port = configuration.get('sshport', int, 22)
         if username is None:
-            username = configuration.get('user', basestring)
+            username = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
         else:
             configuration.set('user', username)
         if command is None:
-            command = configuration.get('command', basestring)
+            command = configuration.get('command', basestring, x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
         else:
             configuration.set('command', command)
         try:
