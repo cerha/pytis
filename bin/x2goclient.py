@@ -321,6 +321,7 @@ class PytisClient(x2go.X2GoClient):
             key_filename = configuration.get('key_filename', basestring)
         except ClientException:
             key_filename = None
+        user = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -330,7 +331,7 @@ class PytisClient(x2go.X2GoClient):
             port = gevent.event.AsyncResult()
             tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
                                                 current_rpyc_port, ssh_forward_port=0,
-                                                ssh_user=configuration.get('user', basestring),
+                                                ssh_user=user,
                                                 ssh_password=password,
                                                 key_filename=key_filename,
                                                 ssh_forward_port_result=port)
