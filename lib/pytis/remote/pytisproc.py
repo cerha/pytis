@@ -353,14 +353,22 @@ class PytisUserService(PytisService):
         return Wrapper(handle, filename, encoding, mode)
 
     def exposed_select_directory(self):
-        import win32gui
-        from win32com.shell import shell, shellcon
-        # Get PIDL of the topmost folder for the dialog
-        desktop_pidl = shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0)
-        pidl, display_name, image_list = shell.SHBrowseForFolder(
-            win32gui.GetDesktopWindow(), desktop_pidl, u"Výběr adresáře", 0, None, None)
-        # Transform PIDL back to a directory name and return it
-        return shell.SHGetPathFromIDList(pidl)
+        if self._pytis_on_windows():
+            import win32gui
+            from win32com.shell import shell, shellcon
+            # Get PIDL of the topmost folder for the dialog
+            desktop_pidl = shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0)
+            pidl, display_name, image_list = shell.SHBrowseForFolder(
+                win32gui.GetDesktopWindow(), desktop_pidl, u"Výběr adresáře", 0, None, None)
+            # Transform PIDL back to a directory name and return it
+            return shell.SHGetPathFromIDList(pidl)
+        else:
+            import PyZenity as zenity
+            directory_list = zenity.GetDirectory()
+            if directory_list and len(directory_list) > 0:
+                return directory_list[0]
+            else:
+                return None
 
     def exposed_select_file(self, filename=None, template=None, multi=False):
         """Return a list of filenames selected by user in GUI dialog.
