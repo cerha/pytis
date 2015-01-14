@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2009-2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -175,7 +175,8 @@ class ItemsHelp(Specification):
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError:
             return identifier
-        items = getattr(view_spec, kind+'s')()
+        kwargs = dict(unnest=True) if kind == 'action' else {}
+        items = getattr(view_spec, kind+'s')(**kwargs)
         item = pytis.util.find(identifier, items, key=lambda x: x.id())
         if item:
             if kind in ('field',):
