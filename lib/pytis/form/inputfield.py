@@ -579,7 +579,7 @@ class InputField(object, KeyHandler, CommandHandler):
                 self._skipped_controls[ctrl] = True
 
     def _set_ctrl_editable(self, ctrl, editable):
-        ctrl.Enable(True)
+        ctrl.Enable(editable)
 
     def _set_ctrl_color(self, ctrl, color):
         if hasattr(ctrl, 'SetOwnBackgroundColour'):
