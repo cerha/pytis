@@ -1568,6 +1568,8 @@ class StatusBar(object):
         self._last_tooltip_index = None
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
+        SB_SUNKEN = 3 # This wx constant is missing in wx Python???
+        sb.SetStatusStyles([SB_SUNKEN for f in fields])
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
         wx_callback(wx.EVT_MOTION, sb, self._on_motion)
