@@ -957,7 +957,8 @@ class VirtualForm(EditForm):
         def req(self):
             return self._req
 
-    def __init__(self, req, resolver, show_reset_button=False, **kwargs):
+    def __init__(self, req, resolver, show_reset_button=False, handler=None, submit_buttons=None,
+                 **kwargs):
         spec = pytis.presentation.Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
@@ -966,7 +967,9 @@ class VirtualForm(EditForm):
         view = spec.view_spec()
         data = spec.data_spec().create()
         row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button)
+        super(VirtualForm, self).__init__(view, req, row, handler=handler,
+                                          submit_buttons=submit_buttons,
+                                          show_reset_button=show_reset_button)
 
 
 class QueryFieldsForm(VirtualForm):
