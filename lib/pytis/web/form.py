@@ -938,22 +938,44 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         """
         self._error = (field_id, error)
 
-class QueryFieldsForm(EditForm):
-    """Special form for representation of browse form query fields (for internal use only)."""
-    _CSS_CLS = 'edit-form query-fields-form'
-    _ALLOW_NOT_NULL_INDICATORS = False
-    _SAVED_EMPTY_VALUE = '-'
+
+class VirtualForm(EditForm):
+    """Edit form with dynamically created in-memory data object
+
+    Pass specification arguments to form constructor to create a form with
+    arbitrary fields, layout and other logic.
+
+    """
+    _CSS_CLS = 'edit-form virtual-form'
 
     class FormRecord(pytis.presentation.PresentedRow):
 
         def __init__(self, req, *args, **kwargs):
             self._req = req
-            super(QueryFieldsForm.FormRecord, self).__init__(*args, **kwargs)
+            super(VirtualForm.FormRecord, self).__init__(*args, **kwargs)
 
         def req(self):
             return self._req
 
-    def __init__(self, query_fields, filter_sets, req, resolver, immediate_filters=True):
+    def __init__(self, req, resolver, show_reset_button=False, **kwargs):
+        spec = pytis.presentation.Specification.create_from_kwargs(
+            resolver,
+            data_cls=pytis.data.RestrictedMemData,
+            **kwargs
+        )
+        view = spec.view_spec()
+        data = spec.data_spec().create()
+        row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
+        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button)
+
+
+class QueryFieldsForm(VirtualForm):
+    """Special form for representation of browse form query fields (for internal use only)."""
+    _CSS_CLS = 'edit-form query-fields-form'
+    _ALLOW_NOT_NULL_INDICATORS = False
+    _SAVED_EMPTY_VALUE = '-'
+
+    def __init__(self, req, resolver, query_fields, filter_sets, immediate_filters=True):
         if query_fields:
             kwargs = dict(query_fields.view_spec_kwargs())
             fields = list(kwargs.pop('fields'))
@@ -970,17 +992,8 @@ class QueryFieldsForm(EditForm):
                     layout = pytis.presentation.HGroup(*(ids + layout.items()))
                 else:
                     layout = pytis.presentation.HGroup(ids, layout)
-        spec = pytis.presentation.Specification.create_from_kwargs(
-            resolver,
-            data_cls=pytis.data.RestrictedMemData,
-            fields=fields,
-            layout=layout,
-            **kwargs
-        )
-        view = spec.view_spec()
-        data = spec.data_spec().create()
-        row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super(QueryFieldsForm, self).__init__(view, req, row)
+        super(QueryFieldsForm, self).__init__(req, resolver, fields=fields, layout=layout, **kwargs)
+        row = self._row
         self._immediate_filters = (immediate_filters and
                                    all(row.type(f).enumerator() is not None
                                        for f in self._field_order()))
@@ -1307,8 +1320,8 @@ class BrowseForm(LayoutForm):
         if query_fields is None:
             query_fields = self._view.query_fields()
         if query_fields or filter_sets:
-            self._query_fields_form = form = QueryFieldsForm(query_fields, filter_sets,
-                                                             req, self._row.resolver(),
+            self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(),
+                                                             query_fields, filter_sets,
                                                              immediate_filters=immediate_filters)
             query_fields_row = form.row()
         else:
