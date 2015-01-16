@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2011, 2012, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2010-2014 by Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-14 15:32'
+_VERSION = '2015-01-16 18:00'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -47,8 +48,11 @@ import gevent
 import gevent.event
 import gevent.queue
 import paramiko
+import pyhoca.cli
+from pyhoca.cli import current_home, runtime_error
 import rpyc
 import x2go
+import x2go.defaults
 import PyZenity as zenity
 import pytis.remote
 
@@ -197,14 +201,127 @@ class RpycInfo(object):
     def password(self):
         return self._password
 
-class PytisClient(x2go.X2GoClient):
+class PytisClient(pyhoca.cli.PyHocaCLI):
 
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
     _DEFAULT_KEY_FILENAME = os.path.expanduser('~/.ssh/id_rsa')
 
-    def __init__(self, *args, **kwargs):
-        super(PytisClient, self).__init__(*args, **kwargs)
+    def __init__(self, args, logger=None, liblogger=None, **kwargs):
+        import pprint
+        ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
+                                                'known_hosts')
+        #
+        self.args = args
+        if logger is None:
+            self._pyhoca_logger = x2go.X2GoLogger(tag='PyHocaCLI')
+        else:
+            self._pyhoca_logger = copy.deepcopy(logger)
+            self._pyhoca_logger.tag = 'PyHocaCLI'
+        _backend_kwargs = copy.copy(kwargs)
+        if self.args.backend_controlsession is not None:
+            _backend_kwargs['control_backend'] = self.args.backend_controlsession
+        if self.args.backend_terminalsession is not None:
+            _backend_kwargs['terminal_backend'] = self.args.backend_terminalsession
+        if self.args.backend_serversessioninfo is not None:
+            _backend_kwargs['info_backend'] = self.args.backend_serversessioninfo
+        if self.args.backend_serversessionlist is not None:
+            _backend_kwargs['list_backend'] = self.args.backend_serversessionlist
+        if self.args.backend_proxy is not None:
+            _backend_kwargs['proxy_backend'] = self.args.backend_proxy
+        if self.args.backend_sessionprofiles is not None:
+            _backend_kwargs['profiles_backend'] = self.args.backend_sessionprofiles
+        if self.args.backend_clientsettings is not None:
+            _backend_kwargs['settings_backend'] = self.args.backend_clientsettings
+        if self.args.backend_clientprinting is not None:
+            _backend_kwargs['printing_backend'] = self.args.backend_clientprinting
+        self._pyhoca_logger('preparing requested X2Go session', loglevel=x2go.loglevel_NOTICE, )
+        x2go.X2GoClient.__init__(self, broker_url=self.args.broker_url,
+                                 broker_password=self.args.broker_password, logger=liblogger,
+                                 **_backend_kwargs)
+        _profiles = self._X2GoClient__get_profiles()
+        if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
+            self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
+                                exitcode=31)
+        self.auth_attempts = int(self.args.auth_attempts)
+        if args.list_profiles:
+            _session_profiles = self._X2GoClient__get_profiles()
+            # retrieve a session list
+            print
+            print "Available X2Go session profiles"
+            print "==============================="
+            if ((hasattr(_session_profiles, 'config_files') and
+                 _session_profiles.config_files is not None)):
+                print "configuration files: %s" % _session_profiles.config_files
+            if ((hasattr(_session_profiles, 'user_config_file') and
+                 _session_profiles.user_config_file is not None)):
+                print "user configuration file: %s" % _session_profiles.user_config_file
+            if ((hasattr(_session_profiles, 'broker_url') and
+                 _session_profiles.broker_url is not None)):
+                print "X2Go Session Broker URL: %s" % _session_profiles.broker_url
+            print
+            for _profile_id in _session_profiles.profile_ids:
+                _profile_config = _session_profiles.get_profile_config(_profile_id)
+                _session_params = _session_profiles.to_session_params(_profile_id)
+                print 'Profile ID: %s' % _profile_id
+                print 'Profile Name: %s' % _session_params['profile_name']
+                print 'Profile Configuration:'
+                pprint.pprint(_profile_config)
+                print 'Derived session parameters:'
+                pprint.pprint(_session_params)
+                print
+            # done
+            sys.exit(0)
+        elif self.args.session_profile:
+            _cmdlineopt_to_sessionopt = {
+                'command': 'cmd',
+                'kb_layout': 'kblayout',
+                'kb_type': 'kbtype',
+                'sound': 'snd_system',
+                'ssh_privkey': 'key_filename',
+                'server': 'hostname',
+                'remote_ssh_port': 'port',
+            }
+            # override session profile options by option values from the arg parser
+            kwargs = {}
+            if hasattr(self.args, 'parser'):
+                for a, v in self.args._get_kwargs():
+                    if v != self.args.parser.get_default(a):
+                        try:
+                            kwargs[_cmdlineopt_to_sessionopt[a]] = v
+                        except KeyError:
+                            kwargs[a] = v
+            # setup up the session profile based X2Go session
+            self.x2go_session_hash = self._X2GoClient__register_session(
+                profile_name=self.args.session_profile,
+                known_hosts=ssh_known_hosts_filename,
+                **kwargs
+            )
+        else:
+            # setup up the manually configured X2Go session
+            self.x2go_session_hash = self._X2GoClient__register_session(
+                args.server,
+                port=int(self.args.remote_ssh_port),
+                known_hosts=ssh_known_hosts_filename,
+                username=self.args.username,
+                key_filename=self.args.ssh_privkey,
+                add_to_known_hosts=self.args.add_to_known_hosts,
+                profile_name='Pyhoca-Client_Session',
+                session_type=self.args.session_type,
+                link=self.args.link,
+                geometry=self.args.geometry,
+                pack=self.args.pack,
+                cache_type='unix-kde',
+                kblayout=self.args.kbd_layout,
+                kbtype=self.args.kbd_type,
+                snd_system=self.args.sound,
+                printing=self.args.printing,
+                print_action=self.args.print_action,
+                print_action_args=self.args.print_action_args,
+                share_local_folders=self.args.share_local_folders,
+                allow_share_local_folders=True,
+                cmd=self.args.command)
+        # super(PytisClient, self).__init__(*args, **kwargs)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
@@ -577,9 +694,25 @@ class PytisClient(x2go.X2GoClient):
         zenity.InfoMessage(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
+    def new_session(self, s_hash):
+        super(PytisClient, self).new_session(s_hash)
+        if self._pytis_setup_configuration is not None:
+            self.pytis_setup(s_hash, self._pytis_setup_configuration)
+            self._pytis_setup_configuration = None
+            def info_handler():
+                while self.session_ok(s_hash):
+                    self.pytis_handle_info()
+                    gevent.sleep(0.1)
+            gevent.spawn(info_handler)
+            
     @classmethod
-    def run(class_, broker_url=None, server=None, username=None, command=None,
-            key_filename=None, add_to_known_hosts=False):
+    def run(class_, args):
+        broker_url = args.broker_url
+        server = args.server
+        username = args.username
+        command = args.command
+        key_filename = args.ssh_privkey
+        add_to_known_hosts = args.add_to_known_hosts
         # Get parameters
         if on_windows():
             zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
@@ -595,16 +728,19 @@ class PytisClient(x2go.X2GoClient):
             server = configuration.get('host', basestring)
         else:
             configuration.set('host', server)
+        args.server = server
         port = configuration.get('sshport', int, 22)
         if username is None:
             username = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
         else:
             configuration.set('user', username)
+        args.username = username
         if command is None:
             command = configuration.get('command', basestring,
                                         x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
         else:
             configuration.set('command', command)
+        args.command = command
         try:
             password = configuration.get('password', basestring)
         except ClientException:
@@ -625,47 +761,372 @@ class PytisClient(x2go.X2GoClient):
         client = None
         password = parameters['password']
         configuration.set('password', password)
+        args.password = password
         key_filename = parameters['key_filename']
         configuration.set('key_filename', key_filename)
+        args.ssh_privkey = key_filename
         # Run
-        client = class_(use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
-        s_uuid = client.register_session(server, port=port, username=username,
-                                         key_filename=key_filename,
-                                         cmd=command, add_to_known_hosts=add_to_known_hosts)
-        client.pytis_start_processes(configuration)
+        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
+        s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
         session.sshproxy_params['key_filename'] = key_filename
         session.sshproxy_params['look_for_keys'] = False
-        client.connect_session(s_uuid, username=username, password=password)
-        client.clean_sessions(s_uuid)
-        session_params = configuration.get_session_params()
-        client.get_session(s_uuid).update_params(session_params)
-        client.start_session(s_uuid)
-        client.pytis_setup(s_uuid, configuration)
-        try:
-            while client.session_ok(s_uuid):
-                client.pytis_handle_info()
-                gevent.sleep(0.1)
-        except KeyboardInterrupt:
-            pass
-        client.terminate_session(s_uuid)
+        client.pytis_start_processes(configuration)
+        client._pytis_setup_configuration = configuration
+        client.authenticate()
+        client.MainLoop()
 
-def run():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--broker-url')
-    parser.add_argument('--server')
-    parser.add_argument('--username')
-    parser.add_argument('--command')
-    parser.add_argument('--ssh-privkey')
-    parser.add_argument('--add-to-known-hosts', action='store_true')
-    args = parser.parse_args()
+# ---------------------
+# Taken from pyhoca-cli
+
+logger = x2go.X2GoLogger()
+liblogger = x2go.X2GoLogger()
+
+# exclusive client control options
+action_options = [
+    {'args': ['-N', '--new'], 'default': False, 'action': 'store_true',
+     'help': 'start a new X2Go session on server (default)', },
+    {'args': ['-R', '--resume'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'resume a suspended X2Go session with name SESSION_NAME', },
+    {'args': ['-D', '--share-desktop'], 'default': None, 'metavar': 'USER@DISPLAY',
+     'help': 'share an X2Go session on server specified by USER@DISPLAY', },
+    {'args': ['-S', '--suspend'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'suspend running X2Go session SESSION_NAME', },
+    {'args': ['-T', '--terminate'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'terminate running X2Go session SESSION_NAME', },
+    {'args': ['-L', '--list-sessions'], 'default': False, 'action': 'store_true', 'help':
+     'list user\'s X2Go sessions on server', },
+    {'args': ['--list-desktops'], 'default': False, 'action': 'store_true',
+     'help': 'list X2Go desktop sessions that are available for sharing', },
+    {'args': ['-l', '--list-profiles'], 'default': False, 'action': 'store_true',
+     'help': 'list user\'s X2Go pre-configured session profiles', },
+    {'args': ['-P', '--session-profile'], 'default': None,
+     'help': 'load x2goclient session profiles and use the session profile SESSION_PROFILE', },
+]
+if not on_windows():
+    action_options.append(
+        {'args': ['--from-stdin'], 'default': False, 'action': 'store_true',
+         'help': ('for LightDM remote login: '
+                  'read <username> <password> <host[:port]> <desktopshell> from STDIN'),
+         },
+    )
+# debug options...
+debug_options = [
+    {'args': ['-d', '--debug'], 'default': False, 'action': 'store_true',
+     'help': 'enable application debugging code', },
+    {'args': ['--quiet'], 'default': False, 'action': 'store_true',
+     'help': 'disable any kind of log output', },
+    {'args': ['--libdebug'], 'default': False, 'action': 'store_true',
+     'help': 'enable debugging code of the underlying Python X2Go module', },
+    {'args': ['--libdebug-sftpxfer'], 'default': False, 'action': 'store_true',
+     'help': ('enable debugging code of Python X2Go\'s sFTP server code '
+              '(very verbose, and even promiscuous)'),
+     },
+    {'args': ['-V', '--version'], 'default': False, 'action': 'store_true',
+     'help': 'print version number and exit', },
+]
+# possible programme options are
+x2go_options = [
+    {'args': ['-c', '--command'],
+     'help': 'command to run with -R mode on server (default: xterm)', },
+    {'args': ['-u', '--username'], 'default': None,
+     'help': 'username for the session (default: current user)', },
+    {'args': ['--password'], 'default': None, 'help': 'user password for session authentication', },
+    {'args': ['-p', '--remote-ssh-port'], 'default': '22',
+     'help': 'remote SSH port (default: 22)', },
+    {'args': ['-k', '--ssh-privkey'], 'default': None,
+     'help': 'use file \'SSH_PRIVKEY\' as private key for the SSH connection (e.g. ~/.ssh/id_rsa)',
+     },
+    {'args': ['--add-to-known-hosts'], 'default': False, 'action': 'store_true',
+     'help': ('add RSA host key fingerprint to ~/.ssh/known_hosts '
+              'if authenticity of server can\'t be established (default: not set)'),
+     },
+    {'args': ['--sound'], 'default': 'pulse', 'choices': ('pulse', 'esd', 'none'),
+     'help': 'X2Go server sound system (default: \'pulse\')', },
+    {'args': ['--printing'], 'default': False, 'action': 'store_true',
+     'help': 'use X2Go printing (default: disabled)', },
+    {'args': ['--share-mode'], 'default': 0,
+     'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
+    {'args': ['-F', '--share-local-folders'], 'metavar': '<folder1>[,<folder2[,...]]',
+     'default': None,
+     'help': 'a comma separated list of local folder names to mount in the X2Go session', },
+    {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
+     'help': 'clean all suspended sessions before starting a new one', },
+    {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
+     'help': ('terminate the connected session when pressing CTRL+C '
+              '(instead of suspending the session)'), },
+    {'args': ['--auth-attempts'], 'default': 3,
+     'help': 'number of authentication attempts before authentication fails (default: 3)', },
+]
+print_options = [
+    {'args': ['--print-action'], 'default': 'PDFVIEW',
+     'choices': x2go.defaults.X2GO_PRINT_ACTIONS.keys(),
+     'help': 'action to be performed for incoming X2Go print jobs (default: \'PDFVIEW\')', },
+    {'args': ['--pdfview-cmd'], 'default': None,
+     'help': (('PDF viewer command for displaying incoming X2Go print jobs (default: \'%s\');'
+              ' this option selects \'--print-action PDFVIEW\'') %
+              x2go.defaults.DEFAULT_PDFVIEW_CMD), },
+    {'args': ['--save-to-folder'], 'default': None, 'metavar': 'PRINT_DEST',
+     'help': (('save print jobs as PDF files to folder PRINT_DEST (default: \'%s\'); '
+               'this option selects \'--print-action PDFSAVE\'') %
+              x2go.defaults.DEFAULT_PDFSAVE_LOCATION), },
+    {'args': ['--printer'], 'default': None,
+     'help': ('target CUPS print queue for incoming X2Go print jobs '
+              '(default: CUPS default printer); this option selects \'--print-action CUPS\''), },
+    {'args': ['--print-cmd'], 'default': None,
+     'help': (('print command including cmd line arguments (default: \'%s\'); '
+               'this option selects \'--print-action PRINTCMD\'') %
+              x2go.defaults.DEFAULT_PRINTCMD_CMD), },
+]
+broker_options = [
+    {'args': ['-B', '--broker-url'], 'default': None,
+     'help': 'retrieve session profiles via an X2Go Session Broker under the given URL', },
+    {'args': ['--broker-password'], 'default': None,
+     'help': 'password for authenticating against the X2Go Session Broker', },
+]
+
+nx_options = [
+    {'args': ['-g', '--geometry'], 'default': '800x600',
+     'help': 'screen geometry: \'<width>x<height>\' or \'fullscreen\' (default: \'800x600\')', },
+    {'args': ['-q', '--link'], 'default': 'adsl',
+     'choices': ('modem', 'isdn', 'adsl', 'wan', 'lan'),
+     'help': 'link quality (default: \'adsl\')', },
+    {'args': ['-t', '--session-type'], 'default': 'application',
+     'choices': ('desktop', 'application'), 'help': 'session type (default: \'application\')', },
+    {'args': ['--pack'], 'default': '16m-jpeg-9',
+     'help': 'compression methods (see below for possible values)', },
+    {'args': ['--kbd-layout'], 'default': 'us',
+     'help': 'use keyboard layout (default: \'us\')', },
+    {'args': ['--kbd-type'], 'default': 'pc105/us',
+     'help': 'set Keyboard type (default: \'pc105/us\')', },
+]
+compat_options = [
+    {'args': ['--port'], 'default': None,
+     'help': 'compatibility option, synonymous to --remote-ssh-port PORT', },
+    {'args': ['--ssh-key'], 'default': None,
+     'help': 'compatibility option, synonymous to --ssh-privkey SSH_KEY', },
+    {'args': ['--use-sound'], 'default': None, 'choices': ('yes', 'no'),
+     'help': 'compatibility option, synonymous to --sound {pulse|none}', },
+    {'args': ['--client-ssh-port'], 'default': None,
+     'help': ('compatibility option for the x2goclient GUI; as Python X2Go brings its own internal '
+              'SFTP server, this option will be ignored'), },
+]
+_profiles_backend_default = x2go.BACKENDS['X2GoSessionProfiles']['default']
+_settings_backend_default = x2go.BACKENDS['X2GoClientSettings']['default']
+_printing_backend_default = x2go.BACKENDS['X2GoClientPrinting']['default']
+if on_windows():
+    _config_backends = ('FILE', 'WINREG')
+else:
+    _config_backends = ('FILE', 'GCONF')
+backend_options = [
+    {'args': ['--backend-controlsession'], 'default': None, 'metavar': '<CONTROLSESSION_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoControlSession'].keys(),
+     'help': ('force usage of a certain CONTROLSESSION_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-terminalsession'], 'default': None, 'metavar': '<TERMINALSESSION_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoTerminalSession'].keys(),
+     'help': ('force usage of a certain TERMINALSESSION_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-serversessioninfo'], 'default': None,
+     'metavar': '<SERVERSESSIONINFO_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoServerSessionInfo'].keys(),
+     'help': ('force usage of a certain SERVERSESSIONINFO_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-serversessionlist'], 'default': None,
+     'metavar': '<SERVERSESSIONLIST_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoServerSessionList'].keys(),
+     'help': ('force usage of a certain SERVERSESSIONLIST_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-proxy'], 'default': None, 'metavar': '<PROXY_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoProxy'].keys(),
+     'help': ('force usage of a certain PROXY_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-sessionprofiles'], 'default': None, 'metavar': '<SESSIONPROFILES_BACKEND>',
+     'choices': _config_backends,
+     'help': ('use given backend for accessing session profiles, available backends on your system:'
+              ' %s (default: %s)') % (', '.join(_config_backends), _profiles_backend_default), },
+    {'args': ['--backend-clientsettings'], 'default': None, 'metavar': '<CLIENTSETTINGS_BACKEND>',
+     'choices': _config_backends,
+     'help': (('use given backend for accessing the client settings configuration, '
+               'available backends on your system: %s (default: %s)') %
+              (', '.join(_config_backends), _settings_backend_default)), },
+    {'args': ['--backend-clientprinting'], 'default': None, 'metavar': '<CLIENTPRINTING_BACKEND>',
+     'choices': _config_backends,
+     'help': (('use given backend for accessing the client printing configuration, '
+               'available backends on your system: %s (default: %s)') %
+              (', '.join(_config_backends), _printing_backend_default)), },
+]
+
+# print version text and exit
+def version():
+    sys.stderr.write("%s\n" % (_VERSION,))
+    sys.exit(0)
+
+def parseargs():
+    global logger
+    global liblogger
+    p = argparse.ArgumentParser(description='X2Go pytis client.',
+                                epilog="""
+Possible values for the --pack NX option are:
+    %s
+""" % x2go.defaults.pack_methods_nx3_formatted,
+                                formatter_class=argparse.RawDescriptionHelpFormatter,
+                                add_help=True, argument_default=None)
+    p_reqargs = p.add_argument_group('X2Go server name')
+    p_reqargs.add_argument('--server', help='server hostname or IP address')
+    p_actionopts = p.add_argument_group('client actions')
+    p_debugopts = p.add_argument_group('debug options')
+    p_x2goopts = p.add_argument_group('X2Go options')
+    p_printopts = p.add_argument_group('X2Go print options')
+    p_brokeropts = p.add_argument_group('X2Go Session Broker client options')
+    p_nxopts = p.add_argument_group('NX options')
+    p_backendopts = p.add_argument_group('Python X2Go backend options (for experts only)')
+    p_compatopts = p.add_argument_group('compatibility options')
+    for (p_group, opts) in ((p_x2goopts, x2go_options), (p_printopts, print_options),
+                            (p_brokeropts, broker_options), (p_actionopts, action_options),
+                            (p_debugopts, debug_options), (p_nxopts, nx_options),
+                            (p_backendopts, backend_options), (p_compatopts, compat_options)):
+        for opt in opts:
+            args = opt['args']
+            del opt['args']
+            p_group.add_argument(*args, **opt)
+    a = p.parse_args()
+    if a.debug:
+        logger.set_loglevel_debug()
+    if a.libdebug:
+        liblogger.set_loglevel_debug()
+    if a.quiet:
+        logger.set_loglevel_quiet()
+        liblogger.set_loglevel_quiet()
+    if a.libdebug_sftpxfer:
+        liblogger.enable_debug_sftpxfer()
+    if a.password and on_windows():
+        runtime_error("The --password option is forbidden on Windows platforms", parser=p,
+                      exitcode=222)
+    if a.version:
+        version()
+    if not (a.session_profile or a.list_profiles):
+        # check for mutual exclusiveness of -N, -R, -S, -T and -L, -N is
+        # default if none of them is set
+        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+             bool(a.list_profiles)) > 1):
+            runtime_error("modes --new, --resume, --share-desktop, --suspend, --terminate, "
+                          "--list-sessions, --list-desktops and "
+                          "--list-profiles are mutually exclusive", parser=p, exitcode=2)
+        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+             bool(a.list_profiles)) == 0):
+            a.new = True
+        # check if pack method is available
+        if not x2go.utils.is_in_nx3packmethods(a.pack):
+            runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
+    else:
+        if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
+                a.list_desktops or a.list_profiles):
+            a.new = True
+    # X2Go printing
+    if (((a.pdfview_cmd and a.printer) or
+         (a.pdfview_cmd and a.save_to_folder) or
+         (a.pdfview_cmd and a.print_cmd) or
+         (a.printer and a.save_to_folder) or
+         (a.printer and a.print_cmd) or
+         (a.print_cmd and a.save_to_folder))):
+        runtime_error(("--pdfviewer, --save-to-folder, --printer and --print-cmd options are "
+                       "mutually exclusive"), parser=p, exitcode=81)
+    if a.pdfview_cmd:
+        a.print_action = 'PDFVIEW'
+    elif a.save_to_folder:
+        a.print_action = 'PDFSAVE'
+    elif a.printer:
+        a.print_action = 'PRINT'
+    elif a.print_cmd:
+        a.print_action = 'PRINTCMD'
+    if a.pdfview_cmd is None and a.print_action == 'PDFVIEW':
+        a.pdfview_cmd = x2go.defaults.DEFAULT_PDFVIEW_CMD
+    if a.save_to_folder is None and a.print_action == 'PDFSAVE':
+        a.save_to_folder = x2go.defaults.DEFAULT_PDFSAVE_LOCATION
+    if a.printer is None and a.print_action == 'PRINT':
+        # None means CUPS default printer...
+        a.printer = None
+    if a.print_cmd is None and a.print_action == 'PRINTCMD':
+        a.print_cmd = x2go.defaults.DEFAULT_PRINTCMD_CMD
+    a.print_action_args = {}
+    if a.pdfview_cmd:
+        a.print_action_args = {'pdfview_cmd': a.pdfview_cmd, }
+    elif a.save_to_folder:
+        a.print_action_args = {'save_to_folder': a.save_to_folder, }
+    elif a.printer:
+        a.print_action_args = {'printer': a.printer, }
+    elif a.print_cmd:
+        a.print_action_args = {'print_cmd': a.print_cmd, }
+    # take care of compatibility options
+    # option --use-sound yes as synonomyn for --sound
+    if a.use_sound is not None:
+        if a.use_sound == 'yes':
+            a.sound = 'pulse'
+        if a.use_sound == 'no':
+            a.sound = 'none'
+    if a.ssh_key is not None:
+        a.ssh_privkey = a.ssh_key
+    if a.port is not None:
+        a.remote_ssh_port = a.port
+    if a.share_local_folders is not None:
+        a.share_local_folders = a.share_local_folders.split(',')
+    try:
+        int(a.auth_attempts)
+    except ValueError:
+        runtime_error("value for cmd line argument --auth-attempts has to be of type integer",
+                      parser=p, exitcode=1)
+    if a.server:
+        # check if SERVER is in .ssh/config file, extract information from there...
+        ssh_config = paramiko.SSHConfig()
+        from pyhoca.cli import ssh_config_filename
+        ssh_config_fileobj = open(ssh_config_filename)
+        ssh_config.parse(ssh_config_fileobj)
+        ssh_host = ssh_config.lookup(a.server)
+        if ssh_host:
+            if 'hostname' in ssh_host.keys():
+                a.server = ssh_host['hostname']
+            if 'port' in ssh_host.keys():
+                a.remote_ssh_port = ssh_host['port']
+        ssh_config_fileobj.close()
+    # check if ssh priv key exists
+    if a.ssh_privkey and not os.path.isfile(a.ssh_privkey):
+        runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
+                      exitcode=30)
+    if not a.ssh_privkey and os.path.isfile('%s/.ssh/id_rsa' % current_home):
+        a.ssh_privkey = '%s/.ssh/id_rsa' % current_home
+    if not a.ssh_privkey and os.path.isfile('%s/.ssh/id_dsa' % current_home):
+        a.ssh_privkey = '%s/.ssh/id_dsa' % current_home
+    # lightdm remote login magic takes place here
+    if a.from_stdin:
+        lightdm_remote_login_buffer = sys.stdin.readline()
+        (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
+        a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
+        if ":" in a.server:
+            a.remote_ssh_port = a.server.split(':')[-1]
+            a.server = ':'.join(a.server.split(':')[:-1])
+        a.command = a.command.upper()
+        a.geometry = 'fullscreen'
+    return p, a
+
+# -----
+# Start
+
+def parse_arguments():
+    parser, args = parseargs()
+    args.parser = parser
+    return args
+
+def main():
+    args = parse_arguments()
     quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
     gevent.signal(quit_signal, gevent.kill)
-    PytisClient.run(args.broker_url, args.server, args.username, args.command, args.ssh_privkey,
-                    args.add_to_known_hosts)
+    PytisClient.run(args)
 
 if __name__ == '__main__':
-    run()
+    main()
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
