@@ -957,19 +957,16 @@ class VirtualForm(EditForm):
         def req(self):
             return self._req
 
-    def __init__(self, req, resolver, show_reset_button=False, handler=None, submit_buttons=None,
-                 **kwargs):
-        spec = pytis.presentation.Specification.create_from_kwargs(
+    def __init__(self, req, resolver, spec_kwargs, show_reset_button=False, **kwargs):
+        specification = pytis.presentation.Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
-            **kwargs
+            **spec_kwargs
         )
-        view = spec.view_spec()
-        data = spec.data_spec().create()
+        view = specification.view_spec()
+        data = specification.data_spec().create()
         row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super(VirtualForm, self).__init__(view, req, row, handler=handler,
-                                          submit_buttons=submit_buttons,
-                                          show_reset_button=show_reset_button)
+        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button, **kwargs)
 
 
 class QueryFieldsForm(VirtualForm):
@@ -980,11 +977,11 @@ class QueryFieldsForm(VirtualForm):
 
     def __init__(self, req, resolver, query_fields, filter_sets, immediate_filters=True):
         if query_fields:
-            kwargs = dict(query_fields.view_spec_kwargs())
-            fields = list(kwargs.pop('fields'))
-            layout = kwargs.pop('layout')
+            spec_kwargs = dict(query_fields.view_spec_kwargs())
+            fields = list(spec_kwargs.pop('fields'))
+            layout = spec_kwargs.pop('layout')
         else:
-            kwargs = {}
+            spec_kwargs = {}
             fields = []
             layout = pytis.presentation.HGroup()
         if filter_sets:
@@ -995,7 +992,8 @@ class QueryFieldsForm(VirtualForm):
                     layout = pytis.presentation.HGroup(*(ids + layout.items()))
                 else:
                     layout = pytis.presentation.HGroup(ids, layout)
-        super(QueryFieldsForm, self).__init__(req, resolver, fields=fields, layout=layout, **kwargs)
+        super(QueryFieldsForm, self).__init__(req, resolver,
+                                              dict(fields=fields, layout=layout, **spec_kwargs))
         row = self._row
         self._immediate_filters = (immediate_filters and
                                    all(row.type(f).enumerator() is not None
