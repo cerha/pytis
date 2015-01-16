@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-16 18:00'
+_VERSION = '2015-01-16 20:42'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -512,6 +512,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if parameters.get('_add_to_known_hosts'):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         selected_method = None
+        # Test ssh agent first
+        connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
+        connect_parameters['key_filename'] = None
+        try:
+            client.connect(look_for_keys=False, **connect_parameters)
+            parameters['key_filename'] = None
+            return client
+        except paramiko.ssh_exception.AuthenticationException:
+            pass
+        # ssh agent not available, try other authentication methods
+        connect_parameters['key_filename'] = parameters.get('key_filename')
         while True:
             connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
             try:
