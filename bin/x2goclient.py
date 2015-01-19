@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-16 20:42'
+_VERSION = '2015-01-19 17:19'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -529,16 +529,18 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 client.connect(look_for_keys=False, **connect_parameters)
                 break
             except paramiko.ssh_exception.AuthenticationException:
-                if selected_method != 'password' and parameters.get('key_filename') is not None:
-                    password = zenity.GetText(text=_("Key password"), password=True,
-                                              title="")
+                key_filename = parameters.get('key_filename')
+                if selected_method != 'password' and key_filename is not None:
+                    password = zenity.GetText(text=(_("Password key for %s") %
+                                                    (key_filename.replace('_', '__'),)),
+                                              password=True, title="")
                     if password is not None:
                         parameters['password'] = password
                         continue
                 if not methods:
                     methods = class_._ssh_server_methods(parameters['hostname'],
                                                          parameters['port'])
-                if 'publickey' in methods and parameters.get('key_filename') is None:
+                if 'publickey' in methods and key_filename is None:
                     if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
                         parameters['key_filename'] = class_._DEFAULT_KEY_FILENAME
                         continue
