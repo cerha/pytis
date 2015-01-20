@@ -714,6 +714,7 @@ class Column(pytis.data.ColumnSpec):
         assert isinstance(out, bool), out
         assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
             original_column
+        assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if (((primary_key or original_column is not None and original_column.primary_key)
              and (not type.not_null() or not type.unique()))):
             type = type.clone(type.__class__(not_null=True, unique=True))
@@ -728,6 +729,11 @@ class Column(pytis.data.ColumnSpec):
         self._index = index
         self._out = out
         self._original_column = original_column
+        if crypto_name is None and original_column is not None:
+            for f in original_column.table.fields:
+                if f.id() == name:
+                    crypto_name = f.crypto_name()
+                    break
         self._crypto_name = crypto_name
 
     def label(self):
@@ -2735,10 +2741,9 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
             query = class_.query()
         def original_column(c):
             result = None
-            if isinstance(c.type, SERIAL) and len(c.base_columns) == 1:
+            if len(c.base_columns) == 1:
                 base_column = list(c.base_columns)[0]
-                if ((isinstance(base_column, sqlalchemy.Column) and
-                     isinstance(base_column.type, SERIAL))):
+                if isinstance(base_column, sqlalchemy.Column):
                     table = base_column.table
                     if isinstance(table, SQLTable):
                         result = base_column
