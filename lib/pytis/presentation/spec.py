@@ -1596,7 +1596,7 @@ class ViewSpec(object):
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               orientation=Orientation.HORIZONTAL, folding=None, initial_folding=None,
-              arguments=None, argument_provider=None, condition_provider=None, 
+              arguments=None, argument_provider=None, condition_provider=None,
               query_fields=None, referer=None, spec_name='', public=None):
         def err(msg, *args):
             """Return assertion error message."""
@@ -3315,9 +3315,9 @@ class Field(object):
                                           validity_column=validity_column,
                                           validity_condition=validity_condition).items()
                                   if v is not None])
-        #assert not enumerator_kwargs or not isinstance(enumerator, pytis.data.Enumerator), \
-        #    err("'enumerator' defined as Enumerator instance and '%s' passed.",
-        #        enumerator_kwargs.keys()[0])
+        # assert not enumerator_kwargs or not isinstance(enumerator, pytis.data.Enumerator), \
+        #     err("'enumerator' defined as Enumerator instance and '%s' passed.",
+        #         enumerator_kwargs.keys()[0])
         links = xtuple(link)
         if __debug__:
             # Temporary: The following test replaces the commented out assertion above.  The
@@ -3337,9 +3337,9 @@ class Field(object):
             # Temporary: We won't even log the old way of passing type
             # arguments in the first step.  We will uncomment it when we decide
             # to start modifying the applications.
-            #if kwargs:
-            #    log_("Passing data type arguments to Field is deprecated: %r",
-            #          tuple(kwargs.keys()))
+            # if kwargs:
+            #     log_("Passing data type arguments to Field is deprecated: %r",
+            #           tuple(kwargs.keys()))
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
@@ -5023,12 +5023,12 @@ class Specification(object):
         self._customize_fields(fields)
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
-        #if self.__class__.__doc__:
-            #parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
-            #if 'description' not in self._view_spec_kwargs:
-            #    self._view_spec_kwargs['description'] = parts[0]
-            #if 'help' not in self._view_spec_kwargs and len(parts) > 1:
-            #    self._view_spec_kwargs['help'] = parts[1]
+        # if self.__class__.__doc__:
+        #     parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
+        #     if 'description' not in self._view_spec_kwargs:
+        #        self._view_spec_kwargs['description'] = parts[0]
+        #     if 'help' not in self._view_spec_kwargs and len(parts) > 1:
+        #        self._view_spec_kwargs['help'] = parts[1]
 
     def _init_from_db_fields(self, table, fields):
         xfields = []
