@@ -649,7 +649,7 @@ class Column(pytis.data.ColumnSpec):
     """
     def __init__(self, name, type, label=None, doc=None, unique=False, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False,
-                 original_column=None):
+                 original_column=None, crypto_name=None):
         """
         Arguments:
 
@@ -695,6 +695,14 @@ class Column(pytis.data.ColumnSpec):
           original_column -- original column of this column;
             'sqlalchemy.Column' instance.  Useful in views where the column
             origin must be known for some reason.
+          crypto_name -- if not 'None' then the field column values are stored
+            encrypted in the database and the argument value is a string
+            identifier of the protection area.  There can be defined several
+            different protection areas identified by corresponding crypto names
+            in the application, protected by different passwords.  Not all data
+            types support encryption, it is an error to set encryption for
+            field types which don't support it.  Encryption implies the
+            actual database column is of binary type.
           
         """
         assert label is None or isinstance(label, basestring), label
@@ -720,6 +728,7 @@ class Column(pytis.data.ColumnSpec):
         self._index = index
         self._out = out
         self._original_column = original_column
+        self._crypto_name = crypto_name
 
     def label(self):
         return self._label
@@ -745,9 +754,15 @@ class Column(pytis.data.ColumnSpec):
     def original_column(self):
         return self._original_column
 
+    def crypto_name(self):
+        return self._crypto_name
+
     def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False,
                           foreign_constraints=None, check_constraints=None):
-        alchemy_type = self.type().sqlalchemy_type()
+        if self._crypto_name:
+            alchemy_type = pytis.data.Binary().sqlalchemy_type()
+        else:
+            alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
         if references is not None:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -5071,7 +5071,8 @@ class Specification(object):
                         default = pytis.util.nextval('%s_%s_seq' %
                                                      (orig_c.table.name, orig_c.name,))
             f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
-                      editable=editable, codebook=codebook, not_null=c.type().not_null())
+                      editable=editable, codebook=codebook, not_null=c.type().not_null(),
+                      crypto_name=c.crypto_name())
             f.set_type(type_)
             xfields.append(f)
             xfields_map[c.id()] = i
