@@ -2747,6 +2747,8 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                     table = base_column.table
                     if isinstance(table, SQLTable):
                         result = base_column
+                    elif base_column is c:
+                        return None
                     elif isinstance(table, SQLView):
                         result = original_column(base_column)
             return result
