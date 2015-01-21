@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-21 18:00'
+_VERSION = '2015-01-21 21:11'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -73,6 +73,62 @@ _NONE = object()
 
 class ClientException(Exception):
     pass
+
+class AuthInfo(dict):
+
+    _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',)
+    _EXTRA_KEYS = ('_add_to_known_hosts', '_command', '_method',)
+    
+    _ARGS_PARAMETERS = (('server', 'hostname'),
+                        ('remote_ssh_port', 'port'),
+                        ('username', 'username'),
+                        ('password', 'password'),
+                        ('ssh_privkey', 'key_filename'),
+                        ('add_to_known_hosts', '_add_to_known_hosts'),
+                        ('command', '_command'),)
+
+    def _check_key(self, key):
+        if key not in self._CONNECT_KEYS + self._EXTRA_KEYS:
+            raise KeyError(key)
+
+    def __getitem__(self, key):
+        self._check_key(key)
+        return super(AuthInfo, self).__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self._check_key(key)
+        return super(AuthInfo, self).__setitem__(key, value)
+
+    def update_non_empty(self, **kwargs):
+        kwargs = dict([a for a in kwargs.items() if a[1]])
+        return self.update(**kwargs)
+
+    def connect_parameters(self):
+        return dict([(k, v,) for k, v in self.items() if k in self._CONNECT_KEYS])
+
+    def update_from_profile(self, profile):
+        for a, p in (('host', 'hostname'),
+                     ('user', 'username'),
+                     ('sshport', 'port'),):
+            v = profile.get(a)
+            if v is not None and v != '':
+                self[p] = v
+
+    def update_from_args(self, args):
+        for a, p in self._ARGS_PARAMETERS:
+            v = getattr(args, a)
+            if v is not None and v != '':
+                if p == 'port':
+                    v = int(v)
+                self[p] = v
+
+    def update_args(self, args):
+        for a, p in self._ARGS_PARAMETERS:
+            v = self.get(p)
+            if v is not None and v != '':
+                setattr(args, a, unicode(v))
+    
+_auth_info = AuthInfo()
 
 class Configuration(object):
 
@@ -364,15 +420,9 @@ class PytisSshProfiles(SshProfiles):
         SshProfiles.__init__(self, *args, **kwargs)
 
     def _make_ssh_client(self):
-        parameters = self._parameters
-        connect_parameters = copy.copy(parameters)
-        try:
-            del connect_parameters['path']
-        except KeyError:
-            pass
-        client = PytisClient.pytis_ssh_connect(connect_parameters)
-        parameters.update(connect_parameters)
-        return client
+        parameters = dict([p for p in self._parameters.items() if p != 'path' and p[1]])
+        _auth_info.update(**parameters)
+        return PytisClient.pytis_ssh_connect()
 
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
@@ -393,7 +443,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
     _MAX_RPYC_PORT_ATTEMPTS = 100
     _DEFAULT_KEY_FILENAME = os.path.expanduser('~/.ssh/id_rsa')
 
-    def __init__(self, args, logger=None, liblogger=None, configuration=None, **kwargs):
+    def __init__(self, args, logger=None, liblogger=None, **kwargs):
         import pprint
         ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
                                                 'known_hosts')
@@ -443,12 +493,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 if upgrade_url:
                     if zenity.Question(_("New pytis client version available. Install?"),
                                        title='', ok_label=_("Yes"), cancel_label=_("No")):
-                        parameters = dict(hostname=p('server', self.args.server),
-                                          port=p('port', self.args.port),
-                                          username=p('username', self.args.username),
-                                          password=p('password', self.args.password),
-                                          _add_to_known_hosts=self.args.add_to_known_hosts)
-                        self._pytis_upgrade(parameters, upgrade_url)
+                        self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
             self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
@@ -520,13 +565,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 if not profile_id:
                     raise Exception(_("No session selected."))
                 profile = profiles.broker_selectsession(profile_id)
-                if configuration is not None:
-                    configuration.set_session_params(profile)
-                for a, p in (('server', 'host'),
-                             ('username', 'user'),
-                             ('remote_ssh_port', 'sshport'),):
-                    if not getattr(args, a):
-                        setattr(args, a, p)
+                _auth_info.update_from_profile(profile)
+                _auth_info.update_args(self.args)
             # setup up the manually configured X2Go session
             self.x2go_session_hash = self._X2GoClient__register_session(
                 args.server,
@@ -551,12 +591,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 share_local_folders=self.args.share_local_folders,
                 allow_share_local_folders=True,
                 cmd=self.args.command)
-        # super(PytisClient, self).__init__(*args, **kwargs)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
 
-    def pytis_setup(self, s_uuid, configuration):
+    def pytis_setup(self, s_uuid):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
         control_session = session.control_session
@@ -658,16 +697,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 self._pytis_password_value.set(rpyc_info.password())
             gevent.sleep(1)
 
-    def _check_ssh_tunnel(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
-        try:
-            password = configuration.get('password', basestring)
-        except ClientException:
-            password = None
-        try:
-            key_filename = configuration.get('key_filename', basestring)
-        except ClientException:
-            key_filename = None
-        user = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
+    def _check_ssh_tunnel(self, _configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+        hostname = _auth_info.get('hostname')
+        username = _auth_info.get('username')
+        password = _auth_info.get('password')
+        key_filename = _auth_info.get('key_filename')
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -675,9 +709,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 gevent.sleep(0.1)
             current_rpyc_port = rpyc_port.get()
             port = gevent.event.AsyncResult()
-            tunnel = pytis.remote.ReverseTunnel(configuration.get('host', basestring),
+            tunnel = pytis.remote.ReverseTunnel(hostname,
                                                 current_rpyc_port, ssh_forward_port=0,
-                                                ssh_user=user,
+                                                ssh_user=username,
                                                 ssh_password=password,
                                                 key_filename=key_filename,
                                                 ssh_forward_port_result=port)
@@ -733,46 +767,45 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         return methods
             
     @classmethod
-    def pytis_ssh_connect(class_, parameters):
-        if not parameters['password']:
-            parameters['password'] = 'X'
+    def pytis_ssh_connect(class_):
+        if not _auth_info.get('password'):
+            _auth_info['password'] = 'X'
         methods = []
         client = paramiko.SSHClient()
         client.load_system_host_keys()
-        if parameters.get('_add_to_known_hosts'):
+        if _auth_info.get('_add_to_known_hosts'):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         selected_method = None
         # Test ssh agent first
-        connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
+        connect_parameters = _auth_info.connect_parameters()
         connect_parameters['key_filename'] = None
         try:
             client.connect(look_for_keys=False, **connect_parameters)
-            parameters['key_filename'] = None
+            _auth_info['key_filename'] = None
             return client
         except paramiko.ssh_exception.AuthenticationException:
             pass
         # ssh agent not available, try other authentication methods
-        connect_parameters['key_filename'] = parameters.get('key_filename')
         while True:
-            connect_parameters = dict([(k, v,) for k, v in parameters.items() if k[0] != '_'])
+            connect_parameters = _auth_info.connect_parameters()
             try:
                 client.connect(look_for_keys=False, **connect_parameters)
                 break
             except paramiko.ssh_exception.AuthenticationException:
-                key_filename = parameters.get('key_filename')
+                key_filename = _auth_info.get('key_filename')
                 if selected_method != 'password' and key_filename is not None:
                     password = zenity.GetText(text=(_("Password key for %s") %
                                                     (key_filename.replace('_', '__'),)),
                                               password=True, title="")
                     if password is not None:
-                        parameters['password'] = password
+                        _auth_info['password'] = password
                         continue
                 if not methods:
-                    methods = class_._ssh_server_methods(parameters['hostname'],
-                                                         parameters['port'])
+                    methods = class_._ssh_server_methods(_auth_info['hostname'],
+                                                         _auth_info.get('port', 22))
                 if 'publickey' in methods and key_filename is None:
                     if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
-                        parameters['key_filename'] = class_._DEFAULT_KEY_FILENAME
+                        _auth_info['key_filename'] = class_._DEFAULT_KEY_FILENAME
                         continue
                 if 'password' in methods:
                     if 'publickey' in methods:
@@ -787,30 +820,44 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     selected_method = 'publickey'
                 else:
                     raise Exception(_("No supported ssh connection method available"))
-                parameters['_method'] = selected_method
+                _auth_info['_method'] = selected_method
                 if selected_method == 'password':
                     password = zenity.GetText(text=_("Login password"), password=True,
                                               title=_("Password input"))
                     if not password:
                         return None
-                    parameters['password'] = password.rstrip('\r\n')
+                    _auth_info['password'] = password.rstrip('\r\n')
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     key_filename = zenity.GetFilename(title=_("Select ssh key file"),
                                                       filename=ssh_directory)
                     if key_filename is None:
                         return None
-                    parameters['key_filename'] = key_filename[0]
+                    _auth_info['key_filename'] = key_filename[0]
                 else:
                     raise Exception(_("Program error"))
         return client
 
     @classmethod
-    def _pytis_upgrade(class_, parameters, upgrade_url):
-        upgrade_parameters, path = class_._pytis_parse_url(upgrade_url,
-                                                           parameters.get('add_to_known_hosts'))
-        parameters.update(upgrade_parameters)
-        client = class_.pytis_ssh_connect(parameters)
+    def _pytis_upgrade(class_, upgrade_url):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|/(?P<path>.*)$)'), upgrade_url)
+        if match is None:
+            raise Exception(_("Invalid broker address"), upgrade_url)
+        parameters = match.groupdict()
+        protocol = parameters['protocol']
+        if protocol != 'ssh':
+            raise Exception(_("Unsupported broker protocol"), protocol)
+        password = parameters.get('password')
+        port = int(parameters.get('port') or '22')
+        _auth_info.update_non_empty(hostname=parameters['host'], port=port,
+                                    username=parameters['user'], password=password)
+        path = parameters.get('path')
+        client = class_.pytis_ssh_connect()
         if client is None:
             zenity.Error(_("Couldn't connect to upgrade server"))
             return
@@ -833,9 +880,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
     def new_session(self, s_hash):
         super(PytisClient, self).new_session(s_hash)
-        if self._pytis_setup_configuration is not None:
-            self.pytis_setup(s_hash, self._pytis_setup_configuration)
-            self._pytis_setup_configuration = None
+        if self._pytis_setup_configuration:
+            self.pytis_setup(s_hash)
+            self._pytis_setup_configuration = False
             def info_handler():
                 while self.session_ok(s_hash):
                     self.pytis_handle_info()
@@ -844,72 +891,47 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             
     @classmethod
     def run(class_, args):
-        server = args.server
-        username = args.username
-        command = args.command
-        key_filename = args.ssh_privkey
-        add_to_known_hosts = args.add_to_known_hosts
+        _auth_info.update_from_args(args)
         if on_windows():
             zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
         else:
             zenity.zen_exec = 'zenity'
         # Read in configuration
-        configuration = None
+        configuration = Configuration()
         if args.broker_url is None:
-            configuration = Configuration()
-            if server is None:
-                server = configuration.get('host', basestring)
-            else:
-                configuration.set('host', server)
-            args.server = server
-            port = configuration.get('sshport', int, 22)
-            if username is None:
-                username = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
-            else:
-                configuration.set('user', username)
-            args.username = username
-            if command is None:
-                command = configuration.get('command', basestring,
-                                            x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
-            else:
-                configuration.set('command', command)
-            args.command = command
+            if not _auth_info.get('hostname'):
+                _auth_info['hostname'] = configuration.get('host', basestring)
+            if not _auth_info.get('port'):
+                _auth_info['port'] = configuration.get('sshport', int, 22)
+            if not _auth_info.get('username'):
+                _auth_info['username'] = configuration.get('user', basestring,
+                                                           x2go.defaults.CURRENT_LOCAL_USER)
+            if not _auth_info.get('_command'):
+                default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
+                _auth_info['_command'] = configuration.get('command', basestring, default_command)
             try:
-                password = configuration.get('password', basestring)
+                _auth_info['password'] = configuration.get('password', basestring)
             except ClientException:
-                password = None
-            if key_filename is None:
+                pass
+            if not _auth_info.get('key_filename'):
                 try:
-                    key_filename = configuration.get('key_filename', basestring)
+                    _auth_info['key_filename'] = configuration.get('key_filename', basestring)
                 except ClientException:
                     pass
-            else:
-                configuration.set('key_filename', key_filename)
-            parameters = dict(hostname=server, port=port, username=username, password=password,
-                              key_filename=key_filename, _add_to_known_hosts=add_to_known_hosts)
             # Check connection parameters and update password
-            ssh_client = class_.pytis_ssh_connect(parameters)
+            ssh_client = class_.pytis_ssh_connect()
             if ssh_client is None:
                 return
-            password = parameters['password']
-            configuration.set('password', password)
-            args.password = password
-            key_filename = parameters['key_filename']
-            configuration.set('key_filename', key_filename)
-            args.ssh_privkey = key_filename
         # Create client
-        kwargs = {}
-        if configuration is None:
-            kwargs['configuration'] = configuration = Configuration()
-        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG,
-                        **kwargs)
+        _auth_info.update_args(args)
+        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
         # Run
         s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
-        session.sshproxy_params['key_filename'] = key_filename
+        session.sshproxy_params['key_filename'] = _auth_info.get('key_filename')
         session.sshproxy_params['look_for_keys'] = False
         client.pytis_start_processes(configuration)
-        client._pytis_setup_configuration = configuration
+        client._pytis_setup_configuration = True
         client.authenticate()
         client.MainLoop()
 
