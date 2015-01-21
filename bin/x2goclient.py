@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-21 16:06'
+_VERSION = '2015-01-21 18:00'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -83,7 +83,6 @@ class Configuration(object):
     def __init__(self):
         self._directory = self._configuration_directory()
         self._configuration = self._read_configuration()
-        self._session_params = {}
 
     def _configuration_directory(self):
         basename = '_pytis_x2go' if on_windows() else '.pytis-x2go'
@@ -129,14 +128,8 @@ class Configuration(object):
                                   (key, value, type_,))
         return value
 
-    def get_session_params(self):
-        if self._session_params:
-            return x2go.utils._convert_SessionProfileOptions_2_SessionParams(self._session_params)
-        else:
-            return {}
-
     def set_session_params(self, session):
-        self._session_params.update(session)
+        self._configuration.update(session)
 
     def set(self, key, value):
         self._configuration[key] = value
@@ -358,11 +351,11 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     def _get_server_hostname(self, profile_id):
         selected_session = self.broker_selectsession(profile_id)
-        return selected_session['server']
+        return selected_session['host']
 
     def _get_server_port(self, profile_id):
         selected_session = self.broker_selectsession(profile_id)
-        return int(selected_session['port'])
+        return int(selected_session['sshport'])
 
 class PytisSshProfiles(SshProfiles):
 
@@ -391,8 +384,8 @@ class PytisSshProfiles(SshProfiles):
                 filtered_profiles[section] = data
         return filtered_profiles
 
-    def pytis_upgrade_parameter(self, parameter):
-        return self._pytis_client_upgrade.get(parameter)
+    def pytis_upgrade_parameter(self, parameter, default=None):
+        return self._pytis_client_upgrade.get(parameter, default)
         
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
@@ -400,7 +393,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
     _MAX_RPYC_PORT_ATTEMPTS = 100
     _DEFAULT_KEY_FILENAME = os.path.expanduser('~/.ssh/id_rsa')
 
-    def __init__(self, args, logger=None, liblogger=None, **kwargs):
+    def __init__(self, args, logger=None, liblogger=None, configuration=None, **kwargs):
         import pprint
         ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
                                                 'known_hosts')
@@ -440,6 +433,22 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             self.profiles_backend = PytisSshProfiles
         self.session_profiles = self.profiles_backend(logger=self.logger, broker_url=broker_url,
                                                       broker_password=self.args.broker_password)
+        # Check for upgrade
+        if self.args.broker_url is not None:
+            profiles = self.session_profiles
+            version = profiles.pytis_upgrade_parameter('version')
+            if version and version > _VERSION:
+                p = profiles.pytis_upgrade_parameter
+                upgrade_url = p('url')
+                if upgrade_url:
+                    if zenity.Question(_("New pytis client version available. Install?"),
+                                       title='', ok_label=_("Yes"), cancel_label=_("No")):
+                        parameters = dict(hostname=p('server', self.args.server),
+                                          port=p('port', self.args.port),
+                                          username=p('username', self.args.username),
+                                          password=p('password', self.args.password),
+                                          _add_to_known_hosts=self.args.add_to_known_hosts)
+                        self._pytis_upgrade(parameters, upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
             self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
@@ -499,6 +508,25 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 **kwargs
             )
         else:
+            # Select session
+            profile_id = None
+            profile_name = 'Pyhoca-Client_Session'
+            if args.broker_url is not None:
+                data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
+                answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
+                                     data=data)
+                profile_id = answer and answer[0]
+                profile_name = None
+                if not profile_id:
+                    raise Exception(_("No session selected."))
+                profile = profiles.broker_selectsession(profile_id)
+                if configuration is not None:
+                    configuration.set_session_params(profile)
+                for a, p in (('server', 'host'),
+                             ('username', 'user'),
+                             ('remote_ssh_port', 'sshport'),):
+                    if not getattr(args, a):
+                        setattr(args, a, p)
             # setup up the manually configured X2Go session
             self.x2go_session_hash = self._X2GoClient__register_session(
                 args.server,
@@ -507,7 +535,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 username=self.args.username,
                 key_filename=self.args.ssh_privkey,
                 add_to_known_hosts=self.args.add_to_known_hosts,
-                profile_name='Pyhoca-Client_Session',
+                profile_id=profile_id,
+                profile_name=profile_name,
                 session_type=self.args.session_type,
                 link=self.args.link,
                 geometry=self.args.geometry,
@@ -820,75 +849,60 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         command = args.command
         key_filename = args.ssh_privkey
         add_to_known_hosts = args.add_to_known_hosts
-        # Get parameters
         if on_windows():
             zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
         else:
             zenity.zen_exec = 'zenity'
-        configuration = Configuration()
-        if server is None:
-            server = configuration.get('host', basestring)
-        else:
-            configuration.set('host', server)
-        args.server = server
-        port = configuration.get('sshport', int, 22)
-        if username is None:
-            username = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
-        else:
-            configuration.set('user', username)
-        args.username = username
-        if command is None:
-            command = configuration.get('command', basestring,
-                                        x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
-        else:
-            configuration.set('command', command)
-        args.command = command
-        try:
-            password = configuration.get('password', basestring)
-        except ClientException:
-            password = None
-        if key_filename is None:
-            try:
-                key_filename = configuration.get('key_filename', basestring)
-            except ClientException:
-                pass
-        else:
-            configuration.set('key_filename', key_filename)
-        parameters = dict(hostname=server, port=port, username=username, password=password,
-                          key_filename=key_filename, _add_to_known_hosts=add_to_known_hosts)
-        # Check connection parameters and update password
-        ssh_client = class_.pytis_ssh_connect(parameters)
-        if ssh_client is None:
-            return
-        client = None
-        password = parameters['password']
-        configuration.set('password', password)
-        args.password = password
-        key_filename = parameters['key_filename']
-        configuration.set('key_filename', key_filename)
-        args.ssh_privkey = key_filename
-        # Create client
-        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
-        # Check for upgrade
-        if args.broker_url is not None:
-            profiles = client.session_profiles
-            version = profiles.pytis_upgrade_parameter('version')
-            if version and version > _VERSION:
-                upgrade_url = profiles.pytis_upgrade_parameter('url')
-                if upgrade_url:
-                    if zenity.Question(_("New pytis client version available. Install?"),
-                                       title='', ok_label=_("Yes"), cancel_label=_("No")):
-                        class_._pytis_upgrade(copy.copy(parameters), upgrade_url)
-        # Select session
-        if args.broker_url is not None:
-            data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
-            answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
-                                 data=data)
-            session_name = answer and answer[0]
-            if not session_name:
-                raise Exception(_("No session selected."))
+        # Read in configuration
+        configuration = None
+        if args.broker_url is None:
             configuration = Configuration()
-            configuration.set_session_params(profiles.broker_selectsession(session_name))
+            if server is None:
+                server = configuration.get('host', basestring)
+            else:
+                configuration.set('host', server)
+            args.server = server
+            port = configuration.get('sshport', int, 22)
+            if username is None:
+                username = configuration.get('user', basestring, x2go.defaults.CURRENT_LOCAL_USER)
+            else:
+                configuration.set('user', username)
+            args.username = username
+            if command is None:
+                command = configuration.get('command', basestring,
+                                            x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command'])
+            else:
+                configuration.set('command', command)
+            args.command = command
+            try:
+                password = configuration.get('password', basestring)
+            except ClientException:
+                password = None
+            if key_filename is None:
+                try:
+                    key_filename = configuration.get('key_filename', basestring)
+                except ClientException:
+                    pass
+            else:
+                configuration.set('key_filename', key_filename)
+            parameters = dict(hostname=server, port=port, username=username, password=password,
+                              key_filename=key_filename, _add_to_known_hosts=add_to_known_hosts)
+            # Check connection parameters and update password
+            ssh_client = class_.pytis_ssh_connect(parameters)
+            if ssh_client is None:
+                return
+            password = parameters['password']
+            configuration.set('password', password)
+            args.password = password
+            key_filename = parameters['key_filename']
+            configuration.set('key_filename', key_filename)
+            args.ssh_privkey = key_filename
+        # Create client
+        kwargs = {}
+        if configuration is None:
+            kwargs['configuration'] = configuration = Configuration()
+        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG,
+                        **kwargs)
         # Run
         s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
