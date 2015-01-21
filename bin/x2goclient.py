@@ -567,30 +567,34 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 profile = profiles.broker_selectsession(profile_id)
                 _auth_info.update_from_profile(profile)
                 _auth_info.update_args(self.args)
-            # setup up the manually configured X2Go session
-            self.x2go_session_hash = self._X2GoClient__register_session(
-                args.server,
-                port=int(self.args.remote_ssh_port),
-                known_hosts=ssh_known_hosts_filename,
-                username=self.args.username,
-                key_filename=self.args.ssh_privkey,
-                add_to_known_hosts=self.args.add_to_known_hosts,
-                profile_id=profile_id,
-                profile_name=profile_name,
-                session_type=self.args.session_type,
-                link=self.args.link,
-                geometry=self.args.geometry,
-                pack=self.args.pack,
-                cache_type='unix-kde',
-                kblayout=self.args.kbd_layout,
-                kbtype=self.args.kbd_type,
-                snd_system=self.args.sound,
-                printing=self.args.printing,
-                print_action=self.args.print_action,
-                print_action_args=self.args.print_action_args,
-                share_local_folders=self.args.share_local_folders,
-                allow_share_local_folders=True,
-                cmd=self.args.command)
+                params = profiles.to_session_params(profile_id)
+                self.x2go_session_hash = self._X2GoClient__register_session(
+                    **params)
+            else:
+                # setup up the manually configured X2Go session
+                self.x2go_session_hash = self._X2GoClient__register_session(
+                    args.server,
+                    port=int(self.args.remote_ssh_port),
+                    known_hosts=ssh_known_hosts_filename,
+                    username=self.args.username,
+                    key_filename=self.args.ssh_privkey,
+                    add_to_known_hosts=self.args.add_to_known_hosts,
+                    profile_id=profile_id,
+                    profile_name=profile_name,
+                    session_type=self.args.session_type,
+                    link=self.args.link,
+                    geometry=self.args.geometry,
+                    pack=self.args.pack,
+                    cache_type='unix-kde',
+                    kblayout=self.args.kbd_layout,
+                    kbtype=self.args.kbd_type,
+                    snd_system=self.args.sound,
+                    printing=self.args.printing,
+                    print_action=self.args.print_action,
+                    print_action_args=self.args.print_action_args,
+                    share_local_folders=self.args.share_local_folders,
+                    allow_share_local_folders=True,
+                    cmd=self.args.command)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
