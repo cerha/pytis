@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-19 17:19'
+_VERSION = '2015-01-21 16:06'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -52,7 +52,9 @@ import pyhoca.cli
 from pyhoca.cli import current_home, runtime_error
 import rpyc
 import x2go
+import x2go.backends.profiles.base
 import x2go.defaults
+import x2go.log
 import PyZenity as zenity
 import pytis.remote
 
@@ -127,42 +129,14 @@ class Configuration(object):
                                   (key, value, type_,))
         return value
 
-    def _get_profile_option_type(self, option):
-        "Get the data type for a specific session profile option."
-        try:
-            return type(self._default_session_profile[option])
-        except KeyError:
-            return types.StringType
-
     def get_session_params(self):
         if self._session_params:
             return x2go.utils._convert_SessionProfileOptions_2_SessionParams(self._session_params)
         else:
             return {}
 
-    def set_session_params(self, session_name, parser):
-        for param in self._default_session_profile:
-            if parser.has_option(session_name, param):
-                option_type = self._get_profile_option_type(param)
-                if isinstance(option_type, types.BooleanType):
-                    val = parser.getboolean(session_name, param)
-                elif isinstance(option_type, types.IntType):
-                    val = parser.getint(session_name, param)
-                elif isinstance(option_type, types.ListType):
-                    _val = parser.get(session_name, param)
-                    _val = _val.strip()
-                    if _val.startswith('[') and _val.endswith(']'):
-                        val = eval(_val)
-                    elif ',' in _val:
-                        _val = [v.strip() for v in _val.split(',')]
-                    else:
-                        val = [_val]
-                else:
-                    _val = parser.get(session_name, param)
-                    val = _val.decode('UTF8')
-            else:
-                val = self._default_session_profile[param]
-            self._session_params[param] = val
+    def set_session_params(self, session):
+        self._session_params.update(session)
 
     def set(self, key, value):
         self._configuration[key] = value
@@ -201,6 +175,225 @@ class RpycInfo(object):
     def password(self):
         return self._password
 
+class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
+
+    defaultSessionProfile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
+
+    def __init__(self, broker_url, logger=None, loglevel=x2go.log.loglevel_DEFAULT,
+                 **kwargs):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<user>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<host>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|/(?P<path>.*)$)'), broker_url)
+        if match is None:
+            raise Exception(_("Invalid broker address"), broker_url)
+        parameters = match.groupdict()
+        protocol = parameters['protocol']
+        if protocol != 'ssh':
+            raise Exception(_("Unsupported broker protocol"), protocol)
+        self._parameters = p = {}
+        p['password'] = parameters.get('password')
+        p['port'] = int(parameters.get('port') or '22')
+        p['hostname'] = parameters['host']
+        p['username'] = parameters['user']
+        p['path'] = parameters.get('path')
+        self._broker_profiles = None
+        self._broker_profile_cache = {}
+        self._ssh_client_ = None
+        x2go.backends.profiles.base.X2GoSessionProfiles.__init__(self, logger=logger,
+                                                                 loglevel=loglevel, **kwargs)
+
+    def __call__(self, profile_id_or_name):
+        # Broken in upstream source
+        _profile_id = self.check_profile_id_or_name(profile_id_or_name)
+        return self.get_profile_config(profile_id=_profile_id)
+
+    def _ssh_client(self):
+        if self._ssh_client_ is None:
+            self._ssh_client_ = self._make_ssh_client()
+        return self._ssh_client_
+
+    def _make_ssh_client(self):
+        parameters = copy.copy(self._parameters)
+        try:
+            del parameters['path']
+        except KeyError:
+            pass
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        try:
+            client.connect(look_for_keys=False, **parameters)
+        except paramiko.ssh_exception.AuthenticationException:
+            return None
+        return client
+
+    def _broker_path(self):
+        return os.path.join('/', self._parameters['path'] or '/usr/bin/x2gobroker')
+    
+    def broker_listprofiles(self):
+        if self._broker_profiles is not None:
+            return self._broker_profiles
+        client = self._ssh_client()
+        if client is None:
+            return {}
+        sessions = ''
+        text = ''
+        in_config = False
+        command = "%s --task listsessions" % (self._broker_path(),)
+        __stdin, stdout, __stderr = client.exec_command(command)
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            text += line
+            if line.strip() == 'START_USER_SESSIONS':
+                in_config = True
+                continue
+            elif line.strip() == 'END_USER_SESSIONS':
+                in_config = False
+            if in_config:
+                sessions += line
+        import ConfigParser
+        import StringIO
+        parser = ConfigParser.ConfigParser()
+        parser.readfp(StringIO.StringIO(sessions))
+        # Get sessions
+        sections = parser.sections()
+        self._broker_profiles = data = {}
+        for session_name in sections:
+            session_data = {}
+            for param in self.defaultSessionProfile:
+                if parser.has_option(session_name, param):
+                    try:
+                        option_type = type(self.defaultSessionProfile[param])
+                    except KeyError:
+                        option_type = types.StringType
+                    if isinstance(option_type, types.BooleanType):
+                        val = parser.getboolean(session_name, param)
+                    elif isinstance(option_type, types.IntType):
+                        val = parser.getint(session_name, param)
+                    elif isinstance(option_type, types.ListType):
+                        _val = parser.get(session_name, param)
+                        _val = _val.strip()
+                        if _val.startswith('[') and _val.endswith(']'):
+                            val = eval(_val)
+                        elif ',' in _val:
+                            _val = [v.strip() for v in _val.split(',')]
+                        else:
+                            val = [_val]
+                    else:
+                        _val = parser.get(session_name, param)
+                        val = _val.decode('UTF8')
+                else:
+                    val = self.defaultSessionProfile[param]
+                session_data[param] = val
+            data[session_name] = session_data
+        return data
+
+    def broker_selectsession(self, profile_id):
+        session_data = self._broker_profile_cache.get(profile_id)
+        if session_data is not None:
+            return session_data
+        client = self._ssh_client()
+        if client is None:
+            return {}
+        session_data = self._broker_profile_cache[profile_id] = \
+            copy.copy(self._broker_profiles[profile_id])
+        server_regexp = re.compile('^SERVER:(.*):(.*)$')
+        text = ''
+        command = "%s --task selectsession --sid %s" % (self._broker_path(), profile_id)
+        __stdin, stdout, __stderr = client.exec_command(command)
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            text += line
+            line = line.strip()
+            m = server_regexp.match(line)
+            if m is not None:
+                host, port = m.groups()
+                try:
+                    port = int(port)
+                except ValueError:
+                    raise Exception(_("Invalid session format"), text)
+                session_data['host'] = host
+                session_data['sshport'] = port
+        return session_data
+
+    def _init_profile_cache(self, profile_id):
+        profile_id = unicode(profile_id)
+        if profile_id in self._broker_profile_cache:
+            del self._broker_profile_cache[profile_id]
+
+    def _populate_session_profiles(self):
+        session_profiles = self.broker_listprofiles()
+        _session_profiles = copy.deepcopy(session_profiles)
+        for session_profile in _session_profiles:
+            session_profile = unicode(session_profile)
+            for key, default_value in self.defaultSessionProfile.iteritems():
+                key = unicode(key)
+                if isinstance(default_value, str):
+                    default_value = unicode(default_value)
+                if key not in session_profiles[session_profile]:
+                    session_profiles[session_profile][key] = default_value
+        return session_profiles
+
+    def _is_mutable(self, profile_id):
+        return False
+
+    def _supports_mutable_profiles(self):
+        return False
+
+    def _get_profile_parameter(self, profile_id, option, key_type):
+        return key_type(self.session_profiles[unicode(profile_id)][unicode(option)])
+
+    def _get_profile_options(self, profile_id):
+        return self.session_profiles[unicode(profile_id)].keys()
+
+    def _get_profile_ids(self):
+        self.session_profiles.keys()
+        return self.session_profiles.keys()
+
+    def _get_server_hostname(self, profile_id):
+        selected_session = self.broker_selectsession(profile_id)
+        return selected_session['server']
+
+    def _get_server_port(self, profile_id):
+        selected_session = self.broker_selectsession(profile_id)
+        return int(selected_session['port'])
+
+class PytisSshProfiles(SshProfiles):
+
+    def __init__(self, *args, **kwargs):
+        self._pytis_client_upgrade = {}
+        SshProfiles.__init__(self, *args, **kwargs)
+
+    def _make_ssh_client(self):
+        parameters = self._parameters
+        connect_parameters = copy.copy(parameters)
+        try:
+            del connect_parameters['path']
+        except KeyError:
+            pass
+        client = PytisClient.pytis_ssh_connect(connect_parameters)
+        parameters.update(connect_parameters)
+        return client
+
+    def broker_listprofiles(self):
+        profiles = SshProfiles.broker_listprofiles(self)
+        filtered_profiles = {}
+        for section, data in profiles.items():
+            if section == 'pytis-client-upgrade':
+                self._pytis_client_upgrade = data
+            else:
+                filtered_profiles[section] = data
+        return filtered_profiles
+
+    def pytis_upgrade_parameter(self, parameter):
+        return self._pytis_client_upgrade.get(parameter)
+        
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
     _DEFAULT_RPYC_PORT = 10000
@@ -236,9 +429,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if self.args.backend_clientprinting is not None:
             _backend_kwargs['printing_backend'] = self.args.backend_clientprinting
         self._pyhoca_logger('preparing requested X2Go session', loglevel=x2go.loglevel_NOTICE, )
-        x2go.X2GoClient.__init__(self, broker_url=self.args.broker_url,
-                                 broker_password=self.args.broker_password, logger=liblogger,
-                                 **_backend_kwargs)
+        broker_url = self.args.broker_url
+        ssh_p = args.broker_url and args.broker_url.lower().startswith('ssh')
+        if not ssh_p:
+            _backend_kwargs['broker_url'] = broker_url
+            _backend_kwargs['broker_password'] = self.args.broker_password
+        x2go.X2GoClient.__init__(self, logger=liblogger, **_backend_kwargs)
+        # Let's substitute unimplemented sshbroker backend
+        if self.args.broker_url is not None and ssh_p:
+            self.profiles_backend = PytisSshProfiles
+        self.session_profiles = self.profiles_backend(logger=self.logger, broker_url=broker_url,
+                                                      broker_password=self.args.broker_password)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
             self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
@@ -503,7 +704,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         return methods
             
     @classmethod
-    def _pytis_ssh_connect(class_, parameters):
+    def pytis_ssh_connect(class_, parameters):
         if not parameters['password']:
             parameters['password'] = 'X'
         methods = []
@@ -576,117 +777,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         return client
 
     @classmethod
-    def _pytis_parse_url(class_, url, add_to_known_hosts=False):
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<user>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<host>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|/(?P<path>.*)$)'), url)
-        if match is None:
-            raise Exception(_("Invalid broker address"), url)
-        parameters = match.groupdict()
-        protocol = parameters['protocol']
-        if protocol != 'ssh':
-            raise Exception(_("Unsupported broker protocol"), protocol)
-        password = parameters.get('password')
-        port = int(parameters.get('port') or '22')
-        ssh_parameters = dict(hostname=parameters['host'], port=port,
-                              username=parameters['user'], password=password,
-                              _add_to_known_hosts=add_to_known_hosts)
-        path = parameters.get('path')
-        return ssh_parameters, path
-
-    @classmethod
-    def _pytis_select_broker_session(class_, broker_url, add_to_known_hosts):
-        parameters, path = class_._pytis_parse_url(broker_url, add_to_known_hosts)
-        # Fetch session list
-        sessions = ''
-        text = ''
-        configuration = None
-        in_config = False
-        client = class_._pytis_ssh_connect(parameters)
-        if client is None:
-            return
-        broker_path = os.path.join('/', path or '/usr/bin/x2gobroker')
-        command = "%s --task listsessions" % (broker_path,)
-        __stdin, stdout, __stderr = client.exec_command(command)
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
-            text += line
-            if line.strip() == 'START_USER_SESSIONS':
-                in_config = True
-                continue
-            elif line.strip() == 'END_USER_SESSIONS':
-                in_config = False
-            if in_config:
-                sessions += line
-        import ConfigParser
-        import StringIO
-        parser = ConfigParser.ConfigParser()
-        parser.readfp(StringIO.StringIO(sessions))
-        # Get sessions
-        sections = parser.sections()
-        data = []
-        for s in sections:
-            name = parser.get(s, 'name')
-            if name == 'pytis-client-upgrade':
-                continue
-            elif name:
-                data.append([s, name])
-            else:
-                data.append([s, ''])
-        # Check for upgrade
-        try:
-            version = parser.get('pytis-client-upgrade', 'version')
-        except ConfigParser.NoSectionError:
-            version = None
-        if version and version > _VERSION:
-            upgrade_url = parser.get('pytis-client-upgrade', 'url')
-            if upgrade_url:
-                if zenity.Question(_("New pytis client version available. Install?"),
-                                   title='', ok_label=_("Yes"), cancel_label=_("No")):
-                    class_._pytis_upgrade(copy.copy(parameters), upgrade_url)
-        # Select session
-        answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
-                             data=data)
-        session_name = answer and answer[0]
-        if not session_name:
-            raise Exception(_("No session selected."))
-        configuration = Configuration()
-        configuration.set_session_params(session_name, parser)
-        # Fetch additional session parameters
-        server_regexp = re.compile('^SERVER:(.*):(.*)$')
-        text = ''
-        command = "%s --task selectsession --sid %s" % (broker_path, session_name)
-        __stdin, stdout, __stderr = client.exec_command(command)
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
-            text += line
-            line = line.strip()
-            m = server_regexp.match(line)
-            if m is not None:
-                host, port = m.groups()
-                try:
-                    port = int(port)
-                except ValueError:
-                    raise Exception(_("Invalid session format"), text)
-                configuration.set('host', host)
-                configuration.set('sshport', port)
-        # Finish configuration and return it
-        configuration.set('password', parameters['password'])
-        return configuration
-
-    @classmethod
     def _pytis_upgrade(class_, parameters, upgrade_url):
         upgrade_parameters, path = class_._pytis_parse_url(upgrade_url,
                                                            parameters.get('add_to_known_hosts'))
         parameters.update(upgrade_parameters)
-        client = class_._pytis_ssh_connect(parameters)
+        client = class_.pytis_ssh_connect(parameters)
         if client is None:
             zenity.Error(_("Couldn't connect to upgrade server"))
             return
@@ -720,7 +815,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             
     @classmethod
     def run(class_, args):
-        broker_url = args.broker_url
         server = args.server
         username = args.username
         command = args.command
@@ -731,12 +825,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
         else:
             zenity.zen_exec = 'zenity'
-        if broker_url:
-            configuration = class_._pytis_select_broker_session(broker_url, add_to_known_hosts)
-            if configuration is None:
-                return
-        else:
-            configuration = Configuration()
+        configuration = Configuration()
         if server is None:
             server = configuration.get('host', basestring)
         else:
@@ -768,8 +857,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         parameters = dict(hostname=server, port=port, username=username, password=password,
                           key_filename=key_filename, _add_to_known_hosts=add_to_known_hosts)
         # Check connection parameters and update password
-        client = class_._pytis_ssh_connect(parameters)
-        if client is None:
+        ssh_client = class_.pytis_ssh_connect(parameters)
+        if ssh_client is None:
             return
         client = None
         password = parameters['password']
@@ -778,8 +867,29 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         key_filename = parameters['key_filename']
         configuration.set('key_filename', key_filename)
         args.ssh_privkey = key_filename
-        # Run
+        # Create client
         client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
+        # Check for upgrade
+        if args.broker_url is not None:
+            profiles = client.session_profiles
+            version = profiles.pytis_upgrade_parameter('version')
+            if version and version > _VERSION:
+                upgrade_url = profiles.pytis_upgrade_parameter('url')
+                if upgrade_url:
+                    if zenity.Question(_("New pytis client version available. Install?"),
+                                       title='', ok_label=_("Yes"), cancel_label=_("No")):
+                        class_._pytis_upgrade(copy.copy(parameters), upgrade_url)
+        # Select session
+        if args.broker_url is not None:
+            data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
+            answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
+                                 data=data)
+            session_name = answer and answer[0]
+            if not session_name:
+                raise Exception(_("No session selected."))
+            configuration = Configuration()
+            configuration.set_session_params(profiles.broker_selectsession(session_name))
+        # Run
         s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
         session.sshproxy_params['key_filename'] = key_filename
