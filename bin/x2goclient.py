@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-22 10:14'
+_VERSION = '2015-01-22 10:30'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -183,12 +183,6 @@ class Configuration(object):
             raise ClientException(_("Invalid configuration parameter type: %s = %r (is not %s)") %
                                   (key, value, type_,))
         return value
-
-    def set_session_params(self, session):
-        self._configuration.update(session)
-
-    def set(self, key, value):
-        self._configuration[key] = value
 
     def rpyc_file(self):
         return self._configuration_file(self._RPYC_FILE)
