@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-22 10:30'
+_VERSION = '2015-01-22 14:41'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -438,7 +438,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
-    _DEFAULT_KEY_FILENAME = os.path.expanduser('~/.ssh/id_rsa')
 
     def __init__(self, args, logger=None, liblogger=None, **kwargs):
         import pprint
@@ -771,7 +770,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
     def pytis_ssh_connect(class_):
         if not _auth_info.get('password'):
             _auth_info['password'] = 'X'
-        methods = []
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         if _auth_info.get('_add_to_known_hosts'):
@@ -787,26 +785,53 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         except paramiko.ssh_exception.AuthenticationException:
             pass
         # ssh agent not available, try other authentication methods
+        methods = class_._ssh_server_methods(_auth_info['hostname'], _auth_info.get('port', 22))
+        key_handlers = (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey,)
+        key_files = []
+        for name in ('id_rsa', 'id_dsa', 'id_ecdsa',):
+            f = os.path.join(os.path.expanduser('~'), '.ssh', name)
+            if os.access(f, os.R_OK):
+                key_files.append(f)
+        def ok_password(key_filename, password=''):
+            for h in key_handlers:
+                try:
+                    h.from_private_key_file(key_filename, password)
+                    return True
+                except:
+                    pass
+            return False
+        def key_password(key_filename, password=''):
+            while True:
+                if ok_password(key_filename, password):
+                    return password
+                password = zenity.GetText(text=(_("Password key for %s") %
+                                                (key_filename.replace('_', '__'),)),
+                                          password=True, title="")
+                if password is None:
+                    return None
         while True:
             connect_parameters = _auth_info.connect_parameters()
             try:
                 client.connect(look_for_keys=False, **connect_parameters)
                 break
             except paramiko.ssh_exception.AuthenticationException:
-                key_filename = _auth_info.get('key_filename')
-                if selected_method != 'password' and key_filename is not None:
-                    password = zenity.GetText(text=(_("Password key for %s") %
-                                                    (key_filename.replace('_', '__'),)),
-                                              password=True, title="")
+                if selected_method != 'password' and 'publickey' in methods:
+                    key_filename = _auth_info.get('key_filename')
+                    if key_filename is not None and os.access(key_filename, os.R_OK):
+                        if ok_password(key_filename, _auth_info.get('password')):
+                            filenames = []
+                        else:
+                            filenames = [key_filename]
+                    else:
+                        filenames = key_files
+                    password = None
+                    for f in filenames:
+                        password = key_password(f, _auth_info.get('password') or '')
+                        if password is not None:
+                            _auth_info['key_filename'] = f
+                            _auth_info['password'] = password
+                            break
                     if password is not None:
-                        _auth_info['password'] = password
-                        continue
-                if not methods:
-                    methods = class_._ssh_server_methods(_auth_info['hostname'],
-                                                         _auth_info.get('port', 22))
-                if 'publickey' in methods and key_filename is None:
-                    if os.access(class_._DEFAULT_KEY_FILENAME, os.R_OK):
-                        _auth_info['key_filename'] = class_._DEFAULT_KEY_FILENAME
                         continue
                 if 'password' in methods:
                     if 'publickey' in methods:
@@ -830,11 +855,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     _auth_info['password'] = password.rstrip('\r\n')
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
-                    key_filename = zenity.GetFilename(title=_("Select ssh key file"),
-                                                      filename=ssh_directory)
-                    if key_filename is None:
-                        return None
-                    _auth_info['key_filename'] = key_filename[0]
+                    while True:
+                        answer = zenity.GetFilename(title=_("Select ssh key file"),
+                                                    filename=ssh_directory)
+                        if answer is None:
+                            return None
+                        key_filename = answer[0]
+                        password = key_password(f, _auth_info.get('password') or '')
+                        if password is not None:
+                            _auth_info['key_filename'] = key_filename
+                            _auth_info['password'] = password
+                            break
                 else:
                     raise Exception(_("Program error"))
         return client
@@ -1255,10 +1286,6 @@ Possible values for the --pack NX option are:
     if a.ssh_privkey and not os.path.isfile(a.ssh_privkey):
         runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
                       exitcode=30)
-    if not a.ssh_privkey and os.path.isfile('%s/.ssh/id_rsa' % current_home):
-        a.ssh_privkey = '%s/.ssh/id_rsa' % current_home
-    if not a.ssh_privkey and os.path.isfile('%s/.ssh/id_dsa' % current_home):
-        a.ssh_privkey = '%s/.ssh/id_dsa' % current_home
     # lightdm remote login magic takes place here
     if a.from_stdin:
         lightdm_remote_login_buffer = sys.stdin.readline()
