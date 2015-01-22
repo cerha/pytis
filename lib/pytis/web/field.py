@@ -146,6 +146,17 @@ def localizable_export(value, **kwargs):
         return ''
 
     
+class Content(pd.Type):
+    """Data type for representation of lcg.Content within pytis fields.
+
+    The type currently doesn't support DB serialization/deserialization and
+    thus is only suitable for ineditable virtual fields.  It just allows to
+    display arbitrary content in web forms.
+
+    """
+    pass
+
+
 class Field(object):
     """Field value exporter for both read-only and editable field representations.
 
@@ -192,6 +203,8 @@ class Field(object):
             cls = DateField
         elif isinstance(data_type, pd.DateTime):
             cls = DateTimeField
+        elif isinstance(data_type, Content):
+            cls = ContentField
         elif isinstance(data_type, pd.Array):
             inner_type = data_type.inner_type()
             if inner_type.enumerator():
@@ -539,6 +552,13 @@ class StructuredTextField(MultilineField):
         else:
             content = lcg.Container(blocks)
         return context.generator().div(content.export(context))
+
+
+class ContentField(MultilineField):
+
+    def _format(self, context):
+        content = self._value().value()
+        return content.export(context)
 
 
 class HtmlField(MultilineField):

@@ -20,7 +20,7 @@ import lcg
 
 from request import FileUpload, Request
 
-from field import UriType, Link, localizable_export, Field, \
+from field import UriType, Link, localizable_export, Content, Field, \
     localizable_export as localizable_datetime # For backwards compatibility.
 
 from form import BadRequest, Form, ShowForm, EditForm, VirtualForm, FilterForm, \
