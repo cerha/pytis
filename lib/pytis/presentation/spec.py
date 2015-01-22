@@ -1683,9 +1683,11 @@ class ViewSpec(object):
             assert is_sequence(sorting)
             if __debug__:
                 for id, dir in sorting:
-                    assert self.field(id) is not None
+                    assert self.field(id) is not None, \
+                        "Invalid sorting column '%s' in %s." % (id, spec_name)
                     assert dir in (pytis.data.ASCENDENT,
-                                   pytis.data.DESCENDANT)
+                                   pytis.data.DESCENDANT), \
+                        "Invalid sorting direction '%s' in %s." % (dir, spec_name)
         if grouping is None:
             grouping = ()
             assert group_heading is None
