@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-22 14:41'
+_VERSION = '2015-01-22 16:34'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -28,7 +28,6 @@ gevent.monkey.patch_all()
 import argparse
 import copy
 import gettext
-import imp
 import os
 import platform
 import re
@@ -49,7 +48,7 @@ import gevent.event
 import gevent.queue
 import paramiko
 import pyhoca.cli
-from pyhoca.cli import current_home, runtime_error
+from pyhoca.cli import runtime_error
 import rpyc
 import x2go
 import x2go.backends.profiles.base
@@ -130,67 +129,22 @@ class AuthInfo(dict):
     
 _auth_info = AuthInfo()
 
-class Configuration(object):
+class Configuration(x2go.X2GoClientSettings):
 
-    _CONFIGURATION_FILE = 'config.py'
-    _RPYC_FILE = 'rpyc'
-    _default_session_profile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
-
-    def __init__(self):
-        self._directory = self._configuration_directory()
-        self._configuration = self._read_configuration()
-
-    def _configuration_directory(self):
-        basename = '_pytis_x2go' if on_windows() else '.pytis-x2go'
-        dirname = os.path.expanduser(os.path.join('~', basename))
-        if not os.access(dirname, os.F_OK):
-            try:
-                os.mkdir(dirname, 0700)
-            except Exception as e:
-                raise ClientException(_("Can't create client directory: %s") % (dirname,), e)
-        elif not os.access(dirname, os.R_OK | os.W_OK | os.X_OK):
-            raise ClientException(_("Client directory not accessible: %s") % (dirname,))
-        return dirname
-
-    def _configuration_file(self, filename):
-        return os.path.join(self._configuration_directory(), filename)
-
-    def _read_configuration(self):
-        filename = self._configuration_file(self._CONFIGURATION_FILE)
-        if not os.access(filename, os.F_OK):
-            try:
-                open(filename, 'w').close()
-            except Exception as e:
-                raise ClientException(_("Can't create client configuration file: %s") % (filename,),
-                                      e)
-        elif not os.access(filename, os.R_OK | os.W_OK):
-            raise ClientException(_("Client configuration not accessible: %s") % (filename,))
-        try:
-            c = imp.load_source('_config', filename)
-        except Exception as e:
-            raise ClientException(_("Error when loading client configuration: %s") % (filename,), e)
-        configuration = copy.copy(c.__dict__)
-        del sys.modules['_config']
-        return configuration
-
-    def get(self, key, type_, default=_NONE):
-        args = () if default is _NONE else (default,)
-        try:
-            value = self._configuration.get(key, *args)
-        except KeyError:
-            raise ClientException(_("Configuration parameter not available: %s") % (key,))
-        if not isinstance(value, type_) and value != default:
-            raise ClientException(_("Invalid configuration parameter type: %s = %r (is not %s)") %
-                                  (key, value, type_,))
-        return value
-
-    def rpyc_file(self):
-        return self._configuration_file(self._RPYC_FILE)
-
+    def __init__(self, *args, **kwargs):
+        super(Configuration, self).__init__(*args, **kwargs)
+        default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
+        self.defaultValues['pytis'] = dict(hostname=None,
+                                          username=x2go.defaults.CURRENT_LOCAL_USER,
+                                          password=None,
+                                          port=22,
+                                          key_filename=None,
+                                          command=default_command)
+        
 class RpycInfo(object):
 
     def __init__(self, configuration, port=None, password=None):
-        self._filename = configuration.rpyc_file()
+        self._filename = os.path.join(os.path.dirname(configuration.config_files[0]), 'pytis-rpyc')
         self._port = port
         self._password = password
 
@@ -932,22 +886,20 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         configuration = Configuration()
         if args.broker_url is None:
             if not _auth_info.get('hostname'):
-                _auth_info['hostname'] = configuration.get('host', basestring)
+                _auth_info['hostname'] = configuration.get_value('pytis', 'hostname')
             if not _auth_info.get('port'):
-                _auth_info['port'] = configuration.get('sshport', int, 22)
+                _auth_info['port'] = configuration.get_value('pytis', 'port', int)
             if not _auth_info.get('username'):
-                _auth_info['username'] = configuration.get('user', basestring,
-                                                           x2go.defaults.CURRENT_LOCAL_USER)
+                _auth_info['username'] = configuration.get_value('pytis', 'username')
             if not _auth_info.get('_command'):
-                default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
-                _auth_info['_command'] = configuration.get('command', basestring, default_command)
+                _auth_info['_command'] = configuration.get_value('pytis', 'command')
             try:
-                _auth_info['password'] = configuration.get('password', basestring)
+                _auth_info['password'] = configuration.get_value('pytis', 'password')
             except ClientException:
                 pass
             if not _auth_info.get('key_filename'):
                 try:
-                    _auth_info['key_filename'] = configuration.get('key_filename', basestring)
+                    _auth_info['key_filename'] = configuration.get_value('pytis', 'key_filename')
                 except ClientException:
                     pass
             # Check connection parameters and update password
