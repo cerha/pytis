@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-21 21:11'
+_VERSION = '2015-01-22 10:14'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -396,7 +396,10 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         return False
 
     def _get_profile_parameter(self, profile_id, option, key_type):
-        return key_type(self.session_profiles[unicode(profile_id)][unicode(option)])
+        value = self.session_profiles[unicode(profile_id)][unicode(option)]
+        if key_type is list and isinstance(value, basestring):
+            value = unicode(value).split(',')
+        return key_type(value)
 
     def _get_profile_options(self, profile_id):
         return self.session_profiles[unicode(profile_id)].keys()
