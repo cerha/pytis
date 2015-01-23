@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -140,6 +140,18 @@ class NonOverlappingRanges(sql.SQLTable):
               sql.Column('d2', pytis.data.DateRange()),)
     exclude_constraints = ((('d', '&&'),),
                            (('d2', '&&'), dict(deferrable=True)),)
+
+class DistantServer(sql.SQLForeignServer):
+    name = 'distant_server'
+    host = 'db.example.com'
+    database = 'foo'
+    port = 5432
+    
+class DistantTable(sql.SQLForeignTable):
+    name = 'distant_table'
+    server = DistantServer
+    fields = (sql.Column('x', pytis.data.Integer(not_null=True)),
+              sql.Column('y', pytis.data.Integer(), default=1),)
 
 class LogTable(sql.SQLTable):
     name = 'log_table'

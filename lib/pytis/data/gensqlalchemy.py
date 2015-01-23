@@ -144,6 +144,19 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_materialized_view(self, view, create_ok=False):
         self.visit_view(view, create_ok=create_ok)
 
+    def visit_foreign_table(self, table, create_ok=False):
+        with _local_search_path(self._set_search_path(table.search_path())):
+            sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in table.fields]
+            def compile(c):
+                # Any better way to reach the column compiler?
+                cc = sqlalchemy.sql.ddl.CreateColumn(c)
+                return cc.compile().visit_create_column(cc)
+            column_string = string.join(['\t' + compile(c) for c in sqlalchemy_columns], ',\n')
+            server = table.server.pytis_name(real=True)
+            command = ('CREATE %s "%s.%s" (\n%s\n) SERVER %s\n' %
+                       (table._DB_OBJECT, table.schema, table.name, column_string, server,))
+            self.connection.execute(command)
+
     def visit_type(self, type_, create_ok=False):
         with _local_search_path(self._set_search_path(type_.search_path())):
             self.make_type(type_.name, type_.fields)
@@ -282,6 +295,10 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
 
     def visit_materialized_view(self, view, create_ok=False):
         self.visit_view(view, create_ok=create_ok)
+        
+    def visit_foreign_table(self, table, create_ok=False):
+        command = 'DROP FOREIGN TABLE "%s"."%s"' % (table.schema, table.name,)
+        self.connection.execute(command)
         
     def visit_type(self, type_, create_ok=False):
         command = 'DROP TYPE "%s"."%s"' % (type_.schema, type_.name,)
@@ -2526,6 +2543,78 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
         """
         class_.init_values = class_.init_values + values
+
+class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
+    """Foreign server specification.
+
+    Properties:
+
+      name -- name of the declared server; string
+      wrapper -- name of the foreign-data wrapper that manages the server; string
+      host -- host name of the server; string
+      database -- database name on the server; string
+      port -- port of the database connection; integer
+    
+    """
+    __metaclass__ = _PytisSimpleMetaclass
+    __visit_name__ = 'server'
+    _DB_OBJECT = 'SERVER'
+    name = None
+    wrapper = 'postgres_fdw'
+    host = None
+    database = None
+    port = None
+    
+    def pytis_create(self):
+        _engine.execute(self)
+    
+@compiles(SQLForeignServer)
+def visit_foreign_server(element, compiler, **kw):
+    options = []
+    def add_option(name, value):
+        options.append("%s %s" % (name, _sql_value_escape(unicode(value)),))
+    for p, o in (('host', 'host'), ('database', 'dbname'), ('port', 'port'),):
+        if getattr(element, p) is not None:
+            add_option(o, getattr(element, p))
+    return ("CREATE SERVER \"%s\" FOREIGN DATA WRAPPER \"%s\" OPTIONS (%s)" %
+            (element.name, element.wrapper, string.join(options, ', '),))
+
+class SQLForeignTable(_SQLTabular):
+    """Foreign table specification.
+
+    Properties:
+
+      fields -- tuple of 'Column' instances defining table columns in their
+        order, excluding inherited columns
+      server -- server of the table; 'SQLForeignServer' object
+
+    """
+    _DB_OBJECT = 'FOREIGN TABLE'
+    __visit_name__ = 'foreign_table'
+    
+    fields = ()
+    server = None
+
+    def __new__(cls, metadata, search_path):
+        columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                         for c in cls.fields])
+        args = (cls.name, metadata,) + columns
+        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+
+    @classmethod
+    def specification_fields(class_):
+        return class_.fields
+
+    def pytis_exists(self, metadata):
+        name = self.pytis_name(real=True)
+        with _metadata_connection(metadata) as connection:
+            return metadata.pytis_engine.dialect.has_table(connection, name, schema=self.schema)
+
+    def create(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+            
+    def drop(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
 class _SQLReplaceable(SQLObject):
 
