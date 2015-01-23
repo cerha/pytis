@@ -30,7 +30,7 @@ from remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException
 
 try:
-    from ssh import ReverseTunnel
+    from ssh import ReverseTunnel, public_key_acceptable
 except ImportError as e:
     def ReverseTunnel(*args, **kwargs):
         raise e

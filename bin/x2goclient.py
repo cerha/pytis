@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-22 16:34'
+_VERSION = '2015-01-23 16:40'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -763,6 +763,19 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                                           password=True, title="")
                 if password is None:
                     return None
+        def key_acceptable(key_filename):
+            public_key_filename = key_filename + '.pub'
+            acceptable = True
+            if os.access(public_key_filename, os.R_OK):
+                try:
+                    acceptable = pytis.remote.public_key_acceptable(
+                        connect_parameters['hostname'],
+                        connect_parameters['username'],
+                        public_key_filename,
+                        port=connect_parameters['port'])
+                except:
+                    pass
+            return acceptable
         while True:
             connect_parameters = _auth_info.connect_parameters()
             try:
@@ -772,7 +785,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 if selected_method != 'password' and 'publickey' in methods:
                     key_filename = _auth_info.get('key_filename')
                     if key_filename is not None and os.access(key_filename, os.R_OK):
-                        if ok_password(key_filename, _auth_info.get('password')):
+                        if ((key_acceptable(key_filename) and
+                             ok_password(key_filename, _auth_info.get('password')))):
                             filenames = []
                         else:
                             filenames = [key_filename]
@@ -780,6 +794,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                         filenames = key_files
                     password = None
                     for f in filenames:
+                        if not key_acceptable(f):
+                            continue
                         password = key_password(f, _auth_info.get('password') or '')
                         if password is not None:
                             _auth_info['key_filename'] = f
