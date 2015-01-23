@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,34 +46,39 @@
 
 "use strict";
 
-var pytis = {};
+var pytis = {
 
-pytis.gettext = new Gettext({domain:'pytis-web'});
-pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
+    gettext: new Gettext({domain: 'pytis-web'}),
 
-pytis.show_tooltip = function(event, uri) {
-    // This can't be implemented as a Field method as Field instances are not 
-    // created in BrowseForm (currently only in edit form).
-    var element, tooltip;
-    if (event) {
-	element = event.target;
-    } else {
-	event = window.event;
-	element = event.srcElement;
-    }
-    if (element._pytis_tooltip) {
-	tooltip = element._pytis_tooltip;
-    } else {
-	tooltip = new lcg.Tooltip(uri);
-	element._pytis_tooltip = tooltip;
-    }
-    tooltip.show(event.pointerX(), event.pointerY());
-};
+    _: function (msg) {
+	return pytis.gettext.gettext(msg);
+    },
 
-pytis.hide_tooltip = function(element) {
-    if (element._pytis_tooltip) {
-	element._pytis_tooltip.hide();
+    show_tooltip: function(event, uri) {
+	// This can't be implemented as a Field method as Field instances are not 
+	// created in BrowseForm (currently only in edit form).
+	var element, tooltip;
+	if (event) {
+	    element = event.target;
+	} else {
+	    event = window.event;
+	    element = event.srcElement;
+	}
+	if (element._pytis_tooltip) {
+	    tooltip = element._pytis_tooltip;
+	} else {
+	    tooltip = new lcg.Tooltip(uri);
+	    element._pytis_tooltip = tooltip;
+	}
+	tooltip.show(event.pointerX(), event.pointerY());
+    },
+
+    hide_tooltip: function(element) {
+	if (element._pytis_tooltip) {
+	    element._pytis_tooltip.hide();
+	}
     }
+
 };
 
 pytis.BrowseForm = Class.create({
