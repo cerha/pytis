@@ -99,7 +99,7 @@ pytis.BrowseForm = Class.create({
 	/* form_id ... HTML id of the pytis form top level element (string)
  	   form_name ... Form name used for distinguishing request parameters
    	     (see form_name in the python class).
-	   uri ... URI of the AJAX request to retrieve form data
+	   uri ... URI for AJAX requests
 	 */
 	this.form = $(form_id);
 	this.form.instance = this;
@@ -126,9 +126,9 @@ pytis.BrowseForm = Class.create({
 	    this.async_load = false;
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
 	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
-	    this.bind_table_headings(this.form.down('table'));
+	    this.bind_table_headings(this.form.down('table.data-table'));
 	    this.bind_table_cells(this.form.down('table.data-table'));
-	    this.bind_row_controls(this.form.down('tbody'));
+	    this.bind_row_controls(this.form.down('table.data-table tbody'));
 	}
 	if (allow_insertion) {
 	    var insert_button = new Element('button', {'class': 'new-row-button'});
@@ -247,7 +247,7 @@ pytis.BrowseForm = Class.create({
 		    container.update(transport.responseText);
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
-		    this.bind_table_headings(container.down('table'));
+		    this.bind_table_headings(container.down('table.data-table'));
 		    this.bind_table_cells(container.down('table.data-table'));
 		    for (i=0; i<this.on_load_callbacks.length; i++) {
 			callback = this.on_load_callbacks[i];
