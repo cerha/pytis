@@ -1276,7 +1276,7 @@ Possible values for the --pack NX option are:
         runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
                       exitcode=30)
     # lightdm remote login magic takes place here
-    if a.from_stdin:
+    if not on_windows() and a.from_stdin:
         lightdm_remote_login_buffer = sys.stdin.readline()
         (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
         a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
