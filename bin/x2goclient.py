@@ -79,7 +79,7 @@ class AuthInfo(dict):
 
     _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',)
     _EXTRA_KEYS = ('_add_to_known_hosts', '_command', '_method',)
-    
+
     _ARGS_PARAMETERS = (('server', 'hostname'),
                         ('remote_ssh_port', 'port'),
                         ('username', 'username'),
@@ -128,7 +128,7 @@ class AuthInfo(dict):
             v = self.get(p)
             if v is not None and v != '':
                 setattr(args, a, unicode(v))
-    
+
 _auth_info = AuthInfo()
 
 class Configuration(x2go.X2GoClientSettings):
@@ -137,12 +137,12 @@ class Configuration(x2go.X2GoClientSettings):
         super(Configuration, self).__init__(*args, **kwargs)
         default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
         self.defaultValues['pytis'] = dict(hostname=None,
-                                          username=x2go.defaults.CURRENT_LOCAL_USER,
-                                          password=None,
-                                          port=22,
-                                          key_filename=None,
-                                          command=default_command)
-        
+                                           username=x2go.defaults.CURRENT_LOCAL_USER,
+                                           password=None,
+                                           port=22,
+                                           key_filename=None,
+                                           command=default_command)
+
 class RpycInfo(object):
 
     def __init__(self, configuration, port=None, password=None):
@@ -230,7 +230,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     def _broker_path(self):
         return os.path.join('/', self._parameters['path'] or '/usr/bin/x2gobroker')
-    
+
     def broker_listprofiles(self):
         if self._broker_profiles is not None:
             return self._broker_profiles
@@ -391,14 +391,23 @@ class PytisSshProfiles(SshProfiles):
         return self._pytis_client_upgrade.get(parameter, default)
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
-        
+
     def get_xserver_config(self, xserver_name):
+        if not xserver_name == 'VcXsrv_shipped':
+            return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
-                pass
+                _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
             elif option == 'run_command':
-                pass
+                _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
+            elif option == 'display' or option == 'last_display':
+                _xserver_config[option] = 'localhost:0'
+            elif option == 'parameters':
+                parameters = self.get(xserver_name, option,
+                                      key_type=self.get_type(xserver_name, option))
+                parameters[0] = ':0'
+                _xserver_config[option] = parameters
             else:
                 try:
                     _xserver_config[option] = self.get(xserver_name, option,
@@ -420,6 +429,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                                                 'known_hosts')
         #
         self.args = args
+        if on_windows():
+            self.args.from_stdin = None
         if logger is None:
             self._pyhoca_logger = x2go.X2GoLogger(tag='PyHocaCLI')
         else:
@@ -740,7 +751,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         transport.close()
         s.close()
         return methods
-            
+
     @classmethod
     def pytis_ssh_connect(class_):
         if not _auth_info.get('password'):
@@ -911,7 +922,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     self.pytis_handle_info()
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
-            
+
     @classmethod
     def run(class_, args):
         _auth_info.update_from_args(args)
