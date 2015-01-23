@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-23 16:40'
+_VERSION = '2015-01-23 17:56'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -52,8 +52,10 @@ from pyhoca.cli import runtime_error
 import rpyc
 import x2go
 import x2go.backends.profiles.base
+import x2go.client
 import x2go.defaults
 import x2go.log
+import x2go.xserver
 import PyZenity as zenity
 import pytis.remote
 
@@ -387,7 +389,26 @@ class PytisSshProfiles(SshProfiles):
 
     def pytis_upgrade_parameter(self, parameter, default=None):
         return self._pytis_client_upgrade.get(parameter, default)
+
+class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         
+    def get_xserver_config(self, xserver_name):
+        _xserver_config = {}
+        for option in self.iniConfig.options(xserver_name):
+            if option == 'test_installed':
+                pass
+            elif option == 'run_command':
+                pass
+            else:
+                try:
+                    _xserver_config[option] = self.get(xserver_name, option,
+                                                       key_type=self.get_type(xserver_name, option))
+                except KeyError:
+                    pass
+        return _xserver_config
+
+x2go.client.X2GoClientXConfig = X2GoClientXConfig
+
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
     _DEFAULT_RPYC_PORT = 10000
