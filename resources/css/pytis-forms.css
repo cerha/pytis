@@ -129,18 +129,19 @@
     border: 1px solid #ddd;
     margin-top: .3em;
 }
-.pytis-form.browse-form table.data-table td, .pytis-form.browse-form table.data-table th {
+.pytis-form.browse-form table.data-table tr.data-row td,
+.pytis-form.browse-form table.data-table tr.column-headings th {
     padding: 2pt;
     vertical-align: top;
     border: 1px solid #ddd;
 }
-.pytis-form.browse-form table.data-table th.column-heading { 
+.pytis-form.browse-form table.data-table tr.column-headings th.column-heading { 
     background-color: #eee;
 }
-.pytis-form.browse-form table.data-table th.column-heading.sortable-column { 
+.pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column { 
     cursor: pointer;
 }
-.pytis-form.browse-form table.data-table th span.sort-indicator {
+.pytis-form.browse-form table.data-table tr.column-headings th span.sort-indicator {
     display: inline-block;
     float: right;
     padding: 3px 2px;
@@ -149,10 +150,10 @@
     background-position: right center;
     background-repeat: no-repeat;
 }
-.pytis-form.browse-form table.data-table th span.sort-direction-asc {
+.pytis-form.browse-form table.data-table tr.column-headings th span.sort-direction-asc {
     background-image: url(sort-asc.png);
 }
-.pytis-form.browse-form table th span.sort-direction-desc {
+.pytis-form.browse-form table.data-table tr.column-headings th span.sort-direction-desc {
     background-image: url(sort-desc.png);
 }
 
@@ -175,18 +176,18 @@
     background-image: url(row-expanded.png);
 }
 
-.pytis-form.browse-form table.data-table td .tree-node {
+.pytis-form.browse-form table.data-table .tree-node {
     white-space: nowrap;
 }
-.pytis-form.browse-form table.data-table tr { background-color: #f8fafb; }
-.pytis-form.browse-form table.data-table tr.even { background-color: #f1f3f2; }
+.pytis-form.browse-form table.data-table tr.data-row { background-color: #f8fafb; }
+.pytis-form.browse-form table.data-table tr.data-row.even { background-color: #f1f3f2; }
 .pytis-form.browse-form table.data-table tr.group-heading th { text-align: left; }
 
-.pytis-form.browse-form table.data-table td .popup-menu-ctrl-widget a {
+.pytis-form.browse-form table.data-table .popup-menu-ctrl-widget a {
     display: block;
     float: right;
 }
-.pytis-form.browse-form table.data-table td pre {
+.pytis-form.browse-form table.data-table pre {
     background-color: transparent;
     border: none;
 }

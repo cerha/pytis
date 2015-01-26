@@ -1609,7 +1609,9 @@ class BrowseForm(LayoutForm):
         row_style = self._view.row_style()
         if isinstance(row_style, collections.Callable):
             row_style = row_style(row)
-        cls = [n % 2 and 'even' or 'odd', self._group and 'even-group' or 'odd-group']
+        cls = ['data-row',
+               n % 2 and 'even' or 'odd',
+               self._group and 'even-group' or 'odd-group']
         if self._group != self._last_group:
             cls.append('group-start')
             if n != 0:
@@ -1838,7 +1840,7 @@ class BrowseForm(LayoutForm):
         headings = self._export_headings(context)
         if summary:
             foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
-        return g.table((g.thead(g.tr(headings)),
+        return g.table((g.thead(g.tr(headings, cls='column-headings')),
                         g.tfoot(foot_rows),
                         g.tbody(rows)),
                        border=1, cls='data-table')
