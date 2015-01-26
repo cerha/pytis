@@ -2086,9 +2086,7 @@ class BrowseForm(LayoutForm):
         self._set_async_request_row(req)
         if not self._expand_row or not self._async_row_expansion:
             raise BadRequest()
-        x = self._expand_row(self._row)
-        lcg.log(x)
-        return x
+        return self._expand_row(self._row)
 
     def export(self, context):
         if self._async_load and self._req.param('_pytis_async_load_request'):
