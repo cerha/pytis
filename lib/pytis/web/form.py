@@ -2058,6 +2058,8 @@ class BrowseForm(LayoutForm):
                 else:
                     # Update all columns as other columns may
                     # change due to computer dependencies.
+                    data = self._row.data()
+                    key = self._row[self._key]
                     rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
                     try:
                         data.update(key, pytis.data.Row(rowdata))
