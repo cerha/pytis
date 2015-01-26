@@ -193,7 +193,7 @@ pytis.BrowseForm = Class.create({
 
     slide_down: function(element) {
 	if (Effect !== undefined) {
-	    Effect.SlideDown(element, {duration: 0.3});
+	    Effect.SlideDown(element, {duration: 0.25});
 	} else {
 	    element.show();
 	}
@@ -201,7 +201,7 @@ pytis.BrowseForm = Class.create({
 
     slide_up: function(element) {
 	if (Effect !== undefined) {
-	    Effect.SlideUp(element, {duration: 0.3});
+	    Effect.SlideUp(element, {duration: 0.25});
 	} else {
 	    element.show();
 	}
@@ -213,12 +213,14 @@ pytis.BrowseForm = Class.create({
 	var expansion = tr.nextSiblings()[0];
 	if (tr.hasClassName('expanded')) {
 	    tr.removeClassName('expanded');
-	    this.slide_up(expansion);
+	    this.slide_up(expansion.down('.row-expansion-content'));
+	    setTimeout(function () { expansion.hide(); }, 250);
 	    link.setAttribute('aria-expanded', 'true');
 	} else {
 	    tr.addClassName('expanded');
 	    if (expansion.hasClassName('row-expansion')) {
-		this.slide_down(expansion);
+		expansion.show();
+		this.slide_down(expansion.down('.row-expansion-content'));
 	    } else {
 		this.send_expand_row_request(tr);
 	    }
@@ -231,12 +233,12 @@ pytis.BrowseForm = Class.create({
 			  _pytis_expand_row: 1,
 			  _pytis_row_key: this.pytis_row_key(tr)};
 	this.send_ajax_request(undefined, parameters, function(transport) {
-	    var expansion = new Element('tr', {'class': 'row-expansion'});
-	    expansion.insert(new Element('td', {'colspan': tr.childElements().length})
-			     .insert(transport.responseText));
-	    expansion.hide();
-	    tr.insert({after: expansion});
-	    this.slide_down(expansion);
+	    var content = new Element('div', {'class': 'row-expansion-content'});
+	    content.insert(transport.responseText);
+	    content.hide()
+	    tr.insert({after: new Element('tr', {'class': 'row-expansion'}).insert(
+		new Element('td', {'colspan': tr.childElements().length}).insert(content))});
+	    this.slide_down(content);
 	}.bind(this));
     },
 
