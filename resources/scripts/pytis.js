@@ -30,6 +30,7 @@
 /*jslint browser: true */
 /*jslint unparam: true */
 /*jslint todo: true */
+/*global Effect */
 /*global Class */
 /*global Element */
 /*global Ajax */
@@ -126,9 +127,8 @@ pytis.BrowseForm = Class.create({
 	    this.async_load = false;
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
 	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
-	    this.bind_table_headings(this.form.down('table.data-table'));
-	    this.bind_table_cells(this.form.down('table.data-table'));
-	    this.bind_row_controls(this.form.down('table.data-table tbody'));
+	    this.bind_table_headings(this.form.down('table.data-table thead'));
+	    this.bind_table_body(this.form.down('table.data-table tbody'));
 	}
 	if (allow_insertion) {
 	    var insert_button = new Element('button', {'class': 'new-row-button'});
@@ -139,14 +139,12 @@ pytis.BrowseForm = Class.create({
 	}
     },
 
-    on_edit_cell: function(event) {
-	var td = (event.element().nodeName === 'TD' ? event.element() : event.element().up('td'));
-	this.send_edit_cell_request(td);
-	event.stop();
-    },
-
     send_ajax_request: function(form, parameters, on_success) {
 	document.body.style.cursor = "wait";
+	if (!form) {
+	    // If no form is passed, we simply create one just for the request.
+	    form = new Element('form', {action: this.uri, method: 'GET'});
+	}
 	form.request({
 	    parameters: parameters,
 	    onSuccess: function(transport) {
@@ -167,18 +165,20 @@ pytis.BrowseForm = Class.create({
 	});
     },
 
+    on_edit_cell: function(event) {
+	var td = (event.element().nodeName === 'TD' ? event.element() : event.element().up('td'));
+	this.send_edit_cell_request(td);
+	event.stop();
+    },
+
     send_edit_cell_request: function(element) {
-	var form = element.down('form');
-	if (!form) {
-	    // If the cell edit form is not present yet, let's create an empty
-	    // form just for sending the request.
-	    form = new Element('form', {action: this.uri, method: 'GET'});
-	}
 	var parameters = {_pytis_form_update_request: 1,
 			  _pytis_edit_cell: 1,
 			  _pytis_row_key: this.pytis_row_key(element),
 			  _pytis_column_id: this.pytis_column_id(element)};
-	this.send_ajax_request(form, parameters, function(transport) {
+	// Note, element.down('form') will not exist on first invocation, but the method
+	// send_ajax_request can handle that.
+	this.send_ajax_request(element.down('form'), parameters, function(transport) {
 	    element.update(transport.responseText);
 	    var edit_form = element.down('form');
 	    if (edit_form) {
@@ -191,11 +191,60 @@ pytis.BrowseForm = Class.create({
 	}.bind(this));
     },
 
+    slide_down: function(element) {
+	if (Effect !== undefined) {
+	    Effect.SlideDown(element, {duration: 0.3});
+	} else {
+	    element.show();
+	}
+    },
+
+    slide_up: function(element) {
+	if (Effect !== undefined) {
+	    Effect.SlideUp(element, {duration: 0.3});
+	} else {
+	    element.show();
+	}
+    },
+
+    on_expand_row: function(event) {
+	var link = event.element();
+	var tr = link.up('tr');
+	var expansion = tr.nextSiblings()[0];
+	if (tr.hasClassName('expanded')) {
+	    tr.removeClassName('expanded');
+	    this.slide_up(expansion);
+	    link.setAttribute('aria-expanded', 'true');
+	} else {
+	    tr.addClassName('expanded');
+	    if (expansion.hasClassName('row-expansion')) {
+		this.slide_down(expansion);
+	    } else {
+		this.send_expand_row_request(tr);
+	    }
+	    event.stop();
+	}
+    },
+
+    send_expand_row_request: function(tr) {
+	var parameters = {_pytis_form_update_request: 1,
+			  _pytis_expand_row: 1,
+			  _pytis_row_key: this.pytis_row_key(tr)};
+	this.send_ajax_request(undefined, parameters, function(transport) {
+	    var expansion = new Element('tr', {'class': 'row-expansion'});
+	    expansion.insert(new Element('td', {'colspan': tr.childElements().length})
+			     .insert(transport.responseText));
+	    expansion.hide();
+	    tr.insert({after: expansion});
+	    this.slide_down(expansion);
+	}.bind(this));
+    },
+
     pytis_row_key: function(element) {
 	// Return pytis row key value for given HTML element inside the pytis table form.
 	// Returns null if the element is not inside a pytis table or
 	// if the table doesn't contain necessary information.
-	var tr = element.up('tr');
+	var tr = (element.nodeName === 'TR' ? element : element.up('tr'));
 	if (tr) {
 	    return tr.getAttribute('data-pytis-row-key');
 	}
@@ -247,8 +296,8 @@ pytis.BrowseForm = Class.create({
 		    container.update(transport.responseText);
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
-		    this.bind_table_headings(container.down('table.data-table'));
-		    this.bind_table_cells(container.down('table.data-table'));
+		    this.bind_table_headings(container.down('table.data-table thead'));
+		    this.bind_table_body(container.down('table.data-table tbody'));
 		    for (i=0; i<this.on_load_callbacks.length; i++) {
 			callback = this.on_load_callbacks[i];
 			callback(this.form);
@@ -318,9 +367,9 @@ pytis.BrowseForm = Class.create({
 	}
     },
 
-    bind_table_headings: function(table) {
-	if (table) {
-	    table.select('th.column-heading').each(function(th) {
+    bind_table_headings: function(thead) {
+	if (thead) {
+	    thead.select('th.column-heading').each(function(th) {
 		if (th.hasClassName('sortable-column')) {
 		    th.observe('click', this.on_table_heading_clicked.bind(this));
 		}
@@ -328,19 +377,23 @@ pytis.BrowseForm = Class.create({
 	}
     },
 
-    bind_table_cells: function(table) {
-	if (table) {
-	    table.select('td.editable-cell').each(function (element) {
+    bind_table_body: function(tbody) {
+	if (tbody) {
+	    tbody.select('td.editable-cell').each(function (element) {
 		element.setAttribute('title', pytis._("Double click the cell to edit the value."));
 		element.on('dblclick', this.on_edit_cell.bind(this));
 	    }.bind(this));
-	}
-    },
-
-    bind_row_controls: function(tbody) {
-	if (tbody) {
-	    tbody.select('a.remove-row').each(function(ctrl) {
-		ctrl.observe('click', this.on_remove_row.bind(this));
+	    tbody.select('tr').each(function(tr) {
+		var remove_row = tr.down('a.remove-row');
+		if (remove_row) {
+		    remove_row.on('click', this.on_remove_row.bind(this));
+		}
+		if (tr.hasClassName('expansible-row')) {
+		    var expand_row = new Element('a', {'class': 'expand-row'});
+		    expand_row.update(pytis._("Expand Row"));
+		    expand_row.on('click', this.on_expand_row.bind(this));
+		    tr.down('td').insert({bottom: expand_row});
+		}
 	    }.bind(this));
 	}
     },
@@ -434,11 +487,10 @@ pytis.BrowseForm = Class.create({
 			  '_pytis_insert_new_row': 1};
 	if (form) {
 	    this.send_ajax_request(form, parameters, function(transport) {
-		var tbody = this.form.down('tbody');
+		var tbody = this.form.down('table.data-table tbody');
 		tbody.insert(transport.responseText);
 		form['_pytis_inserted_rows_' + this.form_name].value++;
-		this.bind_table_cells(tbody.up('table'));
-		this.bind_row_controls(tbody);
+		this.bind_table_body(tbody);
 	    });
 	}
 	event.stop();

@@ -156,6 +156,25 @@
     background-image: url(sort-desc.png);
 }
 
+.pytis-form.browse-form table.data-table tr.expansible-row td:first-child {
+    padding-left: 16px;
+    position: relative;
+}
+.pytis-form.browse-form table.data-table tr.expansible-row a.expand-row {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    text-indent: -9999px;
+    background-image: url(row-collapsed.png);
+    background-position: 1px center;
+    background-repeat: no-repeat;
+}
+.pytis-form.browse-form table.data-table tr.expansible-row.expanded a.expand-row {
+    background-image: url(row-expanded.png);
+}
+
 .pytis-form.browse-form table.data-table td .tree-node {
     white-space: nowrap;
 }

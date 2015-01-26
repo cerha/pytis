@@ -1119,8 +1119,8 @@ class BrowseForm(LayoutForm):
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
-                 cell_editable=None, on_update_row=None,
-                 **kwargs):
+                 cell_editable=None, expand_row=None, async_row_expansion=False,
+                 on_update_row=None, **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -1260,6 +1260,19 @@ class BrowseForm(LayoutForm):
             'PresentedRow' instance and the column's field id) returning
             boolean, indicating whether the cell is editable inline.  By
             default, no cells are editable inline.
+          expand_row -- function of one argument (the form row as a
+            'PresentedRow' instance) returning expanded row content as
+            lcg.Content instance.  When present (not null) each row may be
+            expanded in the user interface to display this additional content
+            for each row.  Typically some additional columns which don't fit in
+            the table can be displayed this way eliminating the need to go to
+            another page and back to display more details about certain
+            records.
+          async_row_expansion -- boolean indicating whether row expansion
+            should be loaded asynchronously.  When True, the expanded content
+            is loaded on demand for each row.  When False, expansion for all
+            rows is part of the initial form data (regardless whether the
+            initial form data is loaded synchronously or asynchronously).
           on_update_row -- callback to perform the row update operation after
             cell editation.  If None, the row is saved using the the standard
             'update()' method on forms's data object.  If not None, it must be
@@ -1503,6 +1516,8 @@ class BrowseForm(LayoutForm):
         self._row_actions = row_actions
         self._async_load = async_load
         self._cell_editable = cell_editable or (lambda x: False)
+        self._expand_row = expand_row
+        self._async_row_expansion = async_row_expansion
         self._on_update_row = on_update_row
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
@@ -1599,6 +1614,8 @@ class BrowseForm(LayoutForm):
             cls.append('group-start')
             if n != 0:
                 cls.append('group-change')
+        if self._expand_row:
+            cls.append('expansible-row')
         if row_style is not None:
             name = row_style.name()
             if name:
@@ -1617,7 +1634,12 @@ class BrowseForm(LayoutForm):
         cells = [g.td(self._export_cell(context, row, n, field), align=self._align.get(field.id),
                       **self._field_style(context, field, row))
                  for field in self._column_fields]
-        return g.tr(cells, id=row_id, **self._row_attr(row, n))
+        result = g.tr(cells, id=row_id, **self._row_attr(row, n))
+        if self._expand_row and not self._async_row_expansion:
+            content = self._expand_row(row)
+            result += g.tr(g.td(content.export(context), colspan=len(self._column_fields)),
+                           cls='row-expansion', style="display: none;")
+        return result
 
     def _export_aggregation(self, context, op):
         def export_aggregation_value(data, op, field):
@@ -2014,6 +2036,56 @@ class BrowseForm(LayoutForm):
         else:
             return None
 
+    def _set_async_request_row(self, req):
+        data = self._row.data()
+        key_value = req.param('_pytis_row_key')
+        key_type = data.find_column(self._key).type()
+        key, err = key_type.validate(key_value)
+        row = data.row(key)
+        self._row.set_row(row)
+
+    def _edit_cell_response(self, req):
+        column_id = req.param('_pytis_column_id')
+        self._set_async_request_row(req)
+        if not self._cell_editable(self._row, column_id):
+            raise BadRequest()
+        form = InlineEditForm(self._view, req, self._row, self._handler, column_id)
+        if req.param('save-edited-cell'):
+            # The cell edit form was submitted.
+            if form.validate(req):
+                if self._on_update_row:
+                    error = self._on_update_row(self._row)
+                else:
+                    # Update all columns as other columns may
+                    # change due to computer dependencies.
+                    rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
+                    try:
+                        data.update(key, pytis.data.Row(rowdata))
+                    except pd.DBException as e:
+                        if e.exception():
+                            error = (None, unicode(e.exception()).strip())
+                        else:
+                            error = (None, e.message())
+                    else:
+                        error = None
+                if error:
+                    form.set_error(*error)
+                else:
+                    def export_cell(context):
+                        return self._export_field(context, self._fields[column_id],
+                                                  editable=False)
+                    return Exporter(export_cell)
+        # Show the form inside the cell.
+        return form
+
+    def _expand_row_response(self, req):
+        self._set_async_request_row(req)
+        if not self._expand_row or not self._async_row_expansion:
+            raise BadRequest()
+        x = self._expand_row(self._row)
+        lcg.log(x)
+        return x
+
     def export(self, context):
         if self._async_load and self._req.param('_pytis_async_load_request'):
             form_id = context.unique_id()
@@ -2085,7 +2157,8 @@ class BrowseForm(LayoutForm):
         BrowseForm may emit ajax requests for query fields form updates.
 
         """
-        if req.param('_pytis_form_update_request') and req.param('_pytis_edit_cell'):
+        if ((req.param('_pytis_form_update_request') and
+             (req.param('_pytis_edit_cell') or req.param('_pytis_expand_row')))):
             return True
         elif self._query_fields_form:
             return self._query_fields_form.is_ajax_request(req)
@@ -2098,43 +2171,10 @@ class BrowseForm(LayoutForm):
         Same rules for the returned value apply as in 'EditForm.ajax_response()'.
 
         """
-        if req.param('_pytis_edit_cell'):
-            column_id, key_value = req.param('_pytis_column_id'), req.param('_pytis_row_key')
-            data = self._row.data()
-            key_type = data.find_column(self._key).type()
-            key, err = key_type.validate(key_value)
-            row = data.row(key)
-            self._row.set_row(row)
-            if not self._cell_editable(self._row, column_id):
-                raise BadRequest()
-            form = InlineEditForm(self._view, req, self._row, self._handler, column_id)
-            if req.param('save-edited-cell'):
-                # The cell edit form was submitted.
-                if form.validate(req):
-                    if self._on_update_row:
-                        error = self._on_update_row(self._row)
-                    else:
-                        # Update all columns as other columns may
-                        # change due to computer dependencies.
-                        rowdata = [(c.id(), self._row[c.id()]) for c in data.columns()]
-                        try:
-                            data.update(key, pytis.data.Row(rowdata))
-                        except pd.DBException as e:
-                            if e.exception():
-                                error = (None, unicode(e.exception()).strip())
-                            else:
-                                error = (None, e.message())
-                        else:
-                            error = None
-                    if error:
-                        form.set_error(*error)
-                    else:
-                        def export_cell(context):
-                            return self._export_field(context, self._fields[column_id],
-                                                      editable=False)
-                        return Exporter(export_cell)
-            # Show the form inside the cell.
-            return form
+        if req.param('_pytis_expand_row'):
+            return self._expand_row_response(req)
+        elif req.param('_pytis_edit_cell'):
+            return self._edit_cell_response(req)
         else:
             return self._query_fields_form.ajax_response(req)
 
