@@ -218,7 +218,7 @@ pytis.BrowseForm = Class.create({
 	    link.setAttribute('aria-expanded', 'true');
 	} else {
 	    tr.addClassName('expanded');
-	    if (expansion.hasClassName('row-expansion')) {
+	    if (expansion && expansion.hasClassName('row-expansion')) {
 		expansion.show();
 		this.slide_down(expansion.down('.row-expansion-content'));
 	    } else {
