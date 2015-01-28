@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-01-28 15:21+0100\n"
+"POT-Creation-Date: 2015-01-28 17:33+0100\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -518,20 +518,24 @@ msgstr ""
 msgid "New row"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:325
+#: ../resources/scripts/pytis.js:227 ../resources/scripts/pytis.js:413
+msgid "Expand Row"
+msgstr ""
+
+#: ../resources/scripts/pytis.js:239 ../resources/scripts/pytis.js:253
+msgid "Collapse Row"
+msgstr ""
+
+#: ../resources/scripts/pytis.js:343
 msgid "Failed loading form:"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:336
+#: ../resources/scripts/pytis.js:354
 msgid "show details"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:385
+#: ../resources/scripts/pytis.js:403
 msgid "Double click the cell to edit the value."
-msgstr ""
-
-#: ../resources/scripts/pytis.js:395
-msgid "Expand Row"
 msgstr ""
 
 #, fuzzy

@@ -17,122 +17,92 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../bin/x2goclient.py:81
-msgid "Can't create client directory: %s"
-msgstr "Nelze vytvořit klientský adresář: %s"
+#~ msgid "Can't create client directory: %s"
+#~ msgstr "Nelze vytvořit klientský adresář: %s"
 
-#: ../bin/x2goclient.py:83
-msgid "Client directory not accessible: %s"
-msgstr "Klientský adresář není přístupný: %s"
+#~ msgid "Client directory not accessible: %s"
+#~ msgstr "Klientský adresář není přístupný: %s"
 
-#: ../bin/x2goclient.py:95
-msgid "Can't create client configuration file: %s"
-msgstr "Nelze vytvořit klientský konfigurační soubor: %s"
+#~ msgid "Can't create client configuration file: %s"
+#~ msgstr "Nelze vytvořit klientský konfigurační soubor: %s"
 
-#: ../bin/x2goclient.py:98
-msgid "Client configuration not accessible: %s"
-msgstr "Klientská konfigurace není přístupná: %s"
+#~ msgid "Client configuration not accessible: %s"
+#~ msgstr "Klientská konfigurace není přístupná: %s"
 
-#: ../bin/x2goclient.py:102
-msgid "Error when loading client configuration: %s"
-msgstr "Chyba při načítání klientské konfigurace: %s"
+#~ msgid "Error when loading client configuration: %s"
+#~ msgstr "Chyba při načítání klientské konfigurace: %s"
 
-#: ../bin/x2goclient.py:110
-msgid "Configuration parameter not available: %s"
-msgstr "Nedostupný konfigurační parametr: %s"
+#~ msgid "Configuration parameter not available: %s"
+#~ msgstr "Nedostupný konfigurační parametr: %s"
 
-#: ../bin/x2goclient.py:112
-msgid "Invalid configuration parameter type: %s = %r (is not %s)"
-msgstr "Chybný typ konfiguračního parametru: %s = %r (není %s)"
+#~ msgid "Invalid configuration parameter type: %s = %r (is not %s)"
+#~ msgstr "Chybný typ konfiguračního parametru: %s = %r (není %s)"
 
-#: ../bin/x2goclient.py:135
-msgid "Can't read RPyC info file: %s"
-msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
+#~ msgid "Can't read RPyC info file: %s"
+#~ msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:145
-msgid "Error when writing RPyC info file: %s"
-msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
+#~ msgid "Error when writing RPyC info file: %s"
+#~ msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:261
-msgid "No free port found for RPyC in the range %s-%s"
-msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
+#~ msgid "No free port found for RPyC in the range %s-%s"
+#~ msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:333
-msgid "Key password"
-msgstr "Heslo ke klíči"
+#~ msgid "Key password"
+#~ msgstr "Heslo ke klíči"
 
-#: ../bin/x2goclient.py:345
-msgid "Default authentication failed"
-msgstr "Výchozí autentizace selhala"
+#~ msgid "Default authentication failed"
+#~ msgstr "Výchozí autentizace selhala"
 
-#: ../bin/x2goclient.py:347
-msgid "Login using password"
-msgstr "Přihlášení heslem"
+#~ msgid "Login using password"
+#~ msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:348
-msgid "Login using a key file"
-msgstr "Přihlášení klíčem"
+#~ msgid "Login using a key file"
+#~ msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:355
-msgid "No supported ssh connection method available"
-msgstr "Není dostupná žádná metoda spojení přes ssh"
+#~ msgid "No supported ssh connection method available"
+#~ msgstr "Není dostupná žádná metoda spojení přes ssh"
 
-#: ../bin/x2goclient.py:358
-msgid "Login password"
-msgstr "Přihlášovací heslo"
+#~ msgid "Login password"
+#~ msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:359
-msgid "Password input"
-msgstr "Zadání hesla"
+#~ msgid "Password input"
+#~ msgstr "Zadání hesla"
 
-#: ../bin/x2goclient.py:365
-msgid "Select ssh key file"
-msgstr "Vyberte ssh klíč"
+#~ msgid "Select ssh key file"
+#~ msgstr "Vyberte ssh klíč"
 
-#: ../bin/x2goclient.py:371
-msgid "Program error"
-msgstr "Chyba programu"
+#~ msgid "Program error"
+#~ msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:383
-msgid "Invalid broker address"
-msgstr "Chybná adresa brokeru"
+#~ msgid "Invalid broker address"
+#~ msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:387
-msgid "Unsupported broker protocol"
-msgstr "Nepodporovaný protokol pro přístup na broker"
+#~ msgid "Unsupported broker protocol"
+#~ msgstr "Nepodporovaný protokol pro přístup na broker"
 
-#: ../bin/x2goclient.py:446
-msgid "New pytis client version available. Install?"
-msgstr "Je dostupná nová verze pytisového klienta. Nainstalovat?"
+#~ msgid "New pytis client version available. Install?"
+#~ msgstr "Je dostupná nová verze pytisového klienta. Nainstalovat?"
 
-#: ../bin/x2goclient.py:447
-msgid "No"
-msgstr "Ne"
+#~ msgid "No"
+#~ msgstr "Ne"
 
-#: ../bin/x2goclient.py:447
-msgid "Yes"
-msgstr "Ano"
+#~ msgid "Yes"
+#~ msgstr "Ano"
 
-#: ../bin/x2goclient.py:450
-msgid "Select session"
-msgstr "Vyberte sezení"
+#~ msgid "Select session"
+#~ msgstr "Vyberte sezení"
 
-#: ../bin/x2goclient.py:454
-msgid "No session selected."
-msgstr "Nebylo vybráno žádné sezení."
+#~ msgid "No session selected."
+#~ msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:475
-msgid "Invalid session format"
-msgstr "Chybný formát sezení"
+#~ msgid "Invalid session format"
+#~ msgstr "Chybný formát sezení"
 
-#: ../bin/x2goclient.py:490
-msgid "Couldn't connect to upgrade server"
-msgstr "Nelze se připojit na aktualizační server"
+#~ msgid "Couldn't connect to upgrade server"
+#~ msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:500
-msgid "Package unpacking failed"
-msgstr "Selhalo rozbalení balíku"
+#~ msgid "Package unpacking failed"
+#~ msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:506
-msgid "Pytis successfully upgraded. Restart the application."
-msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
+#~ msgid "Pytis successfully upgraded. Restart the application."
+#~ msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
