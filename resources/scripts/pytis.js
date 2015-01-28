@@ -207,15 +207,25 @@ pytis.BrowseForm = Class.create({
 	}
     },
 
-    on_expand_row: function(event) {
-	var link = event.element();
-	var tr = link.up('tr');
-	var expansion = tr.nextSiblings()[0];
+    on_toggle_row_expansion: function(event) {
+	var tr = event.element().up('tr');
+	var expansion;
+	if (tr.hasClassName('expansible-row')) {
+	    expansion = tr.nextSiblings()[0];
+	} else {
+	    expansion = tr;
+	    tr = expansion.previousSiblings()[0];
+	}
+	var link = tr.down('a.expand-row');
 	if (tr.hasClassName('expanded')) {
 	    tr.removeClassName('expanded');
 	    this.slide_up(expansion.down('.row-expansion-content'));
-	    setTimeout(function () { expansion.hide(); }, 250);
-	    link.setAttribute('aria-expanded', 'true');
+	    link.focus();
+	    setTimeout(function () {
+		expansion.hide();
+		link.setAttribute('aria-expanded', 'false');
+		link.update(pytis._("Expand Row"));
+	    }, 250);
 	} else {
 	    tr.addClassName('expanded');
 	    if (expansion && expansion.hasClassName('row-expansion')) {
@@ -224,6 +234,10 @@ pytis.BrowseForm = Class.create({
 	    } else {
 		this.send_expand_row_request(tr);
 	    }
+	    setTimeout(function () { 
+		link.setAttribute('aria-expanded', 'true');
+		link.update(pytis._("Collapse Row"));
+	    }, 250);
 	    event.stop();
 	}
     },
@@ -235,7 +249,11 @@ pytis.BrowseForm = Class.create({
 	this.send_ajax_request(undefined, parameters, function(transport) {
 	    var content = new Element('div', {'class': 'row-expansion-content'});
 	    content.insert(transport.responseText);
-	    content.hide()
+	    var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
+	    collapse_ctrl.update(pytis._("Collapse Row"));
+	    collapse_ctrl.on('click', this.on_toggle_row_expansion.bind(this));
+	    content.insert(collapse_ctrl);
+	    content.hide();
 	    tr.insert({after: new Element('tr', {'class': 'row-expansion'}).insert(
 		new Element('td', {'colspan': tr.childElements().length}).insert(content))});
 	    this.slide_down(content);
@@ -393,7 +411,7 @@ pytis.BrowseForm = Class.create({
 		if (tr.hasClassName('expansible-row')) {
 		    var expand_row = new Element('a', {'class': 'expand-row'});
 		    expand_row.update(pytis._("Expand Row"));
-		    expand_row.on('click', this.on_expand_row.bind(this));
+		    expand_row.on('click', this.on_toggle_row_expansion.bind(this));
 		    tr.down('td').insert({bottom: expand_row});
 		}
 	    }.bind(this));

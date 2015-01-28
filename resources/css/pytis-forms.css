@@ -175,6 +175,10 @@
 .pytis-form.browse-form table.data-table tr.expansible-row.expanded a.expand-row {
     background-image: url(row-expanded.png);
 }
+.pytis-form.browse-form table.data-table tr.row-expansion a.collapse-row {
+    position: absolute;
+    left: -9999px;
+}
 
 .pytis-form.browse-form table.data-table .tree-node {
     white-space: nowrap;
