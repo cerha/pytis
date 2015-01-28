@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1205,6 +1205,25 @@ class Macaddr(String):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.MACADDR()
 
+
+class Email(String):
+    """E-mail address."""
+
+    VM_EMAIL_FORMAT = 'VM_EMAIL_FORMAT'
+    # Translators: User input validation error message.
+    _VM_EMAIL_FORMAT_MSG = _(u"Invalid format")
+
+    # Taken from HTML5.  Not compliant with RFC 5322 but it should be good
+    # enough for practical purposes.
+    _EMAIL_FORMAT = re.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+                               "[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
+                               "(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+    
+    def _validate(self, string, *args, **kwargs):
+        if not self._EMAIL_FORMAT.match(string):
+            raise self._validation_error(self.VM_EMAIL_FORMAT)
+        return Value(self, unicode(string)), None
+    
 
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
