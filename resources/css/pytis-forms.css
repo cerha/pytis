@@ -137,7 +137,7 @@
     border: 1px solid #ddd;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading,
-.pytis-form.browse-form table.data-table tr.column-headings th { 
+.pytis-form.browse-form table.data-table tr.group-heading th { 
     background-color: #eee;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column { 
