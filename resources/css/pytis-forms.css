@@ -130,12 +130,14 @@
     margin-top: .3em;
 }
 .pytis-form.browse-form table.data-table tr.data-row td,
-.pytis-form.browse-form table.data-table tr.column-headings th {
+.pytis-form.browse-form table.data-table tr.column-headings th,
+.pytis-form.browse-form table.data-table tr.group-heading th {
     padding: 2pt;
     vertical-align: top;
     border: 1px solid #ddd;
 }
-.pytis-form.browse-form table.data-table tr.column-headings th.column-heading { 
+.pytis-form.browse-form table.data-table tr.column-headings th.column-heading,
+.pytis-form.browse-form table.data-table tr.column-headings th { 
     background-color: #eee;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column { 
