@@ -22,6 +22,8 @@ from __future__ import unicode_literals
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2015-01-23 17:56'
 
+XSERVER_VARIANT = 'VcXsrv_shipped'
+
 import gevent.monkey
 gevent.monkey.patch_all()
 
@@ -393,9 +395,10 @@ class PytisSshProfiles(SshProfiles):
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
     def get_xserver_config(self, xserver_name):
-        if not xserver_name == 'VcXsrv_shipped':
+        if not xserver_name == XSERVER_VARIANT:
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
+        _changed = False
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
                 _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
@@ -407,6 +410,8 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
                 parameters[0] = ':0'
+                if '-notrayicon' in parameters:
+                    parameters.remove('-notrayicon')
                 _xserver_config[option] = parameters
             else:
                 try:
@@ -414,6 +419,12 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
                                                        key_type=self.get_type(xserver_name, option))
                 except KeyError:
                     pass
+            if self.get_value(XSERVER_VARIANT, option) != _xserver_config[option]:
+                _changed = True
+                self.update_value(XSERVER_VARIANT, option, _xserver_config[option])
+        if _changed:
+            self.write_user_config = True
+            self.write()
         return _xserver_config
 
 x2go.client.X2GoClientXConfig = X2GoClientXConfig
@@ -956,7 +967,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 return
         # Create client
         _auth_info.update_args(args)
-        client = class_(args, use_cache=False, start_xserver=True, loglevel=x2go.log.loglevel_DEBUG)
+        client = class_(args, use_cache=False, start_xserver=str(XSERVER_VARIANT),
+                        loglevel=x2go.log.loglevel_DEBUG)
         # Run
         s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
