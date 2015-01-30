@@ -1578,6 +1578,10 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._last_set_invalid_value = None
         return listctrl
 
+    def _set_ctrl_editable(self, ctrl, editable):
+        # Disabling the control also disables scrolling.  We instead simply don't perform
+        # any changes in the disabled state.
+        pass
 
     def _change_callback(self):
         self._reload_enumeration()
@@ -1723,7 +1727,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._set_selection(self._selected_item)
 
     def _can_edit_selected(self, **kwargs):
-        return self._selected_item is not None
+        return self.enabled() and self._selected_item is not None
 
     def _cmd_edit_selected(self):
         view = config.resolver.get(self._cb_name, 'view_spec')
@@ -1738,7 +1742,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self.set_focus()
 
     def _can_delete_selected(self):
-        return self._selected_item is not None
+        return self.enabled() and self._selected_item is not None
         
     def _cmd_delete_selected(self):
         view = config.resolver.get(self._cb_name, 'view_spec')
@@ -1752,11 +1756,17 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
         
+    def _can_new_codebook_record(self):
+        return self.enabled()
+
     def _cmd_new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
+
+    def _can_invoke_codebook_form(self):
+        return self.enabled()
 
     def _cmd_invoke_codebook_form(self):
         super(ListField, self)._cmd_invoke_codebook_form()
