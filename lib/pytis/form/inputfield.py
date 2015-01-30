@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1549,7 +1549,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvořím vlastní seznamový widget.
         style = wx.LC_REPORT | wx.SIMPLE_BORDER | wx.LC_SINGLE_SEL
-        list = wx.ListCtrl(parent, -1, style=style)
+        listctrl = wx.ListCtrl(parent, -1, style=style)
         # Nastavím záhlaví sloupců.
         total_width = 0
         for i, cid in enumerate(columns):
@@ -1558,25 +1558,26 @@ class ListField(GenericCodebookField, CallbackHandler):
                 attr = wx.LIST_FORMAT_RIGHT
             else:
                 attr = wx.LIST_FORMAT_LEFT
-            list.InsertColumn(i, col.column_label(), attr)
+            listctrl.InsertColumn(i, col.column_label(), attr)
             width = col.column_width()
             if width < len(col.column_label()):
                 width = len(col.column_label())
-            list.SetColumnWidth(i, dlg2px(list, 4 * (width + 1)))
+            listctrl.SetColumnWidth(i, dlg2px(listctrl, 4 * (width + 1)))
             total_width = total_width + width
-        height = list.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10 # TODO: something better?
+        height = listctrl.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10 # TODO: something better?
         self._DEFAULT_WIDTH = total_width + 3
-        list.SetMinSize((dlg2px(list, 4 * (self.width() + 1)), height))
-        self._list = list
-        wxid = list.GetId()
-        wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, wxid, self._on_select)
-        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, wxid, self._on_activation)
-        wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
+        listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
+        self._list = listctrl
+        wxid = listctrl.GetId()
+        wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, wxid, self._on_select)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, wxid, self._on_activation)
+        wx_callback(wx.EVT_MOUSEWHEEL, listctrl, lambda e: e.Skip())
         self._selected_item = None
         self._enumeration_changed = True
         self._list_data = []
         self._last_set_invalid_value = None
-        return list
+        return listctrl
+
 
     def _change_callback(self):
         self._reload_enumeration()
