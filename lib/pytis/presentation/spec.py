@@ -5023,6 +5023,16 @@ class Specification(object):
         if not isinstance(fields, self._Fields):
             fields = self._Fields(fields)
         self._customize_fields(fields)
+        for field in fields:
+            # We need to init virtual fields after _customize_fields() because
+            # additional fields may be appended there.
+            if field.virtual():
+                kwargs = field.type_kwargs()
+                if kwargs:
+                    ftype = field.type()
+                    if type(ftype) == type(pytis.data.Type):
+                        ftype = ftype()
+                    field.set_type(ftype.clone(ftype.__class__(**kwargs)))
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
         # if self.__class__.__doc__:
@@ -5085,12 +5095,6 @@ class Specification(object):
                 if n is not None:
                     raise Exception("Virtual field collides with a database column", f.id())
                 xfields.append(f)
-                kwargs = f.type_kwargs()
-                if kwargs:
-                    ftype = f.type()
-                    if type(ftype) == type(pytis.data.Type):
-                        ftype = ftype()
-                    f.set_type(ftype.clone(ftype.__class__(**kwargs)))
             else:
                 if n is None:
                     raise Exception("Field not present in the database specification", f.id())
