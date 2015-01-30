@@ -520,7 +520,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 print
             # done
             sys.exit(0)
-        elif self.args.session_profile:
+        elif self.args.session_profile and not args.broker_url:
             _cmdlineopt_to_sessionopt = {
                 'command': 'cmd',
                 'kb_layout': 'kblayout',
@@ -547,13 +547,14 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             )
         else:
             # Select session
-            profile_id = None
+            profile_id = self.args.session_profile
             profile_name = 'Pyhoca-Client_Session'
             if args.broker_url is not None:
                 data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
-                answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
-                                     data=data)
-                profile_id = answer and answer[0]
+                if not profile_id:
+                    answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
+                                         data=data)
+                    profile_id = answer and answer[0]
                 profile_name = None
                 if not profile_id:
                     raise Exception(_("No session selected."))
