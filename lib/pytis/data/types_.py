@@ -2578,7 +2578,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         
         Arguments:
         
-          data_factory -- a 'DataFactory' instance for data object creation.
+          data_factory -- a 'DataFactory' instance for data object creation, or
+            a string naming the specification of the data factory
           value_column -- identifier of the column which provides the enumeration values.  If
             None, the key column is used.
           validity_column -- identifier of the column which determines valid rows (or None).  If
@@ -2597,7 +2598,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """
         super(DataEnumerator, self).__init__()
         from pytis.data import DataFactory
-        assert isinstance(data_factory, DataFactory), data_factory
+        assert isinstance(data_factory, (DataFactory, basestring,)), data_factory
         assert (value_column is None or
                 isinstance(value_column, basestring))
         assert (validity_column is None or
@@ -2630,6 +2631,9 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             connection_data = config.dbconnection
         else:
             connection_data = self._connection_data
+        if isinstance(self._data_factory, basestring):
+            import config
+            self._data_factory = config.resolver.get(self._data_factory, 'data_spec')
         self._data = data = self._data_factory.create(connection_data=connection_data)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()

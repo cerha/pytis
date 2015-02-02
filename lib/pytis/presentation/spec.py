@@ -3653,10 +3653,7 @@ class Field(object):
         enumerator = self._enumerator
         if enumerator is None:
             enumerator = self._codebook
-        if isinstance(enumerator, basestring):
-            import config
-            enumerator = config.resolver.get(enumerator, 'data_spec')
-        if isinstance(enumerator, pytis.data.DataFactory):
+        if isinstance(enumerator, (pytis.data.DataFactory, basestring,)):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
         if enumerator:
             kwargs['enumerator'] = enumerator
