@@ -1505,18 +1505,21 @@ class SQLObject(object):
                 self.add_is_dependent_on(o)
             else:
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
-                # General dependency must include all schema instances
-                name = o.pytis_name()
-                for search_path in _expand_schemas(o):
-                    schema = search_path[0]
-                    if _enforced_schema:
-                        try:
-                            o = object_by_name('%s.%s' % (_enforced_schema, name,),
-                                               allow_external=False)
-                        except:
+                if isinstance(o, SQLSchematicObject):
+                    # General dependency must include all schema instances
+                    name = o.pytis_name()
+                    for search_path in _expand_schemas(o):
+                        schema = search_path[0]
+                        if _enforced_schema:
+                            try:
+                                o = object_by_name('%s.%s' % (_enforced_schema, name,),
+                                                   allow_external=False)
+                            except:
+                                o = object_by_name('%s.%s' % (schema, name,))
+                        else:
                             o = object_by_name('%s.%s' % (schema, name,))
-                    else:
-                        o = object_by_name('%s.%s' % (schema, name,))
+                        self.add_is_dependent_on(o)
+                else:
                     self.add_is_dependent_on(o)
 
     def _create_access_rights(self):
