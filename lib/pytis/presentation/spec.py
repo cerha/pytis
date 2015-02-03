@@ -5029,7 +5029,10 @@ class Specification(object):
                     ftype = field.type()
                     if ftype is not None:
                         if type(ftype) == type(pytis.data.Type):
-                            ftype = ftype()
+                            if issubclass(ftype, pytis.data.Array):
+                                ftype = ftype(inner_type=kwargs['inner_type'])
+                            else:
+                                ftype = ftype()
                         field.set_type(ftype.clone(ftype.__class__(**kwargs)))
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
