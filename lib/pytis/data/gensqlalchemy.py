@@ -2616,6 +2616,10 @@ class SQLForeignTable(_SQLTabular):
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
+@compiles(SQLForeignTable)
+def visit_foreign_table(element, compiler, **kw):
+    return '"%s"."%s"' % (element.schema, element.name,)
+
 class _SQLReplaceable(SQLObject):
 
     def _pytis_definition(self, connection):

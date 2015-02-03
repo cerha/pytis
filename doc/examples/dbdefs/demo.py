@@ -361,6 +361,16 @@ class BogusView(sql.SQLView):
         return sqlalchemy.select([foo], from_obj=[sql.FullOuterJoin(foo, bar,
                                                                     foo.c.id == bar.c.id)])
 
+class DistantTableView(sql.SQLView):
+    """Test of using distant tables in a view."""
+    name = 'distant_table_view'
+    @classmethod
+    def query(cls):
+        foo = sql.t.Foo
+        distant = sql.t.DistantTable
+        return sqlalchemy.select([foo.c.id, foo.c.n, distant.c.x],
+                                 from_obj=[foo.outerjoin(distant, foo.c.n == distant.c.y)])
+
 
 # Functions
 
