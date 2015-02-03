@@ -2601,6 +2601,11 @@ class SQLForeignTable(_SQLTabular):
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
+    def _add_dependencies(self):
+        super(SQLForeignTable, self)._add_dependencies()
+        if self.server is not None:
+            self.add_is_dependent_on(self.server)
+
     @classmethod
     def specification_fields(class_):
         return class_.fields
