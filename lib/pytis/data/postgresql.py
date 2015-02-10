@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1234,6 +1234,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_apply_type_kwargs(self, ctype, kwargs):
         if ctype and kwargs:
+            if isinstance(ctype, pytis.data.Array) and 'inner_type' not in kwargs:
+                # This argument is mandatory for Array type.
+                kwargs = dict(kwargs, inner_type=ctype.inner_type())
             ctype = ctype.clone(ctype.__class__(**kwargs))
         return ctype
 
