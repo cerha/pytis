@@ -159,22 +159,23 @@
     background-image: url(sort-desc.png);
 }
 
-.pytis-form.browse-form table.data-table tr.expansible-row td:first-child {
-    padding-left: 16px;
+.pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl {
     position: relative;
+    width: 15px;
+    padding: 0;
 }
-.pytis-form.browse-form table.data-table tr.expansible-row a.expand-row {
-    width: 16px;
-    height: 16px;
+.pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl a.expand-row {
+    width: 15px;
+    height: 18px;
     position: absolute;
-    top: 1px;
-    left: 2px;
+    left: 0px;
+    top: 0px;
     text-indent: -9999px;
     background-image: url(row-collapsed.png);
     background-position: 1px center;
     background-repeat: no-repeat;
 }
-.pytis-form.browse-form table.data-table tr.expansible-row.expanded a.expand-row {
+.pytis-form.browse-form table.data-table.expansible-rows tr.expanded a.expand-row {
     background-image: url(row-expanded.png);
 }
 .pytis-form.browse-form table.data-table tr.row-expansion a.collapse-row {

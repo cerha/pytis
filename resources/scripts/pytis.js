@@ -210,11 +210,11 @@ pytis.BrowseForm = Class.create({
     on_toggle_row_expansion: function(event) {
 	var tr = event.element().up('tr');
 	var expansion;
-	if (tr.hasClassName('expansible-row')) {
-	    expansion = tr.nextSiblings()[0];
-	} else {
+	if (tr.hasClassName('row-expansion')) {
 	    expansion = tr;
 	    tr = expansion.previousSiblings()[0];
+	} else {
+	    expansion = tr.nextSiblings()[0];
 	}
 	var link = tr.down('a.expand-row');
 	if (tr.hasClassName('expanded')) {
@@ -395,6 +395,9 @@ pytis.BrowseForm = Class.create({
 		}
 	    }.bind(this));
 	}
+	if (thead.up('table').hasClassName('expansible-rows')) {
+	    thead.down('tr').insert({top: new Element('th', {'class': 'column-heading'})});
+	}
     },
 
     bind_table_body: function(tbody) {
@@ -403,16 +406,18 @@ pytis.BrowseForm = Class.create({
 		element.setAttribute('title', pytis._("Double click the cell to edit the value."));
 		element.on('dblclick', this.on_edit_cell.bind(this));
 	    }.bind(this));
+	    var expansible_rows = tbody.up('table').hasClassName('expansible-rows');
 	    tbody.select('tr').each(function(tr) {
 		var remove_row = tr.down('a.remove-row');
 		if (remove_row) {
 		    remove_row.on('click', this.on_remove_row.bind(this));
 		}
-		if (tr.hasClassName('expansible-row')) {
-		    var expand_row = new Element('a', {'class': 'expand-row'});
-		    expand_row.update(pytis._("Expand Row"));
-		    expand_row.on('click', this.on_toggle_row_expansion.bind(this));
-		    tr.down('td').insert({bottom: expand_row});
+		if (expansible_rows) {
+		    var ctrl = new Element('a', {'class': 'expand-row'});
+		    ctrl.update(pytis._("Expand Row"));
+		    ctrl.on('click', this.on_toggle_row_expansion.bind(this));
+		    ctrl.update(pytis._("Expand Row"));
+		    tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
 		}
 	    }.bind(this));
 	}

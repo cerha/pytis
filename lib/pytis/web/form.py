@@ -1616,8 +1616,6 @@ class BrowseForm(LayoutForm):
             cls.append('group-start')
             if n != 0:
                 cls.append('group-change')
-        if self._expand_row:
-            cls.append('expansible-row')
         if row_style is not None:
             name = row_style.name()
             if name:
@@ -1840,10 +1838,13 @@ class BrowseForm(LayoutForm):
         headings = self._export_headings(context)
         if summary:
             foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
+        cls = ['data-table']
+        if self._expand_row:
+            cls.append('expansible-rows')
         return g.table((g.thead(g.tr(headings, cls='column-headings')),
                         g.tfoot(foot_rows),
                         g.tbody(rows)),
-                       border=1, cls='data-table')
+                       border=1, cls=' '.join(cls))
     
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort') and self._user_sorting:
