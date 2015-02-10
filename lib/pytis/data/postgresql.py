@@ -1205,6 +1205,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'bytea': Binary,
                         'oid': pytis.data.Oid, # for backward compatibility
                         }
+        if type_ and type_[0] == '_':
+            array = True
+            type_ = type_[1:]
+        else:
+            array = False
         try:
             db_type_cls = TYPE_MAPPING[type_]
         except KeyError:
@@ -1230,6 +1235,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 db_type_kwargs['precision'] = precision
         elif db_type_cls == Integer and serial:
             db_type_cls = Serial
+        if array:
+            db_type_kwargs['inner_type'] = db_type_cls()
+            db_type_cls = pytis.data.Array
         return db_type_cls(**db_type_kwargs)
 
     def _pdbb_apply_type_kwargs(self, ctype, kwargs):
@@ -2960,11 +2968,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         for id, typid, type_ in template:
             dbvalue = data_0[i]
             i += 1
-            if isinstance(type_, Range):
+            if isinstance(type_, (Range, Array,)):
                 if not dbvalue:
                     dbvalue = ('', '',)
                 else:
                     dbvalue = tuple(dbvalue[1:-1].split(','))
+                    if isinstance(type_, Array) and isinstance(type_.inner_type(), String):
+                        dbvalue = tuple([v.strip()[1:-1] for v in dbvalue])
             if typid == 0:              # string
                 if dbvalue is None:
                     v = None

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -916,6 +916,8 @@ class _DBTest(_DBBaseTest):
                   "create table rangetable (x int, r int4range, rdt tsrange)",
                   ("insert into rangetable values "
                    "(1, '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
+                  "create table arraytable (x int primary key, a int[], b text[])",
+                  "insert into arraytable values (1, '{2, 3}', '{\"hello\", \"world\"}')",
                   "create view viewtest1 as select *, x||'%s%s'::text as foo "
                   "from viewtest2 where true",
                   "create rule viewtest1_update as on update to viewtest1 "
@@ -956,7 +958,8 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % (t,))
             except:
                 pass
-        for t in ('bin', 'rangetable', 'dateformats', 'fulltext', 'dist', 'xcosi', 'denik',
+        for t in ('bin', 'arraytable', 'rangetable', 'dateformats', 'fulltext',
+                  'dist', 'xcosi', 'denik',
                   'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % (t,))
@@ -1099,6 +1102,14 @@ class DBDataDefault(_DBTest):
              B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange()),),
             key,
             conn)
+        # arrays
+        key = B('x', 'arraytable', 'x')
+        arrays = pytis.data.DBDataDefault(
+            (key,
+             B('a', 'arraytable', 'a', type_=pytis.data.Array(inner_type=pytis.data.Integer())),
+             B('b', 'arraytable', 'b', type_=pytis.data.Array(inner_type=pytis.data.String())),),
+            key,
+            conn)
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -1130,6 +1141,7 @@ class DBDataDefault(_DBTest):
         self.fulltext1 = fulltext1
         self.dateformats = dateformats
         self.ranges = ranges
+        self.arrays = arrays
         self.view = view
         self.view3 = view3
         self.view4 = view4
@@ -1657,6 +1669,38 @@ class DBDataDefault(_DBTest):
         assert row is not None
         value = row[1].value()
         assert value is None, value
+    def test_arrays(self):
+        int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
+        str_array_type = pytis.data.Array(inner_type=pytis.data.String())
+        data = self.arrays
+        row = data.row(pytis.data.ival(1))
+        assert row is not None
+        value = row[1].value()
+        assert value[0].value() == 2 and value[1].value() == 3, value
+        new_value_a, err = int_array_type.validate(('20', '30',))
+        assert err is None, err
+        new_value_b, err = str_array_type.validate(('bye', 'world',))
+        assert err is None, err
+        data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('a', new_value_a,),
+                                    ('b', new_value_b,),)))
+        n = data.select(pytis.data.EQ('a', new_value_a))
+        assert n == 1, n
+        row = data.fetchone()
+        data.close()
+        assert row['a'] == new_value_a, row['a'].value()
+        assert row['b'] == new_value_b, row['b'].value()
+        n = data.select(pytis.data.EQ('b', new_value_b))
+        assert n == 1, n
+        row = data.fetchone()
+        data.close()
+        assert row['a'] == new_value_a, row['a'].value()
+        assert row['b'] == new_value_b, row['b'].value()
+        new_value, err = int_array_type.validate(('40', '50',))
+        assert err is None, err
+        data.update(pytis.data.ival(2), pytis.data.Row((('b', new_value,),)))
+        new_value, err = int_array_type.validate(())
+        assert err is None, err
+        assert new_value.value() == (), new_value.value()
     def test_backslash(self):
         data = self.dstat
         backslash = 'back\\012slash'
