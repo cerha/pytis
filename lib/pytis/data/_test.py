@@ -917,7 +917,7 @@ class _DBTest(_DBBaseTest):
                   ("insert into rangetable values "
                    "(1, '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
                   "create table arraytable (x int primary key, a int[], b text[])",
-                  "insert into arraytable values (1, '{2, 3}', '{\"hello\", \"world\"}')",
+                  "insert into arraytable values (1, '{2, 3}', '{hello, world}')",
                   "create view viewtest1 as select *, x||'%s%s'::text as foo "
                   "from viewtest2 where true",
                   "create rule viewtest1_update as on update to viewtest1 "
@@ -1677,6 +1677,8 @@ class DBDataDefault(_DBTest):
         assert row is not None
         value = row[1].value()
         assert value[0].value() == 2 and value[1].value() == 3, value
+        value = row[2].value()
+        assert value[0].value() == 'hello' and value[1].value() == 'world', value
         new_value_a, err = int_array_type.validate(('20', '30',))
         assert err is None, err
         new_value_b, err = str_array_type.validate(('bye', 'world',))
