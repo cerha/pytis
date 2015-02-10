@@ -153,6 +153,12 @@ class DistantTable(sql.SQLForeignTable):
     fields = (sql.Column('x', pytis.data.Integer(not_null=True)),
               sql.Column('y', pytis.data.Integer(), default=1),)
 
+class DistantUser(sql.SQLForeignUser):
+    name = 'public'
+    server = DistantServer
+    user = 'bob'
+    password = 'secret'
+
 class LogTable(sql.SQLTable):
     name = 'log_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),

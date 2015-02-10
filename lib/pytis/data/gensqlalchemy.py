@@ -2560,7 +2560,7 @@ class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
     
     """
     __metaclass__ = _PytisSimpleMetaclass
-    __visit_name__ = 'server'
+    __visit_name__ = 'foreign_server'
     _DB_OBJECT = 'SERVER'
     name = None
     wrapper = 'postgres_fdw'
@@ -2627,6 +2627,41 @@ class SQLForeignTable(_SQLTabular):
 @compiles(SQLForeignTable)
 def visit_foreign_table(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
+
+class SQLForeignUser(sqlalchemy.schema.DDLElement, SQLObject):
+    """Mapping of a user to a foreign server user.
+
+    Properties:
+
+      name -- name of the local user or one of the special values ('user', 'public'); string
+      server -- server of the table; 'SQLForeignServer' object
+      user -- name of the foreign user; string or 'None'
+      password -- password of the foreign user; string or 'None'
+    
+    """
+    __metaclass__ = _PytisSimpleMetaclass
+    __visit_name__ = 'foreign_user'
+    name = None
+    server = None
+    user = None
+    password = None
+    
+    def pytis_create(self):
+        _engine.execute(self)
+    
+@compiles(SQLForeignUser)
+def visit_foreign_user(element, compiler, **kw):
+    options = []
+    if element.user is not None:
+        options.append("user %s" % (_sql_value_escape(element.user),))
+    if element.password is not None:
+        options.append("password %s" % (_sql_value_escape(element.password),))
+    if options:
+        options_string = ' OPTIONS (%s)' % (string.join(options, ', '),)
+    else:
+        options_string = ''
+    return ('CREATE USER MAPPING FOR "%s" SERVER "%s"%s' %
+            (element.name, element.server.pytis_name(real=True), options_string))
 
 class _SQLReplaceable(SQLObject):
 
