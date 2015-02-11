@@ -1628,6 +1628,12 @@ class BrowseForm(LayoutForm):
             attr['style'] = style
         attr['data-pytis-row-key'] = row[self._key].export()
         return attr
+        
+    def _columns_count(self):
+        n = len(self._column_fields)
+        if self._expand_row:
+            n += 1 # One extra column for row expansion controls. 
+        return n
     
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
@@ -1637,7 +1643,7 @@ class BrowseForm(LayoutForm):
         result = g.tr(cells, id=row_id, **self._row_attr(row, n))
         if self._expand_row and not self._async_row_expansion:
             content = self._expand_row(row)
-            result += g.tr(g.td(content.export(context), colspan=len(self._column_fields)),
+            result += g.tr(g.td(content.export(context), colspan=self._columns_count()),
                            cls='row-expansion', style="display: none;")
         return result
 
@@ -1669,7 +1675,7 @@ class BrowseForm(LayoutForm):
         else:
             return None
         g = context.generator()
-        return g.tr(g.th(heading, colspan=len(self._column_fields)), cls='group-heading')
+        return g.tr(g.th(heading, colspan=self._columns_count()), cls='group-heading')
     
     def _export_headings(self, context):
         g = context.generator()
@@ -1837,7 +1843,7 @@ class BrowseForm(LayoutForm):
             foot_rows = []
         headings = self._export_headings(context)
         if summary:
-            foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
+            foot_rows.append(g.tr(g.td(summary, colspan=self._columns_count())))
         cls = ['data-table']
         if self._expand_row:
             cls.append('expansible-rows')
