@@ -110,6 +110,31 @@ def _function_arguments_seq(function, types_only=False):
 def _function_arguments(function, types_only=False):
     return string.join(_function_arguments_seq(function, types_only=types_only), ', ')
 
+def _rename_replaced_function(generator, function, create):
+    replaced = function.replaces
+    if replaced is not None:
+        n = 1
+        while replaced.replaces is not None:
+            replaced = replaced.replaces
+            n += 1
+        replaced_name = replaced.pytis_name(real=True)
+        schema = function.schema
+        if create:
+            new_underscore = '_'
+            old_underscore = ''
+            name_range = range(n - 1, -1, -1)
+        else:
+            new_underscore = ''
+            old_underscore = '_'
+            name_range = range(n)
+        for i in name_range:
+            underscores = '_' * i
+            command = ('ALTER FUNCTION "%s"."%s%s%s" (%s) RENAME TO "%s%s%s"' %
+                       (schema, old_underscore, underscores, replaced_name,
+                        _function_arguments(function),
+                        new_underscore, underscores, replaced_name,))
+            generator.connection.execute(command)
+
 def _role_string(role):
     if role is True:
         role_string = 'PUBLIC'
@@ -176,6 +201,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_function(self, function, create_ok=False, result_type=None, suffix=''):
         search_path = function.search_path()
         with _local_search_path(self._set_search_path(search_path)):
+            _rename_replaced_function(self, function, True)
             if isinstance(function.result_type, (tuple, list,)):
                 self.make_type('t_' + function.pytis_name() + suffix, function.result_type)
             query_prefix, query_suffix = \
@@ -309,6 +335,7 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
         arguments = _function_arguments(function)
         command = 'DROP FUNCTION "%s"."%s" (%s)' % (function.schema, name, arguments,)
         self.connection.execute(command)
+        _rename_replaced_function(self, function, False)
 
     def visit_aggregate(self, aggregate, checkfirst=False):
         name = aggregate.pytis_name(real=True)
@@ -3079,6 +3106,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
       sql_directory -- name of the directory where SQL files with function body
         definitions are stored; the name is relative to the processed module
         file name
+      replaces -- specification class being replaced by this specification.
+        The original function is renamed by prepending an underscore to its
+        name.  This is useful when some package needs to extend a function from
+        another package.  Note that the replacing function must have new,
+        unique, name defined in its specification; the original function name
+        is used in the database.
 
     Function body can be defined in two ways:
 
@@ -3107,6 +3140,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     expected_rows = None
     set_parameters = ()
     sql_directory = 'sql'
+    replaces = None
     function_name = None        # obsolete
 
     _LANGUAGE = None
@@ -3244,6 +3278,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             _warn("function_name attribute is obsolete in `%s', use db_name instead" %
                   (class_.name,))
             return class_.function_name
+        if real and class_.replaces is not None:
+            return class_.replaces.pytis_name(real=True)
         return super(SQLFunctional, class_).pytis_name(real=real)
 
     def __call__(self, *arguments):

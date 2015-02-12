@@ -572,6 +572,12 @@ class SumFunction(sql.SQLFunction, sql.SQLAggregate):
     def body(self):
         return 'SELECT $1 + $2'
 
+class AlternateRowFunction(RowFunction):
+    name = 'alternate_row_function'
+    replaces = RowFunction
+    def body(self):
+        return "begin return row.n + 1; end;"
+
 
 # Miscellaneous
 
