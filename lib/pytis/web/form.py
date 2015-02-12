@@ -1883,31 +1883,25 @@ class BrowseForm(LayoutForm):
             else:
                 search_string = None
                 condition = None
-            values = [v.value() for v in data.distinct(field.id, prefix=level + 1,
-                                                       condition=self._conditions(condition))
-                      if v.value() is not None]
             if context.lang() == 'cs':
-                # Total hack allowing correct usage of Czech character 'ch' in index search.
-                # A more appropriate solution would be to handle that on the database level.
-                values = [v for v in values if not v.lower().endswith('ch')]
-                if search_string and search_string[-1] == search_string[-1].lower():
-                    ch = 'ch'
-                else:
-                    ch = 'CH'
-                search_ch_string = (search_string or '') + ch
-                condition = self._index_search_condition(search_ch_string)
-                try:
-                    count = data.select(columns=(self._key,),
-                                        condition=self._conditions(condition))
-                finally:
-                    data.close()
-                if count:
-                    i = 0
-                    while (i < len(values)
-                           and (values[i][-1].lower() in (u'á', u'č', u'ď', u'é', u'ě')
-                                or values[i][-1].lower() < u'i')):
-                        i += 1
-                    values.insert(i, search_ch_string)
+                # Hack allowing correct usage of Czech character 'ch' in index search.
+                # We need to look for longer prefixes and eliminate duplicates here.
+                if self._index_search_string[level-1:].lower().startswith('ch'):
+                    # Skip prefixes ending with 'C' when they actyally end with 'CH'.
+                    continue
+                values = []
+                for v in data.distinct(field.id, prefix=level + 2,
+                                       condition=self._conditions(condition)):
+                    value = v.value()
+                    if value is not None:
+                        if not value.lower().endswith('ch'):
+                            value = value[:-1]
+                        if value not in values:
+                            values.append(value)
+            else:
+                values = [v.value() for v in data.distinct(field.id, prefix=level + 1,
+                                                           condition=self._conditions(condition))
+                          if v.value() is not None]
             if len(values) < 3 or len(values) > 100:
                 break
             if search_string:
