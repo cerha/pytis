@@ -153,7 +153,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 return cc.compile().visit_create_column(cc)
             column_string = string.join(['\t' + compile(c) for c in sqlalchemy_columns], ',\n')
             server = table.server.pytis_name(real=True)
-            command = ('CREATE %s "%s.%s" (\n%s\n) SERVER %s\n' %
+            command = ('CREATE %s "%s"."%s" (\n%s\n) SERVER %s\n' %
                        (table._DB_OBJECT, table.schema, table.name, column_string, server,))
             self.connection.execute(command)
 
