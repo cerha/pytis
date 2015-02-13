@@ -1957,10 +1957,15 @@ class BrowseForm(LayoutForm):
         html_id = form_id + (bottom and '-top' or '-bottom')
         content = []
         show_search_field = self._show_search_field
-        if self._query_fields_form and not bottom:
-            #TODO: Hide when there are no records and no active filtering conditions?
-            #    and (count or [v for v in self._filter_ids.values() if v is not None])
-            content.append(self._query_fields_form.export(context))
+        if self._query_fields_form:
+            if not bottom:
+                #TODO: Hide when there are no records and no active filtering conditions?
+                #    and (count or [v for v in self._filter_ids.values() if v is not None])
+                content.append(self._query_fields_form.export(context))
+            else:
+                row = self._query_fields_form.row()
+                content.extend([g.hidden(f.id, row[f.id].export())
+                                for f in self._query_fields_form.fields()])
         limit, limits = self._limit, self._limits
         if limit is not None and count > limits[0]:
             controls = ()
