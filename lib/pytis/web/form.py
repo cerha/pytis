@@ -1958,14 +1958,15 @@ class BrowseForm(LayoutForm):
         content = []
         show_search_field = self._show_search_field
         if self._query_fields_form:
-            if not bottom:
-                #TODO: Hide when there are no records and no active filtering conditions?
-                #    and (count or [v for v in self._filter_ids.values() if v is not None])
-                content.append(self._query_fields_form.export(context))
-            else:
-                row = self._query_fields_form.row()
-                content.extend([g.hidden(f.id, row[f.id].export())
-                                for f in self._query_fields_form.fields()])
+            exported_query_fields = self._query_fields_form.export(context)
+            if bottom:
+                # The form must be present to preserve the query field values
+                # when the bottom controls are used.  Simple hidden fields
+                # don't work for all field types (datetime etc.).
+                exported_query_fields = g.div(exported_query_fields, style='display: none;')
+            #TODO: Hide when there are no records and no active filtering conditions?
+            #    and (count or [v for v in self._filter_ids.values() if v is not None])
+            content.append(exported_query_fields)
         limit, limits = self._limit, self._limits
         if limit is not None and count > limits[0]:
             controls = ()
