@@ -446,8 +446,8 @@ class LayoutForm(FieldForm):
                             g.td(content_, valign='top', cls='ctrl'))
                 else:
                     return g.td(content_, valign='top', cls='ctrl' + spaced)
-            cells = [td(i, label, content_)
-                     for i, (label, content_, fullsize, right_aligned)
+            cells = [td(i, label_, content_)
+                     for i, (label_, content_, fullsize, right_aligned_)
                      in enumerate(content.content())]
             if cells:
                 result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0, role='presentation',
@@ -475,14 +475,14 @@ class LayoutForm(FieldForm):
                 else:
                     normalspan = None
                     fullspan = 2
-                rows = [g.tr(td(label, content_, fullsize, right_aligned, fullspan, normalspan))
-                        for label, content_, fullsize, right_aligned in content.content()]
+                rows = [g.tr(td(label_, content_, fullsize, right_aligned_, fullspan, normalspan))
+                        for label_, content_, fullsize, right_aligned_ in content.content()]
                 if rows:
                     result = [g.table(rows, cls='vertical-group', role='presentation')]
                 else:
                     result = []
             else:
-                result = [item[1] for item in content.content()]
+                result = [item_[1] for item_ in content.content()]
         if result:
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
@@ -647,7 +647,7 @@ class _SubmittableForm(Form):
             if row.editable(fid):
                 field = self._fields[fid]
                 error = field.validate(req, locale_data)
-                #lcg.log("Validation:", (fid, req.param(fid), error))
+                # lcg.log("Validation:", (fid, req.param(fid), error))
                 if error:
                     errors.append((fid, error.message()))
         subform = self._find_subform(self._layout)
@@ -897,7 +897,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                          req.param(fid) not in (exported_value, localized_value))):
                         fdata['value'] = exported_value
                         fdata['localized_value'] = localized_value
-                    #lcg.log('-', fid, localized_value, req.param(fid), field.value());
+                    # lcg.log('-', fid, localized_value, req.param(fid), field.value());
                 if fid in field_states:
                     old_state = field_states[fid]
                     new_state = field.state()
@@ -966,7 +966,8 @@ class VirtualForm(EditForm):
         view = specification.view_spec()
         data = specification.data_spec().create()
         row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button, **kwargs)
+        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button,
+                                          **kwargs)
 
 
 class QueryFieldsForm(VirtualForm):
@@ -1632,7 +1633,7 @@ class BrowseForm(LayoutForm):
     def _columns_count(self):
         n = len(self._column_fields)
         if self._expand_row:
-            n += 1 # One extra column for row expansion controls. 
+            n += 1 # One extra column for row expansion controls.
         return n
     
     def _export_row(self, context, row, n, row_id):
@@ -1886,7 +1887,7 @@ class BrowseForm(LayoutForm):
             if context.lang() == 'cs':
                 # Hack allowing correct usage of Czech character 'ch' in index search.
                 # We need to look for longer prefixes and eliminate duplicates here.
-                if self._index_search_string[level-1:].lower().startswith('ch'):
+                if self._index_search_string[level - 1:].lower().startswith('ch'):
                     # Skip prefixes ending with 'C' when they actyally end with 'CH'.
                     continue
                 values = []
@@ -1964,8 +1965,8 @@ class BrowseForm(LayoutForm):
                 # when the bottom controls are used.  Simple hidden fields
                 # don't work for all field types (datetime etc.).
                 exported_query_fields = g.div(exported_query_fields, style='display: none;')
-            #TODO: Hide when there are no records and no active filtering conditions?
-            #    and (count or [v for v in self._filter_ids.values() if v is not None])
+            # TODO: Hide when there are no records and no active filtering conditions?
+            #       and (count or [v for v in self._filter_ids.values() if v is not None])
             content.append(exported_query_fields)
         limit, limits = self._limit, self._limits
         if limit is not None and count > limits[0]:
@@ -2305,7 +2306,7 @@ class ListView(BrowseForm):
         return result
 
     def _export_group_heading(self, context):
-        #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
+        # return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
         return None
 
     def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
@@ -2380,7 +2381,7 @@ class ItemizedView(BrowseForm):
         return g.li(content, id=row_id)
         
     def _export_group_heading(self, context):
-        #TODO: Create multi-level lists.
+        # TODO: Create multi-level lists.
         return None
     
     def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
