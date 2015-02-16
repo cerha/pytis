@@ -162,7 +162,7 @@ class ReverseTunnel(gevent.Greenlet):
 
     def __init__(self, ssh_host, forward_port, ssh_port=22, ssh_user=None,
                  ssh_forward_port=None, forward_host='localhost', key_filename=None,
-                 ssh_password=None, ssh_forward_port_result=None):
+                 ssh_password=None, ssh_forward_port_result=None, gss_auth=False):
         """
         Arguments:
 
@@ -185,6 +185,8 @@ class ReverseTunnel(gevent.Greenlet):
             '~/.ssh/id_rsa' is used
           ssh_forward_port_result -- optional instance providing 'set' method
             to put the actual ssh forward port value (integer) into
+          gss_auth -- whether to use GSS-API authentication; boolean
+        
         """
         super(ReverseTunnel, self).__init__()
         self._ssh_host = ssh_host
@@ -196,6 +198,7 @@ class ReverseTunnel(gevent.Greenlet):
         self._forward_host = forward_host
         self._key_filename = key_filename
         self._actual_ssh_forward_port = ssh_forward_port_result
+        self._gss_auth = gss_auth
         
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -269,7 +272,7 @@ class ReverseTunnel(gevent.Greenlet):
         log(EVENT, 'Connecting to ssh host %s:%d' % (ssh_host, ssh_port,))
         try:
             client.connect(hostname=ssh_host, port=ssh_port, username=user,
-                           key_filename=key_filename, password=password)
+                           key_filename=key_filename, password=password, gss_auth=self._gss_auth)
         except Exception as e:
             log(OPERATIONAL, 'Failed to connect to %s@%s:%d: %r' % (user, ssh_host, ssh_port, e,))
             return

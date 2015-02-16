@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-23 17:56'
+_VERSION = '2015-02-16 21:09'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -49,6 +49,19 @@ import gevent
 import gevent.event
 import gevent.queue
 import paramiko
+
+_auth_info = None
+class SSHClient(paramiko.SSHClient):
+    pytis_client = True
+    def connect(self, hostname, gss_auth=None, **kwargs):
+        if gss_auth is None:
+            gss_auth = _auth_info.get('gss_auth', False)
+        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
+try:
+    paramiko.SSHClient.pytis_client
+except AttributeError:
+    paramiko.SSHClient = SSHClient
+
 import pyhoca.cli
 from pyhoca.cli import runtime_error
 import rpyc
@@ -79,7 +92,8 @@ class ClientException(Exception):
 
 class AuthInfo(dict):
 
-    _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',)
+    _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',
+                     'gss_auth',)
     _EXTRA_KEYS = ('_add_to_known_hosts', '_command', '_method',)
 
     _ARGS_PARAMETERS = (('server', 'hostname'),
@@ -700,6 +714,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         username = _auth_info.get('username')
         password = _auth_info.get('password')
         key_filename = _auth_info.get('key_filename')
+        gss_auth = _auth_info.get('gss_auth')
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -712,7 +727,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                                                 ssh_user=username,
                                                 ssh_password=password,
                                                 key_filename=key_filename,
-                                                ssh_forward_port_result=port)
+                                                ssh_forward_port_result=port,
+                                                gss_auth=gss_auth)
             tunnel.start()
             while not tunnel.ready():
                 if port.wait(0.1) is not None:
@@ -782,7 +798,14 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             return client
         except paramiko.ssh_exception.AuthenticationException:
             pass
-        # ssh agent not available, try other authentication methods
+        # ssh agent not available, try GSS-API (Kerberos)
+        try:
+            client.connect(look_for_keys=False, gss_auth=True, **connect_parameters)
+            _auth_info['gss_auth'] = True
+            return client
+        except paramiko.ssh_exception.SSHException:
+            pass
+        # Other authentication methods
         methods = class_._ssh_server_methods(_auth_info['hostname'], _auth_info.get('port', 22))
         key_handlers = (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey,)
         key_files = []
