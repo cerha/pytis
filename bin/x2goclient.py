@@ -875,7 +875,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                         if answer is None:
                             return None
                         key_filename = answer[0]
-                        password = key_password(f, _auth_info.get('password') or '')
+                        password = key_password(key_filename, _auth_info.get('password') or '')
                         if password is not None:
                             _auth_info['key_filename'] = key_filename
                             _auth_info['password'] = password
