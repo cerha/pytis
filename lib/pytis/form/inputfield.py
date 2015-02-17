@@ -1259,14 +1259,19 @@ class Invocable(object, CommandHandler):
     
     def _create_widget(self, parent, ctrl):
         widget = super(Invocable, self)._create_widget(parent, ctrl)
-        button = self._create_button(parent, '...', icon=self._INVOKE_ICON)
-        self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
-        button.SetToolTipString(self._INVOKE_TITLE)
+        button = self._create_invocation_button(parent)
+        if button:
+            self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
+            button.SetToolTipString(self._INVOKE_TITLE)
+            wx_callback(wx.EVT_BUTTON, button, button.GetId(),
+                        lambda e: self._on_invoke_selection(ctrl))
+            wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
+            widget = self._hbox(widget, button)
         self._invocation_button = button
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(),
-                    lambda e: self._on_invoke_selection(ctrl))
-        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
-        return self._hbox(widget, button)
+        return widget
+
+    def _create_invocation_button(self, parent):
+        return self._create_button(parent, '...', icon=self._INVOKE_ICON)
 
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
@@ -1985,6 +1990,15 @@ class ImageField(FileField):
         x = self._px_size(parent, 1, 1)[1]
         return (x + 4, x + 2)
     
+    def _create_invocation_button(self, parent):
+        if self._spec.editable() == pytis.presentation.Editable.NEVER:
+            # Hide the button only when the field is statically
+            # ineditable (may not become dynamically editable).
+            # The button looks odd when image field is used as
+            # read only image preview.
+            return None
+        return super(ImageField, self)._create_invocation_button(parent)
+
     def _bitmap(self):
         if self._buffer is not None:
             import PIL.Image
