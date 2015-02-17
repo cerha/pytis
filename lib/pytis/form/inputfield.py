@@ -1951,7 +1951,7 @@ class FileField(Invocable, InputField):
             msg = _("Save value of %s") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
-                                defaultFile=default_filename)
+                                defaultFile=default_filename or '')
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 FileField._last_save_dir = os.path.dirname(path)
