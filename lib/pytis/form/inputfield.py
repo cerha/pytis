@@ -1877,7 +1877,7 @@ class FileField(Invocable, InputField):
              )
 
     def _can_open(self):
-        return self._buffer is not None and self._filename_extension() is not None
+        return self._enabled and self._buffer is not None and self._filename_extension()
         
     def _cmd_open(self):
         open_data_as_file(self._buffer.buffer(), suffix=self._filename_extension())
