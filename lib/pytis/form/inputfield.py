@@ -1999,6 +1999,11 @@ class ImageField(FileField):
             return None
         return super(ImageField, self)._create_invocation_button(parent)
 
+    def _set_ctrl_editable(self, ctrl, editable):
+        # Ineditable button will gray out the image displayed on it.
+        # We sometimes use image fields as read only image preview.
+        pass
+        
     def _bitmap(self):
         if self._buffer is not None:
             import PIL.Image
