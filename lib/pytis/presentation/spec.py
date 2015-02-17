@@ -4592,6 +4592,86 @@ class DbAttachmentStorage(AttachmentStorage):
         return None
     
 
+class SpecificationBase(object):
+    """Base class for specification classes which may be retrieved through resolver."""
+
+    def __init__(self):
+        # Needed here because of some magic used inside the resolver...
+        pass
+
+
+class Application(SpecificationBase):
+    """Specification of a Pytis application.
+
+    Derive this class within your application's specification modules under the
+    name 'Application' and override its methods and attributes described below
+    to customize the application's look and behaviour.
+
+    Custom commands may be used in menu items using string identifiers.  For
+    all such identifiers, the derived class must also define a method named as
+    this identider with a prefix 'cmd_'.  This method, when called with no
+    arguments, must return the specification of the command to invoke as a pair
+    (COMMAND, ARGUMENTS), where the first item is a 'pytis.form.Command'
+    instance and the later item is a dictionary of arguments to passed to the
+    command when invoked.  For example when command identifier is 'my_form',
+    the application must define a method named 'cmd_my_form'.
+
+    """
+
+    def init(self):
+        """Run custom application initialization code before startup forms are opened.
+        
+        This code is run before any forms are opened.  Use 'post_init()' for
+        initialization after all automatically started forms are opened.
+
+        """
+        pass
+
+    def post_init(self):
+        """Run custom application initialization code after startup forms are opened.
+
+        This code is run after all startup forms are opened.  Use 'init()' for
+        initialization before any automatically started forms are opened.
+
+        """
+        pass
+
+    def login_hook(self, success):
+        """Run custom code after login attempt.
+        
+        The boolean argument indicates login success (True when login was
+        successfull, False otherwise).
+
+        The method may be called several times during application startup as
+        long as the login attempts are unsuccessfull (with one or none final
+        successfull call).
+
+        """
+
+    def menu(self):
+        """Return the application's main menu as a sequence of 'pytis.form.Menu' instances."""
+        return ()
+
+    def keymap(self):
+        """Return the sequence of custom keyboard shortcuts as (KEY, COMMAND) pairs.
+
+        Se the docstring of 'pytis.form.Keymap.define_key()' for description of
+        the items of the squence.  COMMAND may be a tuple (COMMAND, ARGS) when
+        arguments need to be passed.
+
+        """
+        return ()
+        
+    def status_fields(self):
+        """Return the specification of status bar fields.
+
+        The specification must have the same format as the constructor argument
+        'fields' of 'pytis.form.screen.StatusBar'.
+
+        """
+        return ()
+
+
 class _SpecificationMetaclass(type):
     
     def __init__(cls, clsname, bases, clsdict):
@@ -4606,8 +4686,10 @@ class _SpecificationMetaclass(type):
              not issubclass(db_table, pytis.data.gensqlalchemy.SQLObject))):
             return
         Specification.add_specification_by_db_spec_name(db_table.__name__, cls)
-        
-class Specification(object):
+
+       
+class Specification(SpecificationBase):
+
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
     Tato třída zjednodušuje vytváření specifikací tím, že definuje vlastní

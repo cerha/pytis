@@ -1141,64 +1141,55 @@ class Menu(_TitledMenuObject):
 
 
 class MItem(_TitledMenuObject):
-    """Specifikace položky menu.
+    """Menu item specification.
 
-    Třída nic nevytváří, pouze si pamatuje parametry a předává je třídě Menu,
-    která provádí tvorbu menu.
-    
+    The class is only for specification purposes, it has no connection to any
+    UI elements.
+
     """
     _WX_KIND = wx.ITEM_NORMAL
     _used_titles = {}
     
-    def __init__(self, title, command, args=None, help=None, hotkey=None,
-                 icon=None):
-        """Uschovej parametry.
+    def __init__(self, title, command, args=None, help=None, hotkey=None, icon=None):
+        """Arguments:
 
-        Argumenty:
-
-          title -- titulek menu, neprázdný řetězec
+          title -- menu item title, non-empty basestring
           
-          command -- instance třídy 'Command' odpovídající příkazu, který má
-            být při aktivaci této položky menu vyvolán.  Zde může být předána
-            také dvojice (COMMAND, ARGS).  V tom případě je instance příkazu
-            prvním prvkem této dvojice a druhý prvek nahrazuje argument 'args',
-            který tímto již nesmí být předán.  Nakonec může být tímto
-            argumentem string, který je pak identifikátorem specifikace ze
-            specifikačního modulu 'app_commands'; tato specifikace je funkcí
-            vracející kýženou dvojici (COMMANDS, ARGS).
+          command -- defines the command invoked when this menu item is
+            activated as a 'pytis.form.Command' instance.  It can be also
+            defined as a pair of (COMMAND, ARGS), where the first item is the
+            command itself and the later item replaces the argument 'args'
+            described below (in this case, the argument 'args' must be None).
+            Finally, this argument may be passed as a string, in which case
+            this string, together with a 'cmd_' prefix, denotes the name of a
+            method in the application specification and this method is called
+            to retrieve the pair (COMMANDS, ARGS).  For example when command is
+            'my_form', the application specification must define a method named
+            'cmd_my_form' (with no arguments) which returns the command
+            specification.
             
-          args -- dictionary argumentů příkazu 'command'.
+          args -- dictionary of 'command' arguemnts.
           
-          help -- řetězec obsahující jednořádkovou nápovědu, zobrazovaný ve
-            stavovém řádku při průchodu přes položku; může být prázdný
+          help -- basestring describing the menu item's action in more detail,
+             but still not longer than one line.  May be displayed for example
+             in status line or as a tooltip.
             
-          hotkey -- horká klávesa, která má být s daným příkazem a argumenty
-            spojena, string nebo sekvence stringů dle specifikace v modulu
-            'command'
+          hotkey -- string or a sequence of strings defining the shortcut to
+            invoke this menu item from keyboard.  The form of the specification
+            is described in the module 'command'.
             
-          icon -- explicitně definovaná ikona položky menu.  Jedná se o
-            identifikátor ikony použitelný jako argument funkce 'get_icon'.
-            Pokud není určena, bude automaticky použita ikona podle typu
-            příkazu (je-li pro příkaz definována).
+          icon -- explicit icon for this menu item.  Must be a valid argument
+            of function 'get_icon()'.  If not defined, default command icon may
+            be used if defined by pytis.
             
-        Je-li uveden argument 'hotkey' a nejsou předávány žádné 'args', je
-        'command' automaticky nastavena tato klávesa.
-          
-        'title' a 'help' jsou vždy považovány za jazykově závislé texty
-        a tudíž automaticky podléhají jazykové konverzi.
-
         """
-        if isinstance(command, (tuple, list,)):
-            command_spec = command[0]
-        else:
-            command_spec = command
         if isinstance(command, basestring):
-            command = config.resolver.get('app_commands', command)
-        if isinstance(command, (tuple, list,)):
-            assert len(command) == 2
-            assert args is None
+            command, args =  pytis.form.custom_command(command)
+        elif isinstance(command, (tuple, list,)):
+            assert len(command) == 2, command
+            assert args is None, args
             command, args = command
-        assert isinstance(command, Command), (command, command_spec,)
+        assert isinstance(command, Command), command
         assert args is None or isinstance(args, dict)
         assert help is None or isinstance(help, basestring)
         assert hotkey is None or isinstance(hotkey, (basestring, tuple, list,))
@@ -1208,7 +1199,7 @@ class MItem(_TitledMenuObject):
         self._help = help
         self._hotkey = xtuple(hotkey)
         self._icon = icon
-        self._action_id = self._make_action_id(command_spec)
+        self._action_id = self._make_action_id(command)
         super(MItem, self).__init__(title)
 
     def _on_ui_event(self, event):

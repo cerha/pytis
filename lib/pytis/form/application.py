@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,26 +64,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     vyměnitelného vnitřku okna (vlastních formulářů).  Statickými prvky jsou
     pull-down menu a stavový řádek.
 
-    Start aplikace a vytvoření statických prvků je možné parametrizovat
-    specifikačním modulem 'application' umístěným v pythonové cestě.
-    Použitelné specifikační funkce jsou:
-
-      menu -- specifikace hlavního menu aplikace ve formátu specifikačního
-        argumentu konstruktoru třídy 'pytis.form.screen.MenuBar'.
-
-      status_fields -- specifikace polí stavové řádky aplikace ve formátu
-        specifikačního argumentu konstruktoru třídy
-        'pytis.form.screen.StatusBar'.
-
-      keymap -- specifikace přiřazení kláves příkazům jako sekvence trojic
-        (KEY, COMMAND, ARGS), kde KEY je definice klávesové zkratky, COMMAND je
-        instance třídy 'Command' a ARGS je slovník argumentů, které mají být
-        příkazu předány.
-
-      init -- Tato funkce může provádět libovolné, blíže neurčené,
-        inicializační akce aplikace.  Je spuštěna až po sestavení hlavního
-        aplikačního okna a načtení konfigurace, takže zde můžeme pracovat i s
-        uživatelským rozhraním.
+    The application may be customized by defining a class named 'Application'
+    within aplication's resolver modules.  This class must be derived from
+    'pytis.presentation.Application' and customizations may be done by
+    overriding its methods and attributes (see the base class docstring).
 
     Start uživatelského rozhraní spočívá ve vytvoření instance této třídy a
     volání její metody 'run()'.
@@ -105,6 +89,30 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def OnInit(self):
         import pytis.extensions
+        try:
+            self._specification = config.resolver.specification('Application')
+        except ResolverError as e:
+            class LegacyApplication(object):
+                def init(self):
+                    return self._spec('init')
+                def post_init(self):
+                    return self._spec('post_init')
+                def menu(self):
+                    return self._spec('menu', ())
+                def login_hook(self, success):
+                    hook = self._spec('login_hook')
+                    if hook:
+                        hook(success)
+                def keymap(self):
+                    return self._spec('keymap', ())
+                def status_fields(self):
+                    return self._spec('status_fields', ())
+                def _spec(self, name, default=None):
+                    try:
+                        return config.resolver.get('application', name)
+                    except ResolverError:
+                        return default
+            self._specification = LegacyApplication()
         if gtk is not None:
             clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
             clipboard.connect("owner-change", self._on_clipboard_copy)
@@ -144,14 +152,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        self._statusbar = StatusBar(frame, self._spec('status_fields', ()))
+        self._statusbar = StatusBar(frame, self._specification.status_fields())
         self._help_browser = None
-        self._login_hook = self._spec('login_hook')
+        self._login_success = False
         keymap = self.keymap = Keymap()
-        custom_keymap = self._spec('keymap', ())
-        assert isinstance(custom_keymap, (tuple, list,)), \
-            ("Keyboard shortcuts specification returned by " +
-             "'keymap' must be a sequence of (KEY, COMMAND) pairs.")
+        custom_keymap = self._specification.keymap()
+        assert isinstance(custom_keymap, (tuple, list,)), custom_keymap
         for key, cmd in pytis.form.DEFAULT_KEYMAP + custom_keymap:
             if isinstance(cmd, (list, tuple,)):
                 cmd, args = cmd
@@ -340,7 +346,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _init(self):
         # Run application specific initialization.
-        self._spec('init')
+        self._specification.init()
         if self._windows.empty():
             self._panel.SetFocus()
         # (Re)open the startup forms saved on last exit.
@@ -415,15 +421,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         self._frame_title()
-        self._spec('post_init')
-
-    def _spec(self, name, default=None, **kwargs):
-        try:
-            result = config.resolver.get('application', name, **kwargs)
-        except ResolverError as e:
-            log(OPERATIONAL, str(e))
-            result = default
-        return result
+        self._specification.post_init()
 
     def _is_valid_spec(self, name):
         # Determine whether the specification name still exists.
@@ -565,14 +563,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     hotkeys = [key.replace('SPC', ' ') for key in hotkey.split(' ')]
                 result = MItem(title, command, help=help, hotkey=hotkeys)
             return result
-        menus = [build(t) for t in menu_template]
-        return menus
+        return [build(t) for t in menu_template]
 
     def _create_menubar(self):
         self._recent_forms_menu = None
-        menus_prototype = self._spec('menu', ())
-        menus = self._build_menu(menus_prototype, config.dbconnection)
-        menus.append(Menu(self._WINDOW_MENU_TITLE,
+        menu = self._build_menu(self._specification.menu(), config.dbconnection)
+        menu.append(Menu(self._WINDOW_MENU_TITLE,
                           (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
                                  help=_("Switch to the previous window in the window list order.")),
                            MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
@@ -587,10 +583,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                            MSeparator(),
                            ),
                           allow_autoindex=False))
-        self._create_command_menu(menus)
-        self._create_help_menu(menus)
+        self._create_command_menu(menu)
+        self._create_help_menu(menu)
         # Determining availability of menu items may invoke database operations...
-        success, mb = db_operation(MenuBar, self._frame, menus, self.keymap)
+        success, mb = db_operation(MenuBar, self._frame, menu, self.keymap)
         if not success:
             return None
         self._menubar = mb
@@ -1279,10 +1275,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return self._frame
 
     def login_hook(self, success):
-        if self._login_hook:
-            self._login_hook(success)
+        if not self._login_success:
+            self._specification.login_hook(success)
             if success:
-                self._login_hook = None
+                self._login_success = True
 
     def profile_manager(self):
         return self._profile_manager
@@ -1302,6 +1298,29 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._logger.log(spec_name, form_name, action, info=info)
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
+
+    def custom_command(self, name):
+        """Return the custom application command referred by 'name' as a pair (CMD, ARGS).
+        
+        The current application specification must define a method named 'cmd_'
+        + name, which returns the command and its arguments as a tuple of two
+        items -- (CMD, ARGS), where CMD is a 'pytis.form.Command' instance and
+        ARGS is a dictionaty of its arguments.  This pair is then returned as
+        the result of this method.  None is returned if no such command is
+        defined by the current application.
+
+        """
+        try:
+            method = getattr(self._specification, 'cmd_' + name)
+        except AttributeError:
+            try:
+                return config.resolver.get('app_commands', name)
+            except ResolverError:
+                return None
+        command, args = method()
+        assert isinstance(command, pytis.form.Command), command
+        assert isinstance(args, dict), args
+        return command, args
 
 
 class DbActionLogger(object):
@@ -1987,3 +2006,7 @@ def password_dialog(title=_("Enter your password"), message=None):
         return result['password'].value()
     else:
         return None
+
+def custom_command(name):
+    return _application.custom_command(name)
+

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2014 Brailcom, o.p.s.
+# Copyright (C) 2009-2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -1281,7 +1281,12 @@ class DMPActions(DMPObject):
             if components[0] == 'RUN_FORM':
                 form_string = components[1]
                 try:
-                    command, args = resolver.get('app_commands', form_string)
+                    try:
+                        app = resolver.specification('Application')
+                        method = getattr(app, 'cmd_' + form_string)
+                        command, args = method()
+                    except (ResolverError, AttributeError):
+                        command, args = resolver.get('app_commands', form_string)
                     form_class = args['form_class']
                     if not issubclass(form_class, pytis.form.Form):
                         raise Exception()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -111,11 +111,9 @@ class Resolver(object):
         return module
     
     def _get_object_by_name(self, name):
-        # The returned object is normally a Specification class, but may be
-        # also a python module (for specification modules with specification
-        # methods, such as application.py, app_commands or some modules defined
-        # by applications with proc_spec) or even a Wiking module class in
-        # Wiking resolver (derived from pytis resolver).
+        # The returned object is normally a Specification class, but may be also a python
+        # module (for modules defined by applications with proc_spec) or even
+        # a Wiking module class in Wiking resolver (derived from pytis resolver).
         if '.' in name:
             module_name, spec_name = name.rsplit('.', 1)
             allow_search = True not in [(module_name + '.').startswith(prefix + '.')
@@ -163,7 +161,7 @@ class Resolver(object):
         if isinstance(specification, ModuleType):
             return specification
         import pytis.presentation
-        if not _issubclass(specification, pytis.presentation.Specification):
+        if not _issubclass(specification, pytis.presentation.SpecificationBase):
             raise ResolverError(("Resolver error loading specification '%s': %s is not a "
                                  "pytis.presentation.Specification subclass.") %
                                 (name, specification,))
@@ -207,7 +205,7 @@ class Resolver(object):
         """
         specification = self._specification_cache[(name, tuple(kwargs.items()))]
         import pytis.presentation
-        if not isinstance(specification, pytis.presentation.Specification):
+        if not isinstance(specification, pytis.presentation.SpecificationBase):
             # We need to avoid returning specification modules here (see
             # _get_specification for its possible return values).
             raise ResolverError(("Resolver error loading specification '%s': %s is not a "

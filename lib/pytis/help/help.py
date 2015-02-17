@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -222,12 +222,8 @@ class HelpUpdater(object):
             return _("Opens a form for new record insertion into %s.", 
                      self._spec_link(spec_name))
         else:
-            #resolver = pytis.util.resolver()
-            #try:
-            #    command = resolver.get('app_commands', command_name)
-            #except pytis.util.ResolverError as e:
-            #    print e
-            #    command = None
+            # Maybe retrieve custom application command here?
+            # command, args = pytis.form.custom_command(command_name)
             #if command and command.__doc__:
             #    return command.__doc__
             #else:
