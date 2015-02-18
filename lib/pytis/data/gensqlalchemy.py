@@ -3759,7 +3759,7 @@ def _db_dependencies(metadata):
     result = connection.execute(query)
     # Let's reduce the set and break unimportant circular dependencies:
     regexp = re.compile('[A-Z]+ "(pg_catalog|information_schema)"\.|'
-                        'FUNCTION "public"\."(ltree|ltxtq|lquery)_')
+                        'FUNCTION "public"\."(ltree|ltxtq|lquery|gbtree.*)_')
     for oid, reltypename, refoid, refreltypename in result:
         try:
             base = loc[refreltypename][refoid]
