@@ -4066,7 +4066,37 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                                 changed.add(oo)
                                 queue.append(oo)
         except sqlalchemy.exc.CircularDependencyError, e:
-            _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (e.args[0],))
+            # The message from SQLAlchemy is not very useful, so we have to
+            # find out more exact information ourselves.
+            cycle_nodes, edges = e.cycles, e.edges
+            c_info = 'Cycles:\n'
+            node_edges = {}
+            for x, y in edges:
+                if x not in node_edges:
+                    node_edges[x] = set()
+                node_edges[x].add(y)
+            nodes = list(cycle_nodes)
+            def search(path):
+                head = path[0]
+                next_nodes = node_edges[path[-1]].intersection(cycle_nodes)
+                if head in next_nodes:
+                    path.append(head)
+                    return True
+                for n in next_nodes.difference(path):
+                    path.append(n)
+                    if search(path):
+                        return True
+                    path.pop()
+                return False
+            while nodes:
+                path = [nodes[0]]
+                search(path)
+                c_info += '* %s\n' % (string.join(path, ' -> ').replace('"', ''),)
+                nodes = list(set(nodes).difference(path))
+            c_info += 'Object origins:\n'
+            for n, e in node_edges.items():
+                c_info += ('- %s: %s\n' % (n, string.join(list(e), ', '))).replace('"', '')
+            _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (c_info,))
         drop.reverse()
         for name in drop:
             o = id2obj.get(name)
