@@ -2181,7 +2181,6 @@ class LocationBar(wx.TextCtrl):
             self.Refresh()
         browser = uicmd.args()['_command_handler']
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)
-        wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         self._want_focus = 0
 
     def _on_update_ui(self, event):
@@ -2197,17 +2196,6 @@ class LocationBar(wx.TextCtrl):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         uri = self.GetValue()
         cmd.invoke(uri=uri, **kwargs)
-
-    def _on_key_down(self, event):
-        # This is a hack to make the form at least respond to the Escape key
-        # (which is normally mapped to COMMAND_LEAVE_FORM).  When the webkit
-        # widget is replaced by wx.WebView, it should be hopefully possible
-        # to remove this hack and handle keys normally within the form.
-        code = event.GetKeyCode()
-        if code == wx.WXK_ESCAPE:
-            pytis.form.Form.COMMAND_LEAVE_FORM.invoke()
-        else:
-            event.Skip()
 
     def set_focus(self):
         # This is a total hack - calling SetFocus() is ignored at form startup, but
@@ -2252,7 +2240,7 @@ def help_proc(func):
     return HelpProc(func)
 
 
-class Browser(wx.Panel, CommandHandler, CallbackHandler):
+class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     """Web Browser widget.
 
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
@@ -2329,11 +2317,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
                         break
                     self.wfile.write(data)
 
-    def __init__(self, parent):
+    def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
         self._resource_provider = None
         self._restricted_navigation_uri = None
+        self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(webview, 1, wx.EXPAND)
@@ -2358,6 +2347,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_loaded)
         wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_error)
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
+        KeyHandler.__init__(self, webview)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
         self._resource_base_uri =  'http://localhost:%d/' % httpd.socket.getsockname()[1]
@@ -2486,6 +2476,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
     def _cmd_load_uri(self, uri):
         self._webview.LoadURL(uri)
+
+    def guardian(self):
+        return self._guardian
 
     def toolbar(self, parent):
         """Create browser toolbar and return it as a 'wx.ToolBar' instance.
