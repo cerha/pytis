@@ -419,12 +419,9 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
                 _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
             elif option == 'run_command':
                 _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
-            elif option == 'display' or option == 'last_display':
-                _xserver_config[option] = 'localhost:0'
             elif option == 'parameters':
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
-                parameters[0] = ':0'
                 if '-notrayicon' in parameters:
                     parameters.remove('-notrayicon')
                 _xserver_config[option] = parameters
