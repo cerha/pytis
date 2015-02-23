@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-02-16 21:09'
+_VERSION = '2015-02-23 21:37'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -29,6 +29,7 @@ gevent.monkey.patch_all()
 
 import argparse
 import copy
+import getpass
 import gettext
 import os
 import platform
@@ -1056,7 +1057,7 @@ debug_options = [
 x2go_options = [
     {'args': ['-c', '--command'],
      'help': 'command to run with -R mode on server (default: xterm)', },
-    {'args': ['-u', '--username'], 'default': None,
+    {'args': ['-u', '--username'], 'default': getpass.getuser(),
      'help': 'username for the session (default: current user)', },
     {'args': ['--password'], 'default': None, 'help': 'user password for session authentication', },
     {'args': ['-p', '--remote-ssh-port'], 'default': '22',
