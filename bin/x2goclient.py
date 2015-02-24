@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-02-23 21:37'
+_VERSION = '2015-02-24 18:12'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -681,6 +681,12 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 if running and process is not None:
                     process.kill()
                 running = False
+            # Maybe the instance was started by another process so we must set
+            # the parameters.
+            if running and not rpyc_port.ready():
+                rpyc_port.set(port)
+                rpyc_info.store()
+                self._pytis_password_value.set(rpyc_info.password())
             # If no running RPyC instance was found then start one
             if not running:
                 authenticator = pytisproc.PasswordAuthenticator()
