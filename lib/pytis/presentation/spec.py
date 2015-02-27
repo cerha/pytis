@@ -1270,7 +1270,7 @@ class QueryFields(object):
             for f in fields:
                 assert isinstance(f, Field), f
         if layout is None:
-            layout = [f.id() for f in fields]
+            layout = [f.id() for f in fields if f.visible()]
         if isinstance(layout, (tuple, list)):
             layout = HGroup(*layout)
         self._autoapply = autoapply
