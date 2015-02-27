@@ -3522,6 +3522,11 @@ class SideBrowseForm(BrowseForm):
         elif self._xarguments is not None:
             self._lf_condition = None
         self._refresh(key_update=False, interactive=True)
+        query_fields = self._view.query_fields()
+        if query_fields:
+            callback = query_fields.on_main_form_selection()
+            if callback:
+                callback(row, self._query_fields_row())
         if self._side_search:
             search = self._side_search(row)
             if search is not None:

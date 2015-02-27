@@ -1236,7 +1236,7 @@ class QueryFields(object):
 
     """
     def __init__(self, fields, autoapply=False, autoinit=False, layout=None, load=None,
-                 save=None, **kwargs):
+                 save=None, on_main_form_selection=None, **kwargs):
         """Arguments:
 
         fields -- field specifications as in ViewSpec
@@ -1255,10 +1255,17 @@ class QueryFields(object):
           argument which is the query fields PresentedRow instance.
         save -- function for saving query field values as a function of one
           argument which is the query fields PresentedRow instance.
+        on_main_form_selection -- when the form is used as a side form of a
+          dual form, given callback function will be called on each row
+          selection change in the main form.  Two arguments are passed to the
+          callback, both are PresentedRow instances.  The first argument represents the selected main form row and the second represents the query fields row main form .
         kwargs -- other ViewSpec constructor arguments
 
         """
         assert fields and isinstance(fields, (tuple, list)), fields
+        assert (on_main_form_selection is None 
+                or isinstance(on_main_form_selection, collections.Callable)), \
+            on_main_form_selection
         if __debug__:
             for f in fields:
                 assert isinstance(f, Field), f
@@ -1270,6 +1277,7 @@ class QueryFields(object):
         self._autoinit = autoinit
         self._load = load
         self._save = save
+        self._on_main_form_selection = on_main_form_selection
         self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
 
     def fields(self):
@@ -1291,6 +1299,10 @@ class QueryFields(object):
     def save(self):
         """Return value of the argument 'save' passed to the constructor."""
         return self._save
+
+    def on_main_form_selection(self):
+        """Return value of the argument 'on_main_form_selection' passed to the constructor."""
+        return self._on_main_form_selection
 
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""
