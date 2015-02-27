@@ -1532,7 +1532,7 @@ class SQLObject(object):
                 self.add_is_dependent_on(o)
             else:
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
-                if isinstance(o, SQLSchematicObject):
+                if issubclass(o, SQLSchematicObject):
                     # General dependency must include all schema instances
                     name = o.pytis_name()
                     for search_path in _expand_schemas(o):
