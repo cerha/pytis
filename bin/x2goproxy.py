@@ -21,6 +21,7 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
+import argparse
 import imp
 import os
 import sys
@@ -33,16 +34,22 @@ import pytis.remote
 
 class Application(object):
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, command=None, **connection_parameters):
         self._config_file = config_file
+        self._application_command = command
+        self._connection_parameters = connection_parameters
         self._read_application_configuration()
 
     def _read_application_configuration(self):
-        configuration = imp.load_source('_config', self._config_file)
-        confdict = configuration.__dict__
-        self._application_command = confdict['command']
-        self._connection_parameters = dict([c for c in confdict.items() if c[0] in ('hostname',)])
-        del sys.modules['_config']
+        if self._config_file is not None:
+            configuration = imp.load_source('_config', self._config_file)
+            confdict = configuration.__dict__
+            command = confdict.get('command')
+            if command is not None:
+                self._application_command = command
+            self._connection_parameters.update(dict([c for c in confdict.items()
+                                                     if c[0] in ('hostname',)]))
+            del sys.modules['_config']
 
     def _run_application(self):
         session_id = pytis.remote.x2go_session_id(fake=True)
@@ -96,12 +103,17 @@ class Application(object):
             if application.poll():
                 break
 
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--command', default=None),
+    parser.add_argument('--hostname', default=None),
+    parser.add_argument('conffile', metavar='CONFIGURATION_FILE', nargs='?')
+    return parser.parse_args()
+
 def main():
-    if len(sys.argv) != 2:
-        sys.stderr.write("usage: %s CONFIG-FILE\n" % (sys.argv[0],))
-        sys.exit(1)
-    config_file = sys.argv[1]
-    application = Application(config_file)
+    args = parse_arguments()
+    config_file = args.conffile
+    application = Application(config_file, command=args.command, hostname=args.hostname)
     application.run()
 
 if __name__ == '__main__':
