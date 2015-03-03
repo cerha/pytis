@@ -21,10 +21,11 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
+import imp
 import os
 import sys
-import gevent
 
+import gevent
 import paramiko
 
 import pytis.remote
@@ -37,8 +38,11 @@ class Application(object):
         self._read_application_configuration()
 
     def _read_application_configuration(self):
-        self._application_command = '/home/x2go/pdd'
-        self._connection_parameters = dict(hostname='foo3')
+        configuration = imp.load_source('_config', self._config_file)
+        confdict = configuration.__dict__
+        self._application_command = confdict['command']
+        self._connection_parameters = dict([c for c in confdict.items() if c[0] in ('hostname',)])
+        del sys.modules['_config']
 
     def _run_application(self):
         session_id = pytis.remote.x2go_session_id(fake=True)

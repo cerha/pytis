@@ -151,15 +151,29 @@ def public_key_acceptable(hostname, username, key_filename, port=22):
     return result
 
 def ssh_connect(hostname, **kwargs):
-    """
+    """Create and return ssh connection to 'hostname'.
+
+    Arguments:
+
+      hostname -- host to connect to; basestring
+      kwargs -- arguments to pass on 'paramiko.SSHClient.connect'
+
+    The return value is 'paramiko.SSHClient' instance.
+
     """
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.connect(hostname, **kwargs)
     return client
     
-def ssh_exec(command, hostname, **kwargs):
-    """
+def ssh_exec(command, hostname):
+    """Execute given 'command' on 'hostname' using X11 forwarding.
+
+    Arguments:
+
+      command -- command name and its arguments; list of strings
+      hostname -- host to execute the given command on; basestring
+    
     """
     # Paramiko doesn't handle X11 forwarding very well, so it's much easier to
     # use just subprocess here.
