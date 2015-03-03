@@ -174,8 +174,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             factory.create(connection_data=config.dbconnection)
         db_operation(test)
-        self._initial_config = [(o, copy.copy(getattr(config, o)))
-                                for o in pytis.form.configurable_options()]
+        self._initial_config = [
+            (o, copy.copy(getattr(config, o)))
+            for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
         self._saved_state = {}
         # Initialize all needed user settings managers.
         self._application_config_manager = pytis.form.ApplicationConfigManager(config.dbconnection)

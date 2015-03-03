@@ -1038,6 +1038,17 @@ class Configuration(object):
         """
         _DEFAULT = ()
 
+    class _Option_initial_keyboard_layout(StringOption):
+        """System command for switching the initial keyboard layout.
+        
+        The value must be one of the commands specified within the
+        'keyboard_layouts' option.  Only if it is present there, the command
+        will be invoked on application startup and the keyboard switcher will
+        indicate the layout by the corresponding icon from 'keyboard_layouts'.
+
+        """
+        _DEFAULT = None
+
     class _Option_row_edit_fg_color(ColorOption):
         u"""Barva textu editovaného řádku tabulkového formuláře."""
         _DEFAULT = '#ffffff'

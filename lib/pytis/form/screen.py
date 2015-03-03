@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1923,7 +1923,8 @@ class KeyboardSwitcher(wx.BitmapButton):
                                 icon=icon,
                             ))
                       for title, icon, system_command in layouts]
-        icon, system_command = layouts[0][1:]
+        layout = find(config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0] 
+        icon, system_command = layout[1:]
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
@@ -1934,6 +1935,7 @@ class KeyboardSwitcher(wx.BitmapButton):
 
     def _switch_layout(self, system_command, icon):
         os.system(system_command)
+        config.initial_keyboard_layout = system_command
         self.SetBitmapLabel(self._bitmaps[icon])
         self._toolbar.Realize()
 
