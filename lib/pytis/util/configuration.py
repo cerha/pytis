@@ -777,7 +777,7 @@ class Configuration(object):
 
     class _Option_rpc_remote_view(BooleanOption):
         """Enable viewing print files remotely on a client machine."""
-        descr = _("Enable viewing print files remotely on a client machine.")
+        _DESCR = _("Enable viewing print files remotely on a client machine.")
         _DEFAULT = True
 
     class _Option_session_id(StringOption, CommandlineOption):
