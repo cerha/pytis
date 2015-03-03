@@ -88,7 +88,11 @@ def client_ip():
     If pytis is not run from an x2go or nx client, return 'None'.
     
     """
-    return x2go_ip() or nx_ip()
+    if config.session_id:
+        ip = '127.0.0.1'
+    else:
+        ip = x2go_ip() or nx_ip()
+    return ip
 
 def client_available():
     """Return true, iff remote client is available."""
@@ -101,10 +105,17 @@ def client_available():
         log(DEBUG, "RPC exception:", e)
         return False
 
-def x2go_session_id():
-    return os.getenv('X2GO_SESSION')
+def x2go_session_id(fake=False):
+    if config.session_id is not None:
+        return config.session_id
+    session_id = os.getenv('X2GO_SESSION')
+    if fake:
+        session_id += 'ssh'
+    return session_id
 
-def pytis_x2go_info_file(session_id):
+def pytis_x2go_info_file(session_id=None):
+    if session_id is None:
+        session_id = x2go_session_id()
     return os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (session_id,)))
 
 class X2GoInfoException(Exception):
@@ -139,10 +150,8 @@ def parse_x2go_info_file(filename):
     access_data['password'] = items[2]
     return access_data
 
-_direct_connection = False
-def _connect():
-    session_id = x2go_session_id()
-    pytis_x2go_file = pytis_x2go_info_file(session_id)
+def read_x2go_info_file(rename=False, use_defaults=True):
+    pytis_x2go_file = pytis_x2go_info_file()
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
             try:
@@ -154,13 +163,33 @@ def _connect():
             except X2GoInfoHardException as e:
                 log(OPERATIONAL, *e.args)
                 return None
-            os.remove(pytis_x2go_file)
-            port = access_data['port']
-            password = access_data['password']
+            if rename:
+                try:
+                    os.rename(pytis_x2go_file, pytis_x2go_info_file(x2go_session_id(fake=True)))
+                except Exception as e:
+                    return
+            else:
+                os.remove(pytis_x2go_file)
             break
+    elif use_defaults:
+        access_data = dict(port=config.rpc_local_port, password=None)
     else:
-        port = config.rpc_local_port
-        password = None
+        access_data = None
+    return access_data
+
+_direct_connection = False
+_access_data = None
+def _connect():
+    access_data = read_x2go_info_file()
+    global _access_data
+    if access_data is None:
+        access_data = _access_data
+    else:
+        _access_data = access_data
+    if access_data is None:
+        return None
+    port = access_data['port']
+    password = access_data['password']
     global _direct_connection
     if password is None:
         _direct_connection = False

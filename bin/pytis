@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 import gc
 import getopt
-import gettext
 import imp
 import os
 import sys
@@ -56,6 +55,7 @@ Options:
   --debug-on-error    run debugger on unhandled exception
   --debug-memory      display memory info
   --profile           run in profiler and write results to `%s'
+  --session-id        use the given session_id
 
 """ % (_PROFILE)
     if optexception:
@@ -105,7 +105,7 @@ def go():
             import cgitb
             sys.stderr.write(cgitb.text(einfo))
         except Exception as e:
-            sys.stderr.write("Unable to generate detailed traceback: "+ str(e) +"\n")
+            sys.stderr.write("Unable to generate detailed traceback: " + str(e) + "\n")
             import traceback
             traceback.print_exception(*einfo)
     if config.debug_memory:
@@ -122,7 +122,8 @@ def gg():
 
 def run_application():
     if gobject is not None:
-        # Init gobject threads as we use gtk widgets at some places (such as a webkit browser widget).
+        # Init gobject threads as we use gtk widgets at some places (such as a
+        # webkit browser widget).
         gobject.threads_init()
     gc.enable() # pro jistotu
     import locale

@@ -2,7 +2,7 @@
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
 #
-# Copyright (C) 2002-2014 Brailcom, o.p.s.
+# Copyright (C) 2002-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -779,6 +779,11 @@ class Configuration(object):
         """Enable viewing print files remotely on a client machine."""
         descr = _("Enable viewing print files remotely on a client machine.")
         _DEFAULT = True
+
+    class _Option_session_id(StringOption, CommandlineOption):
+        """X2Go session id."""
+        _DESCR = _("For internal use only.")
+        _DEFAULT = None
         
     # Ostatní konfigurační volby
 

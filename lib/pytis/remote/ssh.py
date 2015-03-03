@@ -30,6 +30,7 @@ import threading
 import Crypto
 import gevent
 import gevent.event
+import gevent.subprocess
 import paramiko
 
 from pytis.util import log, EVENT, OPERATIONAL
@@ -149,7 +150,21 @@ def public_key_acceptable(hostname, username, key_filename, port=22):
     s.close()
     return result
 
-
+def ssh_connect(hostname, **kwargs):
+    """
+    """
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.connect(hostname, **kwargs)
+    return client
+    
+def ssh_exec(command, hostname, **kwargs):
+    """
+    """
+    # Paramiko doesn't handle X11 forwarding very well, so it's much easier to
+    # use just subprocess here.
+    return gevent.subprocess.Popen(['ssh', '-X', hostname] + command)
+    
 class ReverseTunnel(gevent.Greenlet):
     """Process running reverse ssh forward connection.
 
@@ -162,7 +177,8 @@ class ReverseTunnel(gevent.Greenlet):
 
     def __init__(self, ssh_host, forward_port, ssh_port=22, ssh_user=None,
                  ssh_forward_port=None, forward_host='localhost', key_filename=None,
-                 ssh_password=None, ssh_forward_port_result=None, gss_auth=False):
+                 ssh_password=None, ssh_forward_port_result=None, gss_auth=False,
+                 strict_forward_port=False):
         """
         Arguments:
 
@@ -186,6 +202,9 @@ class ReverseTunnel(gevent.Greenlet):
           ssh_forward_port_result -- optional instance providing 'set' method
             to put the actual ssh forward port value (integer) into
           gss_auth -- whether to use GSS-API authentication; boolean
+          strict_forward_port -- iff True, use only the given ssh_forward_port
+            number; if it is not free then don't attempt to find another port
+            and raise 'paramiko.SSHException' instead
         
         """
         super(ReverseTunnel, self).__init__()
@@ -199,6 +218,7 @@ class ReverseTunnel(gevent.Greenlet):
         self._key_filename = key_filename
         self._actual_ssh_forward_port = ssh_forward_port_result
         self._gss_auth = gss_auth
+        self._strict_forward_port = strict_forward_port
         
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -231,7 +251,8 @@ class ReverseTunnel(gevent.Greenlet):
         port = self._ssh_forward_port
         if not port:
             port = self._DEFAULT_SSH_FORWARD_PORT
-        port_limit = port + self._MAX_SSH_FORWARD_ATTEMPTS
+        n_attempts = 1 if self._strict_forward_port else self._MAX_SSH_FORWARD_ATTEMPTS
+        port_limit = port + n_attempts
         for p in range(port, port_limit):
             try:
                 transport.request_port_forward('', p)
@@ -239,8 +260,9 @@ class ReverseTunnel(gevent.Greenlet):
             except paramiko.SSHException as e:
                 log(EVENT, "Couldn't connect to port %s: %s" % (p, e,))
         else:
-            log(OPERATIONAL, "No free port found in the range %s-%s" % (port, port_limit - 1,))
-            return
+            message = "No free port found in the range %s-%s" % (port, port_limit - 1,)
+            log(OPERATIONAL, message)
+            raise paramiko.SSHException(message)
         if self._actual_ssh_forward_port is not None:
             self._actual_ssh_forward_port.set(p)
         log(EVENT, 'Remote port %d forwarded to %s:%d' % (p, forward_host, forward_port,))
