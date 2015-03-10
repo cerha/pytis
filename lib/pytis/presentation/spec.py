@@ -3021,12 +3021,14 @@ class Field(object):
             specification name, which will be automatically converted to the
             corresponding 'pytis.data.DataEnumerator' instance,
             'pytis.data.DataFactory' instance (also converted to
-            'pytis.data.DataEnumerator') or a class derived from 'Enumeration'.
-            When an 'Enumeration' class is used, it will be converted to a
-            'pytis.data.FixedEnumerator' instance and other attributes, such as
-            'display', 'prefer_display' etc. of this field will be influenced
-            as described in the 'Enumeration' class docstring.
-            If None, the enumerator will default to the value of 'codebook'.
+            'pytis.data.DataEnumerator'), a list or tuple which will be
+            converted to a 'pytis.data.FixedEnumerator' instance or a class
+            derived from 'Enumeration'.  When an 'Enumeration' class is used,
+            it will be converted to a 'pytis.data.FixedEnumerator' instance and
+            other attributes, such as 'display', 'prefer_display' etc. of this
+            field will be influenced as described in the 'Enumeration' class
+            docstring.  If None, the enumerator will default to the value of
+            'codebook'.
           display -- overrides the same 'CodebookSpec' option for this
             particular field.  If not defined, the value defaults to the value
             defined by the related codebook.
@@ -3300,6 +3302,8 @@ class Field(object):
         assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
         if enumerator is None:
             enumerator = codebook
+        elif isinstance(enumerator, (list, tuple)):
+            enumerator = pytis.data.FixedEnumerator(enumerator)
         elif __builtins__['type'](enumerator) == __builtins__['type'](Enumeration) \
                 and issubclass(enumerator, Enumeration):
             e = enumerator
