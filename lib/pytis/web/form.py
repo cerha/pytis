@@ -644,7 +644,7 @@ class _SubmittableForm(Form):
         row = self._row
         locale_data = req.localizer().locale_data()
         for fid in self._field_order():
-            if row.editable(fid):
+            if row.visible(fid) and row.editable(fid):
                 field = self._fields[fid]
                 error = field.validate(req, locale_data)
                 # lcg.log("Validation:", (fid, req.param(fid), error))
