@@ -691,7 +691,7 @@ class Column(pytis.data.ColumnSpec):
     methods.
     
     """
-    def __init__(self, name, type, label=None, doc=None, unique=False, check=None,
+    def __init__(self, name, type, label=None, doc=None, unique=None, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False,
                  original_column=None, crypto_name=None):
         """
@@ -708,7 +708,8 @@ class Column(pytis.data.ColumnSpec):
             database schemas.
           doc -- documentation of the column; basestring or 'None'
           unique -- if true then the column is marked as unique (if it makes
-            sense at the given place); boolean
+            sense at the given place), if 'None' then take the value from
+            column type; boolean
           check -- if not 'None' then it defines SQL construct to use as a
             check on the given column; basestring
           default -- default column value; the value type must be compatible
@@ -751,7 +752,7 @@ class Column(pytis.data.ColumnSpec):
         """
         assert label is None or isinstance(label, basestring), label
         assert doc is None or isinstance(doc, basestring), doc
-        assert isinstance(unique, bool), unique
+        assert unique is None or isinstance(unique, bool), unique
         assert check is None or isinstance(check, basestring), check
         assert isinstance(primary_key, bool), primary_key
         assert isinstance(index, (bool, dict,)), index
@@ -765,7 +766,7 @@ class Column(pytis.data.ColumnSpec):
         pytis.data.ColumnSpec.__init__(self, name, type)
         self._label = label
         self._doc = doc
-        self._unique = unique
+        self._unique = type.unique() if unique is None else unique
         self._check = check
         self._default = default
         self._references = references
