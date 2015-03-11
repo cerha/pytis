@@ -1184,7 +1184,7 @@ class MItem(_TitledMenuObject):
             
         """
         if isinstance(command, basestring):
-            command, args =  pytis.form.custom_command(command)
+            command, args = pytis.form.custom_command(command)
         elif isinstance(command, (tuple, list,)):
             assert len(command) == 2, command
             assert args is None, args
@@ -1917,13 +1917,13 @@ class KeyboardSwitcher(wx.BitmapButton):
                                get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
                               for title, icon, command in layouts])
         self._menu = [MItem(title,
-                            command=Application.COMMAND_HANDLED_ACTION(
+                            command=pytis.form.Application.COMMAND_HANDLED_ACTION(
                                 handler=self._switch_layout,
                                 system_command=system_command,
                                 icon=icon,
                             ))
                       for title, icon, system_command in layouts]
-        layout = find(config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0] 
+        layout = find(config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
         icon, system_command = layout[1:]
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
@@ -2176,7 +2176,7 @@ class Browser(wx.Panel, CommandHandler):
             return False
         elif uri.startswith('#'):
             script = ("var x = document.getElementById('%s'); "
-                      "if (x) { x.scrollIntoView() };")  % uri[1:]
+                      "if (x) { x.scrollIntoView() };") % uri[1:]
             self._webview.execute_script(script)
             return True
         elif uri.startswith('help:'):
