@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-02-24 18:12'
+_VERSION = '2015-03-12 22:55'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -84,7 +84,8 @@ def on_windows():
     return platform.system() == 'Windows'
 
 if on_windows():
-    os.environ[str('NXPROXY_BINARY')] = str(os.path.join(run_directory(), 'nxproxy', 'nxproxy.exe'))
+    win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
+    os.environ[str('NXPROXY_BINARY')] = str(os.path.join(win_apps_path, 'nxproxy', 'nxproxy.exe'))
 
 _NONE = object()
 
@@ -416,9 +417,9 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _changed = False
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
-                _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
+                _xserver_config[option] = os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe')
             elif option == 'run_command':
-                _xserver_config[option] = os.path.join(run_directory(), 'VcXsrv', 'vcxsrv.exe')
+                _xserver_config[option] = os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe')
             elif option == 'parameters':
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
@@ -491,10 +492,12 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         # Check for upgrade
         if self.args.broker_url is not None:
             profiles = self.session_profiles
-            version = profiles.pytis_upgrade_parameter('version')
+            # We can use only supported parameters from session_profiles
+            # So we'll use 'name' for the version and 'command' for url
+            version = profiles.pytis_upgrade_parameter('name')
             if version and version > _VERSION:
                 p = profiles.pytis_upgrade_parameter
-                upgrade_url = p('url')
+                upgrade_url = p('command')
                 if upgrade_url:
                     if zenity.Question(_("New pytis client version available. Install?"),
                                        title='', ok_label=_("Yes"), cancel_label=_("No")):
@@ -927,8 +930,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             raise Exception(_("Unsupported broker protocol"), protocol)
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
-        _auth_info.update_non_empty(hostname=parameters['host'], port=port,
-                                    username=parameters['user'], password=password)
+        _auth_info.update_non_empty(hostname=parameters['hostname'], port=port,
+                                    username=parameters['username'], password=password)
         path = parameters.get('path')
         client = class_.pytis_ssh_connect()
         if client is None:
@@ -966,7 +969,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
     def run(class_, args):
         _auth_info.update_from_args(args)
         if on_windows():
-            zenity.zen_exec = os.path.join(run_directory(), 'zenity.exe')
+            zenity.zen_exec = os.path.join(win_apps_path, 'zenity.exe')
         else:
             zenity.zen_exec = 'zenity'
         # Read in configuration
