@@ -3028,6 +3028,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         elif isinstance(v, datetime.datetime):
             result = ("%d-%02d-%02d %02d:%02d:%02d" %
                       (v.year, v.month, v.day, v.hour, v.minute, v.second,))
+            tzname = v.tzname()
+            if tzname is not None:
+                result += " " + tzname
             quote = True
         elif isinstance(v, datetime.date):
             result = "%d-%02d-%02d" % (v.year, v.month, v.day,)
