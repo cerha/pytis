@@ -126,13 +126,13 @@
 
 .pytis-form.browse-form table.data-table {
     border-collapse: collapse;
-    border: 1px solid #ddd;
+    border: none;
     margin-top: .3em;
 }
 .pytis-form.browse-form table.data-table tr.data-row td,
 .pytis-form.browse-form table.data-table tr.column-headings th,
 .pytis-form.browse-form table.data-table tr.group-heading th {
-    padding: 2pt;
+    padding: 3px;
     vertical-align: top;
     border: 1px solid #ddd;
 }
@@ -439,12 +439,9 @@
     margin: 0;
 }
 
-.pytis-form.browse-form td {
-    position: relative;
-}
 .pytis-form.browse-form a.remove-row img {
     position: relative;
-    top: 3px;
+    top: 2px;
     left: 0;
     padding-left: 2px;
     padding-right: 3px;
