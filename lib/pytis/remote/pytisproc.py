@@ -17,8 +17,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-01-09 18:15'
+_VERSION = '2015-03-19 14:20'
 
+import cStringIO
 import hashlib
 import os
 import random
@@ -130,6 +131,10 @@ class PytisService(rpyc.Service):
 
 class PytisUserService(PytisService):
 
+    def __init__(self, *args, **kwargs):
+        self._gpg_instance = None
+        super(PytisUserService, self).__init__(*args, **kwargs)
+    
     def exposed_restart(self):
         """Restart the user service."""
         file_name = sys.argv[0]
@@ -182,10 +187,56 @@ class PytisUserService(PytisService):
         else:
             subprocess.call(['xdg-open', path])
 
-    def _open_file(self, filename, encoding, mode):
+    def _gpg(self):
+        if self._gpg_instance is None:
+            import pytis.remote.gnupg
+            self._gpg_instance = pytis.remote.gnupg.GPG(options=['--trust-model', 'always'])
+        return self._gpg_instance
+
+    def _select_encryption_keys(self, gpg, keys):
+        if keys:
+            fingerprints = []
+            for k in keys:
+                fingerprints.extend(gpg.import_keys(k).fingerprints)
+            return fingerprints
+        keys = gpg.list_keys(True)
+        n_keys = len(keys)
+        if n_keys == 0:
+            raise Exception("No encryption key found")
+        elif n_keys == 1:
+            selected_key = keys[0]['keyid']
+        else:
+            import PyZenity
+            data = [(k['keyid'], string.join(k['uids']), ', ') for k in keys]
+            answer = PyZenity.List(["Id", "Uids"], title="Select key", data=data)
+            if not answer:
+                raise Exception("Canceled")
+            selected_key = answer[0]
+        return [selected_key]
+
+    def _select_decryption_passphrase(self):
+        import PyZenity
+        passphrase = PyZenity.GetText(text="Decryption key password", password=True,
+                                      title="Decryption key password")
+        if passphrase is None:
+            return None
+        return passphrase.rstrip('\r\n')
+
+    def _open_file(self, filename, encoding, mode, encrypt=None, decrypt=False):
+        service = self
         class Wrapper(object):
             def __init__(self, filename, encoding, mode):
-                self._f = open(filename, mode)
+                self._decrypted = None
+                f = open(filename, mode)
+                if encrypt is not None and mode[0] == 'r':
+                    gpg = service._gpg()
+                    key = service._select_encryption_keys(gpg, encrypt)
+                    s = gpg.encrypt_file(f, key)
+                    f = cStringIO.StringIO(str(s))
+                if decrypt and mode[0] != 'r':
+                    self._decrypted = f
+                    f = cStringIO.StringIO()
+                self._f = f
                 self._filename = filename
                 self._encoding = encoding
             def exposed_read(self):
@@ -193,16 +244,32 @@ class PytisUserService(PytisService):
             def exposed_write(self, data):
                 if isinstance(data, buffer):
                     data = data[:]
-                elif self._encoding is not None:
+                elif self._encoding is not None and self._decrypted is None:
                     data = data.encode(self._encoding)
                 self._f.write(data)
             def exposed_close(self):
+                if self._decrypted is not None:
+                    encrypted = self._f.getvalue()
+                    if encrypted:
+                        gpg = service._gpg()
+                        while True:
+                            passphrase = service._select_decryption_passphrase()
+                            if passphrase is None:
+                                decrypted = ''
+                                break
+                            decrypted = gpg.decrypt(encrypted, passphrase=passphrase).data
+                            if decrypted:
+                                break
+                        if self._encoding is not None:
+                            decrypted = decrypted.encode(self._encoding)
+                        self._decrypted.write(decrypted)
+                        self._decrypted.close()
                 self._f.close()
             def exposed_name(self):
                 return self._filename
         return Wrapper(filename, encoding, mode)
 
-    def exposed_open_file(self, filename, mode, encoding=None):
+    def exposed_open_file(self, filename, mode, encoding=None, encrypt=None, decrypt=False):
         """Return a read-only 'file' like object of the given file.
 
         Arguments:
@@ -210,11 +277,16 @@ class PytisUserService(PytisService):
           filename -- name of the file to open, basestring
           mode -- mode for opening the file
           encoding -- file content output encoding, string or None
+          encrypt -- list of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if 'None' then
+            don't encrypt the file; applicable only for input modes
+          decrypt -- if true then decrypt the file contents; applicable only
+            for output modes
 
         """
-        return self._open_file(filename, encoding, mode)
+        return self._open_file(filename, encoding, mode, encrypt=encrypt, decrypt=decrypt)
 
-    def exposed_open_selected_file(self, template=None):
+    def exposed_open_selected_file(self, template=None, encrypt=None):
         """Return a read-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -223,6 +295,9 @@ class PytisUserService(PytisService):
         Arguments:
 
           template -- a string defining the required file name pattern, or 'None'
+          encrypt -- list of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if 'None' then
+            don't encrypt the file
 
         """
         assert template is None or isinstance(template, basestring), template
@@ -251,9 +326,16 @@ class PytisUserService(PytisService):
             filename = self._pytis_file_dialog(template=template)
         if filename is None:
             return None
+        if encrypt is not None:
+            gpg = self._gpg()
+            keys = self._select_encryption_keys(gpg, encrypt)
         class Wrapper(object):
             def __init__(self, filename):
-                self._f = open(filename, 'rb')
+                f = open(filename, 'rb')
+                if encrypt is not None:
+                    s = gpg.encrypt_file(f, keys)
+                    f = cStringIO.StringIO(str(s))
+                self._f = f
                 self._filename = filename
             def exposed_read(self):
                 return self._f.read()
@@ -264,7 +346,7 @@ class PytisUserService(PytisService):
         return Wrapper(filename)
 
     def exposed_make_selected_file(self, directory=None, filename=None, template=None,
-                                   encoding=None, mode='wb'):
+                                   encoding=None, mode='wb', decrypt=False):
         """Return a write-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -277,6 +359,7 @@ class PytisUserService(PytisService):
           template -- a string defining the required file name pattern, or 'None'
           encoding -- output encoding, string or None
           mode -- default mode for opening the file
+          decrypt -- if true then decrypt the file contents
 
         """
         assert template is None or isinstance(template, basestring), template
@@ -319,9 +402,9 @@ class PytisUserService(PytisService):
                                                template=template, save=True)
             if filename is None:
                 return None
-        return self._open_file(filename, encoding, mode)
+        return self._open_file(filename, encoding, mode, decrypt=decrypt)
 
-    def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb'):
+    def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
         """Create a temporary file and return its instance.
 
         The return value is a 'tempfile.NamedTemporaryFile' instance.
@@ -332,20 +415,41 @@ class PytisUserService(PytisService):
             be part of the suffix then it must be explicitly included in it
           encoding -- output encoding, string or None
           mode -- default mode for opening the file
+          decrypt -- if true then decrypt the file contents
         
         """
+        service = self
         class Wrapper(object):
             def __init__(self, handle, filename, encoding, mode):
+                self._decrypted = None
                 self._f = os.fdopen(handle, mode)
+                if decrypt:
+                    self._decrypted = self._f
+                    self._f = cStringIO.StringIO()
                 self._filename = filename
                 self._encoding = encoding
             def exposed_write(self, data):
                 if isinstance(data, buffer):
                     data = data[:]
-                elif self._encoding is not None:
+                elif self._encoding is not None and self._decrypted is None:
                     data = data.encode(self._encoding)
                 self._f.write(data)
             def exposed_close(self):
+                if self._decrypted is not None:
+                    encrypted = self._f.getvalue()
+                    if encrypted:
+                        gpg = service._gpg()
+                        while True:
+                            passphrase = service._select_decryption_passphrase()
+                            if passphrase is None:
+                                decrypted = ''
+                                break
+                            decrypted = gpg.decrypt(encrypted, passphrase=passphrase).data
+                            if decrypted:
+                                break
+                        if self._encoding is not None:
+                            decrypted = decrypted.encode(self._encoding)
+                        self._decrypted.write(decrypted)
                 self._f.close()
             def exposed_name(self):
                 return self._filename

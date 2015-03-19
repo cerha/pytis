@@ -2554,11 +2554,11 @@ def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
     return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
 
-def open_data_as_file(data, suffix):
+def open_data_as_file(data, suffix, decrypt=False):
     remote_file = None
     if pytis.remote.client_available():
         try:
-            remote_file = pytis.remote.make_temporary_file(suffix=suffix)
+            remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
         except:
             pass
     if remote_file:

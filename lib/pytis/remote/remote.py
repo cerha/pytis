@@ -272,26 +272,30 @@ def launch_url(url):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open URL %s", url))
 
-def open_file(filename, mode, encoding=None):
+def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
     assert isinstance(filename, basestring), filename
     assert isinstance(mode, str), mode
     assert encoding is None or isinstance(encoding, basestring), encoding
+    assert encrypt is None or isinstance(encrypt, list), encrypt
+    assert isinstance(decrypt, bool), decrypt
     try:
-        return _request('open_file', filename, mode, encoding=encoding)
+        return _request('open_file', filename, mode, encoding=encoding, encrypt=encrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
                                                   filename=filename, error=e))
 
-def open_selected_file(template=None):
+def open_selected_file(template=None, encrypt=None):
     assert template is None or isinstance(template, basestring), template
+    assert encrypt is None or isinstance(encrypt, list), encrypt
     try:
-        return _request('open_selected_file', template)
+        return _request('open_selected_file', template, encrypt=encrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
 
-def make_selected_file(directory=None, filename=None, template=None, encoding=None, mode='wb'):
+def make_selected_file(directory=None, filename=None, template=None, encoding=None, mode='wb',
+                       decrypt=False):
     assert directory is None or isinstance(directory, basestring), directory
     assert filename is None or isinstance(filename, basestring), filename
     assert template is None or isinstance(template, basestring), template
@@ -299,17 +303,19 @@ def make_selected_file(directory=None, filename=None, template=None, encoding=No
     assert mode is None or isinstance(mode, basestring), mode
     try:
         return _request('make_selected_file', directory=directory, filename=filename,
-                        template=template, encoding=encoding, mode=mode)
+                        template=template, encoding=encoding, mode=mode, decrypt=decrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file to save: %s", e))
 
-def make_temporary_file(suffix='', encoding=None, mode='wb'):
+def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     assert isinstance(suffix, basestring), suffix
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
+    assert isinstance(decrypt, bool), decrypt
     try:
-        return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode)
+        return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode,
+                        decrypt=decrypt)
     except:
         return None
 
