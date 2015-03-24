@@ -641,6 +641,7 @@ class DmpHelpGenerator(HelpGenerator):
 
 class HelpExporter(pytis.form.Browser.Exporter):
 
+    _STYLES = ('default.css', 'pytis-help.css')
     _PAGE_STRUCTURE = (
         pytis.form.Browser.Exporter.Part('menu'),
         pytis.form.Browser.Exporter.Part('heading'),
