@@ -2040,14 +2040,14 @@ class HelpProc(object):
     def __init__(self, func):
         self._func = func
 
-    def __call__(self):
+    def __call__(self, **kwargs):
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
         if not pytis.form.action_has_access(action):
             msg = _(u"You don't have priviledges to invoke the action '%s'.\n"
                     u"Please contact the access rights administrator.") % (action,)
             pytis.form.run_dialog(pytis.form.Error, msg)
         else:
-            self._func()
+            self._func(**kwargs)
 
 
 def help_proc(func):
@@ -2172,6 +2172,20 @@ class Browser(wx.Panel, CommandHandler):
         message = msgptr[0]
         print "LOAD ERROR:", message
         return False
+
+    def _parse_kwargs(self, uri):
+        def value(v):
+            v = [int(x) if x.isdigit() else x for x in v]
+            if len(v) == 1:
+                v = v[0]
+            return v
+        if '?' in uri:
+            import urlparse
+            uri, query = uri.split('?', 1)
+            kwargs = dict((k, value(v)) for k, v in urlparse.parse_qs(query).items())
+        else:
+            kwargs = {}
+        return uri, kwargs
         
     def _on_navigation_request(self, webview, frame, req, action, decision):
         uri = req.get_uri()
@@ -2206,17 +2220,18 @@ class Browser(wx.Panel, CommandHandler):
                 history.add_item(webkit.WebHistoryItem(uri, uri))
             return True
         elif uri.startswith('form:'):
-            spec_name = uri[5:]
+            spec_name, kwargs = self._parse_kwargs(uri[5:])
             view_spec = config.resolver.get(spec_name, 'view_spec')
             if view_spec.bindings():
                 cls = pytis.form.MultiBrowseDualForm
             else:
                 cls = pytis.form.BrowseForm
-            pytis.form.run_form(cls, spec_name)
+            pytis.form.run_form(cls, spec_name, **kwargs)
             return True
         elif uri.startswith('call:'):
             try:
                 module_name, proc_name = uri[5:].rsplit('.', 1)
+                proc_name, kwargs = self._parse_kwargs(proc_name)
                 module = __import__(module_name)
                 for component in module_name.split('.')[1:]:
                     module = getattr(module, component)
@@ -2224,7 +2239,7 @@ class Browser(wx.Panel, CommandHandler):
                 if not isinstance(proc, HelpProc):
                     raise ProgramError("Unable to call '%s' from help. "
                                        "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
-                proc()
+                proc(**kwargs)
             except:
                 pytis.form.top_level_exception()
             return True
