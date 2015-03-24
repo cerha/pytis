@@ -472,16 +472,11 @@ class HelpGenerator(object):
         return root.find_node('help:'+topic) or root.find_node('NotFound')
 
 
-class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+class HelpExporter(pytis.form.Browser.Exporter):
+
     _BODY_PARTS = ('menu',
                    'heading',
                    'content')
-
-    def _uri_resource(self, context, resource):
-        if resource.uri() is not None:
-            return resource.uri()
-        else:
-            return 'resource:' +resource.filename()
 
     def _menu(self, context):
         g = self._generator

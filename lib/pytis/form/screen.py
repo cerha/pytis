@@ -2076,6 +2076,14 @@ class Browser(wx.Panel, CommandHandler):
     Implemented using Webkit GTK (http://webkitgtk.org/reference/webkitgtk-webkitwebview.html).
     
     """
+    class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+
+        def _uri_resource(self, context, resource):
+            if resource.uri() is not None:
+                return resource.uri()
+            else:
+                return 'resource:' + resource.filename()
+
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         self._webview = None
@@ -2330,9 +2338,7 @@ class Browser(wx.Panel, CommandHandler):
     def load_content(self, node, base_uri='', exporter=None):
         """Load browser content from lcg.ContentNode instance."""
         if exporter is None:
-            class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
-                pass
-            exporter = Exporter(styles=('default.css',), inlinestyles=True)
+            exporter = self.Exporter(styles=('default.css',))
         context = exporter.context(node, None)
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,

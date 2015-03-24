@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -253,12 +253,6 @@ class Menu(RestrictedPytisModule):
             resources = storage.resources()
         else:
             resources = ()
-        if resources:
-            resources.extend((lcg.Script('prototype.js'),
-                              lcg.Script('effects.js'),
-                              lcg.Script('builder.js'),
-                              lcg.Script('lightbox.js'),
-                              lcg.Stylesheet('lightbox.css')))
         if text:
             text = lcg.MacroParser(globals=globals).parse(text)
             parser = lcg.Parser()
