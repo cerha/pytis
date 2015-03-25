@@ -99,7 +99,7 @@ class Help(Specification):
         else:
             # The attachments are not allowed for some special pages, such as the menu root page.
             return None
-        return pp.DbAttachmentStorage(table, ref, record[ref].value(), base_uri='resource:')
+        return pp.DbAttachmentStorage(table, ref, record[ref].value())
     
     def redirect(self, record):
         if record['page_id'].value() is not None:
@@ -166,7 +166,7 @@ class ItemsHelp(Specification):
 
     def _attachment_storage(self, record):
         return pp.DbAttachmentStorage('e_pytis_help_spec_attachments', 'spec_name',
-                                      record['spec_name'].value(), base_uri='resource:')
+                                      record['spec_name'].value())
     def _label(self, record, spec_name, kind, identifier):
         if not kind or not identifier:
             return None

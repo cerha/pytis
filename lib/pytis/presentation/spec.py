@@ -3781,7 +3781,7 @@ class AttachmentStorage(object):
             uri = self._image_uri(filename)
             src_file = self._image_src_file(filename)
             kwargs = dict(size=size,
-                          thumbnail=lcg.Image('t/' + filename, title=title, descr=descr,
+                          thumbnail=lcg.Image('thumbnails/' + filename, title=title, descr=descr,
                                               size=thumbnail_size,
                                               uri=self._thumbnail_uri(filename),
                                               src_file=self._thumbnail_src_file(filename)))
@@ -4046,33 +4046,41 @@ class FileAttachmentStorage(AttachmentStorage):
     
     """
 
-    def __init__(self, directory, base_uri):
+    def __init__(self, directory, base_uri=None):
         """Arguments:
         
           directory -- full path name of the directory where file attachments
             are stored.  See class description for more information.
-          base_uri -- attachments base URI as a string.  This is the URI on
-            which the application handles attachments.
+          base_uri -- attachments base URI as a string or None.  If not None,
+            the resource instances will have their uri attribute set.  The
+            base_uri will be used as a common prefix.  Otherwise the resources
+            have their uri unset.
 
-            
         """
         assert isinstance(directory, basestring)
-        assert isinstance(base_uri, basestring)
+        assert base_uri is None or isinstance(base_uri, basestring)
         self._directory = directory
-        self._base_uri = base_uri.rstrip('/')
+        if base_uri and not base_uri.endswith('/'):
+            base_uri += '/'
+        self._base_uri = base_uri
         
     def _resource_uri(self, filename):
-        base_uri = self._base_uri
-        if not base_uri.endswith(':'):
-            # Example: base_uri = 'resource:' in webkit browser in wx forms.
-            base_uri += '/'
-        return base_uri + filename
+        if self._base_uri:
+            return self._base_uri + filename
+        else:
+            return None
     
     def _image_uri(self, filename):
-        return self._base_uri + '/resized/' + filename
+        if self._base_uri:
+            return self._base_uri + 'resized/' + filename
+        else:
+            return None
     
     def _thumbnail_uri(self, filename):
-        return self._base_uri + '/thumbnails/' + filename
+        if self._base_uri:
+            return self._base_uri + 'thumbnails/' + filename
+        else:
+            return None
     
     def _resource_src_file(self, filename):
         return os.path.join(self._directory, filename)
@@ -4399,7 +4407,7 @@ class DbAttachmentStorage(AttachmentStorage):
                     return
             self.send_error(404, 'Not Found: %s' % self.path)
                 
-    def __init__(self, table, ref_column, ref_value, base_uri):
+    def __init__(self, table, ref_column, ref_value, base_uri=None):
         """Arguments:
 
           table -- string name of the database table to use for storing the
@@ -4407,8 +4415,7 @@ class DbAttachmentStorage(AttachmentStorage):
             described in the class docstring.
           ref_column -- Reference column name (foreign key).
           ref_value -- Reference column value matching the reference column data type.
-          base_uri -- Attachment URI prefix to use for the returned Resource
-            instance URIs.
+          base_uri -- Unused; Kept only for backwards compatibility.
 
         """
         import config

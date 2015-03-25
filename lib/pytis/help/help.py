@@ -355,8 +355,7 @@ class HelpGenerator(object):
         #        groups = [g for g in rights.permitted_groups(perm, None) if g]
         #        content += ":%s:: %s\n" % (perm, ', '.join(map(str, groups)) or _(u"Nedefinováno"))
         storage = pytis.presentation.DbAttachmentStorage('e_pytis_help_spec_attachments',
-                                                         'spec_name', spec_name,
-                                                         base_uri='resource:')
+                                                         'spec_name', spec_name)
         return view_spec.title(), lcg.Container(sections, resources=storage.resources())
 
     def _pytis_help(self, resource_dirs):
@@ -399,9 +398,7 @@ class HelpGenerator(object):
                 parser = lcg.Parser()
                 if row['page_id'].value():
                     storage = pytis.presentation.DbAttachmentStorage(
-                        'e_pytis_help_pages_attachments',
-                        'page_id', row['page_id'].value(),
-                        base_uri='resource:')
+                        'e_pytis_help_pages_attachments', 'page_id', row['page_id'].value())
                     content = lcg.Container(parser.parse(row['content'].value()),
                                             resources=storage.resources())
                 else:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,7 +293,7 @@ class Menu(Specification):
                           "pages of the same hierarchy level.  Leave empty to put the item "
                           "automatically to bottom.")),
         )
-    def _attachment_storage(self, record, base_uri='resource:'):
+    def _attachment_storage(self, record, base_uri=None):
         # Determines the directory for storing the attachments for the 'content' field.
         storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if storage and record['identifier'].value():
@@ -306,7 +306,7 @@ class Menu(Specification):
                 return pp.HttpAttachmentStorage(uri, readonly=readonly)
             else:
                 directory = os.path.join(storage, record['identifier'].value())
-                return pp.FileAttachmentStorage(directory, base_uri)
+                return pp.FileAttachmentStorage(directory, base_uri=base_uri)
         else:
             return None
     def _check_menu_order_condition(self, record):

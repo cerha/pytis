@@ -2078,11 +2078,12 @@ class Browser(wx.Panel, CommandHandler):
     """
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
 
+        def __init__(self, *args, **kwargs):
+            self._get_resource_uri = kwargs.pop('get_resource_uri')
+            super(Browser.Exporter, self).__init__(*args, **kwargs)
+
         def _uri_resource(self, context, resource):
-            if resource.uri() is not None:
-                return resource.uri()
-            else:
-                return 'resource:' + resource.filename()
+            return self._get_resource_uri(resource)
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -2093,6 +2094,14 @@ class Browser(wx.Panel, CommandHandler):
         self._uri_change_callback = None
         self._last_help_uri = None
         self._toolbar = None
+        # This can be actually anything what can be recognized later in
+        # _on_resource_request() and what is recognized by webkit as a valid
+        # URL.  We used the 'resource:' prefix before, but it doesn't work
+        # with newer webkit versions (webkit doesn't allow loading such URL).
+        # In any case, resources are not actually loaded through HTTP from
+        # localhost even though the URL suggests it.  They are loaded by
+        # _on_resource_request().
+        self._resource_base_uri = 'http://localhost/pytis-resources/'
         pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
@@ -2211,7 +2220,8 @@ class Browser(wx.Panel, CommandHandler):
             self._last_help_uri = uri
             from pytis.help import HelpGenerator, HelpExporter
             node = HelpGenerator().help_page(uri[5:])
-            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
+            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
+                                    get_resource_uri=self._resource_uri)
             self.load_content(node, base_uri=uri, exporter=exporter)
             if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
                                        webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
@@ -2245,7 +2255,7 @@ class Browser(wx.Panel, CommandHandler):
             return True
         else:
             restricted_navigation_uri = self._restricted_navigation_uri
-            if ((not uri.startswith('resource:')
+            if ((not uri.startswith(self._resource_base_uri)
                  and restricted_navigation_uri is not None
                  and not uri.startswith(restricted_navigation_uri))):
                 decision.ignore()
@@ -2262,19 +2272,25 @@ class Browser(wx.Panel, CommandHandler):
         uri = resource.get_uri()
         # Note, when load_html() is performed, this method gets called with uri
         # equal to base_uri passed to load_html().
-        if uri.startswith('resource:') and self._resource_provider is not None:
+        if uri.startswith(self._resource_base_uri) and self._resource_provider is not None:
             # Try searching the existing resources by URI first.
             for lcg_resource in self._resource_provider.resources():
-                if lcg_resource.uri() == uri:
+                if self._resource_uri(lcg_resource) == uri:
                     return redirect(lcg_resource)
                 if isinstance(lcg_resource, lcg.Image):
                     thumbnail = lcg_resource.thumbnail()
-                    if thumbnail and thumbnail.uri() == uri:
+                    if thumbnail and self._resource_uri(thumbnail) == uri:
                         return redirect(thumbnail)
             # If URI doesn't match any existing resource, try locating the
             # resource using the standard resource provider's algorithm
             # (including searching resource directories).
             return redirect(self._resource_provider.resource(uri[9:]))
+
+    def _resource_uri(self, resource):
+        uri = resource.uri()
+        if uri is None:
+            uri = self._resource_base_uri + resource.filename()
+        return uri
 
     def _can_go_forward(self):
         return self._webview.can_go_forward()
@@ -2353,7 +2369,8 @@ class Browser(wx.Panel, CommandHandler):
     def load_content(self, node, base_uri='', exporter=None):
         """Load browser content from lcg.ContentNode instance."""
         if exporter is None:
-            exporter = self.Exporter(styles=('default.css',))
+            exporter = self.Exporter(styles=('default.css',),
+                                     get_resource_uri=self._resource_uri)
         context = exporter.context(node, None)
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,
