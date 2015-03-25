@@ -2436,12 +2436,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         except:
             pytis.form.top_level_exception()
 
-    def _resource_uri(self, resource):
-        uri = resource.uri()
-        if uri is None:
-            uri = self._resource_base_uri + resource.filename()
-        return uri
-
     def _parse_kwargs(self, uri):
         def value(v):
             v = [int(x) if x.isdigit() else x for x in v]
@@ -2455,6 +2449,14 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         else:
             kwargs = {}
         return uri, kwargs
+
+    def _resource_uri(self, resource, absolute=True):
+        uri = resource.uri()
+        if uri is None:
+            uri = resource.filename()
+            if absolute:
+                uri = self._resource_base_uri + uri
+        return uri
 
     def _can_go_forward(self):
         return self._webview.CanGoForward()
@@ -2535,11 +2537,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         if self._resource_provider:
             # Try searching the existing resources by URI first.
             for resource in self._resource_provider.resources():
-                if self._resource_uri(resource) == uri:
+                if self._resource_uri(resource, absolute=False) == uri:
                     return resource
                 if isinstance(resource, lcg.Image):
                     thumbnail = resource.thumbnail()
-                    if thumbnail and self._resource_uri(thumbnail) == uri:
+                    if thumbnail and self._resource_uri(thumbnail, absolute=False) == uri:
                         return thumbnail
             # If URI doesn't match any existing resource, try locating the
             # resource using the standard resource provider's algorithm
