@@ -210,7 +210,7 @@ class Field(object):
             if inner_type.enumerator():
                 cls = ChecklistField
             else:
-                raise Exception("Unsupported array field.")
+                cls = ArrayField
         elif data_type.enumerator():
             selection_type = spec.selection_type()
             if selection_type == SelectionType.RADIO:
@@ -986,6 +986,15 @@ class ChecklistField(EnumerationField):
     def _display(self, context):
         return None
 
+
+class ArrayField(EnumerationField):
+
+    def _format(self, context):
+        return ', '.join([g.span(display)
+                          for val, strval, display in self._enumeration(context)])
+
+    def _editor(self, context, **kwargs):
+        raise Exception("Array field editation unsupported.")
 
 class CodebookField(EnumerationField, TextField):
     pass
