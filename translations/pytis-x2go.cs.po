@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2014-12-19 14:13+CET\n"
-"PO-Revision-Date: 2014-12-19 11:02+0100\n"
+"POT-Creation-Date: 2015-03-25 21:17+CET\n"
+"PO-Revision-Date: 2015-03-25 21:31+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -16,6 +16,98 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+
+#: ../bin/x2goclient.py:177
+msgid "Can't read RPyC info file: %s"
+msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
+
+#: ../bin/x2goclient.py:187
+msgid "Error when writing RPyC info file: %s"
+msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
+
+#: ../bin/x2goclient.py:208 ../bin/x2goclient.py:926
+msgid "Invalid broker address"
+msgstr "Chybná adresa brokeru"
+
+#: ../bin/x2goclient.py:212 ../bin/x2goclient.py:930
+msgid "Unsupported broker protocol"
+msgstr "Nepodporovaný protokol pro přístup na broker"
+
+#: ../bin/x2goclient.py:337
+msgid "Invalid session format"
+msgstr "Chybný formát sezení"
+
+#: ../bin/x2goclient.py:502
+msgid "New pytis client version available. Install?"
+msgstr "Je dostupná nová verze klienta Pytis. Nainstalovat?"
+
+#: ../bin/x2goclient.py:503
+msgid "No"
+msgstr "Ne"
+
+#: ../bin/x2goclient.py:503
+msgid "Yes"
+msgstr "Ano"
+
+#: ../bin/x2goclient.py:570
+msgid "Select session"
+msgstr "Vyberte sezení"
+
+#: ../bin/x2goclient.py:575
+msgid "No session selected."
+msgstr "Nebylo vybráno žádné sezení."
+
+#: ../bin/x2goclient.py:708
+msgid "No free port found for RPyC in the range %s-%s"
+msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
+
+#: ../bin/x2goclient.py:835
+msgid "Password key for %s"
+msgstr "Heslo ke klíči v souboru %s"
+
+#: ../bin/x2goclient.py:882
+msgid "Default authentication failed"
+msgstr "Výchozí autentizace selhala"
+
+#: ../bin/x2goclient.py:884
+msgid "Login using password"
+msgstr "Přihlášení heslem"
+
+#: ../bin/x2goclient.py:885
+msgid "Login using a key file"
+msgstr "Přihlášení klíčem"
+
+#: ../bin/x2goclient.py:892
+msgid "No supported ssh connection method available"
+msgstr "Není dostupná žádná metoda spojení přes ssh"
+
+#: ../bin/x2goclient.py:895
+msgid "Login password"
+msgstr "Přihlášovací heslo"
+
+#: ../bin/x2goclient.py:896
+msgid "Password input"
+msgstr "Zadání hesla"
+
+#: ../bin/x2goclient.py:903
+msgid "Select ssh key file"
+msgstr "Vyberte ssh klíč"
+
+#: ../bin/x2goclient.py:914
+msgid "Program error"
+msgstr "Chyba programu"
+
+#: ../bin/x2goclient.py:938
+msgid "Couldn't connect to upgrade server"
+msgstr "Nelze se připojit na aktualizační server"
+
+#: ../bin/x2goclient.py:948
+msgid "Package unpacking failed"
+msgstr "Selhalo rozbalení balíku"
+
+#: ../bin/x2goclient.py:954
+msgid "Pytis successfully upgraded. Restart the application."
+msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
 
 #~ msgid "Can't create client directory: %s"
 #~ msgstr "Nelze vytvořit klientský adresář: %s"
@@ -38,71 +130,5 @@ msgstr ""
 #~ msgid "Invalid configuration parameter type: %s = %r (is not %s)"
 #~ msgstr "Chybný typ konfiguračního parametru: %s = %r (není %s)"
 
-#~ msgid "Can't read RPyC info file: %s"
-#~ msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
-
-#~ msgid "Error when writing RPyC info file: %s"
-#~ msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
-
-#~ msgid "No free port found for RPyC in the range %s-%s"
-#~ msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
-
 #~ msgid "Key password"
 #~ msgstr "Heslo ke klíči"
-
-#~ msgid "Default authentication failed"
-#~ msgstr "Výchozí autentizace selhala"
-
-#~ msgid "Login using password"
-#~ msgstr "Přihlášení heslem"
-
-#~ msgid "Login using a key file"
-#~ msgstr "Přihlášení klíčem"
-
-#~ msgid "No supported ssh connection method available"
-#~ msgstr "Není dostupná žádná metoda spojení přes ssh"
-
-#~ msgid "Login password"
-#~ msgstr "Přihlášovací heslo"
-
-#~ msgid "Password input"
-#~ msgstr "Zadání hesla"
-
-#~ msgid "Select ssh key file"
-#~ msgstr "Vyberte ssh klíč"
-
-#~ msgid "Program error"
-#~ msgstr "Chyba programu"
-
-#~ msgid "Invalid broker address"
-#~ msgstr "Chybná adresa brokeru"
-
-#~ msgid "Unsupported broker protocol"
-#~ msgstr "Nepodporovaný protokol pro přístup na broker"
-
-#~ msgid "New pytis client version available. Install?"
-#~ msgstr "Je dostupná nová verze pytisového klienta. Nainstalovat?"
-
-#~ msgid "No"
-#~ msgstr "Ne"
-
-#~ msgid "Yes"
-#~ msgstr "Ano"
-
-#~ msgid "Select session"
-#~ msgstr "Vyberte sezení"
-
-#~ msgid "No session selected."
-#~ msgstr "Nebylo vybráno žádné sezení."
-
-#~ msgid "Invalid session format"
-#~ msgstr "Chybný formát sezení"
-
-#~ msgid "Couldn't connect to upgrade server"
-#~ msgstr "Nelze se připojit na aktualizační server"
-
-#~ msgid "Package unpacking failed"
-#~ msgstr "Selhalo rozbalení balíku"
-
-#~ msgid "Pytis successfully upgraded. Restart the application."
-#~ msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
