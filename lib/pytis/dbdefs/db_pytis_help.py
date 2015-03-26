@@ -218,7 +218,8 @@ class EvPytisHelp(sql.SQLView):
          where fullname = old.fullname and new.menu_help is null;
        insert into e_pytis_help_spec (spec_name, description, help, changed)
          select old.spec_name, new.spec_description, new.spec_help, true
-         where old.spec_name not in (select spec_name from e_pytis_help_spec);
+         where old.spec_name is not null
+               and old.spec_name not in (select spec_name from e_pytis_help_spec);
        update e_pytis_help_spec set
          description = new.spec_description,
          help = new.spec_help,
