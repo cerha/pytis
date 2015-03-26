@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-03-12 22:55'
+_VERSION = '2015-03-26 21:37'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -40,6 +40,9 @@ import sys
 import tarfile
 import tempfile
 import types
+
+def on_windows():
+    return platform.system() == 'Windows'
 
 def run_directory():
     return sys.path[0]
@@ -75,17 +78,44 @@ import x2go.xserver
 import PyZenity as zenity
 import pytis.remote
 
+# Windows specific setup
+if on_windows():
+    reload(sys)
+    sys.setdefaultencoding('cp1250')
+    win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
+    os.environ[str('NXPROXY_BINARY')] = str(os.path.join(win_apps_path, 'nxproxy', 'nxproxy.exe'))
+    # Set locale language
+    import ctypes
+    lcid_user = ctypes.windll.kernel32.GetUserDefaultLCID()
+    lcid_system = ctypes.windll.kernel32.GetSystemDefaultLCID()
+    if lcid_user:
+        lcid = lcid_user
+    else:
+        lcid = lcid_system
+    import locale
+    os.environ[str("LANGUAGE")] = locale.windows_locale.get(lcid)
+
+def get_language_windows(system_lang=True):
+    """Get language code based on current Windows settings.
+    @return: list of languages.
+    """
+    try:
+        import ctypes
+    except ImportError:
+        return [locale.getdefaultlocale()[0]]
+    # get all locales using windows API
+    lcid_user = ctypes.windll.kernel32.GetUserDefaultLCID()
+    lcid_system = ctypes.windll.kernel32.GetSystemDefaultLCID()
+    if system_lang and lcid_user != lcid_system:
+        lcids = [lcid_user, lcid_system]
+    else:
+        lcids = [lcid_user]
+    return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
+    
 t = gettext.translation('pytis-x2go',
                         os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
                         fallback=True)
 _ = t.ugettext
-
-def on_windows():
-    return platform.system() == 'Windows'
-
-if on_windows():
-    win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
-    os.environ[str('NXPROXY_BINARY')] = str(os.path.join(win_apps_path, 'nxproxy', 'nxproxy.exe'))
 
 _NONE = object()
 
