@@ -372,7 +372,7 @@ class HelpGenerator(object):
             node = self._pytis_help_root_node
         except AttributeError:
             directory = os.path.join(config.help_dir, 'src')
-            reader = lcg.reader(directory, 'pytis', ext='txt')
+            reader = lcg.reader(directory, 'pytis', ext='txt', resource_provider=resource_provider)
             try:
                 node = self._pytis_help_root_node = reader.build()
             except IOError as e:
