@@ -18,7 +18,12 @@
 
 import sys
 import rpyc
-import config
+
+try:
+    import config
+except ImportError:
+    import pytis.util
+    config = pytis.util.Configuration()
 
 def say(user_name, target_ip, request, *arguments):
     if request in('upgrade', 'upgrade_module', 'run_python',):
