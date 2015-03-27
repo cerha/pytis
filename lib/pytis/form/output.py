@@ -384,6 +384,8 @@ def run_viewer(file_):
             remote_file = pytis.remote.make_temporary_file(suffix=suffix)
         except:
             remote = False
+    if remote_file is None:
+        remote = False
     if remote:
         try:
             f = open(file_name)
