@@ -382,10 +382,10 @@ def run_viewer(file_):
         suffix = (os.path.splitext(file_name)[1] or '.pdf')
         try:
             remote_file = pytis.remote.make_temporary_file(suffix=suffix)
+            if remote_file is None:
+                remote = False
         except:
             remote = False
-    if remote_file is None:
-        remote = False
     if remote:
         try:
             f = open(file_name)
