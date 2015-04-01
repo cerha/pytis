@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-03-26 21:37'
+_VERSION = '2015-04-01 16:24'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -440,6 +440,29 @@ class PytisSshProfiles(SshProfiles):
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
+    def _fix_win_path(self, path):
+        """
+        Windows has lots of problems with executables with spaces in
+        the name; this function will remove them (using the ~1
+        format):
+        """
+        if ' ' in path:
+            import ctypes
+            GetShortPathName = ctypes.windll.kernel32.GetShortPathNameW
+            size = max(len(path) + 1, 256)
+            buf = ctypes.create_unicode_buffer(size)
+            try:
+                u = unicode
+            except NameError:
+                u = str
+            ret = GetShortPathName(u(path), buf, size)
+            if not ret:
+                error_msg = ('Error: the path "%s" has a space in it. '
+                             'We could not determine the short pathname for it.' % path)
+                raise ClientException(error_msg)
+            path = str(buf.value)
+        return path
+
     def get_xserver_config(self, xserver_name):
         if not xserver_name == XSERVER_VARIANT:
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
@@ -447,9 +470,9 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _changed = False
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
-                _xserver_config[option] = os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe')
+                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe'))
             elif option == 'run_command':
-                _xserver_config[option] = os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe')
+                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe'))
             elif option == 'parameters':
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
@@ -471,6 +494,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return _xserver_config
 
 x2go.client.X2GoClientXConfig = X2GoClientXConfig
+
 
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
