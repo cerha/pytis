@@ -206,7 +206,7 @@ class DataTable(object):
             row_ = row - 1
         else:
             row_ = row
-        success, result = db_operation(self._retrieve_row, row_)
+        success, result = db_operation(self._retrieve_row, row_, require=require)
         if not success:
             self._panic()
         return result
