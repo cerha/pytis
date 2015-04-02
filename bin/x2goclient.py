@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-04-01 16:24'
+_VERSION = '2015-04-02 16:18'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -470,9 +470,11 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _changed = False
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe'))
+                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
+                                                                          'vcxsrv.exe'))
             elif option == 'run_command':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv', 'vcxsrv.exe'))
+                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
+                                                                          'vcxsrv.exe'))
             elif option == 'parameters':
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
