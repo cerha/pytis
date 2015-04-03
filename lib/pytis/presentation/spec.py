@@ -5196,7 +5196,7 @@ class Specification(SpecificationBase):
             xfields_map[c.id()] = i
             i += 1
         for f in fields:
-            n = xfields_map.get(f.id())
+            n = xfields_map.get(f.dbcolumn())
             if f.virtual():
                 if n is not None:
                     raise Exception("Virtual field collides with a database column", f.id())
