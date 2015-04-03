@@ -75,7 +75,6 @@ import x2go.client
 import x2go.defaults
 import x2go.log
 import x2go.xserver
-import PyZenity as zenity
 import pytis.remote
 
 # Windows specific setup
@@ -118,6 +117,40 @@ t = gettext.translation('pytis-x2go',
 _ = t.ugettext
 
 _NONE = object()
+
+import wx
+app = wx.App()
+
+def info_dialog(message, error=False):
+    style = wx.OK
+    if error:
+        style = style | wx.ICON_ERROR
+    wx.MessageBox(message, style=style)
+    app.Yield()
+    
+def question_dialog(question):
+    answer = wx.MessageBox(question, style=wx.YES_NO)
+    app.Yield()
+    return answer == wx.YES
+
+def text_dialog(prompt, password=False):
+    dialog = wx.GetPasswordFromUser if password else wx.GetTextFromUser
+    answer = dialog(prompt)
+    app.Yield()
+    return answer or None
+
+def choice_dialog(prompt, choices):
+    answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
+    app.Yield()
+    return answer or None
+
+def file_dialog(prompt, directory=None):
+    kwargs = {}
+    if directory is not None:
+        kwargs['default_path'] = directory
+    answer = wx.FileSelector(prompt, **kwargs)
+    app.Yield()
+    return answer or None
 
 class ClientException(Exception):
     pass
@@ -555,8 +588,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 p = profiles.pytis_upgrade_parameter
                 upgrade_url = p('command')
                 if upgrade_url:
-                    if zenity.Question(_("New pytis client version available. Install?"),
-                                       title='', ok_label=_("Yes"), cancel_label=_("No")):
+                    if question_dialog(_("New pytis client version available. Install?")):
                         self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
@@ -623,9 +655,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if args.broker_url is not None:
                 data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
                 if not profile_id:
-                    answer = zenity.List(['Session id', 'Session name'], title=_("Select session"),
-                                         data=data)
-                    profile_id = answer and answer[0]
+                    n = max([len(d[0]) for d in data])
+                    format_ = '%-' + str(n) + 's %s'
+                    choices = [format_ % d for d in data]
+                    answer = choice_dialog(_("Select session"), choices=choices)
+                    profile_id = answer and answer[:n].rstrip()
                 profile_name = None
                 if not profile_id:
                     raise Exception(_("No session selected."))
@@ -888,9 +922,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             while True:
                 if ok_password(key_filename, password):
                     return password
-                password = zenity.GetText(text=(_("Password key for %s") %
-                                                (key_filename.replace('_', '__'),)),
-                                          password=True, title="")
+                password = text_dialog(_("Password key for %s") % (key_filename,),
+                                       password=True)
                 if password is None:
                     return None
         def key_acceptable(key_filename):
@@ -935,11 +968,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                         continue
                 if 'password' in methods:
                     if 'publickey' in methods:
-                        answer = zenity.Question(_("Default authentication failed"),
-                                                 title='',
-                                                 ok_label=_("Login using password"),
-                                                 cancel_label=_("Login using a key file"))
-                        selected_method = 'publickey' if not answer else 'password'
+                        choice_password = _("Login using password")
+                        choice_key_file = _("Login using a key file")
+                        answer = choice_dialog(_("Default authentication failed")
+                                               [choice_password, choice_key_file])
+                        selected_method = 'publickey' if answer == choice_key_file else 'password'
                     else:
                         selected_method = 'password'
                 elif 'publickey' in methods:
@@ -948,19 +981,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     raise Exception(_("No supported ssh connection method available"))
                 _auth_info['_method'] = selected_method
                 if selected_method == 'password':
-                    password = zenity.GetText(text=_("Login password"), password=True,
-                                              title=_("Password input"))
+                    password = text_dialog(_("Login password"), password=True)
                     if not password:
                         return None
                     _auth_info['password'] = password.rstrip('\r\n')
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     while True:
-                        answer = zenity.GetFilename(title=_("Select ssh key file"),
-                                                    filename=ssh_directory)
-                        if answer is None:
+                        key_filename = file_dialog(_("Select ssh key file"),
+                                                   directory=ssh_directory)
+                        if key_filename is None:
                             return None
-                        key_filename = answer[0]
                         password = key_password(key_filename, _auth_info.get('password') or '')
                         if password is not None:
                             _auth_info['key_filename'] = key_filename
@@ -991,7 +1022,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         path = parameters.get('path')
         client = class_.pytis_ssh_connect()
         if client is None:
-            zenity.Error(_("Couldn't connect to upgrade server"))
+            info_dialog(_("Couldn't connect to upgrade server"), error=True)
             return
         install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
         old_install_directory = install_directory + '.old'
@@ -1001,13 +1032,13 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
         if not os.path.isdir(pytis_directory):
-            zenity.Error(_("Package unpacking failed"))
+            info_dialog(_("Package unpacking failed"), error=True)
             return
         os.rename(install_directory, old_install_directory)
         os.rename(pytis_directory, install_directory)
         os.rmdir(tmp_directory)
         shutil.rmtree(old_install_directory)
-        zenity.InfoMessage(_("Pytis successfully upgraded. Restart the application."))
+        info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
     def new_session(self, s_hash):
@@ -1024,10 +1055,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
     @classmethod
     def run(class_, args):
         _auth_info.update_from_args(args)
-        if on_windows():
-            zenity.zen_exec = os.path.join(win_apps_path, 'zenity.exe')
-        else:
-            zenity.zen_exec = 'zenity'
         # Read in configuration
         configuration = Configuration()
         if args.broker_url is None:
