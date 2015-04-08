@@ -602,8 +602,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
             pass
 
     def _pgg_connection_key(self, connection_data):
-        return (connection_data.user(), connection_data.password(),
-                connection_data.host(), connection_data.port(),
+        return (connection_data.user(), connection_data.host(), connection_data.port(),
                 connection_data.database(),)
 
     def _pgg_retrieve_access_groups(self, data):
