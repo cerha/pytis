@@ -2110,10 +2110,13 @@ class BrowseForm(LayoutForm):
     def heading_info(self):
         if self._query_fields_form:
             row = self._query_fields_form.row()
-            names = [row.display(filter_set.id()) for filter_set in self._filter_sets
-                     if row[filter_set.id()].value() is not None]
-            if names:
-                return _("filtered by: ") + lcg.concat(names, separator=', ')
+            filter_names = []
+            for filter_set in self._filter_sets:
+                f = pytis.util.find(row[filter_set.id()].value(), filter_set, key=lambda x: x.id())
+                if f and f.condition():
+                    filter_names.append(f.title())
+            if filter_names:
+                return _("filtered by: ") + lcg.concat(filter_names, separator=', ')
         return None
 
     def query_field_values(self):
