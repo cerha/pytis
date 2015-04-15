@@ -2968,8 +2968,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             dbvalue = data_0[i]
             i += 1
             if isinstance(type_, (Range, Array,)):
-                if not dbvalue:
-                    dbvalue = ('', '',)
+                if not dbvalue or dbvalue == '[]':
+                    dbvalue = ('', '',) if isinstance(type_, Range) else ()
                 else:
                     dbvalue = tuple(dbvalue[1:-1].split(','))
                     if isinstance(type_, Array) and isinstance(type_.inner_type(), String):
