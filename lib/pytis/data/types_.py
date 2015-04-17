@@ -39,7 +39,7 @@ instancemi samostatné třídy 'Value'.
 
 import collections
 import datetime
-import math
+import decimal
 import re
 import string
 import cStringIO
@@ -815,9 +815,9 @@ class Float(Number):
     Other keyword arguments are the same is in the superclass.
 
     """
-    CEILING = 'CEILING'
+    CEILING = decimal.ROUND_CEILING
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
-    FLOOR = 'FLOOR'
+    FLOOR = decimal.ROUND_FLOOR
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
 
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
@@ -876,26 +876,58 @@ class Float(Number):
                         string_ = string_.encode(encoding)
                 value = locale.atof(string_)
             else:
-                value = float(string_)
+                value = decimal.Decimal(string_)
         except:
-            # Dokumentace Pythonu 1.5.2 neříká, že by `float' mohlo metat
-            # nějakou výjimkou, ale evidentně by mělo, pokud `string' nelze
-            # na float převést.
             value = None
         if value is not None:
-            if precision is not None:
-                # Pozor na převody mezi binárními a dekadickými čísly!
-                rvalue = round(value, precision)
-                if rounding:
-                    if rounding == self.CEILING:
-                        if rvalue < value:
-                            rvalue = rvalue + math.pow(10, -precision)
-                    elif rounding == self.FLOOR:
-                        if rvalue > value:
-                            rvalue = rvalue - math.pow(10, -precision)
+            if precision is None:
+                precision = self._precision
+            digits = self._digits
+            # We have to handle floats (as produced by 'locale.atof') very
+            # carefully.
+            if digits is not None:
+                with decimal.localcontext() as context:
+                    context.prec = digits
+                    context.rounding = rounding
+                    if isinstance(value, float):
+                        # Round the value -- any better way?
+                        str_value = ('%%.%dg' % (digits,)) % (value,)
+                        rvalue = float(str_value)
+                        correction = 0
+                        if rounding:
+                            if rounding == self.CEILING:
+                                if rvalue < value:
+                                    correction = 1
+                            elif rounding == self.FLOOR:
+                                if rvalue > value:
+                                    correction = -1
+                            else:
+                                raise ProgramError('Invalid rounding argument', rounding)
+                        value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+                        if correction:
+                            rvalue = rvalue + correction * (10 ** -value.as_tuple().exponent)
+                            value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
                     else:
-                        raise ProgramError('Invalid rounding argument', rounding)
-                value = rvalue
+                        value = +decimal.Decimal(value)
+            if precision is not None:
+                if isinstance(value, float):
+                    rvalue = round(value, precision)
+                    if rounding:
+                        if rounding == self.CEILING:
+                            if rvalue < value:
+                                rvalue = rvalue + 10 ** -precision
+                        elif rounding == self.FLOOR:
+                            if rvalue > value:
+                                rvalue = rvalue - 10 ** -precision
+                        else:
+                            raise ProgramError('Invalid rounding argument', rounding)
+                    value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+                else:
+                    with decimal.localcontext() as context:
+                        context.prec = 100
+                        context.rounding = rounding
+                        quantizer = decimal.Decimal('1.' + '0' * precision)
+                        value = decimal.Decimal(value).quantize(quantizer)
             result = Value(self, value), None
         else:
             result = None, self._validation_error(self.VM_INVALID_NUMBER)

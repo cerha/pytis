@@ -19,6 +19,7 @@
 
 import copy
 import datetime
+import decimal
 import string
 import time
 
@@ -78,7 +79,7 @@ class _TypeCheck(unittest.TestCase):
             assert e is None, ('proper value generated error', value, e.message())
             assert isinstance(v.type(), type_.__class__), ('invalid value type', v.type())
             if check_value:
-                assert v.value() == expected_value, ('invalid value', v.value(), expected_value)
+                self.assertEqual(v.value(), expected_value)
         if check_export and e is None:
             result, error = type_.validate(type_.export(v.value(), **ekwargs), **kwargs)
             assert result == v, ('export failed', str(v), str(result))
@@ -150,23 +151,25 @@ class Float(_TypeCheck):
     def test_precision(self):
         PRECISION = 3
         t = pytis.data.Float(precision=PRECISION)
-        v, _ = self._test_validity(t, '3.14159265', 3.14159265,
+        d = decimal.Decimal
+        v, _ = self._test_validity(t, '3.14159265', d('3.142'),
                                    check_export=False)
         assert v.type().precision() == PRECISION, 'wrong precision value'
         assert v.export() == '3.142', 'invalid export result'
     def test_rounding(self):
-        self._test_validity(None, '3.1415', 3.14, kwargs={'precision': 2})
-        self._test_validity(None, '3.1415', 3.142, kwargs={'precision': 3})
-        self._test_validity(None, '2.71', 3, kwargs={'precision': 0})
+        d = decimal.Decimal
+        self._test_validity(None, '3.1415', d('3.14'), kwargs={'precision': 2})
+        self._test_validity(None, '3.1415', d('3.142'), kwargs={'precision': 3})
+        self._test_validity(None, '2.71', d('3'), kwargs={'precision': 0})
         F = pytis.data.Float.FLOOR
         C = pytis.data.Float.CEILING
-        self._test_validity(None, '3.14159', 3.141, kwargs={'precision': 3,
+        self._test_validity(None, '3.14159', d('3.141'), kwargs={'precision': 3,
                                                             'rounding': F})
-        self._test_validity(None, '3.14159', 3.15, kwargs={'precision': 2,
+        self._test_validity(None, '3.14159', d('3.15'), kwargs={'precision': 2,
                                                            'rounding': C})
-        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
+        self._test_validity(None, '3.14', d('3.14'), kwargs={'precision': 2,
                                                         'rounding': F})
-        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
+        self._test_validity(None, '3.14', d('3.14'), kwargs={'precision': 2,
                                                         'rounding': C})
 tests.add(Float)
 
@@ -1540,9 +1543,10 @@ class DBDataDefault(_DBTest):
             for i in range(n):
                 v = result[i][0]
                 assert keys[i] == v, ('nonmatching key', keys[i], v)
-        x999 = pytis.data.Float().validate('999')[0]
-        x1000 = pytis.data.Float().validate('1000')[0]
-        x3000 = pytis.data.Float().validate('3000')[0]
+        F = pytis.data.Float(digits=17, precision=2)
+        x999 = F.validate('999')[0]
+        x1000 = F.validate('1000')[0]
+        x3000 = F.validate('3000')[0]
         assert self.data.delete_many(pytis.data.EQ('castka', x999)) == 0, 'nonexistent row deleted'
         lines((1, 2, 3, 4))
         assert self.data.delete_many(pytis.data.EQ('castka', x1000)) == 2, 'rows not deleted'
@@ -2200,8 +2204,8 @@ class DBDataAggregated(DBDataDefault):
             column_groups = ()
         else:
             column_groups = ('datum', 'castka',)
-        column_groups = column_groups + (('mesic', pytis.data.Float(), 'date_part',
-                                          sval('month'), 'datum',),)
+        column_groups = column_groups + (('mesic', pytis.data.Float(digits=17, precision=2),
+                                          'date_part', sval('month'), 'datum',),)
         data = D(denik_spec,
                  denik_spec[0],
                  self._dconnection,
