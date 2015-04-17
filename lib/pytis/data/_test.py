@@ -25,11 +25,14 @@ import time
 
 import unittest
 
-from pytis.util import TestSuite, super_
+from pytis.util import TestSuite, super_, DEBUG, OPERATIONAL, ACTION, EVENT
 import pytis.data
 from pytis.data import bval, fval, ival, sval
 
 _connection_data = {'database': 'test'}
+
+import config
+config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
 tests = TestSuite()
 
