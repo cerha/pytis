@@ -1608,6 +1608,11 @@ class DBDataDefault(_DBTest):
             ('Invalid binary data', result,)
         assert self.dbin.delete(key) == 1, 'Binary deletion failed'
     def test_full_text_select(self):
+        ts_config = self._sql_command("select get_current_ts_config()")[0][0]
+        self.assertEqual(ts_config, 'simple',
+                        "Wrong ts_config for full text search tests.\n"
+                        "Use the following SQL command as a database owner to fix it:\n"
+                        "ALTER DATABASE ... SET default_text_search_config to 'simple';")
         def check(query, result_set):
             condition = pytis.data.FT('index', query)
             self.fulltext.select(condition=condition, sort=('index',))
