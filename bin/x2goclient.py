@@ -970,7 +970,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     if 'publickey' in methods:
                         choice_password = _("Login using password")
                         choice_key_file = _("Login using a key file")
-                        answer = choice_dialog(_("Default authentication failed")
+                        answer = choice_dialog(_("Default authentication failed"),
                                                [choice_password, choice_key_file])
                         selected_method = 'publickey' if answer == choice_key_file else 'password'
                     else:
