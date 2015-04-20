@@ -3090,16 +3090,19 @@ def ival(value):
     assert value is None or isinstance(value, int), value
     return Value(Integer(), value)
 
-def fval(value):
+def fval(value, digits=None, precision=None):
     """Return 'Value' instance of type 'Float' with given value.
 
     Arguments:
 
       value -- internal value of the 'Float' instance, float
+      digits -- maximum number of digits to pass to 'Float' constructor
+      precision -- number of digits after decimal point to pass to 'Float'
+        constructor
 
     """
     assert value is None or isinstance(value, float), value
-    return Value(Float(), value)
+    return Value(Float(digits=digits, precision=precision), value)
 
 def bval(value):
     """Return 'Value' instance of type 'Boolean' with given value.
