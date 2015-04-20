@@ -1532,16 +1532,15 @@ class BrowseForm(LayoutForm):
                 return len(order.strip('.').split('.')) - 1
         return None
 
-    def _popup_menu_items(self, context, row):
-        return [lcg.PopupMenuItem(action.title(),
-                                  tooltip=action.descr(),
-                                  enabled=enabled,
-                                  uri=self._uri_provider(row, UriType.ACTION, action))
-                for action, enabled in self._visible_actions(context, row)]
-
     def _export_popup_ctrl(self, context, row, selector):
-        items = self._popup_menu_items(context, row)
-        if items:
+        actions = self._visible_actions(context, row)
+        # Suppress the popup menu when it consists of a single item for action='view'.
+        if actions and not (len(actions) == 1 and actions[0][0].id() == 'view'):
+            items = [lcg.PopupMenuItem(action.title(),
+                                       tooltip=action.descr(),
+                                       enabled=enabled,
+                                       uri=self._uri_provider(row, UriType.ACTION, action))
+                     for action, enabled in self._visible_actions(context, row)]
             ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this record"),
                                      selector)
             return ctrl.export(context)
