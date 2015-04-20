@@ -44,7 +44,7 @@ from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, 
     Profiles, FilterSet, Filter
 import pytis.util
 
-from field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
+from .field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
 
 _ = pytis.util.translations('pytis-web')
 
