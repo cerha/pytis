@@ -1715,6 +1715,14 @@ class BrowseForm(LayoutForm):
     def _export_body(self, context, form_id):
         g = context.generator()
         if self._async_load: # TODO: Avoid for robot's requests
+            if self._query_fields_form:
+                # Quick HACK: Make sure all resources needed by query fields,
+                # such as JavaScript and CSS files, ale allocated in advance.
+                # Better solution will be dynamically adding these resources
+                # allocated within the async request processing, but it will
+                # need a little more work...  Thus we export the query fields
+                # form just for side effects and ignore the result.
+                self._query_fields_form.export(context)
             content = [g.div(g.div(_("Loading form data..."), cls='ajax-loading'),
                              cls='ajax-container')]
         else:
