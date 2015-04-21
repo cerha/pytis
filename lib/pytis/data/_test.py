@@ -2444,6 +2444,8 @@ class DBFunction(_DBBaseTest):
                        "where x >= $1 order by x'"),
                       "foo6(int) returns void as 'insert into tab values ($1)'",
                       "foo7(int, out int, out int) as 'select $1, $1+2'",
+                      "foo8() returns numeric(3,2) as 'select 3.14'",
+                      "foo9() returns float as 'select 3.14::float'",
                       ):
                 self._sql_command("create function %s language sql " % q)
         except:
@@ -2456,7 +2458,10 @@ class DBFunction(_DBBaseTest):
                   "foo4()",
                   "foo5(int)",
                   "foo6(int)",
-                  "foo7(int, out int, out int)",):
+                  "foo7(int, out int, out int)",
+                  "foo8()",
+                  "foo9()",
+                  ):
             try:
                 self._sql_command("drop function %s" % q)
             except:
@@ -2482,6 +2487,15 @@ class DBFunction(_DBBaseTest):
                              pytis.data.String().validate('bar')[0])))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'foobar', ('Invalid result', result))
+    def test_numeric(self):
+        function = pytis.data.DBFunctionDefault('foo8', self._dconnection)
+        row = pytis.data.Row(())
+        result = function.call(row)[0][0].value()
+        self.assertIsInstance(result, decimal.Decimal)
+        function = pytis.data.DBFunctionDefault('foo9', self._dconnection)
+        row = pytis.data.Row(())
+        result = function.call(row)[0][0].value()
+        self.assertIsInstance(result, float)
     def test_empty(self):
         function = pytis.data.DBFunctionDefault('foo3', self._dconnection)
         row = pytis.data.Row(())

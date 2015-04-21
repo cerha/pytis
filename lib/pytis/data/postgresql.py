@@ -1228,10 +1228,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     size = None
                 db_type_kwargs['maxlen'] = size
         elif db_type_cls == Float:
-            spec = int(size_string)
-            precision = (spec & 0xFFFF) - 4
-            if precision >= 0 and precision <= 100:
-                db_type_kwargs['precision'] = precision
+            if type_ == 'numeric':
+                spec = int(size_string)
+                precision = (spec & 0xFFFF) - 4
+                if precision >= 0 and precision <= 100:
+                    db_type_kwargs['precision'] = precision
+                else:
+                    db_type_kwargs['digits'] = 100
         elif db_type_cls == Integer and serial:
             db_type_cls = Serial
         if array:
