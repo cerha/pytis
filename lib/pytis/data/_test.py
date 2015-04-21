@@ -160,20 +160,35 @@ class Float(_TypeCheck):
         self.assertEqual(v.type().precision(), PRECISION)
         self.assertEqual(v.export(), '3.142')
     def test_rounding(self):
-        d = decimal.Decimal
-        self._test_validity(None, '3.1415', d('3.14'), kwargs={'precision': 2})
-        self._test_validity(None, '3.1415', d('3.142'), kwargs={'precision': 3})
-        self._test_validity(None, '2.71', d('3'), kwargs={'precision': 0})
+        self._test_validity(None, '3.1415', 3.14, kwargs={'precision': 2})
+        self._test_validity(None, '3.1415', 3.142, kwargs={'precision': 3})
+        self._test_validity(None, '2.71', 3, kwargs={'precision': 0})
         F = pytis.data.Float.FLOOR
         C = pytis.data.Float.CEILING
-        self._test_validity(None, '3.14159', d('3.141'), kwargs={'precision': 3,
+        self._test_validity(None, '3.14159', 3.141, kwargs={'precision': 3,
                                                             'rounding': F})
-        self._test_validity(None, '3.14159', d('3.15'), kwargs={'precision': 2,
+        self._test_validity(None, '3.14159', 3.15, kwargs={'precision': 2,
                                                            'rounding': C})
-        self._test_validity(None, '3.14', d('3.14'), kwargs={'precision': 2,
+        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
                                                         'rounding': F})
-        self._test_validity(None, '3.14', d('3.14'), kwargs={'precision': 2,
+        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
                                                         'rounding': C})
+    def test_value(self):
+        f = 3.14
+        d = decimal.Decimal('3.14')
+        T = pytis.data.Float()
+        self.assertIsInstance(pytis.data.Value(T, f).value(), float)
+        self.assertIsInstance(pytis.data.Value(T, d).value(), float)
+        T = pytis.data.Float(precision=2)
+        self.assertIsInstance(pytis.data.Value(T, f).value(), decimal.Decimal)
+        self.assertIsInstance(pytis.data.Value(T, d).value(), decimal.Decimal)
+        T = pytis.data.Float(digits=8)
+        self.assertIsInstance(pytis.data.Value(T, f).value(), decimal.Decimal)
+        self.assertIsInstance(pytis.data.Value(T, d).value(), decimal.Decimal)
+    def test_fval(self):
+        self.assertIsInstance(fval(decimal.Decimal('3.14')).value(), decimal.Decimal)
+        self.assertIsInstance(fval(3.14, precision=2).value(), decimal.Decimal)
+        self.assertIsInstance(fval(3.14).value(), float)
 tests.add(Float)
 
 

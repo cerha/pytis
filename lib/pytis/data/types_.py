@@ -504,6 +504,16 @@ class Type(object):
         """
         return value
 
+    def adjust_value(self, value):
+        """Return 'value' in the form to be used as type internal value.
+
+        Typically, the return value is just 'value'.  But if the value is not
+        of the proper internal value type it may be converted to it if
+        possible.  If it is not possible then 'TypeError' is raised.
+
+        """
+        return value
+
     def sqlalchemy_type(self):
         """Return corresponding SQLAlchemy type, sqlalchemy.types.TypeEngine instance."""
         raise Exception("Not implemented", self)
@@ -698,6 +708,11 @@ class Range(Type):
         else:
             v1, v2 = value
         return super(Range, self)._export(v1, **kwargs), super(Range, self)._export(v2, **kwargs)
+    
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, (tuple, list,)):
+            raise TypeError("Value not a sequence", value)
+        return value
 
     def base_type(self):
         """Return instance of the underlying types of the range type.
@@ -746,6 +761,11 @@ class Integer(Number):
         else:
             result = None, self._validation_error(self.VM_NONINTEGER)
         return result
+
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, (int, long,)):
+            raise TypeError("Value not an integer", value)
+        return value
 
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
@@ -933,6 +953,8 @@ class Float(Number):
                         context.rounding = rounding
                         quantizer = decimal.Decimal('1.' + '0' * precision)
                         value = decimal.Decimal(value).quantize(quantizer)
+            if self._digits is None and self._precision is None:
+                value = float(value)
             result = Value(self, value), None
         else:
             result = None, self._validation_error(self.VM_INVALID_NUMBER)
@@ -946,6 +968,15 @@ class Float(Number):
         else:
             return unicode(self._format_string % value)
 
+    def adjust_value(self, value):
+        if value is None:
+            return None
+        if self._precision is not None or self._digits is not None:
+            cast = decimal.Decimal
+        else:
+            cast = float
+        return cast(value)
+    
     def sqlalchemy_type(self):
         if self._digits is True:
             alchemy_type = sqlalchemy.Numeric()
@@ -967,6 +998,11 @@ class DoublePrecision(Float):
     def __init__(self, **kwargs):
         super(DoublePrecision, self).__init__(**kwargs)
 
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, float):
+            raise TypeError("Value not a float", value)
+        return value
+    
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.DOUBLE_PRECISION()
 
@@ -1017,6 +1053,11 @@ class String(Limited):
     def wm_validate(self, object):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
+
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, basestring):
+            raise TypeError("Value not a string", value)
+        return value
     
     def sqlalchemy_type(self):
         if self.minlen() is None and self.maxlen() is None:
@@ -1707,6 +1748,11 @@ class DateTime(_CommonDateTime):
         """
         return class_.datetime()
     
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, datetime.datetime):
+            raise TypeError("Value not a datetime", value)
+        return value
+    
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
                                                         precision=0)
@@ -1800,6 +1846,11 @@ class Date(DateTime):
     def _datetime(class_, tz):
         dt = super(Date, class_)._datetime(tz)
         return dt.date()
+    
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, datetime.date):
+            raise TypeError("Value not a date", value)
+        return value
 
     def sqlalchemy_type(self):
         return sqlalchemy.Date()
@@ -1876,6 +1927,11 @@ class Time(_CommonDateTime):
     def _datetime(class_, tz):
         dt = datetime.datetime.now(tz)
         return dt.astimezone(tz).timetz()
+    
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, (datetime.datetime, datetime.time)):
+            raise TypeError("Value not a time", value)
+        return value
     
     def sqlalchemy_type(self):
         return sqlalchemy.Time(timezone=(not self._without_timezone))
@@ -1982,6 +2038,11 @@ class TimeInterval(Type):
         """
         return self.export(value)
     
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, datetime.timedelta):
+            raise TypeError("Value not a timedelta", value)
+        return value
+    
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.INTERVAL()
 
@@ -2067,6 +2128,11 @@ class Boolean(Type):
     
     def secret_export(self):
         return ''
+    
+    def adjust_value(self, value):
+        if value is None:
+            return None
+        return bool(value)
     
     def sqlalchemy_type(self):
         return sqlalchemy.Boolean()
@@ -2237,6 +2303,11 @@ class Binary(Limited):
     def _format_length(self, length):
         return format_byte_size(length)
 
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, self.Buffer):
+            raise TypeError("Value not a Buffer", value)
+        return value
+    
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.BYTEA()
         
@@ -2447,6 +2518,11 @@ class LTree(Type):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
     
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, basestring):
+            raise TypeError("Value not a string", value)
+        return value
+    
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.LTreeType()
@@ -2512,6 +2588,11 @@ class Array(Limited):
     def inner_type(self):
         return self._inner_type
 
+    def adjust_value(self, value):
+        if value is not None and not isinstance(value, (tuple, list,)):
+            raise TypeError("Value not a sequence", value)
+        return value
+    
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.ARRAY(self.inner_type().sqlalchemy_type())
 
@@ -2982,16 +3063,17 @@ class Value(_Value):
     """
     _VOID = object()
     
-    def __init__(self, type, value):
+    def __init__(self, type_, value):
         """Inicializuj hodnotu daného typu.
 
         Argumenty:
         
-          type -- instance třídy 'Type'
+          type_ -- instance třídy 'Type'
           value -- hodnota samotná, libovolný objekt
          
         """
-        _Value.__init__(self, type, value)
+        value = type_.adjust_value(value)
+        _Value.__init__(self, type_, value)
         self._init()
 
     def __setstate__(self, state):
