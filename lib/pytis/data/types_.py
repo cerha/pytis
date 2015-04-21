@@ -903,10 +903,14 @@ class Float(Number):
                                     correction = -1
                             else:
                                 raise ProgramError('Invalid rounding argument', rounding)
-                        value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+                        if precision is None:
+                            format_ = '%%.%dg' % (digits,)
+                        else:
+                            format_ = '%%.%df' % (precision,)
+                        value = decimal.Decimal(format_ % (rvalue,))
                         if correction:
                             rvalue = rvalue + correction * (10 ** -value.as_tuple().exponent)
-                            value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+                            value = decimal.Decimal(format_ % (rvalue,))
                     else:
                         value = +decimal.Decimal(value)
             if precision is not None:
