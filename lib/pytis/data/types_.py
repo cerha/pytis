@@ -677,11 +677,12 @@ class Range(Type):
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ('', '',),),)
     
     def _validate(self, obj, **kwargs):
+        base_type = self.base_type()
         o1, o2 = obj
-        v1, e1 = super(Range, self)._validate(o1, **kwargs)
+        v1, e1 = base_type._validate(o1, **kwargs)
         if e1 is not None:
             return v1, e1
-        v2, e2 = super(Range, self)._validate(o2, **kwargs)
+        v2, e2 = base_type._validate(o2, **kwargs)
         if e2 is not None:
             return v2, e2
         if v1 is None and v2 is None:
