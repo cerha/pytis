@@ -3105,7 +3105,12 @@ def fval(value, digits=None, precision=None):
         constructor
 
     """
-    assert value is None or isinstance(value, float), value
+    assert value is None or isinstance(value, float) or isinstance(value, decimal.Decimal), value
+    if isinstance(value, decimal.Decimal):
+        if not digits:
+            digits = len(value.as_tuple().digits)
+        if not precision:
+            precision = abs(value.as_tuple().exponent)
     return Value(Float(digits=digits, precision=precision), value)
 
 def bval(value):
