@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2332,7 +2332,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 presented_row = self._table.row(r)
                 for j, (cid, ctype) in enumerate(column_list):
                     if isinstance(ctype, pytis.data.Float):
-                        s = presented_row[cid].value()
+                        s = float(presented_row[cid].value())
                     else:
                         value = presented_row.get(cid, secure=True)
                         if value and value.value() is not None:
