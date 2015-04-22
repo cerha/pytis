@@ -16,16 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Třídy pro specifikaci prezentační vlastností formulářů.
+"""Classes for specification of presentational propertis of pytis data views.
 
-Třída 'ViewSpec' zastřešuje ostatní specifikační třídy definované tímto
-modulem ('Field', 'GroupSpec', ...).
+The class 'Specification' defines the actual properties of the view.  Other
+classes of this module ('Field', 'Binding', 'GroupSpec', ...) are mostly used
+for specification of particular attributes of the 'Specification'.
 
-Vytvoření instance formulářové třídy je potom v podstatě interpretací
-příslušných specifikací.
+Form instances of particular backends (wx forms, web forms) then interpret the
+properties defined in specifications.
 
-Všechny třídy tohoto modulu mají specifikační charakter a jejich instance jsou
-považovány za immutable, tudíž mohou být libovolně sdíleny.
+All classes of this module are of specificational nature and can be considered
+immutable.  Thus they can be shared as needed.
 
 """
 
