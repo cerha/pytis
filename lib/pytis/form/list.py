@@ -2331,23 +2331,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     break
                 presented_row = self._table.row(r)
                 for j, (cid, ctype) in enumerate(column_list):
-                    if isinstance(ctype, pytis.data.Float):
-                        s = float(presented_row[cid].value())
-                    else:
-                        value = presented_row.get(cid, secure=True)
-                        if value and value.value() is not None:
-                            v = value.value()
-                            if isinstance(ctype, pytis.data.Date):
-                                s = datetime.date(v.year, v.month, v.day)
-                            elif isinstance(ctype, pytis.data.Time):
-                                s = datetime.time(v.hour, v.minute, int(v.second))
-                            elif isinstance(ctype, pytis.data.DateTime):
-                                s = v.strftime(pytis.data.DateTime.CZECH_FORMAT)
-                            else:
-                                s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
+                    value = presented_row.get(cid, secure=True)
+                    if value and value.value() is not None:
+                        if isinstance(ctype, pytis.data.Float):
+                            s = float(presented_row[cid].value())
                         else:
-                            s = None
-                    if s is not None:
+                            value = presented_row.get(cid, secure=True)
+                            if value and value.value() is not None:
+                                v = value.value()
+                                if isinstance(ctype, pytis.data.Date):
+                                    s = datetime.date(v.year, v.month, v.day)
+                                elif isinstance(ctype, pytis.data.Time):
+                                    s = datetime.time(v.hour, v.minute, int(v.second))
+                                elif isinstance(ctype, pytis.data.DateTime):
+                                    s = v.strftime(pytis.data.DateTime.CZECH_FORMAT)
+                                else:
+                                    s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
                         ws.write(r + 1, j, s, column_styles[cid])
             w.save(filename)
             if not isinstance(filename, basestring):
