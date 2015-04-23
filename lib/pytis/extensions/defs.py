@@ -150,12 +150,12 @@ def check_form():
         obsah += "Políčka ve fields:\n%s\n\n" % \
                  "\n".join(["  - %s" % f.id() for f in view_spec.fields()])
         # Actions - TODO: Bude třeba zohlednit vnořené seznamy a ActionGroup.
-        #obsah += "\n\nAkce kontextového menu:\n\n"
-        #actions = view_spec.actions()
-        #if actions:
-        #    obsah += "\n".join([a.title() for a in actions])
-        #else:
-        #    obsah += "Nejsou definovány"
+        # obsah += "\n\nAkce kontextového menu:\n\n"
+        # actions = view_spec.actions()
+        # if actions:
+        #     obsah += "\n".join([a.title() for a in actions])
+        # else:
+        #     obsah += "Nejsou definovány"
         # Default select
         _get_default_select(spec)
         pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
@@ -236,7 +236,7 @@ class MenuChecker(object):
                     errors.append("Invalid print specification: " + module)
                 else:
                     print_module_name = module[:print_pos].replace('.', '/')
-                    print_class_name = module[print_pos+1:]
+                    print_class_name = module[print_pos + 1:]
                     try:
                         self._output_resolver.get_object(print_module_name, print_class_name)
                     except pytis.util.ResolverError as e:
@@ -398,7 +398,7 @@ class MenuChecker(object):
                     results = check_spec(name)
                 for error in results:
                     errors.append("Specifikace %s: %s" % (name, error))
-                    last_error = "%s\n%s...)" % (name, error[:width-4])
+                    last_error = "%s\n%s...)" % (name, error[:width - 4])
         pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
                               message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
@@ -449,7 +449,7 @@ class MenuChecker(object):
                     results = check_spec(name, no_spec_error=True)
                 for error in results:
                     errors.append("Specifikace %s: %s" % (name, error))
-                    last_error = "%s\n%s...)" % (name, error[:width-4])
+                    last_error = "%s\n%s...)" % (name, error[:width - 4])
         pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
                               message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
