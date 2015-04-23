@@ -1600,7 +1600,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       'row_number() over () as _number '
                       'from (select%s %%(columns)s from %s '
                       'where (%s)%s %s order by %s%%(ordering)s %s) as %s '
-                      '%%(fulltext_queries)s where %%(condition)s') %
+                      '%%(fulltext_queries)s where %%(condition)s %%(limit)s') %
                      (cursor_name, distinct_on, table_list, relation, filter_condition,
                       groupby, distinct_on_ordering, ordering, table_names[0],)),
                     {'columns': column_list})
@@ -1611,7 +1611,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       "row_number() over (order by %%(ordering)s %s) as _number "
                       "from (select%s * from %s%%(fulltext_queries)s "
                       "where %%(condition)s and (%s)%s) "
-                      "as %s %s order by %%(ordering)s %s") %
+                      "as %s %s order by %%(ordering)s %s %%(limit)s") %
                      (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
                       table_names[0], groupby, ordering,)),
                     {'columns': column_list})
@@ -1621,7 +1621,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     (("declare %s scroll cursor for select %%(columns)s, "
                       "row_number() over (order by %s%%(ordering)s %s) as _number "
                       "from %s%%(fulltext_queries)s "
-                      "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s") %
+                      "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s %%(limit)s") %
                      (cursor_name, distinct_on_ordering, ordering, table_list, relation,
                       filter_condition, groupby, distinct_on_ordering, ordering,)),
                     {'columns': column_list})
@@ -1891,6 +1891,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if sort_string:
             sort_string += ','
         return sort_string
+
+    def _pdbb_limit2sql(self, limit):
+        return '' if limit is None else 'limit %d' % (limit,)
 
     def _pdbb_fulltext_query_name(self, column_name):
         return '_pytis_ftq__%s' % (column_name,)
@@ -2179,7 +2182,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return t
 
     def _pg_select(self, condition, sort, columns, arguments={}, transaction=None,
-                   async_count=False, stop_check=None):
+                   async_count=False, stop_check=None, limit=None):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -2201,11 +2204,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             actually called during any long taking operation.  If it gets, it's
             up to the function what to do, it can e.g. raise some exception to
             stop the operation.
+          limit -- maximum number of rows
 
         """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
-        args = {'condition': cond_string, 'ordering': sort_string}
+        limit_string = self._pdbb_limit2sql(limit)
+        args = {'condition': cond_string, 'ordering': sort_string, 'limit': limit_string}
         fulltext_queries = ['']
         if condition:
             def find_fulltext(operator):
@@ -3088,6 +3093,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     arguments=self._pg_last_select_arguments,
                     async_count=self._pg_async_count,
                     stop_check=self._pg_stop_check,
+                    limit=self._pg_last_select_limit,
                     timeout_callback=self._pg_timeout_callback)
         if row_number >= 0:
             self.skip(row_number + 1)
@@ -3143,7 +3149,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None,
+               limit=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if __debug__:
@@ -3152,6 +3159,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
              condition == self._pg_last_select_condition and
              sort == self._pg_last_select_sorting and
              transaction is self._pg_last_select_transaction and
+             limit == self._pg_last_select_limit and
              not async_count)):
             use_cache = True
         else:
@@ -3175,6 +3183,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_sorting = sort
         self._pg_last_select_transaction = transaction
         self._pg_last_select_arguments = arguments
+        self._pg_last_select_limit = limit
         self._pg_last_fetch_row = None
         self._pg_last_select_row_number = None
         self._pg_stop_check = stop_check
@@ -3189,7 +3198,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         try:
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
                                              arguments=arguments, async_count=async_count,
-                                             stop_check=stop_check)
+                                             stop_check=stop_check, limit=limit)
         except:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 try:

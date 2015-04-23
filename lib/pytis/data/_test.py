@@ -1221,6 +1221,10 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(self.data.fetchone(), 'too many lines')
         self.assertIsNone(self.data.fetchone(), 'data reincarnation')
         self.data.close()
+        self.data.select(arguments=arguments, limit=1)
+        self.assertIsNotNone(self.data.fetchone())
+        self.assertIsNone(self.data.fetchone())
+        self.data.close()
     def test_limited_select(self):
         self.data.select(columns=('castka', 'stat-nazev',))
         for r in (self.ROW1, self.ROW2):

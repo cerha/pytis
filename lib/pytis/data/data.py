@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -358,7 +358,7 @@ class Data(object_2_5):
         return None
     
     def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None,
-               arguments={}, async_count=False, timeout_callback=None):
+               arguments={}, async_count=False, timeout_callback=None, limit=None):
         """Initialize selection of records from the data source.
         
         The method itself does not necessarily load any data, the selection is only initialized if
@@ -385,6 +385,7 @@ class Data(object_2_5):
             operation environment or 'None' (meaning default environment)
           async_count -- if true, try to count result lines asynchronously
           timeout_callback -- ignored
+          limit -- limit maximum number of selected rows, integer or 'None' (no limit)
           
         Je-li 'condition' různé od 'None', specifikuje podmínku pro výběr
         řádků.  Podtřídy nejsou povinny podmínky implementovat (mohou je
@@ -1030,7 +1031,7 @@ class MemData(Data):
                 raise self.UnsupportedOperation(op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None, limit=None):
         """Inicializace vytahování záznamů.
 
         Bližší popis viz nadtřída.  Argumenty 'condition', 'sort',
@@ -1045,8 +1046,15 @@ class MemData(Data):
                 condition = self._condition
         cond = self._condition2pyfunc(condition)
         self._mem_cursor = -1
-        self._mem_select = [self._restrict_row_columns(row, columns)
-                            for row in self._mem_data if cond(row)]
+        result = []
+        for row in self._mem_data:
+            if cond(row):
+                if limit is not None:
+                    if limit <= 0:
+                        break
+                    limit -= 1
+                result.append(self._restrict_row_columns(row, columns))
+        self._mem_select = result
         return len(self._mem_select)
 
     def close(self):

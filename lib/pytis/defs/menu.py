@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -577,13 +577,13 @@ class ColnameData(pytis.data.RestrictedMemData):
         return super(ColnameData, self).row(key, columns=columns)
         
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None, limit=None):
         self._update_data(arguments)
         return super(ColnameData, self).select(condition=condition, reuse=reuse, sort=sort,
                                                columns=columns, transaction=transaction,
                                                arguments=arguments, async_count=async_count,
                                                stop_check=stop_check,
-                                               timeout_callback=timeout_callback)
+                                               timeout_callback=timeout_callback, limit=limit)
     
     def search(self, condition, direction=pytis.data.FORWARD, transaction=None, arguments={}):
         self._update_data(arguments)
