@@ -343,7 +343,7 @@ class MenuChecker(object):
             if not success:
                 return errors + ["Nepodařilo se vytvořit datový objekt."]
             try:
-                data.select()
+                data.select(limit=1)
                 try:
                     row = data.fetchone()
                 except AssertionError as e:
