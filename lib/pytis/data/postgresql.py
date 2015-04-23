@@ -1596,33 +1596,37 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_operations:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                    (('declare %s scroll cursor for select *, '
-                      'row_number() over () as _number '
+                    (('declare %s scroll cursor for '
+                      'select __pytis_select.*, row_number() over () as _number from '
+                      '(select * '
                       'from (select%s %%(columns)s from %s '
                       'where (%s)%s %s order by %s%%(ordering)s %s) as %s '
-                      '%%(fulltext_queries)s where %%(condition)s %%(limit)s') %
+                      '%%(fulltext_queries)s where %%(condition)s %%(limit)s) __pytis_select') %
                      (cursor_name, distinct_on, table_list, relation, filter_condition,
                       groupby, distinct_on_ordering, ordering, table_names[0],)),
                     {'columns': column_list})
         elif distinct_on:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                    (("declare %s scroll cursor for select %%(columns)s, "
-                      "row_number() over (order by %%(ordering)s %s) as _number "
+                    (('declare %s scroll cursor for '
+                      'select __pytis_select.*, row_number() over () as _number from '
+                      '(select %%(columns)s '
                       "from (select%s * from %s%%(fulltext_queries)s "
                       "where %%(condition)s and (%s)%s) "
-                      "as %s %s order by %%(ordering)s %s %%(limit)s") %
-                     (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
+                      "as %s %s order by %%(ordering)s %s %%(limit)s) __pytis_select") %
+                     (cursor_name, distinct_on, table_list, relation, filter_condition,
                       table_names[0], groupby, ordering,)),
                     {'columns': column_list})
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                    (("declare %s scroll cursor for select %%(columns)s, "
-                      "row_number() over (order by %s%%(ordering)s %s) as _number "
+                    (('declare %s scroll cursor for '
+                      'select __pytis_select.*, row_number() over () as _number from '
+                      '(select %%(columns)s '
                       "from %s%%(fulltext_queries)s "
-                      "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s %%(limit)s") %
-                     (cursor_name, distinct_on_ordering, ordering, table_list, relation,
+                      "where %%(condition)s and (%s)%s %s "
+                      "order by %s%%(ordering)s %s %%(limit)s) __pytis_select") %
+                     (cursor_name, table_list, relation,
                       filter_condition, groupby, distinct_on_ordering, ordering,)),
                     {'columns': column_list})
         self._pdbb_command_dummy_select = \
