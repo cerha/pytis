@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2009, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2009, 2010, 2011, 2013, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -342,18 +342,24 @@ class MenuChecker(object):
                                                     dbconnection_spec=self._dbconn)
             if not success:
                 return errors + ["Nepodařilo se vytvořit datový objekt."]
-            data.select()
             try:
-                row = data.fetchone()
-            except AssertionError as e:
-                # Hack to avoid printing errors on non-existent image files
-                # referred from the database.
-                if ((len(e.args) == 3 and
-                     isinstance(e.args[2], pytis.data.ValidationError) and
-                     e.args[2][0] == u'Neplatný grafický formát')):
-                    row = None
-                else:
-                    raise
+                data.select()
+                try:
+                    row = data.fetchone()
+                except AssertionError as e:
+                    # Hack to avoid printing errors on non-existent image files
+                    # referred from the database.
+                    if ((len(e.args) == 3 and
+                         isinstance(e.args[2], pytis.data.ValidationError) and
+                         e.args[2][0] == u'Neplatný grafický formát')):
+                        row = None
+                    else:
+                        raise
+            finally:
+                try:
+                    data.close()
+                except:
+                    pass
             if row:
                 pytis.presentation.PresentedRow(fields, data, row)
         except Exception as e:
