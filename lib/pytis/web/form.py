@@ -295,18 +295,20 @@ class FieldForm(Form):
         return result
 
     def _interpolate(self, context, template, row):
+        g = context.generator()
         def export_field(fid):
             if row.visible(fid):
                 return self._export_field(context, self._fields[fid])
             else:
-                return ''
+                return g.escape('')
         if isinstance(template, collections.Callable):
             template = template(row)
         # Translation is called immediately to force immediate interpolation
         # (with the current row data).  Delayed translation (which invokes the
         # interpolation) would use invalid row data (the 'PresentedRow'
         # instance is reused and filled with table data row by row).
-        return context.localize(template.interpolate(export_field))
+        interpolated = context.localize(template.interpolate(export_field))
+        return lcg.HtmlEscapedUnicode(interpolated, escape=True)
     
 
 class LayoutForm(FieldForm):
@@ -722,6 +724,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
     def _export_error(self, context, form_id, fid, message):
         g = context.generator()
+        message = g.escape(message)
         if fid:
             field = self._fields.get(fid)
             if field:
@@ -2266,10 +2269,11 @@ class ListView(BrowseForm):
         layout = self._list_layout
         g = context.generator()
         parser = lcg.Parser()
-        if isinstance(layout.title(), lcg.TranslatableText):
-            title = self._interpolate(context, layout.title(), row)
+        layout_title = layout.title()
+        if isinstance(layout_title, lcg.TranslatableText):
+            title = self._interpolate(context, layout_title, row)
         else:
-            title = row[layout.title()].export()
+            title = row[layout_title].export()
         anchor = self._anchor
         if anchor:
             anchor = anchor % self._Interpolator(lambda key: row[key].export())

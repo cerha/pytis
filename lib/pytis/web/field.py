@@ -589,7 +589,8 @@ class HtmlField(MultilineField):
             return '!' + self.attribute
 
     def _format(self, context):
-        return context.localize(self._value().export())
+        exported = self._value().export()
+        return context.localize(lcg.HtmlEscapedUnicode(exported, escape=True))
     
     def _editor(self, context, **kwargs):
         content = super(HtmlField, self)._editor(context, **kwargs)
@@ -894,7 +895,10 @@ class EnumerationField(Field):
         if isinstance(type, pd.Array):
             type = type.inner_type()
         return [(val, type.export(val),
-                 g.escape(display).replace(' ', '&nbsp;').replace("\n", "<br/>"))
+                 lcg.HtmlEscapedUnicode(g.escape(display)
+                                        .replace(' ', '&nbsp;')
+                                        .replace("\n", "<br/>"),
+                                        escape=False))
                 for val, display in self._row.enumerate(self.id)]
 
 
@@ -968,7 +972,8 @@ class ChecklistField(EnumerationField):
             else:
                 onchange = None
             result = (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
-                                 disabled=disabled, onchange=onchange) + '&nbsp;' +
+                                 disabled=disabled, onchange=onchange) +
+                      lcg.HtmlEscapedUnicode('&nbsp;', escape=False) +
                       g.label(display, checkbox_id))
             if uri_provider:
                 uri = uri_provider(value)
@@ -977,7 +982,9 @@ class ChecklistField(EnumerationField):
                         link = g.a(strval, href=uri)
                     else:
                         link = g.a(strval, href=uri.uri(), title=uri.title(), target=uri.target())
-                    result += '&nbsp;[' + link + ']'
+                    result += (lcg.HtmlEscapedUnicode('&nbsp;[', escape=False) +
+                               link +
+                               lcg.HtmlEscapedUnicode(']', escape=False))
             return result
         checkboxes = [g.div(checkbox(i, val, strval, display))
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]
@@ -990,6 +997,7 @@ class ChecklistField(EnumerationField):
 class ArrayField(EnumerationField):
 
     def _format(self, context):
+        g = context.generator()
         return ', '.join([g.span(display)
                           for val, strval, display in self._enumeration(context)])
 
