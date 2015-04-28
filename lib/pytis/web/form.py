@@ -885,7 +885,11 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         # Compute field state after all fields are validated.
         for fid in order:
             if fid != changed_field:
-                field = self._fields[fid]
+                try:
+                    field = self._fields[fid]
+                except KeyError:
+                    # May happen e.g. in automated attack attempts
+                    return dict(request_number=request_number, fields={})
                 fdata = fields[fid]
                 fdata['editable'] = row.editable(fid)
                 if ((field.spec.computer() and row.invalid_string(fid) is None
