@@ -590,7 +590,8 @@ class HtmlField(MultilineField):
 
     def _format(self, context):
         exported = self._value().export()
-        return context.localize(lcg.HtmlEscapedUnicode(exported, escape=True))
+        escape = not isinstance(exported, (lcg.HtmlEscapedUnicode, lcg.Concatenation,))
+        return lcg.HtmlEscapedUnicode(context.localize(exported), escape=escape)
     
     def _editor(self, context, **kwargs):
         content = super(HtmlField, self)._editor(context, **kwargs)
@@ -894,12 +895,16 @@ class EnumerationField(Field):
         type = self.type
         if isinstance(type, pd.Array):
             type = type.inner_type()
-        return [(val, type.export(val),
-                 lcg.HtmlEscapedUnicode(g.escape(display)
-                                        .replace(' ', '&nbsp;')
-                                        .replace("\n", "<br/>"),
-                                        escape=False))
-                for val, display in self._row.enumerate(self.id)]
+        result = []
+        for val, display in self._row.enumerate(self.id):
+            if isinstance(display, lcg.Localizable):
+                display = context.localize(display)
+            escaped_display = lcg.HtmlEscapedUnicode(g.escape(display)
+                                                     .replace(' ', '&nbsp;')
+                                                     .replace("\n", "<br/>"),
+                                                     escape=False)
+            result.append((val, type.export(val), escaped_display,))
+        return result
 
 
 class RadioField(EnumerationField):
