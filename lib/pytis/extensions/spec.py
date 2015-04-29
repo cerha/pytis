@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005-2014 Brailcom, o.p.s.
+# Copyright (C) 2005-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -255,7 +255,7 @@ def run_any_form():
                       default='BrowseForm'),
                 Field('name_substr', _("Search string"), width=40,),
                 Field('name', _("Specification name"), width=40, height=10,
-                      enumerator=pytis.data.FixedEnumerator(all_defs),
+                      enumerator=pytis.data.FixedEnumerator(all_defs), not_null=True,
                       selection_type=SelectionType.LIST_BOX,
                       runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
                       ),

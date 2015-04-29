@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2009-2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -32,8 +32,9 @@ class FormProfiles(Specification):
     fields = (
         Field('id', _("Identifier"), width=25, editable=Editable.NEVER),
         Field('title', _("Title"), width=25, editable=Editable.NEVER),
-        Field('username', _("User"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
-        Field('fullname', _("Fullname"), codebook='menu.ApplicationMenuM',
+        Field('username', _("User"), not_null=True, codebook='statistics.FormUserList',
+              value_column='login', editable=Editable.NEVER),
+        Field('fullname', _("Fullname"), not_null=True, codebook='menu.ApplicationMenuM',
               width=80, column_width=30, editable=Editable.NEVER),
         Field('spec_name', _("Specification Name"),
               width=50, column_width=30, editable=Editable.NEVER),
@@ -65,7 +66,8 @@ class FormSettings(Specification):
     title = _(u"Nastavení formulářů")
     fields = (
         Field('id', _("Identifier"), width=20, editable=Editable.NEVER),
-        Field('username', _("User"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
+        Field('username', _("User"), not_null=True, codebook='statistics.FormUserList',
+              value_column='login', editable=Editable.NEVER),
         Field('spec_name', _("Specification Name"), width=50, editable=Editable.NEVER),
         Field('form_name', _(u"Typ formuláře"), width=50, editable=Editable.NEVER),
         Field('pickle', editable=Editable.NEVER),

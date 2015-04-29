@@ -2568,7 +2568,7 @@ class StructuredTextField(TextField):
                           "or insert a new file from your computer.")),
             Field('size', _("Display in page as"), enumerator=self.ImageSizes,
                   selection_type=pytis.presentation.SelectionType.RADIO,
-                  editable=pytis.presentation.Editable.ALWAYS,
+                  editable=pytis.presentation.Editable.ALWAYS, not_null=True,
                   computer=computer(self._size_computer),
                   descr=_("Choose the size and behavior of the image within the page.")),
             Field('orig_size', _("Original size"),

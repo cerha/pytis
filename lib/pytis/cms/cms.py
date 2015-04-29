@@ -262,7 +262,7 @@ class Menu(Specification):
                           "identifikátor může obsahovat pouze písmena bez diakritiky, číslice, "
                           "pomlčky a podtržítka a musí začínat písmenem.")),
             Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
-                  value_column='lang', selection_type=pp.SelectionType.CHOICE),
+                  value_column='lang', not_null=True, selection_type=pp.SelectionType.CHOICE),
             Field('title_or_identifier', _("Title"), width=30, type=_TreeOrder()),
             Field('title', _("Title"), width=20, type=pd.String(maxlen=32, not_null=True),
                   descr=_("Název položky menu - krátký a výstižný.")),
@@ -450,9 +450,10 @@ class UserRoles(Specification):
     def fields(self):
         return (
             Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
-            Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
+            Field('role_id', _("Role"), not_null=True, codebook=self._spec_name('Roles', False)),
             Field('system_role'),
-            Field('uid', _('UID'), codebook=self._spec_name('Users', False), width=5),
+            Field('uid', _('UID'), not_null=True, codebook=self._spec_name('Users', False),
+                  width=5),
             Field('login', _("Přihlašovací jméno"), width=16),
             Field('fullname', _("Celé jméno"), width=50),
             Field('name', _("Název role"), width=16),
@@ -477,7 +478,7 @@ class Actions(Specification):
     def fields(self):
         return (
             Field('action_id', default=nextval('cms_actions_action_id_seq')),
-            Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
+            Field('mod_id', _("Modul"), not_null=True, codebook=self._spec_name('Modules', False)),
             Field('name', _("Title"), width=16),
             Field('description', _("Description"), width=64)
         )
@@ -504,12 +505,12 @@ class Rights(Specification):
             Field('rights_assignment_id',
                   default=nextval('cms_rights_assignment_rights_assignment_id_seq')),
             Field('menu_item_id'),
-            Field('role_id', _("Role"), codebook=self._spec_name('AllRoles', False)),
+            Field('role_id', _("Role"), not_null=True, codebook=self._spec_name('AllRoles', False)),
             Field('role_name', _("Role")),
             Field('system_role'),
             Field('mod_id'),
             Field('action_id', _("Action"), codebook=self._spec_name('Actions', False),
-                  runtime_filter=computer(self._action_filter)),
+                  not_null=True, runtime_filter=computer(self._action_filter)),
             Field('action_name', _("Action Name")),
             Field('action_description', _("Description"), width=30, editable=NEVER),
         )
@@ -553,7 +554,7 @@ class SessionLog(_Log):
         return (
             Field('log_id'),
             Field('session_id'),
-            Field('uid', codebook=self._spec_name('Users')),
+            Field('uid', not_null=True, codebook=self._spec_name('Users')),
             Field('login', _("Login"), width=8),
             Field('fullname', _("Jméno"), width=15),
             Field('success', _("Úspěch"), width=3),
@@ -591,7 +592,7 @@ class AccessLog(_Log):
             Field('log_id'),
             Field('timestamp', _("Datum a čas"), width=17),
             Field('uri', _("Cesta"), width=17),
-            Field('uid', _("User"), codebook=self._spec_name('Users')),
+            Field('uid', _("User"), not_null=True, codebook=self._spec_name('Users')),
             Field('modname', _("Modul"), width=17),
             Field('action', _("Action"), width=17),
         ) + super(AccessLog, self).fields()

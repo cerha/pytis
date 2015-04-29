@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -40,7 +40,7 @@ class FormActionLog(Specification):
     fields = (
         Field('id', editable=Editable.NEVER),
         Field('timestamp', _("Time"), width=25, editable=Editable.NEVER),
-        Field('username', _("User"), codebook='statistics.FormUserList',
+        Field('username', _("User"), not_null=True, codebook='statistics.FormUserList',
               value_column='login', editable=Editable.NEVER),
         Field('spec_name', _("Specification Name"),
               width=50, column_width=30, editable=Editable.NEVER),

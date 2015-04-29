@@ -151,7 +151,7 @@ class ItemsHelp(Specification):
         return (
             Field('item_id'),
             Field('kind'),
-            Field('spec_name', codebook='help.Help', value_column='spec_name'),
+            Field('spec_name', not_null=True, codebook='help.Help', value_column='spec_name'),
             Field('identifier', _("Identifier"), width=30, editable=Editable.NEVER),
             Field('content', _("Description"), width=80, height=15, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
