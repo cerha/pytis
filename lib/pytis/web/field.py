@@ -936,7 +936,8 @@ class ChoiceField(EnumerationField):
     
     def _editor(self, context, **kwargs):
         enumeration = self._enumeration(context)
-        options = [(self.spec.null_display() or "&nbsp;", "")] + \
+        nbsp = lcg.HtmlEscapedUnicode("&nbsp;", escape=False)
+        options = [(self.spec.null_display() or nbsp, "")] + \
                   [(display, strval) for val, strval, display in enumeration]
         value = self._value().value()
         if value in [val for val, strval, display in enumeration]:
