@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Brailcom, o.p.s.
+# Copyright (C) 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -31,13 +31,13 @@ class NewAdminPasswd(Specification):
     public = True
 
     data_cls = pytis.data.RestrictedMemData
-    title = _("Změna administrátorského hesla")
+    title = _(u"Změna administrátorského hesla")
 
     def fields(self):
         return (
-            Field('old_password', _('Stávající heslo'), width=20,
+            Field('old_password', _(u'Stávající heslo'), width=20,
                   type=pytis.data.Password, md5=False, verify=False),
-            Field('new_password', _('Nové heslo'), width=20,
+            Field('new_password', _(u'Nové heslo'), width=20,
                   type=pytis.data.Password, maxlen=32, minlen=8, md5=False,
                   strength=self._check_strength),
         )
@@ -77,14 +77,14 @@ class CryptoAreas(Specification):
         key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
         if not key_id or not key:
             pytis.form.run_dialog(pytis.form.Error,
-                                  _("Nebyl nalezen klíč administrátora pro tuto oblast"))
+                                  _(u"Nebyl nalezen klíč administrátora pro tuto oblast"))
             return
         row = pytis.form.new_record("crypto.NewAdminPasswd", multi_insert=False)
         if not row:
             return
         old_password = row["old_password"].value()
         if not pytis.extensions.check_crypto_password(key, old_password, connection_data):
-            pytis.form.run_dialog(pytis.form.Error, _("Chybné heslo"))
+            pytis.form.run_dialog(pytis.form.Error, _(u"Chybné heslo"))
         encrypted_old_password = rsa_encrypt(db_key, old_password)
         new_password = row["new_password"].value()
         encrypted_new_password = rsa_encrypt(db_key, new_password)
@@ -93,9 +93,9 @@ class CryptoAreas(Specification):
                               ('old_psw', pytis.data.sval(encrypted_old_password),),
                               ('new_psw', pytis.data.sval(encrypted_new_password),),))
         if not function.call(row)[0][0].value():
-            pytis.form.run_dialog(pytis.form.Error, _("Heslo se změnit nepodařilo"))
+            pytis.form.run_dialog(pytis.form.Error, _(u"Heslo se změnit nepodařilo"))
             return
-        pytis.form.run_dialog(pytis.form.Message, _("Heslo bylo změněno"))
+        pytis.form.run_dialog(pytis.form.Message, _(u"Heslo bylo změněno"))
 
     def on_new_record(self, *args, **kwargs):
         return None
