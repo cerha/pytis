@@ -269,7 +269,7 @@ class Type(object):
         name, module = self.__class__.__name__, self.__class__.__module__
         if module != 'pytis.data.types_':
             name = module + '.' + name
-        args = [' %s=%s' % x for x in self._constructor_kwargs.items()]
+        args = [' %s=%s' % x for x in sorted(self._constructor_kwargs.items())]
         return "<%s%s>" % (name, ','.join(args))
 
     def __hash__(self):
@@ -2637,6 +2637,10 @@ class Enumerator(object):
         """
         return value in self.values(**kwargs)
 
+    def __str__(self):
+        return '<%s.%s>' % (self.__class__.__module__, self.__class__.__name__)
+        
+ 
     def values(self, **kwargs):
         """Return a sequence of all valid enumeration values."""
         raise ProgramError('Not implemented', 'Enumerator.values()')
@@ -2670,6 +2674,9 @@ class FixedEnumerator(Enumerator):
         """
         super(FixedEnumerator, self).__init__()
         self._enumeration = tuple(enumeration)
+
+    def __str__(self):
+        return '<%s %r>' % (self.__class__.__name__, self._enumeration)
 
     def values(self):
         return self._enumeration
@@ -2807,7 +2814,12 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         return with_lock(self._data_lock, lfunction)
 
     def __str__(self):
-        return '<%s %s %s>' % (self.__class__, self._data_factory, self._value_column,)
+        factory = self._data_factory
+        if ((isinstance(factory, pytis.data.DataFactory) and
+             isinstance(factory._args[0], (tuple, list)) and
+             isinstance(factory._args[0][0], pytis.data.DBColumnBinding))):
+            factory = factory._args[0][0].table()
+        return '<%s %s %s>' % (self.__class__.__name__, factory, self._value_column,)
 
     # Enumerator interface
     
