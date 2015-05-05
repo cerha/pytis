@@ -33,6 +33,7 @@ import time
 
 import psycopg2 as dbapi
 import psycopg2.extensions
+import psycopg2.extras
 
 from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, RestrictedData
@@ -239,18 +240,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 row = cursor.fetchone()
                 row_data = []
                 for col in row:
-                    if col is None or isinstance(col, buffer):
-                        coldata = col
-                    elif col is True:
-                        coldata = 'T'
-                    elif col is False:
-                        coldata = 'F'
-                    elif hasattr(col, 'lower_inf'):
-                        # Make it compatible with older psycopg2 versions
-                        coldata = '[%s,%s)' % (col.lower, col.upper,)
-                    else:
-                        coldata = str(col)
-                    row_data.append(coldata)
+                    if isinstance(col, psycopg2.extras.Range):
+                        col = (col.lower, col.upper,)
+                    row_data.append(col)
                 data.append(row_data)
         else:
             data.append([cursor.rowcount])

@@ -1150,7 +1150,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             # TODO: This is a quick hack to ignore multicolumn unique constraints. (TC)
             row = lookup_column(table_data.unique())
-            unique = (not not row) and row[0].find(',') == -1
+            unique = row and len(row[0]) == 1
         except:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
@@ -2333,20 +2333,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 t = F
             else:
                 t = self.find_column(cid).type()
-            if isinstance(t, String):
-                if dbvalue is None:
-                    v = None
-                else:
-                    v = unicode(dbvalue, 'utf-8')
-                value = Value(t, v)
-            else:
-                if isinstance(t, DateTime):
-                    kwargs = dict(format=t.SQL_FORMAT, local=not t.is_utc())
-                else:
-                    kwargs = dict()
-                value, error = t.validate(dbvalue, strict=False, **kwargs)
-                assert error is None, (error, t, dbvalue)
-            return value
+            return Value(t, dbvalue)
         result = [make_value(cid, data[0][i]) for i, cid in enumerate(colids)]
         return result
 
@@ -2979,34 +2966,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         for id, typid, type_ in template:
             dbvalue = data_0[i]
             i += 1
-            if isinstance(type_, (Range, Array,)):
-                if not dbvalue or dbvalue == '[]':
-                    dbvalue = ('', '',) if isinstance(type_, Range) else ()
-                else:
-                    dbvalue = tuple(dbvalue[1:-1].split(','))
-                    if isinstance(type_, Array) and isinstance(type_.inner_type(), String):
-                        dbvalue = tuple([v.strip()[1:-1] for v in dbvalue])
-            if typid == 0:              # string
+            if isinstance(type_, Array):
                 if dbvalue is None:
-                    v = None
+                    dbvalue = ()
                 else:
-                    # TODO: This belongs elsewhere (if moving, move also from _pg_select_aggregate)
-                    v = unicode(dbvalue, 'utf-8')
-                value = Value(type_, v)
-            elif typid == 2:            # time
-                local = not type_.utc()
-                format_ = type_.SQL_FORMAT
-                if format_ == '%Y-%m-%d %H:%M:%S':
-                    format_ = True
-                value, err = type_.validate(dbvalue, strict=False, format=format_, local=local)
-                assert err is None, (dbvalue, type_, err)
-            elif typid == 3:            # time interval
-                value, err = type_.validate(dbvalue, strict=False, format=type_.SQL_FORMAT)
-                assert err is None, (dbvalue, type_, err)
+                    inner_type = type_.inner_type()
+                    dbvalue = tuple([Value(inner_type, v) for v in dbvalue])
+            elif isinstance(type_, Binary):
+                dbvalue = type_.Buffer(dbvalue)
             else:
-                value, err = type_.validate(dbvalue, strict=False)
-                assert err is None, (dbvalue, type_, err)
-            row_data.append((id, value))
+                dbvalue = type_.adjust_value(dbvalue)
+            row_data.append((id, Value(type_, dbvalue)))
         return Row(row_data)
 
     def _pg_already_present(self, row, transaction=None):

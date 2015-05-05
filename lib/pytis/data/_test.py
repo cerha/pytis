@@ -264,7 +264,7 @@ class Password(_TypeCheck):
         t7 = pytis.data.Password(strength=strength)
         self._test_validity(t7, 'abc', None)
         self._test_validity(t7, 'Xabc', 'Xabc')
-        
+
 tests.add(Password)
 
 class Color(_TypeCheck):
@@ -535,7 +535,7 @@ class DataEnumerator(unittest.TestCase):
         r = e.row('2')
         self.assertEqual(r['y'].value(), 'b', ('Unexpected value', r['y'].value()))
 tests.add(DataEnumerator)
-        
+
 class FixedEnumerator(unittest.TestCase):
     _values = (1, 3, 5, 7, 9,)
     _enumerator = pytis.data.FixedEnumerator(_values)
@@ -550,7 +550,7 @@ class FixedEnumerator(unittest.TestCase):
     def test_values(self):
         self.assertEqual(self._enumerator.values(), self._values)
 tests.add(FixedEnumerator)
-        
+
 
 ###########
 # data.py #
@@ -852,7 +852,7 @@ class DBData(unittest.TestCase):
         self.assertEqual(len(d.key()), 1, ('invalid number of keys', d.key()))
         self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
 tests.add(DBData)
-    
+
 
 class _DBBaseTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
