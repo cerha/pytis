@@ -147,7 +147,8 @@ class FieldLocator(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Assign(self, node):
-        if len(node.targets) == 1 and hasattr(node.targets[0], 'id') and node.targets[0].id == 'override':
+        if ((len(node.targets) == 1 and hasattr(node.targets[0], 'id')
+             and node.targets[0].id in ('override', 'overriden'))):
             self._inside_override = True
             try:
                 self.generic_visit(node)
@@ -244,9 +245,10 @@ def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
         del lines[ln - i]
 
 def cmd_check_codebooks_not_null(filename, lines):
-    for node, arguments in FieldLocator(True, False, False).search_fields(lines, filename):
+    for node, arguments in FieldLocator(True, False).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
-        if (args.get('codebook') or args.get('enumerator')) and not args.get('not_null'):
+        if (((args.get('codebook') or args.get('enumerator'))
+             and not args.get('not_null') and not args.get('inherit'))):
             warn(filename, node)
 
 def cmd_type_kwargs(filename, lines):
