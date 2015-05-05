@@ -1356,6 +1356,9 @@ class _LocalTimezone(datetime.tzinfo):
         self._offset_diff = self._dst_offset - self._offset
         self._zero_diff = datetime.timedelta(0)
 
+    def __repr__(self):
+        return '%s.%s()' % (self.__class__.__module__, self.__class__.__name__)
+
     def utcoffset(self, dt):
         if self._dst(dt):
             return self._dst_offset
@@ -1386,6 +1389,9 @@ class _UTCTimezone(datetime.tzinfo):
 
     def __init__(self):
         self._zero_diff = datetime.timedelta(0)
+
+    def __repr__(self):
+        return '%s.%s()' % (self.__class__.__module__, self.__class__.__name__)
 
     def utcoffset(self, dt):
         return self._zero_diff
