@@ -683,7 +683,7 @@ class Range(Type):
     corresponding base class values.  NULL values are represented by single
     'None' values in export and by a pair of empty strings on validation.
 
-    The first value is a the first value of the range.  the second value is the
+    The first value is the first value of the range.  The second value is the
     first value *after* the range.
 
     """
@@ -713,9 +713,12 @@ class Range(Type):
         return super(Range, self)._export(v1, **kwargs), super(Range, self)._export(v2, **kwargs)
     
     def adjust_value(self, value):
-        if value is not None and not isinstance(value, (tuple, list,)):
+        if value is None:
+            return None
+        if not isinstance(value, (tuple, list,)):
             raise TypeError("Value not a sequence", value)
-        return value
+        adjust = self.base_type().adjust_value
+        return tuple([adjust(v) for v in value])
 
     def base_type(self):
         """Return instance of the underlying types of the range type.
