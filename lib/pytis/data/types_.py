@@ -766,7 +766,13 @@ class Integer(Number):
         return result
 
     def adjust_value(self, value):
-        if value is not None and not isinstance(value, (int, long,)):
+        if value is None:
+            return None
+        if isinstance(value, decimal.Decimal):
+            if value % 1 != 0:
+                raise TypeError("Value not an integer", value)
+            value = int(value)
+        elif not isinstance(value, (int, long,)):
             raise TypeError("Value not an integer", value)
         return value
 
