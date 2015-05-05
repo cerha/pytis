@@ -1766,6 +1766,14 @@ class DateTime(_CommonDateTime):
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.datetime):
             raise TypeError("Value not a datetime", value)
+        timezone = self.timezone()
+        if value is not None:
+            if value.tzinfo is None:
+                value = datetime.datetime(value.year, value.month, value.day,
+                                          value.hour, value.minute, value.second, value.microsecond,
+                                          timezone)
+            else:
+                value = value.astimezone(timezone)
         return value
     
     def sqlalchemy_type(self):
