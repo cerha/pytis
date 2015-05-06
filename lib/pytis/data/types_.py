@@ -272,6 +272,9 @@ class Type(object):
         args = [' %s=%s' % x for x in sorted(self._constructor_kwargs.items())]
         return "<%s%s>" % (name, ','.join(args))
 
+    def __repr__(self):
+        return str(self)
+
     def __hash__(self):
         return hash(self.__class__.__name__)
 
@@ -2646,6 +2649,8 @@ class Enumerator(object):
     def __str__(self):
         return '<%s.%s>' % (self.__class__.__module__, self.__class__.__name__)
         
+    def __repr__(self):
+        return str(self)
  
     def values(self, **kwargs):
         """Return a sequence of all valid enumeration values."""
