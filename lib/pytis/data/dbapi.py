@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if query_args:
                     def escape(arg):
                         if isinstance(arg, basestring):
-                            result = "'%s'" % (arg.replace("'", "''"),)
+                            result = "'%s'" % (arg.replace('\x00', '\\0').replace("'", "''"),)
                             if not standard_strings:
                                 result = result.replace('\\', '\\\\')
                         else:
