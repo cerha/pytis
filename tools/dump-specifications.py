@@ -46,10 +46,16 @@ def run():
                 "such as --dbhost or --dbname to override certain configuration file "
                 "options."),
     )
-    parser.add_argument('--wiking', action='store_true',
+    parser.add_argument('-w', '--wiking', action='store_true',
                         help="Dump a wiking application (Pytis wx application is the default)")
-    parser.add_argument('--exclude', nargs='+', metavar='NAME', default=(),
+    parser.add_argument('-e', '--exit-on-error', action='store_true',
+                        help=("Print traceback and exit when exception occurs. "
+                              "By default, the error message is printed to the "
+                              "dump output and the program continues."))
+    parser.add_argument('-x', '--exclude', nargs='+', metavar='NAME', default=(),
                         help="Name(s) of specification(s) to skip")
+    parser.add_argument('-i', '--include', nargs='+', metavar='NAME', default=(),
+                        help="Dump only given specification name(s)")
     parser.add_argument('--config', required=True, metavar='PATH',
                         help="Configuration file path")
 
@@ -67,24 +73,32 @@ def run():
         config.resolver = wiking.cfg.resolver = wiking.WikingResolver(wiking.cfg.modules)
         config.dbconnections = wiking.cfg.connections
         config.dbconnection = config.option('dbconnection').default()
-        base_class = wiking.Module
+    resolver = config.resolver
+    processed, errors = 0, 0
+    if args.include:
+        names = args.include
     else:
-        base_class = pytis.presentation.Specification
-    for name, cls in sorted(config.resolver.walk(cls=base_class)):
+        if args.wiking:
+            base_class = wiking.Module
+        else:
+            base_class = pytis.presentation.Specification
+        names = sorted(name for name, cls in resolver.walk(cls=base_class))
+    for name in names:
         if name not in args.exclude:
             try:
-                if not args.wiking:
-                    spec = cls()
+                if args.wiking:
+                    cls = resolver.wiking_module_cls(name)
+                    if not hasattr(cls, 'Spec'):
+                        continue
+                    module = resolver.wiking_module(name)
+                    spec = module.Spec(cls)
+                    data = module._data
+                else:
+                    spec = resolver.specification(name)
                     if not spec.public:
                         continue
                     data_spec = spec.data_spec()
                     data = data_spec.create(dbconnection_spec=config.dbconnection)            
-                elif hasattr(cls, 'Spec'):
-                    spec = cls.Spec(cls)
-                    module = cls(name)
-                    data = module._data
-                else:
-                    continue
                 #print ' ', spec.table
                 view_spec = spec.view_spec()
                 record = pytis.presentation.PresentedRow(view_spec.fields(), data, None)
@@ -100,7 +114,18 @@ def run():
                     print OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes))
                 print
             except Exception as e:
-                print 'ERROR: %s: %s' % (name, e)
+                if args.exit_on_error:
+                    import cgitb
+                    sys.stderr.write("%s:\n" % name)
+                    sys.stderr.write(cgitb.text(sys.exc_info()))
+                    sys.exit(1)
+                else:
+                    print 'ERROR: %s: %s' % (name, e)
+                    errors += 1
+            processed += 1
+    sys.stderr.write("Processed %d specifications with %d errors%s.\n" %
+                     (processed, errors,
+                      " (grep output for '^ERROR:' or use --exit-on-error)" if errors else ''))
 
 
 if __name__ == '__main__':
