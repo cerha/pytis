@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -160,9 +160,10 @@ def dbfunction(name, *args, **kwargs):
 
     If the database call fails, return None.
 
-    Argumenty:
+    Arguments:
 
-      name -- název funkce.
+      name -- name of the function (string) or database specification instance
+        corresponding to the function
       args -- argumenty volání funkce; sekvence dvouprvkových tuplů, kde první
         prvek je název argumentu a druhý jeho hodnota jako instance 'Value'.
       proceed_with_empty_values -- pokud je pravdivé, volá databázovou funkci

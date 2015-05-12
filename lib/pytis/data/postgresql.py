@@ -3777,7 +3777,8 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         """
         Arguments:
 
-          name -- jméno funkce jako neprázdný string
+          name -- name of the function (string) or database specification class
+            corresponding to the function
           connection_data -- instance třídy 'DBConnection' definující
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
@@ -3787,20 +3788,39 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
           kwargs -- forwarded to successors
 
         """
-        assert is_anystring(name)
-        self._name = name
-        bindings = ()
+        from pytis.data.gensqlalchemy import SQLFunctional
+        assert isinstance(name, basestring) or issubclass(name, SQLFunctional), name
+        if isinstance(name, basestring):
+            self._name = name
+            db_spec = None
+        else:
+            db_spec = name
+            self._name = db_spec.pytis_name(real=True)
+            if result_columns is None:
+                result_columns = db_spec.result_type
+                if not isinstance(result_columns, (tuple, list)):
+                    if isinstance(result_columns, Type):
+                        result_columns = ColumnSpec('_result', result_columns)
+                    result_columns = [result_columns]
         self._pdbb_result_columns = result_columns
+        bindings = ()
         super(DBPostgreSQLFunction, self).__init__(
-            bindings=bindings, key=bindings, connection_data=connection_data,
+            bindings=bindings, key=bindings, connection_data=connection_data, db_spec=db_spec,
             **kwargs)
-        arg_query = "select proargtypes from pg_proc where proname='%s'" % (name,)
-        data = self._pg_query(arg_query, outside_transaction=True)
-        arg_types = [int(x) for x in string.split(data[0][0])]
-        def arg_spec(arg):
-            return '%%s' if arg == 17 else '%s'
-        arguments = string.join([arg_spec(a) for a in arg_types], ', ')
-        self._pdbb_function_call = 'select * from %s(%s)' % (name, arguments)
+        if self._pdbb_db_spec is None:
+            arg_query = "select proargtypes from pg_proc where proname='%s'" % (name,)
+            data = self._pg_query(arg_query, outside_transaction=True)
+            arg_types = [int(x) for x in string.split(data[0][0])]
+            def arg_spec(arg):
+                return '%%s' if arg == 17 else '%s'
+            arguments = string.join([arg_spec(a) for a in arg_types], ', ')
+        else:
+            def arg_spec(arg):
+                return '%%s' if isinstance(arg, Binary) else '%s'
+            arguments = string.join([arg_spec(c.type())
+                                     for c in self._pdbb_db_spec.arguments],
+                                    ', ')
+        self._pdbb_function_call = 'select * from %s(%s)' % (self._name, arguments)
 
     def _db_bindings_to_column_spec(self, __bindings):
         if self._pdbb_result_columns is not None:
@@ -3816,8 +3836,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             try:
                 data = self._pg_query(type_query)
                 assert data, ('No such function', self._name)
-                assert len(data) == 1, ('Overloaded functions not supported',
-                                        self._name)
+                assert len(data) == 1, ('Overloaded functions not supported', self._name)
                 r_set, r_type, arg_types = data[0]
                 def type_instances(tnum):
                     query = ("select typname, nspname, typlen, typtype "
