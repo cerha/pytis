@@ -1134,6 +1134,10 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         return cls._class_mapping.get(name)
 
     @classmethod
+    def specifications_by_name(cls, name):
+        return _PytisBaseMetaclass._name_mapping.get(name, set())
+
+    @classmethod
     def specifications(cls):
         "Return all registered specifications."
         return set.union(*_PytisBaseMetaclass._name_mapping.values())
@@ -4207,6 +4211,18 @@ def clear():
 def specifications():
     "Return all loaded specification classes."
     return _PytisBaseMetaclass.specifications()
+
+def specifications_by_name(name):
+    """Return all loaded specifications of objects named 'name'.
+
+    Arguments:
+
+      name -- name of the database object; string
+
+    Set of specification classes with given database 'name' is returned.
+
+    """
+    return _PytisBaseMetaclass.specifications_by_name(name)
 
 def specification_instances():
     "Return all instances of loaded specification classes."

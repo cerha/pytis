@@ -3790,11 +3790,15 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         """
         from pytis.data.gensqlalchemy import SQLFunctional
         assert isinstance(name, basestring) or issubclass(name, SQLFunctional), name
+        db_spec = name
         if isinstance(name, basestring):
+            candidates = list(pytis.data.gensqlalchemy.specifications_by_name(name))
+            if len(candidates) == 1 and issubclass(candidates[0], SQLFunctional):
+                db_spec = candidates[0]
+        if isinstance(db_spec, basestring):
             self._name = name
             db_spec = None
         else:
-            db_spec = name
             self._name = db_spec.pytis_name(real=True)
             if result_columns is None:
                 result_columns = db_spec.result_type
