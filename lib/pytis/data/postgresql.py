@@ -3802,7 +3802,9 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             self._name = db_spec.pytis_name(real=True)
             if result_columns is None:
                 result_columns = db_spec.result_type
-                if not isinstance(result_columns, (tuple, list)):
+                if result_columns is None:
+                    result_columns = []
+                elif not isinstance(result_columns, (tuple, list)):
                     if isinstance(result_columns, Type):
                         result_columns = ColumnSpec('_result', result_columns)
                     result_columns = [result_columns]
