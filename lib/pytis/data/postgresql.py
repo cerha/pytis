@@ -3806,8 +3806,15 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                     result_columns = []
                 elif not isinstance(result_columns, (tuple, list)):
                     if isinstance(result_columns, Type):
-                        result_columns = ColumnSpec('_result', result_columns)
-                    result_columns = [result_columns]
+                        result_columns = [ColumnSpec('_result', result_columns)]
+                    elif isinstance(result_columns, ColumnSpec):
+                        result_columns = [result_columns]
+                    elif result_columns == pytis.data.gensqlalchemy.SQLFunctional.RECORD:
+                        result_columns = [c for c in db_spec.arguments if c.out()]
+                    elif type(result_columns) is type:
+                        result_columns = result_columns.fields
+                    else:
+                        raise Exception("Unhandled function result type", result_columns)
         self._pdbb_result_columns = result_columns
         bindings = ()
         super(DBPostgreSQLFunction, self).__init__(
