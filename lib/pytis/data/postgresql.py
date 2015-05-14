@@ -3811,10 +3811,11 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                         result_columns = [result_columns]
                     elif result_columns == pytis.data.gensqlalchemy.SQLFunctional.RECORD:
                         result_columns = [c for c in db_spec.arguments if c.out()]
-                    elif type(result_columns) is type:
+                    elif hasattr(result_columns, 'fields'):
                         result_columns = result_columns.fields
                     else:
                         result_columns = None
+                        db_spec = None
         self._pdbb_result_columns = result_columns
         bindings = ()
         super(DBPostgreSQLFunction, self).__init__(
