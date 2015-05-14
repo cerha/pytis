@@ -3813,6 +3813,8 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                         result_columns = [c for c in db_spec.arguments if c.out()]
                     elif type(result_columns) is type:
                         result_columns = result_columns.fields
+                    else:
+                        result_columns = None
         self._pdbb_result_columns = result_columns
         bindings = ()
         super(DBPostgreSQLFunction, self).__init__(
