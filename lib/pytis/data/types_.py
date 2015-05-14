@@ -3213,7 +3213,7 @@ def fval(value, digits=None, precision=None):
     """
     assert value is None or isinstance(value, (float, decimal.Decimal,)), value
     if isinstance(value, decimal.Decimal) and digits is None and precision is None:
-        precision = min(-value.as_tuple().exponent, 0)
+        precision = max(-value.as_tuple().exponent, 0)
     return Value(Float(digits=digits, precision=precision), value)
 
 def bval(value):
