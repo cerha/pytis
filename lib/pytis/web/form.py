@@ -1836,12 +1836,12 @@ class BrowseForm(LayoutForm):
             result = None
         else:
             if limit is None or count <= self._limits[0]:
-                summary = _("Total records:") + ' ' + g.strong(str(count))
+                summary = _(g.escape("Total records:")) + ' ' + g.strong(str(count))
             else:
                 # Translators: The variables '%(first)s', '%(last)s' and
                 # '%(total)s' are replaced by the numbers corresponding to the
                 # current listing range.
-                summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
+                summary = _(g.escape("Displayed records %(first)s-%(last)s of total %(total)s"),
                             first=g.strong(str(first_record_offset + 1)),
                             last=g.strong(str(first_record_offset + exported_row_number)),
                             total=g.strong(str(count)))
