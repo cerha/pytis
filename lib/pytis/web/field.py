@@ -899,10 +899,9 @@ class EnumerationField(Field):
         for val, display in self._row.enumerate(self.id):
             if isinstance(display, lcg.Localizable):
                 display = context.localize(display)
-            escaped_display = lcg.HtmlEscapedUnicode(g.escape(display)
-                                                     .replace(' ', '&nbsp;')
-                                                     .replace("\n", "<br/>"),
-                                                     escape=False)
+            escaped_display = g.noescape(g.escape(display)
+                                         .replace(' ', '&nbsp;')
+                                         .replace("\n", "<br/>"))
             result.append((val, type.export(val), escaped_display,))
         return result
 
@@ -979,8 +978,7 @@ class ChecklistField(EnumerationField):
                 onchange = None
             result = (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
                                  disabled=disabled, onchange=onchange) +
-                      lcg.HtmlEscapedUnicode('&nbsp;', escape=False) +
-                      g.label(display, checkbox_id))
+                      g.noescape('&nbsp;') + g.label(display, checkbox_id))
             if uri_provider:
                 uri = uri_provider(value)
                 if uri:
@@ -988,9 +986,7 @@ class ChecklistField(EnumerationField):
                         link = g.a(strval, href=uri)
                     else:
                         link = g.a(strval, href=uri.uri(), title=uri.title(), target=uri.target())
-                    result += (lcg.HtmlEscapedUnicode('&nbsp;[', escape=False) +
-                               link +
-                               lcg.HtmlEscapedUnicode(']', escape=False))
+                    result += (g.noescape('&nbsp;[') + link + g.noescape(']'))
             return result
         checkboxes = [g.div(checkbox(i, val, strval, display))
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]

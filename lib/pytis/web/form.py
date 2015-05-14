@@ -308,7 +308,7 @@ class FieldForm(Form):
         # interpolation) would use invalid row data (the 'PresentedRow'
         # instance is reused and filled with table data row by row).
         interpolated = context.localize(template.interpolate(export_field))
-        return lcg.HtmlEscapedUnicode(interpolated, escape=True)
+        return g.escape(interpolated)
     
 
 class LayoutForm(FieldForm):
