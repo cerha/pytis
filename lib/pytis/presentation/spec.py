@@ -383,7 +383,7 @@ class Action(object):
     """
     def __init__(self, id, title, handler=None, context=ActionContext.RECORD,
                  secondary_context=None, enabled=True, visible=True, access_groups=None,
-                 descr=None, hotkey=None, kwargs=None, **kwargs_):
+                 descr=None, hotkey=None, kwargs=None, form_content=None, **kwargs_):
         """Inicializuj instanci.
 
         Argumenty:
@@ -444,7 +444,14 @@ class Action(object):
             constructor keyword arguments for backwards compatibility, but this
             practice is deprecated.
           hotkey -- keyboard shortcut (implemented only in wx forms).
-        
+          form_content -- function of a three arguments 'generator', 'record'
+            and 'enabled' returning list of additional form elements to prepend
+            to the action button; applicable only to Wiking applications.
+            'generator' is an HTML generator instance, 'record' is current
+            record instance, 'enabled' is a boolean defining whether the given
+            action is enabled.  If the argument is 'None', no additional
+            content is added.
+
         """
         assert isinstance(title, basestring), title
         assert descr is None or isinstance(descr, basestring), descr
@@ -457,6 +464,7 @@ class Action(object):
         assert access_groups is None or isinstance(access_groups, (basestring, tuple, list))
         assert hotkey is None or isinstance(hotkey, (basestring, tuple)), hotkey
         assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
+        assert form_content is None or isinstance(form_content, collections.Callable), form_content
         self._id = id
         self._title = title
         self._handler = handler
@@ -468,6 +476,7 @@ class Action(object):
         self._descr = descr
         self._hotkey = hotkey
         self._kwargs = kwargs or kwargs_
+        self._form_content = form_content
 
     def id(self):
         return self._id
@@ -512,6 +521,23 @@ class Action(object):
     
     def kwargs(self):
         return self._kwargs
+
+    def form_content(self, generator, record, enabled):
+        """Return result of calling 'form_content' function given in constructor.
+
+        Arguments:
+
+          generator -- HTML generator instance
+          record -- current 'Record' instance
+          enabled -- boolean indicating whether the action is enabled
+
+        Return value is a list of extra form elements (as produced by the
+        generator).
+
+        """
+        if self._form_content is None:
+            return []
+        return self._form_content(generator, record, enabled)
 
 
 class PrintAction(object):

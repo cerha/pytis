@@ -167,6 +167,7 @@ class Form(lcg.Content):
                     [('action', action.id()),
                      ('__invoked_from', self.__class__.__name__),
                      ] + action.kwargs().items()] +
+                   action.form_content(g, record, enabled) +
                    [g.button(g.span(action.title()), title=action.descr(),
                              disabled=not enabled, type='submit',
                              cls='action-' + action.id() + (not enabled and ' disabled' or ''))],
