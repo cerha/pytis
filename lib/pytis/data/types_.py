@@ -911,11 +911,11 @@ class Float(Number):
             # carefully.
             if digits is not None:
                 with decimal.localcontext() as context:
-                    context.prec = digits
+                    context.prec = len(str(value)) if digits is True else digits
                     context.rounding = rounding
                     if isinstance(value, float):
                         # Round the value -- any better way?
-                        str_value = ('%%.%dg' % (digits,)) % (value,)
+                        str_value = ('%%.%dg' % (context.prec,)) % (value,)
                         rvalue = float(str_value)
                         correction = 0
                         if rounding:
@@ -928,7 +928,7 @@ class Float(Number):
                             else:
                                 raise ProgramError('Invalid rounding argument', rounding)
                         if precision is None:
-                            format_ = '%%.%dg' % (digits,)
+                            format_ = '%%.%dg' % (context.prec,)
                         else:
                             format_ = '%%.%df' % (precision,)
                         value = decimal.Decimal(format_ % (rvalue,))
