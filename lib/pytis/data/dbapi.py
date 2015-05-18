@@ -242,6 +242,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 for col in row:
                     if isinstance(col, psycopg2.extras.Range):
                         col = (col.lower, col.upper,)
+                    elif isinstance(col, str):
+                        col = unicode(col, 'utf-8')
                     row_data.append(col)
                 data.append(row_data)
         else:
