@@ -2973,9 +2973,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     inner_type = type_.inner_type()
                     dbvalue = tuple([Value(inner_type, v) for v in dbvalue])
             elif isinstance(type_, Binary):
-                if dbvalue is None:
-                    dbvalue = buffer('')
-                dbvalue = type_.Buffer(dbvalue)
+                if dbvalue is not None:
+                    dbvalue = type_.Buffer(dbvalue)
             else:
                 dbvalue = type_.adjust_value(dbvalue)
             row_data.append((id, Value(type_, dbvalue)))
