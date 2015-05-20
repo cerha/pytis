@@ -650,6 +650,9 @@ pytis.Form = Class.create({
 		document.body.style.cursor = "default";
             }
 	}
+        else {
+            console.log ("Empty AJAX response");
+        }
     }
     
 });
