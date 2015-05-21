@@ -3803,7 +3803,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             def arg_spec(arg):
                 return '%%s' if isinstance(arg, Binary) else '%s'
             arguments = string.join([arg_spec(c.type())
-                                     for c in self._pdbb_db_spec.arguments],
+                                     for c in self._pdbb_db_spec.arguments if not c.out()],
                                     ', ')
         self._pdbb_function_call = 'select * from %s(%s)' % (self._name, arguments)
 
