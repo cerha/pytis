@@ -779,6 +779,9 @@ class Integer(Number):
             raise TypeError("Value not an integer", value)
         return value
 
+    def _export(self, value, **kwargs):
+        return '%d' % (value,)
+
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
 
