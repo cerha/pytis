@@ -1178,6 +1178,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'char': String,
                         'date': Date,
                         'time': Time,
+                        'timetz': Time,
                         'smallint': Integer,
                         'bigint': Integer,
                         'int2': Integer,
@@ -1218,7 +1219,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             db_type_kwargs['not_null'] = True
         if unique and db_type_cls != Boolean:
             db_type_kwargs['unique'] = True
-        if db_type_cls == String:
+        if db_type_cls is String:
             if type_ != 'text':
                 try:
                     size = int(size_string) - 4
@@ -1227,7 +1228,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 if size < 0:
                     size = None
                 db_type_kwargs['maxlen'] = size
-        elif db_type_cls == Float:
+        elif db_type_cls is Float:
             if type_ == 'numeric':
                 spec = int(size_string)
                 precision = (spec & 0xFFFF) - 4
@@ -1235,8 +1236,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     db_type_kwargs['precision'] = precision
                 else:
                     db_type_kwargs['digits'] = 100
-        elif db_type_cls == Integer and serial:
+        elif db_type_cls is Integer and serial:
             db_type_cls = Serial
+        elif type_ == 'time':
+            db_type_kwargs['without_time_zone'] = True
         if array:
             db_type_kwargs['inner_type'] = db_type_cls()
             db_type_cls = pytis.data.Array
