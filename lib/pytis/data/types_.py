@@ -1925,7 +1925,9 @@ class Time(_CommonDateTime):
     def _validate(self, *args, **kwargs):
         value, error = super(Time, self)._validate(*args, **kwargs)
         if value:
-            value = Value(value.type(), value.value().timetz())
+            date_time = value.value()
+            v = date_time.time() if self._without_timezone else date_time.timetz()
+            value = Value(value.type(), v)
         return value, error
     
     def primitive_value(self, value):
