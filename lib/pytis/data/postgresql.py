@@ -1239,7 +1239,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif db_type_cls is Integer and serial:
             db_type_cls = Serial
         elif type_ == 'time':
-            db_type_kwargs['without_time_zone'] = True
+            db_type_kwargs['without_timezone'] = True
         if array:
             db_type_kwargs['inner_type'] = db_type_cls()
             db_type_cls = pytis.data.Array
