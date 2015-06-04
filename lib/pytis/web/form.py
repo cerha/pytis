@@ -2044,8 +2044,8 @@ class BrowseForm(LayoutForm):
                 search_id = 'filter-' + html_id
                 search_field = g.div(
                     (g.label(_("Search expression") + ': ', search_id),
-                     g.field(self._text_search_string, name='query', id=search_id,
-                             cls='text-search-field'),
+                     g.input(type='search', value=self._text_search_string,
+                             name='query', id=search_id, cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
                      # Translators: Search button label.
                      g.button(g.span(_("Search")), type='submit', cls='search-button'),

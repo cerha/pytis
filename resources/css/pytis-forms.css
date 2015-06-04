@@ -347,28 +347,20 @@
     color: #444;
     margin-bottom: 0.4em;
 }
-.pytis-form.edit-form .group input.text,
-.pytis-form.edit-form .group input.password,
-.pytis-form.edit-form .group input.file,
-.pytis-form.edit-form .group input.text,
+.pytis-form input.text-search-field,
+.pytis-form.edit-form input.text-field,
 .pytis-form.edit-form textarea,
-.pytis-form.edit-form select { 
+.pytis-form.edit-form select {
     border: 1px solid #bbb;
     background-color: #fff;
     margin: 1px 0;
 }
-.pytis-form.edit-form .group input.text:disabled,
-.pytis-form.edit-form .group input.password:disabled,
-.pytis-form.edit-form .group input.file:disabled,
-.pytis-form.edit-form .group input.text:disabled,
+.pytis-form.edit-form input.text-field:disabled,
 .pytis-form.edit-form textarea:disabled,
 .pytis-form.edit-form select:disabled { 
     background-color: #e8e8e8;
 }
-.pytis-form.edit-form .group input.text,
-.pytis-form.edit-form .group input.password,
-.pytis-form.edit-form .group input.file,
-.pytis-form.edit-form .group input.text,
+.pytis-form.edit-form input.text-field,
 .pytis-form.edit-form textarea {
     padding: 1px;
 }

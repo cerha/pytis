@@ -459,10 +459,11 @@ class TextField(Field):
             # HACK: This makes the Safari's password suggestion work in forms, which
             # call the login name field 'login' instead of 'username' (Wiking).
             kwargs['id'] += '-username'
-        return dict(kwargs, value=value, size=size, maxlength=maxlen)
+        return dict(kwargs, value=value, size=size, maxlength=maxlen,
+                    cls=((kwargs.get('cls') or '') + ' text-field').strip())
 
     def _editor(self, context, **kwargs):
-        return context.generator().field(**kwargs)
+        return context.generator().input(**kwargs)
 
     
 class NumericField(TextField):
@@ -511,12 +512,12 @@ class PasswordField(StringField):
 
     def _editor(self, context, **kwargs):
         g = context.generator()
-        result = g.field(password=True, **kwargs)
+        result = g.input(type='password', **kwargs)
         if self.type.verify():
             # Note, the 'confirm' substring in the id is important for Safari's password
             # suggestion functionality.
             kwargs['id'] += '-confirm-password'
-            result += g.br() + g.field(password=True, **kwargs)
+            result += g.br() + g.input(type='password', **kwargs)
         return result
 
 
