@@ -415,6 +415,7 @@
 .actions button span, .list-form-controls button span {
     display: block;
     line-height: 16px;
+    white-space: nowrap;
     background-position: center left;
     background-repeat: no-repeat;
     background-attachment: center left;
