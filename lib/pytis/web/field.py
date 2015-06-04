@@ -229,6 +229,8 @@ class Field(object):
             cls = HtmlField
         elif spec.height() > 1:
             cls = MultilineField
+        elif isinstance(data_type, pd.Email):
+            cls = EmailField
         elif isinstance(data_type, pd.String):
             cls = StringField
         elif isinstance(data_type, pd.Number):
@@ -519,6 +521,12 @@ class PasswordField(StringField):
             kwargs['id'] += '-confirm-password'
             result += g.br() + g.input(type='password', **kwargs)
         return result
+
+
+class EmailField(StringField):
+
+    def _editor_kwargs(self, context):
+        return dict(super(EmailField, self)._editor_kwargs(context), type='email')
 
 
 class MultilineField(Field):
