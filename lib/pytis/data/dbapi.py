@@ -169,6 +169,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             return result, new_connection
         try:
             result = do_query(connection, query)
+            if query == 'commit':
+                self._postgresql_commit_transaction(connection)
+            elif query == 'rollback':
+                self._postgresql_rollback_transaction(connection)
         except dbapi.InterfaceError as e:
             if e.args and e.args[0].find('connection already closed') != -1:
                 # We believe this shouldn't happen as a program error and it
@@ -221,7 +225,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         if connection.connection_info('transaction_start_time') is None:
             connection.set_connection_info('transaction_start_time', now)
             if __debug__:
-                connection.set_connection_info('transaction_start_stack', inspect.currentframe())
+                if query not in ('commit', 'rollback',):
+                    connection.set_connection_info('transaction_start_stack',
+                                                   inspect.currentframe())
         if __debug__:
             if query.startswith('fetch') or query.startswith('skip'):
                 extra_info = (query,)
@@ -263,27 +269,33 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
     
-    def _postgresql_commit_transaction(self):
-        connection, new = self._pg_get_connection()
-        raw_connection = connection.connection()
+    def _postgresql_commit_transaction(self, connection=None):
+        if connection is None:
+            connection_, new = self._pg_get_connection()
+        else:
+            connection_, new = connection, False
+        raw_connection = connection_.connection()
         try:
             raw_connection.commit()
-            self._postgresql_reset_connection_info(connection, ['commit'])
+            self._postgresql_reset_connection_info(connection_, ['commit'])
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         if new:
-            self._pg_return_connection(connection)
+            self._pg_return_connection(connection_)
         
-    def _postgresql_rollback_transaction(self):
-        connection, new = self._pg_get_connection()
-        raw_connection = connection.connection()
+    def _postgresql_rollback_transaction(self, connection=None):
+        if connection is None:
+            connection_, new = self._pg_get_connection()
+        else:
+            connection_, new = connection, False
+        raw_connection = connection_.connection()
         try:
             raw_connection.rollback()
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
-        self._postgresql_reset_connection_info(connection, ['rollback'])
+        self._postgresql_reset_connection_info(connection_, ['rollback'])
         cursor = raw_connection.cursor()
         query = 'set client_encoding to "utf-8"'
         try:
@@ -294,7 +306,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # (maybe) idle transaction.
         raw_connection.commit()
         if new:
-            self._pg_return_connection(connection)
+            self._pg_return_connection(connection_)
 
     def _maybe_connection_error(self, e):
         if e.args[0].find('server closed the connection unexpectedly') != -1:
