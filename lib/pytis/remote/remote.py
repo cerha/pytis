@@ -97,12 +97,13 @@ def client_ip():
 def client_available():
     """Return true, iff remote client is available."""
     if not config.rpc_communication_enabled or client_ip() is None:
-        log(DEBUG, "RPC unavailable")
+        level = OPERATIONAL if config.rpc_communication_enabled else DEBUG
+        log(level, "RPC unavailable")
         return False
     try:
         return _request('echo', 'hello') == 'hello'
     except Exception, e:
-        log(DEBUG, "RPC exception:", e)
+        log(OPERATIONAL, "RPC exception:", e)
         return False
 
 def x2go_session_id(fake=False):
