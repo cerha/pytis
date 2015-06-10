@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-03-19 14:20'
+_VERSION = '2015-06-10 11:00'
 
 import cStringIO
 import hashlib
@@ -134,6 +134,16 @@ class PytisUserService(PytisService):
     def __init__(self, *args, **kwargs):
         self._gpg_instance = None
         super(PytisUserService, self).__init__(*args, **kwargs)
+        self._pytis_clean_tempdir()
+
+    def _pytis_clean_tempdir(self):
+        tempdir = tempfile.gettempdir()
+        for f in os.listdir(tempdir):
+            if f.startswith('pytis'):
+                try:
+                    os.remove(os.path.join(tempdir, f))
+                except:
+                    pass
     
     def exposed_restart(self):
         """Restart the user service."""
