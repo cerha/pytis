@@ -41,7 +41,7 @@ import BaseHTTPServer
 
 import pytis.data
 from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
-    public_attributes, public_attr_values, split_camel_case, xtuple, \
+    public_attributes, public_attr_values, split_camel_case, xtuple, nextval, \
     log, OPERATIONAL, \
     ProgramError
 import pytis.presentation
@@ -5208,13 +5208,13 @@ class Specification(SpecificationBase):
             default = c.default()
             if default is None and isinstance(type_, pytis.data.Serial):
                 if isinstance(table, pytis.data.gensqlalchemy.SQLTable):
-                    default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
-                                                                c.id(),))
+                    default = nextval('%s_%s_seq' % (table.pytis_name(real=True), c.id(),),
+                                      connection_name=self.connection)
                 else:
                     orig_c = c.original_column()
                     if orig_c is not None:
-                        default = pytis.util.nextval('%s_%s_seq' %
-                                                     (orig_c.table.name, orig_c.name,))
+                        default = nextval('%s_%s_seq' % (orig_c.table.name, orig_c.name,),
+                                          connection_name=self.connection)
             f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
                       editable=editable, codebook=codebook, not_null=c.type().not_null(),
                       crypto_name=c.crypto_name())

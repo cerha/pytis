@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1570,7 +1570,7 @@ def camel_case_to_lower(string, separator='-'):
     """Return a lowercase string using 'separator' to concatenate words."""
     return separator.join([w.lower() for w in split_camel_case(string)])
 
-def nextval(seq):
+def nextval(seq, connection_name=None):
     """Return a function generating next value from given DB sequence.
 
     The argument 'seq' is the string name of a database sequence object.  The
@@ -1585,7 +1585,7 @@ def nextval(seq):
     def conn_spec():
         import config
         return config.dbconnection
-    counter = pytis.data.DBCounterDefault(seq, conn_spec)
+    counter = pytis.data.DBCounterDefault(seq, conn_spec, connection_name=connection_name)
     return lambda transaction=None: counter.next(transaction=transaction)
 
 def rsa_encrypt(key, text):
