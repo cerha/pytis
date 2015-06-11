@@ -448,7 +448,6 @@ class AccessLog(RestrictedPytisModule):
 class Application(wiking.CookieAuthentication, wiking.Application):
     
     _MAPPING = dict(wiking.Application._MAPPING,
-                    _resources='Resources',
                     _attachments='HttpAttachmentStorageBackend')
     
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
