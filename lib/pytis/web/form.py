@@ -724,7 +724,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
     def _export_error(self, context, form_id, fid, message):
         g = context.generator()
-        message = g.escape(message)
         if fid:
             field = self._fields.get(fid)
             if field:
