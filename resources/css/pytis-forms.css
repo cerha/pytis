@@ -130,6 +130,7 @@
     margin-top: .3em;
 }
 .pytis-form.browse-form table.data-table tr.data-row td,
+.pytis-form.browse-form table.data-table tr.row-expansion td,
 .pytis-form.browse-form table.data-table tr.column-headings th,
 .pytis-form.browse-form table.data-table tr.group-heading th {
     padding: 3px;
@@ -186,7 +187,8 @@
 .pytis-form.browse-form table.data-table .tree-node {
     white-space: nowrap;
 }
-.pytis-form.browse-form table.data-table tr.data-row { background-color: #f8fafb; }
+.pytis-form.browse-form table.data-table tr.data-row,
+.pytis-form.browse-form table.data-table tr.row-expansion { background-color: #f8fafb; }
 .pytis-form.browse-form table.data-table tr.data-row.even { background-color: #f1f3f2; }
 .pytis-form.browse-form table.data-table tr.group-heading th { text-align: left; }
 
