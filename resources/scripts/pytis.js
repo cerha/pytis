@@ -246,7 +246,7 @@ pytis.BrowseForm = Class.create({
 	var parameters = {_pytis_form_update_request: 1,
 			  _pytis_expand_row: 1,
 			  _pytis_row_key: this.pytis_row_key(tr)};
-	this.send_ajax_request(undefined, parameters, function(transport) {
+	this.send_ajax_request(this.form.down('form'), parameters, function(transport) {
 	    var content = new Element('div', {'class': 'row-expansion-content'});
 	    content.insert(transport.responseText);
 	    var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
