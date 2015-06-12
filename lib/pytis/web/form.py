@@ -1268,14 +1268,14 @@ class BrowseForm(LayoutForm):
             'PresentedRow' instance and the column's field id) returning
             boolean, indicating whether the cell is editable inline.  By
             default, no cells are editable inline.
-          expand_row -- function of one argument (the form row as a
-            'PresentedRow' instance) returning expanded row content as
-            lcg.Content instance.  When present (not null) each row may be
-            expanded in the user interface to display this additional content
-            for each row.  Typically some additional columns which don't fit in
-            the table can be displayed this way eliminating the need to go to
-            another page and back to display more details about certain
-            records.
+          expand_row -- function of two arguments.  The first argument is the
+            form row as a 'PresentedRow' instance, the second is the form
+            instance.  The function returns expanded row content as lcg.Content
+            instance.  When present (not null) each row may be expanded in the
+            user interface to display this additional content for each row.
+            Typically some additional columns which don't fit in the table can
+            be displayed this way eliminating the need to go to another page
+            and back to display more details about certain records.
           async_row_expansion -- boolean indicating whether row expansion
             should be loaded asynchronously.  When True, the expanded content
             is loaded on demand for each row.  When False, expansion for all
@@ -1649,7 +1649,7 @@ class BrowseForm(LayoutForm):
                  for field in self._column_fields]
         result = g.tr(cells, id=row_id, **self._row_attr(row, n))
         if self._expand_row and not self._async_row_expansion:
-            content = self._expand_row(row)
+            content = self._expand_row(row, self)
             result += g.tr(g.td(content.export(context), colspan=self._columns_count()),
                            cls='row-expansion', style="display: none;")
         return result
@@ -2112,7 +2112,7 @@ class BrowseForm(LayoutForm):
         self._set_async_request_row(req)
         if not self._expand_row or not self._async_row_expansion:
             raise BadRequest()
-        return self._expand_row(self._row)
+        return self._expand_row(self._row, self)
 
     def export(self, context):
         if self._async_load and self._req.param('_pytis_async_load_request'):
