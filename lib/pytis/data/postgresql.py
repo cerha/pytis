@@ -1891,6 +1891,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 colstring = self._pdbb_column_group_call(g)
             else:
                 b = self._db_column_binding(id)
+                assert b is not None, \
+                    "Unknown column '%s' in sorting specification for '%s'" % \
+                    (id, self._key_binding[0].table())
                 colstring = self._pdbb_btabcol(b, full_text_handler=full_text_handler,
                                                convert_ltree=True)
             return '%s %s' % (colstring, dir,)
