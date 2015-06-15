@@ -1121,7 +1121,7 @@ class BrowseForm(LayoutForm):
     """Determines whether the table is present on output even if it contains no rows."""
 
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
-                 columns=None, sorting=None, grouping=None, message=None,
+                 columns=None, sorting=None, transform_sorting=None, grouping=None, message=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None,
                  allow_text_search=None, text_search_condition=None, permanent_text_search=False,
                  filter=None, filter_sets=None, profiles=None, query_fields=None,
@@ -1147,6 +1147,10 @@ class BrowseForm(LayoutForm):
             value overrides the default sorting defined by the specification,
             but may be further overriden by the sorting defined by the
             currently selected form profile (see 'profiles').
+          transform_sorting -- function of one argument (sorting specification)
+            returning a transformed sorting specification.  If not None, this
+            function is applied to form sorting specification (visible in the
+            user interface) before passing it to the actual data select.
           grouping -- visual grouping of table rows.  The value is a column
             identifier or a sequence of column identifiers.  Grouping allows
             you to visually distinguish table rows, which have the same
@@ -1306,6 +1310,8 @@ class BrowseForm(LayoutForm):
         super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
         assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
         assert isinstance(permanent_text_search, bool), permanent_text_search
+        assert transform_sorting is None or isinstance(transform_sorting, collections.Callable), \
+            transform_sorting
         data = self._row.data()
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
@@ -1381,6 +1387,10 @@ class BrowseForm(LayoutForm):
         if sorting is None:
             sorting = ((self._key, pytis.data.ASCENDENT),)
         self._sorting = sorting
+        if transform_sorting:
+            self._data_sorting = transform_sorting(sorting)
+        else:
+            self._data_sorting = sorting
         # Determine the current grouping.
         if grouping is None:
             grouping = self._view.grouping()
@@ -1757,13 +1767,13 @@ class BrowseForm(LayoutForm):
         # for some hints.  It would unnecessarily call computers, some of which may be
         # really expensive (i.e. on binary fields).
         self._row.set_row(row)
-            
+
     def _table_rows(self):
         data = self._row.data()
         self._row_count = data.select(columns=self._select_columns,
                                       condition=self._conditions(),
                                       arguments=self._arguments,
-                                      sort=self._sorting)
+                                      sort=self._data_sorting)
         def generator():
             try:
                 while True:
@@ -1886,7 +1896,7 @@ class BrowseForm(LayoutForm):
 
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string + "*")
-        return pytis.data.WM(self._sorting[0][0], value, ignore_case=False)
+        return pytis.data.WM(self._data_sorting[0][0], value, ignore_case=False)
     
     def _export_index_search_controls(self, context):
         g = context.generator()
