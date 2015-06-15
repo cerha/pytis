@@ -229,8 +229,11 @@ pytis.BrowseForm = Class.create({
 	} else {
 	    tr.addClassName('expanded');
 	    if (expansion && expansion.hasClassName('row-expansion')) {
+		var content = expansion.down('.row-expansion-content');
+		expansion.setAttribute('style', '');
+		content.setAttribute('style', '');
 		expansion.show();
-		this.slide_down(expansion.down('.row-expansion-content'));
+		this.slide_down(content);
 	    } else {
 		this.send_expand_row_request(tr);
 	    }
