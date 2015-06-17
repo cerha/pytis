@@ -1850,7 +1850,8 @@ class BrowseForm(LayoutForm):
                 # Translators: The variables '%(first)s', '%(last)s' and
                 # '%(total)s' are replaced by the numbers corresponding to the
                 # current listing range.
-                summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
+                message = "Displayed records %(first)s-%(last)s of total %(total)s"
+                summary = _(lcg.HtmlEscapedUnicode(message, escape=False),
                             first=g.strong(str(first_record_offset + 1)),
                             last=g.strong(str(first_record_offset + exported_row_number)),
                             total=g.strong(str(count)))
