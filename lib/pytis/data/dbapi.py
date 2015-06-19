@@ -27,6 +27,7 @@ Database API implementation.
 
 """
 
+import datetime
 import inspect
 import select
 import time
@@ -111,8 +112,29 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         if __debug__:
             connection.set_connection_info('transaction_start_stack', None)
     
-    def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
+    def _postgresql_query(self, connection, query, outside_transaction, _retry=True):
         result = None
+        def transform_arg(a):
+            if isinstance(a, tuple):
+                a0 = a[0]
+                if isinstance(a0, (int, long, float,)):
+                    c = psycopg2.extras.NumericRange
+                elif isinstance(a0, datetime.datetime):
+                    if a0.tzinfo is None:
+                        c = psycopg2.extras.DateTimeRange
+                    else:
+                        c = psycopg2.extras.DateTimeTZRange
+                elif isinstance(a0, datetime.date):
+                    c = psycopg2.extras.DateRange
+                else:
+                    raise Exception("Unsupported range type", a)
+                a = c(*a)
+            return a
+        if isinstance(query, basestring):
+            query_args = {}
+        else:
+            query, args = query.query()
+            query_args = dict([(k, transform_arg(v)) for k, v in args.items()])
         def do_query(connection, query):
             raw_connection = connection.connection()
             standard_strings = connection.connection_info('standard_strings')
@@ -132,7 +154,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                         else:
                             result = arg
                         return result
-                    query_string = query % tuple([escape(arg) for arg in query_args])
+                    escaped_args = dict([(k, escape(v)) for k, v in query_args.items()])
+                    query_string = query % escaped_args
                 else:
                     query_string = query
                 self._sql_logger.write(query_string + '\n')
