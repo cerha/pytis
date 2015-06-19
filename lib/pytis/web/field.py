@@ -943,16 +943,16 @@ class ChoiceField(EnumerationField):
     _HANDLER = 'pytis.ChoiceField'
     
     def _editor(self, context, **kwargs):
+        g = context.generator()
         enumeration = self._enumeration(context)
-        nbsp = lcg.HtmlEscapedUnicode("&nbsp;", escape=False)
-        options = [(self.spec.null_display() or nbsp, "")] + \
+        options = [(self.spec.null_display() or g.noescape("&nbsp;"), "")] + \
                   [(display, strval) for val, strval, display in enumeration]
         value = self._value().value()
         if value in [val for val, strval, display in enumeration]:
             selected = self.type.export(value)
         else:
             selected = None
-        return context.generator().select(options=options, selected=selected, **kwargs)
+        return g.select(options=options, selected=selected, **kwargs)
     
 class ChecklistField(EnumerationField):
     _HANDLER = 'pytis.ChecklistField'
