@@ -1781,12 +1781,17 @@ class DateTime(_CommonDateTime):
             raise TypeError("Value not a datetime", value)
         timezone = self.timezone()
         if value is not None:
-            if value.tzinfo is None:
-                value = datetime.datetime(value.year, value.month, value.day,
-                                          value.hour, value.minute, value.second, value.microsecond,
-                                          timezone)
+            if self._without_timezone:
+                if value.tzinfo is not None:
+                    value = datetime.datetime(value.year, value.month, value.day, value.hour,
+                                              value.minute, value.second, value.microsecond)
             else:
-                value = value.astimezone(timezone)
+                if value.tzinfo is None:
+                    value = datetime.datetime(value.year, value.month, value.day, value.hour,
+                                              value.minute, value.second, value.microsecond,
+                                              timezone)
+                else:
+                    value = value.astimezone(timezone)
         return value
     
     def sqlalchemy_type(self):
@@ -1814,7 +1819,7 @@ class DateTimeRange(Range, DateTime):
             sql_class = pytis.data.gensqlalchemy.TSTZRANGE
         return sql_class()
     def base_type(self):
-        return pytis.data.DateTime(utc=self._utc)
+        return pytis.data.DateTime(utc=self._utc, without_timezone=self._without_timezone)
 
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.

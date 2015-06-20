@@ -1122,7 +1122,7 @@ class DBDataDefault(_DBTest):
         ranges = pytis.data.DBDataDefault(
             (key,
              B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
-             B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange()),),
+             B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange(without_timezone=True)),),
             key,
             conn)
         # arrays
@@ -1682,8 +1682,8 @@ class DBDataDefault(_DBTest):
         self.assertEqual(value[0] == 10 and value[1], 20, value)
         new_value, err = pytis.data.IntegerRange().validate(('20', '30',))
         self.assertIsNone(err)
-        rdt_value, err = pytis.data.DateTimeRange().validate(('2014-02-01 00:00:00',
-                                                              '2014-02-01 00:00:02',))
+        rdt_value, err = pytis.data.DateTimeRange(without_timezone=True)\
+                                   .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
         self.assertIsNone(err)
         data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),
                                     ('rdt', rdt_value,),)))
@@ -1695,8 +1695,8 @@ class DBDataDefault(_DBTest):
         self.assertEqual(row['rdt'], rdt_value)
         new_value, err = pytis.data.IntegerRange().validate(('40', '50',))
         self.assertIsNone(err)
-        rdt_value, err = pytis.data.DateTimeRange().validate(('2014-03-01 00:00:00',
-                                                              '2014-03-01 00:00:02',))
+        rdt_value, err = pytis.data.DateTimeRange(without_timezone=True)\
+                                   .validate(('2014-03-01 00:00:00', '2014-03-01 00:00:02',))
         self.assertIsNone(err)
         data.update(pytis.data.ival(2), pytis.data.Row((('r', new_value,), ('rdt', rdt_value,),)))
         new_value, err = pytis.data.IntegerRange().validate(('', '',))
