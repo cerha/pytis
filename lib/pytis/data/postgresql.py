@@ -1903,7 +1903,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 fix_case = lambda x: x
             if rel in ('=', '!=') and a2null:
                 rel = _Query(' IS' + (' NOT' if rel == '!=' else '') + ' ')
-            return (fix_case(a1) + rel + fix_case(a2)).wrap()
+            return (fix_case(a1) + ' ' + rel + ' ' + fix_case(a2)).wrap()
         operators = {'EQ': '=',
                      'NE': '!=',
                      'LT': '<',
@@ -1931,7 +1931,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if (i - j) % 2 == 1:
                         spec = spec[:i] + new + spec[i + 1:]
             rel = (op_name == 'NW' and 'NOT ' or '') + 'LIKE'
-            expression = relop(rel, (cid, spec,), op_kwargs)
+            expression = relop(rel, (cid, sval(spec),), op_kwargs)
         elif op_name == 'NOT':
             assert len(op_args) == 1, ('Invalid number or arguments', op_args)
             arg = op_args[0]
