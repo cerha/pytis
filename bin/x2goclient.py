@@ -139,8 +139,11 @@ def text_dialog(prompt, password=False):
     app.Yield()
     return answer or None
 
-def choice_dialog(prompt, choices):
-    answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
+def choice_dialog(prompt, choices, index=False):
+    if index:
+        answer = wx.GetSingleChoiceIndex(prompt, prompt, choices=choices)
+    else:
+        answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
     app.Yield()
     return answer or None
 
@@ -654,12 +657,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             profile_name = 'Pyhoca-Client_Session'
             if args.broker_url is not None:
                 data = [(k, v['name'],) for k, v in profiles.broker_listprofiles().items()]
+                data.sort(key=lambda tup: tup[1])
                 if not profile_id:
-                    n = max([len(d[0]) for d in data])
-                    format_ = '%-' + str(n) + 's %s'
-                    choices = [format_ % d for d in data]
-                    answer = choice_dialog(_("Select session"), choices=choices)
-                    profile_id = answer and answer[:n].rstrip()
+                    choices = [d[1] for d in data]
+                    answer = choice_dialog(_("Select session"), choices=choices, index=True)
+                    profile_id = answer and data[answer][0].rstrip()
                 profile_name = None
                 if not profile_id:
                     raise Exception(_("No session selected."))
