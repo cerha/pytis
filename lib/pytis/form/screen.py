@@ -2599,6 +2599,7 @@ def open_data_as_file(data, suffix, decrypt=False):
             remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
         except Exception as e:
             log(OPERATIONAL, "Can't create remote temporary file: %s" % (e,))
+            pytis.form.run_dialog(pytis.form.Error, _("Nelze vytvořit pomocný soubor: %s" % (e,)))
     if remote_file:
         client_ip = pytis.remote.client_ip()
         log(OPERATIONAL, "Launching file on Windows at %s:" % client_ip, remote_file.name())
