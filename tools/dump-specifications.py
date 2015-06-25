@@ -116,8 +116,8 @@ def run():
             except Exception as e:
                 if args.exit_on_error:
                     import cgitb
-                    sys.stderr.write("%s:\n" % name)
                     sys.stderr.write(cgitb.text(sys.exc_info()))
+                    sys.stderr.write("Failed on specification: %s\n\n" % name)
                     sys.exit(1)
                 else:
                     print 'ERROR: %s: %s' % (name, e)
