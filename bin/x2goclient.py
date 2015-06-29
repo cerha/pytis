@@ -110,7 +110,7 @@ def get_language_windows(system_lang=True):
     else:
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
-    
+
 t = gettext.translation('pytis-x2go',
                         os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
                         fallback=True)
@@ -127,7 +127,7 @@ def info_dialog(message, error=False):
         style = style | wx.ICON_ERROR
     wx.MessageBox(message, style=style)
     app.Yield()
-    
+
 def question_dialog(question):
     answer = wx.MessageBox(question, style=wx.YES_NO)
     app.Yield()
@@ -139,13 +139,20 @@ def text_dialog(prompt, password=False):
     app.Yield()
     return answer or None
 
-def choice_dialog(prompt, choices, index=False):
-    if index:
-        answer = wx.GetSingleChoiceIndex(prompt, prompt, choices=choices)
-    else:
-        answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
+def choice_dialog(prompt, choices):
+    answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
     app.Yield()
     return answer or None
+
+def choice_dialog_index(prompt, choices):
+    answer = wx.GetSingleChoiceIndex(prompt, prompt, choices=choices)
+    app.Yield()
+    if not answer:
+        return 0
+    elif answer == -1:
+        return None
+    else:
+        return answer
 
 def file_dialog(prompt, directory=None):
     kwargs = {}
@@ -660,8 +667,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 data.sort(key=lambda tup: tup[1])
                 if not profile_id:
                     choices = [d[1] for d in data]
-                    answer = choice_dialog(_("Select session"), choices=choices, index=True)
-                    profile_id = answer and data[answer][0].rstrip()
+                    answer = choice_dialog_index(_("Select session"), choices=choices)
+                    profile_id = answer is not None and data[answer][0].rstrip()
                 profile_name = None
                 if not profile_id:
                     raise Exception(_("No session selected."))
