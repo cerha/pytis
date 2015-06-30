@@ -1099,44 +1099,51 @@ class Name(String):
 class Password(String):
     """Specialized string type for password fields.
 
-    The user interface should handle password input differently from ordinary string input.
+    The user interface should handle passwords differently from ordinary
+    strings.
 
-    1. The typed characters should never be visible on the screen.
+    1. The values must be treated as sensitive information which should never
+       appear on the screen as well as in logs etc.
 
-    2. Also, if the constructor argument 'verify' is true (it is by default), the user should be
-       required to type the new value twice to prevent typos (since there is no visual feedback).
-       The user interface is responsible for creating two fields if the method 'verify()' returns
-       true.  The value of the second field is passed as the 'verify' argument to the 'validate()'
-       method.
-
-    The validation argument 'verify' should be always passed when validating user input.  It may be
-    omitted if validation is used just to convert an already validated string value (e.g. read from
-    database) to a 'Value' instance.  When user input is validated, but the type doesn't require
-    verification (the user enters the password just once), it is thus necessary to pass the same
-    value twice (as the validated value and as the 'verify' argument).
+    2. Also, if the constructor argument 'verify' is true (it is by default),
+       the user should be required to type the new value twice to prevent typos
+       (since there is no visual feedback).  Thus the user interface should
+       create two input fields in this case.  The value of the second field
+       must be passed as the 'verify' argument to the 'validate()' method.
 
     Constructor arguments:
     
-      md5 -- boolean flag indicating, that the password is stored as a hexadeximal md5 hash.
-        This will lead to automatic conversion of user input to its md5 hash, so the original
-        password is no more visible anywhere after successful validation.  The conversion is
-        only done when the 'verify' argument is passed to the 'validate()' method.  When
-        'verify' is not used, the input string is not considered to be user input, but an
-        already hashed value (eg. read from data source).
+      verify -- boolean flag indicating, that user input should be verified by
+        the user interface by presenting two controls for entering the
+        password.  Both inputs must match to pass validation.
 
-      verify -- boolean flag indicating, that user input should be verified by the user
-        interface by presenting two controls for entering the password.  Both inputs must match
-        to pass validation.
-
-      strength -- specification of password strength checking.  If 'None',
-        no special checks are performed.  If 'True', default checking
-        implemented in the '_check_strength' method is performed.  If
-        anything else, it must be a function of a single argument, the
-        password string, that returns either 'None' when the password is
-        strong enough or an error message if the password is weak.
+      strength -- specification of password strength checking.  If 'None', no
+        special checks are performed.  If 'True', default checking implemented
+        in the '_check_strength' method is performed.  If anything else, it
+        must be a function of a single argument, the password string, that
+        returns either 'None' when the password is strong enough or an error
+        message if the password is weak.
          
+      md5 -- DEPRECATED; Use a virtual field for password entry and a computer
+        function to create a hash; The built-in md5 hashing doesn't use salt so
+        can not be considered secure; Original docstring: boolean flag
+        indicating, that the password is stored as a hexadeximal md5 hash.
+        This will lead to automatic conversion of user input to its md5 hash,
+        so the original password is no more visible anywhere after successful
+        validation.  The conversion is only done when the 'verify' argument is
+        passed to the 'validate()' method.  When 'verify' is not used, the
+        input string is not considered to be user input, but an already hashed
+        value (eg. read from data source).
+
     Other arguments are passed to the parent constructor.
 
+    The validation argument 'verify' should be always passed when validating
+    user input.  It may be omitted if validation is used just to convert an
+    already validated string value (e.g. read from database) to a 'Value'
+    instance.  When user input is validated, but the type doesn't require
+    verification (the user enters the password just once), it is thus necessary
+    to pass the same value twice (as the validated value and as the 'verify'
+    argument).
 
     """
     VM_PASSWORD = 'VM_PASSWORD'
