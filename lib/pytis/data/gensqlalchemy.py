@@ -3203,6 +3203,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
+        if self.replaces is not None:
+            self.add_is_dependent_on(object_by_class(self.replaces, self._search_path))
         result_type = self.result_type
         if ((result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
              not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
