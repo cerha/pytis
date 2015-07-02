@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -118,6 +118,16 @@ def ftype(expr, precision, scale, asdecimal=False):
     """
     return sqlalchemy.cast(expr, sqlalchemy.Numeric(precision=precision, scale=scale,
                                                     asdecimal=asdecimal))
+
+def rtype(expr):
+    """Return SQLAlchemy expression casted to float.
+
+    Arguments:
+
+      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+
+    """
+    return sqlalchemy.cast(expr, sqlalchemy.Float())
 
 def ittype(expr):
     """Return SQLAlchemy expression casted to interval.
