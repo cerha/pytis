@@ -67,6 +67,8 @@ def run():
         parser.print_help()
         sys.exit(1)
     config.log_logger = (NullLogger, (), {})
+    import lcg
+    lcg.log = lambda *args, **kwargs: None
     if args.wiking:
         import wiking
         wiking.cfg.user_config_file = config.config_file
