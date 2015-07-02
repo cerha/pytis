@@ -3393,10 +3393,6 @@ class Field(object):
         if column_label is None:
             column_label = label
         self._column_label = column_label
-        if (enumerator or codebook) and 'not_null' not in kwargs:
-            # Enumeration fields are NOT NULL by default.  It is not very intuitive, but
-            # we must keep it for backwards compatibility.
-            kwargs['not_null'] = True
         self._virtual = virtual
         self._type = type
         self._type_kwargs = kwargs
