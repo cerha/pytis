@@ -1308,11 +1308,14 @@ def object_by_specification_name(specification_name, search_path=None):
     return object_by_class(class_, search_path or _current_search_path)
 
 class RawCondition(object):
+    __visit_name__ = 'raw_condition'
     def __init__(self, condition):
         self._condition = condition
         self._from_objects = []
     def _compiler_dispatch(self, *args, **kwargs):
         return self._condition
+    def get_children(self, *args, **kwargs):
+        return ()
     
 class TableLookup(object):
     """Accessor for table instances.
@@ -3687,6 +3690,8 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     name = None
     depends_on = ()
     error_level = 0
+    key = None
+    foreign_key_constraints = set()
     
     __visit_name__ = 'raw'
     
