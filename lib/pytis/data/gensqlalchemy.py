@@ -351,6 +351,11 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
                     self.connection.execute('DROP TRIGGER "%s" ON "%s"' %
                                             (trigger.pytis_name(real=True),
                                              table.pytis_name(real=True),))
+
+    def visit_table_index(self, index, checkfirst=False):
+        command = ('ALTER %s "%s"."%s" DROP CONSTRAINT "%s"' %
+                   (index.db_object, index.object_schema, index.object_name, index.name,))
+        self.connection.execute(command)
         
 class _ObjectComment(sqlalchemy.schema.DDLElement):
     def __init__(self, obj, kind, comment):
@@ -2049,6 +2054,20 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         """
         return ()
 
+class _TableIndex(SQLObject):
+    "Object for dropping unique indexes that must be dropped in a special way."
+
+    __visit_name__ = 'table_index'
+
+    def __init__(self, name, db_object, object_schema, object_name):
+        self.name = name
+        self.db_object = db_object
+        self.object_schema = object_schema
+        self.object_name = object_name
+            
+    def drop(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+    
 class _SQLIndexable(SQLObject):
     
     index_columns = ()
@@ -2168,7 +2187,13 @@ class _SQLIndexable(SQLObject):
                             changed = True
         # All the remaining database indexes may be dropped now.
         for i in db_index_columns.values():
-            i.drop(_engine)
+            if i.unique:
+                # We can't use simply `i.drop(_engine)' here as PostgreSQL
+                # requires dropping the corresponding table constraint instead
+                # of the index.
+                _TableIndex(i.name, self._DB_OBJECT, i.table.schema, i.table.name).drop(_engine)
+            else:
+                i.drop(_engine)
             changed = True
         # Create the remaining new indexes from the specifications.
         for i in new_index_columns.values():
