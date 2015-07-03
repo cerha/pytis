@@ -2305,7 +2305,7 @@ class ListView(BrowseForm):
                 parts.append(g.span(img, cls='list-layout-image'))
         if self._meta:
             meta = [(g.span(field.label + ":", cls='label id-' + field.id) + " "
-                     if labeled else '') +
+                     if labeled else g.noescape('')) +
                     self._export_field(context, field)
                     for field, labeled in self._meta if row.visible(field.id)]
             if meta:
