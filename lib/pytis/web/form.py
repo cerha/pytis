@@ -983,7 +983,8 @@ class QueryFieldsForm(VirtualForm):
     _ALLOW_NOT_NULL_INDICATORS = False
     _SAVED_EMPTY_VALUE = '-'
 
-    def __init__(self, req, resolver, query_fields, filter_sets, immediate_filters=True):
+    def __init__(self, req, resolver, query_fields, filter_sets, immediate_filters=True,
+                 async_load=False):
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
             fields = list(spec_kwargs.pop('fields'))
@@ -1006,6 +1007,7 @@ class QueryFieldsForm(VirtualForm):
         self._immediate_filters = (immediate_filters and
                                    all(row.type(f).enumerator() is not None
                                        for f in self._field_order()))
+        self._async_load = async_load
         if req.param('list-form-controls-submitted'):
             self.validate(req)
         if not self.is_ajax_request(req):
@@ -1065,7 +1067,9 @@ class QueryFieldsForm(VirtualForm):
 
     def _export_javascript(self, context, form_id):
         script = super(QueryFieldsForm, self)._export_javascript(context, form_id)
-        if self._immediate_filters:
+        if self._immediate_filters and not self._async_load:
+            # When the form is loaded asynchronously, the change handlers are assigned
+            # in pytis.js (bind_controls)!
             script += ("$('%s').select('select, checkbox, radio').each(function (element) { "
                        "element.onchange = function (e) { this.form.submit(); return true; }; "
                        "});" % form_id)
@@ -1350,7 +1354,8 @@ class BrowseForm(LayoutForm):
         if query_fields or filter_sets:
             self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(),
                                                              query_fields, filter_sets,
-                                                             immediate_filters=immediate_filters)
+                                                             immediate_filters=immediate_filters,
+                                                             async_load=async_load)
             query_fields_row = form.row()
         else:
             self._query_fields_form = None

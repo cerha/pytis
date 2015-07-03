@@ -370,13 +370,20 @@ pytis.BrowseForm = Class.create({
 		    event.stop();
 		}.bind(this));
 	    }.bind(this));
-	    panel.select('select').each(function(ctrl) {
-		ctrl.onchange = null; // Deactivate the original handler.
-		ctrl.observe('change', function(event) {
-		    this.reload_form_data(ctrl);
+	    var apply_button = panel.down('button.apply-filters');
+	    if (apply_button) {
+		apply_button.observe('click', function(event) {
+		    this.reload_form_data(apply_button);
 		    event.stop();
 		}.bind(this));
-	    }.bind(this));
+	    } else {
+		panel.select('select, checkbox, radio').each(function(ctrl) {
+		    ctrl.observe('change', function(event) {
+			this.reload_form_data(ctrl);
+			event.stop();
+		    }.bind(this));
+		}.bind(this));
+	    }
 	    panel.select('.index-search-controls a').each(function(ctrl) {
 		var params = ctrl.href.replace(/;/g, '&').parseQuery();
 		ctrl.observe('click', function(event) {
@@ -433,7 +440,9 @@ pytis.BrowseForm = Class.create({
 		parameters[x.name] = x.value;
 	    }
 	});
-	parameters[ctrl.name] = ctrl.value;
+	if (ctrl.tagName !== 'BUTTON') {
+	    parameters[ctrl.name] = ctrl.value;
+	}
 	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
 	this.load_form_data(parameters, true);
     },
