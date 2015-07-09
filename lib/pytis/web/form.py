@@ -512,7 +512,7 @@ class LayoutForm(FieldForm):
             sign = ''
             if self._EDITABLE:
                 html_id = field.html_id()
-                if field.not_null() and self._ALLOW_NOT_NULL_INDICATORS:
+                if field.indicate_not_null() and self._ALLOW_NOT_NULL_INDICATORS:
                     sign = g.sup("*", cls="not-null")
                 if not self._row.editable(field.id):
                     cls += ' disabled'
@@ -761,7 +761,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _export_footer(self, context, form_id):
         if self._show_footer:
             for f in self._fields.values():
-                if f.label and f.not_null() and f.id in self._layout.order():
+                if f.label and f.indicate_not_null() and f.id in self._layout.order():
                     g = context.generator()
                     return [g.div(g.span("*", cls="not-null") + ") " +
                                   _("Fields marked by an asterisk are mandatory."),

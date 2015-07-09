@@ -252,8 +252,6 @@ class Field(object):
         self._format_cache_context = None
         self._multirow = multirow
         self._key = row.data().key()[0].id()
-        self._not_null = t.not_null() and not isinstance(t, pd.Boolean) and \
-            (row.new() or not isinstance(t, (pd.Password, pd.Binary)))
         self._big = isinstance(t, (pd.Big, pd.Large))
         # All public attributes must be treated as read-only!
         self.id = fid
@@ -345,9 +343,9 @@ class Field(object):
             html_id += '-' + self._row[self._key].export()
         return html_id
 
-    def not_null(self):
+    def indicate_not_null(self):
         """Return True if the field is NOT NULL (the value is required)."""
-        return self._not_null
+        return self.type.not_null()
 
     def label_in_front(self):
         """Return True if the label is in front of the field."""
@@ -440,7 +438,7 @@ class Field(object):
         g = context.generator()
         active = self._row.depends(self.id, layout_fields)
         return g.js_call("new %s" % self._HANDLER, form_id, self.html_id(),
-                         self.id, self.state(), active, self.not_null())
+                         self.id, self.state(), active, self.indicate_not_null())
 
 
 class TextField(Field):
@@ -500,9 +498,6 @@ class PasswordField(StringField):
     _HANDLER = 'pytis.PasswordField'
     
     def _validate(self, value, locale_data, **kwargs):
-        if not value and not self._row.new():
-            # Keep the original password when the field is empty.
-            return None
         if self.type.verify():
             if isinstance(value, tuple) and len(value) == 2:
                 value, kwargs['verify'] = value
@@ -808,6 +803,9 @@ class CheckboxField(Field):
             value = 'F'
         return super(CheckboxField, self)._validate(value, locale_data, **kwargs)
 
+    def indicate_not_null(self):
+        return False
+
     def label_in_front(self):
         return False
         
@@ -870,6 +868,10 @@ class FileUploadField(Field):
 
     def _editor(self, context, **kwargs):
         return context.generator().upload(**kwargs)
+
+    def indicate_not_null(self):
+        return self.type.not_null() and row.new()
+
 
     
 class EnumerationField(Field):
