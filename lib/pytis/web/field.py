@@ -724,7 +724,7 @@ class DateTimeField(TextField):
 
     def _maxlen(self):
         # TODO: Respect date format!
-        return 18
+        return 19
     
     def _editor(self, context, **kwargs):
         result = super(DateTimeField, self)._editor(context, **kwargs)
