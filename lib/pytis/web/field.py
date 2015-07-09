@@ -870,7 +870,7 @@ class FileUploadField(Field):
         return context.generator().upload(**kwargs)
 
     def indicate_not_null(self):
-        return self.type.not_null() and row.new()
+        return self.type.not_null() and self._row.new()
 
 
     
