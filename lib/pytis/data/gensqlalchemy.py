@@ -1627,6 +1627,8 @@ def _alchemy2pytis_type(atype):
         return pytis.data.Date()
     elif isinstance(atype, sqlalchemy.Numeric):
         return pytis.data.Float(digits=atype.precision, precision=atype.scale)
+    elif isinstance(atype, sqlalchemy.dialects.postgresql.ARRAY):
+        return pytis.data.Array(inner_type=_alchemy2pytis_type(atype.item_type))
     elif isinstance(atype, sqlalchemy.types.NullType):
         return None
     raise Exception("Unrecognized SQLAlchemy type", atype)
