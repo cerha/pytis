@@ -206,8 +206,8 @@ class Field(object):
         elif isinstance(data_type, Content):
             cls = ContentField
         elif isinstance(data_type, pd.Array):
-            inner_type = data_type.inner_type()
-            if inner_type.enumerator():
+            selection_type = spec.selection_type()
+            if selection_type == SelectionType.CHECKLIST:
                 cls = ChecklistField
             else:
                 cls = ArrayField
@@ -905,20 +905,11 @@ class EnumerationField(Field):
         else:
             return None
 
-    def _enumeration(self, context):
+    def _format_display_value(self, context, display):
         g = context.generator()
-        type = self.type
-        if isinstance(type, pd.Array):
-            type = type.inner_type()
-        result = []
-        for val, display in self._row.enumerate(self.id):
-            if isinstance(display, lcg.Localizable):
-                display = context.localize(display)
-            escaped_display = g.noescape(g.escape(display)
-                                         .replace(' ', '&nbsp;')
-                                         .replace("\n", "<br/>"))
-            result.append((val, type.export(val), escaped_display,))
-        return result
+        if isinstance(display, lcg.Localizable):
+            display = context.localize(display)
+        return g.noescape(g.escape(display).replace(' ', '&nbsp;').replace("\n", "<br/>"))
 
 
 class RadioField(EnumerationField):
@@ -928,19 +919,21 @@ class RadioField(EnumerationField):
         g = context.generator()
         value = self._value()
         radios = []
-        choices = self._enumeration(context)
+        choices = self._row.enumerate(self.id)
         if not value.type().not_null():
             null_display = self.spec.null_display()
             if null_display:
-                choices.insert(0, (None, '', null_display))
+                choices.insert(0, (None, null_display))
         if self.spec.orientation() == Orientation.VERTICAL or self.spec.height() > 1:
             wrap = g.div
         else:
             wrap = g.span
-        for i, (val, strval, display) in enumerate(choices):
+        for i, (val, display) in enumerate(choices):
             radio_id = id + '-' + str(i)
-            radio = g.radio(value=strval, checked=(val == value.value()), id=radio_id, **kwargs)
-            label = g.label(display, radio_id)
+            radio = g.radio(value=self.type.export(val),
+                            checked=(val == value.value()),
+                            id=radio_id, **kwargs)
+            label = g.label(self._format_display_value(context, display), radio_id)
             radios.append(wrap(radio + label))
         return wrap(radios, id=id, cls='radio-group')
 
@@ -950,28 +943,50 @@ class ChoiceField(EnumerationField):
     
     def _editor(self, context, **kwargs):
         g = context.generator()
-        enumeration = self._enumeration(context)
+        enumeration = self._row.enumerate(self.id)
         options = [(self.spec.null_display() or g.noescape("&nbsp;"), "")] + \
-                  [(display, strval) for val, strval, display in enumeration]
+                  [(self._format_display_value(context, display), self.type.export(val))
+                   for val, display in enumeration]
         value = self._value().value()
-        if value in [val for val, strval, display in enumeration]:
+        if value in [val for val, display in enumeration]:
             selected = self.type.export(value)
         else:
             selected = None
         return g.select(options=options, selected=selected, **kwargs)
     
-class ChecklistField(EnumerationField):
-    _HANDLER = 'pytis.ChecklistField'
+
+class ArrayField(EnumerationField):
 
     def _validate(self, value, locale_data, **kwargs):
         if value:
             value = pytis.util.xtuple(value)
         else:
             value = ()
-        return super(ChecklistField, self)._validate(value, locale_data, **kwargs)
+        return super(ArrayField, self)._validate(value, locale_data, **kwargs)
+
+    def _format(self, context):
+        g = context.generator()
+        if self.spec.display():
+            values = self._row.display(self.id, export=localizable_export, single=False)
+        else:
+            values = [v.export() for v in self._value().value()]
+        return lcg.concat([g.span(value) for value in values], separator=', ')
+
+    def _display(self, context):
+        return None
+
+    def _editor(self, context, **kwargs):
+        raise Exception("Array field editation unsupported.")
+
+
+class ChecklistField(ArrayField):
+    _HANDLER = 'pytis.ChecklistField'
     
     def _format(self, context):
-        return self._editor(context, id=self.html_id(), readonly=True)
+        if self._showform:
+            return self._editor(context, id=self.html_id(), readonly=True)
+        else:
+            return super(ChecklistField, self)._format(context)
         
     def _editor(self, context, id, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
@@ -981,7 +996,7 @@ class ChecklistField(EnumerationField):
             uri_provider = self._uri_provider(self._row, UriType.LINK, self.id)
         else:
             uri_provider = None
-        def checkbox(i, value, strval, display):
+        def checkbox(i, value, display):
             # Beware!  Any changes in checkbox rendering made here should be
             # also reflected in the javascript code rendering the items
             # dynamically on form changes.
@@ -991,35 +1006,25 @@ class ChecklistField(EnumerationField):
                 onchange = "this.checked=" + (checked and 'true' or 'false')
             else:
                 onchange = None
-            result = (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
+            exported_value = self.type.inner_type().export(value)
+            result = (g.checkbox(id=checkbox_id, name=name, value=exported_value, checked=checked,
                                  disabled=disabled, onchange=onchange) +
-                      g.noescape('&nbsp;') + g.label(display, checkbox_id))
+                      g.noescape('&nbsp;') +
+                      g.label(self._format_display_value(context, display), checkbox_id))
             if uri_provider:
                 uri = uri_provider(value)
                 if uri:
                     if type(uri) in (str, unicode):
-                        link = g.a(strval, href=uri)
+                        link = g.a(exported_value, href=uri)
                     else:
-                        link = g.a(strval, href=uri.uri(), title=uri.title(), target=uri.target())
+                        link = g.a(exported_value, href=uri.uri(), title=uri.title(),
+                                   target=uri.target())
                     result += (g.noescape('&nbsp;[') + link + g.noescape(']'))
             return result
-        checkboxes = [g.div(checkbox(i, val, strval, display))
-                      for i, (val, strval, display) in enumerate(self._enumeration(context))]
+        checkboxes = [g.div(checkbox(i, val, display))
+                      for i, (val, display) in enumerate(self._row.enumerate(self.id))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
-    
-    def _display(self, context):
-        return None
 
-
-class ArrayField(EnumerationField):
-
-    def _format(self, context):
-        g = context.generator()
-        return ', '.join([g.span(display)
-                          for val, strval, display in self._enumeration(context)])
-
-    def _editor(self, context, **kwargs):
-        raise Exception("Array field editation unsupported.")
 
 class CodebookField(EnumerationField, TextField):
     pass

@@ -257,7 +257,7 @@ class InputField(object, KeyHandler, CommandHandler):
                     SelectionType.CODEBOOK: CodebookField,
                     SelectionType.LIST: ListField,
                     SelectionType.CHOICE: ChoiceField,
-                    SelectionType.LIST_BOX: ListBoxField,
+                    SelectionType.LISTBOX: ListBoxField,
                     SelectionType.RADIO: RadioBoxField,
                 }
                 field = mapping[selection_type]
@@ -2559,7 +2559,7 @@ class StructuredTextField(TextField):
         fields = (
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
-                  selection_type=pytis.presentation.SelectionType.LIST_BOX),
+                  selection_type=pytis.presentation.SelectionType.LISTBOX),
             Field('preview', _("Preview"), compact=True, width=200, height=200,
                   computer=computer(self._image_preview_computer),
                   editable=pytis.presentation.Editable.NEVER,
@@ -2622,7 +2622,7 @@ class StructuredTextField(TextField):
         fields = (
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
-                  selection_type=pytis.presentation.SelectionType.LIST_BOX),
+                  selection_type=pytis.presentation.SelectionType.LISTBOX),
             Field('title', _(u"Title"), width=50,
                   descr=_("Enter the link label displayed within document text. "
                           "Leave empty if you want to dispaly the file name directly.")),

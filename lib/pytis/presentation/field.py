@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2014 Brailcom, o.p.s.
+# Copyright (C) 2002-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -978,8 +978,19 @@ class PresentedRow(object):
         column = self._coldict[key]
         return column.prefer_display
         
-    def display(self, key, export=None):
+    def display(self, key, export=None, single=True):
         """Return enumerator `display' value for given field as a string.
+        
+        Arguments:
+
+          export -- function used to export inline_display field value.  If not
+            defined, the default export method of inline_display data type is
+            used; Relevant only for fields with 'inline_display' defined.
+            Unused otherwise (when a display function is called).
+          single -- always return a single string (bool).  If true, the method
+            returns a single string also for Array types.  Otherwise array
+            values are returned as a tuple of separately formatted display
+            values.
 
         If the field has no enumerator or no display was specified, an empty
         string is returned.
@@ -988,7 +999,7 @@ class PresentedRow(object):
         to the enumeration (is invalid) or if it is not possible to retrieve
         the displayed value (isufficient access rights, current transaction
         aborted etc.)
-        
+
         """
         column = self._coldict[key]
         if self._secret_column(column):
@@ -1022,12 +1033,17 @@ class PresentedRow(object):
         if value is None:
             return column.null_display or ''
         elif display:
+            def check_result(f, *args, **kwargs):
+                result = f(*args, **kwargs)
+                assert isinstance(result, basestring), \
+                    "Invalid result of display function for column '%s': %r" % (column.id, result)
+                return result
             if isinstance(column.type, pytis.data.Array):
-                result = ', '.join([display(v.value()) for v in value])
+                result = [check_result(display, v.value()) for v in value]
+                if single:
+                    result = ', '.join(result)
             else:
-                result = display(value)
-            assert isinstance(result, basestring), \
-                "Invalid result of display function for column '%s': %r" % (column.id, result)
+                result = check_result(display, value)
             return result
         else:
             return ''

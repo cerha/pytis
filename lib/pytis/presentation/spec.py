@@ -2299,18 +2299,22 @@ class Editable(object):
 class SelectionType(object):
     """Definition of available selection types for enumeration fields."""
     CHOICE = 'CHOICE'
-    """Pull-down menu selection."""
+    """Pull-down menu selection from enumaration display values."""
     RADIO = 'RADIO'
-    """Radio box with a radio button for each selection value."""
-    LIST_BOX = 'LIST_BOX'
-    """Scrollable list selection."""
-    CODEBOOK = 'CODEBOOK'
-    """Hand-editable code entry field with a Codebook form invocation button."""
+    """Radio box with a radio button for each enumeration display value."""
+    LISTBOX = 'LISTBOX'
+    """Scrollable list selection from enumaration display values."""
     LIST = 'LIST'
     """Scrollable list with all codebook columns."""
+    CODEBOOK = 'CODEBOOK'
+    """Hand-editable code entry field with a Codebook form invocation button."""
+    CHECKLIST = 'CHECKLIST'
+    """List with a checkbox for each enumeration value (only for multi-value/Array fields)."""
     # Backwards compatibility options
     RADIO_BOX = RADIO
-    """Deprecated."""
+    """Deprecated.  Equivalent to 'RADIO'"""
+    LIST_BOX = LISTBOX
+    """Deprecated.  Equivalent to 'LISTBOX'"""
     
    
 class PostProcess(object):

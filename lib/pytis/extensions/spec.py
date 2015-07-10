@@ -256,7 +256,7 @@ def run_any_form():
                 Field('name_substr', _("Search string"), width=40,),
                 Field('name', _("Specification name"), width=40, height=10,
                       enumerator=pytis.data.FixedEnumerator(all_defs), not_null=True,
-                      selection_type=SelectionType.LIST_BOX,
+                      selection_type=SelectionType.LISTBOX,
                       runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
                       ),
                 ))
