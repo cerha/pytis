@@ -93,9 +93,9 @@ class PresentedRow(unittest.TestCase):
                                  ('c', None),
                                  ('d', None),
                                  ('sum', None)))
-        data_row = self._data_row(a='xx', b=100, c=77, d=18, r=(1, 8))
+        data_row = self._data_row(a=4, b=100, c=77, d=18, r=(1, 8))
         row = pp.PresentedRow(self._fields, self._data, data_row, new=True)
-        self._check_values(row, (('a', 'xx'),
+        self._check_values(row, (('a', 4),
                                  ('b', 100),
                                  ('c', 77),
                                  ('d', 18),
@@ -103,7 +103,7 @@ class PresentedRow(unittest.TestCase):
                                  ('sum', 177),
                                  ('r', (1, 8))))
         row = pp.PresentedRow(self._fields, self._data, data_row, new=False)
-        self._check_values(row, (('a', 'xx'),
+        self._check_values(row, (('a', 4),
                                  ('b', 100),
                                  ('c', 77),
                                  ('d', 18),
@@ -111,7 +111,7 @@ class PresentedRow(unittest.TestCase):
                                  ('sum', 177)))
         row['c'] = self._value('c', 88)
         row['r'] = self._value('r', (8, 9))
-        self._check_values(row, (('a', 'xx'),
+        self._check_values(row, (('a', 4),
                                  ('b', 100),
                                  ('c', 88),
                                  ('d', 176),
@@ -119,8 +119,8 @@ class PresentedRow(unittest.TestCase):
         # TODO: dodělat
     def test_prefill(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True,
-                           prefill={'a': 'xx', 'b': 3, 'd': 77})
-        self._check_values(row, (('a', 'xx'),
+                           prefill={'a': 1, 'b': 3, 'd': 77})
+        self._check_values(row, (('a', 1),
                                  ('b', 3),
                                  ('c', 5),
                                  ('d', 77),
@@ -233,7 +233,7 @@ class PresentedRow(unittest.TestCase):
         #self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
         assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
         del changed[0:len(changed)]
-        row.set_row(self._data_row(a='xx', b=10, c=20, d=30))
+        row.set_row(self._data_row(a=1, b=10, c=20, d=30))
         assert 'a' in changed and 'b' in changed and 'c' in changed and 'd' in changed \
                and 'sum' in changed and 'inc' in changed, changed
         
@@ -279,7 +279,10 @@ class PresentedRow(unittest.TestCase):
     def test_format(self):
         row = pp.PresentedRow(self._fields, self._data, None, singleline=True)
         row['r'] = self._value('r', (8, 9))
-        assert row.format('r') == ('8', '9'), row.format('r')
+        r1 = row.format('r')
+        r2 = row.format('r', single=False)
+        assert r1 == u'8 — 9', r1
+        assert r2 == ('8', '9'), r2
     def test_display(self):
         C = pd.ColumnSpec
         S = pd.String
