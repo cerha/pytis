@@ -3505,10 +3505,16 @@ class Field(object):
                 t2 = t2()
             kwargs['type'] = t1.clone(t2)
         new_field = Field(**kwargs)
-        if kwargs.get('codebook') is not None:
-            type_ = kwargs.get('type') or field.type()
-            if type_ is not None:
-                new_field.set_type(type_)
+        type_ = kwargs.get('type') or field.type()
+        if type_ is not None and kwargs.get('codebook') is not None:
+            new_field.set_type(type_)
+        elif isinstance(type_, pytis.data.Array):
+            # This hack adds field's enumerator to the Array inner type.
+            enumerator = dict(self.type_kwargs(), **field.type_kwargs()).get('enumerator')
+            inner_type = type_.inner_type()
+            if enumerator and not inner_type.enumerator():
+                inner_type = inner_type.clone(inner_type.__class__(enumerator=enumerator))
+                new_field.set_type(type_.clone(type_.__class__(inner_type=inner_type)))
         return new_field
 
     def id(self):
@@ -3697,9 +3703,11 @@ class Field(object):
         if enumerator:
             kwargs['enumerator'] = enumerator
         if 'inner_type' in kwargs:
-            # This is quite a hack - it assumes all type arguments are the
-            # inner type arguments.  If not, an instance must be passed
-            # directly, but that doesn't allow the enumerator magic.
+            # This is a hack for the deprecated special case when inner_type
+            # of Array type is passed as a class.  It assumes all type arguments
+            # are the inner type arguments.  The main reason is to add enumerator
+            # to inner type kwargs.  There is another similar hack in Field.clone()
+            # which works for the case that types are instances (not classes).
             inner_type = kwargs.pop('inner_type')
             if type(inner_type) == type(pytis.data.Type):
                 kwargs = {'inner_type': inner_type(**kwargs)}
