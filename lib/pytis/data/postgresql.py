@@ -1125,7 +1125,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
                 result = full_text_handler(binding)
             elif convert_ltree and isinstance(column_type(), LTree) and column_type().text():
-                result = self._pdbb_tabcol(binding.table(), column_name, column_id).cast('text')
+                result = self._pdbb_tabcol(binding.table(), column_name, column_id) + '::text'
             else:
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id)
                 crypto_name = binding.crypto_name()
