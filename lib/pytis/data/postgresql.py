@@ -1902,8 +1902,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 fix_case = lambda x: x
             if rel in ('=', '!=') and a2null:
-                rel = _Query(' IS' + (' NOT' if rel == '!=' else '') + ' ')
-            return (fix_case(a1) + ' ' + rel + ' ' + fix_case(a2)).wrap()
+                relarg = _Query(' IS' + (' NOT' if rel == '!=' else '') + ' NULL')
+            else:
+                relarg = _Query(rel + ' ') + fix_case(a2)
+            return (fix_case(a1) + ' ' + relarg).wrap()
         operators = {'EQ': '=',
                      'NE': '!=',
                      'LT': '<',
