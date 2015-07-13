@@ -1976,7 +1976,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif op_name == 'LTreeMatch':
             assert len(op_args) == 2, ('Invalid number of arguments', op_args)
             col, query = op_args
-            expression = _Query("%s ~ %%s" % (col,), query)
+            expression = _Query("%s ~ " % (col,)) + _Query.next_arg_query(sval(query))
         elif op_name == 'Function':
             expression = function_call(op_args)
         else:
