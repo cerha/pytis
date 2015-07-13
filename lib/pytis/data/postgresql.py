@@ -2207,7 +2207,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     while True:
                         if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
-                            args = dict(selection=selection, number=self._pg_position() + 1)
+                            args = dict(selection=selection,
+                                        number=ival(self._pg_position() + 1))
                             query = data._pdbb_command_move_absolute.update(args)
                             if not transaction or transaction.open():
                                 # The transaction can still become dead before
@@ -2990,8 +2991,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._postgresql_begin_transaction()
                 if isolation:
                     read_only_string = (" READ ONLY" if read_only else "")
-                    q = self._pdbb_command_isolation.update(dict(isolation=_Query(isolation),
-                                                                 read_only=_Query(read_only_string)))
+                    args = dict(isolation=_Query(isolation), read_only=_Query(read_only_string))
+                    q = self._pdbb_command_isolation.update(args)
                     self._pg_query(q)
                 else:
                     self._pg_query(_Query("select null"))
