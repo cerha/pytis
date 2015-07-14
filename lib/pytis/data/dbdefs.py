@@ -149,6 +149,16 @@ def stype(expr, **kwargs):
     """
     return sqlalchemy.cast(expr, sqlalchemy.String(**kwargs))
 
+def btype(expr, **kwargs):
+    """Return SQLAlchemy expression casted to boolean.
+
+    Arguments:
+
+      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+
+    """
+    return sqlalchemy.cast(expr, sqlalchemy.Boolean(**kwargs))
+
 def is_(column, other):
     """Like SQLAlchemy 'is_()' method, but casted to boolean.
 
