@@ -376,7 +376,11 @@ class LayoutForm(FieldForm):
             return self._content
             
     def __init__(self, view, req, row, layout=None, **kwargs):
-        assert layout is None or isinstance(layout, GroupSpec)
+        if layout is None:
+            layout = view.layout().group()
+        if isinstance(layout, (tuple, list)):
+            layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
+        assert isinstance(layout, GroupSpec)
         self._layout = layout
         super(LayoutForm, self).__init__(view, req, row, **kwargs)
         
