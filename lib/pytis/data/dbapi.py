@@ -182,8 +182,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if not outside_transaction:
                     raise DBRetryException(message, exception, exception.args, query)
                 cdata = connection.connection_data()
+                search_path = connection.connection_info('search_path')
                 new_connection = self._postgresql_new_connection(cdata)
                 try:
+                    if search_path:
+                        do_query(new_connection, 'set search_path to ' + search_path)
                     result = do_query(new_connection, query)
                 except Exception as e:
                     raise DBSystemException(message, e, e.args, query)
