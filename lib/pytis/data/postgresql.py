@@ -229,6 +229,8 @@ class _Query(object):
         for k, v in args.items():
             if isinstance(v, basestring):
                 args[k] = "'" + v + "'"
+            elif isinstance(v, buffer):
+                args[k] = '<binary_data>'
         return query % args
 
     @classmethod

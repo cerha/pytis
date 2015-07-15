@@ -151,6 +151,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                             result = "'%s'" % (arg.replace('\x00', '\\0').replace("'", "''"),)
                             if not standard_strings:
                                 result = result.replace('\\', '\\\\')
+                        elif isinstance(arg, buffer):
+                            result = '<binary_data>'
                         else:
                             result = arg
                         return result
