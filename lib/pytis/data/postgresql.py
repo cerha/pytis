@@ -1381,7 +1381,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     db_type_kwargs['digits'] = 100
         elif db_type_cls is Integer and serial:
             db_type_cls = Serial
-        elif type_ in ('time', 'tsrange',):
+        elif type_ in ('timestamp', 'time', 'tsrange',):
             db_type_kwargs['without_timezone'] = True
         if array:
             db_type_kwargs['inner_type'] = db_type_cls()
