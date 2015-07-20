@@ -54,26 +54,31 @@ def check_specifications(specifications):
                 (without_tz if type_._without_timezone else with_tz).add(f)
         if with_tz or without_tz:
             table_name = table.pytis_name(real=True)
+            spec_class = table.__class__
+            spec_name = spec_class.__name__
+            module_name = spec_class.__module__
+            if module_name:
+                spec_name = module_name + '.' + spec_name
             for schema_name in table.object_schemas():
                 db_table = load_table(schema_name, table_name)
                 for f in with_tz:
                     column_name = f.id()
                     is_with_tz = db_table.get(column_name)
                     if is_with_tz is None:
-                        print "MISSING:", table_name, column_name
+                        print "MISSING:", spec_name, column_name
                     elif not is_with_tz:
-                        print "FIX - WITHOUT TIMEZONE:", table_name, column_name
+                        print "FIX - WITHOUT TIMEZONE:", spec_name, column_name
                     else:
-                        print 'OK:', table_name, column_name
+                        print 'OK:', spec_name, column_name
                 for f in without_tz:
                     column_name = f.id()
                     is_with_tz = db_table.get(column_name)
                     if is_with_tz is None:
-                        print "MISSING:", table_name, column_name
+                        print "MISSING:", spec_name, column_name
                     elif is_with_tz:
-                        print "FIX - WITH TIMEZONE:", table_name, column_name
+                        print "FIX - WITH TIMEZONE:", spec_name, column_name
                     else:
-                        print 'OK:', table_name, column_name
+                        print 'OK:', spec_name, column_name
 
 def main():
     if len(sys.argv) != 2:
