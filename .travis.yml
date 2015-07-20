@@ -1,0 +1,48 @@
+language: python
+python:
+  - "2.7"
+env:
+  matrix:
+    - PGVER=9.1
+    - PGVER=9.2
+    - PGVER=9.3
+    - PGVER=9.4
+  global:
+    - WXVERDEB=2.8
+    - WXVERFULL=2.8.12.1
+matrix:
+  allow_failures:
+    - env: PGVER=9.1
+install:
+  - "git clone git://git.freebsoft.org/git/lcg"
+  - "git clone git://git.freebsoft.org/git/wiking"
+  - "sudo apt-get update -qq"
+  - "sudo service postgresql stop"
+  - "sudo service postgresql start $PGVER"
+  - "sudo apt-get -y install libpq-dev postgresql-plpython-$PGVER"
+  - "pip install psycopg2 sqlalchemy coveralls unittest2"
+  # install wx 2.8
+  # the following commented-out lines are for installing wxGTK along with wxPython from upstream, useful if we decide to test with non-Debian upstream versions in the future
+  #- "sudo apt-get -y build-dep python-wxgtk2.8"
+  #- "wget http://sourceforge.net/projects/wxpython/files/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2/download && mv download wxPython-src-2.8.12.1.tar.bz2"
+  #- "tar xjf wxPython-src-2.8.12.1.tar.bz2 && cd wxPython-src-2.8.12.1"
+  #- "curl 'http://anonscm.debian.org/cgit/freewx/wx.git/plain/debian/patches/fix-configure-for-multiarch?h=debian-wx3.0&id=a1cb13e75d4c83a96e48c621736685a9d2bf4cf8' | patch"
+  #- "./configure --with-zlib=sys --with-expat=sys --enable-unicode --with-gtk --without-gnomeprint --with-opengl --enable-sound --with-sdl --enable-display --enable-geometry --enable-graphics_ctx --with-libjpeg=sys --with-libpng=sys --with-libtiff=sys --enable-mediactrl"
+  #- "make && make -C make -C contrib/src/gizmos && make -C contrib/src/stc"
+  #- "sudo make install && sudo make -C contrib/src/gizmos install && sudo make -C contrib/src/stc install"
+  - "sudo apt-get build-dep python-wxgtk${WXVERDEB}"
+  - "sudo apt-get install libwxgtk${WXVERDEB}-dev"
+  - "apt-get source python-wxgtk${WXVERDEB} && cd wxwidgets${WXVERDEB}-${WXVERFULL}"
+  - "cd wxPython && CFLAGS=\"-Wno-error\" python setup.py build_ext WXPORT=gtk2 UNICODE=1 CORE_ONLY=1 --inplace"
+  - "cd ../.."
+before_script:
+  - "createuser -U postgres -SDR pytis"
+  - "createdb -U postgres -O $USER test"
+  - "createlang -U postgres plpythonu test"
+  - "psql -U postgres -1c \"ALTER DATABASE test SET default_text_search_config to \'simple\'\" test"
+  - "psql -U postgres -1c 'CREATE EXTENSION pgcrypto;' test"
+  - "PYTHONPATH=lib tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql -1f - test"
+script:
+  - "PYTHONPATH=lcg/lib:lib:wiking/lib:wxwidgets${WXVERDEB}-${WXVERFULL}/wxPython:$PYTHONPATH coverage run --source=lib/pytis lib/pytis/data/_test.py"
+after_success:
+  - "coveralls"
