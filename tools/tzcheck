@@ -41,11 +41,8 @@ def load_table(schema_name, table_name):
     c.close()
     return dict(columns)
 
-def load_specifications():
-    import config
-    for m in config.search_modules:
-        if m.endswith('.defs'):
-            pytis.util.load_module(m[:-4] + 'dbdefs')
+def load_specifications(module):
+    pytis.util.load_module(module)
     return [s for s in sql.specification_instances() if isinstance(s, sql.SQLTable)]
 
 def check_specifications(specifications):
@@ -162,11 +159,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('config_file', metavar='CONFIG-FILE',
                         help="pytis configuration file")
+    parser.add_argument('module', metavar='DBDEFS-MODULE',
+                        help="pytis configuration file")
     parser.add_argument('--update', action='store_true',
                         help="update specifications as needed")
     args = parser.parse_args()
     pytis.util.set_configuration_file(args.config_file)
-    specifications = load_specifications()
+    specifications = load_specifications(args.module)
     changes = check_specifications(specifications)
     if args.update:
         update_specifications(changes)
