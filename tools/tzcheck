@@ -3,6 +3,7 @@
 import optparse
 import os
 import re
+import shutil
 import sys
 import tempfile
 
@@ -149,7 +150,7 @@ def update_specifications(changes):
                 pass
         else:
             try:
-                os.rename(output_file, module_file)
+                shutil.move(output_file, module_file)
             except Exception as e:
                 print "ERROR: Can't install modified file:", module_file, e
     for module_name, class_dict in updates.items():
