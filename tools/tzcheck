@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
+import optparse
+import os
+import re
 import sys
+import tempfile
 
 import psycopg2 as dbapi
 
@@ -44,6 +48,7 @@ def load_specifications():
     return [s for s in sql.specification_instances() if isinstance(s, sql.SQLTable)]
 
 def check_specifications(specifications):
+    changes = set()
     for table in specifications:
         with_tz = set()
         without_tz = set()
@@ -55,7 +60,7 @@ def check_specifications(specifications):
         if with_tz or without_tz:
             table_name = table.pytis_name(real=True)
             spec_class = table.__class__
-            spec_name = spec_class.__name__
+            spec_name = spec_class_name = spec_class.__name__
             module_name = spec_class.__module__
             if module_name:
                 spec_name = module_name + '.' + spec_name
@@ -67,6 +72,7 @@ def check_specifications(specifications):
                     if is_with_tz is None:
                         print "MISSING:", spec_name, column_name
                     elif not is_with_tz:
+                        changes.add((module_name, spec_class_name, column_name, True,))
                         print "FIX - WITHOUT TIMEZONE:", spec_name, column_name
                     else:
                         print 'OK:', spec_name, column_name
@@ -76,18 +82,95 @@ def check_specifications(specifications):
                     if is_with_tz is None:
                         print "MISSING:", spec_name, column_name
                     elif is_with_tz:
+                        changes.add((module_name, spec_class_name, column_name, False,))
                         print "FIX - WITH TIMEZONE:", spec_name, column_name
                     else:
                         print 'OK:', spec_name, column_name
+    return changes
 
+def update_specifications(changes):
+    python_path = sys.path
+    re_class = re.compile('^class +([a-zA-Z_0-9]+) *[(]')
+    re_field = re.compile('^[ a-zA-Z_0-9.]*Column *'
+                          '[(][\'"]([a-zA-Z_0-9]+)[\'"],.*Time(Range)? *[(]')
+    re_without_timezone = re.compile('.*without_timezone=(True|False)')
+    updates = {} # file - class - field - without_timezone value
+    for module, class_, column, value in changes:
+        class_dict = updates[module] = updates.get(module, {})
+        column_dict = class_dict[class_] = class_dict.get(class_, {})
+        column_dict[column] = value
+    for module, class_dict in updates.items():
+        module_path = os.path.join(*module.split('.')) + '.py'
+        for p in python_path:
+            module_file = os.path.join(p, module_path)
+            try:
+                input_ = open(module_file)
+                break
+            except IOError:
+                pass
+        else:
+            print "ERROR: Can't open module not found:", module
+            continue
+        fd, output_file = tempfile.mkstemp()
+        try:
+            output = os.fdopen(fd, 'w')
+            current_class_dict = None
+            for line in input_.readlines():
+                new_line = line
+                if current_class_dict:
+                    match = re_field.match(line)
+                    if match is not None:
+                        field = match.group(1)
+                        value = current_class_dict.get(field)
+                        if value is not None:
+                            del current_class_dict[field]
+                        wtz_match = re_without_timezone.match(line)
+                        if wtz_match is None:
+                            end = match.end()
+                            new_line = line[:end] + 'without_timezone=' + str(value)
+                            if end >= len(line) or line[end] != ')':
+                                new_line += ', '
+                            new_line += line[end:]
+                        else:
+                            beg, end = match.span(1)
+                            new_line = line[:beg] + str(value) + line[end:]
+                match = re_class.match(line)
+                if match is not None:
+                    class_name = match.group(1)
+                    current_class_dict = class_dict.get(class_name)
+                output.write(new_line)
+            output.close()
+            input_.close()
+        except Exception as e:
+            print 'ERROR:', e
+            try:
+                os.remove(output_file)
+            except:
+                pass
+        else:
+            try:
+                os.rename(output_file, module_file)
+            except Exception as e:
+                print "ERROR: Can't install modified file:", module_file, e
+    for module_name, class_dict in updates.items():
+        for class_name, field_dict in class_dict.items():
+            for field_name in field_dict:
+                print 'NOT UPDATED:', module_name, class_name, field_name
+                
 def main():
-    if len(sys.argv) != 2:
-        sys.stderr.write("usage: %s CONFIG-FILE\n" % (sys.argv[0],))
+    parser = optparse.OptionParser()
+    parser.add_option("--update", action="store_true",
+                      help="update specifications as needed")
+    options, args = parser.parse_args()
+    if len(args) != 1:
+        sys.stderr.write("usage: %s [ --update ] CONFIG-FILE\n" % (sys.argv[0],))
         sys.exit(1)
-    config_file = sys.argv[1]
+    config_file = args[0]
     pytis.util.set_configuration_file(config_file)
     specifications = load_specifications()
-    check_specifications(specifications)
+    changes = check_specifications(specifications)
+    if options.update:
+        update_specifications(changes)
 
 if __name__ == '__main__':
     main()
