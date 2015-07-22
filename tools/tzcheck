@@ -29,32 +29,63 @@ def connect():
                 kwargs[option] = value
         db_connection = dbapi.connect(**kwargs)
 
-def load_table(schema_name, table_name):
+def query(query, args):
     connect()
     c = db_connection.cursor()
-    c.execute(("select attname, typname from pg_class "
-               "join pg_namespace on relnamespace = pg_namespace.oid "
-               "join pg_attribute on attrelid = pg_class.oid "
-               "join pg_type on atttypid = pg_type.oid "
-               "where nspname = '%s' and relname = '%s' ") % (schema_name, table_name,))
-    columns = [(row[0], row[1].endswith('tz'),) for row in c.fetchall()]
+    c.execute(query, args)
+    result = c.fetchall()
     c.close()
+    return result
+
+def load_table(schema_name, table_name):
+    q = ("select attname, typname from pg_class "
+         "join pg_namespace on relnamespace = pg_namespace.oid "
+         "join pg_attribute on attrelid = pg_class.oid "
+         "join pg_type on atttypid = pg_type.oid "
+         "where nspname = %(schema)s and relname = %(table)s ")
+    a = dict(schema=schema_name, table=table_name)
+    columns = [(row[0], row[1].endswith('tz'),) for row in query(q, a)]
     return dict(columns)
+
+def load_function(schema_name, function_name):
+    q = ("select proargtypes from pg_proc "
+         "join pg_namespace on pronamespace = pg_namespace.oid "
+         "where nspname = %(schema)s and proname = %(function)s")
+    a = dict(schema=schema_name, function=function_name)
+    arguments = [type_mapping[int(arg)].endswith('tz') for arg in query(q, a)[0][0].split()]
+    return dict(enumerate(arguments))
+
+type_mapping = None
+def load_type_mapping():
+    global type_mapping
+    if type_mapping is None:
+        q = "select oid, typname from pg_type"
+        type_mapping = dict(query(q, {}))
 
 def load_specifications(module):
     pytis.util.load_module(module)
-    return [s for s in sql.specification_instances() if isinstance(s, sql.SQLTable)]
+    return [s for s in sql.specification_instances()
+            if isinstance(s, (sql.SQLTable, sql.SQLFunctional,))]
 
 def check_specifications(specifications):
-    changes = set()
+    load_type_mapping()
+    changes = check_table_specifications([s for s in specifications
+                                          if isinstance(s, sql.SQLTable)])
+    changes += check_function_specifications([s for s in specifications
+                                              if isinstance(s, sql.SQLFunctional) and
+                                              s.__class__.__name__ != 'T'])
+    return changes
+
+def check_table_specifications(specifications):
+    changes = []
     for table in specifications:
-        with_tz = set()
-        without_tz = set()
+        with_tz = []
+        without_tz = []
         for f in table.fields:
             type_ = f.type()
             if ((isinstance(type_, (pytis.data.DateTime, pytis.data.Time,)) and
                  not isinstance(type_, pytis.data.Date))):
-                (without_tz if type_._without_timezone else with_tz).add(f)
+                (without_tz if type_._without_timezone else with_tz).append(f)
         if with_tz or without_tz:
             table_name = table.pytis_name(real=True)
             spec_class = table.__class__
@@ -70,7 +101,7 @@ def check_specifications(specifications):
                     if is_with_tz is None:
                         print "MISSING:", spec_name, column_name
                     elif not is_with_tz:
-                        changes.add((module_name, spec_class_name, column_name, True,))
+                        changes.append((module_name, spec_class_name, column_name, True,))
                         print "FIX - WITHOUT TIMEZONE:", spec_name, column_name
                     else:
                         print 'OK:', spec_name, column_name
@@ -80,10 +111,48 @@ def check_specifications(specifications):
                     if is_with_tz is None:
                         print "MISSING:", spec_name, column_name
                     elif is_with_tz:
-                        changes.add((module_name, spec_class_name, column_name, False,))
+                        changes.append((module_name, spec_class_name, column_name, False,))
                         print "FIX - WITH TIMEZONE:", spec_name, column_name
                     else:
                         print 'OK:', spec_name, column_name
+    return changes
+
+def check_function_specifications(specifications):
+    changes = []
+    for function in specifications:
+        with_tz = []
+        without_tz = []
+        arguments = function.arguments
+        for i in range(len(arguments)):
+            type_ = arguments[i].type()
+            if ((isinstance(type_, (pytis.data.DateTime, pytis.data.Time,)) and
+                 not isinstance(type_, pytis.data.Date))):
+                (without_tz if type_._without_timezone else with_tz).append(i)
+        if with_tz or without_tz:
+            function_name = function.pytis_name(real=True)
+            spec_class = function.__class__
+            spec_name = spec_class.__name__
+            module_name = spec_class.__module__
+            if module_name:
+                spec_name = module_name + '.' + spec_name
+            for schema_name in function.object_schemas():
+                db_function = load_function(schema_name, function_name)
+                for a in with_tz:
+                    is_with_tz = db_function.get(a)
+                    if is_with_tz is None:
+                        print "MISSING:", spec_name, a
+                    elif not is_with_tz:
+                        print "FIX - WITHOUT TIMEZONE:", spec_name, a
+                    else:
+                        print 'OK:', spec_name, a
+                for a in without_tz:
+                    is_with_tz = db_function.get(a)
+                    if is_with_tz is None:
+                        print "MISSING:", spec_name, a
+                    elif is_with_tz:
+                        print "FIX - WITH TIMEZONE:", spec_name, a
+                    else:
+                        print 'OK:', spec_name, a
     return changes
 
 def update_specifications(changes):
