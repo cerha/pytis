@@ -1690,7 +1690,8 @@ class DateTime(_CommonDateTime):
             tzinfo = self.LOCAL_TZINFO
         else:
             tzinfo = self.UTC_TZINFO
-        value = value.astimezone(tzinfo)
+        if not self._without_timezone:
+            value = value.astimezone(tzinfo)
         if format is True:
             exported = value.isoformat(' ')
         else:
