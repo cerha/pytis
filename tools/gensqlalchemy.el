@@ -1,6 +1,6 @@
 ;;; gensqlalchemy.el --- support for working with pytis database specifications
 
-;; Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
+;; Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 
 ;; COPYRIGHT NOTICE
 
@@ -101,7 +101,7 @@
 ;;     (gensqlalchemy-pythonpath . "/PATH/TO/APPLICATION/lib:/PATH/TO/pytis/lib:/PATH/TO/lcg/lib"))
 ;;    ("lib/APPLICATION/dbdefs" . ((python-mode . ((gensqlalchemy-mode 1))))))
 
-(require 'cl)
+(require 'cl-lib)
 (require 'compile)
 (require 'etags)
 (require 'python)
@@ -202,8 +202,8 @@ Currently the mode just defines some key bindings."
     (format "*%s:%s*" name ext)))
 
 (defmacro with-gensqlachemy-specification (&rest body)
-  (let (($spec-regexp (gensym))
-        ($point (gensym)))
+  (let (($spec-regexp (cl-gensym))
+        ($point (cl-gensym)))
     `(save-excursion
        (let ((,$spec-regexp "^class +\\([a-zA-Z_0-9]+\\) *("))
          (goto-char (line-beginning-position))
@@ -355,7 +355,7 @@ If called with a prefix argument then show dependent objects as well."
        ,@body)))
 
 (defmacro with-gensqlalchemy-transaction (commit-command &rest body)
-  (let (($buffer (gensym)))
+  (let (($buffer (cl-gensym)))
     `(let ((,$buffer (if (eq major-mode 'sql-mode)
                          (current-buffer)
                        (get-buffer (gensqlalchemy-buffer-name "sql")))))
@@ -425,7 +425,6 @@ If called with a prefix argument then show dependent objects as well."
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
           (gensqlalchemy-send-buffer)))
-      (setq foo (cons 1 objects))
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
                   (destructuring-bind (kind name args) spec
@@ -595,10 +594,10 @@ objects."
 (defun gensqlalchemy-find-object (name)
   (let ((dir (gensqlalchemy-specification-directory))
         (class-regexp (concat "^class +" (regexp-quote name) "\\>")))
-    (flet ((spec-buffer-p (buffer)
-             (let ((file (or (buffer-file-name buffer) "")))
-               (or (string-prefix-p dir file)
-                   (string-match "/pytis/db/dbdefs/" file))))
+    (cl-flet ((spec-buffer-p (buffer)
+               (let ((file (or (buffer-file-name buffer) "")))
+                 (or (string-prefix-p dir file)
+                     (string-match "/pytis/db/dbdefs/" file))))
            (look-for-tag (name next-p)
              (let ((buffer (ignore-errors (find-tag-noselect name next-p))))
                (when buffer
@@ -682,11 +681,11 @@ where the specification may be put without breaking dependencies."
             (re-search-backward "^\\(class\\|    [a-zA-Z_]\\)")
             (push object (if (looking-at "    def ") soft-objects hard-objects))
             (goto-char point))))
-      (setq soft-objects (set-difference soft-objects hard-objects :test #'string=)) ; unused now
+      (setq soft-objects (cl-set-difference soft-objects hard-objects :test #'string=)) ; unused now
       (setq hard-dependencies (mapcar #'gensqlalchemy-find-object (sort hard-objects #'string<))))
     (let ((files (mapcar #'file-name-nondirectory
-                         (remove-if #'(lambda (file) (not (string-prefix-p dir file)))
-                                    (mapcar #'second hard-dependencies)))))
+                         (cl-remove-if #'(lambda (file) (not (string-prefix-p dir file)))
+                                       (mapcar #'second hard-dependencies)))))
       (find-file-other-window (concat dir "__init__.py"))
       (goto-char (point-min))
       (while (and files (re-search-forward "^from +\\([a-zA-Z0-9_]+\\) +import " nil t))
