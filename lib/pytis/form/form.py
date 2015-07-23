@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
         import pytis.extensions
-        start_time = pytis.data.DateTime.now()
+        start_time = pytis.data.DateTime.now(without_timezone=True)
         self._parent = parent
         self._resolver = resolver
         self._guardian = guardian or parent
@@ -209,7 +209,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             # This is necessary to prevent database connection leaks
             self._cleanup()
             raise
-        show_time = pytis.data.DateTime.now()
+        show_time = pytis.data.DateTime.now(without_timezone=True)
         if self._LOG_STATISTICS and config.form_statistics:
             pytis.extensions.dbfunction('pytis_log_form',
                                         ('form', pytis.data.Value(pytis.data.String(), name),),

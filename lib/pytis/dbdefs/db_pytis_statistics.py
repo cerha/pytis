@@ -56,8 +56,9 @@ class EPytisFormLog(sql.SQLTable):
               sql.Column('class', pytis.data.String(not_null=True), index=True),
               sql.Column('info', pytis.data.String(not_null=False), index=True),
               sql.Column('login', pytis.data.Name(not_null=True), index=True),
-              sql.Column('t_start', pytis.data.DateTime(not_null=True), index=True),
-              sql.Column('t_show', pytis.data.DateTime(not_null=True)),
+              sql.Column('t_start', pytis.data.DateTime(not_null=True, without_timezone=True),
+                         index=True),
+              sql.Column('t_show', pytis.data.DateTime(not_null=True, without_timezone=True)),
               )
     inherits = (XChanges,)
     with_oids = True
@@ -70,8 +71,8 @@ class PytisLogForm(sql.SQLFunction):
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
-                 sql.Column('', pytis.data.DateTime()),
-                 sql.Column('', pytis.data.DateTime()),)
+                 sql.Column('', pytis.data.DateTime(without_timezone=True)),
+                 sql.Column('', pytis.data.DateTime(without_timezone=True)),)
     result_type = pytis.data.Integer()
     multirow = False
     stability = 'VOLATILE'
