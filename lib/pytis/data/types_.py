@@ -3282,27 +3282,29 @@ def dval(value):
     assert value is None or isinstance(value, datetime.date), value
     return Value(Date(), value)
 
-def dtval(value):
+def dtval(value, without_timezone=False):
     """Return 'Value' instance of type 'DateTime' with given value.
 
     Arguments:
 
       value -- internal value of the 'DateTime' instance, datetime.datetime
+      without_timezone -- corresponding constructor argument of 'DateTime'
 
     """
     assert value is None or isinstance(value, datetime.datetime), value
-    return Value(DateTime(), value)
+    return Value(DateTime(without_timezone=without_timezone), value)
 
-def tval(value):
+def tval(value, without_timezone=False):
     """Return 'Value' instance of type 'Time' with given value.
 
     Arguments:
 
       value -- internal value of the 'Value' instance, datetime.time
+      without_timezone -- corresponding constructor argument of 'Time'
 
     """
     assert value is None or isinstance(value, datetime.time), value
-    return Value(Time(), value)
+    return Value(Time(without_timezone=without_timezone), value)
 
 def wmval(value):
     """Return 'VMValue' instance of type 'String' with given value.
