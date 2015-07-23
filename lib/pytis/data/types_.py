@@ -1550,7 +1550,10 @@ class _CommonDateTime(Type):
           
         """
         type_ = class_(**kwargs)
-        tz = type_._timezone
+        if kwargs.get('without_timezone'):
+            tz = False
+        else:
+            tz = type_._timezone
         return Value(type_, class_.datetime(tz=tz))
 
     @classmethod
@@ -1563,14 +1566,16 @@ class _CommonDateTime(Type):
         Arguments:
 
           tz -- determines time zone of the value; if 'None', UTC is used, if
-            'True', local time zone is used; otherwise it must be a
-            'datetime.tzinfo' instance to use
-        
+            'True', local time zone is used, if 'False', don't use any time
+            zone; otherwise it must be a 'datetime.tzinfo' instance to use
+
         """
         if tz is None:
             tz = class_.UTC_TZINFO
         elif tz is True:
             tz = class_.LOCAL_TZINFO
+        elif tz is False:
+            tz = None
         return class_._datetime(tz=tz)
 
     @classmethod
@@ -1970,7 +1975,11 @@ class Time(_CommonDateTime):
     @classmethod
     def _datetime(class_, tz):
         dt = datetime.datetime.now(tz)
-        return dt.astimezone(tz).timetz()
+        if tz is None:
+            result = dt.time()
+        else:
+            result = dt.astimezone(tz).timetz()
+        return result
     
     def adjust_value(self, value):
         if value is not None and not isinstance(value, (datetime.datetime, datetime.time)):
