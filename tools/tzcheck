@@ -52,7 +52,10 @@ def load_function(schema_name, function_name):
          "join pg_namespace on pronamespace = pg_namespace.oid "
          "where nspname = %(schema)s and proname = %(function)s")
     a = dict(schema=schema_name, function=function_name)
-    arguments = [type_mapping[int(arg)].endswith('tz') for arg in query(q, a)[0][0].split()]
+    result = query(q, a)
+    if len(result) == 0:
+        return {}
+    arguments = [type_mapping[int(arg)].endswith('tz') for arg in result[0][0].split()]
     return dict(enumerate(arguments))
 
 type_mapping = None
