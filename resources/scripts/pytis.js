@@ -440,9 +440,7 @@ pytis.BrowseForm = Class.create({
 		parameters[x.name] = x.value;
 	    }
 	});
-	if (ctrl.tagName !== 'BUTTON') {
-	    parameters[ctrl.name] = ctrl.value;
-	}
+	parameters[ctrl.name] = ctrl.value;
 	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
 	this.load_form_data(parameters, true);
     },
