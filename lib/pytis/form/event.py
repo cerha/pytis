@@ -74,7 +74,7 @@ _wx_key = None
 
 
 _in_top_level_exception = False
-def top_level_exception():
+def top_level_exception(message=None):
     """Zpracuj aktuálně vyvolanou výjimku aplikace."""
     global _in_top_level_exception
     if _in_top_level_exception:
@@ -91,7 +91,7 @@ def top_level_exception():
         import traceback
         tbstring = "\n".join(traceback.format_exception(*einfo))
     log(OPERATIONAL, 'Top-level exception caught', tbstring)
-    text = pytis.form.run_dialog(pytis.form.BugReport, einfo)
+    text = pytis.form.run_dialog(pytis.form.BugReport, einfo, message=message)
     if text is None:
         sys.exit()
     elif text:

@@ -1033,7 +1033,7 @@ class BugReport(GenericDialog):
     _COMMIT_BUTTON = _EXIT_LABEL
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
-    def __init__(self, parent, einfo):
+    def __init__(self, parent, einfo, message=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1041,6 +1041,7 @@ class BugReport(GenericDialog):
           parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
           einfo -- informace o výjimce ve tvaru vraceném funkcí
             'sys.exc_info()'
+          message -- error message to display to the user
 
         """
         super_(BugReport).__init__(self, parent, _("Unhandled exception"),
@@ -1049,10 +1050,11 @@ class BugReport(GenericDialog):
                                             self._EXIT_LABEL),
                                    default=self._IGNORE_LABEL)
         self._einfo = einfo
+        self._message = message
 
     def _create_content(self, sizer):
         dialog = self._dialog
-        label = wx.StaticText(dialog, -1, _("Oops"))
+        label = wx.StaticText(dialog, -1, self._message or _("Oops"))
         font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
@@ -1074,7 +1076,6 @@ class BugReport(GenericDialog):
                 traceback.AppendToPage(text[pointer:min(pointer + step, len(text))])
                 pointer += step
                 traceback.SetSize(char2px(traceback, 140, 35))
-            #traceback.SetFonts('Arial', 'Fixed', sizes=(6,7,8,9,10,11,12))
         else:
             style = wx.TE_MULTILINE | wx.TE_DONTWRAP #|wx.TE_READONLY
             traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
