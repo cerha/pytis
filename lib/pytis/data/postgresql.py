@@ -2038,8 +2038,27 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colspec = self.find_column(colid)
             assert colspec, ('Column not found', colid)
             crypto_name = b.crypto_name()
+            ctype = colspec.type()
+            if isinstance(ctype, (DateTime, Time,)) and value.value() is not None:
+                t = value.type()
+                if ctype.without_timezone():
+                    if not t.without_timezone():
+                        notz_value = value.value()
+                        if isinstance(t, DateTime):
+                            # There's no way to convert time without date to local time zone
+                            notz_value = notz_value.astimezone(DateTime.LOCAL_TZINFO)
+                        notz_value = notz_value.replace(tzinfo=None)
+                        value = Value(ctype, notz_value)
+                else:
+                    if t.without_timezone():
+                        # There's no way to convert time without date to local time zone
+                        if isinstance(t, DateTime):
+                            tz_value = value.value().replace(tzinfo=DateTime.LOCAL_TZINFO)
+                        else:
+                            raise DBUserException("Time value without time zone", None,
+                                                  (value.value(), b.table(), colid,))
+                        value = Value(ctype, tz_value)
             if crypto_name is not None:
-                ctype = colspec.type()
                 if isinstance(ctype, String):
                     encryption_function = 'pytis_encrypt_text'
                 elif isinstance(ctype, Float):

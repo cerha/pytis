@@ -901,6 +901,8 @@ class _DBTest(_DBBaseTest):
                   "create table fulltext(id int, text1 varchar(256), text2 text, index tsvector)",
                   "create table dateformats (id int primary key, "
                   "datetime timestamptz default now())",
+                  "create table timezones(id serial primary key, "
+                  "dt timestamp, dttz timestamptz, t time, ttz timetz)",
                   "create trigger textindexupdate before update or insert on fulltext "
                   "for each row execute procedure "
                   "tsvector_update_trigger(index,'pg_catalog.simple',text1,text2)",
@@ -981,7 +983,7 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % (t,))
             except:
                 pass
-        for t in ('bin', 'arraytable', 'rangetable', 'dateformats', 'fulltext',
+        for t in ('bin', 'arraytable', 'rangetable', 'dateformats', 'timezones', 'fulltext',
                   'dist', 'xcosi', 'denik',
                   'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',):
             try:
@@ -1117,6 +1119,16 @@ class DBDataDefault(_DBTest):
              B('datetime', 'dateformats', 'datetime', type_=pytis.data.ISODateTime()),),
             key,
             conn)
+        # timezones
+        key = B('id', 'timezones', 'id')
+        timezones = pytis.data.DBDataDefault(
+            (key,
+             B('dt', 'timezones', 'dt', type_=pytis.data.DateTime(without_timezone=True)),
+             B('dttz', 'timezones', 'dttz', type_=pytis.data.DateTime()),
+             B('t', 'timezones', 't', type_=pytis.data.Time(without_timezone=True)),
+             B('ttz', 'timezones', 'ttz', type_=pytis.data.Time()),),
+            key,
+            conn)
         # ranges
         key = B('x', 'rangetable', 'x')
         ranges = pytis.data.DBDataDefault(
@@ -1163,6 +1175,7 @@ class DBDataDefault(_DBTest):
         self.fulltext = fulltext
         self.fulltext1 = fulltext1
         self.dateformats = dateformats
+        self.timezones = timezones
         self.ranges = ranges
         self.arrays = arrays
         self.view = view
@@ -1674,6 +1687,36 @@ class DBDataDefault(_DBTest):
         delta = datetime.datetime.now(pytis.data.DateTime.UTC_TZINFO) - value
         self.assertGreaterEqual(delta, datetime.timedelta(), value)
         self.assertLess(delta, datetime.timedelta(seconds=3600), value)
+    def test_timezones(self):
+        data = self.timezones
+        V = pytis.data.Value
+        moment = datetime.datetime(2015, 7, 1, 12, 0, 0)
+        moment_tz = moment.replace(tzinfo=pytis.data.DateTime.LOCAL_TZINFO)
+        dt_val = V(pytis.data.DateTime(without_timezone=True), moment)
+        dttz_val = V(pytis.data.DateTime(), moment_tz)
+        t_val = V(pytis.data.Time(without_timezone=True), moment.time())
+        ttz_val = V(pytis.data.Time(), moment_tz.timetz())
+        key_val = pytis.data.ival(1)
+        def check_row():
+            row = data.row(key_val)
+            self.assertEqual(row['dt'], dt_val)
+            self.assertEqual(row['dttz'], dttz_val)
+            self.assertEqual(row['t'], t_val)
+            self.assertIsNone(row['ttz'].value())
+        self.assertRaises(pytis.data.DBUserException,
+                         data.insert, pytis.data.Row((('id', key_val),
+                                                      ('dt', dttz_val), ('dttz', dt_val),
+                                                      ('t', ttz_val), ('ttz', t_val),)))
+        data.insert(pytis.data.Row((('id', key_val),
+                                    ('dt', dttz_val), ('dttz', dt_val),
+                                    ('t', ttz_val), ('ttz', pytis.data.tval(None)),)))
+        check_row()
+        self.assertRaises(pytis.data.DBUserException,
+                         data.update, key_val, pytis.data.Row((('dt', dttz_val), ('dttz', dt_val),
+                                                               ('t', ttz_val), ('ttz', t_val),)))
+        data.update(key_val, pytis.data.Row((('dt', dttz_val), ('dttz', dt_val),
+                                             ('t', ttz_val), ('ttz', pytis.data.tval(None)),)))
+        check_row()
     def test_ranges(self):
         data = self.ranges
         row = data.row(pytis.data.ival(1))

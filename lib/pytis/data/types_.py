@@ -1540,6 +1540,9 @@ class _CommonDateTime(Type):
     def _export(self, value, local=None, format=None):
         return value.strftime(format or self._format)
 
+    def without_timezone(self):
+        return self._without_timezone
+
     @classmethod
     def now(class_, **kwargs):
         """Return 'Value' instance of this type of the current moment.
