@@ -2055,8 +2055,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         if isinstance(t, DateTime):
                             tz_value = value.value().replace(tzinfo=DateTime.LOCAL_TZINFO)
                         else:
-                            raise DBUserException("Time value without time zone", None,
-                                                  (value.value(), b.table(), colid,))
+                            try:
+                                raise DBUserException("Time value without time zone", None,
+                                                      (value.value(), b.table(), colid,))
+                            except:
+                                import pytis.form
+                                if pytis.form.top_window() is not None:
+                                    message = _("Application error. "
+                                                "You can report it to get it fixed soon.")
+                                    pytis.form.top_level_exception(message)
+                                else:
+                                    raise
                         value = Value(ctype, tz_value)
             if crypto_name is not None:
                 if isinstance(ctype, String):
