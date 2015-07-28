@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-11-07 11:17+0100\n"
+"POT-Creation-Date: 2015-07-28 20:58+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -22,32 +22,31 @@ msgstr ""
 msgid "Access denied"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:76
+#: ../lib/pytis/data/dbapi.py:78
 msgid "Waiting for server recovery"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:88
+#: ../lib/pytis/data/dbapi.py:90
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:176
+#: ../lib/pytis/data/dbapi.py:209
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:195
+#: ../lib/pytis/data/dbapi.py:228
 msgid "Database connection timeout"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:197 ../lib/pytis/data/dbapi.py:307
+#: ../lib/pytis/data/dbapi.py:230 ../lib/pytis/data/dbapi.py:341
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:211 ../lib/pytis/data/pgsql.py:87
-#: ../lib/pytis/data/pgsql.py:94
+#: ../lib/pytis/data/dbapi.py:244
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:215 ../lib/pytis/data/pgsql.py:99
+#: ../lib/pytis/data/dbapi.py:248
 msgid "Database integrity violation"
 msgstr ""
 
@@ -64,24 +63,16 @@ msgstr ""
 msgid "Invalid user name or password"
 msgstr "Niewłaściwy format daty lub czasu"
 
-#: ../lib/pytis/data/pgsql.py:60
-msgid "Unable to connect to the database"
-msgstr ""
-
-#: ../lib/pytis/data/pgsql.py:69
-msgid "Query arguments unsupported by the pgsql backend"
-msgstr ""
-
-#: ../lib/pytis/data/postgresql.py:275 ../lib/pytis/data/postgresql.py:364
-#: ../lib/pytis/data/postgresql.py:376
+#: ../lib/pytis/data/postgresql.py:457 ../lib/pytis/data/postgresql.py:541
+#: ../lib/pytis/data/postgresql.py:553
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:511
-msgid "Characters present in data not representable in database encoding"
+#: ../lib/pytis/data/postgresql.py:2064
+msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3737
+#: ../lib/pytis/data/postgresql.py:3804
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Niewłaściwy format daty lub czasu"
@@ -97,152 +88,153 @@ msgstr "Pusta wartość"
 msgid "Invalid value"
 msgstr "Niepoprawny numer"
 
-#: ../lib/pytis/data/types_.py:396
+#: ../lib/pytis/data/types_.py:399
 #, python-format
 msgid "Wildcard matching not supported for values of type '%s'."
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:530
+#: ../lib/pytis/data/types_.py:543
 #, python-format
 msgid "Minimal value is %(minimum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:533
+#: ../lib/pytis/data/types_.py:546
 #, python-format
 msgid "Maximal value is %(maximum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:610
+#: ../lib/pytis/data/types_.py:623
 #, fuzzy, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:613
+#: ../lib/pytis/data/types_.py:626
 #, fuzzy, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:715
+#: ../lib/pytis/data/types_.py:737
 msgid "Not an integer"
 msgstr "To nie jest liczba całkowita"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:825
+#: ../lib/pytis/data/types_.py:861
 msgid "Invalid number"
 msgstr "Niepoprawny numer"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:959
+#: ../lib/pytis/data/types_.py:1047
 #, fuzzy, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:961 ../lib/pytis/data/types_.py:2042
+#: ../lib/pytis/data/types_.py:1049 ../lib/pytis/data/types_.py:2220
 #, fuzzy, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1051
+#: ../lib/pytis/data/types_.py:1151
 msgid "Enter the password twice to eliminate typos"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1054
+#: ../lib/pytis/data/types_.py:1154
 msgid "Passwords don't match"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1057
+#: ../lib/pytis/data/types_.py:1157
 #, fuzzy
 msgid "Invalid MD5 hash"
 msgstr "Niepoprawna wartość"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1060
+#: ../lib/pytis/data/types_.py:1160
 msgid "Please use mix of letters and non-letters in your password"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1122 ../lib/pytis/data/types_.py:1158
-#: ../lib/pytis/data/types_.py:1194 ../lib/pytis/data/types_.py:1853
+#: ../lib/pytis/data/types_.py:1222 ../lib/pytis/data/types_.py:1258
+#: ../lib/pytis/data/types_.py:1294 ../lib/pytis/data/types_.py:1314
+#: ../lib/pytis/data/types_.py:2021
 msgid "Invalid format"
 msgstr "Niewłaściwy format"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1144
+#: ../lib/pytis/data/types_.py:1244
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr "Niewłaściwy format koloru ('#RGB' lub '#RRGGBB')"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1160
+#: ../lib/pytis/data/types_.py:1260
 #, python-format
 msgid "Invalid inet address mask: %(mask)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1162
+#: ../lib/pytis/data/types_.py:1262
 #, python-format
 msgid "Invalid inet address value %(addr)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1323
+#: ../lib/pytis/data/types_.py:1448
 msgid "Invalid date or time format"
 msgstr "Niewłaściwy format daty lub czasu"
 
-#: ../lib/pytis/data/types_.py:1324
+#: ../lib/pytis/data/types_.py:1449
 msgid "Invalid date or time"
 msgstr "Niewłaściwy format daty lub czasu"
 
-#: ../lib/pytis/data/types_.py:1325
+#: ../lib/pytis/data/types_.py:1450
 msgid "Date outside the allowed range"
 msgstr "Data poza dopuszczalnym obrębem"
 
-#: ../lib/pytis/data/types_.py:2007
+#: ../lib/pytis/data/types_.py:2180
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2088
+#: ../lib/pytis/data/types_.py:2266
 #, python-format
 msgid "Not a buffer object: %r"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2224
+#: ../lib/pytis/data/types_.py:2407
 #, fuzzy, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
-#: ../lib/pytis/data/types_.py:2226
+#: ../lib/pytis/data/types_.py:2409
 #, fuzzy, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Ciąg przekracza maksymalną długość %(maxlen)d"
 
-#: ../lib/pytis/data/types_.py:2228
+#: ../lib/pytis/data/types_.py:2411
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2244
+#: ../lib/pytis/data/types_.py:2427
 #, fuzzy
 msgid "Invalid graphics format"
 msgstr "Niewłaściwy format"
 
-#: ../lib/pytis/data/types_.py:2349
+#: ../lib/pytis/data/types_.py:2532
 #, fuzzy
 msgid "Invalid hierarchical value format"
 msgstr "Niewłaściwy format daty lub czasu"
 
-#: ../lib/pytis/data/types_.py:2351
+#: ../lib/pytis/data/types_.py:2534
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2353
+#: ../lib/pytis/data/types_.py:2536
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 

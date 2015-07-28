@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2015-03-25 21:17+CET\n"
+"POT-Creation-Date: 2015-07-28 20:59+CEST\n"
 "PO-Revision-Date: 2015-03-25 21:31+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -17,97 +17,94 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../bin/x2goclient.py:177
+#: ../bin/x2goclient.py:250
 msgid "Can't read RPyC info file: %s"
 msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:187
+#: ../bin/x2goclient.py:260
 msgid "Error when writing RPyC info file: %s"
 msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:208 ../bin/x2goclient.py:926
+#: ../bin/x2goclient.py:281 ../bin/x2goclient.py:1022
 msgid "Invalid broker address"
 msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:212 ../bin/x2goclient.py:930
+#: ../bin/x2goclient.py:285 ../bin/x2goclient.py:1026
 msgid "Unsupported broker protocol"
 msgstr "Nepodporovaný protokol pro přístup na broker"
 
-#: ../bin/x2goclient.py:337
+#: ../bin/x2goclient.py:410
 msgid "Invalid session format"
 msgstr "Chybný formát sezení"
 
-#: ../bin/x2goclient.py:502
+#: ../bin/x2goclient.py:601
 msgid "New pytis client version available. Install?"
 msgstr "Je dostupná nová verze klienta Pytis. Nainstalovat?"
 
-#: ../bin/x2goclient.py:503
-msgid "No"
-msgstr "Ne"
-
-#: ../bin/x2goclient.py:503
-msgid "Yes"
-msgstr "Ano"
-
-#: ../bin/x2goclient.py:570
+#: ../bin/x2goclient.py:670
 msgid "Select session"
 msgstr "Vyberte sezení"
 
-#: ../bin/x2goclient.py:575
+#: ../bin/x2goclient.py:674
 msgid "No session selected."
 msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:708
+#: ../bin/x2goclient.py:807
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:835
+#: ../bin/x2goclient.py:934
 msgid "Password key for %s"
 msgstr "Heslo ke klíči v souboru %s"
 
-#: ../bin/x2goclient.py:882
-msgid "Default authentication failed"
-msgstr "Výchozí autentizace selhala"
-
-#: ../bin/x2goclient.py:884
+#: ../bin/x2goclient.py:980
 msgid "Login using password"
 msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:885
+#: ../bin/x2goclient.py:981
 msgid "Login using a key file"
 msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:892
+#: ../bin/x2goclient.py:982
+msgid "Default authentication failed"
+msgstr "Výchozí autentizace selhala"
+
+#: ../bin/x2goclient.py:990
 msgid "No supported ssh connection method available"
 msgstr "Není dostupná žádná metoda spojení přes ssh"
 
-#: ../bin/x2goclient.py:895
+#: ../bin/x2goclient.py:993
 msgid "Login password"
 msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:896
-msgid "Password input"
-msgstr "Zadání hesla"
-
-#: ../bin/x2goclient.py:903
+#: ../bin/x2goclient.py:1000
 msgid "Select ssh key file"
 msgstr "Vyberte ssh klíč"
 
-#: ../bin/x2goclient.py:914
+#: ../bin/x2goclient.py:1010
 msgid "Program error"
 msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:938
+#: ../bin/x2goclient.py:1034
 msgid "Couldn't connect to upgrade server"
 msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:948
+#: ../bin/x2goclient.py:1044
 msgid "Package unpacking failed"
 msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:954
+#: ../bin/x2goclient.py:1050
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
+
+#~ msgid "No"
+#~ msgstr "Ne"
+
+#~ msgid "Yes"
+#~ msgstr "Ano"
+
+#~ msgid "Password input"
+#~ msgstr "Zadání hesla"
 
 #~ msgid "Can't create client directory: %s"
 #~ msgstr "Nelze vytvořit klientský adresář: %s"
