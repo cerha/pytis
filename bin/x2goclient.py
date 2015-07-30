@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-04-02 16:18'
+_VERSION = '2015-07-30 15:52'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -678,6 +678,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 params = profiles.to_session_params(profile_id)
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
+                if on_windows() and args.create_shortcut:
+                    self._create_shortcut(broker_url, args.server, profile_id)
             else:
                 # setup up the manually configured X2Go session
                 self.x2go_session_hash = self._X2GoClient__register_session(
@@ -1061,6 +1063,15 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
 
+    def _create_shortcut(self, broker_url, host, profile_id):
+        import urlparse
+        broker_host = urlparse.urlparse(broker_url).netloc
+        shortcut_name = '%s__%s__%s.lnk' % (broker_host, host, profile_id,)
+        shortcut_exists = False
+        if ((not shortcut_exists and
+             question_dialog(_("Create desktop shortcut for this session profile?")))):
+            pass
+
     @classmethod
     def run(class_, args):
         _auth_info.update_from_args(args)
@@ -1184,6 +1195,9 @@ x2go_options = [
     {'args': ['--auth-attempts'], 'default': 3,
      'help': 'number of authentication attempts before authentication fails (default: 3)', },
 ]
+if on_windows():
+    x2go_options.append({'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
+                         'help': 'create desktop shortcut if not present (default: disabled)', })
 print_options = [
     {'args': ['--print-action'], 'default': 'PDFVIEW',
      'choices': x2go.defaults.X2GO_PRINT_ACTIONS.keys(),
