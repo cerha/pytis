@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2015-07-28 20:59+CEST\n"
-"PO-Revision-Date: 2015-03-25 21:31+0100\n"
+"POT-Creation-Date: 2015-07-30 15:50+CEST\n"
+"PO-Revision-Date: 2015-07-30 15:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -25,11 +25,11 @@ msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
 msgid "Error when writing RPyC info file: %s"
 msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:281 ../bin/x2goclient.py:1022
+#: ../bin/x2goclient.py:281 ../bin/x2goclient.py:1024
 msgid "Invalid broker address"
 msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:285 ../bin/x2goclient.py:1026
+#: ../bin/x2goclient.py:285 ../bin/x2goclient.py:1028
 msgid "Unsupported broker protocol"
 msgstr "Nepodporovaný protokol pro přístup na broker"
 
@@ -49,53 +49,57 @@ msgstr "Vyberte sezení"
 msgid "No session selected."
 msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:807
+#: ../bin/x2goclient.py:809
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:934
+#: ../bin/x2goclient.py:936
 msgid "Password key for %s"
 msgstr "Heslo ke klíči v souboru %s"
 
-#: ../bin/x2goclient.py:980
+#: ../bin/x2goclient.py:982
 msgid "Login using password"
 msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:981
+#: ../bin/x2goclient.py:983
 msgid "Login using a key file"
 msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:982
+#: ../bin/x2goclient.py:984
 msgid "Default authentication failed"
 msgstr "Výchozí autentizace selhala"
 
-#: ../bin/x2goclient.py:990
+#: ../bin/x2goclient.py:992
 msgid "No supported ssh connection method available"
 msgstr "Není dostupná žádná metoda spojení přes ssh"
 
-#: ../bin/x2goclient.py:993
+#: ../bin/x2goclient.py:995
 msgid "Login password"
 msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:1000
+#: ../bin/x2goclient.py:1002
 msgid "Select ssh key file"
 msgstr "Vyberte ssh klíč"
 
-#: ../bin/x2goclient.py:1010
+#: ../bin/x2goclient.py:1012
 msgid "Program error"
 msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:1034
+#: ../bin/x2goclient.py:1036
 msgid "Couldn't connect to upgrade server"
 msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:1044
+#: ../bin/x2goclient.py:1046
 msgid "Package unpacking failed"
 msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:1050
+#: ../bin/x2goclient.py:1052
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
+
+#: ../bin/x2goclient.py:1072
+msgid "Create desktop shortcut for this session profile?"
+msgstr "Vytvořit pro tento profil ikonu na ploše?"
 
 #~ msgid "No"
 #~ msgstr "Ne"
