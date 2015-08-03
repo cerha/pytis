@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-07-30 15:52'
+_VERSION = '2015-08-03 21:04'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1195,9 +1195,6 @@ x2go_options = [
     {'args': ['--auth-attempts'], 'default': 3,
      'help': 'number of authentication attempts before authentication fails (default: 3)', },
 ]
-if on_windows():
-    x2go_options.append({'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
-                         'help': 'create desktop shortcut if not present (default: disabled)', })
 print_options = [
     {'args': ['--print-action'], 'default': 'PDFVIEW',
      'choices': x2go.defaults.X2GO_PRINT_ACTIONS.keys(),
@@ -1224,7 +1221,6 @@ broker_options = [
     {'args': ['--broker-password'], 'default': None,
      'help': 'password for authenticating against the X2Go Session Broker', },
 ]
-
 nx_options = [
     {'args': ['-g', '--geometry'], 'default': '800x600',
      'help': 'screen geometry: \'<width>x<height>\' or \'fullscreen\' (default: \'800x600\')', },
@@ -1251,6 +1247,13 @@ compat_options = [
      'help': ('compatibility option for the x2goclient GUI; as Python X2Go brings its own internal '
               'SFTP server, this option will be ignored'), },
 ]
+if on_windows():
+    win2pytis_options = [
+        {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
+         'help': 'create desktop shortcut if not present (default: disabled)', },
+        {'args': ['--calling-script'], 'default': False,
+         'help': 'full file name of the script invoking this command', },
+    ]
 _profiles_backend_default = x2go.BACKENDS['X2GoSessionProfiles']['default']
 _settings_backend_default = x2go.BACKENDS['X2GoClientSettings']['default']
 _printing_backend_default = x2go.BACKENDS['X2GoClientPrinting']['default']
@@ -1322,10 +1325,14 @@ Possible values for the --pack NX option are:
     p_nxopts = p.add_argument_group('NX options')
     p_backendopts = p.add_argument_group('Python X2Go backend options (for experts only)')
     p_compatopts = p.add_argument_group('compatibility options')
-    for (p_group, opts) in ((p_x2goopts, x2go_options), (p_printopts, print_options),
-                            (p_brokeropts, broker_options), (p_actionopts, action_options),
-                            (p_debugopts, debug_options), (p_nxopts, nx_options),
-                            (p_backendopts, backend_options), (p_compatopts, compat_options)):
+    option_groups = [(p_x2goopts, x2go_options), (p_printopts, print_options),
+                     (p_brokeropts, broker_options), (p_actionopts, action_options),
+                     (p_debugopts, debug_options), (p_nxopts, nx_options),
+                     (p_backendopts, backend_options), (p_compatopts, compat_options)]
+    if on_windows():
+        p_win2pytisopts = p.add_argument_group('win2pytis options')
+        option_groups.append((p_win2pytisopts, win2pytis_options))
+    for (p_group, opts) in option_groups:
         for opt in opts:
             args = opt['args']
             del opt['args']
