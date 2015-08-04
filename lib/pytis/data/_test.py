@@ -1751,6 +1751,17 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(row)
         value = row[1].value()
         self.assertIsNone(value)
+        def test_condition(n_rows, condition):
+            try:
+                self.assertEqual(n_rows, data.select(condition))
+            finally:
+                data.close()
+        def irange(x, y):
+            return pytis.data.Value(pytis.data.IntegerRange(), (x, y,))
+        test_condition(1, pytis.data.RangeContains('r', irange(15, 18)))
+        test_condition(1, pytis.data.RangeContained('r', irange(30, 60)))
+        test_condition(2, pytis.data.RangeOverlap('r', irange(0, 100)))
+        test_condition(0, pytis.data.RangeOverlap('r', irange(25, 35)))
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())

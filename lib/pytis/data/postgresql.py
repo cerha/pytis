@@ -1916,6 +1916,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      'GE': '>=',
                      'LTreeAncestor': '@>',
                      'LTreeDescendant': '<@',
+                     'RangeContains': '@>',
+                     'RangeContained': '<@',
+                     'RangeOverlap': '&&',
                      }
         if op_name in operators:
             expression = relop(operators[op_name], op_args, op_kwargs)

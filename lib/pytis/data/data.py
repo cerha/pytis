@@ -75,7 +75,7 @@ DESCENDANT = 'DESCENDANT'
 """Konstanta pro sestupné třídění."""
 
 
-### Datové třídy
+# Data classes
 
 
 class Operator(object):
@@ -1134,7 +1134,7 @@ class MemData(Data):
         return 1
 
 
-### Pomocné funkce
+# Utility functions
 
 
 def EQ(x, y, ignore_case=False):
@@ -1142,7 +1142,7 @@ def EQ(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1157,7 +1157,7 @@ def NE(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1173,7 +1173,7 @@ def WM(x, y, ignore_case=True):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- instance 'WMValue' definující vzor; její hodnota může jako wildcars
         obsahovat znaky '*' (lze substituovat čímkoliv) a '?' (lze substituovat
         libovolným znakem)
@@ -1190,7 +1190,7 @@ def NW(x, y, ignore_case=True):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- string definující vzor; jako wildcars může obsahovat znaky '*' (lze
         substituovat čímkoliv) a '?' (lze substituovat libovolným znakem)
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
@@ -1207,7 +1207,7 @@ def LT(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1222,7 +1222,7 @@ def LE(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1240,7 +1240,7 @@ def GT(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1257,7 +1257,7 @@ def GE(x, y, ignore_case=False):
 
     Argumenty:
     
-      x -- column identifier, string, or an 'OpFunction' value
+      x -- column identifier (basestring), or an 'OpFunction' value
       y -- hodnota sloupce, instance třídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1335,10 +1335,10 @@ def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
 
     Arguments:
 
-      column_id -- column id (string), the value of which is tested for
+      column_id -- column id (basestring), the value of which is tested for
         presence in the subquery
       data -- 'Data' instance, to perform the subquery on
-      table_column_id -- column id (string) in 'data' returning the subquery values
+      table_column_id -- column id (basestring) in 'data' returning the subquery values
       table_condition -- condition limiting the selection from 'data'
       table_arguments -- arguments passed to 'data' (if 'data' is on a table function).
 
@@ -1402,6 +1402,39 @@ def LTreeDescendant(x, y):
 
     """
     return Operator('LTreeDescendant', x, y)
+
+def RangeContains(column, value):
+    """Range "contains" operator.
+
+    Arguments:
+    
+      range_ -- column identifier (string), or an 'OpFunction' value
+      value -- column identifier (string) or 'Value' instance (of a range type)
+    
+    """
+    return Operator('RangeContains', column, value)
+
+def RangeContained(column, value):
+    """Range "is contained by" operator.
+
+    Arguments:
+
+      range_ -- column identifier (string), or an 'OpFunction' value
+      value -- column identifier (string) or 'Value' instance (of a range type)
+    
+    """
+    return Operator('RangeContained', column, value)
+
+def RangeOverlap(column, value):
+    """Range overlap test.
+
+    Arguments:
+
+      range_ -- column identifier (string), or an 'OpFunction' value
+      value -- column identifier (string) or 'Value' instance (of a range type)
+    
+    """
+    return Operator('RangeOverlap', column, value)
 
 def FunctionCondition(function, *args):
     """Function call.
