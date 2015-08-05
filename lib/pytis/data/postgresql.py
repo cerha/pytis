@@ -1164,11 +1164,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif isinstance(ctype, Number):
             cast = ''
         elif isinstance(ctype, Time):
-            cast = 'time'
+            cast = 'time' if ctype.without_timezone() else 'timetz'
         elif isinstance(ctype, Date):
             cast = 'date'
         elif isinstance(ctype, DateTime):
-            cast = 'timestamp'
+            cast = 'timestamp' if ctype.without_timezone() else 'timestamptz'
         elif isinstance(ctype, Boolean):
             cast = 'bool'
         else:
