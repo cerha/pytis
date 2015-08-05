@@ -40,7 +40,7 @@ from pytis.data import DBException, DBInsertException, DBLockException, DBRetryE
     DBSystemException, DBUserException, DBConnection, DBConnectionPool, DBData, \
     ColumnSpec, DBColumnBinding, Row, Function, dbtable, reversed_sorting, \
     Array, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
-    Macaddr, Number, Serial, String, Time, TimeInterval, ival, sval, \
+    Macaddr, Number, Range, Serial, String, Time, TimeInterval, ival, sval, \
     Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT, DESCENDANT
 import pytis.util
 from pytis.util import ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_sequence, \
@@ -1157,7 +1157,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
 
     def _pdbb_coalesce(self, ctype, value):
-        if ctype is None or isinstance(ctype, String) or not value:
+        if ctype is None or isinstance(ctype, (String, Range,)) or not value:
             cast = ''
         elif isinstance(ctype, Float):
             cast = 'numeric'

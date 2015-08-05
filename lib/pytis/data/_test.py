@@ -1758,10 +1758,15 @@ class DBDataDefault(_DBTest):
                 data.close()
         def irange(x, y):
             return pytis.data.Value(pytis.data.IntegerRange(), (x, y,))
+        def drange(x, y):
+            return pytis.data.Value(pytis.data.DateTimeRange(without_timezone=True),
+                                    (datetime.datetime(*x), datetime.datetime(*y),))
         test_condition(1, pytis.data.RangeContains('r', irange(15, 18)))
         test_condition(1, pytis.data.RangeContained('r', irange(30, 60)))
         test_condition(2, pytis.data.RangeOverlap('r', irange(0, 100)))
         test_condition(0, pytis.data.RangeOverlap('r', irange(25, 35)))
+        test_condition(1, pytis.data.RangeOverlap('rdt', drange((2014, 2, 1, 0, 0, 0,),
+                                                                (2014, 4, 1, 0, 0, 0,))))
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())
