@@ -679,7 +679,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
                 if on_windows() and args.create_shortcut:
-                    self._create_shortcut(broker_url, args.server, profile_id)
+                    self._create_shortcut(broker_url, args.server, profile_id, args.calling_script)
             else:
                 # setup up the manually configured X2Go session
                 self.x2go_session_hash = self._X2GoClient__register_session(
@@ -1248,7 +1248,7 @@ compat_options = [
               'SFTP server, this option will be ignored'), },
 ]
 if on_windows():
-    win2pytis_options = [
+    pytis2go_options = [
         {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
          'help': 'create desktop shortcut if not present (default: disabled)', },
         {'args': ['--calling-script'], 'default': False,
@@ -1330,8 +1330,8 @@ Possible values for the --pack NX option are:
                      (p_debugopts, debug_options), (p_nxopts, nx_options),
                      (p_backendopts, backend_options), (p_compatopts, compat_options)]
     if on_windows():
-        p_win2pytisopts = p.add_argument_group('win2pytis options')
-        option_groups.append((p_win2pytisopts, win2pytis_options))
+        p_pytis2goopts = p.add_argument_group('pytis2go options')
+        option_groups.append((p_pytis2goopts, pytis2go_options))
     for (p_group, opts) in option_groups:
         for opt in opts:
             args = opt['args']
