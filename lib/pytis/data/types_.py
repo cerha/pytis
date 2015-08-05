@@ -679,15 +679,82 @@ class Range(Type):
 
     This class should be inherited to corresponding base types to make new
     range types.  Validation accepts pairs of strings which are validated by
-    calling the superclass.  Export returns values which contain pairs of the
-    corresponding base class values.  NULL values are represented by single
-    'None' values in export and by a pair of empty strings on validation.
-
-    The first value is the first value of the range.  The second value is the
-    first value *after* the range.
+    calling the superclass.  Export returns 'Range.Range' instance.  NULL
+    values are represented by single 'None' values in export and by a
+    'Range.Range' instance of empty strings on validation.
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ('', '',),),)
+
+    class Range(object):
+
+        _type = None
+        _default_lower_inc = True
+        _default_upper_inc = False
+        
+        def __init__(self, lower, upper, lower_inc=None, upper_inc=None):
+            self._lower = lower
+            self._upper = upper
+            if lower_inc is None:
+                lower_inc = self._default_lower_inc
+            self._lower_inc = lower_inc
+            if upper_inc is None:
+                upper_inc = self._default_upper_inc
+            self._upper_inc = upper_inc
+
+        def lower(self):
+            return self._lower
+
+        def upper(self):
+            return self._upper
+
+        def lower_inc(self):
+            return self._lower_inc
+
+        def upper_inc(self):
+            return self._upper_inc
+
+        def __cmp__(self, other):
+            if sameclass(self, other):
+                range_type = self._type
+                if range_type is None:
+                    range_1 = self
+                    range_2 = other
+                else:
+                    range_1 = range_type.adjust_value(self)
+                    range_2 = range_type.adjust_value(other)
+                return (cmp(range_1._lower, range_2._lower) or
+                        cmp(range_1._upper, range_2._upper))
+            else:
+                return compare_objects(self, other)
+        
+        def __len__(self):
+            return 2
+
+        def __getitem__(self, key):
+            if key == 0:
+                return self.lower()
+            elif key == 1:
+                return self.upper()
+            else:
+                raise IndexError(key)
+        
+    def __init__(self, lower_inc=True, upper_inc=False, **kwargs):
+        """
+        Arguments:
+
+          lower_inc -- indicates whether the lower bound is inclusive; boolean
+          upper_inc -- indicates whether the upper bound is inclusive; boolean
+
+        """
+        self._lower_inc = lower_inc
+        self._upper_inc = upper_inc
+        class InstanceRange(Range.Range):
+            _type = self
+            _default_lower_inc = lower_inc
+            _default_upper_inc = upper_inc
+        self.Range = InstanceRange
+        super(Range, self).__init__(**kwargs)
     
     def _validate(self, obj, **kwargs):
         base_type = self.base_type()
@@ -702,7 +769,7 @@ class Range(Type):
             value = None
         else:
             assert v1 is not None and v2 is not None, obj
-            value = (v1.value(), v2.value(),)
+            value = self.Range(v1.value(), v2.value(),)
         return Value(self, value), None
         
     def _export(self, value, **kwargs):
@@ -711,14 +778,51 @@ class Range(Type):
         else:
             v1, v2 = value
         return super(Range, self)._export(v1, **kwargs), super(Range, self)._export(v2, **kwargs)
+
+    def lower_inc(self):
+        return self._lower_inc
+
+    def upper_inc(self):
+        return self._upper_inc
+
+    _LOWER_BOUND = 'LOWER_BOUND'
+    _UPPER_BOUND = 'UPPER_BOUND'
     
+    def _adjust_bound(self, bound, value, value_inc):
+        assert isinstance(value_inc, bool), value_inc
+        if bound is self._LOWER_BOUND:
+            type_inc = self.lower_inc()
+        elif bound is self._UPPER_BOUND:
+            type_inc = self.upper_inc()
+        else:
+            raise Exception("Invalid bound", bound)
+        if type_inc != value_inc:
+            if (((bound is self._LOWER_BOUND and not value_inc) or
+                 (bound is self._UPPER_BOUND and value_inc))):
+                change_function = self._increase_bound
+            else:
+                change_function = self._decrease_bound
+            value = change_function(value)
+        return value
+
+    def _increase_bound(self, value):
+        raise Exception("Changing bounds not possible for this type")
+            
+    def _decrease_bound(self, value):
+        raise Exception("Changing bounds not possible for this type")
+            
     def adjust_value(self, value):
         if value is None:
             return None
-        if not isinstance(value, (tuple, list,)):
-            raise TypeError("Value not a sequence", value)
+        if not isinstance(value, (Range.Range, tuple, list,)):
+            raise TypeError("Value not a range", value)
         adjust = self.base_type().adjust_value
-        return tuple([adjust(v) for v in value])
+        adjusted = [adjust(v) for v in value]
+        if isinstance(value, Range.Range):
+            adjusted = [self._adjust_bound(self._LOWER_BOUND, adjusted[0], value.lower_inc()),
+                        self._adjust_bound(self._UPPER_BOUND, adjusted[1], value.upper_inc())]
+        result = self.Range(*adjusted)
+        return result
 
     def base_type(self):
         """Return instance of the underlying types of the range type.
@@ -791,6 +895,10 @@ class IntegerRange(Range, Integer):
         return pytis.data.gensqlalchemy.INT4RANGE()
     def base_type(self):
         return pytis.data.Integer()
+    def _increase_bound(self, value):
+        return value + 1
+    def _decrease_bound(self, value):
+        return value - 1
 
 class SmallInteger(Integer):
     def sqlalchemy_type(self):
@@ -806,6 +914,10 @@ class LargeIntegerRange(Range, Integer):
         return pytis.data.gensqlalchemy.INT8RANGE()
     def base_type(self):
         return pytis.data.LargeInteger()
+    def _increase_bound(self, value):
+        return value + 1
+    def _decrease_bound(self, value):
+        return value - 1
 
 class Oid(Integer):
     def sqlalchemy_type(self):
@@ -1911,6 +2023,10 @@ class DateRange(Range, Date):
         return pytis.data.gensqlalchemy.DATERANGE()
     def base_type(self):
         return pytis.data.Date()
+    def _increase_bound(self, value):
+        return value + datetime.timedelta(1)
+    def _decrease_bound(self, value):
+        return value - datetime.timedelta(1)
 
 class Time(_CommonDateTime):
     """Time of day without the date part.

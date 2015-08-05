@@ -937,9 +937,9 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
-                  "create table rangetable (x int, r int4range, rdt tsrange)",
+                  "create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)",
                   ("insert into rangetable values "
-                   "(1, '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
+                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
                   "create table arraytable (x int primary key, a int[], b text[])",
                   "insert into arraytable values (1, '{2, 3}', '{hello, world}')",
                   "insert into arraytable values (99, NULL, '{}')",
@@ -1134,6 +1134,8 @@ class DBDataDefault(_DBTest):
         ranges = pytis.data.DBDataDefault(
             (key,
              B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
+             B('r2', 'rangetable', 'r2', type_=pytis.data.IntegerRange(lower_inc=False,
+                                                                       upper_inc=True)),
              B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange(without_timezone=True)),),
             key,
             conn)
@@ -1718,46 +1720,57 @@ class DBDataDefault(_DBTest):
                                              ('t', ttz_val), ('ttz', pytis.data.tval(None)),)))
         check_row()
     def test_ranges(self):
+        IR = pytis.data.IntegerRange()
+        IR2 = pytis.data.IntegerRange(lower_inc=False, upper_inc=True)
+        # Basic tests
         data = self.ranges
         row = data.row(pytis.data.ival(1))
         self.assertIsNotNone(row)
         value = row[1].value()
         self.assertEqual(value[0] == 10 and value[1], 20, value)
-        new_value, err = pytis.data.IntegerRange().validate(('20', '30',))
+        new_value, err = IR.validate(('20', '30',))
         self.assertIsNone(err)
         rdt_value, err = pytis.data.DateTimeRange(without_timezone=True)\
                                    .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
         self.assertIsNone(err)
         data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),
-                                    ('rdt', rdt_value,),)))
-        n = data.select(pytis.data.EQ('r', new_value))
-        self.assertEqual(n, 1)
-        row = data.fetchone()
-        data.close()
+                                    ('r2', new_value,), ('rdt', rdt_value,),)))
+        for column in ('r', 'r2',):
+            n = data.select(pytis.data.EQ('r2', new_value))
+            try:
+                self.assertEqual(n, 1)
+                row = data.fetchone()
+            finally:
+                data.close()
         self.assertEqual(row['r'], new_value)
+        self.assertEqual(row['r2'], new_value)
         self.assertEqual(row['rdt'], rdt_value)
-        new_value, err = pytis.data.IntegerRange().validate(('40', '50',))
+        new_value, err = IR.validate(('40', '50',))
         self.assertIsNone(err)
         rdt_value, err = pytis.data.DateTimeRange(without_timezone=True)\
                                    .validate(('2014-03-01 00:00:00', '2014-03-01 00:00:02',))
         self.assertIsNone(err)
-        data.update(pytis.data.ival(2), pytis.data.Row((('r', new_value,), ('rdt', rdt_value,),)))
-        new_value, err = pytis.data.IntegerRange().validate(('', '',))
+        data.update(pytis.data.ival(2), pytis.data.Row((('r', new_value,), ('r2', new_value,),
+                                                        ('rdt', rdt_value,),)))
+        new_value, err = IR.validate(('', '',))
         self.assertIsNone(err)
         self.assertIsNone(new_value.value())
         data.insert(pytis.data.Row((('x', pytis.data.ival(3),), ('r', new_value,),
-                                    ('rdt', new_value,),)))
+                                    ('r2', new_value,), ('rdt', new_value,),)))
         row = data.row(pytis.data.ival(3))
         self.assertIsNotNone(row)
         value = row[1].value()
         self.assertIsNone(value)
+        # Range operators
         def test_condition(n_rows, condition):
             try:
                 self.assertEqual(n_rows, data.select(condition))
             finally:
                 data.close()
         def irange(x, y):
-            return pytis.data.Value(pytis.data.IntegerRange(), (x, y,))
+            return pytis.data.Value(IR, IR.Range(x, y))
+        def irange2(x, y):
+            return pytis.data.Value(IR2, IR2.Range(x, y))
         def drange(x, y):
             return pytis.data.Value(pytis.data.DateTimeRange(without_timezone=True),
                                     (datetime.datetime(*x), datetime.datetime(*y),))
@@ -1767,6 +1780,13 @@ class DBDataDefault(_DBTest):
         test_condition(0, pytis.data.RangeOverlap('r', irange(25, 35)))
         test_condition(1, pytis.data.RangeOverlap('rdt', drange((2014, 2, 1, 0, 0, 0,),
                                                                 (2014, 4, 1, 0, 0, 0,))))
+        # Inclusive / non-inclusive bounds
+        test_condition(0, pytis.data.RangeOverlap('r', irange(20, 30)))
+        test_condition(1, pytis.data.RangeOverlap('r', irange(19, 30)))
+        test_condition(0, pytis.data.RangeOverlap('r', irange2(19, 30)))
+        test_condition(1, pytis.data.RangeOverlap('r', irange2(18, 30)))
+        test_condition(0, pytis.data.RangeOverlap('r', irange(0, 10)))
+        test_condition(1, pytis.data.RangeOverlap('r', irange2(0, 10)))
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())

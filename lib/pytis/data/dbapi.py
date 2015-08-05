@@ -37,7 +37,7 @@ import psycopg2.extensions
 import psycopg2.extras
 
 from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
-from pytis.data import AccessRights, Permission, RestrictedData
+from pytis.data import AccessRights, Permission, Range, RestrictedData
 from dbdata import DBConnection, DBException, DBInsertException, DBLockException, \
     DBLoginException, DBRetryException, DBSystemException, DBUserException
 from postgresql import DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction, \
@@ -114,22 +114,24 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     
     def _postgresql_query(self, connection, query, outside_transaction, _retry=True):
         result = None
-        def transform_arg(a):
-            if isinstance(a, tuple):
-                a0 = a[0]
-                if isinstance(a0, (int, long, float,)):
+        def transform_arg(arg):
+            if isinstance(arg, Range.Range):
+                lower = arg.lower()
+                upper = arg.upper()
+                if isinstance(lower, (int, long, float,)):
                     c = psycopg2.extras.NumericRange
-                elif isinstance(a0, datetime.datetime):
-                    if a0.tzinfo is None:
+                elif isinstance(lower, datetime.datetime):
+                    if lower.tzinfo is None:
                         c = psycopg2.extras.DateTimeRange
                     else:
                         c = psycopg2.extras.DateTimeTZRange
-                elif isinstance(a0, datetime.date):
+                elif isinstance(lower, datetime.date):
                     c = psycopg2.extras.DateRange
                 else:
-                    raise Exception("Unsupported range type", a)
-                a = c(*a)
-            return a
+                    raise Exception("Unsupported range type", arg)
+                bounds = ('[' if arg.lower_inc() else '(') + (']' if arg.upper_inc() else ')')
+                arg = c(lower, upper, bounds=bounds)
+            return arg
         if isinstance(query, basestring):
             query_args = {}
         else:
@@ -275,7 +277,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 row_data = []
                 for col in row:
                     if isinstance(col, psycopg2.extras.Range):
-                        col = (col.lower, col.upper,)
+                        col = Range.Range(col.lower, col.upper,
+                                          lower_inc=col.lower_inc, upper_inc=col.upper_inc)
                     elif isinstance(col, str):
                         col = unicode(col, 'utf-8')
                     row_data.append(col)
