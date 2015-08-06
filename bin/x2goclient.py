@@ -679,7 +679,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
                 if on_windows() and args.create_shortcut:
-                    self._create_shortcut(broker_url, args.server, profile_id, args.calling_script)
+                    self._create_shortcut(broker_url, args.server, profile_id, params['profile_name'],
+                                          args.calling_script)
             else:
                 # setup up the manually configured X2Go session
                 self.x2go_session_hash = self._X2GoClient__register_session(
@@ -1063,15 +1064,65 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
 
-    def _create_shortcut(self, broker_url, host, profile_id):
+    def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
+        import winshell
+        scripts_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'scripts'))
+        if not os.path.isdir(scripts_path):
+            return
         broker_host = urlparse.urlparse(broker_url).netloc
-        shortcut_name = '%s__%s__%s.lnk' % (broker_host, host, profile_id,)
+        vbs_name = '%s__%s__%s.vbs' % (broker_host, host, profile_id,)
+        vbs_path = os.path.join(scripts_path, vbs_name)
+        if not os.path.exists(vbs_path):
+            if calling_script and os.path.exists(calling_script):
+                with open(calling_script, 'r') as f:
+                    broker_src = f.read()
+                profile_src = re.sub(r'(--broker-url=[^"\s]+)', r'\1 -P %s' % profile_id, broker_src)
+                with open(vbs_path, 'w') as f:
+                    f.write(profile_src)
+        # check if vbs script was created properly
+        if not os.path.exists(vbs_path):
+            return
+        # Check if shortcut for vbs_path allready exists
         shortcut_exists = False
-        if ((not shortcut_exists and
-             question_dialog(_("Create desktop shortcut for this session profile?")))):
-            pass
-
+        shortcut_list = [os.path.join(winshell.desktop(), f)
+                         for f in os.listdir(winshell.desktop())
+                         if os.path.isfile(os.path.join(winshell.desktop(), f))
+                         and os.path.splitext(f)[1].lower() == '.lnk']
+        for lpath in shortcut_list:
+            try:
+                with winshell.shortcut(lpath) as link:
+                    if link.path.lower() == vbs_path.lower():
+                        shortcut_exists = True
+            except Exception:
+                pass
+        if (shortcut_exists or
+            not question_dialog(_("Create desktop shortcut for this session profile?"))):
+            return
+        # Create shortcut on desktop
+        shortcut_name = profile_name
+        while True:
+            shortcut_path = os.path.join(winshell.desktop(), '%s.lnk' % shortcut_name)
+            if not os.path.exists(shortcut_path):
+                break
+            else:
+                basename = os.path.splitext(shortcut_name)[0]
+                msg = _("Shortcut %s allready exists. Please, rename it:") % shortcut_name
+                new_name = text_dialog(msg, caption=_("Edit shortcut name"),
+                                       default_value=shortcut_name)
+                if not new_name:
+                    return
+                elif shortcut_name != new_name:
+                    shortcut_name = new_name
+        with winshell.shortcut(shortcut_path) as link:
+            link.path = vbs_path
+            link.description = profile_id
+            link.working_directory = scripts_path
+            icon_location = os.path.normpath(os.path.join(scripts_path, '..',  'icons',
+                                                          'p2go.ico'))
+            if os.path.exists(icon_location):
+                link.icon_location = (icon_location, 0)
+                    
     @classmethod
     def run(class_, args):
         _auth_info.update_from_args(args)
