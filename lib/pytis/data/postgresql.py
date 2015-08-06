@@ -1403,16 +1403,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            if direct_types:
-                t = b.type()
-            elif self._arguments is None:
-                t = self._pdbb_get_table_type(b.table(), b.column(), b.type())
-            else:
-                t = b.type()
-                assert t is not None, ("Column types must be specified for table functions",
-                                       b.id(), b.table(),)
+            b_type = b.type()
+            if direct_types or b_type is not None:
+                t = b_type
                 if type(t) == type(Type):
                     t = t()
+            elif self._arguments is None:
+                t = self._pdbb_get_table_type(b.table(), b.column(), b_type)
+            else:
+                raise Exception("Column types must be specified for table functions",
+                                b.id(), b.table(),)
             t = self._pdbb_apply_type_kwargs(t, b.kwargs())
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
