@@ -1727,23 +1727,32 @@ class DBDataDefault(_DBTest):
         row = data.row(pytis.data.ival(1))
         self.assertIsNotNone(row)
         value = row[1].value()
-        self.assertEqual(value[0] == 10 and value[1], 20, value)
+        self.assertEqual(value[0], 10)
+        self.assertEqual(value[1], 20)
+        value = row[2].value()
+        self.assertEqual(value.lower(), 9)
+        self.assertEqual(value.upper(), 19)
         new_value, err = IR.validate(('20', '30',))
         self.assertIsNone(err)
+        new_value_2, err = IR2.validate(('19', '29',))
+        self.assertIsNone(err)
+        self.assertEqual(new_value.value(), new_value_2.value())
         rdt_value, err = pytis.data.DateTimeRange(without_timezone=True)\
                                    .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
         self.assertIsNone(err)
         data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),
-                                    ('r2', new_value,), ('rdt', rdt_value,),)))
+                                    ('r2', new_value_2,), ('rdt', rdt_value,),)))
         for column in ('r', 'r2',):
-            n = data.select(pytis.data.EQ('r2', new_value))
-            try:
-                self.assertEqual(n, 1)
-                row = data.fetchone()
-            finally:
-                data.close()
+            for value in (new_value, new_value_2,):
+                n = data.select(pytis.data.EQ(column, value))
+                try:
+                    self.assertEqual(n, 1)
+                    row = data.fetchone()
+                finally:
+                    data.close()
         self.assertEqual(row['r'], new_value)
-        self.assertEqual(row['r2'], new_value)
+        self.assertEqual(row['r2'].value(), new_value.value())
+        self.assertEqual(row['r2'].value(), new_value_2.value())
         self.assertEqual(row['rdt'], rdt_value)
         new_value, err = IR.validate(('40', '50',))
         self.assertIsNone(err)
