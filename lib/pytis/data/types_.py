@@ -739,7 +739,7 @@ class Range(Type):
             else:
                 raise IndexError(key)
         
-    def __init__(self, lower_inc=True, upper_inc=False, **kwargs):
+    def _init(self, lower_inc=True, upper_inc=False, **kwargs):
         """
         Arguments:
 
@@ -754,7 +754,7 @@ class Range(Type):
             _default_lower_inc = lower_inc
             _default_upper_inc = upper_inc
         self.Range = InstanceRange
-        super(Range, self).__init__(**kwargs)
+        super(Range, self)._init(**kwargs)
     
     def _validate(self, obj, **kwargs):
         base_type = self.base_type()
