@@ -438,6 +438,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 # any data.
                 return None
         else:
+            if form is None:
+                return None
             # Append query field values as the second argument provider
             # argument.
             return form.row()
@@ -511,8 +513,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def refresh(self, reload_query_fields=True, **kwargs):
         query_fields = self._view.query_fields()
         if query_fields and query_fields.load() and reload_query_fields:
-            load = query_fields.load()
-            load(self._query_fields_row())
+            row = self._query_fields_row()
+            if row is not None:
+                query_fields.load()(row)
         return super(ListForm, self).refresh(**kwargs)
 
     def restore(self):
