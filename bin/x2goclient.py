@@ -133,9 +133,9 @@ def question_dialog(question):
     app.Yield()
     return answer == wx.YES
 
-def text_dialog(prompt, password=False):
+def text_dialog(prompt, caption='', default_value='', password=False):
     dialog = wx.GetPasswordFromUser if password else wx.GetTextFromUser
-    answer = dialog(prompt)
+    answer = dialog(prompt, caption=caption, default_value=default_value)
     app.Yield()
     return answer or None
 
