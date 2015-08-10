@@ -440,7 +440,10 @@ pytis.BrowseForm = Class.create({
 		parameters[x.name] = x.value;
 	    }
 	});
-	parameters[ctrl.name] = ctrl.value;
+	if (ctrl.name) {
+	    // Some buttons (apply-filters) have no value, others (prev/next-page-button) do...
+	    parameters[ctrl.name] = ctrl.value;
+	}
 	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
 	this.load_form_data(parameters, true);
     },
