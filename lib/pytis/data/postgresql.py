@@ -2082,14 +2082,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 else:
                     raise Exception("Encryption supported not available for the type", ctype)
                 if isinstance(ctype, Binary):
-                    if value is None:
+                    if value.value() is None:
                         if b.encrypt_empty():
                             value = _QFunction(encryption_function,
                                                (sval(None), sval(crypto_name),))
                     else:
                         value = _QFunction(encryption_function, (value, sval(crypto_name)))
                 else:
-                    if value is not None or b.encrypt_empty():
+                    if value.value() is not None or b.encrypt_empty():
                         value = _QFunction(encryption_function, (value, sval(crypto_name)))
             columns.append(b.column())
             values.append(value)
