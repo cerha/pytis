@@ -1107,7 +1107,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 break
             else:
                 basename = os.path.splitext(shortcut_name)[0]
-                msg = _("Shortcut %s allready exists. Please, rename it:") % shortcut_name
+                msg = _("Shortcut %s allready exists. Choose another name:") % shortcut_name
                 new_name = text_dialog(msg, caption=_("Edit shortcut name"),
                                        default_value=shortcut_name)
                 if not new_name:
