@@ -118,14 +118,15 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if isinstance(arg, Range.Range):
                 lower = arg.lower()
                 upper = arg.upper()
-                if isinstance(lower, (int, long, float,)):
+                test_value = upper if lower is None else lower
+                if isinstance(test_value, (int, long, float,)):
                     c = psycopg2.extras.NumericRange
-                elif isinstance(lower, datetime.datetime):
-                    if lower.tzinfo is None:
+                elif isinstance(test_value, datetime.datetime):
+                    if test_value.tzinfo is None:
                         c = psycopg2.extras.DateTimeRange
                     else:
                         c = psycopg2.extras.DateTimeTZRange
-                elif isinstance(lower, datetime.date):
+                elif isinstance(test_value, datetime.date):
                     c = psycopg2.extras.DateRange
                 else:
                     raise Exception("Unsupported range type", arg)

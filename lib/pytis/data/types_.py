@@ -896,8 +896,12 @@ class IntegerRange(Range, Integer):
     def base_type(self):
         return pytis.data.Integer()
     def _increase_bound(self, value):
+        if value is None:
+            return None
         return value + 1
     def _decrease_bound(self, value):
+        if value is None:
+            return None
         return value - 1
 
 class SmallInteger(Integer):
@@ -915,8 +919,12 @@ class LargeIntegerRange(Range, Integer):
     def base_type(self):
         return pytis.data.LargeInteger()
     def _increase_bound(self, value):
+        if value is None:
+            return None
         return value + 1
     def _decrease_bound(self, value):
+        if value is None:
+            return None
         return value - 1
 
 class Oid(Integer):
@@ -2024,8 +2032,12 @@ class DateRange(Range, Date):
     def base_type(self):
         return pytis.data.Date()
     def _increase_bound(self, value):
+        if value is None:
+            return None
         return value + datetime.timedelta(1)
     def _decrease_bound(self, value):
+        if value is None:
+            return None
         return value - datetime.timedelta(1)
 
 class Time(_CommonDateTime):

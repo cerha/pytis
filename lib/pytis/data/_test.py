@@ -1796,6 +1796,9 @@ class DBDataDefault(_DBTest):
         test_condition(1, pytis.data.RangeOverlap('r', irange2(18, 30)))
         test_condition(0, pytis.data.RangeOverlap('r', irange(0, 10)))
         test_condition(1, pytis.data.RangeOverlap('r', irange2(0, 10)))
+        # Unbound values
+        test_condition(1, pytis.data.RangeOverlap('r', irange(30, None)))
+        test_condition(1, pytis.data.RangeOverlap('r', irange(None, 30)))
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())
