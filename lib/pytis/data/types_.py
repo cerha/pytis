@@ -721,8 +721,14 @@ class Range(Type):
                 else:
                     range_1 = range_type.adjust_value(self)
                     range_2 = range_type.adjust_value(other)
-                return (cmp(range_1._lower, range_2._lower) or
-                        cmp(range_1._upper, range_2._upper))
+                def cmp_(x, y):
+                    if x is None and y is not None:
+                        return -1
+                    elif y is None and x is not None:
+                        return 1
+                    return cmp(x, y)
+                return (cmp_(range_1._lower, range_2._lower) or
+                        cmp_(range_1._upper, range_2._upper))
             else:
                 return compare_objects(self, other)
         
