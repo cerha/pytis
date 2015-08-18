@@ -1797,6 +1797,10 @@ class DBDataDefault(_DBTest):
         test_condition(0, pytis.data.RangeOverlap('r', irange(0, 10)))
         test_condition(1, pytis.data.RangeOverlap('r', irange2(0, 10)))
         # Unbound values
+        value, err = IR.validate(('1', '',))
+        self.assertIsNone(err)
+        self.assertEqual(value.value().lower(), 1)
+        self.assertEqual(value.value().upper(), None)
         test_condition(1, pytis.data.RangeOverlap('r', irange(30, None)))
         test_condition(1, pytis.data.RangeOverlap('r', irange(None, 30)))
     def test_arrays(self):

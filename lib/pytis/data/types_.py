@@ -736,7 +736,9 @@ class Range(Type):
                 return self.upper()
             else:
                 raise IndexError(key)
-        
+
+    _NULL_RANGE_VALUE = ('', '')
+
     def _init(self, lower_inc=True, upper_inc=False, **kwargs):
         """
         Arguments:
@@ -754,13 +756,15 @@ class Range(Type):
         self.Range = InstanceRange
         super(Range, self)._init(**kwargs)
     
-    def _validate(self, obj, **kwargs):
+    def validate(self, obj, **kwargs):
+        if obj == self._NULL_RANGE_VALUE:
+            return Value(self, None), None
         base_type = self.base_type()
         o1, o2 = obj
-        v1, e1 = base_type._validate(o1, **kwargs)
+        v1, e1 = base_type.validate(o1, **kwargs)
         if e1 is not None:
             return v1, e1
-        v2, e2 = base_type._validate(o2, **kwargs)
+        v2, e2 = base_type.validate(o2, **kwargs)
         if e2 is not None:
             return v2, e2
         if v1 is None and v2 is None:
@@ -771,7 +775,9 @@ class Range(Type):
         return Value(self, value), None
         
     def export(self, value, *args, **kwargs):
-        if not value:
+        if value is None:
+            return self._NULL_RANGE_VALUE
+        elif not value:
             v1 = v2 = value
         else:
             v1, v2 = value
