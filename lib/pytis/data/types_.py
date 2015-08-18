@@ -756,7 +756,7 @@ class Range(Type):
         self.Range = InstanceRange
         super(Range, self)._init(**kwargs)
     
-    def validate(self, obj, **kwargs):
+    def _validate(self, obj, **kwargs):
         if obj == self._NULL_RANGE_VALUE:
             return Value(self, None), None
         base_type = self.base_type()
