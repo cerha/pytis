@@ -684,8 +684,6 @@ class Range(Type):
     'Range.Range' instance of empty strings on validation.
 
     """
-    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ('', '',),),)
-
     class Range(object):
 
         _type = None
@@ -772,12 +770,12 @@ class Range(Type):
             value = self.Range(v1.value(), v2.value(),)
         return Value(self, value), None
         
-    def _export(self, value, **kwargs):
+    def export(self, value, *args, **kwargs):
         if not value:
             v1 = v2 = value
         else:
             v1, v2 = value
-        return super(Range, self)._export(v1, **kwargs), super(Range, self)._export(v2, **kwargs)
+        return super(Range, self).export(v1, **kwargs), super(Range, self).export(v2, **kwargs)
 
     def lower_inc(self):
         return self._lower_inc
