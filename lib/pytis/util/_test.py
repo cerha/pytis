@@ -423,7 +423,9 @@ class Classes(unittest.TestCase):
         assert util.direct_public_members(self._D) == ()
         self_members = list(util.direct_public_members(self))
         self_members.sort()
-        assert self_members == ['test_direct_public_members',
+        assert self_members == ['setUpClass',
+                                'tearDownClass',
+                                'test_direct_public_members',
                                 'test_next_subclass',
                                 'test_public_attributes'], self_members
 tests.add(Classes)
