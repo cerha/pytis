@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2008, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2008, 2011, 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -425,7 +425,7 @@ class Classes(unittest.TestCase):
         self_members.sort()
         assert self_members == ['test_direct_public_members',
                                 'test_next_subclass',
-                                'test_public_attributes']
+                                'test_public_attributes'], self_members
 tests.add(Classes)
 
 
