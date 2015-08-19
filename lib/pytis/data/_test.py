@@ -449,7 +449,7 @@ class TimeInterval2(_TypeCheck):
         self.assertEqual(exported, '00:00', (value, exported,))
         exported = value.export(format='%H')
         self.assertEqual(exported, '25', (value, exported,))
-tests.add(TimeInterval)
+tests.add(TimeInterval2)
 
 
 class Boolean(_TypeCheck):
