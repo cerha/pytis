@@ -1135,9 +1135,6 @@ def compare_objects(o1, o2):
 
     - Jestliže jsou oba objekty 'None', rovnají se.
 
-    - Jestliže jeden z objektů je instance třídy a druhý není instancí třídy,
-      instance je větší.
-
     - Jestliže oba objekty jsou instance různých tříd, vrátí se výsledek
       porovnání 'id' jejich tříd.
 
@@ -1145,16 +1142,10 @@ def compare_objects(o1, o2):
       'cmp(o1, o2)'.
       
     """
-    try:
-        c1 = o1.__class__
-    except:
-        c1 = None
-    try:
-        c2 = o2.__class__
-    except:
-        c2 = None
-    if c1:
-        if c2:
+    c1 = None if o1 is None else o1.__class__
+    c2 = None if o2 is None else o2.__class__
+    if c1 is not None:
+        if c2 is not None:
             if c1 == c2:
                 return cmp(o1, o2)
             elif id(c1) < id(c2):
