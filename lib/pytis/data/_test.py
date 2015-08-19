@@ -1722,6 +1722,8 @@ class DBDataDefault(_DBTest):
     def test_ranges(self):
         IR = pytis.data.IntegerRange()
         IR2 = pytis.data.IntegerRange(lower_inc=False, upper_inc=True)
+        IR3 = pytis.data.IntegerRange(lower_inc=False, upper_inc=False)
+        DR = pytis.data.DateTimeRange(without_timezone=True)
         # Basic tests
         data = self.ranges
         row = data.row(pytis.data.ival(1))
@@ -1781,8 +1783,7 @@ class DBDataDefault(_DBTest):
         def irange2(x, y):
             return pytis.data.Value(IR2, IR2.Range(x, y))
         def drange(x, y):
-            return pytis.data.Value(pytis.data.DateTimeRange(without_timezone=True),
-                                    (datetime.datetime(*x), datetime.datetime(*y),))
+            return pytis.data.Value(DR, (datetime.datetime(*x), datetime.datetime(*y),))
         test_condition(1, pytis.data.RangeContains('r', irange(15, 18)))
         test_condition(1, pytis.data.RangeContained('r', irange(30, 60)))
         test_condition(2, pytis.data.RangeOverlap('r', irange(0, 100)))
@@ -1803,6 +1804,19 @@ class DBDataDefault(_DBTest):
         self.assertEqual(value.value().upper(), None)
         test_condition(1, pytis.data.RangeOverlap('r', irange(30, None)))
         test_condition(1, pytis.data.RangeOverlap('r', irange(None, 30)))
+        # Other checks
+        value, err = IR.validate(('2', '2'))
+        self.assertIsNone(err)
+        value, err = IR3.validate(('2', '2'))
+        self.assertIsNone(err)
+        value, err = IR.validate(('2', '1'))
+        self.assertIsNotNone(err)
+        value, err = DR.validate(('2015-01-01 12:00:00', '2015-01-01 12:00:00'))
+        self.assertIsNone(err)
+        value, err = DR.validate(('2015-01-01 12:00:01', '2015-01-01 12:00:00'))
+        self.assertIsNotNone(err)
+        pytis.data.Value(IR, IR.Range(1, 1))
+        self.assertRaises(TypeError, pytis.data.Value, IR, IR.Range(1, 0))
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())

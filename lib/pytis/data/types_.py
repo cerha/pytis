@@ -684,6 +684,9 @@ class Range(Type):
     'Range.Range' instance of empty strings on validation.
 
     """
+    VM_REVERSE_RANGE = 'VM_REVERSE_RANGE'
+    _VM_REVERSE_RANGE_MSG = _(u"Lower range bound higher than the upper one")
+
     class Range(object):
 
         _type = None
@@ -777,7 +780,15 @@ class Range(Type):
             value = None
         else:
             assert v1 is not None and v2 is not None, obj
-            value = self.Range(v1.value(), v2.value(),)
+            v1_value = v1.value()
+            v2_value = v2.value()
+            if v1_value is not None and v2_value is not None:
+                if v1_value > v2_value:
+                    # PostgreSQL accepts values under the opposite condition
+                    # regardless of bound kinds.
+                    raise self._validation_error(self.VM_REVERSE_RANGE,
+                                                 lower=v1_value, upper=v2_value)
+            value = self.Range(v1_value, v2_value,)
         return Value(self, value), None
         
     def export(self, value, *args, **kwargs):
@@ -831,6 +842,8 @@ class Range(Type):
         if isinstance(value, Range.Range):
             adjusted = [self._adjust_bound(self._LOWER_BOUND, adjusted[0], value.lower_inc()),
                         self._adjust_bound(self._UPPER_BOUND, adjusted[1], value.upper_inc())]
+        if adjusted[0] is not None and adjusted[1] is not None and adjusted[0] > adjusted[1]:
+            raise TypeError("Lower range bound higher than the upper one", adjusted)
         result = self.Range(*adjusted)
         return result
 
