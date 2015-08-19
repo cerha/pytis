@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,12 @@ class PresentedRow(unittest.TestCase):
         
     def _check_values(self, row, pairs):
         for k, v in pairs:
-            assert row[k].value() == v, (k, v, row[k].value())
+            row_value = row[k].value()
+            if isinstance(v, tuple):
+                for v1, v2 in zip(v, row_value):
+                    assert v1 == v2, (k, v, row_value)
+            else:
+                assert row_value == v, (k, v, row_value)
     def _value(self, key, value):
         col = find(key, self._columns, key=lambda c: c.id())
         return pd.Value(col.type(), value)
