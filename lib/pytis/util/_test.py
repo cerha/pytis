@@ -210,21 +210,25 @@ class CompareObjects(unittest.TestCase):
     class B:
         pass
     def test_function(self):
+        def compare(a, b, op):
+            x = util.compare_objects(a, b)
+            assert op(x, 0), '%s %s 0' % (x, {operator.eq: '==', operator.ne: '!=',
+                                              operator.gt: '>', operator.lt: '<'}[op])
         o1 = None
         o2 = 'foo'
         o3 = 'bar'
         o4 = CompareObjects.A()
         o5 = CompareObjects.A()
         o6 = CompareObjects.B()
-        assert util.compare_objects(o1, o1) == 0, 'comparison error'
-        assert util.compare_objects(o4, o4) == 0, 'comparison error'
-        assert util.compare_objects(o4, o5) != 0, 'comparison error'
-        assert util.compare_objects(o1, o4) < 0, 'comparison error'
-        assert util.compare_objects(o6, o2) > 0, 'comparison error'
-        assert util.compare_objects(o5, o6) != 0, 'comparison error'
-        assert util.compare_objects(o1, o2) != 0, 'comparison error'
-        assert util.compare_objects(o2, o3) > 0, 'comparison error'
-        assert util.compare_objects(o3, o2) < 0, 'comparison error'
+        compare(o1, o1, operator.eq)
+        compare(o4, o4, operator.eq)
+        compare(o4, o5, operator.ne)
+        compare(o1, o4, operator.lt)
+        compare(o6, o2, operator.gt)
+        compare(o5, o6, operator.ne)
+        compare(o1, o2, operator.ne)
+        compare(o2, o3, operator.gt)
+        compare(o3, o2, operator.lt)
 tests.add(CompareObjects)
 
 
