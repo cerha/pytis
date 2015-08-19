@@ -5,12 +5,9 @@ import optparse
 import string
 import sys
 
-import psycopg2 as dbapi
-
 import pytis.extensions
 
 import pytis.data.postgresql
-pg_escape = pytis.data.postgresql.pg_escape
 
 class Configuration(object):
     dbparameters = dict(host=None, database=None, user=None, password=None)
@@ -75,12 +72,13 @@ def command_system_rights(parameters, dry_run, args, system=True):
             print "Error: invalid argument:", spec
             return
         role = spec[:separator_pos]
-        right_columns = spec[separator_pos+1:].split('/')
+        right_columns = spec[separator_pos + 1:].split('/')
         right = right_columns[0]
         columns = right_columns[1:] or [None]
         if columns and columns[0] == '':
             specification_name = string.split(shortname, '/')[1]
-            dmp_config = pytis.extensions.DMPConfiguration(configuration_file=parameters['configuration_file'])
+            dmp_config = pytis.extensions.DMPConfiguration(
+                configuration_file=parameters['configuration_file'])
             resolver = dmp_config.resolver()
             try:
                 form_specification = resolver.specification(specification_name)
@@ -94,7 +92,8 @@ def command_system_rights(parameters, dry_run, args, system=True):
                     colid = f.id()
                     if colid not in columns_spec:
                         columns.append(colid)
-        if right not in ('*', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call', 'show',):
+        if right not in ('*', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call',
+                         'show',):
             print "Error: invalid right:", right
             return
         if system and right == '*':
@@ -174,7 +173,8 @@ def command_update_form(parameters, dry_run, args):
     else:
         fullname = None
     specification = args[0]
-    return pytis.extensions.dmp_update_form(parameters, dry_run, specification, new_fullname=fullname)
+    return pytis.extensions.dmp_update_form(parameters, dry_run, specification,
+                                            new_fullname=fullname)
 
 def command_rename_specification(parameters, dry_run, args):
     if len(args) < 2:
@@ -288,8 +288,7 @@ def run():
     parameters = {}
     for k, v in Configuration.dbparameters.items():
         if v is not None:
-            parameters[k] = v    
-    command = args[0].replace('-', '_')
+            parameters[k] = v
     command_args = args[1:]
     command_function = find_command(args[0])
     parameters['configuration_file'] = options.config
