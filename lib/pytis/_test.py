@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2004, 2005, 2013 Brailcom, o.p.s.
+# Copyright (C) 2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,10 @@
 import unittest
 
 
+
 tests = unittest.TestSuite()
-for module_name in ('pytis.data._test', 'pytis.util._test'):
-    module = __import__(module_name, globals(), locals(), ['get_tests'])
+for module_name in ('pytis.data', 'pytis.presentation', 'pytis.util'):
+    module = __import__(module_name + '._test', globals(), locals(), ['get_tests'])
     tests.addTest(module.get_tests())
 
 

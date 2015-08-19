@@ -43,6 +43,6 @@ before_script:
   - "psql -U postgres -1c 'CREATE EXTENSION pgcrypto;' test"
   - "PYTHONPATH=lib tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql -1f - test"
 script:
-  - "PYTHONPATH=lcg/lib:lib:wiking/lib:wxwidgets${WXVERDEB}-${WXVERFULL}/wxPython:$PYTHONPATH coverage run --source=lib/pytis lib/pytis/data/_test.py"
+  - "PYTHONPATH=lcg/lib:lib:wiking/lib:wxwidgets${WXVERDEB}-${WXVERFULL}/wxPython:$PYTHONPATH coverage run --source=lib/pytis lib/pytis/_test.py"
 after_success:
   - "coveralls"
