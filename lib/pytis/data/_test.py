@@ -937,9 +937,9 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
-                  "create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)",
-                  ("insert into rangetable values "
-                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
+                  ("create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)", 90200,),
+                  (("insert into rangetable values "
+                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"), 90200,),
                   "create table arraytable (x int primary key, a int[], b text[])",
                   "insert into arraytable values (1, '{2, 3}', '{hello, world}')",
                   "insert into arraytable values (99, NULL, '{}')",
@@ -967,7 +967,14 @@ class _DBTest(_DBBaseTest):
                   "$$ select * from xcosi where id > $1 $$",
                   ):
             try:
-                self._sql_command(q)
+                if len(q)==2:
+                    cmd = q[0]
+                    min_version = q[1]
+                else:
+                    cmd = q
+                    min_version = None
+                if min_version is None or min_version <= self._connector.server_version:
+                    self._sql_command(cmd)
             except:
                 self.tearDown()
                 raise
@@ -983,9 +990,12 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % (t,))
             except:
                 pass
-        for t in ('bin', 'arraytable', 'rangetable', 'dateformats', 'timezones', 'fulltext',
+        tables = ['bin', 'arraytable', 'dateformats', 'timezones', 'fulltext',
                   'dist', 'xcosi', 'denik',
-                  'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',):
+                  'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',]
+        if self._connector.server_version >= 90200:
+            tables.append('rangetable')
+        for t in tables:
             try:
                 self._sql_command('drop table %s' % (t,))
             except:
@@ -1130,15 +1140,16 @@ class DBDataDefault(_DBTest):
             key,
             conn)
         # ranges
-        key = B('x', 'rangetable', 'x')
-        ranges = pytis.data.DBDataDefault(
-            (key,
-             B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
-             B('r2', 'rangetable', 'r2', type_=pytis.data.IntegerRange(lower_inc=False,
-                                                                       upper_inc=True)),
-             B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange(without_timezone=True)),),
-            key,
-            conn)
+        if self._connector.server_version >= 90200:
+            key = B('x', 'rangetable', 'x')
+            ranges = pytis.data.DBDataDefault(
+                (key,
+                 B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
+                 B('r2', 'rangetable', 'r2', type_=pytis.data.IntegerRange(lower_inc=False,
+                                                                           upper_inc=True)),
+                 B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange(without_timezone=True)),),
+                key,
+                conn)
         # arrays
         key = B('x', 'arraytable', 'x')
         arrays = pytis.data.DBDataDefault(
@@ -1178,7 +1189,8 @@ class DBDataDefault(_DBTest):
         self.fulltext1 = fulltext1
         self.dateformats = dateformats
         self.timezones = timezones
-        self.ranges = ranges
+        if self._connector.server_version >= 90200:
+            self.ranges = ranges
         self.arrays = arrays
         self.view = view
         self.view3 = view3
@@ -1720,6 +1732,8 @@ class DBDataDefault(_DBTest):
                                              ('t', ttz_val), ('ttz', pytis.data.tval(None)),)))
         check_row()
     def test_ranges(self):
+        if self._connector.server_version < 90200:
+            return
         IR = pytis.data.IntegerRange()
         IR2 = pytis.data.IntegerRange(lower_inc=False, upper_inc=True)
         IR3 = pytis.data.IntegerRange(lower_inc=False, upper_inc=False)

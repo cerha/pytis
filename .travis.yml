@@ -10,9 +10,6 @@ env:
   global:
     - WXVERDEB=2.8
     - WXVERFULL=2.8.12.1
-matrix:
-  allow_failures:
-    - env: PGVER=9.1
 install:
   - "git clone git://git.freebsoft.org/git/lcg"
   - "git clone git://git.freebsoft.org/git/wiking"
