@@ -258,11 +258,7 @@ class Type(object):
               cmp(self._enumerator, other._enumerator) == 0):
             result = 0
         else:
-            result = -1
-            # TODO: Volání compare_objects způsobuje rekurzi.  Existuje nějaký
-            # případ, kdy by se instance mohly rovnat i přes nesplnění výše
-            # uvedených podmínek?
-            # result = compare_objects(self, other)
+            return cmp(id(self), id(other))
         return result
 
     def __str__(self):

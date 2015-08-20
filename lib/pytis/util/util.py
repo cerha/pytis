@@ -1142,24 +1142,14 @@ def compare_objects(o1, o2):
       'cmp(o1, o2)'.
       
     """
-    c1 = None if o1 is None else o1.__class__
-    c2 = None if o2 is None else o2.__class__
-    if c1 is not None:
-        if c2 is not None:
-            if c1 == c2:
-                return cmp(o1, o2)
-            elif id(c1) < id(c2):
-                return -1
-            else:
-                return 1
-        else:
-            return 1
+    c1 = o1.__class__
+    c2 = o2.__class__
+    if c1 == c2:
+        return cmp(o1, o2)
+    elif id(c1) < id(c2):
+        return -1
     else:
-        if c2:
-            return -1
-        else:
-            return cmp(o1, o2)
-
+        return 1
 
 def less(o1, o2):
     """Similar to '<' operator but handles 'None' values.
