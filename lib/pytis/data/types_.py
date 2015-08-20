@@ -760,7 +760,15 @@ class Range(Type):
             _default_upper_inc = upper_inc
         self.Range = InstanceRange
         super(Range, self)._init(**kwargs)
-    
+
+    def __cmp__(self, other):
+        result = super(Range, self).__cmp__(other)
+        if not result:
+            result = cmp(self._lower_inc, other._lower_inc)
+        if not result:
+            result = cmp(self._upper_inc, other._upper_inc)
+        return result
+
     def _validate(self, obj, **kwargs):
         if obj == self._NULL_RANGE_VALUE:
             return Value(self, None), None
