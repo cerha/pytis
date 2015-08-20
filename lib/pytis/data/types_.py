@@ -254,7 +254,7 @@ class Type(object):
             result = 0
         elif (self._constraints == other._constraints and
               self._not_null == other._not_null and
-              self._unique == other.unique and
+              self._unique == other._unique and
               cmp(self._enumerator, other._enumerator) == 0):
             result = 0
         else:
