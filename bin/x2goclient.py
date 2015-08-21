@@ -20,62 +20,23 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-03 21:04'
+_VERSION = '2015-08-21 21:36'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
 import gevent.monkey
 gevent.monkey.patch_all()
 
-import argparse
-import copy
-import getpass
 import gettext
 import os
 import platform
-import re
-import shutil
-import signal
 import sys
-import tarfile
-import tempfile
-import types
 
 def on_windows():
     return platform.system() == 'Windows'
 
 def run_directory():
     return sys.path[0]
-
-sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
-
-import gevent
-import gevent.event
-import gevent.queue
-import paramiko
-
-_auth_info = None
-class SSHClient(paramiko.SSHClient):
-    pytis_client = True
-    def connect(self, hostname, gss_auth=None, **kwargs):
-        if gss_auth is None:
-            gss_auth = _auth_info.get('gss_auth', False)
-        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
-try:
-    paramiko.SSHClient.pytis_client
-except AttributeError:
-    paramiko.SSHClient = SSHClient
-
-import pyhoca.cli
-from pyhoca.cli import runtime_error
-import rpyc
-import x2go
-import x2go.backends.profiles.base
-import x2go.client
-import x2go.defaults
-import x2go.log
-import x2go.xserver
-import pytis.remote
 
 # Windows specific setup
 if on_windows():
@@ -116,51 +77,168 @@ t = gettext.translation('pytis-x2go',
                         fallback=True)
 _ = t.ugettext
 
-_NONE = object()
-
 import wx
-app = wx.App()
 
-def info_dialog(message, error=False):
-    style = wx.OK
-    if error:
-        style = style | wx.ICON_ERROR
-    wx.MessageBox(message, style=style)
-    app.Yield()
+class App(wx.App):
+    def __init__(self, *args, **kwargs):
+        self._progress = None
+        self._progress_value = 1
+        self._progress_max = None
+        super(App, self).__init__(*args, **kwargs)
 
-def question_dialog(question):
-    answer = wx.MessageBox(question, style=wx.YES_NO)
-    app.Yield()
-    return answer == wx.YES
+    def info_dialog(self, message, caption='', error=False):
+        self.close_progress_dialog()
+        style = wx.OK
+        if error:
+            style = style | wx.ICON_ERROR
+        dlg = wx.MessageDialog(message, caption=caption, style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        dlg.ShowModal()
+        dlg.Destroy()
+        app.Yield()
 
-def text_dialog(prompt, caption='', default_value='', password=False):
-    dialog = wx.GetPasswordFromUser if password else wx.GetTextFromUser
-    answer = dialog(prompt, caption=caption, default_value=default_value)
-    app.Yield()
-    return answer or None
+    def question_dialog(self, question, caption=''):
+        self.close_progress_dialog()
+        style = wx.YES_NO
+        dlg = wx.MessageDialog(question, caption=caption, style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        answer = dlg.ShowModal()
+        dlg.Destroy()
+        self.Yield()
+        return answer == wx.YES
 
-def choice_dialog(prompt, choices):
-    answer = wx.GetSingleChoice(prompt, prompt, choices=choices)
-    app.Yield()
-    return answer or None
-
-def choice_dialog_index(prompt, choices):
-    answer = wx.GetSingleChoiceIndex(prompt, prompt, choices=choices)
-    app.Yield()
-    if not answer:
-        return 0
-    elif answer == -1:
-        return None
-    else:
+    def text_dialog(self, prompt, caption='', default_value='', password=False):
+        self.close_progress_dialog()
+        style = wx.TextEntryDialogStyle
+        if password:
+            style = style | wx.TE_PASSWORD
+            dlg = wx.PasswordEntryDialog(None, prompt, caption=caption, style=style)
+        else:
+            dlg = wx.TextEntryDialog(None, prompt, caption=caption, defaultValue=default_value,
+                                     style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        if dlg.ShowModal() == wx.ID_OK:
+            answer = dlg.GetValue()
+        else:
+            answer = None
+        dlg.Destroy()
+        self.Yield()
         return answer
 
-def file_dialog(prompt, directory=None):
-    kwargs = {}
-    if directory is not None:
-        kwargs['default_path'] = directory
-    answer = wx.FileSelector(prompt, **kwargs)
-    app.Yield()
-    return answer or None
+    def choice_dialog(self, prompt, choices, index=False):
+        self.close_progress_dialog()
+        style = wx.CHOICEDLG_STYLE
+        dlg = wx.SingleChoiceDialog(None, prompt, prompt, choices=choices, style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        if dlg.ShowModal() == wx.ID_OK:
+            if index:
+                answer = dlg.GetSelection()
+                if answer == -1:
+                    answer = None
+            else:
+                answer = dlg.GetStringSelection()
+        else:
+            answer = None
+        dlg.Destroy()
+        self.Yield()
+        return answer
+
+    def choice_dialog_index(self, prompt, choices):
+        return self.choice_dialog(prompt, choices, index=True)
+
+    def file_dialog(self, prompt, directory=None):
+        self.close_progress_dialog()
+        kwargs = {}
+        if directory is not None:
+            kwargs['default_path'] = directory
+        answer = wx.FileSelector(prompt, **kwargs)
+        self.Yield()
+        return answer or None
+
+    def progress_dialog(self, title, message, maximum):
+        self._progress_max = maximum
+        self._progress_title = title
+        self._progress_message = message
+        self._progress = wx.ProgressDialog(title, message, maximum)
+        self.Yield()
+
+    def update_progress_dialog(self, value=None, title=None, message=None):
+        if value:
+            self._progress_value = value
+        else:
+            if self._progress_value < self._progress_max - 1:
+                self._progress_value += 1
+        if title:
+            self._progress_title = title
+        if message:
+            self._progress_message = message
+        if not self._progress:
+            self.progress_dialog(self._progress_title, self._progress_message, self._progress_max)
+            self.Yield()
+        self._progress.Update(self._progress_value)
+        self.Yield()
+
+    def close_progress_dialog(self):
+        if self._progress is not None:
+            self._progress.Update(self._progress_max)
+            self._progress.Destroy()
+            self.Yield()
+            self._progress = None
+            self.Yield()
+
+app = App()
+
+app.progress_dialog(_("Starting application"), _("Connecting to server. Please wait..."), 20)
+
+import argparse
+import copy
+import getpass
+import re
+import shutil
+import signal
+import tarfile
+import tempfile
+import types
+
+sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
+
+import gevent
+import gevent.event
+import gevent.queue
+import paramiko
+
+app.update_progress_dialog()
+
+_auth_info = None
+class SSHClient(paramiko.SSHClient):
+    pytis_client = True
+    def connect(self, hostname, gss_auth=None, **kwargs):
+        if gss_auth is None:
+            gss_auth = _auth_info.get('gss_auth', False)
+        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
+try:
+    paramiko.SSHClient.pytis_client
+except AttributeError:
+    paramiko.SSHClient = SSHClient
+
+import pyhoca.cli
+from pyhoca.cli import runtime_error
+import rpyc
+import x2go
+import x2go.backends.profiles.base
+import x2go.client
+import x2go.defaults
+import x2go.log
+import x2go.xserver
+import pytis.remote
+
+app.update_progress_dialog()
+
+_NONE = object()
 
 class ClientException(Exception):
     pass
@@ -548,6 +626,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
     def __init__(self, args, logger=None, liblogger=None, **kwargs):
         import pprint
+        app.update_progress_dialog()
         ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
                                                 'known_hosts')
         #
@@ -589,6 +668,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         self.session_profiles = self.profiles_backend(logger=self.logger, broker_url=broker_url,
                                                       broker_password=self.args.broker_password)
         # Check for upgrade
+        app.update_progress_dialog()
         if self.args.broker_url is not None:
             profiles = self.session_profiles
             # We can use only supported parameters from session_profiles
@@ -598,13 +678,14 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 p = profiles.pytis_upgrade_parameter
                 upgrade_url = p('command')
                 if upgrade_url:
-                    if question_dialog(_("New pytis client version available. Install?")):
+                    if app.question_dialog(_("New pytis client version available. Install?")):
                         self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
             self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
                                 exitcode=31)
         self.auth_attempts = int(self.args.auth_attempts)
+        app.update_progress_dialog()
         if args.list_profiles:
             _session_profiles = self._X2GoClient__get_profiles()
             # retrieve a session list
@@ -634,6 +715,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             # done
             sys.exit(0)
         elif self.args.session_profile and not args.broker_url:
+            app.update_progress_dialog()
             _cmdlineopt_to_sessionopt = {
                 'command': 'cmd',
                 'kb_layout': 'kblayout',
@@ -660,6 +742,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             )
         else:
             # Select session
+            app.update_progress_dialog()
             profile_id = self.args.session_profile
             profile_name = 'Pyhoca-Client_Session'
             if args.broker_url is not None:
@@ -667,17 +750,21 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 data.sort(key=lambda tup: tup[1])
                 if not profile_id:
                     choices = [d[1] for d in data]
-                    answer = choice_dialog_index(_("Select session"), choices=choices)
+                    answer = app.choice_dialog_index(_("Select session"), choices=choices)
                     profile_id = answer is not None and data[answer][0].rstrip()
                 profile_name = None
                 if not profile_id:
+                    app.close_progress_dialog()
                     raise Exception(_("No session selected."))
                 profile = profiles.broker_selectsession(profile_id)
+                app.update_progress_dialog(message=_("Opening selected profile. Please wait..."))
                 _auth_info.update_from_profile(profile)
                 _auth_info.update_args(self.args)
                 params = profiles.to_session_params(profile_id)
+                app.update_progress_dialog()
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
+                app.update_progress_dialog()
                 if on_windows() and args.create_shortcut:
                     self._create_shortcut(broker_url, args.server, profile_id, params['profile_name'],
                                           args.calling_script)
@@ -706,9 +793,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     share_local_folders=self.args.share_local_folders,
                     allow_share_local_folders=True,
                     cmd=self.args.command)
+        app.update_progress_dialog()
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
+        app.update_progress_dialog()
 
     def pytis_setup(self, s_uuid):
         # Configuration transfer to the server
@@ -865,8 +954,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
         args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
+        app.update_progress_dialog()
         gevent.spawn(self._check_rpyc_server, *args)
+        app.update_progress_dialog()
         gevent.spawn(self._check_ssh_tunnel, *args)
+        app.update_progress_dialog()
 
     def terminate_session(self, *args, **kwargs):
         try:
@@ -934,8 +1026,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             while True:
                 if ok_password(key_filename, password):
                     return password
-                password = text_dialog(_("Password key for %s") % (key_filename,),
-                                       password=True)
+                password = app.text_dialog(_("Password key for %s") % (key_filename,),
+                                           password=True)
                 if password is None:
                     return None
         def key_acceptable(key_filename):
@@ -982,8 +1074,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     if 'publickey' in methods:
                         choice_password = _("Login using password")
                         choice_key_file = _("Login using a key file")
-                        answer = choice_dialog(_("Default authentication failed"),
-                                               [choice_password, choice_key_file])
+                        answer = app.choice_dialog(_("Default authentication failed"),
+                                                   [choice_password, choice_key_file])
                         selected_method = 'publickey' if answer == choice_key_file else 'password'
                     else:
                         selected_method = 'password'
@@ -993,15 +1085,15 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     raise Exception(_("No supported ssh connection method available"))
                 _auth_info['_method'] = selected_method
                 if selected_method == 'password':
-                    password = text_dialog(_("Login password"), password=True)
+                    password = app.text_dialog(_("Login password"), password=True)
                     if not password:
                         return None
                     _auth_info['password'] = password.rstrip('\r\n')
                 elif selected_method == 'publickey':
                     ssh_directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
                     while True:
-                        key_filename = file_dialog(_("Select ssh key file"),
-                                                   directory=ssh_directory)
+                        key_filename = app.file_dialog(_("Select ssh key file"),
+                                                       directory=ssh_directory)
                         if key_filename is None:
                             return None
                         password = key_password(key_filename, _auth_info.get('password') or '')
@@ -1054,7 +1146,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         sys.exit(0)
 
     def new_session(self, s_hash):
+        app.update_progress_dialog()
         super(PytisClient, self).new_session(s_hash)
+        app.update_progress_dialog()
         if self._pytis_setup_configuration:
             self.pytis_setup(s_hash)
             self._pytis_setup_configuration = False
@@ -1063,6 +1157,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     self.pytis_handle_info()
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
+        app.close_progress_dialog()
 
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
@@ -1096,8 +1191,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                         shortcut_exists = True
             except Exception:
                 pass
-        if (shortcut_exists or
-            not question_dialog(_("Create desktop shortcut for this session profile?"))):
+        if ((shortcut_exists or
+             not app.question_dialog(_("Create desktop shortcut for this session profile?")))):
             return
         # Create shortcut on desktop
         shortcut_name = profile_name
@@ -1106,9 +1201,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if not os.path.exists(shortcut_path):
                 break
             else:
-                basename = os.path.splitext(shortcut_name)[0]
-                msg = _("Shortcut %s allready exists. Choose another name:") % shortcut_name
-                new_name = text_dialog(msg, caption=_("Edit shortcut name"),
+                msg = _("Shortcut %s allready exists. Please, rename it:") % shortcut_name
+                new_name = app.text_dialog(msg, caption=_("Edit shortcut name"),
                                        default_value=shortcut_name)
                 if not new_name:
                     return
@@ -1154,14 +1248,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         _auth_info.update_args(args)
         client = class_(args, use_cache=False, start_xserver=str(XSERVER_VARIANT),
                         loglevel=x2go.log.loglevel_DEBUG)
+        app.update_progress_dialog()
         # Run
         s_uuid = client.x2go_session_hash
         session = client.session_registry(s_uuid)
         session.sshproxy_params['key_filename'] = _auth_info.get('key_filename')
         session.sshproxy_params['look_for_keys'] = False
         client.pytis_start_processes(configuration)
+        app.update_progress_dialog()
         client._pytis_setup_configuration = True
         client.authenticate()
+        app.close_progress_dialog()
         client.MainLoop()
 
 # ---------------------
@@ -1518,6 +1615,8 @@ def main():
     quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
     gevent.signal(quit_signal, gevent.kill)
     PytisClient.run(args)
+
+app.update_progress_dialog()
 
 if __name__ == '__main__':
     main()
