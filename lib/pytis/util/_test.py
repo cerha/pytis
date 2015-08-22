@@ -437,6 +437,15 @@ class Caching(unittest.TestCase):
         self.assertEqual(c['a'], 1)
         c.reset()
         self.assertEqual(c['a'], 3)
+    def test_limited_cache(self):
+        def squarer(key):
+            return key*key
+        c = caching.LimitedCache(squarer, limit=2)
+        self.assertEqual(c[2], 4)
+        self.assertEqual(c[3], 9)
+        self.assertEqual(len(c), 2)
+        self.assertEqual(c[4], 16)
+        self.assertLessEqual(len(c), 2)
 tests.add(Caching)
 
 
