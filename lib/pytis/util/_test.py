@@ -48,6 +48,7 @@ class Counter(unittest.TestCase):
         self.assertEqual(counter.next(), 1)
         self.assertEqual(counter.next(), 2)
         self.assertEqual(counter.current(), 2)
+tests.add(Counter)
 
 class Pipe(unittest.TestCase):
     def test_it(self):
@@ -297,6 +298,7 @@ class CopyStream(unittest.TestCase):
         output = StringIO.StringIO(value)
         util.copy_stream(input, output)
         self.assertEqual(output.getvalue(), value)
+tests.add(CopyStream)
 
 
 class FindUtils(unittest.TestCase):
