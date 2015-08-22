@@ -391,7 +391,7 @@ class Mktempdir(unittest.TestCase):
                 if d:
                     try:
                         os.rmdir(d)
-                    except:
+                    except: # pragma: no cover
                         pass
 tests.add(Mktempdir)
 
@@ -464,5 +464,5 @@ tests.add(Resolver)
 def get_tests():
     return tests
 
-if __name__ == '__main__':
+if __name__ == '__main__': # pragma: no cover
     unittest.main()
