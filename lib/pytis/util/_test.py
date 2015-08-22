@@ -38,16 +38,16 @@ tests = test.TestSuite()
 class Counter(unittest.TestCase):
     def test_it(self):
         counter = util.Counter()
-        assert counter.current() == 0
-        assert counter.next() == 1
-        assert counter.next() == 2
-        assert counter.next() == 3
-        assert counter.current() == 3
+        self.assertEqual(counter.current(), 0)
+        self.assertEqual(counter.next(), 1)
+        self.assertEqual(counter.next(), 2)
+        self.assertEqual(counter.next(), 3)
+        self.assertEqual(counter.current(), 3)
         counter.reset()
-        assert counter.current() == 0
-        assert counter.next() == 1
-        assert counter.next() == 2
-        assert counter.current() == 2
+        self.assertEqual(counter.current(), 0)
+        self.assertEqual(counter.next(), 1)
+        self.assertEqual(counter.next(), 2)
+        self.assertEqual(counter.current(), 2)
 
 class Pipe(unittest.TestCase):
     def test_it(self):
@@ -55,27 +55,27 @@ class Pipe(unittest.TestCase):
         p.write('foo')
         p.write('bar')
         r = p.read(4)
-        assert r == 'foob', r
+        self.assertEqual(r, 'foob')
         p.write('baz')
         p.close()
         r = p.read()
-        assert r == 'arbaz', r
+        self.assertEqual(r, 'arbaz')
         r = p.read()
-        assert r is None, r
+        self.assertIsNone(r)
     def test_cc(self):
         s = StringIO.StringIO()
         p = util.Pipe(cc=s)
         p.write('foo')
         p.write('bar')
         r = p.read(4)
-        assert r == 'foob', r
+        self.assertEqual(r, 'foob')
         p.write('baz')
-        assert s.getvalue() == 'foobarbaz', s.getvalue()
+        self.assertEqual(s.getvalue(), 'foobarbaz')
         p.close()
         r = p.read()
-        assert r == 'arbaz', r
+        self.assertEqual(r, 'arbaz')
         r = p.read()
-        assert r is None, r
+        self.assertIsNone(r)
     def test_multi_cc(self):
         s = StringIO.StringIO()
         s1 = StringIO.StringIO()
@@ -83,15 +83,15 @@ class Pipe(unittest.TestCase):
         p.write('foo')
         p.write('bar')
         r = p.read(4)
-        assert r == 'foob', r
+        self.assertEqual(r, 'foob')
         p.write('baz')
-        assert s.getvalue() == 'foobarbaz', s.getvalue()
-        assert s1.getvalue() == 'foobarbaz', s.getvalue()
+        self.assertEqual(s.getvalue(), 'foobarbaz')
+        self.assertEqual(s1.getvalue(), 'foobarbaz')
         p.close()
         r = p.read()
-        assert r == 'arbaz', r
+        self.assertEqual(r, 'arbaz')
         r = p.read()
-        assert r is None, r
+        self.assertIsNone(r)
 tests.add(Pipe)
 
 
@@ -105,7 +105,7 @@ class Popen(unittest.TestCase):
         from_, to = popen.from_child(), popen.to_child()
         to.write(self.STRING)
         to.close()
-        assert from_.read() == self.RSTRING
+        self.assertEqual(from_.read(), self.RSTRING)
     def test_auto(self):
         self._test_auto(self.COMMAND)
     def test_command_as_sequence(self):
@@ -120,72 +120,75 @@ class Popen(unittest.TestCase):
         out = popen1.to_child()
         out.write(self.STRING)
         out.close()
-        assert popen3.from_child().read() == self.RSTRING
+        self.assertEqual(popen3.from_child().read(), self.RSTRING)
 tests.add(Popen)
 
 
 class Stack(unittest.TestCase):
     def test_it(self):
         stack = util.Stack()
-        assert stack.empty()
+        self.assertTrue(stack.empty())
         a = 'AAA'
         stack.push(a)
-        assert not stack.empty()
-        assert stack.top() is a
+        self.assertFalse(stack.empty())
+        self.assertIs(stack.top(), a)
         b = 'BBB'
         stack.push(b)
-        assert not stack.empty()
-        assert stack.top() is b
+        self.assertFalse(stack.empty())
+        self.assertIs(stack.top(), b)
         stack.pop()
-        assert not stack.empty()
-        assert stack.top() is a
+        self.assertFalse(stack.empty())
+        self.assertIs(stack.top(), a)
         stack.pop()
-        assert stack.empty()
+        self.assertTrue(stack.empty())
 tests.add(Stack)
         
 
 class XStack(unittest.TestCase):
     def test_it(self):
         xstack = util.XStack()
-        assert xstack.empty()
-        assert xstack.active() is None
-        assert xstack.prev() is None and xstack.next() is None
+        self.assertTrue(xstack.empty())
+        self.assertIsNone(xstack.active())
+        self.assertIsNone(xstack.prev())
+        self.assertIsNone(xstack.next())
         a = 'AAA'
         b = 'BBB'
         c = 'CCC'
         d = 'DDD'
         xstack.push(a)
-        assert xstack.items() == (a,)
-        assert xstack.active() is a
-        assert xstack.prev() is None and xstack.next() is None
+        self.assertEqual(xstack.items(), (a,))
+        self.assertIs(xstack.active(), a)
+        self.assertIsNone(xstack.prev())
+        self.assertIsNone(xstack.next())
         xstack.push(b)
-        assert xstack.items() == (b, a,)
-        assert xstack.active() is b
-        assert xstack.prev() is a
-        assert xstack.next() is a
+        self.assertEqual(xstack.items(), (b, a,))
+        self.assertIs(xstack.active(), b)
+        self.assertIs(xstack.prev(), a)
+        self.assertIs(xstack.next(), a)
         xstack.push(c)
-        assert xstack.items() == (c, b, a,)
-        assert xstack.active() is c
-        assert xstack.prev() is a
-        assert xstack.next() is b
+        self.assertEqual(xstack.items(), (c, b, a,))
+        self.assertIs(xstack.active(), c)
+        self.assertIs(xstack.prev(), a)
+        self.assertIs(xstack.next(), b)
         xstack.activate(a)
-        assert xstack.active() is a
-        assert xstack.prev() is b
-        assert xstack.next() is c
+        self.assertIs(xstack.active(), a)
+        self.assertIs(xstack.prev(), b)
+        self.assertIs(xstack.next(), c)
         xstack.activate(b)
-        assert xstack.active() is b
-        assert xstack.prev() is c
-        assert xstack.next() is a
+        self.assertIs(xstack.active(), b)
+        self.assertIs(xstack.prev(), c)
+        self.assertIs(xstack.next(), a)
         xstack.remove(b)
-        assert xstack.items() == (c, a,)
-        assert xstack.active() is a
+        self.assertEqual(xstack.items(), (c, a,))
+        self.assertIs(xstack.active(), a)
         xstack.push(d)
-        assert xstack.items() == (c, d, a,)
-        assert xstack.active() is d
+        self.assertEqual(xstack.items(), (c, d, a,))
+        self.assertIs(xstack.active(), d)
         xstack.pop()
         xstack.pop()
-        assert xstack.active() is c
-        assert xstack.prev() is None and xstack.next() is None
+        self.assertIs(xstack.active(), c)
+        self.assertIsNone(xstack.prev())
+        self.assertIsNone(xstack.next())
 tests.add(XStack)
 
 
@@ -195,12 +198,13 @@ class Sameclass(unittest.TestCase):
     class B:
         pass
     def test_function(self):
-        assert util.sameclass(Sameclass.A(), Sameclass.A()), \
-               'same classes not recognized'
-        assert not util.sameclass(Sameclass.A(), Sameclass.B()), \
-               'different classes not recognized'
-        assert util.sameclass(1, 1), 'same inteeger classes not recognized'
-        assert not util.sameclass(1, 1.0), 'different classes not recognized'
+        self.longMessage = True
+        self.assertTrue(util.sameclass(Sameclass.A(), Sameclass.A()), \
+               'same classes not recognized')
+        self.assertFalse(util.sameclass(Sameclass.A(), Sameclass.B()), \
+               'different classes not recognized')
+        self.assertTrue(util.sameclass(1, 1), 'same inteeger classes not recognized')
+        self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
 tests.add(Sameclass)
 
 
@@ -210,48 +214,45 @@ class CompareObjects(unittest.TestCase):
     class B:
         pass
     def test_function(self):
-        def compare(a, b, op):
-            x = util.compare_objects(a, b)
-            assert op(x, 0), '%s %s 0' % (x, {operator.eq: '==', operator.ne: '!=',
-                                              operator.gt: '>', operator.lt: '<'}[op])
         o1 = None
         o2 = 'foo'
         o3 = 'bar'
         o4 = CompareObjects.A()
         o5 = CompareObjects.A()
         o6 = CompareObjects.B()
-        compare(o1, o1, operator.eq)
-        compare(o4, o4, operator.eq)
-        compare(o4, o5, operator.ne)
-        compare(o1, o4, operator.ne)
-        compare(o6, o2, operator.ne)
-        compare(o5, o6, operator.ne)
-        compare(o1, o2, operator.ne)
-        compare(o2, o3, operator.gt)
-        compare(o3, o2, operator.lt)
+        self.assertEqual(util.compare_objects(o1, o1), 0)
+        self.assertEqual(util.compare_objects(o4, o4), 0)
+        self.assertNotEqual(util.compare_objects(o4, o5), 0)
+        self.assertNotEqual(util.compare_objects(o1, o4), 0)
+        self.assertNotEqual(util.compare_objects(o6, o2), 0)
+        self.assertNotEqual(util.compare_objects(o5, o6), 0)
+        self.assertNotEqual(util.compare_objects(o1, o2), 0)
+        self.assertGreater(util.compare_objects(o2, o3), 0)
+        self.assertLess(util.compare_objects(o3, o2), 0)
 tests.add(CompareObjects)
 
 
 class MiscFunctions(unittest.TestCase):
     def test_is_sequence(self):
-        assert util.is_sequence((1, 2, 3)), 'sequence not a sequence'
-        assert util.is_sequence(()), 'sequence not a sequence'
-        assert util.is_sequence([]), 'sequence not a sequence'
-        assert util.is_sequence([1]), 'sequence not a sequence'
-        assert not util.is_sequence(None), 'non-sequence as sequence'
-        assert not util.is_sequence(self), 'non-sequence as sequence'
-        assert not util.is_sequence({}), 'non-sequence as sequence'
+        self.longMessage = True
+        self.assertTrue(util.is_sequence((1, 2, 3)), 'sequence not a sequence')
+        self.assertTrue(util.is_sequence(()), 'sequence not a sequence')
+        self.assertTrue(util.is_sequence([]), 'sequence not a sequence')
+        self.assertTrue(util.is_sequence([1]), 'sequence not a sequence')
+        self.assertFalse(util.is_sequence(None), 'non-sequence as sequence')
+        self.assertFalse(util.is_sequence(self), 'non-sequence as sequence')
+        self.assertFalse(util.is_sequence({}), 'non-sequence as sequence')
     def test_safedel(self):
         d = {'alpha': 1, 'beta': 2, 'gamma': 3}
         l = ['alpha', 'beta', 'gamma']
-        assert util.safedel(d, 'delta') == d
-        assert util.safedel (l, 3) == l
+        self.assertEqual(util.safedel(d, 'delta'), d)
+        self.assertEqual(util.safedel (l, 3), l)
         dx = util.safedel(d, 'alpha')
-        assert dx == {'beta': 2, 'gamma': 3}
+        self.assertEqual(dx,  {'beta': 2, 'gamma': 3})
         lx = util.safedel(l, 1)
-        assert lx == ['alpha', 'gamma']
-        assert util.safedel({}, 'foo') == {}
-        assert util.safedel([], 2) == []
+        self.assertEqual(lx,  ['alpha', 'gamma'])
+        self.assertEqual(util.safedel({}, 'foo'),  {})
+        self.assertEqual(util.safedel([], 2),  [])
 tests.add(MiscFunctions)
 
 
@@ -259,32 +260,31 @@ class ListUtils(unittest.TestCase):
     def test_some(self):
         T = True
         F = False
-        assert not util.some(util.identity, ())
-        assert util.some(util.identity, (T,))
-        assert not util.some(util.identity, (F,))
-        assert util.some(util.identity, (F, T))
+        self.assertFalse(util.some(util.identity, ()))
+        self.assertTrue(util.some(util.identity, (T,)))
+        self.assertFalse(util.some(util.identity, (F,)))
+        self.assertTrue(util.some(util.identity, (F, T)))
         import operator
-        assert util.some(operator.and_, (T, T), (T, F))
+        self.assertTrue(util.some(operator.and_, (T, T), (T, F)))
         def all3(x,y,z):
             return x and y and z
-        assert not util.some(all3, (T, T), (T, F), (F, T))
+        self.assertFalse(util.some(all3, (T, T), (T, F), (F, T)))
     def test_remove_duplicates(self):
-        assert util.remove_duplicates([]) == [], 'empty list failed'
-        assert util.remove_duplicates([1, 1]) == [1]
-        l = util.remove_duplicates([2, 2, 1, 3, 1, 2])
-        l.sort()
-        assert l == [1, 2, 3]
+        self.longMessage = True
+        self.assertEqual(util.remove_duplicates([]), [], 'empty list failed')
+        self.assertEqual(util.remove_duplicates([1, 1]), [1])
+        self.assertItemsEqual(util.remove_duplicates([2, 2, 1, 3, 1, 2]), [1, 2, 3])
     def test_flatten(self):
-        result = util.flatten([])
-        assert result == [] or result == (), result
-        result = util.flatten([[([])]])
-        assert result == [] or result == (), result
-        result = util.flatten([[1,2],3,[[4]],[(5,[6,7],8)]])
-        assert result == [1,2,3,4,5,6,7,8] or result == (1,2,3,4,5,6,7,8), \
-               result
+        def assertEqualListOrTuple(actual, expected):
+            assert isinstance(expected, (list, tuple,)), "Test logic error"
+            self.assertIsInstance(actual, (list, tuple,))
+            self.assertSequenceEqual(actual, expected)
+        assertEqualListOrTuple(util.flatten([]), [])
+        assertEqualListOrTuple(util.flatten([[([])]]), [])
+        assertEqualListOrTuple(util.flatten([[1,2],3,[[4]],[(5,[6,7],8)]]), [1,2,3,4,5,6,7,8])
     def test_nreverse(self):
-        assert util.nreverse([1,2,3]) == [3,2,1]
-        assert util.nreverse([]) == []
+        self.assertEqual(util.nreverse([1,2,3]), [3,2,1])
+        self.assertEqual(util.nreverse([]), [])
 tests.add(ListUtils)
 
 
@@ -296,51 +296,47 @@ class CopyStream(unittest.TestCase):
         input.seek(0)
         output = StringIO.StringIO(value)
         util.copy_stream(input, output)
-        assert output.getvalue() == value
+        self.assertEqual(output.getvalue(), value)
 
 
 class FindUtils(unittest.TestCase):
     _ALIST = [(0, 5), (1, 6), (1, 7)]
     def test_position(self):
-        assert util.position(42, []) == None
-        assert util.position(42, [42]) == 0
-        assert util.position(42, [1, 42]) == 1
-        assert util.position(42, [1, 42, 2]) == 1
-        assert util.position(42, [1, 2, 3]) == None
+        self.assertEqual(util.position(42, []), None)
+        self.assertEqual(util.position(42, [42]), 0)
+        self.assertEqual(util.position(42, [1, 42]), 1)
+        self.assertEqual(util.position(42, [1, 42, 2]), 1)
+        self.assertEqual(util.position(42, [1, 2, 3]), None)
     def test_find(self):
-        assert util.find(42, []) == None
-        assert util.find(42, [42.0]) == 42
-        assert util.find(42, [1, 2, 3]) == None
-        assert util.find(42, [-41, -42, -43], key=operator.neg) == -42
-        assert util.find(42, [41, 42, 43, 44], test=(lambda x, y: x<y)) == 43
-        assert util.find(42, [-40, -41, -42, -43], key=operator.neg,
-                         test=(lambda x, y: x<y)) == -43
+        self.assertEqual(util.find(42, []), None)
+        self.assertEqual(util.find(42, [42.0]), 42)
+        self.assertEqual(util.find(42, [1, 2, 3]), None)
+        self.assertEqual(util.find(42, [-41, -42, -43], key=operator.neg), -42)
+        self.assertEqual(util.find(42, [41, 42, 43, 44], test=(lambda x, y: x<y)), 43)
+        self.assertEqual(util.find(42, [-40, -41, -42, -43], key=operator.neg,
+                         test=(lambda x, y: x<y)), -43)
     def test_assoc(self):
-        assert util.assoc(1, self._ALIST) == (1, 6)
-        assert util.assoc(2, self._ALIST) == None
-        assert util.assoc(5, self._ALIST) == None
+        self.assertEqual(util.assoc(1, self._ALIST), (1, 6))
+        self.assertEqual(util.assoc(2, self._ALIST), None)
+        self.assertEqual(util.assoc(5, self._ALIST), None)
     def test_rassoc(self):
-        assert util.rassoc(1, self._ALIST) == None
-        assert util.rassoc(5, self._ALIST) == (0, 5)
+        self.assertEqual(util.rassoc(1, self._ALIST), None)
+        self.assertEqual(util.rassoc(5, self._ALIST), (0, 5))
     def test_ecase(self):
         settings = ((1, 'alpha'), (2, 'beta'), (3, 'gamma'), (3, 'delta'))
-        assert util.ecase(1, *settings) == 'alpha'
-        assert util.ecase(3, *settings) == 'gamma'
-        try:
+        self.assertEqual(util.ecase(1, *settings), 'alpha')
+        self.assertEqual(util.ecase(3, *settings), 'gamma')
+        with self.assertRaises(util.ProgramError):
             util.ecase(0, *settings)
-            ok = 0
-        except util.ProgramError:
-            ok = 1
-        assert ok
 tests.add(FindUtils)
 
 
 class StringFunctions(unittest.TestCase):
     def test_starts_with(self):
-        assert util.starts_with('abcdef', 'abc')
-        assert util.starts_with('abc', '')
-        assert not util.starts_with('foo', 'bar')
-        assert not util.starts_with('foobar', 'bar')
+        self.assertTrue(util.starts_with('abcdef', 'abc'))
+        self.assertTrue(util.starts_with('abc', ''))
+        self.assertFalse(util.starts_with('foo', 'bar'))
+        self.assertFalse(util.starts_with('foobar', 'bar'))
 tests.add(StringFunctions)
 
 
@@ -353,16 +349,12 @@ class NonLocalTransfers(unittest.TestCase):
         else:
             util.throw('foobar')
     def test_basic(self):
-        assert util.catch('foobar', self._function, 'foo') == 1
-        assert util.catch('foobar', self._function, 'bar') == 2
-        assert util.catch('foobar', self._function, 'foobar') is None
+        self.assertEqual(util.catch('foobar', self._function, 'foo'), 1)
+        self.assertEqual(util.catch('foobar', self._function, 'bar'), 2)
+        self.assertIsNone(util.catch('foobar', self._function, 'foobar'))
     def test_tags(self):
-        try:
+        with self.assertRaises(util._Throw):
             util.catch('foo', self._function, 'foobar')
-        except util._Throw:
-            pass
-        else:
-            raise Exception('Uncaughtable throw catched')
         util.catch('foobar', util.catch, 'foo', self._function, 'bar')
 tests.add(NonLocalTransfers)
 
@@ -370,8 +362,8 @@ tests.add(NonLocalTransfers)
 class DevNullStream(unittest.TestCase):
     def test_read(self):
         f = util.dev_null_stream('r')
-        assert f.read() == ''
-        assert f.read() == ''
+        self.assertEqual(f.read(), '')
+        self.assertEqual(f.read(), '')
     def test_write(self):
         f = util.dev_null_stream('w')
         f.write('a'*100)
@@ -389,9 +381,9 @@ class Mktempdir(unittest.TestCase):
             dir1 = util.mktempdir('foo')
             dir2 = util.mktempdir('bar')
             dir3 = util.mktempdir('foo')
-            assert dir1 != dir3, dir1
+            self.assertNotEqual(dir1, dir3)
             for d in dir1, dir2, dir3:
-                assert (os.stat(d)[0] & 0o7777) == 0700, (d, os.stat(d)[0])
+                self.assertEqual((os.stat(d)[0] & 0o7777), 0700)
         finally:
             for d in dir1, dir2, dir3:
                 if d:
@@ -411,27 +403,23 @@ class Classes(unittest.TestCase):
     class _D(_B, _C): pass
     def test_next_subclass(self):
         x = self._D()
-        assert util.next_subclass(self._D, x) == self._B
-        assert util.next_subclass(self._C, x) == None
-        assert util.next_subclass(self._B, x) == self._A
-        assert util.next_subclass(self._A, x) == self._C
+        self.assertEqual(util.next_subclass(self._D, x), self._B)
+        self.assertEqual(util.next_subclass(self._C, x), None)
+        self.assertEqual(util.next_subclass(self._B, x), self._A)
+        self.assertEqual(util.next_subclass(self._A, x), self._C)
     def test_public_attributes(self):
-        result = util.public_attributes(self._B)
-        result = list(result)
-        result.sort()
-        assert result == ['x', 'y'], ('Invalid public attributes', result)
+        self.longMessage = True
+        self.assertItemsEqual(util.public_attributes(self._B), ['x', 'y'], 'Invalid public attributes')
     def test_direct_public_members(self):
-        assert util.direct_public_members(self._A) == ('x',)
-        assert util.direct_public_members(self._B) == ('y',)
-        assert util.direct_public_members(self._C) == ()
-        assert util.direct_public_members(self._D) == ()
-        self_members = list(util.direct_public_members(self))
-        self_members.sort()
-        assert self_members == ['setUpClass',
-                                'tearDownClass',
-                                'test_direct_public_members',
-                                'test_next_subclass',
-                                'test_public_attributes'], self_members
+        self.assertEqual(util.direct_public_members(self._A), ('x',))
+        self.assertEqual(util.direct_public_members(self._B), ('y',))
+        self.assertEqual(util.direct_public_members(self._C), ())
+        self.assertEqual(util.direct_public_members(self._D), ())
+        self.assertItemsEqual(util.direct_public_members(self), ['setUpClass',
+                                                                 'tearDownClass',
+                                                                 'test_direct_public_members',
+                                                                 'test_next_subclass',
+                                                                 'test_public_attributes'])
 tests.add(Classes)
 
 
@@ -442,11 +430,11 @@ class Caching(unittest.TestCase):
             counter[0] += 1
             return counter[0]
         c = caching.SimpleCache(get)
-        assert c['a'] == 1
-        assert c['b'] == 2
-        assert c['a'] == 1
+        self.assertEqual(c['a'], 1)
+        self.assertEqual(c['b'], 2)
+        self.assertEqual(c['a'], 1)
         c.reset()
-        assert c['a'] == 3
+        self.assertEqual(c['a'], 3)
 tests.add(Caching)
 
 
@@ -456,15 +444,15 @@ class Resolver(unittest.TestCase):
         import pytis.presentation
         r = Resolver(search=('pytis', 'pytis.defs.profiles'))
         view = r.get('cms.Languages', 'view_spec')
-        assert isinstance(view, pytis.presentation.ViewSpec)
+        self.assertIsInstance(view, pytis.presentation.ViewSpec)
         spec = r.specification('cms.Languages')
-        assert isinstance(spec, pytis.presentation.Specification)
+        self.assertIsInstance(spec, pytis.presentation.Specification)
         # Test top level specification name (from pytis.defs.profiles).
         spec2 = r.specification('FormProfiles')
-        assert isinstance(spec2, pytis.presentation.Specification)
+        self.assertIsInstance(spec2, pytis.presentation.Specification)
         specifications = [spec for name, spec in r.walk()]
         from pytis.cms import Languages
-        assert Languages in specifications, specifications
+        self.assertIn(Languages, specifications)
 tests.add(Resolver)
     
 
