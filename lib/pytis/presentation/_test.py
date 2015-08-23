@@ -31,6 +31,7 @@ tests = pytis.util.test.TestSuite()
 
 class PresentedRow(unittest.TestCase):
     def setUp(self):
+        self.longMessage = True
         key = pd.ColumnSpec('a', pd.Integer())
         self._columns = (
             key,
@@ -74,9 +75,9 @@ class PresentedRow(unittest.TestCase):
             row_value = row[k].value()
             if isinstance(v, tuple):
                 for v1, v2 in zip(v, row_value):
-                    assert v1 == v2, (k, v, row_value)
+                    self.assertEqual(v1, v2, (k, v, row_value))
             else:
-                assert row_value == v, (k, v, row_value)
+                self.assertEqual(row_value, v, (k, v, row_value))
     def _value(self, key, value):
         col = find(key, self._columns, key=lambda c: c.id())
         return pd.Value(col.type(), value)
@@ -140,9 +141,9 @@ class PresentedRow(unittest.TestCase):
     def test_computer(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3})
-        assert row.get('sum', lazy=True).value() is None
-        assert row['sum'].value() == 8
-        assert row.get('sum', lazy=True).value() == 8
+        self.assertIsNone(row.get('sum', lazy=True).value())
+        self.assertEqual(row['sum'].value(), 8)
+        self.assertEqual(row.get('sum', lazy=True).value(), 8)
         self._check_values(row, (('d', 10), ('sum', 8), ('inc', 9)))
         row['c'] = self._value('c', 100)
         self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
@@ -155,27 +156,27 @@ class PresentedRow(unittest.TestCase):
                                  ('inc', 89)))
     def test_validation(self):
         row = pp.PresentedRow(self._fields, self._data, None)
-        assert row.validate('a', '2') is None
-        assert row.validate('b', '2.3') is not None
-        assert row.validate('c', '8') is None
-        assert row.validate('d', '12') is None
+        self.assertIsNone(row.validate('a', '2'))
+        self.assertIsNotNone(row.validate('b', '2.3'))
+        self.assertIsNone(row.validate('c', '8'))
+        self.assertIsNone(row.validate('d', '12'))
         self._check_values(row, (('a', 2),
                                  ('b', None),
                                  ('c', 8),
                                  ('d', 12),
                                  ('sum', 0)))
-        assert row.invalid_string('a') is None
-        assert row.invalid_string('b') == '2.3'
-        assert row.validate('b', '12') is None
-        assert row.invalid_string('b') is None
-        assert row.validate('r', ('2', '12')) is None
+        self.assertIsNone(row.invalid_string('a'))
+        self.assertEqual(row.invalid_string('b'), '2.3')
+        self.assertIsNone(row.validate('b', '12'))
+        self.assertIsNone(row.invalid_string('b'))
+        self.assertIsNone(row.validate('r', ('2', '12')))
         self._check_values(row, (('b', 12),
                                  ('c', 8),
                                  ('sum', 20),
                                  ('r', (2, 12))))
-        assert row.validate('r', ('2', 'x12')) is not None
+        self.assertIsNotNone(row.validate('r', ('2', 'x12')))
         self._check_values(row, (('r', (2, 12)),))
-        assert row.invalid_string('r') == ('2', 'x12')
+        self.assertEqual(row.invalid_string('r'), ('2', 'x12'))
     def test_set_row(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
@@ -217,10 +218,10 @@ class PresentedRow(unittest.TestCase):
     def test_editable(self):
         row = pp.PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
-        assert row.editable('a')
-        assert not row.editable('d')
+        self.assertTrue(row.editable('a'))
+        self.assertFalse(row.editable('d'))
         row['b'] = self._value('b', 5)
-        assert row.editable('d')
+        self.assertTrue(row.editable('d'))
     def test_callback(self):
         row = pp.PresentedRow(self._fields, self._data, None, new=True, prefill={'b': 3})
         changed = []
@@ -236,11 +237,17 @@ class PresentedRow(unittest.TestCase):
         #del changed[0:len(changed)]
         row['c'] = self._value('c', 100)
         #self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
-        assert 'd' in changed and 'sum' in changed and 'inc' in changed, changed
+        self.assertIn('d', changed)
+        self.assertIn('sum', changed)
+        self.assertIn('inc', changed)
         del changed[0:len(changed)]
         row.set_row(self._data_row(a=1, b=10, c=20, d=30))
-        assert 'a' in changed and 'b' in changed and 'c' in changed and 'd' in changed \
-               and 'sum' in changed and 'inc' in changed, changed
+        self.assertIn('a', changed)
+        self.assertIn('b', changed)
+        self.assertIn('c', changed)
+        self.assertIn('d', changed)
+        self.assertIn('sum', changed)
+        self.assertIn('inc', changed)
         
     def test_editability_callbacks(self):
         enabled = [None] # we need a mutable object...
@@ -248,46 +255,46 @@ class PresentedRow(unittest.TestCase):
         def callback():
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
-        assert enabled[0] is None, enabled[0]
+        self.assertIsNone(enabled[0])
         row['a'] = self._value('a', 8)
-        assert enabled[0] is None, enabled[0]
+        self.assertIsNone(enabled[0])
         row['c'] = self._value('c', 3)
-        assert enabled[0] is False
+        self.assertFalse(enabled[0])
         row['b'] = self._value('b', 2)
-        assert enabled[0] is False
+        self.assertFalse(enabled[0])
         row['b'] = self._value('b', 3)
-        assert enabled[0] is True
+        self.assertTrue(enabled[0])
         row['c'] = self._value('c', 2)
-        assert enabled[0] is False
+        self.assertFalse(enabled[0])
     def test_has_key(self):
         row = pp.PresentedRow(self._fields, self._data, None)
-        assert 'a' in row
-        assert 'inc' in row
-        assert 'blabla' not in row
+        self.assertIn('a', row)
+        self.assertIn('inc', row)
+        self.assertNotIn('blabla', row)
     def test_changed(self):
         row = pp.PresentedRow(self._fields, self._data, None)
-        assert not row.changed()
+        self.assertFalse(row.changed())
         row['b'] = self._value('b', 333)
-        assert row.changed()
+        self.assertTrue(row.changed())
     def test_field_changed(self):
         row = pp.PresentedRow(self._fields, self._data, None, prefill={'b': 3, 'c': 8})
-        assert not row.field_changed('a')
-        assert not row.field_changed('b')
-        assert not row.field_changed('c')
+        self.assertFalse(row.field_changed('a'))
+        self.assertFalse(row.field_changed('b'))
+        self.assertFalse(row.field_changed('c'))
         row['b'] = self._value('b', 333)
-        assert not row.field_changed('a')
-        assert row.field_changed('b')
-        assert not row.field_changed('c')
+        self.assertFalse(row.field_changed('a'))
+        self.assertTrue(row.field_changed('b'))
+        self.assertFalse(row.field_changed('c'))
     def test_keys(self):
         row = pp.PresentedRow(self._fields, self._data, None)
-        assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
+        self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))
     def test_format(self):
         row = pp.PresentedRow(self._fields, self._data, None, singleline=True)
         row['r'] = self._value('r', (8, 9))
         r1 = row.format('r')
         r2 = row.format('r', single=False)
-        assert r1 == u'8 — 9', r1
-        assert r2 == ('8', '9'), r2
+        self.assertEqual(r1, u'8 — 9')
+        self.assertEqual(r2, ('8', '9'))
     def test_display(self):
         C = pd.ColumnSpec
         S = pd.String
@@ -309,23 +316,23 @@ class PresentedRow(unittest.TestCase):
                   )
         row = pp.PresentedRow(fields, data, None,
                            prefill={'b': '2', 'c': '3', 'd': '1'})
-        assert row.display('a') == '', row.display('a')
-        assert row.display('b') == 'SECOND', row.display('b')
-        assert row.display('c') == '-3-', row.display('c')
-        assert row.display('d') == 'first', row.display('d')
+        self.assertEqual(row.display('a'), '')
+        self.assertEqual(row.display('b'), 'SECOND')
+        self.assertEqual(row.display('c'), '-3-')
+        self.assertEqual(row.display('d'), 'first')
     def test_depends(self):
         row = pp.PresentedRow(self._fields, self._data, None)
         any = ('a', 'b', 'c', 'd', 'e', 'sum', 'inc')
-        assert not row.depends('a', any)
-        assert not row.depends('b', ('a', 'b', 'c'))
-        assert row.depends('b', ('d',))
-        assert row.depends('b', ('a', 'b', 'c', 'd'))
-        assert row.depends('c', ('d',))
-        assert not row.depends('d', any)
-        assert not row.depends('e', any)
-        assert row.depends('sum', ('inc', 'd'))
-        assert not row.depends('sum', ('a', 'b', 'c', 'e', 'sum'))
-        assert not row.depends('inc', any)
+        self.assertFalse(row.depends('a', any))
+        self.assertFalse(row.depends('b', ('a', 'b', 'c')))
+        self.assertTrue(row.depends('b', ('d',)))
+        self.assertTrue(row.depends('b', ('a', 'b', 'c', 'd')))
+        self.assertTrue(row.depends('c', ('d',)))
+        self.assertFalse(row.depends('d', any))
+        self.assertFalse(row.depends('e', any))
+        self.assertTrue(row.depends('sum', ('inc', 'd')))
+        self.assertFalse(row.depends('sum', ('a', 'b', 'c', 'e', 'sum')))
+        self.assertFalse(row.depends('inc', any))
         
 tests.add(PresentedRow)
 
@@ -338,8 +345,8 @@ class PrettyTypes(unittest.TestCase):
                                                           **kwargs)
     def test_instance(self):
         t = PrettyTypes.CustomFoldable(maxlen=5)
-        assert t.maxlen() == 5
-        assert t.tree_column_id() == 'tree_order'
+        self.assertEqual(t.maxlen(), 5)
+        self.assertEqual(t.tree_column_id(), 'tree_order')
 
 tests.add(PrettyTypes)
 
