@@ -354,5 +354,5 @@ tests.add(PrettyTypes)
 def get_tests():
     return tests
 
-if __name__ == '__main__':
+if __name__ == '__main__': # pragma: no cover
     unittest.main() #defaultTest='get_tests')
