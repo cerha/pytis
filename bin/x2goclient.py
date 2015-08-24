@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-21 21:36'
+_VERSION = '2015-08-24 14:02'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -766,8 +766,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     **params)
                 app.update_progress_dialog()
                 if on_windows() and args.create_shortcut:
-                    self._create_shortcut(broker_url, args.server, profile_id, params['profile_name'],
-                                          args.calling_script)
+                    self._create_shortcut(broker_url, args.server, profile_id,
+                                          params['profile_name'], args.calling_script)
             else:
                 # setup up the manually configured X2Go session
                 self.x2go_session_hash = self._X2GoClient__register_session(
@@ -1126,7 +1126,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         path = parameters.get('path')
         client = class_.pytis_ssh_connect()
         if client is None:
-            info_dialog(_("Couldn't connect to upgrade server"), error=True)
+            app.info_dialog(_("Couldn't connect to upgrade server"), error=True)
             return
         install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
         old_install_directory = install_directory + '.old'
@@ -1136,13 +1136,13 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
         if not os.path.isdir(pytis_directory):
-            info_dialog(_("Package unpacking failed"), error=True)
+            app.info_dialog(_("Package unpacking failed"), error=True)
             return
         os.rename(install_directory, old_install_directory)
         os.rename(pytis_directory, install_directory)
         os.rmdir(tmp_directory)
         shutil.rmtree(old_install_directory)
-        info_dialog(_("Pytis successfully upgraded. Restart the application."))
+        app.info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
     def new_session(self, s_hash):
@@ -1172,7 +1172,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if calling_script and os.path.exists(calling_script):
                 with open(calling_script, 'r') as f:
                     broker_src = f.read()
-                profile_src = re.sub(r'(--broker-url=[^"\s]+)', r'\1 -P %s' % profile_id, broker_src)
+                profile_src = re.sub(r'(--broker-url=[^"\s]+)', r'\1 -P %s' % profile_id,
+                                     broker_src)
                 with open(vbs_path, 'w') as f:
                     f.write(profile_src)
         # check if vbs script was created properly
@@ -1180,10 +1181,10 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             return
         # Check if shortcut for vbs_path allready exists
         shortcut_exists = False
-        shortcut_list = [os.path.join(winshell.desktop(), f)
-                         for f in os.listdir(winshell.desktop())
-                         if os.path.isfile(os.path.join(winshell.desktop(), f))
-                         and os.path.splitext(f)[1].lower() == '.lnk']
+        shortcut_list = [os.path.join(winshell.desktop(), d)
+                         for d in os.listdir(winshell.desktop())
+                         if os.path.isfile(os.path.join(winshell.desktop(), d))
+                         and os.path.splitext(d)[1].lower() == '.lnk']
         for lpath in shortcut_list:
             try:
                 with winshell.shortcut(lpath) as link:
@@ -1212,8 +1213,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             link.path = vbs_path
             link.description = profile_id
             link.working_directory = scripts_path
-            icon_location = os.path.normpath(os.path.join(scripts_path, '..',  'icons',
-                                                          'p2go.ico'))
+            icon_location = os.path.normpath(os.path.join(scripts_path, '..', 'icons', 'p2go.ico'))
             if os.path.exists(icon_location):
                 link.icon_location = (icon_location, 0)
                     
