@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-24 14:02'
+_VERSION = '2015-08-24 17:27'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -185,8 +185,6 @@ class App(wx.App):
     def close_progress_dialog(self):
         if self._progress is not None:
             self._progress.Update(self._progress_max)
-            self._progress.Destroy()
-            self.Yield()
             self._progress = None
             self.Yield()
 
