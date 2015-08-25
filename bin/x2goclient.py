@@ -184,7 +184,9 @@ class App(wx.App):
             self.progress_dialog(self._pytis_progress_title, self._pytis_progress_message,
                                  self._pytis_progress_max)
             self.Yield()
-        self._pytis_progress.Update(self._pytis_progress_value)
+        else:
+            self._pytis_progress.Show()
+        self._pytis_progress.Update(self._pytis_progress_value, self._pytis_progress_message)
         self.Yield()
 
     def hide_progress_dialog(self):
