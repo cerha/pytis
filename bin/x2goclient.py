@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-24 17:27'
+_VERSION = '2015-08-24 23:23'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -87,7 +87,7 @@ class App(wx.App):
         super(App, self).__init__(*args, **kwargs)
 
     def info_dialog(self, message, caption='', error=False):
-        self.close_progress_dialog()
+        self.hide_progress_dialog()
         style = wx.OK
         if error:
             style = style | wx.ICON_ERROR
@@ -99,7 +99,7 @@ class App(wx.App):
         app.Yield()
 
     def question_dialog(self, question, caption=''):
-        self.close_progress_dialog()
+        self.hide_progress_dialog()
         style = wx.YES_NO
         dlg = wx.MessageDialog(question, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
@@ -110,7 +110,7 @@ class App(wx.App):
         return answer == wx.YES
 
     def text_dialog(self, prompt, caption='', default_value='', password=False):
-        self.close_progress_dialog()
+        self.hide_progress_dialog()
         style = wx.TextEntryDialogStyle
         if password:
             style = style | wx.TE_PASSWORD
@@ -129,7 +129,7 @@ class App(wx.App):
         return answer
 
     def choice_dialog(self, prompt, choices, index=False):
-        self.close_progress_dialog()
+        self.hide_progress_dialog()
         style = wx.CHOICEDLG_STYLE
         dlg = wx.SingleChoiceDialog(None, prompt, prompt, choices=choices, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
@@ -151,7 +151,7 @@ class App(wx.App):
         return self.choice_dialog(prompt, choices, index=True)
 
     def file_dialog(self, prompt, directory=None):
-        self.close_progress_dialog()
+        self.hide_progress_dialog()
         kwargs = {}
         if directory is not None:
             kwargs['default_path'] = directory
@@ -181,6 +181,10 @@ class App(wx.App):
             self.Yield()
         self._progress.Update(self._progress_value)
         self.Yield()
+
+    def hide_progress_dialog(self):
+        if self._progress is not None:
+            self._progress.Hide()
 
     def close_progress_dialog(self):
         if self._progress is not None:
