@@ -520,7 +520,7 @@ class LayoutForm(FieldForm):
                     sign = g.sup("*", cls="not-null")
                 if not self._row.editable(field.id):
                     cls += ' disabled'
-            return g.label(field.label + sign + ':', for_=html_id, cls=cls)
+            return g.label((field.label, sign, ':'), for_=html_id, cls=cls)
         else:
             return None
     
