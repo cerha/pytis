@@ -2419,6 +2419,8 @@ class ItemizedView(BrowseForm):
                                   for field in self._column_fields
                                   if row.visible(field.id) and row[field.id].value() is not None],
                                  separator=self._separator)
+        if self._row_actions:
+            content += self._export_popup_ctrl(context, row, 'li')
         return g.li(content, id=row_id)
         
     def _export_group_heading(self, context):
