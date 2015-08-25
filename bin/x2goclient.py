@@ -92,7 +92,7 @@ class App(wx.App):
         style = wx.OK
         if error:
             style = style | wx.ICON_ERROR
-        dlg = wx.MessageDialog(message, caption=caption, style=style)
+        dlg = wx.MessageDialog(None, message, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
         dlg.ShowModal()
@@ -102,7 +102,7 @@ class App(wx.App):
     def question_dialog(self, question, caption=''):
         self.hide_progress_dialog()
         style = wx.YES_NO
-        dlg = wx.MessageDialog(question, caption=caption, style=style)
+        dlg = wx.MessageDialog(None, question, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
         answer = dlg.ShowModal()
