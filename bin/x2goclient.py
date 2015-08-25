@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-25 12:48'
+_VERSION = '2015-08-25 12:58'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -80,10 +80,11 @@ _ = t.ugettext
 import wx
 
 class App(wx.App):
+
     def __init__(self, *args, **kwargs):
-        self._progress = None
-        self._progress_value = 1
-        self._progress_max = None
+        self._pytis_progress = None
+        self._pytis_progress_value = 1
+        self._pytis_progress_max = None
         super(App, self).__init__(*args, **kwargs)
 
     def info_dialog(self, message, caption='', error=False):
@@ -163,36 +164,37 @@ class App(wx.App):
         return answer or None
 
     def progress_dialog(self, title, message, maximum):
-        self._progress_max = maximum
-        self._progress_title = title
-        self._progress_message = message
-        self._progress = wx.ProgressDialog(title, message, maximum)
+        self._pytis_progress_max = maximum
+        self._pytis_progress_title = title
+        self._pytis_progress_message = message
+        self._pytis_progress = wx.ProgressDialog(title, message, maximum)
         self.Yield()
 
     def update_progress_dialog(self, value=None, title=None, message=None):
         if value:
-            self._progress_value = value
+            self._pytis_progress_value = value
         else:
-            if self._progress_value < self._progress_max - 1:
-                self._progress_value += 1
+            if self._pytis_progress_value < self._pytis_progress_max - 1:
+                self._pytis_progress_value += 1
         if title:
-            self._progress_title = title
+            self._pytis_progress_title = title
         if message:
-            self._progress_message = message
-        if not self._progress:
-            self.progress_dialog(self._progress_title, self._progress_message, self._progress_max)
+            self._pytis_progress_message = message
+        if not self._pytis_progress:
+            self.progress_dialog(self._pytis_progress_title, self._pytis_progress_message,
+                                 self._pytis_progress_max)
             self.Yield()
-        self._progress.Update(self._progress_value)
+        self._pytis_progress.Update(self._pytis_progress_value)
         self.Yield()
 
     def hide_progress_dialog(self):
-        if self._progress is not None:
-            self._progress.Hide()
+        if self._pytis_progress is not None:
+            self._pytis_progress.Hide()
 
     def close_progress_dialog(self):
-        if self._progress is not None:
-            self._progress.Update(self._progress_max)
-            self._progress = None
+        if self._pytis_progress is not None:
+            self._pytis_progress.Update(self._pytis_progress_max)
+            self._pytis_progress = None
             self.Yield()
 
 app = App()
