@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-24 23:23'
+_VERSION = '2015-08-25 12:48'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -128,6 +128,9 @@ class App(wx.App):
         self.Yield()
         return answer
 
+    def username_dialog(self):
+        return self.text_dialog(_("User name"), default_value=x2go.defaults.CURRENT_LOCAL_USER)
+
     def choice_dialog(self, prompt, choices, index=False):
         self.hide_progress_dialog()
         style = wx.CHOICEDLG_STYLE
@@ -198,7 +201,6 @@ app.progress_dialog(_("Starting application"), _("Connecting to server. Please w
 
 import argparse
 import copy
-import getpass
 import re
 import shutil
 import signal
@@ -308,7 +310,6 @@ class Configuration(x2go.X2GoClientSettings):
         super(Configuration, self).__init__(*args, **kwargs)
         default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
         self.defaultValues['pytis'] = dict(hostname=None,
-                                           username=x2go.defaults.CURRENT_LOCAL_USER,
                                            password=None,
                                            port=22,
                                            key_filename=None,
@@ -367,7 +368,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         p['password'] = parameters.get('password')
         p['port'] = int(parameters.get('port') or '22')
         p['hostname'] = parameters['host']
-        p['username'] = parameters['user']
+        p['username'] = parameters['user'] or app.username_dialog()
         p['path'] = parameters.get('path')
         self._broker_profiles = None
         self._broker_profile_cache = {}
@@ -776,7 +777,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     args.server,
                     port=int(self.args.remote_ssh_port),
                     known_hosts=ssh_known_hosts_filename,
-                    username=self.args.username,
+                    username=(self.args.username or app.username_dialog),
                     key_filename=self.args.ssh_privkey,
                     add_to_known_hosts=self.args.add_to_known_hosts,
                     profile_id=profile_id,
@@ -1124,7 +1125,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
         _auth_info.update_non_empty(hostname=parameters['hostname'], port=port,
-                                    username=parameters['username'], password=password)
+                                    username=(parameters['username'] or app.username_dialog()),
+                                    password=password)
         path = parameters.get('path')
         client = class_.pytis_ssh_connect()
         if client is None:
@@ -1230,7 +1232,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if not _auth_info.get('port'):
                 _auth_info['port'] = configuration.get_value('pytis', 'port', int)
             if not _auth_info.get('username'):
-                _auth_info['username'] = configuration.get_value('pytis', 'username')
+                _auth_info['username'] = app.username_dialog()
             if not _auth_info.get('_command'):
                 _auth_info['_command'] = configuration.get_value('pytis', 'command')
             try:
@@ -1316,7 +1318,7 @@ debug_options = [
 x2go_options = [
     {'args': ['-c', '--command'],
      'help': 'command to run with -R mode on server (default: xterm)', },
-    {'args': ['-u', '--username'], 'default': getpass.getuser(),
+    {'args': ['-u', '--username'],
      'help': 'username for the session (default: current user)', },
     {'args': ['--password'], 'default': None, 'help': 'user password for session authentication', },
     {'args': ['-p', '--remote-ssh-port'], 'default': '22',
