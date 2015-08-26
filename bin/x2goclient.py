@@ -94,10 +94,14 @@ class App(wx.App):
             style = style | wx.ICON_ERROR
         dlg = wx.MessageDialog(None, message, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
-            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP) 
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
         dlg.ShowModal()
         dlg.Destroy()
         app.Yield()
+        self.show_progress_dialog()
 
     def question_dialog(self, question, caption=''):
         self.hide_progress_dialog()
@@ -121,12 +125,16 @@ class App(wx.App):
                                      style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
         if dlg.ShowModal() == wx.ID_OK:
             answer = dlg.GetValue()
         else:
             answer = None
         dlg.Destroy()
         self.Yield()
+        self.show_progress_dialog()
         return answer
 
     def username_dialog(self):
@@ -138,6 +146,9 @@ class App(wx.App):
         dlg = wx.SingleChoiceDialog(None, prompt, prompt, choices=choices, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
         if dlg.ShowModal() == wx.ID_OK:
             if index:
                 answer = dlg.GetSelection()
@@ -149,6 +160,7 @@ class App(wx.App):
             answer = None
         dlg.Destroy()
         self.Yield()
+        self.show_progress_dialog()
         return answer
 
     def choice_dialog_index(self, prompt, choices):
@@ -161,6 +173,7 @@ class App(wx.App):
             kwargs['default_path'] = directory
         answer = wx.FileSelector(prompt, **kwargs)
         self.Yield()
+        self.show_progress_dialog()
         return answer or None
 
     def progress_dialog(self, title, message, maximum):
@@ -190,8 +203,14 @@ class App(wx.App):
         self.Yield()
 
     def hide_progress_dialog(self):
+        if on_windows():
+            return self.close_progress_dialog()
         if self._pytis_progress is not None:
             self._pytis_progress.Hide()
+
+    def show_progress_dialog(self):
+        if self._pytis_progress_max is not None:
+            self.update_progress_dialog()
 
     def close_progress_dialog(self):
         if self._pytis_progress is not None:
