@@ -27,8 +27,8 @@ all: $(mo_files) $(resource_po_files)
 ../resources/translations/pytis-web.%.po: pytis-web.%.po ../resources/translations
 	cp $< $@
 
-pytis-data.pot: $(shell find ../lib/pytis/data -name "*.py")
-	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/data/ -o pytis-data.pot
+pytis-data.pot: $(shell find ../lib/pytis/data -name "*.py") $(shell find ../lib/pytis/presentation -name "*.py")
+	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/data/ ../lib/pytis/presentation/ -o pytis-data.pot
 
 pytis-web.pot: $(shell find ../lib/pytis/web -name "*.py") $(shell find ../resources/scripts -name "*.js")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/web/ ../resources/scripts/ -o pytis-web.pot
