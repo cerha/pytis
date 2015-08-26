@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2015-08-13 18:11+CEST\n"
-"PO-Revision-Date: 2015-08-13 18:13+0200\n"
+"POT-Creation-Date: 2015-08-26 16:44+CEST\n"
+"PO-Revision-Date: 2015-08-26 16:50+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -17,97 +17,153 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../bin/x2goclient.py:250
+#: ../bin/x2goclient.py:133
+msgid "User name"
+msgstr "Uživatelské jméno"
+
+#: ../bin/x2goclient.py:204
+msgid "Initializing libraries. Please wait..."
+msgstr "Inicializace knihoven. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:204
+msgid "Starting application"
+msgstr "Start aplikace"
+
+#: ../bin/x2goclient.py:247
+msgid "Initializing application. Please wait..."
+msgstr "Inicializace aplikace. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:335
 msgid "Can't read RPyC info file: %s"
 msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:260
+#: ../bin/x2goclient.py:345
 msgid "Error when writing RPyC info file: %s"
 msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:281 ../bin/x2goclient.py:1025
+#: ../bin/x2goclient.py:366 ../bin/x2goclient.py:1120
 msgid "Invalid broker address"
 msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:285 ../bin/x2goclient.py:1029
+#: ../bin/x2goclient.py:370 ../bin/x2goclient.py:1124
 msgid "Unsupported broker protocol"
 msgstr "Nepodporovaný protokol pro přístup na broker"
 
-#: ../bin/x2goclient.py:410
+#: ../bin/x2goclient.py:495
 msgid "Invalid session format"
 msgstr "Chybný formát sezení"
 
-#: ../bin/x2goclient.py:601
+#: ../bin/x2goclient.py:636
+msgid "Client setup. Please wait..."
+msgstr "Nastavení klienta. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:678
+msgid "Checking for new client version. Please wait..."
+msgstr "Kontrola nové verze klienta. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:688
 msgid "New pytis client version available. Install?"
 msgstr "Je dostupná nová verze klienta Pytis. Nainstalovat?"
 
-#: ../bin/x2goclient.py:670
+#: ../bin/x2goclient.py:695
+msgid "Checking sessions and profiles. Please wait..."
+msgstr "Načítání sezení a profilů. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:758
 msgid "Select session"
 msgstr "Vyberte sezení"
 
-#: ../bin/x2goclient.py:674
+#: ../bin/x2goclient.py:763
 msgid "No session selected."
 msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:810
+#: ../bin/x2goclient.py:765
+msgid "Opening selected profile. Please wait..."
+msgstr "Otevírání zvoleného profilu. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:773
+msgid "Checking desktop shortcut. Please wait..."
+msgstr "Kontrola zástupců na ploše. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:902
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:937
+#: ../bin/x2goclient.py:960 ../bin/x2goclient.py:1255
+msgid "Starting server connections. Please wait..."
+msgstr "Start spojení na server. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:1032
 msgid "Password key for %s"
 msgstr "Heslo ke klíči v souboru %s"
 
-#: ../bin/x2goclient.py:983
+#: ../bin/x2goclient.py:1078
 msgid "Login using password"
 msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:984
+#: ../bin/x2goclient.py:1079
 msgid "Login using a key file"
 msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:985
+#: ../bin/x2goclient.py:1080
 msgid "Default authentication failed"
 msgstr "Výchozí autentizace selhala"
 
-#: ../bin/x2goclient.py:993
+#: ../bin/x2goclient.py:1088
 msgid "No supported ssh connection method available"
 msgstr "Není dostupná žádná metoda spojení přes ssh"
 
-#: ../bin/x2goclient.py:996
+#: ../bin/x2goclient.py:1091
 msgid "Login password"
 msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:1003
+#: ../bin/x2goclient.py:1098
 msgid "Select ssh key file"
 msgstr "Vyberte ssh klíč"
 
-#: ../bin/x2goclient.py:1013
+#: ../bin/x2goclient.py:1108
 msgid "Program error"
 msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:1037
+#: ../bin/x2goclient.py:1133
 msgid "Couldn't connect to upgrade server"
 msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:1047
+#: ../bin/x2goclient.py:1143
 msgid "Package unpacking failed"
 msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:1053
+#: ../bin/x2goclient.py:1149
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
 
-#: ../bin/x2goclient.py:1100
+#: ../bin/x2goclient.py:1153
+msgid "Creating new session. Please wait..."
+msgstr "Vytváření nového sezení. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:1156
+msgid "Setting up new session. Please wait..."
+msgstr "Nastavování nového sezení. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:1200
 msgid "Create desktop shortcut for this session profile?"
 msgstr "Vytvořit pro tento profil ikonu na ploše?"
 
-#: ../bin/x2goclient.py:1110
-msgid "Shortcut %s allready exists. Choose another name:"
+#: ../bin/x2goclient.py:1209
+msgid "Shortcut %s allready exists. Please, rename it:"
 msgstr "Zástupce %s již existuje. Zvolte jiné jméno:"
 
-#: ../bin/x2goclient.py:1111
+#: ../bin/x2goclient.py:1210
 msgid "Edit shortcut name"
 msgstr "Upravit jméno zástupce"
+
+#: ../bin/x2goclient.py:1262
+msgid "Authenticating. Please wait..."
+msgstr "Autentizace. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:1623
+msgid "Launching application. Please wait..."
+msgstr "Spouštění aplikace. Vyčkejte prosím..."
 
 #~ msgid "No"
 #~ msgstr "Ne"
