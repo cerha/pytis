@@ -1196,14 +1196,37 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if not os.path.isdir(scripts_path):
             return
         broker_host = urlparse.urlparse(broker_url).netloc
+        username = _auth_info.get('username') or ''
         vbs_name = '%s__%s__%s.vbs' % (broker_host, host, profile_id,)
+        if username:
+            vbs_name = '%s__%s' % (username, vbs_name)
         vbs_path = os.path.join(scripts_path, vbs_name)
         if not os.path.exists(vbs_path):
             if calling_script and os.path.exists(calling_script):
                 with open(calling_script, 'r') as f:
                     broker_src = f.read()
-                profile_src = re.sub(r'(--broker-url=[^"\s]+)', r'\1 -P %s' % profile_id,
+                match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                                  '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                                  '(|:(?P<password>.*))@)'
+                                  '(?P<hostname>[a-zA-Z0-9\.-]+)'
+                                  '(|:(?P<port>[0-9]+))'
+                                  '($|/(?P<path>.*)$)'), broker_url)
+                parameters = match.groupdict()
+                password = parameters['password'] and ":" + parameters['password'] or ''
+                port = parameters['port'] and ":" + parameters['port'] or ''
+                broker_url_tmpl = "--broker-url=%s://%s%s@%s%s/%s -P %s"
+                profile_src = re.sub(r'(--broker-url=[^"\s]+)',
+                                     broker_url_tmpl % (parameters['protocol'],
+                                                        username,
+                                                        password,
+                                                        parameters['hostname'],
+                                                        port,
+                                                        parameters['path'],
+                                                        profile_id),
                                      broker_src)
+                profile_src = re.sub(r'--create-shortcut', r'', profile_src)
+                profile_src = re.sub(r'--calling-script=', r'', profile_src)
+                profile_src = re.sub(r'&\s+Wscript.ScriptFullName', r'', profile_src)
                 with open(vbs_path, 'w') as f:
                     f.write(profile_src)
         # check if vbs script was created properly
