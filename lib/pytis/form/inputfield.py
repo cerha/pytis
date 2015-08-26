@@ -1631,10 +1631,14 @@ class ListField(GenericCodebookField, CallbackHandler):
                 select_item = i
             for j, id in enumerate(self._columns):
                 value = row[id]
+                t = value.type()
                 if not enumerator.permitted(id):
-                    exported_value = value.type().secret_export()
-                elif isinstance(value.type(), pytis.data.Boolean):
+                    exported_value = t.secret_export()
+                elif isinstance(t, pytis.data.Boolean):
                     exported_value = value.value() and _("Yes") or _("No")
+                elif isinstance(t, pytis.data.Range):
+                    # TODO: This duplicates the logic in PresentedRow.format()!!!
+                    exported_value = u' — '.join(x or _("unlimited") for x in value.export())
                 else:
                     exported_value = value.export().replace("\n", ";")
                 list.SetStringItem(i, j, exported_value)
