@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2015-08-26 14:17+0200\n"
-"PO-Revision-Date: 2015-08-26 13:51+0200\n"
+"PO-Revision-Date: 2015-08-26 14:28+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -2334,9 +2334,9 @@ msgid "Current browser URI."
 msgstr "Aktuální adresa prohlížeče."
 
 #: ../lib/pytis/form/screen.py:2602
-#, fuzzy, python-format
+#, python-format
 msgid "Unable to create temporary file: %s"
-msgstr "Nepodařilo se vybrat soubor k uložení: %s"
+msgstr "Nelze vytvořit pomocný soubor: %s"
 
 #: ../lib/pytis/form/screen.py:2632
 #, python-format
