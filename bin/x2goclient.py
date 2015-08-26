@@ -109,10 +109,17 @@ class App(wx.App):
         dlg = wx.MessageDialog(None, question, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
-        answer = dlg.ShowModal()
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
+        if dlg.ShowModal() == wx.ID_YES:
+            answer = True
+        else:
+            answer = False
         dlg.Destroy()
         self.Yield()
-        return answer == wx.YES
+        self.show_progress_dialog()
+        return answer
 
     def text_dialog(self, prompt, caption='', default_value='', password=False):
         self.hide_progress_dialog()
