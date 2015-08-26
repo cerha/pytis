@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-07-28 20:58+0200\n"
+"POT-Creation-Date: 2015-08-26 13:41+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -249,7 +249,7 @@ msgstr ""
 msgid "filtered by: "
 msgstr ""
 
-#: ../lib/pytis/web/form.py:2537 ../lib/pytis/web/form.py:2539
+#: ../lib/pytis/web/form.py:2539 ../lib/pytis/web/form.py:2541
 msgid "Remove this row"
 msgstr ""
 

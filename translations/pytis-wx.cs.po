@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-12 19:57+0200\n"
+"POT-Creation-Date: 2015-08-26 13:41+0200\n"
 "PO-Revision-Date: 2014-12-19 19:43+0100\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -125,7 +125,7 @@ msgid "Clear the menu of recent forms"
 msgstr "Vymazat menu posledně otevřených formulářů"
 
 #: ../lib/pytis/form/application.py:733 ../lib/pytis/form/dialog.py:1322
-#: ../lib/pytis/form/inputfield.py:2626 ../lib/pytis/form/inputfield.py:2652
+#: ../lib/pytis/form/inputfield.py:2630 ../lib/pytis/form/inputfield.py:2656
 msgid "Title"
 msgstr "Název"
 
@@ -451,7 +451,7 @@ msgstr "Uzavřít okno aktuálního formuláře."
 msgid "User interface settings"
 msgstr "Nastavení uživatelského rozhraní"
 
-#: ../lib/pytis/form/configui.py:43 ../lib/pytis/util/util.py:1967
+#: ../lib/pytis/form/configui.py:43 ../lib/pytis/util/util.py:1948
 msgid "Colors"
 msgstr "Barvy"
 
@@ -573,11 +573,11 @@ msgstr "Ok"
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/form/dialog.py:99 ../lib/pytis/form/inputfield.py:1637
+#: ../lib/pytis/form/dialog.py:99 ../lib/pytis/form/inputfield.py:1638
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/form/dialog.py:101 ../lib/pytis/form/inputfield.py:1637
+#: ../lib/pytis/form/dialog.py:101 ../lib/pytis/form/inputfield.py:1638
 msgid "No"
 msgstr "Ne"
 
@@ -669,7 +669,7 @@ msgstr "Opravdu chcete ukončit aplikaci?"
 msgid "Automatically open the checked forms on next startup"
 msgstr "Zapamatovat označené formuláře pro příští spuštění"
 
-#: ../lib/pytis/form/dialog.py:1480 ../lib/pytis/form/inputfield.py:1925
+#: ../lib/pytis/form/dialog.py:1480 ../lib/pytis/form/inputfield.py:1929
 msgid "All files"
 msgstr "Všechny soubory"
 
@@ -721,7 +721,7 @@ msgstr ""
 msgid "Can't filter when the current profile is not saved!"
 msgstr "Filtrování nemůže být provedeno, pokud aktuální profil není uložen!"
 
-#: ../lib/pytis/form/dualform.py:1126 ../lib/pytis/form/inputfield.py:2178
+#: ../lib/pytis/form/dualform.py:1126 ../lib/pytis/form/inputfield.py:2182
 #: ../lib/pytis/form/list.py:876 ../lib/pytis/form/list.py:3356
 #: ../lib/pytis/form/screen.py:1763
 msgid "Save"
@@ -1126,27 +1126,27 @@ msgstr "Chyba validace hodnoty políčka:"
 msgid "Maximal length exceeded."
 msgstr "Překročena maximální délka."
 
-#: ../lib/pytis/form/inputfield.py:898 ../lib/pytis/form/inputfield.py:2202
+#: ../lib/pytis/form/inputfield.py:898 ../lib/pytis/form/inputfield.py:2206
 msgid "Cut"
 msgstr "Vyjmout"
 
-#: ../lib/pytis/form/inputfield.py:899 ../lib/pytis/form/inputfield.py:2203
+#: ../lib/pytis/form/inputfield.py:899 ../lib/pytis/form/inputfield.py:2207
 msgid "Cut the selected text to clipboard."
 msgstr "Vyjmout označený text a uložit jej do schránky."
 
-#: ../lib/pytis/form/inputfield.py:900 ../lib/pytis/form/inputfield.py:2205
+#: ../lib/pytis/form/inputfield.py:900 ../lib/pytis/form/inputfield.py:2209
 msgid "Copy"
 msgstr "Kopírovat"
 
-#: ../lib/pytis/form/inputfield.py:901 ../lib/pytis/form/inputfield.py:2206
+#: ../lib/pytis/form/inputfield.py:901 ../lib/pytis/form/inputfield.py:2210
 msgid "Copy the selected text to clipboard."
 msgstr "Zkopírovat označený text do schránky."
 
-#: ../lib/pytis/form/inputfield.py:902 ../lib/pytis/form/inputfield.py:2208
+#: ../lib/pytis/form/inputfield.py:902 ../lib/pytis/form/inputfield.py:2212
 msgid "Paste"
 msgstr "Vložit"
 
-#: ../lib/pytis/form/inputfield.py:903 ../lib/pytis/form/inputfield.py:2209
+#: ../lib/pytis/form/inputfield.py:903 ../lib/pytis/form/inputfield.py:2213
 msgid "Paste text from clipboard."
 msgstr "Vložit text ze schránky do políčka."
 
@@ -1158,7 +1158,7 @@ msgstr "Vybrat vše"
 msgid "Select entire field value."
 msgstr "Označit celou hodnotu."
 
-#: ../lib/pytis/form/inputfield.py:1252 ../lib/pytis/form/inputfield.py:1687
+#: ../lib/pytis/form/inputfield.py:1252 ../lib/pytis/form/inputfield.py:1691
 #: ../lib/pytis/form/list.py:3046
 msgid "Select"
 msgstr "Vybrat"
@@ -1199,348 +1199,352 @@ msgstr "Vyhledat v číselníku"
 msgid "Show the codebook and start incremental search."
 msgstr "Zobrazit číselník se zapnutým inkrementálním vyhledáváním."
 
-#: ../lib/pytis/form/inputfield.py:1688
+#: ../lib/pytis/form/inputfield.py:1641
+msgid "unlimited"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1692
 msgid "Select this item as active."
 msgstr "Zvolit tuto položku jako aktivní."
 
-#: ../lib/pytis/form/inputfield.py:1689
+#: ../lib/pytis/form/inputfield.py:1693
 msgid "Show selected item"
 msgstr "Najít vybranou položku"
 
-#: ../lib/pytis/form/inputfield.py:1690
+#: ../lib/pytis/form/inputfield.py:1694
 msgid "Locate the currently selected item."
 msgstr "Nalistovat v seznamu vybranou položku."
 
-#: ../lib/pytis/form/inputfield.py:1692
+#: ../lib/pytis/form/inputfield.py:1696
 msgid "Show codebook"
 msgstr "Zobrazit číselník"
 
-#: ../lib/pytis/form/inputfield.py:1693
+#: ../lib/pytis/form/inputfield.py:1697
 msgid "Open the codebook form."
 msgstr "Otevřít číselníkový formulář."
 
-#: ../lib/pytis/form/inputfield.py:1694
+#: ../lib/pytis/form/inputfield.py:1698
 msgid "Edit selected item"
 msgstr "Upravit vybranou položku"
 
-#: ../lib/pytis/form/inputfield.py:1695
+#: ../lib/pytis/form/inputfield.py:1699
 msgid "Open the selected item in edit form."
 msgstr "Otevřít vybranou položku v editačním formuláři."
 
-#: ../lib/pytis/form/inputfield.py:1696
+#: ../lib/pytis/form/inputfield.py:1700
 msgid "Remove selected item"
 msgstr "Smazat vybranou položku"
 
-#: ../lib/pytis/form/inputfield.py:1697
+#: ../lib/pytis/form/inputfield.py:1701
 msgid "Remove the selected item from the codebook."
 msgstr "Vymazat vybranou položku z číselníku."
 
-#: ../lib/pytis/form/inputfield.py:1698
+#: ../lib/pytis/form/inputfield.py:1702
 msgid "Insert new item"
 msgstr "Vložit novou položku"
 
-#: ../lib/pytis/form/inputfield.py:1699
+#: ../lib/pytis/form/inputfield.py:1703
 msgid "Open form for new codebook record insertion."
 msgstr "Otevřít formulář pro vložení nového záznamu do číselníku."
 
-#: ../lib/pytis/form/inputfield.py:1703
+#: ../lib/pytis/form/inputfield.py:1707
 msgid "Show the entire table"
 msgstr "Zobrazit celou tabulku"
 
-#: ../lib/pytis/form/inputfield.py:1704
+#: ../lib/pytis/form/inputfield.py:1708
 msgid "Open the codebook in a standalone form."
 msgstr "Otevřít náhled číselníku v samostatném formuláři."
 
-#: ../lib/pytis/form/inputfield.py:1758
+#: ../lib/pytis/form/inputfield.py:1762
 #, python-format
 msgid "Really remove the item %s from the codebook permanently?"
 msgstr "Opravdu chcete položku %s zcela vymazat z číselníku?"
 
-#: ../lib/pytis/form/inputfield.py:1786
+#: ../lib/pytis/form/inputfield.py:1790
 msgid "Select File"
 msgstr "Vybrat soubor"
 
-#: ../lib/pytis/form/inputfield.py:1787
+#: ../lib/pytis/form/inputfield.py:1791
 msgid "Show a dialog to browse files in the file system."
 msgstr "Zobrazit dialog pro procházení systému souborů."
 
-#: ../lib/pytis/form/inputfield.py:1869
+#: ../lib/pytis/form/inputfield.py:1873
 msgid "Open"
 msgstr "Otevřít"
 
-#: ../lib/pytis/form/inputfield.py:1870
+#: ../lib/pytis/form/inputfield.py:1874
 msgid "Open the file in a preferred application."
 msgstr "Otevřít soubor v preferované aplikaci."
 
-#: ../lib/pytis/form/inputfield.py:1871
+#: ../lib/pytis/form/inputfield.py:1875
 msgid "Load from file"
 msgstr "Nastavit ze souboru"
 
-#: ../lib/pytis/form/inputfield.py:1872
+#: ../lib/pytis/form/inputfield.py:1876
 msgid "Set the field value from a file."
 msgstr "Nahradit hodnotu políčka daty ze souboru."
 
-#: ../lib/pytis/form/inputfield.py:1873
+#: ../lib/pytis/form/inputfield.py:1877
 msgid "Save to file"
 msgstr "Uložit do souboru"
 
-#: ../lib/pytis/form/inputfield.py:1874
+#: ../lib/pytis/form/inputfield.py:1878
 msgid "Save the current field value as file."
 msgstr "Uložit aktuální hodnotu políčka jako soubor."
 
-#: ../lib/pytis/form/inputfield.py:1875
+#: ../lib/pytis/form/inputfield.py:1879
 msgid "Clear value"
 msgstr "Vynulovat hodnotu"
 
-#: ../lib/pytis/form/inputfield.py:1876
+#: ../lib/pytis/form/inputfield.py:1880
 msgid "Set the field to an ampty value."
 msgstr "Nastavit prázdnou hodnotu."
 
-#: ../lib/pytis/form/inputfield.py:1898
+#: ../lib/pytis/form/inputfield.py:1902
 msgid "Error reading file:"
 msgstr "Chyba při čtení souboru:"
 
-#: ../lib/pytis/form/inputfield.py:1901
+#: ../lib/pytis/form/inputfield.py:1905
 msgid "File loaded."
 msgstr "Soubor načten."
 
-#: ../lib/pytis/form/inputfield.py:1907
+#: ../lib/pytis/form/inputfield.py:1911
 #, python-format
 msgid "Select the file for field '%s'"
 msgstr "Vyberte soubor pro políčko '%s'"
 
-#: ../lib/pytis/form/inputfield.py:1932
+#: ../lib/pytis/form/inputfield.py:1936
 #, python-format
 msgid "Files of allowed type (%s)"
 msgstr "Soubory požadovaného typu (%s)"
 
-#: ../lib/pytis/form/inputfield.py:1951
+#: ../lib/pytis/form/inputfield.py:1955
 #, python-format
 msgid "Save value of %s"
 msgstr "Uložit hodnotu políčka %s"
 
-#: ../lib/pytis/form/inputfield.py:1965
+#: ../lib/pytis/form/inputfield.py:1969
 msgid "Error writing file to disk:"
 msgstr "Chyba při zápisu souboru na disk:"
 
-#: ../lib/pytis/form/inputfield.py:1967
+#: ../lib/pytis/form/inputfield.py:1971
 msgid "File saved."
 msgstr "Soubor byl uložen."
 
-#: ../lib/pytis/form/inputfield.py:2045 ../lib/pytis/form/inputfield.py:2046
-#: ../lib/pytis/form/inputfield.py:2362 ../lib/pytis/form/inputfield.py:2363
+#: ../lib/pytis/form/inputfield.py:2049 ../lib/pytis/form/inputfield.py:2050
+#: ../lib/pytis/form/inputfield.py:2366 ../lib/pytis/form/inputfield.py:2367
 msgid "Error accessing attachment storrage"
 msgstr "Chyba přístupu k úložišti příloh"
 
-#: ../lib/pytis/form/inputfield.py:2050
+#: ../lib/pytis/form/inputfield.py:2054
 msgid "Inline"
 msgstr "Do řádku"
 
-#: ../lib/pytis/form/inputfield.py:2051
+#: ../lib/pytis/form/inputfield.py:2055
 msgid "Left"
 msgstr "Vlevo"
 
-#: ../lib/pytis/form/inputfield.py:2052
+#: ../lib/pytis/form/inputfield.py:2056
 msgid "Right"
 msgstr "Vpravo"
 
-#: ../lib/pytis/form/inputfield.py:2056
+#: ../lib/pytis/form/inputfield.py:2060
 #, python-format
 msgid "Small preview (%d px), click to enlarge"
 msgstr "Malý náhled (%d px), kliknutím se zvětší"
 
-#: ../lib/pytis/form/inputfield.py:2058
+#: ../lib/pytis/form/inputfield.py:2062
 #, python-format
 msgid "Larger preview (%d px), click to enlarge"
 msgstr "Větší náhled (%d px), kliknutím se zvětší"
 
-#: ../lib/pytis/form/inputfield.py:2061
+#: ../lib/pytis/form/inputfield.py:2065
 msgid "Full size (appropriate for screenshot etc.)"
 msgstr "V plné velikosti (vhodné pro snímek obrazovky apod.)"
 
-#: ../lib/pytis/form/inputfield.py:2179
+#: ../lib/pytis/form/inputfield.py:2183
 msgid "Save the record without closing the form."
 msgstr "Uložit záznam bez uzavření formuláře."
 
-#: ../lib/pytis/form/inputfield.py:2188
+#: ../lib/pytis/form/inputfield.py:2192
 msgid "Confirm and leave"
 msgstr "Potvrdit a skončit"
 
-#: ../lib/pytis/form/inputfield.py:2189
+#: ../lib/pytis/form/inputfield.py:2193
 msgid "Confirm the changes and leave editation."
 msgstr "Potvrdit změny a opustit editaci."
 
-#: ../lib/pytis/form/inputfield.py:2219
+#: ../lib/pytis/form/inputfield.py:2223
 msgid "Heading level"
 msgstr "Úroveň nadpisu"
 
-#: ../lib/pytis/form/inputfield.py:2220
+#: ../lib/pytis/form/inputfield.py:2224
 msgid "Insert markup for heading of given level."
 msgstr "Vložit značky pro nadpis dané úrovně."
 
-#: ../lib/pytis/form/inputfield.py:2224
+#: ../lib/pytis/form/inputfield.py:2228
 msgid "Bold text"
 msgstr "Tučný text"
 
-#: ../lib/pytis/form/inputfield.py:2225
+#: ../lib/pytis/form/inputfield.py:2229
 msgid "Insert markup for bold text."
 msgstr "Vložit značku pro tučný text."
 
-#: ../lib/pytis/form/inputfield.py:2227
+#: ../lib/pytis/form/inputfield.py:2231
 msgid "Slanted"
 msgstr "Skloněné písmo"
 
-#: ../lib/pytis/form/inputfield.py:2228
+#: ../lib/pytis/form/inputfield.py:2232
 msgid "Insert markup for text emphasized by slanted font."
 msgstr "Vložit značku pro text zvýrazeněný skloněným písmem."
 
-#: ../lib/pytis/form/inputfield.py:2230
+#: ../lib/pytis/form/inputfield.py:2234
 msgid "Underlined text"
 msgstr "Podtržený text"
 
-#: ../lib/pytis/form/inputfield.py:2231
+#: ../lib/pytis/form/inputfield.py:2235
 msgid "Insert markup for underlined text."
 msgstr "Vložit značku pro podtržený text."
 
-#: ../lib/pytis/form/inputfield.py:2234
+#: ../lib/pytis/form/inputfield.py:2238
 msgid "Hypertext link"
 msgstr "Hypertextový odkaz"
 
-#: ../lib/pytis/form/inputfield.py:2235
+#: ../lib/pytis/form/inputfield.py:2239
 msgid "Insert markup hypertext link."
 msgstr "Vložit značku pro hypertextový odkaz."
 
-#: ../lib/pytis/form/inputfield.py:2237
+#: ../lib/pytis/form/inputfield.py:2241
 msgid "Image"
 msgstr "Obrázek"
 
-#: ../lib/pytis/form/inputfield.py:2238
+#: ../lib/pytis/form/inputfield.py:2242
 msgid "Insert image."
 msgstr "Vložit obrázek."
 
-#: ../lib/pytis/form/inputfield.py:2240
+#: ../lib/pytis/form/inputfield.py:2244
 msgid "Attachment"
 msgstr "Příloha"
 
-#: ../lib/pytis/form/inputfield.py:2241
+#: ../lib/pytis/form/inputfield.py:2245
 msgid "Attach file."
 msgstr "Vložit soubor."
 
-#: ../lib/pytis/form/inputfield.py:2243
+#: ../lib/pytis/form/inputfield.py:2247
 msgid "Itemized list"
 msgstr "Odrážkový seznam"
 
-#: ../lib/pytis/form/inputfield.py:2244
+#: ../lib/pytis/form/inputfield.py:2248
 msgid "Create a bullet list item."
 msgstr "Vytvořit položku odrážkového seznamu."
 
-#: ../lib/pytis/form/inputfield.py:2246
+#: ../lib/pytis/form/inputfield.py:2250
 msgid "Numbered list"
 msgstr "Číslovaný seznam"
 
-#: ../lib/pytis/form/inputfield.py:2247
+#: ../lib/pytis/form/inputfield.py:2251
 msgid "Create a numbered list item."
 msgstr "Vytvořit položku číslovaného seznamu."
 
-#: ../lib/pytis/form/inputfield.py:2249
+#: ../lib/pytis/form/inputfield.py:2253
 msgid "Preformatted text"
 msgstr "Předformátovaný text"
 
-#: ../lib/pytis/form/inputfield.py:2250
+#: ../lib/pytis/form/inputfield.py:2254
 msgid "Insert markup for preformatted text."
 msgstr "Vložit značky pro předformátovaný text."
 
-#: ../lib/pytis/form/inputfield.py:2252
+#: ../lib/pytis/form/inputfield.py:2256
 msgid "Line break"
 msgstr "Vynucený řádkový zlom"
 
-#: ../lib/pytis/form/inputfield.py:2253
+#: ../lib/pytis/form/inputfield.py:2257
 msgid "Insert markup for explicit line break."
 msgstr "Vložit vynucený řádkový zlom."
 
-#: ../lib/pytis/form/inputfield.py:2256
+#: ../lib/pytis/form/inputfield.py:2260
 msgid "Show HTML preview"
 msgstr "Zobrazit HTML náhled"
 
-#: ../lib/pytis/form/inputfield.py:2257
+#: ../lib/pytis/form/inputfield.py:2261
 msgid "Show preview of the text formatted as HTML."
 msgstr "Zobrazit náhled zformátovaného textu jako HTML."
 
-#: ../lib/pytis/form/inputfield.py:2259
+#: ../lib/pytis/form/inputfield.py:2263
 msgid "Show PDF preview"
 msgstr "Zobrazit PDF náhled"
 
-#: ../lib/pytis/form/inputfield.py:2260
+#: ../lib/pytis/form/inputfield.py:2264
 msgid "Show preview of the text formatted as PDF."
 msgstr "Zobrazit náhled zformátovaného textu jako PDF."
 
-#: ../lib/pytis/form/inputfield.py:2271
+#: ../lib/pytis/form/inputfield.py:2275
 msgid "Edit in a standalone window"
 msgstr "Editovat v samostatném okně"
 
-#: ../lib/pytis/form/inputfield.py:2360
+#: ../lib/pytis/form/inputfield.py:2364
 msgid "Invalid image format!"
 msgstr "Neplatný grafický formát!"
 
-#: ../lib/pytis/form/inputfield.py:2389 ../lib/pytis/form/inputfield.py:2397
-#: ../lib/pytis/form/inputfield.py:2563
+#: ../lib/pytis/form/inputfield.py:2393 ../lib/pytis/form/inputfield.py:2401
+#: ../lib/pytis/form/inputfield.py:2567
 msgid "Preview"
 msgstr "Náhled"
 
-#: ../lib/pytis/form/inputfield.py:2560 ../lib/pytis/form/inputfield.py:2623
+#: ../lib/pytis/form/inputfield.py:2564 ../lib/pytis/form/inputfield.py:2627
 msgid "Available files"
 msgstr "Dostupné soubory"
 
-#: ../lib/pytis/form/inputfield.py:2567
+#: ../lib/pytis/form/inputfield.py:2571
 msgid "Choose one of available files or insert a new file from your computer."
 msgstr ""
 "Vyberte jeden z dostupných souborů, nebo vložte nový z vašeho počítače."
 
-#: ../lib/pytis/form/inputfield.py:2569
+#: ../lib/pytis/form/inputfield.py:2573
 msgid "Display in page as"
 msgstr "Zobrazit ve stránce jako"
 
-#: ../lib/pytis/form/inputfield.py:2573
+#: ../lib/pytis/form/inputfield.py:2577
 msgid "Choose the size and behavior of the image within the page."
 msgstr "Vyberte jeden z uvedených způsobů zobrazení obrázku ve stránce."
 
-#: ../lib/pytis/form/inputfield.py:2574
+#: ../lib/pytis/form/inputfield.py:2578
 msgid "Original size"
 msgstr "Velikost originálu"
 
-#: ../lib/pytis/form/inputfield.py:2576
+#: ../lib/pytis/form/inputfield.py:2580
 msgid "Preview size"
 msgstr "Velikost náhledu"
 
-#: ../lib/pytis/form/inputfield.py:2578
+#: ../lib/pytis/form/inputfield.py:2582
 msgid "Resize ratio"
 msgstr "Poměr zmenšení"
 
-#: ../lib/pytis/form/inputfield.py:2580
+#: ../lib/pytis/form/inputfield.py:2584
 msgid "Alignment"
 msgstr "Zarovnání"
 
-#: ../lib/pytis/form/inputfield.py:2586 ../lib/pytis/form/inputfield.py:2629
-#: ../lib/pytis/form/inputfield.py:2655
+#: ../lib/pytis/form/inputfield.py:2590 ../lib/pytis/form/inputfield.py:2633
+#: ../lib/pytis/form/inputfield.py:2659
 msgid "Tooltip"
 msgstr "Tooltip"
 
-#: ../lib/pytis/form/inputfield.py:2587
+#: ../lib/pytis/form/inputfield.py:2591
 msgid ""
 "Enter the text displayed in baloon help above the image when the mouse moves "
 "over."
 msgstr ""
 "Zadejte text zobrazený jako bublinová nápověda při najetí myší na obrázek."
 
-#: ../lib/pytis/form/inputfield.py:2590 ../lib/pytis/form/inputfield.py:2633
+#: ../lib/pytis/form/inputfield.py:2594 ../lib/pytis/form/inputfield.py:2637
 msgid "Insert new"
 msgstr "Vložit nový"
 
-#: ../lib/pytis/form/inputfield.py:2592
+#: ../lib/pytis/form/inputfield.py:2596
 msgid "Insert Image"
 msgstr "Vložit obrázek"
 
-#: ../lib/pytis/form/inputfield.py:2627
+#: ../lib/pytis/form/inputfield.py:2631
 msgid ""
 "Enter the link label displayed within document text. Leave empty if you want "
 "to dispaly the file name directly."
@@ -1548,22 +1552,22 @@ msgstr ""
 "Zadejte název zobrazený v textu dokumentu. Ponechte prázdné, pokud chcete "
 "zobrazit přímo název souboru."
 
-#: ../lib/pytis/form/inputfield.py:2630 ../lib/pytis/form/inputfield.py:2656
+#: ../lib/pytis/form/inputfield.py:2634 ../lib/pytis/form/inputfield.py:2660
 msgid ""
 "Enter the text displayed in baloon help above the link when the mouse moves "
 "over."
 msgstr ""
 "Zadejte text zobrazený jako bublinová nápověda při najetí myší na odkaz."
 
-#: ../lib/pytis/form/inputfield.py:2634
+#: ../lib/pytis/form/inputfield.py:2638
 msgid "Insert attachment"
 msgstr "Vložit přílohu"
 
-#: ../lib/pytis/form/inputfield.py:2648
+#: ../lib/pytis/form/inputfield.py:2652
 msgid "Target"
 msgstr "Cíl"
 
-#: ../lib/pytis/form/inputfield.py:2649
+#: ../lib/pytis/form/inputfield.py:2653
 msgid ""
 "Enter the absolute URL, such as http://www.mycompany.com or a local link, "
 "such as an identifier of another page in the CMS."
@@ -1571,7 +1575,7 @@ msgstr ""
 "Zadejte absolutní URL ve tvaru např. http://www.mojefirma.com nebo lokální "
 "adresu jako např. identifikátor jiné stránky v CMS."
 
-#: ../lib/pytis/form/inputfield.py:2653
+#: ../lib/pytis/form/inputfield.py:2657
 msgid ""
 "Enter the link label displayed within the document text. Leave empty if you "
 "want to dispaly the target URL directly."
@@ -1579,11 +1583,11 @@ msgstr ""
 "Zadejte název zobrazený v textu dokumentu. Ponechte prázdné, pokud chcete "
 "zobrazit přímo URL zadané v předchozím políčku."
 
-#: ../lib/pytis/form/inputfield.py:2659
+#: ../lib/pytis/form/inputfield.py:2663
 msgid "Link properties"
 msgstr "Vlastnosti odkazu"
 
-#: ../lib/pytis/form/inputfield.py:2745
+#: ../lib/pytis/form/inputfield.py:2749
 msgid "Invalid range format."
 msgstr "Neplatný formát rozsahu."
 
@@ -2662,19 +2666,19 @@ msgstr "|%s (A/N)? "
 msgid "Press Enter..."
 msgstr "Stiskni Enter..."
 
-#: ../lib/pytis/util/util.py:1968
+#: ../lib/pytis/util/util.py:1949
 msgid "Legends"
 msgstr "Legenda"
 
-#: ../lib/pytis/util/util.py:1969
+#: ../lib/pytis/util/util.py:1950
 msgid "Added"
 msgstr "Přidáno"
 
-#: ../lib/pytis/util/util.py:1970
+#: ../lib/pytis/util/util.py:1951
 msgid "Changed"
 msgstr "Změněno"
 
-#: ../lib/pytis/util/util.py:1971
+#: ../lib/pytis/util/util.py:1952
 msgid "Deleted"
 msgstr "Smazáno"
 
