@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-26 13:41+0200\n"
+"POT-Creation-Date: 2015-08-26 14:14+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -232,6 +232,14 @@ msgstr ""
 
 #: ../lib/pytis/data/types_.py:2691
 msgid "One of hierarchical value items contains invalid characters"
+msgstr ""
+
+#: ../lib/pytis/presentation/field.py:626
+msgid "unlimited"
+msgstr ""
+
+#: ../lib/pytis/presentation/field.py:808
+msgid "Such value already exists."
 msgstr ""
 
 #, fuzzy
