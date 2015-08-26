@@ -623,7 +623,7 @@ class PresentedRow(object):
             if svalue == ('', ''):
                 svalue = ''
             else:
-                svalue = u' — '.join(svalue)
+                svalue = u' — '.join(x or _("unlimited") for x in svalue)
         self._cache[cache_key] = svalue
         return svalue
 
