@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2013-2015 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2013.
 #
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2015-08-26 13:41+0200\n"
-"PO-Revision-Date: 2014-12-19 19:43+0100\n"
+"PO-Revision-Date: 2015-08-26 13:51+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -1201,7 +1201,7 @@ msgstr "Zobrazit číselník se zapnutým inkrementálním vyhledáváním."
 
 #: ../lib/pytis/form/inputfield.py:1641
 msgid "unlimited"
-msgstr ""
+msgstr "neomezeno"
 
 #: ../lib/pytis/form/inputfield.py:1692
 msgid "Select this item as active."
@@ -2535,7 +2535,7 @@ msgstr "Povolit vzdálené prohlížení tiskových souborů na klientské stani
 
 #: ../lib/pytis/util/configuration.py:785
 msgid "For internal use only."
-msgstr ""
+msgstr "Pouze pro interní použití."
 
 #: ../lib/pytis/util/configuration.py:850
 msgid "Target directory for saving exported files."
