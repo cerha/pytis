@@ -805,7 +805,7 @@ class PresentedRow(object):
                                       transaction=self._transaction, **select_kwargs)
             self._data.close()
             if count != 0:
-                error = pytis.data.ValidationError(_(u"Taková hodnota již existuje."))
+                error = pytis.data.ValidationError(_("Such value already exists."))
         if not value:
             value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
         if value and string != self.format(key):
