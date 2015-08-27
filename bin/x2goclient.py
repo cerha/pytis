@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-26 16:44'
+_VERSION = '2015-08-27 21:18'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -94,7 +94,7 @@ class App(wx.App):
             style = style | wx.ICON_ERROR
         dlg = wx.MessageDialog(None, message, caption=caption, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
-            dlg.ToggleWindowStyle(wx.STAY_ON_TOP) 
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
         # Raise should not be necessary, but there was a problem with focus
         # when used on windows
         dlg.Raise()
@@ -718,6 +718,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             self._runtime_error('no such session profile of name: %s' % (self.args.session_profile),
                                 exitcode=31)
         self.auth_attempts = int(self.args.auth_attempts)
+        # Examine profiles
         app.update_progress_dialog(message=_("Checking sessions and profiles. Please wait..."))
         if args.list_profiles:
             _session_profiles = self._X2GoClient__get_profiles()
@@ -1189,6 +1190,18 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             gevent.spawn(info_handler)
         app.close_progress_dialog()
 
+    def pytis_maybe_resume_session(self, s_hash):
+        session_infos = self._X2GoClient__list_sessions(s_hash)
+        if session_infos:
+            def session(s_hash, info):
+                return '%s %s@%s %s' % (s_hash, info.username or '', info.hostname or '',
+                                        (info.date_created or '').replace('T', ' '),)
+            choices = [session(*item) for item in session_infos.items() if item[1].status == 'S']
+            answer = app.choice_dialog(_("Resume session"), choices)
+            if answer:
+                self.args.resume = answer.split()[0]
+                self.args.new = False
+
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
         import winshell
@@ -1312,6 +1325,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         client._pytis_setup_configuration = True
         client.authenticate()
         app.close_progress_dialog()
+        client.pytis_maybe_resume_session(s_uuid)
         client.MainLoop()
 
 # ---------------------
