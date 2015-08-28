@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-27 21:18'
+_VERSION = '2015-08-28 10:14'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1196,9 +1196,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             def session(s_hash, info):
                 return '%s %s@%s %s' % (s_hash, info.username or '', info.hostname or '',
                                         (info.date_created or '').replace('T', ' '),)
-            choices = [session(*item) for item in session_infos.items() if item[1].status == 'S']
+            new_session = _("New session")
+            choices = ([new_session] +
+                       [session(*item) for item in session_infos.items() if item[1].status == 'S'])
             answer = app.choice_dialog(_("Resume session"), choices)
-            if answer:
+            if answer and answer != new_session:
                 self.args.resume = answer.split()[0]
                 self.args.new = False
 
