@@ -937,9 +937,11 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
-                  ("create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)", 90200,),
+                  ("create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)",
+                   90200,),
                   (("insert into rangetable values "
-                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"), 90200,),
+                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
+                   90200,),
                   "create table arraytable (x int primary key, a int[], b text[])",
                   "insert into arraytable values (1, '{2, 3}', '{hello, world}')",
                   "insert into arraytable values (99, NULL, '{}')",
@@ -967,7 +969,7 @@ class _DBTest(_DBBaseTest):
                   "$$ select * from xcosi where id > $1 $$",
                   ):
             try:
-                if len(q)==2:
+                if len(q) == 2:
                     cmd = q[0]
                     min_version = q[1]
                 else:
@@ -992,7 +994,7 @@ class _DBTest(_DBBaseTest):
                 pass
         tables = ['bin', 'arraytable', 'dateformats', 'timezones', 'fulltext',
                   'dist', 'xcosi', 'denik',
-                  'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',]
+                  'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6']
         if self._connector.server_version >= 90200:
             tables.append('rangetable')
         for t in tables:
@@ -1145,9 +1147,10 @@ class DBDataDefault(_DBTest):
             ranges = pytis.data.DBDataDefault(
                 (key,
                  B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),
-                 B('r2', 'rangetable', 'r2', type_=pytis.data.IntegerRange(lower_inc=False,
-                                                                           upper_inc=True)),
-                 B('rdt', 'rangetable', 'rdt', type_=pytis.data.DateTimeRange(without_timezone=True)),),
+                 B('r2', 'rangetable', 'r2',
+                   type_=pytis.data.IntegerRange(lower_inc=False, upper_inc=True)),
+                 B('rdt', 'rangetable', 'rdt',
+                   type_=pytis.data.DateTimeRange(without_timezone=True)),),
                 key,
                 conn)
         # arrays
