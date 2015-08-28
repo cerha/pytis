@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-28 10:14'
+_VERSION = '2015-08-28 11:19'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1191,6 +1191,10 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         app.close_progress_dialog()
 
     def pytis_maybe_resume_session(self, s_hash):
+        args = self.args
+        if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
+             args.list_desktops or args.list_profiles)):
+            return
         session_infos = self._X2GoClient__list_sessions(s_hash)
         if session_infos:
             def session(s_hash, info):
@@ -1201,8 +1205,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                        [session(*item) for item in session_infos.items() if item[1].status == 'S'])
             answer = app.choice_dialog(_("Resume session"), choices)
             if answer and answer != new_session:
-                self.args.resume = answer.split()[0]
-                self.args.new = False
+                args.resume = answer.split()[0]
+                args.new = False
 
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
