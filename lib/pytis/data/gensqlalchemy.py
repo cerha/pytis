@@ -605,41 +605,12 @@ class LTreeType(sqlalchemy.types.UserDefinedType):
             return value
         return process
 
-class _RangeType(sqlalchemy.types.UserDefinedType):
-
-    def bind_processor(self, dialect):
-        def process(value):
-            return value
-        return process
-
-    def result_processor(self, dialect, coltype):
-        def process(value):
-            return value
-        return process
-
-class INT4RANGE(_RangeType):
-    def get_col_spec(self):
-        return 'int4range'
-        
-class INT8RANGE(_RangeType):
-    def get_col_spec(self):
-        return 'int8range'
-
-class NUMRANGE(_RangeType):
-    def get_col_spec(self):
-        return 'numrange'
-
-class TSRANGE(_RangeType):
-    def get_col_spec(self):
-        return 'tsrange'
-
-class TSTZRANGE(_RangeType):
-    def get_col_spec(self):
-        return 'tstzrange'
-        
-class DATERANGE(_RangeType):
-    def get_col_spec(self):
-        return 'daterange'
+INT4RANGE = sqlalchemy.dialects.postgresql.INT4RANGE
+INT8RANGE = sqlalchemy.dialects.postgresql.INT8RANGE
+NUMRANGE = sqlalchemy.dialects.postgresql.NUMRANGE
+TSRANGE = sqlalchemy.dialects.postgresql.TSRANGE
+TSTZRANGE = sqlalchemy.dialects.postgresql.TSTZRANGE
+DATERANGE = sqlalchemy.dialects.postgresql.DATERANGE
                 
 @compiles(sqlalchemy.schema.CreateTable, 'postgresql')
 def visit_create_table(element, compiler, **kwargs):

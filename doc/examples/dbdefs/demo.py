@@ -17,7 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+
 import sqlalchemy
+import psycopg2.extras
+
 import pytis.data
 import pytis.data.gensqlalchemy as sql
 from pytis.data.dbdefs import ival
@@ -376,6 +380,16 @@ class DistantTableView(sql.SQLView):
         distant = sql.t.DistantTable
         return sqlalchemy.select([foo.c.id, foo.c.n, distant.c.x],
                                  from_obj=[foo.outerjoin(distant, foo.c.n == distant.c.y)])
+
+class RangeView(sql.SQLView):
+    name = 'range_view'
+    @classmethod
+    def query(class_):
+        ranges = sql.t.NonOverlappingRanges
+        date_range = psycopg2.extras.DateTimeRange(datetime.date(2015, 1, 1),
+                                                   datetime.date(2015, 8, 31))
+        return sqlalchemy.select([ranges], from_obj=[ranges],
+                                 whereclause=ranges.c.d.overlaps(date_range))
 
 
 # Functions
