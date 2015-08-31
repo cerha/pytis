@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-31 15:49'
+_VERSION = '2015-08-31 19:52'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -147,7 +147,9 @@ class App(wx.App):
     def username_dialog(self):
         return self.text_dialog(_("User name"), default_value=x2go.defaults.CURRENT_LOCAL_USER)
 
-    def choice_dialog(self, prompt, choices, index=False):
+    def choice_dialog(self, prompt, choices, index=False, buttons=None):
+        if buttons is not None:
+            return self._button_choice_dialog(prompt, choices, index=index, buttons=buttons)
         self.hide_progress_dialog()
         style = wx.CHOICEDLG_STYLE
         dlg = wx.SingleChoiceDialog(None, prompt, prompt, choices=choices, style=style)
@@ -169,6 +171,56 @@ class App(wx.App):
         self.Yield()
         self.show_progress_dialog()
         return answer
+
+    def _button_choice_dialog(self, prompt, choices, index, buttons):
+        self.hide_progress_dialog()
+        class Dialog(wx.Dialog):
+            def __init__(self):
+                super(Dialog, self).__init__(None, -1, title=prompt)
+                # panels
+                listbox_panel = wx.Panel(self, wx.ID_ANY)
+                button_panel = wx.Panel(self, wx.ID_ANY)
+                # sizers
+                main_sizer = wx.BoxSizer(wx.VERTICAL)
+                listbox_sizer = wx.BoxSizer(wx.VERTICAL)
+                button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+                # listbox
+                listbox_id = wx.NewId()
+                dialog_label = wx.StaticText(self, label=prompt)
+                listbox = wx.ListBox(listbox_panel, id=listbox_id, choices=choices,
+                                     style=wx.LB_SINGLE)
+                self._pytis_button = None
+                self._pytis_selected = 0
+                listbox.SetSelection(self._pytis_selected)
+                self.Bind(wx.EVT_LISTBOX, self.on_listbox, id=listbox_id)
+                listbox_sizer.Add(listbox, 1, wx.ALL | wx.EXPAND, 0)
+                listbox_panel.SetSizer(listbox_sizer)
+                # buttons
+                self._pytis_selections = []
+                for b in buttons:
+                    button_id = wx.NewId()
+                    wx_button = wx.Button(button_panel, id=button_id, label=b)
+                    button_sizer.Add(wx_button)
+                    button_panel.SetSizer(button_sizer)
+                    def callback(event, button=b):
+                        self._pytis_button = button
+                        self.Close()
+                    self.Bind(wx.EVT_BUTTON, callback, id=button_id)
+                # dialog finalization
+                main_sizer.Add(dialog_label, 0, wx.ALL, 5)
+                main_sizer.Add(listbox_panel, 1, wx.ALL | wx.CENTER | wx.EXPAND, 5)
+                main_sizer.Add(button_panel, 0, wx.ALL | wx.CENTER, 5)
+                self.SetSizer(main_sizer)
+            def on_listbox(self, event):
+                self._pytis_selected = event.GetSelection()
+            def result(self):
+                return self._pytis_button, self._pytis_selected
+        dlg = Dialog()
+        dlg.ShowModal()
+        result = dlg.result()
+        if not index:
+            result[1] = choices[result[1]]
+        return result
 
     def choice_dialog_index(self, prompt, choices):
         return self.choice_dialog(prompt, choices, index=True)
@@ -1195,22 +1247,35 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
              args.list_desktops or args.list_profiles)):
             return
-        session_infos = [info for info in self._X2GoClient__list_sessions(s_hash).values()
-                         if info.status == 'S']
-        session_infos.sort(lambda i1, i2: (cmp(i1.username, i2.username) or
-                                           cmp(i1.hostname, i2.hostname) or
-                                           cmp(i2.date_created, i1.date_created)))
-        if session_infos:
+        while True:
+            session_infos = [info for info in self._X2GoClient__list_sessions(s_hash).values()
+                             if info.status == 'S']
+            if not session_infos:
+                break
+            session_infos.sort(lambda i1, i2: (cmp(i1.username, i2.username) or
+                                               cmp(i1.hostname, i2.hostname) or
+                                               cmp(i2.date_created, i1.date_created)))
             def session(info):
                 return '%s@%s %s' % (info.username or '', info.hostname or '',
                                      (info.date_created or '').replace('T', ' '),)
             new_session = _("New session")
             choices = ([new_session] + [session(item) for item in session_infos])
-            answer = app.choice_dialog(_("Resume session"), choices, index=True)
-            if answer:
-                args.resume = session_infos[answer - 1].name
-                args.new = False
-
+            resume, terminate, cancel = _("OK"), _("Terminate"), _("Cancel")
+            button, answer = app.choice_dialog(_("Resume session"), choices, index=True,
+                                               buttons=(resume, terminate, cancel,))
+            if button == cancel:
+                break
+            else:
+                session_name = session_infos[answer - 1].name
+                if button == resume:
+                    args.resume = session_name
+                    args.new = False
+                    break
+                elif button == terminate:
+                    self._X2GoClient__terminate_session(s_hash, session_name)
+                else:
+                    raise Exception("Invalid session button", button)
+            
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
         import winshell
