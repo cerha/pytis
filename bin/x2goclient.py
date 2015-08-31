@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-28 11:19'
+_VERSION = '2015-08-31 13:24'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1195,17 +1195,20 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
              args.list_desktops or args.list_profiles)):
             return
-        session_infos = self._X2GoClient__list_sessions(s_hash)
+        session_infos = [info for info in self._X2GoClient__list_sessions(s_hash).values()
+                         if info.status == 'S']
+        session_infos.sort(lambda i1, i2: (cmp(i1.username, i2.username) or
+                                           cmp(i1.hostname, i2.hostname) or
+                                           cmp(i2.date_created, i1.date_created)))
         if session_infos:
-            def session(s_hash, info):
-                return '%s %s@%s %s' % (s_hash, info.username or '', info.hostname or '',
-                                        (info.date_created or '').replace('T', ' '),)
+            def session(info):
+                return '%s@%s %s' % (info.username or '', info.hostname or '',
+                                     (info.date_created or '').replace('T', ' '),)
             new_session = _("New session")
-            choices = ([new_session] +
-                       [session(*item) for item in session_infos.items() if item[1].status == 'S'])
-            answer = app.choice_dialog(_("Resume session"), choices)
-            if answer and answer != new_session:
-                args.resume = answer.split()[0]
+            choices = ([new_session] + [session(item) for item in session_infos])
+            answer = app.choice_dialog(_("Resume session"), choices, index=True)
+            if answer:
+                args.resume = session_infos[answer - 1].name
                 args.new = False
 
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
