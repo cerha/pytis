@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-
 import sqlalchemy
-import psycopg2.extras
 
 import pytis.data
 import pytis.data.gensqlalchemy as sql
@@ -386,8 +383,7 @@ class RangeView(sql.SQLView):
     @classmethod
     def query(class_):
         ranges = sql.t.NonOverlappingRanges
-        date_range = psycopg2.extras.DateTimeRange(datetime.date(2015, 1, 1),
-                                                   datetime.date(2015, 8, 31))
+        date_range = sqlalchemy.literal_column("'[2015-01-01, 2015-09-01)'")
         return sqlalchemy.select([ranges], from_obj=[ranges],
                                  whereclause=ranges.c.d.overlaps(date_range))
 
