@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-31 13:24'
+_VERSION = '2015-08-31 15:49'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1162,7 +1162,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
         old_install_directory = install_directory + '.old'
         tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
-        pytis_directory = os.path.join(tmp_directory, 'pytis')
+        pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
         sftp = client.open_sftp()
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
