@@ -270,14 +270,18 @@ def cmd_set_explicit_ineditable(filename, lines):
                 else:
                     if ((isinstance(val, ast.Call) and
                          (isinstance(val.func, ast.Attribute) and
-                          val.func.attr in ('computer', 'Computer', 'CbComputer'))
-                         or
-                         (isinstance(val, ast.Name) and
-                          val.func.id in ('computer', 'Computer', 'CbComputer')))):
+                          val.func.attr in ('computer', 'Computer', 'CbComputer')
+                          or
+                          isinstance(val.func, ast.Name) and
+                          val.func.id in ('computer', 'Computer', 'CbComputer')
+                          or
+                          isinstance(val, ast.Name) and
+                          val.func.id in ('computer', 'Computer', 'CbComputer')
+                      ))):
                         modify = True
                     else:
-                        warn(filename, node, "Can't determine '%s' value: %s",
-                             arg.name, unparse(val))
+                        warn(filename, node, "Can't determine '%s' value: %s %s",
+                             arg.name, val.func, unparse(val))
                         modify = False
             if not modify and args.get('width') is not None:
                 arg = args['width']
