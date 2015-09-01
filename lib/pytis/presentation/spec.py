@@ -2384,7 +2384,7 @@ class Computer(object):
         return self._function(*args, **kwargs)
 
     def __str__(self):
-        return '<%s>' % (self.__class__.__name__,)
+        return '<%s %s depends=%r>' % (self.__class__.__name__, self._function.__name__, self._depends)
 
     def function(self):
         """Vrať funkci zadanou v konstruktoru."""
