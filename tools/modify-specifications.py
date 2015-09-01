@@ -250,6 +250,47 @@ def cmd_check_codebooks_not_null(filename, lines):
              and not args.get('not_null') and not args.get('inherit'))):
             warn(filename, node)
 
+def cmd_set_explicit_ineditable(filename, lines):
+    """Add explicit editable=NEVER to field specifications where needed.
+
+    This must be done as a preparation for the planned removal of the implicit
+    dependency of field editability on computer and width in pytis (computed
+    fields and zero width fields used to be ineditable by default).
+
+    """
+    for node, arguments in FieldLocator(True, True, True).search_fields(lines, filename):
+        args = dict((a.name, a) for a in arguments)
+        if 'editable' not in args:
+            modify = False
+            if args.get('computer') is not None:
+                arg = args['computer']
+                val = arg.value
+                if not val or isinstance(val, ast.Name) and val.id == 'None':
+                    modify = False
+                else:
+                    if ((isinstance(val, ast.Call) and
+                         (isinstance(val.func, ast.Attribute) and
+                          val.func.attr in ('computer', 'Computer', 'CbComputer'))
+                         or
+                         (isinstance(val.func, ast.Name) and
+                          val.func.id in ('computer', 'Computer', 'CbComputer')))):
+                        modify = True
+                    else:
+                        warn(filename, node, "Can't determine '%s' value: %s",
+                             arg.name, unparse(val))
+                        modify = False
+            if not modify and args.get('width') is not None:
+                arg = args['width']
+                val = arg.value
+                if isinstance(val, ast.Num) and val.n == 0:
+                    modify = True
+                else:
+                    modify = False
+            if modify:
+                ln = arg.start.ln
+                offset = arg.start.offset
+                lines[ln] = lines[ln][:offset] + ', editable=pp.Editable.NEVER' + lines[ln][offset:]
+
 def cmd_type_kwargs(filename, lines):
     """Convert type kwargs in field specifications to type instance aruments."""
     lines_to_delete = []
