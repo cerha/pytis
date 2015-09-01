@@ -108,9 +108,13 @@ def run():
                     t = record.type(fid)
                     f = view_spec.field(fid)
                     attr = (
+                        ('label', f.label()),
                         ('not_null', t.not_null()),
                         ('editable', f.editable()),
                         ('type', t),
+                        ('computer', f.computer()),
+                        ('width', f.width()),
+                        ('height', f.height()),
                     )
                     attributes = ' '.join('%s=%s' % (k, v) for k, v in attr if v is not None)
                     print OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes))
