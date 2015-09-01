@@ -272,7 +272,7 @@ def cmd_set_explicit_ineditable(filename, lines):
                          (isinstance(val.func, ast.Attribute) and
                           val.func.attr in ('computer', 'Computer', 'CbComputer'))
                          or
-                         (isinstance(val.func, ast.Name) and
+                         (isinstance(val, ast.Name) and
                           val.func.id in ('computer', 'Computer', 'CbComputer')))):
                         modify = True
                     else:
