@@ -158,13 +158,12 @@ class FieldLocator(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Call(self, node):
-        def fname_in(*names):
-            f = node.func
-            return hasattr(f, 'id') and f.id in names or hasattr(f, 'attr') and f.attr in names
-        if ((fname_in('Field') and self._process_fields and 
+        f = node.func
+        fname = hasattr(f, 'id') and f.id or hasattr(f, 'attr') and f.attr or None
+        if ((fname == 'Field' and self._process_fields and 
              (self._process_override or not self._inside_override)
              or
-             fname_in('modify', 'modify_many', 'modify_except')
+             fname in ('modify', 'modify_many', 'modify_except')
              and self._inside_customize_fields and self._process_customize_fields)):
             args = []
             previous = None
@@ -173,7 +172,7 @@ class FieldLocator(ast.NodeVisitor):
                 args.append(arg)
                 previous = arg
             self._found.append((node, args))
-        elif fname_in('_inherited_fields'):
+        elif fname == '_inherited_fields':
             self._inside_inherited_fields = True
             try:
                 self.generic_visit(node)
