@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-08-31 19:52'
+_VERSION = '2015-09-02 15:11'
 
 XSERVER_VARIANT = 'VcXsrv_shipped'
 
@@ -1264,7 +1264,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             button, answer = app.choice_dialog(_("Resume session"), choices, index=True,
                                                buttons=(resume, terminate, cancel,))
             if button == cancel:
-                break
+                sys.exit(0)
             else:
                 session_name = session_infos[answer - 1].name
                 if button == resume:
