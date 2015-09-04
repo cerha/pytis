@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 #
-# Copyright (C) 2002-2014 Brailcom, o.p.s.
+# Copyright (C) 2002-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -475,10 +475,8 @@ class Document(_Container):
                 value = definition
             else:
                 value = definition.lcg()
-            return {None: value}
+            return value
         content_id = 'pytismarkup%d' % (self._counter.next(),)
-        if self.arg_presentation is not None and not isinstance(self.arg_presentation, dict):
-            self.arg_presentation = {None: self.arg_presentation}
         return lcg.ContentNode(id=content_id, title=' ', # let's avoid printing the id
                                content=self.lcg(),
                                page_header=arg(self.arg_page_header),
