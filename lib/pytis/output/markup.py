@@ -791,7 +791,7 @@ class StructuredText(_Mark):
         result = lcg.Container(parser.parse(self._text, parameters))
         self._parameters = {}
         for k, v in parameters.items():
-            self._parameters[k] = {None: v}
+            self._parameters[k] = v
         if 'first_page_header' not in self._parameters and 'page_header' in self._parameters:
             self._parameters['first_page_header'] = self._parameters['page_header']
         return result
