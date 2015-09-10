@@ -406,8 +406,7 @@ class LCGFormatter(object):
              not (isinstance(body, (tuple, list,)) and body and
                   isinstance(body[0], pytis.output.Document)))):
             body.lcg() # to generate parameters
-            simple_parameters = dict([(k, v[None],) for k, v in parameters.items()])
-            body = pytis.output.Document(body, **simple_parameters)
+            body = pytis.output.Document(body, **parameters)
         else:
             # It's unclear how to interpret this situation.  In the Lout
             # formatter the parameters were apparently taken from
@@ -424,7 +423,7 @@ class LCGFormatter(object):
                     for k, v in parameters.items():
                         name = 'arg_' + k
                         if getattr(document, name) is None:
-                            setattr(document, name, v[None])
+                            setattr(document, name, v)
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
