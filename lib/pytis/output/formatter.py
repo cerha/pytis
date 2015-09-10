@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 #
-# Copyright (C) 2002-2014 Brailcom, o.p.s.
+# Copyright (C) 2002-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -399,7 +399,7 @@ class LCGFormatter(object):
                     value = a
                 else:
                     value = a.lcg()
-                parameters[p] = {None: value}
+                parameters[p] = value
         self._body_parameters = parameters
         if ((not isinstance(body, pytis.output.Document) and
              body and
