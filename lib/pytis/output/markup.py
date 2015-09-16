@@ -766,7 +766,14 @@ class Image(_Mark):
         import config
         file_name = os.path.join(config.print_spec_dir, self._file_name)
         image = lcg.Image(file_name, src_file=file_name)
-        return lcg.InlineImage(image)
+        # Wrapping InlineImage into Figure prevents LCG from resizing the
+        # image.  LCG recently started to automatically reduce image size
+        # so that an image is at maximim a half of the size of the page.
+        # But most templates don't count with that (for example page
+        # background image is supposed to stretch to the whole page).
+        # This hack seems to prevent it, but there should be some more
+        # control over it.
+        return lcg.Figure(lcg.InlineImage(image))
 
 class StructuredText(_Mark):
     """LCG structured text."""
