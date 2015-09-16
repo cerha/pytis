@@ -746,17 +746,22 @@ class LongTable(Table):
 class Image(_Mark):
     """EPS obrázek."""
     
-    def __init__(self, file_name):
+    def __init__(self, file_name, standalone=True):
         """Inicializuj instanci.
 
         Argumenty:
 
           file_name -- jméno souboru obrázku, relativní k adresáři definovanému
             konfigurační volbou 'print_spec_dir'.
+          standalone -- určuje, zda obrázek má být vykreslen jako samostatný
+            (True) nebo jako součást textu (False).  Pokud je obrázek vykreslen
+            jako součást textu, může být na výstupu upravena jeho velikost
+            (větší obrázky budou automaticky zmenšeny).
 
         """
         super(Image, self).__init__()
         self._file_name = file_name
+        self._standalone = standalone
 
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
@@ -766,14 +771,7 @@ class Image(_Mark):
         import config
         file_name = os.path.join(config.print_spec_dir, self._file_name)
         image = lcg.Image(file_name, src_file=file_name)
-        # Wrapping InlineImage into Figure prevents LCG from resizing the
-        # image.  LCG recently started to automatically reduce image size
-        # so that an image is at maximim a half of the size of the page.
-        # But most templates don't count with that (for example page
-        # background image is supposed to stretch to the whole page).
-        # This hack seems to prevent it, but there should be some more
-        # control over it.
-        return lcg.Figure(lcg.InlineImage(image))
+        return lcg.InlineImage(image, standalone=self._standalone)
 
 class StructuredText(_Mark):
     """LCG structured text."""
