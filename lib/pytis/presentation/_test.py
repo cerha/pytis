@@ -63,9 +63,9 @@ class PresentedRow(unittest.TestCase):
                      computer=pp.Computer(twice, depends=('c',))),
             pp.Field('e', type=pd.Integer(), virtual=True,
                      default=88),
-            pp.Field('sum', type=pd.Integer(), virtual=True,
+            pp.Field('sum', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
                      computer=pp.Computer(sum, depends=('b', 'c'))),
-            pp.Field('inc', type=pd.Integer(), virtual=True,
+            pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
                      computer=pp.Computer(inc, depends=('sum',))),
             pp.Field('r'),
         )

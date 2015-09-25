@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010, 2011, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -23,7 +23,7 @@ import pytis.util
 from pytis.util import nextval
 import pytis.data
 import pytis.extensions
-from pytis.extensions import Field
+from pytis.presentation import Field, Editable
 import pytis.form
 import pytis.presentation
 
@@ -34,15 +34,15 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
     table = 'ev_pytis_global_output_templates'
     title = _("Předdefinované tiskové šablony")
     fields = (
-        Field('id', _("Identifikátor řádku"), editable=pytis.presentation.Editable.NEVER),
-        Field('module', _("Formulář"), editable=pytis.presentation.Editable.NEVER),
+        Field('id', _("Identifikátor řádku"), editable=Editable.NEVER),
+        Field('module', _("Formulář"), editable=Editable.NEVER),
         Field('specification', _("Název šablony")),
         Field('template', _("Šablona"), text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=20, compact=True),
         Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=20, compact=True),
-        Field('help', _("Help"), virtual=True,
+        Field('help', _("Help"), virtual=True, editable=Editable.NEVER,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=20, compact=True),
     )
@@ -55,7 +55,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
     title = _("Uživatelské tiskové šablony")
     fields = (
         Field('id', _("Identifikátor řádku"), default=nextval('e_pytis_output_templates_id_seq'),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('module', _("Formulář")),
         Field('specification', _("Název šablony")),
         Field('template', _("Šablona"), text_format=pytis.presentation.TextFormat.LCG,
@@ -75,7 +75,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
         Field('style', _("Styl"),
               width=80, height=25, compact=True),
         Field('username', _("User")),
-        Field('help', _("Help"), virtual=True,
+        Field('help', _("Help"), virtual=True, editable=Editable.NEVER,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=25, compact=True),
     )
@@ -105,7 +105,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
 
 class DirectUserOutputTemplates(UserOutputTemplates):
     def fields(self):
-        overridde = (pytis.presentation.Field('module', editable=pytis.presentation.Editable.NEVER),
+        overridde = (pytis.presentation.Field('module', editable=Editable.NEVER),
                      )
         return self._inherited_fields(DirectUserOutputTemplates, override=overridde)
     

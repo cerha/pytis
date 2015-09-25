@@ -3098,8 +3098,8 @@ class QueryFieldsForm(_VirtualEditForm):
         kwargs['fields'] = fields + (
             # Add hidden virtual field just for tracking changes of other fields.
             Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
-                  computer=pytis.presentation.Computer(lambda r: True,
-                                                       depends=[f.id() for f in fields])),
+                  editable=Editable.NEVER,
+                  computer=Computer(lambda r: True, depends=[f.id() for f in fields])),
         )
         _VirtualEditForm._full_init(self, *args, **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',

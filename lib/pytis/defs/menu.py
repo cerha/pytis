@@ -83,9 +83,10 @@ class ApplicationRoles(_ApplicationRolesSpecification):
     title = _(u"Role")
     fields = (
         Field('roleid', _(u"Skupina"),     # to allow binding of ApplicationRolesMembers
-              virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
+              virtual=True, editable=Editable.NEVER,
+              computer=pytis.presentation.computer(lambda row, name: name)),
         Field('member', _(u"Obsažená role"),     # to allow binding of ApplicationRolesOwners
-              virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
+              virtual=True, editable=Editable.NEVER, computer=pytis.presentation.computer(lambda row, name: name)),
         Field('name', _("Title"),
               fixed=True,
               descr=_(u"Stručný název role nebo uživatelské jméno v databázi.")),
@@ -181,11 +182,11 @@ class ApplicationRolesMembership(_ApplicationRolesSpecification):
         Field('purposeid', _(u"Identifikátor účelu role"), not_null=True,
               codebook='menu.ApplicationRolePurposes'),
         Field('purpose', _(u"Účel role"),
-              editable=pytis.presentation.Editable.NEVER, fixed=True),
+              editable=Editable.NEVER, fixed=True),
         Field('mpurposeid', _(u"Identifikátor účelu role"), not_null=True,
               codebook='menu.ApplicationRolePurposes'),
         Field('mpurpose', _(u"Účel role"),
-              editable=pytis.presentation.Editable.NEVER, fixed=True),
+              editable=Editable.NEVER, fixed=True),
         Field('description', _("Description"),
               descr=_(u"Popis určení role.")),
         Field('mdescription', _("Description"),
@@ -280,13 +281,14 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('position_nsub', _(u"Počet poduzlů")),
         Field('fullname', _(u"Navěšená akce"), not_null=True, codebook='menu.ApplicationActions',
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
-        Field('xaction', _(u"Navěšená akce"), virtual=True,
+        Field('xaction', _(u"Navěšená akce"), virtual=True, 
+              editable=pytis.presentation.Editable.NEVER,
               computer=pytis.presentation.computer(_xaction_computer),
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
         Field('locked', _(u"Zákaz editace"), fixed=True,
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('dirty', _(u"Neaktuální překlad"), fixed=True,
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
     )
     columns = ('t_xtitle', 'xaction', 'locked',)
     layout = ('title', 't_title', 'position',)
@@ -327,28 +329,28 @@ class ApplicationMenuM(pytis.presentation.Specification):
     title = _(u"Menu")
     fields = (
         Field('fullname', _(u"Navěšená akce"), not_null=True, codebook='menu.ApplicationActions',
-              editable=pytis.presentation.Editable.NEVER,
+              editable=Editable.NEVER,
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
         Field('shortname', _("Action"), not_null=True, codebook='menu.ApplicationShortActions',
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('actiontype', _(u"Typ položky"), fixed=True,
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('menuid', _(u"Id"), default=nextval('e_pytis_menu_menuid_seq'),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('title', _(u"Titulek položky menu"), type=_Title(),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('position', _(u"Pozice v menu"), fixed=True, not_null=True,
               codebook='menu.ApplicationMenuPositions',
-              editable=pytis.presentation.Editable.NEVER,
+              editable=Editable.NEVER,
               type=pytis.data.LTree(not_null=True, text=False)),
         Field('position_nsub', _(u"Počet poduzlů"),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('xaction', _(u"Navěšená akce"), virtual=True,
               computer=pytis.presentation.computer(_xaction_computer),
-              editable=pytis.presentation.Editable.NEVER,
+              editable=Editable.NEVER,
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
         Field('locked', _(u"Zákaz editace"), fixed=True,
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('description', _(u"Poznámka")),
     )
     columns = ('title', 'actiontype', 'fullname', 'description',)
@@ -485,18 +487,18 @@ class ApplicationMenuCodebook(pytis.presentation.Specification):
     fields = (
         Field('position', _(u"Pozice v menu"), fixed=True, not_null=True,
               codebook='menu.ApplicationMenuPositions',
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('position_nsub', _(u"Počet poduzlů"),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('fullname', _(u"Navěšená akce"), not_null=True, codebook='menu.ApplicationActions',
-              editable=pytis.presentation.Editable.NEVER,
+              editable=Editable.NEVER,
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
         Field('shortname', _("Action"), not_null=True, codebook='menu.ApplicationShortActions',
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('actiontype', _(u"Typ položky"), fixed=True,
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('title', _(u"Titulek položky menu"), type=_Title(),
-              editable=pytis.presentation.Editable.NEVER),
+              editable=Editable.NEVER),
         Field('description', _(u"Poznámka")),
     )
     columns = ('title', 'actiontype', 'description',)
@@ -604,9 +606,9 @@ class ColnameCodebook(pytis.presentation.Specification):
     def fields(self):
         return (
             pytis.presentation.Field('colname', _("Identifier"), type=pytis.data.String,
-                                     editable=pytis.presentation.Editable.NEVER, not_null=True),
+                                     editable=Editable.NEVER, not_null=True),
             pytis.presentation.Field('label', _("Description"), type=pytis.data.String,
-                                     editable=pytis.presentation.Editable.NEVER, not_null=True),
+                                     editable=Editable.NEVER, not_null=True),
         )
 
 class _ApplicationMenuRightsBase(pytis.presentation.Specification):
@@ -656,8 +658,8 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
             Field('roleid', _(u"Role"), not_null=True, codebook='menu.ApplicationRoles',
                   fixed=True),
             Field('purpose', _(u"Účel role"),
-                  editable=pytis.presentation.Editable.NEVER, fixed=True),
-            Field('shortname', _("Action"), editable=pytis.presentation.Editable.NEVER,
+                  editable=Editable.NEVER, fixed=True),
+            Field('shortname', _("Action"), editable=Editable.NEVER,
                   not_null=True, codebook='menu.ApplicationShortActions',
                   descr=_(u"Identifikátor akce související s danou položkou menu")),
             Field('colname', _(u"Sloupec"),
@@ -672,7 +674,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
             Field('granted', _(u"Ano/Ne"), fixed=True, default=True,
                   descr=_(u"Je právo povoleno (ano) nebo zakázáno (ne)?")),
             Field('redundant', _(u"Nadbytečné"), fixed=True,
-                  editable=pytis.presentation.Editable.NEVER,
+                  editable=Editable.NEVER,
                   descr=_(u"Je toto právo nadbytečné, bez vlivu na výsledná práva?")),
         )
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
@@ -870,9 +872,9 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
         Field('roleid', _(u"Role"), type=pytis.data.String(not_null=True),
               fixed=True),
         Field('purpose', _(u"Účel role"), type=pytis.data.String(),
-              editable=pytis.presentation.Editable.NEVER, fixed=True),
+              editable=Editable.NEVER, fixed=True),
         Field('columns', _(u"Sloupce"), type=pytis.data.String(),
-              editable=pytis.presentation.Editable.NEVER,
+              editable=Editable.NEVER,
               descr=_(u"Sloupce, na které je právo aplikováno; není-li uvedeno, tak všechny.")),
         Field('rights', _(u"Práva"), type=pytis.data.String(), fixed=True),
         Field('rights_show', _(u"Menu"), type=pytis.data.Boolean(), fixed=True,
@@ -920,7 +922,7 @@ class ApplicationChangedRights(ApplicationSummaryRights):
                  )
     fields = (ApplicationSummaryRights.fields +
               (Field('change', _(u"Nové"), type=pytis.data.Boolean(),
-                     editable=pytis.presentation.Editable.NEVER, fixed=True),))
+                     editable=Editable.NEVER, fixed=True),))
     _STYLE_OLD = pytis.presentation.Style(background=pytis.presentation.Color.GRAY10)
     def row_style(self, row):
         if not row['change'].value():
@@ -985,7 +987,7 @@ class ApplicationRoleMenuExtended(ApplicationRoleMenu):
                  )
     fields = (ApplicationRoleMenu.fields +
               (Field('actiontype', _(u"Typ položky"), fixed=True,
-                     editable=pytis.presentation.Editable.NEVER,
+                     editable=Editable.NEVER,
                type=pytis.data.String()),))
     columns = ('title', 'actiontype', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)

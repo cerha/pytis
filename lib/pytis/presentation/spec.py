@@ -2963,14 +2963,11 @@ class Field(object):
             will be left out during these recomputations and will keep their
             prevoius widths.
           editable -- one of 'Editable' constants or a 'Computer' instance.
-            The constants determine field editability statically, the computer
+           The constants determine field editability statically, the computer
             may be used to compute editability dynamically based on the values
             of other fields of a record and return true iff the field is
             editable (see also notes about computer specifications below).  The
-            default value is 'Editable.ALWAYS', but certain combinations of
-            other specification parameters may lead to another default value
-            (for example if a'computer' is defined, the default value is
-            'Editable.NEVER').
+            default value is 'Editable.ALWAYS'.
           visible -- boolean value or a 'Computer' instance returning the
             visibility (boolean result) dynamically.  Returning false will
             exclude the field from all kinds of forms (table columns or or form
@@ -3235,10 +3232,6 @@ class Field(object):
         mohou záviset na jiných počítaných políčkách), ale graf závislostí musí
         tvořit strom (nesmí vzniknout cyklus).
         
-        V každém případě je počítaný sloupec implicitně needitovatelný
-        ('Editable.NEVER'), pokud není explicitně nastaven jako editovatelný
-        pomocí specifikátoru 'editable'.
-
         """
         for key, value in (('id', id), ('label', label), ('column_label', column_label)):
             if value is not None:
@@ -3249,9 +3242,10 @@ class Field(object):
         self._kwargs = kwargs
         self._init(**kwargs)
                  
-    def _init(self, id, label=None, column_label=None, descr=None, virtual=False, dbcolumn=None,
-              type=None, type_=None, width=None, column_width=None, disable_column=False,
-              fixed=False, height=None, editable=None, visible=True, compact=False, nocopy=False,
+    def _init(self, id, label=None, column_label=None, descr=None, virtual=False,
+              dbcolumn=None, type=None, type_=None, width=None, column_width=None,
+              disable_column=False, fixed=False, height=None,
+              editable=Editable.ALWAYS, visible=True, compact=False, nocopy=False,
               default=None, computer=None, formatter=None, line_separator=';',
               codebook=None, display=None, prefer_display=None, display_size=None,
               null_display=None, inline_display=None, inline_referer=None,
@@ -3285,6 +3279,10 @@ class Field(object):
         assert isinstance(virtual, bool), virtual
         assert isinstance(disable_column, bool), disable_column
         assert isinstance(fixed, bool), fixed
+        if editable is None:
+            # For backwards compatibility - some specifications use it...
+            editable = Editable.ALWAYS
+        assert isinstance(editable, Computer) or editable in public_attributes(Editable), editable
         assert isinstance(compact, bool), compact
         assert isinstance(nocopy, bool), nocopy
         assert computer is None or isinstance(computer, Computer), computer
@@ -3414,18 +3412,11 @@ class Field(object):
         self._default = default
         self._computer = computer
         self._height = height
-        if editable is None:
-            if width == 0 or computer:
-                editable = Editable.NEVER
-            else:
-                editable = Editable.ALWAYS
-        elif isinstance(editable, Computer):
+        if isinstance(editable, Computer):
             # For backwards compatibility
             e_func = editable.function()
             if len(argument_names(e_func)) == 2:
                 editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
-        else:
-            assert editable in public_attributes(Editable), editable
         self._editable = editable
         assert isinstance(visible, (bool, Computer))
         self._visible = visible
@@ -5192,7 +5183,7 @@ class Specification(SpecificationBase):
             descr = None
             if c.label():
                 descr = c.doc()
-            editable = None # Use the default
+            editable = Editable.ALWAYS
             type_ = c.type()
             if isinstance(type_, pytis.data.Serial):
                 editable = Editable.NEVER

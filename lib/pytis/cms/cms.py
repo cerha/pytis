@@ -78,7 +78,7 @@ class Languages(Specification):
             Field('lang_id', default=nextval('cms_languages_lang_id_seq')),
             Field('lang', _("Kód"), width=2, column_width=6, fixed=True,
                   filter=pp.TextFilter.ALPHANUMERIC, post_process=pp.PostProcess.LOWER),
-            Field('name', _("Title"), virtual=True,
+            Field('name', _("Title"), virtual=True, editable=NEVER,
                   computer=computer(lambda record, lang: self._language_name(lang))),
         )
     def _language_name(self, lang):
@@ -103,7 +103,8 @@ class Modules(Specification):
         return (
             Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
             Field('modname', _("Title"), width=32),
-            Field('descr', _("Description"), width=64, virtual=True, computer=computer(self._descr)),
+            Field('descr', _("Description"), width=64, virtual=True,
+                  editable=NEVER, computer=computer(self._descr)),
         )
     def _module(self, modname):
         if modname:
@@ -533,8 +534,8 @@ class _Log(Specification):
     def fields(self):
         return (
             Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
-            Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
-                  column_width=15, width=40),
+            Field('hostname', _("Hostname"), virtual=True, editable=NEVER,
+                  computer=computer(self._hostname), column_width=15, width=40),
             Field('user_agent', _("User agent"), column_width=25, width=80),
             Field('referer', _("Referer"), column_width=25, width=80)
         )

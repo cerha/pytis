@@ -48,7 +48,7 @@ class Help(Specification):
     def fields(self):
         return (
             Field('help_id',
-                  # The computer is only used for help pages (with page_id) so
+                  # The computer is only used for help pages (, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=Editable.NEVERwith page_id) so
                   # we don't need to care about other kinds of help_id.  New
                   # record is always a new page.
                   computer=computer(lambda r, page_id: 'page/%d' % page_id)),
@@ -79,8 +79,8 @@ class Help(Specification):
                   descr=_("Enter a number denoting the order of the item in menu between "
                           "pages of the same hierarchy level.  Leave empty to put the item "
                           "automatically to bottom.")),
-            Field('removed', _("Removed"), editable=pp.Editable.NEVER),
-            Field('changed', _("Changed"), editable=pp.Editable.NEVER),
+            Field('removed', _("Removed"), editable=Editable.NEVER),
+            Field('changed', _("Changed"), editable=Editable.NEVER),
             )
     def row_style(self, row):
         return not row['changed'].value() and pp.Style(background='#ffd') or None
@@ -155,9 +155,9 @@ class ItemsHelp(Specification):
             Field('identifier', _("Identifier"), width=30, editable=Editable.NEVER),
             Field('content', _("Description"), width=80, height=15, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('label', _("Title"), width=30, virtual=True, computer=computer(self._label)),
-            Field('removed', _("Removed"), editable=pp.Editable.NEVER),
-            Field('changed', _("Changed"), editable=pp.Editable.NEVER,
+            Field('label', _("Title"), width=30, virtual=True, editable=pp.Editable.NEVER, computer=computer(self._label)),
+            Field('removed', _("Removed"), editable=Editable.NEVER),
+            Field('changed', _("Changed"), editable=Editable.NEVER,
                   computer=computer(lambda r, content: True)),
             )
     
