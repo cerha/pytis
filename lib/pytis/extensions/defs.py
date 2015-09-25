@@ -70,8 +70,14 @@ def get_menu_forms():
         data = None
     if data is None:
         resolver = pytis.util.resolver()
+        try:
+            appl = config.resolver.specification('Application')
+        except ResolverError:
+            menus = resolver.get('application', 'menu')
+        else:
+            menus = appl.menu()
         forms = [(item.args()['form_class'], item.args()['name'])
-                 for item in flatten_menus(resolver.get('application', 'menu'), [])
+                 for item in flatten_menus(menus, [])
                  if (isinstance(item, pytis.form.MItem)
                      and item.command() == pytis.form.Application.COMMAND_RUN_FORM
                      and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
