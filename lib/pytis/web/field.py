@@ -636,7 +636,7 @@ class HtmlField(MultilineField):
             acf_rules = (
                 # Text content
                 # Links
-                Rule(['a'], ['href', 'name']),
+                Rule(['a'], ['href', 'name', 'data-lcg-resource'], classes=['lcg-video', 'lcg-audio']),
                 Rule(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'], ['align']),
                 Rule(['p'], ['align']),
                 Rule(['pre']),
