@@ -358,23 +358,18 @@ def cmd_type_kwargs(filename, lines):
                                    lines[arg.end.ln][arg.end.offset:])
             for ln in range(arg.start.ln + 1, arg.end.ln + 1):
                 lines_to_delete.append(ln)
-                
-            for a in args[args.index(arg):]:
-                length = arg.end.offset - arg.start.offset
+            for a in args[args.index(arg)+1:]:
                 if a.start.ln == arg.end.ln:
-                    a.start.ln = arg.start.ln
-                    a.start.offset -= length
-                if a.end and a.end.ln == arg.end.ln:
-                    a.end.ln = arg.start.ln
-                    a.end.offset -= length
+                    a.start.offset -= arg.end.offset - arg.start.offset
         # Move type direct kwargs to type instance kwargs. 
         if type_arg and (unparsed_type_args or not isinstance(type_arg.value, ast.Call)):
             if type_arg.start.ln == type_arg.end.ln:
-                x = lines[type_arg.end.ln][type_arg.start.offset:type_arg.end.offset]
+                x = lines[type_arg.start.ln][type_arg.start.offset:type_arg.end.offset]
             else:
                 x = (lines[type_arg.start.ln][type_arg.start.offset:].strip() + ' ' +
                      ''.join([lines[ln].strip() + ' '
-                               for ln in range(type_arg.start.ln+1, type_arg.end.ln)]) +
+                              for ln in range(type_arg.start.ln+1, type_arg.end.ln)
+                              if ln not in lines_to_delete]) +
                      lines[type_arg.end.ln][:type_arg.end.offset].strip())
             x = x.lstrip(',').strip()[5:]
             if x != unparse(type_arg.value):
