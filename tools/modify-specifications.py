@@ -427,30 +427,29 @@ def run_commands(commands, filename, no_act=False):
             run_commands(commands, os.path.join(filename, x), no_act=no_act)
 
 if __name__ == '__main__':
-    no_act = False
     commands = []
-    i = 1 # Start from the second item (the first argument).
-    while i < len(sys.argv) and sys.argv[i].startswith('-'):
-        arg = sys.argv[i]
-        i += 1
-        if arg in ('-n', '--no-act'):
-            no_act = True
-        elif arg.startswith('--'):
-            try:
-                command = locals()['cmd_' + arg[2:].replace('-', '_')]
-            except KeyError:
-                die("Invalid argument: %s", arg)
-            else:
-                commands.append(command)
+    paths = []
+    no_act = False
+    for arg in sys.argv[1:]:
+        if arg.startswith('--'):
+            command = locals().get('cmd_' + arg[2:].replace('-', '_'))
         else:
+            command = None
+        if command:
+            commands.append(command)
+        elif arg in ('-n', '--no-act'):
+            no_act = True
+        elif arg.startswith('-'):
             die("Invalid argument: %s", arg)
+        else:
+            paths.append(arg)
     if not commands:
         die("No command given. Pass at least one of the following commands:\n%s",
             ''.join('  --' + x[4:].replace('_', '-') + '\n'
                     for x in locals() if x.startswith('cmd_')))
-    if not sys.argv[i:]:
+    if not paths:
         die("No files or directories given.")
-    for path in sys.argv[i:]:
+    for path in paths:
         if not os.path.exists(path):
             die("Invalid path: %s", path)
         run_commands(commands, path, no_act=no_act)
