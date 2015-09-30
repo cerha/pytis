@@ -266,7 +266,7 @@ class Type(object):
         if module != 'pytis.data.types_':
             name = module + '.' + name
         args = [' %s=%s' % x for x in sorted(self._constructor_kwargs.items())]
-        return "<%s%s>" % (name, ','.join(args))
+        return "<%s%s>" % (name, ''.join(args))
 
     def __repr__(self):
         return str(self)

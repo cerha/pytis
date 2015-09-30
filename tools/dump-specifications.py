@@ -111,7 +111,11 @@ def run():
                         ('label', f.label()),
                         ('not_null', t.not_null()),
                         ('editable', f.editable()),
-                        ('type', t),
+                        # We care only about the resulting not_null value which
+                        # is printed above, not about type's not_null argument.
+                        ('type', (str(t)
+                                  .replace(' not_null=True', '')
+                                  .replace(' not_null=False', ''))),
                         ('computer', f.computer()),
                         ('width', f.width()),
                         ('height', f.height()),
