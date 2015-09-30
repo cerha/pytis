@@ -306,10 +306,12 @@ def cmd_set_explicit_ineditable(filename, lines):
 def cmd_type_kwargs(filename, lines):
     """Convert type kwargs in field specifications to type instance aruments."""
     lines_to_delete = []
-    type_kwargs = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen', 'minimum', 'maximum',
-                   'encrypted', 'precision', 'format', 'mindate', 'maxdate', 'utc',
-                   'validation_messages', 'inner_type',
-                   'minsize', 'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',)
+    type_kwargs = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
+                   'minimum', 'maximum', 'encrypted', 'precision', 'format',
+                   'mindate', 'maxdate', 'utc', 'validation_messages',
+                   'inner_type', 'minsize', 'maxsize', 'formats', 
+                   'strength', 'md5', 'verify', 'text',)
+
     for node, args, cls in FieldLocator().search_fields(lines, filename):
         #print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
         type_arg = None
