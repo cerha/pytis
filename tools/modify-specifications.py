@@ -321,7 +321,7 @@ def cmd_type_kwargs(filename, lines):
             print ("File %s, line %d\n"
                    "  Can't determine argument end.  Please reformat the source code.\n"
                    "  '%s' should not be the last argument.") % \
-                (filename, arg.start.ln + 1, unparse(arg.kw))
+                (filename, args[-1].start.ln + 1, unparse(args[-1].kw))
             continue
         type_arg = find('type', args, key=lambda a: a.name)
         type_cls = None
