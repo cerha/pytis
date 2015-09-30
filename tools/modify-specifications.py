@@ -326,7 +326,6 @@ def cmd_type_kwargs(filename, lines):
         type_arg = find('type', args, key=lambda a: a.name)
         type_cls = None
         type_args = [arg for arg in args if arg.name in type_kwargs]
-        unparsed_type_args = ', '.join([unparse(a.kw) for a in type_args])
         if type_args and not type_arg:
             argnames = [a.name for a in type_args]
             if all(name in ('not_null', 'unique') for name in argnames):
@@ -350,7 +349,8 @@ def cmd_type_kwargs(filename, lines):
                 mod = os.path.splitext(os.path.split(filename)[-1])[0]
                 print ("File %s, line %d\n"
                        "  Can't determine data type of field %s.%s.%s (%s)") % \
-                    (filename, node.lineno, mod, cls, field_id, unparsed_type_args)
+                    (filename, node.lineno, mod, cls, field_id,
+                     ', '.join([unparse(a.kw) for a in type_args]))
                 continue
         # Remove all directly passed type kwargs.
         for arg in type_args:
@@ -362,7 +362,7 @@ def cmd_type_kwargs(filename, lines):
                 if a.start.ln == arg.end.ln:
                     a.start.offset -= arg.end.offset - arg.start.offset
         # Move type direct kwargs to type instance kwargs. 
-        if type_arg and (unparsed_type_args or not isinstance(type_arg.value, ast.Call)):
+        if type_arg and (type_args or not isinstance(type_arg.value, ast.Call)):
             if type_arg.start.ln == type_arg.end.ln:
                 x = lines[type_arg.start.ln][type_arg.start.offset:type_arg.end.offset]
             else:
@@ -378,16 +378,18 @@ def cmd_type_kwargs(filename, lines):
             ln, offset = type_arg.end.ln, type_arg.end.offset
             if isinstance(type_arg.value, ast.Call):
                 offset -= 1
-                insert = unparsed_type_args
+                insert = ', '.join([unparse(a.kw) for a in type_args
+                                    if unparse(a.kw) not in unparse(type_arg.value)])
                 if lines[ln][offset - 1] != '(':
                     insert = ', ' + insert
             else:
-                insert = '(' + unparsed_type_args + ')'
+                insert = '(' + ', '.join([unparse(a.kw) for a in type_args]) + ')'
         # Insert type kwarg as an instance.
         elif type_args:
             assert type_cls is not None
             ln, offset = type_args[0].start.ln, type_args[0].start.offset
-            insert = ', type=%s(%s)' % (type_cls, unparsed_type_args)
+            insert = ', type=%s(%s)' % (type_cls,
+                                        ', '.join([unparse(a.kw) for a in type_args]))
         else:
             insert = None
         if insert:
