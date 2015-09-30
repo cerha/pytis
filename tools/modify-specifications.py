@@ -146,6 +146,13 @@ class FieldLocator(ast.NodeVisitor):
         else:
             self.generic_visit(node)
 
+    def visit_ClassDef(self, node):
+        self._class_name = node.name
+        try:
+            self.generic_visit(node)
+        finally:
+            self._class_name = None
+
     def visit_Assign(self, node):
         if ((len(node.targets) == 1 and hasattr(node.targets[0], 'id')
              and node.targets[0].id in ('override', 'overriden'))):
@@ -171,7 +178,7 @@ class FieldLocator(ast.NodeVisitor):
                 arg = Arg(self._lines, kw, previous)
                 args.append(arg)
                 previous = arg
-            self._found.append((node, args))
+            self._found.append((node, args, self._class_name))
         elif fname == '_inherited_fields':
             self._inside_inherited_fields = True
             try:
@@ -187,6 +194,7 @@ class FieldLocator(ast.NodeVisitor):
         self._inside_customize_fields = False
         self._inside_override = False
         self._inside_inherited_fields = False
+        self._class_name = None
         self.visit(ast.parse(''.join(lines), filename))
         return self._found
 
@@ -199,7 +207,7 @@ def cmd_set_codebooks_not_null(filename, lines):
     implicit not_null dependency on codebook and enumerator.
     
     """
-    for node, arguments in FieldLocator(True, False, False).search_fields(lines, filename):
+    for node, arguments, cls in FieldLocator(True, False, False).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
         if 'not_null' not in args:
             for cb in (args.get('codebook'), args.get('enumerator')):
@@ -231,7 +239,7 @@ def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
     
     """
     lines_to_delete = []
-    for node, arguments in FieldLocator(False, True).search_fields(lines, filename):
+    for node, arguments, cls in FieldLocator(False, True).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
         cb = args.get('codebook') or args.get('enumerator')
         nn = args.get('not_null')
@@ -244,7 +252,7 @@ def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
         del lines[ln - i]
 
 def cmd_check_codebooks_not_null(filename, lines):
-    for node, arguments in FieldLocator(True, False).search_fields(lines, filename):
+    for node, arguments, cls in FieldLocator(True, False).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
         if (((args.get('codebook') or args.get('enumerator'))
              and not args.get('not_null') and not args.get('inherit'))):
@@ -258,7 +266,7 @@ def cmd_set_explicit_ineditable(filename, lines):
     fields and zero width fields used to be ineditable by default).
 
     """
-    for node, arguments in FieldLocator(True, True, True).search_fields(lines, filename):
+    for node, arguments, cls in FieldLocator(True, True, True).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
         if 'editable' not in args:
             modify = False
@@ -302,53 +310,25 @@ def cmd_type_kwargs(filename, lines):
                    'encrypted', 'precision', 'format', 'mindate', 'maxdate', 'utc',
                    'validation_messages', 'inner_type',
                    'minsize', 'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',)
-    for node, args in FieldLocator().search_fields(lines, filename):
+    for node, args, cls in FieldLocator().search_fields(lines, filename):
         #print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
         type_arg = None
         type_args = []
-        for arg in reversed(args):
-            #print "  -", arg.start, arg.end, unparse(arg.kw), arg.name, arg.value
-            if arg.name == 'type' and isinstance(arg.value, (ast.Name, ast.Attribute, ast.Call)):
-                type_arg = arg
-            elif arg.name in type_kwargs:
-                type_args.insert(0, arg)
-                if arg.end is None:
-                    # The end of the last argument may not be always obvious!
-                    print "File %s, line %d\n  Can't determine end of %s" % \
-                        (filename, arg.start.ln + 1, unparse(arg.kw))
-                else:
-                    lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
-                                           lines[arg.end.ln][arg.end.offset:])
-                    for ln in range(arg.start.ln + 1, arg.end.ln + 1):
-                        lines_to_delete.append(ln)
-                    if type_arg and type_arg.end.ln == arg.end.ln:
-                        type_arg.end.ln = arg.start.ln
-                        type_arg.end.offset -= arg.end.offset - arg.start.offset
+        if args[-1].name in ('type',) + type_kwargs and args[-1].end is None:
+            # The end of the last argument may not be always obvious!
+            print ("File %s, line %d\n"
+                   "  Can't determine argument end.  Please reformat the source code.\n"
+                   "  '%s' should not be the last argument.") % \
+                (filename, arg.start.ln + 1, unparse(arg.kw))
+            continue
+        type_arg = find('type', args, key=lambda a: a.name)
+        type_cls = None
+        type_args = [arg for arg in args if arg.name in type_kwargs]
         unparsed_type_args = ', '.join([unparse(a.kw) for a in type_args])
-        if type_arg and (unparsed_type_args or not isinstance(type_arg.value, ast.Call)):
-            if not type_arg.end:
-                field_id = node.args and unparse(node.args[0]) or '?'
-                print ("File %s, line %d\n"
-                       "  Can't detect end of '%s' field type specification.\n"
-                       "  Please reformat the source code (should not be the last argument).") % \
-                    (filename, node.lineno, field_id)
-                insert = None
-            else:
-                ln, offset = type_arg.end.ln, type_arg.end.offset
-                assert lines[ln][:offset].endswith(unparse(type_arg.value)), \
-                    "%s line %d: '%s', '%s' " % (filename, ln, lines[ln][:offset],
-                                                 unparse(type_arg.value))
-                if isinstance(type_arg.value, ast.Call):
-                    offset -= 1
-                    insert = unparsed_type_args
-                    if lines[ln][offset - 1] != '(':
-                        insert = ', ' + insert
-                else:
-                    insert = '(' + unparsed_type_args + ')'
-        elif type_args:
-            ln, offset = type_args[0].start.ln, type_args[0].start.offset
+        if type_args and not type_arg:
             argnames = [a.name for a in type_args]
-            
+            if all(name in ('not_null', 'unique') for name in argnames):
+                continue
             if 'maxlen' in argnames:
                 type_cls = 'pd.String'
             elif 'precision' in argnames:
@@ -363,19 +343,54 @@ def cmd_type_kwargs(filename, lines):
                     type_cls = 'pd.Time'
                 elif fmt.startswith('pd.DateTime.'):
                     type_cls = 'pd.DateTime'
-                else:
-                    type_cls = None
+            if type_cls is None:
+                field_id = node.args and eval(unparse(node.args[0])) or '?'
+                mod = os.path.splitext(os.path.split(filename)[-1])[0]
+                print ("File %s, line %d\n"
+                       "  Can't determine data type of field %s.%s.%s (%s)") % \
+                    (filename, node.lineno, mod, cls, field_id, unparsed_type_args)
+                continue
+        # Remove all directly passed type kwargs.
+        for arg in type_args:
+            lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
+                                   lines[arg.end.ln][arg.end.offset:])
+            for ln in range(arg.start.ln + 1, arg.end.ln + 1):
+                lines_to_delete.append(ln)
+                
+            for a in args[args.index(arg):]:
+                length = arg.end.offset - arg.start.offset
+                if a.start.ln == arg.end.ln:
+                    a.start.ln = arg.start.ln
+                    a.start.offset -= length
+                if a.end and a.end.ln == arg.end.ln:
+                    a.end.ln = arg.start.ln
+                    a.end.offset -= length
+        # Move type direct kwargs to type instance kwargs. 
+        if type_arg and (unparsed_type_args or not isinstance(type_arg.value, ast.Call)):
+            if type_arg.start.ln == type_arg.end.ln:
+                x = lines[type_arg.end.ln][type_arg.start.offset:type_arg.end.offset]
             else:
-                type_cls = None
-            if type_cls:
-                insert = ', type=%s(%s)' % (type_cls, unparsed_type_args)
-            elif [name for name in argnames if name not in ('not_null', 'unique')]:
-                field_id = node.args and unparse(node.args[0]) or '?'
-                print "File %s, line %d\n  Can't determine data type of field %s (%s)" % \
-                    (filename, node.lineno, field_id, unparsed_type_args)
-                insert = None
+                x = (lines[type_arg.start.ln][type_arg.start.offset:].strip() + ' ' +
+                     ''.join([lines[ln].strip() + ' '
+                               for ln in range(type_arg.start.ln+1, type_arg.end.ln)]) +
+                     lines[type_arg.end.ln][:type_arg.end.offset].strip())
+            x = x.lstrip(',').strip()[5:]
+            if x != unparse(type_arg.value):
+                print "File %s, line %d\n  '%s'\n  '%s'" % \
+                    (filename, type_arg.start.ln + 1, x, unparse(type_arg.value))
+            ln, offset = type_arg.end.ln, type_arg.end.offset
+            if isinstance(type_arg.value, ast.Call):
+                offset -= 1
+                insert = unparsed_type_args
+                if lines[ln][offset - 1] != '(':
+                    insert = ', ' + insert
             else:
-                insert = ', ' + unparsed_type_args
+                insert = '(' + unparsed_type_args + ')'
+        # Insert type kwarg as an instance.
+        elif type_args:
+            assert type_cls is not None
+            ln, offset = type_args[0].start.ln, type_args[0].start.offset
+            insert = ', type=%s(%s)' % (type_cls, unparsed_type_args)
         else:
             insert = None
         if insert:
