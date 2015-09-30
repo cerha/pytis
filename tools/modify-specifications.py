@@ -303,15 +303,27 @@ def cmd_set_explicit_ineditable(filename, lines):
                 offset = arg.start.offset
                 lines[ln] = lines[ln][:offset] + ', editable=pp.Editable.NEVER' + lines[ln][offset:]
 
-def cmd_type_kwargs(filename, lines):
-    """Convert type kwargs in field specifications to type instance aruments."""
+def cmd_type_kwargs(filename, lines, type_map=None):
+    """Convert type kwargs in field specifications to type instance aruments.
+
+    The optional argument 'type_map' may be used to supply type classes to fields
+    where the type can not be determined from the field specification itself.
+
+    The value of the argument is a file name as a string.  The current type map
+    file format follows the format of pytis/tools/dump-specifications.py
+    output.
+
+    """
     lines_to_delete = []
     type_kwargs = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                    'minimum', 'maximum', 'encrypted', 'precision', 'format',
                    'mindate', 'maxdate', 'utc', 'validation_messages',
                    'inner_type', 'minsize', 'maxsize', 'formats', 
                    'strength', 'md5', 'verify', 'text',)
-
+    if type_map:
+        type_dict = make_type_map(type_map)
+    else:
+        type_dict = None
     for node, args, cls in FieldLocator().search_fields(lines, filename):
         #print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
         type_arg = None
@@ -345,13 +357,21 @@ def cmd_type_kwargs(filename, lines):
                 elif fmt.startswith('pd.DateTime.'):
                     type_cls = 'pd.DateTime'
             if type_cls is None:
-                field_id = node.args and eval(unparse(node.args[0])) or '?'
-                mod = os.path.splitext(os.path.split(filename)[-1])[0]
-                print ("File %s, line %d\n"
-                       "  Can't determine data type of field %s.%s.%s (%s)") % \
-                    (filename, node.lineno, mod, cls, field_id,
-                     ', '.join([unparse(a.kw) for a in type_args]))
-                continue
+                field_id = '.'.join((os.path.splitext(os.path.split(filename)[-1])[0],
+                                     cls,
+                                     node.args and eval(unparse(node.args[0])) or '?'))
+                if type_dict:
+                    type_cls = type_dict.get(field_id)
+                    if type_cls:
+                        print ("File %s, line %d\n"
+                               "  Data type %s of field %s taken from type map %s.") % \
+                            (filename, node.lineno, type_cls, field_id, type_map)
+                if type_cls is None:
+                    print ("File %s, line %d\n"
+                           "  Can't determine data type of field %s (%s)") % \
+                        (filename, node.lineno, field_id,
+                         ', '.join([unparse(a.kw) for a in type_args]))
+                    continue
         # Remove all directly passed type kwargs.
         for arg in type_args:
             lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
@@ -403,8 +423,8 @@ def run_commands(commands, filename, no_act=False):
     if os.path.isfile(filename) and filename.endswith('.py'):
         lines = open(filename).readlines()
         original_text = ''.join(lines)
-        for command in commands:
-            command(filename, lines)
+        for command, kwargs in commands:
+            command(filename, lines, **kwargs)
         new_text = ''.join(lines)
         if new_text != original_text:
             try:
@@ -425,6 +445,22 @@ def run_commands(commands, filename, no_act=False):
         for x in os.listdir(filename):
             run_commands(commands, os.path.join(filename, x), no_act=no_act)
 
+_type_maps = {}
+def make_type_map(filename):
+    """Process the type map file and return a dictionary mapping fields to type names."""
+    try:
+        type_map = _type_maps[filename]
+    except KeyError:
+        import re
+        type_map =  _type_maps[filename] = {}
+        matcher = re.compile('\w+\.defs\.(\w+\.\w+.\w+) .*type=<(\w+).*')
+        with file(os.path.abspath(os.path.expanduser(filename))) as f:
+            for line in f.readlines():
+                match = matcher.match(line)
+                if match:
+                    type_map[match.group(1)] = 'pd.' + match.group(2)
+    return type_map
+
 if __name__ == '__main__':
     commands = []
     paths = []
@@ -435,9 +471,12 @@ if __name__ == '__main__':
         else:
             command = None
         if command:
-            commands.append(command)
+            commands.append((command, {}))
         elif arg in ('-n', '--no-act'):
             no_act = True
+        elif commands and arg.startswith('--') and '=' in arg:
+            name, value = arg[2:].split('=')
+            commands[-1][1][name.replace('-', '_')] = value
         elif arg.startswith('-'):
             die("Invalid argument: %s", arg)
         else:
