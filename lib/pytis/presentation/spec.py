@@ -5214,10 +5214,9 @@ class Specification(SpecificationBase):
                     if orig_c is not None:
                         default = nextval('%s_%s_seq' % (orig_c.table.name, orig_c.name,),
                                           connection_name=self.connection)
-            f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
-                      editable=editable, codebook=codebook, not_null=c.type().not_null(),
+            f = Field(c.id(), c.label(), type=type_, descr=descr, default=default,
+                      editable=editable, codebook=codebook, #not_null=type_.not_null(),
                       crypto_name=c.crypto_name())
-            f.set_type(type_)
             xfields.append(f)
             xfields_map[c.id()] = i
             i += 1
