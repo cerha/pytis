@@ -362,10 +362,10 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                                      node.args and eval(unparse(node.args[0])) or '?'))
                 if type_dict:
                     type_cls = type_dict.get(field_id)
-                    if type_cls:
-                        print ("File %s, line %d\n"
-                               "  Data type %s of field %s taken from type map %s.") % \
-                            (filename, node.lineno, type_cls, field_id, type_map)
+                    #if type_cls:
+                    #    print ("File %s, line %d\n"
+                    #           "  Data type %s of field %s taken from type map %s.") % \
+                    #        (filename, node.lineno, type_cls, field_id, type_map)
                 if type_cls is None:
                     print ("File %s, line %d\n"
                            "  Can't determine data type of field %s (%s)") % \
