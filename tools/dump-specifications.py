@@ -108,17 +108,15 @@ def run():
                     t = record.type(fid)
                     f = view_spec.field(fid)
                     attr = (
-                        ('label', f.label()),
+                        #('label', f.label()),
                         ('not_null', t.not_null()),
-                        ('editable', f.editable()),
                         # We care only about the resulting not_null value which
                         # is printed above, not about type's not_null argument.
                         ('type', (str(t)
                                   .replace(' not_null=True', '')
                                   .replace(' not_null=False', ''))),
+                        ('editable', f.editable()),
                         ('computer', f.computer()),
-                        ('width', f.width()),
-                        ('height', f.height()),
                     )
                     attributes = ' '.join('%s=%s' % (k, v) for k, v in attr if v is not None)
                     print OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes)).encode('utf-8')
