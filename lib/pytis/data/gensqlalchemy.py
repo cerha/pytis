@@ -614,8 +614,10 @@ DATERANGE = sqlalchemy.dialects.postgresql.DATERANGE
                 
 @compiles(sqlalchemy.schema.CreateTable, 'postgresql')
 def visit_create_table(element, compiler, **kwargs):
-    result = compiler.visit_create_table(element, **kwargs)
     table = element.element
+    if table.unlogged and 'UNLOGGED' not in table._prefixes:
+        table._prefixes.append('UNLOGGED')
+    result = compiler.visit_create_table(element, **kwargs)
     if table.inherits:
         inherited = [table._table_name(t) for t in table.inherits]
         result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), string.join(inherited, ', '),)
@@ -2204,6 +2206,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         order, excluding inherited columns
       inherits -- tuple of inherited tables, specification classes
       tablespace -- 'None' or string defining tablespace of the table
+      unlogged -- iff True then UNLOGGED prefix will be used
       check -- tuple of SQL expressions (basestrings) defining check
         constraints on the table
       unique -- tuple of tuples defining unique constraints; each of the tuples
@@ -2258,6 +2261,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     fields = ()
     inherits = ()
     tablespace = None
+    unlogged = False
     init_columns = None
     init_values = ()
     check = ()
@@ -2579,6 +2583,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
         """
         class_.init_values = class_.init_values + values
+
 
 class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
     """Foreign server specification.
