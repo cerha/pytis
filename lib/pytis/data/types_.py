@@ -222,11 +222,12 @@ class Type(object):
         purpose in this class.
 
         """
-        assert isinstance(not_null, bool)
-        assert isinstance(unique, bool)
-        assert enumerator is None or isinstance(enumerator, Enumerator)
-        assert isinstance(constraints, (list, tuple,))
-        assert validation_messages is None or isinstance(validation_messages, dict)
+        assert isinstance(not_null, bool), not_null
+        assert isinstance(unique, bool), unique
+        assert enumerator is None or isinstance(enumerator, Enumerator), enumerator
+        assert isinstance(constraints, (list, tuple,)), constraints
+        assert validation_messages is None or isinstance(validation_messages, dict), \
+            validation_messages
         self._not_null = not_null
         self._unique = unique
         self._enumerator = enumerator
