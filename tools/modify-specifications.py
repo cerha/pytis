@@ -331,9 +331,9 @@ def cmd_type_kwargs(filename, lines, type_map=None):
         if args[-1].name in ('type',) + type_kwargs and args[-1].end is None:
             # The end of the last argument may not be always obvious!
             print ("File %s, line %d\n"
-                   "  Can't determine argument end.  Please reformat the source code.\n"
-                   "  '%s' should not be the last argument.") % \
-                (filename, args[-1].start.ln + 1, unparse(args[-1].kw))
+                   "  Can't determine end of '%s' argument when it is the last argument.\n"
+                   "  Please reformat the source code.") % \
+                (filename, args[-1].start.ln + 1, args[-1].name)
             continue
         type_arg = find('type', args, key=lambda a: a.name)
         type_cls = None
@@ -368,7 +368,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                     #        (filename, node.lineno, type_cls, field_id, type_map)
                 if type_cls is None:
                     print ("File %s, line %d\n"
-                           "  Can't determine data type of field %s (%s)") % \
+                           "  Can't determine type for %s (%s)") % \
                         (filename, node.lineno, field_id,
                          ', '.join([unparse(a.kw) for a in type_args]))
                     continue
@@ -391,10 +391,14 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                               for ln in range(type_arg.start.ln+1, type_arg.end.ln)
                               if ln not in lines_to_delete]) +
                      lines[type_arg.end.ln][:type_arg.end.offset].strip())
-            x = x.lstrip(',').strip()[5:]
-            if x != unparse(type_arg.value):
-                print "File %s, line %d\n  '%s'\n  '%s'" % \
-                    (filename, type_arg.start.ln + 1, x, unparse(type_arg.value))
+            x = x.strip(',').strip()
+            if x != unparse(type_arg.kw):
+                print ("File %s, line %d\n"
+                       "  Warning: Can't verify position, please check this change.\n"
+                       "  '%s'\n  '%s'") % \
+                    (filename,
+                     type_arg.start.ln - len([l for l in lines_to_delete if l < type_arg.start.ln]),
+                     x, unparse(type_arg.kw))
             ln, offset = type_arg.end.ln, type_arg.end.offset
             if isinstance(type_arg.value, ast.Call):
                 offset -= 1
