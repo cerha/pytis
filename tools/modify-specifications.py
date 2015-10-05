@@ -326,18 +326,17 @@ def cmd_type_kwargs(filename, lines, type_map=None):
         type_dict = None
     for node, args, cls in FieldLocator().search_fields(lines, filename):
         #print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
-        type_arg = None
-        type_args = []
-        if args[-1].name in ('type',) + type_kwargs and args[-1].end is None:
+        type_cls = None
+        type_arg = find('type', args, key=lambda a: a.name)
+        type_args = [arg for arg in args if arg.name in type_kwargs]
+        if args and args[-1].end is None and (args[-1] in type_args or
+                                              args[-1] == type_arg and type_args):
             # The end of the last argument may not be always obvious!
             print ("File %s, line %d\n"
                    "  Can't determine end of '%s' argument when it is the last argument.\n"
                    "  Please reformat the source code.") % \
                 (filename, args[-1].start.ln + 1, args[-1].name)
             continue
-        type_arg = find('type', args, key=lambda a: a.name)
-        type_cls = None
-        type_args = [arg for arg in args if arg.name in type_kwargs]
         if type_args and not type_arg:
             argnames = [a.name for a in type_args]
             if all(name in ('not_null', 'unique') for name in argnames):
@@ -377,10 +376,23 @@ def cmd_type_kwargs(filename, lines, type_map=None):
             lines[arg.start.ln] = (lines[arg.start.ln][:arg.start.offset] +
                                    lines[arg.end.ln][arg.end.offset:])
             for ln in range(arg.start.ln + 1, arg.end.ln + 1):
-                lines_to_delete.append(ln)
+                if ln not in lines_to_delete:
+                    lines_to_delete.append(ln)
+            if range(arg.start.ln + 1, arg.end.ln + 1):
+                lx = lines_to_delete[-1]+1
             for a in args[args.index(arg)+1:]:
                 if a.start.ln == arg.end.ln:
-                    a.start.offset -= arg.end.offset - arg.start.offset
+                    if arg.start.ln == arg.end.ln:
+                        a.start.offset -= arg.end.offset - arg.start.offset
+                        if a.end and a.end.ln == a.start.ln:
+                            a.end.offset -= arg.end.offset - arg.start.offset
+                    else:
+                        start_ln, start_offset = a.start.ln, a.start.offset
+                        a.start.ln = arg.start.ln
+                        a.start.offset = arg.start.offset + a.start.offset - arg.end.offset
+                        if a.end and a.end.ln == start_ln:
+                            a.end.ln = arg.start.ln
+                            a.end.offset = a.start.offset + a.end.offset - start_offset
         # Move type direct kwargs to type instance kwargs. 
         if type_arg and (type_args or not isinstance(type_arg.value, ast.Call)):
             if type_arg.start.ln == type_arg.end.ln:
