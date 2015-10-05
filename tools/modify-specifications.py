@@ -469,12 +469,13 @@ def make_type_map(filename):
     except KeyError:
         import re
         type_map =  _type_maps[filename] = {}
-        matcher = re.compile('\w+\.defs\.(\w+\.\w+.\w+) .*type=<(\w+).*')
+        matcher = re.compile('^(?:\w+\.)+?(\w+\.\w+.\w+) .*type=<(\w+).*')
         with file(os.path.abspath(os.path.expanduser(filename))) as f:
             for line in f.readlines():
                 match = matcher.match(line)
                 if match:
-                    type_map[match.group(1)] = 'pd.' + match.group(2)
+                    field, tname = match.groups()
+                    type_map[field] = 'pd.' + tname
     return type_map
 
 if __name__ == '__main__':
