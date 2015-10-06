@@ -410,6 +410,8 @@
 .actions button, .list-form-controls button {
     width: auto; /* fix MSIE size */
     overflow: visible; /* fix MSIE size */
+    margin-right: 0.4em;
+    margin-bottom: 0.4em;
 }
 .actions button span, .list-form-controls button span {
     display: block;
