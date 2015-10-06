@@ -1398,15 +1398,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _db_bindings_to_column_spec(self, bindings):
         key = []
         columns = []
-        direct_types = self._pdbb_db_spec is not None
+        do_introspection = (
+            # No introspection needed when DB specification is available.
+            self._pdbb_db_spec is None
+            # Introspection not possible for table functions.
+            and self._arguments is None
+        )
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            if direct_types or b.type() is not None:
-                table_type = None
-            elif self._arguments is None:
+            if do_introspection:
                 table_type = self._pdbb_get_table_type(b.table(), b.column())
             else:
+                table_type = None
+            if b.type() is None and self._arguments is not None:
                 raise Exception("Column types must be specified for table functions",
                                 b.id(), b.table(),)
             t = self._pdbb_apply_type_kwargs(table_type, b)
