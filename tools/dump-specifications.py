@@ -30,7 +30,7 @@ import re
 import getopt
 import argparse
 
-import pytis.extensions
+import pytis.presentation
 import pytis.util
 
 class NullLogger(pytis.util.Logger):
