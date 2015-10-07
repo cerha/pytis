@@ -65,18 +65,23 @@ var pytis = {
 	    event = window.event;
 	    element = event.srcElement;
 	}
-	if (element._pytis_tooltip) {
-	    tooltip = element._pytis_tooltip;
-	} else {
-	    tooltip = new lcg.Tooltip(uri);
-	    element._pytis_tooltip = tooltip;
-	}
-	tooltip.show(event.pointerX(), event.pointerY());
+	element._pytis_tooltip_timeout = setTimeout(function () {
+	    if (element._pytis_tooltip) {
+		tooltip = element._pytis_tooltip;
+	    } else {
+		tooltip = new lcg.Tooltip(uri);
+		element._pytis_tooltip = tooltip;
+	    }
+	    tooltip.show(event.pointerX(), event.pointerY());
+	}, 500);
     },
 
     hide_tooltip: function(element) {
 	if (element._pytis_tooltip) {
 	    element._pytis_tooltip.hide();
+	}
+	if (element._pytis_tooltip_timeout) {
+	    clearTimeout(element._pytis_tooltip_timeout);
 	}
     }
 
