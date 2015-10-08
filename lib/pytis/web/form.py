@@ -454,7 +454,7 @@ class LayoutForm(FieldForm):
                                 cls='horizontal-group')]
             else:
                 result = [g.table(
-                    [g.tr([(g.th(label, cls='label') if label else '' +
+                    [g.tr([((g.th(label, cls='label') if label else '') +
                             g.td(content_, cls='ctrl'))
                            for i, (label, content_, __, ___) in enumerate(content.content())])],
                     role='presentation',
