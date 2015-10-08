@@ -72,7 +72,7 @@ def get_menu_forms():
         resolver = pytis.util.resolver()
         try:
             appl = config.resolver.specification('Application')
-        except ResolverError:
+        except pytis.util.ResolverError:
             menus = resolver.get('application', 'menu')
         else:
             menus = appl.menu()
