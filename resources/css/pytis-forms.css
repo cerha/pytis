@@ -26,6 +26,10 @@
     margin: 0.4em 0;
     padding: 0.4em 0.6em;
 }
+.pytis-form .paging-controls > span {
+    margin-bottom: 0.4em;
+}
+
 .pytis-form.query-fields-form > table {
     border-collapse: collapse;
     border: none;
@@ -44,9 +48,14 @@
     text-align: left;
     margin: 0 0 0.3em 0;
 }
-.pytis-form.query-fields-form td.apply-filters {
-    padding-left: 0.8em;
+.pytis-form.query-fields-form div.form-body {
+    display: inline-block;
+    margin-right: 0.8em;
+}
+.pytis-form.query-fields-form div.apply-filters {
+    display: inline-block;
     vertical-align: bottom;
+    margin-bottom: 0.2em;
 }
 
 .pytis-form .group div.group {
@@ -72,17 +81,45 @@
     position: relative;
 }
 .pytis-form legend.empty { display: none; }
-
-.pytis-form table.horizontal-group.expanded { width: 100%; }
-.pytis-form.query-fields-form table.horizontal-group.expanded { width: auto; }
+.pytis-form table.horizontal-group {
+    border: none;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+.pytis-form table.vertical-group td.expanded,
+.pytis-form table.horizontal-group.expanded {
+    width: 100%;
+}
+.pytis-form div.horizontal-group table.vertical-group td.expanded,
+.pytis-form div.horizontal-group table.horizontal-group.expanded {
+    width: auto;
+}
+.pytis-form table.horizontal-group > tbody > tr > th,
+.pytis-form table.horizontal-group > tbody > tr > td,
+.pytis-form table.vertical-group > tbody > tr > th,
+.pytis-form table.vertical-group > tbody > tr > td {
+    vertical-align: top;
+}
+.pytis-form table.horizontal-group > tbody > tr > td.spacer {
+    width: 100%;
+}
 .pytis-form .horizontal-group fieldset.group {
     margin: 0 0 0.4em 0;
     /* margin-bottom: 100%; ** this breaks fieldset border. */
 }
-.pytis-form .horizontal-group td.spaced,
-.pytis-form .horizontal-group th.spaced {
-    padding-left: 0.6em;
+.pytis-form table.horizontal-group > tbody > tr > td { padding-right: 0.6em; }
+.pytis-form table.horizontal-group > tbody > tr > td:last-child { padding-right: 0; }
+
+.pytis-form div.horizontal-group {
+    margin-left: -0.6em;
 }
+.pytis-form div.horizontal-group > div {
+    display: inline-block;
+    margin-bottom: 0.2em;
+    margin-left: 0.6em;
+    vertical-align: top;
+}
+
 .pytis-form .error, .pytis-form .validation-error {
     color: #a21;
 }
@@ -266,12 +303,16 @@
     border-spacing: 0.6em;
 }
 .pytis-form.list-view table.grid td {
+    vertical-align: top;
 }
 .pytis-form.list-view table.grid h3 {
     margin-top: 0;
 }
 .pytis-form fieldset.body div.field { 
     margin: 0.2em 0;
+}
+.pytis-form label {
+    margin-right: 0.25em;
 }
 .pytis-form .field-label { 
     white-space: nowrap;
@@ -307,7 +348,6 @@
     line-height: 1.4em;
 }
 .pytis-form th.label { 
-    padding-right: 0.3em;
     line-height: 1.4em;
     white-space: nowrap;
 }
@@ -411,7 +451,6 @@
     width: auto; /* fix MSIE size */
     overflow: visible; /* fix MSIE size */
     margin-right: 0.4em;
-    margin-bottom: 0.4em;
 }
 .actions button span, .list-form-controls button span {
     display: block;

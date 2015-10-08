@@ -1007,7 +1007,7 @@ class GroupSpec(object):
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL,
-                 align_hgroups=True):
+                 align_hgroups=True, flexible=False):
         """Arguments:
 
           items -- contents of the group as a sequence of layout items (see
@@ -1032,6 +1032,13 @@ class GroupSpec(object):
             fields of the parent group.  This option, when applied on the
             parent group, makes it possible to disable this alignment when it
             is not desired.  It is currently only implemented for web forms.
+        
+          flexible -- allow horizontal group to be wrapped (arranged
+            vertically) when there is not enough space to fit the items side by
+            side.  It is actually recommended to make all horizontal groups
+            flexible to allow responsive layout in web environment, but the
+            default is False for legacy reasons.  The option has no effect in
+            vertical groups.
 
         """
         assert is_sequence(items), items
@@ -1041,6 +1048,7 @@ class GroupSpec(object):
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
         assert isinstance(align_hgroups, bool), align_hgroups
+        assert isinstance(flexible, bool), flexible
         self._allowed_item_types = (Button, Text, str, unicode)
         if __debug__:
             allowed_item_types = (GroupSpec, Button, Text, basestring)
@@ -1068,6 +1076,7 @@ class GroupSpec(object):
         self._border = border
         self._border_style = border_style
         self._align_hgroups = align_hgroups
+        self._flexible = flexible
 
     def items(self):
         """Return the group contents as a tuple."""
@@ -1109,6 +1118,9 @@ class GroupSpec(object):
 
     def align_hgroups(self):
         return self._align_hgroups
+
+    def flexible(self):
+        return self._flexible
 
 
 class FieldSet(GroupSpec):

@@ -446,35 +446,32 @@ class LayoutForm(FieldForm):
             else:
                 raise pytis.util.ProgramError("Unsupported layout item type:", item)
         if group.orientation() == Orientation.HORIZONTAL:
-            def td(i, label, content_):
-                spaced = (i != 0 and ' spaced' or '')
-                if label:
-                    return (g.th(label, valign='top', cls='label' + spaced) +
-                            g.td(content_, valign='top', cls='ctrl'))
-                else:
-                    return g.td(content_, valign='top', cls='ctrl' + spaced)
-            cells = [td(i, label_, content_)
-                     for i, (label_, content_, fullsize, right_aligned_)
-                     in enumerate(content.content())]
-            if cells:
-                result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0, role='presentation',
-                                  cls='horizontal-group' + (not omit_first_field_label
-                                                            and ' expanded' or ''))]
-            else:
+            if not content.content():
                 result = []
+            elif group.flexible():
+                result = [g.div([g.div((label or '') + content_)
+                                 for i, (label, content_, __, ___) in enumerate(content.content())],
+                                cls='horizontal-group')]
+            else:
+                result = [g.table(
+                    [g.tr([(g.th(label, cls='label') if label else '' +
+                            g.td(content_, cls='ctrl'))
+                           for i, (label, content_, __, ___) in enumerate(content.content())])],
+                    role='presentation',
+                    cls='horizontal-group' + (not omit_first_field_label and ' expanded' or ''))]
         else:
             def td(label, content_, fullsize, right_aligned, fullspan, normalspan):
                 if fullsize:
-                    return g.td(content_, cls='ctrl', valign='top', colspan=fullspan)
+                    return g.td(content_, cls='ctrl', colspan=fullspan)
                 else:
                     if content.allow_right_aligned_fields() and right_aligned:
-                        spacer = g.td('', width='100%', cls='spacer')
-                        kwargs = dict(align='right')
+                        spacer = g.td('', cls='spacer')
+                        kwargs = dict(cls='ctrl', align='right')
                     else:
                         spacer = ''
-                        kwargs = dict(width='100%', colspan=normalspan)
-                    return (g.th(label or '', valign='top', cls='label', align='right') +
-                            g.td(content_, cls='ctrl', valign='top', **kwargs) + spacer)
+                        kwargs = dict(cls='ctrl expanded', colspan=normalspan)
+                    return (g.th(label or '', cls='label', align='right') +
+                            g.td(content_, **kwargs) + spacer)
             if content.has_labeled_items():
                 if content.allow_right_aligned_fields():
                     normalspan = 2
@@ -1063,10 +1060,8 @@ class QueryFieldsForm(VirtualForm):
         if self._immediate_filters:
             # Hide the submit button, but leave it in place for non-Javascript browsers.
             submit_button = g.noscript(submit_button)
-        content.append(g.table(g.tbody(g.tr((g.td(self._export_body(context, form_id)),
-                                             g.td(submit_button,
-                                                  cls='apply-filters')))),
-                               role='presentation'))
+        content.extend((g.div(self._export_body(context, form_id), cls='form-body'),
+                        g.div(submit_button, cls='apply-filters')))
         return content
 
     def _export_javascript(self, context, form_id):
@@ -2026,7 +2021,7 @@ class BrowseForm(LayoutForm):
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
-                controls += (g.span((g.label(_("Page") + ': ', offset_id),
+                controls += (g.span((g.label(_("Page") + ':', offset_id),
                                      g.select(name='offset', id=offset_id, selected=page * limit,
                                               title=(_("Page") + ' ' +
                                                      _("(Use ALT+arrow down to select)")),
@@ -2045,7 +2040,7 @@ class BrowseForm(LayoutForm):
                                      ) + (search_button and (search_button,) or ()),
                                     cls="buttons"))
             limit_id = 'limit-' + html_id
-            controls += (g.span((g.label(_("Records per page") + ':', limit_id) + ' ',
+            controls += (g.span((g.label(_("Records per page") + ':', limit_id),
                                  g.select(name='limit', id=limit_id, selected=limit,
                                           title=(_("Records per page") + ' ' +
                                                  _("(Use ALT+arrow down to select)")),
@@ -2061,7 +2056,7 @@ class BrowseForm(LayoutForm):
             if not bottom and self._allow_search_field:
                 search_id = 'filter-' + html_id
                 search_field = g.div(
-                    (g.label(_("Search expression") + ': ', search_id),
+                    (g.label(_("Search expression") + ':', search_id),
                      g.input(type='search', value=self._text_search_string,
                              name='query', id=search_id, cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
