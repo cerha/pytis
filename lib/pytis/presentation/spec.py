@@ -1311,7 +1311,7 @@ class QueryFields(object):
         if layout is None:
             layout = [f.id() for f in fields if f.visible()]
         if isinstance(layout, (tuple, list)):
-            layout = HGroup(*layout)
+            layout = HGroup(*layout, flexible=True)
         self._autoapply = autoapply
         self._autoinit = autoinit
         self._load = load
