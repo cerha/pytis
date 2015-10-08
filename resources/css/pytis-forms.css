@@ -19,7 +19,7 @@
     color: #000;
 }
 
-.pytis-form .group, .pytis-form div.submit, .pytis-form .paging-controls {
+.pytis-form .group, .pytis-form .submit, .pytis-form .paging-controls {
     background-color: #eee;
     border: 1px solid #ddd;
     border-width: 1px 0;
@@ -48,14 +48,18 @@
     text-align: left;
     margin: 0 0 0.3em 0;
 }
-.pytis-form.query-fields-form div.form-body {
+.pytis-form.query-fields-form > .body {
     display: inline-block;
-    margin-right: 0.8em;
 }
-.pytis-form.query-fields-form div.apply-filters {
+.pytis-form.query-fields-form > .submit {
     display: inline-block;
     vertical-align: bottom;
-    margin-bottom: 0.2em;
+    background: none;
+    background-color: white;
+    border: none;
+    margin: 0 0.8em 0.2em 0;
+    padding: 0;
+    text-align: left;
 }
 
 .pytis-form .group div.group {
@@ -131,12 +135,12 @@
 * html .pytis-form .horizontal-group fieldset.group { margin: 0 0 1em 0; }
 * html .pytis-form fieldset.group legend { color: #000; position: absolute; top: -0.6em; left: 0.2em; }
 
-.pytis-form div.submit {
+.pytis-form .submit {
     margin-top: .5em;
     padding: .5em;
     text-align: center;
 }
-.pytis-form div.submit button { 
+.pytis-form .submit button {
     line-height: 1.4em;
     margin: 0 .6em;
 }
@@ -308,9 +312,6 @@
 .pytis-form.list-view table.grid h3 {
     margin-top: 0;
 }
-.pytis-form fieldset.body div.field { 
-    margin: 0.2em 0;
-}
 .pytis-form label {
     margin-right: 0.25em;
 }
@@ -425,7 +426,16 @@
     padding: 0;
 }
 
-.pytis-form.list-view div.summary {
+.pytis-form.browse-form > .body {
+    display: inline-block;
+}
+.pytis-form.browse-form .summary {
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-top: 0;
+    text-align: right;
+}
+.pytis-form.list-view .summary {
     margin-top: 1.2em;
     border-top: 1px solid #ddd;
 }
@@ -451,6 +461,9 @@
     width: auto; /* fix MSIE size */
     overflow: visible; /* fix MSIE size */
     margin-right: 0.4em;
+}
+.actions button {
+    margin-bottom: 0.4em;
 }
 .actions button span, .list-form-controls button span {
     display: block;

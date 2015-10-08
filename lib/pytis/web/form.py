@@ -158,7 +158,8 @@ class Form(lcg.Content):
         return None
 
     def _export_form(self, context, form_id):
-        return self._export_body(context, form_id)
+        g = context.generator()
+        return [g.div(self._export_body(context, form_id), cls='body')]
 
     def _export_actions(self, context, record, uri):
         g = context.generator()
@@ -1048,21 +1049,20 @@ class QueryFieldsForm(VirtualForm):
                                         null_display=null_display, not_null=False,
                                         enumerator=Enum, default=filter_set.default())
 
-    def _export_footer(self, context, form_id):
-        return None
-
     def _export_form(self, context, form_id):
         g = context.generator()
-        content = self._export_errors(context, form_id)
+        return (self._export_errors(context, form_id) +
+                [g.div(self._export_body(context, form_id), cls='body')] +
+                self._export_submit(context))
+
+    def _export_submit(self, context):
+        g = context.generator()
         # Translators: Button for manual filter invocation.
-        submit_button = g.button(g.span(_("Change filters")),
-                                 type='submit', cls='apply-filters')
+        submit_button = g.button(g.span(_("Change filters")), type='submit', cls='apply-filters')
         if self._immediate_filters:
             # Hide the submit button, but leave it in place for non-Javascript browsers.
             submit_button = g.noscript(submit_button)
-        content.extend((g.div(self._export_body(context, form_id), cls='form-body'),
-                        g.div(submit_button, cls='apply-filters')))
-        return content
+        return [g.div(submit_button, cls='submit')]
 
     def _export_javascript(self, context, form_id):
         script = super(QueryFieldsForm, self)._export_javascript(context, form_id)
@@ -1087,12 +1087,12 @@ class InlineEditForm(EditForm):
 
     def _export_body(self, context, form_id):
         field = self._fields[self._layout.order()[0]]
-        return self._export_field(context, field, editable=True)
+        return [self._export_field(context, field, editable=True)]
 
     def _export_submit(self, context):
         g = context.generator()
-        return g.button(g.span(_("Save")), type='submit', name='save-edited-cell', value='1',
-                        cls='save-edited-cell')
+        return [g.button(g.span(_("Save")), type='submit', name='save-edited-cell', value='1',
+                         cls='save-edited-cell')]
 
     def _export_error(self, context, form_id, fid, message):
         return message
@@ -1793,12 +1793,11 @@ class BrowseForm(LayoutForm):
         return generator()
 
     def _export_table(self, context, form_id):
-        g = context.generator()
         data = self._row.data()
         limit = self._limit
         exported_rows = []
         rows = self._table_rows()
-        count = self._row_count
+        row_count = self._row_count
         found = False
         offset = self._offset
         if self._search:
@@ -1807,22 +1806,22 @@ class BrowseForm(LayoutForm):
                 found = True
                 offset = dist - 1
         if limit is not None:
-            page = int(max(0, min(offset, count - 1)) / limit)
+            page = int(max(0, min(offset, row_count - 1)) / limit)
             first_record_offset = page * limit
         else:
             page = 0
             first_record_offset = 0
-        if count == 0:
+        if row_count == 0:
             pages = 0
         elif limit is None:
             pages = 1
         else:
-            pages, modulo = divmod(count, min(limit, count))
+            pages, modulo = divmod(row_count, min(limit, row_count))
             pages += modulo and 1 or 0
         self._group = True
         self._last_group = None
         group_values = last_group_values = None
-        exported_row_number = 0
+        current_row_number = 0
         data.skip(first_record_offset)
         for row in rows:
             self._set_row(row)
@@ -1834,56 +1833,65 @@ class BrowseForm(LayoutForm):
                     group_heading = self._export_group_heading(context)
                     if group_heading is not None:
                         exported_rows.append(group_heading)
-            if found and (limit is None and offset == exported_row_number or
-                          limit is not None and offset == (exported_row_number + page * limit)):
+            if found and (limit is None and offset == current_row_number or
+                          limit is not None and offset == (current_row_number + page * limit)):
                 row_id = 'found-record'
             else:
                 row_id = None
-            exported_rows.append(self._export_row(context, self._row, exported_row_number, row_id))
+            exported_rows.append(self._export_row(context, self._row, current_row_number, row_id))
             self._last_group = self._group
-            exported_row_number += 1
-            if limit is not None and exported_row_number >= limit:
+            current_row_number += 1
+            if limit is not None and current_row_number >= limit:
                 break
+        count_on_page = current_row_number
         data.close()
-        if exported_row_number == 0 and not self._EXPORT_EMPTY_TABLE:
-            result = None
+        if count_on_page == 0 and not self._EXPORT_EMPTY_TABLE:
+            body = None
         else:
-            if limit is None or count <= self._limits[0]:
-                summary = _("Total records:") + ' ' + g.strong(str(count))
-            else:
-                # Translators: The variables '%(first)s', '%(last)s' and
-                # '%(total)s' are replaced by the numbers corresponding to the
-                # current listing range.
-                summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
-                            first=g.strong(str(first_record_offset + 1)),
-                            last=g.strong(str(first_record_offset + exported_row_number)),
-                            total=g.strong(str(count)))
-            result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
+            g = context.generator()
+            body = g.div((
+                self._wrap_exported_rows(context, exported_rows, page, pages),
+                self._export_summary(context, limit, first_record_offset, count_on_page),
+            ), cls='body')
         return [x for x in
                 (self._export_message(context),
-                 self._export_controls(context, form_id, count, page, pages),
-                 result,
-                 self._export_controls(context, form_id, count, page, pages, bottom=True))
+                 self._export_controls(context, form_id, page, pages),
+                 body,
+                 self._export_controls(context, form_id, page, pages, bottom=True))
                 if x]
 
-    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+    def _wrap_exported_rows(self, context, rows, page, pages):
         g = context.generator()
         if page + 1 == pages:
             # Display aggregations on the last page.
-            foot_rows = [self._export_aggregation(context, op)
-                         for op in self._view.aggregations()]
+            foot = g.tfoot([self._export_aggregation(context, op)
+                            for op in self._view.aggregations()])
         else:
-            foot_rows = []
+            foot = ''
         headings = self._export_headings(context)
-        if summary:
-            foot_rows.append(g.tr(g.td(summary, colspan=self._columns_count())))
         cls = ['data-table']
         if self._expand_row:
             cls.append('expansible-rows')
         return g.table((g.thead(g.tr(headings, cls='column-headings')),
-                        g.tfoot(foot_rows),
+                        foot,
                         g.tbody(rows)),
                        border=1, cls=' '.join(cls))
+
+    def _export_summary(self, context, limit, first_record_offset, count_on_page):
+        g = context.generator()
+        row_count = self._row_count
+        if limit is None or row_count <= self._limits[0]:
+            summary = _("Total records:") + ' ' + g.strong(str(row_count))
+        else:
+            # Translators: The variables '%(first)s', '%(last)s' and
+            # '%(total)s' are replaced by the numbers corresponding to the
+            # current listing range.
+            summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
+                        first=g.strong(str(first_record_offset + 1)),
+                        last=g.strong(str(first_record_offset + count_on_page)),
+                        total=g.strong(str(row_count)))
+        return g.div(summary, cls='summary')
+        
     
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort') and self._user_sorting:
@@ -1985,7 +1993,7 @@ class BrowseForm(LayoutForm):
         else:
             return None
 
-    def _export_controls(self, context, form_id, count, page, pages, bottom=False):
+    def _export_controls(self, context, form_id, page, pages, bottom=False):
         g = context.generator()
         html_id = form_id + (bottom and '-top' or '-bottom')
         content = []
@@ -2000,7 +2008,7 @@ class BrowseForm(LayoutForm):
             # TODO: Hide when there are no records and no active filtering conditions?
             #       and (count or [v for v in self._filter_ids.values() if v is not None])
             content.append(exported_query_fields)
-        limit, limits = self._limit, self._limits
+        count, limit, limits = self._row_count, self._limit, self._limits
         if limit is not None and count > limits[0]:
             controls = ()
             if count > 100:
@@ -2345,14 +2353,15 @@ class ListView(BrowseForm):
         # return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
         return None
 
-    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+    def _wrap_exported_rows(self, context, rows, page, pages):
         g = context.generator()
-        result = ()
         if self._row_actions:
             context.resource('lcg.js')
             context.resource('lcg-widgets.css')
         if self._exported_row_index:
-            result += (g.div(g.ul(*self._exported_row_index), cls="index"),)
+            row_index = g.div(g.ul(*self._exported_row_index), cls="index")
+        else:
+            row_index = ''
         columns = self._list_layout.columns()
         if columns > 1:
             n, mod = divmod(len(rows), columns)
@@ -2361,9 +2370,7 @@ class ListView(BrowseForm):
             rows = g.table([g.tr([g.td(r, width="%d%%" % (100 / columns), valign='top')
                                   for r in rows[i * columns:(i + 1) * columns]])
                             for i in range(n + min(mod, 1))], border=0, cls='grid')
-        result += (g.div(rows, cls="body"),
-                   g.div(summary, cls="summary"))
-        return lcg.concat(result)
+        return row_index + g.div(rows, cls='content')
 
 
 class ItemizedView(BrowseForm):
@@ -2422,7 +2429,7 @@ class ItemizedView(BrowseForm):
         # TODO: Create multi-level lists.
         return None
     
-    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+    def _wrap_exported_rows(self, context, rows, page, pages):
         g = context.generator()
         return g.ul(lcg.concat(rows))
 
@@ -2624,15 +2631,19 @@ class EditableBrowseForm(BrowseForm):
                     yield None
         return g()
 
-    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+    def _wrap_exported_rows(self, context, rows, page, pages):
         g = context.generator()
-        if self._allow_insertion:
-            summary = None
         hidden = g.hidden('_pytis_inserted_rows_' + self._name, self._extra_rows)
         for row_key in self._removed_keys():
             hidden += g.hidden('_pytis_removed_row_key_' + self._name, row_key)
-        return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows, summary,
-                                                                   count, page, pages) + hidden
+        return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows,
+                                                                   page, pages) + hidden
+
+    def _export_summary(self, *args, **kwargs):
+        if self._allow_insertion:
+            return ''
+        else:
+            return super(EditableBrowseForm, self)._export_summary(*args, **kwargs)
 
     def ajax_response(self, req):
         """Return the AJAX request response as a JSON encoded data structure.
