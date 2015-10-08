@@ -50,6 +50,7 @@
 }
 .pytis-form.query-fields-form > .body {
     display: inline-block;
+    margin-right: 0.8em;
 }
 .pytis-form.query-fields-form > .submit {
     display: inline-block;
@@ -57,9 +58,12 @@
     background: none;
     background-color: white;
     border: none;
-    margin: 0 0.8em 0.2em 0;
+    margin: 0 0 0.2em 0;
     padding: 0;
     text-align: left;
+}
+.pytis-form.query-fields-form > .submit button {
+    margin: 0;
 }
 
 .pytis-form .group div.group {
