@@ -434,6 +434,7 @@
     padding: 0;
 }
 
+.pytis-form.browse-form > .ajax-container > .body,
 .pytis-form.browse-form > .body {
     display: inline-block;
 }
