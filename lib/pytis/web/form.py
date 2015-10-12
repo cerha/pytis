@@ -158,8 +158,7 @@ class Form(lcg.Content):
         return None
 
     def _export_form(self, context, form_id):
-        g = context.generator()
-        return [g.div(self._export_body(context, form_id), cls='body')]
+        return self._export_body(context, form_id)
 
     def _export_actions(self, context, record, uri):
         g = context.generator()
