@@ -2358,10 +2358,6 @@ class ListView(BrowseForm):
         if self._row_actions:
             context.resource('lcg.js')
             context.resource('lcg-widgets.css')
-        if self._exported_row_index:
-            row_index = g.div(g.ul(*self._exported_row_index), cls="index")
-        else:
-            row_index = ''
         columns = self._list_layout.columns()
         if columns > 1:
             n, mod = divmod(len(rows), columns)
@@ -2370,7 +2366,11 @@ class ListView(BrowseForm):
             rows = g.table([g.tr([g.td(r, width="%d%%" % (100 / columns), valign='top')
                                   for r in rows[i * columns:(i + 1) * columns]])
                             for i in range(n + min(mod, 1))], border=0, cls='grid')
-        return row_index + g.div(rows, cls='content')
+        result = g.div(rows, cls='content')
+        if self._exported_row_index:
+            result = g.concat(g.div(g.ul(*self._exported_row_index), cls="index"),
+                              result)
+        return result
 
 
 class ItemizedView(BrowseForm):
