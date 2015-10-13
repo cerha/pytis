@@ -2499,7 +2499,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         and item.orientation() == Orientation.HORIZONTAL \
                         and isinstance(item.items()[0], basestring) \
                         and not self._field(item.items()[0]).spec().compact() \
-                        and not isinstance(self._field(item.items()[0]).type(), pytis.data.Boolean):
+                        and self._field(item.items()[0]).label() is not None:
                     # This item will become a part of the current aligned pack.
                     # Nested horizontal groups are aligned if they start with a labeled field.
                     pack.append(item)
@@ -2549,7 +2549,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _pack_fields(self, parent, items, space, gap, suppress_label=False):
         # Pack the sequence of fields and/or buttons aligned vertically into a grid.
-        #  items -- sequence of field identifiers and/or Button instances.
+        #  items -- sequence of InputField, GroupSpec or Button instances.
         #  space -- space between the control and its label in dlg units; integer
         #  gap -- space between the fields in dlg units; integer
         #  suppress_label -- True if the field label should be supressed.  Used
