@@ -2512,13 +2512,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             elif isinstance(item, pytis.form.InputField):
                 if item.spec().compact():
                     # This is a compact field (not a part of the aligned pack).
-                    label = item.label()
-                    if label:
-                        x = wx.BoxSizer(wx.VERTICAL)
-                        x.Add(label, 0, wx.ALIGN_LEFT)
-                        x.Add(item.widget())
-                    else:
-                        x = item.widget()
+                    label = item.label() or wx.StaticText(parent, -1, '')
+                    x = wx.BoxSizer(wx.VERTICAL)
+                    x.Add(label, 0, wx.ALIGN_LEFT)
+                    x.Add(item.widget())
                 else:
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
                     x = self._pack_fields(parent, (item,), gap,
@@ -2569,12 +2566,13 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     grid.Add(self._create_text(parent, item))
             else:
-                if item.label() and not suppress_label:
+                if not suppress_label:
+                    label = item.label() or wx.StaticText(parent, -1, '')
                     if item.height() > 1:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_TOP | wx.TOP
                     else:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
-                    grid.Add(item.label(), 0, style, 2)
+                    grid.Add(label, 0, style, 2)
                 grid.Add(item.widget())
         return grid
 
