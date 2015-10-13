@@ -106,20 +106,6 @@ class TextFormat(object):
     """
 
 
-class BorderStyle(object):
-    """Výčtová třída definující konstanty pro styl orámování."""
-    ALL = 'ALL'
-    """Mezera je kolem dokola."""
-    TOP = 'TOP'
-    """Mezera je jen nahoře."""
-    BOTTOM = 'BOTTOM'
-    """Mezera je jen dole."""
-    LEFT = 'LEFT'
-    """Mezera je jen vpravo."""
-    RIGHT = 'RIGHT'
-    """Mezera je jen vlevo."""
-
-    
 class Color(object):
     """Independent definition of generic named colors to be used within 'Style' specifications."""
     WHITE          = (255, 255, 255)
@@ -1006,8 +992,7 @@ class GroupSpec(object):
 
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
-                 gap=2, space=1, border=3, border_style=BorderStyle.ALL,
-                 align_hgroups=True, flexible=False):
+                 gap=2, space=1, border=3, align_hgroups=True, flexible=False):
         """Arguments:
 
           items -- contents of the group as a sequence of layout items (see
@@ -1021,7 +1006,7 @@ class GroupSpec(object):
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
             
-          gap, space, border, border_style -- Depracated and unsupported by
+          gap, space, border -- Depracated and unsupported by
             some form types (particularly by web forms).
 
           align_hgroups -- align contained horizontal groups so that their
@@ -1046,7 +1031,6 @@ class GroupSpec(object):
         assert isinstance(gap, int), gap
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
-        assert border_style in public_attributes(BorderStyle)
         assert isinstance(align_hgroups, bool), align_hgroups
         assert isinstance(flexible, bool), flexible
         self._allowed_item_types = (Button, Text, str, unicode)
@@ -1074,7 +1058,6 @@ class GroupSpec(object):
         self._gap = gap
         self._space = space
         self._border = border
-        self._border_style = border_style
         self._align_hgroups = align_hgroups
         self._flexible = flexible
 
@@ -1111,10 +1094,6 @@ class GroupSpec(object):
     def border(self):
         """Vrať šířku mezery kolem celé skupiny v du."""
         return self._border
-
-    def border_style(self):
-        """Vrať styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
-        return self._border_style
 
     def align_hgroups(self):
         return self._align_hgroups

@@ -48,7 +48,7 @@ import wx.combo
 
 import pytis.form
 import pytis.presentation
-from pytis.presentation import BorderStyle, Orientation, TextFormat
+from pytis.presentation import Orientation, TextFormat
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
 from command import Command, CommandHandler, UICommand, command_icon
@@ -2551,20 +2551,6 @@ def orientation2wx(orientation):
         return wx.HORIZONTAL
     else:
         raise ProgramError("Neplatná hodnota Orientation:", orientation)
-
-def border_style2wx(style):
-    """Převeď konstantu třídy 'BorderStyle' na wx reprezentaci."""
-    mapping = {
-        BorderStyle.ALL: wx.ALL,
-        BorderStyle.TOP: wx.TOP,
-        BorderStyle.BOTTOM: wx.BOTTOM,
-        BorderStyle.LEFT: wx.LEFT,
-        BorderStyle.RIGHT: wx.RIGHT,
-    }
-    try:
-        return mapping[style]
-    except KeyError:
-        raise ProgramError("Neplatná hodnota BorderStyle: ", style)
 
 # Pomocné funkce
 

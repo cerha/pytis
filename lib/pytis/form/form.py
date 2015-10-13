@@ -42,7 +42,7 @@ from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, 
     find, format_traceback, log, super_, xlist, xtuple
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
-    MSeparator, Window, border_style2wx, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
+    MSeparator, Window, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
     db_operation, delete_record, form_settings_manager, get_status, \
@@ -2484,7 +2484,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         space = dlg2px(parent, group.space())
         gap = dlg2px(parent, group.gap())
         border = dlg2px(parent, group.border())
-        border_style = border_style2wx(group.border_style())
         for i, item in enumerate(group.items()):
             if isinstance(item, basestring):
                 if self._view.field(item).width() == 0:
@@ -2507,7 +2506,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if len(pack) != 0:
                 # Add the latest aligned pack into the sizer (if there was one).
                 sizer.Add(self._pack_fields(parent, pack, space, gap),
-                          0, wx.ALIGN_TOP | border_style, border)
+                          0, wx.ALIGN_TOP | wx.ALL, border)
                 pack = []
             if isinstance(item, GroupSpec):
                 x = self._create_group(parent, item)
@@ -2531,14 +2530,15 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 x = self._create_text(parent, item)
             else:
                 raise ProgramError("Unsupported layout item!", item)
-            bstyle = border_style
             if aligned:
-                bstyle = bstyle & ~(wx.LEFT | wx.TOP | wx.BOTTOM)
-            sizer.Add(x, 0, wx.ALIGN_TOP | bstyle, border)
+                border_style = wx.RIGHT
+            else:
+                border_style = wx.ALL
+            sizer.Add(x, 0, wx.ALIGN_TOP | border_style, border)
         if len(pack) != 0:
             # přidej zbylý sled políček (pokud nějaký byl)
             sizer.Add(self._pack_fields(parent, pack, space, gap),
-                      0, wx.ALIGN_TOP | border_style, border)
+                      0, wx.ALIGN_TOP | wx.ALL, border)
         # pokud má skupina orámování, přidáme ji ještě do sizeru s horním
         # odsazením, jinak je horní odsazení příliš malé.
         if group.label() is not None:
