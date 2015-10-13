@@ -371,14 +371,13 @@ class InputField(object, KeyHandler, CommandHandler):
         self._valid = False
         self._init_attributes()
         self._call_on_idle = []
+        self._label = self._create_label(parent)
         self._ctrl = ctrl = self._create_ctrl(parent)
         self._controls = [(ctrl, self._set_ctrl_editable, self._set_ctrl_color)]
         self._init_ctrl(ctrl)
         if inline:
-            self._label = None
             self._widget = ctrl
         else:
-            self._label = self._create_label(parent)
             self._widget = self._create_widget(parent, ctrl)
         if not self._enabled:
             self._set_editable(False)
@@ -429,9 +428,10 @@ class InputField(object, KeyHandler, CommandHandler):
     def _create_label(self, parent):
         # Return field label as 'wx.StaticText' instance.
         label = self.spec().label()
-        if label:
-            label = label + ':'
-        return wx.StaticText(parent, -1, label, style=wx.ALIGN_RIGHT)
+        if label and not self._inline:
+            return wx.StaticText(parent, -1, label + ':', style=wx.ALIGN_RIGHT)
+        else:
+            return None
 
     def _create_ctrl(self, parent):
         # Return the actual control element for this field.
@@ -742,8 +742,7 @@ class Unlabeled:
 
     """
     def _create_label(self, parent):
-        # Return an empty label as 'wx.StaticText' instance.
-        return wx.StaticText(parent, -1, '')
+        return None
 
 
 class TextField(InputField):
