@@ -992,7 +992,7 @@ class GroupSpec(object):
 
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
-                 gap=2, space=1, border=3, align_hgroups=True, flexible=False):
+                 gap=2, border=3, align_hgroups=True, flexible=False):
         """Arguments:
 
           items -- contents of the group as a sequence of layout items (see
@@ -1006,7 +1006,7 @@ class GroupSpec(object):
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
             
-          gap, space, border -- Depracated and unsupported by
+          gap, border -- Depracated and unsupported by
             some form types (particularly by web forms).
 
           align_hgroups -- align contained horizontal groups so that their
@@ -1056,7 +1056,6 @@ class GroupSpec(object):
         self._label = label
         self._orientation = orientation
         self._gap = gap
-        self._space = space
         self._border = border
         self._align_hgroups = align_hgroups
         self._flexible = flexible
@@ -1086,10 +1085,6 @@ class GroupSpec(object):
     def gap(self):
         """Vrať šířku mezery vertikální mezi políčky v du."""
         return self._gap
-
-    def space(self):
-        """Vrať šířku mezery mezi políčkem a jeho labelem v du."""
-        return self._space
 
     def border(self):
         """Vrať šířku mezery kolem celé skupiny v du."""

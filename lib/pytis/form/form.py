@@ -2481,7 +2481,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             sizer = wx.BoxSizer(orientation)
         pack = []
-        space = dlg2px(parent, group.space())
         gap = dlg2px(parent, group.gap())
         border = dlg2px(parent, group.border())
         for i, item in enumerate(group.items()):
@@ -2505,7 +2504,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     continue
             if len(pack) != 0:
                 # Add the latest aligned pack into the sizer (if there was one).
-                sizer.Add(self._pack_fields(parent, pack, space, gap),
+                sizer.Add(self._pack_fields(parent, pack, gap),
                           0, wx.ALIGN_TOP | wx.ALL, border)
                 pack = []
             if isinstance(item, GroupSpec):
@@ -2522,7 +2521,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         x = item.widget()
                 else:
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
-                    x = self._pack_fields(parent, (item,), space, gap,
+                    x = self._pack_fields(parent, (item,), gap,
                                           suppress_label=(i == 0 and aligned))
             elif isinstance(item, Button):
                 x = self._create_button(parent, item)
@@ -2536,26 +2535,24 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 border_style = wx.ALL
             sizer.Add(x, 0, wx.ALIGN_TOP | border_style, border)
         if len(pack) != 0:
-            # přidej zbylý sled políček (pokud nějaký byl)
-            sizer.Add(self._pack_fields(parent, pack, space, gap),
+            # Add remaining fields pack, if any.
+            sizer.Add(self._pack_fields(parent, pack, gap),
                       0, wx.ALIGN_TOP | wx.ALL, border)
-        # pokud má skupina orámování, přidáme ji ještě do sizeru s horním
-        # odsazením, jinak je horní odsazení příliš malé.
+        # If this is a labeled group, add small top margin, otherwise it is too tight.
         if group.label() is not None:
             s = wx.BoxSizer(orientation)
             s.Add(sizer, 0, wx.TOP, 2)
             sizer = s
         return sizer
 
-    def _pack_fields(self, parent, items, space, gap, suppress_label=False):
+    def _pack_fields(self, parent, items, gap, suppress_label=False):
         # Pack the sequence of fields and/or buttons aligned vertically into a grid.
         #  items -- sequence of InputField, GroupSpec or Button instances.
-        #  space -- space between the control and its label in dlg units; integer
         #  gap -- space between the fields in dlg units; integer
         #  suppress_label -- True if the field label should be supressed.  Used
         #    for vertically aligned horizontal groups (the label is placed in
         #    the parent pack)
-        grid = wx.FlexGridSizer(len(items), 2, gap, space)
+        grid = wx.FlexGridSizer(len(items), 2, gap, 2)
         for item in items:
             if isinstance(item, GroupSpec):
                 field = self._field(item.items()[0])
