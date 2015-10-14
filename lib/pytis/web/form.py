@@ -2028,24 +2028,28 @@ class BrowseForm(LayoutForm):
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
-                controls += (g.span((g.label(_("Page") + ':', ids.offset),
-                                     g.select(name='offset', id=ids.offset, selected=page * limit,
-                                              title=(_("Page") + ' ' +
-                                                     _("(Use ALT+arrow down to select)")),
-                                              onchange='this.form.submit(); return true',
-                                              options=[(str(i + 1), i * limit)
-                                                       for i in range(pages)]),
-                                     ' / ',
-                                     g.strong(str(pages))), cls="offset"),
-                             g.span((g.button(g.span(_("Previous")), name='prev', value='1',
-                                              title=_("Go to previous page"), disabled=(page == 0),
-                                              type='submit', cls='prev-page-button'),
-                                     g.button(g.span(_("Next")), name='next', value='1',
-                                              title=_("Go to next page"),
-                                              disabled=(page + 1) * limit >= count,
-                                              type='submit', cls='next-page-button'),
-                                     ) + (search_button and (search_button,) or ()),
-                                    cls="buttons"))
+                controls += (
+                    g.span((
+                        g.label(_("Page") + ':', ids.offset),
+                        g.select(name='offset', id=ids.offset, selected=page * limit,
+                                 title=(_("Page") + ' ' + _("(Use ALT+arrow down to select)")),
+                                 onchange='this.form.submit(); return true',
+                                 options=[(str(i + 1), i * limit) for i in range(pages)]),
+                        g.span(str(page + 1), cls='current-page'),
+                        g.span(' / ', cls='separator'),
+                        g.span(str(pages), cls='total-pages'),
+                    ), cls="offset"),
+                    g.span((
+                        g.button(g.span(_("Previous")), name='prev', value='1',
+                                 title=_("Go to previous page"), disabled=(page == 0),
+                                 type='submit', cls='prev-page-button'),
+                        g.button(g.span(_("Next")), name='next', value='1',
+                                 title=_("Go to next page"),
+                                 disabled=(page + 1) * limit >= count,
+                                 type='submit', cls='next-page-button'),
+                        search_button or '',
+                    ), cls="buttons"),
+                )
             controls += (g.span((g.label(_("Records per page") + ':', ids.limit),
                                  g.select(name='limit', id=ids.limit, selected=limit,
                                           title=(_("Records per page") + ' ' +
@@ -2078,8 +2082,11 @@ class BrowseForm(LayoutForm):
                 content.extend((g.hidden('sort', sorting_column),
                                 g.hidden('dir', self._SORTING_DIRECTIONS[direction])))
             content.append(g.hidden('list-form-controls-submitted', '1'))
-            return g.form(content, action=g.uri(self._handler), method='GET',
-                          cls='list-form-controls')
+            return g.form(
+                content,
+                action=g.uri(self._handler), method='GET',
+                cls='list-form-controls %s-list-form-controls' % ('bottom' if bottom else 'top'),
+            )
         else:
             return None
 

@@ -279,6 +279,18 @@
 .list-form-controls span.buttons {
     margin-right: 1em;
 }
+.list-form-controls span.current-page,
+.list-form-controls span.total-pages {
+    font-weight: bold;
+}
+.list-form-controls span.current-page { display: none; }
+
+@media only screen and (max-width: 700px) {
+.list-form-controls .index-search-controls { display: none; }
+.list-form-controls .offset select { display: none; }
+.list-form-controls span.current-page { display: inline; }
+.list-form-controls span.limit { display: none; }
+}
 
 .pytis-form.browse-form #found-record {
     background-color: #fc8 !important;
