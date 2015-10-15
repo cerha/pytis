@@ -484,6 +484,9 @@
     overflow: visible; /* fix MSIE size */
     margin-right: 0.4em;
 }
+.list-form-controls .query button {
+    margin-right: 0;
+}
 .actions button::-moz-focus-inner,
 .pytis-form .submit button::-moz-focus-inner,
 .list-form-controls button::-moz-focus-inner {
