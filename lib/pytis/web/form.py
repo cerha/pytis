@@ -2053,7 +2053,7 @@ class BrowseForm(LayoutForm):
                                           options=[(str(i), i) for i in limits])),
                                 cls='limit'),
                          g.noscript(g.button(g.span(_("Go")), type='submit',
-                                             cls='goto-page-button')))
+                                             cls='goto-page')))
             if controls:
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
@@ -2065,7 +2065,7 @@ class BrowseForm(LayoutForm):
                              name='query', id=ids.search, cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
                      # Translators: Search button label.
-                     g.button(g.span(_("Search")), type='submit', cls='search-button'),
+                     g.button(g.span(_("Search")), type='submit', cls='search'),
                      g.button(g.span(_("Cancel")), type='submit', cls='cancel-search')),
                     cls='query', style=not show_search_field and 'display:none' or None,
                 )
