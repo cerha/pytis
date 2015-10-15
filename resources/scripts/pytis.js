@@ -369,7 +369,7 @@ pytis.BrowseForm = Class.create({
 
     bind_controls: function(panel) {
 	if (panel) {
-	    panel.select('.prev-page-button, .next-page-button').each(function(ctrl) {
+	    panel.select('button.prev-page, button.next-page').each(function(ctrl) {
 		ctrl.observe('click', function(event) {
 		    this.reload_form_data(ctrl);
 		    event.stop();
@@ -446,7 +446,7 @@ pytis.BrowseForm = Class.create({
 	    }
 	});
 	if (ctrl.name) {
-	    // Some buttons (apply-filters) have no value, others (prev/next-page-button) do...
+	    // Some buttons (apply-filters) have no value, others (prev-page/next-page) do...
 	    parameters[ctrl.name] = ctrl.value;
 	}
 	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
@@ -455,7 +455,7 @@ pytis.BrowseForm = Class.create({
 
     bind_search_controls: function(panel) {
 	if (panel) {
-	    var search_button = panel.down('.paging-controls button.search-button');
+	    var search_button = panel.down('.paging-controls button.search');
 	    if (search_button) {
 		search_button.observe('click', this.on_show_search_controls.bind(this));
 	    }
@@ -503,7 +503,7 @@ pytis.BrowseForm = Class.create({
 	for (i=0; i<2; i++) {
 	    panel = this.form.down('.list-form-controls', i);
 	    if (panel) {
-		button = panel.down('.paging-controls button.search-button');
+		button = panel.down('.paging-controls button.search');
 		if (button) {
 		    button.hide();
 		}
