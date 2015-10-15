@@ -144,7 +144,6 @@
     text-align: center;
 }
 .pytis-form .submit button {
-    line-height: 1.4em;
     margin: 0 .6em;
 }
 
@@ -478,23 +477,35 @@
     padding-left: 0.5em;
 }
 
-.actions button, .list-form-controls button {
+.actions button,
+.pytis-form .submit button,
+.list-form-controls button {
     width: auto; /* fix MSIE size */
     overflow: visible; /* fix MSIE size */
     margin-right: 0.4em;
 }
+.actions button::-moz-focus-inner,
+.pytis-form .submit button::-moz-focus-inner,
+.list-form-controls button::-moz-focus-inner {
+    padding: 2px 1px 0 1px;
+    border: 0
+}
+
 .actions button {
     margin-bottom: 0.4em;
 }
-.actions button span, .list-form-controls button span {
-    display: block;
-    line-height: 16px;
+.actions button span,
+.pytis-form .submit button span,
+.list-form-controls button span {
+    display: inline-block;
     white-space: nowrap;
+    overflow: hidden;
     background-position: center left;
     background-repeat: no-repeat;
     background-attachment: center left;
 }
-.actions button[disabled] span, .list-form-controls button[disabled] span {
+.actions button[disabled] span,
+.list-form-controls button[disabled] span {
     opacity: 0.5;
     color: #000;
 }
