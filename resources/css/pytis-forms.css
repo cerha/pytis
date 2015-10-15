@@ -501,7 +501,6 @@
 .list-form-controls button span {
     display: inline-block;
     white-space: nowrap;
-    overflow: hidden;
     background-position: center left;
     background-repeat: no-repeat;
     background-attachment: center left;
