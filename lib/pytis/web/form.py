@@ -2020,12 +2020,6 @@ class BrowseForm(LayoutForm):
                 if index_search_controls:
                     controls += index_search_controls
             if pages > 1:
-                if self._allow_search_field:
-                    search_button = g.button(g.span(_("Search")), cls='search-button',
-                                             type='submit',
-                                             style=show_search_field and 'display:none' or None)
-                else:
-                    search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
                 controls += (
@@ -2040,14 +2034,15 @@ class BrowseForm(LayoutForm):
                         g.span(str(pages), cls='total-pages'),
                     ), cls="offset"),
                     g.span((
-                        g.button(g.span(_("Previous")), name='prev', value='1',
-                                 title=_("Go to previous page"), disabled=(page == 0),
-                                 type='submit', cls='prev-page-button'),
-                        g.button(g.span(_("Next")), name='next', value='1',
-                                 title=_("Go to next page"),
-                                 disabled=(page + 1) * limit >= count,
-                                 type='submit', cls='next-page-button'),
-                        search_button or '',
+                        g.button(g.span(_("Previous")), title=_("Go to previous page"),
+                                 name='prev', value='1', disabled=(page == 0),
+                                 type='submit', cls='prev-page'),
+                        g.button(g.span(_("Next")), title=_("Go to next page"),
+                                 name='next', value='1', disabled=(page + 1) * limit >= count,
+                                 type='submit', cls='next-page'),
+                        g.button(g.span(_("Search")), type='submit', cls='search',
+                                 style=show_search_field and 'display:none' or None)
+                        if self._allow_search_field else '',
                     ), cls="buttons"),
                 )
             controls += (g.span((g.label(_("Records per page") + ':', ids.limit),
