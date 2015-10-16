@@ -489,8 +489,7 @@
 .actions button::-moz-focus-inner,
 .pytis-form .submit button::-moz-focus-inner,
 .list-form-controls button::-moz-focus-inner {
-    padding: 2px 1px 0 1px;
-    border: 0
+    padding: 0 1px;
 }
 
 .actions button {
