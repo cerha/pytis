@@ -335,7 +335,7 @@ class LCGFormatter(object):
                                                            transaction=self._transaction,
                                                            codebooks=codebooks)
             return binding_dictionary
-        
+
     def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
                  parameters={}, language=None, translations=()):
         """Arguments:
@@ -545,10 +545,10 @@ class LCGFormatter(object):
     def pdf(self):
         "Return the formatted document as PDF data (basestring)."
         return self._pdf()
-        
+
     def preview(self, stream):
         """Return the formatted document as a plain text.
-        
+
         Arguments:
 
           stream -- stream open for writing, providing 'write' method.
@@ -561,7 +561,7 @@ class LCGFormatter(object):
         """Send the document as PDF to 'stream'.
 
         Arguments:
-        
+
           stream -- stream open for writing, providing 'write' method.
           hook -- function of no arguments to be called after formatting but
             before cleanup
@@ -574,13 +574,13 @@ class LCGFormatter(object):
         if hook is not None:
             hook()
         self._resolve(self._template_id, 'cleanup')
-    
+
     def printdirect(self):
         """Send the document as PDF to the standard input of 'printing_command'."""
         process = Popen(config.printing_command, from_child=dev_null_stream('w'))
         stream = process.to_child()
         self.printout(stream)
-    
+
     def close(self):
         """Obsolete, no need to call this method anymore."""
         pass
@@ -663,14 +663,14 @@ class PrintSpecification(object):
     Additionally, it's possible to define initial actions to be performed
     before printing, typically asking user for dynamic parameters of the
     output.  You can use 'init()' method for that purpose.
-    
+
     """
     def __init__(self, parameters):
         """
         Arguments:
 
           parameters -- dictionary of print parameters
-        
+
         """
         self._parameters = dict(parameters)
 
@@ -690,76 +690,76 @@ class PrintSpecification(object):
 
         """
         return True
-        
+
     def cleanup(self):
         """Run actions to be performed after output formatting."""
         pass
-        
+
     def body(self):
         """Return body of the document.
 
         Returns pytis 'Document' instance or a sequence of 'Document' instances
         or any pytis markup content acceptable by 'Document' constructor.
-          
+
         """
         return None
-    
+
     def page_header(self):
         """Return header of a page.
 
         Returns '_Mark' instance.
-          
+
         """
         return None
-    
+
     def first_page_header(self):
         """Return header of the first page.
 
         It is necessary to define this only when the first page header should
         be different from the header returned from 'page_header'.
-            
+
         Returns '_Mark' instance.
-          
+
         """
         return self.page_header()
-    
+
     def page_footer(self):
         """Return footer of a page.
-            
+
         Returns '_Mark' instance.
-          
+
         """
         return pytis.output.Center('Strana ', pytis.output.PageNumber())
-    
+
     def doc_header(self):
         """Return initial part of the whole document.
-          
+
         Returns '_Mark' instance.
-        
+
         """
         return None
-    
+
     def doc_footer(self):
         """Return closing part of the document.
-          
+
         Returns '_Mark' instance.
-        
+
         """
         return None
-    
+
     def page_layout(self):
         """Return dictionary of page parameters.
 
         Returns dictionary of supported page parameters.
-        
+
         """
         return {}
-    
+
     def background(self):
         """Return background image to be put on each page.
-        
+
         Returns '_Mark' instance.
-          
+
         """
         return None
 

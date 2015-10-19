@@ -55,7 +55,7 @@ class ResolverModuleError(pytis.util.ResolverError):
 
 class ResolverFileError(pytis.util.ResolverError):
     """Výjimka vyvolávaná nelze-li načíst žádaný specifikační soubor."""
-    
+
     def __init__(self, file_name, path, exception):
         """Inicializuj výjimku.
 
@@ -65,7 +65,7 @@ class ResolverFileError(pytis.util.ResolverError):
           path -- cesta ke specifikačním souborům, string
           exception -- výjimka, která problém signalizovala, instance třídy
             'Exception' nebo 'None'
-          
+
         """
         msg = 'Error importing specification file %s: %s %s' % (file_name, exception, path)
         super_(ResolverFileError).__init__(self, msg)
@@ -73,7 +73,7 @@ class ResolverFileError(pytis.util.ResolverError):
 
 class ResolverSpecError(pytis.util.ResolverError):
     """Výjimka vyvolaná není-li ve specifikačním modulu žádaná funkce."""
-    
+
     def __init__(self, module_name, spec_name):
         """Inicializuj výjimku.
 
@@ -81,7 +81,7 @@ class ResolverSpecError(pytis.util.ResolverError):
 
           module_name -- jméno specifikačního modulu, string
           spec_name -- jméno specfikační funkce, string
-          
+
         """
         msg = 'Specification not found: %s, %s' % (module_name, spec_name)
         super_(ResolverSpecError).__init__(self, msg)
@@ -103,7 +103,7 @@ class Resolver(object):
         self._object_cache = SimpleCache(self._get_object)
         self._spec_cache = SimpleCache(self._get_spec)
         self._instance_cache = SimpleCache(self._get_instance)
-    
+
     def _get_module(self, module_name):
         raise ResolverModuleError(module_name)
 
@@ -137,7 +137,7 @@ class Resolver(object):
         module_name, spec_name, args, kwargs_items = key
         class_ = self.get_object(module_name, spec_name)
         return class_(*args, **dict(kwargs_items))
-        
+
     def get_object(self, module_name, spec_name):
         """Vrať požadovaný objekt z daného specifikačního modulu.
 
@@ -146,7 +146,7 @@ class Resolver(object):
           module_name -- jméno specifikačního modulu
           spec_name -- jméno objektu ze specifikačního modulu, neprázdný
             string
-        
+
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
         nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
@@ -164,7 +164,7 @@ class Resolver(object):
         Argumenty:
 
           module_name -- jméno specifikačního modulu
-        
+
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.
 
@@ -184,7 +184,7 @@ class Resolver(object):
 
         Instance třídy je vytvořena voláním jejího konstruktoru s argumenty
         'args' a 'kwargs'.
-        
+
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
         nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
@@ -217,17 +217,17 @@ class Resolver(object):
         resolveru jako první poziční argument) a nad ní zavolána metoda
         'spec_name', té jsou předány dané klíčové argumenty a výsledek je
         vrácen.
-          
+
         Není-li modul 'module_name' nalezen, je vyvolána výjimka
         'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
         nalezena specifikace 'spec_name', je vyvolána výjimka
         'ResolverSpecError'.
-        
+
         """
         key = (module_name, spec_name, tuple(kwargs.items()))
         return self._spec_cache[key]
 
- 
+
 class FileResolver(Resolver):
     """Resolver natahující moduly ze specifikačních souborů.
 
@@ -246,7 +246,7 @@ class FileResolver(Resolver):
         """
         super(FileResolver, self).__init__()
         self._path = xlist(path)
-        
+
     def _get_module(self, name, path=None):
         if path is None:
             path = self._path
@@ -294,7 +294,7 @@ class PlainFileResolver(Resolver):
         super(PlainFileResolver, self).__init__()
         self._path = xlist(path)
         self._extension = extension
-        
+
     def _get_module(self, name):
         return [os.path.join(path, name) for path in self._path]
 
@@ -359,7 +359,7 @@ class DatabaseResolver(Resolver):
         import config
         self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
                                         config.dbconnection)
-        
+
     def _get_module(self, name):
         return name
 
@@ -388,7 +388,7 @@ class OutputResolver(Resolver):
     Tento resolver jednak poskytuje standardní specifikace, jednak tiskové specifikace a jednak
     zpřístupňuje šablonám parametry, prostřednictvím metody
     'output_parameter()' nebo jejího aliasu 'p()'.
-    
+
     """
     OUTPUT_PARAMETERS = 'output-parameters'
     """Jméno modulu parametrů výstupu."""
@@ -426,7 +426,7 @@ class OutputResolver(Resolver):
             return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
         except pytis.util.ResolverError:
             return self._specification_resolver.get(module_name, spec_name, **kwargs)
-    
+
     def output_parameter(self, name, **kwargs):
         """Vrať hodnotu parametru výstupu 'name'.
 
@@ -449,7 +449,7 @@ class OutputResolver(Resolver):
 
           parameters -- dictionary of output parameters to be added, keys must
             be non-empty strings, values may be arbitrary objects
-            
+
         """
         p = self._parameters
         for k, v in parameters.items():

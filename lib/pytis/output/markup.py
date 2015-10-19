@@ -62,7 +62,7 @@ class _Mark(object):
 
     def __init__(self):
         self._lcg_result = None
-        
+
     def lcg(self):
         """Return LCG content corresponding to the mark and its content.
         The return value is an 'lcg.Content' instance.
@@ -80,7 +80,7 @@ class _Mark(object):
 class _Container(_Mark):
 
     KWARGS = {}
-    
+
     def __init__(self, *contents, **kwargs):
         """Definuj odstavec.
 
@@ -108,10 +108,10 @@ class _Container(_Mark):
 
     def _lcg_contents(self):
         return [_something_to_lcg(c) for c in self._contents]
-        
+
     def _lcg(self):
         return lcg.Container(self._lcg_contents(), orientation=lcg.Orientation.HORIZONTAL)
-    
+
 
 class Null(_Mark):
     """Nic.
@@ -149,7 +149,7 @@ class _HAlignContainer(_Container):
         if len(contents) > 1:
             contents = [lcg.Container(contents, orientation=lcg.Orientation.HORIZONTAL)]
         return lcg.Container(contents, halign=self._ALIGNMENT, orientation=lcg.Orientation.VERTICAL)
-            
+
 class Center(_HAlignContainer):
     """Značka horizontálního vycentrování svého obsahu."""
     _ALIGNMENT = lcg.HorizontalAlignment.CENTER
@@ -161,7 +161,7 @@ class AlignLeft(_HAlignContainer):
 class AlignRight(_HAlignContainer):
     """Značka zarovnání svého obsahu vpravo."""
     _ALIGNMENT = lcg.HorizontalAlignment.RIGHT
-    
+
 class VCenter(_Container):
     """Značka vertikálního vycentrování svého obsahu."""
     def _lcg(self):
@@ -169,11 +169,12 @@ class VCenter(_Container):
                              valign=lcg.VerticalAlignment.CENTER,
                              orientation=lcg.Orientation.HORIZONTAL)
 
+
 class _Space(_Mark):
 
     VERTICAL = 'VERTICAL'
     HORIZONTAL = 'HORIZONTAL'
-    
+
     def __init__(self, size, orientation):
         super(_Space, self).__init__()
         self._size = size
@@ -201,7 +202,7 @@ class _Space(_Mark):
 
 class VSpace(_Space):
     """Značka prázdného vertikálního objektu dané šířky."""
-    
+
     def __init__(self, height):
         """Inicializuj instanci.
 
@@ -218,7 +219,7 @@ class VSpace(_Space):
 
 class HSpace(_Space):
     """Značka prázdného horizontálního objektu dané šířky."""
-    
+
     def __init__(self, width):
         """Inicializuj instanci.
 
@@ -250,13 +251,13 @@ class List(_Container):
     Položky seznamu jsou uvozeny značkou specifikovanou klíčovým argumentem
     konstruktoru 'mark'.  Není-li tento argument zadán, položky nemají žádné
     zvláštní uvození.
-    
+
     """
     NUMBER_MARK = 'NUMBER_MARK'
     """Položky seznamu uvozené vzestupnými arabskými číslicemi od 1."""
     BULLET_MARK = 'BULLET_MARK'
     """Položky seznamu uvozené puntíkem."""
-    
+
     KWARGS = {'mark': None}
 
     def _lcg(self):
@@ -328,7 +329,7 @@ class Roman(_Container):
 
 class FontSize(_Container):
     """Standardně sázený text."""
-    
+
     def __init__(self, size, *contents):
         """Definuj text.
 
@@ -342,7 +343,7 @@ class FontSize(_Container):
         """
         super_(FontSize).__init__(self, *contents)
         self._size = size
-        
+
     def size(self):
         """Vrať velikost zadanou v konstruktoru."""
         return self._size
@@ -358,7 +359,7 @@ class FontFamily(_Container):
     Tato značka zároveň nastaví základní řez fontu.
 
     """
-    
+
     PROPORTIONAL = 'PROPORTIONAL'
     """Standardní proporcionální font (například Times)."""
     SANS_SERIF = 'SANS_SERIF'
@@ -377,7 +378,7 @@ class FontFamily(_Container):
         """
         super_(FontFamily).__init__(self, *contents)
         self._family = family
-        
+
     def family(self):
         """Vrať rodinu fontu zadanou v konstruktoru."""
         return self._family
@@ -413,7 +414,7 @@ class Group(_Container):
         odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
         argumentu 'vertical') bude patřičně upravena, velikost prvků s udaným
         poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument podporován.
-      
+
     """
     KWARGS = {'vertical': False,
               'boxed': False,
@@ -478,7 +479,7 @@ class Document(_Container):
         Arguments:
 
           kwargs -- kwargs to pass to 'lcg.ContentNode' constructor
-          
+
         """
         def arg(definition):
             if definition is None or isinstance(definition, lcg.Content):
@@ -504,14 +505,14 @@ class Table(_Mark):
     """
     class Column:
         """Specifikační třída sloupce tabulky."""
-        
+
         ALIGN_LEFT = 'ALIGN_LEFT'
         """Zarovnání obsahu sloupce nalevo."""
         ALIGN_CENTER = 'ALIGN_CENTER'
         """Centrování obsahu sloupce."""
         ALIGN_RIGHT = 'ALIGN_RIGHT'
         """Zarovnání obsahu sloupce napravo."""
-        
+
         def __init__(self, label=None, width=None, alignment=ALIGN_LEFT,
                      label_alignment=ALIGN_CENTER):
             """Inicializuj instanci.
@@ -533,7 +534,7 @@ class Table(_Mark):
             self.width = width
             self.alignment = alignment
             self.label_alignment = label_alignment
-            
+
     def __init__(self, columns, *data, **kwargs):
         """Inicializuj instanci.
 
@@ -562,7 +563,7 @@ class Table(_Mark):
         self._columns = columns
         self._data = data
         self._vmargin = vmargin
-        
+
     def columns(self):
         """Vrať specifikaci sloupců tabulky zadanou v konstruktoru."""
         return self._columns
@@ -585,12 +586,12 @@ class Table(_Mark):
 
     def _lcg_table_data(self):
         return self._data
-    
+
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths,
                          presentation=self._lcg_presentation(),
                          halign=lcg.HorizontalAlignment.LEFT)
-    
+
     def _lcg(self):
         table_rows = []
         if any([c.label is not None for c in self._columns]):
@@ -652,7 +653,7 @@ class LongTable(Table):
     """
     class Column(Table.Column):
         """Specifikační třída sloupce dlouhé tabulky."""
-        
+
         def __init__(self, label, width, **kwargs):
             """Stejné jako v předkovi až na argumenty 'label' a 'width'.
 
@@ -716,7 +717,7 @@ class LongTable(Table):
     def separator_height(self):
         """Vrať tloušťku oddělovací čáry záhlaví zadanou v konstruktoru."""
         return self._separator_height
-    
+
     def line_separator_height(self):
         """Vrať tloušťku oddělovací čáry řádků zadanou v konstruktoru."""
         return self._line_separator_height
@@ -724,11 +725,11 @@ class LongTable(Table):
     def separator_margin(self):
         """Vrať vzdálenost oddělovací čáry záhlaví zadanou v konstruktoru."""
         return self._separator_margin
-    
+
     def line_separator_margin(self):
         """Vrať vzdálenost oddělovací čáry řádků zadanou v konstruktoru."""
         return self._line_separator_margin
-    
+
     def _lcg_presentation(self):
         presentation = super(LongTable, self)._lcg_presentation()
         presentation.separator_height = self._line_separator_height
@@ -736,7 +737,7 @@ class LongTable(Table):
         presentation.header_separator_height = self._separator_height
         presentation.header_separator_margin = self._separator_margin
         return presentation
-    
+
     def _lcg_table_data(self):
         if self._row_generator_init is not None:
             self._row_generator_init()
@@ -752,10 +753,10 @@ class LongTable(Table):
         return lcg.Table(table_rows, column_widths=column_widths, long=True,
                          presentation=self._lcg_presentation(),
                          halign=lcg.HorizontalAlignment.LEFT)
-    
+
 class Image(_Mark):
     """EPS obrázek."""
-    
+
     def __init__(self, file_name, standalone=True):
         """Inicializuj instanci.
 
@@ -787,7 +788,7 @@ class StructuredText(_Mark):
     """LCG structured text."""
 
     _ITERATOR_MATCHER = re.compile(r'\|([^|]*\${(?:data\.|[^}]+\.(?:data|codebook)\.))')
-    
+
     def __init__(self, text):
         """
         Arguments:
