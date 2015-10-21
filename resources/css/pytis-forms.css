@@ -235,7 +235,7 @@
 .pytis-form.browse-form table.data-table tr.data-row.even { background-color: #f1f3f2; }
 .pytis-form.browse-form table.data-table tr.group-heading th { text-align: left; }
 
-.pytis-form.browse-form table.data-table .popup-menu-ctrl-widget a {
+.pytis-form.browse-form table.data-table .popup-menu-ctrl-widget {
     display: block;
     float: right;
 }

@@ -1562,8 +1562,8 @@ class BrowseForm(LayoutForm):
                                        enabled=enabled,
                                        uri=self._uri_provider(row, UriType.ACTION, action))
                      for action, enabled in self._visible_actions(context, row)]
-            ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this record"),
-                                     selector)
+            ctrl = lcg.PopupMenuCtrl(_("Popup the menu of actions for this record"),
+                                     items, active_area_selector=selector)
             return ctrl.export(context)
         else:
             return ''
