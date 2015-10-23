@@ -20,9 +20,10 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-09-02 15:28'
+_VERSION = '2015-10-19 18:55'
 
-XSERVER_VARIANT = 'VcXsrv_shipped'
+XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
+XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -311,8 +312,6 @@ try:
 except AttributeError:
     paramiko.SSHClient = SSHClient
 
-import pyhoca.cli
-from pyhoca.cli import runtime_error
 import rpyc
 import x2go
 import x2go.backends.profiles.base
@@ -670,17 +669,17 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return path
 
     def get_xserver_config(self, xserver_name):
-        if not xserver_name == XSERVER_VARIANT:
+        if not xserver_name in XSERVER_VARIANTS:
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         _changed = False
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
                 _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv.exe'))
+                                                                          'vcxsrv_pytis.exe'))
             elif option == 'run_command':
                 _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv.exe'))
+                                                                          'vcxsrv_pytis.exe'))
             elif option == 'parameters':
                 parameters = self.get(xserver_name, option,
                                       key_type=self.get_type(xserver_name, option))
@@ -693,16 +692,88 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
                                                        key_type=self.get_type(xserver_name, option))
                 except KeyError:
                     pass
-            if self.get_value(XSERVER_VARIANT, option) != _xserver_config[option]:
+            if self.get_value(xserver_name, option) != _xserver_config[option]:
                 _changed = True
-                self.update_value(XSERVER_VARIANT, option, _xserver_config[option])
+                self.update_value(xserver_name, option, _xserver_config[option])
         if _changed:
             self.write_user_config = True
             self.write()
         return _xserver_config
 
+
+X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
+if on_windows():
+    update_dir = {
+        'XServers': {
+            'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming', 'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
+        },
+        'VcXsrv_pytis': {
+            'display': 'localhost:20',
+            'last_display': 'localhost:20',
+            'process_name': 'vcxsrv_pytis.exe',
+            'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
+            'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
+            'parameters': [':20', '-clipboard', '-multiwindow', '-notrayicon', '-nowinkill', '-nounixkill', '-swcursor', ],
+        },
+        'VcXsrv_pytis_desktop': {
+            'display': 'localhost:30',
+            'last_display': 'localhost:30',
+            'process_name': 'vcxsrv_pytis_desktop.exe',
+            'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
+            'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
+            'parameters': [':30', '-clipboard', '-notrayicon', '-nowinkill', '-nounixkill', '-swcursor', ],
+        },
+        }
+    X2GO_CLIENTXCONFIG_DEFAULTS.update(update_dir)
+    x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
+
 x2go.client.X2GoClientXConfig = X2GoClientXConfig
 
+class X2GoClient(x2go.X2GoClient):
+
+    def start_xserver_pytis(self, variant=None):
+        if on_windows() and variant:
+            if self.client_rootdir:
+                _xconfig_config_file = os.path.join(self.client_rootdir, x2go.defaults.X2GO_XCONFIG_FILENAME)
+                self.client_xconfig = x2go.client.X2GoClientXConfig(config_files=[_xconfig_config_file],
+                                                                    logger=self.logger)
+            else:
+                self.client_xconfig = x2go.client.X2GoClientXConfig(logger=self.logger)
+            if not self.client_xconfig.installed_xservers:
+                self.HOOK_no_installed_xservers_found()
+            else:
+                _last_display = None
+                if  type(variant) is types.BooleanType:
+                    p_xs_name = self.client_xconfig.preferred_xserver_names[0]
+                    _last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
+                    _new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
+                    p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
+                elif type(variant) is types.StringType:
+                    _last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
+                    _new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
+                    p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
+                if not self.client_xconfig.running_xservers:
+                    if p_xs is not None:
+                        self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1], logger=self.logger)
+                else:
+                    if p_xs is not None and _last_display is not None:
+                        if _last_display == _new_display:
+                            #
+                            # FIXME: this trick is nasty, client implementation should rather cleanly shutdown launch X-server processes
+                            #
+                            # re-use a left behind X-server instance of a previous/crashed run of Python X2Go Client
+                            self.logger('found a running (and maybe stray) X-server, trying to re-use it on X DISPLAY port: %s' % _last_display, loglevel=x2go.log.loglevel_WARN)
+                            os.environ.update({str('DISPLAY'): str(_last_display)})
+                    else:
+                        # presume the running XServer listens on :0
+                        self.logger('using fallback display for X-server: localhost:0', loglevel=x2go.log.loglevel_WARN)
+                        os.environ.update({str('DISPLAY'): str('localhost:0')})
+    __start_xserver_pytis = start_xserver_pytis
+
+x2go.X2GoClient = X2GoClient
+
+import pyhoca.cli
+from pyhoca.cli import runtime_error
 
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
@@ -747,6 +818,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             _backend_kwargs['broker_url'] = broker_url
             _backend_kwargs['broker_password'] = self.args.broker_password
         x2go.X2GoClient.__init__(self, logger=liblogger, **_backend_kwargs)
+        if not self.args.broker_url:
+            # Start xserver with default variant
+            self._X2GoClient__start_xserver_pytis(variant=str(XSERVER_VARIANT_DEFAULT))
         # Let's substitute unimplemented sshbroker backend
         if self.args.broker_url is not None and ssh_p:
             self.profiles_backend = PytisSshProfiles
@@ -845,6 +919,15 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 _auth_info.update_from_profile(profile)
                 _auth_info.update_args(self.args)
                 params = profiles.to_session_params(profile_id)
+                # Start xserver according to the selected profile
+                rootless = profile.get('rootless', True)
+                if not rootless or int(rootless) == 0:
+                    rootless = False
+                if not rootless:
+                    variant = 'VcXsrv_pytis_desktop'
+                else:
+                    variant = 'VcXsrv_pytis'
+                self._X2GoClient__start_xserver_pytis(variant=str(variant))
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
                 if on_windows() and args.create_shortcut:
@@ -1279,7 +1362,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     self._X2GoClient__terminate_session(s_hash, session_name)
                 else:
                     raise Exception("Invalid session button", button)
-            
+
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
         import winshell
@@ -1360,7 +1443,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             icon_location = os.path.normpath(os.path.join(scripts_path, '..', 'icons', 'p2go.ico'))
             if os.path.exists(icon_location):
                 link.icon_location = (icon_location, 0)
-                    
+
     @classmethod
     def run(class_, args):
         _auth_info.update_from_args(args)
@@ -1390,7 +1473,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 return
         # Create client
         _auth_info.update_args(args)
-        client = class_(args, use_cache=False, start_xserver=str(XSERVER_VARIANT),
+        client = class_(args, use_cache=False, start_xserver=False,
                         loglevel=x2go.log.loglevel_DEBUG)
         app.update_progress_dialog(message=_("Starting server connections. Please wait..."))
         # Run
