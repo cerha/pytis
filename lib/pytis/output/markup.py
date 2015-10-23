@@ -37,7 +37,7 @@ import os
 import re
 
 import lcg
-from lcg import Unit, UPoint
+from lcg import Unit, UPoint, Color
 import pytis.output
 import pytis.util
 from pytis.util import some, super_
@@ -402,8 +402,12 @@ class Group(_Container):
 
       vertical -- je-li pravdivé, budou prvky spojeny vertikálně, jinak budou
         spojeny horizontálně
-      boxed -- právě když je pravdivé, budou prvky skupiny orámovány
-      box_margin -- space between the box and the content, 'Unit'
+      boxed -- iff true, the group will have a box around
+      box_margin -- space between the box and the content as 'Unit' instance
+      box_width -- Box line width as 'Unit' instance
+      box_color -- Box line color as 'Color' instance
+      box_radius -- if defined and not 0, box corners will be rounded
+        with given radius as 'Unit' instance
       balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
         s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
         odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
@@ -414,6 +418,9 @@ class Group(_Container):
     KWARGS = {'vertical': False,
               'boxed': False,
               'box_margin': None,
+              'box_radius': None,
+              'box_width': None,
+              'box_color': None,
               'balance': None}
 
     def _lcg(self):
@@ -421,6 +428,9 @@ class Group(_Container):
         if self.arg_boxed:
             presentation.boxed = True
             presentation.box_margin = self.arg_box_margin
+            presentation.box_radius = self.arg_box_radius
+            presentation.box_width = self.arg_box_width
+            presentation.box_color = self.arg_box_color
         if self.arg_vertical:
             orientation = lcg.Orientation.VERTICAL
         else:
