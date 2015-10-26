@@ -237,8 +237,13 @@ class HSpace(_Space):
 
 class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
+    def __init__(self, thickness=None, color=None, **kwargs):
+        self._thickness = thickness
+        self._color = color
+        super(HLine, self).__init__()
+
     def _lcg(self):
-        return lcg.HorizontalSeparator()
+        return lcg.HorizontalSeparator(thickness=self._thickness, color=self._color)
 
 class Paragraph(_Container):
     """Značka odstavce."""
