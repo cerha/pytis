@@ -238,6 +238,17 @@ class HSpace(_Space):
 class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
     def __init__(self, thickness=None, color=None, **kwargs):
+        """Arguments:
+
+        thickness -- Thickness of the line as 'lcg.Unit' or None for the
+          default thickness.  May be also passed directly as int or float which
+          will be automatically converted to 'UMm' (milimeters).
+        color -- line color as 'lcg.Color' or None for the (media dependent)
+          default color.
+
+        """
+        if not isinstance(thickness, lcg.Unit):
+            thickness = lcg.UMm(thickness)
         self._thickness = thickness
         self._color = color
         super(HLine, self).__init__()
@@ -435,6 +446,10 @@ class Group(_Container):
         argumentu 'vertical') bude patřičně upravena, velikost prvků s udaným
         poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument podporován.
 
+    All argumentrs which accept a Unit instance may be also given directly as
+    int or float which will be automatically converted to Umm (given dimension
+    in mimimeters).
+
     """
     KWARGS = {'vertical': False,
               'boxed': False,
@@ -453,6 +468,10 @@ class Group(_Container):
     def _lcg(self):
         def coalesce(a, b):
             return a if a is not None else b
+        def unit(x):
+            if x is not None and not isinstance(x, lcg.Unit):
+                x = lcg.UMm(x)
+            return x
         presentation = lcg.Presentation()
         padding_top = coalesce(self.arg_padding_top, self.arg_padding)
         padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
@@ -460,9 +479,9 @@ class Group(_Container):
         padding_right = coalesce(self.arg_padding_right, self.arg_padding)
         if self.arg_boxed:
             presentation.boxed = True
-            presentation.box_margin = self.arg_box_margin
-            presentation.box_radius = self.arg_box_radius
-            presentation.box_width = self.arg_box_width
+            presentation.box_margin = unit(self.arg_box_margin)
+            presentation.box_radius = unit(self.arg_box_radius)
+            presentation.box_width = unit(self.arg_box_width)
             presentation.box_color = self.arg_box_color
         contents = self._lcg_contents()
         if self.arg_vertical:
