@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
+ * Copyright (C) 2012-2015 Brailcom, o.p.s.
  * Author: Hynek Hanke
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1301,15 +1301,13 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     };
 
     var update_mathml_from_ascii = function(element) {
-        function get_text(node) {
-            /* Convert MathML DOM node to text using a helper element */
-            var helper = document.createElement('span');
-            helper.appendChild(node);
-            return helper.innerHTML;
-        }
+	var node = parseMath(dlg.getValueOf('main', 'source-ascii'), false);
+        /* Convert MathML DOM node to text using a helper element */
+        var helper = document.createElement('span');
+        helper.appendChild(node);
+	var mathml = clean_mathml(helper.innerHTML , "", true);
         var dlg = CKEDITOR.dialog.getCurrent();
-        var mathml = get_text(parseMath(dlg.getValueOf('main', 'source-ascii'), false));
-        dlg.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
+        dlg.setValueOf('main', 'source-mathml', mathml);
     };
 
 
