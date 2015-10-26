@@ -418,15 +418,81 @@ class FontFamily(_Container):
         presentation.font_family = family
         return lcg.Container(self._lcg_contents(), presentation=presentation)
 
-class Group(_Container):
-    """Spojení obsahu do skupiny.
+class _Group(_Container):
+    KWARGS = dict(boxed=False,
+                  box_margin=None,
+                  box_radius=None,
+                  box_width=None,
+                  box_color=None,
+                  padding=None,
+                  padding_top=None,
+                  padding_bottom=None,
+                  padding_left=None,
+                  padding_right=None,
+                  spacing=None,
+                  balance=None)
 
-    Na rozdíl od prostého užití tuple, tato značka umožňuje specifikovat různé
-    parametry tohoto spojení pomocí předaných klíčovaných argumentů.  Těmito
-    argumenty mohou být:
+    def _orientation(self):
+        pass
 
-      vertical -- iff true, the items will be arranged vertically, otherwise
-        horizontally
+    def _lcg(self):
+        def coalesce(a, b):
+            return a if a is not None else b
+        def unit(x):
+            if x is not None and not isinstance(x, lcg.Unit):
+                x = lcg.UMm(x)
+            return x
+        presentation = lcg.Presentation()
+        padding_top = coalesce(self.arg_padding_top, self.arg_padding)
+        padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
+        padding_left = coalesce(self.arg_padding_left, self.arg_padding)
+        padding_right = coalesce(self.arg_padding_right, self.arg_padding)
+        if self.arg_boxed:
+            presentation.boxed = True
+            presentation.box_margin = unit(self.arg_box_margin)
+            presentation.box_radius = unit(self.arg_box_radius)
+            presentation.box_width = unit(self.arg_box_width)
+            presentation.box_color = _color(self.arg_box_color)
+        contents = self._lcg_contents()
+        orientation = self._orientation()
+        if orientation == lcg.Orientation.VERTICAL:
+            if self.arg_spacing:
+                space = [VSpace(self.arg_spacing).lcg()]
+                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
+            if padding_top:
+                contents.insert(0, VSpace(padding_top).lcg())
+            if padding_bottom:
+                contents.append(VSpace(padding_bottom).lcg())
+            if padding_left or padding_right:
+                group = HGroup(contents,
+                               padding_left=padding_left,
+                               padding_right=padding_right)
+                contents = group.lcg()
+        else:
+            if self.arg_spacing:
+                space = [HSpace(self.arg_spacing).lcg()]
+                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
+            if padding_left:
+                contents.insert(0, HSpace(padding_left).lcg())
+            if padding_right:
+                contents.append(HSpace(padding_right).lcg())
+            if padding_top or padding_bottom:
+                group = VGroup(contents,
+                              padding_top=padding_top,
+                              padding_bottom=padding_bottom)
+                contents = group.lcg()
+        return lcg.Container(contents, orientation=orientation,
+                             presentation=presentation,
+                             halign=lcg.HorizontalAlignment.LEFT,
+                             valign=lcg.VerticalAlignment.TOP)
+
+
+class HGroup(_Group):
+    """Group of horizontally arranged items.
+
+    Unlike when multiple items are grouped simply into a tuple, this element
+    allows specification of various parameters how the items are arranged:
+
       boxed -- iff true, the group will have a box around
       box_margin -- space between the box and the content as 'Unit' instance or None
       box_width -- box line width as 'Unit' instance or None
@@ -453,82 +519,39 @@ class Group(_Container):
         instance.
       balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
         s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
-        odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
-        argumentu 'vertical') bude patřičně upravena, velikost prvků s udaným
-        poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument podporován.
+        odpovídajících prvků.  Velikost prvků ve směru orientace skupiny
+        (horizontální nebo vertikální) bude patřičně upravena, velikost prvků
+        s udaným poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument
+        podporován.
 
     All argumentrs which accept a Unit instance may be also given directly as
     int or float which will be automatically converted to Umm (given dimension
     in mimimeters).
 
     """
-    KWARGS = {'vertical': False,
-              'boxed': False,
-              'box_margin': None,
-              'box_radius': None,
-              'box_width': None,
-              'box_color': None,
-              'padding': None,
-              'padding_top': None,
-              'padding_bottom': None,
-              'padding_left': None,
-              'padding_right': None,
-              'spacing': None,
-              'balance': None}
+    def _orientation(self):
+        return lcg.Orientation.HORIZONTAL
 
-    def _lcg(self):
-        def coalesce(a, b):
-            return a if a is not None else b
-        def unit(x):
-            if x is not None and not isinstance(x, lcg.Unit):
-                x = lcg.UMm(x)
-            return x
-        presentation = lcg.Presentation()
-        padding_top = coalesce(self.arg_padding_top, self.arg_padding)
-        padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
-        padding_left = coalesce(self.arg_padding_left, self.arg_padding)
-        padding_right = coalesce(self.arg_padding_right, self.arg_padding)
-        if self.arg_boxed:
-            presentation.boxed = True
-            presentation.box_margin = unit(self.arg_box_margin)
-            presentation.box_radius = unit(self.arg_box_radius)
-            presentation.box_width = unit(self.arg_box_width)
-            presentation.box_color = _color(self.arg_box_color)
-        contents = self._lcg_contents()
-        if self.arg_vertical:
-            orientation = lcg.Orientation.VERTICAL
-            if self.arg_spacing:
-                space = [VSpace(self.arg_spacing).lcg()]
-                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
-            if padding_top:
-                contents.insert(0, VSpace(padding_top).lcg())
-            if padding_bottom:
-                contents.append(VSpace(padding_bottom).lcg())
-            if padding_left or padding_right:
-                group = Group(contents,
-                              padding_left=padding_left,
-                              padding_right=padding_right,
-                              vertical=False)
-                contents = group.lcg()
-        else:
-            orientation = lcg.Orientation.HORIZONTAL
-            if self.arg_spacing:
-                space = [HSpace(self.arg_spacing).lcg()]
-                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
-            if padding_left:
-                contents.insert(0, HSpace(padding_left).lcg())
-            if padding_right:
-                contents.append(HSpace(padding_right).lcg())
-            if padding_top or padding_bottom:
-                group = Group(contents,
-                              padding_top=padding_top,
-                              padding_bottom=padding_bottom,
-                              vertical=True)
-                contents = group.lcg()
-        return lcg.Container(contents, orientation=orientation,
-                             presentation=presentation,
-                             halign=lcg.HorizontalAlignment.LEFT,
-                             valign=lcg.VerticalAlignment.TOP)
+
+class VGroup(_Group):
+    """Group of vertically arranged items.
+
+    All arguments of HGroup may be also used for VGroup.  Only the direction in
+    which the items are arranged is vertical.
+
+    """
+    def _orientation(self):
+        return lcg.Orientation.VERTICAL
+
+
+class Group(_Group):
+
+    """Depracated: Use HGroup or VGroup instead."""
+    KWARGS = dict(_Group.KWARGS, vertical=False)
+
+    def _orientation(self):
+        return lcg.Orientation.VERTICAL if self.arg_vertical else lcg.Orientation.HORIZONTAL
+
 
 class Document(_Container):
     """Samostatná část dokumentu se samostatně číslovanými stránkami.
