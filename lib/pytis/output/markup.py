@@ -406,14 +406,29 @@ class Group(_Container):
     parametry tohoto spojení pomocí předaných klíčovaných argumentů.  Těmito
     argumenty mohou být:
 
-      vertical -- je-li pravdivé, budou prvky spojeny vertikálně, jinak budou
-        spojeny horizontálně
+      vertical -- iff true, the items will be arranged vertically, otherwise
+        horizontally
       boxed -- iff true, the group will have a box around
-      box_margin -- space between the box and the content as 'Unit' instance
-      box_width -- Box line width as 'Unit' instance
-      box_color -- Box line color as 'Color' instance
-      box_radius -- if defined and not 0, box corners will be rounded
+      box_margin -- space between the box and the content as 'Unit' instance or None
+      box_width -- box line width as 'Unit' instance or None
+      box_color -- box line color as 'Color' instance
+      box_radius -- if not None and not 0, box corners will be rounded
         with given radius as 'Unit' instance
+      padding -- space around group contents.  This space is added to
+        box_margin for a boxed group, but there are major differences between
+        box_margin and padding.  Box margin only applies to boxed groups and is
+        ignored for non boxed groups.  Padding applies to both.  Box margin is
+        inherited to any inner boxed groups which don't explicitly override it.
+        Padding only applies to the group for which it is defined.  Morover,
+        padding can be set differently for each side using 'padding_top',
+        'padding_bottom', 'padding_left', 'padding_right'.  None means or
+        'Unit' instance.
+      padding_top -- overrides 'padding' for the top side.
+      padding_bottom -- overrides 'padding' for the bottom side.
+      padding_left -- overrides 'padding' for the left side.
+      padding_right -- overrides 'padding' for the right side.
+      spacing -- space between the individual group items. None or 'Unit'
+        instance.
       balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
         s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
         odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
@@ -427,21 +442,60 @@ class Group(_Container):
               'box_radius': None,
               'box_width': None,
               'box_color': None,
+              'padding': None,
+              'padding_top': None,
+              'padding_bottom': None,
+              'padding_left': None,
+              'padding_right': None,
+              'spacing': None,
               'balance': None}
 
     def _lcg(self):
+        def coalesce(a, b):
+            return a if a is not None else b
         presentation = lcg.Presentation()
+        padding_top = coalesce(self.arg_padding_top, self.arg_padding)
+        padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
+        padding_left = coalesce(self.arg_padding_left, self.arg_padding)
+        padding_right = coalesce(self.arg_padding_right, self.arg_padding)
         if self.arg_boxed:
             presentation.boxed = True
             presentation.box_margin = self.arg_box_margin
             presentation.box_radius = self.arg_box_radius
             presentation.box_width = self.arg_box_width
             presentation.box_color = self.arg_box_color
+        contents = self._lcg_contents()
         if self.arg_vertical:
             orientation = lcg.Orientation.VERTICAL
+            if self.arg_spacing:
+                space = [VSpace(self.arg_spacing).lcg()]
+                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
+            if padding_top:
+                contents.insert(0, VSpace(padding_top).lcg())
+            if padding_bottom:
+                contents.append(VSpace(padding_bottom).lcg())
+            if padding_left or padding_right:
+                group = Group(contents,
+                              padding_left=padding_left,
+                              padding_right=padding_right,
+                              vertical=False)
+                contents = group.lcg()
         else:
             orientation = lcg.Orientation.HORIZONTAL
-        return lcg.Container(self._lcg_contents(), orientation=orientation,
+            if self.arg_spacing:
+                space = [HSpace(self.arg_spacing).lcg()]
+                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
+            if padding_left:
+                contents.insert(0, HSpace(padding_left).lcg())
+            if padding_right:
+                contents.append(HSpace(padding_right).lcg())
+            if padding_top or padding_bottom:
+                group = Group(contents,
+                              padding_top=padding_top,
+                              padding_bottom=padding_bottom,
+                              vertical=True)
+                contents = group.lcg()
+        return lcg.Container(contents, orientation=orientation,
                              presentation=presentation,
                              halign=lcg.HorizontalAlignment.LEFT,
                              valign=lcg.VerticalAlignment.TOP)
