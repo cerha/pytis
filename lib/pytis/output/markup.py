@@ -57,6 +57,12 @@ def _something_to_lcg(something):
         result = something.lcg()
     return result
 
+def _color(color):
+    if isinstance(color, (tuple, list)):
+        color = lcg.Color(*color)
+    if isinstance(color, basestring):
+        color = lcg.Color(color)
+    return color
 
 class _Mark(object):
 
@@ -244,13 +250,15 @@ class HLine(_Mark):
           default thickness.  May be also passed directly as int or float which
           will be automatically converted to 'UMm' (milimeters).
         color -- line color as 'lcg.Color' or None for the (media dependent)
-          default color.
+          default color.  May be also passed directly as HTML string or a tuple
+          of ints or floats which will be automatically converted to 'Color'
+          instance with given constructor argument(s).
 
         """
         if not isinstance(thickness, lcg.Unit):
             thickness = lcg.UMm(thickness)
         self._thickness = thickness
-        self._color = color
+        self._color = _color(color)
         super(HLine, self).__init__()
 
     def _lcg(self):
@@ -422,7 +430,10 @@ class Group(_Container):
       boxed -- iff true, the group will have a box around
       box_margin -- space between the box and the content as 'Unit' instance or None
       box_width -- box line width as 'Unit' instance or None
-      box_color -- box line color as 'Color' instance
+      box_color -- box line color as 'Color' instance.  May be also passed
+          directly as HTML string or a tuple of ints or floats which will be
+          automatically converted to 'Color' instance with given constructor
+          argument(s).
       box_radius -- if not None and not 0, box corners will be rounded
         with given radius as 'Unit' instance
       padding -- space around group contents.  This space is added to
@@ -482,7 +493,7 @@ class Group(_Container):
             presentation.box_margin = unit(self.arg_box_margin)
             presentation.box_radius = unit(self.arg_box_radius)
             presentation.box_width = unit(self.arg_box_width)
-            presentation.box_color = self.arg_box_color
+            presentation.box_color = _color(self.arg_box_color)
         contents = self._lcg_contents()
         if self.arg_vertical:
             orientation = lcg.Orientation.VERTICAL
