@@ -65,6 +65,8 @@ PAGE_WIDTH = 'pwidth'
 """Šířka stránky, instance třídy 'Unit'."""
 PAGE_HEIGHT = 'pheight'
 """Výška stránky, instance třídy 'Unit'."""
+# Pokud nejsou uvedeny rozměry PAGE_WIDTH a PAGE_HEIGHT,
+# použijí se v pdf exporteru lcg standardní rozměry stránky A4.
 PAGE_TOP_MARGIN = 'top_margin'
 """Velikost horního okraje stránky, instance třídy 'Unit'."""
 PAGE_BOTTOM_MARGIN = 'bottom_margin'
@@ -75,6 +77,9 @@ PAGE_RIGHT_MARGIN = 'right_margin'
 """Velikost pravého okraje stránky, instance třídy 'Unit'."""
 PAGE_LANDSCAPE_MODE = 'landscape_mode'
 """Právě když je pravdivé, bude zaměněna výška a šířka stránky."""
+# Nastavení landscape módu se uplatní jen v případě, že nejsou
+# explicitně nastaveny PAGE_WIDTH a PAGE_HEIGHT. Ovlivňuje se tedy jen
+# landscape mód pro defaultní stránka A4.
 
 
 class AbortOutput(Exception):
