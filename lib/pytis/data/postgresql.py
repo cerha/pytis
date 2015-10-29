@@ -142,7 +142,7 @@ class _PgValue(object):
 class _Query(object):
 
     _n = 0
-    
+
     def __init__(self, template, args=None):
         assert isinstance(template, basestring), template
         assert args is None or isinstance(args, dict), args
@@ -293,7 +293,7 @@ class _QInsert(_Query):
         args = copy.copy(self._args)
         args[self._values_arg] = self.join(values)
         return _Query(self._template, args)
-    
+
 
 class PostgreSQLResult(object):
     """Na použitém backendu nezávislá reprezentace výsledku SQL příkazu.
@@ -304,15 +304,15 @@ class PostgreSQLResult(object):
     """
     def __init__(self, data):
         """
-        
+
         Argumenty:
 
           data -- datový objekt odpovídající výsledku; jedná-li se o sekvenci
             sekvencí stringů, fungují standardní metody v této třídě, v opačném
             případě je nutno tyto metody předefinovat
-        
+
         Příklady standardních hodnot 'data':
-        
+
           (('1', 'prvni'), ('2', 'druhy'), ('3', 'treti'))
           ()
           [['42']]
@@ -325,7 +325,7 @@ class PostgreSQLResult(object):
         # není ani mrhání CPU cykly, protože kód poběží na klientech, kteří
         # se stejně vesměs flákají.
         self._data = data
-        
+
     def __getitem__(self, row):
         """Vrať hodnotu výsledku z řádku 'row'.
 
@@ -343,7 +343,7 @@ class PostgreSQLResult(object):
         """Vrať počet řádků dat.
         """
         return len(self._data)
-    
+
 
 class PostgreSQLAccessor(object_2_5):
     """Třída pro low-level přístup k PostgreSQL.
@@ -371,7 +371,7 @@ class PostgreSQLAccessor(object_2_5):
 
               connection -- spojení do databázového stroje
               connection_data -- specifikace parametrů spojení
-              
+
             """
             self._connection_set.add(self)
             self._connection = connection
@@ -418,13 +418,13 @@ class PostgreSQLAccessor(object_2_5):
 
               result -- výsledek SQL příkazu v podobě závislé na použitém
                backendu
-               
+
             """
             self._result = result
 
         def result(self):
             return self._result
-    
+
     def _postgresql_new_connection(self, connection_data):
         """Vytvoř, inicializuj a vrať nové spojení do databáze.
 
@@ -434,7 +434,7 @@ class PostgreSQLAccessor(object_2_5):
 
           connection_data -- dictionary obsahující přihlašovací údaje jako
             stroj, port, uživatel, heslo, atd.
-            
+
         """
         connection = self._postgresql_open_connection(connection_data)
         self._postgresql_initialize_connection(connection)
@@ -466,21 +466,21 @@ class PostgreSQLAccessor(object_2_5):
             '_postgresql_Connection'
 
         V této třídě metoda nedělá nic.
-        
+
         """
         pass
-    
+
     def _postgresql_initialize_connection(self, connection):
         """Proveď potřebné inicializace nového spojení 'connection'.
 
         Pozor, tato metoda může být volána z jakékoliv instance třídy, nesmí
         tedy zde být nic specifického pro konkrétní instanci.
-        
+
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
         self._postgresql_initialize_crypto(connection)
-        
+
     def _postgresql_initialize_transactions(self, connection):
         """Nastav způsob provádění transakcí pro konkrétní backend."""
         pass
@@ -520,7 +520,7 @@ class PostgreSQLAccessor(object_2_5):
                 query = _Query("set search_path to " + search_path)
                 self._postgresql_query(connection, query, False)
                 connection.set_connection_info('search_path', search_path)
-        
+
     def _postgresql_query(self, connection, query, restartable):
         """Perform SQL 'query' and return the result.
 
@@ -548,16 +548,16 @@ class PostgreSQLAccessor(object_2_5):
           result -- instance '_postgresql_Result'
 
         Tato metoda musí být předefinována v podtřídě.
-        
+
         """
         raise ProgramError(_(u"Method not implemented"))
 
     def _postgresql_begin_transaction(self):
         self._pg_query(_Query('begin'))
-                
+
     def _postgresql_commit_transaction(self):
         self._pg_query(_Query('commit'))
-        
+
     def _postgresql_rollback_transaction(self):
         self._pg_query(_Query('rollback'))
 
@@ -597,7 +597,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
     """
 
     _pg_connection_pool_ = None
-    
+
     def __init__(self, connection_data, connection_name=None, **kwargs):
         """
         Arguments:
@@ -641,7 +641,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
     def _pg_connections(self):
         return self._pg_connections_
-    
+
     def _pg_get_connection(self, outside_transaction=False):
         connections = self._pg_connections()
         if outside_transaction or not connections:
@@ -650,7 +650,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         else:
             connection = connections[-1], False
         return connection
-        
+
     def _pg_return_connection(self, connection):
         pool = self._pg_connection_pool()
         pool.put_back(connection.connection_data(), connection)
@@ -659,7 +659,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         """Call the SQL 'query' and return the result.
 
         Arguments:
-        
+
           query -- '_Query' instance
           outside_transaction -- iff it is true, the query is performed outside
             the current transaction (if there is any)
@@ -673,7 +673,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
         The method must properly handle database exception and in case any is
         caught the corresponding 'DBException' must be raised.
-        
+
         """
         assert isinstance(query, _Query), query
         assert transaction is None or not outside_transaction, \
@@ -733,13 +733,13 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         """
         import config
         config.dbconnection.set_crypto_password(password)
-        config.dbconnection = config.dbconnection # mark as changed
+        config.dbconnection = config.dbconnection  # mark as changed
         self._pg_flush_connections()
-        
+
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
     """Třída pro zjišťování skupin uživatele."""
-    
+
     _access_groups = {}
     _access_groups_data_objects = {}
     _logical_access_groups = UNDEFINED
@@ -1104,7 +1104,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Vrať sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
             t = self._pdbb_get_table_type(binding.table(), binding.column(), noerror=True)
-            return self._pdbb_apply_type_kwargs(t, binding.type(), binding.kwargs())
+            return self._pdbb_apply_type_kwargs(t, binding)
         result = None
         if operations is not None:
             for aggregate, id_, name in operations:
@@ -1331,7 +1331,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'inet': Inet,
                         'macaddr': Macaddr,
                         'bytea': Binary,
-                        'oid': pytis.data.Oid, # for backward compatibility
+                        'oid': pytis.data.Oid,  # for backward compatibility
                         }
         if type_ and type_[0] == '_':
             array = True
@@ -1373,7 +1373,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             db_type_cls = pytis.data.Array
         return db_type_cls(**db_type_kwargs)
 
-    def _pdbb_apply_type_kwargs(self, ctype, btype, kwargs):
+    def _pdbb_apply_type_kwargs(self, ctype, binding):
+        btype = binding.type()
+        kwargs = binding.kwargs()
         if btype:
             if type(btype) == type(pytis.data.Type):
                 btype = btype()
@@ -1382,10 +1384,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 ctype = btype
             else:
                 assert (isinstance(btype, ctype.__class__)
-                        or isinstance(btype, TimeInterval) # temporary hack
+                        or isinstance(btype, TimeInterval)  # temporary hack
                         and ctype.__class__ == Time), \
                     "%s.%s: User type doesn't match DB type: %s, %s" % \
-                    (table, column, btype, ctype)
+                    (binding.table(), binding.column(), btype, ctype)
                 ctype = ctype.clone(btype)
         if ctype and kwargs:
             if isinstance(ctype, pytis.data.Array) and 'inner_type' not in kwargs:
@@ -1408,7 +1410,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 raise Exception("Column types must be specified for table functions",
                                 b.id(), b.table(),)
-            t = self._pdbb_apply_type_kwargs(table_type, b.type(), b.kwargs())
+            t = self._pdbb_apply_type_kwargs(table_type, b)
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
@@ -1862,9 +1864,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             function, args = op_args[0], op_args[1:]
             queries = []
             for a in args:
-                if isinstance(a, basestring): # column name
+                if isinstance(a, basestring):  # column name
                     queries.append(colarg(a)[0])
-                elif isinstance(a, Value): # direct value
+                elif isinstance(a, Value):  # direct value
                     queries.append(a)
                 else:
                     raise ProgramError("Invalid function condition argument", a)
@@ -2773,7 +2775,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pointer = pointer
             result = buffer[pointer]
             if __debug__:
-                log(DEBUG, 'Buffer hit:', pointer) #, str(result))
+                log(DEBUG, 'Buffer hit:', pointer)  # , str(result))
             return result
 
         def correction(self, direction, row_count_info):
@@ -3535,10 +3537,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_select_transaction is not None and not self._pg_select_user_transaction:
             try:
                 self._pg_select_transaction.commit()
-            except DBSystemException: # e.g. after db engine restart
+            except DBSystemException:  # e.g. after db engine restart
                 pass
             self._pg_select_transaction = None
-        elif self._pg_select_transaction is not None: # inside user transaction
+        elif self._pg_select_transaction is not None:  # inside user transaction
             if self._pg_select_transaction.open():
                 query = self._pdbb_command_close_select.update(args)
                 transaction = self._pg_select_transaction
@@ -3549,7 +3551,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def select_active(self):
         return self._pg_select_transaction is not None
-        
+
     def insert(self, row, after=None, before=None, transaction=None):
         assert after is None or before is None, 'Both after and before specified'
         log(ACTION, 'Insert row:', (row, after, before))
@@ -3631,7 +3633,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     else:
                         new_row = self.row(new_key, transaction=transaction)
                         result = new_row, True
-            else: # not origrow
+            else:  # not origrow
                 msg = 'Row with given key does not exist'
                 result = msg, False
                 log(ACTION, msg, key)
@@ -4091,13 +4093,13 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         c = self._trans_connection()
         value = max(c.connection_info('last_query_time') or 0, moment)
         c.set_connection_info('last_query_time', value)
-        
+
     @classmethod
     def close_transactions(class_):
         """Check all transactions for timeout.
 
         Call timeout callbacks for timeouted transactions.
-        
+
         """
         T = DBPostgreSQLTransaction
         if T._trans_check_interval is None:

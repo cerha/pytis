@@ -129,8 +129,8 @@ def _evparse_string(text):
     i = 0
     while text[i] != '"':
         i = i + 1
-    return text[:i], text[i+1:]
-    
+    return text[:i], text[i + 1:]
+
 def _evparse_boolean(text):
     if text[:len('false')] == 'false':
         return False, text[len('false'):]
@@ -154,4 +154,4 @@ def _evparse_array(text):
     i = 0
     while text[i] != ']':
         i = i + 1
-    return None, text[i+1:]
+    return None, text[i + 1:]

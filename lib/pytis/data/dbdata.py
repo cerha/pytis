@@ -84,14 +84,14 @@ class DBData(Data):
     DB-SIG API.
 
     Všechny metody této třídy přístupující k datům mohou metat 'DBException'.
-    
+
     """
     def __init__(self, bindings, ordering=None, distinct_on=(), arguments=None,
                  crypto_names=(), **kwargs):
         """Inicializuj tabulku s napojením do databáze.
 
         Argumenty:
-        
+
           bindings -- sekvence instancí třídy 'DBBinding'
           ordering -- stejné jako v předkovi
           distinct_on -- sequence of column names to add as a DISTINCT TO part
@@ -111,7 +111,7 @@ class DBData(Data):
 
         Žádné dva prvky 'bindings' by neměly mít shodné id, s výjimkou skrytých
         bindings, která mají jako id prázdný řetězec.
-        
+
         """
         assert is_sequence(bindings), ('Invalid binding type', bindings)
         self._bindings = tuple(bindings)
@@ -176,9 +176,9 @@ class DBData(Data):
         Pokud pro 'col_id' není žádné binding definováno, vrať 'None'.
 
         Argumenty:
-        
+
           col_id -- identifikace tabulkového sloupce jako string
-          
+
         """
         for b in self._bindings:
             if b.id() == col_id:
@@ -226,10 +226,10 @@ class DBData(Data):
 
         It includes crypto names given in the constructor and crypto names
         defined in bindings.
-        
+
         """
         return self._crypto_names
-        
+
 
 class DBConnectionPool:
 
@@ -346,7 +346,7 @@ class DBConnectionPool:
         """Return list of current transaction commands of all known connections.
 
         It's useful when debugging idle transactions or connection leaks.
-        
+
         """
         info = []
         for connections in self._allocated_connections.values():
@@ -357,7 +357,7 @@ class DBConnectionPool:
 
 ### Specifikační třídy
 
-    
+
 class DBConnection:
     """Specifikace parametrů pro připojení do databáze.
 
@@ -370,13 +370,13 @@ class DBConnection:
 
     """
     _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode', 'schemas',)
-    
+
     def __init__(self, user=None, password=None, host=None, port=None,
                  database=None, sslmode='allow', schemas=None, alternatives={}, _name=None):
         """Initialize connection specification instance.
 
         Arguments:
-        
+
           user -- database user as a string or 'None'
           password -- database password as a string or 'None'
           host -- database server name as a string or 'None'
@@ -417,7 +417,7 @@ class DBConnection:
         return dict([(option, self.__dict__['_' + option])
                      for option in self._OPTIONS
                      if option not in exclude and self.__dict__['_' + option] is not None])
-    
+
     def __str__(self):
         options = ["%s='%s'" % item for item in self._options(exclude=('password',)).items()]
         return "<%s %s>" % (self.__class__.__name__, ", ".join(options))
@@ -467,7 +467,7 @@ class DBConnection:
         Available connection names are defined by the 'alternatives' constructor argument.  'None'
         is reserved for the default connection.  The list of alternative connections is kept, so it
         is possible to switch back to a previous connection using 'select()' again.
-        
+
         """
         if name == self._name:
             return self
@@ -521,14 +521,14 @@ class DBConnection:
 
         """
         return self._crypto_password
-    
+
     def set_crypto_password(self, password):
         """Set instance crypto password to 'password'.
 
         Arguments:
 
           password -- the password, string
-          
+
         """
         self._crypto_password = password
 
@@ -537,22 +537,22 @@ class DBBinding:
     """Definice napojení dat do databáze.
 
     Tato definice je využívána třídou 'DBData' a jejími potomky.
-    
+
     Tato třída je pouze abstraktním základem, který definuje pouze stringový
     identifikátor instance napojení.  Mechanismy pro skutečné definice
     databázových napojení poskytují až potomci této třídy.
 
     Třída je specifikována jako immutable a jako taková může být libovolně
     sdílena.
-    
+
     """
     def __init__(self, id):
         """Definuj napojení.
 
         Argumenty:
-        
+
           id -- identifikátor napojení, libovolný string
-          
+
         """
         assert isinstance(id, basestring)
         self._id = id
@@ -567,17 +567,17 @@ class DBColumnBinding(DBBinding):
 
     Tato vazba je dána jménem databázové tabulky a jejího sloupce, na který
     se tabulkový sloupec mapuje.
-    
+
     Třída je specifikována jako immutable a jako taková může být libovolně
     sdílena.
-    
+
     """
     def __init__(self, id, table, column, related_to=None, type_=None, crypto_name=None,
                  encrypt_empty=True, **kwargs):
         """Define a column binding.
 
         Argumenty:
-        
+
           id -- id sloupce
           table -- jméno databázové tabulky, do které má být tabulkový sloupec napojen, jako string
           column -- jméno sloupce databázové tabulky, na který má být tabulkový sloupec napojen,
@@ -650,15 +650,15 @@ class DBColumnBinding(DBBinding):
     def crypto_name(self):
         """Return 'crypto_name' value given in the constructor, 'None' or string."""
         return self._crypto_name
-    
+
     def encrypt_empty(self):
         """Return 'encrypt_empty' value given in the constructor, boolean."""
         return self._encrypt_empty
-    
+
     def kwargs(self):
         """Vrať slovník klíčových argumentů konstruktoru dat. typu sloupce."""
         return self._kwargs
-    
+
     def is_hidden(self):
         """Vrať pravdu, právě když sloupec není přítomen v datové tabulce."""
         return self._is_hidden
@@ -670,7 +670,7 @@ class DBColumnBinding(DBBinding):
     def __cmp__(self, other):
         return compare_attr(self, other,
                             ('_table', '_column', '_related_to', '_type', '_is_hidden'))
-    
+
     def __hash__(self):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
@@ -731,7 +731,7 @@ class DBSystemException(DBException):
     'DBSystemException' pouze tehdy, je-li schopno rozpoznat, že se jedná
     o systémovou chybu.  To znamená, že systémová chyba může být signalizována
     i jako prostá 'DBException'.
-    
+
     """
 
 
@@ -746,7 +746,7 @@ class DBRetryException(DBSystemException):
     queries(typically when it is raised at the beginning of a transaction).
 
     """
-    
+
 
 class DBUserException(DBException):
     """Výjimka nahazovaná v případě vzniku uživatelské databázové chyby.
@@ -759,7 +759,7 @@ class DBUserException(DBException):
     'DBUserException' pouze tehdy, je-li schopno rozpoznat, že se jedná
     o uživatelskou chybu.  To znamená, že uživatelská chyba může být
     signalizována i jako prostá 'DBException'.
-    
+
     """
 
 

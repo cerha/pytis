@@ -46,7 +46,7 @@ class Permission:
     user commands will mostly use 'CALL' permission.
 
     """
-    
+
     VIEW = 'VIEW'
     """Right to view the contents."""
     INSERT = 'INSERT'
@@ -86,7 +86,7 @@ class Permission:
 
 class AccessRights(object):
     """Access rights specification."""
-    
+
     def __init__(self, *access_rights):
         """
         Arguments:
@@ -152,7 +152,7 @@ class AccessRights(object):
             return True
         ok_groups = self.permitted_groups(permission, column)
         return (None in ok_groups) or some(lambda g: g in ok_groups, groups)
-    
+
     def permitted(self, permission, groups, column=None):
         """Return true iff any of 'groups' has got 'permission'.
 
@@ -190,12 +190,12 @@ class AccessRights(object):
         """Return list of groups with 'permission' to 'column'.
 
         Arguments:
-        
+
           permission -- asked permission, one of the 'Permission' class
             constants except of 'Permission.ALL'
           column -- name of the column (as a string) to test the permission
             against, or 'None' in which case implicit rights are tested
-            
+
         """
         groups = self._permitted_groups(permission, column)
         if column is None:
@@ -225,14 +225,13 @@ class DBAccessRights(AccessRights):
           object-name -- symbolic identifier (as a string) of the access rights
             in the database
           connection_data -- connection parameters specification
-          
+
         """
         access_rights = self._build_access_rights(object_name, connection_data)
         super(DBAccessRights, self).__init__(*access_rights)
 
     def _build_access_rights(self, object_name, connection_data):
         import pytis.data
-        import config
         access_rights = []
         bindings = [pytis.data.DBColumnBinding(name, 'pytis.access_rights', name)
                     for name in 'id', 'object', 'column_', 'group_', 'permission']
@@ -254,11 +253,11 @@ class DBAccessRights(AccessRights):
             except:
                 pass
         return access_rights
-    
+
 
 class RestrictedData(Data):
     """Data object with restricted access to its operations."""
-    
+
     def __init__(self,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  **kwargs):
@@ -267,7 +266,7 @@ class RestrictedData(Data):
 
           access_rights -- 'AccessRights' instance defining access rights to
             the object
-          
+
         """
         super(RestrictedData, self).__init__(access_rights=access_rights,
                                              **kwargs)
@@ -288,7 +287,7 @@ class RestrictedData(Data):
                                                  column=c):
                 table = self._bindings[0].table()
                 raise DataAccessException(permission, table=table, column=c)
-        
+
     def _check_access_condition_columns(self, condition):
         # Toto původně byla lokální funkce v `_check_access_condition'.
         # Jenomže je rekurzivní, což vede k tomu, že nemůže být uvolněna (sice
@@ -311,7 +310,7 @@ class RestrictedData(Data):
             return [column]
         else:
             return [condition.args()[0]]
-        
+
     def _check_access_condition(self, condition):
         return True
 
@@ -348,7 +347,7 @@ class RestrictedData(Data):
         """
         return self._access_rights.permitted(permission, self.access_groups(),
                                              column=column_id)
-    
+
     # Předefinované metody.
     # Je nutno dbát opatrnosti u conditions a dalších argumentů, protože ty
     # umožňují získávat informace o datech nepřímo.
@@ -364,15 +363,15 @@ class RestrictedData(Data):
         self._check_access_sorting(sort)
         return super(RestrictedData, self).select(condition=condition,
                                                   sort=sort, **kwargs)
-    
+
     def fetchone(self, **kwargs):
         row = super(RestrictedData, self).fetchone(**kwargs)
         return self._access_filter_row(row)
-        
+
     def search(self, condition, **kwargs):
         self._check_access_condition(condition)
         return super(RestrictedData, self).search(condition, **kwargs)
-        
+
     def insert(self, row, **kwargs):
         row = self._access_filter_row(row, Permission.INSERT)
         resrow, result = super(RestrictedData, self).insert(row, **kwargs)
@@ -407,12 +406,12 @@ class RestrictedMemData(RestrictedData, MemData):
     data, but support of the access rights checking protocol that allows to use
     memory data objects in forms (so called virtual forms not bound to a
     database table).
-    
+
     """
     def __init__(self, columns, **kwargs):
         super(RestrictedMemData, self).__init__(columns=columns, **kwargs)
-        
-    
+
+
 class DataAccessException(Exception):
     """Exception raised on access rights violation."""
 
@@ -426,7 +425,7 @@ class DataAccessException(Exception):
             'None'
           column -- name of the column which couldn't be accessed, string or
             'None'
-            
+
         """
         import config
         log(EVENT, 'Access violation attempt',
@@ -438,11 +437,11 @@ def is_in_groups(access_groups):
     """Return true iff the current user is a member of any of the groups.
 
     Arguments:
-    
+
       'access_groups' -- sequence of group names (as strings) to test the user
         against, or 'None'; if it is 'None' then true is returned
         unconditionally.
-    
+
     """
     import config
     from pytis.data import default_access_groups

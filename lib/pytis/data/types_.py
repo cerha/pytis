@@ -78,7 +78,7 @@ class UnsupportedPrimitiveValueConversion(Exception):
         msg = 'Object of type %s can not be converted to a primitive value.' % type
         super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
 
-    
+
 class Type(object):
     """Abstract base class for all data type specific classes.
 
@@ -88,7 +88,7 @@ class Type(object):
     modified during their life time and may be shared without a limitation.
 
     Constructor arguments:
-        
+
       not_null -- flag saying the value must not be empty.  Empty value is
         None or any other value mapped to None in '_SPECIAL_VALUES'.
       enumerator -- enumerator specification as 'Enumerator' instance or
@@ -111,7 +111,7 @@ class Type(object):
 
     """
     __metaclass__ = _MType
-    
+
     class _TypeTable:
 
         def __init__(self):
@@ -162,9 +162,9 @@ class Type(object):
     _VM_NULL_VALUE_MSG = _(u"Empty value")
     # Translators: User input validation error message.
     _VM_INVALID_VALUE_MSG = _(u"Invalid value")
-    
+
     _SPECIAL_VALUES = ()
-    
+
     _VALIDATION_CACHE_LIMIT = 1000
 
     def _make(class_, *args, **kwargs):
@@ -192,7 +192,7 @@ class Type(object):
 
         """
         return Type._type_table
-    
+
     def __init__(self, **kwargs):
         """Initialize the instance.
 
@@ -205,16 +205,16 @@ class Type(object):
         The purpose of overriding '_init()' instead of '__init__()' is to be
         able to save the dictionary of explicitly passed constructor arguments
         here.  This allows type cloning (see 'clone()').
-        
+
         """
         self._constructor_kwargs = kwargs
         self._init(**kwargs)
         super(Type, self).__init__()
-                 
+
     def _init(self, not_null=False, enumerator=None, constraints=(),
               validation_messages=None, unique=False):
         """Initialize the instance.
-        
+
         Defines constructor arguments and their default values.  You typically
         want to override this method in derived classes to define type specific
         constructor arguments or default values of inherited arguments as you
@@ -278,7 +278,7 @@ class Type(object):
     def __getstate__(self):
         assert self._id is not None, ('Improper type instance', self)
         return self._id
-    
+
     def __setstate__(self, state):
         if not isinstance(state, int):
             raise InvalidAccessError('Invalid type identifier', state)
@@ -298,13 +298,13 @@ class Type(object):
         assert isinstance(other, self.__class__), '%s, %s' % (self.__class__, other)
         kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
         return other.__class__(**kwargs)
-            
+
     def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
         """Validate the 'object' and return a 'Value' instance and an error.
 
         Arguments:
-        
+
           object -- an object to be converted to a value
           strict -- passing 'False' leads to a ``tolerant'' validation.  No
             constraints are checked and the method does its best to convert
@@ -339,7 +339,7 @@ class Type(object):
 
         Derived classes should not override this method.  They should override
         '_validate()' instead.
-        
+
         """
         # Tato metoda je zároveň používána i pro převod hodnot získaných
         # z databázového rozhraní.  To není úplně ideální, ale je to zatím
@@ -373,10 +373,10 @@ class Type(object):
             self._check_constraints(value.value(), transaction=transaction, condition=condition,
                                     arguments=arguments)
         return value
-    
+
     def _validate(self, object, **kwargs):
         return Value(self, None), None
-    
+
     def wm_validate(self, object):
         """Zvaliduj objekt pro wildcard matching.
 
@@ -401,7 +401,7 @@ class Type(object):
         if kwargs:
             message %= kwargs
         return ValidationError(message)
-        
+
     def _check_constraints(self, value, transaction=None, condition=None, arguments=None):
         if value is None:
             if self._not_null:
@@ -438,10 +438,10 @@ class Type(object):
         """Return pair (ARGS, KWARGS) containing constructor arguments.
 
         This is useful when you need to create a modified type instance.
-        
+
         """
         return self._init_args
-            
+
     def export(self, value, *args, **kwargs):
         """Vrať stringovou reprezentaci 'value' schopnou validace.
 
@@ -470,7 +470,7 @@ class Type(object):
         """Return the default value as a 'Value' instance.
 
         If no such value exists or doesn't make sense, return 'None'.
-        
+
         The returned value may be used for example for initialization of a new
         record.
 
@@ -486,7 +486,7 @@ class Type(object):
 
         'value' must be a valid internal python value corresponding to the type
         (obtained for example by validation).
-        
+
         The basic types include python's 'bool', 'int', 'float', 'str',
         'unicode', 'list', 'dict' and 'NoneType'.  Most types are represented
         directly by basic python values, but some types, such as date/time must
@@ -500,7 +500,7 @@ class Type(object):
 
         This method may be useful for all kinds of value serializations, such
         as JSON conversion.
-        
+
         """
         return value
 
@@ -517,7 +517,7 @@ class Type(object):
     def sqlalchemy_type(self):
         """Return corresponding SQLAlchemy type, sqlalchemy.types.TypeEngine instance."""
         raise Exception("Not implemented", self)
-       
+
 
 class Number(Type):
     """Abstraktní typová třída, která je základem všech numerických typů.
@@ -526,15 +526,15 @@ class Number(Type):
     numerickými typy, aby tyto byly jakožto číselné snadno rozpoznatelné.
 
     Constructor arguments:
-      
+
       minimum -- minimal value; 'None' denotes no limit.
       maximum -- maximal value; 'None' denotes no limit.
-            
+
     Other arguments are passed to the parent constructor.
-        
+
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
-    
+
     VM_MINIMUM = 'VM_MINIMUM'
     # Translators: User input validation error message.
     _VM_MINIMUM_MSG = _(u"Minimal value is %(minimum)s")
@@ -560,7 +560,7 @@ class Number(Type):
         """Return the minimal value.
 
         'None' denotes no limit.
-        
+
         """
         return self._minimum
 
@@ -568,7 +568,7 @@ class Number(Type):
         """Return the maximal value.
 
         'None' denotes no limit.
-        
+
         """
         return self._maximum
 
@@ -579,14 +579,14 @@ class Number(Type):
                 raise self._validation_error(self.VM_MINIMUM, minimum=self._minimum)
             if self._maximum is not None and value > self._maximum:
                 raise self._validation_error(self.VM_MAXIMUM, maximum=self._maximum)
-    
+
 
 class Big(Type):
     """Mixin class denoting types with big values.
 
     Instances of this type are sometimes handled in Pytis in a special way,
     e.g. they are not printed to the terminal log.
-    
+
     """
 
 class Large(Big):
@@ -602,17 +602,17 @@ class Limited(Type):
 
     Minimal and maximal length of a value of this type can be limited by passing the
     `minlen' and `maxlen' constructor arguments.
-    
+
     Constructor arguments:
-     
+
       minlen -- minimal length of a value of this type as integer or
         'None'; 'None' denotes unlimited minimal length.
-          
+
       maxlen -- maximal length of a value of this type as integer or
         'None'; 'None' denotes unlimited maximal length.
-          
+
     Other arguments are passed to the parent constructor.
-    
+
     """
 
     VM_MINLEN = 'VM_MINLEN'
@@ -640,7 +640,7 @@ class Limited(Type):
         """Return the minimal length of the value as an integer or 'None'.
 
         'None' denotes unlimited minimal length.
-        
+
         """
         return self._minlen
 
@@ -648,7 +648,7 @@ class Limited(Type):
         """Return the maximal length of the value as an integer or 'None'.
 
         'None' denotes unlimited length.
-        
+
         """
         return self._maxlen
 
@@ -689,7 +689,7 @@ class Range(Type):
         _type = None
         _default_lower_inc = True
         _default_upper_inc = False
-        
+
         def __init__(self, lower, upper, lower_inc=None, upper_inc=None):
             self._lower = lower
             self._upper = upper
@@ -731,7 +731,7 @@ class Range(Type):
                         cmp_(range_1._upper, range_2._upper))
             else:
                 return compare_objects(self, other)
-        
+
         def __len__(self):
             return 2
 
@@ -795,7 +795,7 @@ class Range(Type):
                                                  lower=v1_value, upper=v2_value)
             value = self.Range(v1_value, v2_value,)
         return Value(self, value), None
-        
+
     def export(self, value, *args, **kwargs):
         if value is None:
             return self._NULL_RANGE_VALUE
@@ -813,7 +813,7 @@ class Range(Type):
 
     _LOWER_BOUND = 'LOWER_BOUND'
     _UPPER_BOUND = 'UPPER_BOUND'
-    
+
     def _adjust_bound(self, bound, value, value_inc):
         assert isinstance(value_inc, bool), value_inc
         if bound is self._LOWER_BOUND:
@@ -833,10 +833,10 @@ class Range(Type):
 
     def _increase_bound(self, value):
         raise Exception("Changing bounds not possible for this type")
-            
+
     def _decrease_bound(self, value):
         raise Exception("Changing bounds not possible for this type")
-            
+
     def adjust_value(self, value):
         if value is None:
             return None
@@ -856,7 +856,7 @@ class Range(Type):
         """Return instance of the underlying types of the range type.
 
         This is the type of the two values of the range pair.
-        
+
         """
         raise Exception("Not implemented")
 
@@ -867,10 +867,10 @@ class Integer(Number):
     VM_NONINTEGER = 'VM_NONINTEGER'
     # Translators: User input validation error message.
     _VM_NONINTEGER_MSG = _(u"Not an integer")
-    
+
     def _validate(self, string):
         """Pokus se převést 'string' na plain nebo long integer.
-        
+
         Pokud je 'string' možno převést na plain integer, je správný a vrácená
         instance třídy 'Value' obsahuje odpovídající hodnotu jako plain
         integer.  V jiném případě platí analogické pravidlo pro long integers.
@@ -879,7 +879,7 @@ class Integer(Number):
 
         Metoda validuje všechny zápisy integers akceptované Pythonem, zejména
         tedy i long integers ve tvaru '1L'.
-        
+
         """
         assert isinstance(string, basestring), ('Not a string', string)
         try:
@@ -939,7 +939,7 @@ class SmallInteger(Integer):
 class LargeInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
-        
+
 class LargeIntegerRange(Range, Integer):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -1007,7 +1007,7 @@ class Float(Number):
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
     # Translators: User input validation error message.
     _VM_INVALID_NUMBER_MSG = _(u"Invalid number")
-    
+
     def _init(self, precision=None, digits=None, **kwargs):
         super(Float, self)._init(**kwargs)
         assert precision is None or precision >= 0, ('Invalid precision', precision,)
@@ -1027,7 +1027,7 @@ class Float(Number):
     def digits(self):
         """Return number of digits given in the constructor."""
         return self._digits
-    
+
     def _validate(self, string_, precision=None, rounding=None, locale_format=True):
         """Pokus se převést 'string_' na float.
 
@@ -1046,7 +1046,7 @@ class Float(Number):
             přesnost; 'None' značí standardní zaokrouhlení, konstanta 'CEILING'
             zaokrouhlení směrem nahoru, konstanta 'FLOOR' zaokrouhlení směrem
             dolů (pozor na záporná čísla, platí to pro ně také přesně takto!)
-        
+
         """
         assert isinstance(string_, basestring), ('Not a string', string_)
         assert (precision is None or isinstance(precision, int) and precision >= 0), \
@@ -1139,7 +1139,7 @@ class Float(Number):
         else:
             cast = float
         return cast(value)
-    
+
     def sqlalchemy_type(self):
         if self._digits is True:
             alchemy_type = sqlalchemy.Numeric()
@@ -1156,7 +1156,7 @@ class DoublePrecision(Float):
     """Database double precision type.
 
     Useful in specifications.
-    
+
     """
     def __init__(self, **kwargs):
         super(DoublePrecision, self).__init__(**kwargs)
@@ -1165,11 +1165,11 @@ class DoublePrecision(Float):
         if value is not None and not isinstance(value, float):
             raise TypeError("Value not a float", value)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.DOUBLE_PRECISION()
 
-        
+
 class Monetary(Float):
     """Monetary type.
 
@@ -1177,7 +1177,7 @@ class Monetary(Float):
 
     Web forms will be able to render such fields with locale specific monetary
     formatting.
-    
+
     """
     def _init(self, precision=2, **kwargs):
         super(Monetary, self)._init(precision=precision, **kwargs)
@@ -1196,13 +1196,13 @@ class String(Limited):
     # Translators: User input validation error message.
     _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
-    
+
     def _validate(self, string):
         """Vrať instanci třídy 'Value' s hodnotou 'string'.
 
         Pokud byla v konstruktoru specifikována maximální délka, 'string' je
         správný právě tehdy, není-li delší než tato délka.
-        
+
         """
         assert isinstance(string, basestring), ('Not a string', string)
         return Value(self, unicode(string)), None
@@ -1221,7 +1221,7 @@ class String(Limited):
         if value is not None and not isinstance(value, basestring):
             raise TypeError("Value not a string", value)
         return value
-    
+
     def sqlalchemy_type(self):
         if self.minlen() is None and self.maxlen() is None:
             result = sqlalchemy.TEXT()
@@ -1236,14 +1236,14 @@ class Name(String):
     """String type to be identified as 'name' in the database.
 
     Useful in database specifications.
-    
+
     """
-    
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.NAME()
 
-    
+
 class Password(String):
     """Specialized string type for password fields.
 
@@ -1260,7 +1260,7 @@ class Password(String):
        must be passed as the 'verify' argument to the 'validate()' method.
 
     Constructor arguments:
-    
+
       verify -- boolean flag indicating, that user input should be verified by
         the user interface by presenting two controls for entering the
         password.  Both inputs must match to pass validation.
@@ -1271,7 +1271,7 @@ class Password(String):
         must be a function of a single argument, the password string, that
         returns either 'None' when the password is strong enough or an error
         message if the password is weak.
-         
+
       md5 -- DEPRECATED; Use a virtual field for password entry and a computer
         function to create a hash; The built-in md5 hashing doesn't use salt so
         can not be considered secure; Original docstring: boolean flag
@@ -1306,7 +1306,7 @@ class Password(String):
     VM_MIX_CHARACTERS = 'VM_MIX_CHARACTERS'
     # Translators: User input validation error message.
     _VM_MIX_CHARACTERS_MSG = _(u"Please use mix of letters and non-letters in your password")
-    
+
     def _init(self, md5=False, verify=True, strength=None, **kwargs):
         super(Password, self)._init(**kwargs)
         assert isinstance(md5, bool)
@@ -1331,7 +1331,7 @@ class Password(String):
                 non_letters = True
         if not letters or not non_letters:
             return self._VM_MIX_CHARACTERS_MSG
-        
+
     def _validate(self, string, verify=None, **kwargs):
         if verify is not None:
             if not verify:
@@ -1362,21 +1362,21 @@ class Password(String):
                 return None, self._validation_error(self.VM_INVALID_MD5)
         return value, error
 
-    
+
 class RegexString(String):
 
     VM_FORMAT = 'VM_FORMAT'
     # Translators: User input validation error message.
     _VM_FORMAT_MSG = _(u"Invalid format")
     _REGEX = None
-    
+
     def _init(self, regex=None, **kwargs):
         super(RegexString, self)._init(**kwargs)
         if regex is None:
             self._regex = self._REGEX
         else:
             self._regex = re.compile(regex)
-    
+
     def _validate(self, string, *args, **kwargs):
         # TODO: Shall we rather do the regexp check in _check_constraints?
         value, error = super(RegexString, self)._validate(string, *args, **kwargs)
@@ -1384,7 +1384,7 @@ class RegexString(String):
             value, error = None, self._validation_error(self.VM_FORMAT)
         return value, error
 
-    
+
 class Color(RegexString):
     """Barva reprezentovaná řetězcem '#RRGGBB'."""
 
@@ -1395,7 +1395,7 @@ class Color(RegexString):
     def sqlalchemy_type(self):
         return sqlalchemy.String(length=7)
 
-    
+
 class Inet(String):
     """IPv4 nebo IPv6 adresa."""
 
@@ -1408,7 +1408,7 @@ class Inet(String):
     _VM_INET_MASK_MSG = _(u"Invalid inet address mask: %(mask)s")
     # Translators: User input validation error message.
     _VM_INET_ADDR_MSG = _(u"Invalid inet address value %(addr)s")
-    
+
     _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
     def _validate(self, string, *args, **kwargs):
@@ -1440,16 +1440,16 @@ class Macaddr(String):
     VM_MACADDR_FORMAT = 'VM_MACADDR_FORMAT'
     # Translators: User input validation error message.
     _VM_MACADDR_FORMAT_MSG = _(u"Invalid format")
-    
+
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
-    
+
     def _validate(self, string, *args, **kwargs):
         if not self._MACADDR_FORMAT.match(string):
             raise self._validation_error(self.VM_MACADDR_FORMAT)
         macaddr = string.replace(':', '').replace('-', '')
         value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
         return Value(self, unicode(value)), None
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.MACADDR()
 
@@ -1466,12 +1466,12 @@ class Email(String):
     _EMAIL_FORMAT = re.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
                                "[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
                                "(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-    
+
     def _validate(self, string, *args, **kwargs):
         if not self._EMAIL_FORMAT.match(string):
             raise self._validation_error(self.VM_EMAIL_FORMAT)
         return Value(self, unicode(string)), None
-    
+
 
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
@@ -1479,7 +1479,7 @@ class TreeOrderBase(Type):
     The type itself does not implement any specific features.  It has strictly specificational
     meaning.  If such a column is detected within a list, the user interface may try to render the
     tree structure of the items according to the tree level value.
-    
+
     """
     pass
 
@@ -1497,7 +1497,7 @@ class FullTextIndex(String):
     inserted at all into it.  All this type is able to do is to enable access
     to 'pytis.data.FT' operator and to enable access to full text search result
     headlines.
-    
+
     Constructor arguments:
 
       columns -- tuple of column ids (strings), these columns will be included
@@ -1514,7 +1514,7 @@ class FullTextIndex(String):
         """Return sequence of column ids given in constructor."""
         return self._columns
 
-    
+
 class _LocalTimezone(datetime.tzinfo):
 
     def __init__(self):
@@ -1577,9 +1577,9 @@ class _CommonDateTime(Type):
 
     All the derived classes use classes from Python 'datetime' module to
     represent the date and/or time values.
-    
+
     Constructor arguments:
-    
+
       format -- specification of both input and output format of date
         and/or time in the form accepted by `time.strftime()'.
       mindate, maxdate -- limits of acceptable date/time
@@ -1589,19 +1589,19 @@ class _CommonDateTime(Type):
         database objects should be created WITH TIMEZONE.
 
     """
-    
+
     VM_DT_FORMAT = 'VM_DT_FORMAT'
     VM_DT_VALUE = 'VM_DT_VALUE'
     VM_DT_AGE = 'VM_DT_AGE'
     _VM_DT_FORMAT_MSG = _(u"Invalid date or time format")
     _VM_DT_VALUE_MSG = _(u"Invalid date or time")
     _VM_DT_AGE_MSG = _(u"Date outside the allowed range")
-    
+
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
-    
+
     def _init(self, format, utc=True, without_timezone=False, **kwargs):
         assert format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
@@ -1614,7 +1614,7 @@ class _CommonDateTime(Type):
         self._check_matcher = {}
         self._without_timezone = without_timezone
         super(_CommonDateTime, self)._init(**kwargs)
-        
+
     def _check_format(self, format, string):
         try:
             matcher = self._check_matcher[format]
@@ -1641,11 +1641,11 @@ class _CommonDateTime(Type):
     def timezone(self):
         """Return 'datetime.tzinfo' object corresponding to the time zone."""
         return self._timezone
-    
+
     def is_utc(self):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
-        
+
     def _validate(self, string, format=None, local=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
@@ -1657,7 +1657,7 @@ class _CommonDateTime(Type):
           local -- if true, handle the given value as a local time value; if
             false, handle it as a UTC value; if 'None' handle it according to
             utc flag of the type
-          
+
         """
         assert isinstance(string, basestring), string
         if format is None:
@@ -1684,7 +1684,7 @@ class _CommonDateTime(Type):
         except Exception:
             result = None, self._validation_error(self.VM_DT_FORMAT)
         return result
-    
+
     def _export(self, value, local=None, format=None):
         return value.strftime(format or self._format)
 
@@ -1698,7 +1698,7 @@ class _CommonDateTime(Type):
         Arguments:
 
           kwargs -- arguments passed to the class constructor
-          
+
         """
         type_ = class_(**kwargs)
         if kwargs.get('without_timezone'):
@@ -1732,7 +1732,7 @@ class _CommonDateTime(Type):
     @classmethod
     def _datetime(class_, tz):
         raise Exception("Not implemented")
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.DateTime(timezone=True)
 
@@ -1763,7 +1763,7 @@ class DateTime(_CommonDateTime):
     """Formát data a času používaný standardně SQL stroji."""
     CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
     """Český \"účetnický\" formát data a času."""
-    
+
     _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
     def _init(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
@@ -1837,7 +1837,7 @@ class DateTime(_CommonDateTime):
           local -- if true then the value is exported in local time, otherwise
             it is exported in UTC; if 'None' handle it according to utc flag of
             the type
-          
+
         """
         assert isinstance(value, datetime.datetime), value
         if local is None:
@@ -1911,7 +1911,7 @@ class DateTime(_CommonDateTime):
 
           dt1 -- start datetime; 'Value' instance of 'DateTime' type
           dt2 -- end datetime; 'Value' instance of 'DateTime' type
-          
+
         """
         diff = dt2.value() - dt1.value()
         return diff.days * 86400 + diff.seconds
@@ -1923,7 +1923,7 @@ class DateTime(_CommonDateTime):
 
         In this particular class, the returned value is an ISO formatted
         datetime string ('%Y-%m-%d %H:%M:%S').
-        
+
         """
         return self.export(value, format='%Y-%m-%d %H:%M:%S', local=False)
 
@@ -1932,7 +1932,7 @@ class DateTime(_CommonDateTime):
         """Deprecated.  Use 'datetime' method instead.
         """
         return class_.datetime()
-    
+
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.datetime):
             raise TypeError("Value not a datetime", value)
@@ -1950,13 +1950,13 @@ class DateTime(_CommonDateTime):
                 else:
                     value = value.astimezone(timezone)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
                                                         precision=0)
 class LocalDateTime(DateTime):
     "Datetime stored as UTC in database but presented as local time by default."
-    
+
     def _export(self, value, local=None, format=None):
         if local is None:
             local = True
@@ -1982,17 +1982,17 @@ class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.
     """
     SQL_FORMAT = True
-    
+
     def primitive_value(self, value):
         """Return given value represented as a string.
-        
+
         I've no idea why this method should return a string, on the contrary to
         'Time.primitive_value' description.  But it's consistent with the
         superclass method return value.
-        
+
         """
         return self.export(value, format=True, local=False)
-    
+
 class Date(DateTime):
     """Date without a time.
 
@@ -2036,7 +2036,7 @@ class Date(DateTime):
 
         In this particular class, the returned value is an ISO formatted
         date string ('%Y-%m-%d').
-        
+
         """
         return self.export(value, format='%Y-%m-%d', local=False)
 
@@ -2044,7 +2044,7 @@ class Date(DateTime):
     def _datetime(class_, tz):
         dt = super(Date, class_)._datetime(tz)
         return dt.date()
-    
+
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.date):
             raise TypeError("Value not a date", value)
@@ -2075,7 +2075,7 @@ class Time(_CommonDateTime):
     prevent problems with daylight saving time conversions.  If you need to use
     time with local timezones, either use 'DateTime' or don't mix timezones in
     constructor, validation and exports.
-    
+
     Constructor arguments:
 
       format -- specification of both input and output format of date
@@ -2083,7 +2083,7 @@ class Time(_CommonDateTime):
         May be also None in which case the configuration option
         'config.date_time_format' is used.  The class defines '*_FORMAT'
         constants which may be used as a value of this argument.
-        
+
     """
 
     DEFAULT_FORMAT = '%H:%M:%S'
@@ -2106,7 +2106,7 @@ class Time(_CommonDateTime):
             v = date_time.time() if self._without_timezone else date_time.timetz()
             value = Value(value.type(), v)
         return value, error
-    
+
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
 
@@ -2114,7 +2114,7 @@ class Time(_CommonDateTime):
 
         In this particular class, the returned value is an ISO formatted
         time string ('%H:%M:%S').
-        
+
         """
         return self.export(value, format='%H:%M:%S')
 
@@ -2139,18 +2139,18 @@ class Time(_CommonDateTime):
         else:
             result = dt.astimezone(tz).timetz()
         return result
-    
+
     def adjust_value(self, value):
         if value is not None and not isinstance(value, (datetime.datetime, datetime.time)):
             raise TypeError("Value not a time", value)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.Time(timezone=(not self._without_timezone))
-    
+
 class LocalTime(Time):
     "Time stored as UTC in database but presented as local time by default."
-    
+
     def _export(self, value, local=None, format=None):
         if local is None:
             local = True
@@ -2164,7 +2164,7 @@ class LocalTime(Time):
 
 class TimeInterval(Type):
     """Amount of time between two moments.
-                    
+
     Constructor arguments:
 
       format -- specification of both input and output format of the time
@@ -2182,7 +2182,7 @@ class TimeInterval(Type):
     DEFAULT_FORMAT = '%H:%M:%S'
     SHORT_FORMAT = '%H:%M'
     SQL_FORMAT = True
-    
+
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     def _init(self, format=None, **kwargs):
@@ -2200,7 +2200,7 @@ class TimeInterval(Type):
         matcher_string = (format.replace('%H', re_hours).
                           replace('%M', re_minutes).replace('%S', re_seconds))
         return re.compile(matcher_string)
-    
+
     def _validate(self, string_, format=None, **kwargs):
         assert isinstance(string_, basestring)
         if format is None:
@@ -2221,7 +2221,7 @@ class TimeInterval(Type):
         seconds = seconds % 86400
         interval = datetime.timedelta(days, seconds)
         return Value(self, interval), None
-    
+
     def _export(self, value, format=None, **kwargs):
         assert isinstance(value, datetime.timedelta), value
         seconds = value.days * 86400 + value.seconds
@@ -2238,7 +2238,7 @@ class TimeInterval(Type):
                                 replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
         return format_string % dict(hours=(seconds / 3600), minutes=((seconds % 3600) / 60),
                                     seconds=(seconds % 60))
-    
+
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
 
@@ -2246,15 +2246,15 @@ class TimeInterval(Type):
 
         In this particular class, the returned value is an ISO formatted
         string ('%H:%M:%S').
-        
+
         """
         return self.export(value)
-    
+
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.timedelta):
             raise TypeError("Value not a timedelta", value)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.INTERVAL()
 
@@ -2305,7 +2305,7 @@ def add_timedelta(value, timedelta):
 
 class Boolean(Type):
     """Jednoduchý výčtový typ implementující hodnoty \"pravda\" a \"nepravda\".
-    
+
     Za pravdu je považován string 'T', za nepravdu string 'F'; tyto stringy
     jsou uživatelskými hodnotami výčtu.  Odpovídající vnitřní hodnoty jsou
     blíže nespecifikované pythonové objekty s pythonovu sémantikou pravdy a
@@ -2313,15 +2313,15 @@ class Boolean(Type):
 
     Validační argument 'extended' umožňuje liberálnější kontrolu vstupu.  Je-li pravdivý, jsou
     kromě \"oficiálních\" hodnot 'object' zvalidovány i následující stringové hodnoty:
-    
+
     \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
     \'f\', \'0\' -- jako reprezentace nepravdivé hodnoty
 
-    
+
     """
 
     _SPECIAL_VALUES = ((True, 'T'), (False, 'F'), (None, ''))
-    
+
     def _init(self, not_null=True):
         e = FixedEnumerator((True, False))
         super(Boolean, self)._init(enumerator=e, not_null=not_null)
@@ -2334,22 +2334,22 @@ class Boolean(Type):
                 return Value(self, False), None
         # Valid values are found in _SPECIAL_VALUES before _validate is called.
         return None, ValidationError(_(u"Invalid boolean type input value"))
-    
+
     def default_value(self):
         return Value(self, False)
-    
+
     def secret_export(self):
         return ''
-    
+
     def adjust_value(self, value):
         if value is None:
             return None
         return bool(value)
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.Boolean()
 
-    
+
 class Binary(Limited):
     """Binary data.
 
@@ -2371,10 +2371,10 @@ class Binary(Limited):
     validation is trivial.
 
     """
-    
+
     _VALIDATION_CACHE_LIMIT = 0
     _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
-    
+
     class Buffer(object):
         """Wrapper of a buffer for internal representation of binary values.
 
@@ -2385,13 +2385,13 @@ class Binary(Limited):
 
         Methods for loading binary data from files or saving them are also
         provided, but these are mostly here for convenience.
-        
+
         """
         def __init__(self, data, filename=None, mime_type=None):
             """Initialize a new buffer instance and validate the input data.
 
             Arguments:
-            
+
               data -- The buffer data.  It can be a Python 'buffer' object,
                 input file path as a string or an open stream (a file-like
                 object).  A buffer object is used directly, file path is opened
@@ -2408,9 +2408,9 @@ class Binary(Limited):
 
             Raises 'ValidationError' if the data don't conform to the binary
             format in use (depending on the actual 'Buffer' subclass).
-            
+
             Raises 'IOError' if the input file can not be read.
-            
+
             """
             self.load(data, filename=filename, mime_type=mime_type)
 
@@ -2420,7 +2420,7 @@ class Binary(Limited):
         def _validate(self, data):
             if not isinstance(data, buffer):
                 raise ValidationError(_(u"Not a buffer object: %r") % data)
-            
+
         def buffer(self):
             """Return the binary data as a Python buffer instance."""
             return self._buffer
@@ -2432,10 +2432,10 @@ class Binary(Limited):
         def mime_type(self):
             """Return the suggested MIME type as passed to the constructor."""
             return self._mime_type
-        
+
         def path(self):
             """Return the path to the input file or None.
-            
+
             If the buffer was loaded from a file, the input path is returned as
             a string.  None is returned if the buffer was loaded from an input
             stream or buffer.  The application should not rely on the path to
@@ -2444,7 +2444,7 @@ class Binary(Limited):
             or a similar purpos.  Note, that in the client-server environment,
             the path refers to the server filesystem, so might not be usable
             for the client at all.
-            
+
             """
             return self._path
 
@@ -2452,9 +2452,9 @@ class Binary(Limited):
             """Save the buffer data into a file.
 
             Arguments:
-            
+
               path -- string path to the output file.
-            
+
             Raises 'IOError' if the file can not be written.
 
             """
@@ -2463,20 +2463,20 @@ class Binary(Limited):
                 f.write(self._buffer)
             finally:
                 f.close()
-                
+
         def load(self, data, filename=None, mime_type=None):
             """Try to re-load buffer data with new content.
 
             Arguments:
-            
+
               data, filename, mime_type -- same as in constructor.
-            
+
             Raises 'IOError' if the file can not be read.
 
             Raises 'ValidationError' if the data format is invalid.
 
             The original buffer contents remains unchanged in case of any error.
-            
+
             """
             assert filename is None or isinstance(filename, basestring)
             assert mime_type is None or isinstance(mime_type, basestring)
@@ -2500,11 +2500,11 @@ class Binary(Limited):
             self._path = path
             self._filename = filename
             self._mime_type = mime_type
-            
+
     def _init(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self)._init(**kwargs)
-        
+
     def _validate(self, object, filename=None, mime_type=None, **kwargs):
         value = Value(self, self.Buffer(object, filename=filename, mime_type=mime_type))
         return value, None
@@ -2519,16 +2519,16 @@ class Binary(Limited):
         if value is not None and not isinstance(value, self.Buffer):
             raise TypeError("Value not a Buffer", value)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.BYTEA()
-        
-    
+
+
 class Image(Binary, Big):
     """Binary type for generic bitmap images.
 
     The binary data of this type are represented by an 'Image.Buffer' instance.
-    
+
     'Image.Buffer' validates the binary data to conform to one of input image
     formats supported by the Python Imaging Library.  It also provides the
     `image()' method, which returns the 'PIL.Image' instance corresponding to
@@ -2542,9 +2542,9 @@ class Image(Binary, Big):
     Imaging Library documentation for the full list.
 
     The Python Imaging Library (PIL) must be installed when using this class.
-    
+
     Constructor arguments:
-        
+
       minsize -- maximal image size in pixels as a sequence of two integers
         (WIDTH, HEIGHT).  'None' in either value indicates an unlimited
         size in the corresponding direction...
@@ -2554,18 +2554,18 @@ class Image(Binary, Big):
         'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of the
         supported formats depends upon your PIL version.  If None, all
         formats supported by the Python Imaging Library are allowed.
-      
+
     Other arguments are passed to the parent constructor.
-        
+
     """
-    
+
     VM_MAXSIZE = 'VM_MAXSIZE'
     _VM_MAXSIZE_MSG = _(u"Maximal pixel size %(maxsize)s exceeded")
     VM_MINSIZE = 'VM_MINSIZE'
     _VM_MINSIZE_MSG = _(u"Minimal pixel size %(minsize)s exceeded")
     VM_FORMAT = 'VM_FORMAT'
     _VM_FORMAT_MSG = _(u"Unsupported format %(format)s; valid formats: %(formats)s")
-    
+
     class Buffer(Binary.Buffer):
         """A bufer for internal representation of bitmap image data.
 
@@ -2582,7 +2582,7 @@ class Image(Binary, Big):
             except IOError:
                 raise ValidationError(_(u"Invalid graphics format"))
             self._image = image
-    
+
         def image(self):
             """Return the image as a 'PIL.Image' instance."""
             return self._image
@@ -2620,7 +2620,7 @@ class Image(Binary, Big):
         """Return the minimal image size in pixels as a pair (WIDTH, HEIGHT).
 
         WIDTH and HEIGHT are integers or 'None' (denoting no limit).
-        
+
         """
         return self._minsize
 
@@ -2628,14 +2628,14 @@ class Image(Binary, Big):
         """Return the maximal image size in pixels as a pair (WIDTH, HEIGHT).
 
         WIDTH and HEIGHT are integers or 'None' (denoting no limit).
-        
+
         """
         return self._maxsize
-    
+
     def formats(self):
         """Return the tuple of allowed input formats or None."""
         return self._formats
-    
+
     def _check_constraints(self, value, **kwargs):
         super(Image, self)._check_constraints(value, **kwargs)
         if value is not None:
@@ -2643,10 +2643,10 @@ class Image(Binary, Big):
             for min, max, size in zip(self._minsize, self._maxsize, image.size):
                 if min is not None and size < min:
                     raise self._validation_error(self.VM_MINSIZE,
-                                               minsize='%sx%s' % self._minsize)
+                                                 minsize='%sx%s' % self._minsize)
                 if max is not None and size > max:
                     raise self._validation_error(self.VM_MAXSIZE,
-                                               maxsize='%sx%s' % self._maxsize)
+                                                 maxsize='%sx%s' % self._maxsize)
             if self._formats is not None and image.format not in self._formats:
                 raise self._validation_error(self.VM_FORMAT,
                                              format=image.format,
@@ -2658,10 +2658,10 @@ class Image(Binary, Big):
         See 'Type.primitive_value()' for generic description of this method.
 
         The conversion is not supported for this particular class.
-        
+
         """
         raise UnsupportedPrimitiveValueConversion(self)
-    
+
 
 class LTree(Type):
     """Type representing a hierarchical (tree) structure.
@@ -2675,7 +2675,7 @@ class LTree(Type):
 
     - The items between dots may not be empty, may contain only alphanumeric
       characters and may be at most 255 characters long (each of them).
-      
+
     Constructor arguments:
 
       text -- if true, handle the type values as text values, otherwise
@@ -2702,7 +2702,7 @@ class LTree(Type):
     def text(self):
         """Return value of 'text' constructor argument."""
         return self._text
-        
+
     def _validate(self, string):
         assert isinstance(string, basestring), ('Not a string', string)
         items = string.split('.')
@@ -2729,12 +2729,12 @@ class LTree(Type):
     def wm_validate(self, object):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
-    
+
     def adjust_value(self, value):
         if value is not None and not isinstance(value, basestring):
             raise TypeError("Value not a string", value)
         return value
-    
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.LTreeType()
@@ -2749,15 +2749,15 @@ class Array(Limited):
     strings are validated against the inner type.  The internal value is a
     tuple of 'Value' instances of the inner type.  Export returns a tuple of
     strings corresponding to the exported array items.
-    
+
     """
     _SPECIAL_VALUES = Limited._SPECIAL_VALUES + ((None, ''),)
-    
+
     def _init(self, inner_type, **kwargs):
         assert isinstance(inner_type, Type)
         self._inner_type = inner_type
         super(Array, self)._init(**kwargs)
-        
+
     def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
         # We override `validate()' instead of `_validate()' here, which is
@@ -2793,10 +2793,10 @@ class Array(Limited):
 
         In this particular class, the returned value is an array of inner
         values converted to primitive types.
-        
+
         """
         return [val.primitive_value() for val in value]
-    
+
     def inner_type(self):
         return self._inner_type
 
@@ -2804,7 +2804,7 @@ class Array(Limited):
         if value is not None and not isinstance(value, (tuple, list,)):
             raise TypeError("Value not a sequence", value)
         return value
-    
+
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.ARRAY(self.inner_type().sqlalchemy_type())
 
@@ -2829,13 +2829,13 @@ class Enumerator(object):
     'Type' instances.  Any enumerator method which is not thread-safe must be
     clearly marked as such and it may not be used with enumerator instances
     used in types.
-    
+
     """
     def check(self, value, **kwargs):
         """Return true, iff 'value' belongs to the enumeration.
 
         Arguments:
-        
+
           value -- internal Python value of the corresponding data type, for
             which the enumerator is used.
 
@@ -2845,20 +2845,20 @@ class Enumerator(object):
         presence of 'value' in the returned sequence.  This may be suboptimal
         for potentionaly large sets so it may be overriden in derived classes
         using a more sophisticated method.
-        
+
         """
         return value in self.values(**kwargs)
 
     def __str__(self):
         return '<%s.%s>' % (self.__class__.__module__, self.__class__.__name__)
-        
+
     def __repr__(self):
         return str(self)
- 
+
     def values(self, **kwargs):
         """Return a sequence of all valid enumeration values."""
         raise ProgramError('Not implemented', 'Enumerator.values()')
-    
+
 
 class TransactionalEnumerator(object):
     """Mix-in class for enumerators which need a database transaction.
@@ -2866,9 +2866,9 @@ class TransactionalEnumerator(object):
     The methods 'values()' and 'check()' of such enumerators accept one
     mandatory keyword argument 'transaction' representing the current database
     transaction.
-    
+
     """
-    
+
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration passed to the constructor.
 
@@ -2876,15 +2876,15 @@ class FixedEnumerator(Enumerator):
     arguments.
 
     """
-    
+
     def __init__(self, enumeration):
         """Initialize the instance.
-        
+
         Arguments:
-        
+
           enumeration -- a sequence of values compatible with internal (Python)
             values of the type, for which the enumerator is used.
-          
+
         """
         super(FixedEnumerator, self).__init__()
         self._enumeration = tuple(enumeration)
@@ -2894,8 +2894,8 @@ class FixedEnumerator(Enumerator):
 
     def values(self):
         return self._enumeration
-        
-    
+
+
 class DataEnumerator(Enumerator, TransactionalEnumerator):
     """Enumerator retrieving the enumeration values from a data object.
 
@@ -2914,9 +2914,9 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     def __init__(self, data_factory, value_column=None, validity_column=None,
                  validity_condition=None, connection_data=None):
         """Initialize the instance.
-        
+
         Arguments:
-        
+
           data_factory -- a 'DataFactory' instance for data object creation, or
             a string naming the specification of the data factory
           value_column -- identifier of the column which provides the enumeration values.  If
@@ -2933,7 +2933,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
           connection_data -- 'DBConnection' instance providing the database
             connection parameters; if 'None' then connection parameters are
             retrieved from the configuration
-            
+
         """
         super(DataEnumerator, self).__init__()
         from pytis.data import DataFactory
@@ -3036,7 +3036,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         return '<%s %s %s>' % (self.__class__.__name__, factory, self._value_column,)
 
     # Enumerator interface
-    
+
     def check(self, value, transaction=None, condition=None, arguments=None):
         row = self._retrieve(value, transaction, condition, arguments=arguments)
         if row is None:
@@ -3070,7 +3070,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             return tuple(result)
         result = with_lock(self._data_lock, lfunction)
         return result
-    
+
     # Extended interface.
 
     def add_callback_on_change(self, callback):
@@ -3079,11 +3079,11 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             self._data.add_callback_on_change(callback)
         else:
             self._change_callbacks.append(callback)
-        
+
     def data_factory(self):
         """Vrať specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
         return self._data_factory
-    
+
     def value_column(self):
         """Vrať název sloupce datového objektu, který nese vnitřní hodnotu."""
         return self._value_column
@@ -3091,12 +3091,12 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     def validity_condition(self):
         """Return static condition determining validity of data rows."""
         return self._validity_condition
-    
+
     def row(self, value, transaction=None, condition=None, arguments=None):
         """Return a *data* row corresponding to given codebook value.
-        
+
         Arguments:
-        
+
           value -- internal (Python) value of the enumerator's 'value_column'.  The row
             corresponding to this value is returned.
           transaction -- transaction for data operations.
@@ -3111,7 +3111,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """
         return self._retrieve(value, transaction=transaction, condition=condition,
                               arguments=arguments)
-    
+
     def rows(self, transaction=None, condition=None, arguments=None, sort=()):
         """Return sequence of rows of the underlying data object.
 
@@ -3153,22 +3153,22 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             return self._data.permitted(column, pytis.data.Permission.VIEW)
         else:
             return True
-    
+
 
 class ValidationError(Exception):
     """Popis chyby při neúspěchu validace v 'Type.validate'.
 
     Popis lze získat veřejnou metodou 'message'.  Popisem je string a měl by
     být srozumitelný jako zpráva pro uživatele.
-    
+
     """
     def __init__(self, message):
         """Inicializuj zprávu o chybě.
 
         Argumenty:
-        
+
           message -- string obsahující zprávu o chybě pro uživatele
-         
+
         """
         super_(ValidationError).__init__(self, message)
         self._message = message
@@ -3192,7 +3192,7 @@ class _Value(object):
         """Inicializuj instanci.
 
         Argumenty:
-        
+
           type -- instance třídy 'Type'
           value -- hodnota samotná, libovolný objekt
 
@@ -3211,7 +3211,7 @@ class _Value(object):
                                      type)
         self._type = type
         self._value = state['_value']
-    
+
     def __unicode__(self):
         type = self.type()
         value = unicode(self.value())
@@ -3225,7 +3225,7 @@ class _Value(object):
 
         'self' a 'other' jsou shodné, právě když se rovnají jejich typy a
         hodnoty.
-        
+
         """
         if sameclass(self, other):
             t1, t2 = self.type(), other.type()
@@ -3285,18 +3285,18 @@ class Value(_Value):
 
     Pro zápis hodnoty do uživatelského rozhraní nebo databáze lze využít metodu
     'export()'.
-    
+
     """
     _VOID = object()
-    
+
     def __init__(self, type_, value):
         """Inicializuj hodnotu daného typu.
 
         Argumenty:
-        
+
           type_ -- instance třídy 'Type'
           value -- hodnota samotná, libovolný objekt
-         
+
         """
         value = type_.adjust_value(value)
         _Value.__init__(self, type_, value)
@@ -3305,7 +3305,7 @@ class Value(_Value):
     def __setstate__(self, state):
         super(Value, self).__setstate__(state)
         self._init()
-        
+
     def _init(self):
         if self._type.__class__ == String:    # pozor, nebezpečná věc!
             e = self._value or ''
@@ -3315,14 +3315,14 @@ class Value(_Value):
 
     def __hash__(self):
         return hash(self._type) ^ hash(self._value)
-        
+
     def export(self, *args, **kwargs):
         """Vrať stringovou reprezentaci hodnoty schopnou validace.
 
         Tato metoda je pouze zkratkou pro volání
         'self.type().export(self.value())'.  Pokud jsou metodě předány
         argumenty, je metoda `Type.export()' volána i s těmito argumenty.
-        
+
         """
         # Abychom to zbytečně nekomplikovali, tak cachujeme pouze exporty bez
         # argumentů.
@@ -3348,7 +3348,7 @@ class Value(_Value):
         """
         assert isinstance(type, Type)
         return self.__class__(type, self._value)
-    
+
     @classmethod
     def reconceal(class_, value):
         """Return 'class_' instance corresponding to 'value'.
@@ -3370,11 +3370,11 @@ class Value(_Value):
         """Return given value represented by a basic python type.
 
         See 'Type.primitive_value()' for more information.
-        
+
         """
         return self.type().primitive_value(self.value())
 
-    
+
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
 

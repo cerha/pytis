@@ -67,7 +67,6 @@ def fval(number):
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Float())
 
-    
 def itval(interval):
     """Return literal interval value.
 
@@ -97,7 +96,7 @@ def dtype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Date())
-    
+
 def itype(expr):
     """Return SQLAlchemy expression casted to integer.
 
@@ -138,7 +137,7 @@ def ittype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Interval())
-    
+
 def stype(expr, **kwargs):
     """Return SQLAlchemy expression casted to string.
 
@@ -204,7 +203,7 @@ def rule_condition(*specifiers):
 
       specifiers -- sequence of condition specifiers.  Each of the specifiers
         can be on of the following:
-  
+
           basestring -- it names the column to assign and the same column name
             is used from NEW to get the value
           tuple of two elements -- the first element (basestring) names the
@@ -233,7 +232,7 @@ def rule_condition(*specifiers):
             c = s
         conditions.append(c)
     return and_(*conditions)
-    
+
 def rule_insert(table, values):
     """Return typical insert rule statement.
 

@@ -57,7 +57,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # class method from it.  By wrapping the callback by a tuple we prevent
         # that misbehavior.
         class_._query_callback = (callback,)
-    
+
     @classmethod
     def _postgresql_open_connection(class_, connection_data):
         # Prepare connection data
@@ -111,7 +111,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         connection.set_connection_info('last_query_time', None)
         if __debug__:
             connection.set_connection_info('transaction_start_stack', None)
-    
+
     def _postgresql_query(self, connection, query, outside_transaction, _retry=True):
         result = None
         def transform_arg(arg):
@@ -227,7 +227,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBInsertException()
                 elif (position('error: Connection timed out') != -1 or
                       position('timeout expired') != -1):
-                    
+
                     raise DBSystemException(_(u"Database connection timeout"), e, e.args, query)
                 elif position('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
@@ -300,7 +300,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._postgresql_commit_transaction()
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
-    
+
     def _postgresql_commit_transaction(self, connection=None):
         if connection is None:
             connection_, new = self._pg_get_connection()
@@ -314,7 +314,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
         if new:
             self._pg_return_connection(connection_)
-        
+
     def _postgresql_rollback_transaction(self, connection=None):
         if connection is None:
             connection_, new = self._pg_get_connection()
@@ -344,7 +344,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         if e.args[0].find('server closed the connection unexpectedly') != -1:
             raise DBSystemException(_(u"Database connection error"), e, e.args)
 
-    
+
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
     pass
 
@@ -366,7 +366,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             self._sql_logger = None # difficult to call superclass constructors properly
             PostgreSQLNotifier._PgNotifier.__init__(self, connection_data,
                                                     connection_name=connection_name)
-            
+
             self._pgnotif_connection = None
 
         def _notif_init_connection(self):
@@ -377,7 +377,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection.connection().set_isolation_level(
                     psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
                 self._registered_notifications = []
-            
+
         def _notif_do_registration(self, notification):
             if notification not in self._registered_notifications:
                 self._registered_notifications.append(notification)
@@ -388,7 +388,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 return self._postgresql_query(connection, query, True)
             _result, self._pgnotif_connection = \
                 with_lock(self._pg_query_lock, lfunction)
-        
+
         def _notif_listen_loop(self):
             while True:
                 while self._pgnotif_connection is None:

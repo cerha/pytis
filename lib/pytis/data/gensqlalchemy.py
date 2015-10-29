@@ -141,7 +141,7 @@ def _role_string(role):
     else:
         role_string = '"%s"' % (role,)
     return role_string
-    
+
 class _PytisSchemaHandler(object):
 
     def _set_search_path(self, search_path):
@@ -150,7 +150,7 @@ class _PytisSchemaHandler(object):
         command = 'SET SEARCH_PATH TO %s' % (path,)
         self.connection.execute(command)
         return search_path
-    
+
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
     def visit_view(self, view, create_ok=False):
@@ -321,11 +321,11 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
 
     def visit_materialized_view(self, view, create_ok=False):
         self.visit_view(view, create_ok=create_ok)
-        
+
     def visit_foreign_table(self, table, create_ok=False):
         command = 'DROP FOREIGN TABLE "%s"."%s"' % (table.schema, table.name,)
         self.connection.execute(command)
-        
+
     def visit_type(self, type_, create_ok=False):
         command = 'DROP TYPE "%s"."%s"' % (type_.schema, type_.name,)
         self.connection.execute(command)
@@ -356,7 +356,7 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
         command = ('ALTER %s "%s"."%s" DROP CONSTRAINT "%s"' %
                    (index.db_object, index.object_schema, index.object_name, index.name,))
         self.connection.execute(command)
-        
+
 class _ObjectComment(sqlalchemy.schema.DDLElement):
     def __init__(self, obj, kind, comment):
         self.object = obj
@@ -378,7 +378,7 @@ def visit_object_comment(element, compiler, **kw):
     return ("COMMENT ON %s %s\"%s\"%s IS '%s'" %
             (kind, schema, o.pytis_name(real=True), extra,
              element.comment.replace("'", "''"),))
-        
+
 class _ColumnComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, field):
         self.table = table
@@ -611,7 +611,7 @@ NUMRANGE = sqlalchemy.dialects.postgresql.NUMRANGE
 TSRANGE = sqlalchemy.dialects.postgresql.TSRANGE
 TSTZRANGE = sqlalchemy.dialects.postgresql.TSTZRANGE
 DATERANGE = sqlalchemy.dialects.postgresql.DATERANGE
-                
+
 @compiles(sqlalchemy.schema.CreateTable, 'postgresql')
 def visit_create_table(element, compiler, **kwargs):
     table = element.element
@@ -646,7 +646,7 @@ def visit_TIMESTAMP(element, compiler, **kwargs):
 
 
 # Columns
-        
+
 class Column(pytis.data.ColumnSpec):
     """Specification of a database column.
 
@@ -667,7 +667,7 @@ class Column(pytis.data.ColumnSpec):
     useful for specifications.  Instead you can inspect 'sqlalchemy.Column'
     instances when needed in certain places using 'sqlalchemy.Column' public
     methods.
-    
+
     """
     def __init__(self, name, type, label=None, doc=None, unique=None, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False,
@@ -726,7 +726,7 @@ class Column(pytis.data.ColumnSpec):
             types support encryption, it is an error to set encryption for
             field types which don't support it.  Encryption implies the
             actual database column is of binary type.
-          
+
         """
         assert label is None or isinstance(label, basestring), label
         assert doc is None or isinstance(doc, basestring), doc
@@ -877,7 +877,7 @@ class _TabularType(pytis.data.Type):
             def process(value):
                 return value
             return process
-    
+
     def __init__(self, tabular):
         super(_TabularType, self).__init__()
         self._orig_tabular = tabular
@@ -894,16 +894,16 @@ class Argument(Column):
 
     This is basically the same as 'Column', but it additionaly allows
     specifying '_SQLTabular' subclass as the argument type.
-    
+
     """
     def __init__(self, name, type_, *args, **kwargs):
         if isinstance(type_, type) and issubclass(type_, _SQLTabular):
             type_ = _TabularType(type_)
         super(Argument, self).__init__(name, type_, *args, **kwargs)
-    
+
 
 # Utilities
-    
+
 def _error(message, error=True):
     prefix = (u'Error' if error else u'Warning')
     sys.stderr.write(u'%s: %s\n' % (prefix, message,))
@@ -928,7 +928,7 @@ def _metadata_connection(metadata):
         yield connection
     finally:
         connection.close()
-    
+
 def _sql_id_escape(identifier):
     return '"%s"' % (identifier.replace('"', '""'),)
 
@@ -995,7 +995,7 @@ class SQLFlexibleValue(object):
 
     """
     _values = {}
-    
+
     def __init__(self, name, default=None, environment=None):
         """
         Arguments:
@@ -1065,7 +1065,7 @@ class SQLFlexibleValue(object):
 
           name -- name of the flexible value; string
           value -- value bound to the name
-        
+
         """
         class_._values[name] = value
 
@@ -1082,10 +1082,10 @@ class SQLNameException(SQLException):
         super(SQLNameException, self).__init__("Object not found", *args)
 
 class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
-    
+
     _name_mapping = {}
     _class_mapping = {}
-    
+
     def __init__(cls, clsname, bases, clsdict):
         cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
         if cls._is_specification(clsname):
@@ -1127,9 +1127,9 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         _PytisBaseMetaclass._class_mapping = {}
 
 class _PytisSimpleMetaclass(_PytisBaseMetaclass):
-    
+
     objects = []
-    
+
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
         if cls._is_specification(clsname):
@@ -1197,7 +1197,7 @@ class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
              cls.table is not None)):
             cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
-    
+
 def object_by_name(name, allow_external=True):
     try:
         o = _metadata.tables[name]
@@ -1294,7 +1294,7 @@ class RawCondition(object):
         return self._condition
     def get_children(self, *args, **kwargs):
         return ()
-    
+
 class TableLookup(object):
     """Accessor for table instances.
 
@@ -1389,7 +1389,7 @@ class Arguments(object):
     objects.  This is currently used only in foreign key constraints.
 
     This class is also available by short name 'a'.
-    
+
     """
     def __init__(self, *args, **kwargs):
         self._args = args
@@ -1461,7 +1461,7 @@ class SQLObject(object):
     @classmethod
     def pytis_kind(class_):
         return class_._DB_OBJECT
-    
+
     @classmethod
     def pytis_name(class_, real=False):
         if real and class_.db_name:
@@ -1486,7 +1486,7 @@ class SQLObject(object):
         _warn("Can't upgrade an object of %s type: %s." %
               (self.pytis_kind() or 'raw', self.name,))
         return True
-        
+
     def pytis_upgrade(self, metadata, strict=True):
         if not self.pytis_exists(metadata):
             self.pytis_create()
@@ -1605,7 +1605,7 @@ def _alchemy2pytis_type(atype):
     elif isinstance(atype, sqlalchemy.types.NullType):
         return None
     raise Exception("Unrecognized SQLAlchemy type", atype)
-    
+
 
 # Database objects
 
@@ -1615,13 +1615,13 @@ class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLO
     Properties:
 
       name -- name of the schema; string
-      
+
     """
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'schema'
     _DB_OBJECT = 'SCHEMA'
     name = None
-    
+
     def __init__(self, *args, **kwargs):
         super(SQLSchema, self).__init__(*args, **kwargs)
         self._create_access_rights()
@@ -1631,11 +1631,11 @@ class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLO
 
     def pytis_changed(self, metadata, strict=True):
         return False
-        
+
     def pytis_create(self):
         _engine.execute(self)
         self.after_create(_engine)
-        
+
     def after_create(self, bind):
         for o in self._access_right_objects:
             bind.execute(o)
@@ -1667,7 +1667,7 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     name = None
     start = None
     increment = None
-    
+
     def __init__(self, *args, **kwargs):
         super(SQLSequence, self).__init__(*args, **kwargs)
         self._create_access_rights()
@@ -1683,11 +1683,11 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
 
     def pytis_changed(self, metadata, strict=True):
         return False
-        
+
     def pytis_create(self):
         super(SQLSequence, self).pytis_create()
         self.after_create(_engine)
-    
+
 class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     """Base class for all table-like specification objects.
 
@@ -1727,7 +1727,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     """
     __metaclass__ = _PytisSchematicMetaclass
     _DB_OBJECT = None
-    
+
     name = None
     depends_on = ()
     insert_order = None
@@ -1805,7 +1805,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
              (db_column.nullable != spec_column.nullable or
               self._pytis_defaults_changed(db_column, spec_column) is not None))):
             return True
-        
+
     def _pytis_columns_changed(self, metadata):
         name = self.pytis_name(real=True)
         schema = self.schema
@@ -1828,7 +1828,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             if self._pytis_distinct_columns(c1, c2):
                 return True
         return False
-        
+
     def pytis_changed(self, metadata, strict=True):
         if strict:
             return self._pytis_columns_changed(metadata)
@@ -1840,7 +1840,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         # global gsql processing.
         self.pytis_create()
         return True
-        
+
     def pytis_dependencies(self):
         return self._extra_dependencies
 
@@ -1857,7 +1857,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             command = ('ALTER %s "%s"."%s" OWNER TO "%s"' %
                        (self._DB_OBJECT, self.schema, self.name, self.owner,))
             sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
-        
+
     def _create_rules(self):
         def make_rule(action, instead_commands, also_commands):
             rule = _Rule(self, action, instead_commands, also_commands)
@@ -1874,7 +1874,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def _hidden_rule_columns(self, tabular):
         return []
-    
+
     def _rule_assignments(self, tabular, excluded, special):
         assignments = {}
         all_columns = self._hidden_rule_columns(tabular)
@@ -1950,7 +1950,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def _default_rule_commands(self):
         return None
-    
+
     def on_insert(self):
         """Return sequence of SQL commands to be performed on INSERT.
 
@@ -1974,7 +1974,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         """Return sequence of SQL commands to be performed on UPDATE.
 
         This is similar to 'on_insert()' except it handles UPDATE.
-        
+
         """
         if self.update_order is None:
             return self._default_rule_commands()
@@ -1993,7 +1993,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         """Return sequence of SQL commands to be performed on DELETE.
 
         This is similar to 'on_insert()' except it handles DELETE.
-        
+
         """
         if self.delete_order is None:
             return self._default_rule_commands()
@@ -2009,7 +2009,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
         It effectively defines ON INSERT ALSO rule.  The default implementation
         returns an empty sequence.
-        
+
         """
         return ()
 
@@ -2017,7 +2017,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         """Return sequence of additional SQL commands to perfom on UPDATE.
 
         This is similar to 'on_insert_also()' except it handles UPDATE.
-        
+
         """
         return ()
 
@@ -2025,7 +2025,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         """Return sequence of additional SQL commands to perfom on DELETE.
 
         This is similar to 'on_insert_also()' except it handles DELETE.
-        
+
         """
         return ()
 
@@ -2039,19 +2039,19 @@ class _TableIndex(SQLObject):
         self.db_object = db_object
         self.object_schema = object_schema
         self.object_name = object_name
-            
+
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
-    
+
 class _SQLIndexable(SQLObject):
-    
+
     index_columns = ()
 
     def _init(self, *args, **kwargs):
         super(_SQLIndexable, self)._init(*args, **kwargs)
         if self._is_true_specification():
             self._create_special_indexes()
-    
+
     def _create_special_indexes(self):
         args = ()
         for index in self.index_columns:
@@ -2175,7 +2175,7 @@ class _SQLIndexable(SQLObject):
             i.create(_engine)
             changed = True
         return changed
-        
+
     def pytis_changed(self, metadata, strict=True):
         # Not everything covered here, but we don't support all features in upgrade
         if super(_SQLIndexable, self).pytis_changed(metadata, strict=strict):
@@ -2257,7 +2257,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     """
     _DB_OBJECT = 'TABLE'
-    
+
     fields = ()
     inherits = ()
     tablespace = None
@@ -2270,7 +2270,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     foreign_keys = ()
     with_oids = False
     triggers = ()
-    
+
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
         key = []
@@ -2410,7 +2410,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         for c in constraints:
             simplify(c)
         return simplified
-        
+
     def pytis_changed(self, metadata, strict=True):
         # Not everything covered here, but we don't support all features in upgrade
         if super(SQLTable, self).pytis_changed(metadata, strict=strict):
@@ -2479,7 +2479,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         for fdef in new_constraints:
             _engine.execute(fdef)
         return changed
-            
+
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
         sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
@@ -2490,7 +2490,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
             doc = c.doc()
             if doc:
                 sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
-        
+
     def _create_parameters(self):
         self._alter_table("SET %s OIDS" % ("WITH" if self.with_oids else "WITHOUT",))
         if self.tablespace:
@@ -2528,7 +2528,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
             if T._pytis_direct_dependencies is None:
                 T._pytis_direct_dependencies = []
             T._pytis_direct_dependencies.append(self.__class__)
-    
+
     def _register_access_rights(self):
         super(SQLTable, self)._register_access_rights()
         groups = set([group for right, group in self.access_rights
@@ -2557,7 +2557,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         command = 'SET SEARCH_PATH TO %s' % (path,)
         bind.execute(command)
         return search_path
-        
+
     def _insert_values(self, bind):
         if self.init_values:
             for row in self.init_values:
@@ -2595,7 +2595,7 @@ class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
       host -- host name of the server; string
       database -- database name on the server; string
       port -- port of the database connection; integer
-    
+
     """
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'foreign_server'
@@ -2605,10 +2605,10 @@ class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
     host = None
     database = None
     port = None
-    
+
     def pytis_create(self):
         _engine.execute(self)
-    
+
 @compiles(SQLForeignServer)
 def visit_foreign_server(element, compiler, **kw):
     options = []
@@ -2632,7 +2632,7 @@ class SQLForeignTable(_SQLTabular):
     """
     _DB_OBJECT = 'FOREIGN TABLE'
     __visit_name__ = 'foreign_table'
-    
+
     fields = ()
     server = None
 
@@ -2658,7 +2658,7 @@ class SQLForeignTable(_SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
-            
+
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
@@ -2675,7 +2675,7 @@ class SQLForeignUser(sqlalchemy.schema.DDLElement, SQLObject):
       server -- server of the table; 'SQLForeignServer' object
       user -- name of the foreign user; string or 'None'
       password -- password of the foreign user; string or 'None'
-    
+
     """
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'foreign_user'
@@ -2683,10 +2683,10 @@ class SQLForeignUser(sqlalchemy.schema.DDLElement, SQLObject):
     server = None
     user = None
     password = None
-    
+
     def pytis_create(self):
         _engine.execute(self)
-    
+
 @compiles(SQLForeignUser)
 def visit_foreign_user(element, compiler, **kw):
     options = []
@@ -2819,7 +2819,7 @@ class _SQLQuery(SQLObject):
         return included
 
 class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
-    
+
     @classmethod
     def query(class_):
         return None
@@ -2899,16 +2899,16 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
             else:
                 raise SQLException("Missing column", c)
         return reordered
-    
+
     def _original_columns(self):
         return self.query().inner_columns
-    
+
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
-            
+
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
-        
+
     @classmethod
     def specification_fields(class_):
         with _local_search_path(class_.default_search_path()):
@@ -2930,7 +2930,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
             return Column(c.name, _alchemy2pytis_type(c.type), original_column=original_column(c))
         fields = [make_column(c) for c in query.c]
         return fields
-    
+
 class SQLView(_SQLBaseView):
     """View specification.
 
@@ -2973,7 +2973,7 @@ class SQLView(_SQLBaseView):
         return ()
 
     __visit_name__ = 'view'
-        
+
     def _equivalent_rule_columns(self, column):
         equivalents = []
         if column is not None:
@@ -2984,7 +2984,7 @@ class SQLView(_SQLBaseView):
                     if c is not column:
                         equivalents.append(c)
         return equivalents
-    
+
     def _hidden_rule_columns(self, tabular):
         hidden_columns = []
         original_columns = self._original_columns()
@@ -3073,10 +3073,10 @@ class SQLType(_SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
-            
+
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
-    
+
 class SQLFunctional(_SQLReplaceable, _SQLTabular):
     """Base class of function definitions.
 
@@ -3230,7 +3230,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def _pytis_columns_changed(self, metadata):
         return False
-        
+
     def _pytis_definition(self, connection):
         # This can't distinguish between functions overloaded by argument types
         self._pytis_set_definition_schema(connection)
@@ -3253,7 +3253,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             definition += row[0]
         result.close()
         return definition
-        
+
     def pytis_changed(self, metadata, strict=True):
         if self._pytis_columns_changed(metadata):
             return True
@@ -3281,7 +3281,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
-            
+
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
@@ -3302,7 +3302,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
           arguments -- tuple of function argument values, of types as required
             by SQLAlchemy
-        
+
         """
         function_name = self.pytis_name(real=True)
         name = '"%s"."%s"' % (self.schema, function_name,)
@@ -3360,7 +3360,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                          self._LANGUAGE, stability, security, marker,))
         query_suffix = '\n%s' % (marker,)
         return query_prefix, query_suffix
-        
+
 class SQLFunction(_SQLQuery, SQLFunctional):
     """SQL function definition.
 
@@ -3373,10 +3373,10 @@ class SQLFunction(_SQLQuery, SQLFunctional):
 
     """
     _LANGUAGE = 'sql'
-    
+
     def _pytis_query_objects(self):
         return [self.body()]
-        
+
 class SQLPlFunction(SQLFunctional):
     """PL/pgSQL function definition.
 
@@ -3385,7 +3385,7 @@ class SQLPlFunction(SQLFunctional):
 
     """
     _LANGUAGE = 'plpgsql'
-    
+
 class SQLPyFunction(SQLFunctional):
     """PL/Python function definition.
 
@@ -3403,7 +3403,7 @@ class SQLPyFunction(SQLFunctional):
     the PL/Python function.  The utility objects are defined in 'Util' inner
     class, see its documentation for more information.  Objects defined this
     way are available for use in the PL/Python function.
-    
+
     Utility functions and classes are typically defined in a common base class
     inherited by specifications of PL/Python functions or in a common
     'SQLPyFunction.Util' subclass inherited by 'Util' inner classes in
@@ -3429,7 +3429,7 @@ class SQLPyFunction(SQLFunctional):
         code.
 
         """
-    
+
     def body(self):
         # The method itself
         main_method_name = self.name
@@ -3550,7 +3550,7 @@ class SQLEventHandler(SQLFunctional):
     'SQLTable' properties (such as 'triggers').
 
     Subclasses may define more additional properties.
-    
+
     """
     table = None
 
@@ -3571,18 +3571,18 @@ class SQLTrigger(SQLEventHandler):
       call_arguments -- if the trigger function has any arguments then this
         property must define their values and in the right order; tuple of
         values of types accepted by SQLAlchemy for given argument types.
-    
+
     """
     __metaclass__ = _PytisTriggerMetaclass
     _DB_OBJECT = 'TRIGGER'
-    
+
     events = ('insert', 'update', 'delete',)
     position = 'after'
     each_row = True
     call_arguments = ()
 
     __visit_name__ = 'trigger'
-        
+
     def __new__(cls, metadata, search_path):
         if cls.name is None:
             if cls.table is None:
@@ -3622,7 +3622,7 @@ class SQLTrigger(SQLEventHandler):
                 n = result.fetchone()[0]
                 result.close()
             return n > 0
-            
+
     def pytis_changed(self, metadata, strict=True):
         if super(SQLTrigger, self).pytis_changed(metadata, strict=strict):
             return True
@@ -3689,15 +3689,15 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
 
     """
     __metaclass__ = _PytisSchematicMetaclass
-    
+
     name = None
     depends_on = ()
     error_level = 0
     key = None
     foreign_key_constraints = set()
-    
+
     __visit_name__ = 'raw'
-    
+
     def __init__(self, metadata, search_path):
         self._extra_dependencies = set()
         super(SQLRaw, self).__init__()
@@ -3705,13 +3705,13 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
         self._add_dependencies()
         self.schema = search_path[0] # required by metadata in certain situations
         metadata._add_table(self.pytis_name(), search_path[0], self)
-        
+
     def search_path(self):
         return self._search_path
 
     def add_is_dependent_on(self, table):
         self._extra_dependencies.add(table)
-    
+
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
@@ -4133,8 +4133,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                 _error("Can't recreate object `%s'" % (name,))
             elif o not in upgrade_metadata.pytis_changed:
                 o.pytis_create()
-            
-    
+
+
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
               upgrade=False, debug=False):
