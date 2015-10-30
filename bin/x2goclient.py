@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-10-19 18:55'
+_VERSION = '2015-10-30 20:46'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -669,7 +669,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return path
 
     def get_xserver_config(self, xserver_name):
-        if not xserver_name in XSERVER_VARIANTS:
+        if xserver_name not in XSERVER_VARIANTS:
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         _changed = False
@@ -705,7 +705,8 @@ X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 if on_windows():
     update_dir = {
         'XServers': {
-            'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming', 'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
+            'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
+                               'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
         },
         'VcXsrv_pytis': {
             'display': 'localhost:20',
@@ -713,7 +714,8 @@ if on_windows():
             'process_name': 'vcxsrv_pytis.exe',
             'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
             'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-            'parameters': [':20', '-clipboard', '-multiwindow', '-notrayicon', '-nowinkill', '-nounixkill', '-swcursor', ],
+            'parameters': [':20', '-clipboard', '-multiwindow', '-notrayicon', '-nowinkill',
+                           '-nounixkill', '-swcursor', ],
         },
         'VcXsrv_pytis_desktop': {
             'display': 'localhost:30',
@@ -723,7 +725,7 @@ if on_windows():
             'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
             'parameters': [':30', '-clipboard', '-notrayicon', '-nowinkill', '-nounixkill', '-swcursor', ],
         },
-        }
+    }
     X2GO_CLIENTXCONFIG_DEFAULTS.update(update_dir)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
 
@@ -743,12 +745,12 @@ class X2GoClient(x2go.X2GoClient):
                 self.HOOK_no_installed_xservers_found()
             else:
                 _last_display = None
-                if  type(variant) is types.BooleanType:
+                if isinstance(variant, types.BooleanType):
                     p_xs_name = self.client_xconfig.preferred_xserver_names[0]
                     _last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
                     _new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
                     p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
-                elif type(variant) is types.StringType:
+                elif isinstance(variant, types.StringType):
                     _last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
                     _new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
                     p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
@@ -759,10 +761,14 @@ class X2GoClient(x2go.X2GoClient):
                     if p_xs is not None and _last_display is not None:
                         if _last_display == _new_display:
                             #
-                            # FIXME: this trick is nasty, client implementation should rather cleanly shutdown launch X-server processes
+                            # FIXME: this trick is nasty, client implementation should rather cleanly
+                            # shutdown launch X-server processes
                             #
-                            # re-use a left behind X-server instance of a previous/crashed run of Python X2Go Client
-                            self.logger('found a running (and maybe stray) X-server, trying to re-use it on X DISPLAY port: %s' % _last_display, loglevel=x2go.log.loglevel_WARN)
+                            # re-use a left behind X-server instance of a previous/crashed
+                            # run of Python X2Go Client
+                            self.logger('found a running (and maybe stray) X-server, trying to '
+                                        're-use it on X DISPLAY port: %s' % _last_display,
+                                        loglevel=x2go.log.loglevel_WARN)
                             os.environ.update({str('DISPLAY'): str(_last_display)})
                     else:
                         # presume the running XServer listens on :0
@@ -1417,6 +1423,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 with winshell.shortcut(lpath) as link:
                     if link.path.lower() == vbs_path.lower():
                         shortcut_exists = True
+                        break
             except Exception:
                 pass
         if ((shortcut_exists or
@@ -1431,7 +1438,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             else:
                 msg = _("Shortcut %s allready exists. Please, rename it:") % shortcut_name
                 new_name = app.text_dialog(msg, caption=_("Edit shortcut name"),
-                                       default_value=shortcut_name)
+                                           default_value=shortcut_name)
                 if not new_name:
                     return
                 elif shortcut_name != new_name:
