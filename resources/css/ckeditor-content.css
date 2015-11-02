@@ -13,7 +13,12 @@ a:visited { color: #03b; }
 a:link:hover, a:visited:hover { color: #d60; }
 a.lcg-audio { color: #03b; text-decoration: underline; }
 
-img { margin: .5em .8em; }
+img[align="left"] {
+    margin-right: 1em;
+}
+img[align="right"] {
+    margin-left: 1em;
+}
 
 figure {
   border: thin silver solid;
