@@ -1845,7 +1845,7 @@ class RecordForm(LookupForm):
             prefill = {}
             for cid in the_row.keys():
                 fspec = self._view.field(cid)
-                if cid in keys or fspec.nocopy():
+                if cid in keys or fspec.nocopy() or not the_row.editable(cid):
                     continue
                 computer = fspec.computer()
                 if computer:
