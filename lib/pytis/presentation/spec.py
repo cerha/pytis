@@ -1431,19 +1431,39 @@ class ViewSpec(object):
             but you can still abort the operation by rollback of the
             transaction (if the underlying database engine supports it).
             
-          on_new_record -- akce vložení nového záznamu.  Pokud je None, bude
-            provedena výchozí akce (otevření PopupEditForm nad danou
-            specifikací).  Předáním funkce lze předefinovat přidání nového
-            záznamu v daném náhledu libovolnou vlastní funkcionalitou.  Funkce
-            musí akceptovat klíčový argument 'prefill' (viz.
-            'pytis.form.new_record()').
+          on_new_record -- custom handling of new record insertion.  If not
+            defined, the default handling takes place (a new record insertion
+            form is opened).  If defined, it overrides the default handling by
+            custom functionality.  It must be a function (callable object)
+            which accepts the keyword argument 'prefill' which is a dictionary
+            of values to be prefilled in the form.  Keys are field identifiers
+            and values are 'pytis.data.Value' instances.  Optionally, the
+            function may also accept the keyword argument 'transaction' which
+            will contain the current database transaction.  If the new record
+            is created by copying an existing record, the prefill will include
+            the copied values of the original row.  Also, when an existing
+            record is copied, a function 'on_copy_record' may be defined to
+            handle this case specifically (see below).  The function returns
+            either a 'PresentedRow' instance representing the already inserted
+            record or a dictionary.  If a dictionary is returned, the default
+            handling will take place but it will use the returned dictionary as
+            prefill instead of the default prefill (passed to the function as
+            argument).
+
+          on_copy_record -- custom handling of new record insertion by copying
+            an existing record.  Overrides 'on_new_record' for the specific
+            case of record copying.  The arguments and return value are the
+            same as for 'on_new_record', but there is an additional keyword
+            argument 'row' containing the copied record as a 'PresentedRow'
+            instance.
             
-          on_edit_record -- akce editace záznamu.  Pokud je None, bude
-            provedena výchozí akce (otevření PopupEditForm nad danou
-            specifikací).  Předáním funkce jednoho klíčového argumentu,
-            jímž je instance 'PresentedRow', lze předefinovat editaci záznamu
-            libovolnou vlastní funkcionalitou.
-            
+          on_edit_record -- custom handling of record editation (update).  If
+            not defined, the default handling takes place (update record form
+            is opened).  If defined, it overrides the default handling by
+            custom functionality.  The function must accept the keyword
+            argument 'row' containing the edited record as a 'PresentedRow'
+            instance.
+
           on_delete_record -- user defined record deletion function.  If
             defined, it must be a function of one argument (the current record
             as a PresentedRow instance) which will be called on users request
@@ -1610,8 +1630,8 @@ class ViewSpec(object):
         self._init(**self._kwargs)
     
     def _init(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
-              actions=(), sorting=None, grouping=None, group_heading=None, check=(),
-              cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
+              actions=(), sorting=None, grouping=None, group_heading=None, check=(), cleanup=None, 
+              on_new_record=None, on_copy_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
@@ -1768,6 +1788,7 @@ class ViewSpec(object):
         assert orientation in public_attributes(Orientation)
         assert cleanup is None or isinstance(cleanup, collections.Callable)
         assert on_new_record is None or isinstance(on_new_record, collections.Callable)
+        assert on_copy_record is None or isinstance(on_copy_record, collections.Callable)
         assert on_edit_record is None or isinstance(on_edit_record, collections.Callable)
         assert on_delete_record is None or isinstance(on_delete_record, collections.Callable)
         assert redirect is None or isinstance(redirect, collections.Callable)
@@ -1797,6 +1818,7 @@ class ViewSpec(object):
         self._check = check
         self._cleanup = cleanup
         self._on_new_record = on_new_record
+        self._on_copy_record = on_copy_record
         self._on_edit_record = on_edit_record
         self._on_delete_record = on_delete_record
         self._redirect = redirect
@@ -1895,6 +1917,10 @@ class ViewSpec(object):
     def on_new_record(self):
         """Vrať funkci provádějící vložení nového záznamu, nebo None."""
         return self._on_new_record
+
+    def on_copy_record(self):
+        """Vrať funkci provádějící vložení zkopírovaného záznamu, nebo None."""
+        return self._on_copy_record
 
     def on_edit_record(self):
         """Vrať funkci provádějící editaci záznamu, nebo None."""

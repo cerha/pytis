@@ -1007,18 +1007,29 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return True
 
     def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
-                        block_on_new_record=False, transaction=None, spec_kwargs={}):
-        # Dokumentace viz funkce new_record().
+                        block_on_new_record=False, transaction=None, spec_kwargs={},
+                        copied_row=None):
+        # See new_record() for documentation.
         view = config.resolver.get(name, 'view_spec', **spec_kwargs)
-        on_new_record = view.on_new_record()
+        kwargs = dict(prefill=prefill)
+        if copied_row and view.on_copy_record():
+            on_new_record = view.on_copy_record()
+            kwargs['row'] = copied_row
+        else:
+            on_new_record = view.on_new_record()
         if not block_on_new_record and on_new_record is not None:
-            kwargs = dict(prefill=prefill)
             if 'transaction' in argument_names(on_new_record):
                 kwargs['transaction'] = transaction
             result = on_new_record(**kwargs)
-            top = self.current_form()
-            if isinstance(top, pytis.form.Refreshable):
-                top.refresh()
+            if isinstance(result, dict):
+                result = self._cmd_new_record(name, prefill=result, inserted_data=inserted_data,
+                                              multi_insert=multi_insert, block_on_new_record=True,
+                                              transaction=transaction, spec_kwargs=spec_kwargs,
+                                              copied_row=copied_row)
+            else:
+                top = self.current_form()
+                if isinstance(top, pytis.form.Refreshable):
+                    top.refresh()
         else:
             if view.arguments() is not None:
                 message(_("This form doesn't allow insertion."), beep_=True)
@@ -1408,7 +1419,7 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
 
 
 def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
-               block_on_new_record=False, transaction=None, spec_kwargs={}):
+               block_on_new_record=False, transaction=None, spec_kwargs={}, copied_row=None):
     """Start an interactive form for new record insertion.
 
     Arguments:

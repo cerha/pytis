@@ -1964,8 +1964,11 @@ class RecordForm(LookupForm):
         if prefill is None:
             prefill = self._prefill and copy_.copy(self._prefill) or {}
         if copy:
-            prefill.update(self._row_copy_prefill(self.current_row()))
-        result = new_record(self._name, prefill=prefill)
+            copied_row = self.current_row()
+            prefill.update(self._row_copy_prefill(copied_row))
+        else:
+            copied_row = None
+        result = new_record(self._name, prefill=prefill, copied_row=copied_row)
         if result:
             if not self.select_row(result.row(), quiet=True):
                 msg = _(u"The inserted record didn't appear in the current view.")
