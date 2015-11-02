@@ -107,7 +107,7 @@
 .pytis-form table.vertical-group > tbody > tr > td {
     vertical-align: top;
 }
-.pytis-form table.horizontal-group > tbody > tr > td.spacer {
+.pytis-form table.vertical-group > tbody > tr > td.spacer {
     width: 100%;
 }
 .pytis-form .horizontal-group fieldset.group {
