@@ -997,18 +997,14 @@ class GroupSpec(object):
 
           items -- contents of the group as a sequence of layout items (see
             'GroupSpec' for details about possible types of items).
-            
           orientation -- defines how the fields are composed together as one of
             'Orientation' class constants.  Vertical group has items above each
             other, horizontal has items side by side.
-
           label -- Group label as a (localizable) string displayed at the top
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
-            
-          gap, border -- Depracated and unsupported by
-            some form types (particularly by web forms).
-
+          gap, border -- Depracated and unsupported by some form types
+            (particularly by web forms).
           align_hgroups -- align contained horizontal groups so that their
             first field aligns with the fields of this group.  Contained
             horizontal groups within a vertical group of labeled fields are by
@@ -1017,7 +1013,6 @@ class GroupSpec(object):
             fields of the parent group.  This option, when applied on the
             parent group, makes it possible to disable this alignment when it
             is not desired.  It is currently only implemented for web forms.
-        
           flexible -- allow horizontal group to be wrapped (arranged
             vertically) when there is not enough space to fit the items side by
             side.  It is actually recommended to make all horizontal groups
