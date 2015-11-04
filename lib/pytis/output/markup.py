@@ -255,7 +255,7 @@ class HLine(_Mark):
           instance with given constructor argument(s).
 
         """
-        if not isinstance(thickness, lcg.Unit):
+        if thickness is not None and not isinstance(thickness, lcg.Unit):
             thickness = lcg.UMm(thickness)
         self._thickness = thickness
         self._color = _color(color)
