@@ -2,12 +2,14 @@ Pytis Installation Instructions
 
 Requirements:
 
-  * Python 2.6 or later
-  * PostgreSQL 8.4 or later
-  * Python modules: 
+  * Python 2.6 or 2.7 (Python3.x is not supported)
+  * PostgreSQL 9.4 or later
+  * Python modules:
     - psycopg2
     - sqlalchemy
-    - imaging (only when using Image data types)  
+    - imaging (only when using Image data types)
+    - rpyc (only when using x2goclient.py)
+    - reportlab (for printing)
   * For running GUI applications, you need also these Python modules:
     - wxgtk2.8 (only for GUI apps)
     - wxversion
@@ -21,7 +23,7 @@ Install all these on a Debian-based system:
 
 apt-get install python postgresql python-psycopg2 python-sqlalchemy \
  python-imaging python-wxgtk2.8 python-wxversion python-magic \
- postgresql-contrib postgresql-plpython
+ postgresql-contrib postgresql-plpython python-reportlab
 
 The currently supported model of using Pytis is running it directly out of the
 checked out tree, being able to check out a newer version at any time and using
