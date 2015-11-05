@@ -49,12 +49,12 @@ class CommonApplicationRolePurposes(ApplicationRolePurposes):
 
 class _ApplicationRolesSpecification(pytis.presentation.Specification):
     public = False
-    
+
     access_rights = pytis.data.AccessRights((None, (['admin_roles'], pytis.data.Permission.ALL)),)
-    
+
     def _row_editable(self, row):
         return row['purposeid'].value() != 'admn'
-    
+
     def on_edit_record(self, row):
         if not self._row_editable(row):
             pytis.form.run_dialog(pytis.form.Warning, _(u"Správcovské role nelze editovat"))
@@ -68,7 +68,7 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
             pytis.form.run_dialog(pytis.form.Warning, _(u"Správcovské role nelze mazat"))
             return False
         return True
-        
+
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
@@ -76,7 +76,7 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
                                      _(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
-    
+
 class ApplicationRoles(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_roles'
@@ -137,13 +137,13 @@ class ApplicationRoles(_ApplicationRolesSpecification):
                                            condition=(lambda r:
                                                       pytis.data.EQ('username', r['roleid']))),
                 )
-    
+
     def on_delete_record(self, row):
         if self._row_deleteable(row):
             pytis.form.run_dialog(pytis.form.Warning,
                                   _(u"Role nelze mazat, nastavte datum zrušení"))
         return None
-    
+
     def _copy_roles(self, row):
         template_row = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
         if template_row is None:
@@ -199,7 +199,7 @@ class ApplicationRolesMembership(_ApplicationRolesSpecification):
     def _row_editable(self, row):
         # This is here to prevent deletion of admin role memberships
         return row['purposeid'].value() != 'admn' and row['mpurposeid'].value() != 'admn'
-    
+
     def on_edit_record(self, row):
         pytis.form.run_dialog(pytis.form.Warning,
                               _(u"Přiřazení rolí nelze editovat, jen přidávat a mazat"))
@@ -281,7 +281,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('position_nsub', _(u"Počet poduzlů")),
         Field('fullname', _(u"Navěšená akce"), not_null=True, codebook='menu.ApplicationActions',
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
-        Field('xaction', _(u"Navěšená akce"), virtual=True, 
+        Field('xaction', _(u"Navěšená akce"), virtual=True,
               editable=pytis.presentation.Editable.NEVER,
               computer=pytis.presentation.computer(_xaction_computer),
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
@@ -313,7 +313,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         wm_value = row['position'].value() + '.*'
         if ((row.data().select(condition=pytis.data.AND(pytis.data.LTreeMatch('position',
                                                                               wm_value),
-                                                       pytis.data.NE('position', row['position'])))
+                                                        pytis.data.NE('position', row['position'])))
              > 0)):
             pytis.form.run_dialog(pytis.form.Warning,
                                   _(u"Nelze mazat položky obsahující jiné položky"))
@@ -322,7 +322,7 @@ class ApplicationMenu(pytis.presentation.Specification):
                                      _(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
-    
+
 class ApplicationMenuM(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_menu_structure'
@@ -439,7 +439,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
             return pytis.data.EQ('spec_name', pytis.data.sval(split_shortname[1]))
         else:
             return pytis.data.OR()
-        
+
     ## Form actions
 
     def _copy_rights(self, row):
@@ -539,7 +539,7 @@ class ApplicationRights(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='description')
 
 class ColnameEnumerator(pytis.data.Enumerator):
-        
+
     def values(self, argument=None):
         if argument is None:
             return ()
@@ -578,11 +578,11 @@ class ColnameData(pytis.data.RestrictedMemData):
             label = (f.column_label() or f.label() or f.id())
             mem_data.append(pytis.data.Row((('colname', pytis.data.sval(f.id()),),
                                             ('label', pytis.data.sval(label),),)))
-        
+
     def row(self, key, columns=None, arguments={}, transaction=None):
         self._update_data(arguments)
         return super(ColnameData, self).row(key, columns=columns)
-        
+
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
                arguments={}, async_count=False, stop_check=None, timeout_callback=None, limit=None):
         self._update_data(arguments)
@@ -591,7 +591,7 @@ class ColnameData(pytis.data.RestrictedMemData):
                                                arguments=arguments, async_count=async_count,
                                                stop_check=stop_check,
                                                timeout_callback=timeout_callback, limit=limit)
-    
+
     def search(self, condition, direction=pytis.data.FORWARD, transaction=None, arguments={}):
         self._update_data(arguments)
         return super(ColnameData, self).search(condition, direction=direction,
@@ -602,7 +602,7 @@ class ColnameCodebook(pytis.presentation.Specification):
     title = _("Sloupce")
     data_cls = ColnameData
     cb = pytis.presentation.CodebookSpec(display='label', enable_autocompletion=False)
-    
+
     def fields(self):
         return (
             pytis.presentation.Field('colname', _("Identifier"), type=pytis.data.String,
@@ -613,7 +613,7 @@ class ColnameCodebook(pytis.presentation.Specification):
 
 class _ApplicationMenuRightsBase(pytis.presentation.Specification):
     public = False
-    
+
     def _multiaction_check(self):
         main_form = pytis.form.current_form().main_form()
         shortname = main_form.current_row()['shortname']
@@ -647,7 +647,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
         self._multiaction_check()
     def _after_edit_checks(self):
         self._codebook_rights_check()
-    
+
 class ApplicationMenuRights(_ApplicationMenuRightsBase):
     public = True
     table = 'ev_pytis_action_rights'
@@ -734,7 +734,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
                 message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")
             pytis.form.run_dialog(pytis.form.Message, message)
         return {'commit_changes': commit_changes}
-    
+
 class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
     def _init(self, **kwargs):
         super(_RightsTree, self)._init(tree_column_id='tree',
@@ -977,7 +977,7 @@ class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
     public = True
     table = 'pytis_view_role_menu'
     title = _(u"Chystané menu uživatele")
-    
+
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
     public = True
     table = 'pytis_view_extended_role_menu'

@@ -570,20 +570,20 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._recent_forms_menu = None
         menu = self._build_menu(self._specification.menu(), config.dbconnection)
         menu.append(Menu(self._WINDOW_MENU_TITLE,
-                          (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
-                                 help=_("Switch to the previous window in the window list order.")),
-                           MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                                 help=_("Switch to the next window in the window list order.")),
-                           MItem(_("Most recently active window"),
-                                 command=Application.COMMAND_RAISE_RECENT_FORM,
-                                 help=_("Allows mutual switching of two most recently active "
-                                        "windows cyclically.")),
-                           MItem(_("Close active window"),
-                                 command=pytis.form.Form.COMMAND_LEAVE_FORM,
-                                 help=_("Closes the window of the active form.")),
-                           MSeparator(),
-                           ),
-                          allow_autoindex=False))
+                         (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
+                                help=_("Switch to the previous window in the window list order.")),
+                          MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                                help=_("Switch to the next window in the window list order.")),
+                          MItem(_("Most recently active window"),
+                                command=Application.COMMAND_RAISE_RECENT_FORM,
+                                help=_("Allows mutual switching of two most recently active "
+                                       "windows cyclically.")),
+                          MItem(_("Close active window"),
+                                command=pytis.form.Form.COMMAND_LEAVE_FORM,
+                                help=_("Closes the window of the active form.")),
+                          MSeparator(),
+                          ),
+                         allow_autoindex=False))
         self._create_command_menu(menu)
         self._create_help_menu(menu)
         # Determining availability of menu items may invoke database operations...
@@ -594,7 +594,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
         return mb
-        
+
 # Ostatní metody
 
     def _form_menu_item_title(self, form):
@@ -1313,7 +1313,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def custom_command(self, name):
         """Return the custom application command referred by 'name' as a pair (CMD, ARGS).
-        
+
         The current application specification must define a method named 'cmd_'
         + name, which returns the command and its arguments as a tuple of two
         items -- (CMD, ARGS), where CMD is a 'pytis.form.Command' instance and
@@ -2021,4 +2021,3 @@ def password_dialog(title=_("Enter your password"), message=None):
 
 def custom_command(name):
     return _application.custom_command(name)
-

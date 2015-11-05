@@ -55,7 +55,7 @@ def specification_path(specification_name):
     the specification name and NAME is the specification name without the path.
     If no path is identified then PATH is empty and NAME is
     'specification_name'.
-    
+
     Arguments:
 
       specification_name -- name of the specification; basestring
@@ -78,7 +78,7 @@ class TextFormat(object):
     Not all formats defined below must be supported at all places where
     'TextFormat' is specified.  The documentation of each such place should
     specify the behavior for each of the supported text formats.
-    
+
     """
     PLAIN = 'plain'
     """Plain text
@@ -94,7 +94,7 @@ class TextFormat(object):
     version and the range of supported elements depends strictly upon the
     consumer of this text.  This constant only indicates, that the text is in
     HTML and should be treated as such.
-    
+
     """
     LCG = WIKI = 'lcg'
     """LCG Structured Text
@@ -131,7 +131,7 @@ class Color(object):
     SLATEGRAY2     = (185, 211, 238)
     LIGHTSALMON    = (255, 160, 122)
 
-    
+
 class Style(object):
     """Text style specification.
 
@@ -156,7 +156,7 @@ class Style(object):
           overstrike -- flag indicating that the text should be stroked through
           underline -- flag indicating that the text should be underlined
           name -- style name (string) refering to a common style definition in a stylesheet
-          
+
         """
         self._foreground = foreground
         self._background = background
@@ -180,7 +180,7 @@ class Style(object):
 
     def overstrike(self):
         return self._overstrike
-    
+
     def underline(self):
         return self._underline
 
@@ -197,7 +197,7 @@ class Style(object):
             return self
         else:
             return other + self
-        
+
     def __add__(self, other):
         def coalesce(x, y):
             if x is not None:
@@ -222,7 +222,7 @@ class Orientation(object):
     VERTICAL = 'VERTICAL'
     """Vertical orientation."""
 
-    
+
 class Text(object):
     """Specification of a text embedded within form layout.
 
@@ -233,7 +233,7 @@ class Text(object):
     def __init__(self, text):
         assert isinstance(text, basestring), text
         self._text = text
-        
+
     def text(self):
         return self._text
 
@@ -246,7 +246,7 @@ class Button(object):
     actions (defined by 'Action') or a user defined function.
 
     """
-    
+
     def __init__(self, label=None, handler=None, enabled=None, action=None, width=None,
                  tooltip=None, active_in_popup_form=True, active_in_readonly_form=False):
         """Arguments:
@@ -274,7 +274,7 @@ class Button(object):
             often modify form data.  True value will activate the button in even for readonly
             forms.  This may be particularly useful when the button performs some action, which
             doesn't modify the data.
-            
+
         """
         if action is None:
             assert isinstance(label, basestring), label
@@ -297,25 +297,25 @@ class Button(object):
         self._tooltip = tooltip
         self._active_in_popup_form = active_in_popup_form
         self._active_in_readonly_form = active_in_readonly_form
-        
+
     def label(self):
         return self._label
-    
+
     def handler(self):
         return self._handler
-    
+
     def enabled(self):
         return self._enabled
-    
+
     def action(self):
         return self._action
-    
+
     def width(self):
         return self._width
-    
+
     def tooltip(self):
         return self._tooltip
-    
+
     def active_in_popup_form(self):
         return self._active_in_popup_form
 
@@ -324,7 +324,7 @@ class Button(object):
 
 class ActionContext(object):
     """Enumeration class defining available constants for 'Action' context specification."""
-    
+
     RECORD = 'RECORD'
     """Action is performed on the current record (table row, show form record etc.).
 
@@ -334,7 +334,7 @@ class ActionContext(object):
     """
     CURRENT_ROW = RECORD
     """Depracated: Use RECORD instaed."""
-    
+
     SELECTION = 'SELECTION'
     """Action is performed on the current selection (records selected in the UI).
 
@@ -470,41 +470,41 @@ class Action(object):
     def name(self):
         """Deprecated: Use id() instead."""
         return self.id()
-    
+
     def title(self, raw=False):
         title = self._title
         if not raw:
             title = title.replace("&", "")
         return title
-            
+
     def handler(self):
         return self._handler
 
     def context(self):
         return self._context
-    
+
     def secondary_context(self):
         return self._secondary_context
-    
+
     def enabled(self):
         return self._enabled
-        
+
     def visible(self):
         return self._visible
 
     def access_groups(self):
         return self._access_groups
-        
+
     def set_access_groups(self, access_groups):
         assert access_groups is None or is_sequence(access_groups)
         self._access_groups = access_groups
-        
+
     def descr(self):
         return self._descr
-        
+
     def hotkey(self):
         return self._hotkey
-    
+
     def kwargs(self):
         return self._kwargs
 
@@ -532,7 +532,7 @@ class PrintAction(object):
     def __init__(self, id, title, name):
         """
         Arguments:
-        
+
           id -- action identifier as a string.  It must be unique among all
             objects identifiers within a given form.
           title -- action title displayed in the user interface
@@ -562,7 +562,7 @@ class PrintAction(object):
         """Return print action name in the form useable for DMP."""
         return self._name.replace('/', '#')
 
-  
+
 class _TitledGroup(object):
     """Generic superclass for titled groups of items.
 
@@ -571,7 +571,7 @@ class _TitledGroup(object):
     nested elements in the user interface.
 
     """
-                 
+
     _ITEM_TYPE = None
     """Defines the Python class that all group items must be instance of."""
     _ALLOW_SUBSEQUENCES = False
@@ -597,7 +597,7 @@ class _TitledGroup(object):
                     assert isinstance(item, (self.__class__, self._ITEM_TYPE)), item
         self._title = title
         self._items = items
-        
+
     def title(self):
         return self._title
 
@@ -607,7 +607,7 @@ class _TitledGroup(object):
     @classmethod
     def unnest(cls, items):
         """Return the list of unnested end items within the given sequence of items.
-        
+
         Unnests all nested groups or subsequences of items into one linear
         sequence of end items.
 
@@ -635,7 +635,7 @@ class ActionGroup(_TitledGroup):
     _ITEM_TYPE = Action
     _ALLOW_SUBSEQUENCES = True
 
-    
+
 class Profile(object):
     """Predefined form profile specification.
 
@@ -652,7 +652,7 @@ class Profile(object):
     def __init__(self, id, title, filter=None, descr=None, sorting=None, columns=None,
                  grouping=None, aggregations=None, folding=None, column_widths=None, errors=()):
         """Arguments:
-        
+
           id -- profile identifier as a string.  It must be unique among all
             profile identifiers within a given form.
           title -- user visible profile name as a string.
@@ -684,7 +684,7 @@ class Profile(object):
             message.  Not designed to be used in specifications.  This value is
             set automatically by profile manager when validating saved
             profiles.
-          
+
         """
         assert isinstance(id, basestring)
         assert isinstance(title, basestring), title
@@ -705,7 +705,7 @@ class Profile(object):
         self._folding = folding
         self._column_widths = column_widths
         self._errors = errors
-    
+
     def __str__(self):
         parameters = ['%s=%s' % (key[1:], value)
                       for key, value in self.__dict__.items()
@@ -719,7 +719,7 @@ class Profile(object):
     def id(self):
         """Return the unique profile identifier."""
         return self._id
-        
+
     def title(self):
         """Return the name passed to the constructor."""
         return self._title
@@ -734,7 +734,7 @@ class Profile(object):
     def filter(self):
         """Return the condition passed to the constructor."""
         return self._filter
-    
+
     def sorting(self):
         """Return the sorting specification passed to the constructor."""
         return self._sorting
@@ -772,7 +772,7 @@ class ProfileGroup(_TitledGroup):
     """
     _ITEM_TYPE = Profile
 
-    
+
 class AggregatedView(object):
     """Predefined aggregated view specification.
 
@@ -786,10 +786,10 @@ class AggregatedView(object):
     user data.
 
     """
-    
+
     def __init__(self, id, name, group_by_columns, aggregation_columns):
         """Arguments:
-        
+
           id -- aggregation identifier as a string.  It must be unique among all
             aggregations within a given specification.
           name -- user visible name as a string.
@@ -803,7 +803,7 @@ class AggregatedView(object):
             where each item is a pair of string column identifier and the
             aggregation function as one of pytis.data.Data AGG_* constants.
             May only be used if 'group_by_columns' are also defiend.
-          
+
         """
         assert isinstance(id, basestring), id
         assert isinstance(name, basestring), name
@@ -813,19 +813,19 @@ class AggregatedView(object):
         self._name = name
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
-    
+
     def id(self):
         return self._id
-        
+
     def name(self):
         return self._name
 
     def group_by_columns(self):
         return self._group_by_columns
-    
+
     def aggregation_columns(self):
         return self._aggregation_columns
-    
+
 
 class Profiles(list):
     """A sequence of form profiles with an optional specification of the default profile.
@@ -837,10 +837,10 @@ class Profiles(list):
 
     """
     _ID_MATCHER = re.compile('[a-z0-9_]+')
-    
+
     def __new__(cls, *args, **kwargs):
         return list.__new__(cls, args)
-    
+
     def __init__(self, *profiles, **kwargs):
         """Arguments:
 
@@ -893,15 +893,15 @@ class Filter(Profile):
     They can also be used within the deprecated 'filters' parameter of
     'ViewSpec' for backwards compatibility, but such specifications should be
     updated to use 'profiles' instead.
-    
+
     """
     def __init__(self, id, name, condition=None):
         super(Filter, self).__init__(id, name, filter=condition)
-        
+
     def condition(self):
         """Return the condition passed to the constructor."""
         return self._filter
-        
+
 Condition = Filter
 """Deprecated: Use 'Profile' instead."""
 
@@ -918,10 +918,10 @@ class FilterSet(list):
 
     """
     _ID_MATCHER = re.compile('[a-z0-9_]+')
-    
+
     def __init__(self, id, title, filters, default=None):
         """Arguments:
-        
+
           id -- filter set identifier as a non-empty string.  It must be unique
             among all objects identifiers within a given form and it may
             contain only lower-case English alphabet letters, digits and
@@ -929,7 +929,7 @@ class FilterSet(list):
           title -- label of the filter to be displayed to the user, basestring
           filters -- sequence of 'Filter' instances
           default -- identifier of the filter (from 'filters') to be selected by default
-        
+
         """
         assert isinstance(id, basestring), id
         assert self._ID_MATCHER.match(id), id
@@ -976,16 +976,16 @@ class GroupSpec(object):
         specification,
 
       * 'Button' instance to place action button inside the layout,
-      
+
       * 'Text' instance to place arbitrary text inside the layout,
-      
+
       * recursively embedded group as a 'GroupSpec' instance,
 
       * callable object (function) which returns one of the above.  The
         function must accept the current record ('PresentedRow' instance) as an
         argument.  This allows building layouts dynamically depending on the
         properties of the record to be displayed within the layout.
-      
+
     The items are composed either vertically (above each other) or horizontally
     (side by side).  Sophisticated layouts may be created by combining multiple
     nested layouts.
@@ -997,14 +997,17 @@ class GroupSpec(object):
 
           items -- contents of the group as a sequence of layout items (see
             'GroupSpec' for details about possible types of items).
+
           orientation -- defines how the fields are composed together as one of
             'Orientation' class constants.  Vertical group has items above each
             other, horizontal has items side by side.
           label -- Group label as a (localizable) string displayed at the top
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
-          gap, border -- Depracated and unsupported by some form types
-            (particularly by web forms).
+
+          gap, border -- Depracated and unsupported by
+            some form types (particularly by web forms).
+
           align_hgroups -- align contained horizontal groups so that their
             first field aligns with the fields of this group.  Contained
             horizontal groups within a vertical group of labeled fields are by
@@ -1013,6 +1016,7 @@ class GroupSpec(object):
             fields of the parent group.  This option, when applied on the
             parent group, makes it possible to disable this alignment when it
             is not desired.  It is currently only implemented for web forms.
+
           flexible -- allow horizontal group to be wrapped (arranged
             vertically) when there is not enough space to fit the items side by
             side.  It is actually recommended to make all horizontal groups
@@ -1099,28 +1103,28 @@ class FieldSet(GroupSpec):
     specialization with more convenient constructor interface for this kind of
     layout) so its instances may be used as items of 'ViewSpec' 'layout'
     specification.
-    
+
     """
     def __init__(self, label, items):
         super(FieldSet, self).__init__(items, label=label, orientation=Orientation.VERTICAL)
-        
+
 
 class ColumnLayout(GroupSpec):
     """Set of horizontally (side by side) composed field groups in form layout.
-    
+
     This class is derived from 'GroupSpec' (it is actually just its
     specialization with more convenient constructor interface for this kind of
     layout) so its instances may be used as items of 'ViewSpec' 'layout'
     specification.
-    
+
     """
     def __init__(self, *items):
         super(ColumnLayout, self).__init__(items, orientation=Orientation.HORIZONTAL)
 
-    
+
 class TabGroup(GroupSpec):
     """Tabbed layout specification."""
-    
+
     def __init__(self, *tabs):
         """Arguments:
 
@@ -1132,7 +1136,7 @@ class TabGroup(GroupSpec):
         items = [GroupSpec(xtuple(group), label=label, orientation=Orientation.VERTICAL)
                  for label, group in tabs]
         super(TabGroup, self).__init__(items, orientation=Orientation.VERTICAL)
-        
+
 
 class HGroup(GroupSpec):
     """Horizontální seskupení políček.
@@ -1143,7 +1147,7 @@ class HGroup(GroupSpec):
     def __init__(self, *items, **kwargs):
         super(HGroup, self).__init__(items, orientation=Orientation.HORIZONTAL, **kwargs)
 
-        
+
 class VGroup(GroupSpec):
     """Vertikální seskupení políček.
 
@@ -1153,7 +1157,7 @@ class VGroup(GroupSpec):
     def __init__(self, *items, **kwargs):
         super(VGroup, self).__init__(items, orientation=Orientation.VERTICAL, **kwargs)
 
-        
+
 class LHGroup(HGroup):
     """Horizontální seskupení políček s nadpisem a orámováním.
 
@@ -1164,7 +1168,7 @@ class LHGroup(HGroup):
         kwargs['label'] = label
         super(LHGroup, self).__init__(*items, **kwargs)
 
-        
+
 class LVGroup(VGroup):
     """Vertikální seskupení políček s labelem a orámováním.
 
@@ -1174,7 +1178,7 @@ class LVGroup(VGroup):
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LVGroup, self).__init__(*items, **kwargs)
-    
+
 
 class LayoutSpec(object):
     """Deprecated: Use 'GroupSpec' directly to specify 'ViewSpec' 'layout'."""
@@ -1182,13 +1186,13 @@ class LayoutSpec(object):
         """Inicializace a doplnění defaultních hodnot atributů.
 
         Argumenty:
-        
+
           caption -- nadpis editačního formuláře jednoho záznamu
-          
+
           group -- specifikace skupiny políček nejvýšší úrovně; instance
             'GroupSpec'. Tato skupina může obsahovat další vnořené skupiny
             (viz dokumentace třídy 'GroupSpec').
-            
+
           order -- specifikace pořadí procházení mezi políčky jako sekvence
             řatězců - identifikátorů políček.  Pokud není None, je pořadí
             procházení políček určeno pořadím jejich identifikátorů v této
@@ -1224,10 +1228,10 @@ class LayoutSpec(object):
     def group(self):
         """Vrať skupinu políček nejvýšší úrovně; instance 'GroupSpec'."""
         return self._group
-    
+
     def order(self):
         """Vrať tuple id všech políček editačního formuláře v pořadí procházení.
-        
+
         Pokud nebylo pořadí v konstruktoru určeno, odpovídá pořadí ve skupinách.
 
         """
@@ -1266,12 +1270,13 @@ class QueryFields(object):
         on_main_form_selection -- when the form is used as a side form of a
           dual form, given callback function will be called on each row
           selection change in the main form.  Two arguments are passed to the
-          callback, both are PresentedRow instances.  The first argument represents the selected main form row and the second represents the query fields row main form .
+          callback, both are PresentedRow instances.  The first argument represents
+          the selected main form row and the second represents the query fields row main form .
         kwargs -- other ViewSpec constructor arguments
 
         """
         assert fields and isinstance(fields, (tuple, list)), fields
-        assert (on_main_form_selection is None 
+        assert (on_main_form_selection is None
                 or isinstance(on_main_form_selection, collections.Callable)), \
             on_main_form_selection
         if __debug__:
@@ -1341,10 +1346,10 @@ class ViewSpec(object):
             used in browse form headings and in other contexts, where the
             entity is referred as whole (all the records).  Thus the title
             should mostly be in plural (for example 'Invoices').
-            
+
           singular -- the title of a single item (one record) of the entity as
             a (unicode) string.  If None, 'title' is used in both contexts.
-            
+
           layout -- single record form layout specification as a 'GroupSpec'
             instance.  It is also possible to pass a sequence of items, which
             are automatically wrapped into a newly created 'GroupSpec' instance
@@ -1356,7 +1361,7 @@ class ViewSpec(object):
 
           list_layout -- specification of list layout as a 'ListLayout'
             instance or None.
-          
+
           columns -- specification of table form columns as a sequence of field
             identifiers from 'fields'.  If not defined, the default column list
             will include all fields which don't have 'column_width' set to zero
@@ -1371,11 +1376,11 @@ class ViewSpec(object):
             create unnamed groups which are visually separated from their
             neighbours.  Nested groups may be used inside other groups
             recursively.
-                        
+
           sorting -- default sorting in the same format as accepted by the
             'sort' argument of 'pytis.data.Data.select()'.  If None, the
             records will be sorted by the key column.
-            
+
           grouping -- default visual grouping of table rows.  The value is a
             column identifier or a sequence of column identifiers.  Grouping
             allows you to visually group table rows, which have the same
@@ -1414,7 +1419,7 @@ class ViewSpec(object):
             Formulář by potom měl uživatele vrátit do editace daného polčka.
             Je možné vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
             zpráva, která má být zobrazena uživateli.
-            
+
           cleanup -- a function for final actions after inserting/updating a
             record.  The function must accept two arguments -- the first one is
             the row after performing the database operation (insert/update) and
@@ -1430,39 +1435,19 @@ class ViewSpec(object):
             unlike 'check', 'cleanup' is called after the database operation,
             but you can still abort the operation by rollback of the
             transaction (if the underlying database engine supports it).
-            
-          on_new_record -- custom handling of new record insertion.  If not
-            defined, the default handling takes place (a new record insertion
-            form is opened).  If defined, it overrides the default handling by
-            custom functionality.  It must be a function (callable object)
-            which accepts the keyword argument 'prefill' which is a dictionary
-            of values to be prefilled in the form.  Keys are field identifiers
-            and values are 'pytis.data.Value' instances.  Optionally, the
-            function may also accept the keyword argument 'transaction' which
-            will contain the current database transaction.  If the new record
-            is created by copying an existing record, the prefill will include
-            the copied values of the original row.  Also, when an existing
-            record is copied, a function 'on_copy_record' may be defined to
-            handle this case specifically (see below).  The function returns
-            either a 'PresentedRow' instance representing the already inserted
-            record or a dictionary.  If a dictionary is returned, the default
-            handling will take place but it will use the returned dictionary as
-            prefill instead of the default prefill (passed to the function as
-            argument).
 
-          on_copy_record -- custom handling of new record insertion by copying
-            an existing record.  Overrides 'on_new_record' for the specific
-            case of record copying.  The arguments and return value are the
-            same as for 'on_new_record', but there is an additional keyword
-            argument 'row' containing the copied record as a 'PresentedRow'
-            instance.
-            
-          on_edit_record -- custom handling of record editation (update).  If
-            not defined, the default handling takes place (update record form
-            is opened).  If defined, it overrides the default handling by
-            custom functionality.  The function must accept the keyword
-            argument 'row' containing the edited record as a 'PresentedRow'
-            instance.
+          on_new_record -- akce vložení nového záznamu.  Pokud je None, bude
+            provedena výchozí akce (otevření PopupEditForm nad danou
+            specifikací).  Předáním funkce lze předefinovat přidání nového
+            záznamu v daném náhledu libovolnou vlastní funkcionalitou.  Funkce
+            musí akceptovat klíčový argument 'prefill' (viz.
+            'pytis.form.new_record()').
+
+          on_edit_record -- akce editace záznamu.  Pokud je None, bude
+            provedena výchozí akce (otevření PopupEditForm nad danou
+            specifikací).  Předáním funkce jednoho klíčového argumentu,
+            jímž je instance 'PresentedRow', lze předefinovat editaci záznamu
+            libovolnou vlastní funkcionalitou.
 
           on_delete_record -- user defined record deletion function.  If
             defined, it must be a function of one argument (the current record
@@ -1479,7 +1464,7 @@ class ViewSpec(object):
             refresh) are performed.  Finally, if a 'pytis.data.Operator'
             instance is returned, all records matching given condition are
             deleted without further prompting.
-            
+
           redirect -- redirection for single record view/editation specified as
             a callable object (function) of one argument - the 'PresentedRow'
             instance.  The function should return the name of the specification
@@ -1490,18 +1475,18 @@ class ViewSpec(object):
             to be able to open each particular record in a form which matches
             its subtype.  Note, that the same effect would be possible by
             defining the 'on_edit_record' function.
-            
+
           focus_field -- identifier of the field, which should automatically
             gain focus when a form is open.  You may also pass a function of
             one argument ('PresentedRow' instance), which returns the field
             identifier.  When None, or None is returned by the function, the
             first form field is focused by default.
-            
+
           description -- brief description of the view.  A short text (one or
             two sentences) without formatting.  Use the 'help' argument below
             to supply a detailed description.  But even if 'help' is present,
             this short description should still be defined.
-          
+
           help -- detailed description of the view as a formatted text in the
             LCG Structured Text format.  This text is used for generating the
             on-line help and it is also possible to supply it in a separate
@@ -1536,7 +1521,7 @@ class ViewSpec(object):
             pytis data type instance of the function result.  When a user
             attempts to open an aggregated view of the form, she can select the
             columns used in the group by caluse.
-            
+
           aggregated_views -- specification of predefined agregated views as a
             sequence of 'AggregatedView' instances.
 
@@ -1554,7 +1539,7 @@ class ViewSpec(object):
 
           folding -- 'FoldableForm.Folding' instance defining initial
             folding.  'None' means use the standard folding.
-            
+
           arguments -- sequence of 'DBBinding' instances defining table
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
@@ -1579,7 +1564,7 @@ class ViewSpec(object):
             arguments are described below in section Provider Arguments.
             Defining 'argument_provider' makes sense only for database table
             functions.  It should be 'None' for standard tables and views.
-            
+
           condition_provider -- function returning a form filtering condition
             as a 'pytis.data.Operator' instance.  If used (not None), the
             returned condition is applied in addition to any other conditions,
@@ -1615,7 +1600,7 @@ class ViewSpec(object):
         should generally consume only the arguments it needs, but still accept
         all other keyword arguments (**kwargs) for the possibility of extending
         the available arguments in future pytis versions.
-        
+
           query_fields -- 'PresentedRow' instance with the current query field
             values from the user interface.  Only passed, when 'query_fields'
             are defined in form specification.
@@ -1628,9 +1613,9 @@ class ViewSpec(object):
         """
         self._kwargs = dict(kwargs, title=title, fields=fields)
         self._init(**self._kwargs)
-    
+
     def _init(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
-              actions=(), sorting=None, grouping=None, group_heading=None, check=(), cleanup=None, 
+              actions=(), sorting=None, grouping=None, group_heading=None, check=(), cleanup=None,
               on_new_record=None, on_copy_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None, filter_sets=(),
@@ -1833,13 +1818,13 @@ class ViewSpec(object):
         self._aggregated_views = tuple(aggregated_views)
         self._bindings = tuple(bindings)
         self._orientation = orientation
-        self._folding = folding or initial_folding # initial_folding is deprecated!
+        self._folding = folding or initial_folding  # initial_folding is deprecated!
         self._arguments = arguments
         self._argument_provider = argument_provider
         self._condition_provider = condition_provider
         self._query_fields = query_fields
         self._referer = referer
-        
+
     def clone(self, other):
         """Clone this instance by another 'ViewSpec' instance and return the cloned instance.
 
@@ -1864,25 +1849,25 @@ class ViewSpec(object):
         """Vrať tuple specifikací všech políček v layoutu.
 
         (A navíc to vrací i políčka, která v layoutu nejsou.)
-        
+
         """
         return self._fields
-        
+
     def field(self, id):
         """Vrať specifikaci políčka daného 'id' jako instanci 'Field'.
 
         Pokud takové políčko neexistuje, vrať 'None'.
-        
+
         """
         return self._field_dict.get(id)
-        
+
     def layout(self):
         """Vrať specifikaci rozvržení editačního formuláře."""
         return self._layout
 
     def list_layout(self):
         return self._list_layout
-    
+
     def columns(self):
         """Vrať tuple identifikátorů sloupců pro tabulkový formulář."""
         return self._columns
@@ -1933,7 +1918,7 @@ class ViewSpec(object):
     def redirect(self):
         """Vrať funkci zajišťující přesměrování na jiný název specifikace."""
         return self._redirect
-        
+
     def focus_field(self):
         """Vrať řetězec nebo funkci, určující políčko formuláře s fokusem."""
         return self._focus_field
@@ -1945,7 +1930,7 @@ class ViewSpec(object):
     def help(self):
         """Vrať podrobnou nápovědu."""
         return self._help
-    
+
     def row_style(self):
         """Vrať výchozí styl řádku, nebo funkci, která jej vypočte."""
         return self._row_style
@@ -1983,7 +1968,7 @@ class ViewSpec(object):
     def arguments(self):
         """Return 'None' or a sequence of table function arguments."""
         return self._arguments
-    
+
     def argument_provider(self):
         """Return 'None' or a function generating database table function arguments."""
         return self._argument_provider
@@ -2008,12 +1993,12 @@ class ViewSpec(object):
         """
         return self._spec_name
 
-    
+
 class BindingSpec(object):
     """Specifikace vazby dvou náhledů při propojení do duálního formuláře.
 
     DEPRECATED: Use 'Binding' instead.
-    
+
     Definuje vlastnosti napojení dvou formulářů při jejich spojení do duálního
     formuláře.  Definována je jak datová vazba, tak některé prezentační
     vlastnosti spojení.
@@ -2029,7 +2014,7 @@ class BindingSpec(object):
     pro náhled 'B' (v roli vedlejšího formuláře).
 
     """
-    
+
     def __init__(self, title=None, binding_column=None, side_binding_column=None,
                  hide_binding_column=True, append_condition=None, condition=None, description=None,
                  help=None, sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
@@ -2039,7 +2024,7 @@ class BindingSpec(object):
 
           title -- The title of the dual form as a string.  If omitted, the title will be
             provided automatically as a concatenation of the titles of both involved forms.
-                        
+
           binding_column -- the identifier of the binding column (string).  The binding column
             determines filtering of the side form depending on the current main form row.  If
             specified, side form will be filtered to contain only the rows, which have the same
@@ -2047,10 +2032,10 @@ class BindingSpec(object):
             'side_binding_column' if the identifier of the binding column is different in the side
             form.  Using the binding column is optional and if omitted, the filtering depends
             solely on the 'condition' argument.
-            
+
           side_binding_column -- identifier of the binding column in the side form.  The default
             value None means to use the same identifier as given by 'binding_column'.
-            
+
           hide_binding_column -- the binding column is hidden by default in the side form.  Pass a
             false value to this argument to unhide it.
 
@@ -2061,18 +2046,18 @@ class BindingSpec(object):
             solely.
 
           description -- a brief description of this dual connection of the forms.
-            
+
           help -- detailed description of this dual connection as a formatted text in the LCG
             Structured Text format.  This text is used for generating the on-line help and it is
             also possible to supply it in a separate file.  See the Help tutorial for more
             information.
-            
+
           sash_ratio -- the relative proportion of the size of the two forms.  The value is a
             decimal number in the range from zero to one.  The default value of 0.5 denotes equal
             space for both forms.  Lower value means less space for the main form.  The ratio only
             has effect when displaying two table forms separated horizontally.  Layout forms are
             sized according to their width/height.
-            
+
           orientation -- the default orientation of the dual form separator as one of 'Orientation'
             constants.  In horizontal orientation, the main form is above the side form, in
             vertical it is on the left side.
@@ -2104,16 +2089,16 @@ class BindingSpec(object):
         self._condition = condition
         self._sash_ratio = sash_ratio
         self._orientation = orientation
-        
+
     def title(self):
         return self._title
 
     def description(self):
         return self._description
-    
+
     def help(self):
         return self._help
-    
+
     def binding_column(self):
         return self._binding_column
 
@@ -2125,10 +2110,10 @@ class BindingSpec(object):
 
     def condition(self):
         return self._condition
-    
+
     def sash_ratio(self):
         return self._sash_ratio
-    
+
     def orientation(self):
         return self._orientation
 
@@ -2151,7 +2136,7 @@ class Binding(object):
     def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
                  single=False, arguments=None, prefill=None, search=None, uri=None, content=None):
         """Arguments:
-        
+
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
           title -- title used for the list of related records
@@ -2221,7 +2206,7 @@ class Binding(object):
             functions 'pytis.util.lcg_to_html()' or
             'pytis.util.parse_lcg_text()' may be useful if you need to display
             the formatted content of a field containing LCG Structured Text.
-          
+
         """
         assert isinstance(id, basestring), id
         assert isinstance(title, basestring), title
@@ -2255,25 +2240,25 @@ class Binding(object):
         self._search = search
         self._uri = uri
         self._content = content
-        
+
     def id(self):
         return self._id
 
     def title(self):
         return self._title
-        
+
     def name(self):
         return self._name
-        
+
     def binding_column(self):
         return self._binding_column
-    
+
     def condition(self):
         return self._condition
-        
+
     def descr(self):
         return self._descr
-        
+
     def single(self):
         return self._single
 
@@ -2302,7 +2287,7 @@ class Editable(object):
     NEVER = 'NEVER'
     """The field is never editable."""
 
-    
+
 class SelectionType(object):
     """Definition of available selection types for enumeration fields."""
     CHOICE = 'CHOICE'
@@ -2322,8 +2307,8 @@ class SelectionType(object):
     """Deprecated.  Equivalent to 'RADIO'"""
     LIST_BOX = LISTBOX
     """Deprecated.  Equivalent to 'LISTBOX'"""
-    
-   
+
+
 class PostProcess(object):
     "Výčtová třída definující konstanty pro způsob zpracování uživ. vstupu."
     UPPER = 'UPPER'
@@ -2331,7 +2316,7 @@ class PostProcess(object):
     LOWER = 'LOWER'
     """Převeď veškerá písmena na malá."""
 
-    
+
 class TextFilter(object):
     """Výčtová třída definující konstanty pro způsob filtrování uživ. vstupu.
     """
@@ -2361,7 +2346,7 @@ class TextFilter(object):
 
 class Computer(object):
     """Specifikace funkce pro dopočítání hodnoty sloupce."""
-    
+
     def __init__(self, function, depends=None):
         """Inicializuj specifikaci.
 
@@ -2370,7 +2355,7 @@ class Computer(object):
           function -- libovolná funkce vracející hodnotu kompatibilní s vnitřní
             hodnotou datového typu odpovídajícího sloupci, pro který je
             použita.
-            
+
           depends -- seznam sloupců, na kterých dané počítané políčko závisí.
             Měl by obsahovat všechny sloupce, které počítací funkce používá pro
             určení výsledné hodnoty.  Hodnota potom bude přepočítána pouze
@@ -2423,7 +2408,7 @@ def computer(function):
         def func(row, aa, bb):
             return aa + bb
         c = computer(func)
-        
+
     or:
 
         c = computer(lambda r, aa, bb: aa + bb)
@@ -2439,11 +2424,11 @@ def computer(function):
         kwargs = dict([(column, row[column].value()) for column in columns])
         return function(row, **kwargs)
     return Computer(func, depends=columns)
-    
+
 
 class CbComputer(Computer):
     """Specializovaný computer, který získává hodnotu z číselníku.
-    
+
     Tento computer automaticky poskytuje dopočítávací funkci, která získává
     hodnotu z některého sloupce číselníku navázaného na jiné políčko stejného
     náhledu.  Toho lze využít u políček, která ve skutečnosti jen zobrazují
@@ -2462,15 +2447,15 @@ class CbComputer(Computer):
         """Inicialize the instance.
 
         Arguments:
-        
+
           field -- identifier of a field in the same specification, which provides codebook
             values.  This field must have an enumerator of type 'DataEnumerator' (must be a
             codebook field).
 
           column -- identifier of a column within the enumerator data object.  The computer will
             return the value of this column as its result.
-          
-        
+
+
         """
         assert isinstance(field, basestring)
         assert column is None or isinstance(column, basestring)
@@ -2478,7 +2463,7 @@ class CbComputer(Computer):
         self._column = column
         self._default = default
         super(CbComputer, self).__init__(self._compute, depends=(field,))
-        
+
     def _compute(self, row):
         cbvalue = row[self._field]
         if cbvalue.value() is not None:
@@ -2497,12 +2482,12 @@ class CbComputer(Computer):
     def field(self):
         """Vrať id políčka, jehož enumerátor je použit."""
         return self._field
-    
+
     def column(self):
         """Vrať id sloupce datového objektu enumerátoru, který udává hodnotu."""
         return self._column
-    
-    
+
+
 class CodebookSpec(object):
     """Specification of codebook properties of given view.
 
@@ -2510,12 +2495,12 @@ class CodebookSpec(object):
     (see the 'codebook' argument of 'Field' for more information about codebooks).
 
     'CodebookSpec' may be defined as the 'cb' attribute of a 'Specification'.
-    
+
     """
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
                  display_size=20, enable_autocompletion=True, begin_search=None):
         """Arguments:
-        
+
           display -- defines the method of retrieving the user visible value of
             the codebook item (see below for more information about user
             visible values).  None (the default value) means to use the
@@ -2574,25 +2559,25 @@ class CodebookSpec(object):
         self._display_size = display_size
         self._begin_search = begin_search
         self._enable_autocompletion = enable_autocompletion
-        
+
     def columns(self):
         return self._columns
-        
+
     def sorting(self):
         return self._sorting
-        
+
     def display(self):
         """Return the 'display' specification as passed to the constructor."""
         return self._display
-    
+
     def prefer_display(self):
         """Return true if the display should be preferred over the internal codebook value."""
         return self._prefer_display
-        
+
     def display_size(self):
         """Return the display size in characters."""
         return self._display_size
-        
+
     def begin_search(self):
         """Return the identifier of the column where incremental search should be started."""
         return self._begin_search
@@ -2602,7 +2587,7 @@ class CodebookSpec(object):
 
     def arguments(self):
         return self._arguments
-    
+
 
 class FormType(object):
     """Specifikace abstraktního typu formuláře podle účelu jeho otevření.
@@ -2614,19 +2599,19 @@ class FormType(object):
     nejvhodnější.
 
     """
-    
+
     BROWSE = 'BROWSE'
     """Otevření řádkového náhledu v podobě tabulky."""
-    
+
     VIEW = 'VIEW'
     """Otevření needitovatelného náhledu jednoho záznamu."""
-    
+
     BROWSABLE_VIEW = 'BROWSABLE_VIEW'
     """Otevření needitovatelného náhledu jednoho záznamu s možností procházení záznamů."""
-    
+
     EDIT = 'EDIT'
     """Otevření editačního formuláře jednoho záznamu."""
-    
+
     INSERT = 'INSERT'
     """Otevření editačního formuláře pro vložení nového záznamu."""
 
@@ -2660,7 +2645,7 @@ class Link(object):
             pojmenován automaticky a zařazen mezi automaticky generované
             odkazy.  Pokud je titulek uveden, bude v uživatelském rozhraní
             odkaz uveden samostatně před všemi automaticky generovanými odkazy.
-            
+
           enabled -- function of one argument ('PresentedRow' instance)
             returning True when the link is active for given record or False
             otherwise.  A boolean value may also be used directly instead of a
@@ -2691,7 +2676,7 @@ class Link(object):
 
     def __str__(self):
         return '<Link %s %s>' % (self._name, self._column,)
-                
+
     def name(self):
         return self._name
 
@@ -2709,10 +2694,10 @@ class Link(object):
 
     def enabled(self):
         return self._enabled
-    
+
     def filter(self):
         return self._filter
-    
+
 
 class ListLayout(object):
     """Specification of list layout.
@@ -2723,7 +2708,7 @@ class ListLayout(object):
     records are not presented as a table, but as sections, where each record
     has its own heading, meta information and text (description, annotation,
     message...).
-    
+
     """
     def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
                  meta_labels=False, columns=1, allow_index=False, popup_actions=False):
@@ -2793,13 +2778,13 @@ class ListLayout(object):
         self._columns = columns
         self._allow_index = allow_index
         self._popup_actions = popup_actions
-        
+
     def title(self):
         return self._title
-    
+
     def meta(self):
         return self._meta
-    
+
     def content(self):
         return self._content
 
@@ -2808,13 +2793,13 @@ class ListLayout(object):
 
     def image(self):
         return self._image
-        
+
     def anchor(self):
         return self._anchor
-    
+
     def meta_labels(self):
         return self._meta_labels
-    
+
     def columns(self):
         return self._columns
 
@@ -2872,10 +2857,10 @@ class Enumeration(object):
 
     selection_type = SelectionType.CHOICE
     """Overrides Field's 'selection_type' attribute."""
-    
+
     orientation = Orientation.VERTICAL
     """Overrides Field's 'orientaion' attribute."""
-    
+
     null_display = None
     """Overrides Field's 'null_display' attribute."""
 
@@ -2887,8 +2872,8 @@ class Enumeration(object):
     always show labels instead of enumeration inner values.
 
     """
-    
-    
+
+
 class Field(object):
     """Specification of a generic form field representing a data value.
 
@@ -2901,7 +2886,7 @@ class Field(object):
     on classes implementing the user interface and the details also depend on
     the kind of user interface (GUI forms, web forms, printed reports).  Not
     all features may be supported by all user interface implementations.
-    
+
     """
     def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
         """Arguments:
@@ -3238,7 +3223,7 @@ class Field(object):
         Závislosti počítaných políček mohou být i tranzitivní (počítaná políčka
         mohou záviset na jiných počítaných políčkách), ale graf závislostí musí
         tvořit strom (nesmí vzniknout cyklus).
-        
+
         """
         for key, value in (('id', id), ('label', label), ('column_label', column_label)):
             if value is not None:
@@ -3248,7 +3233,7 @@ class Field(object):
             kwargs = dict(inherit._kwargs, **kwargs)
         self._kwargs = kwargs
         self._init(**kwargs)
-                 
+
     def _init(self, id, label=None, column_label=None, descr=None, virtual=False,
               dbcolumn=None, type=None, type_=None, width=None, column_width=None,
               disable_column=False, fixed=False, height=None,
@@ -3397,7 +3382,7 @@ class Field(object):
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
-            label = id # TODO: Allow unlabeled fields?
+            label = id  # TODO: Allow unlabeled fields?
         self._label = label
         if column_label is None:
             column_label = label
@@ -3563,10 +3548,10 @@ class Field(object):
 
     def disable_column(self):
         return self._disable_column
-        
+
     def fixed(self):
         return self._fixed
-        
+
     def height(self, default=1):
         """Return the height specified in constructor or 'default' if specified height was None."""
         if self._height is None:
@@ -3594,10 +3579,10 @@ class Field(object):
 
     def formatter(self):
         return self._formatter
-    
+
     def line_separator(self):
         return self._line_separator
-    
+
     def codebook(self):
         """Return the 'codebook' name passeed to the constructor as a string."""
         return self._codebook
@@ -3616,19 +3601,19 @@ class Field(object):
 
     def inline_display(self):
         return self._inline_display
-    
+
     def inline_referer(self):
         return self._inline_referer
 
     def allow_codebook_insert(self):
         return self._allow_codebook_insert
-    
+
     def codebook_insert_spec(self):
         return self._codebook_insert_spec
-    
+
     def codebook_insert_prefill(self):
         return self._codebook_insert_prefill
-    
+
     def runtime_filter(self):
         return self._runtime_filter
 
@@ -3664,13 +3649,13 @@ class Field(object):
 
     def text_format(self):
         return self._text_format
-    
+
     def attachment_storage(self):
         return self._attachment_storage
 
     def printable(self):
         return self._printable
-    
+
     def slider(self):
         return self._slider
 
@@ -3689,10 +3674,10 @@ class Field(object):
             data_spec = config.resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
         return completer
-    
+
     def type_kwargs(self):
         """Return the keyword arguments for field's data type construction.
-        
+
         This method should never be called from outside of the 'pytis.presentation' module.
 
         """
@@ -3737,7 +3722,7 @@ class Fields(object):
 
     def __getitem__(self, key):
         return self._dict[key]
-    
+
     def __len__(self, key):
         return len(self._fields)
 
@@ -3747,7 +3732,7 @@ class Fields(object):
     def fields(self, override=(), exclude=()):
         override = dict([(f.id(), f) for f in override])
         return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
-    
+
 
 class AttachmentStorage(object):
     """Abstract base class defining the API for storing file attachments.
@@ -3778,13 +3763,13 @@ class AttachmentStorage(object):
     unless he surely knows which storage implementation is in use.  Of course,
     the transaction may only be passed in contexts where one exists.  If there
     is no transaction in progress, None is passed.
-    
+
     """
 
     class StorageError(Exception):
         """Exception raised by storage methods when a storage access problem occurres."""
         pass
-    
+
     class InvalidImageFormat(StorageError):
         """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
         pass
@@ -3805,7 +3790,7 @@ class AttachmentStorage(object):
         '_resource_uri()', '_image_uri()', '_thumbnail_uri()',
         '_resource_src_file()', '_image_src_file()' and
         '_thumbnail_src_file()'.
-        
+
         """
         import lcg
         cls = self._resource_cls(filename)
@@ -3846,46 +3831,46 @@ class AttachmentStorage(object):
             else:
                 cls = lcg.Resource
         return cls
-    
+
     def _resource_uri(self, filename):
         """Return the URI of a resource of given 'filename'.
 
         Used by '_resource()' to get the value for 'uri' argument for non-image
         resources and image resources which don't have a thumbnail (are
         displayed full-size within the document).
-        
+
         """
         pass
-    
+
     def _image_uri(self, filename):
         """Return the URI of an image resource of given 'filename'.
 
         Used by '_resource()' to get the value for 'uri' argument for image
         resources which have a thumbnail (this URI should lead to an enlarged
         variant of the image (not necessarily the original)).
-        
+
         """
         pass
-    
+
     def _thumbnail_uri(self, filename):
         """Return the URI of an image thumbnail returned by '_resource()'.
-        
+
         Used by '_resource()' to get the value for 'uri' argument for an image
         thumbnail.
-        
+
         """
         pass
-    
+
     def _resource_src_file(self, filename):
         """Return source file path of a resource of given 'filename' or None.
 
         Used by '_resource()' to get the value for 'src_file' argument for
         non-image resources.  May return None when the storage doesn't support
         source files.
-        
+
         """
         return None
-    
+
     def _image_src_file(self, filename):
         """Return image source file path of a resource of given 'filename' or None.
 
@@ -3893,20 +3878,20 @@ class AttachmentStorage(object):
         image resources which have a thumbnail (this path should point to an
         enlarged variant of the image (not necessarily the original)).  May
         return None when the storage doesn't support source files.
-        
+
         """
         return None
-    
+
     def _thumbnail_src_file(self, filename):
         """Return thumbnail source file path of a resource of given 'filename' or None.
 
         Used by '_resource()' to get the value for 'src_file' argument for
         image thumbnails.  May return None when the storage doesn't support
         source files.
-        
+
         """
         return None
-    
+
     def _resized_image(self, image, size):
         """Return the given PIL.Image instance resized to 'size' as a PIL.Image instance.
 
@@ -3932,7 +3917,7 @@ class AttachmentStorage(object):
             attachment parameters (usually passed through 'resource.info()').
           transaction -- current database transaction instance or None.  See
             the class docstring for more details.
-             
+
 
         Raises 'InvalidImageFormat' exception if an image of unknown or invalid
           type is inserted.
@@ -3945,7 +3930,7 @@ class AttachmentStorage(object):
         """Update the information about given attachment.
 
         Arguments:
-        
+
           filename -- unique file name (basestring) identifying the resource.
             Must be one of existing filenames as returned by
             'resource.filename()' of one of the resources returned by
@@ -3957,22 +3942,22 @@ class AttachmentStorage(object):
             'resource.info()').
           transaction -- current database transaction instance or None.  See
             the class docstring for more details.
-        
+
         Returns None when the update is performed ok or an error message string
         when error occurres.
-        
+
         """
         pass
-    
+
     def delete(self, filename, transaction=None):
         """Not supported yet"""
         pass
-    
+
     def retrieve(self, filename, transaction=None):
         """Retieve the contents of an attachment file of given name.
 
         Arguments:
-        
+
           filename -- unique file name (basestring) identifying the resource.
             Must be one of existing filenames as returned by
             'resource.filename()' of one of the resources returned by
@@ -3983,9 +3968,9 @@ class AttachmentStorage(object):
         The returned value is an open file like object with methods 'read()'
         and 'close()'.  The calling side is responsible for calling 'close()'
         after reading file data.
-        
+
         None is returned when a corresponding attachment is not found.
-        
+
         """
         pass
 
@@ -3993,7 +3978,7 @@ class AttachmentStorage(object):
         """Return a 'lcg.Resource' instance for given 'filename' if it exists or None.
 
         Arguments:
-        
+
           filename -- unique file name (basestring) identifying the resource.
             Must be one of existing filenames as returned by
             'resource.filename()' of one of the resources returned by
@@ -4006,7 +3991,7 @@ class AttachmentStorage(object):
         may pass also additional information about the attachment in the 'info'
         argument of 'lcg.Resource' (available through the method
         'resource.info()').
-        
+
         """
         pass
 
@@ -4014,10 +3999,10 @@ class AttachmentStorage(object):
         """Return a list of all files currently present in the storage.
 
         Arguments:
-        
+
           transaction -- current database transaction instance or None.  See
             the class docstring for more details.
-             
+
         The returned list consists of 'lcg.Resource' instances corresponding to
         attachment files.  See 'resource()' for more information about the
         returned resource instances.
@@ -4035,12 +4020,12 @@ class AttachmentStorage(object):
           uri -- the searched resource URI as a basestring.
           transaction -- current database transaction instance or None.  See
             the class docstring for more details.
-             
+
         Searches all the resources returned by 'resources()' including nested
         resources, such as thumbnails of Image resources.
 
         None is returned when a corresponding resource is not found.
-        
+
         """
         import lcg
         for resource in self.resources(transaction=transaction):
@@ -4051,8 +4036,8 @@ class AttachmentStorage(object):
                 if thumbnail and thumbnail.uri() == uri:
                     return thumbnail
         return None
-        
-    
+
+
 class FileAttachmentStorage(AttachmentStorage):
     """Simple AttachmentStorage API implementation storing files in a filesystem.
 
@@ -4076,12 +4061,12 @@ class FileAttachmentStorage(AttachmentStorage):
     attachments is currently not supported by web forms).  If both applications
     run on a different machine, the directory must be shared through a network
     filesystem.
-    
+
     """
 
     def __init__(self, directory, base_uri=None):
         """Arguments:
-        
+
           directory -- full path name of the directory where file attachments
             are stored.  See class description for more information.
           base_uri -- attachments base URI as a string or None.  If not None,
@@ -4096,34 +4081,34 @@ class FileAttachmentStorage(AttachmentStorage):
         if base_uri and not base_uri.endswith('/'):
             base_uri += '/'
         self._base_uri = base_uri
-        
+
     def _resource_uri(self, filename):
         if self._base_uri:
             return self._base_uri + filename
         else:
             return None
-    
+
     def _image_uri(self, filename):
         if self._base_uri:
             return self._base_uri + 'resized/' + filename
         else:
             return None
-    
+
     def _thumbnail_uri(self, filename):
         if self._base_uri:
             return self._base_uri + 'thumbnails/' + filename
         else:
             return None
-    
+
     def _resource_src_file(self, filename):
         return os.path.join(self._directory, filename)
-    
+
     def _image_src_file(self, filename):
         return os.path.join(self._directory, 'resized', filename)
-    
+
     def _thumbnail_src_file(self, filename):
         return os.path.join(self._directory, 'thumbnails', filename)
-    
+
     def insert(self, filename, data, values, transaction=None):
         import lcg
         import PIL.Image
@@ -4175,7 +4160,7 @@ class FileAttachmentStorage(AttachmentStorage):
             return self._resource(filename, **self._resource_kwargs(filename))
         else:
             return None
-        
+
     def resources(self, transaction=None):
         directory = self._directory
         if os.path.isdir(directory):
@@ -4201,7 +4186,7 @@ class FileAttachmentStorage(AttachmentStorage):
             if not os.path.exists(directory):
                 os.makedirs(directory)
             self._resized_image(image, size).save(path)
-        
+
     def update(self, filename, values, transaction=None):
         if 'has_thumbnail' in values:
             if values['has_thumbnail']:
@@ -4214,7 +4199,7 @@ class FileAttachmentStorage(AttachmentStorage):
                     path = os.path.join(self._directory, subdir, filename)
                     if os.path.exists(path):
                         os.remove(path)
-        
+
 class HttpAttachmentStorage(AttachmentStorage):
     """Remote AttachmentStorage implementation storing files through HTTP.
 
@@ -4244,13 +4229,13 @@ class HttpAttachmentStorage(AttachmentStorage):
 
     def __init__(self, uri, readonly=True):
         """Arguments:
-        
+
           uri -- full URI of the attachment storage server application
             (including the initial 'http://' or 'https://' protocol
             specification).
           readonly -- True if the storage is read only, False if read/write
             access should be allowed by the server side.
-            
+
         """
         import random
         import config
@@ -4283,7 +4268,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             raise
         else:
             transaction.commit()
-        
+
     def _connect(self, uri, body=None, headers={}):
         import urllib2
         headers['User-Agent'] = 'Pytis/%s (HttpAttachmentStorage)' % pytis.__version__
@@ -4296,13 +4281,13 @@ class HttpAttachmentStorage(AttachmentStorage):
             return urllib2.urlopen(req)
         except (urllib2.HTTPError, urllib2.URLError) as e:
             raise self.StorageError(str(e))
-            
+
     def _resource_uri(self, filename):
         return self._uri + '/' + filename
-    
+
     def _image_uri(self, filename):
         return self._uri + '/resized/' + filename
-    
+
     def _thumbnail_uri(self, filename):
         return self._uri + '/thumbnails/' + filename
 
@@ -4330,7 +4315,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             raise self.StorageError('Invalid server response')
         if response_text != 'OK':
             raise self.StorageError(response_text)
-    
+
     def _resource_kwargs(self, info):
         kwargs = dict(title=info.get('title'),
                       descr=info.get('descr'),
@@ -4340,7 +4325,7 @@ class HttpAttachmentStorage(AttachmentStorage):
         if 'size' in info:
             kwargs['size'] = info['size']
         return kwargs
-    
+
     def resource(self, filename, transaction=None):
         try:
             info = self._json_data(self._uri + '/' + filename + '?action=info')
@@ -4357,7 +4342,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             return self._connect(self._uri + '/' + filename + '?action=retrieve')
         except self.StorageError:
             return None
-   
+
     def insert(self, filename, data, values, transaction=None):
         import mimetools
         import json
@@ -4374,14 +4359,14 @@ class HttpAttachmentStorage(AttachmentStorage):
         body.extend(('--' + boundary + '--', ''))
         self._post_data(self._uri, '\r\n'.join(body),
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
-        
+
     def update(self, filename, values, transaction=None):
         import urllib
         import json
         data = urllib.urlencode(dict(action='update', values=json.dumps(values)))
         self._post_data(self._uri + '/' + filename, data)
-        
-    
+
+
 class DbAttachmentStorage(AttachmentStorage):
     """AttachmentStorage implementation storing files in the database.
 
@@ -4415,10 +4400,10 @@ class DbAttachmentStorage(AttachmentStorage):
     for one page, so there will be a constraint:
 
        unique page_id, file_name
-    
+
 
     """
-    
+
     class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         """Simple HTTP server to serve attachments to the built-in pytis browser.
 
@@ -4439,7 +4424,7 @@ class DbAttachmentStorage(AttachmentStorage):
                     self.wfile.write(data)
                     return
             self.send_error(404, 'Not Found: %s' % self.path)
-                
+
     def __init__(self, table, ref_column, ref_value, base_uri=None):
         """Arguments:
 
@@ -4503,7 +4488,7 @@ class DbAttachmentStorage(AttachmentStorage):
                 value = t.Buffer(value)
             rowdata.append((column, pytis.data.Value(t, value)))
         return pytis.data.Row(rowdata)
-            
+
     def _get_row(self, filename, transaction=None):
         self._data.select(condition=self._condition(filename), transaction=transaction)
         row = self._data.fetchone()
@@ -4526,10 +4511,10 @@ class DbAttachmentStorage(AttachmentStorage):
 
     def _resource_uri(self, filename):
         return self._base_uri + '/' + filename
-    
+
     def _image_uri(self, filename):
         return self._base_uri + '/resized/' + filename
-    
+
     def _thumbnail_uri(self, filename):
         return self._base_uri + '/thumbnails/' + filename
 
@@ -4541,7 +4526,7 @@ class DbAttachmentStorage(AttachmentStorage):
         except IOError:
             image = None
         return image
-    
+
     def _computed_row_values(self, image, has_thumbnail=False,
                              image_size=(1024, 800), thumbnail_size=(200, 200), **values):
         import cStringIO
@@ -4559,14 +4544,14 @@ class DbAttachmentStorage(AttachmentStorage):
             row_values[column + '_width'] = width
             row_values[column + '_height'] = height
         return row_values
-    
+
     def resource(self, filename, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
             return self._row_resource(row)
         else:
             return None
-        
+
     def resources(self, transaction=None):
         resources = []
         columns = [c.id() for c in self._data.columns()
@@ -4579,7 +4564,7 @@ class DbAttachmentStorage(AttachmentStorage):
             resources.append(self._row_resource(row))
         self._data.close()
         return resources
- 
+
     def insert(self, filename, data, values, transaction=None):
         filedata = buffer(data.read())
         rowdata = {self._ref_column: self._ref_value,
@@ -4597,7 +4582,7 @@ class DbAttachmentStorage(AttachmentStorage):
             return str(e)
         else:
             return None
-        
+
     def update(self, filename, values, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
@@ -4612,7 +4597,7 @@ class DbAttachmentStorage(AttachmentStorage):
             return None
         else:
             return "Attachment '%s' not found!" % filename
- 
+
     def retrieve(self, filename, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
@@ -4620,7 +4605,7 @@ class DbAttachmentStorage(AttachmentStorage):
             return cStringIO.StringIO(row['file'].value().buffer())
         else:
             return None
-        
+
     def get_data_for_uri(self, uri):
         """Special method for the DbAttachmentStorage HTTP server communication.
 
@@ -4646,7 +4631,7 @@ class DbAttachmentStorage(AttachmentStorage):
                 if row:
                     return row[field].value().buffer()
         return None
-    
+
 
 class SpecificationBase(object):
     """Base class for specification classes which may be retrieved through resolver."""
@@ -4676,7 +4661,7 @@ class Application(SpecificationBase):
 
     def init(self):
         """Run custom application initialization code before startup forms are opened.
-        
+
         This code is run before any forms are opened.  Use 'post_init()' for
         initialization after all automatically started forms are opened.
 
@@ -4694,7 +4679,7 @@ class Application(SpecificationBase):
 
     def login_hook(self, success):
         """Run custom code after login attempt.
-        
+
         The boolean argument indicates login success (True when login was
         successfull, False otherwise).
 
@@ -4717,7 +4702,7 @@ class Application(SpecificationBase):
 
         """
         return ()
-        
+
     def status_fields(self):
         """Return the specification of status bar fields.
 
@@ -4729,7 +4714,7 @@ class Application(SpecificationBase):
 
 
 class _SpecificationMetaclass(type):
-    
+
     def __init__(cls, clsname, bases, clsdict):
         type.__init__(cls, clsname, bases, clsdict)
         cls._pytis_map_db_name_to_spec(clsdict)
@@ -4743,7 +4728,7 @@ class _SpecificationMetaclass(type):
             return
         Specification.add_specification_by_db_spec_name(db_table.__name__, cls)
 
-       
+
 class Specification(SpecificationBase):
 
     """Souhrnná specifikační třída sestavující specifikace automaticky.
@@ -4780,9 +4765,9 @@ class Specification(SpecificationBase):
 
     Note: This attribute is currently ignored in web applications based on
     Wiking.
-    
+
     """
-    
+
     table = None
     """Database specification of the data table, view or function.
 
@@ -4796,7 +4781,7 @@ class Specification(SpecificationBase):
 
     key = None
     """Data object key column identifier as a string or their sequence.
-    
+
     Sequence may be used if the data object has a multicolumn key.  In any case all named columns
     must exist in the 'fields' specification.  In 'key' is not defined, the first column form
     'fields' is used."""
@@ -4809,7 +4794,7 @@ class Specification(SpecificationBase):
     add or override attributes of fields made from database specifications.
     All the fields and attributes are merged together, with fields specified
     here taking precedence.
-    
+
     May be also defined as a method of the same name.
 
     """
@@ -4819,7 +4804,7 @@ class Specification(SpecificationBase):
 
     Useful only when the table is actually a row returning function, otherwise
     it must be 'None'.
-    
+
     May be also defined as a method of the same name."""
 
     argument_provider = None
@@ -4833,7 +4818,7 @@ class Specification(SpecificationBase):
     it is useful e.g. when updating previously supplied arguments.  This
     specification makes sense only for database table functions, it should be
     'None' for standard tables and views."""
-    
+
     access_rights = None
     """Access rights for the view as an 'AccessRights' instance.
 
@@ -4859,7 +4844,7 @@ class Specification(SpecificationBase):
 
     distinct_on = None
     """Sequence of column names to filter distinct rows of the underlying data object."""
-    
+
     data_cls = pytis.data.DBDataDefault
     """Datová třída použitá pro vytvoření datového objektu."""
 
@@ -4873,23 +4858,23 @@ class Specification(SpecificationBase):
 
     bindings = {}
     """Specification of bindings for use in dual forms.
-    
+
     A dictionary, where the key is the name of the side form specification and the value is a
     'BindingSpec' instance which determines how the current view interconnects with given side form
     in a dual form.
-    
+
     May be also defined as a method of the same name."""
-    
+
     cb = CodebookSpec()
     """'CodebookSpec' instance defining properties of the view when used as a codebook.
 
     May be also defined as a method of the same name."""
-    
+
     sorting = None
     """Default sorting specification.
-    
+
     May be also defined as a method of the same name."""
-    
+
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
@@ -4931,7 +4916,7 @@ class Specification(SpecificationBase):
               id_ -- id of the field; basestring
 
             If no such field exists, raise 'KeyError'.
-            
+
             """
             for f in self:
                 if f.id() == id_:
@@ -4946,7 +4931,7 @@ class Specification(SpecificationBase):
               field -- new field to be put at the given place; 'Field' instance
 
             If no such field exists, raise 'KeyError'.
-            
+
             """
             for i in range(len(self)):
                 if self[i].id() == id_:
@@ -4967,7 +4952,7 @@ class Specification(SpecificationBase):
                 their values as values
 
             If field_id is not found, raise 'KeyError'.
-            
+
             """
             self._modify((field_id,), **properties)
         def modify_many(self, field_ids, **properties):
@@ -4981,7 +4966,7 @@ class Specification(SpecificationBase):
                 their values as values
 
             If any of the field_ids is not found, raise 'KeyError'.
-            
+
             """
             self._modify(field_ids, **properties)
         def modify_except(self, field_ids, **properties):
@@ -4996,7 +4981,7 @@ class Specification(SpecificationBase):
 
             If you want to modify properties of all fields, use an empty
             sequence as 'field_ids' argument.
-            
+
             """
             field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
             self._modify(field_ids_to_modify, **properties)
@@ -5010,7 +4995,7 @@ class Specification(SpecificationBase):
                 property values as values
 
             If any of the field_ids is not found, raise 'KeyError'.
-            
+
             """
             for id_, value in settings.items():
                 self._modify((id_,), **{property_: value})
@@ -5107,7 +5092,7 @@ class Specification(SpecificationBase):
                 access_rights[shortname] = pytis.data.AccessRights()
         # That's all
         Specification._access_rights = access_rights
-        
+
     def __init__(self, resolver=None):
         # TODO: the `resolver' argument is not normally passed now.  It is here
         # just for backwards compatibility for specifications which override
@@ -5130,7 +5115,7 @@ class Specification(SpecificationBase):
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
                               'add_specification_by_db_spec_name', 'create_from_kwargs',
-                              'ro_select', 'oid', # for backwards compatibility
+                              'ro_select', 'oid',  # for backwards compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
@@ -5222,7 +5207,7 @@ class Specification(SpecificationBase):
                         default = nextval('%s_%s_seq' % (orig_c.table.name, orig_c.name,),
                                           connection_name=self.connection)
             f = Field(c.id(), c.label(), type=type_, descr=descr, default=default,
-                      editable=editable, codebook=codebook, #not_null=type_.not_null(),
+                      editable=editable, codebook=codebook,  # not_null=type_.not_null(),
                       crypto_name=c.crypto_name())
             xfields.append(f)
             xfields_map[c.id()] = i
@@ -5340,9 +5325,9 @@ class Specification(SpecificationBase):
 
     def _inherited_fields(self, cls, override=(), exclude=()):
         """Helper method for simplification of field inheritance.
-        
+
         Sample usage:
-        
+
         def fields(self):
             return self._inherited_fields(SpecName,
                 override=(
@@ -5377,7 +5362,7 @@ class Specification(SpecificationBase):
 
     def _spec_fields(self, **kwargs):
         return self._inherited_fields(self.__class__, **kwargs)
-    
+
     def view_spec(self):
         """Vrať prezentační specifikaci jako instanci 'ViewSpec'."""
         try:
@@ -5387,7 +5372,7 @@ class Specification(SpecificationBase):
             spec = self._view_spec = self._create_view_spec(spec_name=self._action_spec_name(),
                                                             **kwargs)
         return spec
-        
+
     def data_spec(self):
         """Vrať datovou specifikaci jako instanci datové třídy."""
         try:
@@ -5395,11 +5380,11 @@ class Specification(SpecificationBase):
         except AttributeError:
             spec = self._data_spec = self._create_data_spec()
         return spec
-        
+
     def cb_spec(self):
         """Vrať specifikaci číselníku jako instanci 'CodebookSpec'."""
         return self.cb
-    
+
     def binding_spec(self):
         """Vrať specifikaci navázání v duálním formuláři jako slovník."""
         return self.bindings
@@ -5419,7 +5404,7 @@ class Specification(SpecificationBase):
         """Return the 'access_rights' attribute value.
 
         This is here to make access rights easily accessible by method call from resolvers.
-        
+
         """
         return self.access_rights
 
@@ -5429,7 +5414,7 @@ class Specification(SpecificationBase):
 
         If no access rights (of any form) are stored in the database, return
         'None'.
-        
+
         """
         if class_._access_rights is None:
             access_rights = None
@@ -5448,7 +5433,7 @@ class Specification(SpecificationBase):
     def _spec_name(class_):
         full_name = class_.__module__ + '.' + class_.__name__
         return pytis.presentation.specification_path(full_name)[1]
-        
+
     @classmethod
     def _codebook_by_db_spec_name(class_, db_spec_name):
         specification_names = class_._specifications_by_db_spec_name.get(db_spec_name)
