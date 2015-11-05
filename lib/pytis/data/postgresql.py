@@ -1103,8 +1103,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       column_groups=None):
         """Vrať sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
-            t = self._pdbb_get_table_type(binding.table(), binding.column(), noerror=True)
-            return self._pdbb_apply_type_kwargs(t, binding)
+            t = self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
+                                          noerror=True)
+            return self._pdbb_apply_type_kwargs(t, binding.kwargs())
         result = None
         if operations is not None:
             for aggregate, id_, name in operations:
@@ -1259,7 +1260,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         PostgreSQLStandardBindingHandler._pdbb_table_column_data[table_key] = table_data
         return table_data
 
-    def _pdbb_get_table_type(self, table, column, noerror=False):
+    def _pdbb_get_table_type(self, table, column, ctype=None, noerror=False):
         if self._pdbb_db_spec is not None:
             for b in self._bindings:
                 if b.id() == column:
@@ -1296,8 +1297,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         except:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
-        return self._pdbb_get_type(type_, size_string, not_null=not_null,
-                                   serial=serial, unique=unique)
+        result = self._pdbb_get_type(type_, size_string, not_null=not_null,
+                                     serial=serial, unique=unique)
+        if ctype:
+            db_type_cls = result.__class__
+            if type(ctype) == type(pytis.data.Type):
+                ctype = ctype()
+            assert (db_type_cls == Binary # maybe a crypto column
+                    or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
+                    or isinstance(ctype, db_type_cls)), \
+                "%s.%s: User type doesn't match DB type: %s, %s" % \
+                (table, column, ctype, result)
+            if db_type_cls == Binary and not isinstance(ctype, Binary):
+                result = ctype
+            else:
+                result = result.clone(ctype)
+        return result
 
     def _pdbb_get_type(self, type_, size_string, not_null=False, serial=False, unique=False):
         # Zde lze doplnit další používané standardní typy z PostgreSQL
@@ -1373,22 +1388,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             db_type_cls = pytis.data.Array
         return db_type_cls(**db_type_kwargs)
 
-    def _pdbb_apply_type_kwargs(self, ctype, binding):
-        btype = binding.type()
-        kwargs = binding.kwargs()
-        if btype:
-            if type(btype) == type(pytis.data.Type):
-                btype = btype()
-            if ctype is None or ctype.__class__ == Binary and not isinstance(btype, Binary):
-                # Maybe a crypto column
-                ctype = btype
-            else:
-                assert (isinstance(btype, ctype.__class__)
-                        or isinstance(btype, TimeInterval)  # temporary hack
-                        and ctype.__class__ == Time), \
-                    "%s.%s: User type doesn't match DB type: %s, %s" % \
-                    (binding.table(), binding.column(), btype, ctype)
-                ctype = ctype.clone(btype)
+    def _pdbb_apply_type_kwargs(self, ctype, kwargs):
         if ctype and kwargs:
             if isinstance(ctype, pytis.data.Array) and 'inner_type' not in kwargs:
                 # This argument is mandatory for Array type.
@@ -1403,14 +1403,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            if direct_types or b.type() is not None:
-                table_type = None
+            b_type = b.type()
+            if direct_types or b_type is not None:
+                t = b_type
+                if type(t) == type(Type):
+                    t = t()
             elif self._arguments is None:
-                table_type = self._pdbb_get_table_type(b.table(), b.column())
+                t = self._pdbb_get_table_type(b.table(), b.column(), b_type)
             else:
                 raise Exception("Column types must be specified for table functions",
                                 b.id(), b.table(),)
-            t = self._pdbb_apply_type_kwargs(table_type, b)
+            t = self._pdbb_apply_type_kwargs(t, b.kwargs())
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
