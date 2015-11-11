@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This script implements pytis form updates through AJAX.  
+/* This script implements pytis form updates through AJAX.
  *
  * The form is periodically checked for changes and the values are sent to the
  * server as asynchronous requests.  Based on the server response, the user
@@ -27,9 +27,9 @@
  *   - updating field editability dynamically,
  *   - updating enumerations based on pytis runtime filters and arguments.
  */
-/*jslint browser: true */
-/*jslint unparam: true */
-/*jslint todo: true */
+/*jshint browser: true */
+/*jshint es3: true */
+/*jshint -W097 */ // allow direct "use strict"
 /*global Effect */
 /*global Class */
 /*global Element */
@@ -56,7 +56,7 @@ var pytis = {
     },
 
     show_tooltip: function(event, uri) {
-	// This can't be implemented as a Field method as Field instances are not 
+	// This can't be implemented as a Field method as Field instances are not
 	// created in BrowseForm (currently only in edit form).
 	var element, tooltip;
 	if (event) {
@@ -99,7 +99,7 @@ pytis.BrowseForm = Class.create({
     the form's DOM element.  It is automatically attached to the form's top
     level element as it's 'instance' attribute, so in Prototype.js, you can
     access it as '$(form_id).instance'.
-      
+
      */
     initialize: function(form_id, form_name, uri, allow_insertion) {
 	/* form_id ... HTML id of the pytis form top level element (string)
@@ -121,7 +121,7 @@ pytis.BrowseForm = Class.create({
 		parameters = query;
 	    }
 	    var page = this.form.up('.notebook-widget > div');
-	    if (page) { 
+	    if (page) {
 		lcg.Notebook.on_activation(page, function() {
 		    this.load_form_data(parameters);
 		}.bind(this));
@@ -242,7 +242,7 @@ pytis.BrowseForm = Class.create({
 	    } else {
 		this.send_expand_row_request(tr);
 	    }
-	    setTimeout(function () { 
+	    setTimeout(function () {
 		link.setAttribute('aria-expanded', 'true');
 		link.update(pytis._("Collapse Row"));
 	    }, 250);
@@ -348,7 +348,7 @@ pytis.BrowseForm = Class.create({
 		if (busy_cursor) {
 		    document.body.style.cursor = "default";
 		}
-		var msg = (pytis._("Failed loading form:") +' '+ 
+		var msg = (pytis._("Failed loading form:") +' '+
 			   transport.status +' '+ transport.statusText);
 		var tb_start = transport.responseText.search('here is the original traceback:');
 		var traceback = '';
@@ -588,7 +588,7 @@ pytis.Form = Class.create({
 	    this._observer = new Form.Observer(form, 1, this.on_change.bind(this));
 	}
     },
-    
+
     on_change: function(form, value) {
 	// Send AJAX request in reaction to user changes of form values.
 	// TODO: Avoid AJAX request flooding during typing or other continuous
@@ -603,9 +603,9 @@ pytis.Form = Class.create({
 	    var field = item.value;
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
-	    if ((field.active()
-		 && (values.hasOwnProperty(id) || last_values.hasOwnProperty(id)) 
-		 && values[id] !== last_values[id])) {
+	    if ((field.active() &&
+		 (values.hasOwnProperty(id) || last_values.hasOwnProperty(id)) &&
+		 values[id] !== last_values[id])) {
 		document.body.style.cursor = "wait";
 		var states = new Hash();
 		this._fields.each(function(x) {
@@ -623,7 +623,7 @@ pytis.Form = Class.create({
 	    }
 	}.bind(this));
     },
-    
+
     update: function(response) {
 	// Update the form state in reaction to previously sent AJAX request.
 	var data = response.responseJSON;
@@ -669,10 +669,10 @@ pytis.Form = Class.create({
             }
 	}
         else {
-            console.log ("Empty AJAX response");
+            console.log("Empty AJAX response");
         }
     }
-    
+
 });
 
 pytis.Field = Class.create({
@@ -752,7 +752,7 @@ pytis.Field = Class.create({
     _set_editability: function(value) {
 	this._ctrl.disabled = !value;
     },
-    
+
     set_value: function(value, localized_value) {
 	// Set the field value.
 	if (localized_value !== undefined) {
@@ -761,7 +761,7 @@ pytis.Field = Class.create({
 	    this._ctrl.value = value;
 	}
     },
-    
+
     set_enumeration: function(value, links) {
 	// Update enumeration controls (only for enumeration fields).
 	return;
@@ -857,7 +857,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	    return item.firstDescendant();
 	});
     },
-    
+
     value: function() {
 	var checkboxes = this._checkboxes();
 	return checkboxes.map(function(checkbox) {
@@ -925,7 +925,7 @@ pytis.HtmlField = Class.create(pytis.Field, {
 	    CKEDITOR.on('dialogDefinition', pytis.HtmlField.on_dialog);
 	}
     },
-    
+
     _attachment_storage_request: function(request, parameters) {
 	parameters._pytis_form_update_request = 1;
 	parameters._pytis_attachment_storage_field = this._id;
@@ -944,11 +944,11 @@ pytis.HtmlField = Class.create(pytis.Field, {
     list_attachments: function() {
 	return this._attachment_storage_request('list', {});
     },
-    
+
     // Insert attachment doesn't go through AJAX due to browser limitations.
     // Iframe upload is performed as implemented in CKeditor and
     // customized in ckeditor-plugin.js so a method is not needed here.
-    
+
     update_attachment: function(filename, values) {
 	return this._attachment_storage_request('update', {filename: filename,
 							   values: Object.toJSON(values)});
@@ -987,7 +987,7 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 	    this._form.request({parameters: parameters, onSuccess: this.update.bind(this)});
 	}
     },
-    
+
     update: function(response) {
 	// Update the form state in reaction to previously sent AJAX request.
 	var data = response.responseJSON;

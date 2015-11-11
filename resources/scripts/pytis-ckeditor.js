@@ -16,16 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*jslint browser: true */
-/*jslint unparam: true */
-/*jslint regexp: true */
-/*jslint todo: true */
+
+/*jhlint browser: true */
+/*jshint es3: true */
+/*jshint -W097 */ // allow direct "use strict"
+/*jhlint regexp: true */
 /*global Class */
 /*global Element */
 /*global Hash */
 /*global pytis */
 /*global alert */
 /*global confirm */
+/*global document */
 /*global $ */
 /*global CKEDITOR */
 /*global ck_get_ascendant */
@@ -34,6 +36,8 @@
 /*global embed_swf_object */
 /*global parseMath */
 /*global Node */
+/*global Option */
+
 "use strict";
 
 // Remember the base uri of the current script here for later use (hack).
@@ -90,7 +94,7 @@ pytis.HtmlField.plugin = function(editor) {
     editor.addMenuItem('insertSpaceBefore', {
 	label: pytis._("Insert space before"),
 	command: 'insertSpaceBefore',
-	group: 'PytisGroup',
+	group: 'PytisGroup'
     });
     editor.addCommand('insertSpaceAfter', new CKEDITOR.command(editor, {
 	exec: function(editor) {
@@ -100,15 +104,17 @@ pytis.HtmlField.plugin = function(editor) {
     editor.addMenuItem('insertSpaceAfter', {
 	label: pytis._("Insert space after"),
 	command: 'insertSpaceAfter',
-	group: 'PytisGroup',
+	group: 'PytisGroup'
     });
 
      /* Add a common context menu listener handling all the attachment types */
     if (editor.contextMenu) {
 	editor.contextMenu.addListener(function(element) {
             if (element) {
-		element = element.getAscendant('a', true) || element.getAscendant('div', true)
-		|| element.getAscendant('span', true) || element.getAscendant('table', true);
+		element = (element.getAscendant('a', true) ||
+			   element.getAscendant('div', true) ||
+			   element.getAscendant('span', true) ||
+			   element.getAscendant('table', true));
 	    }
             if (element && !element.data('cke-realelement')) {
 		var result = {};
@@ -117,8 +123,8 @@ pytis.HtmlField.plugin = function(editor) {
 			result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
                     }
 		}
-		if (((element.getName() === 'div') && (element.isReadOnly()))
-		    || element.getName() === 'table') {
+		if (((element.getName() === 'div') && (element.isReadOnly())) ||
+		    element.getName() === 'table') {
                     result.insertSpaceBefore = CKEDITOR.TRISTATE_OFF;
                     result.insertSpaceAfter = CKEDITOR.TRISTATE_OFF;
                 }
@@ -190,7 +196,7 @@ pytis.HtmlField.plugin = function(editor) {
     editor.addMenuItem('figureCaption', {
         label: pytis._("Add figure caption"),
         command: 'figure-caption',
-        group: 'PytisGroup',
+        group: 'PytisGroup'
     });
 
     /* Add support for definition lists */
@@ -250,7 +256,7 @@ pytis.HtmlField.plugin = function(editor) {
 	    var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
 	    var transformations = table.getAttribute('data-lcg-transformations');
 	    if (transformations === null) {
-		// Use default transformations for tables which don't have the 
+		// Use default transformations for tables which don't have the
 		// 'data-lcg-transformations' attribute. These were created before
 		// the functionality was added so they deserve the defaults
 		// unlike the tables which have the attribute, but it is empty
@@ -303,7 +309,7 @@ pytis.HtmlField.plugin = function(editor) {
 		    remove_transformation(table, item);
 		}
 	    });
-	}	
+	}
         if (event.data.name === 'table' || event.data.name === 'tableProperties') {
             var dialog_definition = event.data.definition;
             dialog_definition.removeContents('advanced');
@@ -611,11 +617,11 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            if (this.attachment) {
                                element.data('lcg-resource', this.attachment.filename);
                            }
-                       },
+                       }
                       },
                       {type: 'html',
                        id: 'preview',
-                       html: '',
+                       html: ''
                       }
                   ]},
                  {type: 'html',
@@ -670,7 +676,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 				       }
                                    }
                                    hidden_fields.each(function (item) {
-                                       Element.insert(form, 
+                                       Element.insert(form,
 						      new Element('input', {'type': 'hidden',
 									    'name': item.key,
 									    'value': item.value}));
@@ -719,7 +725,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 			   }
 			   return false;
                        }
-                      },
+                      }
                   ]
                  },
                  {type: 'text',
@@ -733,16 +739,16 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 			  var dialog = CKEDITOR.dialog.getCurrent();
 			  element.setText(dialog.getValueOf('main', 'identifier'));
 		      }
-                  },
+                  }
                  },
                  {type: 'text',
                   id: 'description',
                   label: pytis._('Accessible description'),
                   commit: function(element) {
                       element.setAttribute('alt', this.getValue());
-                  },
-                 },
-             ]},
+                  }
+                 }
+             ]}
         ],
         onShow: function() {
             // Check if editing an existing element or inserting a new one
@@ -782,13 +788,13 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
 
 	    // TODO: Display error message when error != null.
             var error = field.update_attachment(filename, attributes);
-            
+
 	    // Insert or update the HTML element
             if (this.insertMode) {
                 editor.insertElement(this.element);
             }
             this.commitContent(this.element);
-        },
+        }
     };
 };
 
@@ -828,7 +834,7 @@ pytis.HtmlField.image_dialog = function(editor) {
             var img = element.getFirst();
             if (img) {
                 var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
-		// Append cache killer suffix to the uri to force reloading the displayed 
+		// Append cache killer suffix to the uri to force reloading the displayed
 		// image when thumbnail size is changed.
 		uri += (uri.indexOf('?') === -1 ? '?' : '&') + 'time=' + new Date().getTime();
 		img.removeAttribute('width');
@@ -875,7 +881,7 @@ pytis.HtmlField.image_dialog = function(editor) {
          label: pytis._('Text wrapping'),
          items: [[pytis._('No wrapping'), 'inline'],
                  [pytis._('Wrap right'), 'left'], // Align left wraps text from right
-                 [pytis._('Wrap left'), 'right'],],
+                 [pytis._('Wrap left'), 'right']],
          setup: function(element) {
              // Read alignment of the image
              var img = element.getFirst();
@@ -883,7 +889,7 @@ pytis.HtmlField.image_dialog = function(editor) {
              if (img) {
 		 var align;
                  if (figure) {
-		     align = figure.getAttribute('data-lcg-align'); 
+		     align = figure.getAttribute('data-lcg-align');
                  } else {
 		     align = img.getAttribute('align');
 		 }
@@ -936,7 +942,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                   } else {
                       // Handle cases where type is not specified
                       var link = element.getAttribute('href');
-                      if (link && link.length > 0) { 
+                      if (link && link.length > 0) {
                           this.setValue('external');
                       } else {
                           this.setValue('enlarge');
@@ -1015,7 +1021,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                       ck_set_protected_attribute(element, 'href', this.getValue());
                   }
               }
-             },
+             }
          ]}]);
     return dialog;
 };
@@ -1099,21 +1105,21 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 			   {type: 'select',
 			    id: 'type',
 			    label: pytis._('Exercise Type'),
-			    items: exercise_types,
+			    items: exercise_types
 			   },
 			   {type: 'textarea',
 			    id: 'src',
 			    rows: 28,
 			    cols: 70,
-			    label: pytis._('Exercise Definition'),
-			   },
+			    label: pytis._('Exercise Definition')
+			   }
 		       ]},
 		      {type: 'html',
 		       id: 'help',
 		       html: '<div id="exercise-help"></div>'
 		      }
-		  ]},
-	     ]},
+		  ]}
+	     ]}
 	],
 	onShow: function() {
             // Check if editing an existing element or inserting a new one
@@ -1140,7 +1146,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		editor.insertElement(this.element);
             }
             this.commitContent(this.element);
-	},
+	}
     };
 
     ck_element(dialog, 'type').setup = function(element) {
@@ -1210,11 +1216,11 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		  [
                       {type: 'textarea',
                        id: 'source-ascii',
-                       label: "ASCII",
+                       label: "ASCII"
                       },
 		      {type: 'html',
 		       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
-		      },
+		      }
 		  ]},
 		 {type: 'vbox',
 		  id: 'source-mathml-box',
@@ -1222,20 +1228,20 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		  [
                       {type: 'textarea',
                        id: 'source-mathml',
-                       label: "MathML",
+                       label: "MathML"
                       },
 		      {type: 'html',
 		       html: '<div class="ckeditor-help">'+pytis._("To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)")+'</div>'
-		      },
+		      }
 		  ]},
                  {type: 'button',
                   id: 'toggle-input',
-                  label: pytis._("Switch ASCII / MathML editing"),
+                  label: pytis._("Switch ASCII / MathML editing")
                  },
                  {type: 'html',
                   id: 'math-preview',
-                  html: '<div id="math-preview-container"><div id="math-preview"></div></div>',
-                 },
+                  html: '<div id="math-preview-container"><div id="math-preview"></div></div>'
+                 }
              ]
             }
         ],
@@ -1288,16 +1294,16 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 	    production_args = 'contenteditable="false" style="display:inline-block"';
 	}
 	if (annotation.length > 0) {
-	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
-		+ '<semantics>'
-		+ inner_mathml
-	        + '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>'
-		+ '</semantics>'
-		+ '</math>';
+	    return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
+		    '<semantics>' +
+		    inner_mathml +
+		    '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>' +
+		    '</semantics>' +
+		    '</math>');
 	}
-	return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
-	    + inner_mathml
-	    + '</math>';
+	return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
+		inner_mathml +
+		'</math>');
     };
 
     var update_mathml_from_ascii = function(element) {
@@ -1372,7 +1378,7 @@ function ck_language_combo(editor, languages) {
         className: 'cke_format',
         multiSelect: false,
         panel: {
-            css: [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css')],
+            css: [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css')]
         },
         init: function() {
 	    var i;
@@ -1510,18 +1516,18 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
                        /* TODO: This needs to be editable and taken from CMS */
                        items: [[pytis._("Index of Terms"), 'term'],
                                [pytis._("Name Index"), 'name'],
-                               [pytis._("Index of Places"), 'place'],
+                               [pytis._("Index of Places"), 'place']
                               ]
                       },
                       {type: 'text',
                        id: 'item',
                        label: pytis._('Item'),
                        required: true,
-                       validate: CKEDITOR.dialog.validate.notEmpty(pytis._("Index item cannot be empty.")),
-                      },
+                       validate: CKEDITOR.dialog.validate.notEmpty(pytis._("Index item cannot be empty."))
+                      }
                   ]
-                 },
-             ],}],
+                 }
+             ]}],
         onShow: function() {
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
@@ -1545,7 +1551,7 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
                 editor.insertElement(this.element);
             }
             this.commitContent(this.element);
-        },
+        }
     };
     ck_element(dialog, 'index').setup = function(element) {
         this.setValue(element.data('lcg-index'));
