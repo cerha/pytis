@@ -1,3 +1,4 @@
+sudo: required
 language: python
 python:
   - "2.7"
@@ -27,9 +28,9 @@ install:
   #- "./configure --with-zlib=sys --with-expat=sys --enable-unicode --with-gtk --without-gnomeprint --with-opengl --enable-sound --with-sdl --enable-display --enable-geometry --enable-graphics_ctx --with-libjpeg=sys --with-libpng=sys --with-libtiff=sys --enable-mediactrl"
   #- "make && make -C make -C contrib/src/gizmos && make -C contrib/src/stc"
   #- "sudo make install && sudo make -C contrib/src/gizmos install && sudo make -C contrib/src/stc install"
-  - "sudo apt-get build-dep python-wxgtk${WXVERDEB}"
-  - "sudo apt-get install libwxgtk${WXVERDEB}-dev"
-  - "apt-get source python-wxgtk${WXVERDEB} && cd wxwidgets${WXVERDEB}-${WXVERFULL}"
+  - "sudo apt-get -y build-dep python-wxgtk${WXVERDEB}"
+  - "sudo apt-get -y install libwxgtk${WXVERDEB}-dev"
+  - "apt-get -y source python-wxgtk${WXVERDEB} && ([ -d wxwidgets${WXVERDEB}-${WXVERFULL} ] || mv wxwidgets${WXVERDEB}-${WXVERFULL}* wxwidgets${WXVERDEB}-${WXVERFULL}) && cd wxwidgets${WXVERDEB}-${WXVERFULL}"
   - "cd wxPython && CFLAGS=\"-Wno-error\" python setup.py build_ext WXPORT=gtk2 UNICODE=1 CORE_ONLY=1 --inplace"
   - "cd ../.."
 before_script:
