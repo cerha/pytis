@@ -1,138 +1,66 @@
-#title Tutoriál: Systém nápovìdy
+= SystÃ©m nÃ¡povÄ›dy =
 
-* Úvod
+== Ãšvod ==
 
-Pro zobrazování nápovìdy v Pytisu je pou¾it specializovanı wx prohlí¾eè
-nápovìdy.  Ten zobrazuje nápovìdu ve formátu MS Help Project (kterı pou¾ívá i
-vestavìnı prohlí¾eè MS Windows a nìkteré dal¹í prohlí¾eèe nápovìdy).  Jinı
-formát bohu¾el podporován není, ale proto¾e je to formát velice jednoduchı a v
-podstatì odpovídající na¹im potøebám, není dùvod jej nepou¾ít za pøedpokladu,
-¾e námi vytváøená data jsou v nezávislém formátu a do formátu MS Help Project
-je pouze exportujeme.
+Pro zobrazovÃ¡nÃ­ nÃ¡povÄ›dy v Pytisu je pouÅ¾it integrovanÃ½ webovÃ½ prohlÃ­Å¾eÄ.
+ProhlÃ­Å¾eÄ, kromÄ› bÄ›Å¾nÃ© obsluhy 'http://', 'https://' apod, automaticky
+obsluhuje URL s prefixem 'help:' jako nÃ¡povÄ›du.  NÃ¡povÄ›da se vÅ¾dy sklÃ¡dÃ¡ z
+nÃ¡povÄ›dy aktuÃ¡lnÄ› spuÅ¡tÄ›nÃ© aplikace (popisuje strukturu menu a jednotlivÃ©
+nÃ¡hledy) a nÃ¡povÄ›dy Pytisu samotnÃ©ho (popisuje obecnÃ© ovlÃ¡dÃ¡nÃ­ aplikace).
 
-Toho je dosa¾eno pou¾itím LCG viz (http://www.freebsoft.org/lcg).
+NÃ¡povÄ›da Pytisu je definovÃ¡na ve zdrojovÃ½ch souborech Pytisu v adresÃ¡Å™i help
+(plnÃ¡ cesta musÃ­ bÃ½t nastavena v konfiguraÄnÃ­ promÄ›nnÃ© help_dir).
 
-V budoucnu lze vestavìnı prohlí¾eè v pøípadì potøeby nahradit externím, nebo
-implementovat vlastní prohlí¾eè a data z LCG exportovat do jiného podobného
-formátu.
+NÃ¡povÄ›da aplikace je uloÅ¾ena v databÃ¡zi aplikace.  DatabÃ¡ze se naplnÃ­
+informacemi o dostupnÃ½ch nÃ¡hledech aplikace pomocÃ­ skriptu
+tools/help-updater.py a nÃ¡slednÄ› lze texty nÃ¡povÄ›dy upravovat pÅ™Ã­mo v aplikaci
+skrze nÃ¡hled 'help.Help', kterÃ½ je moÅ¾nÃ© pÅ™idat do menu aplikace pomocÃ­ DMP.
 
-Dále by bylo mo¾né roz¹íøit LCG pro generování tisknutelného vıstupu a vytváøet
-papírovou podobu nápovìdy.
+Po zmÄ›nÃ¡ch ve specifikacÃ­ch je potÅ™eba strukturu dat v databÃ¡zi aktualizovat
+opÄ›t skriptem help-updater.py.  StÃ¡vajÃ­cÃ­ texty upravenÃ© skrze sprÃ¡vu nÃ¡povÄ›dy
+zÅ¯stanou pÅ™i tÃ©to aktualizaci zachovÃ¡ny.  Skript pouze aktualizuje strukturu
+nÃ¡hledÅ¯, polÃ­Äek, vazeb apod.
 
-
-* Konfigurace
-
-Konfiguraèní volba `help_dir' slou¾í k nastavení adresáøe nápovìdy.  Pøi
-spu¹tìní aplikace jsou v tomto adresáøi automaticky vyhledány v¹echny pøítomné
-soubory nápovìdy (soubory s pøíponou zip).  Ka¾dá takto nalezená sekce nápovìdy
-(nazıvaná také Help Book) je potom pøidána do menu 'Nápovìda', které je a
-aplikaci automaticky vytvoøeno.
-
-Pozor:  Pokud není ¾ádnı soubor nápovìdy nalezen, nebo pokud aplikace definuje
-vlastní menu s názvem `Nápovìda', není menu nápovìdy do aplikace pøidáno.
-
-Typická aplikace bude pou¾ívat dvì sekce nápovìdy.  Jednak je to nápovìda
-systému Pytis (popisující u¾ivatelské rozhraní, obládání formuláøù a v¹echny
-dal¹í obecné vlastnosti) a jednak nápovìda vlastní aplikace (ISAS, SOLAS,
-atd.).  
-
-Zdrojová data nápovìdy systému Pytis jsou v novém CVS modulu `pytis-help'.  Ten
-obsahuje také Makefile a README, kde je popsáno, jak nápovìdu vygenerovat.
-
-Zdrojová data nápovìdy vlastní aplikace mohou bıt buïto souèástí CVS aplikace,
-nebo také v samostatném modulu.  Doporuèován je stejnı layout jako v modulu
-`pytis-help', kdy vlastní zdrojová data jsou v podadresáøi `src' a Makefile
-generuje vıslednı zip soubor do koøenového adresáøe nápovìdy aplikace.
-
-Doporuèená konfigurace je potom taková, ¾e konfiguraèní volba `src_dir' ukazuje
-do koøenového adresáøe nápovìdy aplikace a vygenerovanı soubor `pytis.zip' z
-`pytis-help' je proliknován do tohoto adresáøe (pro ka¾dou provozovanou
-aplikaci).
+Informace o struktuÅ™e menu aplikace jsou pro ÃºÄely generovÃ¡nÃ­ nÃ¡povÄ›dy pÅ™evzaty
+pÅ™Ã­mo z DMP.
 
 
-* Tvorba nápovìdy
+== ObecnÃ¡ doporuÄenÃ­ pro formÃ¡tovÃ¡nÃ­ textÅ¯ nÃ¡povÄ›dy ==
 
-Pro generování nápovìdy v pou¾itém vystupním formátu byl vyvinut specializovanı
-modul pro LCG.
+- ZnÃ¡t podporovanÃ© konstrukce a vyuÅ¾Ã­vat vÅ¾dy ty, kterÃ© se pro danÃ½ ÃºÄel
+  nejlÃ©pe hodÃ­.  Konstrukce v LCG majÃ­ pÅ™evÃ¡Å¾nÄ› sÃ©mantickÃ½ vÃ½znam.  Skoro
+  vÅ¡e se sice dÃ¡ napsat jako jeden dlouhÃ½ odstavec textu, ale vyuÅ¾itÃ­m
+  prvkÅ¯, jako jsou seznamy definic Äi vnoÅ™enÃ© odrÃ¡Å¾kovÃ© seznamy lze text
+  podstatnÄ› zpÅ™ehlednit a odlehÄit.
 
-LCG zpracovává vstupní data ve formì textovıch souborù umístìnıch v hierarchii
-adresáøù.  Z tìchto dat je vytvoøen kompletní provázanı systém nápovìdy.  Ten
-je po exportu ve formì ZIP souboru pou¾itelnı v Pytisu.  Více informací o
-formátu zdrojovıch dat lze získat v dokumentaci LCG, která je k dispozici
-on-line na domovské stránce LCG (http://www.freebsoft.org/lcg).  Dále budou
-popisovány pouze vlastnosti specifické pro pou¾ití LCG v systému Pytis.
+- Tabulku pouÅ¾Ã­t pouze v pÅ™Ã­padÄ›, Å¾e Å¾Ã¡dnÃ½ jinÃ½ zpÅ¯sob nenÃ­ vhodnÃ½.
 
-Textové soubory definují statickou èást nápovìdy.  Kromì toho je mo¾né èásti
-nápovìdy generovat programovì (viz ní¾e).  Na programovì generované èásti, jako
-jsou popisy jednotlivıch náhledù, se lze odkazovat i ze statickıch èástí a
-naopak.
+- V maximÃ¡lnÃ­ mÃ­Å™e vyuÅ¾Ã­vat hypertextovÃ© provÃ¡zÃ¡nÃ­ jednotlivÃ½ch dokumentÅ¯
+  (souborÅ¯).
 
-Doporuèení pro tvorbu nápovìdy:
+- DlouhÃ© dokumenty rozdÄ›lit na nÄ›kolik menÅ¡Ã­ch, z nichÅ¾ kaÅ¾dÃ½ pojednÃ¡vÃ¡
+  pouze o jednom oddÄ›lenÃ©m problÃ©mu a pÅ™Ã­padnÃ© zÃ¡vislosti Å™eÅ¡it vzÃ¡jemnÃ½m
+  provÃ¡zÃ¡nÃ­m dokumentÅ¯ odkazy.
 
-- Znát podporované konstrukce a vyu¾ívat v¾dy ty, které se pro danı úèel
-  nejlépe hodí.  Konstrukce v LCG mají pøevá¾nì sémantickı vıznam.  Skoro
-  v¹e se sice dá napsat jako jeden dlouhı odstavec textu, ale vyu¾itím
-  prvkù, jako jsou seznamy definic èi vnoøené odrá¾kové seznamy lze text
-  podstatnì zpøehlednit a odlehèit.
+- VÅ¡echny ÄÃ¡sti, kterÃ© se v rÃ¡mci nÃ¡povÄ›dy nÄ›jakÃ½m zpÅ¯sobem vyskytujÃ­ na
+  vÃ­ce mÃ­stech, oddÄ›lit do statickÃ© ÄÃ¡sti a na tu se odkazovat.  V Å¾Ã¡dnÃ©m
+  pÅ™Ã­padÄ› neopakovat jednu informaci na vÃ­ce mÃ­stech.
 
-- Tabulku pou¾ít pouze v pøípadì, ¾e ¾ádnı jinı zpùsob není vhodnı.
+- Vyvarovat se dlouhÃ½ch souvÄ›tÃ­.  KrÃ¡tkÃ© jednoduchÃ© vÄ›ty se mnohem lÃ©pe Ätou.
 
-- V maximální míøe vyu¾ívat hypertextové provázání jednotlivıch dokumentù
-  (souborù).
-
-- Dlouhé dokumenty rozdìlit na nìkolik men¹ích, z nich¾ ka¾dı pojednává
-  pouze o jednom oddìleném problému a pøípadné závislosti øe¹it vzájemnım
-  provázáním dokumentù odkazy.
-
-- V¹echny èásti, které se v rámci nápovìdy nìjakım zpùsobem vyskytují na
-  více místech, oddìlit do statické èásti a na tu se odkazovat.  V ¾ádném
-  pøípadì neopakovat jednu informaci na více místech.
-
-- Vyvarovat se dlouhıch souvìtí.  Krátké a jasné vìty se mnohem
-  lépe ètou.
-
-- Pro zvıraznìní textu pou¾ívat kurzívu, nikoli tuènı text.
+- Pro zvÃ½raznÄ›nÃ­ textu pouÅ¾Ã­vat kurzÃ­vu, nikoli tuÄnÃ½ text.
 
 
-* Automaticky generované èásti nápovìdy
+== PÅ™ehled Implementace ==
 
-LCG také podporuje roz¹iøující moduly pro vytváøení nápovìdy z externích
-zdrojù, co¾ nám umo¾òuje sestavovat èásti nápovìdy automaticky naèítáním
-informací z defsù.  Takto je napøíkald sestaven strom menu aplikace s odkazy na
-popisy jednotlivıch náhledù.  Tøídy urèené pro vytváøení nápovìdy pro pytis
-aplikace jsou definovány v modulu `help' v `pytis.extensions'.
+Obsah nÃ¡povÄ›dy v databÃ¡zi je vytvoÅ™en a po zmÄ›nÃ¡ch ve specifikacÃ­ch
+aktualizovÃ¡n pomocÃ­ skriptu tools/help-updater.py, potaÅ¾mo tÅ™Ã­dy
+'pytis.help.HelpUpdater'.
 
+ProhlÃ­Å¾eÄ je definovÃ¡n tÅ™Ã­dou 'pytis.form.Browser'.  URL s prefixem 'help:'
+jsou obsluhovÃ¡na tak, Å¾e tÅ™Ã­da 'pytis.help.HelpGenerator' vygeneruje dokument
+jako 'lcg.ContentNode' a ten je exportovÃ¡n do HTML pomocÃ­
+'pytis.help.HelpExporter'.
 
-* Automaticky vytváøené popisy náhledù aplikace
-
-Automaticky generované informace o náhledu jsou napøíklad:
- 
-- Název specifikace
-
-- Seznam polo¾ek menu, kterımi lze danı náhled vyvolat.
-
-- Pøístupová práva
-
-Kromì tìchto informací je do dokumnetu vkládán také textovı popis náhledu.  Ten
-je naèten buïto ze souboru, nebo pokud odpovídající soubor neexistuje, je
-naèten struènı popis z defsu (pøednost tedy má soubor, pokud existuje).
-
-Soubor s popisem je vyhdedáván v adresáøi `descr' umístìném v hlavním adresáøi
-nápovìdy aplikace.  Název souboru musí odpovídat názvu specifikace, vèetnì
-varianty, tak¾e napøíklad náhledu `Spolecnosti:ALL' bude odpovídat soubor
-`descr/Spolecnosti:ALL.txt'.
-
-Podle typu formuláøe jsou rozli¹ovány dva základní typy náhledù:
-
-- jednoduché (pracují v zásadì s jedním defsem).
-
-- duální (pracují se dvìma defsy provázanımi pøes binding_column)
-
-Pozor, napø. DescriptiveDualForm je sice duální formuláø ale z tohoto pohledu
-jde o jednoduchı náhled, proto¾e pracuje jen s jedním defsem.
-
-Pro duální náhledy je k názvu souboru pøipojena koncovka `-dual'.  Tak¾e
-vısledné jméno souboru bude napø. `descr/Spolecnosti:ALL-dual.txt'.  Odkazy na
-popisy jednotlivıch náhledù, ze kterıch je duální náhled sestaven, jsou pøidány
-automaticky.  Naproti tomu se u duálních náhledù nezobrazují pøístupová práva,
-proto¾e ta jsou dána právy jednotlivıch podøízenıch náhledù.
+NÃ¡hledy pro sprÃ¡vu nÃ¡povÄ›dy jsou definovÃ¡ny v modulu pytis.defs.help a
+pÅ™Ã­sluÅ¡nÃ© datovÃ© specifikace v pytis.dbdefs.db_pytis_help.
