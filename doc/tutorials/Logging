@@ -1,113 +1,113 @@
-#title Logování
+#title LogovÃ¡nÃ­
 
-* Cíle a základní principy
+* CÃ­le a zÃ¡kladnÃ­ principy
 
-U ka¾dého programu èasto potøebujeme vìdìt, co se dìje uvnitø.  Kdy¾ nìco
-vùbec nefunguje, funguje ¹patnì nebo je nutné zjistit historické události, je
-ka¾dá informace programu o sobì samém, o tom, co udìlal a proè to udìlal,
-velmi cenná.  Naopak program v podobì èerné skøíòky, která o sobì nenechá
-¾ádnı záznam, v takovıch situacích zpùsobuje skøípìní zubù.  Proto je
-dùle¾ité definovat nìjakı mechanismus, kterı programu umo¾òuje snadno
-zaznamenávat informace o svém bìhu.  To je cílem *logování*.
+UÂ kaÅ¾dÃ©ho programu Äasto potÅ™ebujeme vÄ›dÄ›t, co se dÄ›je uvnitÅ™.  KdyÅ¾ nÄ›co
+vÅ¯bec nefunguje, funguje Å¡patnÄ› nebo je nutnÃ© zjistit historickÃ© udÃ¡losti, je
+kaÅ¾dÃ¡ informace programu oÂ sobÄ› samÃ©m, oÂ tom, co udÄ›lal a proÄ to udÄ›lal,
+velmi cennÃ¡.  Naopak program vÂ podobÄ› ÄernÃ© skÅ™Ã­Åˆky, kterÃ¡ oÂ sobÄ› nenechÃ¡
+Å¾Ã¡dnÃ½ zÃ¡znam, vÂ takovÃ½ch situacÃ­ch zpÅ¯sobuje skÅ™Ã­pÄ›nÃ­ zubÅ¯.  Proto je
+dÅ¯leÅ¾itÃ© definovat nÄ›jakÃ½ mechanismus, kterÃ½ programu umoÅ¾Åˆuje snadno
+zaznamenÃ¡vat informace oÂ svÃ©m bÄ›hu.  To je cÃ­lem *logovÃ¡nÃ­*.
 
-Logování tedy slou¾í k zaznamenávání dùle¾itıch informací o událostech
-v systému, zejména:
+LogovÃ¡nÃ­ tedy slouÅ¾Ã­ kÂ zaznamenÃ¡vÃ¡nÃ­ dÅ¯leÅ¾itÃ½ch informacÃ­ oÂ udÃ¡lostech
+vÂ systÃ©mu, zejmÃ©na:
 
-- Informace pro administrátora o stavu systému.  Pokud dojde k nìjakému
-  technickému problému, administrátor by mìl bıt schopen z logu zjistit,
-  o jakı problém jde nebo alespoò jak se pøesnì problém projevuje.
+- Informace pro administrÃ¡tora o stavu systÃ©mu.  Pokud dojde kÂ nÄ›jakÃ©mu
+  technickÃ©mu problÃ©mu, administrÃ¡tor by mÄ›l bÃ½t schopen zÂ logu zjistit,
+  oÂ jakÃ½ problÃ©m jde nebo alespoÅˆ jak se pÅ™esnÄ› problÃ©m projevuje.
 
-- Záznam u¾ivatelskıch akcí pro pøípadnou pozdìj¹í diagnostiku problémù.
-  Pokud provozovatel systému oznámí chybné chování, mìli bychom bıt z logu
-  schopni zrekonstruovat postup, jakım se k chybì do¹lo.  To je v na¹em
-  pøípadì obzvlá¹» dùle¾ité, proto¾e nìjaké chyby se urèitì objeví a vzhledem
-  ke vzdálenosti zákazníka pùjde mnohdy o jedinou mo¾nost jak zjistit, co se
-  vlastnì *pøesnì* stalo.
+- ZÃ¡znam uÅ¾ivatelskÃ½ch akcÃ­ pro pÅ™Ã­padnou pozdÄ›jÅ¡Ã­ diagnostiku problÃ©mÅ¯.
+  Pokud provozovatel systÃ©mu oznÃ¡mÃ­ chybnÃ© chovÃ¡nÃ­, mÄ›li bychom bÃ½t zÂ logu
+  schopni zrekonstruovat postup, jakÃ½m se kÂ chybÄ› doÅ¡lo.  To je vÂ naÅ¡em
+  pÅ™Ã­padÄ› obzvlÃ¡Å¡Å¥ dÅ¯leÅ¾itÃ©, protoÅ¾e nÄ›jakÃ© chyby se urÄitÄ› objevÃ­ a vzhledem
+  ke vzdÃ¡lenosti zÃ¡kaznÃ­ka pÅ¯jde mnohdy oÂ jedinou moÅ¾nost jak zjistit, co se
+  vlastnÄ› *pÅ™esnÄ›* stalo.
 
-- Zmìny v¹ech dat.  Slou¾í ke stejnému úèelu jako záznam u¾ivatelskıch akcí.
-  Naopak to neslou¾í jako forma zálohy pro rekonstrukci dat -- to bude
-  zaji¹tìno jinım (spolehlivìj¹ím) zpùsobem[1].
+- ZmÄ›ny vÅ¡ech dat.  SlouÅ¾Ã­ ke stejnÃ©mu ÃºÄelu jako zÃ¡znam uÅ¾ivatelskÃ½ch akcÃ­.
+  Naopak to neslouÅ¾Ã­ jako forma zÃ¡lohy pro rekonstrukci dat -- to bude
+  zajiÅ¡tÄ›no jinÃ½m (spolehlivÄ›jÅ¡Ã­m) zpÅ¯sobem[1].
 
-- Ladící informace potøebné pouze bìhem vıvoje programu, které se nikdy
-  nelogují za ostrého bìhu aplikace.  Tyto slou¾í jako na¹e pomùcka pro
-  rychlej¹í odhalování chyb -- zaznamenávají redundantní informace o datech a
-  událostech v mezikrocích, které bychom jinak museli stejnì zji¹»ovat
-  analızou kódu nebo v debuggeru.
+- LadÃ­cÃ­ informace potÅ™ebnÃ© pouze bÄ›hem vÃ½voje programu, kterÃ© se nikdy
+  nelogujÃ­ za ostrÃ©ho bÄ›hu aplikace.  Tyto slouÅ¾Ã­ jako naÅ¡e pomÅ¯cka pro
+  rychlejÅ¡Ã­ odhalovÃ¡nÃ­ chyb -- zaznamenÃ¡vajÃ­ redundantnÃ­ informace oÂ datech a
+  udÃ¡lostech vÂ mezikrocÃ­ch, kterÃ© bychom jinak museli stejnÄ› zjiÅ¡Å¥ovat
+  analÃ½zou kÃ³du nebo vÂ debuggeru.
 
-Logování musí dostateènì vyhovìt dvìma protichùdnım po¾adavkùm:
+LogovÃ¡nÃ­ musÃ­ dostateÄnÄ› vyhovÄ›t dvÄ›ma protichÅ¯dnÃ½m poÅ¾adavkÅ¯m:
 
-1. Zaznamenání co nejvíce informací o události.
+1. ZaznamenÃ¡nÃ­ co nejvÃ­ce informacÃ­ oÂ udÃ¡losti.
 
-2. Snadnost pou¾ití pro vıvojáøe.
+2. Snadnost pouÅ¾itÃ­ pro vÃ½vojÃ¡Å™e.
 
-Kromì toho je je¹tì dùle¾itá mo¾nost rozumné práce s vıstupem logování, ale
-tento problém lze obvykle zajistit vhodnou implementací rozhraní a netıká se
-pøímo definice rozhraní.
+KromÄ› toho je jeÅ¡tÄ› dÅ¯leÅ¾itÃ¡ moÅ¾nost rozumnÃ© prÃ¡ce sÂ vÃ½stupem logovÃ¡nÃ­, ale
+tento problÃ©m lze obvykle zajistit vhodnou implementacÃ­ rozhranÃ­ a netÃ½kÃ¡ se
+pÅ™Ã­mo definice rozhranÃ­.
 
-Aby tyto po¾adavky byly splnìny, musí logování v¹e, co mù¾e zjistit samo,
-zaznamenat bez jakékoliv asistence vıvojáøe, dále umo¾nit vıvojáøi zaznamenat
-prakticky cokoliv a pøitom tak èinit co nejjednodu¹¹í formou (co nejménì
-funkcí s co nejménì argumenty).
+Aby tyto poÅ¾adavky byly splnÄ›ny, musÃ­ logovÃ¡nÃ­ vÅ¡e, co mÅ¯Å¾e zjistit samo,
+zaznamenat bez jakÃ©koliv asistence vÃ½vojÃ¡Å™e, dÃ¡le umoÅ¾nit vÃ½vojÃ¡Å™i zaznamenat
+prakticky cokoliv a pÅ™itom tak Äinit co nejjednoduÅ¡Å¡Ã­ formou (co nejmÃ©nÄ›
+funkcÃ­ sÂ co nejmÃ©nÄ› argumenty).
 
 
-* Pou¾ití
+* PouÅ¾itÃ­
   
-Logování zaji¹»uje modul =pytis.util.log=.  Vzhledem k charakteru tohoto modulu
-je explicitnì dovoleno jej importovat zpùsobem =from pytis.util.log import *=.
+LogovÃ¡nÃ­ zajiÅ¡Å¥uje modul =pytis.util.log=.  Vzhledem kÂ charakteru tohoto modulu
+je explicitnÄ› dovoleno jej importovat zpÅ¯sobem =from pytis.util.log import *=.
 
-Základní pou¾ití modulu je velmi jednoduché.  Modul definuje funkci =log=,
-která je v podstatì jedinım rozhraním k logování.  Tato funkce má tøi
-parametry: druh události, slovní popis události a libovolnı pythonovı objekt.
-Volání funkce =log= mù¾e vypadat napøíklad takto:
+ZÃ¡kladnÃ­ pouÅ¾itÃ­ modulu je velmi jednoduchÃ©.  Modul definuje funkci =log=,
+kterÃ¡ je vÂ podstatÄ› jedinÃ½m rozhranÃ­m kÂ logovÃ¡nÃ­.  Tato funkce mÃ¡ tÅ™i
+parametry: druh udÃ¡losti, slovnÃ­ popis udÃ¡losti a libovolnÃ½ pythonovÃ½ objekt.
+VolÃ¡nÃ­ funkce =log= mÅ¯Å¾e vypadat napÅ™Ã­klad takto:
 
 <example>
 import pytis.util
 ...
-pytis.util.log(pytis.util.OPERATIONAL, 'Pád systému', exception)
+pytis.util.log(pytis.util.OPERATIONAL, 'PÃ¡d systÃ©mu', exception)
 </example>
 
-První argument specifikuje, o jakı druh události jde.  S ohledem na na
-zaèátku deklarované úèely logování se mù¾e jednat o událost provozní,
-u¾ivatelskou nebo ladící.  Pro jednotlivé druhy událostí jsou v modulu
-definovány pøíslu¹né konstanty.  V uvedeném pøíkladu se jedná o událost
-provozní, oznaèenou konstantou =OPERATIONAL=.
+PrvnÃ­ argument specifikuje, oÂ jakÃ½ druh udÃ¡losti jde.  SÂ ohledem na na
+zaÄÃ¡tku deklarovanÃ© ÃºÄely logovÃ¡nÃ­ se mÅ¯Å¾e jednat oÂ udÃ¡lost provoznÃ­,
+uÅ¾ivatelskou nebo ladÃ­cÃ­.  Pro jednotlivÃ© druhy udÃ¡lostÃ­ jsou vÂ modulu
+definovÃ¡ny pÅ™Ã­sluÅ¡nÃ© konstanty.  VÂ uvedenÃ©m pÅ™Ã­kladu se jednÃ¡ oÂ udÃ¡lost
+provoznÃ­, oznaÄenou konstantou =OPERATIONAL=.
 
-Druhı argument je v¾dy øetìzec ve formì èitelné pro lidi.
+DruhÃ½ argument je vÅ¾dy Å™etÄ›zec ve formÄ› ÄitelnÃ© pro lidi.
 
-Dal¹í informace obecnì není tøeba zaznamenávat, proto¾e logovací systém
-automaticky doplní celou øadu dal¹ích informací jako datum a èas, u¾ivatele,
-jméno modulu, apod.  Pokud je potøeba poskytnout je¹tì nìjakou specifickou
-doplòující informaci (data), vyu¾ije se tøetí argument funkce =log=, kterı je
-nepovinnı a kterım mù¾e bıt libovolnı pythonovı objekt.  V na¹em pøíkladì je
-to odchycená vıjimka pøedaná prostøednictvím promìnné =exception=.
+DalÅ¡Ã­ informace obecnÄ› nenÃ­ tÅ™eba zaznamenÃ¡vat, protoÅ¾e logovacÃ­ systÃ©m
+automaticky doplnÃ­ celou Å™adu dalÅ¡Ã­ch informacÃ­ jako datum a Äas, uÅ¾ivatele,
+jmÃ©no modulu, apod.  Pokud je potÅ™eba poskytnout jeÅ¡tÄ› nÄ›jakou specifickou
+doplÅˆujÃ­cÃ­ informaci (data), vyuÅ¾ije se tÅ™etÃ­ argument funkce =log=, kterÃ½ je
+nepovinnÃ½ a kterÃ½m mÅ¯Å¾e bÃ½t libovolnÃ½ pythonovÃ½ objekt.  VÂ naÅ¡em pÅ™Ã­kladÄ› je
+to odchycenÃ¡ vÃ½jimka pÅ™edanÃ¡ prostÅ™ednictvÃ­m promÄ›nnÃ© =exception=.
 
 
-* Zásady psaní logovacích hlá¹ek
+* ZÃ¡sady psanÃ­ logovacÃ­ch hlÃ¡Å¡ek
 
-Logovací hlá¹ky se pí¹í v èe¹tinì (v souladu s obecnımi jazykovımi pravidly
-na¹í aplikace) a *neobalují* se podtr¾ítkem, proto¾e pro nì platí jiná pravidla
-ne¾ pro ostatní hlá¹ky v systému (pøekládají se v¾dy do angliètiny, aby jim
-rozumìl administrátor systému i my), co¾ se zaji¹»uje uvnitø logovacího
+LogovacÃ­ hlÃ¡Å¡ky se pÃ­Å¡Ã­ vÂ ÄeÅ¡tinÄ› (vÂ souladu sÂ obecnÃ½mi jazykovÃ½mi pravidly
+naÅ¡Ã­ aplikace) a *neobalujÃ­* se podtrÅ¾Ã­tkem, protoÅ¾e pro nÄ› platÃ­ jinÃ¡ pravidla
+neÅ¾ pro ostatnÃ­ hlÃ¡Å¡ky vÂ systÃ©mu (pÅ™eklÃ¡dajÃ­ se vÅ¾dy do angliÄtiny, aby jim
+rozumÄ›l administrÃ¡tor systÃ©mu iÂ my), coÅ¾ se zajiÅ¡Å¥uje uvnitÅ™ logovacÃ­ho
 modulu.
 
-U logovacích hlá¹ek je dùle¾itá *struènost* a *srozumitelnost*.  Hlá¹ky nesmí
-svou délkou èinit log nepøehlednı a ¹patnì èitelnı.  Pøitom jim musí ètenáø
-rozumìt a musí bıt pokud mo¾no srozumitelné jak samostatnì, tak i v kontextu
-okolních hlá¹ek.
+UÂ logovacÃ­ch hlÃ¡Å¡ek je dÅ¯leÅ¾itÃ¡ *struÄnost* a *srozumitelnost*.  HlÃ¡Å¡ky nesmÃ­
+svou dÃ©lkou Äinit log nepÅ™ehlednÃ½ a Å¡patnÄ› ÄitelnÃ½.  PÅ™itom jim musÃ­ ÄtenÃ¡Å™
+rozumÄ›t a musÃ­ bÃ½t pokud moÅ¾no srozumitelnÃ© jak samostatnÄ›, tak iÂ vÂ kontextu
+okolnÃ­ch hlÃ¡Å¡ek.
 
-"Formátovací" pravidla pro logovací hlá¹ky:
+"FormÃ¡tovacÃ­" pravidla pro logovacÃ­ hlÃ¡Å¡ky:
 
-- Hlá¹ka zaèíná velkım písmenem a neukonèuje se teèkou.
+- HlÃ¡Å¡ka zaÄÃ­nÃ¡ velkÃ½m pÃ­smenem a neukonÄuje se teÄkou.
 
-- Pou¾ívá se trpnı rod (je struènìj¹í).
+- PouÅ¾Ã­vÃ¡ se trpnÃ½ rod (je struÄnÄ›jÅ¡Ã­).
 
 - Interpunkce se omezuje na minimum.
 
-- Do hlá¹ek se nevkládají *¾ádná* data, pro ty slou¾í volitelnı argument funkce
+- Do hlÃ¡Å¡ek se nevklÃ¡dajÃ­ *Å¾Ã¡dnÃ¡* data, pro ty slouÅ¾Ã­ volitelnÃ½ argument funkce
   =log=.
 
 
 Footnotes: 
-[1]  Denní zálohou serveru mimo pracovní dobu a ¹tosem papírù za ka¾dı den
-     práce.
+[1]  DennÃ­ zÃ¡lohou serveru mimo pracovnÃ­ dobu a Å¡tosem papÃ­rÅ¯ za kaÅ¾dÃ½ den
+     prÃ¡ce.
 

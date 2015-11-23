@@ -1,99 +1,99 @@
-#title Tutoriál: Konfiguraèní mechanismus
+#title TutoriÃ¡l: KonfiguraÄnÃ­ mechanismus
 
-* Cíle
+* CÃ­le
 
-Smyslem konfiguraèního mechanismu je umo¾nit tvorbu a správu konfigurace,
-s ohledem na následující po¾adavky:
+Smyslem konfiguraÄnÃ­ho mechanismu je umoÅ¾nit tvorbu a sprÃ¡vu konfigurace,
+sÂ ohledem na nÃ¡sledujÃ­cÃ­ poÅ¾adavky:
 
-- Dostateèná dokumentace v¹ech konfiguraèních parametrù a jasná definice
-  jejich vıznamu.
+- DostateÄnÃ¡ dokumentace vÅ¡ech konfiguraÄnÃ­ch parametrÅ¯ a jasnÃ¡ definice
+  jejich vÃ½znamu.
 
-- Obvyklı mechanismus zpracování konfigurace, vèetnì voleb pøíkazové øádky a
-  promìnnıch prostøedí.
+- ObvyklÃ½ mechanismus zpracovÃ¡nÃ­ konfigurace, vÄetnÄ› voleb pÅ™Ã­kazovÃ© Å™Ã¡dky a
+  promÄ›nnÃ½ch prostÅ™edÃ­.
 
-- Jednoduchá definice novıch konfiguraèních parametrù.
+- JednoduchÃ¡ definice novÃ½ch konfiguraÄnÃ­ch parametrÅ¯.
 
-- Mo¾nost vytváøení konfiguraèních parametrù specifickıch pro konkrétní
-  aplikace, stejnım zpùsobem jako v pøípadì standardních konfiguraèních
-  parametrù.
+- MoÅ¾nost vytvÃ¡Å™enÃ­ konfiguraÄnÃ­ch parametrÅ¯ specifickÃ½ch pro konkrÃ©tnÃ­
+  aplikace, stejnÃ½m zpÅ¯sobem jako vÂ pÅ™Ã­padÄ› standardnÃ­ch konfiguraÄnÃ­ch
+  parametrÅ¯.
   
-- Flexibilita umo¾òující udr¾ování implicitní definice konfigurace v CVS,
-  její správu na instalovaném stroji a takté¾ lokální definici pou¾ívanou pøi
-  vıvoji a ladìní aplikací bez nutnosti zasahovat do souborù pod kontrolou
+- Flexibilita umoÅ¾ÅˆujÃ­cÃ­ udrÅ¾ovÃ¡nÃ­ implicitnÃ­ definice konfigurace vÂ CVS,
+  jejÃ­ sprÃ¡vu na instalovanÃ©m stroji a taktÃ©Å¾ lokÃ¡lnÃ­ definici pouÅ¾Ã­vanou pÅ™i
+  vÃ½voji a ladÄ›nÃ­ aplikacÃ­ bez nutnosti zasahovat do souborÅ¯ pod kontrolou
   CVS.
 
-- V rámci mo¾ností usnadnìní ladìní.
+- VÂ rÃ¡mci moÅ¾nostÃ­ usnadnÄ›nÃ­ ladÄ›nÃ­.
 
 
 * Popis mechanismu
 
-Konfigurace je definována tøídou =pytis.util.Configuration=.  Tato tøída
-obsahuje definice standardních konfiguraèních parametrù spoleènıch pro
-v¹echny aplikace vystavìném nad toolkitem EBASu.  Mno¾inu konfiguraèních
-parametrù lze roz¹íøit pro konkrétní aplikaci vytvoøením instance
-odpovídajícího potomka této tøídy v definièních souborech aplikace a jeho
-ztoto¾nìním s modulem =config= (viz ní¾e).
+Konfigurace je definovÃ¡na tÅ™Ã­dou =pytis.util.Configuration=.  Tato tÅ™Ã­da
+obsahuje definice standardnÃ­ch konfiguraÄnÃ­ch parametrÅ¯ spoleÄnÃ½ch pro
+vÅ¡echny aplikace vystavÄ›nÃ©m nad toolkitem EBASu.  MnoÅ¾inu konfiguraÄnÃ­ch
+parametrÅ¯ lze rozÅ¡Ã­Å™it pro konkrÃ©tnÃ­ aplikaci vytvoÅ™enÃ­m instance
+odpovÃ­dajÃ­cÃ­ho potomka tÃ©to tÅ™Ã­dy vÂ definiÄnÃ­ch souborech aplikace a jeho
+ztotoÅ¾nÄ›nÃ­m sÂ modulem =config= (viz nÃ­Å¾e).
 
-Ka¾dı konfiguraèní parametr je instancí tøídy
-=pytis.util.Configuration.Option=.  Tato tøída definuje v¹echny specifikace
-konfiguraèního parametru, zejména jeho název a popis, jemu odpovídající volbu
-pøíkazové øádky a promìnnou prostøedí (jsou-li jaké) a implicitní hodnotu.
+KaÅ¾dÃ½ konfiguraÄnÃ­ parametr je instancÃ­ tÅ™Ã­dy
+=pytis.util.Configuration.Option=.  Tato tÅ™Ã­da definuje vÅ¡echny specifikace
+konfiguraÄnÃ­ho parametru, zejmÃ©na jeho nÃ¡zev a popis, jemu odpovÃ­dajÃ­cÃ­ volbu
+pÅ™Ã­kazovÃ© Å™Ã¡dky a promÄ›nnou prostÅ™edÃ­ (jsou-li jakÃ©) a implicitnÃ­ hodnotu.
 
-Pro definici nového konfiguraèního parametru není nutno vytváøet instanci
-tøídy =pytis.util.Configuration.Option= pøímo, staèí definovat jejího potomka
-ve tøídì =pytis.util.Configuration=.  Tento potomek musí mít jméno ve tvaru
-=_Option_PARAMETER=, kde =PARAMETER= je název konfiguraèního parametru, tak
-jak se na nìj bude odkazovat kód.  Dokumentaèní øetìzec novì definované tøídy
-se automaticky stane dokumentací parametru ve vygenerovaném vzorovém
-konfiguraèním souboru.  S ohledem na tuto skuteènost mají dokumentaèní
-øetìzce tìchto tøíd nestandardní podobu, viz definované parametry ve tøídì
+Pro definici novÃ©ho konfiguraÄnÃ­ho parametru nenÃ­ nutno vytvÃ¡Å™et instanci
+tÅ™Ã­dy =pytis.util.Configuration.Option= pÅ™Ã­mo, staÄÃ­ definovat jejÃ­ho potomka
+ve tÅ™Ã­dÄ› =pytis.util.Configuration=.  Tento potomek musÃ­ mÃ­t jmÃ©no ve tvaru
+=_Option_PARAMETER=, kde =PARAMETER= je nÃ¡zev konfiguraÄnÃ­ho parametru, tak
+jak se na nÄ›j bude odkazovat kÃ³d.  DokumentaÄnÃ­ Å™etÄ›zec novÄ› definovanÃ© tÅ™Ã­dy
+se automaticky stane dokumentacÃ­ parametru ve vygenerovanÃ©m vzorovÃ©m
+konfiguraÄnÃ­m souboru.  SÂ ohledem na tuto skuteÄnost majÃ­ dokumentaÄnÃ­
+Å™etÄ›zce tÄ›chto tÅ™Ã­d nestandardnÃ­ podobu, viz definovanÃ© parametry ve tÅ™Ã­dÄ›
 =pytis.form.Configuration=.
 
-Tøída =pytis.util.Configuration.Option= definuje implicitní hodnoty pro v¹echny
-specifikace parametrù, obvykle ve vıznamu "nedefinováno".  V ideálním pøípadì
-tak není nutno v definici nové tøídy uvádìt nic kromì patøièného
-dokumentaèního øetìzce.  Pokud v¹ak má bıt napøíklad parametr pøístupnı pøes
-volbu pøíkazové øádky nebo mít jinou viditelnost v generovaném vzorovém
-konfiguraèním souboru, je nutno pøedefinovat odpovídající metody.
+TÅ™Ã­da =pytis.util.Configuration.Option= definuje implicitnÃ­ hodnoty pro vÅ¡echny
+specifikace parametrÅ¯, obvykle ve vÃ½znamu "nedefinovÃ¡no".  VÂ ideÃ¡lnÃ­m pÅ™Ã­padÄ›
+tak nenÃ­ nutno vÂ definici novÃ© tÅ™Ã­dy uvÃ¡dÄ›t nic kromÄ› patÅ™iÄnÃ©ho
+dokumentaÄnÃ­ho Å™etÄ›zce.  Pokud vÅ¡ak mÃ¡ bÃ½t napÅ™Ã­klad parametr pÅ™Ã­stupnÃ½ pÅ™es
+volbu pÅ™Ã­kazovÃ© Å™Ã¡dky nebo mÃ­t jinou viditelnost vÂ generovanÃ©m vzorovÃ©m
+konfiguraÄnÃ­m souboru, je nutno pÅ™edefinovat odpovÃ­dajÃ­cÃ­ metody.
 
-Obvykle staèí v pøedefinovanıch metodách pouze definovat správné návratové
-hodnoty a není nutno psát vıkonnı kód.  Tøída =pytis.util.Configuration=
-zaji¹»uje na základì danıch specifikací v¹e potøebné.  Vıjimkou je uvedení
-popisu volby pøíkazové øádky ve vıpisu pou¾ití, ve skriptu =ebas=.
+Obvykle staÄÃ­ vÂ pÅ™edefinovanÃ½ch metodÃ¡ch pouze definovat sprÃ¡vnÃ© nÃ¡vratovÃ©
+hodnoty a nenÃ­ nutno psÃ¡t vÃ½konnÃ½ kÃ³d.  TÅ™Ã­da =pytis.util.Configuration=
+zajiÅ¡Å¥uje na zÃ¡kladÄ› danÃ½ch specifikacÃ­ vÅ¡e potÅ™ebnÃ©.  VÃ½jimkou je uvedenÃ­
+popisu volby pÅ™Ã­kazovÃ© Å™Ã¡dky ve vÃ½pisu pouÅ¾itÃ­, ve skriptu =ebas=.
 
-Konfigurace je implicitnì naèítána z konfiguraèního souboru
-=config/config.py=.  Kromì toho je naèítán té¾ soubor =config/_config.py=,
-pokud existuje.  Nastavení z =_config.py= mají vy¹¹í prioritu ne¾ nastavení
-z =config.py=.  Soubor =_config.py= je urèen pro lokální konfiguraci pøi
-vıvoji a ladìní aplikace, ne pro pou¾ívání za ostrého bìhu aplikace.
+Konfigurace je implicitnÄ› naÄÃ­tÃ¡na zÂ konfiguraÄnÃ­ho souboru
+=config/config.py=.  KromÄ› toho je naÄÃ­tÃ¡n tÃ©Å¾ soubor =config/_config.py=,
+pokud existuje.  NastavenÃ­ zÂ =_config.py= majÃ­ vyÅ¡Å¡Ã­ prioritu neÅ¾ nastavenÃ­
+zÂ =config.py=.  Soubor =_config.py= je urÄen pro lokÃ¡lnÃ­ konfiguraci pÅ™i
+vÃ½voji a ladÄ›nÃ­ aplikace, ne pro pouÅ¾Ã­vÃ¡nÃ­ za ostrÃ©ho bÄ›hu aplikace.
 
-Je-li aplikace spu¹tìna bez optimalizace Pythonu (tj. =__debug__= je
-nastaveno na pravdu), jsou konfiguraèní parametry pøi zmìnì nìkterého
-z konfiguraèních souborù automaticky pøenaèítány.  Je pak ji¾ jen zále¾itostí
-modulù, které tyto parametry pou¾ívají, zda a jak na tuto zmìnu budou
-reagovat.  Zmìnu konfigurace lze zjistit dotazem na sériové èíslo konfigurace
+Je-li aplikace spuÅ¡tÄ›na bez optimalizace Pythonu (tj. =__debug__= je
+nastaveno na pravdu), jsou konfiguraÄnÃ­ parametry pÅ™i zmÄ›nÄ› nÄ›kterÃ©ho
+zÂ konfiguraÄnÃ­ch souborÅ¯ automaticky pÅ™enaÄÃ­tÃ¡ny.  Je pak jiÅ¾ jen zÃ¡leÅ¾itostÃ­
+modulÅ¯, kterÃ© tyto parametry pouÅ¾Ã­vajÃ­, zda a jak na tuto zmÄ›nu budou
+reagovat.  ZmÄ›nu konfigurace lze zjistit dotazem na sÃ©riovÃ© ÄÃ­slo konfigurace
 metodou =Configuration.serial_number=.
 
-Pøi zji¹»ování hodnoty konfiguraèního parametru má nejvy¹¹í prioritu volba
-pøíkazové øádky, poté hodnoty promìnnıch prostøedí v jejich uvedeném poøadí
-ve specifikaci, poté hodnota v konfiguraèním souboru a nakonec hodnota daná
+PÅ™i zjiÅ¡Å¥ovÃ¡nÃ­ hodnoty konfiguraÄnÃ­ho parametru mÃ¡ nejvyÅ¡Å¡Ã­ prioritu volba
+pÅ™Ã­kazovÃ© Å™Ã¡dky, potÃ© hodnoty promÄ›nnÃ½ch prostÅ™edÃ­ vÂ jejich uvedenÃ©m poÅ™adÃ­
+ve specifikaci, potÃ© hodnota vÂ konfiguraÄnÃ­m souboru a nakonec hodnota danÃ¡
 metodou =pytis.util.Configuration.Option.default=.
 
-Hodnoty konfiguraèních parametrù mohou záviset na hodnotách jinıch
-konfiguraèních parametrù.  Instanci tøídy =Option= je pøedávána instance
-konfigurace, odkud je mo¾no jiné konfiguraèní parametry získat.
-V závislostech parametrù v¹ak nesmí vzniknout cyklus.
+Hodnoty konfiguraÄnÃ­ch parametrÅ¯ mohou zÃ¡viset na hodnotÃ¡ch jinÃ½ch
+konfiguraÄnÃ­ch parametrÅ¯.  Instanci tÅ™Ã­dy =Option= je pÅ™edÃ¡vÃ¡na instance
+konfigurace, odkud je moÅ¾no jinÃ© konfiguraÄnÃ­ parametry zÃ­skat.
+VÂ zÃ¡vislostech parametrÅ¯ vÅ¡ak nesmÃ­ vzniknout cyklus.
 
 
-* Pou¾ití
+* PouÅ¾itÃ­
 
-** Pøíklad definice konfiguraèního parametru
+** PÅ™Ã­klad definice konfiguraÄnÃ­ho parametru
 
-Ve tøídì =pytis.util.Configuration= je definována následující vnitøní tøída:
+Ve tÅ™Ã­dÄ› =pytis.util.Configuration= je definovÃ¡na nÃ¡sledujÃ­cÃ­ vnitÅ™nÃ­ tÅ™Ã­da:
 
 <example>
     class _Option_dbuser(Option):
-        """U¾ivatelské jméno (login) pro databázové spojení."""
+        """UÅ¾ivatelskÃ© jmÃ©no (login) pro databÃ¡zovÃ© spojenÃ­."""
         def long_option(self):
             return 'dbuser='
         def default(self):
@@ -103,34 +103,34 @@ Ve tøídì =pytis.util.Configuration= je definována následující vnitøní tøída:
             return 'getpass.getuser()'
 </example>
 
-Definuje konfiguraèní parametr =dbuser=, urèující login u¾ivatele do
-databáze.  Parametr bude v programu pøístupnı pod jménem =config.dbuser=.
-Jeho hodnotu lze zmìnit, jak je øeèeno metodou =long_option=. volbou
-pøíkazové øádky =--dbuser=, vy¾adující hodnotu.  Proto¾e nebyla zmìnìna
-viditelnost parametru ve vzorovém konfiguraèním souboru, objeví se v tomto
-souboru následující øádky:
+Definuje konfiguraÄnÃ­ parametr =dbuser=, urÄujÃ­cÃ­ login uÅ¾ivatele do
+databÃ¡ze.  Parametr bude vÂ programu pÅ™Ã­stupnÃ½ pod jmÃ©nem =config.dbuser=.
+Jeho hodnotu lze zmÄ›nit, jak je Å™eÄeno metodou =long_option=. volbou
+pÅ™Ã­kazovÃ© Å™Ã¡dky =--dbuser=, vyÅ¾adujÃ­cÃ­ hodnotu.  ProtoÅ¾e nebyla zmÄ›nÄ›na
+viditelnost parametru ve vzorovÃ©m konfiguraÄnÃ­m souboru, objevÃ­ se vÂ tomto
+souboru nÃ¡sledujÃ­cÃ­ Å™Ã¡dky:
 
 <example>
-  # U¾ivatelské jméno (login) pro databázové spojení.
+  # UÅ¾ivatelskÃ© jmÃ©no (login) pro databÃ¡zovÃ© spojenÃ­.
   #dbuser = getpass.getuser()
 </example>
 
-V¹imnìte si, ¾e se ve specifikaci li¹í implicitní hodnota jako taková (metoda
-=default=) a øetìzec urèenı pro vzorovı konfiguraèní soubor (metoda
-=default_string=).  Pokud by nebyla pøedefinována metoda =default_string=, ve
-vygenerovaném vzorovém konfiguraèním souboru by se objevilo jméno u¾ivatele,
-kterı tento soubor generoval.
+VÅ¡imnÄ›te si, Å¾e se ve specifikaci liÅ¡Ã­ implicitnÃ­ hodnota jako takovÃ¡ (metoda
+=default=) a Å™etÄ›zec urÄenÃ½ pro vzorovÃ½ konfiguraÄnÃ­ soubor (metoda
+=default_string=).  Pokud by nebyla pÅ™edefinovÃ¡na metoda =default_string=, ve
+vygenerovanÃ©m vzorovÃ©m konfiguraÄnÃ­m souboru by se objevilo jmÃ©no uÅ¾ivatele,
+kterÃ½ tento soubor generoval.
 
-** Jak pøistupovat k hodnotì konfiguraèního parametru
+** Jak pÅ™istupovat kÂ hodnotÄ› konfiguraÄnÃ­ho parametru
 
-Inicializaèní soubor modulu =pytis.util= vytváøí instanci tøídy
-=pytis.util.Configuration= a instaluje ji jako fiktivní globální modul
-=config=.  Pøístupy k modulu =config= jsou tak efektivnì pøístupy k této
+InicializaÄnÃ­ soubor modulu =pytis.util= vytvÃ¡Å™Ã­ instanci tÅ™Ã­dy
+=pytis.util.Configuration= a instaluje ji jako fiktivnÃ­ globÃ¡lnÃ­ modul
+=config=.  PÅ™Ã­stupy kÂ modulu =config= jsou tak efektivnÄ› pÅ™Ã­stupy kÂ tÃ©to
 instanci.
 
-Tøída =pytis.util.Configuration= definuje virtuální atributy odpovídající
-jednotlivım konfiguraèním parametrùm.  Parametry tedy lze èíst teèkovou
-notací, jako kdyby se jednalo o atributy modulu =config=, napøíklad parametr
-=debug= je zpøístupnìn jako =config.debug=.  Do konfiguraèních parametrù lze
-i pøiøazovat nové hodnoty, toho by v¹ak nemìlo bıt vyu¾íváno pro jiné úèely
-ne¾ ladìní.
+TÅ™Ã­da =pytis.util.Configuration= definuje virtuÃ¡lnÃ­ atributy odpovÃ­dajÃ­cÃ­
+jednotlivÃ½m konfiguraÄnÃ­m parametrÅ¯m.  Parametry tedy lze ÄÃ­st teÄkovou
+notacÃ­, jako kdyby se jednalo oÂ atributy modulu =config=, napÅ™Ã­klad parametr
+=debug= je zpÅ™Ã­stupnÄ›n jako =config.debug=.  Do konfiguraÄnÃ­ch parametrÅ¯ lze
+iÂ pÅ™iÅ™azovat novÃ© hodnoty, toho by vÅ¡ak nemÄ›lo bÃ½t vyuÅ¾Ã­vÃ¡no pro jinÃ© ÃºÄely
+neÅ¾ ladÄ›nÃ­.

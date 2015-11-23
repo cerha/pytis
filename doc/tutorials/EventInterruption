@@ -1,103 +1,103 @@
-#title Pøeru¹ení zpracování událostí
+#title PÅ™eruÅ¡enÃ­ zpracovÃ¡nÃ­ udÃ¡lostÃ­
 
-* Cíle a základní principy
+* CÃ­le a zÃ¡kladnÃ­ principy
 
-Nìkteré akce vyvolané u¾ivatelem mohou trvat pomìrnì dlouho.  Napøíklad ètení
-dat z databáze nebo formátování vıstupu mù¾e zpùsobit nepøíjemné èekání.
-Mù¾eme rozli¹it dva druhy dlouhotrvajících akcí:
+NÄ›kterÃ© akce vyvolanÃ© uÅ¾ivatelem mohou trvat pomÄ›rnÄ› dlouho.  NapÅ™Ã­klad ÄtenÃ­
+dat zÂ databÃ¡ze nebo formÃ¡tovÃ¡nÃ­ vÃ½stupu mÅ¯Å¾e zpÅ¯sobit nepÅ™Ã­jemnÃ© ÄekÃ¡nÃ­.
+MÅ¯Å¾eme rozliÅ¡it dva druhy dlouhotrvajÃ­cÃ­ch akcÃ­:
 
-1. Akce, které zásadnì trvají dlouho a u kterıch se nepøedpokládá, ¾e po dobu
-   jejich provádìní budou zablokovány v¹echny akce u¾ivatele.
+1. Akce, kterÃ© zÃ¡sadnÄ› trvajÃ­ dlouho a uÂ kterÃ½ch se nepÅ™edpoklÃ¡dÃ¡, Å¾e po dobu
+   jejich provÃ¡dÄ›nÃ­ budou zablokovÃ¡ny vÅ¡echny akce uÅ¾ivatele.
 
-2. Akce, které neblokují aplikaci dlouhodobì, av¹ak mohou potenciálnì trvat
-   natolik dlouho, ¾e je u¾ivatel bude chtít je¹tì pøed jejich ukonèením
-   pøeru¹it.
+2. Akce, kterÃ© neblokujÃ­ aplikaci dlouhodobÄ›, avÅ¡ak mohou potenciÃ¡lnÄ› trvat
+   natolik dlouho, Å¾e je uÅ¾ivatel bude chtÃ­t jeÅ¡tÄ› pÅ™ed jejich ukonÄenÃ­m
+   pÅ™eruÅ¡it.
 
-Jak lze s dlouhotrvajícími akcemi ve wxPythonu nakládat docela pìknì shrnuje
-dokument [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]].  Jak z onoho dokumentu vyplıvá, obecnì
-uspokojivé, tj. svım charakterem preemptivní, øe¹ení problému
-dlouhotrvajících úloh ve wxPythonu patrnì neexistuje.  V¾dy je nutná aktivní
-podpora v kódu, kde ke zdr¾ení dochází nebo mù¾e dojít.  Je tedy nutno najít
-nìjakı mechanismus, kterı nakládání s dlouhotrvajícími akcemi alespoò co
-nejvíce usnadòuje.
+Jak lze sÂ dlouhotrvajÃ­cÃ­mi akcemi ve wxPythonu naklÃ¡dat docela pÄ›knÄ› shrnuje
+dokument [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]].  Jak zÂ onoho dokumentu vyplÃ½vÃ¡, obecnÄ›
+uspokojivÃ©, tj. svÃ½m charakterem preemptivnÃ­, Å™eÅ¡enÃ­ problÃ©mu
+dlouhotrvajÃ­cÃ­ch Ãºloh ve wxPythonu patrnÄ› neexistuje.  VÅ¾dy je nutnÃ¡ aktivnÃ­
+podpora vÂ kÃ³du, kde ke zdrÅ¾enÃ­ dochÃ¡zÃ­ nebo mÅ¯Å¾e dojÃ­t.  Je tedy nutno najÃ­t
+nÄ›jakÃ½ mechanismus, kterÃ½ naklÃ¡dÃ¡nÃ­ sÂ dlouhotrvajÃ­cÃ­mi akcemi alespoÅˆ co
+nejvÃ­ce usnadÅˆuje.
 
-** Pøedlouhé akce, neblokující
+** PÅ™edlouhÃ© akce, neblokujÃ­cÃ­
 
-Akce prvního druhu musí bıt zásadnì spou¹tìny jako samostatné vlákno nebo
-proces a umo¾nit pokraèování u¾ivatelské interakce bìhem svého provádìní.
-K tomu není celkem co dodat, snad jen stojí za pøipomenutí, ¾e:
+Akce prvnÃ­ho druhu musÃ­ bÃ½t zÃ¡sadnÄ› spouÅ¡tÄ›ny jako samostatnÃ© vlÃ¡kno nebo
+proces a umoÅ¾nit pokraÄovÃ¡nÃ­ uÅ¾ivatelskÃ© interakce bÄ›hem svÃ©ho provÃ¡dÄ›nÃ­.
+KÂ tomu nenÃ­ celkem co dodat, snad jen stojÃ­ za pÅ™ipomenutÃ­, Å¾e:
 
-- I asynchronní akci musí bıt mo¾no nìjakım zpùsobem pøeru¹it, aby
-  nedocházelo ke zbyteènému hromadìní procesù a plıtvání strojového èasu,
-  dále zpomalující u¾ tak pomalé u¾ivatelské rozhraní.
+- IÂ asynchronnÃ­ akci musÃ­ bÃ½t moÅ¾no nÄ›jakÃ½m zpÅ¯sobem pÅ™eruÅ¡it, aby
+  nedochÃ¡zelo ke zbyteÄnÃ©mu hromadÄ›nÃ­ procesÅ¯ a plÃ½tvÃ¡nÃ­ strojovÃ©ho Äasu,
+  dÃ¡le zpomalujÃ­cÃ­ uÅ¾ tak pomalÃ© uÅ¾ivatelskÃ© rozhranÃ­.
 
-- Je zapotøebí zajistit, aby akce byla buï korektnì reentrantní, nebo aby
-  její paralelní spu¹tìní bìhem jejího provádìní bylo znemo¾nìno.
+- Je zapotÅ™ebÃ­ zajistit, aby akce byla buÄ korektnÄ› reentrantnÃ­, nebo aby
+  jejÃ­ paralelnÃ­ spuÅ¡tÄ›nÃ­ bÄ›hem jejÃ­ho provÃ¡dÄ›nÃ­ bylo znemoÅ¾nÄ›no.
 
-** Krat¹í akce, blokující
+** KratÅ¡Ã­ akce, blokujÃ­cÃ­
 
-U akcí druhého druhu je situace slo¾itìj¹í, nebo» jimi vyvolávané akce
-povìt¹inou nejsou navr¾eny pro spou¹tìní v samostatném vláknì nebo procesu,
-èasto ani vytváøení samostatného vlákna do celkového zpracování nezapadá a
-pøedev¹ím je ¾ádoucí, aby akce byly skuteènì blokující.  Je jenom ¾ádána
-mo¾nost jejich pøeru¹ení.  Tento po¾adavek je netriviální, proto¾e wxWindows
-neumo¾òuje snadné pøijetí nové události bìhem zpracování jiné události, je
-nutná aktivní podpora v provádìném kódu.
-
-
-* Øe¹ení
-
-Ze tøí øe¹ení nabízenıch ve zmínìném dokumentu [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]] pøipadá
-v úvahu pouze vyu¾ití funkce =wxYield=.  Zpracování ve vláknì není
-v interakci s u¾ivatelskım rozhraním pøíli¹ ¾ádoucí a rozdìlení zpracování do
-idle událostí je pro danı úèel zcela nevhodné.
-
-U =wxYield= je nutno uvá¾it, ¾e toto volání nesmí bıt provádìno ani pøíli¹
-èasto (je, zahrneme-li i pøíslu¹né zpracování, dost drahé) ani pøíli¹ zøídka
-(¹patná odezva na pøeru¹ující akci u¾ivatele).  Také nesmí bıt vázáno na
-explicitní podporu kódu, napøíklad kód databázového rozhraní, ve kterém se
-mù¾e zpracování události chvíli zdr¾et, nemù¾e volat =wxYield= sám o sobì.
-Pokud by explicitní podpora kódu byla vy¾adována, musely by opìt bıt kdejaké
-jinak triviální akce spou¹tìny ve vláknech (stejnì nepøeru¹itelnıch!).
-
-Proto pou¾ijeme následující, z hlediska vıkonného kódu dobøe transparentní,
-øe¹ení:
-
-- =wxYield= bude opakovanì voláno v samostatném vláknì, bì¾ícím po celou dobu
-  práce u¾ivatelského rozhraní aplikace.  Dojde-li k vyvolání události bìhem
-  zpracování jiné události, vlákno se podívá, zda se jedná o pøeru¹ovací
-  pøíkaz.  Je-li tomu tak, nastaví indikátor pøeru¹ení, v opaèném pøípadì
-  událost zahodí [1].
-
-- Ve¹keré callbacky budou obaleny kódem, kterı o¹etøí nastavení pøíznaku
-  zpracovávané události a dal¹í vìci.  Obalení bude zaji¹tìno nahrazením wx
-  funkcí pro pøiøazení callbackù na¹ím univerzálním obalovaèem.
-
-- Do funkce =log= bude vlo¾en callback pro kontrolu indikátoru pøeru¹ení.
-  Tento callback v pøípadì nastaveného flagu pøeru¹ení vyvolá speciální, pro
-  tento úèel zavedenou vıjimku =UserBreakException=.
-
-- Pøeru¹ovací vıjimka bude odchytávána na nejvy¹¹í úrovni aplikace,
-  tj. nebude-li o¹etøena jinde, akce se jednodu¹e pøeru¹í bez dal¹ích efektù
-  (èi¹tìní, apod.).
+UÂ akcÃ­ druhÃ©ho druhu je situace sloÅ¾itÄ›jÅ¡Ã­, neboÅ¥ jimi vyvolÃ¡vanÃ© akce
+povÄ›tÅ¡inou nejsou navrÅ¾eny pro spouÅ¡tÄ›nÃ­ vÂ samostatnÃ©m vlÃ¡knÄ› nebo procesu,
+Äasto ani vytvÃ¡Å™enÃ­ samostatnÃ©ho vlÃ¡kna do celkovÃ©ho zpracovÃ¡nÃ­ nezapadÃ¡ a
+pÅ™edevÅ¡Ã­m je Å¾Ã¡doucÃ­, aby akce byly skuteÄnÄ› blokujÃ­cÃ­.  Je jenom Å¾Ã¡dÃ¡na
+moÅ¾nost jejich pÅ™eruÅ¡enÃ­.  Tento poÅ¾adavek je netriviÃ¡lnÃ­, protoÅ¾e wxWindows
+neumoÅ¾Åˆuje snadnÃ© pÅ™ijetÃ­ novÃ© udÃ¡losti bÄ›hem zpracovÃ¡nÃ­ jinÃ© udÃ¡losti, je
+nutnÃ¡ aktivnÃ­ podpora vÂ provÃ¡dÄ›nÃ©m kÃ³du.
 
 
-* Pou¾ití
+* Å˜eÅ¡enÃ­
 
-Na kód u¾ivatelského rozhraní jsou kladeny následující po¾adavky:
+Ze tÅ™Ã­ Å™eÅ¡enÃ­ nabÃ­zenÃ½ch ve zmÃ­nÄ›nÃ©m dokumentu [[http://wiki.wxpython.org/index.cgi/LongRunningTasks][Long Running Tasks]] pÅ™ipadÃ¡
+vÂ Ãºvahu pouze vyuÅ¾itÃ­ funkce =wxYield=.  ZpracovÃ¡nÃ­ ve vlÃ¡knÄ› nenÃ­
+vÂ interakci sÂ uÅ¾ivatelskÃ½m rozhranÃ­m pÅ™Ã­liÅ¡ Å¾Ã¡doucÃ­ a rozdÄ›lenÃ­ zpracovÃ¡nÃ­ do
+idle udÃ¡lostÃ­ je pro danÃ½ ÃºÄel zcela nevhodnÃ©.
 
-- Místo funkcí =wx.EVT_*= pro pøiøazení callbackù u¾ivatelskım akcím (stisk
-  klávesy, klik my¹i, ne v¹ak nutnì ji¾ zmìna velikosti, apod.) musí bıt
-  callbacky pøiøazovány zásadnì prostøednictvím funkce
+UÂ =wxYield= je nutno uvÃ¡Å¾it, Å¾e toto volÃ¡nÃ­ nesmÃ­ bÃ½t provÃ¡dÄ›no ani pÅ™Ã­liÅ¡
+Äasto (je, zahrneme-li iÂ pÅ™Ã­sluÅ¡nÃ© zpracovÃ¡nÃ­, dost drahÃ©) ani pÅ™Ã­liÅ¡ zÅ™Ã­dka
+(Å¡patnÃ¡ odezva na pÅ™eruÅ¡ujÃ­cÃ­ akci uÅ¾ivatele).  TakÃ© nesmÃ­ bÃ½t vÃ¡zÃ¡no na
+explicitnÃ­ podporu kÃ³du, napÅ™Ã­klad kÃ³d databÃ¡zovÃ©ho rozhranÃ­, ve kterÃ©m se
+mÅ¯Å¾e zpracovÃ¡nÃ­ udÃ¡losti chvÃ­li zdrÅ¾et, nemÅ¯Å¾e volat =wxYield= sÃ¡m oÂ sobÄ›.
+Pokud by explicitnÃ­ podpora kÃ³du byla vyÅ¾adovÃ¡na, musely by opÄ›t bÃ½t kdejakÃ©
+jinak triviÃ¡lnÃ­ akce spouÅ¡tÄ›ny ve vlÃ¡knech (stejnÄ› nepÅ™eruÅ¡itelnÃ½ch!).
+
+Proto pouÅ¾ijeme nÃ¡sledujÃ­cÃ­, zÂ hlediska vÃ½konnÃ©ho kÃ³du dobÅ™e transparentnÃ­,
+Å™eÅ¡enÃ­:
+
+- =wxYield= bude opakovanÄ› volÃ¡no vÂ samostatnÃ©m vlÃ¡knÄ›, bÄ›Å¾Ã­cÃ­m po celou dobu
+  prÃ¡ce uÅ¾ivatelskÃ©ho rozhranÃ­ aplikace.  Dojde-li kÂ vyvolÃ¡nÃ­ udÃ¡losti bÄ›hem
+  zpracovÃ¡nÃ­ jinÃ© udÃ¡losti, vlÃ¡kno se podÃ­vÃ¡, zda se jednÃ¡ oÂ pÅ™eruÅ¡ovacÃ­
+  pÅ™Ã­kaz.  Je-li tomu tak, nastavÃ­ indikÃ¡tor pÅ™eruÅ¡enÃ­, vÂ opaÄnÃ©m pÅ™Ã­padÄ›
+  udÃ¡lost zahodÃ­ [1].
+
+- VeÅ¡kerÃ© callbacky budou obaleny kÃ³dem, kterÃ½ oÅ¡etÅ™Ã­ nastavenÃ­ pÅ™Ã­znaku
+  zpracovÃ¡vanÃ© udÃ¡losti a dalÅ¡Ã­ vÄ›ci.  ObalenÃ­ bude zajiÅ¡tÄ›no nahrazenÃ­m wx
+  funkcÃ­ pro pÅ™iÅ™azenÃ­ callbackÅ¯ naÅ¡Ã­m univerzÃ¡lnÃ­m obalovaÄem.
+
+- Do funkce =log= bude vloÅ¾en callback pro kontrolu indikÃ¡toru pÅ™eruÅ¡enÃ­.
+  Tento callback vÂ pÅ™Ã­padÄ› nastavenÃ©ho flagu pÅ™eruÅ¡enÃ­ vyvolÃ¡ speciÃ¡lnÃ­, pro
+  tento ÃºÄel zavedenou vÃ½jimku =UserBreakException=.
+
+- PÅ™eruÅ¡ovacÃ­ vÃ½jimka bude odchytÃ¡vÃ¡na na nejvyÅ¡Å¡Ã­ Ãºrovni aplikace,
+  tj. nebude-li oÅ¡etÅ™ena jinde, akce se jednoduÅ¡e pÅ™eruÅ¡Ã­ bez dalÅ¡Ã­ch efektÅ¯
+  (ÄiÅ¡tÄ›nÃ­, apod.).
+
+
+* PouÅ¾itÃ­
+
+Na kÃ³d uÅ¾ivatelskÃ©ho rozhranÃ­ jsou kladeny nÃ¡sledujÃ­cÃ­ poÅ¾adavky:
+
+- MÃ­sto funkcÃ­ =wx.EVT_*= pro pÅ™iÅ™azenÃ­ callbackÅ¯ uÅ¾ivatelskÃ½m akcÃ­m (stisk
+  klÃ¡vesy, klik myÅ¡i, ne vÅ¡ak nutnÄ› jiÅ¾ zmÄ›na velikosti, apod.) musÃ­ bÃ½t
+  callbacky pÅ™iÅ™azovÃ¡ny zÃ¡sadnÄ› prostÅ™ednictvÃ­m funkce
   =pytis.form.wx_callback=.
 
-- Ve¹kerı kód musí dostateènì èasto logovat.  Pojem "dostateènì èasto" je
-  mínìn z hlediska èasového.  Pokud toto *jednodu¹e* zajistit nelze, jako
-  napøíklad u systémovıch potenciálnì blokujících volání, nedá se nic dìlat.
+- VeÅ¡kerÃ½ kÃ³d musÃ­ dostateÄnÄ› Äasto logovat.  Pojem "dostateÄnÄ› Äasto" je
+  mÃ­nÄ›n zÂ hlediska ÄasovÃ©ho.  Pokud toto *jednoduÅ¡e* zajistit nelze, jako
+  napÅ™Ã­klad uÂ systÃ©movÃ½ch potenciÃ¡lnÄ› blokujÃ­cÃ­ch volÃ¡nÃ­, nedÃ¡ se nic dÄ›lat.
 
-- Pokud je potøeba v pøípadì pøeru¹ení provést nìjaké èistící akce, je nutno
-  odchytávat vıjimku =UserBreakException= a odpovídajícím zpùsobem na ni
+- Pokud je potÅ™eba vÂ pÅ™Ã­padÄ› pÅ™eruÅ¡enÃ­ provÃ©st nÄ›jakÃ© ÄistÃ­cÃ­ akce, je nutno
+  odchytÃ¡vat vÃ½jimku =UserBreakException= a odpovÃ­dajÃ­cÃ­m zpÅ¯sobem na ni
   reagovat.
 
 
-[1] To mù¾e mít velmi pozitivní efekt na zpomalení autorepeatu :-).
+[1] To mÅ¯Å¾e mÃ­t velmi pozitivnÃ­ efekt na zpomalenÃ­ autorepeatuÂ :-).

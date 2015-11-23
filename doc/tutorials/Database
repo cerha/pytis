@@ -1,66 +1,66 @@
-#title Tutoriál: Databázové rozhraní
+#title TutoriÃ¡l: DatabÃ¡zovÃ© rozhranÃ­
 
-* Cíle a základní principy
+* CÃ­le a zÃ¡kladnÃ­ principy
 
-Cílem databázového rozhraní je poskytnout prostøedky pro nìkolik málo
-základních operací, které budeme provádìt nad databázovımi daty.  Tento
-dokument poskytuje základní ideové informace o rozhraní a jednoduchı návod, jak
-s rozhraním zaèít pracovat.  Podrobnı popis rozhraní naleznete v dokumentaci
+CÃ­lem databÃ¡zovÃ©ho rozhranÃ­ je poskytnout prostÅ™edky pro nÄ›kolik mÃ¡lo
+zÃ¡kladnÃ­ch operacÃ­, kterÃ© budeme provÃ¡dÄ›t nad databÃ¡zovÃ½mi daty.  Tento
+dokument poskytuje zÃ¡kladnÃ­ ideovÃ© informace oÂ rozhranÃ­ a jednoduchÃ½ nÃ¡vod, jak
+sÂ rozhranÃ­m zaÄÃ­t pracovat.  PodrobnÃ½ popis rozhranÃ­ naleznete vÂ dokumentaci
 modulu =pytis.data=.
 
-V první øadì je nutno si uvìdomit dùvody[1], které pro zavedení tohoto rozhraní
-máme:
+VÂ prvnÃ­ Å™adÄ› je nutno si uvÄ›domit dÅ¯vody[1], kterÃ© pro zavedenÃ­ tohoto rozhranÃ­
+mÃ¡me:
 
-- Co nejvíce omezit nutnost definice jednoho a tého¾ na více místech.  Pokud
-  bychom pracovali s daty pøímo prostøednictvím SQL pøíkazù, museli bychom
-  popsat podobu pøíslu¹nıch tabulek nìkolikrát (pro SELECT, INSERT, atd.).
-  Rozhraní by mìlo umo¾nit definovat napojení na databázi na jediném místì.
+- Co nejvÃ­ce omezit nutnost definice jednoho a tÃ©hoÅ¾ na vÃ­ce mÃ­stech.  Pokud
+  bychom pracovali sÂ daty pÅ™Ã­mo prostÅ™ednictvÃ­m SQL pÅ™Ã­kazÅ¯, museli bychom
+  popsat podobu pÅ™Ã­sluÅ¡nÃ½ch tabulek nÄ›kolikrÃ¡t (pro SELECT, INSERT, atd.).
+  RozhranÃ­ by mÄ›lo umoÅ¾nit definovat napojenÃ­ na databÃ¡zi na jedinÃ©m mÃ­stÄ›.
 
-- Unifikace pøístupu k datùm.  Díky jednoduchému jednotnému rozhraní nebude
-  k databázi pøistupováno na rùznıch místech programu rùznì, dle aktuální
-  nálady konkrétního vıvojáøe.
+- Unifikace pÅ™Ã­stupu kÂ datÅ¯m.  DÃ­ky jednoduchÃ©mu jednotnÃ©mu rozhranÃ­ nebude
+  kÂ databÃ¡zi pÅ™istupovÃ¡no na rÅ¯znÃ½ch mÃ­stech programu rÅ¯znÄ›, dle aktuÃ¡lnÃ­
+  nÃ¡lady konkrÃ©tnÃ­ho vÃ½vojÃ¡Å™e.
 
-- Odstínìní aplikaèního programu od pøímé komunikace s databázovım strojem.  To
-  umo¾ní o¹etøit pøípadné budoucí i souèasné problémy komunikace bez nutnosti
-  zasahovat do aplikaèního kódu.
+- OdstÃ­nÄ›nÃ­ aplikaÄnÃ­ho programu od pÅ™Ã­mÃ© komunikace sÂ databÃ¡zovÃ½m strojem.  To
+  umoÅ¾nÃ­ oÅ¡etÅ™it pÅ™Ã­padnÃ© budoucÃ­ iÂ souÄasnÃ© problÃ©my komunikace bez nutnosti
+  zasahovat do aplikaÄnÃ­ho kÃ³du.
 
-- V rámci mo¾ností danıch pøedchozími body co nejvíce zjednodu¹it práci
-  s daty.[2]
+- VÂ rÃ¡mci moÅ¾nostÃ­ danÃ½ch pÅ™edchozÃ­mi body co nejvÃ­ce zjednoduÅ¡it prÃ¡ci
+  sÂ daty.[2]
 
-S ohledem na uvedené dùvody potøebnosti rozhraní, je toto zalo¾eno na
-následujících principech:
+SÂ ohledem na uvedenÃ© dÅ¯vody potÅ™ebnosti rozhranÃ­, je toto zaloÅ¾eno na
+nÃ¡sledujÃ­cÃ­ch principech:
 
-- Datová abstrakce v¹ech objektù, se kterımi pracujeme.  V¹echny tyto objekty
-  jsou reprezentovány tøídami rozhraní, co¾ jednak zavádí urèitou typovou
-  kontrolu a jednak umo¾òuje v pøípadì potøeby na rùzná místa zavést v¹elijaké
-  ¹olichy bez úèasti aplikaèního programátora.
+- DatovÃ¡ abstrakce vÅ¡ech objektÅ¯, se kterÃ½mi pracujeme.  VÅ¡echny tyto objekty
+  jsou reprezentovÃ¡ny tÅ™Ã­dami rozhranÃ­, coÅ¾ jednak zavÃ¡dÃ­ urÄitou typovou
+  kontrolu a jednak umoÅ¾Åˆuje vÂ pÅ™Ã­padÄ› potÅ™eby na rÅ¯znÃ¡ mÃ­sta zavÃ©st vÅ¡elijakÃ©
+  Å¡olichy bez ÃºÄasti aplikaÄnÃ­ho programÃ¡tora.
 
-- Cílem rozhraní není nahrazovat funkcionalitu databázového serveru.  Rozhraní
-  se nesna¾í øe¹it komplikovaná provázání tabulek, toto se ponechává na
-  schopnostech serveru.[3]  Pøedpokládá se, ¾e se bude do znaèné míry pracovat
-  s *virtuálními tabulkami*, které budou víceménì odpovídat po¾adovanım datùm a
-  pomocí rules definují slo¾itìj¹í vazby na databázovém serveru.[4]
+- CÃ­lem rozhranÃ­ nenÃ­ nahrazovat funkcionalitu databÃ¡zovÃ©ho serveru.  RozhranÃ­
+  se nesnaÅ¾Ã­ Å™eÅ¡it komplikovanÃ¡ provÃ¡zÃ¡nÃ­ tabulek, toto se ponechÃ¡vÃ¡ na
+  schopnostech serveru.[3]  PÅ™edpoklÃ¡dÃ¡ se, Å¾e se bude do znaÄnÃ© mÃ­ry pracovat
+  sÂ *virtuÃ¡lnÃ­mi tabulkami*, kterÃ© budou vÃ­cemÃ©nÄ› odpovÃ­dat poÅ¾adovanÃ½m datÅ¯m a
+  pomocÃ­ rules definujÃ­ sloÅ¾itÄ›jÅ¡Ã­ vazby na databÃ¡zovÃ©m serveru.[4]
 
-- Cílem rozhraní není univerzálnost.  Nejde o to vytvoøit rozhraní nezávislé na
-  backendu, databázovém stroji, atd. ani o snahu vytvoøit rozhraní pou¾itelné
-  ve více aplikacích.  Nemusíme proto do rozhraní zavádìt zbyteèné komplikace
-  pro zaji¹tìní obecnosti a staèí se omezit jen na zcela konkrétní vìci, které
-  doopravdy potøebujeme.
+- CÃ­lem rozhranÃ­ nenÃ­ univerzÃ¡lnost.  Nejde oÂ to vytvoÅ™it rozhranÃ­ nezÃ¡vislÃ© na
+  backendu, databÃ¡zovÃ©m stroji, atd. ani oÂ snahu vytvoÅ™it rozhranÃ­ pouÅ¾itelnÃ©
+  ve vÃ­ce aplikacÃ­ch.  NemusÃ­me proto do rozhranÃ­ zavÃ¡dÄ›t zbyteÄnÃ© komplikace
+  pro zajiÅ¡tÄ›nÃ­ obecnosti a staÄÃ­ se omezit jen na zcela konkrÃ©tnÃ­ vÄ›ci, kterÃ©
+  doopravdy potÅ™ebujeme.
 
-- Pøedchozí bod ov¹em nic nemìní na nutnosti aplikace vrstevnatého a
-  modulárního pøístupu, èistì z dùvodù pøehlednosti a údr¾by.  Proto je
-  rozhraní rozsekáno do malıch èástí, z nich¾ ka¾dá implementuje svoji jedinou
-  konkrétní funkcionalitu a mnoho z tìchto èástí lze v pøípadì potøeby vymìnit.
+- PÅ™edchozÃ­ bod ovÅ¡em nic nemÄ›nÃ­ na nutnosti aplikace vrstevnatÃ©ho a
+  modulÃ¡rnÃ­ho pÅ™Ã­stupu, ÄistÄ› zÂ dÅ¯vodÅ¯ pÅ™ehlednosti a ÃºdrÅ¾by.  Proto je
+  rozhranÃ­ rozsekÃ¡no do malÃ½ch ÄÃ¡stÃ­, zÂ nichÅ¾ kaÅ¾dÃ¡ implementuje svoji jedinou
+  konkrÃ©tnÃ­ funkcionalitu a mnoho z tÄ›chto ÄÃ¡stÃ­ lze vÂ pÅ™Ã­padÄ› potÅ™eby vymÄ›nit.
   
 
-* Pou¾ití
+* PouÅ¾itÃ­
 
-Rozhraní je implementováno v modulu =pytis.data=.  Zde uvádíme základní pøíklady
-pou¾ití modulu, pro podrobnìj¹í popis viz dokumentace modulu a doplòující
-vysvìtlivky ní¾e.
+RozhranÃ­ je implementovÃ¡no vÂ modulu =pytis.data=.  Zde uvÃ¡dÃ­me zÃ¡kladnÃ­ pÅ™Ã­klady
+pouÅ¾itÃ­ modulu, pro podrobnÄ›jÅ¡Ã­ popis viz dokumentace modulu a doplÅˆujÃ­cÃ­
+vysvÄ›tlivky nÃ­Å¾e.
 
-Zaèneme jednoduchım pøíkladem.  Pøedstavme si, ¾e v databázi máme dvì tabulky
-vytvoøené tìmito SQL pøíkazy:
+ZaÄneme jednoduchÃ½m pÅ™Ã­kladem.  PÅ™edstavme si, Å¾e vÂ databÃ¡zi mÃ¡me dvÄ› tabulky
+vytvoÅ™enÃ© tÄ›mito SQL pÅ™Ã­kazy:
 
 <verbatim>
 CREATE TABLE cis (x int PRIMARY KEY, y text) WITH OIDS;
@@ -72,9 +72,9 @@ INSERT INTO cis VALUES (9, 'devet');
 INSERT INTO tab VALUES (1, 'text', 1);
 </verbatim>
 
-Nìkde v aplikaci budeme chtít pracovat s tabulkou =tab=.  To nám umo¾ní
-instance =tab_data= tøídy =pytis.data.Data=, kterou vytvoøíme následujícím
-zpùsobem:
+NÄ›kde vÂ aplikaci budeme chtÃ­t pracovat sÂ tabulkou =tab=.  To nÃ¡m umoÅ¾nÃ­
+instance =tab_data= tÅ™Ã­dy =pytis.data.Data=, kterou vytvoÅ™Ã­me nÃ¡sledujÃ­cÃ­m
+zpÅ¯sobem:
 
 <example>
   import pytis.data as d
@@ -99,10 +99,10 @@ zpùsobem:
   tab_data = tab_factory.create(dbconnection_spec=connection)
 </example>
 
-S =tab_data= pak mù¾eme provádìt základní datové operace:
+SÂ =tab_data= pak mÅ¯Å¾eme provÃ¡dÄ›t zÃ¡kladnÃ­ datovÃ© operace:
 
 <example>
-  print 'øádky tabulky:'
+  print 'Å™Ã¡dky tabulky:'
   tab_data.select()
   while True:
       row = tab_data.fetchone()
@@ -114,128 +114,128 @@ S =tab_data= pak mù¾eme provádìt základní datové operace:
   old_key = tab_data.columns()[0].type().validate('1')[0]
   new_key = tab_data.columns()[0].type().validate('9')[0]
   new_row_data = []
-  for c, v in zip(tab_data.columns(), ('9', u'pìknı øádek', '9')):
+  for c, v in zip(tab_data.columns(), ('9', u'pÄ›knÃ½ Å™Ã¡dek', '9')):
       new_row_data.append ((c.id(), c.type().validate(v)[0]))
   new_row = d.Row(new_row_data)
   
   if tab_data.insert(new_row):
-      print 'novı øádek vlo¾en'
+      print 'novÃ½ Å™Ã¡dek vloÅ¾en'
   if tab_data.delete(new_key):
-      print 'novı øádek vymazán'
+      print 'novÃ½ Å™Ã¡dek vymazÃ¡n'
   if tab_data.update(old_key, new_row):
-      print 'starı øádek zmìnìn na novı'
+      print 'starÃ½ Å™Ã¡dek zmÄ›nÄ›n na novÃ½'
   if tab_data.row(new_key):
-      print 'novı øádek nalezen'
+      print 'novÃ½ Å™Ã¡dek nalezen'
 </example>
 
-Rozebereme si nyní jednotlivé èásti pøíkladu.
+Rozebereme si nynÃ­ jednotlivÃ© ÄÃ¡sti pÅ™Ã­kladu.
 
-**Terminologická poznámka:** Hovoøíme-li o _datové tabulce_, máme tím na mysli
-instanci tøídy =pytis.data.Data=.  Hovoøíme-li o _databázové tabulce_, máme
-tím na mysli tabulku v databázi.
+**TerminologickÃ¡ poznÃ¡mka:** HovoÅ™Ã­me-li oÂ _datovÃ© tabulce_, mÃ¡me tÃ­m na mysli
+instanci tÅ™Ã­dy =pytis.data.Data=.  HovoÅ™Ã­me-li oÂ _databÃ¡zovÃ© tabulce_, mÃ¡me
+tÃ­m na mysli tabulku vÂ databÃ¡zi.
 
 ** Import modulu
 
-Pro kompletní práci s daty slou¾í modul =pytis.data=.  Ten automaticky importuje
-své submoduly.
+Pro kompletnÃ­ prÃ¡ci sÂ daty slouÅ¾Ã­ modul =pytis.data=.  Ten automaticky importuje
+svÃ© submoduly.
 
-** Specifikace spojení do databáze
+** Specifikace spojenÃ­ do databÃ¡ze
 
-Parametry pøipojení do databáze definujeme pomocí instance tøídy
-=pytis.data.DBConnection=.  V konstruktoru staèí specifikovat pouze
-neimplicitní hodnoty parametrù.
+Parametry pÅ™ipojenÃ­ do databÃ¡ze definujeme pomocÃ­ instance tÅ™Ã­dy
+=pytis.data.DBConnection=.  VÂ konstruktoru staÄÃ­ specifikovat pouze
+neimplicitnÃ­ hodnoty parametrÅ¯.
 
-Objekt definující spojení je pouze specifikaèní a je pova¾ován za immutable.
-Proto a proto¾e obì tabulky, se kterımi budeme pracovat, se nacházejí ve stejné
-databázi, jej mù¾eme vyu¾ít v jedné instanci pro obì tabulky.
+Objekt definujÃ­cÃ­ spojenÃ­ je pouze specifikaÄnÃ­ a je povaÅ¾ovÃ¡n za immutable.
+Proto a protoÅ¾e obÄ› tabulky, se kterÃ½mi budeme pracovat, se nachÃ¡zejÃ­ ve stejnÃ©
+databÃ¡zi, jej mÅ¯Å¾eme vyuÅ¾Ã­t vÂ jednÃ© instanci pro obÄ› tabulky.
 
-** Definice sloupcù
+** Definice sloupcÅ¯
 
-Definice sloupcù je nejkomplikovanìj¹í èást celé zále¾itosti.  Ka¾dı sloupec je
-specifikován instancí tøídy =pytis.data.DBColumnBinding=, která definuje
-mapování sloupce _datové_ tabulky do _databázovıch_ tabulek.  V nejjednodu¹¹ím
-pøípadì je sloupec definován tøemi parametry: svım identifikátorem (libovolnı
-neprázdnı øetìzec, pøes kterı se na nìj budeme odkazovat) a tabulkou a sloupcem
-v databázi, kterım odpovídá.  Databázové rozhraní na základì této specifikace
-samo pøiøadí sloupci datovı typ, odpovídající danému sloupci dané tabulky
-v databázi.  Pøedpokládá se, ¾e tímto zpùsobem bude specifikována naprostá
-vìt¹ina sloupcù.
+Definice sloupcÅ¯ je nejkomplikovanÄ›jÅ¡Ã­ ÄÃ¡st celÃ© zÃ¡leÅ¾itosti.  KaÅ¾dÃ½ sloupec je
+specifikovÃ¡n instancÃ­ tÅ™Ã­dy =pytis.data.DBColumnBinding=, kterÃ¡ definuje
+mapovÃ¡nÃ­ sloupce _datovÃ©_ tabulky do _databÃ¡zovÃ½ch_ tabulek.  VÂ nejjednoduÅ¡Å¡Ã­m
+pÅ™Ã­padÄ› je sloupec definovÃ¡n tÅ™emi parametry: svÃ½m identifikÃ¡torem (libovolnÃ½
+neprÃ¡zdnÃ½ Å™etÄ›zec, pÅ™es kterÃ½ se na nÄ›j budeme odkazovat) a tabulkou a sloupcem
+vÂ databÃ¡zi, kterÃ½m odpovÃ­dÃ¡.  DatabÃ¡zovÃ© rozhranÃ­ na zÃ¡kladÄ› tÃ©to specifikace
+samo pÅ™iÅ™adÃ­ sloupci datovÃ½ typ, odpovÃ­dajÃ­cÃ­ danÃ©mu sloupci danÃ© tabulky
+vÂ databÃ¡zi.  PÅ™edpoklÃ¡dÃ¡ se, Å¾e tÃ­mto zpÅ¯sobem bude specifikovÃ¡na naprostÃ¡
+vÄ›tÅ¡ina sloupcÅ¯.
 
-Napøíklad specifikace
+NapÅ™Ã­klad specifikace
 
 <verbatim>
   d.dbdata.DBColumnBinding('klic', 'tab', 'a')
 </verbatim>
 
-definuje sloupec _datové_ tabulky, jen¾ budeme nazıvat =klic= a kterı odpovídá
-sloupci =a= _databázové tabulky_ =tab=.
+definuje sloupec _datovÃ©_ tabulky, jenÅ¾ budeme nazÃ½vat =klic= a kterÃ½ odpovÃ­dÃ¡
+sloupci =a= _databÃ¡zovÃ© tabulky_ =tab=.
 
-Seznam tìchto "sloupcovıch" definic pøesnì definuje sloupce _datové_ tabulky,
-co se tıèe jejich poètu, poøadí a napojení do databáze.
+Seznam tÄ›chto "sloupcovÃ½ch" definic pÅ™esnÄ› definuje sloupce _datovÃ©_ tabulky,
+co se tÃ½Äe jejich poÄtu, poÅ™adÃ­ a napojenÃ­ do databÃ¡ze.
 
-V pøíkladu vidíme je¹tì jedno speciální napojení sloupce, a sice na èíselník.
-Pomocí argumentu konstruktoru =related_to= specifikujeme, ¾e odpovídající
-databázovı sloupec je v relaci s jinım sloupcem databáze.  Relaci mù¾eme zavést
-pro libovolné dva sloupce dvou tabulek, její reálné vyu¾ití se v¹ak pøedpokládá
-pouze u vazeb na èíselníky.  Pomocí argumentu =enumerator= øíkáme, ¾e typ
-daného sloupce není zji¹»ován z databáze, nıbr¾ ¾e jím má bıt instance tøídy
-=pytis.data.DataEnumerator= obsahující zadanou _datovou_ tabulku.
+VÂ pÅ™Ã­kladu vidÃ­me jeÅ¡tÄ› jedno speciÃ¡lnÃ­ napojenÃ­ sloupce, aÂ sice na ÄÃ­selnÃ­k.
+PomocÃ­ argumentu konstruktoru =related_to= specifikujeme, Å¾e odpovÃ­dajÃ­cÃ­
+databÃ¡zovÃ½ sloupec je vÂ relaci sÂ jinÃ½m sloupcem databÃ¡ze.  Relaci mÅ¯Å¾eme zavÃ©st
+pro libovolnÃ© dva sloupce dvou tabulek, jejÃ­ reÃ¡lnÃ© vyuÅ¾itÃ­ se vÅ¡ak pÅ™edpoklÃ¡dÃ¡
+pouze uÂ vazeb na ÄÃ­selnÃ­ky.  PomocÃ­ argumentu =enumerator= Å™Ã­kÃ¡me, Å¾e typ
+danÃ©ho sloupce nenÃ­ zjiÅ¡Å¥ovÃ¡n zÂ databÃ¡ze, nÃ½brÅ¾ Å¾e jÃ­m mÃ¡ bÃ½t instance tÅ™Ã­dy
+=pytis.data.DataEnumerator= obsahujÃ­cÃ­ zadanou _datovou_ tabulku.
 
-Klíèové sloupce umis»ujeme do pomocnıch promìnnıch, proto¾e je vyu¾ijeme jak
-v seznamu sloupcù, tak ve specifikaci klíèù.
+KlÃ­ÄovÃ© sloupce umisÅ¥ujeme do pomocnÃ½ch promÄ›nnÃ½ch, protoÅ¾e je vyuÅ¾ijeme jak
+vÂ seznamu sloupcÅ¯, tak ve specifikaci klÃ­ÄÅ¯.
 
-** Vytvoøení datového objektu
+** VytvoÅ™enÃ­ datovÃ©ho objektu
 
-Pokud ji¾ máme definovány klíèe, vytvoøen seznam specifikací sloupcù a
-definováno pøipojení do databáze, dostaneme kı¾enı datovı objekt jednodu¹e
-vytvoøením instance tøídy =pytis.data.DBDataDefault=.  Pro pøístup do
-databáze pou¾íváme v¾dy právì tuto tøídu, která je potomkem abstraktní tøídy
-=pytis.data.DBData= a nestaráme se blí¾e o její pùvod.
+Pokud jiÅ¾ mÃ¡me definovÃ¡ny klÃ­Äe, vytvoÅ™en seznam specifikacÃ­ sloupcÅ¯ a
+definovÃ¡no pÅ™ipojenÃ­ do databÃ¡ze, dostaneme kÃ½Å¾enÃ½ datovÃ½ objekt jednoduÅ¡e
+vytvoÅ™enÃ­m instance tÅ™Ã­dy =pytis.data.DBDataDefault=.  Pro pÅ™Ã­stup do
+databÃ¡ze pouÅ¾Ã­vÃ¡me vÅ¾dy prÃ¡vÄ› tuto tÅ™Ã­du, kterÃ¡ je potomkem abstraktnÃ­ tÅ™Ã­dy
+=pytis.data.DBData= a nestarÃ¡me se blÃ­Å¾e oÂ jejÃ­ pÅ¯vod.
 
-V pøíkladu nevytváøíme instance tøídy =pytis.data.DBData= pøímo.  Místo
-toho napøed definujeme továrnu se stejnımi iniciálními argumenty, z ní¾ pak
-vytváøíme skuteèné datové objekty metodou =create=.  Tento postup je zde nutnı
-proto, ¾e argument =related_to= po¾aduje jako svoji hodnotu právì instanci
-tøídy =pytis.data.DataFactory=.
+VÂ pÅ™Ã­kladu nevytvÃ¡Å™Ã­me instance tÅ™Ã­dy =pytis.data.DBData= pÅ™Ã­mo.  MÃ­sto
+toho napÅ™ed definujeme tovÃ¡rnu se stejnÃ½mi iniciÃ¡lnÃ­mi argumenty, zÂ nÃ­Å¾ pak
+vytvÃ¡Å™Ã­me skuteÄnÃ© datovÃ© objekty metodou =create=.  Tento postup je zde nutnÃ½
+proto, Å¾e argument =related_to= poÅ¾aduje jako svoji hodnotu prÃ¡vÄ› instanci
+tÅ™Ã­dy =pytis.data.DataFactory=.
 
-** Vytvoøení klíèù a nového øádku
+** VytvoÅ™enÃ­ klÃ­ÄÅ¯ a novÃ©ho Å™Ã¡dku
 
 **TODO**
 
-Pro tyto operace dosud není hotovo nìjaké jednoduché rozhraní, tak¾e je
-zde demonstrován znaènì nemotornı low level postup.
+Pro tyto operace dosud nenÃ­ hotovo nÄ›jakÃ© jednoduchÃ© rozhranÃ­, takÅ¾e je
+zde demonstrovÃ¡n znaÄnÄ› nemotornÃ½ low level postup.
 
 ** Operace nad daty
 
-Tøída =pytis.data.Data= definuje nìkolik základních operací, vesmìs
-odpovídajících základním SQL operacím:
+TÅ™Ã­da =pytis.data.Data= definuje nÄ›kolik zÃ¡kladnÃ­ch operacÃ­, vesmÄ›s
+odpovÃ­dajÃ­cÃ­ch zÃ¡kladnÃ­m SQL operacÃ­m:
 
-- Metody pro vıbìr dat: =row=, =select=, =fetchone=, =close=.
+- Metody pro vÃ½bÄ›r dat: =row=, =select=, =fetchone=, =close=.
 
 - Metody pro modifikaci dat: =insert=, =update=, =delete=.
 
-Odkazujeme-li se na nìjakı øádek dat (v metodách =row=, =update= a =delete=),
-pou¾íváme klíè tabulky reprezentovanı instancí tøídy =pytis.data.Value=.
-S øádky dat se pracuje v¾dy prostøednictvím instancí tøídy
+Odkazujeme-li se na nÄ›jakÃ½ Å™Ã¡dek dat (vÂ metodÃ¡ch =row=, =update= a =delete=),
+pouÅ¾Ã­vÃ¡me klÃ­Ä tabulky reprezentovanÃ½ instancÃ­ tÅ™Ã­dy =pytis.data.Value=.
+SÂ Å™Ã¡dky dat se pracuje vÅ¾dy prostÅ™ednictvÃ­m instancÃ­ tÅ™Ã­dy
 =pytis.data.Row=.
 
-Øetìzcové hodnoty musí bıt typu Unicode.
+Å˜etÄ›zcovÃ© hodnoty musÃ­ bÃ½t typu Unicode.
 
 
 Footnotes: 
 
-[1] Podobné dùvody existují pro zavedení rozhraní k u¾ivatelskému rozhraní.
+[1] PodobnÃ© dÅ¯vody existujÃ­ pro zavedenÃ­ rozhranÃ­ kÂ uÅ¾ivatelskÃ©mu rozhranÃ­.
 
-[2] Lze namítat, ¾e zejména zavedení tøíd =Value= a =Row= spí¹e práci
-komplikuje.  Tøída =Row= se ov¹em sna¾í emulovat lists a dictionaries, èím¾ se
-tyto komplikace do znaèné míry eliminují, pøièem¾ datová abstrakce zùstává.
-U =Value= k urèitému zeslo¾itìní skuteènì dochází, ale to není natolik záva¾né,
-aby to byl dostateènı argument proti vıhodám zavedení této tøídy.
+[2] Lze namÃ­tat, Å¾e zejmÃ©na zavedenÃ­ tÅ™Ã­d =Value= a =Row= spÃ­Å¡e prÃ¡ci
+komplikuje.  TÅ™Ã­da =Row= se ovÅ¡em snaÅ¾Ã­ emulovat lists a dictionaries, ÄÃ­mÅ¾ se
+tyto komplikace do znaÄnÃ© mÃ­ry eliminujÃ­, pÅ™iÄemÅ¾ datovÃ¡ abstrakce zÅ¯stÃ¡vÃ¡.
+UÂ =Value= kÂ urÄitÃ©mu zesloÅ¾itÄ›nÃ­ skuteÄnÄ› dochÃ¡zÃ­, ale to nenÃ­ natolik zÃ¡vaÅ¾nÃ©,
+aby to byl dostateÄnÃ½ argument proti vÃ½hodÃ¡m zavedenÃ­ tÃ©to tÅ™Ã­dy.
 
-[3] Pokud ov¹em server potøebnımi schopnostmi disponuje.  PostgreSQL teoreticky
-ano, po praktické stránce to ov¹em mù¾e bıt hor¹í, ne v¹e (správnì) funguje.
-Je zapotøebí obezøetnosti a nebude-li mo¾no jinak, bude nutno obohatit
-funkcionalitu databázového rozhraní, co¾ by bylo nepøíjemné zejména z hlediska
-definice specifikací.
+[3] Pokud ovÅ¡em server potÅ™ebnÃ½mi schopnostmi disponuje.  PostgreSQL teoreticky
+ano, po praktickÃ© strÃ¡nce to ovÅ¡em mÅ¯Å¾e bÃ½t horÅ¡Ã­, ne vÅ¡e (sprÃ¡vnÄ›) funguje.
+Je zapotÅ™ebÃ­ obezÅ™etnosti a nebude-li moÅ¾no jinak, bude nutno obohatit
+funkcionalitu databÃ¡zovÃ©ho rozhranÃ­, coÅ¾ by bylo nepÅ™Ã­jemnÃ© zejmÃ©na zÂ hlediska
+definice specifikacÃ­.
 
-[4] Tentı¾ mechanismus by mìl umo¾nit øe¹ení problému pøístupovıch práv.
+[4] TentÃ½Å¾ mechanismus by mÄ›l umoÅ¾nit Å™eÅ¡enÃ­ problÃ©mu pÅ™Ã­stupovÃ½ch prÃ¡v.
