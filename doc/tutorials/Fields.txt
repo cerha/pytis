@@ -276,3 +276,23 @@ argumentu 'new').
 >>> record.values()
 (1, 5)
 
+Ve speciálním případě se může hodit i výpočet, který sice závisí na hodnotě
+některého políčka z řádku, ale tato závislost není deklarována.  Potom při
+změně zdrojové hodnoty nedojde k přepočítání, ale to může být žádoucí.
+Např. může počítané políčko za určitých podmínek použít svou vlastní předchozí
+hodnotu.  Jak již bylo řečeno, samo na sobě políčko záviset nemůže, ale ke své
+hodnotě přesto přistupovat může.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 2 * x if x < 100 else r['y'].value())))
+>>> record['x'] = pd.ival(5)
+>>> record['y'].value()
+10
+>>> record['x'] = pd.ival(20)
+>>> record['y'].value()
+40
+>>> record['x'] = pd.ival(200)
+>>> record['y'].value()
+40
+
