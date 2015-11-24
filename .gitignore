@@ -7,3 +7,4 @@
 /translations/*.d
 /resources/translations/
 *_flymake.py
+/doc/html/
