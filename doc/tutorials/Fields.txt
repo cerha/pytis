@@ -263,3 +263,16 @@ Traceback (most recent call last):
     ...
 TypeError: ('Value not an integer', '1')
 
+Computer lze použít i v případě, že hodnota políčka nezávisí na hodnotách
+jiných políček.  Potom funguje obdobně jako výchozí hodnota (default) s tím
+rozdílem, že ve funkci je přístup k aktuálnímu řádku a přes něj i k dalším
+objektům, jako např. aktuální formulář a že k výpočtu dochází (jak bylo
+popsáno) za jiných podmínek -- např. i u řádku, který není nový (ve smyslu
+argumentu 'new').
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer(), computer=computer(lambda r: 5)),
+...                 row={'x': 1})
+>>> record.values()
+(1, 5)
+
