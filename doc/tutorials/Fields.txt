@@ -1,0 +1,247 @@
+= Specifikace políček a výpočty hodnot =
+
+Souhrnná dokumentace ke specifikacím políček, inicializacím jejich hodnot v
+záznamu a vzájemným vztahům různých parametrů v různých situacích při
+dopočítávání hodnot a vlastností políček během práce se záznamem.
+
+== Úvod ==
+
+Hodnoty políček v pytisových formulářích jsou ovlivněny několika faktory
+současně.  Výchozí hodnota políčka je určena jednak typem políčka a jednak
+parametrem 'default' ve specifikaci políčka.  Při otevření formuláře je možné
+předat hodnoty k předvyplnění pomocí argumentu 'prefill'.  Dále se uplatňuje
+dopočítávání hodnot určené parametrem 'computer' ve specifikaci políčka.
+Chování je jiné u nového a u stávajícího záznamu.  Všechny tyto možnosti navíc
+musí ošetřit nestandardní situace, např. předání neplatné hodnoty nebo
+nastavení needitovatelného políčka.  Souhrn všech těchto faktorů potom může pro
+vývojáře aplikace vytvářet nečekané situace nebo působit nepřehledným dojmem.
+Úkolem tohoto dokumentu je zdokumentovat vzájemné působení všech faktorů
+vstupujících do hry.
+
+
+== Definice pomocného kódu pro následné příklady ==
+
+Následující importované identifikátory a pomocná třída jsou využívány v
+příkladech uváděných dále v textu tohoto dokumentu.
+
+>>> import pytis.data as pd
+>>> import datetime as dt
+>>> from pytis.presentation import PresentedRow, Field, Enumeration, computer, Editable
+>>> class Record(PresentedRow):
+...     def __init__(self, *fields, **kwargs):
+...         columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields if not f.virtual()]
+...         data = pd.Data(columns, columns[0])
+...         row = kwargs.pop('row', None)
+...         if isinstance(row, dict):
+...             row = pd.Row([(k, pd.Value(data.find_column(k).type(), v))
+...                           for k, v in row.items()])
+...         super(Record, self).__init__(fields, data, row, **kwargs)
+...     def values(self):
+...         return tuple(record[key].value() for key in record.keys())
+
+-----
+Bla bla
+-----
+
+== Výchozí hodnota (default) ==
+
+Výchozí hodnota políčka je určena parametrem 'default' ve specifikaci políčka.
+Výchozí hodnota se uplatní vždy při inicializaci nového prázdného řádku.  Pokud
+nejde o nový řádek, výchozí hodnota se tedy vůbec neuplatní.  Je možno předat
+buďto přímo hodnotu samotnou ve formě platné vnitřní Pythonové hodnoty
+odpovídající datovému typu políčka, nebo funkci.  Pokud je předána funkce
+(callable object), bude tato funkce zavolána bez argumentů vždy při
+inicializaci nového prázdného řádku a její návratová hodnota je použita.
+
+>>> record = Record(Field('x', type=pd.Integer(), default=5),
+...                 Field('y', type=pd.Integer(), default=lambda: 2),
+...                 new=True)
+>>> record.values()
+(5, 2)
+
+>>> record = Record(Field('x', type=pd.Integer(), default=5),
+...                 Field('y', type=pd.Integer(), default=lambda: 2))
+>>> record.values()
+(None, None)
+
+Při použití specifikace výčtu hodnot políčka paremetrem 'enumerator' pomocí
+třídy 'pytis.presentation.Enumeration' je výchozí hodnota políčka určena
+atributem 'default' této třídy, pokud nemá dané políčko explicitně nastavenu
+hodnotu parametru 'default' ve své specifikaci.
+
+>>> class Enum(Enumeration):
+...     enumeration = ((1, 'First'), (2, 'Second'))
+...     default = 1
+>>> record = Record(Field('x', type=pd.Integer(), enumerator=Enum),
+...                 Field('y', type=pd.Integer(), enumerator=Enum, default=2),
+...                 new=True)
+>>> record.values()
+(1, 2)
+
+Pokud výchozí hodnota není určena explicitně parametrem 'default' (nebo
+převzata z 'Enumeration'), je určena datovým typem daného políčka.  U většiny
+typů je to None.  Např. u typu Boolean je to ale False.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Boolean()),
+...                 new=True)
+>>> record.values()
+(None, False)
+
+Pokud výchozí hodnota není kompatibilní s datovým typem políčka, dojde při
+inicializaci řádku k výjimce 'TypeError'.
+
+>>> record = Record(Field('x', type=pd.Integer(), default='1'), new=True)
+Traceback (most recent call last):
+    ...
+TypeError: ('Value not an integer', '1')
+
+
+== Předvyplnění hodnoty (prefill) ==
+
+V mnoha situacích lze hodnoty pro nově vytvářený i editovaný řádek předat
+pomocí argumentu 'prefill'.  Je to slovník, kde klíče jsou identifikátory
+políček a hodnoty jsou odpovídající hodnoty -- je povoleno předávat hodnoty
+jako instance 'pytis.data.Value' nebo přímo jako vnitřní Pythonové hodnoty
+odpovídajícího datového typu.  Kde není důvod učinit jinak, doporučuje se
+použít přímo vnitřní Pythonovou hodnotu.
+
+Prefill má vyšší prioritu, než default, takže pokud je hodnota políčka
+přítomna v prefill, jeho výchozí hodnota se neuplatní.
+
+>>> record = Record(Field('x', type=pd.Integer(), default=5),
+...                 Field('y', type=pd.Integer(), default=1),
+...                 Field('z', type=pd.Integer(), default=20),
+...                 prefill={'x': 4, 'z': None}, new=True)
+>>> record.values()
+(4, 1, None)
+
+Invalid field identifiers in prefill will raise KeyError.
+
+>>> record = Record(Field('x', type=pd.Integer()), prefill={'y': 1})
+Traceback (most recent call last):
+    ...
+KeyError: 'y'
+
+Invalid values in prefill will raise TypeError.
+
+>>> record = Record(Field('x', type=pd.Integer()), prefill={'x': '1'})
+Traceback (most recent call last):
+    ...
+TypeError: ('Value not an integer', '1')
+
+
+== Hodnoty z datového řádku (row) ==
+
+Pokud je záznam inicializován ze stávajících hodnot převzatých z databáze,
+neuplatní se pro příslušná políčka default, prefill ani computer (viz dále).
+
+Pro jednoduchost zápisu umožňuje zde definovaná třída 'Record' předávat
+argument 'row' též jako slovník vnitřních hodnot.  Za normálních okolností to
+však musí být vždy instance 'pytis.data.Row'.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer()),
+...                 Field('z', type=pd.Integer()),
+...                 row={'x': 1, 'y': 2, 'z': 3}, 
+...                 prefill={'x': 4, 'z': None})
+>>> record.values()
+(4, 2, None)
+
+Zde vidíme, že prefill má vyšší prioritu než hodnoty pocházející z datového
+řádku.
+
+
+== Dopočítávaná políčka (computer) ==
+
+Hodnota dopočítávaných políček je „vypočtena” na základě hodnot ostatních
+políček stejného záznamu.  K výpočtu hodnoty definujeme ve specifikaci políčka
+dopočítávací funkci pomocí parametru 'computer'.  Hodnotou tohoto parametru je
+instance třídy 'pytis.presentation.Computer', která definuje jednak
+dopočítávací funkci a jednak seznam políček, na kterých výsledná hodnota
+dopočítávací funkce závisí.
+
+Podstatné zpřehlednění a zjednodušení zápisu dopočítávací funkce umožňuje
+pomocná funkce 'pytis.presentation.computer', která zajistí převod hodnot řádku
+na argumenty dopočítávací funkce a automaticky sestaví seznam závislostí.
+Doporučuje se používat ji všude, kde je to možné.
+
+Dopočítávání probíhá asynchronně - dopočítávací funkce je volána až v okamžiku,
+kdy je hodnota políčka potřeba - je zobrazena v uživatelském rozhraní, nebo je
+potřeba k výpočtu nějaké další hodnoty (počítaná políčka mohou záviset na
+jiných počítaných políčkách).  Políčko nesmí záviset samo na sobě, ani přímo,
+ani přes závislost na jiném políčku.  V takové situaci by došlo k zacyklení v
+rekurzi při výpočtu hodnoty.
+
+Příklad:
+
+>>> record = Record(
+...     Field('x', type=pd.Integer()),
+...     Field('y', type=pd.Integer(),
+...           computer=computer(lambda r, x: 2 * x)),
+...     Field('firstname', type=pd.String()),
+...     Field('surname', type=pd.String()),
+...     Field('fullname', type=pd.String(),
+...           computer=computer(lambda r, firstname, surname: firstname + ' ' + surname)),
+...     prefill={'x': 4,
+...              'firstname': 'Bob',
+...              'surname': 'Black'},
+...     new=True)
+>>> record.values()
+(4, 8, 'Bob', 'Black', 'Bob Black')
+
+Computer se nevolá, pokud je hodnota daného políčka přítomna v datovém řádku.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 2 * x)),
+...                 Field('z', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 3 * x)),
+...                 row={'x': 4, 'y': 5})
+>>> record.values()
+(4, 5, 12)
+
+Pozor! Pokud je definován computer a zároveň výchozí hodnota (default), má v
+případě nového záznamu přednost výchozí hodnota a computer se v takovém případě
+nevyvolá.  Stejně tak prefill (který má ještě vyšší prioritu než default) bude
+mít před dopočítáváním přednost.
+
+>>> record = Record(Field('x', type=pd.Integer(), default=4),
+...                 Field('y', type=pd.Integer(), default=1,
+...                       computer=computer(lambda r, x: 2 * x)),
+...                 Field('z', type=pd.Integer(), default=1,
+...                       computer=computer(lambda r, x: 3 * x)),
+...                 prefill={'z': 5},
+...                 new=True)
+>>> record.values()
+(4, 1, 5)
+
+Poněkud překvapivě se computer nevolá ani v případě, že vytvářený řádek není
+'new' a není předán datový řádek argumentem 'row'.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 2 * x)),
+...                 Field('z', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 3 * x)),
+...                 prefill={'x': 1})
+>>> record.values()
+(1, None, None)
+
+Patrně nejde o záměr, ale o mezní situaci, která se v praktických případech
+nevyskytuje, neboť při práci se stávajícím záznamem je vždy předán argument
+'row' a při vytváření nového záznamu je nastaveno 'new'.
+
+Pokud je 'row' předán, computer se rázem uplatní, třebaže se jeho výpočtu
+hodnoty v 'row' ani nemusí týkat.
+
+>>> record = Record(Field('x', type=pd.Integer()),
+...                 Field('y', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 2 * x)),
+...                 Field('z', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 3 * x)),
+...                 prefill={'x': 1},
+...                 row={'y': 10})
+>>> record.values()
+(1, 10, 3)
+
