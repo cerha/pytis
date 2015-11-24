@@ -232,12 +232,18 @@ Poněkud překvapivě se computer nevolá ani v případě, že vytvářený ř�
 >>> record.values()
 (1, None, None)
 
+Následná změna však již výpočty vyvolá.
+
+>>> record['x'] = pd.ival(5)
+>>> record.values()
+(5, 10, 15)
+
 Patrně nejde o záměr, ale o mezní situaci, která se v praktických případech
 nevyskytuje, neboť při práci se stávajícím záznamem je vždy předán argument
 'row' a při vytváření nového záznamu je nastaveno 'new'.
 
-Pokud je 'row' předán, computer se rázem uplatní, třebaže se jeho výpočtu
-hodnoty v 'row' ani nemusí týkat.
+Pokud je 'row' předán, computer se rázem uplatní, třebaže se hodnoty v 'row'
+výpočtu ani nemusí týkat.
 
 >>> record = Record(Field('x', type=pd.Integer()),
 ...                 Field('y', type=pd.Integer(),
