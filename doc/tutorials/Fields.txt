@@ -159,16 +159,23 @@ dopočítávací funkci a jednak seznam políček, na kterých výsledná hodnot
 dopočítávací funkce závisí.
 
 Podstatné zpřehlednění a zjednodušení zápisu dopočítávací funkce umožňuje
-pomocná funkce 'pytis.presentation.computer', která zajistí převod hodnot řádku
-na argumenty dopočítávací funkce a automaticky sestaví seznam závislostí.
+pomocná funkce 'pytis.presentation.computer()', která zajistí převod hodnot
+řádku na argumenty dopočítávací funkce a automaticky sestaví seznam závislostí.
 Doporučuje se používat ji všude, kde je to možné.
 
-Dopočítávání probíhá asynchronně - dopočítávací funkce je volána až v okamžiku,
-kdy je hodnota políčka potřeba - je zobrazena v uživatelském rozhraní, nebo je
-potřeba k výpočtu nějaké další hodnoty (počítaná políčka mohou záviset na
-jiných počítaných políčkách).  Políčko nesmí záviset samo na sobě, ani přímo,
-ani přes závislost na jiném políčku.  V takové situaci by došlo k zacyklení v
-rekurzi při výpočtu hodnoty.
+Dopočítávání probíhá asynchronně -- dopočítávací funkce je volána až v
+okamžiku, kdy je hodnota políčka potřeba -- je zobrazena v uživatelském
+rozhraní, nebo je potřeba k výpočtu nějaké další hodnoty (počítaná políčka
+mohou záviset na jiných počítaných políčkách).  Políčko nesmí záviset samo na
+sobě, ani přímo, ani přes závislost na jiném políčku.  V takové situaci by
+došlo k zacyklení v rekurzi při výpočtu hodnoty.  Během života záznamu
+(např. během editace při zobrazení formuláře) je hodnota každého počítaného
+políčka automaticky přepočítána pokaždé, když se změní některá z hodnot
+ostatních políček, na kterých počítané políčko závisí.  Přesněji řečeno je při
+těchto změnách hodnota políčka označena jako „zastaralá” a k přepočítání dojde
+pouze pokud je nová hodnota potřeba.  V uživatelském rozhraní je to zajištěno
+pomocí zpětných volání (callbacků) -- viz
+'pytis.presentation.PresentedRow.CALL_CHANGE'.
 
 Příklad:
 
