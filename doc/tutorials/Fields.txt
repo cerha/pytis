@@ -255,3 +255,11 @@ výpočtu ani nemusí týkat.
 >>> record.values()
 (1, 10, 3)
 
+Dopočítávací funkce musí vrátit platnou vnitřní Pythonovou hodnotu odpovídající
+datovému typu políčka, jinak dojde k výjimce TypeError.
+
+>>> record = Record(Field('x', type=pd.Integer(), computer=computer(lambda r: '1')), new=True)
+Traceback (most recent call last):
+    ...
+TypeError: ('Value not an integer', '1')
+
