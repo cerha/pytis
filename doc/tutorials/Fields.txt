@@ -39,9 +39,6 @@ příkladech uváděných dále v textu tohoto dokumentu.
 ...     def values(self):
 ...         return tuple(record[key].value() for key in record.keys())
 
------
-Bla bla
------
 
 == Výchozí hodnota (default) ==
 
