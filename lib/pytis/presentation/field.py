@@ -38,38 +38,44 @@ _ = translations('pytis-data')
 class PresentedRow(object):
     """A record of presented data.
 
-    The class is an intermediate layer between a data row and its final presentation.  As oposed to
-    the data row, it contains all fields present in field specifications (including virtual
-    fields).  On the other hand, it doesn't solve a concrete presentation beyond string formatting.
+    The class is an intermediate layer between a data row and its final
+    presentation.  As oposed to the data row, it contains all fields present in
+    field specifications (including virtual fields).  On the other hand, it
+    doesn't solve a concrete presentation beyond string formatting.
 
     """
-
     CALL_CHANGE = 'CALL_CHANGE'
     """Callback called on indirect field change.
 
-    Invoked when the field value changes due to its computer dependency on other field(s)."""
-            
+    Invoked when the field value changes due to its computer dependency on
+    other field(s).
+
+    """
     CALL_EDITABILITY_CHANGE = 'CALL_EDITABILITY_CHANGE'
     """Callback called on field editability change.
 
-    Invoked when the field editability changes due to its dependency on another field's
-    value(s)."""
-    
+    Invoked when the field editability changes due to its dependency on another
+    field's value(s).
+
+    """
     CALL_VISIBILITY_CHANGE = 'CALL_VISIBILITY_CHANGE'
     """Callback called on field visibility change.
 
-    Invoked when the field visibility changes due to its dependency on another field's
-    value(s)."""
-    
+    Invoked when the field visibility changes due to its dependency on another
+    field's value(s).
+
+    """
     CALL_ENUMERATION_CHANGE = 'CALL_ENUMERATION_CHANGE'
     """Callback called on field enumeration change.
 
-    Invoked when the enumaration filter changes due to its dependency on another field's value(s).
-    The enumaration is the list of valid field values provided by data type enumarator."""
+    Invoked when the enumaration filter changes due to its dependency on
+    another field's value(s).  The enumaration is the list of valid field
+    values provided by data type enumarator.
 
+    """
     class ProtectionError(Exception):
         """Exception raised on column protection violations."""
-    
+
     class _Column:
         def __init__(self, f, type, data, resolver):
             self.id = f.id()
@@ -110,38 +116,45 @@ class PresentedRow(object):
             self.is_range = isinstance(type, pytis.data.Range)
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
-    
+
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
         """Initialize the instance.
-        
+
         Arguments:
 
           fields -- a sequence of field specifications as 'Field' instances.
           data -- the underlying data object as a 'pytis.data.Data' instance.
           transaction -- current transaction for data operations.
           row -- initial row data (see below).
-          prefill -- a dictionary of values for row initialization.  The dictionary is keyed by
-            field identifiers and the values can be either 'pytis.data.Value' instances or the
-            corresponding Python internal values (matching the field type).  These values take
-            precedence before default values, the values contained within the passed 'row' as well
-            as the computed values (the computers for prefilled values are not invoked).
-          singleline -- a boolean flag indicating that the exported values of all fields will be
-            formatted to single line (influences the 'format()' method behavior).
-          new -- boolean flag determining whether the row represents a new record for insertion or
-            an existing row for select or update.
-          resolver -- a 'Resolver' instance for specification retrieval.  If not used, the global
-            resolver returned by 'pytis.util.resolver()' will be used.
+          prefill -- a dictionary of values for row initialization.  The
+            dictionary is keyed by field identifiers and the values can be
+            either 'pytis.data.Value' instances or the corresponding Python
+            internal values (matching the field type).  These values take
+            precedence before default values, the values contained within the
+            passed 'row' as well as the computed values (the computers for
+            prefilled values are not invoked).
+          singleline -- a boolean flag indicating that the exported values of
+            all fields will be formatted to single line (influences the
+            'format()' method behavior).
+          new -- boolean flag determining whether the row represents a new
+            record for insertion or an existing row for select or update.
+          resolver -- a 'Resolver' instance for specification retrieval.  If
+            not used, the global resolver returned by 'pytis.util.resolver()'
+            will be used.
 
-        Initial field values are determined depending on the argument 'row', which can have one of
-        the following values:
+        Initial field values are determined depending on the argument 'row',
+        which can have one of the following values:
 
-          None -- default values will be generated according to field specifications.
-          'PresentedRow' instance -- field values are taken from this instance.
-          'pytis.data.Row' instance -- field values are taken from this data row.
+          * None -- default values will be generated according to field
+            specifications.
+          * 'PresentedRow' instance -- field values are taken from this instance.
+          * 'pytis.data.Row' instance -- field values are taken from this data
+            row.
 
-        In any case only the state of the 'row' in the time of this constructor call matters.  Any
-        later changes to it have no effect on the newly created instance.
+        In any case only the state of the 'row' in the time of this constructor
+        call matters.  Any later changes to it have no effect on the newly
+        created instance.
 
         """
         assert isinstance(fields, (tuple, list))
@@ -277,7 +290,7 @@ class PresentedRow(object):
             if computer:
                 all.extend(self._all_deps(computer))
         return all
-        
+
     def _init_dependencies(self):
         # Pro každé políčko si zapamatuji seznam počítaných políček, která na
         # něm závisí (obrácené mapování než ve specifikacích).
@@ -337,10 +350,10 @@ class PresentedRow(object):
 
     def __getitem__(self, key, lazy=False):
         """Vrať hodnotu políčka 'key' jako instanci třídy 'pytis.data.Value'.
-        
+
         'key' je id políčka (řetězec) identifikující existující políčko, jinak
         je chování metody nedefinováno.
-        
+
         """
         column = self._coldict[key]
         if self._protected and self._secret_column(column):
@@ -386,7 +399,7 @@ class PresentedRow(object):
             self._resolve_dependencies(key)
             if run_callback:
                 self._run_callback(self.CALL_CHANGE, key)
-                
+
     def __unicode__(self):
         if hasattr(self, '_row'):
             def strval(column):
@@ -408,7 +421,7 @@ class PresentedRow(object):
             callback = callbacks.get(key)
             if callback:
                 callback()
-            
+
     def _resolve_dependencies(self, key=None):
         changed_enumerations = []
         if key is None:
@@ -442,7 +455,7 @@ class PresentedRow(object):
             for k, dirty in self._dirty.items():
                 if dirty:
                     self._run_callback(self.CALL_CHANGE, k)
-    
+
     def _recompute_editability(self, key=None):
         if key is None:
             keys = self._editable.keys()
@@ -466,7 +479,7 @@ class PresentedRow(object):
         self._editable[key] = result = bool(func(self))
         self._editability_dirty[key] = False
         return result
-    
+
     def _recompute_visibility(self, key=None):
         if key is None:
             keys = self._visible.keys()
@@ -490,12 +503,12 @@ class PresentedRow(object):
         self._visible[key] = result = func(self)
         self._visibility_dirty[key] = False
         return result
-    
+
     def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
 
           Arguments:
-          
+
             default -- the default value returned when the key does not exist.
             lazy -- if true, the value will not be computed even if it should
               be.  This may result in returning an invalid value, but prevents
@@ -504,7 +517,7 @@ class PresentedRow(object):
             secure -- if 'False', the value is formatted in a common way; if
               'True', the value is replaced by type secret value replacement if
               its column is secret.
-          
+
         """
         if secure and not self.permitted(key, pytis.data.Permission.VIEW):
             return default
@@ -514,19 +527,22 @@ class PresentedRow(object):
             return default
 
     def cb_value(self, key, column):
-        """Return the value of another column in the data object of given field's enumerator.
+        """Return the value of another column in given field's enumerator data object.
 
         Arguments:
 
-          key -- field identifier (string).  This field must have an enumerator of type
-            'DataEnumerator'.
-          column -- identifier of another column in the enumerator's data object.
+          key -- field identifier (string).  This field must have an enumerator
+            of type 'DataEnumerator'.
+          column -- identifier of another column in the enumerator's data
+            object.
 
-        This method is in fact just a convenience wrapper for 'pytis.data.DataEnumerator.row()'.
+        This method is in fact just a convenience wrapper for
+        'pytis.data.DataEnumerator.row()'.
 
-        Returns a 'pytis.data.Value' instance or None when the enumerator doesn't contain the
-        current value of the field 'key' (the field value is not valid).
-            
+        Returns a 'pytis.data.Value' instance or None when the enumerator
+        doesn't contain the current value of the field 'key' (the field value
+        is not valid).
+
         """
         value = self[key]
         row = value.type().enumerator().row(value.value(), transaction=self._transaction,
@@ -536,7 +552,7 @@ class PresentedRow(object):
             return row[column]
         else:
             return None
-        
+
     def row(self):
         """Return the current *data* row as a 'pytis.data.Row' instance."""
         row_data = [(c.id, self[c.id].retype(c.data_column.type()),)
@@ -554,7 +570,7 @@ class PresentedRow(object):
     def set_transaction(self, transaction):
         """Set the current transaction for data operations."""
         self._transaction = transaction
-    
+
     def resolver(self):
         """Return the 'resolver' passed to the constructor."""
         return self._resolver
@@ -571,16 +587,17 @@ class PresentedRow(object):
           form -- 'Form' instance of the row's form
           secure -- if 'False', the value is formatted in a common way; if
             'True', the value is replaced by type secret value replacement if
-            its column is secret; if a basestring, secret values are replaced by
-            the string (this is useful for editable secret fields, to display an
-            empty string there)
-          single -- always export as a single string (bool).  If true, the method
-            returns a single string also for Range types.  Otherwise range
-            values are returned as a tuple of two separately formatted values.
+            its column is secret; if a basestring, secret values are replaced
+            by the string (this is useful for editable secret fields, to
+            display an empty string there)
+          single -- always export as a single string (bool).  If true, the
+            method returns a single string also for Range types.  Otherwise
+            range values are returned as a tuple of two separately formatted
+            values.
           export -- custom export function to use instead of 'Value.export()'
             (callable of one argument, the internal field value)
-          kwargs -- keyword arguments passed to the 'export()' method of the field's
-            'Value' instance.
+          kwargs -- keyword arguments passed to the 'export()' method of the
+            field's 'Value' instance.
 
         """
         cache_key = (key, single, secure, pretty, export)
@@ -631,58 +648,62 @@ class PresentedRow(object):
         """Set the current row data according to 'row'.
 
         Arguments:
-           row -- has the same meaning as the constructor argument of the same name.
-           reset -- a boolean flag indicating, that the new row data will now be considered as
-             original.  This influences the behavior of the methods 'changed()' and
-             'original_row()'.
-           prefill -- has the same meaning as the constructor argument of the same name.
 
-        This method is meant to support the concept of current row in a form with fixed
-        fields/columns and data object.  It saves the specification processing in the constructor.
-        
+           row -- has the same meaning as the constructor argument of the same
+             name.
+           reset -- a boolean flag indicating, that the new row data will now
+             be considered as original.  This influences the behavior of the
+             methods 'changed()' and 'original_row()'.
+           prefill -- has the same meaning as the constructor argument of the
+             same name.
+
+        This method is meant to support the concept of current row in a form
+        with fixed fields/columns and data object.  It saves the specification
+        processing in the constructor.
+
         """
         self._set_row(row, reset=reset, prefill=prefill)
 
     def fields(self):
         """Return the list of all field specifications as 'Field' instances."""
         return self._fields
-        
+
     def __contains__(self, key):
         """Return true if a field of given key is contained within the row."""
         return key in self._coldict
-        
+
     def has_key(self, key):
         return self.__contains__(key)
-    
+
     def keys(self):
         """Return the list of identifiers of all fields contained within the row."""
         return [c.id for c in self._columns]
-        
+
     def key(self):
         """Return the data key for this row as a tuple of key column 'Value' instances."""
         return tuple([self[c.id()] for c in self._data.key()])
-        
+
     def new(self):
         """Return true if the row represents a new (inserted) record."""
         return self._new
-    
+
     def original_row(self, initialized=True):
         """Return a *data* row containing the values before changes.
 
         Arguemnts:
-        
+
           initialized -- if True (default), return the row with initialized
             values according to prefill, default and computer initializations.
             If False, return the 'row' prior to all internal initializations.
             A higher level explanation of the same is that with
             initialized=False you get the original data row, while with
             initialized=True you get the row values before any user changes.
-            
+
         In both cases (initialized=True/False) the returned row corresponds to
         the 'row' passed to the constructor or the last call to 'set_row()'
         with 'reset' set to true.  If 'initialized' is False, the returned
-        value may be None if the 'row' argument was None.  Otherwise it is
-        a 'pytis.data.Row' instance.
+        value may be None if the 'row' argument was None.  Otherwise it is a
+        'pytis.data.Row' instance.
 
         """
         if initialized:
@@ -695,7 +716,7 @@ class PresentedRow(object):
 
         The original values are values set in row initialization or after the
         last call to 'set_row()' with 'reset' set to true.
-        
+
         """
         original_row = self.original_row()
         original_record = copy.copy(self)
@@ -705,9 +726,10 @@ class PresentedRow(object):
     def changed(self):
         """Return true if the *data* row has been changed.
 
-        The row is considered changed if the underlying data row is not equal to the original row
-        passed to (or created in) the constructor in the sense of the `=' operator.  Changes in the
-        virtual fields (not present in the underlying data row) are ignored.
+        The row is considered changed if the underlying data row is not equal
+        to the original row passed to (or created in) the constructor in the
+        sense of the `=' operator.  Changes in the virtual fields (not present
+        in the underlying data row) are ignored.
 
         """
         for key in self._row.keys():
@@ -718,9 +740,9 @@ class PresentedRow(object):
     def field_changed(self, key):
         """Return true if given field was changed compared to its original value.
 
-        Warning: True is always returned for virtual fields (with no underlying data column).  For
-        all computed fields the result may not be accurate because the recomputation may not have
-        happened yet.
+        Warning: True is always returned for virtual fields (with no underlying
+        data column).  For all computed fields the result may not be accurate
+        because the recomputation may not have happened yet.
 
         """
         return (key not in self._row or
@@ -746,7 +768,7 @@ class PresentedRow(object):
             editable = self._coldict[key].editable
             result = (editable == Editable.ALWAYS or editable == Editable.ONCE and self._new)
         return result
-    
+
     def visible(self, key):
         """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
 
@@ -761,7 +783,7 @@ class PresentedRow(object):
         else:
             result = self._coldict[key].visible
         return result
-    
+
     def type(self, key):
         """Return the data type of field identified by 'key'."""
         return self._coldict[key].type
@@ -771,7 +793,7 @@ class PresentedRow(object):
         column = self._coldict[key]
         enumerator = column.type.enumerator()
         return isinstance(enumerator, pytis.data.DataEnumerator) and not enumerator.permitted()
-        
+
     def validate(self, key, string, **kwargs):
         """Validate user input and propagate the value to the row if the string is valid.
 
@@ -780,12 +802,14 @@ class PresentedRow(object):
           key -- identifier of the validated field
           string -- string value representing user input
 
-        If the string is not valid, it is saved (can be retrieved later by the 'invalid_string()'
-        method) and this state is also reflected by the 'changed()' and 'field_changed()' methods.
-        This state is updated after each validation attempt.
-        
-        Returns: 'ValidationError' instance if an error occurs or None if the string is valid.
-        
+        If the string is not valid, it is saved (can be retrieved later by the
+        'invalid_string()' method) and this state is also reflected by the
+        'changed()' and 'field_changed()' methods.  This state is updated after
+        each validation attempt.
+
+        Returns: 'ValidationError' instance if an error occurs or None if the
+        string is valid.
+
         """
         column = self._coldict[key]
         ctype = column.type
@@ -852,7 +876,7 @@ class PresentedRow(object):
         """
 
         return key in self._validated_fields
-    
+
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
         assert function is None or isinstance(function, collections.Callable), \
@@ -867,14 +891,14 @@ class PresentedRow(object):
 
     def permitted(self, key, permission):
         """Return true if the user has permissons for given field.
-        
+
         Arguments:
-        
+
           key -- field identifier (string).
           permission -- one of 'pytis.data.Permission' constants determining the permission to be
             checked or 'True' in which case corresponding editing permission
             (insert or update) is checked.
-          
+
         Permission checking of virtual fields is limited to the VIEW
         permission, based on the field dependencies.  VIEW of a virtual column
         is permitted if all the fields from dependencies are allowed to VIEW.
@@ -969,7 +993,7 @@ class PresentedRow(object):
                 display_function = display
                 display = lambda row: display_function(row[value_column].value())
         return display
-    
+
     def codebook(self, key):
         """Return the name of given field's codebook specification for resolver."""
         return self._coldict[key].codebook
@@ -977,10 +1001,10 @@ class PresentedRow(object):
     def prefer_display(self, key):
         column = self._coldict[key]
         return column.prefer_display
-        
+
     def display(self, key, export=None, single=True):
         """Return enumerator `display' value for given field as a string.
-        
+
         Arguments:
 
           export -- function used to export inline_display field value.  If not
@@ -1047,7 +1071,7 @@ class PresentedRow(object):
             return result
         else:
             return ''
-    
+
     def enumerate(self, key):
         """Return the list of valid values of an enumeration field.
 
@@ -1058,7 +1082,7 @@ class PresentedRow(object):
         If the field given by 'key' has no enumerator, None is returned.  The
         inner_type's enumerator is used automatically for fields of type
         'pytis.data.Array'.
-       
+
         """
         column = self._coldict[key]
         if self._secret_column(column):
@@ -1115,12 +1139,13 @@ class PresentedRow(object):
         else:
             result = value_dict[key]
         return result
-        
-    def runtime_filter(self, key):
-        """Return the current run-time filter condition for an enumerator of field KEY.
 
-        Returns a 'pytis.data.Operator' instance when a filter is active or None if the field has
-        no enumerator or if the enumerator is not filtered.
+    def runtime_filter(self, key):
+        """Return the current run-time filter for an enumerator of field KEY.
+
+        Returns a 'pytis.data.Operator' instance when a filter is active or
+        None if the field has no enumerator or if the enumerator is not
+        filtered.
 
         """
         return self._runtime_limit(key, self._runtime_filter_dirty, self._runtime_filter,
@@ -1141,8 +1166,8 @@ class PresentedRow(object):
 
         Arguments:
           key -- field identifier as a string
-          static -- if true, true is returned only if the completer is defined by a static set of
-            values (i.e. it is not bound to a data object).
+          static -- if true, true is returned only if the completer is defined
+            by a static set of values (i.e. it is not bound to a data object).
 
         """
         column = self._coldict[key]
@@ -1159,16 +1184,18 @@ class PresentedRow(object):
 
         Arguments:
           key -- field identifier as a string
-          prefix -- prefix value as a (unicode) string or None.  If specified, the list of
-            completions is filtered for values with given prefix.  Prefix matching is case
-            insensitive.
+          prefix -- prefix value as a (unicode) string or None.  If specified,
+            the list of completions is filtered for values with given prefix.
+            Prefix matching is case insensitive.
 
-        The returned list contains available completions provided by the underlying completer of
-        given field.  The completer is determined either by the 'completer' argument in field
-        specification or (if not defined) the enumerator of the field's data type.  If the field is
-        not associated with any completer, the method always returns an empty list.  The method
-        'has_completer()' may be used to find out, whether the field has a completer.
-        
+        The returned list contains available completions provided by the
+        underlying completer of given field.  The completer is determined
+        either by the 'completer' argument in field specification or (if not
+        defined) the enumerator of the field's data type.  If the field is not
+        associated with any completer, the method always returns an empty list.
+        The method 'has_completer()' may be used to find out, whether the field
+        has a completer.
+
         """
         column = self._coldict[key]
         completer = self._completer(column)
@@ -1240,14 +1267,14 @@ class PresentedRow(object):
         The result depends on the 'attachment_storage' specification of the
         field given by 'key'.  If the attachment storage is defined as a
         callable object, it is automatically called and the result is returned.
-        
+
         """
         column = self._coldict[key]
         storage = column.attachment_storage
         if isinstance(storage, collections.Callable):
             storage = storage(self)
         return storage
-    
+
     def filename(self, key):
         """Return the file name for given field or None.
 
@@ -1258,7 +1285,7 @@ class PresentedRow(object):
         by 'key'.  If the filename is defined as a callable object, it is
         automatically called and the result is returned.  If defined as a field
         id, the exported value of given field is returned.
-        
+
         """
         column = self._coldict[key]
         filename_spec = column.filename
