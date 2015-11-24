@@ -69,7 +69,7 @@ class PresentedRow(unittest.TestCase):
                      computer=pp.Computer(inc, depends=('sum',))),
             pp.Field('r'),
         )
-        
+
     def _check_values(self, row, pairs):
         for k, v in pairs:
             row_value = row[k].value()
@@ -248,7 +248,7 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('d', changed)
         self.assertIn('sum', changed)
         self.assertIn('inc', changed)
-        
+
     def test_editability_callbacks(self):
         enabled = [None] # we need a mutable object...
         row = pp.PresentedRow(self._fields, self._data, None, prefill={'a': 6})
@@ -333,7 +333,7 @@ class PresentedRow(unittest.TestCase):
         self.assertTrue(row.depends('sum', ('inc', 'd')))
         self.assertFalse(row.depends('sum', ('a', 'b', 'c', 'e', 'sum')))
         self.assertFalse(row.depends('inc', any))
-        
+
 tests.add(PresentedRow)
 
 
@@ -349,6 +349,11 @@ class PrettyTypes(unittest.TestCase):
         self.assertEqual(t.tree_column_id(), 'tree_order')
 
 tests.add(PrettyTypes)
+
+class DocTest(unittest.TestCase):
+    def test_field_computations(self):
+        import doctest
+        doctest.testfile('../../../doc/tutorials/Fields.txt')
 
 
 def get_tests():
