@@ -24,7 +24,7 @@ This module includes the following classes:
 
   'HelpUpdater' -- Create/update initial help texts in the database according
     to specifications.
-   
+
   'HelpGenerator' -- Generate a final help page contents according to the texts
     defined in the database.
 
@@ -32,8 +32,8 @@ The last important part of the pytis help system is the user interface for
 managment of the help texts in the database by help administrators.  This is
 defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 'pytis.defs' is in resolver search path).
-  
-""" 
+
+"""
 
 import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
 from pytis.util import current_language, log, OPERATIONAL, translations
@@ -118,7 +118,7 @@ class HelpUpdater(object):
                                                      pd.EQ('content', pd.sval(None)))])))
             data.update_many(pd.AND(*(conds + [pd.EQ('removed', pd.bval(False))])),
                              pd.Row(self._values(data, removed=True)))
-        
+
     def _update_menu_item_help(self, fullname, spec_name):
         kind = fullname.split('/', 1)[0]
         if kind == 'menu':
@@ -163,7 +163,7 @@ class HelpUpdater(object):
         else:
             title = view_spec.title()
         return '[help:spec/%s %s]' % (spec_name, title)
-        
+
     def _generate_form_help(self, form_class, spec_name):
         if form_class.endswith('.ConfigForm'):
             if spec_name == 'ui':
@@ -196,7 +196,7 @@ class HelpUpdater(object):
                     return c.label()
                 description = _("Forms are connected through the equality of values "
                                 "in column '%(main_form_column)s' of the main form and "
-                                "column '%(side_form_column)s' of the side form.", 
+                                "column '%(side_form_column)s' of the side form.",
                                 main_form_column=clabel(mainname, b.binding_column()),
                                 side_form_column=clabel(sidename, b.side_binding_column()))
             return '%s\n\n:%s::%s\n:%s::%s\n\n%s' % (
@@ -214,12 +214,12 @@ class HelpUpdater(object):
                 form_type = getattr(pytis.form, form_name).DESCR
             else:
                 form_type = form_class
-            return _("Opens %(form_type)s for %(spec_name)s", 
+            return _("Opens %(form_type)s for %(spec_name)s",
                      form_type=form_type, spec_name=self._spec_link(spec_name))
 
     def _generate_new_record_help(self, spec_name, command_name):
         if spec_name:
-            return _("Opens a form for new record insertion into %s.", 
+            return _("Opens a form for new record insertion into %s.",
                      self._spec_link(spec_name))
         else:
             # Maybe retrieve custom application command here?
@@ -228,7 +228,7 @@ class HelpUpdater(object):
             #    return command.__doc__
             #else:
             return _("Invokes command %s.") % command_name
-    
+
     def _generate_proc_help(self, procname, spec_name):
         return _("Invokes procedure %s from %s.") % (procname, spec_name)
 
@@ -255,11 +255,11 @@ class HelpUpdater(object):
                 break
             if row['fullname'].value():
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
-                
+
 
 class HelpGenerator(object):
     """Generate help page contents according to the current texts in the database."""
-    
+
     def _spec_items_descriptions(self, spec_name):
         data = pytis.data.dbtable('e_pytis_help_spec_items',
                                         ('spec_name', 'kind', 'identifier', 'content'),
@@ -481,4 +481,3 @@ class HelpExporter(pytis.form.Browser.Exporter):
         return g.div((g.h(g.a(_("Navigation"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')
-
