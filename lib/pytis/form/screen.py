@@ -2284,7 +2284,8 @@ class Browser(wx.Panel, CommandHandler):
             # If URI doesn't match any existing resource, try locating the
             # resource using the standard resource provider's algorithm
             # (including searching resource directories).
-            return redirect(self._resource_provider.resource(uri[9:]))
+            uri = uri[len(self._resource_base_uri):]
+            return redirect(self._resource_provider.resource(uri))
 
     def _resource_uri(self, resource):
         uri = resource.uri()
