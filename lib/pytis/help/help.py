@@ -478,6 +478,6 @@ class HelpExporter(pytis.form.Browser.Exporter):
     def _menu(self, context):
         g = self._generator
         tree = lcg.FoldableTree(tooltip=_("Expand/collapse complete menu hierarchy"))
-        return g.div((g.h(g.a(_("Navigation"), accesskey="3"), 3),
+        return g.div((g.div(_("Navigation"), cls='menu-heading'),
                       tree.export(context)),
                      cls='menu-panel')
