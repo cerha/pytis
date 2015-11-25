@@ -2354,7 +2354,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         KeyHandler.__init__(self, webview)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
-        self._resource_base_uri =  'http://localhost:%d/' % httpd.socket.getsockname()[1]
+        self._resource_base_uri = 'http://localhost:%d/' % httpd.socket.getsockname()[1]
 
     def __del__(self):
         self._httpd.shutdown()
