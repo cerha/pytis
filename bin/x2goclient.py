@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-10-30 20:46'
+_VERSION = '2015-12-01 16:01'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -714,7 +714,7 @@ if on_windows():
             'process_name': 'vcxsrv_pytis.exe',
             'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
             'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-            'parameters': [':20', '-clipboard', '-multiwindow', '-notrayicon', '-nowinkill',
+            'parameters': [':20', '-clipboard', '-noclipboardprimary', '-multiwindow', '-notrayicon', '-nowinkill',
                            '-nounixkill', '-swcursor', ],
         },
         'VcXsrv_pytis_desktop': {
@@ -723,7 +723,8 @@ if on_windows():
             'process_name': 'vcxsrv_pytis_desktop.exe',
             'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
             'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-            'parameters': [':30', '-clipboard', '-notrayicon', '-nowinkill', '-nounixkill', '-swcursor', ],
+            'parameters': [':30', '-clipboard', 'noclipboardprimary', '-notrayicon', '-nowinkill', '-nounixkill',
+                           '-swcursor', ],
         },
     }
     X2GO_CLIENTXCONFIG_DEFAULTS.update(update_dir)
