@@ -20,16 +20,43 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-12-01 16:01'
+_VERSION = '2015-12-01 22:13'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
+
+import os
+
+XCONFIG_DEFAULTS = {
+    'XServers': {
+        'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
+                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
+    },
+    'VcXsrv_pytis': {
+        'display': 'localhost:20',
+        'last_display': 'localhost:20',
+        'process_name': 'vcxsrv_pytis.exe',
+        'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
+        'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
+        'parameters': [':20', '-clipboard', '-noclipboardprimary', '-multiwindow',
+                       '-nowinkill', '-nounixkill', '-swcursor', ],
+    },
+    'VcXsrv_pytis_desktop': {
+        'display': 'localhost:30',
+        'last_display': 'localhost:30',
+        'process_name': 'vcxsrv_pytis_desktop.exe',
+        'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
+        'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
+        'parameters': [':30', '-clipboard', 'noclipboardprimary', '-notrayicon', '-nowinkill',
+                       '-nounixkill', '-swcursor', ],
+    },
+}
+
 
 import gevent.monkey
 gevent.monkey.patch_all()
 
 import gettext
-import os
 import platform
 import sys
 
@@ -673,6 +700,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         _changed = False
+        _defaults = XCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
                 _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
@@ -680,12 +708,8 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             elif option == 'run_command':
                 _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
                                                                           'vcxsrv_pytis.exe'))
-            elif option == 'parameters':
-                parameters = self.get(xserver_name, option,
-                                      key_type=self.get_type(xserver_name, option))
-                if '-notrayicon' in parameters:
-                    parameters.remove('-notrayicon')
-                _xserver_config[option] = parameters
+            elif option in ('display', 'last_display', 'process_name', 'parameters'):
+                _xserver_config[option] = _defaults[option]
             else:
                 try:
                     _xserver_config[option] = self.get(xserver_name, option,
@@ -703,31 +727,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 if on_windows():
-    update_dir = {
-        'XServers': {
-            'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
-                               'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
-        },
-        'VcXsrv_pytis': {
-            'display': 'localhost:20',
-            'last_display': 'localhost:20',
-            'process_name': 'vcxsrv_pytis.exe',
-            'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-            'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-            'parameters': [':20', '-clipboard', '-noclipboardprimary', '-multiwindow', '-notrayicon', '-nowinkill',
-                           '-nounixkill', '-swcursor', ],
-        },
-        'VcXsrv_pytis_desktop': {
-            'display': 'localhost:30',
-            'last_display': 'localhost:30',
-            'process_name': 'vcxsrv_pytis_desktop.exe',
-            'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-            'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-            'parameters': [':30', '-clipboard', 'noclipboardprimary', '-notrayicon', '-nowinkill', '-nounixkill',
-                           '-swcursor', ],
-        },
-    }
-    X2GO_CLIENTXCONFIG_DEFAULTS.update(update_dir)
+    X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
 
 x2go.client.X2GoClientXConfig = X2GoClientXConfig
@@ -1311,10 +1311,12 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if not os.path.isdir(pytis_directory):
             app.info_dialog(_("Package unpacking failed"), error=True)
             return
-        os.rename(install_directory, old_install_directory)
-        os.rename(pytis_directory, install_directory)
-        os.rmdir(tmp_directory)
+        if os.path.exists(old_install_directory):
+            shutil.rmtree(old_install_directory)
+        shutil.move(install_directory, old_install_directory)
+        shutil.move(pytis_directory, install_directory)
         shutil.rmtree(old_install_directory)
+        shutil.rmtree(tmp_directory)
         app.info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
