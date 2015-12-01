@@ -1246,6 +1246,7 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         self._ctrl.SetSelection(self._radio_values.index(value))
         self._on_change() # call manually, since SetSelection() doesn't emit an event.
 
+
 class EnumerationField(GenericEnumerationField):
     """Common base class for fields based on 'wx.ControlWithItems'."""
     _INVALID_SELECTION = wx.NOT_FOUND
