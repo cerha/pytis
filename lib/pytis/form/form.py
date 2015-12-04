@@ -2387,6 +2387,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._edit_form_timeout = None if self._transaction is None else config.edit_form_timeout
         # Other attributes
         self._fields = []
+        self._tab_navigated_widgets = []
         if set_values:
             for key, value in set_values.items():
                 type = self._row.type(key)
@@ -2829,16 +2830,20 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             refresh()
         return result
 
+    def _can_navigate(self, back=False):
+        return self._mode != self.MODE_VIEW
+
     def _cmd_navigate(self, back=False):
-        if self._mode != self.MODE_VIEW:
-            # Vygeneruj událost navigace mezi políčky.
-            w = wx_focused_window()
-            if not w:
-                self._fields[0].set_focus()
-                w = wx_focused_window()
-            if w:
-                flags = not back and wx.NavigationKeyEvent.IsForward or 0
-                w.Navigate(flags=flags)
+        order = ([f for f in self._fields if f.enabled()] +
+                 [w for w in self._tab_navigated_widgets if w.IsEnabled()])
+        current = pytis.form.InputField.focused() or wx_focused_window()
+        if current in order:
+            i = (order.index(current) + (-1 if back else 1)) % len(order)
+            target = order[i]
+            if target in self._fields:
+                target.set_focus()
+            else:
+                target.SetFocus()
 
     # Public methods
 
@@ -3075,6 +3080,8 @@ class PopupEditForm(PopupForm, EditForm):
             button = wx_button(self, fullsize=True, **kwargs)
             if i == 0:
                 button.SetDefault()
+            pytis.form.wx_callback(wx.EVT_KEY_DOWN, button, self.on_key_down)
+            self._tab_navigated_widgets.append(button)
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer
 
