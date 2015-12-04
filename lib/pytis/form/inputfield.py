@@ -65,7 +65,7 @@ class _TextValidator(wx.PyValidator):
 
     def Clone(self):
         return _TextValidator(self._control, self._filter)
-    
+
     def _on_char(self, event):
         key = event.GetKeyCode()
         if ((self._filter is not None and
@@ -79,7 +79,7 @@ class _TextValidator(wx.PyValidator):
 
 class _Completer(wx.PopupWindow):
     """Autocompletion selection control."""
-    
+
     def __init__(self, ctrl):
         """Initialize the selectrol for given `wx.TextCtrl' instance."""
         super(_Completer, self).__init__(ctrl.GetParent())
@@ -146,7 +146,7 @@ class _Completer(wx.PopupWindow):
         """Handle TextCtrl keypresses if they belong to the completer.
 
         Returns True if the event was processed and False when it should be passed on.
-        
+
         """
         listctrl = self._list
         if listctrl.GetItemCount() == 0:
@@ -169,7 +169,7 @@ class _Completer(wx.PopupWindow):
                 self._show(False)
                 return True
         return False
-    
+
     def update(self, completions, show):
         """Update the list of available completions."""
         self._show(False)
@@ -177,7 +177,7 @@ class _Completer(wx.PopupWindow):
         listctrl.ClearAll()
         listctrl.InsertColumn(0, "")
         height_limit = None
-        listctrl.SetSize((17, 17)) # Needed for GetViewRect to work consistently.
+        listctrl.SetSize((17, 17))  # Needed for GetViewRect to work consistently.
         for i, choice in enumerate(completions):
             listctrl.InsertStringItem(i, "")
             listctrl.SetStringItem(i, 0, choice)
@@ -211,7 +211,7 @@ class InputField(object, KeyHandler, CommandHandler):
     Tato třída není sama o sobě instanciovatelná! Odvozením další
     třídy a předefinováním dále popsaných metod však lze vytvořit políčka
     s libvolným chováním realizovaná libovolným UI prvkem.
-    
+
     """
 
     _DEFAULT_WIDTH = 13
@@ -220,16 +220,16 @@ class InputField(object, KeyHandler, CommandHandler):
 
     _focused_field = None
     _last_focused_field = None
-    
+
     def _get_command_handler_instance(cls):
         return InputField.focused()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
+
     def create(cls, parent, row, id, inline=False, **kwargs):
         """Create an instance of the class corresponding to the field specification.
 
         The arguments are the same as for the 'InputField' constructor.
-        
+
         """
         # assert isinstance(parent, wx.Window)
         assert isinstance(row, PresentedRow)
@@ -302,11 +302,11 @@ class InputField(object, KeyHandler, CommandHandler):
     def _focus(cls, field):
         # import weakref
         current = cls.focused()
-        cls._focused_field = field #weakref.ref(field)
+        cls._focused_field = field  # weakref.ref(field)
         if current is not None:
             cls._last_focused_field = current
     _focus = classmethod(_focus)
-    
+
     def _last_focused(cls):
         field = cls._last_focused_field
         cls._last_focused_field = None
@@ -323,10 +323,10 @@ class InputField(object, KeyHandler, CommandHandler):
     focused = classmethod(focused)
 
     # Instance methods
-    
+
     def __init__(self, parent, row, id, inline=False, guardian=None, readonly=False):
         """Initialize the input field according to its specification.
-        
+
         Arguments:
 
           parent -- wx parent for the created widgets.
@@ -390,10 +390,10 @@ class InputField(object, KeyHandler, CommandHandler):
             value = row.format(id, single=False, secure='')
         self._set_value(value)
         self._call_on_idle.append(self._update_background_color)
-        
+
     def _init_attributes(self):
         pass
-        
+
     def _init_ctrl(self, ctrl):
         KeyHandler.__init__(self, ctrl)
         wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
@@ -409,7 +409,7 @@ class InputField(object, KeyHandler, CommandHandler):
             return "<%s id='%s'>" % (self.__class__.__name__, self.id())
         except AttributeError:
             return "<%s (uninitialized)>" % self.__class__.__name__
-        
+
     def _on_navigation(self, widget, skip=False):
         def cb(e):
             e.Skip()
@@ -417,7 +417,7 @@ class InputField(object, KeyHandler, CommandHandler):
                 flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
                 wx.CallAfter(lambda: widget.Navigate(flag))
         return cb
-            
+
     def _hbox(self, *content):
         # Helper function to group wx widgets into a horizontal box (sizer).
         hbox = wx.BoxSizer()
@@ -453,7 +453,7 @@ class InputField(object, KeyHandler, CommandHandler):
     def _set_value(self, value):
         # Set the field control according to given external (string) value.
         raise ProgramError("This method must be overriden!")
-    
+
     # Other private methods.
 
     def _menu(self):
@@ -465,7 +465,7 @@ class InputField(object, KeyHandler, CommandHandler):
         if file_open_mitems:
             menu += tuple(file_open_mitems)
         return menu
-                        
+
     def _on_context_menu(self, ctrl, position=None):
         def handler(uicmd):
             if issubclass(uicmd.command().handler(), (InputField, Invocable)):
@@ -484,7 +484,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())
-        
+
     def _on_idle(self, event):
         if self._needs_validation:
             transaction = self._row.transaction()
@@ -506,21 +506,21 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _on_change_hook(self):
         """Handle field value changes.
-        
+
         Overriding this method allows any additional actions after each change of the field value.
-        
+
         """
         pass
-        
+
     def _on_validity_change(self):
         """Handle field validity changes.
-        
+
         Overriding this method allows any additional actions after field validity changes, such as
         highlighting this state in the UI.
-        
+
         """
         self._update_background_color()
-        
+
     def _current_ctrl(self):
         # Note, there may be several active controls, for example in range fields...
         return self._last_focused_ctrl or self._controls[0][0]
@@ -612,7 +612,7 @@ class InputField(object, KeyHandler, CommandHandler):
     def _px_size(self, parent, width, height):
         size = dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
         return (size.width, size.height)
-    
+
     def _set_focus(self, ctrl):
         parent = ctrl.GetParent()
         nb = parent.GetParent()
@@ -635,7 +635,7 @@ class InputField(object, KeyHandler, CommandHandler):
             return False
 
     # Command processing
-    
+
     def _can_reset(self):
         return self._modified() and self._enabled
 
@@ -649,7 +649,7 @@ class InputField(object, KeyHandler, CommandHandler):
             self._on_context_menu(ctrl, position=(size.x / 3, size.y / 2))
 
     # Public methods
-        
+
     def width(self):
         """Return field width in characters."""
         return self.spec().width(self._DEFAULT_WIDTH)
@@ -685,7 +685,7 @@ class InputField(object, KeyHandler, CommandHandler):
         """Invoke field validation and propagate current user input to the underlying PresentedRow.
 
         Arguments:
-        
+
           interactive -- controls how the validation error is announced if the current field value
             is not valid.  If true, the error is announced by a popup dialog.  If false the error
             message will appear in the status line.
@@ -710,7 +710,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def set_focus(self, reset=False):
         """Make the field active for user input."""
-        InputField._last_focused() # Focus set programatically - forget the last focused field.
+        InputField._last_focused()  # Focus set programatically - forget the last focused field.
         self._want_focus = self._current_ctrl()
 
     def enabled(self):
@@ -724,7 +724,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
         """
         return self._enabled
-    
+
     def reset(self):
         """Reset the field to its original value."""
         self._row[self._id] = self._row.original_row()[self._id]
@@ -732,8 +732,8 @@ class InputField(object, KeyHandler, CommandHandler):
     def insert_text(self, text):
         """Insert given text into the field in the current place of the cursor."""
         self._controls[0][0].WriteText(text)
-        
-        
+
+
 class Unlabeled:
     """Mix-in třída pro políčka .
 
@@ -747,7 +747,7 @@ class Unlabeled:
 
 class TextField(InputField):
     """Textové vstupní políčko."""
-    
+
     NUMBERS = map(str, range(10))
     SIGNS = ['-', '+']
     DECIMAL_POINTS = ['.', ',']
@@ -792,7 +792,7 @@ class TextField(InputField):
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
         return (x, x)
-        
+
     def on_key_down(self, event):
         if self._enabled and self._completer and self._completer.on_key_down(event):
             return
@@ -803,7 +803,7 @@ class TextField(InputField):
         if self.height() > 1:
             style |= wx.TE_MULTILINE
         return style
-    
+
     def _maxlen(self):
         """Vrať maximální délku zadaného textu."""
         return None
@@ -823,7 +823,7 @@ class TextField(InputField):
             self._completer.update(self._row.completions(self.id(), prefix=text),
                                    self._enabled and self._has_focus())
         return super(TextField, self)._on_idle(event)
-        
+
     def _on_change(self, event=None):
         post_process = self._post_process_func()
         if post_process:
@@ -839,7 +839,7 @@ class TextField(InputField):
 
         Vrací: Funkci jednoho argumentu (původní text), která vrací
         řetězec (změněný text).
-        
+
         """
         try:
             return self._stored_post_process_func
@@ -859,13 +859,13 @@ class TextField(InputField):
 
     def _filter(self):
         """Vrať filtrační funkci odpovídající specifikaci políčka.
-        
+
         Vrací: Funkci jednoho argumentu, která vrací pravdu, pokud znak
         odpovídá specifikaci filtru pro dané políčko, nepravdu v opačném
         případě.
 
         Pokud políčko nemá nastavenu filtraci, vrací None.
-        
+
         """
         filter_spec = self.spec().filter()
         if filter_spec is None:
@@ -889,7 +889,7 @@ class TextField(InputField):
     def _set_value(self, value):
         assert isinstance(value, basestring), value
         self._ctrl.SetValue(value)
-        self._on_change() # call manually, since SetValue() doesn't emit an event.
+        self._on_change()  # call manually, since SetValue() doesn't emit an event.
 
     def _menu(self):
         return super(TextField, self)._menu() + \
@@ -904,37 +904,37 @@ class TextField(InputField):
                        _("Select entire field value.")))
 
     # Zpracování příkazů
-    
+
     def _can_cut(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
-        
+
     def _cmd_cut(self):
         self._current_ctrl().Cut()
         self._on_change()
-        
+
     def _can_copy(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
 
     def _cmd_copy(self):
         self._current_ctrl().Copy()
-        
+
     def _can_paste(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'CanPaste') and ctrl.CanPaste()
-    
+
     def _cmd_paste(self):
         paste_from_clipboard(self._current_ctrl())
         self._on_change()
-        
+
     def _can_select_all(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'SetSelection') and ctrl.GetValue()
 
     def _cmd_select_all(self):
         return self._current_ctrl().SetSelection(-1, -1)
-        
+
 
 class StringField(TextField):
     """Textové vstupní políčko pro data typu 'pytis.data.String'."""
@@ -945,7 +945,7 @@ class StringField(TextField):
 
 class PasswordField(StringField):
     _ORIGINAL_VALUE = u'\u2024' * 8
-    
+
     def _text_ctrl_style(self):
         return super(PasswordField, self)._text_ctrl_style() | wx.TE_PASSWORD
 
@@ -958,7 +958,7 @@ class PasswordField(StringField):
         else:
             self._ctrl2 = None
         return widget
-    
+
     def _set_value(self, value):
         if value:
             value = self._ORIGINAL_VALUE
@@ -992,14 +992,14 @@ class SpinnableField(InputField):
 
         The derived classes will usually just define '_SPIN_STEP' value, but for more complicated
         spinning logic, it is possible to override this method as well.
-        
+
         """
         if up:
             value += self._SPIN_STEP
         else:
             value -= self._SPIN_STEP
         return value
-    
+
     def _cmd_spin(self, up=True):
         value = self._row[self._id].value()
         new_value = self._spin(value, up=up)
@@ -1011,11 +1011,11 @@ class SpinnableField(InputField):
         self._row[self._id] = pytis.data.Value(self.type(), new_value)
         if select_all:
             ctrl.SetSelection(-1, -1)
-        
+
     def _can_spin(self, up=True):
         return self._valid
-        
-    
+
+
 class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
@@ -1059,15 +1059,15 @@ class CheckBoxField(Unlabeled, InputField):
         control = wx.CheckBox(parent, -1, label)
         wx_callback(wx.EVT_CHECKBOX, control, control.GetId(), self._on_change)
         return control
-                    
+
     def _get_value(self):
         return self._ctrl.GetValue() and 'T' or 'F'
 
     def _set_value(self, value):
         assert value in ('T', 'F', ''), ('Invalid value', value)
         self._ctrl.SetValue(value == 'T')
-        self._on_change() # call manually, since SetValue() doesn't emit an event.
-        
+        self._on_change()  # call manually, since SetValue() doesn't emit an event.
+
 
 class GenericEnumerationField(InputField):
 
@@ -1098,10 +1098,10 @@ class GenericEnumerationField(InputField):
         Public method to be used by application code in specific cases,
         typically when the enumeration depends on some external condition which
         is not detected by the PresentedRow row automatic callbacks.
-        
+
         """
         self._reload_enumeration()
-    
+
 
 class RadioBoxField(Unlabeled, GenericEnumerationField):
     """Field with a fixed enumeration represented by 'wx.RadioBox'.
@@ -1133,7 +1133,7 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
                               choices=[label_ for value, label_ in enumeration])
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
-    
+
     def _get_value(self):
         i = self._ctrl.GetSelection()
         if i == wx.NOT_FOUND:
@@ -1141,7 +1141,7 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         else:
             value = self._radio_values[i]
         return value
-        
+
     def _set_value(self, value):
         assert isinstance(value, basestring), value
         try:
@@ -1149,20 +1149,20 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         except ValueError:
             selection = wx.NOT_FOUND
         self._ctrl.SetSelection(selection)
-        self._on_change() # call manually, since SetSelection() doesn't emit an event.
+        self._on_change()  # call manually, since SetSelection() doesn't emit an event.
 
-    
+
 class EnumerationField(GenericEnumerationField):
     """Common base class for fields based on 'wx.ControlWithItems'."""
     _INVALID_SELECTION = wx.NOT_FOUND
 
     def _enumeration(self):
         return self._row.enumerate(self.id())
-    
+
     def _append_items(self, ctrl):
         for value, label in self._enumeration():
             ctrl.Append(label, self._type.export(value))
-        
+
     def _get_value(self):
         i = self._ctrl.GetSelection()
         if i == wx.NOT_FOUND:
@@ -1180,7 +1180,7 @@ class EnumerationField(GenericEnumerationField):
         else:
             selection = self._INVALID_SELECTION
         self._ctrl.SetSelection(selection)
-        self._on_change() # call manually, since SetSelection() doesn't emit an event.
+        self._on_change()  # call manually, since SetSelection() doesn't emit an event.
 
     def _reload_enumeration(self):
         orig_value = self._get_value()
@@ -1188,15 +1188,15 @@ class EnumerationField(GenericEnumerationField):
         self._append_items(self._ctrl)
         self._set_value(orig_value)
         self._update_size(self._ctrl)
-        
+
     def _update_size(self, ctrl):
         ctrl.SetSize(ctrl.GetBestSize())
 
-        
+
 class ChoiceField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.Choice'."""
     _INVALID_SELECTION = 0
-    
+
     def _enumeration(self):
         return [(None, self._spec.null_display() or '')] + super(ChoiceField, self)._enumeration()
 
@@ -1206,12 +1206,12 @@ class ChoiceField(EnumerationField):
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
 
-    
+
 class ListBoxField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.ListBox'."""
     _DEFAULT_HEIGHT = None
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
-    
+
     def _create_ctrl(self, parent):
         control = wx.ListBox(parent, style=wx.LB_SINGLE | wx.LB_NEEDED_SB)
         self._append_items(control)
@@ -1231,7 +1231,7 @@ class ListBoxField(EnumerationField):
             width = min(max(width, min_width), 3 * min_width)
         height = char2px(ctrl, 1, float(10) / 7).height * (self.height() or ctrl.GetCount())
         ctrl.SetMinSize((width, height))
-    
+
     def _set_value(self, value):
         super(ListBoxField, self)._set_value(value)
         self._ctrl.SetFirstItem(self._ctrl.GetSelection())
@@ -1246,16 +1246,16 @@ class Invocable(object, CommandHandler):
 
     The input control will be accompanied with an invocation button and will also handle the
     INVOKE_SELECTION command.
-    
+
     """
     _INVOKE_TITLE = _("Select")
     _INVOKE_HELP = None
     _INVOKE_ICON = 'invoke-selection'
-    
+
     def _get_command_handler_instance(cls):
         return InputField._get_command_handler_instance()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
+
     def _create_widget(self, parent, ctrl):
         widget = super(Invocable, self)._create_widget(parent, ctrl)
         button = self._create_invocation_button(parent)
@@ -1283,17 +1283,17 @@ class Invocable(object, CommandHandler):
         return super(Invocable, self)._menu() + \
             (None,
              UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
-    
+
     def _on_invoke_selection(self, ctrl, alternate=False):
         raise ProgramError("This method must be overriden!")
-    
+
     def _cmd_invoke_selection(self, **kwargs):
         self._on_invoke_selection(self._ctrl, **kwargs)
-        
+
     def _can_invoke_selection(self, **kwargs):
         return self.enabled()
 
-    
+
 class DateField(Invocable, TextField, SpinnableField):
     """Input field for values of type 'pytis.data.Date'.
 
@@ -1307,7 +1307,7 @@ class DateField(Invocable, TextField, SpinnableField):
     _INVOKE_TITLE = _("Select from Calendar")
     _INVOKE_HELP = _("Show the calendar for date selection.")
     _SPIN_STEP = datetime.timedelta(days=1)
-    
+
     def _date_type(self):
         return self._type
 
@@ -1323,7 +1323,7 @@ class DateTimeField(DateField):
     """Input field for values of type 'pytis.data.DateTime'.
 
     The date part can be changed using the calendar widget.
-    
+
     Spinning changes the date by one day per one step.
 
     """
@@ -1343,15 +1343,15 @@ class DateTimeField(DateField):
                                    tzinfo=t.timezone(), **kwargs)
             ctrl.SetValue(t.export(dt))
 
-            
+
 class TimeField(TextField, SpinnableField):
     """Input field for values of type 'pytis.data.Time'.
-    
+
     The field also supports spinning (see 'SpinnableField') by one hour per one step.
 
     """
     _SPIN_STEP = datetime.timedelta(hours=1)
-    
+
 
 class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
@@ -1359,7 +1359,7 @@ class ColorSelectionField(Invocable, TextField):
     _DEFAULT_WIDTH = 7
     _INVOKE_TITLE = _("Select Color")
     _INVOKE_HELP = _("Show the color selection dialog.")
-    
+
     def _on_invoke_selection(self, ctrl, alternate=False):
         color = run_dialog(ColorSelector, self._get_value())
         if color is not None:
@@ -1368,13 +1368,13 @@ class ColorSelectionField(Invocable, TextField):
     def _create_button(self, parent, label, **kwargs):
         size = self._button_size(parent)
         return wx.lib.colourselect.ColourSelect(parent, -1, size=size)
-    
+
     def _set_value(self, value):
         if not self._inline:
             self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
-    
+
 class GenericCodebookField(GenericEnumerationField):
     """Společná nadtřída číselníkových políček."""
 
@@ -1388,10 +1388,10 @@ class GenericCodebookField(GenericEnumerationField):
         self._cb_name = cb_name
         self._cb_spec = cb_spec
         super(GenericCodebookField, self)._init_attributes()
-        
+
     def _reload_enumeration(self):
         pass
-        
+
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' argument."""
         value = self._row[self.id()]
@@ -1402,7 +1402,7 @@ class GenericCodebookField(GenericEnumerationField):
 
     def _codebook_arguments(self):
         return self._row.runtime_arguments(self.id())
-    
+
     def _run_codebook_form(self, begin_search=None):
         """Zobraz číselník a po jeho skončení nastav hodnotu políčka."""
         enumerator = self._type.enumerator()
@@ -1415,7 +1415,7 @@ class GenericCodebookField(GenericEnumerationField):
         result = run_form(pytis.form.CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
                           condition=condition, arguments=self._codebook_arguments())
-        if result: # may be None or False!
+        if result:  # may be None or False!
             self._set_value(result.format(enumerator.value_column()))
         self.set_focus()
 
@@ -1433,10 +1433,10 @@ class GenericCodebookField(GenericEnumerationField):
         result = new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
         if result and value_column in result:
             self._set_value(result[value_column].export())
-        
+
     def _cmd_invoke_codebook_form(self):
         self._run_codebook_form()
-    
+
 
 class CodebookField(Invocable, GenericCodebookField, TextField):
     """Vstupní pole pro data navázaná na číselník.
@@ -1461,7 +1461,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _init_attributes(self):
         self._display = None
         super(CodebookField, self)._init_attributes()
-        
+
     def _create_widget(self, parent, ctrl):
         """Zavolej '_create_widget()' třídy Invocable a přidej displej."""
         widget = super(CodebookField, self)._create_widget(parent, ctrl)
@@ -1515,7 +1515,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             else:
                 display = ''
             self._display.SetValue(display)
-        
+
     def _on_invoke_selection(self, ctrl, alternate=False):
         value_column = self._type.enumerator().value_column()
         value = self._get_value()
@@ -1527,7 +1527,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         else:
             begin_search = self._cb_spec.begin_search()
         self._run_codebook_form(begin_search=begin_search)
-    
+
 
 class ListField(GenericCodebookField, CallbackHandler):
     """Číselníkové políčko zobrazující data číselníku jako součást formuláře.
@@ -1568,7 +1568,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                 width = len(col.column_label())
             listctrl.SetColumnWidth(i, dlg2px(listctrl, 4 * (width + 1)))
             total_width = total_width + width
-        height = listctrl.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10 # TODO: any better?
+        height = listctrl.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10  # TODO: any better?
         self._DEFAULT_WIDTH = total_width + 3
         listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
         self._list = listctrl
@@ -1590,7 +1590,7 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _change_callback(self):
         self._reload_enumeration()
         super(ListField, self)._change_callback()
-        
+
     def _on_select(self, event):
         self._list.SetItemState(event.GetIndex(), 0, wx.LIST_STATE_SELECTED)
 
@@ -1599,12 +1599,12 @@ class ListField(GenericCodebookField, CallbackHandler):
         i = event.GetIndex()
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
-            
+
     # def _on_kill_focus(self, event):
     #     if self._selected_item is not None:
     #         self._list.EnsureVisible(self._selected_item)
     #     return super(ListField, self)._on_kill_focus(event)
-        
+
     def _reload_enumeration(self):
         if self._last_set_invalid_value is not None:
             current = self._last_set_invalid_value
@@ -1678,7 +1678,7 @@ class ListField(GenericCodebookField, CallbackHandler):
             # Empty value.
             self._set_selection(None)
             return True
-        
+
     def _get_value(self):
         i = self._selected_item
         if i is not None:
@@ -1716,21 +1716,21 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _selected_item_index(self):
         return self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
-    
+
     # Command handling
-    
+
     def _can_select(self):
         if not self.enabled():
             return False
         else:
             return self._selected_item_index() != -1
-    
+
     def _cmd_select(self):
         self._set_selection(self._selected_item_index())
-        
+
     def _can_show_selected(self):
         return self._selected_item is not None
-        
+
     def _cmd_show_selected(self):
         self._set_selection(self._selected_item)
 
@@ -1751,7 +1751,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _can_delete_selected(self):
         return self.enabled() and self._selected_item is not None
-        
+
     def _cmd_delete_selected(self):
         view = config.resolver.get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
@@ -1763,7 +1763,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
-        
+
     def _can_new_codebook_record(self):
         return self.enabled()
 
@@ -1785,7 +1785,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
-    
+
     _INVOKE_TITLE = _("Select File")
     _INVOKE_HELP = _("Show a dialog to browse files in the file system.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
@@ -1796,7 +1796,7 @@ class FileField(Invocable, InputField):
     def _init_attributes(self):
         self._buffer = None
         super(FileField, self)._init_attributes()
-        
+
     def _create_ctrl(self, parent):
         if self._spec.filename():
             size = 50
@@ -1811,11 +1811,11 @@ class FileField(Invocable, InputField):
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
         return (x + 5, x + 2)
-    
+
     def _validate(self):
         filename = self._buffer and self._buffer.filename()
         return self._row.validate(self.id(), self._get_value(), filename=filename)
-        
+
     def _get_value(self):
         return self._buffer and self._buffer.buffer()
 
@@ -1836,7 +1836,7 @@ class FileField(Invocable, InputField):
     def _on_change_hook(self):
         super(FileField, self)._on_change_hook()
         self._on_file_changed()
-        
+
     def _on_file_changed(self):
         filename = self._row.filename(self._id)
         display = filename or ''
@@ -1850,7 +1850,7 @@ class FileField(Invocable, InputField):
 
     def _on_filename_dclick(self, event):
         FileField.COMMAND_OPEN.invoke(_command_handler=self)
-        
+
     def _on_invoke_selection(self, ctrl, alternate=False):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
 
@@ -1881,13 +1881,13 @@ class FileField(Invocable, InputField):
 
     def _can_open(self):
         return self._enabled and self._buffer is not None and self._filename_extension()
-        
+
     def _cmd_open(self):
         open_data_as_file(self._buffer.buffer(), suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
-        
+
     def _cmd_load(self):
         def load(data, filename):
             try:
@@ -1942,10 +1942,10 @@ class FileField(Invocable, InputField):
             filename = os.path.split(path)[1]
             FileField._last_load_dir = os.path.dirname(path)
             load(path, filename)
-        
+
     def _can_save(self):
         return self._buffer is not None
-        
+
     def _cmd_save(self):
         default_filename = self._row.filename(self._id)
         if pytis.remote.client_available():
@@ -1970,10 +1970,10 @@ class FileField(Invocable, InputField):
                 message(_("File saved."))
             finally:
                 f.close()
-        
+
     def _can_clear(self):
         return self._enabled and self._buffer is not None
-        
+
     def _cmd_clear(self):
         self._set_value(None)
 
@@ -1983,7 +1983,7 @@ class ImageField(FileField):
 
     _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
-    
+
     def _create_ctrl(self, parent):
         return wx_button(parent, bitmap=self._bitmap(),
                          size=(self.width() + 10, self.height() + 10),
@@ -1992,7 +1992,7 @@ class ImageField(FileField):
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
         return (x + 4, x + 2)
-    
+
     def _create_invocation_button(self, parent):
         if self._spec.editable() == pytis.presentation.Editable.NEVER:
             # Hide the button only when the field is statically
@@ -2006,7 +2006,7 @@ class ImageField(FileField):
         # Ineditable button will gray out the image displayed on it.
         # We sometimes use image fields as read only image preview.
         pass
-        
+
     def _bitmap(self):
         if self._buffer is not None:
             import PIL.Image
@@ -2019,21 +2019,21 @@ class ImageField(FileField):
             wximg.LoadStream(stream, type=wx.BITMAP_TYPE_PNG)
             return wx.BitmapFromImage(wximg)
         return wx.EmptyBitmap(1, 1, depth=1)
-    
+
     def _on_button(self):
         if self.COMMAND_OPEN.enabled():
             self.COMMAND_OPEN.invoke()
-    
+
     def _filename_extension(self):
         if self._buffer:
             return "." + self._buffer.image().format.lower()
         else:
             return None
-        
+
     def _on_file_changed(self):
         self._ctrl.SetBitmapLabel(self._bitmap())
 
-    
+
 class StructuredTextField(TextField):
     class AttachmentEnumerator(pytis.data.Enumerator, pytis.data.TransactionalEnumerator):
         def __init__(self, storage, images=True):
@@ -2048,7 +2048,7 @@ class StructuredTextField(TextField):
                 run_dialog(Error, title=_("Error accessing attachment storrage"),
                            message=_("Error accessing attachment storrage") + ':\n' + e)
                 return []
-            
+
     class ImageAlignments(pytis.presentation.Enumeration):
         enumeration = (('inline', _("Inline")),
                        ('left', _("Left")),
@@ -2275,7 +2275,7 @@ class StructuredTextField(TextField):
                                ""),
                      )
         return menu
-    
+
     def _create_ctrl(self, parent):
         import wx.stc
         class TextCtrl(wx.stc.StyledTextCtrl):
@@ -2316,7 +2316,7 @@ class StructuredTextField(TextField):
         self._last_load_dir = None
         self._storage = self._row.attachment_storage(self._id)
         return ctrl
-        
+
     def _create_widget(self, parent, ctrl):
         widget = super(StructuredTextField, self)._create_widget(parent, ctrl)
         toolbar = wx.ToolBar(parent)
@@ -2367,22 +2367,22 @@ class StructuredTextField(TextField):
 
     def _cmd_search(self):
         pass
-    
+
     def _cmd_search_and_replace(self):
         pass
-    
+
     def _can_undo(self):
         return self._ctrl.CanUndo()
-    
+
     def _cmd_undo(self):
         self._ctrl.Undo()
-    
+
     def _can_redo(self):
         return self._ctrl.CanRedo()
-    
+
     def _cmd_redo(self):
         self._ctrl.Redo()
-        
+
     def _cmd_preview(self):
         text = self._get_value()
         if self._storage:
@@ -2399,7 +2399,7 @@ class StructuredTextField(TextField):
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
         node = lcg.ContentNode('export', title=_("Preview"), content=content,
                                resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
-        exporter = lcg.pdf.PDFExporter() #translations=cfg.translation_path)
+        exporter = lcg.pdf.PDFExporter()  # translations=cfg.translation_path)
         context = exporter.context(node, 'cs')
         pdf = exporter.export(context)
         process = Popen(config.printing_command, from_child=dev_null_stream('w'))
@@ -2410,11 +2410,11 @@ class StructuredTextField(TextField):
     def _cmd_strong(self):
         self._insert_markup('*')
         self.set_focus()
-        
+
     def _cmd_emphasized(self):
         self._insert_markup('/')
         self.set_focus()
-        
+
     def _cmd_underlined(self):
         self._insert_markup('_')
         self.set_focus()
@@ -2440,7 +2440,7 @@ class StructuredTextField(TextField):
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
         self.set_focus()
-        
+
     def _cmd_verbatim(self):
         ctrl = self._ctrl
         start, end = ctrl.GetSelection()
@@ -2512,14 +2512,14 @@ class StructuredTextField(TextField):
             return self._storage_op('resource', filename, transaction=self._row.transaction())
         else:
             return None
-    
+
     def _size_computer(self, row, filename):
         thumbnail = None
         resource = self._retrieve_attachment(filename)
         if resource:
             thumbnail = resource.thumbnail()
         return self.ImageSizes.matching_size(thumbnail)
-        
+
     def _preview_size_computer(self, row, filename, size):
         resource = self._retrieve_attachment(filename)
         if resource:
@@ -2527,7 +2527,7 @@ class StructuredTextField(TextField):
             if orig_size:
                 return "%dx%d px" % self.ImageSizes.preview_size(size, None, orig_size)
         return None
-    
+
     def _orig_size_computer(self, row, filename, size):
         resource = self._retrieve_attachment(filename)
         if resource:
@@ -2535,7 +2535,7 @@ class StructuredTextField(TextField):
             if orig_size:
                 return "%dx%d px" % tuple(orig_size)
         return None
-        
+
     def _resize_computer(self, row, filename):
         thumbnail = None
         resource = self._retrieve_attachment(filename)
@@ -2546,7 +2546,7 @@ class StructuredTextField(TextField):
                 return str(resize) + '%'
             return thumbnail
         return None
-        
+
     def _cmd_image(self):
         if not self._storage:
             return
@@ -2576,9 +2576,11 @@ class StructuredTextField(TextField):
                   descr=_("Choose the size and behavior of the image within the page.")),
             Field('orig_size', _("Original size"), editable=pytis.presentation.Editable.NEVER,
                   computer=computer(self._orig_size_computer)),
-            Field('preview_size', _("Preview size"), editable=pp.Editable.NEVER,
+            Field('preview_size', _("Preview size"),
+                  editable=pytis.presentation.Editable.NEVER,
                   computer=computer(self._preview_size_computer)),
-            Field('resize', _("Resize ratio"), editable=pp.Editable.NEVER,
+            Field('resize', _("Resize ratio"),
+                  editable=pytis.presentation.Editable.NEVER,
                   computer=computer(self._resize_computer)),
             Field('align', _("Alignment"), not_null=True,
                   enumerator=self.ImageAlignments),
@@ -2611,7 +2613,7 @@ class StructuredTextField(TextField):
                         tooltip=row['tooltip'].value(),
                         align=row['align'].value())
         self.set_focus()
-        
+
     def _cmd_attachment(self):
         if not self._storage:
             return
@@ -2672,7 +2674,7 @@ class StructuredTextField(TextField):
     def _cmd_linebreak(self):
         self._ctrl.WriteText('//\n')
         self.set_focus()
-        
+
     def _cmd_heading(self, level):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
@@ -2697,14 +2699,14 @@ class StructuredTextField(TextField):
         ctrl.SetSelection(line_beginning, line_beginning + len(line_text))
         ctrl.WriteText(new_text)
         self.set_focus()
-        
+
     def _cmd_open_in_editor(self):
         result = run_form(pytis.form.ResizableInputForm, name='x', title=self._spec.label(),
                           fields=(self._spec,),
                           prefill={self._id: self._ctrl.GetValue()})
         if result is not None:
             self._ctrl.SetValue(result[self._id].value())
-            
+
     def current_heading_level(self):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
@@ -2718,7 +2720,7 @@ class StructuredTextField(TextField):
 
 
 class RangeField(InputField):
-    
+
     def _create_widget(self, parent, ctrl):
         w1 = super(RangeField, self)._create_widget(parent, ctrl)
         ctrl2 = self._create_ctrl(parent)
@@ -2727,7 +2729,7 @@ class RangeField(InputField):
         w2 = super(RangeField, self)._create_widget(parent, ctrl2)
         self._inputs = (ctrl, ctrl2)
         return self._hbox(w1, w2)
-    
+
     def _set_value(self, value):
         if self._inline:
             if isinstance(value, tuple):
