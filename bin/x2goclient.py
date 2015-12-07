@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-12-01 22:13'
+_VERSION = '2015-12-07 17:29'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -38,7 +38,7 @@ XCONFIG_DEFAULTS = {
         'process_name': 'vcxsrv_pytis.exe',
         'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
         'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-        'parameters': [':20', '-clipboard', '-noclipboardprimary', '-multiwindow',
+        'parameters': [':20', '-clipboard', '-noprimary', '-multiwindow',
                        '-nowinkill', '-nounixkill', '-swcursor', ],
     },
     'VcXsrv_pytis_desktop': {
@@ -47,7 +47,7 @@ XCONFIG_DEFAULTS = {
         'process_name': 'vcxsrv_pytis_desktop.exe',
         'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
         'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-        'parameters': [':30', '-clipboard', 'noclipboardprimary', '-notrayicon', '-nowinkill',
+        'parameters': [':30', '-clipboard', 'noprimary', '-nowinkill',
                        '-nounixkill', '-swcursor', ],
     },
 }
