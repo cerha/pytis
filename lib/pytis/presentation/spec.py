@@ -369,7 +369,8 @@ class Action(object):
     """
     def __init__(self, id, title, handler=None, context=ActionContext.RECORD,
                  secondary_context=None, enabled=True, visible=True, access_groups=None,
-                 descr=None, hotkey=None, kwargs=None, form_content=None, **kwargs_):
+                 descr=None, hotkey=None, icon=None, kwargs=None, form_content=None,
+                 **kwargs_):
         """Inicializuj instanci.
 
         Argumenty:
@@ -430,6 +431,8 @@ class Action(object):
             constructor keyword arguments for backwards compatibility, but this
             practice is deprecated.
           hotkey -- keyboard shortcut (implemented only in wx forms).
+          icon -- action icon string identifier.  Implemented only in web
+            forms, where the identifier refers to a CSS class name.
           form_content -- function of a three arguments 'generator', 'record'
             and 'enabled' returning list of additional form elements to prepend
             to the action button; applicable only to Wiking applications.
@@ -449,6 +452,7 @@ class Action(object):
         assert isinstance(visible, collections.Callable) or isinstance(visible, bool), visible
         assert access_groups is None or isinstance(access_groups, (basestring, tuple, list))
         assert hotkey is None or isinstance(hotkey, (basestring, tuple)), hotkey
+        assert icon is None or isinstance(icon, basestring), icon
         assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
         assert form_content is None or isinstance(form_content, collections.Callable), form_content
         self._id = id
@@ -461,6 +465,7 @@ class Action(object):
         self._access_groups = access_groups
         self._descr = descr
         self._hotkey = hotkey
+        self._icon = icon
         self._kwargs = kwargs or kwargs_
         self._form_content = form_content
 
@@ -504,6 +509,9 @@ class Action(object):
 
     def hotkey(self):
         return self._hotkey
+
+    def icon(self):
+        return self._icon
 
     def kwargs(self):
         return self._kwargs
