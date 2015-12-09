@@ -48,11 +48,11 @@ from .field import Field, DateTimeField, RadioField, UriType, Link, localizable_
 
 _ = pytis.util.translations('pytis-web')
 
-    
+
 class BadRequest(Exception):
     """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
     pass
-    
+
 class Exporter(lcg.Content):
     """Helper class to simplify returning exported content in AJAX responses.
 
@@ -74,7 +74,7 @@ class Form(lcg.Content):
 
     The form instance behaves as any other LCG Content element.  The HTML
     rendering is done in the export phase.
-    
+
     URI provider interface
 
     URI provider makes Pytis web forms independent on the application's URI
@@ -82,7 +82,7 @@ class Form(lcg.Content):
     situations (determined by function arguments).
 
     The function 'uri_provider' must accept three positional arguments:
-    
+
       record -- the 'pytis.presentation.PresentedRow' instance
       kind -- one of 'UriType' constants.  It is used for distinction of
         the purpose, for which the uri is used (eg. for a field link, image
@@ -103,7 +103,7 @@ class Form(lcg.Content):
         argument -- the internal python value of the field's inner type.
         The function will return an URI or Link instance as above for
         given array value.
-        
+
     """
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
@@ -133,7 +133,7 @@ class Form(lcg.Content):
             global actions (see 'pytis.presentation.ActionContext').  The
             default value (None) means to use the actions as defined in the
             specification.
-            
+
         """
         super(Form, self).__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
@@ -168,8 +168,8 @@ class Form(lcg.Content):
                      ('__invoked_from', self.__class__.__name__),
                      ] + action.kwargs().items()] +
                    action.form_content(g, record, enabled) +
-                   [g.button(g.span(action.title()), title=action.descr(),
-                             disabled=not enabled, type='submit',
+                   [g.button(g.span('', cls='icon') + g.span(action.title(), cls='label'),
+                             title=action.descr(), disabled=not enabled, type='submit',
                              cls='action-' + action.id() + (not enabled and ' disabled' or ''))],
                    action=uri)
             for action, enabled in self._visible_actions(context, record)]
@@ -261,15 +261,15 @@ class Form(lcg.Content):
 
 class FieldForm(Form):
     """Form with formattable fields."""
-    
+
     def __init__(self, *args, **kwargs):
         super(FieldForm, self).__init__(*args, **kwargs)
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
-        
+
     def _field(self, id, multirow=False):
         return Field.create(self._row, self._view.field(id), self, self._uri_provider,
                             multirow=multirow)
-        
+
     def _export_field(self, context, field, editable=False):
         if editable:
             result = field.editor(context)
@@ -309,7 +309,7 @@ class FieldForm(Form):
         # instance is reused and filled with table data row by row).
         interpolated = context.localize(template.interpolate(export_field))
         return g.escape(interpolated)
-    
+
 
 class LayoutForm(FieldForm):
     """Form with fields arranged according to pytis layout specification."""
@@ -323,7 +323,7 @@ class LayoutForm(FieldForm):
 
         This class tries to encapsulate some of the group export logic to make
         the '_export_group()' method more readable.
-        
+
         """
         def __init__(self):
             self._content = []
@@ -331,11 +331,11 @@ class LayoutForm(FieldForm):
             self._has_labeled_items = False
             self._allow_right_aligned_fields = False
             self._last_field_was_right_aligned = False
-            
+
         def append(self, content, label=None, fullsize=True, right_aligned=False,
                    needs_panel=False):
             """Append exported content to the group .
-            
+
             Arguments:
               content -- exported content of one group item.
               label -- exported label of one group item.  This is typically
@@ -353,7 +353,7 @@ class LayoutForm(FieldForm):
                 panel.  If the group is only a composition of nested groups, it
                 does not need a panel, if it contains fields and other directly
                 visible content needs a panel.
-              
+
             """
             self._content.append((label, content, fullsize, right_aligned))
             if needs_panel:
@@ -365,7 +365,7 @@ class LayoutForm(FieldForm):
                 self._has_labeled_items = True
             if needs_panel:
                 self._needs_panel = needs_panel
-                
+
         def needs_panel(self):
             return self._needs_panel
         def has_labeled_items(self):
@@ -374,7 +374,7 @@ class LayoutForm(FieldForm):
             return self._allow_right_aligned_fields
         def content(self):
             return self._content
-            
+
     def __init__(self, view, req, row, layout=None, **kwargs):
         if layout is None:
             layout = view.layout().group()
@@ -383,7 +383,7 @@ class LayoutForm(FieldForm):
         assert isinstance(layout, GroupSpec)
         self._layout = layout
         super(LayoutForm, self).__init__(view, req, row, **kwargs)
-        
+
     def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
         content = self._GroupContent()
@@ -520,7 +520,7 @@ class LayoutForm(FieldForm):
             return g.label((field.label, sign, ':'), for_=html_id, cls=cls)
         else:
             return None
-    
+
     def _export_field_help(self, context, field):
         return None
 
@@ -533,11 +533,11 @@ class _SingleRecordForm(LayoutForm):
     def __init__(self, view, req, row, layout=None, **kwargs):
         layout = layout or view.layout().group()
         super(_SingleRecordForm, self).__init__(view, req, row, layout=layout, **kwargs)
-        
+
     def _export_body(self, context):
         return [self._export_group(context, self._layout)]
-    
-    
+
+
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
@@ -560,7 +560,7 @@ class _SubmittableForm(Form):
           show_reset_button -- boolean flag indicating whether the form reset
             button is displayed.  Pressing this button will reset all form
             fields to their initial state.
-            
+
           See the parent classes for definition of the remaining arguments.
 
         """
@@ -570,7 +570,7 @@ class _SubmittableForm(Form):
         self._enctype = None
         self._last_validation_errors = []
         super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
-    
+
     def _export_form(self, context):
         g = context.generator()
         return [g.form((super(_SubmittableForm, self)._export_form(context) +
@@ -590,14 +590,17 @@ class _SubmittableForm(Form):
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden] + \
-            [g.button(g.span(label), name=name, value='1' if name else None,
-                      type='submit', title=_("Submit the form"))
+                  [g.button(g.span('', cls='icon') + g.span(label, cls='label'),
+                            name=name, value='1' if name else None,
+                            type='submit', title=_("Submit the form"), cls='submit')
              for name, label in self._submit_buttons]
         if self._show_cancel_button:
-            content.append(g.button(g.span(_("Cancel")), type='submit', name='_cancel', value='1'))
+            content.append(g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
+                                    type='submit', name='_cancel', value='1', cls='cancel'))
         if self._show_reset_button:
-            content.append(g.button(g.span(_("Reset")), type='reset', title=_("Undo all changes")))
-        return [g.div(content, cls='submit')]
+            content.append(g.button(g.span('', cls='icon') + g.span(_("Reset"), cls='label'),
+                                    type='reset', title=_("Undo all changes"), cls='reset'))
+        return [g.div(content, cls='submit-buttons')]
 
     def _field_order(self):
         """Return the order of visible fields in the form as a sequence of field ids."""
@@ -675,7 +678,7 @@ class ShowForm(_SingleRecordForm):
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
-    
+
     def __init__(self, view, req, row, multipart=None, show_footer=True, **kwargs):
         """Arguments:
 
@@ -722,7 +725,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return (self._export_errors(context) +
                 super(EditForm, self)._export_form(context) +
                 self._export_footer(context))
-    
+
     def _export_error(self, context, fid, message):
         g = context.generator()
         if fid:
@@ -793,10 +796,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _attachment_storage_get(self, req, row, storage):
         resource = storage.resource(req.param('filename'))
         return resource and self._resource2dict(resource)
-        
+
     def _attachment_storage_list(self, req, row, storage):
         return [self._resource2dict(r) for r in storage.resources()]
-    
+
     def _attachment_storage_update(self, req, row, storage):
         try:
             import json
@@ -1058,7 +1061,8 @@ class QueryFieldsForm(VirtualForm):
     def _export_submit(self, context):
         g = context.generator()
         # Translators: Button for manual filter invocation.
-        submit_button = g.button(g.span(_("Change filters")), type='submit', cls='apply-filters')
+        submit_button = g.button(g.span('', cls='icon') + g.span(_("Change filters"), cls='label'),
+                                 type='submit', cls='apply-filters')
         if self._immediate_filters:
             # Hide the submit button, but leave it in place for non-Javascript browsers.
             submit_button = g.noscript(submit_button)
@@ -1091,7 +1095,8 @@ class InlineEditForm(EditForm):
 
     def _export_submit(self, context):
         g = context.generator()
-        return [g.button(g.span(_("Save")), type='submit', name='save-edited-cell', value='1',
+        return [g.button(g.span('', cls='icon') + g.span(_("Save"), cls='label'),
+                         type='submit', name='save-edited-cell', value='1',
                          cls='save-edited-cell')]
 
     def _export_error(self, context, fid, message):
@@ -1103,17 +1108,17 @@ class FilterForm(EditForm):
     # This form is currently only used in Wiking Biblio CatalogNews module.
     # The whole thing needs some further work to be generally usable ...
     _CSS_CLS = 'edit-form filter-form'
-    
+
     def __init__(self, fields, req, row, **kwargs):
         view = ViewSpec(_("Filter"), fields)
         kwargs['reset'] = kwargs.get('reset') # Default to None in this class.
         kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
         super(FilterForm, self).__init__(view, req, row, **kwargs)
-        
+
     def _export_footer(self, context):
         return []
 
-    
+
 class BrowseForm(LayoutForm):
     _CSS_CLS = 'browse-form'
     _HTTP_METHOD = 'GET'
@@ -1598,7 +1603,7 @@ class BrowseForm(LayoutForm):
             (style.underline, 'text-decoration', lambda x: x and 'underline' or 'none'),
         ) if attr() is not None]
         return '; '.join(styles)
-    
+
     def _field_style(self, context, field, row):
         field_style = field.style
         if isinstance(field_style, collections.Callable):
@@ -1649,13 +1654,13 @@ class BrowseForm(LayoutForm):
             attr['style'] = style
         attr['data-pytis-row-key'] = row[self._key].export()
         return attr
-        
+
     def _columns_count(self):
         n = len(self._column_fields)
         if self._expand_row:
             n += 1 # One extra column for row expansion controls.
         return n
-    
+
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
         cells = [g.td(self._export_cell(context, row, n, field), align=self._align.get(field.id),
@@ -1685,7 +1690,7 @@ class BrowseForm(LayoutForm):
                  g.td(export_aggregation_value(data, op, field), cls='id-' + field.id)
                  for i, field in enumerate(self._column_fields)]
         return g.tr(cells, cls='aggregation-results ' + agg_id)
-    
+
     def _export_group_heading(self, context):
         group_heading = self._view.group_heading()
         if isinstance(group_heading, lcg.TranslatableText):
@@ -1697,7 +1702,7 @@ class BrowseForm(LayoutForm):
             return None
         g = context.generator()
         return g.tr(g.th(heading, colspan=self._columns_count()), cls='group-heading')
-    
+
     def _export_headings(self, context):
         g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
@@ -1891,8 +1896,7 @@ class BrowseForm(LayoutForm):
                         last=g.strong(str(first_record_offset + count_on_page)),
                         total=g.strong(str(row_count)))
         return g.div(summary, cls='summary')
-        
-    
+
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort') and self._user_sorting:
             sorting_column, direction = self._user_sorting
@@ -1909,7 +1913,7 @@ class BrowseForm(LayoutForm):
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string + "*")
         return pytis.data.WM(self._data_sorting[0][0], value, ignore_case=False)
-    
+
     def _export_index_search_controls(self, context):
         g = context.generator()
         field = self._field(self._sorting[0][0])
@@ -2034,13 +2038,16 @@ class BrowseForm(LayoutForm):
                         g.span(str(pages), cls='total-pages'),
                     ), cls="offset"),
                     g.span((
-                        g.button(g.span(_("Previous")), title=_("Go to previous page"),
+                        g.button(g.span('', cls='icon') + g.span(_("Previous"), cls='label'),
+                                 title=_("Go to previous page"),
                                  name='prev', value='1', disabled=(page == 0),
                                  type='submit', cls='prev-page'),
-                        g.button(g.span(_("Next")), title=_("Go to next page"),
+                        g.button(g.span(_("Next"), cls='label') + g.span('', cls='icon'),
+                                 title=_("Go to next page"),
                                  name='next', value='1', disabled=(page + 1) * limit >= count,
                                  type='submit', cls='next-page'),
-                        g.button(g.span(_("Search")), type='submit', cls='search',
+                        g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
+                                 type='submit', cls='search',
                                  style=show_search_field and 'display:none' or None)
                         if self._allow_search_field else '',
                     ), cls="buttons"),
@@ -2052,8 +2059,8 @@ class BrowseForm(LayoutForm):
                                           onchange='this.form.submit(); return true',
                                           options=[(str(i), i) for i in limits])),
                                 cls='limit'),
-                         g.noscript(g.button(g.span(_("Go")), type='submit',
-                                             cls='goto-page')))
+                         g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
+                                             type='submit', cls='goto-page')))
             if controls:
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
@@ -2065,8 +2072,10 @@ class BrowseForm(LayoutForm):
                              name='query', id=ids.search, cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
                      # Translators: Search button label.
-                     g.button(g.span(_("Search")), type='submit', cls='search'),
-                     g.button(g.span(_("Cancel")), type='submit', cls='cancel-search')),
+                     g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
+                              type='submit', cls='search'),
+                     g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
+                              type='submit', cls='cancel-search')),
                     cls='query', style=not show_search_field and 'display:none' or None,
                 )
                 content.insert(0, search_field)
@@ -2140,7 +2149,7 @@ class BrowseForm(LayoutForm):
             return lcg.concat(self._export_table(context))
         else:
             return super(BrowseForm, self).export(context)
-        
+
     def heading_info(self):
         if self._query_fields_form:
             row = self._query_fields_form.row()
@@ -2168,18 +2177,18 @@ class BrowseForm(LayoutForm):
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
         return self._current_profile
-        
+
     def condition(self):
         """Return the current form condition as 'pytis.data.Operator' instance."""
         return self._conditions()
-        
+
     def arguments(self):
         """Return the current select arguments as a dictionary."""
         return self._arguments
 
     def rows(self):
         """Return a generator returning all form data rows as 'pytis.data.Row' instances.
-        
+
         This method can not be called inside 'export()' and vice versa (export
         can not be called before the row generator is exhausted).
 
@@ -2188,7 +2197,7 @@ class BrowseForm(LayoutForm):
 
     def row_count(self):
         """Return the number of rows in the form as integer.
-        
+
         This method will return None before either 'export()' or 'rows()' is called.
 
         """
@@ -2283,7 +2292,7 @@ class ListView(BrowseForm):
     def export(self, context):
         self._exported_row_index = []
         return super(ListView, self).export(context)
-        
+
     def _export_row(self, context, row, n, row_id):
         layout = self._list_layout
         g = context.generator()
@@ -2377,9 +2386,9 @@ class ItemizedView(BrowseForm):
     This form behaves similarly to a regular 'BrowseForm', but the records are
     presented as items in an unordered bullet list rather than as table rows.
     """
-    
+
     _CSS_CLS = 'itemized-view'
-    
+
     def __init__(self, view, req, row, columns=None, separator=', ', template=None, **kwargs):
         """Arguments:
 
@@ -2398,7 +2407,7 @@ class ItemizedView(BrowseForm):
             instance as an argument.
 
           See the parent classes for definition of the remaining arguments.
-          
+
         """
         if not columns:
             columns = (view.columns()[0],) # Include just the first column by default.
@@ -2408,7 +2417,7 @@ class ItemizedView(BrowseForm):
                 isinstance(template, (lcg.TranslatableText, collections.Callable)))
         self._separator = separator
         self._template = template
-        
+
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
         template = self._template
@@ -2422,11 +2431,11 @@ class ItemizedView(BrowseForm):
         if self._row_actions:
             content += self._export_popup_ctrl(context, row, 'li')
         return g.li(content, id=row_id)
-        
+
     def _export_group_heading(self, context):
         # TODO: Create multi-level lists.
         return None
-    
+
     def _wrap_exported_rows(self, context, rows, page, pages):
         g = context.generator()
         return g.ul(lcg.concat(rows))
@@ -2445,10 +2454,10 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     Each checkbox column is represented by one request parameter.  Its name is
     the column identifier and the values are the key column values of all
     checked rows.
-    
+
     """
     _HTTP_METHOD = 'POST'
-    
+
     def __init__(self, view, req, row, check_columns=None, limits=(), limit=None, **kwargs):
         """Arguments:
 
@@ -2477,7 +2486,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
         else:
             return super(CheckRowsForm, self)._export_cell(context, row, n, field,
                                                            editable=editable)
-        
+
 
 class EditableBrowseForm(BrowseForm):
     """Web BrowseForm with editable fields in certain columns.
@@ -2495,7 +2504,7 @@ class EditableBrowseForm(BrowseForm):
 
     """
     _EXPORT_EMPTY_TABLE = True
-    
+
     def __init__(self, view, req, row, editable_columns=None, set_row_callback=None,
                  allow_insertion=False, extra_rows=0, **kwargs):
         """Arguments:
@@ -2611,7 +2620,7 @@ class EditableBrowseForm(BrowseForm):
         else:
             removed_keys = ()
         return removed_keys
-            
+
     def _table_rows(self):
         rows = super(EditableBrowseForm, self)._table_rows()
         self._row.inserted_row_number = None
