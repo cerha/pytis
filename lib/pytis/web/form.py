@@ -547,12 +547,15 @@ class _SubmittableForm(Form):
                  show_cancel_button=False, show_reset_button=True, **kwargs):
         """Arguments:
 
-          submit_buttons -- submit buttons as a sequence of (NAME, LABEL)
-            pairs, where LABEL is the button label and NAME is the name of the
+          submit_buttons -- submit buttons as a sequence of (NAME, LABEL, ICON)
+            triples, where LABEL is the button label, NAME is the name of the
             corresponding request parameter which has the value '1' if the form
-            was submitted using given submit button.  If NAME is None, no
-            request parameter is sent by the button.  The default is just one
-            button labeled "Submit" with no NAME.
+            was submitted using given submit button and ICON is the icon CSS
+            class name.  If NAME is None, no request parameter is sent by the
+            button.  Just two items (NAME, LABEL) may be present when no icon
+            is desired.  The actual icon properties for given class name must
+            be defined within the stylesheet.  The default is just one button
+            labeled "Submit" with no NAME and the default submit icon.
           show_cancel_button -- boolean flag indicating whether the cancel
             button is displayed.  The cancel button will appear as another
             submit button with name '_cancel'.  If pressed, the form is
@@ -591,11 +594,12 @@ class _SubmittableForm(Form):
         invoked_from = self._req.param('__invoked_from')
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
-        content = [g.hidden(name, value) for name, value in hidden] + \
-                  [g.button(g.span('', cls='icon') + g.span(label, cls='label'),
-                            name=name, value='1' if name else None,
-                            type='submit', title=_("Submit the form"), cls='submit')
-             for name, label in self._submit_buttons]
+        content = [g.hidden(name, value) for name, value in hidden]
+        for item in self._submit_buttons:
+            name, label, icon = item if len(item) == 3 else tuple(item) + ('default-submit-icon',)
+            content.append(g.button(g.span('', cls='icon ' + icon) + g.span(label, cls='label'),
+                                    name=name, value='1' if name else None,
+                                    type='submit', title=_("Submit the form"), cls='submit'))
         if self._show_cancel_button:
             content.append(g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
                                     type='submit', name='_cancel', value='1', cls='cancel'))
