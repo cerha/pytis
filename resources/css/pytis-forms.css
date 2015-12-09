@@ -268,27 +268,30 @@
     padding: 0.4em;
     padding-top: 0;
 }
-.list-form-controls span.offset,
-.list-form-controls span.buttons,
-.list-form-controls span.limit {
+.list-form-controls .offset,
+.list-form-controls .buttons,
+.list-form-controls .limit {
     white-space: nowrap;
     display: inline-block;
 }
-.list-form-controls span.offset,
-.list-form-controls span.buttons {
+.list-form-controls .offset,
+.list-form-controls .buttons {
     margin-right: 1em;
 }
-.list-form-controls span.current-page,
-.list-form-controls span.total-pages {
+.list-form-controls .buttons button {
+    margin-right: .3em;
+}
+.list-form-controls .current-page,
+.list-form-controls .total-pages {
     font-weight: bold;
 }
-.list-form-controls span.current-page { display: none; }
+.list-form-controls .current-page { display: none; }
 
 @media only screen and (max-width: 700px) {
 .list-form-controls .index-search-controls { display: none; }
 .top-list-form-controls .offset select { display: none; }
-.top-list-form-controls span.current-page { display: inline; }
-.top-list-form-controls span.limit { display: none; }
+.top-list-form-controls .current-page { display: inline; }
+.top-list-form-controls .limit { display: none; }
 }
 
 .pytis-form.browse-form #found-record {
