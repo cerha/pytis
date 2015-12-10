@@ -1571,6 +1571,7 @@ class BrowseForm(LayoutForm):
             items = [lcg.PopupMenuItem(action.title(),
                                        tooltip=action.descr(),
                                        enabled=enabled,
+                                       icon=action.icon(),
                                        uri=self._uri_provider(row, UriType.ACTION, action))
                      for action, enabled in self._visible_actions(context, row)]
             ctrl = lcg.PopupMenuCtrl(_("Popup the menu of actions for this record"),
