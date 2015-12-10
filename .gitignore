@@ -2,9 +2,9 @@
 *.pyo
 *.mo
 *~
+*_flymake.py
 /TAGS
+/doc/html/
 /translations/*.pot
 /translations/*.d
 /resources/translations/
-*_flymake.py
-/doc/html/
