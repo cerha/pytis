@@ -1072,7 +1072,7 @@ class QueryFieldsForm(VirtualForm):
         if self._immediate_filters:
             # Hide the submit button, but leave it in place for non-Javascript browsers.
             submit_button = g.noscript(submit_button)
-        return [g.div(submit_button, cls='submit')]
+        return [g.div(submit_button, cls='submit-buttons')]
 
     def _export_javascript(self, context):
         script = super(QueryFieldsForm, self)._export_javascript(context)

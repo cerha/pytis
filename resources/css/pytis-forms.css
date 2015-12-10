@@ -71,6 +71,7 @@
 }
 .pytis-form.query-fields-form > .submit-buttons button {
     margin: 0;
+    padding: 1px 5px;
 }
 
 .pytis-form .group div.group {
