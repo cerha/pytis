@@ -703,7 +703,6 @@ class InputField(object, KeyHandler, CommandHandler):
         self.reset()
 
     def _cmd_context_menu(self):
-        ctrl = wx_focused_window()
         for ctrl, set_editable, set_color in self._controls:
             size = ctrl.GetSize()
             self._on_context_menu(ctrl, position=(size.x / 3, size.y / 2))
