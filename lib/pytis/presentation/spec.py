@@ -1444,18 +1444,43 @@ class ViewSpec(object):
             but you can still abort the operation by rollback of the
             transaction (if the underlying database engine supports it).
 
-          on_new_record -- akce vložení nového záznamu.  Pokud je None, bude
-            provedena výchozí akce (otevření PopupEditForm nad danou
-            specifikací).  Předáním funkce lze předefinovat přidání nového
-            záznamu v daném náhledu libovolnou vlastní funkcionalitou.  Funkce
-            musí akceptovat klíčový argument 'prefill' (viz.
-            'pytis.form.new_record()').
+          on_new_record -- user defined record insertion function.  The default
+            response to the users request to insert a new record is opening a
+            form and inserting a new row into the underlying database object
+            after its submission.  The user defined function may completely (or
+            partially, see return value) override this behavior.  The function
+            must accept a keyword argument 'prefill' which contains a
+            dictionary with field identifiers as keys and 'Value' instances as
+            values.  Optionally, the function may also accept a keyword
+            argument 'transaction' containing the transaction for database
+            operations.  When the insertion is successful, the function should
+            return the inserted row as a 'PresentedRow' instance.  The user
+            interface will refresh the current form and display this row as the
+            current row if possible.  If the insertion didn't succeed (either
+            for error or user's exit), None should be returned.  The third
+            option is to return a dictionary.  In this case the dictionary is
+            used as 'prefill' and default handling is invoked with this prefill
+            replacing the original one.
 
-          on_edit_record -- akce editace záznamu.  Pokud je None, bude
-            provedena výchozí akce (otevření PopupEditForm nad danou
-            specifikací).  Předáním funkce jednoho klíčového argumentu,
-            jímž je instance 'PresentedRow', lze předefinovat editaci záznamu
-            libovolnou vlastní funkcionalitou.
+          on_copy_record -- user defined record copying function.  If defined,
+            it will be used instead of 'on_new_record' when the new record is
+            created by copying an existing record.  This function (unlike
+            'on_new_record') will receive one additional keyword argument 'row'
+            which contains the copied record as a 'PresentedRow' instance.  The
+            other arguments ('prefill' and 'transaction') have the same meaning
+            as in 'on_new_record'.  If not defined and 'on_new_record' is
+            defined, 'on_new_record' is used also for copying.  Handling the
+            return value is the same as for 'on_new_record'.
+
+          on_edit_record -- user defined record edit function.  The default
+            response to the users request to edit an existing record is opening
+            a form and updating the underlying database object after its
+            submission.  The user defined function may completely (or
+            partially) override this behavior.  The function must accept a
+            keyword argument 'row' which contains the edited row as a
+            'PresentedRow' instance.  The function may access the transaction
+            for database operations through the method 'row.transaction()'.
+            The function's return value is ignored.
 
           on_delete_record -- user defined record deletion function.  If
             defined, it must be a function of one argument (the current record
