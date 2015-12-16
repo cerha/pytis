@@ -345,6 +345,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     @classmethod
     def focused(cls):
+        print '--', wx_focused_window()
         field = cls._focused_field
         if field is not None and field._alive():
             return field
