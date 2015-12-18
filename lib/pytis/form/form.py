@@ -2834,16 +2834,15 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._mode != self.MODE_VIEW
 
     def _cmd_navigate(self, back=False):
-        order = ([f for f in self._fields if f.enabled()] +
-                 [w for w in self._tab_navigated_widgets if w.IsEnabled()])
-        current = pytis.form.InputField.focused() or wx_focused_window()
+        widgets = (reduce(lambda w, f: w + (f.tab_navigated_widgets() if f.enabled() else ()),
+                          self._fields, ())
+                   + tuple(self._tab_navigated_widgets))
+        order = [w for w in widgets if w.IsEnabled()]
+        current = wx_focused_window()
         if current in order:
             i = (order.index(current) + (-1 if back else 1)) % len(order)
             target = order[i]
-            if target in self._fields:
-                target.set_focus()
-            else:
-                target.SetFocus()
+            target.SetFocus()
 
     # Public methods
 

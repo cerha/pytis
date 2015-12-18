@@ -244,12 +244,11 @@ class InputField(object, KeyHandler, CommandHandler):
     _DEFAULT_HEIGHT = 1
     _DEFAULT_BACKGROUND_COLOR = None
 
-    _focused_field = None
     _last_focused_field = None
 
     @classmethod
     def _get_command_handler_instance(cls):
-        return InputField.focused()
+        return InputField.last_focused_field()
 
     @classmethod
     def create(cls, parent, row, id, inline=False, **kwargs):
@@ -322,34 +321,16 @@ class InputField(object, KeyHandler, CommandHandler):
         return field(parent, row, id, inline=inline, **kwargs)
 
     @classmethod
-    def _defocus(cls, field):
-        if cls._focused_field is field:
-            cls._last_focused_field = cls._focused_field
-            cls._focused_field = None
+    def set_last_focused_field(cls, field):
+        cls._last_focused_field = field
 
     @classmethod
-    def _focus(cls, field):
-        # import weakref
-        current = cls.focused()
-        cls._focused_field = field  # weakref.ref(field)
-        if current is not None:
-            cls._last_focused_field = current
-
-    @classmethod
-    def _last_focused(cls):
+    def last_focused_field(cls):
         field = cls._last_focused_field
-        cls._last_focused_field = None
         if field is not None and field._alive():
             return field
-        return None
-
-    @classmethod
-    def focused(cls):
-        print '--', wx_focused_window()
-        field = cls._focused_field
-        if field is not None and field._alive():
-            return field
-        return None
+        else:
+            return None
 
     # Instance methods
 
@@ -385,7 +366,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self._guardian = guardian
         self._id = id = spec.id()
         self._inline = inline
-        self._want_focus = None
+        self._want_focus = False
         self._last_focused_ctrl = None
         self._connection_closed = False
         if row.new():
@@ -400,10 +381,10 @@ class InputField(object, KeyHandler, CommandHandler):
         self._enabled = not readonly and row.editable(id)
         self._callback_registered = False
         self._skipped_controls = {}
-        self._needs_validation = False
-        self._valid = False
+        self._needs_validation = True
+        self._last_validation_error = None
         self._needs_check = False
-        self._check_ok = True
+        self._last_check_result = None
         self._init_attributes()
         self._call_on_idle = []
         self._label = self._create_label(parent)
@@ -434,8 +415,6 @@ class InputField(object, KeyHandler, CommandHandler):
     def _init_ctrl(self, ctrl):
         KeyHandler.__init__(self, ctrl)
         wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
-        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
-        wx_callback(wx.EVT_SET_FOCUS, ctrl, self._on_set_focus)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, lambda e: self._on_context_menu(ctrl))
         wx_callback(wx.EVT_NAVIGATION_KEY, ctrl, self._on_navigation(ctrl))
         if self._spec.descr() is not None:
@@ -516,23 +495,30 @@ class InputField(object, KeyHandler, CommandHandler):
             elif isinstance(item, UICommand):
                 item = mitem(item.clone(_command_handler=handler(item)))
             menu.append(item)
-        ctrl = self._last_focused_ctrl or self._controls[0][0]
-        popup_menu(ctrl, menu, position=position, keymap=global_keymap())
+        popup_menu(self._current_ctrl(), menu, position=position, keymap=global_keymap())
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())
 
+    def _valid(self):
+        return self._last_validation_error is None
+
     def _check(self):
-        result = self._row.check(self.id())
-        return result
+        return self._row.check(self.id())
 
     def _on_idle(self, event):
+        w = wx_focused_window()
+        if w in [x[0] for x in self._controls]:
+            self._last_focused_ctrl = w
+            InputField.set_last_focused_field(self)
+        elif self._want_focus and self.enabled():
+            self._set_focus(self._current_ctrl())
+        self._want_focus = False
         if self._needs_validation or self._needs_check:
             transaction = self._row.transaction()
             # Don't validate when the transaction is already closed.
             if transaction is None or transaction.open():
                 valid_before = self.valid()
-                msg = None
                 if self._needs_validation:
                     self._needs_validation = False
                     try:
@@ -540,20 +526,17 @@ class InputField(object, KeyHandler, CommandHandler):
                     except (pytis.data.DBRetryException, pytis.data.DBSystemException):
                         error = None
                         self._connection_closed = True
-                    msg = error.message() if error else None
-                    self._valid = error is None
+                    self._last_validation_error = error
                     self._on_change_hook()
                 if self._needs_check:
                     self._needs_check = False
-                    error = self._check()
-                    msg = error if msg is None else msg
-                    self._check_ok = error is None
+                    self._last_check_result = self._check()
                 if self.valid() != valid_before:
                     self._on_validity_change()
-                if msg:
-                    message(msg)
-        if self._want_focus and not self._has_focus():
-            self._set_focus(self._want_focus)
+                if self._last_validation_error:
+                    message(self._last_validation_error.message())
+                elif self._last_check_result:
+                    message(self._last_check_result)
         while self._call_on_idle:
             callback = self._call_on_idle.pop()
             callback()
@@ -577,26 +560,12 @@ class InputField(object, KeyHandler, CommandHandler):
         self._update_background_color()
 
     def _current_ctrl(self):
-        # Note, there may be several active controls, for example in range fields...
+        """
+
+        Note, there may be several active controls, for example in range fields...
+
+        """
         return self._last_focused_ctrl or self._controls[0][0]
-
-    def _on_set_focus(self, event):
-        self._last_focused_ctrl = event.GetEventObject()
-        self._want_focus = None
-        last = InputField._last_focused()
-        # TODO: Zkusit to přes `wx.Window.SetFocusFromKbd()'
-        if last is not None and last is not self and last.enabled() and last._modified():
-            if not last.validate(interactive=False):
-                last.set_focus()
-                return True
-        InputField._focus(self)
-        event.Skip()
-        return True
-
-    def _on_kill_focus(self, event):
-        InputField._defocus(self)
-        event.Skip()
-        return True
 
     def _change_callback(self):
         # Field value change signalization from PresentedRow.
@@ -681,10 +650,6 @@ class InputField(object, KeyHandler, CommandHandler):
                 if nb.GetPage(i) == parent:
                     nb.SetSelection(i)
         ctrl.SetFocus()
-
-    def _has_focus(self):
-        """Return true if the field currently has keyboard focus."""
-        return InputField.focused() is self
 
     def _alive(self):
         try:
@@ -776,12 +741,11 @@ class InputField(object, KeyHandler, CommandHandler):
         per field check function.  If either of these fails, False is returned.
 
         """
-        return self._valid and self._check_ok
+        return self._valid() and self._last_check_result is None
 
     def set_focus(self, reset=False):
         """Make the field active for user input."""
-        InputField._last_focused()  # Focus set programatically - forget the last focused field.
-        self._want_focus = self._current_ctrl()
+        self._want_focus = True
 
     def enabled(self):
         """Return true if the field is editable by the user.
@@ -813,6 +777,10 @@ class InputField(object, KeyHandler, CommandHandler):
 
         """
         return self._connection_closed
+
+    def tab_navigated_widgets(self):
+        """Return a tuple of 'wx.Window' subclasses present in form tab navigation."""
+        return (self._controls[0][0],)
 
 
 class Unlabeled:
@@ -900,10 +868,10 @@ class TextField(InputField):
         text = self._update_completions
         if text is not None:
             self._update_completions = None
-            # If the field has no focus, the change is *most likely* not originated by the user, so
-            # we we don't popup the selection (the second argument to update()).
+            # If the field has no focus, the change is *most likely* not originated by the
+            # user, so we we don't popup the selection (the second argument to update()).
             self._completer.update(self._row.completions(self.id(), prefix=text),
-                                   self._enabled and self._has_focus())
+                                   self._enabled and wx_focused_window() == self._ctrl)
 
     def _on_change(self, event=None):
         post_process = self._post_process_func()
@@ -1057,6 +1025,9 @@ class PasswordField(StringField):
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
 
+    def tab_navigated_widgets(self):
+        return super(PasswordField, self).tab_navigated_widgets() + (self._ctrl2,)
+
 class SpinnableField(InputField):
     """Field capable of spinning its value up/down (incrementing/decrementing)."""
 
@@ -1094,7 +1065,7 @@ class SpinnableField(InputField):
             ctrl.SetSelection(-1, -1)
 
     def _can_spin(self, up=True):
-        return self._valid
+        return self._valid()
 
 
 class NumericField(TextField, SpinnableField):
@@ -1488,7 +1459,7 @@ class GenericCodebookField(GenericEnumerationField):
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' argument."""
         value = self._row[self.id()]
-        if self._valid and value.value():
+        if self._valid() and value.value():
             return {self._type.enumerator().value_column(): value}
         else:
             return None
@@ -1520,7 +1491,7 @@ class GenericCodebookField(GenericEnumerationField):
             prefill = prefill_function(self._row)
         else:
             prefill = {}
-        if not self._valid and self._modified():
+        if not self._valid() and self._modified():
             prefill[value_column] = self._get_value()
         spec_name = fspec.codebook_insert_spec() or self._cb_name
         result = new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
@@ -1603,7 +1574,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _update_display(self):
         if self._display:
-            if self._readonly or self._valid:
+            if self._readonly or self._valid():
                 display = self._row.display(self.id())
             else:
                 display = ''
@@ -1612,7 +1583,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _on_invoke_selection(self, ctrl, alternate=False):
         value_column = self._type.enumerator().value_column()
         value = self._get_value()
-        if ((not self._valid and value and self._modified() and
+        if ((not self._valid() and value and self._modified() and
              isinstance(self.type(), pytis.data.String))):
             begin_search = (value_column, value)
         elif alternate:
@@ -1692,11 +1663,6 @@ class ListField(GenericCodebookField, CallbackHandler):
         i = event.GetIndex()
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
-
-    # def _on_kill_focus(self, event):
-    #     if self._selected_item is not None:
-    #         self._list.EnsureVisible(self._selected_item)
-    #     return super(ListField, self)._on_kill_focus(event)
 
     def _reload_enumeration(self):
         if self._last_set_invalid_value is not None:
@@ -2794,6 +2760,9 @@ class RangeField(InputField):
         else:
             value = [ctrl.GetValue() for ctrl in self._inputs]
         return self._row.validate(self.id(), tuple(value))
+
+    def tab_navigated_widgets(self):
+        return self._inputs
 
 
 class NumericRangeField(RangeField, NumericField):
