@@ -385,6 +385,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self._last_validation_error = None
         self._needs_check = False
         self._last_check_result = None
+        self._had_focus = False
         self._init_attributes()
         self._call_on_idle = []
         self._label = self._create_label(parent)
@@ -508,7 +509,8 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _on_idle(self, event):
         w = wx_focused_window()
-        if w in [x[0] for x in self._controls]:
+        has_focus = w in [x[0] for x in self._controls]
+        if has_focus:
             self._last_focused_ctrl = w
             InputField.set_last_focused_field(self)
         elif self._want_focus and self.enabled():
@@ -537,10 +539,18 @@ class InputField(object, KeyHandler, CommandHandler):
                     message(self._last_validation_error.message())
                 elif self._last_check_result:
                     message(self._last_check_result)
+        if self._had_focus and not has_focus:
+            self._on_defocus()
+        self._had_focus = has_focus
         while self._call_on_idle:
             callback = self._call_on_idle.pop()
             callback()
         event.Skip()
+
+    def _on_defocus(self):
+        """Field lost focus handler."""
+        if not self._valid():
+            message(self.spec().label() + ': ' + self._last_validation_error.message(), beep_=True)
 
     def _on_change_hook(self):
         """Handle field value changes.
@@ -873,6 +883,13 @@ class TextField(InputField):
             self._completer.update(self._row.completions(self.id(), prefix=text),
                                    self._enabled and wx_focused_window() == self._ctrl)
 
+    def _on_defocus(self):
+        super(TextField, self)._on_defocus()
+        if not self._valid():
+            # This works around the problem of invisible selection of invalid
+            # field (when the field background color is set).
+            self._ctrl.SetSelection(0, 0)
+
     def _on_change(self, event=None):
         post_process = self._post_process_func()
         if post_process:
@@ -1024,6 +1041,11 @@ class PasswordField(StringField):
         else:
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
+
+    def _on_defocus(self):
+        super(PasswordField, self)._on_defocus()
+        if not self._valid():  # See TextField._on_defocus() for info on this hack.
+            self._ctrl2.SetSelection(0, 0)
 
     def tab_navigated_widgets(self):
         return super(PasswordField, self).tab_navigated_widgets() + (self._ctrl2,)
@@ -2760,6 +2782,11 @@ class RangeField(InputField):
         else:
             value = [ctrl.GetValue() for ctrl in self._inputs]
         return self._row.validate(self.id(), tuple(value))
+
+    def _on_defocus(self):
+        super(RangeField, self)._on_defocus()
+        if not self._valid():  # See TextField._on_defocus() for info on this hack.
+            self._input[1].SetSelection(0, 0)
 
     def tab_navigated_widgets(self):
         return self._inputs
