@@ -1103,10 +1103,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       column_groups=None):
         """Vrať sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
-            t = self._pdbb_get_table_type(binding.table(), binding.column(), noerror=True)
-            if t:
-                t = self._pdbb_apply_type_kwargs(t, binding)
-            return t
+            return self.find_column(binding.id()).type()
         result = None
         if operations is not None:
             for aggregate, id_, name in operations:

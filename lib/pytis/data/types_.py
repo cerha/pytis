@@ -2678,10 +2678,14 @@ class LTree(Type):
 
     Constructor arguments:
 
-      text -- if true, handle the type values as text values, otherwise
-        handle them as true ltree values.  This makes difference in
-        sorting -- when true, sort textually, when false, sort
-        lexicographically.
+      text -- if true, handle the type values as text values, otherwise handle
+        them as true ltree values.  This makes difference in sorting -- when
+        true, sort textually, when false, sort as ltree.  This may be
+        particularly useful when ltree values contain national characters,
+        which are not sorted correctly by PostgreSQL ltree sorting.  Anyway,
+        when true, the values must be padded to a fixed width of individual
+        ltree components (such as '00010.00008.00124' instead of '10.8.124') in
+        order to get the expected results with textual sorting.
 
     """
     VM_TREE_FORMAT = 'VM_TREE_FORMAT'
@@ -2695,7 +2699,7 @@ class LTree(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, text=True, **kwargs):
+    def _init(self, text=False, **kwargs):
         super(LTree, self)._init(**kwargs)
         self._text = text
 
