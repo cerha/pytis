@@ -82,7 +82,7 @@ class PytisService(rpyc.Service):
         """Return 'text'.
 
         This is useful for checking whether the service is working.
-        
+
         """
         return text
 
@@ -134,29 +134,19 @@ class PytisUserService(PytisService):
     def __init__(self, *args, **kwargs):
         self._gpg_instance = None
         super(PytisUserService, self).__init__(*args, **kwargs)
-        self._pytis_clean_tempdir()
 
-    def _pytis_clean_tempdir(self):
-        tempdir = tempfile.gettempdir()
-        for f in os.listdir(tempdir):
-            if f.startswith('pytis'):
-                try:
-                    os.remove(os.path.join(tempdir, f))
-                except:
-                    pass
-    
     def exposed_restart(self):
         """Restart the user service."""
         file_name = sys.argv[0]
         if file_name[:-4] == '.pyc':
             file_name = file_name[:-1]
         execfile(file_name)
-        
+
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
 
         If the text can't be retrieved, return 'None'.
-        
+
         """
         import win32clipboard
         win32clipboard.OpenClipboard()
@@ -166,14 +156,14 @@ class PytisUserService(PytisService):
             data = None
         win32clipboard.CloseClipboard()
         return data
-        
+
     def exposed_set_clipboard_text(self, text):
         """Set clipboard content to text.
 
         Arguments:
 
           text -- text to store into the clipboard; unicode
-          
+
         """
         assert isinstance(text, unicode), text
         import win32clipboard
@@ -426,7 +416,7 @@ class PytisUserService(PytisService):
           encoding -- output encoding, string or None
           mode -- default mode for opening the file
           decrypt -- if true then decrypt the file contents
-        
+
         """
         service = self
         class Wrapper(object):
@@ -463,7 +453,7 @@ class PytisUserService(PytisService):
                 self._f.close()
             def exposed_name(self):
                 return self._filename
-        handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
+        handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
         return Wrapper(handle, filename, encoding, mode)
 
     def exposed_select_directory(self):
@@ -575,7 +565,7 @@ class PytisAdminService(PytisService):
         now = time.time()
         add_task('pytis_service_stop', 'sc stop PytisService', now + delay * 60)
         add_task('pytis_service_start', 'sc start PytisService', now + (delay + 1) * 60)
-        
+
     def exposed_register_user(self, user, port):
         assert isinstance(user, basestring), user
         assert isinstance(port, int), port
@@ -634,7 +624,7 @@ class PasswordAuthenticator(object):
         self._challenges = set()
         self._lock = threading.Lock()
         self._ssh_tunnel_dead = ssh_tunnel_dead
-    
+
     def __call__(self, sock):
         n = len(self._password)
         challenge = sock.recv(n)

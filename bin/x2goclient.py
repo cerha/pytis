@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-12-07 17:29'
+_VERSION = '2016-01-06 21:55'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -39,7 +39,7 @@ XCONFIG_DEFAULTS = {
         'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
         'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
         'parameters': [':20', '-clipboard', '-noprimary', '-multiwindow',
-                       '-nowinkill', '-nounixkill', '-swcursor', ],
+                       '-nowinkill', '-nounixkill', '-swcursor'],
     },
     'VcXsrv_pytis_desktop': {
         'display': 'localhost:30',
@@ -1014,6 +1014,16 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             info.set_port(port)
             info.write()
 
+    @classmethod
+    def _pytis_clean_tempdir(class_):
+        tempdir = tempfile.gettempdir()
+        for f in os.listdir(tempdir):
+            if f.startswith(str('pytistmp')):
+                try:
+                    os.remove(os.path.join(tempdir, f))
+                except:
+                    pass
+
     def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
         process = None
@@ -1481,6 +1491,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             ssh_client = class_.pytis_ssh_connect()
             if ssh_client is None:
                 return
+        # Clean tempdir
+        class_._pytis_clean_tempdir()
         # Create client
         _auth_info.update_args(args)
         client = class_(args, use_cache=False, start_xserver=False,
