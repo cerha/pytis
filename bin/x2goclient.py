@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-01-06 21:55'
+_VERSION = '2016-01-06 22:26'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1327,6 +1327,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         shutil.move(pytis_directory, install_directory)
         shutil.rmtree(old_install_directory)
         shutil.rmtree(tmp_directory)
+        f_config = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
+        if os.access(f_config, os.W_OK):
+            os.remove(f_config)
         app.info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
