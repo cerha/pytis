@@ -1027,9 +1027,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                               transaction=transaction, spec_kwargs=spec_kwargs,
                                               copied_row=copied_row)
             else:
-                top = self.current_form()
-                if isinstance(top, pytis.form.Refreshable):
-                    top.refresh()
+                Application.COMMAND_REFRESH.invoke(interactive=False)
         else:
             if view.arguments() is not None:
                 message(_("This form doesn't allow insertion."), beep_=True)
