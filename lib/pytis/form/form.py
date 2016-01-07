@@ -56,11 +56,11 @@ class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
     def __init__(self, *args, **kwargs):
         log(OPERATIONAL, "%s instantiated:" % self.__class__.__name__, (args, kwargs))
-        
+
 
 class FormSettings(FormProfile):
     pass
-        
+
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
 
@@ -110,7 +110,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Inicializuj instanci.
 
         Argumenty:
-        
+
           parent -- instance 'wxFrame', do kterého formulář patří
           resolver -- resolver jmenných odkazů, instance 'pytis.util.Resolver'
           name -- jméno specifikačního souboru pro resolver; string
@@ -143,7 +143,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         Odkaz na resolver samotný je také zapamatován pro pozdější použití
         (vytváření dalších formulářů).
-          
+
         Inicializace je rozdělena do několika kroků.  Nejprve jsou zpracovány
         všechny argumenty společné všem formuářovým třídám.  Ty zpracovává
         konstruktor bázové třídy 'Form'.  Jejich zpracování by nemělo být
@@ -166,7 +166,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Teprve po zpravování argumentů konstruktoru a inicializaci atributů je
         vytvářen vlastní obsah formuláře (viz. '_create_form()').  Toto by mělo
         být dodržováno i v odvozených třídách.
-        
+
         """
         Window.__init__(self, parent)
         self._name = name
@@ -179,7 +179,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                                           parent=parent,
                                           resolver=resolver,
                                           name=name)
-        
+
     def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
         import pytis.extensions
@@ -238,11 +238,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Retrieve form parameter independent on current profile."""
         return form_settings_manager().get(self._profile_spec_name(), self._form_name(),
                                            option, default=default)
-        
+
     def _set_saved_setting(self, option, value):
         """Update saved form parameter independent on current profile."""
         form_settings_manager().set(self._profile_spec_name(), self._form_name(), option, value)
-    
+
     def _create_view_spec(self):
         t = time.time()
         spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
@@ -272,7 +272,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
              self._transaction is not self._governing_transaction)):
             self._transaction = self._default_transaction()
         return self._transaction
-        
+
     def _create_form_parts(self, sizer):
         pass
 
@@ -283,7 +283,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         should be added to the toolbar with visual separators between
         individual groups.  Items of the inner sequences must be 'UICommand'
         instances.
-        
+
         """
         # In this class returns those commands from global TOOLBAR_COMMANDS
         # which belong to this form class.
@@ -304,7 +304,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                 uicmd.create_toolbar_ctrl(toolbar)
         toolbar.Realize()
         return toolbar
-    
+
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
 
@@ -320,7 +320,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             # 'pytis.form.list').
             module_name = 'pytis.form'
         return '%s.%s' % (module_name, cls.__name__)
-    
+
     def _profile_spec_name(self):
         # Return form name for profile manager.  There is a separate method for
         # this as we need to construct a special name for aggregated forms.  So
@@ -361,9 +361,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                 self._transaction.rollback()
             except:
                 pass
-        
+
     # Zpracování příkazů
-   
+
     def _cmd_help(self):
         Application.COMMAND_HELP.invoke(topic=('spec/' + self._name))
 
@@ -382,7 +382,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._leave_form_requested = True
 
     # Veřejné metody
-    
+
     def name(self):
         """Vrať název specifikace formuláře."""
         return self._name
@@ -469,10 +469,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         If it wasn't, it is necessary to call 'full_init()' for this form to
         use the form.
-        
+
         """
         return self._full_init_called
-        
+
     def size(self):
         """Return the prefered form size in pixels as a tuple of two integers (width, height).
 
@@ -481,7 +481,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         return None
 
-    
+
 class InnerForm(Form):
     """Formulář, který zpracuje příkazy samostatně i unvitř duálního formuláře.
 
@@ -495,12 +495,12 @@ class InnerForm(Form):
 
     Příkazy definované touto třídou a třídami z ní odvozenými jsou však vždy
     předávány aktivnímu vnitřnímu formuláři.
-    
+
     """
     def _get_command_handler_instance(cls):
         return current_form()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
+
     def _init_attributes(self, **kwargs):
         super(InnerForm, self)._init_attributes(**kwargs)
         # The aggregation menu must be created dynamically, but we can find out just once,
@@ -508,7 +508,7 @@ class InnerForm(Form):
         self._has_aggregation_menu = self._aggregation_menu() is not None
         # Print menu is no longer static, so we create it on demand.
         self._print_menu_ = UNDEFINED
-        
+
     def _on_menu_button(self, items):
         self._run_callback(self.CALL_USER_INTERACTION)
         parent = wx_focused_window()
@@ -588,35 +588,35 @@ class InnerForm(Form):
                     description = self._view.description()
             self._cached_spec_description = description
         return description
-    
+
     def _cmd_describe(self):
         title = self._view.title()
         description = self._spec_description()
         text = "= " + title + " =\n\n" + description
         InfoWindow(title, text=text, format=TextFormat.LCG)
-        
+
     def _can_describe(self):
         return self._spec_description() is not None
-        
+
     def _cmd_aggregation_menu(self):
         self._on_menu_button(self._aggregation_menu())
-        
+
     def _can_aggregation_menu(self):
         return self._has_aggregation_menu
-        
+
     def _can_print_menu(self):
         return bool(self._get_print_menu())
 
     def _cmd_print_menu(self):
         self._on_menu_button(self._get_print_menu())
 
-    
+
 class Refreshable:
     """Třída zajišťující existenci metody 'refresh()' s daným významem.
 
     Tuto třídu by měly dědit všechny formuláře, které mají být obnoveny při
     změně dat (typicky způsobené jiným formulářem výše na zásobníku rámců).
-    
+
     """
 
     DOIT_IMMEDIATELY = 'DOIT_IMMEDIATELY'
@@ -632,7 +632,7 @@ class Refreshable:
 
     Není-li seznam právě editován, je update proveden okamžitě.  Jinak je
     proveden až po ukončení editace.
-    
+
     """
     DOIT_IFNEEDED = 'DOIT_IFNEEDED'
     """Konstanta pro 'refresh()' pro podmíněný update.
@@ -650,11 +650,11 @@ class Refreshable:
         """Zablokuj veškerý refresh po dobu provádění funkce 'function'.
 
         Všechny argumenty jsou předány volané funkci.
-        
+
         Vrací: výsledek vrácený volanou funkcí.
 
         Refresh je zablokován globálně, pro všechny existující formuláře.
-        
+
         """
         Refreshable._block_refresh += 1
         try:
@@ -663,7 +663,7 @@ class Refreshable:
             Refreshable._block_refresh -= 1
         return result
     block_refresh = classmethod(block_refresh)
-    
+
     def refresh(self, when=None, interactive=False):
         """Aktualizuj data formuláře z datového zdroje.
 
@@ -711,7 +711,7 @@ class PopupForm:
         Pokud frame ještě neexistuje, vytvoř jej.
 
         Argumenty:
-        
+
           parent -- rodičovské okno, instance 'wx.Window'
 
         """
@@ -722,14 +722,14 @@ class PopupForm:
             self._popup_frame_ = frame
             pytis.form.wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         return frame
-    
+
     def _popup_frame_style(self):
         try:
             modal = wx.DIALOG_MODAL
         except:
             modal = wx.wxDIALOG_MODAL
         return modal | wx.DEFAULT_DIALOG_STYLE
-    
+
     def _on_frame_close(self, event):
         if self:
             if self._exit_check():
@@ -741,7 +741,7 @@ class PopupForm:
     def close(self, force=False):
         # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
         return self._popup_frame_.Close(force=force)
-        
+
     def run(self, lock_key=None):
         """Show the form as a modal dialog.
 
@@ -776,13 +776,13 @@ class PopupForm:
 
 class TitledForm:
     """Mix-in třída pro formuláře s titulkem.
-    
+
     Lze využít buďto pouze metodu '_create_caption()', která vytváří samotný
     text titulku, nebo metodu '_create_title_bar()', která přidává 3d panel.
 
     """
     _TITLE_BORDER_WIDTH = 2
-    
+
     def _create_caption(self, parent=None, size=None):
         # Create the title text as 'wxStaticText' instance.
         text = self.title()
@@ -811,7 +811,7 @@ class TitledForm:
 
 class LookupForm(InnerForm):
     """Formulář s vyhledáváním a tříděním."""
-    
+
     SORTING_NONE = 'NONE'
     """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
     SORTING_ASCENDENT = pytis.data.ASCENDENT
@@ -832,7 +832,7 @@ class LookupForm(InnerForm):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-        
+
           filter -- initial filter condition as a 'pytis.data.Operator'
             instance.  This filter is indicated to the user and can be modified
             as any other user-defined filter (as opposed to the 'condition'
@@ -876,7 +876,7 @@ class LookupForm(InnerForm):
         regardless the default profile specification or user settings.  It is
         not possible to save this profile and no parameters are influenced by
         previous user specific form settings.
-        
+
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         assert columns is None or isinstance(columns, (list, tuple))
@@ -942,7 +942,7 @@ class LookupForm(InnerForm):
             raise Form.InitError()
         self._lf_select_count_ = None
         self._init_select(async_count=True)
-        
+
     def __getattr__(self, name):
         # Compatibility with contingent external code using the old attribute
         if name == '_lf_select_count':
@@ -1040,11 +1040,11 @@ class LookupForm(InnerForm):
                         return False
                     self._arguments = arguments
         return True
-                
+
     def _load_profiles(self):
         return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
                                                self._view, self._data, self._default_profile)
-    
+
     def _apply_initial_profile(self):
         # This must be called in _on_idle especially because the initial
         # profile may not be valid and we want to make use of handling invalid
@@ -1057,7 +1057,7 @@ class LookupForm(InnerForm):
                 # unknown reason) sometimes steals the focus when applied in a
                 # sideform.
                 dual.main_form().focus()
-                
+
     def _on_idle(self, event):
         if super(LookupForm, self)._on_idle(event):
             return True
@@ -1098,7 +1098,7 @@ class LookupForm(InnerForm):
                            transaction=self._open_transaction(), reuse=False,
                            async_count=async_count,
                            timeout_callback=self._transaction_timeout_callback)
-        
+
     def _init_data_select(self, data, async_count=False):
         self._init_transaction_timeouts(data)
         return self._open_data_select(data, async_count)
@@ -1115,20 +1115,20 @@ class LookupForm(InnerForm):
 
     def _sorting_columns(self):
         return [cid for cid, direction in self._lf_sorting]
-        
+
     def _sorting_position(self, cid):
         try:
             return self._sorting_columns().index(cid)
         except ValueError:
             return None
-        
+
     def _sorting_direction(self, cid):
         pos = self._sorting_position(cid)
         if pos is not None:
             return self._lf_sorting[pos][1]
         else:
             return None
-        
+
     def _lf_sfs_columns(self):
         return pytis.form.sfs_columns(self._view.fields(), self._data)
 
@@ -1181,10 +1181,10 @@ class LookupForm(InnerForm):
 
     def _cmd_first_record(self):
         self.select_row(0)
-        
+
     def _cmd_last_record(self):
         self.select_row(self._lf_count() - 1)
-        
+
     def _cmd_search(self, next=False, back=False):
         condition = self._lf_search_condition
         if condition is not None and next:
@@ -1222,7 +1222,7 @@ class LookupForm(InnerForm):
 
     def _save_profile(self, profile):
         profile_manager().save_profile(self._profile_spec_name(), self._form_name(), profile)
-    
+
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
 
@@ -1232,11 +1232,11 @@ class LookupForm(InnerForm):
         base class.  Derived classes, which also have attributes for other
         profile parameters should override this method to set their specific
         attributes too.
-        
+
         Note: The attribute '_current_profile' always contains the 'Profile'
         instance passed to the last '_apply_profile_parameters()' call.  It is
         not updated when the form state later changes due to user actions.
-        
+
         """
         sorting = profile.sorting()
         if sorting is None:
@@ -1244,7 +1244,7 @@ class LookupForm(InnerForm):
         self._current_profile = profile
         self._lf_filter = profile.filter()
         self._lf_sorting = sorting
-        
+
     def _apply_profile(self, profile, refresh=True):
         """Change the current form state according to given 'Profile' instance.
 
@@ -1270,7 +1270,7 @@ class LookupForm(InnerForm):
         the user changed them since he switched to that profile
         (`self._current_profile' instance is not updated when the form state
         changes, it representes the previously saved state).
-        
+
         """
         return dict(filter=self._lf_filter, sorting=self._lf_sorting)
 
@@ -1352,7 +1352,7 @@ class LookupForm(InnerForm):
     def _can_update_profile(self):
         return (self._current_profile.id() != '__constructor_profile__'
                 and self._current_profile_changed())
-        
+
     def _cmd_update_profile(self):
         current = self._current_profile
         index = self._profiles.index(current)
@@ -1360,7 +1360,7 @@ class LookupForm(InnerForm):
         self._profiles[index] = profile
         self._save_profile(profile)
         self._current_profile = profile
-    
+
     def _can_delete_profile(self):
         return self._is_user_defined_profile(self._current_profile)
 
@@ -1372,13 +1372,13 @@ class LookupForm(InnerForm):
 
     def _can_reload_profile(self):
         return self._current_profile_changed()
-    
+
     def _cmd_reload_profile(self):
         self._apply_profile(self._current_profile)
-        
+
     def _can_reset_profile(self):
         return not self._is_user_defined_profile(self._current_profile)
-        
+
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
         profile_id = self._current_profile.id()
@@ -1395,7 +1395,7 @@ class LookupForm(InnerForm):
     def _can_set_initial_profile(self):
         return self._current_profile.id() not in (self._get_saved_setting('initial_profile'),
                                                   '__constructor_profile__')
-        
+
     def _cmd_set_initial_profile(self):
         profile_id = self._current_profile.id()
         self._set_saved_setting('initial_profile', profile_id)
@@ -1413,7 +1413,7 @@ class LookupForm(InnerForm):
 
     def _can_unfilter(self):
         return self._lf_filter is not None
-        
+
     def _cmd_unfilter(self):
         self.filter(None)
 
@@ -1437,17 +1437,17 @@ class LookupForm(InnerForm):
           primary -- právě když je pravdivé, bude daný sloupec zvolen jako
             primární a *jediný* třídící sloupec.  V opačném případě bude pouze
             přidán na konec stávajícího seznamu třídících sloupců.
-        
+
         Při nejednoznačné kombinaci argumentů 'col' a 'direction' je
         automaticky vyvolán dialog pro výběr třídících kritérií.
-        
+
         """
         sorting = self._determine_sorting(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
             self.select_row(self._current_key())
         return sorting
-    
+
     def _can_sort(self, col=None, direction=None, primary=False):
         # `col' je zde identifikátor sloupce.
         sorting_columns = tuple(self._sorting_columns())
@@ -1508,9 +1508,9 @@ class LookupForm(InnerForm):
         else:
             raise ProgramError("Invalid sorting arguments:", (col, direction))
         return sorting
-        
+
     # Veřejné metody
-    
+
     def filter(self, condition, append=False):
         """Apply given filtering condition.
 
@@ -1545,7 +1545,7 @@ class LookupForm(InnerForm):
         """Apply the profile given by profile_id.
 
         Arguments:
-        
+
           profile_id -- id of the profile to be loaded.  It must be one of the
             available profiles (defined in specification or user defined
             profiles).
@@ -1555,7 +1555,7 @@ class LookupForm(InnerForm):
         if not profile:
             raise ProgramError("Unknown profile '%s'" % profile_id)
         self._apply_profile(profile)
-            
+
     def data(self, init_select=True):
         """Return a new instance of the data object used by the form.
 
@@ -1577,7 +1577,7 @@ class LookupForm(InnerForm):
         if init_select:
             self._init_data_select(data)
         return data
-            
+
     def condition(self):
         """Vrať specifikaci aktuální podmínky výběru dat.
 
@@ -1594,15 +1594,15 @@ class LookupForm(InnerForm):
     def view(self):
         """Return the form's presentation specification as a 'ViewSpec' instance."""
         return self._view
-    
+
     def profiles(self):
         """Return the current form profiles as a list."""
         return self._profiles
-    
+
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
         return self._current_profile
-        
+
 
 class RecordForm(LookupForm):
     """Formulář schopný nějakým způsobem zobrazit aktuální záznam."""
@@ -1612,7 +1612,7 @@ class RecordForm(LookupForm):
 
     Argumentem callbackové funkce je nově vybraný záznam jako instance
     'RecordForm.Record'.
-    
+
     """
     class Record(PresentedRow):
         # Experimental PresentedRow extension aware of its parent form.  This might allow
@@ -1629,7 +1629,7 @@ class RecordForm(LookupForm):
             # Return a new instance rather than giving the internally used data object.
             # Moreover this instance will have the select initialized in LookupForm.
             return self._form.data()
-    
+
     def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
                          **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -1688,7 +1688,7 @@ class RecordForm(LookupForm):
             return None
         else:
             return row
-    
+
     def _find_row_by_values(self, cols, values):
         """Vrať datový řádek odpovídající daným hodnotám.
 
@@ -1718,7 +1718,7 @@ class RecordForm(LookupForm):
         success, row = db_operation(dbop, condition)
         self._init_select(async_count=True)
         return row
-        
+
     def _find_row_by_key(self, key):
         cols = self._select_columns()
         success, row = db_operation(self._data.row, key, columns=cols,
@@ -1728,7 +1728,7 @@ class RecordForm(LookupForm):
             return row
         else:
             return None
-    
+
     def _get_row_number(self, row):
         """Vrať číslo řádku odpovídající dané instanci 'pytis.data.Row'.
 
@@ -1789,10 +1789,10 @@ class RecordForm(LookupForm):
                 data_row = the_row.row()
             return data_row.columns([c.id() for c in self._data.key()])
         return None
-    
+
     def _current_column_id(self):
         return None
-    
+
     def _new_form_kwargs(self):
         return dict(arguments=self._current_arguments())
 
@@ -1836,7 +1836,7 @@ class RecordForm(LookupForm):
             rdata = [(key, value) for (key, value) in rdata
                      if original_row[key].value() != value.value()]
         return pytis.data.Row(rdata)
-    
+
     def _row_copy_prefill(self, the_row):
         # Create a copy of the row, but exclude key columns and computed
         # columns which depend on key columns.
@@ -1887,7 +1887,7 @@ class RecordForm(LookupForm):
             return form
         else:
             return None
-                
+
     def _context_action_args(self, action):
         def selection(form):
             result = self.selected_rows()
@@ -1926,9 +1926,9 @@ class RecordForm(LookupForm):
         super(RecordForm, self)._cleanup()
         # PresentedRow may contain references to data objects
         self._row = None
-    
+
     # Command handling
-    
+
     def _cmd_new_record(self, copy=False, prefill=None):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
@@ -1973,7 +1973,7 @@ class RecordForm(LookupForm):
             if not self.select_row(result.row(), quiet=True):
                 msg = _(u"The inserted record didn't appear in the current view.")
                 run_dialog(Warning, msg)
-    
+
     def _can_edit_record(self):
         return self._current_key() is not None
 
@@ -2021,7 +2021,7 @@ class RecordForm(LookupForm):
     def _cmd_refresh_db(self):
         self._data.refresh()
         self.refresh()
-        
+
     def _can_context_action(self, action):
         if action.secondary_context() is not None and self._secondary_context_form() is None:
             return False
@@ -2129,7 +2129,7 @@ class RecordForm(LookupForm):
     def _cmd_open_editor(self, field_id):
         run_form(StructuredTextEditor, self.name(),
                  field_id=field_id, select_row=self.current_key())
-            
+
     # Public methods
 
     def record(self, row, **kwargs):
@@ -2137,12 +2137,12 @@ class RecordForm(LookupForm):
         fields = self._view.fields()
         data = self._create_data_object()
         return self.Record(self, fields, data, row, transaction=self._open_transaction(), **kwargs)
-    
+
     def select_row(self, position, quiet=False):
         """Vyber řádek dle 'position'.
 
         Argument 'position' může mít některou z následujících hodnot:
-        
+
           None -- nebude vybrán žádný řádek.
           Nezáporný integer -- bude vybrán řádek příslušného pořadí, přičemž
             řádky jsou číslovány od 0.
@@ -2154,7 +2154,7 @@ class RecordForm(LookupForm):
           Instance třídy 'pytis.data.Row' -- bude převeden na datový klíč a
             zobrazen odpovídající řádek.  Instance musí být kompatibilní
             s datovým objektem formuláře.
-        
+
         Pokud takový záznam neexistuje, zobraz chybový dialog.  Argumentem
         'quiet' lze zobrazení chybového dialogu potlačit.  Tím lze nenalezení
         řádku tiše ignorovat, nebo ošetřit vlastním způsobem na základě
@@ -2166,7 +2166,7 @@ class RecordForm(LookupForm):
 
         Vrací: Pravdu, pokud byl záznam úspěšně nalezen a vybrán, nepravdu v
         opačném případě.
-        
+
         """
         row = self._data_row(position)
         if ((not quiet and
@@ -2192,7 +2192,7 @@ class RecordForm(LookupForm):
         else:
             run_dialog(Warning, _("Record not found"))
         return False
-    
+
     def current_row(self):
         """Vrať instanci PresentedRow právě aktivního řádku.
 
@@ -2229,7 +2229,7 @@ class RecordForm(LookupForm):
     def prefill(self):
         """Vrať data pro předvyplnění nového záznamu."""
         return self._prefill
-    
+
     def presented_rows(self):
         """Return an iterator over all rows currently contained in the form."""
         class Iterator(object):
@@ -2245,7 +2245,7 @@ class RecordForm(LookupForm):
                 self._row_number += 1
                 return row
         return Iterator(self._table)
-    
+
 
 # Editační formulář
 
@@ -2262,7 +2262,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     Formulář může sloužit jak k prohlížení či editaci stávajících dat, tak
     i k vytváření nových záznamů (viz argument konstruktoru 'mode').
- 
+
     """
 
     _LOG_STATISTICS = False
@@ -2273,7 +2273,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     """Mód formuláře pro editaci stávajících záznamů."""
     MODE_VIEW = 'MODE_VIEW'
     """Mód formuláře pro zobrazení záznamů bez možnosti editace."""
-    
+
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
         # Calculate the ideal total form size.  We first count the size of the sizer without the
@@ -2331,7 +2331,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             directly.  These values will not affect the initial row state
             (unlike the 'prefill' argument of the parent class) and thus will
             appear as changed to the user.
-         
+
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
         new = mode == self.MODE_INSERT
@@ -2440,7 +2440,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         panel.SetSizer(sizer)
         pytis.form.wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
-    
+
     def _field(self, id):
         f = find(id, self._fields, key=lambda f: f.id())
         if f is None:
@@ -2715,7 +2715,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _update_op_args(self, rdata):
         return self._data.update, (self._current_key(), rdata)
-        
+
     def _exit_check(self):
         if self.changed():
             q = _(u"Unsaved changed in form data!") + "\n" + \
@@ -2725,10 +2725,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return True
 
     # Command handling
-    
+
     def _can_commit_record(self, close=True):
         return self._mode != self.MODE_VIEW
-    
+
     def _cmd_commit_record(self, close=True):
         result = self._commit_form(close=close)
         if result:
@@ -2745,7 +2745,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if w:
                 flags = not back and wx.NavigationKeyEvent.IsForward or 0
                 w.Navigate(flags=flags)
-    
+
     # Public methods
 
     def title(self):
@@ -2759,7 +2759,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         needed to display all fields without scrolling.  The current real size
         may be greater or smaller depending on the size of the window where the
         form is displayed.
-        
+
         """
         return (self._size.width, self._size.height)
 
@@ -2767,14 +2767,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """Return the 'InputField' instance for the field 'id'.
 
         Raises 'ProgramError' if the field of given id does not exist.
-        
+
         """
         return self._field(id)
-    
+
     def fields(self):
         """Return all form fields as a tuple of 'InputField' instances."""
         return self._fields
-    
+
     def changed(self):
         """Return true iff the form data was changed since last saved."""
         return self._row.changed()
@@ -2783,7 +2783,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """Return true iff the form is read only."""
         return self._mode == self.MODE_VIEW
 
-    
+
 class PopupEditForm(PopupForm, EditForm):
     """Stejné jako 'EditForm', avšak v popup podobě."""
 
@@ -2792,7 +2792,7 @@ class PopupEditForm(PopupForm, EditForm):
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         EditForm.__init__(self, parent, *args, **kwargs)
-    
+
     def _full_init(self, *args, **kwargs):
         EditForm._full_init(self, *args, **kwargs)
         if self._inserted_data is not None:
@@ -2807,7 +2807,7 @@ class PopupEditForm(PopupForm, EditForm):
         # irrelevant here and it causes problems with set_values - the
         # additional select_row() call resets them.
         self._initial_select_row = None
-        
+
     def _open_data_select(self, data, async_count=False):
         if self._initial_select_row == 0:
             # Some special forms (such as virtual forms) may require opening
@@ -2825,7 +2825,7 @@ class PopupEditForm(PopupForm, EditForm):
             connection_name = None
         return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name,
                                                ok_rollback_closed=True)
-        
+
     def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
@@ -2838,7 +2838,7 @@ class PopupEditForm(PopupForm, EditForm):
             This option is only relevant in insert mode.  False value will disable this feature and
             the `Next' button will not be present on the form.
           kwargs -- arguments passed to the parent class
-            
+
         """
         EditForm._init_attributes(self, **kwargs)
         assert inserted_data is None or self._mode == self.MODE_INSERT, (inserted_data, self._mode)
@@ -2927,7 +2927,7 @@ class PopupEditForm(PopupForm, EditForm):
         else:
             message(_("Record %d/%d skipped") % (i, len(self._inserted_data)))
             self._load_next_row()
-    
+
     def _buttons(self):
         buttons = (dict(id=wx.ID_OK,
                         tooltip=_("Save the record and close the form"),
@@ -2945,7 +2945,7 @@ class PopupEditForm(PopupForm, EditForm):
                              tooltip=_("Skip this record without saving"),
                              callback=self._on_skip_button),)
         return buttons
-        
+
     def _create_buttons(self):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         for i, kwargs in enumerate(self._buttons()):
@@ -2965,19 +2965,19 @@ class PopupEditForm(PopupForm, EditForm):
     def _apply_initial_profile(self):
         # See the comment for _apply_profile() above.
         pass
-    
+
     def _can_commit_record(self, close=True, next=False):
         if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
             return False
         return super(PopupEditForm, self)._can_commit_record()
-    
+
     def _cmd_commit_record(self, close=True, next=False):
         result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
         if result and next:
             message(_("Record saved"))
             self._load_next_row()
         return result
-        
+
     def _cmd_safe_leave_form(self):
         # Leaving form in idle thread causes recursion in popup forms, when a
         # dialog asking for confirmation of leaving unsaved form appears.  So
@@ -2985,13 +2985,13 @@ class PopupEditForm(PopupForm, EditForm):
         # which lead to moving _leave_form to the idle thread don't apply to
         # popup forms.
         self._cmd_leave_form()
-        
+
     def can_command(self, command, **kwargs):
         if ((command.handler() in (LookupForm, RecordForm) and
              command != RecordForm.COMMAND_CONTEXT_ACTION)):
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
-        
+
     def run(self):
         if self._mode == self.MODE_EDIT:
             key = self._current_key()
@@ -3019,9 +3019,9 @@ class _VirtualEditForm(EditForm):
     Specification class.  The specification is created in runtime according to
     keyword arguments passed to the form constructor and the data object is
     created as MemData object so no "real" database objects are needed as well.
-    
+
     """
-    
+
     def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
                    prefill=None, **kwargs):
         self._specification = Specification.create_from_kwargs(
@@ -3036,7 +3036,7 @@ class _VirtualEditForm(EditForm):
         super(_VirtualEditForm, self)._full_init(parent, resolver, name, guardian=guardian,
                                              mode=self.MODE_INSERT, prefill=prefill,
                                              transaction=transaction, **additional_kwargs)
-        
+
     def _create_view_spec(self):
         return self._specification.view_spec()
 
@@ -3046,16 +3046,16 @@ class _VirtualEditForm(EditForm):
 
     def _get_saved_setting(self, option, default=None):
         return default
-    
+
     def _load_profiles(self):
         return [self._default_profile]
-    
+
     def _default_transaction(self):
         return None
 
     def _print_menu(self):
         return []
-        
+
 
 class InputForm(_VirtualEditForm, PopupEditForm):
     """Dynamically created virtual form.
@@ -3068,7 +3068,7 @@ class InputForm(_VirtualEditForm, PopupEditForm):
     'pytis.presentation.Specification' class.  The default 'data_cls' of the
     specification is 'pytis.data.RestrictedMemData' so the form will by default
     work with a virtual data object which is not bound to any database object.
-    
+
     This form is mainly intended to be used as a single purpose input form when
     it is neccessary to query the user for several values and the fields can be
     easily described as standard pytis input fields.  All the features
@@ -3080,7 +3080,7 @@ class InputForm(_VirtualEditForm, PopupEditForm):
     result = run_form(InputForm, title=_("Enter the values"),
                       fields=(Field('title', _(u"Title"), not_null=True),
                               Field('date', _(u"Date"), type=pytis.data.Date)))
-                              
+
     The 'result' is None if the form was escaped without confirmation.  If
     confirmed, the 'result' is a 'pytis.presentation.PresentedRow' instance
     containing the entered values.  Other specification attributes, such as
@@ -3115,29 +3115,29 @@ class QueryFieldsForm(_VirtualEditForm):
 
     def _create_form_parts(self, sizer):
         sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
-        
+
     def run(self):
         raise Exception("This form can not be run.")
 
     def row(self):
         return self._row
 
-    
+
 class ResizableEditForm(object):
     """Mixin for resizable edit forms with fields expanded to the whole window.
 
     The fields returned by _resizable_fields() will take the whole space of the
     form and will expand with the form when its window is resized.  It is
     mostly useful for forms which should look like a text editor.
-    
+
     """
-    
+
     def _popup_frame_style(self):
         return super(ResizableEditForm, self)._popup_frame_style() | wx.RESIZE_BORDER
 
     def _resizable_fields(self):
         return self._view.layout().group().order()
-    
+
     def _create_form_parts(self, sizer):
         panel = wx.Panel(self)
         field_sizer = wx.BoxSizer()
@@ -3158,7 +3158,7 @@ class ResizableInputForm(ResizableEditForm, InputForm):
     # Used within StructuredTextField._cmd_open_in_editor().
     pass
 
-        
+
 class StructuredTextEditor(ResizableEditForm, PopupEditForm):
     """Text Editor of a single structured text field running outside transaction.
 
@@ -3169,7 +3169,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
     database.
 
     """
-    
+
     def _init_attributes(self, field_id, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
@@ -3180,10 +3180,10 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
         """
         super(StructuredTextEditor, self)._init_attributes(**kwargs)
         self._editor_field_id = field_id
-    
+
     def _resizable_fields(self):
         return (self._editor_field_id,)
-    
+
     def _default_transaction(self):
         # Run editor outside transaction to prevent long transactions (the
         # editation usually takes quite some time).
@@ -3194,7 +3194,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
         # above).  Instead we rely on the check for conflicting changes before
         # commit implemented below in _check_record.
         return True
-        
+
     def _check_record(self, row):
         result = super(StructuredTextEditor, self)._check_record(row)
         if result is None:
@@ -3234,11 +3234,11 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
     def size(self):
         return (700, 500)
 
-        
+
 class PopupInsertForm(PopupEditForm):
-    
+
     DESCR = _(u"insert form")
-    
+
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
 
@@ -3256,11 +3256,11 @@ class ShowForm(EditForm):
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0, **kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
-        
+
     def changed(self):
         # Since the row is not reset when the current record changes, it would report a change...
         return False
-        
+
     def _select_columns(self):
         big_field_ids = []
         for f in self._view.fields():
@@ -3273,7 +3273,7 @@ class ShowForm(EditForm):
         result = [c.id() for c in self._data.columns() if c.id() not in big_field_ids]
         return result
 
-        
+
 class BrowsableShowForm(ShowForm):
     """Listovací formulář pro zobrazení náhledu.
 
@@ -3281,7 +3281,7 @@ class BrowsableShowForm(ShowForm):
     kterou je vytvořen, vyhledávání atd.  Z uživatelského hlediska jde v
     podstatě o redukci prohlížecích možností formuláře typu 'BrowseForm' na
     jeden záznam zobrazený v Layoutu editačního formuláře.
-    
+
     """
 
     def _cmd_next_record(self, back=False):
@@ -3313,7 +3313,7 @@ class BrowsableShowForm(ShowForm):
             position = "%d/%s" % (n is not None and n + 1 or 0, total)
             set_status('list-position', position)
         return result
-                     
+
 
 class WebForm(Form, Refreshable):
     """Web browser embedded in a Pytis form.
@@ -3331,14 +3331,14 @@ class WebForm(Form, Refreshable):
 
     def _create_data_object(self):
         return None
-    
+
     def _init_attributes(self, title=None, content=None, **kwargs):
         super_(WebForm)._init_attributes(self, **kwargs)
         assert (content is not None) == (title is not None), \
             "When 'content' specified, 'title' must be set too (and wice versa)."
         self._title = title
         self._content = content
-        
+
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
         sizer.Add(browser.toolbar(self), 0, wx.EXPAND | wx.FIXED_MINSIZE)
