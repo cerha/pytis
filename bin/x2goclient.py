@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-01-12 18:31'
+_VERSION = '2016-01-12 19:48'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1304,7 +1304,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         password = parameters.get('password')
         port = int(parameters.get('port') or '22')
         _auth_info.update_non_empty(hostname=parameters['hostname'], port=port,
-                                    username=(parameters['username'] or app.username_dialog()),
                                     password=password)
         path = parameters.get('path')
         client = class_.pytis_ssh_connect()
@@ -1332,10 +1331,13 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         if os.access(f_config, os.W_OK):
             os.remove(f_config)
         if os.access(scripts_directory, os.R_OK):
-            for fs in os.listdir(scripts_directory):
-                fspath = os.path.join(scripts_directory, fs)
+            for fname in os.listdir(scripts_directory):
+                fpath = os.path.join(scripts_directory, fname)
+                dpath = os.path.normpath(os.path.join(scripts_install_dir, fname))
+                if os.access(dpath, os.W_OK):
+                    os.remove(dpath)
                 try:
-                    shutil.move(fspath, scripts_install_dir)
+                    shutil.move(fpath, scripts_install_dir)
                 except Exception:
                     pass
         shutil.rmtree(tmp_directory)
