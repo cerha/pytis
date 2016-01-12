@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-01-06 22:26'
+_VERSION = '2016-01-12 18:03'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1315,6 +1315,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         old_install_directory = install_directory + '.old'
         tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
         pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
+        scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
+        scripts_install_dir = os.path.join(install_directory, 'pytis2go', 'scripts')
         sftp = client.open_sftp()
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
@@ -1330,6 +1332,13 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         f_config = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
         if os.access(f_config, os.W_OK):
             os.remove(f_config)
+        if os.access(scripts_directory, 'os.R_OK'):
+            for fs in os.listdir(scripts_directory):
+                fspath = os.path.join(scripts_directory, fs)
+                try:
+                    shutil.move(fspath, scripts_install_dir)
+                except Exception:
+                    pass
         app.info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
