@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-01-12 18:03'
+_VERSION = '2016-01-12 18:31'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1316,7 +1316,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
         pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
         scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
-        scripts_install_dir = os.path.join(install_directory, 'pytis2go', 'scripts')
+        scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
         sftp = client.open_sftp()
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
@@ -1328,17 +1328,17 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         shutil.move(install_directory, old_install_directory)
         shutil.move(pytis_directory, install_directory)
         shutil.rmtree(old_install_directory)
-        shutil.rmtree(tmp_directory)
         f_config = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
         if os.access(f_config, os.W_OK):
             os.remove(f_config)
-        if os.access(scripts_directory, 'os.R_OK'):
+        if os.access(scripts_directory, os.R_OK):
             for fs in os.listdir(scripts_directory):
                 fspath = os.path.join(scripts_directory, fs)
                 try:
                     shutil.move(fspath, scripts_install_dir)
                 except Exception:
                     pass
+        shutil.rmtree(tmp_directory)
         app.info_dialog(_("Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
