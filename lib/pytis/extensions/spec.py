@@ -38,7 +38,7 @@ _ = pytis.util.translations('pytis-wx')
 
 
 # Zkratky na často používané identifikátory.
-    
+
 ASC = pytis.data.ASCENDENT
 DESC = pytis.data.DESCENDANT
 
@@ -124,20 +124,20 @@ def get_value(value, default=None):
     Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
     will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
     internal (Python) value will be returned.
-    
+
     """
     if value is None:
         return default
     else:
         return value.value()
-    
+
 def format_value(value, default=None):
     """Return the formatted (string) value of given 'pytis.data.Value' instance.
 
     Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
     will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
     formatted (string) value will be returned.
-    
+
     """
     if value is None:
         return default
@@ -153,7 +153,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     proceduře předány jako poziční argumenty v daném pořadí.
 
     Klíčové argumenty jsou předány beze změn.
-    
+
     """
     if __debug__:
         for arg in (spec_name, proc_name) + args:
@@ -165,7 +165,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
 
 def cb2colvalue(value, column=None, transaction=None):
     """Převeď hodnotu políčka na hodnotu uvedeného sloupce navázaného číselníku.
-    
+
     Argumenty:
 
       value -- Instance `Value', jejíž typ má definován enumerátor typu
@@ -179,7 +179,7 @@ def cb2colvalue(value, column=None, transaction=None):
     zjednodušuje se tím práce s výsledkem.  Pokud je zapotřebí korektnějšího
     chování, je doporučeno použít přímo metodu 'DataEnumerator.row()'
     (například voláním 'value.type().enumerator().row(value.value())'.
-        
+
     """
     assert isinstance(value, pytis.data.Value)
     assert value.type().enumerator() is not None
@@ -210,10 +210,10 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
       select_row -- řádek, na který se má nastavit kurzor.
       multirow -- umožní výběr více řádků.
       transaction -- transakce pro předání CodebookFormu.
-    
+
     Vrací None (pokud není vybrán žádný řádek) nebo vybraný řádek nebo
     tuple vybraných řádků (pokud je argument multirow nastaven).
-    
+
     """
     if multirow:
         class_ = pytis.form.SelectRowsForm
@@ -226,7 +226,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                select_row=select_row,
                                filter=filter,
                                transaction=transaction)
-    
+
 def run_any_form():
     form_types = (
         ("BrowseForm", pytis.form.BrowseForm),
@@ -309,7 +309,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
             except pytis.util.ResolverError:
                 result = self._Spec()
             return result
-        
+
     pytis.util.log(pytis.util.EVENT, 'Vyvolání tiskového formuláře')
     P = _PrintResolver
     parameters = {(spec + '/' + pytis.output.P_ROW): row}
@@ -330,7 +330,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
         file_ = pytis.util.TemporaryFile()
         formatter.printout(file_, hook=(lambda: pytis.form.run_viewer(file_)))
     return True
-        
+
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
@@ -346,7 +346,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
       subject -- subject emailu
       msg -- tělo emailu
       filename -- název pro soubor s přílohou; pokud je None, bude vygenerován
-      
+
       Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
     """
     import tempfile
@@ -373,7 +373,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
             return None
     else:
         return "No print data available."
-    
+
 class ReusableSpec:
     def __init__(self, resolver):
         self._resolver = resolver
@@ -433,7 +433,7 @@ def mime_type_constraint(*allowed_mime_types):
     constraints as follows:
 
        type = pytis.data.Binary(constraints=(mime_type_constraint('application/pdf'),))
-    
+
     """
     import magic
     def constraint(value):
