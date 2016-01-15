@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005-2015 Brailcom, o.p.s.
+# Copyright (C) 2005-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -277,7 +277,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
       spec -- name of the specification for print resolver
       print_spec -- name of the print specification for 'pytis.output.Formatter'
       row -- row data for print resolver
-      output_file -- name of the file to write output PDF data to, string; if
+      output_file -- file to write output PDF data to, open file-like object; if
         'None' then show the output in an external PDF viewer
       language -- language code to pass to the exporter context
       translations -- translations to pass to PDFExporter
