@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -535,9 +535,8 @@ class Action(object):
 
 
 class PrintAction(object):
-    """Output (print) action specification.
-    """
-    def __init__(self, id, title, name):
+    """Output (print) action specification."""
+    def __init__(self, id, title, name, language=None):
         """
         Arguments:
 
@@ -545,6 +544,7 @@ class PrintAction(object):
             objects identifiers within a given form.
           title -- action title displayed in the user interface
           name -- name of the print specification, string
+          language -- output language; two letter language code or None
 
         """
         assert isinstance(id, basestring), id
@@ -553,6 +553,7 @@ class PrintAction(object):
         self._id = id
         self._title = title
         self._name = name
+        self._language = language
 
     def id(self):
         """Return action id given in the constructor."""
@@ -565,6 +566,10 @@ class PrintAction(object):
     def name(self):
         """Return print action name given in the constructor."""
         return self._name
+
+    def language(self):
+        """Return output language given in the constructor."""
+        return self._language
 
     def dmp_name(self):
         """Return print action name in the form useable for DMP."""

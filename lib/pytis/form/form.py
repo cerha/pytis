@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -538,7 +538,8 @@ class InnerForm(Form):
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
         menu = [MItem(p.title(),
-                      command=pytis.form.BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
+                      command=pytis.form.BrowseForm.COMMAND_PRINT(print_spec_path=p.name(),
+                                                                  language=p.language()))
                 for p in print_spec
                 if action_has_access('print/%s' % (p.dmp_name(),),
                                      perm=pytis.data.Permission.PRINT)]

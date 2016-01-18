@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -3415,8 +3415,8 @@ class BrowseForm(FoldableForm):
                                   "related data in side forms."),
                            icon='link'))
         return menu
-    
-    def _cmd_print(self, print_spec_path=None):
+
+    def _cmd_print(self, print_spec_path=None, language=None):
         log(EVENT, 'Print form invocation:', print_spec_path)
         name = self._name
         if not print_spec_path:
@@ -3426,6 +3426,7 @@ class BrowseForm(FoldableForm):
                 spec = None
             if spec:
                 print_spec_path = spec[0].name()
+                language = spec[0].language()
             else:
                 print_spec_path = name
         parameters = self._formatter_parameters()
@@ -3438,6 +3439,8 @@ class BrowseForm(FoldableForm):
         try:
             formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec_path,
                                                form=self, parameters=parameters,
+                                               language=language,
+                                               translations=pytis.util.translations(),
                                                **self._print_form_kwargs())
         except pytis.output.AbortOutput:
             return
