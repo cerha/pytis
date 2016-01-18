@@ -3440,7 +3440,7 @@ class BrowseForm(FoldableForm):
             formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec_path,
                                                form=self, parameters=parameters,
                                                language=language,
-                                               translations=pytis.util.translations(),
+                                               translations=pytis.util.translation_path(),
                                                **self._print_form_kwargs())
         except pytis.output.AbortOutput:
             return
