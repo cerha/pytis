@@ -481,7 +481,7 @@ class LCGFormatter(object):
         start_time = pytis.data.DateTime.now()
         T = pytis.data.DBTransactionDefault
         transaction = T(connection_data=config.dbconnection, isolation=T.REPEATABLE_READ)
-        children = []
+        template_nodes = []
         if self._form is not None and self._row_template is not None:
             i = 1
             row_template = self._row_template
@@ -495,40 +495,36 @@ class LCGFormatter(object):
                 document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
                                            content=row_template_lcg, globals=row_lcg_globals,
                                            **parameters)
-                children.append(document)
+                template_nodes.append(document)
                 i += 1
         lcg_globals = self._LCGGlobals(self._resolver, self._form, self._form_bindings,
                                        self._codebooks, transaction, parameters=self._parameters)
         lcg_globals['app'] = self._application_variables
-        body = self._body
-        if not body:
-            body = []
-        elif not isinstance(body, (list, tuple,)):
-            body = [body]
-        children = ([document_.lcg_document(globals=lcg_globals) for document_ in body] +
-                    children)
-        lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
-                                      **self._body_parameters)
-        presentation = lcg.Presentation()
-        presentation.font_name = 'DejaVu'
-        presentation.font_family = lcg.FontFamily.FIXED_WIDTH
         def margin(key):
             size = self._page_layout.get(key)
             if size is None:
                 size = UMm(10)
             return size
-        presentation.top_margin = margin(PAGE_TOP_MARGIN)
-        presentation.bottom_margin = margin(PAGE_BOTTOM_MARGIN)
-        presentation.left_margin = margin(PAGE_LEFT_MARGIN)
-        presentation.right_margin = margin(PAGE_RIGHT_MARGIN)
-        presentation.page_width = self._page_layout.get(PAGE_WIDTH)
-        presentation.page_height = self._page_layout.get(PAGE_HEIGHT)
-        presentation.landscape = self._page_layout.get(PAGE_LANDSCAPE_MODE)
+        presentation = lcg.Presentation(
+            font_name='DejaVu',
+            font_family=lcg.FontFamily.FIXED_WIDTH,
+            top_margin=margin(PAGE_TOP_MARGIN),
+            bottom_margin=margin(PAGE_BOTTOM_MARGIN),
+            left_margin=margin(PAGE_LEFT_MARGIN),
+            right_margin=margin(PAGE_RIGHT_MARGIN),
+            page_width=self._page_layout.get(PAGE_WIDTH),
+            page_height=self._page_layout.get(PAGE_HEIGHT),
+            landscape=self._page_layout.get(PAGE_LANDSCAPE_MODE),
+        )
         start_time_export = pytis.data.DateTime.now()
         exporter = lcg.pdf.PDFExporter(translations=self._translations)
-        presentation_args = (self._style or [])
-        presentation_set = lcg.PresentationSet(presentation_args)
-        context = exporter.context(lcg_content, self._language, presentation=presentation_set)
+        body = xtuple(self._body) if self._body else ()
+        body_nodes = [doc.lcg_document(globals=lcg_globals) for doc in body]
+        root_node = lcg.ContentNode(id='__dummy', content=lcg.Content(),
+                                    children=body_nodes + template_nodes,
+                                    **self._body_parameters)
+        context = exporter.context(root_node, self._language,
+                                   presentation=lcg.PresentationSet(self._style or []))
         try:
             pdf = exporter.export(context, global_presentation=presentation)
         except lcg.SubstitutionIterator.IteratorError, e:
