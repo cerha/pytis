@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 #
-# Copyright (C) 2002-2015 Brailcom, o.p.s.
+# Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -266,8 +266,10 @@ class HLine(_Mark):
 
 class Paragraph(_Container):
     """Značka odstavce."""
+    KWARGS = {'noindent': False}
+
     def _lcg(self):
-        return lcg.Paragraph(self._lcg_contents())
+        return lcg.Paragraph(self._lcg_contents(), noindent=self.arg_noindent)
 
 class List(_Container):
     """Seznam.
