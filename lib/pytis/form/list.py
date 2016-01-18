@@ -616,7 +616,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel = panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
-        columns = [(c.label(), c) for c in self._columns
+        columns = [(c.column_label(), c) for c in self._columns
                    if isinstance(self._row.type(c.id()), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
