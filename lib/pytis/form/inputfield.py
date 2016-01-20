@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1743,7 +1743,14 @@ class ListField(GenericCodebookField, CallbackHandler):
         if on_edit_record is not None:
             on_edit_record(row=self._current_row())
         else:
-            run_form(pytis.form.PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
+            set_values_function = self.spec().codebook_update_set_values()
+            if set_values_function:
+                set_values = set_values_function(self._row)
+            else:
+                set_values = None
+            run_form(pytis.form.PopupEditForm, self._cb_name,
+                     select_row=self._select_row_arg(),
+                     set_values=set_values,
                      transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)

@@ -3107,6 +3107,11 @@ class Field(object):
             created in the context of the current field.  The function will get
             a PresentedRow instance as an argument representing the current
             record.  Only relevant when 'allow_codebook_insert' is true.
+          codebook_update_set_values -- function returning a dictionary of
+            values to set on codebook row editation when a codebook record is
+            updated from within an active value of a ListField.  The function
+            will get a PresentedRow instance as an argument representing the
+            current record.
           runtime_filter -- provider of enumeration runtime filter as a
             'Computer' instance.  The computer function computes the filtering
             condition based on the current row data.  This condition is used to
@@ -3280,7 +3285,8 @@ class Field(object):
               codebook=None, display=None, prefer_display=None, display_size=None,
               null_display=None, inline_display=None, inline_referer=None,
               allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_insert_prefill=None, codebook_runtime_filter=None, runtime_filter=None,
+              codebook_insert_prefill=None, codebook_update_set_values=None,
+              codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=None, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, filename_extensions=(),
@@ -3332,6 +3338,9 @@ class Field(object):
             or isinstance(codebook_insert_spec, basestring), codebook_insert_spec
         assert codebook_insert_prefill is None \
             or isinstance(codebook_insert_prefill, collections.Callable), codebook_insert_prefill
+        assert codebook_update_set_values is None \
+            or isinstance(codebook_update_set_values, collections.Callable), \
+            codebook_update_set_values
         assert width is None or isinstance(width, int)
         if codebook_runtime_filter is not None:
             assert runtime_filter is None
@@ -3462,6 +3471,7 @@ class Field(object):
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_insert_prefill = codebook_insert_prefill
+        self._codebook_update_set_values = codebook_update_set_values
         self._runtime_filter = runtime_filter
         self._runtime_arguments = runtime_arguments
         self._selection_type = selection_type
@@ -3651,6 +3661,9 @@ class Field(object):
 
     def codebook_insert_prefill(self):
         return self._codebook_insert_prefill
+
+    def codebook_update_set_values(self):
+        return self._codebook_update_set_values
 
     def runtime_filter(self):
         return self._runtime_filter
