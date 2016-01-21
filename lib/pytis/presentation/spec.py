@@ -536,24 +536,30 @@ class Action(object):
 
 class PrintAction(object):
     """Output (print) action specification."""
-    def __init__(self, id, title, name, language=None):
-        """
-        Arguments:
+    def __init__(self, id, title, name, language=None, handler=None):
+        """Arguments:
 
           id -- action identifier as a string.  It must be unique among all
             objects identifiers within a given form.
           title -- action title displayed in the user interface
           name -- name of the print specification, string
           language -- output language; two letter language code or None
+          handler -- custom print handler function as a callable object; If
+            None, the printing is by default performed by Pytis.  If a function
+            is given, the function will be called on PrintAction invocation
+            with current form row as a 'PresentedRow' instance as the first
+            positional argument.
 
         """
         assert isinstance(id, basestring), id
         assert isinstance(title, basestring), title
         assert isinstance(name, basestring), name
+        assert handler is None or isinstance(handler, collections.Callable), handler
         self._id = id
         self._title = title
         self._name = name
         self._language = language
+        self._handler = handler
 
     def id(self):
         """Return action id given in the constructor."""
@@ -570,6 +576,10 @@ class PrintAction(object):
     def language(self):
         """Return output language given in the constructor."""
         return self._language
+
+    def handler(self):
+        """Return custom print handler given in the constructor."""
+        return self._handler
 
     def dmp_name(self):
         """Return print action name in the form useable for DMP."""
@@ -5442,14 +5452,12 @@ class Specification(SpecificationBase):
 
     def print_spec(self):
         """Vrať sekvenci specifikací tiskových náhledů."""
-        print_spec = []
-        i = 1
-        for p in (self.prints or []):
-            if not isinstance(p, PrintAction):
-                p = PrintAction('__print_action_%d' % (i,), p[0], p[1])
-                i += 1
-            print_spec.append(p)
-        return print_spec
+        prints = self.prints or ()
+        if isinstance(prints, collections.Callable):
+            prints = prints()
+        return [p if isinstance(p, PrintAction) else
+                PrintAction('__print_action_%d' % (i,), p[0], p[1])
+                for i, p in enumerate(prints)]
 
     def access_spec(self):
         """Return the 'access_rights' attribute value.
