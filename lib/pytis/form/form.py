@@ -3272,7 +3272,8 @@ class ShowForm(EditForm):
                     big_field_ids.append(f.id())
             elif t is not None and issubclass(t, pytis.data.Big):
                 big_field_ids.append(f.id())
-        result = [c.id() for c in self._data.columns() if c.id() not in big_field_ids]
+        result = [c.id() for c in self._data.columns()
+                  if not isinstance(c.type(), pytis.data.Big) and c.id() not in big_field_ids]
         return result
 
 
