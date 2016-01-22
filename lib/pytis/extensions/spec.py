@@ -268,7 +268,7 @@ cmd_run_any_form = \
 
 
 def printdirect(resolver, spec, print_spec, row, output_file=None,
-                language=None, translations=(), **kwargs):
+                language=None, translations=(), spec_kwargs=None, **kwargs):
     """Print specification to an output file or show it in a PDF viewer.
 
     Arguments:
@@ -281,7 +281,10 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
         'None' then show the output in an external PDF viewer
       language -- language code to pass to the exporter context
       translations -- translations to pass to PDFExporter
-      kwargs -- passed to the print resolver for use in the print procedure
+      spec_kwargs -- dictionary of keyword arguments to pass to the print
+        specification constructor
+      kwargs -- passed to the print resolver as parameters for use in the print
+        procedure
 
     Return True if the document was printed or displayed; return False if the
     action was aborted.
@@ -321,7 +324,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     try:
         formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec,
                                            parameters=parameters, language=language,
-                                           translations=translations)
+                                           translations=translations, spec_kwargs=spec_kwargs)
     except pytis.output.AbortOutput:
         return False
     if output_file:

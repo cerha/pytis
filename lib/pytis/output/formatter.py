@@ -342,7 +342,7 @@ class LCGFormatter(object):
             return binding_dictionary
 
     def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
-                 parameters={}, language=None, translations=()):
+                 parameters={}, language=None, translations=(), spec_kwargs=None):
         """Arguments:
 
           resolver -- form specification resolver
@@ -357,6 +357,8 @@ class LCGFormatter(object):
           parameters -- dictionary of form parameters
           language -- language code to pass to the exporter context
           translations -- translations to pass to PDFExporter
+          spec_kwargs -- dictionary of keyword arguments to pass to the print
+            specification constructor
 
         """
         self._resolver = resolver
@@ -365,6 +367,7 @@ class LCGFormatter(object):
         self._parameters = HashableDict(parameters)
         self._language = language
         self._translations = translations
+        self._spec_kwargs = spec_kwargs or {}
         if not self._resolve(template_id, 'init'):
             raise AbortOutput()
         self._doc_header, __ = self._resolve(template_id, 'doc_header')
@@ -443,7 +446,8 @@ class LCGFormatter(object):
         result = default
         for resolver in xtuple(self._output_resolvers):
             try:
-                result = resolver.get(template_id, element, parameters=self._parameters)
+                result = resolver.get(template_id, element, parameters=self._parameters,
+                                      **self._spec_kwargs)
             except ResolverError:
                 continue
             break
