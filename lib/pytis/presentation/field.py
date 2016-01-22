@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2015 Brailcom, o.p.s.
+# Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import string
 
 import pytis.data
 from pytis.util import ProgramError, Resolver, \
-    argument_names, positive_id, remove_duplicates, translations
+    argument_names, positive_id, remove_duplicates, translations, format_byte_size
 from spec import CbComputer, CodebookSpec, Computer, Editable
 from types_ import PrettyType
 
@@ -405,6 +405,9 @@ class PresentedRow(object):
             def strval(column):
                 if isinstance(column.type, pytis.data.Password):
                     return "***"
+                elif isinstance(column.type, pytis.data.Big):
+                    return '<%s %s>' % (column.type.__class__.__name__,
+                                        format_byte_size(len(self[column.id].value())))
                 else:
                     return unicode(self[column.id].value())
             info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
