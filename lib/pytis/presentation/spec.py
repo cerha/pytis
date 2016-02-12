@@ -350,7 +350,7 @@ class ActionContext(object):
     Global actions don't operate on particular records, they either don't
     operate on records at all or they operate on all records or they implement
     their own method of selecting the record(s) for the operation (e.g. pop-up
-    a dialog).  The handler wil receive no positional argument.
+    a dialog).  The handler will receive no positional argument.
 
     """
     # TODO: Zde by ještě mohla být jedna hodnota, která by umožnila definovat
@@ -536,7 +536,7 @@ class Action(object):
 
 class PrintAction(object):
     """Output (print) action specification."""
-    def __init__(self, id, title, name, language=None, handler=None):
+    def __init__(self, id, title, name, language=None, handler=None, context=None):
         """Arguments:
 
           id -- action identifier as a string.  It must be unique among all
@@ -547,19 +547,29 @@ class PrintAction(object):
           handler -- custom print handler function as a callable object; If
             None, the printing is by default performed by Pytis.  If a function
             is given, the function will be called on PrintAction invocation
-            with current form row as a 'PresentedRow' instance as the first
-            positional argument.
+            with one or no positional argument, according to 'context'.  By
+            default, the context is 'ActionContext.RECORD', so one positional
+            argument is passed (the current form row as a 'PresentedRow'
+            instance).
+          context -- context of records on which the action operates.
+            Only relevant when 'handler' is defined.  It determines which
+            arguments the handler receives.  The value is one of
+            'ActionContext' constants.
 
         """
         assert isinstance(id, basestring), id
         assert isinstance(title, basestring), title
         assert isinstance(name, basestring), name
         assert handler is None or isinstance(handler, collections.Callable), handler
+        assert context is None or context in public_attributes(ActionContext), context
+        assert context is None or handler is not None, \
+            'Context only makes sense when handler is used.'
         self._id = id
         self._title = title
         self._name = name
         self._language = language
         self._handler = handler
+        self._context = context or ActionContext.RECORD
 
     def id(self):
         """Return action id given in the constructor."""
@@ -580,6 +590,10 @@ class PrintAction(object):
     def handler(self):
         """Return custom print handler given in the constructor."""
         return self._handler
+
+    def context(self):
+        """Return print handler context given in the constructor."""
+        return self._context
 
     def dmp_name(self):
         """Return print action name in the form useable for DMP."""

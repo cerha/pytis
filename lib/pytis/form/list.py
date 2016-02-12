@@ -3416,7 +3416,8 @@ class BrowseForm(FoldableForm):
                            icon='link'))
         return menu
 
-    def _cmd_print(self, print_spec_path=None, language=None, handler=None):
+    def _cmd_print(self, print_spec_path=None, language=None, handler=None,
+                   context=pytis.presentation.ActionContext.RECORD):
         log(EVENT, 'Print form invocation:', print_spec_path)
         name = self._name
         if not print_spec_path:
@@ -3428,10 +3429,12 @@ class BrowseForm(FoldableForm):
                 print_spec_path = spec[0].name()
                 language = spec[0].language()
                 handler = spec[0].handler()
+                context = spec[0].context()
             else:
                 print_spec_path = name
         if handler:
-            return handler(self.current_row())
+            args = self._context_action_args(Action('x', '-', context=context))
+            return handler(*args)
         parameters = self._formatter_parameters()
         parameters.update({self._PrintResolver.P_NAME: name})
         print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)

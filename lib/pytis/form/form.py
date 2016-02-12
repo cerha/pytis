@@ -540,7 +540,8 @@ class InnerForm(Form):
         menu = [MItem(p.title(),
                       command=pytis.form.BrowseForm.COMMAND_PRINT(print_spec_path=p.name(),
                                                                   language=p.language(),
-                                                                  handler=p.handler()))
+                                                                  handler=p.handler(),
+                                                                  context=p.context()))
                 for p in print_spec
                 if action_has_access('print/%s' % (p.dmp_name(),),
                                      perm=pytis.data.Permission.PRINT)]
