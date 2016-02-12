@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1630,7 +1630,15 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
     def _on_left_down(self, event):
         self.Dismiss()
         if self._selected_profile_index is not None:
-            pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
+            # We explicitly pass _command_handler to ensure that the
+            # command is handled by the form for which the profile
+            # selection menu was constructed.  This is because we've
+            # seen tracebacks indicating that handliong gets to a
+            # form with fewer profiles than _selected_profile_index.
+            # Probably the current form may change for some reason
+            # between the popup invocation and the click?
+            pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index,
+                                                               _command_handler=self._current_form)
 
     def _append_label(self, label, toplevel=True):
         i = self.GetItemCount()
@@ -1671,7 +1679,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         # Called just prior to displaying the popup.
         # Fill menu items before each popup and delete them on dismiss to
         # avoid having to update the menu during form profile list update.
-        form = pytis.form.current_form()
+        self._current_form = form = pytis.form.current_form()
         profiles = form.profiles()
         current = form.current_profile()
         def append_system_profiles(items, level=0):
