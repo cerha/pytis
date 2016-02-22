@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2015 Brailcom, o.p.s.
+# Copyright (C) 2006-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1586,8 +1586,9 @@ class BrowseForm(LayoutForm):
         if field.id == self._column_fields[0].id:
             tree_level = self._tree_level()
             if tree_level is not None and tree_level > 0:
-                indent = tree_level * g.span(2 * '&nbsp;', cls='tree-indent')
-                content = indent + '&bull;&nbsp;' + g.span(content, cls='tree-node')
+                indent = lcg.concat([g.span(g.noescape('&nbsp;&nbsp;'), cls='tree-indent')
+                                     for i in range(tree_level)])
+                content = indent + g.noescape('&bull;&nbsp;') + g.span(content, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
                 content += self._export_popup_ctrl(context, row, 'tr')
