@@ -239,8 +239,10 @@ class PytisUserService(PytisService):
                 self._f = f
                 self._filename = filename
                 self._encoding = encoding
-            def exposed_read(self):
-                return self._f.read()
+            def exposed_read(self, *args):
+                return self._f.read(*args)
+            def exposed_readline(self):
+                return self._f.readline()
             def exposed_write(self, data):
                 if isinstance(data, buffer):
                     data = data[:]
@@ -509,7 +511,7 @@ class PytisUserService(PytisService):
         if len(file_filter) == 0:
             file_filter.append((u"Všechny soubory (*.*)", "*.*"))
         result = tkFileDialog.askopenfilename(parent=root, initialfile=filename,
-                                              defaultextension=extension, multi=multi)
+                                              defaultextension=extension, multiple=multi)
         filenames = root.tk.splitlist(result)
         root = None
         return [unicode(f, sys.getfilesystemencoding()) for f in filenames]
