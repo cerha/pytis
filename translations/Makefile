@@ -12,9 +12,10 @@ ifeq ($(MAKECMDGOALS),extract)
 
 pytis-data.pot: $(foreach dir, data presentation, $(shell find ../lib/pytis/$(dir) -name "*.py"))
 pytis-defs.pot: $(foreach dir, defs cms, $(shell find ../lib/pytis/$(dir) -name "*.py"))
-pytis-web.pot: $(foreach dir, lib/pytis/web resources/scripts, $(shell find ../$(dir) -name "*.py"))
-pytis-wx.pot: $(foreach dir, form util extensions output help remote, \
-		$(shell find ../lib/pytis/$(dir) -name "*.py"))
+pytis-web.pot:  $(shell find ../lib/pytis/web -name "*.py") \
+		$(shell find ../resources/scripts -name "*.js")
+pytis-wx.pot:   $(foreach dir, form util extensions output help remote, \
+		  $(shell find ../lib/pytis/$(dir) -name "*.py"))
 pytis-x2go.pot: ../bin/x2goclient.py
 $(wildcard *.pot):
 	pybabel extract -F babel.cfg --add-comments=Translators: -s $(sort $(dir $^)) -o $@
