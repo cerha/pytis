@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-08-26 13:41+0200\n"
+"POT-Creation-Date: 2016-02-24 17:33+0100\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -16,32 +16,5624 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/web/dialog.py:52 ../lib/pytis/web/form.py:570
+#: ../bin/x2goclient.py:176
+msgid "User name"
+msgstr ""
+
+#: ../bin/x2goclient.py:310
+msgid "Starting application"
+msgstr ""
+
+#: ../bin/x2goclient.py:310
+msgid "Initializing libraries. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:351
+msgid "Initializing application. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:439
+#, python-format
+msgid "Can't read RPyC info file: %s"
+msgstr ""
+
+#: ../bin/x2goclient.py:449
+#, python-format
+msgid "Error when writing RPyC info file: %s"
+msgstr ""
+
+#: ../bin/x2goclient.py:470 ../bin/x2goclient.py:1299
+#, fuzzy
+msgid "Invalid broker address"
+msgstr "Neplatná hodnota"
+
+#: ../bin/x2goclient.py:474 ../bin/x2goclient.py:1303
+msgid "Unsupported broker protocol"
+msgstr ""
+
+#: ../bin/x2goclient.py:599
+#, fuzzy
+msgid "Invalid session format"
+msgstr "Neplatný formát"
+
+#: ../bin/x2goclient.py:792
+msgid "Client setup. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:837
+msgid "Checking for new client version. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:847
+msgid "New pytis client version available. Install?"
+msgstr ""
+
+#: ../bin/x2goclient.py:855
+msgid "Checking sessions and profiles. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:918
+#, fuzzy
+msgid "Select session"
+msgstr "Akcie"
+
+#: ../bin/x2goclient.py:923
+msgid "No session selected."
+msgstr ""
+
+#: ../bin/x2goclient.py:925
+msgid "Opening selected profile. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:942
+msgid "Checking desktop shortcut. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:1081
+#, python-format
+msgid "No free port found for RPyC in the range %s-%s"
+msgstr ""
+
+#: ../bin/x2goclient.py:1139 ../bin/x2goclient.py:1514
+msgid "Starting server connections. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:1211
+#, python-format
+msgid "Password key for %s"
+msgstr ""
+
+#: ../bin/x2goclient.py:1257
+msgid "Login using password"
+msgstr ""
+
+#: ../bin/x2goclient.py:1258
+msgid "Login using a key file"
+msgstr ""
+
+#: ../bin/x2goclient.py:1259
+msgid "Default authentication failed"
+msgstr ""
+
+#: ../bin/x2goclient.py:1267
+msgid "No supported ssh connection method available"
+msgstr ""
+
+#: ../bin/x2goclient.py:1270
+msgid "Login password"
+msgstr ""
+
+#: ../bin/x2goclient.py:1277
+msgid "Select ssh key file"
+msgstr ""
+
+#: ../bin/x2goclient.py:1287
+msgid "Program error"
+msgstr ""
+
+#: ../bin/x2goclient.py:1311
+msgid "Couldn't connect to upgrade server"
+msgstr ""
+
+#: ../bin/x2goclient.py:1323
+msgid "Package unpacking failed"
+msgstr ""
+
+#: ../bin/x2goclient.py:1344
+msgid "Pytis successfully upgraded. Restart the application."
+msgstr ""
+
+#: ../bin/x2goclient.py:1348
+msgid "Creating new session. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:1351
+msgid "Setting up new session. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:1377
+msgid "New session"
+msgstr ""
+
+#: ../bin/x2goclient.py:1379
+msgid "OK"
+msgstr ""
+
+#: ../bin/x2goclient.py:1379
+msgid "Terminate"
+msgstr ""
+
+#: ../bin/x2goclient.py:1379 ../lib/pytis/form/dialog.py:97
+#: ../lib/pytis/form/dualform.py:1126 ../lib/pytis/form/list.py:3356
+#: ../lib/pytis/web/form.py:604 ../lib/pytis/web/form.py:2085
+msgid "Cancel"
+msgstr ""
+
+#: ../bin/x2goclient.py:1380
+msgid "Resume session"
+msgstr ""
+
+#: ../bin/x2goclient.py:1457
+msgid "Create desktop shortcut for this session profile?"
+msgstr ""
+
+#: ../bin/x2goclient.py:1466
+#, python-format
+msgid "Shortcut %s allready exists. Please, rename it:"
+msgstr ""
+
+#: ../bin/x2goclient.py:1467
+msgid "Edit shortcut name"
+msgstr ""
+
+#: ../bin/x2goclient.py:1521
+msgid "Authenticating. Please wait..."
+msgstr ""
+
+#: ../bin/x2goclient.py:1883
+msgid "Launching application. Please wait..."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:86 ../demo/www/demo.py:88
+msgid "Product prices in different countries"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:89 ../demo/lib/demo/defs/misc.py:218
+#: ../demo/www/demo.py:91
+msgid "Continent"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:91 ../demo/www/demo.py:93
+msgid "Select continent to limit country selection below to given continent."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:92 ../demo/lib/demo/defs/misc.py:105
+#: ../demo/lib/demo/defs/misc.py:225 ../demo/lib/demo/defs/misc.py:289
+#: ../demo/www/demo.py:94
+msgid "Country"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:96 ../demo/www/demo.py:98
+msgid ""
+"Select the country. Use the radio buttons above to limit the available "
+"options to countries of given continent."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:98 ../demo/www/demo.py:100
+msgid "Product filter"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:99 ../demo/www/demo.py:101
+msgid ""
+"Enter a wildcard expression to filter only matching products in the codebook "
+"field below."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:101 ../demo/www/demo.py:103
+msgid "Marked products only"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:102 ../demo/www/demo.py:104
+msgid ""
+"Check this checkbox if you want to filter the products in the list below to "
+"contain only marked products."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:104 ../demo/lib/demo/dbdefs/db_1.py:133
+#: ../demo/lib/demo/defs/misc.py:395 ../demo/www/demo.py:106
+msgid "Product"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:107 ../demo/www/demo.py:109
+msgid "Select the product to set the price for."
+msgstr ""
+
+#: ../demo/lib/demo/www.py:108 ../demo/lib/demo/dbdefs/db_1.py:135
+#: ../demo/output/Products.py:51 ../demo/www/demo.py:110
+msgid "Price"
+msgstr ""
+
+#: ../demo/lib/demo/www.py:109 ../demo/www/demo.py:112
+msgid "Expense"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:61 ../demo/lib/demo/dbdefs/db_1.py:132
+#: ../demo/lib/demo/dbdefs/db_1.py:147 ../demo/lib/demo/dbdefs/db_1.py:238
+#: ../demo/lib/demo/defs/misc.py:574 ../demo/lib/demo/defs/misc.py:594
+#: ../lib/pytis/defs/logging.py:91
+msgid "ID"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:62
+msgid "Value"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:134 ../lib/pytis/form/list.py:1963
+#: ../lib/pytis/form/search.py:632
+msgid "Count"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:136
+msgid "Available since"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:138
+msgid "Marked"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:139 ../demo/lib/demo/defs/misc.py:398
+msgid "Notes"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:148 ../demo/lib/demo/defs/misc.py:111
+msgid "Date"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:149
+msgid "DateTime"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:150
+msgid "Integer"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:173 ../demo/lib/demo/defs/misc.py:96
+#: ../demo/lib/demo/defs/misc.py:576 ../demo/lib/demo/defs/misc.py:594
+#: ../demo/output/Products.py:50
+msgid "Name"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:174 ../lib/pytis/form/application.py:1567
+#: ../lib/pytis/form/application.py:2011
+msgid "Password"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:175
+msgid "MD5 Password"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:183 ../demo/lib/demo/dbdefs/db_1.py:194
+#: ../demo/lib/demo/dbdefs/db_1.py:250 ../lib/pytis/defs/menu.py:175
+#: ../lib/pytis/defs/menu.py:267 ../lib/pytis/defs/menu.py:338
+#: ../lib/pytis/defs/menu.py:657 ../lib/pytis/defs/menu.py:752
+#: ../lib/pytis/defs/menu.py:831
+msgid "Id"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:184 ../demo/lib/demo/dbdefs/db_1.py:239
+msgid "File"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:185 ../demo/lib/demo/dbdefs/db_1.py:198
+#: ../demo/lib/demo/defs/misc.py:578 ../demo/lib/demo/defs/misc.py:595
+#: ../lib/pytis/cms/cms.py:106 ../lib/pytis/cms/cms.py:192
+#: ../lib/pytis/cms/cms.py:274 ../lib/pytis/cms/cms.py:418
+#: ../lib/pytis/cms/cms.py:461 ../lib/pytis/cms/cms.py:484
+#: ../lib/pytis/cms/cms.py:516 ../lib/pytis/defs/help.py:63
+#: ../lib/pytis/defs/help.py:156 ../lib/pytis/defs/menu.py:42
+#: ../lib/pytis/defs/menu.py:190 ../lib/pytis/defs/menu.py:192
+#: ../lib/pytis/defs/menu.py:228 ../lib/pytis/defs/menu.py:610
+#: ../lib/pytis/help/help.py:331
+#, fuzzy
+msgid "Description"
+msgstr "Akcie"
+
+#: ../demo/lib/demo/dbdefs/db_1.py:186
+msgid "File name"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:195 ../lib/pytis/form/inputfield.py:2247
+#: ../resources/scripts/pytis-ckeditor.js:804
+#, fuzzy
+msgid "Image"
+msgstr "obrázok"
+
+#: ../demo/lib/demo/dbdefs/db_1.py:196
+msgid "Filename"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:197 ../demo/lib/demo/defs/cb.py:199
+#: ../lib/pytis/cms/cms.py:81 ../lib/pytis/cms/cms.py:105
+#: ../lib/pytis/cms/cms.py:236 ../lib/pytis/cms/cms.py:267
+#: ../lib/pytis/cms/cms.py:268 ../lib/pytis/cms/cms.py:416
+#: ../lib/pytis/cms/cms.py:483 ../lib/pytis/cms/cms.py:617
+#: ../lib/pytis/defs/help.py:38 ../lib/pytis/defs/help.py:60
+#: ../lib/pytis/defs/help.py:158 ../lib/pytis/defs/menu.py:90
+#: ../lib/pytis/defs/profiles.py:34 ../lib/pytis/form/application.py:733
+#: ../lib/pytis/form/dialog.py:1322 ../lib/pytis/form/inputfield.py:2638
+#: ../lib/pytis/form/inputfield.py:2664
+#: ../resources/scripts/pytis-ckeditor.js:733
+msgid "Title"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:199 ../demo/lib/demo/defs/misc.py:248
+msgid "Size"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:240
+msgid "URL"
+msgstr ""
+
+#: ../demo/lib/demo/dbdefs/db_1.py:251
+msgid "Random Number"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:48
+msgid "&System"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:49
+msgid "&Run form"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:51
+msgid "&Check specification files"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:53
+msgid "Management of menus and user roles"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:54
+msgid "Roles"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:55
+#: ../demo/lib/demo/defs/application.py:102 ../lib/pytis/cms/cms.py:247
+#: ../lib/pytis/defs/menu.py:265 ../lib/pytis/defs/menu.py:329
+#: ../lib/pytis/defs/menu.py:486 ../lib/pytis/defs/menu.py:516
+#: ../lib/pytis/defs/menu.py:880 ../lib/pytis/defs/menu.py:946
+msgid "Menu"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:56
+msgid "Menu Rights"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:58
+msgid "Form statistics"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:59
+msgid "Short statistics"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:60
+msgid "Full statistics"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:61
+#: ../demo/lib/demo/defs/application.py:106
+msgid "Users"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:63
+msgid "User printing templates"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:64
+msgid "Global printing templates"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:65
+msgid "Crypto users"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:69
+msgid "E&xit"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:71
+msgid "&Misc"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:72
+msgid "&Virtual form"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:73
+msgid "&Enumeration fields"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:74
+msgid "Codebook run-time &filter"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:75
+msgid "&Inheritance"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:76
+msgid "&Binary data"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:77
+msgid "&Generic binary data"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:78
+#, fuzzy
+msgid "&Images"
+msgstr "obrázok"
+
+#: ../demo/lib/demo/defs/application.py:80
+msgid "&Dual forms"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:81 ../demo/lib/demo/defs/cb.py:47
+msgid "Continents"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:82 ../demo/lib/demo/defs/cb.py:96
+msgid "Countries"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:84
+msgid "Dialog test"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:85
+msgid "Password fields"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:86 ../demo/lib/demo/defs/misc.py:377
+msgid "Products"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:87
+msgid "Tree Order"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:88 ../demo/lib/demo/defs/misc.py:591
+msgid "Foldable Tree"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:89 ../demo/lib/demo/defs/misc.py:608
+msgid "Long Table"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:90 ../demo/lib/demo/defs/misc.py:623
+msgid "Slow Long Table"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:91
+msgid "Fast Long Table"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:92 ../demo/lib/demo/defs/misc.py:639
+msgid "Files and URLs"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:93
+msgid "Query Fields"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:94
+msgid "Range Types"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:96
+msgid "&Codebooks"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:97
+msgid "Con&tinents"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:98
+msgid "&Countries"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:99
+msgid "Insurance"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:101
+msgid "&CMS"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:103
+msgid "Languages"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:104
+msgid "Modules"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:105
+#, fuzzy
+msgid "Generic actions"
+msgstr "Akcie"
+
+#: ../demo/lib/demo/defs/application.py:107
+msgid "User Roles"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:108
+msgid "Session Log"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:109
+msgid "Access Log"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:110
+msgid "Color themes"
+msgstr ""
+
+#: ../demo/lib/demo/defs/application.py:120
+msgid "Virtual Form Example"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:57
+msgid "Encrypt and upload"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:58
+msgid "Download and decrypt"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:68
+msgid "Select recipient keys"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:69 ../demo/lib/demo/defs/misc.py:255
+#: ../lib/pytis/cms/cms.py:596 ../lib/pytis/defs/logging.py:43
+#: ../lib/pytis/defs/logging.py:81 ../lib/pytis/defs/logging.py:93
+#: ../lib/pytis/defs/printing.py:77 ../lib/pytis/defs/profiles.py:35
+#: ../lib/pytis/defs/profiles.py:69
+msgid "User"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:69
+msgid "Area"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:85 ../demo/lib/demo/defs/binary.py:130
+msgid "Remote connection not available."
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:90
+msgid "No key selected."
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:94
+msgid "No file selected."
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:113
+msgid "Encryption error."
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:122 ../lib/pytis/form/inputfield.py:1908
+msgid "Error reading file:"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:134
+#, python-format
+msgid "No data in this row. %s"
+msgstr ""
+
+#: ../demo/lib/demo/defs/binary.py:164
+#, fuzzy
+msgid "Images"
+msgstr "obrázok"
+
+#: ../demo/lib/demo/defs/cb.py:56
+msgid "All Countries"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:59
+msgid "Islands"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:61
+msgid "Disabled Countries"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:63
+#, fuzzy
+msgid "Random numbers"
+msgstr "Niepovolené číslo"
+
+#: ../demo/lib/demo/defs/cb.py:66 ../lib/pytis/form/configui.py:74
+#: ../resources/scripts/pytis-ckeditor.js:225
+msgid "Default"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:67
+msgid "Countries of the current continent"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:69
+msgid "Countries of the current continent as specification"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:72
+msgid "PDF LayoutError"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:74
+msgid "Template based"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:75
+msgid "Database template"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:76
+msgid "Iterated table"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:104
+msgid "Continent name"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:121
+msgid "All islands"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:130
+msgid "Continent details"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:132
+msgid "Shows the details of the currently selected main table record."
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:133
+msgid "Other countries of the same continent"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:135
+msgid ""
+"Displays a table of all countries from the same continent as the currently "
+"selected main form country."
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:137
+msgid "Wikipedia"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:138
+msgid "Shows Wikipedia information about the currently selected country."
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:171
+msgid "Function Table"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:185
+msgid "Fees"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:197
+msgid "Really print?"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cb.py:207 ../demo/lib/demo/defs/cb.py:272
+msgid "Printed!"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cms.py:33 ../resources/scripts/pytis-ckeditor.js:227
+msgid "English"
+msgstr ""
+
+#: ../demo/lib/demo/defs/cms.py:34 ../resources/scripts/pytis-ckeditor.js:226
+msgid "Czech"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:39
+msgid "Fruits"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:40
+msgid "Vegetables"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:77
+msgid "Virtual form"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:88
+msgid "Editable"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:89
+msgid ""
+"Check/uncheck this checkbox to enable/disable the form fields.  Any more "
+"complicated logic is possible to control the editability of any particular "
+"field using the 'editable' property in field specification."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:93
+msgid "Number"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:95
+msgid "A simple numeric field."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:100
+msgid ""
+"A simple text-entry field with completer.  Enumeration fields have completer "
+"by default, but you can use autocompletion also for any text field without "
+"any effect to validation.  You can pass a name of specification as-well, to "
+"obtain completions from a data object."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:104
+msgid "Name 2"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:108
+msgid ""
+"This is a simple codebook field.  Please see the `Enumeration fields' demo "
+"for more examples and explanations of different types of codebook/"
+"enumeration fields."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:113
+msgid "Date entry field with a calendar control and a default value."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:114
+msgid "Checkbox"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:115
+msgid "Radio box"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:117
+msgid "Note"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:119
+msgid ""
+"Multiline text field with a computer.  The computer computes the field value "
+"from values of other fields in the form.  The computed value is recomputed "
+"on any change in the fields, on which the computer depends. Computed fields "
+"are not editable by default, but editability can be enabled explicitly."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:178
+msgid "Enumeration fields"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:188
+msgid "Tiny"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:189
+msgid "Small"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:190
+msgid "Medium"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:191
+msgid "Large"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:192
+msgid "Huge"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:211
+msgid "Cache"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:212
+msgid "Check"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:213
+msgid "Bank Transfer"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:224
+msgid "Simple pull-down menu selection."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:229
+msgid ""
+"This field provides a text entry for writing down the code directly.  It "
+"most convenient when the codebook contains a relatively large number of "
+"items while their codes are short and simple.  Then the user most often "
+"knows the codes without looking them up.  Right from the text entry field, "
+"there is a codebook invocation button, which allows the user to select the "
+"item from a codebook form (when he doesn't remember the code or wants to see "
+"the full listing of all available items for some other reason).  Further on "
+"the right, there is a gray field called `display'.  It shows the description "
+"of the currently selected item (eg. the full name for the selected code).  "
+"Thus it provides immediate feedback when the user modifies the value.  It is "
+"empty when the entered code is invalid (not contained in the codebook).  It "
+"is updated with any change of the field value."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:243
+msgid "Payment type"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:244
+msgid ""
+"This field demonstrates a simple radio box selection.  What is, however, "
+"slightly more exciting about this field, is the creation of a custom static "
+"enumerator not bound to a data object."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:250
+msgid ""
+"This field demonstrates a scrollable list selection with max. height limit "
+"and a default value set to `Small'."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:252
+msgid "Group"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:254
+msgid "The available values are read dynamically from an external source."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:258
+msgid ""
+"The available values are read dynamically from an external source and depend "
+"on the current value of 'group'."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:277
+msgid "Codebook runtime filter demo"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:282
+msgid "Country name filter"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:283
+msgid ""
+"Enter a wildcard expression to filter only matching countries in the "
+"codebook field below."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:285
+msgid "Show only european countries"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:287
+msgid ""
+"Check/uncheck this checkbox to enable/disable non-european countries in the "
+"codebook field below."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:293
+msgid "This field demonstrates a codebook with a runtime filter."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:294
+msgid "List field country selection"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:299
+msgid ""
+"This field has the same runtime filter as the field above, but is "
+"represented by a different type of input control."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:324
+msgid "Simplified runtime filter demo"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:327
+msgid "Select your country"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:353
+msgid "Země"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:371
+msgid "Kontinent"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:392 ../demo/lib/demo/defs/misc.py:535
+msgid "Date when the product was first included."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:393 ../demo/lib/demo/defs/misc.py:536
+msgid "Arbitrary internal notes about given product."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:401
+msgid "Year"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:402
+msgid "Month"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:407
+msgid "Aggregates"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:408
+msgid "Product Page"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:454
+msgid "Product Info"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:455
+msgid "Shows web page generated from LCG structured text."
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:458
+msgid "Mark/unmark"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:459
+msgid "Mark all"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:460
+msgid "Unmark all"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:462
+msgid "Mark selected"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:464
+msgid "Update prices"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:465
+msgid "Print price"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:479 ../demo/lib/demo/defs/misc.py:486
+#, python-format
+msgid "Marked %d rows"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:519
+msgid "XProducts"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:571
+msgid "Tree"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:575
+msgid "Tree ID"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:577 ../demo/lib/demo/defs/misc.py:594
+msgid "Amount"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:645 ../lib/pytis/form/dialog.py:1509
+#, fuzzy
+msgid "Open file"
+msgstr "súbor"
+
+#: ../demo/lib/demo/defs/misc.py:646
+msgid "Open URL"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:690
+msgid "Random numbers controlled by query fields"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:693
+msgid "Row Count"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:694
+msgid "Min"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:695 ../demo/lib/demo/defs/misc.py:696
+msgid "Max"
+msgstr ""
+
+#: ../demo/lib/demo/defs/misc.py:707
+msgid "RangeTypes"
+msgstr ""
+
+#: ../demo/output/Products.py:49
+msgid "Product ID"
+msgstr ""
+
+#: ../demo/output/Products.py:53
+msgid "Print Specification Demo"
+msgstr ""
+
+#: ../demo/output/Products.py:58
+#, python-format
+msgid "Language: %s"
+msgstr ""
+
+#: ../demo/www/demo.py:49
+msgid "Pytis Demo"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:73
+msgid "Jazyky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:74
+msgid "Správa jazyků dostupných v CMS."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:79
+msgid "Kód"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:97
+msgid "Moduly"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:98
+msgid "Správa rozšiřujících modulů použitelných ve stránkách."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:132
+msgid "Dostupné akce tohoto modul"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:135
+msgid "Přenačíst dostupné akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:142
+msgid ""
+"Modul je používán v existujících stránkách.\n"
+"Pokud jej chcete vymazat, zrušte nejprve všechny navázané stránky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:165
+msgid "Neuvedeno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:187
+msgid "Nalezené akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:188
+msgid "Zaškrtněte akce, které chcete zpřístupnit webovým uživatelům:"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:192 ../lib/pytis/cms/cms.py:513
+#: ../lib/pytis/cms/cms.py:598 ../lib/pytis/defs/logging.py:49
+#: ../lib/pytis/defs/menu.py:227 ../lib/pytis/defs/menu.py:241
+#: ../lib/pytis/defs/menu.py:334 ../lib/pytis/defs/menu.py:496
+#: ../lib/pytis/defs/menu.py:662 ../lib/pytis/defs/menu.py:759
+#: ../lib/pytis/defs/menu.py:838 ../lib/pytis/defs/statistics.py:110
+#, fuzzy
+msgid "Action"
+msgstr "Akcie"
+
+#: ../lib/pytis/cms/cms.py:209
+msgid "Zobrazení záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:210
+msgid "Výpis všech záznamů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:211
+msgid "Export tabulky do CSV formát"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:212
+msgid "Zobrazení RSS kanálů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:213
+msgid "Vložení nového záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:214
+msgid "Editace stávajícího záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:215
+msgid "Smazání záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:216
+msgid "Export tisknutelných políček do PDF"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:228
+msgid "Men"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:237 ../lib/pytis/cms/cms.py:258
+#: ../lib/pytis/defs/help.py:155 ../lib/pytis/defs/menu.py:41
+#: ../lib/pytis/defs/menu.py:608 ../lib/pytis/defs/profiles.py:33
+#: ../lib/pytis/defs/profiles.py:68
+msgid "Identifier"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:238 ../lib/pytis/cms/cms.py:279
+#: ../lib/pytis/cms/cms.py:283 ../lib/pytis/cms/cms.py:482
+#: ../lib/pytis/cms/cms.py:597
+msgid "Modul"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:248
+msgid "Správa položek hlavního menu, jejich hierarchie a obsahu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:260
+msgid ""
+"Identifikátor bude vystupovat jako vnější adresa stránky.  Může být použit v "
+"odkazech na tuto stránku v rámci textu jiných stránek. Platný identifikátor "
+"může obsahovat pouze písmena bez diakritiky, číslice, pomlčky a podtržítka a "
+"musí začínat písmenem."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:265 ../lib/pytis/defs/menu.py:277
+msgid "Jazyk"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:269
+msgid "Název položky menu - krátký a výstižný."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:270
+msgid "Nadpis"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:271
+msgid ""
+"Hlavní nadpis při zobrazení stránky.  Pokud ponecháte nevyplněné, použije se "
+"název položky.  Ten je ale někdy kvůli použití v menu příliš krátký, takže "
+"zde je možné určit jeho delší variantu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:275
+msgid "Stručný popis stránky (zobrazen v menu jako tooltip)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:276 ../lib/pytis/cms/cms.py:365
+#: ../lib/pytis/defs/help.py:64 ../lib/pytis/defs/help.py:115
+#: ../lib/pytis/defs/profiles.py:46 ../lib/pytis/defs/profiles.py:74
+msgid "Content"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:278
+msgid "Text stránky formátovaný jako LCG strukturovaný text (wiki)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:281
+msgid ""
+"Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
+"prostou textovou stránku."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:284 ../lib/pytis/defs/help.py:33
+#: ../lib/pytis/defs/help.py:71
+msgid "Parent item"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:287
+msgid ""
+"Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
+"prázdné pro stránky na nejvyšší úrovni menu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:289
+msgid "Zveřejněno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:290
+msgid ""
+"Umožňuje řídit dostupnost dané položky nezávisle pro kažou jazykovou verzi."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:292 ../lib/pytis/defs/help.py:77
+msgid "Ordering"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:293 ../lib/pytis/defs/help.py:79
+msgid ""
+"Enter a number denoting the order of the item in menu between pages of the "
+"same hierarchy level.  Leave empty to put the item automatically to bottom."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:324
+msgid "Položka nemůže být nadřízená sama sobě."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:332
+msgid ""
+"Nelze přiřadit podřízenou položku jako nadřízenou (cyklus v hierarchii)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:337
+msgid "Stejné pořadové číslo už má jiná položka na této úrovni menu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:344
+msgid ""
+"Položka má podřízené položky.\n"
+"Pokud ji chcete vymazat, vymažte nejprve všechny podpoložky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:355
+msgid "Globální vlastnosti (společné pro všechny jazyky)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:357
+msgid "Text stránky (pro aktuální jazykovou verzi)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:361 ../lib/pytis/cms/cms.py:501
+msgid "Přístupová práva"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:377
+#, python-format
+msgid "Chyba přísutu k úložišti příloh: %s"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:387 ../lib/pytis/defs/crypto.py:63
+#: ../lib/pytis/defs/crypto.py:112 ../lib/pytis/defs/menu.py:390
+#: ../lib/pytis/defs/statistics.py:41 ../lib/pytis/defs/statistics.py:59
+#: ../lib/pytis/defs/statistics.py:82
+msgid "Uživatelé"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:388
+msgid "Správa uživatelských účtů, které je poté možno zařazovat do rolí."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:392 ../lib/pytis/cms/cms.py:456
+msgid "UID"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:393 ../lib/pytis/cms/cms.py:458
+msgid "Přihlašovací jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:394 ../lib/pytis/cms/cms.py:459
+msgid "Celé jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:395
+msgid "Heslo"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:403 ../lib/pytis/cms/cms.py:410
+msgid "Uživatelské role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:404
+msgid "Historie přihlášení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:411
+msgid ""
+"Správa dostupných uživatelských rolí, které je možné přiřazovat uživatelům."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:417
+msgid "Systémová role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:425
+msgid "Uživatelé zařazení do této role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:431
+msgid "Systémové role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:432
+msgid "Systémové role jsou uživatelům přiřazeny automaticky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:441 ../lib/pytis/cms/cms.py:454
+#: ../lib/pytis/cms/cms.py:509 ../lib/pytis/cms/cms.py:510
+#: ../lib/pytis/defs/menu.py:83 ../lib/pytis/defs/menu.py:658
+#: ../lib/pytis/defs/menu.py:755 ../lib/pytis/defs/menu.py:834
+#: ../lib/pytis/defs/menu.py:872 ../lib/pytis/defs/menu.py:940
+msgid "Role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:442
+msgid ""
+"Role dostupné pro přiřazování práv akcím (obsahuje systémové i uživatelsky "
+"definované role)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:448
+msgid "Přiřazení uživatelských rolí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:449
+msgid "Správa přiřazení uživatelských rolí jednotlivým uživatelům."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:460
+msgid "Název role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:468
+msgid "Správa přiřazení uživatelů jednotlivým uživatelským rolím."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:474
+msgid "Dostupné akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:475
+msgid "Výčet podporovaných akcí pro jednotlivé moduly."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:493
+msgid "Akce společné pro všechny položky men"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:494
+msgid "Výčet podporovaných akcí společných pro všechny položky menu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:502
+msgid "Přiřazení práv k akcím modulů pro jednotlivé uživatelské role."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:515
+msgid "Action Name"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:536
+msgid "IP adresa"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:537
+msgid "Hostname"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:539
+msgid "User agent"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:540
+msgid "Referer"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:546
+msgid "Neznámý"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:550
+msgid "Log přihlášení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:551
+msgid "Záznam informací o přihlášení uživatelů k webu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:559 ../lib/pytis/defs/statistics.py:70
+#: ../lib/pytis/defs/statistics.py:84 ../lib/pytis/defs/statistics.py:96
+#: ../lib/pytis/defs/statistics.py:111 ../lib/pytis/form/application.py:1565
+msgid "Login"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:560
+msgid "Jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:561
+msgid "Úspěch"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:562
+msgid "Začátek"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:563
+msgid "Trvání"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:564 ../lib/pytis/defs/help.py:126
+#: ../lib/pytis/defs/help.py:195
+msgid "Active"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:587
+msgid "Log přístupů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:588
+msgid ""
+"Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:594 ../lib/pytis/defs/logging.py:92
+msgid "Datum a čas"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:595
+msgid "Cesta"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:612
+msgid "Barevné Motivy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:613
+msgid "Správa barevných motivů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:618 ../lib/pytis/cms/cms.py:635
+#: ../lib/pytis/cms/cms.py:648 ../lib/pytis/cms/cms.py:660
+#: ../lib/pytis/cms/cms.py:668 ../lib/pytis/cms/cms.py:671
+#: ../lib/pytis/cms/cms.py:674
+msgid "Text"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:620 ../lib/pytis/cms/cms.py:641
+#: ../lib/pytis/cms/cms.py:654 ../lib/pytis/cms/cms.py:663
+#: ../lib/pytis/cms/cms.py:669 ../lib/pytis/cms/cms.py:672
+#: ../lib/pytis/cms/cms.py:675
+msgid "Pozadí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:622
+msgid "Zvýrazněné pozadí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:623
+msgid ""
+"Zvýraznění pomocí barvy pozadí může být použito na různých místech, např. "
+"pro odlišení aktuální položky menu, aktuálního jazyka, nalezeného záznamu ve "
+"formuláři apod."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:626
+msgid "Odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:627
+msgid "Barva textu nenavštíveného odkazu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:628
+msgid "Navštívený odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:629
+msgid ""
+"Barva textu navštíveného odkazu.  Pokud ponecháte prázdné, bude použita "
+"stejná barva jako u nenavštíveného odkazu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:631
+msgid "Aktivní odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:632
+msgid ""
+"Obarvení odkazu při při pohybu myší nad ním.  Pokud ponecháte prázdné, "
+"nebude odkaz na pohyb myši reagovat."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:634 ../lib/pytis/cms/cms.py:657
+#: ../lib/pytis/cms/cms.py:665 ../lib/pytis/cms/cms.py:670
+#: ../lib/pytis/cms/cms.py:673
+msgid "Orámování"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:636
+msgid ""
+"Barvy nadpisů jsou používány pro zvýrazenění názvů kapitol, panelů a jiných "
+"elementů majících povahu nadpisu či záhlaví.  V závislosti na použitých "
+"stylech mohou některé typy nadpisů používat odlišnou barvu pozadí, jiné "
+"mohou být pouze podtrženy (viz dále).  Barva textu je však společná pro oba "
+"typy nadpisů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:642
+msgid ""
+"Barva pozadí pro nadpisy, které používají zvýraznění barvou pozadí.Typicky "
+"jsou to záhlaví částí stránky (menu, panely apod.) a nadpisy vyšších úrovní."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:645
+msgid "Podtržení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:646
+msgid ""
+"Barva podtržení pro nadpisy, které používají zvýraznění podtržením.Typicky "
+"jsou to nadpisy nižších úrovní."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:649
+msgid ""
+"Rámy jsou obecně využívány pro odlišení samostatných prvků stránky, jako "
+"jsou například formuláře, nástrojové lišty, rejstříky apod. Rámy v tomto "
+"smyslu nemají nic splečného s HTML rámy (frame).  Pokud barvu textu "
+"nevyplníte, bude použita standardní barva textu (často u rámů budete chtít "
+"nastavit pouze barvu pozadí a orámování)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:655
+msgid ""
+"Barva pozadí rámů pro jejich vizuální odlišení od ostatního obsahu stránky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:658
+msgid ""
+"Barva orámování okrajů plochy rámu na přechodu mezi barvou pozadí rámu a "
+"jeho podkladem."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:661
+msgid ""
+"Na podkladových plochách se většinou text přímo nevyskytuje, ale některé "
+"styly to mohou předepisovat."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:664
+msgid "Podkladové plochy tvoří okolí hlavního obsahu stránky a panelů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:666
+msgid ""
+"Určuje barvu rámečku na přechodu mezi podkladovou plochou a obsahovými "
+"částmi stránky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:676
+msgid ""
+"Odlišení informačního řádku v detailních výpisech, jako např. informace o "
+"datu a autorovi v seznamu článků"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:678
+msgid "Standardní pozadí buňky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:679
+msgid "Stínované pozadí buňky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:680
+msgid "Nápověda formuláře"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:681
+msgid "Neaktivní záložka"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:685
+msgid "Standardní barvy stránky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:688
+msgid "Tabulky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:690
+msgid "Různé"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:693
+msgid "Barvy nadpisů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:695
+msgid "Rámy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:697
+msgid "Meta data záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:699
+msgid "Barvy podkladových ploch"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:702
+msgid "Chybové zprávy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:704
+msgid "Informační zprávy"
+msgstr ""
+
+#: ../lib/pytis/data/access.py:433 ../lib/pytis/form/application.py:1543
+#: ../lib/pytis/help/help.py:281
+msgid "Access denied"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:78
+msgid "Waiting for server recovery"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:90
+msgid "Can't connect to database"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:212
+msgid "Database interface error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:231
+msgid "Database connection timeout"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:233 ../lib/pytis/data/dbapi.py:345
+msgid "Database connection error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:247
+msgid "Database operational error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:251
+msgid "Database integrity violation"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:299
+msgid "Too many database connections"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:707 ../lib/pytis/form/application.py:1588
+#: ../lib/pytis/form/application.py:1593
+msgid "Database error"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:775
+#, fuzzy
+msgid "Invalid user name or password"
+msgstr "Chybný formát dátumu alebo času"
+
+#: ../lib/pytis/data/postgresql.py:457 ../lib/pytis/data/postgresql.py:541
+#: ../lib/pytis/data/postgresql.py:553
+msgid "Method not implemented"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:2063
+msgid "Application error. You can report it to get it fixed soon."
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:3803
+#, fuzzy
+msgid "Invalid database counter value"
+msgstr "Chybný dátum alebo čas"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:162
+msgid "Empty value"
+msgstr "Prázdna hodnota"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:164
+#, fuzzy
+msgid "Invalid value"
+msgstr "Niepovolené číslo"
+
+#: ../lib/pytis/data/types_.py:396
+#, python-format
+msgid "Wildcard matching not supported for values of type '%s'."
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:540
+#, python-format
+msgid "Minimal value is %(minimum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:543
+#, python-format
+msgid "Maximal value is %(maximum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:620 ../lib/pytis/web/field.py:826
+#, python-format
+msgid "Minimal size %(minlen)s not satisfied"
+msgstr "Nedodržaná minimálna veľkosť %(minlen)s"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:623
+#, fuzzy, python-format
+msgid "Maximal length %(maxlen)s characters exceeded"
+msgstr "Reťazec presahuje maximálnu dĺžku %(maxlen)s"
+
+#: ../lib/pytis/data/types_.py:685
+msgid "Lower range bound higher than the upper one"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:869
+msgid "Not an integer"
+msgstr "Nie je to celé číslo"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1009
+msgid "Invalid number"
+msgstr "Niepovolené číslo"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1195
+#, fuzzy, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "Nedodržaná minimálna dĺžka %(minlen)s"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1197 ../lib/pytis/data/types_.py:2376
+#: ../lib/pytis/web/field.py:830
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr "Maximálna veľkosť %(maxlen)s prekročená"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1299
+msgid "Enter the password twice to eliminate typos"
+msgstr "Zadajte heslo dvakrát pre eliminovanie preklepov"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1302
+msgid "Passwords don't match"
+msgstr "Kontrolné zadanie hesla nezodpovedá"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1305
+#, fuzzy
+msgid "Invalid MD5 hash"
+msgstr "Neplatný formát"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1308
+msgid "Please use mix of letters and non-letters in your password"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1370 ../lib/pytis/data/types_.py:1406
+#: ../lib/pytis/data/types_.py:1442 ../lib/pytis/data/types_.py:1462
+#: ../lib/pytis/data/types_.py:2177
+msgid "Invalid format"
+msgstr "Neplatný formát"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1392
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Formát farby nezodpovedá  ('#RGB' nebo '#RRGGBB')"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1408
+#, python-format
+msgid "Invalid inet address mask: %(mask)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1410
+#, python-format
+msgid "Invalid inet address value %(addr)s"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1596
+msgid "Invalid date or time format"
+msgstr "Chybný formát dátumu alebo času"
+
+#: ../lib/pytis/data/types_.py:1597
+msgid "Invalid date or time"
+msgstr "Chybný dátum alebo čas"
+
+#: ../lib/pytis/data/types_.py:1598
+msgid "Date outside the allowed range"
+msgstr "Dátum mimo povolený rozsah"
+
+#: ../lib/pytis/data/types_.py:2336
+msgid "Invalid boolean type input value"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2422
+#, python-format
+msgid "Not a buffer object: %r"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2563
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr "Maximálny rozmer %(maxsize)s pixelov prekročený"
+
+#: ../lib/pytis/data/types_.py:2565
+#, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Minimálny rozmer %(minsize)s pixelov nedodržaný"
+
+#: ../lib/pytis/data/types_.py:2567
+#, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
+
+#: ../lib/pytis/data/types_.py:2583
+#, fuzzy
+msgid "Invalid graphics format"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/data/types_.py:2692
+#, fuzzy
+msgid "Invalid hierarchical value format"
+msgstr "Chybný formát dátumu alebo času"
+
+#: ../lib/pytis/data/types_.py:2694
+msgid "One of hierarchical value items is too long"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2696
+msgid "One of hierarchical value items contains invalid characters"
+msgstr ""
+
+#: ../lib/pytis/dbdefs/db_pytis_crypto.py:24
+#: ../lib/pytis/dbdefs/db_pytis_crypto.py:36
+msgid "Šifrovací oblast"
+msgstr ""
+
+#: ../lib/pytis/dbdefs/db_pytis_crypto.py:25
+msgid "Popis"
+msgstr ""
+
+#: ../lib/pytis/dbdefs/db_pytis_crypto.py:38
+msgid "Uživatel"
+msgstr ""
+
+#: ../lib/pytis/dbdefs/db_pytis_crypto.py:41
+msgid "Nový"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:34
+msgid "Změna administrátorského hesla"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:38
+msgid "Stávající heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:40
+msgid "Nové heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:55
+msgid "Použijte, prosím, kombinaci malých a velkých znaků a číslic."
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:61
+msgid "Šifrovací oblasti"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:66
+msgid "Změnit heslo administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:80
+msgid "Nebyl nalezen klíč administrátora pro tuto oblast"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:87
+msgid "Chybné heslo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:96
+msgid "Heslo se změnit nepodařilo"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:98
+msgid "Heslo bylo změněno"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:115
+msgid "E-mailová adresa administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:117
+msgid "Heslo administrátora"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:155
+msgid "Uživatele lze jen přidávat a odebírat"
+msgstr ""
+
+#: ../lib/pytis/defs/crypto.py:160
+msgid "Administrátory mazat nelze"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:47 ../lib/pytis/defs/printing.py:45
+#: ../lib/pytis/defs/printing.py:78 ../lib/pytis/defs/printing.py:88
+#: ../lib/pytis/form/application.py:469 ../lib/pytis/form/application.py:476
+msgid "Help"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:55 ../lib/pytis/defs/profiles.py:37
+msgid "Fullname"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/logging.py:45
+#: ../lib/pytis/defs/profiles.py:39 ../lib/pytis/defs/profiles.py:71
+msgid "Specification Name"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:66
+msgid "Menu item description"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:68
+msgid "Brief form description"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:69
+msgid "Detailed form help"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:75
+msgid ""
+"Choose the directly superordinate item in menu hierarchy. Leave empty for "
+"pages at the top level menu."
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:82 ../lib/pytis/defs/help.py:159
+msgid "Removed"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:83 ../lib/pytis/defs/help.py:160
+#: ../lib/pytis/util/util.py:1951
+msgid "Changed"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:116
+msgid "Fields"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:117 ../lib/pytis/defs/menu.py:395
+#: ../lib/pytis/defs/statistics.py:88 ../lib/pytis/help/help.py:335
+#, fuzzy
+msgid "Profiles"
+msgstr "súbor"
+
+#: ../lib/pytis/defs/help.py:118
+#, fuzzy
+msgid "Actions"
+msgstr "Akcie"
+
+#: ../lib/pytis/defs/help.py:119
+msgid "Side Forms"
+msgstr ""
+
+#: ../lib/pytis/defs/help.py:143
+msgid "This item has no editable help."
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:39
+msgid "User Actions Log"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:42
+msgid "Time"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:47 ../lib/pytis/defs/profiles.py:41
+#: ../lib/pytis/defs/statistics.py:35 ../lib/pytis/defs/statistics.py:52
+#: ../lib/pytis/defs/statistics.py:72 ../lib/pytis/defs/statistics.py:98
+#: ../lib/pytis/defs/statistics.py:113
+msgid "Form Class"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:50
+#, fuzzy
+msgid "Information"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/defs/logging.py:67
+msgid "Overview of Changes"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:77
+msgid "From"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:79
+msgid "To"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/logging.py:95
+msgid "Tabulka"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:83 ../lib/pytis/defs/logging.py:98
+msgid "Klíč"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:84
+msgid "Řádek obsahuje"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:85 ../lib/pytis/defs/logging.py:94
+msgid "Schema"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:96
+msgid "Operace"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:97
+msgid "ID klíč"
+msgstr ""
+
+#: ../lib/pytis/defs/logging.py:99
+msgid "Řádek"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:39
+msgid "Účely rolí"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:60
+msgid "Správcovské role nelze editovat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:68
+msgid "Správcovské role nelze mazat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:76 ../lib/pytis/defs/menu.py:322
+#: ../lib/pytis/defs/menu.py:721 ../lib/pytis/defs/menu.py:817
+msgid "Opravdu chcete záznam zcela vymazat?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:85 ../lib/pytis/defs/menu.py:176
+msgid "Skupina"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:88 ../lib/pytis/defs/menu.py:179
+msgid "Obsažená role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:92
+msgid "Stručný název role nebo uživatelské jméno v databázi."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:94 ../lib/pytis/defs/menu.py:191
+#: ../lib/pytis/defs/menu.py:193
+msgid "Popis určení role."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:95 ../lib/pytis/defs/menu.py:98
+msgid "Účel"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:97
+msgid "Účel role: normální, uživatelský účet, správcovská."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:100
+msgid "Význam role: normální, uživatelský účet, správcovská."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:101
+msgid "Datum zrušení"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:103
+msgid "Je-li nastaveno, role je od daného data neaktivní."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:110
+msgid "Zkopírovat role od..."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:113
+msgid "Obsahuje role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:116
+msgid "Patří do rolí"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:119
+msgid "Náhled menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:123
+msgid "Náhled chystaného menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:128
+msgid "Rozšířený náhled menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:131
+msgid "Rozšířený náhled chystaného menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:136 ../lib/pytis/defs/menu.py:399
+msgid "Log Akcí"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:144
+msgid "Role nelze mazat, nastavte datum zrušení"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:178
+msgid "Role, do níž jsou zahrnuty jiné role."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:181
+msgid "Role, která je členem skupinové role."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:182 ../lib/pytis/defs/menu.py:186
+msgid "Identifikátor účelu role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:184 ../lib/pytis/defs/menu.py:188
+#: ../lib/pytis/defs/menu.py:660 ../lib/pytis/defs/menu.py:757
+#: ../lib/pytis/defs/menu.py:836 ../lib/pytis/defs/menu.py:874
+msgid "Účel role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:205
+msgid "Přiřazení rolí nelze editovat, jen přidávat a mazat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:210
+msgid "Zařazení do skupiny"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:215
+msgid "Přiřazení role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:224 ../lib/pytis/defs/menu.py:239
+msgid "Uživatelské akce"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:226 ../lib/pytis/defs/menu.py:282
+#: ../lib/pytis/defs/menu.py:284 ../lib/pytis/defs/menu.py:331
+#: ../lib/pytis/defs/menu.py:348 ../lib/pytis/defs/menu.py:493
+msgid "Navěšená akce"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:270
+msgid "MenuId"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:271
+msgid "Id obsahující role"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:272
+msgid "Základní titulek položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:273
+msgid "Odvozený titulek položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:274
+msgid "Přeložený titulek položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:276 ../lib/pytis/defs/menu.py:340
+#: ../lib/pytis/defs/menu.py:500 ../lib/pytis/defs/menu.py:519
+#: ../lib/pytis/defs/menu.py:520 ../lib/pytis/defs/menu.py:942
+msgid "Titulek položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:278 ../lib/pytis/defs/menu.py:342
+#: ../lib/pytis/defs/menu.py:488 ../lib/pytis/defs/menu.py:518
+#: ../lib/pytis/defs/menu.py:943
+msgid "Pozice v menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:280
+msgid "Následující pozice v menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:281 ../lib/pytis/defs/menu.py:346
+#: ../lib/pytis/defs/menu.py:491 ../lib/pytis/defs/menu.py:754
+#: ../lib/pytis/defs/menu.py:833 ../lib/pytis/defs/menu.py:944
+msgid "Počet poduzlů"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:283 ../lib/pytis/defs/menu.py:287
+#: ../lib/pytis/defs/menu.py:333 ../lib/pytis/defs/menu.py:351
+#: ../lib/pytis/defs/menu.py:495
+msgid "Akce aplikace vyvolaná položkou menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:288 ../lib/pytis/defs/menu.py:352
+msgid "Zákaz editace"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:290
+msgid "Neaktuální překlad"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:302
+msgid "Tuto položku menu nelze editovat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:308
+msgid "Tuto položku menu nelze smazat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:311
+msgid "Koncové položky menu nelze mazat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:319
+msgid "Nelze mazat položky obsahující jiné položky"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:336 ../lib/pytis/defs/menu.py:498
+#: ../lib/pytis/defs/menu.py:989
+msgid "Typ položky"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:354 ../lib/pytis/defs/menu.py:502
+msgid "Poznámka"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:360
+msgid "Rozpis práv podle rolí"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:365
+msgid "Rozpis práv podle sloupců"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:370
+msgid "Práva položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:377
+msgid "Chystaná práva položky"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:384
+msgid "Chystané změny"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:397
+msgid "Nastavení"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:404
+msgid "Zkopírovat práva z..."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:407
+msgid "Odstranit nadbytečná práva"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:467
+#, python-format
+msgid ""
+"Ve specifikaci chybí tyto sloupce práv: %s.\n"
+"Chcete práva přesto zkopírovat?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:477
+#, python-format
+msgid "Opravdu chcete odstranit nadbytečná práva položky \"%s\"?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:602 ../lib/pytis/defs/menu.py:876
+msgid "Sloupce"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:627
+msgid "Pozor, tato položka se vyskytuje i na jiných místech menu:"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:630
+msgid "[bez titulku]"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:654 ../lib/pytis/defs/menu.py:750
+#: ../lib/pytis/defs/menu.py:879 ../lib/pytis/defs/menu.py:945
+msgid "Práva"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:664 ../lib/pytis/defs/menu.py:760
+#: ../lib/pytis/defs/menu.py:839
+msgid "Identifikátor akce související s danou položkou menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:665 ../lib/pytis/defs/menu.py:761
+#: ../lib/pytis/defs/menu.py:840
+msgid "Sloupec"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:668 ../lib/pytis/defs/menu.py:763
+#: ../lib/pytis/defs/menu.py:842
+msgid "Sloupec, na který se právo vztahuje"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:669 ../lib/pytis/defs/menu.py:764
+#: ../lib/pytis/defs/menu.py:843
+msgid "Právo"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:671 ../lib/pytis/defs/menu.py:766
+#: ../lib/pytis/defs/menu.py:845
+msgid "Přidělené nebo odebrané právo"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:672 ../lib/pytis/defs/menu.py:767
+#: ../lib/pytis/defs/menu.py:846
+msgid "Systémové"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:673 ../lib/pytis/defs/menu.py:769
+#: ../lib/pytis/defs/menu.py:848
+msgid "Jde o neměnné právo definováno tvůrcem aplikace?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:674 ../lib/pytis/defs/menu.py:770
+#: ../lib/pytis/defs/menu.py:849
+msgid "Ano/Ne"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:675 ../lib/pytis/defs/menu.py:772
+#: ../lib/pytis/defs/menu.py:851
+msgid "Je právo povoleno (ano) nebo zakázáno (ne)?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:676 ../lib/pytis/defs/menu.py:773
+#: ../lib/pytis/defs/menu.py:852
+msgid "Nadbytečné"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:678 ../lib/pytis/defs/menu.py:775
+#: ../lib/pytis/defs/menu.py:854
+msgid "Je toto právo nadbytečné, bez vlivu na výsledná práva?"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:703 ../lib/pytis/defs/menu.py:799
+msgid "Systémová práva nelze editovat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:713 ../lib/pytis/defs/menu.py:809
+msgid "Systémová práva nelze mazat"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:732
+msgid "Změny aplikovány"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:734
+msgid "Provádění změn uzamčeno, změny nebyly aplikovány"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:753 ../lib/pytis/defs/menu.py:832
+msgid "Stromový identifikátor"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:865
+msgid "Souhrnná práva"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:878
+msgid "Sloupce, na které je právo aplikováno; není-li uvedeno, tak všechny."
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:881 ../lib/pytis/defs/menu.py:947
+msgid "Zobrazení v menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:882 ../lib/pytis/defs/menu.py:948
+msgid "Náhled"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:883 ../lib/pytis/defs/menu.py:949
+msgid "Zobrazení formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:884 ../lib/pytis/defs/menu.py:950
+msgid "Vložení"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:885 ../lib/pytis/defs/menu.py:951
+msgid "Vložení nového záznamu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:886 ../lib/pytis/defs/menu.py:952
+msgid "Editace"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:887 ../lib/pytis/defs/menu.py:953
+msgid "Změna hodnot existujícího záznamu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:888 ../lib/pytis/defs/menu.py:954
+msgid "Smazání"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:889 ../lib/pytis/defs/menu.py:955
+msgid "Smazání existujícího záznamu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:890 ../lib/pytis/defs/menu.py:956
+msgid "Tisk"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:891 ../lib/pytis/defs/menu.py:957
+msgid "Tisk formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:892 ../lib/pytis/defs/menu.py:958
+msgid "Export"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:893 ../lib/pytis/defs/menu.py:959
+msgid "Export formuláře do souboru"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:894 ../lib/pytis/defs/menu.py:960
+msgid "Spuštění"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:895 ../lib/pytis/defs/menu.py:961
+msgid "Spuštění funkce (netýká se formulářů)"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:913
+msgid "Chystaná práva"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:918
+msgid "Chystané změny práv"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:924
+msgid "Nové"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:934
+msgid "Menu uživatele"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:939
+msgid "Identifikátor položky menu"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:979
+msgid "Chystané menu uživatele"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:984
+msgid "Rozšířené menu uživatele"
+msgstr ""
+
+#: ../lib/pytis/defs/menu.py:1000
+msgid "Chystané rozšířené menu uživatele"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:35
+msgid "Předdefinované tiskové šablony"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:37 ../lib/pytis/defs/printing.py:57
+msgid "Identifikátor řádku"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:38 ../lib/pytis/defs/printing.py:59
+msgid "Formulář"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:39 ../lib/pytis/defs/printing.py:60
+msgid "Název šablony"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:40 ../lib/pytis/defs/printing.py:61
+#: ../lib/pytis/defs/printing.py:83
+msgid "Šablona"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:42 ../lib/pytis/defs/printing.py:63
+msgid "Šablona pro jednotlivé řádky"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:55
+msgid "Uživatelské tiskové šablony"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:66
+msgid "Hlavička"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:69
+msgid "Odlišná hlavička první stránky"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:72
+msgid "Patička"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:75 ../lib/pytis/defs/printing.py:87
+msgid "Styl"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:84
+msgid "Řádková šablona"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:85
+msgid "Hlavičky a patičky"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:91
+msgid "Můžete mazat pouze své vlastní záznamy."
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:94
+#, python-format
+msgid "Opravdu chcete vymazat tiskovou sestavu %s?"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:103
+msgid "Tento název šablony již existuje"
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:123
+msgid "Tisková sestava neexistuje: "
+msgstr ""
+
+#: ../lib/pytis/defs/printing.py:128
+msgid "Tisková sestava se vyskytuje ve více exemplářích: "
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:31
+msgid "Profily formulářů"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:43
+msgid "Id profilu"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:47
+msgid "Chyby"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:48
+msgid "Neplatný"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:55
+msgid "Neplatné profily"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:57
+msgid "Uživatelské profily"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:59
+msgid "Systémové profily"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:66
+msgid "Nastavení formulářů"
+msgstr ""
+
+#: ../lib/pytis/defs/profiles.py:72
+msgid "Typ formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:32
+msgid "Přehled používaných formulářů"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:34 ../lib/pytis/defs/statistics.py:51
+#: ../lib/pytis/defs/statistics.py:71 ../lib/pytis/defs/statistics.py:97
+#: ../lib/pytis/defs/statistics.py:112
+msgid "Jméno formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:36 ../lib/pytis/defs/statistics.py:54
+msgid "Počet uživatelů"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:37 ../lib/pytis/defs/statistics.py:55
+#: ../lib/pytis/defs/statistics.py:74 ../lib/pytis/defs/statistics.py:100
+#: ../lib/pytis/defs/statistics.py:114
+msgid "Počet otevření"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:38 ../lib/pytis/defs/statistics.py:56
+msgid "Průměrná doba startu"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:39 ../lib/pytis/defs/statistics.py:57
+#: ../lib/pytis/defs/statistics.py:75 ../lib/pytis/defs/statistics.py:101
+#: ../lib/pytis/defs/statistics.py:115
+msgid "Poslední spuštění"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:49
+msgid "Podrobný přehled používaných formulářů"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:53 ../lib/pytis/defs/statistics.py:73
+#: ../lib/pytis/defs/statistics.py:99
+msgid "Parametry formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:68
+msgid "Uživatelé formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:86
+msgid "Formuláře"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:94 ../lib/pytis/defs/statistics.py:108
+msgid "Formuláře uživatele"
+msgstr ""
+
+#: ../lib/pytis/defs/statistics.py:124
+msgid "Tato databáze neobsahuje uživatelskou konfiguraci"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:41
+msgid "Could not connect to SMTP server"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:42
+msgid "Recipient address refused"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:43
+msgid "Sender address refused"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:44
+msgid "SMTP server disconnected"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:45
+msgid "Error by sending data"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:46
+msgid "Error by sending helo"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:204
+msgid "Could not import Python GnuPG module"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:205
+msgid "Could not create GPG instance"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:206
+msgid "Could not create a temporary GPG keyring"
+msgstr ""
+
+#: ../lib/pytis/extensions/email_.py:207
+msgid "GPG process did not return string."
+msgstr ""
+
+#: ../lib/pytis/extensions/misc.py:199
+msgid ""
+"Default printer setup failed.\n"
+"CUPS Python interface not present.\n"
+"Please, contact the system administrator."
+msgstr ""
+
+#: ../lib/pytis/extensions/misc.py:217
+msgid "Choose the default printer:"
+msgstr ""
+
+#: ../lib/pytis/extensions/misc.py:219
+#, fuzzy
+msgid "Printer Selection"
+msgstr "Akcie"
+
+#: ../lib/pytis/extensions/spec.py:75
+#, python-format
+msgid "Open %s \"%s\""
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:81
+#, python-format
+msgid "Open insertion form \"%s\""
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:252
+msgid "Run Form"
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:253
+msgid "Form type"
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:256
+msgid "Search string"
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:257
+msgid "Specification name"
+msgstr ""
+
+#: ../lib/pytis/extensions/spec.py:453
+#, python-format
+msgid "Detected data type %(detected)s. Expected %(expected)s."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:79
+msgid "&Windows"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:223
+msgid "Enter your login password for encryption keys management"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:228
+msgid "Enter your login password once more for verification"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:234
+#, fuzzy
+msgid "The passwords don't match"
+msgstr "Kontrolné zadanie hesla nezodpovedá"
+
+#: ../lib/pytis/form/application.py:242
+#, fuzzy
+msgid "Invalid password"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/application.py:274
+#, fuzzy, python-format
+msgid "Enter the password to unlock the encryption area %s."
+msgstr "Zadajte heslo dvakrát pre eliminovanie preklepov"
+
+#: ../lib/pytis/form/application.py:276
+msgid "This is probably your old login password."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:277
+msgid "Encryption key password"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:365
+msgid "Invalid form class in 'startup_forms':"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:386
+#, python-format
+msgid "Opening form: %s (%d/%d)"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:411
+msgid "Opening saved forms"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:412
+msgid "Opening form"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:466
+msgid "Commands"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:573
+#, fuzzy
+msgid "Previous window"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/application.py:574
+msgid "Switch to the previous window in the window list order."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:575
+msgid "Next window"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:576
+msgid "Switch to the next window in the window list order."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:577
+msgid "Most recently active window"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:579
+msgid "Allows mutual switching of two most recently active windows cyclically."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:581
+msgid "Close active window"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:583
+msgid "Closes the window of the active form."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:612
+#, python-format
+msgid "Bring form window to the top (%s)"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:650
+#, python-format
+msgid "Open the form (%s)"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:655 ../lib/pytis/form/search.py:359
+msgid "Clear"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:656
+msgid "Clear the menu of recent forms"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:733
+msgid "Type"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:834 ../lib/pytis/form/event.py:66
+msgid "Stopped..."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:916
+msgid "Opening form..."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:930
+#, python-format
+msgid "Form \"%s\" found between opened windows."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:956
+#, python-format
+msgid "Form creation failed: %s"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1033
+msgid "This form doesn't allow insertion."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1052
+msgid "Running procedure..."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1278
+msgid "Recently opened forms"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1390
+msgid "Opening form refused."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1451 ../lib/pytis/form/application.py:1606
+msgid "Are you sure to delete the record permanently?"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1476
+msgid "This form doesn't allow deletion."
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1564
+msgid "Log in for database access"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:1592
+msgid "Try again?"
+msgstr ""
+
+#: ../lib/pytis/form/application.py:2005
+msgid "Enter your password"
+msgstr ""
+
+#: ../lib/pytis/form/command.py:305
+#, python-format
+msgid "Command invocation refused: %s"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:524
+msgid "Pytis Help"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:525
+msgid "Open the user's manual describing work with the application in general"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:528
+msgid "Help for the current form"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:529
+msgid "Open the detailed description of the current form in the help browser"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:532
+msgid "Current form description"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:533
+msgid "Display a breif description of the current form"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:536
+msgid "Show aggregation functions menu"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:537
+msgid "Show the menu of aggregation functions for the current form"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:540
+msgid "Show print menu"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:541
+msgid "Show the menu of print reports for the current form"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:544 ../lib/pytis/form/form.py:1179
+#, fuzzy
+msgid "Jump to record"
+msgstr "Žiadne záznamy."
+
+#: ../lib/pytis/form/commands_.py:545
+msgid "Jump to record by row number"
+msgstr ""
+
+#. Search button label.
+#: ../lib/pytis/form/commands_.py:548 ../lib/pytis/form/search.py:578
+#: ../lib/pytis/web/form.py:2057 ../lib/pytis/web/form.py:2083
+msgid "Search"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:549
+msgid "Search a record matching given conditions."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:552
+msgid "Search next"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:553
+msgid "Search next record matching given conditions."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:556
+#, fuzzy
+msgid "Search previous"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/commands_.py:557
+msgid "Search previous record matching given conditions."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:560
+msgid "Search incrementally"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:561
+msgid "Progressively search record by typing column value."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:564 ../lib/pytis/form/search.py:153
+msgid "Sort"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:565
+msgid "Define the terms of sorting records."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:568
+msgid "Profile selection"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:569
+msgid ""
+"Shows the current profile and allows selection from predefined profiles."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:573 ../lib/pytis/form/search.py:623
+#: ../lib/pytis/form/search.py:637 ../lib/pytis/web/form.py:1119
+#, fuzzy
+msgid "Filter"
+msgstr "súbor"
+
+#: ../lib/pytis/form/commands_.py:574
+msgid "Filter records matching given conditions."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:577 ../lib/pytis/form/search.py:624
+#, fuzzy
+msgid "Unfilter"
+msgstr "súbor"
+
+#: ../lib/pytis/form/commands_.py:578
+msgid "Cancel current filtering condition."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:581 ../lib/pytis/form/list.py:3169
+#, fuzzy
+msgid "Edit record"
+msgstr "Počet záznamov celkom:"
+
+#: ../lib/pytis/form/commands_.py:582
+msgid "Open a form to edit the current record."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:585
+#, fuzzy
+msgid "New record"
+msgstr "Žiadne záznamy."
+
+#: ../lib/pytis/form/commands_.py:586
+msgid "Open a form to create a new record."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:589
+msgid "New record - copy"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:590
+msgid "Create a new record by copying the values of the current record."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:593 ../lib/pytis/form/list.py:3175
+msgid "Delete record"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:594
+msgid "Delete the current record."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:597
+msgid "Insert row below"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:598
+msgid "Insert a new record below the current row in inline mode."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:601
+msgid "Insert row above"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:602
+msgid "Insert a new record above the current row in inline mode."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:605
+msgid "Copy row below"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:606
+msgid "Insert a new record as a copy below the current row in inline mode."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:609
+msgid "Copy row above"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:610
+msgid "Insert a new record as a copy above the current row in inline mode."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:613 ../lib/pytis/form/list.py:2216
+msgid "Export to file"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:614
+msgid "Export form data into a file."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:617
+msgid "Import from file"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:618
+msgid "Import data from a text file in CSV format."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:621
+#, fuzzy
+msgid "Switch the active form"
+msgstr "Odoslať formulár"
+
+#: ../lib/pytis/form/commands_.py:622
+msgid "Switch between the top and the bottom form of a dual form."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:626
+msgid "Switch the current keyboard layout"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:627
+msgid "Switch between keyboard layouts defined in configuration."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:631
+msgid "Switch splitter orientation"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:632
+msgid ""
+"Switch between horizontal and vertical arrangement of the main form and side "
+"form."
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:636
+msgid "Close form"
+msgstr ""
+
+#: ../lib/pytis/form/commands_.py:637
+msgid "Close the current form window."
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:42 ../lib/pytis/form/configui.py:197
+#: ../lib/pytis/form/event.py:125
+msgid "User interface settings"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:43 ../lib/pytis/util/util.py:1948
+msgid "Colors"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:44
+msgid "Current table row highlight"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:57 ../resources/scripts/pytis-ckeditor.js:932
+msgid "Behavior"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:66
+msgid "Other"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:69
+msgid "Export settings"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:75
+msgid "During inline editation"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:76
+#, fuzzy
+msgid "Inactive form"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/configui.py:77
+msgid "Border width"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:78
+msgid "Current cell highlight"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:79
+msgid "Table grid"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:80
+msgid "Grouping background change"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:82
+msgid "Inactive input field"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:83
+msgid "Disabled input field"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:84
+#, fuzzy
+msgid "Invalid input field"
+msgstr "Niepovolené číslo"
+
+#: ../lib/pytis/form/configui.py:85
+msgid "Show start-up dialog"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:86
+msgid "Show tooltips"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:87
+msgid "Automatically numbered menus with accellerator keys"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:88
+msgid "Automatically stretch tables to full window width"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:89
+msgid "Cache specification files on startup"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:90
+msgid "E-mail address"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:91
+msgid "Default directory"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:92
+msgid "Character encoding"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:93
+msgid "Windows workstation support"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:94
+msgid "Open PDF documents on Windows workstation"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:117
+#, python-format
+msgid "Open configuration form \"%s\""
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:178
+msgid "configuration form"
+msgstr ""
+
+#: ../lib/pytis/form/configui.py:210
+msgid "Apply changes without closing the form"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:95
+msgid "Ok"
+msgstr ""
+
+#. Boolean value display.  Should be Yes/No in the meaning True/False.
+#: ../lib/pytis/form/dialog.py:99 ../lib/pytis/form/inputfield.py:1637
+#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
+msgid "Yes"
+msgstr "Áno"
+
+#: ../lib/pytis/form/dialog.py:101 ../lib/pytis/form/inputfield.py:1637
+#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
+msgid "No"
+msgstr "Nie"
+
+#: ../lib/pytis/form/dialog.py:360
+msgid "Message"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:396
+msgid "Warning"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:420
+msgid "Error"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:444 ../lib/pytis/form/dialog.py:457
+msgid "Question"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:523 ../lib/pytis/form/dialog.py:644
+#, fuzzy
+msgid "Enter value"
+msgstr "Prázdna hodnota"
+
+#: ../lib/pytis/form/dialog.py:742 ../lib/pytis/form/dialog.py:795
+msgid "Operation in progress"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:743 ../lib/pytis/form/dialog.py:795
+msgid "Please wait..."
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:903
+msgid "Calendar"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:984
+#, fuzzy
+msgid "Color selection"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/dialog.py:1030
+msgid "Ignore"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1031
+msgid "Send error report"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1032 ../lib/pytis/form/dialog.py:1421
+msgid "Exit application"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1047
+msgid "Unhandled exception"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1057
+msgid "Oops"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1282
+msgid "Aggregated view parameters"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1319
+msgid ""
+"Enter the name for saving the view, or leave empty, if you prefer not to "
+"save it."
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1331
+msgid "Group by"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1342
+#, fuzzy
+msgid "Function"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/dialog.py:1395
+msgid "You need to select at least one grouping column."
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1422
+msgid "Really quit the application?"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1423
+msgid "Automatically open the checked forms on next startup"
+msgstr ""
+
+#: ../lib/pytis/form/dialog.py:1480 ../lib/pytis/form/inputfield.py:1935
+#, fuzzy
+msgid "All files"
+msgstr "súbor"
+
+#: ../lib/pytis/form/dialog.py:1510
+#, fuzzy
+msgid "Save file"
+msgstr "súbor"
+
+#: ../lib/pytis/form/dialog.py:1564
+msgid "Directory selection"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:79
+#, fuzzy
+msgid "dual form"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/dualform.py:563
+msgid "dual view"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:794
+msgid "Form disabled"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1039
+msgid "Available forms"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1049
+msgid "Close this form"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1052
+msgid "Filter the main form by this side form"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1053
+msgid ""
+"Show only those rows of the main form, which have at least one row in this "
+"side form."
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1125
+msgid "Can't filter when the current profile is not saved!"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1126 ../lib/pytis/form/inputfield.py:2188
+#: ../lib/pytis/form/list.py:876 ../lib/pytis/form/list.py:3356
+#: ../lib/pytis/form/screen.py:1771 ../lib/pytis/web/form.py:1104
+msgid "Save"
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1148
+msgid "The requested side form is not available."
+msgstr ""
+
+#: ../lib/pytis/form/dualform.py:1161
+msgid "tabbed dual form"
+msgstr ""
+
+#: ../lib/pytis/form/event.py:101
+msgid ""
+"Destination address not known. The configuration option `bug_report_address' "
+"must be set."
+msgstr ""
+
+#: ../lib/pytis/form/event.py:120
+msgid "Your e-mail address"
+msgstr ""
+
+#: ../lib/pytis/form/event.py:122
+#, python-format
+msgid "Set your address in form \"%s\" to avoid being asked next time."
+msgstr ""
+
+#: ../lib/pytis/form/event.py:158
+msgid "Failed sending error report:"
+msgstr ""
+
+#: ../lib/pytis/form/event.py:161
+msgid "Error report sent."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:551
+msgid "New report"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:563
+msgid "Edit report"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:564
+msgid "Delete report"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:890
+msgid "Default profile"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:896
+msgid "Initial profile"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1153 ../lib/pytis/form/form.py:2189
+#: ../lib/pytis/form/form.py:2196
+msgid "Record not found"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1178
+#, python-format
+msgid "Record number (1-%s):"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1299
+msgid "Keep"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1299 ../lib/pytis/form/search.py:361
+#: ../lib/pytis/form/search.py:378
+msgid "Remove"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1300
+#, python-format
+msgid ""
+"User profile \"%s\" is invalid.\n"
+"The form specification has probably changed and the saved\n"
+"profile is incompatible now. You can either remove the profile,\n"
+"or keep it and ask the administrator to update it."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1306
+#, fuzzy
+msgid "Invalid profile"
+msgstr "Chybný dátum alebo čas"
+
+#: ../lib/pytis/form/form.py:1331 ../lib/pytis/form/form.py:1346
+msgid "Profile of this name already exists."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1338 ../lib/pytis/form/form.py:1352
+#, python-format
+msgid "Profile saved as '%s'."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1425
+msgid "This column can not be used for filtering."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1493
+msgid "This column can not be used for sorting."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1537
+msgid "Unnamed profile"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1807
+msgid "The record is locked."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1956
+#, python-format
+msgid ""
+"This form contains the mandatory field %s, but you don't have access to its "
+"codebook values. Please contact the access rights administrator."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1962
+#, python-format
+msgid ""
+"This form contains the field %s, but you don't have access to its codebook "
+"values. Please contact the access rights administrator."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:1977
+msgid "The inserted record didn't appear in the current view."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2000
+msgid "This form is read-only."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2057
+msgid "Insufficient permissions to insert records to this table."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2061
+msgid ""
+"Choose the file containing the imported data first. You will be able to "
+"check and confirm each record separately in the next step."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2064
+#, fuzzy
+msgid "Input file format:"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/form.py:2068
+msgid ""
+"The first row contains column identifiers, so it determines the meaning and "
+"the order of the values in the following data rows."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2071
+msgid "Possible column identifiers for this form are:"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2079
+msgid "Batch import"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2081
+msgid "Separator"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2084
+msgid "No separator given."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2090
+msgid "No file given. Process terminated."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2095
+#, python-format
+msgid "Unable to open file '%s': %s"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2103
+msgid "Unknown column:"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2112 ../lib/pytis/form/form.py:2120
+#, python-format
+msgid "Error at line %d:"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2113
+msgid "The number of values doesn't match the number of columns."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2121
+#, python-format
+msgid "Invalid value of column '%s':"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2190
+msgid ""
+"The searched record was not found. It may be caused by the active filter.\n"
+"Do you want to activate the default profile and try searching again?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2359
+msgid "Continue editing?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2360
+msgid ""
+"The time limit for form editing has expired.\n"
+"Do you want to continue?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2378
+msgid "The time limit for form editation has elapsed."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2707
+#, fuzzy
+msgid "Record update failed"
+msgstr "Počet záznamov na stránku"
+
+#: ../lib/pytis/form/form.py:2709
+msgid "Transaction aborted, unable to continue"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2724
+msgid "Unsaved changed in form data!"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2725
+msgid "Do you really want to close the form?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2793
+msgid "edit form"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2868
+msgid "Notification area"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2870
+msgid "Batch insertion progress indicator"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2912
+msgid "All records processed."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2920
+msgid ""
+"Not all input records processed yet.\n"
+"Really quit batch insertion?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2929
+#, fuzzy
+msgid "No next record"
+msgstr "Žiadne záznamy."
+
+#: ../lib/pytis/form/form.py:2931
+#, python-format
+msgid "Record %d/%d skipped"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2936
+msgid "Save the record and close the form"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2939
+msgid "Close the form without saving"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2942 ../lib/pytis/form/search.py:574
+#: ../lib/pytis/web/form.py:2053
+msgid "Next"
+msgstr "ďalší"
+
+#: ../lib/pytis/form/form.py:2943
+msgid "Save the current record and read next record into the form."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2947
+msgid "Skip"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2948
+#, fuzzy
+msgid "Skip this record without saving"
+msgstr "Preskočit na prvý riadok začínajúci na „%s“"
+
+#: ../lib/pytis/form/form.py:2980
+#, fuzzy
+msgid "Record saved"
+msgstr "Počet záznamov na stránku"
+
+#: ../lib/pytis/form/form.py:3216
+msgid "Original text"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3216
+msgid "Concurrently changed version"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3217
+msgid ""
+"Someone else has changed the same text while you made your modifications. "
+"You can see the overview of the changes below.\n"
+"The safest resolution is to discard your changes and start over with the new "
+"version of the text. If your modifications\n"
+"were too extensive, you can try incorporating the below listed changes into "
+"your version."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3223
+msgid "Discard my changes"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3223
+msgid "Merge"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3224
+msgid "Ignore the concurrent changes"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3225
+msgid "Conflicting modifications"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3243
+msgid "insert form"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3258
+#, fuzzy
+msgid "view form"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/form.py:3300
+#, fuzzy
+msgid "Last record"
+msgstr "Počet záznamov celkom:"
+
+#: ../lib/pytis/form/form.py:3304
+#, fuzzy
+msgid "First record"
+msgstr "Počet záznamov celkom:"
+
+#: ../lib/pytis/form/form.py:3328
+msgid "document view"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:3367
+msgid "Document"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:74
+#, fuzzy
+msgid "Invalid character!"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/inputfield.py:462
+msgid "Restore the original value"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:463
+#, fuzzy
+msgid "Discard all changes."
+msgstr "Zrušiť všetky urobené zmeny"
+
+#: ../lib/pytis/form/inputfield.py:704
+msgid "Validation error"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:705
+msgid "Error validating field value:"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:769
+#, fuzzy
+msgid "Maximal length exceeded."
+msgstr "Maximálna veľkosť %(maxlen)s prekročená"
+
+#: ../lib/pytis/form/inputfield.py:897 ../lib/pytis/form/inputfield.py:2212
+msgid "Cut"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:898 ../lib/pytis/form/inputfield.py:2213
+msgid "Cut the selected text to clipboard."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:899 ../lib/pytis/form/inputfield.py:2215
+msgid "Copy"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:900 ../lib/pytis/form/inputfield.py:2216
+msgid "Copy the selected text to clipboard."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:901 ../lib/pytis/form/inputfield.py:2218
+msgid "Paste"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:902 ../lib/pytis/form/inputfield.py:2219
+msgid "Paste text from clipboard."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:903
+#, fuzzy
+msgid "Select All"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/inputfield.py:904
+msgid "Select entire field value."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1251 ../lib/pytis/form/inputfield.py:1690
+#: ../lib/pytis/form/list.py:3046
+#, fuzzy
+msgid "Select"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/inputfield.py:1307
+msgid "Select from Calendar"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1308
+msgid "Show the calendar for date selection."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1360
+#, fuzzy
+msgid "Select Color"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/inputfield.py:1361
+msgid "Show the color selection dialog."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1458
+msgid "Select from Codebook"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1459
+msgid "Show the selection of available codebook values."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1485
+msgid "Insert a new codebook value."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1494
+msgid "Search in codebook"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1495
+msgid "Show the codebook and start incremental search."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1640 ../lib/pytis/presentation/field.py:646
+msgid "unlimited"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1691
+msgid "Select this item as active."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1692
+msgid "Show selected item"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1693
+msgid "Locate the currently selected item."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1695
+msgid "Show codebook"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1696
+msgid "Open the codebook form."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1697
+msgid "Edit selected item"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1698
+msgid "Open the selected item in edit form."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1699
+msgid "Remove selected item"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1700
+msgid "Remove the selected item from the codebook."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1701
+msgid "Insert new item"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1702
+msgid "Open form for new codebook record insertion."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1706
+msgid "Show the entire table"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1707
+msgid "Open the codebook in a standalone form."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1768
+#, python-format
+msgid "Really remove the item %s from the codebook permanently?"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1796
+#, fuzzy
+msgid "Select File"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/inputfield.py:1797
+msgid "Show a dialog to browse files in the file system."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1879
+msgid "Open"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1880
+msgid "Open the file in a preferred application."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1881
+msgid "Load from file"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1882
+msgid "Set the field value from a file."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1883
+msgid "Save to file"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1884
+msgid "Save the current field value as file."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1885
+msgid "Clear value"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1886
+msgid "Set the field to an ampty value."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1911
+msgid "File loaded."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1917
+#, python-format
+msgid "Select the file for field '%s'"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1942
+#, python-format
+msgid "Files of allowed type (%s)"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1961
+#, python-format
+msgid "Save value of %s"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1975
+msgid "Error writing file to disk:"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:1977
+msgid "File saved."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2055 ../lib/pytis/form/inputfield.py:2056
+#: ../lib/pytis/form/inputfield.py:2372 ../lib/pytis/form/inputfield.py:2373
+msgid "Error accessing attachment storrage"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2060
+msgid "Inline"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2061
+msgid "Left"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2062
+msgid "Right"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2066
+#, python-format
+msgid "Small preview (%d px), click to enlarge"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2068
+#, python-format
+msgid "Larger preview (%d px), click to enlarge"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2071
+msgid "Full size (appropriate for screenshot etc.)"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2189
+msgid "Save the record without closing the form."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2198
+msgid "Confirm and leave"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2199
+msgid "Confirm the changes and leave editation."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2229
+msgid "Heading level"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2230
+msgid "Insert markup for heading of given level."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2234
+msgid "Bold text"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2235
+msgid "Insert markup for bold text."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2237
+msgid "Slanted"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2238
+msgid "Insert markup for text emphasized by slanted font."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2240
+msgid "Underlined text"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2241
+msgid "Insert markup for underlined text."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2244
+msgid "Hypertext link"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2245
+msgid "Insert markup hypertext link."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2248
+msgid "Insert image."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2250
+#: ../resources/scripts/pytis-ckeditor.js:1063
+msgid "Attachment"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2251
+msgid "Attach file."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2253
+msgid "Itemized list"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2254
+msgid "Create a bullet list item."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2256
+msgid "Numbered list"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2257
+msgid "Create a numbered list item."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2259
+msgid "Preformatted text"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2260
+msgid "Insert markup for preformatted text."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2262
+msgid "Line break"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2263
+msgid "Insert markup for explicit line break."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2266
+msgid "Show HTML preview"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2267
+msgid "Show preview of the text formatted as HTML."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2269
+msgid "Show PDF preview"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2270
+msgid "Show preview of the text formatted as PDF."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2281
+msgid "Edit in a standalone window"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2370
+#, fuzzy
+msgid "Invalid image format!"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/inputfield.py:2399 ../lib/pytis/form/inputfield.py:2407
+#: ../lib/pytis/form/inputfield.py:2573
+#, fuzzy
+msgid "Preview"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/inputfield.py:2570 ../lib/pytis/form/inputfield.py:2635
+msgid "Available files"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2577
+msgid "Choose one of available files or insert a new file from your computer."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2579
+msgid "Display in page as"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2583
+msgid "Choose the size and behavior of the image within the page."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2584
+msgid "Original size"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2586
+#, fuzzy
+msgid "Preview size"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/inputfield.py:2589
+msgid "Resize ratio"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2592
+msgid "Alignment"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2598 ../lib/pytis/form/inputfield.py:2641
+#: ../lib/pytis/form/inputfield.py:2667
+msgid "Tooltip"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2599
+msgid ""
+"Enter the text displayed in baloon help above the image when the mouse moves "
+"over."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2602 ../lib/pytis/form/inputfield.py:2645
+msgid "Insert new"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2604
+msgid "Insert Image"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2639
+msgid ""
+"Enter the link label displayed within document text. Leave empty if you want "
+"to dispaly the file name directly."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2642 ../lib/pytis/form/inputfield.py:2668
+msgid ""
+"Enter the text displayed in baloon help above the link when the mouse moves "
+"over."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2646
+msgid "Insert attachment"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2660
+msgid "Target"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2661
+msgid ""
+"Enter the absolute URL, such as http://www.mycompany.com or a local link, "
+"such as an identifier of another page in the CMS."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2665
+msgid ""
+"Enter the link label displayed within the document text. Leave empty if you "
+"want to dispaly the target URL directly."
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2671
+msgid "Link properties"
+msgstr ""
+
+#: ../lib/pytis/form/inputfield.py:2757
+#, fuzzy
+msgid "Invalid range format."
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/form/list.py:106 ../lib/pytis/form/search.py:635
+#: ../lib/pytis/web/form.py:1692
+#, fuzzy
+msgid "Sum"
+msgstr "Odoslať"
+
+#: ../lib/pytis/form/list.py:106
+msgid "Sum:"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:107 ../lib/pytis/form/search.py:636
+#: ../lib/pytis/web/form.py:1693
+msgid "Average"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:107
+msgid "Avg:"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:108 ../lib/pytis/form/search.py:633
+#: ../lib/pytis/web/form.py:1694
+msgid "Minimum"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:108
+msgid "Min:"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:109 ../lib/pytis/form/search.py:634
+#: ../lib/pytis/web/form.py:1695
+msgid "Maximum"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:109
+msgid "Max:"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:111
+msgid "row form"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:456
+msgid "Apply"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:457
+msgid "Reload form data with current query field values."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:464
+msgid "Minimize"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:465
+msgid "Minimize/maximize query panel."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:468
+msgid "Move up"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:469
+msgid "Move the query panel to the top/bottom edge of the form."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:590 ../lib/pytis/form/list.py:3159
+msgid "Edit cell"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:592
+msgid "Enter the input field for this value."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:593
+msgid "Save Record"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:595
+msgid "Save the record and leave editation."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:596
+#, fuzzy
+msgid "Quit editation"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/list.py:598
+msgid "Leave editation without saving the record."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:600
+msgid "Copy cell content"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:602
+msgid "Copy the value into the clipboard."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:610
+msgid " (hidden)"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:623
+msgid ""
+"Choose the column to search in (incremental search is only possible in text "
+"columns)."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:626
+msgid "Enter the text search for."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:629
+#, fuzzy
+msgid "Find previous"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/list.py:631
+msgid "Find next"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:633
+msgid "search also inside values"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:634
+msgid ""
+"Check if you want to search anywhere inside the value. Otherwise the "
+"substring is only searched at the start of the string."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:638
+msgid "case sensitive"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:639
+msgid "Check if you want to distinguish lower and upper case letters."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:642
+msgid "Hide"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:642
+msgid "Hide the search panel"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:697
+msgid "No next matching record"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:842
+msgid "In-line editation disabled.  Use a standalone form (F5)."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:845
+msgid "Field not editable."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:874
+msgid "Revoke your changes?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:876
+msgid "Revoke"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:876
+msgid "Continue editation"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:948
+msgid "Record saved to the database."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:957
+msgid "Row with this key already exists or adjacent row changed."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:959
+msgid ""
+"Row with this key already exists or the original row doesn't exist anymore."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1117
+msgid "Query fields contain unapplied changes. Apply now?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1196
+msgid "Row headings"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1208
+msgid "Show all"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1209
+msgid "Hide all"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1216
+msgid "Open predefined aggregated view"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1225
+msgid "Open user defined aggregated view"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1228
+msgid "Define new aggregated view"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1232
+msgid "Remove agregated view"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1244
+msgid "Primary Sorting"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1245 ../lib/pytis/form/list.py:1250
+msgid "Sort Ascending"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1247 ../lib/pytis/form/list.py:1252
+msgid "Sort Descending"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1249
+msgid "Secondary Sorting"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1254
+msgid "Omit this column from sorting"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1256
+msgid "Cancel sorting completely"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1259
+msgid "Group up to this column"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1261
+msgid "Cancel visual grouping"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1264
+#, fuzzy
+msgid "Autofilter"
+msgstr "súbor"
+
+#: ../lib/pytis/form/list.py:1265
+msgid "Cancel filtering"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1267
+msgid "Hide this column"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1269
+msgid "Displayed columns"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1292
+msgid "Copy the Result"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1392
+#, python-format
+msgid "Result of aggregation function %(aggregation)s for column %(column)s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1551
+msgid "Hide row headings"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1596
+msgid "Data changed"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1598
+msgid "Data ok"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1612
+msgid "Save the editted record?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:1688
+msgid "Cancel changes in row editation and refresh the form?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2051
+msgid "Too many items for autofilter."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2111
+msgid "Unable to search incrementally in this column."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2161
+msgid "The table has no rows!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2163
+msgid "The table has too many rows! Use a filter."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2166
+msgid "You don't have permissions to export this table."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2169
+msgid "Export aborted."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2182 ../lib/pytis/form/list.py:2183
+#: ../lib/pytis/form/list.py:2195
+#, python-format
+msgid "Files %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2189
+msgid "Data may be exported into one of the following file formats."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2190
+msgid "Choose the desired format."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2228 ../lib/pytis/form/list.py:2256
+msgid "Unable to open the file for writing!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2248
+#, python-format
+msgid "Encoding %s not supported."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2249
+msgid "Exported data will not be recoded."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2364
+msgid "You don't have insert permissions for this table!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2367
+msgid "In-line insertion not allowed. Use a standalone form (F6)."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2377
+#, python-format
+msgid ""
+"Mandatory column '%s' not shown.\n"
+"Unable to insert new rows in in-line mode.\n"
+"Unhide the column or insert the record in a standalone form (F6)."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2440
+msgid "Save the record?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2772
+msgid ""
+"You attempted to use a filter with the IN operator\n"
+"on a foldable form. This operation may potentially\n"
+"take several minutes. You can greatly speed up the\n"
+"operation by turning the folding off (sorting by\n"
+"another column).\n"
+"Really continue?"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2906
+msgid "Folding/unfolding form nodes to a particular level."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2907
+msgid "Folding level (1-...):"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:2947
+msgid "codebook"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3023
+msgid "Unable to search incrementally. No sortable column found!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3097
+msgid "Print specification not found!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3161
+msgid "Edit the value in in-line mode."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3162
+#, fuzzy
+msgid "Filter by cell"
+msgstr "súbor"
+
+#: ../lib/pytis/form/list.py:3164
+msgid "Filter the rows containing the same value in this column."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3165
+#, fuzzy
+msgid "Copy cell value"
+msgstr "Prázdna hodnota"
+
+#: ../lib/pytis/form/list.py:3167
+msgid "Copy the contents of the cell into the clipboard."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3171
+msgid "Open a separate edit form for this record."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3172
+#, fuzzy
+msgid "Copy record"
+msgstr "Žiadne záznamy."
+
+#: ../lib/pytis/form/list.py:3174
+msgid "Open a separate insert form with a copy of this record."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3177
+msgid "Delete the record parmanently from the database."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3178
+#, fuzzy
+msgid "Preview form"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/list.py:3180
+msgid "Open the preview form for browsing all records."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3182
+msgid "Dual preview"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3184
+msgid "Open a dual form with a table up and preview at the bottom."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3186
+#, fuzzy
+msgid "Cancel selection"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/list.py:3188
+msgid "Cancel the selection of rows for bulk operations."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3190
+#, python-format
+msgid "Text editor for field %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3192
+msgid "Open a structured text editor."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3216
+#, python-format
+msgid "Link - %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3217
+#, python-format
+msgid "Edit %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3218
+#, python-format
+msgid "Show %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3219
+#, python-format
+msgid "Insert for %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3220
+#, fuzzy, python-format
+msgid "Preview %s"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/list.py:3284
+#, python-format
+msgid "Insert a new record for value '%(value)s' of column %(column)s."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3296
+#, python-format
+msgid "Search value of column %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3297
+#, python-format
+msgid "Search the record for value '%(value)s' of column %(column)s."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3303
+#, python-format
+msgid "Edit the record of column %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3304
+#, python-format
+msgid "Edit the record for value '%(value)s' of column %(column)s."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3310
+#, python-format
+msgid "Show the record of column %s"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3311
+#, python-format
+msgid "Show the record for value '%(value)s' of column %(column)s."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3343
+#, python-format
+msgid ""
+"Filter \"%(view_title)s\" for rows not contained in column \"%(column)s\" of "
+"the current form."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3347
+#, python-format
+msgid ""
+"Filter \"%(view_title)s\" for rows contained in column \"%(column)s\" of the "
+"current form."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3355
+msgid "Can not filter as long as the current profile is unsaved!"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3390
+msgid "Links"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3396
+msgid "Filter existing values (operator IN)"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3400
+msgid "Filter missing values (operator NOT IN)"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3412
+msgid "Open with side forms"
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3414
+msgid "Open the current record in a main form with related data in side forms."
+msgstr ""
+
+#: ../lib/pytis/form/list.py:3686
+msgid "Aggregated View"
+msgstr ""
+
+#: ../lib/pytis/form/output.py:335
+msgid ""
+"Invalid use of identifier `data' in print specification.\n"
+"Maybe use `current_row' instead?"
+msgstr ""
+
+#: ../lib/pytis/form/output.py:412
+msgid "No PDF viewer found."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:203
+msgid "Space"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:257
+#, python-format
+msgid "Open file \"%s\""
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:258
+#, python-format
+msgid "Open the value of field \"%s\" as a file."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1655
+msgid "(invalid)"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1695
+#, fuzzy
+msgid "System Profiles"
+msgstr "súbor"
+
+#: ../lib/pytis/form/screen.py:1699
+#, fuzzy
+msgid "User Profiles"
+msgstr "súbor"
+
+#: ../lib/pytis/form/screen.py:1773
+msgid "Update the saved profile according to the current form setup."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1774
+msgid "Save as new"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1781
+msgid "Create a new profile according to the current form setup."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1782
+msgid "Rename"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1788
+msgid "Change the name of the current profile and save it."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1789
+msgid "Delete"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1791
+msgid "Delete the selected saved profile."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1794
+msgid ""
+"Automatically switch to this profile when this form is opened next time."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1797
+msgid "Restore to previously saved form settings"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1799
+msgid "Discard changes in form settings since the profile was last saved."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1800
+msgid "Restore to default form settings"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1802
+msgid "Discard all user changes in form settings."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:1818
+msgid "Enter the profile name and press ENTER when done."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2054
+#, python-format
+msgid ""
+"You don't have priviledges to invoke the action '%s'.\n"
+"Please contact the access rights administrator."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2170
+msgid "Document loaded."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2175
+msgid "Loading document failed."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2178
+msgid "Loading document."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2270
+#, python-format
+msgid "External URL navigation denied: %s"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2341
+msgid "Back"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2342
+msgid "Go back to the previous location in browser history."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2344
+msgid "Forward"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2345
+msgid "Go forward to the following location in browser history."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2347
+msgid "Reload"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2348
+msgid "Reload the current document."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2350
+msgid "Stop"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2351
+msgid "Stop loading the document."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2353
+#, fuzzy
+msgid "Location"
+msgstr "Akcie"
+
+#: ../lib/pytis/form/screen.py:2354
+msgid "Current browser URI."
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2597
+#, python-format
+msgid "Unable to create temporary file: %s"
+msgstr ""
+
+#: ../lib/pytis/form/screen.py:2627
+#, python-format
+msgid "External veiwer for '%s' not found."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:78
+msgid "Close"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:152
+msgid "Sorting"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:154
+msgid "Reset to default sorting"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:159
+msgid "Ascending"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:160
+msgid "Descending"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:161
+msgid "No sorting"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:188
+msgid "Choose the sorting column."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:190
+msgid "Choose the sorting direction."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:194
+msgid "Add"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:195
+msgid "Add secundary sorting column."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:239
+msgid "AND"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:240
+msgid "OR"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:254
+#, fuzzy
+msgid "value"
+msgstr "Prázdna hodnota"
+
+#: ../lib/pytis/form/search.py:258
+#, python-format
+msgid "Error in condition no. %d: %s"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:341
+msgid "Choose the logical operator to join with previous conditions."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:342
+msgid "Operator weight:"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:343
+msgid "Choose the level of precedence of the logical operator."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:348
+msgid "Choose the table column (first operand)."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:350
+msgid "Choose the operator."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:353
+msgid "Choose the second operand."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:355
+msgid "Enter the operand value."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:356
+msgid "Suck"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:357
+msgid "Use the value of the current cell."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:360
+msgid "Clear the condition."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:362 ../lib/pytis/form/search.py:379
+msgid "Remove this condition."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:365
+msgid "NOT IN"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:368
+msgid "IN"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:387
+msgid "Failed to decompose the conditional expression:"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:406
+msgid "Add AND"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:407
+msgid "Add a new condition in conjunction."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:408
+msgid "Add OR"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:409
+msgid "Add a new condition in disjunction."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:410
+msgid "Remove all"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:411
+msgid "Remove all current conditions."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:437
+#, python-format
+msgid "Incompatible types %s and %s"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:440
+msgid "Binary column can only be compared with value."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:443
+msgid "Binary column can only be tested for equality/inequality."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:575 ../lib/pytis/web/form.py:2049
+msgid "Previous"
+msgstr "predchádzajúci"
+
+#: ../lib/pytis/form/search.py:661
+msgid "Aggregation functions"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:667
+msgid "Select the column for aggregation."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:669
+msgid "Select the aggregation function."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:671
+msgid "Displays the aggregation function result."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:672
+msgid "Compute"
+msgstr ""
+
+#: ../lib/pytis/form/search.py:673
+msgid "Compute the aggregation function result."
+msgstr ""
+
+#: ../lib/pytis/form/search.py:693
+msgid "Operation not supported for the selected column type."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:170
+msgid "Opens a form for customizing the application user interface."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:172
+msgid "Opens a form for customizing data export."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:201
+#, python-format
+msgid ""
+"Forms are connected through the equality of values in column "
+"'%(main_form_column)s' of the main form and column '%(side_form_column)s' of "
+"the side form."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:203
+msgid "Opens a dual form:"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:204
+#, fuzzy
+msgid "Main form"
+msgstr "Neplatný formát"
+
+#: ../lib/pytis/help/help.py:206
+#, fuzzy
+msgid "Side form"
+msgstr "Odoslať formulár"
+
+#: ../lib/pytis/help/help.py:218
+#, python-format
+msgid "Opens %(form_type)s for %(spec_name)s"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:223
+#, python-format
+msgid "Opens a form for new record insertion into %s."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:230
+#, python-format
+msgid "Invokes command %s."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:233
+#, python-format
+msgid "Invokes procedure %s from %s."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:236
+#, python-format
+msgid "Invokes %s."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:239
+msgid "Reloads access rights."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:242
+#, python-format
+msgid "Invokes form %s."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:245
+msgid "Exits the application."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:282
+#, python-format
+msgid "You don't have permissions for specification „%s“."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:295
+msgid "Description not available."
+msgstr ""
+
+#: ../lib/pytis/help/help.py:310
+msgid "Related views:"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:330
+msgid "Overview"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:332
+msgid "Form fields"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:338
+msgid "Context menu actions"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:341
+#, fuzzy
+msgid "Side forms"
+msgstr "Odoslať formulár"
+
+#: ../lib/pytis/help/help.py:380
+msgid "Pytis User Guide"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:381
+msgid "Help files not found!"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:405 ../lib/pytis/help/help.py:464
+msgid "Contents"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:449
+#, python-format
+msgid "%s application help"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:453
+msgid "Not Found"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:454
+#, python-format
+msgid "The requested help page not found: %s"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:480
+msgid "Expand/collapse complete menu hierarchy"
+msgstr ""
+
+#: ../lib/pytis/help/help.py:481
+#, fuzzy
+msgid "Navigation"
+msgstr "Akcie"
+
+#: ../lib/pytis/output/flibdata.py:137
+#, fuzzy
+msgid "Invalid column reference"
+msgstr "Niepovolené číslo"
+
+#: ../lib/pytis/output/formatter.py:165
+#, python-format
+msgid "Going to format a table with many rows (%d)."
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:166
+msgid "Do you want to continue printing anyway?"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:535
+msgid ""
+"Invalid use of iterator.\n"
+"Maybe you refer to an non-existent or inaccessible object in the table?"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:602
+msgid "COLUMN_IDENTIFIER"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:603
+msgid "Primary template variables:"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:605
+msgid "column value insertion"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:606
+msgid "complete table insertion"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:607
+msgid "value insertion in repeated table row"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:615 ../lib/pytis/output/formatter.py:635
+msgid "Column identifiers:"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:621 ../lib/pytis/output/formatter.py:641
+msgid "Codebooks:"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:626
+#, fuzzy
+msgid "Side forms:"
+msgstr "Odoslať formulár"
+
+#: ../lib/pytis/output/formatter.py:647
+msgid "Aggregation variables:"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:649
+msgid "minimum"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:650
+msgid "maximum"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:651
+msgid "count"
+msgstr ""
+
+#: ../lib/pytis/output/formatter.py:652
+#, fuzzy
+msgid "sum"
+msgstr "Odoslať"
+
+#: ../lib/pytis/output/formatter.py:653
+msgid "average"
+msgstr ""
+
+#: ../lib/pytis/output/markup.py:108
+#, fuzzy
+msgid "Invalid item arguments"
+msgstr "Chybný dátum alebo čas"
+
+#: ../lib/pytis/output/markup.py:676
+msgid "More than 26 columns in a table"
+msgstr ""
+
+#: ../lib/pytis/presentation/field.py:835
+msgid "Such value already exists."
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:265 ../lib/pytis/remote/remote.py:286
+#, python-format
+msgid "Unable to open file %(filename)s: %(error)s"
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:274
+#, python-format
+msgid "Unable to open URL %s"
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:296
+#, python-format
+msgid "Unable to select a file for download: %s"
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:310
+#, python-format
+msgid "Unable to select a file to save: %s"
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:329
+#, python-format
+msgid "Failed selecting directory: %s"
+msgstr ""
+
+#: ../lib/pytis/remote/remote.py:337
+#, python-format
+msgid "Failed selecting file: %s"
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:775
+msgid "Enable RPC communication with Windows client machines."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:780
+msgid "Enable viewing print files remotely on a client machine."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:785
+msgid "For internal use only."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:850
+msgid "Target directory for saving exported files."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:860
+msgid "Exported data encoding."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:861
+msgid "Must be one of Pyhon supported encodings."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:953
+msgid "Maximum time in seconds to leave an open transaction untouched."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:962
+msgid "Maximum time in seconds to leave an idle transaction untouched."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:980
+msgid "Show tooltips."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:985
+msgid "Stretch table columns to fit full window width."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:995
+msgid "Show the initial splash screen."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1007
+msgid "Enable automatic keyboard shortcut accelerators in menu items."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1008
+msgid "Change requires the application to be restarted."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1018
+msgid "Cache all specifications on application startup."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1019
+msgid ""
+"Initializes specifications of all forms when the application starts which "
+"may slightly reduce their subsequent startup time for the cost of a short "
+"initial delay."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1066
+msgid "Current cell highlight color in table forms."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1075
+msgid "Current row highlight color in table forms."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1084
+msgid "Current row highlight color in table forms during inline editation."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1094
+msgid "Current row highlight color in unfocussed table forms."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1103
+msgid "Current table row highlight border width in pixels."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1115
+msgid "Grid line color in table forms."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1131
+msgid "Grouping background downgrade."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1132
+msgid ""
+"Grouping may be used to visually distinguish table rows that belong to the "
+"same group.  Table background color is changing between the groups of rows, "
+"so that lighter colored rows are followed by darker colored rows and vice "
+"versa.  The color specification in this option determines the level and the "
+"tone of the darker rows.  When combined with white rows, the darker rows wil "
+"have the exactly same color as specified.  But some rows may be already "
+"colored otherwise and in this case the two colors are combined."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1145
+msgid "Ineditable input field background color."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1150
+msgid "Color of input field ineditable due to access rights."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:1164
+msgid ""
+"Background color during field editation when the current value is not valid."
+msgstr ""
+
+#: ../lib/pytis/util/test.py:88
+#, python-format
+msgid "|%s (Y/N)? "
+msgstr ""
+
+#: ../lib/pytis/util/test.py:99
+msgid "Press Enter..."
+msgstr ""
+
+#: ../lib/pytis/util/util.py:1949
+msgid "Legends"
+msgstr ""
+
+#: ../lib/pytis/util/util.py:1950
+msgid "Added"
+msgstr ""
+
+#: ../lib/pytis/util/util.py:1952
+msgid "Deleted"
+msgstr ""
+
+#: ../lib/pytis/web/dialog.py:52 ../lib/pytis/web/form.py:572
 msgid "Submit"
 msgstr "Odoslať"
 
 #: ../lib/pytis/web/field.py:742
 msgid "today"
 msgstr ""
-
-#. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
-msgid "Yes"
-msgstr "Áno"
-
-#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
-msgid "No"
-msgstr "Nie"
-
-#: ../lib/pytis/web/field.py:826
-#, python-format
-msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Nedodržaná minimálna veľkosť %(minlen)s"
-
-#: ../lib/pytis/web/field.py:830
-#, python-format
-msgid "Maximal size %(maxlen)s exceeded"
-msgstr "Maximálna veľkosť %(maxlen)s prekročená"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
@@ -53,107 +5645,77 @@ msgstr "obrázok"
 msgid "file"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:285 ../lib/pytis/web/form.py:287
+#: ../lib/pytis/web/form.py:287 ../lib/pytis/web/form.py:289
 msgid "Print"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:289
+#: ../lib/pytis/web/form.py:291
 msgid "Export the contents of this field into PDF"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:597
+#: ../lib/pytis/web/form.py:602
 msgid "Submit the form"
 msgstr "Odoslať formulár"
 
-#: ../lib/pytis/web/form.py:600 ../lib/pytis/web/form.py:2070
-msgid "Cancel"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:602
+#: ../lib/pytis/web/form.py:607
 msgid "Reset"
 msgstr "Vrátiť pôvodné hodnoty"
 
-#: ../lib/pytis/web/form.py:602
+#: ../lib/pytis/web/form.py:608
 msgid "Undo all changes"
 msgstr "Zrušiť všetky urobené zmeny"
 
-#: ../lib/pytis/web/form.py:615
+#: ../lib/pytis/web/form.py:621
 msgid "Integrity check failed."
 msgstr ""
 
-#: ../lib/pytis/web/form.py:662
+#: ../lib/pytis/web/form.py:668
 #, fuzzy
 msgid "Invalid subform values."
 msgstr "Neplatná hodnota"
 
-#: ../lib/pytis/web/form.py:771
+#: ../lib/pytis/web/form.py:778
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označené hviezdičkou sú povinné."
 
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1046
+#: ../lib/pytis/web/form.py:1053
 msgid "All items"
 msgstr ""
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1061
+#: ../lib/pytis/web/form.py:1070
 msgid "Change filters"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1099
-msgid "Save"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:1113
-#, fuzzy
-msgid "Filter"
-msgstr "súbor"
-
-#: ../lib/pytis/web/form.py:1115
+#: ../lib/pytis/web/form.py:1121
 #, fuzzy
 msgid "Apply Filter"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:1350
+#: ../lib/pytis/web/form.py:1356
 #, fuzzy
 msgid "Profile"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:1570
+#: ../lib/pytis/web/form.py:1577
 msgid "Popup the menu of actions for this record"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1684
-#, fuzzy
-msgid "Sum"
-msgstr "Odoslať"
-
-#: ../lib/pytis/web/form.py:1685
-msgid "Average"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:1686
-msgid "Minimum"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:1687
-msgid "Maximum"
-msgstr ""
-
-#: ../lib/pytis/web/form.py:1751
+#: ../lib/pytis/web/form.py:1759
 msgid "Loading form data..."
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1857
+#: ../lib/pytis/web/form.py:1897
 msgid "Total records:"
 msgstr "Počet záznamov celkom:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1865
+#: ../lib/pytis/web/form.py:1905
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
@@ -173,13 +5735,13 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1961
+#: ../lib/pytis/web/form.py:1976
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1966
+#: ../lib/pytis/web/form.py:1981
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Preskočit na prvý riadok začínajúci na „%s“"
@@ -188,7 +5750,7 @@ msgstr "Preskočit na prvý riadok začínajúci na „%s“"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1979
+#: ../lib/pytis/web/form.py:1994
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -197,417 +5759,309 @@ msgstr[1] ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1985
+#: ../lib/pytis/web/form.py:2000
 msgid "No records."
 msgstr "Žiadne záznamy."
 
-#. Search button label.
-#: ../lib/pytis/web/form.py:2022 ../lib/pytis/web/form.py:2069
-msgid "Search"
-msgstr ""
-
-#. Paging controls allow navigation in long lists which are split into
-#. several pages.  The user can select a specific page or browse
-#. forward/backwards.
-#: ../lib/pytis/web/form.py:2029 ../lib/pytis/web/form.py:2031
+#: ../lib/pytis/web/form.py:2039 ../lib/pytis/web/form.py:2041
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:2032 ../lib/pytis/web/form.py:2051
+#: ../lib/pytis/web/form.py:2041 ../lib/pytis/web/form.py:2066
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použite ALT+šipka dole pre výber)"
 
-#: ../lib/pytis/web/form.py:2038
-msgid "Previous"
-msgstr "predchádzajúci"
-
-#: ../lib/pytis/web/form.py:2039
+#: ../lib/pytis/web/form.py:2050
 msgid "Go to previous page"
 msgstr "Prejsť na predchádzajúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:2041
-msgid "Next"
-msgstr "ďalší"
-
-#: ../lib/pytis/web/form.py:2042
+#: ../lib/pytis/web/form.py:2054
 msgid "Go to next page"
 msgstr "Prejsť na nasledujúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:2048 ../lib/pytis/web/form.py:2050
+#: ../lib/pytis/web/form.py:2063 ../lib/pytis/web/form.py:2065
 msgid "Records per page"
 msgstr "Počet záznamov na stránku"
 
-#: ../lib/pytis/web/form.py:2055
+#: ../lib/pytis/web/form.py:2070
 msgid "Go"
 msgstr "Choď"
 
-#: ../lib/pytis/web/form.py:2064
+#: ../lib/pytis/web/form.py:2078
 msgid "Search expression"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:2152
+#: ../lib/pytis/web/form.py:2170
 msgid "filtered by: "
 msgstr ""
 
-#: ../lib/pytis/web/form.py:2539 ../lib/pytis/web/form.py:2541
+#: ../lib/pytis/web/form.py:2556 ../lib/pytis/web/form.py:2558
 msgid "Remove this row"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:66
+#: ../resources/scripts/pytis-ckeditor.js:70
 msgid "Edit"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:91
+#: ../resources/scripts/pytis-ckeditor.js:95
 msgid "Insert space before"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:101
+#: ../resources/scripts/pytis-ckeditor.js:105
 msgid "Insert space after"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:149
+#: ../resources/scripts/pytis-ckeditor.js:155
 msgid "Create the quotation first, then you can supply the source inside it."
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:154
+#: ../resources/scripts/pytis-ckeditor.js:160
 msgid "Supply Quotation Source"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:191
+#: ../resources/scripts/pytis-ckeditor.js:197
 msgid "Add figure caption"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:212
+#: ../resources/scripts/pytis-ckeditor.js:218
 msgid "Definition list"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:219
-msgid "Default"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:220
-msgid "Czech"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:221
-msgid "English"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:222
+#: ../resources/scripts/pytis-ckeditor.js:228
 msgid "German"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:223
+#: ../resources/scripts/pytis-ckeditor.js:229
 msgid "Spanish"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:224
+#: ../resources/scripts/pytis-ckeditor.js:230
 msgid "French"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:225
+#: ../resources/scripts/pytis-ckeditor.js:231
 msgid "Russian"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:226
+#: ../resources/scripts/pytis-ckeditor.js:232
 msgid "Latin"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:317
+#: ../resources/scripts/pytis-ckeditor.js:323
 msgid "Braille Transformations"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:322
+#: ../resources/scripts/pytis-ckeditor.js:328
 msgid ""
 "How should the table be transformed for the Braille output when it doesn't "
 "fit the output media in its original form?"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:327
+#: ../resources/scripts/pytis-ckeditor.js:333
 msgid "Can be spread across facing pages"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:334
+#: ../resources/scripts/pytis-ckeditor.js:340
 msgid "Can be transposed (swap rows and columns)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:341
+#: ../resources/scripts/pytis-ckeditor.js:347
 msgid "When this is not sufficient:"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:343
+#: ../resources/scripts/pytis-ckeditor.js:349
 msgid "Expand to list by rows"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:344
+#: ../resources/scripts/pytis-ckeditor.js:350
 msgid "Expand to list by columns"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:345
+#: ../resources/scripts/pytis-ckeditor.js:351
 msgid "Split vertically into several narrower tables"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:568
+#: ../resources/scripts/pytis-ckeditor.js:574
 msgid "You must choose an object to include"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:692
+#: ../resources/scripts/pytis-ckeditor.js:698
 msgid "Upload successful"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:706
+#: ../resources/scripts/pytis-ckeditor.js:712
 msgid "Upload new file"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:718
+#: ../resources/scripts/pytis-ckeditor.js:724
 msgid "First select a file to be uploaded."
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:727
-msgid "Title"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:740
+#: ../resources/scripts/pytis-ckeditor.js:746
 msgid "Accessible description"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:798
-#, fuzzy
-msgid "Image"
-msgstr "obrázok"
-
-#: ../resources/scripts/pytis-ckeditor.js:867
+#: ../resources/scripts/pytis-ckeditor.js:873
 msgid "Display as"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:868
+#: ../resources/scripts/pytis-ckeditor.js:874
 msgid "Full size"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:869
+#: ../resources/scripts/pytis-ckeditor.js:875
 msgid "Small preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:870
+#: ../resources/scripts/pytis-ckeditor.js:876
 msgid "Medium preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:871
+#: ../resources/scripts/pytis-ckeditor.js:877
 msgid "Large preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:875
+#: ../resources/scripts/pytis-ckeditor.js:881
 msgid "Text wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:876
+#: ../resources/scripts/pytis-ckeditor.js:882
 msgid "No wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:877
+#: ../resources/scripts/pytis-ckeditor.js:883
 msgid "Wrap right"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:878
+#: ../resources/scripts/pytis-ckeditor.js:884
 msgid "Wrap left"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:926
-msgid "Behavior"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:927
+#: ../resources/scripts/pytis-ckeditor.js:933
 msgid "Enlarge on click"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:929
+#: ../resources/scripts/pytis-ckeditor.js:935
 msgid "Link"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:930
+#: ../resources/scripts/pytis-ckeditor.js:936
 msgid "Link to anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:974
+#: ../resources/scripts/pytis-ckeditor.js:980
 msgid "Select the anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1005
+#: ../resources/scripts/pytis-ckeditor.js:1011
 msgid "Link target (URL)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1026
+#: ../resources/scripts/pytis-ckeditor.js:1032
 msgid "Audio"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1043
+#: ../resources/scripts/pytis-ckeditor.js:1049
 msgid "Video"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1057
-msgid "Attachment"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:1091
+#: ../resources/scripts/pytis-ckeditor.js:1097
 msgid "Exercise"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1101
+#: ../resources/scripts/pytis-ckeditor.js:1107
 msgid "Exercise Type"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1108
+#: ../resources/scripts/pytis-ckeditor.js:1114
 msgid "Exercise Definition"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1183
+#: ../resources/scripts/pytis-ckeditor.js:1189
 msgid "MathML"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1216
+#: ../resources/scripts/pytis-ckeditor.js:1222
 msgid "Guide on "
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1228
+#: ../resources/scripts/pytis-ckeditor.js:1234
 msgid ""
 "To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from "
 "external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1233
+#: ../resources/scripts/pytis-ckeditor.js:1239
 msgid "Switch ASCII / MathML editing"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1356
+#: ../resources/scripts/pytis-ckeditor.js:1360
 msgid "Editing MathML will destroy your ASCII formula. Continue?"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1372
-#: ../resources/scripts/pytis-ckeditor.js:1373
+#: ../resources/scripts/pytis-ckeditor.js:1376
+#: ../resources/scripts/pytis-ckeditor.js:1377
 msgid "Language"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1499
-#: ../resources/scripts/pytis-ckeditor.js:1502
+#: ../resources/scripts/pytis-ckeditor.js:1503
+#: ../resources/scripts/pytis-ckeditor.js:1506
 msgid "Index item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1509
+#: ../resources/scripts/pytis-ckeditor.js:1513
 msgid "Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1511
+#: ../resources/scripts/pytis-ckeditor.js:1515
 msgid "You must choose an index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1513
+#: ../resources/scripts/pytis-ckeditor.js:1517
 msgid "Index of Terms"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1514
+#: ../resources/scripts/pytis-ckeditor.js:1518
 msgid "Name Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1515
+#: ../resources/scripts/pytis-ckeditor.js:1519
 msgid "Index of Places"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1520
+#: ../resources/scripts/pytis-ckeditor.js:1524
 msgid "Item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1522
+#: ../resources/scripts/pytis-ckeditor.js:1526
 msgid "Index item cannot be empty."
 msgstr ""
 
-#: ../resources/scripts/pytis.js:135
+#: ../resources/scripts/pytis.js:140
 msgid "New row"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:227 ../resources/scripts/pytis.js:427
-#: ../resources/scripts/pytis.js:429
+#: ../resources/scripts/pytis.js:232 ../resources/scripts/pytis.js:432
+#: ../resources/scripts/pytis.js:434
 msgid "Expand Row"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:242 ../resources/scripts/pytis.js:256
+#: ../resources/scripts/pytis.js:247 ../resources/scripts/pytis.js:261
 msgid "Collapse Row"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:346
+#: ../resources/scripts/pytis.js:351
 msgid "Failed loading form:"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:357
+#: ../resources/scripts/pytis.js:362
 msgid "show details"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:416
+#: ../resources/scripts/pytis.js:421
 msgid "Double click the cell to edit the value."
 msgstr ""
-
-#~ msgid "Empty value"
-#~ msgstr "Prázdna hodnota"
-
-#, fuzzy
-#~ msgid "Minimal length %(minlen)s characters not satisfied"
-#~ msgstr "Nedodržaná minimálna dĺžka %(minlen)s"
-
-#, fuzzy
-#~ msgid "Maximal length %(maxlen)s characters exceeded"
-#~ msgstr "Reťazec presahuje maximálnu dĺžku %(maxlen)s"
-
-#~ msgid "Not an integer"
-#~ msgstr "Nie je to celé číslo"
-
-#~ msgid "Invalid number"
-#~ msgstr "Niepovolené číslo"
 
 #, fuzzy
 #~ msgid "String exceeds max length %(maxlen)s characters"
 #~ msgstr "Raťazec presahuje maximálnu dĺžku %(maxlen)s"
-
-#~ msgid "Enter the password twice to eliminate typos"
-#~ msgstr "Zadajte heslo dvakrát pre eliminovanie preklepov"
-
-#~ msgid "Passwords don't match"
-#~ msgstr "Kontrolné zadanie hesla nezodpovedá"
-
-#~ msgid "Invalid format"
-#~ msgstr "Neplatný formát"
-
-#~ msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-#~ msgstr "Formát farby nezodpovedá  ('#RGB' nebo '#RRGGBB')"
-
-#~ msgid "Invalid date or time format"
-#~ msgstr "Chybný formát dátumu alebo času"
-
-#~ msgid "Invalid date or time"
-#~ msgstr "Chybný dátum alebo čas"
-
-#~ msgid "Date outside the allowed range"
-#~ msgstr "Dátum mimo povolený rozsah"
-
-#~ msgid "Maximal pixel size %(maxsize)s exceeded"
-#~ msgstr "Maximálny rozmer %(maxsize)s pixelov prekročený"
-
-#~ msgid "Minimal pixel size %(minsize)s exceeded"
-#~ msgstr "Minimálny rozmer %(minsize)s pixelov nedodržaný"
-
-#~ msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-#~ msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
-
-#, fuzzy
-#~ msgid "Instructions"
-#~ msgstr "Akcie"
-
-#, fuzzy
-#~ msgid "Selections"
-#~ msgstr "Akcie"
-
-#, fuzzy
-#~ msgid "Dictation"
-#~ msgstr "Akcie"
-
-#, fuzzy
-#~ msgid "Apply filters"
-#~ msgstr "súbor"

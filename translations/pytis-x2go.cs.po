@@ -7,7 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2015-08-28 10:48+CEST\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-02-24 18:10+0100\n"
 "PO-Revision-Date: 2015-08-28 10:49+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -17,182 +18,346 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../bin/x2goclient.py:148
+#: ../bin/x2goclient.py:176
 msgid "User name"
 msgstr "Uživatelské jméno"
 
-#: ../bin/x2goclient.py:230
-msgid "Initializing libraries. Please wait..."
-msgstr "Inicializace knihoven. Vyčkejte prosím..."
-
-#: ../bin/x2goclient.py:230
+#: ../bin/x2goclient.py:310
 msgid "Starting application"
 msgstr "Start aplikace"
 
-#: ../bin/x2goclient.py:273
+#: ../bin/x2goclient.py:310
+msgid "Initializing libraries. Please wait..."
+msgstr "Inicializace knihoven. Vyčkejte prosím..."
+
+#: ../bin/x2goclient.py:351
 msgid "Initializing application. Please wait..."
 msgstr "Inicializace aplikace. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:361
+#: ../bin/x2goclient.py:439
+#, python-format
 msgid "Can't read RPyC info file: %s"
 msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:371
+#: ../bin/x2goclient.py:449
+#, python-format
 msgid "Error when writing RPyC info file: %s"
 msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
-#: ../bin/x2goclient.py:392 ../bin/x2goclient.py:1147
+#: ../bin/x2goclient.py:470 ../bin/x2goclient.py:1299
 msgid "Invalid broker address"
 msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:396 ../bin/x2goclient.py:1151
+#: ../bin/x2goclient.py:474 ../bin/x2goclient.py:1303
 msgid "Unsupported broker protocol"
 msgstr "Nepodporovaný protokol pro přístup na broker"
 
-#: ../bin/x2goclient.py:521
+#: ../bin/x2goclient.py:599
 msgid "Invalid session format"
 msgstr "Chybný formát sezení"
 
-#: ../bin/x2goclient.py:662
+#: ../bin/x2goclient.py:792
 msgid "Client setup. Please wait..."
 msgstr "Nastavení klienta. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:704
+#: ../bin/x2goclient.py:837
 msgid "Checking for new client version. Please wait..."
 msgstr "Kontrola nové verze klienta. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:714
+#: ../bin/x2goclient.py:847
 msgid "New pytis client version available. Install?"
 msgstr "Je dostupná nová verze klienta Pytis. Nainstalovat?"
 
-#: ../bin/x2goclient.py:722
+#: ../bin/x2goclient.py:855
 msgid "Checking sessions and profiles. Please wait..."
 msgstr "Načítání sezení a profilů. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:785
+#: ../bin/x2goclient.py:918
 msgid "Select session"
 msgstr "Vyberte sezení"
 
-#: ../bin/x2goclient.py:790
+#: ../bin/x2goclient.py:923
 msgid "No session selected."
 msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:792
+#: ../bin/x2goclient.py:925
 msgid "Opening selected profile. Please wait..."
 msgstr "Otevírání zvoleného profilu. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:800
+#: ../bin/x2goclient.py:942
 msgid "Checking desktop shortcut. Please wait..."
 msgstr "Kontrola zástupců na ploše. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:929
+#: ../bin/x2goclient.py:1081
+#, python-format
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:987 ../bin/x2goclient.py:1319
+#: ../bin/x2goclient.py:1139 ../bin/x2goclient.py:1514
 msgid "Starting server connections. Please wait..."
 msgstr "Start spojení na server. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1059
+#: ../bin/x2goclient.py:1211
+#, python-format
 msgid "Password key for %s"
 msgstr "Heslo ke klíči v souboru %s"
 
-#: ../bin/x2goclient.py:1105
+#: ../bin/x2goclient.py:1257
 msgid "Login using password"
 msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:1106
+#: ../bin/x2goclient.py:1258
 msgid "Login using a key file"
 msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:1107
+#: ../bin/x2goclient.py:1259
 msgid "Default authentication failed"
 msgstr "Výchozí autentizace selhala"
 
-#: ../bin/x2goclient.py:1115
+#: ../bin/x2goclient.py:1267
 msgid "No supported ssh connection method available"
 msgstr "Není dostupná žádná metoda spojení přes ssh"
 
-#: ../bin/x2goclient.py:1118
+#: ../bin/x2goclient.py:1270
 msgid "Login password"
 msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:1125
+#: ../bin/x2goclient.py:1277
 msgid "Select ssh key file"
 msgstr "Vyberte ssh klíč"
 
-#: ../bin/x2goclient.py:1135
+#: ../bin/x2goclient.py:1287
 msgid "Program error"
 msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:1160
+#: ../bin/x2goclient.py:1311
 msgid "Couldn't connect to upgrade server"
 msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:1170
+#: ../bin/x2goclient.py:1323
 msgid "Package unpacking failed"
 msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:1176
+#: ../bin/x2goclient.py:1344
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
 
-#: ../bin/x2goclient.py:1180
+#: ../bin/x2goclient.py:1348
 msgid "Creating new session. Please wait..."
 msgstr "Vytváření nového sezení. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1183
+#: ../bin/x2goclient.py:1351
 msgid "Setting up new session. Please wait..."
 msgstr "Nastavování nového sezení. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1199
+#: ../bin/x2goclient.py:1377
 msgid "New session"
 msgstr "Nové sezení"
 
-#: ../bin/x2goclient.py:1202
+#: ../bin/x2goclient.py:1379
+msgid "OK"
+msgstr ""
+
+#: ../bin/x2goclient.py:1379
+msgid "Terminate"
+msgstr ""
+
+#: ../bin/x2goclient.py:1379
+msgid "Cancel"
+msgstr ""
+
+#: ../bin/x2goclient.py:1380
 msgid "Resume session"
 msgstr "Obnova sezení"
 
-#: ../bin/x2goclient.py:1264
+#: ../bin/x2goclient.py:1457
 msgid "Create desktop shortcut for this session profile?"
 msgstr "Vytvořit pro tento profil ikonu na ploše?"
 
-#: ../bin/x2goclient.py:1273
+#: ../bin/x2goclient.py:1466
+#, python-format
 msgid "Shortcut %s allready exists. Please, rename it:"
 msgstr "Zástupce %s již existuje. Zvolte jiné jméno:"
 
-#: ../bin/x2goclient.py:1274
+#: ../bin/x2goclient.py:1467
 msgid "Edit shortcut name"
 msgstr "Upravit jméno zástupce"
 
-#: ../bin/x2goclient.py:1326
+#: ../bin/x2goclient.py:1521
 msgid "Authenticating. Please wait..."
 msgstr "Autentizace. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1688
+#: ../bin/x2goclient.py:1883
 msgid "Launching application. Please wait..."
 msgstr "Spouštění aplikace. Vyčkejte prosím..."
 
-#~ msgid "No"
-#~ msgstr "Ne"
+#, fuzzy
+#~ msgid "Password"
+#~ msgstr "Zadání hesla"
+
+#, fuzzy
+#~ msgid "MD5 Password"
+#~ msgstr "Heslo ke klíči"
+
+#, fuzzy
+#~ msgid "File name"
+#~ msgstr "Uživatelské jméno"
+
+#, fuzzy
+#~ msgid "Password fields"
+#~ msgstr "Zadání hesla"
+
+#, fuzzy
+#~ msgid "User Roles"
+#~ msgstr "Uživatelské jméno"
+
+#, fuzzy
+#~ msgid "User"
+#~ msgstr "Uživatelské jméno"
+
+#, fuzzy
+#~ msgid "Remote connection not available."
+#~ msgstr "Není dostupná žádná metoda spojení přes ssh"
+
+#, fuzzy
+#~ msgid "No key selected."
+#~ msgstr "Nebylo vybráno žádné sezení."
+
+#, fuzzy
+#~ msgid "No file selected."
+#~ msgstr "Nebylo vybráno žádné sezení."
+
+#, fuzzy
+#~ msgid "User agent"
+#~ msgstr "Uživatelské jméno"
+
+#, fuzzy
+#~ msgid "Can't connect to database"
+#~ msgstr "Nelze se připojit na aktualizační server"
+
+#, fuzzy
+#~ msgid "Invalid number"
+#~ msgstr "Chybná adresa brokeru"
+
+#, fuzzy
+#~ msgid "Passwords don't match"
+#~ msgstr "Zadání hesla"
+
+#, fuzzy
+#~ msgid "Invalid format"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Invalid date or time format"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Invalid date or time"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Invalid graphics format"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Invalid hierarchical value format"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Could not connect to SMTP server"
+#~ msgstr "Nelze se připojit na aktualizační server"
+
+#, fuzzy
+#~ msgid "Invalid password"
+#~ msgstr "Přihlášovací heslo"
+
+#, fuzzy
+#~ msgid "Encryption key password"
+#~ msgstr "Heslo ke klíči"
+
+#, fuzzy
+#~ msgid "Enter your password"
+#~ msgstr "Heslo ke klíči"
+
+#, fuzzy
+#~ msgid "Open configuration form \"%s\""
+#~ msgstr "Klientská konfigurace není přístupná: %s"
 
 #~ msgid "Yes"
 #~ msgstr "Ano"
 
-#~ msgid "Password input"
-#~ msgstr "Zadání hesla"
+#~ msgid "No"
+#~ msgstr "Ne"
 
-#~ msgid "Can't create client directory: %s"
+#, fuzzy
+#~ msgid "Please wait..."
+#~ msgstr "Nastavení klienta. Vyčkejte prosím..."
+
+#, fuzzy
+#~ msgid "Exit application"
+#~ msgstr "Start aplikace"
+
+#, fuzzy
+#~ msgid "Select"
+#~ msgstr "Vyberte sezení"
+
+#, fuzzy
+#~ msgid "Select Color"
+#~ msgstr "Vyberte sezení"
+
+#, fuzzy
+#~ msgid "Select File"
+#~ msgstr "Vyberte ssh klíč"
+
+#, fuzzy
+#~ msgid "Error writing file to disk:"
+#~ msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
+
+#, fuzzy
+#~ msgid "Invalid image format!"
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Invalid range format."
+#~ msgstr "Chybný formát sezení"
+
+#, fuzzy
+#~ msgid "Rename"
+#~ msgstr "Uživatelské jméno"
+
+#, fuzzy
+#~ msgid "Error in condition no. %d: %s"
+#~ msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
+
+#, fuzzy
+#~ msgid "Exits the application."
+#~ msgstr "Start aplikace"
+
+#, fuzzy
+#~ msgid "%s application help"
+#~ msgstr "Start aplikace"
+
+#, fuzzy
+#~ msgid "Invalid item arguments"
+#~ msgstr "Chybná adresa brokeru"
+
+#, fuzzy
+#~ msgid "Failed selecting directory: %s"
 #~ msgstr "Nelze vytvořit klientský adresář: %s"
+
+#, fuzzy
+#~ msgid "Invalid subform values."
+#~ msgstr "Chybná adresa brokeru"
+
+#, fuzzy
+#~ msgid "Search expression"
+#~ msgstr "Vyberte sezení"
 
 #~ msgid "Client directory not accessible: %s"
 #~ msgstr "Klientský adresář není přístupný: %s"
 
 #~ msgid "Can't create client configuration file: %s"
 #~ msgstr "Nelze vytvořit klientský konfigurační soubor: %s"
-
-#~ msgid "Client configuration not accessible: %s"
-#~ msgstr "Klientská konfigurace není přístupná: %s"
 
 #~ msgid "Error when loading client configuration: %s"
 #~ msgstr "Chyba při načítání klientské konfigurace: %s"
@@ -202,6 +367,3 @@ msgstr "Spouštění aplikace. Vyčkejte prosím..."
 
 #~ msgid "Invalid configuration parameter type: %s = %r (is not %s)"
 #~ msgstr "Chybný typ konfiguračního parametru: %s = %r (není %s)"
-
-#~ msgid "Key password"
-#~ msgstr "Heslo ke klíči"
