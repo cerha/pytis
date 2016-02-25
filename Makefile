@@ -12,3 +12,5 @@ compile:
 
 translations:
 	make -C translations
+extract:
+	make -C translations extract
