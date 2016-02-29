@@ -42,10 +42,10 @@ import BaseHTTPServer
 import pytis.data
 from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval, \
-    log, OPERATIONAL, \
-    ProgramError
+    log, OPERATIONAL, translations, ProgramError
 import pytis.presentation
 
+_ = translations('pytis-data')
 
 def specification_path(specification_name):
     """Return specification path and the relative specification name.
@@ -4716,10 +4716,12 @@ class StatusField(object):
     'Application.status_fields'.
 
     """
-    def __init__(self, id, refresh=None, refresh_interval=None, width=10):
+    def __init__(self, id, label=None, refresh=None, refresh_interval=None, width=10):
         """Arguments:
 
           id -- field identifier as a basestring.
+          label -- field label as a basestring.  The label will be displayed
+            as a tooltip.
           refresh -- callable object returning the current field value
             text as a basestring when called with no arguments.  The
             function will be called periodically on user interface
@@ -4734,16 +4736,21 @@ class StatusField(object):
 
         """
         assert isinstance(id, basestring), id
+        assert label is None or isinstance(label, basestring), label
         assert refresh is None or isinstance(refresh, collections.Callable), refresh
         assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
         assert width is None or isinstance(width, int) and width > 0
         self._id = id
+        self._label = label
         self._refresh = refresh
         self._refresh_interval = refresh_interval
         self._width = width
 
     def id(self):
         return self._id
+
+    def label(self):
+        return self._label
 
     def refresh(self):
         return self._refresh
@@ -4858,8 +4865,10 @@ class Application(SpecificationBase):
         """
         return (
             StatusField('message', width=None),
-            StatusField('list-position', refresh=self._refresh_list_position, width=15),
-            StatusField('remote-status', refresh=self._refresh_remote_status,
+            StatusField('list-position', _("List position"),
+                        refresh=self._refresh_list_position, width=15),
+            StatusField('remote-status', _("Remote communication status"),
+                        refresh=self._refresh_remote_status,
                         refresh_interval=10000, width=5),
         )
 

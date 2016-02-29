@@ -1493,6 +1493,7 @@ class StatusBar(object):
         sb.SetStatusWidths(widths)
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
+        wx_callback(wx.EVT_MOTION, sb, self._on_motion)
 
     def _on_idle(self, event):
         for i, field in enumerate(self._fields):
@@ -1506,6 +1507,25 @@ class StatusBar(object):
                 message = refresh()
                 if message is not None:
                     self._sb.SetStatusText(message, i)
+
+    def _on_motion(self, event):
+        x = event.GetX()
+        for i, field in enumerate(self._fields):
+            fx, fy, fw, fh = self._sb.GetFieldRect(i)
+            if x >= fx and x <= fx + fw:
+                window = event.GetEventObject()
+                text = self._fields[i].label()
+                if text:
+                    tip = window.GetToolTip()
+                    if tip is None:
+                        tip = wx.ToolTip(text)
+                        window.SetToolTip(tip)
+                    elif tip.GetTip() != text:
+                        tip.SetTip(text)
+                else:
+                    window.SetToolTip(None)
+                break
+        event.Skip()
 
     def set_status_text(self, field_id, text):
         """Set the text displayed in field 'field_id' to 'text'.
