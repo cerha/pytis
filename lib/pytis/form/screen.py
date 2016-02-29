@@ -51,6 +51,7 @@ import pytis.presentation
 from pytis.presentation import Orientation, TextFormat
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
+from pytis.form import wx_callback
 from command import Command, CommandHandler, UICommand, command_icon
 from managers import FormProfileManager
 
@@ -772,7 +773,7 @@ class KeyHandler:
     def _handle_keys(self, *widgets):
         """Registruj se pro ošetření klávesových událostí daných UI prvků."""
         for widget in widgets:
-            pytis.form.wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
+            wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
 
     def _init_commands(self):
         # Nemůžeme `_commands' inicializovat hned v konstruktoru, protože
@@ -1069,8 +1070,8 @@ class Menu(_TitledMenuObject):
 
         """
         self._wx_menu = menu = wx.Menu()
-        pytis.form.wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
-                               lambda event: self._on_highlight_item(menu, event))
+        wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
+                    lambda event: self._on_highlight_item(menu, event))
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_str = {}
@@ -1316,9 +1317,9 @@ class MItem(_TitledMenuObject):
 
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        pytis.form.wx_callback(wx.EVT_MENU, parent, item.GetId(),
-                               lambda e: self._command.invoke(**self._args))
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_MENU, parent, item.GetId(),
+                    lambda e: self._command.invoke(**self._args))
+        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         self._create_icon(item)
         return item
 
@@ -1491,7 +1492,7 @@ class StatusBar(object):
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
         parent.SetStatusBar(sb)
-        pytis.form.wx_callback(wx.EVT_IDLE, sb, self._on_idle)
+        wx_callback(wx.EVT_IDLE, sb, self._on_idle)
 
     def _on_idle(self, event):
         for i, field in enumerate(self._fields):
@@ -1706,12 +1707,12 @@ class ProfileSelector(wx.combo.ComboCtrl):
         self._on_enter_perform = None
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
-        pytis.form.wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
-        pytis.form.wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        pytis.form.wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
-        pytis.form.wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
-        pytis.form.wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
+        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
+        wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
+        wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
+        wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
+        wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
 
     def _on_ui_event(self, event):
         enabled = pytis.form.LookupForm.COMMAND_PROFILE_MENU.enabled()
@@ -1816,8 +1817,8 @@ class TextHeadingSelector(wx.Choice):
     def __init__(self, parent, uicmd, size=None):
         self._uicmd = uicmd
         wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size)
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
-        pytis.form.wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
+        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
 
     def _on_ui_event(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1852,8 +1853,8 @@ class FormStateToolbarControl(wx.BitmapButton):
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
-        pytis.form.wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
 
     def _on_click(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1902,7 +1903,7 @@ class KeyboardSwitcher(wx.BitmapButton):
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
-        pytis.form.wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
 
     def _on_click(self, event):
         popup_menu(self._toolbar, self._menu)
@@ -1962,15 +1963,15 @@ class LocationBar(wx.TextCtrl):
         wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER,
                              name='location-bar')
         self.SetEditable(editable)
-        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
         if editable:
-            pytis.form.wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
+            wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
         else:
             self.SetOwnBackgroundColour(config.field_disabled_color)
             self.Refresh()
         browser = uicmd.args()['_command_handler']
         browser.set_uri_change_callback(lambda uri: self.SetValue(uri))
-        pytis.form.wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
+        wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         self._want_focus = 0
 
     def _on_update_ui(self, event):
@@ -2076,7 +2077,7 @@ class Browser(wx.Panel, CommandHandler):
         # localhost even though the URL suggests it.  They are loaded by
         # _on_resource_request().
         self._resource_base_uri = 'http://localhost/pytis-resources/'
-        pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
+        wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
         if self._webview is None:
@@ -2654,7 +2655,7 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
         ctrl.SetToolTipString(tooltip)
     if update:
         # Bug: 'parent' is undefined!
-        # pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
+        # wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
         pass
     if not enabled:
         ctrl.Enable(False)
@@ -2743,10 +2744,10 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
         # if update:
-        #     pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
+        #     wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
         #                 lambda e: e.Enable(cmd.enabled(**args)))
     if callback:
-        pytis.form.wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return button
 
@@ -2801,7 +2802,7 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
     elif selected:
         ctrl.SetSelection(labels.index(selected))
     if on_change:
-        pytis.form.wx_callback(evt, ctrl, ctrl.GetId(), on_change)
+        wx_callback(evt, ctrl, ctrl.GetId(), on_change)
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
@@ -2826,10 +2827,10 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         cls = wx.TextCtrl
     ctrl = cls(parent, -1, style=(readonly and wx.TE_READONLY or 0))
     if on_key_down:
-        pytis.form.wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
+        wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
-        pytis.form.wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
-    pytis.form.wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
+        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
+    wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
     if value is not None:
         ctrl.SetValue(value)
     if length:
