@@ -1440,8 +1440,8 @@ class MenuBar(wx.MenuBar):
 # Status bar
 
 
-class StatusBar(wx.StatusBar):
-    """Třída realizující stavový řádek.
+class StatusBar(object):
+    """Pytis application main frame status bar.
 
     Stavový řádek slouží pro zobrazování krátkých zpráv uživateli a zobrazování
     stavových informací.  Může být rozdělen do více polí, z nichž každé slouží
@@ -1449,32 +1449,17 @@ class StatusBar(wx.StatusBar):
     'wxStatusBar' z wxWindows, měly by však být volány pouze její vlastní
     metody a ne metody poděděné z třídy 'wxStatusBar'.
 
-    Stavový řádek je definován svým rozdělením na pole, z nichž každé má své
-    jméno a šířku.  V těchto polích lze zobrazovat zprávy metodou 'message()'.
-
-    Příklad použití:
-
-       frame = wx.Frame(None, title='Pokus')
-
-       sb = StatusBar(frame, (('main', -1), ('a', 80), ('b', 20)))
-       sb.message('message', 'ahoj')
-       sb.message('a', 'nazdar')
-
     """
     class _Timer(wx.Timer):
-        def __init__(self, statusbar, field_number):
-            self._statusbar = statusbar
-            self._field_number = field_number
-            wx.Timer.__init__(self, None, field_number)
 
         def Notify(self):
-            self._statusbar.SetStatusText('', self._field_number)
             self.Stop()
 
-        def start(self, timeout):
+        def Start(self, timeout):
             if self.IsRunning():
                 self.Stop()
-            self.Start(1000 * timeout, True)
+            super(StatusBar._Timer, self).Start(timeout, True)
+
 
     def __init__(self, parent, fields):
         """Inicializuj StatusBar a vytvoř pojmenovaná pole.
@@ -1493,92 +1478,73 @@ class StatusBar(wx.StatusBar):
         mít stejné ID.
 
         """
-        super(StatusBar, self).__init__(parent, -1)
-        parent.SetStatusBar(self)
-        self.SetFieldsCount(len(fields))
-        self._field_numbers = {}
-        self._timer = {}
-        self._widths = widths = []
-        for i, field in enumerate(fields):
-            id, width = field
-            self._field_numbers[id] = i
-            # Each field has its own timer...
-            self._timer[id] = self._Timer(self, i)
-            if width is None:
-                width = -1
-            elif width > 0:
-                width = dlg2px(self, width * 4)
-            widths.append(width)
-        if widths and widths[-1] > 0:
+        self._sb = sb = wx.StatusBar(parent, -1)
+        self._fields = tuple(fields)
+        self._timers = [self._Timer() if f.refresh_interval() else None for f in fields]
+        widths = [dlg2px(sb, f.width() * 4) if f.width() is not None else -1 for f in fields]
+        if widths[-1] > 0:
             # Wx hack: Extend the last field to fit also the dragging triangle.
             widths[-1] += 22
-        self._orig_widths = widths[:]
-        self.SetStatusWidths(widths)
+        self._widths = widths
+        self._orig_widths = tuple(widths)
+        self._field_ids = [f.id() for f in fields]
+        sb.SetFieldsCount(len(fields))
+        sb.SetStatusWidths(widths)
+        parent.SetStatusBar(sb)
+        pytis.form.wx_callback(wx.EVT_IDLE, sb, self._on_idle)
 
-    def _field_number(self, id):
-        """Vrať pořadové číslo pole 'id' pro wxWindows.
+    def _on_idle(self, event):
+        for i, field in enumerate(self._fields):
+            refresh, interval = field.refresh(), field.refresh_interval()
+            if interval:
+                timer = self._timers[i]
+                if timer.IsRunning():
+                    continue
+                timer.Start(interval)
+            if refresh:
+                message = refresh()
+                if message is not None:
+                    self._sb.SetStatusText(message, i)
 
-        Argumenty:
+    def set_status_text(self, field_id, text):
+        """Set the text displayed in field 'field_id' to 'text'.
 
-           id -- id pole jako string
+        Arguments:
 
-        Pokud pole pojmenované 'id' neexistuje, vyvolej výjimku 'KeyError'.
+          field_id -- status field id as basestring
+          text -- text to be displayed in the field as basestring
+
+        Returns True on success or False when no shch field was found in the
+        status bar.
 
         """
-        return self._field_numbers[id]
-
-    def message(self, id, message, timeout=None):
-        """Nastav text pole 'id' na 'message'.
-
-        Argumenty:
-
-          id -- id pole jako string
-          message -- string, který má být novým obsahem pole; může být
-            i 'None', v kterémžto případě bude předchozí hlášení smazáno
-          timeout -- pokud je zadáno, zpráva zmizí po zadaném počtu sekund
-
-        Pokud stavová řádka dané pole neobsahuje, vrať nepravdu, jinak vracej
-        pravdu.
-
-        """
-        if message is None:
-            message = ''
-        else:
-            message = unicode(message)
+        text = unicode(text or '')
         try:
-            i = self._field_number(id)
-        except KeyError:
+            i = self._field_ids.index(field_id)
+        except ValueError:
             return False
         # Prevent status bar blinking by checking against the current value.
-        if message != self.GetStatusText(i):
+        if text != self._sb.GetStatusText(i):
             # Adjust the field width to fit the new text (for fixed width fields only).  The
             # "fixed" fields don't change their width as a percentage of the application frame
             # width, but are not completely fixed...
             if self._widths[i] > 0:
                 # Add 6 pixels below for the borders.
-                width = max(self.GetTextExtent(message)[0] + 6, self._orig_widths[i])
+                width = max(self._sb.GetTextExtent(text)[0] + 6, self._orig_widths[i])
                 if width != self._widths[i]:
                     self._widths[i] = width
-                    self.SetStatusWidths(self._widths)
-            self.SetStatusText(message, i)
-        if timeout is not None:
-            self._timer[id].start(timeout)
+                    self._sb.SetStatusWidths(self._widths)
+            self._sb.SetStatusText(text, i)
         return True
 
-    def get_message(self, id):
-        """Vrať text pole 'id' jako string.
-
-        Argumenty:
-
-           id -- identifikátor pole jako řetězec
-
-        Pokud pole daného 'id' neexistuje, je vrácena hodnota None.
-
-        """
+    def get_status_text(self, field_id):
+        """Get the text displayed in field 'field_id' or None when no such field exists."""
         try:
-            return self.GetStatusText(self._field_number(id))
-        except KeyError:
+            i = self._field_ids.index(field_id)
+        except ValueError:
             return None
+        else:
+            return self._sb.GetStatusText(i)
 
 
 class InfoWindow(object):

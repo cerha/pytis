@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ import wx.html
 
 import pytis.data
 import pytis.form
-from pytis.presentation import Field, Specification, computer
+from pytis.presentation import Field, Specification, StatusField, computer
 import pytis.util
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     ProgramError, ResolverError, Stack, XStack, \
@@ -152,7 +152,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        self._statusbar = StatusBar(frame, self._specification.status_fields())
+        # TODO: This is temporary backwards compatible conversion of status_fields()
+        # specifications.  It should be removed when all applications are updated.
+        default_fields = dict([(f.id(), f)
+                               for f in pytis.presentation.Application().status_fields()])
+        status_fields = [default_fields.get(x[0], StatusField(x[0], width=x[1]))
+                         if isinstance(x, tuple) else x
+                         for x in self._specification.status_fields()]
+        self._statusbar = StatusBar(frame, status_fields)
         self._help_browser = None
         self._login_success = False
         keymap = self.keymap = Keymap()
@@ -1190,16 +1197,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log.add_hook(log_wrapper)
         self.MainLoop()
 
-    def top_window(self):
+    def top_window(self, allow_modal=True):
         """Vrať momentálně aktivní okno aplikace.
 
         """
-        if not self._modals.empty():
+        if allow_modal and not self._modals.empty():
             return self._modals.top()
         else:
             return self._windows.active()
 
-    def current_form(self, inner=True):
+    def current_form(self, inner=True, allow_modal=True):
         """Vrať právě aktivní formulář aplikace, pokud existuje.
 
         Pokud není otevřen žádný formulář, nebo aktivním oknem není formulář,
@@ -1207,52 +1214,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         jeho aktivní podformulář, právě pokud je argument 'inner' pravdivý.
 
         """
-        form = self.top_window()
+        form = self.top_window(allow_modal=allow_modal)
         if not isinstance(form, pytis.form.Form):
             return None
         if inner:
             while isinstance(form, (pytis.form.DualForm, pytis.form.MultiForm)):
                 form = form.active_form()
         return form
-
-    def set_status(self, id, message, timeout=None, root=False, log_=True):
-        """Nastav v poli stavové řádky daného 'id' zprávu 'message'.
-
-        Argumenty:
-
-          id -- identifikátor pole stavové řádky.
-
-          message -- string, který má být zobrazen, nebo 'None'; je-li 'None',
-            bude předchozí hlášení smazáno.
-
-          timeout -- není-li 'None', zpráva zmizí po zadaném počtu sekund.
-
-          root -- je-li pravdivé, bude zpráva zobrazena vždy v hlavním okně
-            aplikace.  Pokud ne, je zpráva zobrazena ve stavové řádce hlavního
-            okna aplikace až v případě, že není otevřeno žádné modální okno,
-            nebo se zobrazení zprávy v modálním okně nepodařilo.
-
-          log_ -- pokud je pravda, bude událost zalogována.
-
-        Zobrazení není garantováno, nemusí se zobrazit například v případě, kdy
-        stavový řádek neobsahuje odpovídající pole.
-
-        """
-        if __debug__:
-            if log_:
-                log(DEBUG, u"Nastavení pole stavové řádky:", data=(id, message))
-
-        modal = self._modals.top()
-        if root or not isinstance(modal, pytis.form.Form) or not modal.set_status(id, message):
-            return self._statusbar.message(id, message, timeout=timeout)
-
-    def get_status(self, id):
-        """Vrať text pole 'id' stavového řádku hlavního okna aplikace.
-
-        Pokud stavový řádek dané pole neobsahuje, vrať None.
-
-        """
-        return self._statusbar.get_message(id)
 
     def save(self):
         """Ulož stav aplikace."""
@@ -1621,29 +1589,16 @@ def run_dialog(*args, **kwargs):
         log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
 
 
-def current_form(inner=True):
+def current_form(**kwargs):
     """Vrať právě aktivní formulář (viz 'Application.current_form()')."""
     if _application is not None:
-        return _application.current_form(inner=inner)
+        return _application.current_form(**kwargs)
 
 
-def top_window():
+def top_window(**kwargs):
     """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
     if _application is not None:
-        return _application.top_window()
-
-
-def set_status(id, message, log_=True):
-    """Nastav pole 'id' stavové řádky (viz 'Application.set_status()')."""
-    if _application is not None:
-        return _application.set_status(id, message, log_=log_)
-    else:
-        log(OPERATIONAL, "Attempt to set status-line:", (id, message))
-
-
-def get_status(id):
-    """Vrať text pole 'id' stavové řádky. (viz 'Application.get_status()')"""
-    return _application.get_status(id)
+        return _application.top_window(**kwargs)
 
 
 def recent_forms_menu():
@@ -1696,37 +1651,54 @@ def frame_title(title):
 
 # Ostatní funkce.
 
+def set_status(id, text, log_=True):
+    """Set status bar field 'id' to display given 'text'."""
+    if __debug__:
+        if log_:
+            log(DEBUG, u"Status text updated:", (id, text))
+    return _application._statusbar.set_status_text(id, text)
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
-    """Zaloguj a zobraz neinteraktivní 'message' v okně aplikace.
+    """Display a non-interactive message in the status bar 'message' field.
 
-    Argumenty:
+    Arguments:
 
-      message -- řetězec, který má být zobrazen; obsahuje-li jako poslední znak
-        dvojtečku, není tato v okně aplikace zobrazena
-      kind -- druh zprávy, jedna z konstant modulu 'log'
-      data -- doplňující data pro logování, stejné jako v 'log.log'
-      beep_ -- právě když je pravdivé, bude hlášení doprovázeno pípnutím
-      timeout -- pokud je zadáno, zpráva zmizí po zadaném počtu sekund
-      root -- je-li pravdivé, bude zpráva zobrazena vždy v hlavním okně
-        aplikace.  Pokud ne, je zpráva zobrazena ve stavové řádce hlavního okna
-        aplikace až v případě, že není otevřeno žádné modální okno, nebo se
-        zobrazení zprávy v modálním okně nepodařilo.
-      log_ -- pokud je pravda, bude zpráva také zalogována.
-
-    Pro zobrazení zprávy ve stavové řádce platí stejná pravidla, jako v případě
-    metody 'Application.set_status()'.
+      message -- the text to be displayed; if the text ends with a colon,
+        it will be stripped.
+      beep_ -- iff true, the message will be accompanied by a beep.
+      log_ -- iff true, the text will be also logged.
+      kind -- logging kind; one of 'log' module constants.
+      data -- additional data to be logged (same as in 'log.log').
+      timeout -- optional timeout after which the message disappears.
+      root -- iff true, the message is displayed always in the main
+        application frame's status bar.  Otherwise the message will
+        appear in the current modal window's status bar if there is
+        a modal window, it has a status bar and the status bar
+        contains the 'message' field.
 
     """
     if beep_:
         beep()
     if log_ and (message or data):
         log(kind, message, data=data)
-    if _application:
-        if message and message[-1] == ':':
-            message = message[:-1]
-        _application.set_status('message', message, timeout=timeout, root=root)
+    if not _application:
+        return
+    if message and message[-1] == ':':
+        message = message[:-1]
+    if not root:
+        modal = _application._modals.top()
+        if isinstance(modal, pytis.form.Form) and modal.set_status('message', message):
+            return
+    sb = _application._statusbar
+    if timeout:
+        class Timer(wx.Timer):
+            def Notify(self):
+                self.Stop()
+                if sb.get_status_text('message') == unicode(message):
+                    sb.set_status_text('message', '')
+        Timer().Start(1000 * timeout)
+    return sb.set_status_text('message', message)
 
 
 def create_data_object(name, spec_kwargs={}, kwargs={}):

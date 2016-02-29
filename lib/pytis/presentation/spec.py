@@ -4708,6 +4708,52 @@ class DbAttachmentStorage(AttachmentStorage):
         return None
 
 
+class StatusField(object):
+    """Status bar field specification.
+
+    Defines properties of a status bar fields returned by
+    'Application.status_fields'.
+
+    """
+    def __init__(self, id, refresh=None, refresh_interval=None, width=10):
+        """Arguments:
+
+          id -- field identifier as a basestring.
+          refresh -- callable object returning the current field value
+            text as a basestring when called with no arguments.  The
+            function will be called periodically on user interface
+            refresh events (ON_IDLE).  If None the field will not be
+            updated periodically.  Such fields may be updated
+            imperatively by calling 'pytis.form.set_status()'.
+            The function should not perform any demanding processing
+            and should return promptly.
+          refresh_interval -- minimal delay between two successive
+            calls of the 'refresh' function in miliseconds.
+          width -- field width as a number of characters.
+
+        """
+        assert isinstance(id, basestring), id
+        assert refresh is None or isinstance(refresh, collections.Callable), refresh
+        assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
+        assert width is None or isinstance(width, int) and width > 0
+        self._id = id
+        self._refresh = refresh
+        self._refresh_interval = refresh_interval
+        self._width = width
+
+    def id(self):
+        return self._id
+
+    def refresh(self):
+        return self._refresh
+
+    def refresh_interval(self):
+        return self._refresh_interval
+
+    def width(self):
+        return self._width
+
+
 class SpecificationBase(object):
     """Base class for specification classes which may be retrieved through resolver."""
 
@@ -4778,14 +4824,43 @@ class Application(SpecificationBase):
         """
         return ()
 
-    def status_fields(self):
-        """Return the specification of status bar fields.
+    def _refresh_list_position(self):
+        from pytis.form import current_form
+        form = current_form(allow_modal=False)
+        if hasattr(form, 'list_position'):
+            return form.list_position()
+        else:
+            return ''
 
-        The specification must have the same format as the constructor argument
-        'fields' of 'pytis.form.screen.StatusBar'.
+    def _refresh_remote_status(self):
+        import pytis.remote
+        if pytis.remote.client_available():
+            return 'Ok'
+        else:
+            return 'N/A'
+
+    def status_fields(self):
+        """Return status bar fields as a sequence of 'StatusField' instances.
+
+        The application's main window status bar will be created according to
+        this specification.
+
+        By default, the following fields are returned:
+          - message: displays various non-interactive messages
+          - list-positin: Displays the current position in the list of
+            records (such as 3/168) when a list form is active.
+          - remote-status: Displays the current status of remote communication.
+
+        Derived application can extend, reorder or redefine the fields as
+        needed.
 
         """
-        return ()
+        return (
+            StatusField('message', width=None),
+            StatusField('list-position', refresh=self._refresh_list_position, width=15),
+            StatusField('remote-status', refresh=self._refresh_remote_status,
+                        refresh_interval=10000, width=5),
+        )
 
 
 class _SpecificationMetaclass(type):

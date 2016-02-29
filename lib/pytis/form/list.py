@@ -65,7 +65,7 @@ from screen import CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, \
 from search import sfs_columns
 from application import Application, \
     aggregated_views_manager, block_refresh, current_form, db_operation, \
-    message, refresh, run_dialog, run_form, set_status
+    message, refresh, run_dialog, run_form
 import _grid
 import config
 
@@ -100,8 +100,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TITLE_BAR = True
     _ALLOW_TOOLBAR = False
-
-    _STATUS_FIELDS = ('list-position', 'data-changed')
 
     _AGGREGATIONS = ((pytis.data.Data.AGG_SUM, _("Sum"), 'agg-sum', _("Sum:")),
                      (pytis.data.Data.AGG_AVG, _("Average"), 'agg-avg', _("Avg:")),
@@ -148,6 +146,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._aggregation_columns = ()
         self._last_grid_mouse_position = (None, None, None)
         self._last_cell_tooltip_position = (None, None)
+        self._list_position = None
 
     def _default_columns(self):
         """Return the default form columns as a sequence of field identifiers (strings)."""
@@ -818,10 +817,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             delay = self._SELECTION_CALLBACK_DELAY
                             self._selection_callback_tick = delay
                     # TODO: tady to způsobuje špatné zobrazování pozice v
-                    #       dualform. Nahrazeno voláním _show_position v
+                    #       dualform. Nahrazeno voláním _update_list_position v
                     #       _post_selection_hook.
                     #       Jiné řešení?
-                    # self._show_position()
+                    # self._update_list_position()
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
@@ -1049,7 +1048,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         now = time.time()
         maybe_future = self._last_reshuffle_request + self._REFRESH_PERIOD
         self._reshuffle_request = max(now, maybe_future)
-        self._show_data_status()
+        self._update_data_status()
 
     def _on_idle(self, event):
         if super(ListForm, self)._on_idle(event):
@@ -1111,7 +1110,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if ((self._table.editing() is None and
              self._last_updated_row_count != self._table.number_of_rows(timeout=0.3))):
             self._update_grid()
-            self._show_position()
+            self._update_list_position()
         if self._unapplied_query_field_changes:
             self._unapplied_query_field_changes = False
             if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
@@ -1146,7 +1145,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _post_selection_hook(self, the_row):
         if focused_window() is self:
             # TODO: viz poznámka v _select_cell.
-            self._show_position()
+            self._update_list_position()
             # Show display value in status line (this is also shown in tooltips,
             # but tooltips are not useful when using keyboard only).
             row, col = self._current_cell()
@@ -1584,19 +1583,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             scrollTo = vsy - pxy / lines
             g.Scroll(-1, scrollTo)
 
-    def _show_position(self):
+    def _update_list_position(self):
         row = self._current_cell()[0]
         total, finished = self._table.number_of_rows(timeout=0, full_result=True)
         if not finished:
             total = '%s?' % (total,)
-        set_status('list-position', "%d/%s" % (row + 1, total))
+        self._list_position = "%d/%s" % (row + 1, total)
 
-    def _show_data_status(self):
+    def list_position(self):
+        return self._list_position
+
+    def _update_data_status(self):
         if self._reshuffle_request > self._last_reshuffle_request:
-            status = _("Data changed")
+            self._data_changed = False
         else:
-            status = _("Data ok")
-        set_status('data-changed', status)
+            self._data_changed = True
+        # TODO: the status is currently unused but it was designed
+        # to be displayed in a status bar field.
 
     def _is_changed(self):
         editing = self._table.editing()
@@ -1703,7 +1706,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     raise ProgramError('Invalid refresh parameter', k)
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True, retain_row=True)
-        self._show_data_status()
+        self._update_data_status()
         self._print_menu_ = UNDEFINED
         return True
 
@@ -2469,12 +2472,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         """Return True, iff the table currently is in in-line edit mode."""
         return self._table.editing()
 
-    def status_fields(self):
-        # TODO: zatím je podoba statusbaru určena specifikací, ale bylo by
-        # rozumné to celé předělat, aby se statusbar dynamicky měnil podle
-        # aktuálního formuláře (s využitím této metody).
-        return (('list-position', 7),)
-
     # Other public methods
 
     def on_key_down(self, event, dont_skip=True):
@@ -2505,8 +2502,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def focus(self):
         super(ListForm, self).focus()
-        self._show_position()
-        self._show_data_status()
+        self._update_list_position()
+        self._update_data_status()
         self._grid.SetFocus()
         self._grid.Refresh()
 

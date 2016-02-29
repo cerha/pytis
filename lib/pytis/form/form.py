@@ -45,9 +45,9 @@ from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem
     MSeparator, Window, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
-    db_operation, delete_record, form_settings_manager, get_status, \
+    db_operation, delete_record, form_settings_manager, \
     has_access, message, new_record, profile_manager, refresh, run_dialog, run_form, \
-    set_status, top_window, wx_focused_window
+    top_window, wx_focused_window
 import config
 
 _ = pytis.util.translations('pytis-wx')
@@ -87,7 +87,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
     """Konstanta callbacku interakce uživatele."""
 
-    _STATUS_FIELDS = ()
     _LOG_STATISTICS = True
     DESCR = None
 
@@ -347,8 +346,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _cleanup(self):
         super(Form, self)._cleanup()
         self._cleanup_data()
-        for id in self._STATUS_FIELDS:
-            set_status(id, '')
 
     def _cleanup_data(self):
         try:
@@ -440,12 +437,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return False
 
     def save(self):
-        self._saved_state = map(lambda id: (id, get_status(id)), self._STATUS_FIELDS)
         self._release_data()
 
     def restore(self):
-        for id, message_ in self._saved_state:
-            set_status(id, message_, log_=False)
+        pass
 
     def data(self):
         """Return a new instance of the data object used by the form."""
@@ -2869,6 +2864,7 @@ class PopupEditForm(PopupForm, EditForm):
         if self._inserted_data is not None:
             spec += (('progress', 9, _(u"Batch insertion progress indicator")),)
         box = wx.BoxSizer()
+
         self._status_fields = dict(
             [(id, self._create_status_bar_field(box, width, descr))
              for id, width, descr in spec])
@@ -3314,9 +3310,11 @@ class BrowsableShowForm(ShowForm):
             total = '%s?' % (total,)
         if current_row and total:
             n = self._get_row_number(current_row)
-            position = "%d/%s" % (n is not None and n + 1 or 0, total)
-            set_status('list-position', position)
+            self._list_position = "%d/%s" % (n is not None and n + 1 or 0, total)
         return result
+
+    def list_position(self):
+        return getattr(self, '_list_position', None)
 
 
 class WebForm(Form, Refreshable):
