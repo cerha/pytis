@@ -108,28 +108,28 @@ class TextFormat(object):
 
 class Color(object):
     """Independent definition of generic named colors to be used within 'Style' specifications."""
-    WHITE          = (255, 255, 255)
-    BLACK          = (  0,   0,   0)
-    RED            = (255,   0,   0)
-    RED20          = (255, 200, 200)
-    GREEN          = (  0, 255,   0)
-    BLUE           = (  0,   0, 255)
-    YELLOW         = (255, 255, 160)
-    GRAY           = ( 50,  50,  50)
-    GRAY90         = ( 25,  25,  25)
-    GRAY80         = ( 50,  50,  50)
-    GRAY70         = ( 75,  75,  75)
-    GRAY60         = (100, 100, 100)
-    GRAY50         = (125, 125, 125)
-    GRAY40         = (150, 150, 150)
-    GRAY30         = (175, 175, 175)
-    GRAY20         = (200, 200, 200)
-    GRAY10         = (225, 225, 225)
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    RED = (255, 0, 0)
+    RED20 = (255, 200, 200)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 160)
+    GRAY = (50, 50, 50)
+    GRAY90 = (25, 25, 25)
+    GRAY80 = (50, 50, 50)
+    GRAY70 = (75, 75, 75)
+    GRAY60 = (100, 100, 100)
+    GRAY50 = (125, 125, 125)
+    GRAY40 = (150, 150, 150)
+    GRAY30 = (175, 175, 175)
+    GRAY20 = (200, 200, 200)
+    GRAY10 = (225, 225, 225)
     BLANCHETALMOND = (255, 235, 205)
-    LIGHTYELLOW    = (255, 255, 224)
-    PEACHPUFF2     = (238, 203, 173)
-    SLATEGRAY2     = (185, 211, 238)
-    LIGHTSALMON    = (255, 160, 122)
+    LIGHTYELLOW = (255, 255, 224)
+    PEACHPUFF2 = (238, 203, 173)
+    SLATEGRAY2 = (185, 211, 238)
+    LIGHTSALMON = (255, 160, 122)
 
 
 class Style(object):
@@ -2438,7 +2438,8 @@ class Computer(object):
         return self._function(*args, **kwargs)
 
     def __str__(self):
-        return '<%s %s depends=%r>' % (self.__class__.__name__, self._function.__name__, self._depends)
+        return '<%s %s depends=%r>' % (self.__class__.__name__, self._function.__name__,
+                                       self._depends)
 
     def function(self):
         """Vrať funkci zadanou v konstruktoru."""
