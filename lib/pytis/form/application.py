@@ -1991,3 +1991,38 @@ def password_dialog(title=_("Enter your password"), message=None):
 
 def custom_command(name):
     return _application.custom_command(name)
+
+
+def built_in_status_fields():
+    """Return the built-in status bar fields as a tuple of 'StatusField' instances.
+
+    The following status bar fields are defined by this method:
+      - message: displays various non-interactive messages
+        set by 'pytis.form.message()'.
+      - list-positin: Displays the current position in the list of
+        records (such as 3/168) when a list form is active.
+      - remote-status: Displays the current status of remote communication.
+
+    """
+    def _refresh_list_position():
+        form = current_form(allow_modal=False)
+        if hasattr(form, 'list_position'):
+            return form.list_position()
+        else:
+            return ''
+
+    def _refresh_remote_status():
+        import pytis.remote
+        if pytis.remote.client_available():
+            return 'Ok'
+        else:
+            return 'N/A'
+
+    return (
+        StatusField('message', width=None),
+        StatusField('list-position', _("List position"),
+                    refresh=_refresh_list_position, width=15),
+        StatusField('remote-status', _("Remote communication status"),
+                    refresh=_refresh_remote_status,
+                    refresh_interval=10000, width=5),
+    )

@@ -42,10 +42,9 @@ import BaseHTTPServer
 import pytis.data
 from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval, \
-    log, OPERATIONAL, translations, ProgramError
+    log, OPERATIONAL, ProgramError
 import pytis.presentation
 
-_ = translations('pytis-data')
 
 def specification_path(specification_name):
     """Return specification path and the relative specification name.
@@ -4725,7 +4724,7 @@ class StatusField(object):
           refresh -- callable object returning the current field value
             text as a basestring when called with no arguments.  The
             function will be called periodically on user interface
-            refresh events (ON_IDLE).  If None the field will not be
+            refresh events (on idle).  If None the field will not be
             updated periodically.  Such fields may be updated
             imperatively by calling 'pytis.form.set_status()'.
             The function should not perform any demanding processing
@@ -4832,46 +4831,17 @@ class Application(SpecificationBase):
         """
         return ()
 
-    def _refresh_list_position(self):
-        from pytis.form import current_form
-        form = current_form(allow_modal=False)
-        if hasattr(form, 'list_position'):
-            return form.list_position()
-        else:
-            return ''
-
-    def _refresh_remote_status(self):
-        import pytis.remote
-        if pytis.remote.client_available():
-            return 'Ok'
-        else:
-            return 'N/A'
-
     def status_fields(self):
         """Return status bar fields as a sequence of 'StatusField' instances.
 
         The application's main window status bar will be created according to
-        this specification.
-
-        By default, the following fields are returned:
-          - message: displays various non-interactive messages
-          - list-positin: Displays the current position in the list of
-            records (such as 3/168) when a list form is active.
-          - remote-status: Displays the current status of remote communication.
-
-        Derived application can extend, reorder or redefine the fields as
-        needed.
+        this specification.  By default, the result of
+        'pytis.form.built_in_status_fields()' is returned.  Derived application
+        can extend, reorder or redefine the fields as needed.
 
         """
-        return (
-            StatusField('message', width=None),
-            StatusField('list-position', _("List position"),
-                        refresh=self._refresh_list_position, width=15),
-            StatusField('remote-status', _("Remote communication status"),
-                        refresh=self._refresh_remote_status,
-                        refresh_interval=10000, width=5),
-        )
-
+        import pytis.form
+        return pytis.form.built_in_status_fields()
 
 class _SpecificationMetaclass(type):
 
