@@ -39,7 +39,7 @@ from pytis.presentation import ActionContext, Button, Computer, Editable, Field,
     Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
     Text, TextFormat, ViewSpec
 from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED, \
-    find, format_traceback, log, super_, xlist, xtuple
+    find, format_traceback, log, super_, xlist, xtuple, argument_names
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
     MSeparator, Window, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
@@ -1981,7 +1981,11 @@ class RecordForm(LookupForm):
         row = self.current_row()
         on_edit_record = self._view.on_edit_record()
         if on_edit_record is not None:
-            on_edit_record(row=row)
+            if 'transaction' in argument_names(on_edit_record):
+                kwargs = dict(transaction=row.transaction())
+            else:
+                kwargs = dict()
+            on_edit_record(row=row, **kwargs)
             # TODO: _signal_update vyvolá refresh.  To je tu jen pro případ, že
             # byla uživatelská procedura ošetřena jinak než vyvoláním
             # formuláře.  Protože to samo už je hack, tak ať si raději také

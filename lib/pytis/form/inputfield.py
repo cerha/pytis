@@ -41,7 +41,7 @@ from pytis.presentation import AttachmentStorage, CodebookSpec, Field, Orientati
     PostProcess, PresentedRow, SelectionType, \
     TextFilter, TextFormat, computer
 from pytis.util import EVENT, Popen, ProgramError, ResolverError, \
-    dev_null_stream, find, format_byte_size, log
+    dev_null_stream, find, format_byte_size, log, argument_names
 import pytis.remote
 from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
@@ -1740,18 +1740,24 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _cmd_edit_selected(self):
         view = config.resolver.get(self._cb_name, 'view_spec')
         on_edit_record = view.on_edit_record()
-        if on_edit_record is not None:
-            on_edit_record(row=self._current_row())
+        prefill_function = self.spec().codebook_update_prefill()
+        transaction = self._row.transaction()
+        if prefill_function:
+            prefill = prefill_function(self._row)
         else:
-            set_values_function = self.spec().codebook_update_set_values()
-            if set_values_function:
-                set_values = set_values_function(self._row)
+            prefill = None
+        if on_edit_record is not None:
+            if prefill_function:
+                kwargs = dict(prefill=prefill)
             else:
-                set_values = None
+                kwargs = dict()
+            if 'transaction' in argument_names(on_edit_record):
+                kwargs['transaction'] = transaction
+            on_edit_record(row=self._current_row(), **kwargs)
+        else:
             run_form(pytis.form.PopupEditForm, self._cb_name,
                      select_row=self._select_row_arg(),
-                     set_values=set_values,
-                     transaction=self._row.transaction())
+                     set_values=prefill, transaction=transaction)
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()

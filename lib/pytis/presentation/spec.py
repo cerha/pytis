@@ -1506,9 +1506,15 @@ class ViewSpec(object):
             submission.  The user defined function may completely (or
             partially) override this behavior.  The function must accept a
             keyword argument 'row' which contains the edited row as a
-            'PresentedRow' instance.  The function may access the transaction
-            for database operations through the method 'row.transaction()'.
-            The function's return value is ignored.
+            'PresentedRow' instance.  The function may alco define a keyword
+            argument 'transaction'.  In this case the current database
+            transaction is passed through this argument.  Otherwise the
+            transaction may be also accessed through 'row.transaction()'.  The
+            function will receive an additional keyword argument 'prefill' in
+            case that row editation is invoked from within a ListField
+            (codebook field with selection_type='SelectionType.LIST') which
+            defines 'codebook_update_prefill' (see 'Field' constructor
+            arguments).  The function's return value is ignored.
 
           on_delete_record -- user defined record deletion function.  If
             defined, it must be a function of one argument (the current record
@@ -3131,11 +3137,14 @@ class Field(object):
             created in the context of the current field.  The function will get
             a PresentedRow instance as an argument representing the current
             record.  Only relevant when 'allow_codebook_insert' is true.
-          codebook_update_set_values -- function returning a dictionary of
-            values to set on codebook row editation when a codebook record is
-            updated from within an active value of a ListField.  The function
-            will get a PresentedRow instance as an argument representing the
-            current record.
+          codebook_update_prefill -- function returning a dictionary of values
+            to set on codebook row editation when a codebook record is updated
+            from within an active value of a ListField.  The function will get
+            a PresentedRow instance as an argument representing the current
+            record.  If the codebook specification defines 'on_edit_record',
+            the result is passed to 'on_edit_record' function as a keyword
+            argument 'prefill'.  Otherwise it is directly prefilled within the
+            edit form.
           runtime_filter -- provider of enumeration runtime filter as a
             'Computer' instance.  The computer function computes the filtering
             condition based on the current row data.  This condition is used to
@@ -3309,7 +3318,7 @@ class Field(object):
               codebook=None, display=None, prefer_display=None, display_size=None,
               null_display=None, inline_display=None, inline_referer=None,
               allow_codebook_insert=False, codebook_insert_spec=None,
-              codebook_insert_prefill=None, codebook_update_set_values=None,
+              codebook_insert_prefill=None, codebook_update_prefill=None,
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=None, post_process=None, filter=None, filter_list=None,
@@ -3362,9 +3371,9 @@ class Field(object):
             or isinstance(codebook_insert_spec, basestring), codebook_insert_spec
         assert codebook_insert_prefill is None \
             or isinstance(codebook_insert_prefill, collections.Callable), codebook_insert_prefill
-        assert codebook_update_set_values is None \
-            or isinstance(codebook_update_set_values, collections.Callable), \
-            codebook_update_set_values
+        assert codebook_update_prefill is None \
+            or isinstance(codebook_update_prefill, collections.Callable), \
+            codebook_update_prefill
         assert width is None or isinstance(width, int)
         if codebook_runtime_filter is not None:
             assert runtime_filter is None
@@ -3495,7 +3504,7 @@ class Field(object):
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_insert_prefill = codebook_insert_prefill
-        self._codebook_update_set_values = codebook_update_set_values
+        self._codebook_update_prefill = codebook_update_prefill
         self._runtime_filter = runtime_filter
         self._runtime_arguments = runtime_arguments
         self._selection_type = selection_type
@@ -3686,8 +3695,8 @@ class Field(object):
     def codebook_insert_prefill(self):
         return self._codebook_insert_prefill
 
-    def codebook_update_set_values(self):
-        return self._codebook_update_set_values
+    def codebook_update_prefill(self):
+        return self._codebook_update_prefill
 
     def runtime_filter(self):
         return self._runtime_filter
