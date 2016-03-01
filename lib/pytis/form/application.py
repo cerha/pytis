@@ -1656,7 +1656,7 @@ def set_status(id, text, log_=True):
     if __debug__:
         if log_:
             log(DEBUG, u"Status text updated:", (id, text))
-    return _application._statusbar.set_status_text(id, text)
+    return _application._statusbar.set_status(id, text)
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
@@ -1696,9 +1696,9 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             def Notify(self):
                 self.Stop()
                 if sb.get_status_text('message') == unicode(message):
-                    sb.set_status_text('message', '')
+                    sb.set_status('message', '')
         Timer().Start(1000 * timeout)
-    return sb.set_status_text('message', message)
+    return sb.set_status('message', message)
 
 
 def create_data_object(name, spec_kwargs={}, kwargs={}):
@@ -2014,9 +2014,9 @@ def built_in_status_fields():
     def _refresh_remote_status():
         import pytis.remote
         if pytis.remote.client_available():
-            return 'Ok'
+            return (_("Ok"), 'connected')
         else:
-            return 'N/A'
+            return (_('N/A'), 'disconnected')
 
     return (
         StatusField('message', width=None),

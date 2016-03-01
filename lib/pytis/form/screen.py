@@ -48,7 +48,7 @@ import wx.combo
 
 import pytis.form
 import pytis.presentation
-from pytis.presentation import Orientation, TextFormat
+from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
 from pytis.form import wx_callback
@@ -1461,7 +1461,6 @@ class StatusBar(object):
                 self.Stop()
             super(StatusBar._Timer, self).Start(timeout, True)
 
-
     def __init__(self, parent, fields):
         """Inicializuj StatusBar a vytvoř pojmenovaná pole.
 
@@ -1489,11 +1488,14 @@ class StatusBar(object):
         self._widths = widths
         self._orig_widths = tuple(widths)
         self._field_ids = [f.id() for f in fields]
+        self._state = [(None, None) for f in fields]
+        self._bitmaps = [None for f in fields]
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
         wx_callback(wx.EVT_MOTION, sb, self._on_motion)
+        wx_callback(wx.EVT_SIZE, sb, self._on_size)
 
     def _on_idle(self, event):
         for i, field in enumerate(self._fields):
@@ -1504,15 +1506,19 @@ class StatusBar(object):
                     continue
                 timer.Start(interval)
             if refresh:
-                message = refresh()
-                if message is not None:
-                    self._sb.SetStatusText(message, i)
+                status = refresh()
+                if status is not None:
+                    if isinstance(status, (tuple, list)):
+                        text, icon = status
+                    else:
+                        text, icon = status, None
+                    self._set_status(i, text, icon)
 
     def _on_motion(self, event):
         x = event.GetX()
         for i, field in enumerate(self._fields):
-            fx, fy, fw, fh = self._sb.GetFieldRect(i)
-            if x >= fx and x <= fx + fw:
+            rect = self._sb.GetFieldRect(i)
+            if x >= rect.x and x <= rect.x + rect.width:
                 window = event.GetEventObject()
                 text = self._fields[i].label()
                 if text:
@@ -1527,45 +1533,120 @@ class StatusBar(object):
                 break
         event.Skip()
 
-    def set_status_text(self, field_id, text):
-        """Set the text displayed in field 'field_id' to 'text'.
+    def _on_size(self, event):
+        self._update_bitmap_positions()
+        event.Skip()
+
+    def _update_bitmap_positions(self):
+        for i, bitmap in enumerate(self._bitmaps):
+            if bitmap:
+                self._update_bitmap_position(i)
+
+    def _update_bitmap_position(self, i):
+        bitmap = self._bitmaps[i]
+        position = self._fields[i].icon_position()
+        rect = self._sb.GetFieldRect(i)
+        if position == StatusField.ICON_LEFT:
+            x = rect.x + 4
+        else:
+            x = rect.x + rect.width - 2 - bitmap.GetSize().width
+        bitmap.SetPosition((x, rect.y + 3))
+
+    def _set_status(self, i, text, icon):
+        sb = self._sb
+        text = unicode(text or '')
+        current_text, current_icon = self._state[i]
+        self._state[i] = (text, icon)
+        if icon != current_icon:
+            current_bitmap = self._bitmaps[i]
+            if current_bitmap is not None:
+                current_bitmap.Destroy()
+            if icon is not None:
+                bitmap = get_icon(icon)
+                if bitmap:
+                    self._bitmaps[i] = wx.StaticBitmap(sb, bitmap=bitmap)
+                    self._update_bitmap_position(i)
+                else:
+                    self._bitmaps[i] = None
+            else:
+                self._bitmaps[i] = None
+        # Prevent status bar blinking by checking against the current value.
+        if text != current_text:
+            if text and icon:
+                if self._fields[i].icon_position() == StatusField.ICON_LEFT:
+                    text = '      ' + text
+                else:
+                    text += '       '
+            if self._widths[i] > 0:
+                # Adjust the field width to fit the new text (for fixed width fields only).  The
+                # "fixed" fields don't change their width as a percentage of the application frame
+                # width, but are not completely fixed...
+                # Add 6 pixels below for the borders.
+                width = max(sb.GetTextExtent(text)[0] + 6, self._orig_widths[i])
+                if width != self._widths[i]:
+                    self._widths[i] = width
+                    sb.SetStatusWidths(self._widths)
+                    self._update_bitmap_positions()
+            sb.SetStatusText(text, i)
+
+    def set_status(self, field_id, text, icon=None):
+        """Set the text and/or icon displayed in the field 'field_id'.
 
         Arguments:
 
           field_id -- status field id as basestring
-          text -- text to be displayed in the field as basestring
 
-        Returns True on success or False when no shch field was found in the
+          text -- text to be displayed in the field as basestring or None to
+            clear the text.
+
+          icon -- icon to be displayed within the field as an identifier to be
+            passed to 'get_icon()'.  The position of the icon is determined by
+            the field specification ('icon_position' passed to 'StatusField'
+            constructor).
+
+        Returns True on success or False when no such field was found in the
         status bar.
 
         """
-        text = unicode(text or '')
         try:
             i = self._field_ids.index(field_id)
         except ValueError:
             return False
-        # Prevent status bar blinking by checking against the current value.
-        if text != self._sb.GetStatusText(i):
-            # Adjust the field width to fit the new text (for fixed width fields only).  The
-            # "fixed" fields don't change their width as a percentage of the application frame
-            # width, but are not completely fixed...
-            if self._widths[i] > 0:
-                # Add 6 pixels below for the borders.
-                width = max(self._sb.GetTextExtent(text)[0] + 6, self._orig_widths[i])
-                if width != self._widths[i]:
-                    self._widths[i] = width
-                    self._sb.SetStatusWidths(self._widths)
-            self._sb.SetStatusText(text, i)
-        return True
+        else:
+            self._set_status(i, text, icon)
+            return True
 
     def get_status_text(self, field_id):
-        """Get the text displayed in field 'field_id' or None when no such field exists."""
+        """Get the text displayed in field 'field_id' or None.
+
+        None is returned if given field does not exists in the status bar.  If
+        the field exists, but displays no text (maybe just an icon), empty
+        string is returned.
+
+        """
         try:
             i = self._field_ids.index(field_id)
         except ValueError:
             return None
         else:
-            return self._sb.GetStatusText(i)
+            # Get the original text from self._state as the text returned by
+            # self._sb.GetStatusText() may contain spaces to make room for icons.
+            return self._state[i][0]
+
+    def get_status_icon(self, field_id):
+        """Get the identifier of the icon displayed in field 'field_id' or None.
+
+        None is returned if given field does not exists in the status bar or if
+        the field exists but does not currently display an icon.  If not None,
+        it is the last icon identifier as passed to 'set_status()'.
+
+        """
+        try:
+            i = self._field_ids.index(field_id)
+        except ValueError:
+            return None
+        else:
+            return self._state[i][1]
 
 
 class InfoWindow(object):

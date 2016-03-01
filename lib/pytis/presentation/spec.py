@@ -4715,7 +4715,13 @@ class StatusField(object):
     'Application.status_fields'.
 
     """
-    def __init__(self, id, label=None, refresh=None, refresh_interval=None, width=10):
+    ICON_LEFT = 'ICON_LEFT'
+    """Place icon on left edge of the status field (the text is displayed right of the icon)."""
+    ICON_RIGHT = 'ICON_RIGHT'
+    """Place icon on right edge of the status field (the text is displayed left of the icon)."""
+
+    def __init__(self, id, label=None, refresh=None, refresh_interval=None, width=10,
+                 icon_position=ICON_LEFT):
         """Arguments:
 
           id -- field identifier as a basestring.
@@ -4732,6 +4738,9 @@ class StatusField(object):
           refresh_interval -- minimal delay between two successive
             calls of the 'refresh' function in miliseconds.
           width -- field width as a number of characters.
+          icon_position -- position to be used for placement of an icon
+            if the field status is set to contain an icon.  It may be
+            one of class constants 'ICON_LEFT' or 'ICON_RIGHT'.
 
         """
         assert isinstance(id, basestring), id
@@ -4739,11 +4748,13 @@ class StatusField(object):
         assert refresh is None or isinstance(refresh, collections.Callable), refresh
         assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
         assert width is None or isinstance(width, int) and width > 0
+        assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
         self._id = id
         self._label = label
         self._refresh = refresh
         self._refresh_interval = refresh_interval
         self._width = width
+        self._icon_position = icon_position
 
     def id(self):
         return self._id
@@ -4759,6 +4770,9 @@ class StatusField(object):
 
     def width(self):
         return self._width
+
+    def icon_position(self):
+        return self._icon_position
 
 
 class SpecificationBase(object):
