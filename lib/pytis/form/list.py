@@ -2372,7 +2372,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         def _process_table(update):
             column_list = []
             col_position = 0
-            w = xlsxwriter.Workbook(file_)
+            tmp_file = pytis.util.TemporaryFile()
+            tmp_file_name = tmp_file.name
+            w = xlsxwriter.Workbook(tmp_file)
             ws = w.add_worksheet('Export')
             def _get_format(ctype):
                 if isinstance(ctype, pytis.data.Float):
@@ -2473,6 +2475,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
                             ws.write_string(r + 1, position, s)
             w.close()
+            with open(tmp_file_name, 'rb') as f:
+                file_.write(f.read())
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
 
