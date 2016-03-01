@@ -95,8 +95,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     CALL_MODIFICATION = 'CALL_MODIFICATION'
     """Konstanta callbacku modifikace řádku."""
 
-    _REFRESH_PERIOD = 60 # sekund
-    _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
+    _REFRESH_PERIOD = 60   # sekund
+    _SELECTION_CALLBACK_DELAY = 3   # desítky milisekund
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TITLE_BAR = True
     _ALLOW_TOOLBAR = False
@@ -266,7 +266,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.DisableDragRowSize()
         g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
         g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-        g.SetLabelFont(g.GetFont()) # Use standard font instead of bold.
+        g.SetLabelFont(g.GetFont())  # Use standard font instead of bold.
         self._row_height = row_height = dlg2px(g, 0, 10).GetHeight()
         self._label_height = dlg2px(g, 0, 12).GetHeight()
         self._init_col_attr()
@@ -571,7 +571,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             panel.SetToolTipString(', '.join(values))
         elif panel.GetToolTip():
             panel.SetToolTipString(' ')
-            panel.GetToolTip().Enable(False) # Doesn't seem to work, thus the line above...
+            panel.GetToolTip().Enable(False)  # Doesn't seem to work, thus the line above...
 
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
@@ -1477,7 +1477,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Draw the label itself.
             label = c.column_label()
             while dc.GetTextExtent(label)[0] > width and len(label):
-                label = label[:-1] # Shrink the label to fit the column width.
+                label = label[:-1]  # Shrink the label to fit the column width.
             dc.DrawLabel(label, (x, y, width, label_height), wx.ALIGN_CENTER)
             # Draw the sorting sign.
             pos = self._sorting_position(id)
@@ -1670,7 +1670,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         Vrací: Pravdu, právě když byla aktualizace provedena.
 
         """
-        assert when in (None, # internal ONLY!
+        assert when in (None,  # internal ONLY!
                         self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT, self.DOIT_IFNEEDED), when
         assert reset is None or isinstance(reset, dict), reset
         if when is None:
@@ -1691,7 +1691,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             QUESTION = _("Cancel changes in row editation and refresh the form?")
             delay = not self._finish_editing(question=QUESTION)
         else:
-            delay = (self._table.editing() is not None) # nechceme držet info
+            delay = (self._table.editing() is not None)  # nechceme držet info
         if delay:
             if __debug__:
                 log(DEBUG, 'Refresh postponed until end of editation.')
@@ -2176,45 +2176,48 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, 'Called export to file')
         if not self._can_cmd_export():
             return
-        try:
-            import pyExcelerator as pyxls
-            pyxls               # to make flake8 happy
-            xls_possible = True
-        except:
-            xls_possible = False
+        fileformats = ['CSV']
+        import pkgutil
+        found = pkgutil.find_loader('pyExcelerator') is not None
+        if found:
+            fileformats.insert(0, 'XLS')
+        found = pkgutil.find_loader('xlsxwriter') is not None
+        if found:
+            fileformats.insert(0, 'XLSX')
         wildcards = [_("Files %s", "TXT (*.txt)"), "*.txt",
                      _("Files %s", "CSV (*.csv)"), "*.csv"]
         username = config.dbconnection.user()
         if username is None:
             username = ''
         default_filename = 'export_%s.txt' % username
-        if xls_possible:
+        if len(fileformats) > 1:
             msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
                               _("Choose the desired format.")))
-            fileformat = run_dialog(MultiQuestion, msg, ('CSV', 'XLS'), default='CSV')
+            fileformat = run_dialog(MultiQuestion, msg, fileformats, default='CSV')
             if not fileformat:
                 return
             if fileformat == 'XLS':
                 wildcards = [_("Files %s", "XLS (*.xls)"), "*.xls"]
                 default_filename = 'export_%s.xls' % username
+            elif fileformat == 'XLSX':
+                wildcards = [_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"]
+                default_filename = 'export_%s.xlsx' % username
         else:
             fileformat = 'CSV'
-
-        filename = None
+        export_file = None
         remote = False
         if pytis.remote.client_available():
             client_ip = pytis.remote.client_ip()
             log(EVENT, 'Windows service on %s available' % client_ip)
             try:
-                filename = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
+                export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
             except:
                 pass
-            export_file = filename
             if export_file is not None:
                 remote = True
         else:
-            log(EVENT, 'Windows service not available')
-        if filename is None:
+            log(EVENT, 'RPC communication not available')
+        if not export_file:
             export_dir = config.export_directory
             filename = pytis.form.run_dialog(pytis.form.FileDialog, title=_("Export to file"),
                                              dir=export_dir, file=default_filename, mode='SAVE',
@@ -2222,7 +2225,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if not filename:
                 return
             mode = 'w'
-            if fileformat == 'XLS':
+            if fileformat.startswith('XLS'):
                 mode += 'b'
             try:
                 export_file = open(filename, mode)
@@ -2233,14 +2236,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
         if fileformat == 'XLS':
             export_function = self._cmd_export_xls
+        elif fileformat == 'XLSX':
+            export_function = self._cmd_export_xlsx
         else:
             export_function = self._cmd_export_csv
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
-            pytis.remote.launch_file(filename.name())
+            pytis.remote.launch_file(export_file.name())
 
-    def _cmd_export_csv(self, filename):
+    def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         export_encoding = config.export_encoding
@@ -2252,15 +2257,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             _("Exported data will not be recoded."))
             export_encoding = None
             run_dialog(Error, msg)
-        if isinstance(filename, basestring):
+        if isinstance(file_, basestring):
             try:
-                export_file = open(filename, 'w')
+                export_file = open(file_, 'w')
             except:
                 msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return False
         else:
-            export_file = filename
+            export_file = file_
         number_rows = self._table.number_of_rows()
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
@@ -2296,7 +2301,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
 
-    def _cmd_export_xls(self, filename):
+    def _cmd_export_xls(self, file_):
         log(EVENT, 'Called XLS export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         import datetime
@@ -2352,11 +2357,122 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             else:
                                 s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
                         ws.write(r + 1, j, s, column_styles[cid])
-            w.save(filename)
-            if not isinstance(filename, basestring):
+            w.save(file_)
+            if not isinstance(file_, basestring):
                 # This is necessary to prevent truncation of the file in some
                 # cases as pyxls doesn't close the file.
-                filename.close()
+                file_.close()
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        return True
+
+    def _cmd_export_xlsx(self, file_):
+        log(EVENT, 'Called XLSX export')
+        MINIMAL_COLUMN_WIDTH = 12
+        import xlsxwriter
+        def _process_table(update):
+            column_list = []
+            col_position = 0
+            w = xlsxwriter.Workbook(file_)
+            ws = w.add_worksheet('Export')
+            def _get_format(ctype):
+                if isinstance(ctype, pytis.data.Float):
+                    precision = ctype.precision()
+                    if precision and precision > 0:
+                        num_format = '0.' + '0' * precision
+                    else:
+                        num_format = 'General'
+                    fmt = {'num_format': num_format}
+                elif isinstance(ctype, pytis.data.Integer):
+                    num_format = '0'
+                    fmt = {'num_format': num_format}
+                elif isinstance(ctype, pytis.data.Date):
+                    date_format_str = 'dd/mm/yyyy'
+                    fmt = {'num_format': date_format_str, 'align': 'left'}
+                elif isinstance(ctype, pytis.data.Time):
+                    time_format_str = 'hh:mm:ss'
+                    fmt = {'num_format': time_format_str, 'align': 'left'}
+                elif isinstance(ctype, pytis.data.DateTime):
+                    datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
+                    fmt = {'num_format': datetime_format_str, 'align': 'left'}
+                else:
+                    return None
+                return w.add_format(fmt)
+            for c in self._columns:
+                col_id = c.id()
+                col_type = self._row.type(c.id())
+                col_label = c.column_label() or c.label()
+                col_width = max(c.width(), len(col_label), MINIMAL_COLUMN_WIDTH)
+                if isinstance(col_type, pytis.data.Range):
+                    base_type = col_type.base_type()
+                    column_list.append(dict(col_position=col_position,
+                                            col_id=col_id,
+                                            col_type=base_type,
+                                            col_label=col_label,
+                                            col_width=col_width,
+                                            col_range='lower',
+                                            col_fmt=_get_format(base_type)))
+                    col_position = col_position + 1
+                    column_list.append(dict(col_position=col_position,
+                                            col_id=col_id,
+                                            col_type=base_type,
+                                            col_label=col_label,
+                                            col_width=col_width,
+                                            col_range='upper',
+                                            col_fmt=_get_format(base_type)))
+                else:
+                    column_list.append(dict(col_position=col_position,
+                                            col_id=col_id,
+                                            col_type=col_type,
+                                            col_label=col_label,
+                                            col_width=col_width,
+                                            col_range=None,
+                                            col_fmt=_get_format(col_type)))
+                col_position = col_position + 1
+            number_rows = self._table.number_of_rows()
+            # Worksheet column settings
+            bold = w.add_format({'bold': True})
+            merge_bold = w.add_format({'align': 'center', 'bold': True})
+            skip_next = False
+            for col_attrs in column_list:
+                position = col_attrs['col_position']
+                label = col_attrs['col_label']
+                width = col_attrs['col_width']
+                ws.set_column(position, position, width)
+                if skip_next:
+                    skip_next = False
+                    continue
+                if col_attrs['col_range'] is not None:
+                    ws.merge_range(0, position, 0, position + 1, unicode(label), merge_bold)
+                    skip_next = True
+                else:
+                    ws.write(0, position, unicode(label), bold)
+            for r in range(0, number_rows):
+                if not update(int(float(r) / number_rows * 100)):
+                    break
+                presented_row = self._table.row(r)
+                for col in column_list:
+                    cid = col['col_id']
+                    ctype = col['col_type']
+                    col_range = col['col_range']
+                    position = col['col_position']
+                    fmt = col['col_fmt']
+                    value = presented_row.get(cid, secure=True)
+                    if value and value.value() is not None:
+                        v = value.value()
+                        if col_range == 'lower':
+                            v = v.lower()
+                        elif col_range == 'upper':
+                            v = v.upper()
+                        if isinstance(ctype, pytis.data.Float) or isinstance(ctype, pytis.data.Integer):
+                            ws.write_number(r + 1, position, v, fmt)
+                        elif isinstance(ctype, pytis.data.DateTime):
+                            ws.write_datetime(r + 1, position, v, fmt)
+                        elif col_range is not None and isinstance(ctype, pytis.data.String):
+                            ws.write(r + 1, position, v)
+                        else:
+                            s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
+                            ws.write_string(r + 1, position, s)
+            w.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
 
@@ -2594,7 +2710,7 @@ class FoldableForm(ListForm):
                         if next_state is None:
                             if state_level:
                                 next_level = state_level - 1
-                            else: # state_level == 0 or state_level == None -> inherit it
+                            else:  # state_level == 0 or state_level == None -> inherit it
                                 next_level = state_level
                             next_state = FoldableForm._FoldingState(level=next_level, subnodes={})
                         new_next_state = fold(next_state, path[1:], level)
@@ -2854,9 +2970,9 @@ class FoldableForm(ListForm):
                 if pos != -1:
                     x1 = self._grid.GetTextExtent(value[:pos])[0]
                     x2 = self._grid.GetTextExtent(value[:pos + 1])[0]
-                    x = event.GetPosition()[0] - 2 # don't count grid padding.
+                    x = event.GetPosition()[0] - 2  # don't count grid padding.
                     offset = self._grid.CellToRect(row, col)[0]
-                    if x1 - 2 < x - offset < x2 + 2: # enlarge the active area by 2px for easier hit
+                    if x1 - 2 < x - offset < x2 + 2:  # enlarge the active area by 2px for easier hit
                         if event.ControlDown():
                             level = None
                         else:
@@ -3480,7 +3596,7 @@ class SideBrowseForm(BrowseForm):
         self._main_form = main_form
         self._selection_condition = condition
         self._main_form_row = None
-        kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
+        kwargs['condition'] = pytis.data.OR()  # The form will be empty after initialization.
         super(SideBrowseForm, self)._init_attributes(**kwargs)
 
     def _current_arguments(self):
