@@ -1912,7 +1912,9 @@ class RecordForm(LookupForm):
         scontext = action.secondary_context()
         if scontext is not None:
             form = self._secondary_context_form()
-            if scontext == ActionContext.RECORD:
+            if form is None:
+                args += (None,)
+            elif scontext == ActionContext.RECORD:
                 args += (form.current_row(),)
             elif scontext == ActionContext.SELECTION:
                 args += (selection(form),)
@@ -2025,8 +2027,6 @@ class RecordForm(LookupForm):
         self.refresh()
 
     def _can_context_action(self, action):
-        if action.secondary_context() is not None and self._secondary_context_form() is None:
-            return False
         if not pytis.data.is_in_groups(action.access_groups()):
             return False
         enabled = action.enabled()
