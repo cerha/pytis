@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-01-12 19:48'
+_VERSION = '2016-03-03 16:10'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1409,7 +1409,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             vbs_name = '%s__%s' % (username, vbs_name)
         vbs_path = os.path.join(scripts_path, vbs_name)
         if not os.path.exists(vbs_path):
-            if calling_script and os.path.exists(calling_script):
+            if calling_script:
+                calling_script = os.path.join(scripts_path, os.path.basename(calling_script))
+            if os.path.exists(calling_script):
                 with open(calling_script, 'r') as f:
                     broker_src = f.read()
                 match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
