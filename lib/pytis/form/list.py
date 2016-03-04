@@ -2178,6 +2178,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return
         fileformats = ['CSV']
         import pkgutil
+        found = pkgutil.find_loader('pyExcelerator') is not None
+        if found:
+            fileformats.insert(0, 'XLS')
         found = pkgutil.find_loader('xlsxwriter') is not None
         if found:
             fileformats.insert(0, 'XLSX')
@@ -2193,7 +2196,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             fileformat = run_dialog(MultiQuestion, msg, fileformats, default='CSV')
             if not fileformat:
                 return
-            if fileformat == 'XLSX':
+            if fileformat == 'XLS':
+                wildcards = [_("Files %s", "XLS (*.xls)"), "*.xls"]
+                default_filename = 'export_%s.xls' % username
+            elif fileformat == 'XLSX':
                 wildcards = [_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"]
                 default_filename = 'export_%s.xlsx' % username
         else:
@@ -2228,7 +2234,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return
-        if fileformat == 'XLSX':
+        if fileformat == 'XLS':
+            export_function = self._cmd_export_xls
+        elif fileformat == 'XLSX':
             export_function = self._cmd_export_xlsx
         else:
             export_function = self._cmd_export_csv
@@ -2290,6 +2298,70 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 csv_buffer.write('\n')
             export_file.write(csv_buffer.getvalue())
             export_file.close()
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        return True
+
+    def _cmd_export_xls(self, file_):
+        log(EVENT, 'Called XLS export')
+        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
+        import datetime
+        import pyExcelerator as pyxls
+        number_rows = self._table.number_of_rows()
+        def _process_table(update):
+            w = pyxls.Workbook()
+            ws = w.add_sheet('Export')
+            # Export labelů
+            for i, column in enumerate(self._columns):
+                label = column.column_label()
+                if label is None:
+                    label = column.label()
+                ws.write(0, i, unicode(label))
+            default_style = pyxls.XFStyle()
+            w.add_style(default_style)
+            # Styles
+            column_styles = {}
+            for cid, ctype in column_list:
+                st = pyxls.XFStyle()
+                if isinstance(ctype, pytis.data.Float):
+                    precision = ctype.precision()
+                    if precision and precision > 0:
+                        fmt = "0." + "0" * precision
+                    else:
+                        fmt = "general"
+                    st.num_format_str = fmt
+                elif isinstance(ctype, pytis.data.Date):
+                    st.num_format_str = "D.M.YYYY"
+                elif isinstance(ctype, pytis.data.Time):
+                    st.num_format_str = "h:mm:ss"
+                elif isinstance(ctype, pytis.data.DateTime):
+                    st.num_format_str = "D.M.YYYY h:mm:ss"
+                column_styles[cid] = st
+                w.add_style(st)
+            for r in range(0, number_rows):
+                if not update(int(float(r) / number_rows * 100)):
+                    break
+                presented_row = self._table.row(r)
+                for j, (cid, ctype) in enumerate(column_list):
+                    value = presented_row.get(cid, secure=True)
+                    if value and value.value() is not None:
+                        v = value.value()
+                        if isinstance(ctype, pytis.data.Float):
+                            s = float(v)
+                        else:
+                            if isinstance(ctype, pytis.data.Date):
+                                s = datetime.date(v.year, v.month, v.day)
+                            elif isinstance(ctype, pytis.data.Time):
+                                s = datetime.time(v.hour, v.minute, int(v.second))
+                            elif isinstance(ctype, pytis.data.DateTime):
+                                s = v.strftime(pytis.data.DateTime.CZECH_FORMAT)
+                            else:
+                                s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
+                        ws.write(r + 1, j, s, column_styles[cid])
+            w.save(file_)
+            if not isinstance(file_, basestring):
+                # This is necessary to prevent truncation of the file in some
+                # cases as pyxls doesn't close the file.
+                file_.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
 
