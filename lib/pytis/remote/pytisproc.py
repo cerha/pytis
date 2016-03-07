@@ -41,7 +41,7 @@ class PytisService(rpyc.Service):
     def _pytis_on_windows(self):
         return sys.platform == 'win32'
 
-    def _pytis_file_dialog(self, directory=None, filename=None, template=None, save=False):
+    def _zenity_file_dialog(self, directory=None, filename=None, template=None, save=False):
         args = ['zenity', '--file-selection']
         patterns = []
         if filename is not None:
@@ -325,7 +325,7 @@ class PytisUserService(PytisService):
                 return None
             filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
         else:
-            filename = self._pytis_file_dialog(template=template)
+            filename = self._zenity_file_dialog(template=template)
         if filename is None:
             return None
         if encrypt is not None:
@@ -400,8 +400,8 @@ class PytisUserService(PytisService):
                 return None
             filename = unicode(filename, sys.getfilesystemencoding())
         else:
-            filename = self._pytis_file_dialog(directory=directory, filename=filename,
-                                               template=template, save=True)
+            filename = self._zenity_file_dialog(directory=directory, filename=filename,
+                                                template=template, save=True)
             if filename is None:
                 return None
         return self._open_file(filename, encoding, mode, decrypt=decrypt)
