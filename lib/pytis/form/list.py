@@ -2243,7 +2243,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
-            pytis.remote.launch_file(export_file.name())
+            exported_filename = export_file.name()
+            export_file.close()
+            pytis.remote.launch_file(exported_filename)
 
     def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
