@@ -445,7 +445,7 @@ class AccessLog(RestrictedPytisModule):
         self._data.insert(row)
 
 
-class Application(wiking.CookieAuthentication, wiking.Application):
+class Application(wiking.Application):
 
     _MAPPING = dict(wiking.Application._MAPPING,
                     _attachments='HttpAttachmentStorageBackend')
@@ -455,10 +455,10 @@ class Application(wiking.CookieAuthentication, wiking.Application):
                'SiteIcon': (wiking.Roles.ANYONE,),
                'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
 
-    def _auth_user(self, req, login):
+    def user(self, req, login):
         return self._module('Users').user(req, login)
 
-    def _auth_check_password(self, user, password):
+    def verify_password(self, user, password):
         user_password = user.password()
         if user_password is None:
             return False
