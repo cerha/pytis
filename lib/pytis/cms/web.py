@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@ class Specification(wiking.Specification):
 
 class RestrictedPytisModule(wiking.PytisModule):
     """wiking.PytisModule which passes authorization requests to Application.authorize()."""
-    
+
     def _authorized(self, req, action, record=None, **kwargs):
         roles = wiking.module('Application').authorized_roles(req, self, action=action, record=record)
         if req.check_roles(roles):
@@ -61,7 +61,7 @@ class RestrictedPytisModule(wiking.PytisModule):
             return  self._check_owner(req, action, record=record)
         else:
             return False
-    
+
 
 class Languages(RestrictedPytisModule):
     class Spec(Specification, cms.Languages):
@@ -75,7 +75,7 @@ class Menu(RestrictedPytisModule):
 
     class Spec(Specification, cms.Menu):
         pass
-    
+
     _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
     _SUBSTITUTION_PROVIDERS = ()
     """Sequence of names of modules providing substitution variables.
@@ -111,10 +111,10 @@ class Menu(RestrictedPytisModule):
 
         """
         return dict(identifier=req.unresolved_path[0])
-    
+
     def _menu_item_rows(self, req, **kwargs):
         return self._data.get_rows(**kwargs)
-    
+
     def _embed_binding(self, modname):
         return wiking.Binding(self.EMBED_BINDING_ID, '', modname, condition=lambda r: None)
 
@@ -129,7 +129,7 @@ class Menu(RestrictedPytisModule):
         # The only supported action of this module is `view' and the `action' argument is ignored
         # here (left for the embedded module action resolution).
         return 'view'
-    
+
     def _handle(self, req, action, **kwargs):
         # HACK: We need to store the current resolved menu item somewhere.
         # Wiking support for resolution tracking would be a clean solution.
@@ -138,9 +138,9 @@ class Menu(RestrictedPytisModule):
 
     def _pytis_redirect_origin(self, req):
         """Find the original module if the request was forwarded due to pytis redirection.
-        
+
         Returns module instance of the original request handler (before pytis redirection) or None
-        
+
         """
         module = None
         forwards = req.forwards()
@@ -166,7 +166,7 @@ class Menu(RestrictedPytisModule):
                 if module.name() == menu_record['modname'].value():
                     return rights.permitted_roles(menu_item_id, action)
         return ()
-    
+
     def _attachment_storage(self, record):
         base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
         # We can't use record.attachment_storage() as we need to pass custom arguments.
@@ -184,7 +184,7 @@ class Menu(RestrictedPytisModule):
                     return wiking.serve_file(req, resource.src_file())
             raise wiking.NotFound()
         return super(Menu, self)._handle_subpath(req, record)
-            
+
     def menu(self, req):
         children = {None: []}
         translations = {}
@@ -200,7 +200,7 @@ class Menu(RestrictedPytisModule):
                 try:
                     module = self._module(modname)
                 except AttributeError:
-                    # We want the website to work even if the module was uninstalled or renamed. 
+                    # We want the website to work even if the module was uninstalled or renamed.
                     submenu = []
                 else:
                     submenu = list(module.submenu(req, menu_item_id))
@@ -283,7 +283,7 @@ class Menu(RestrictedPytisModule):
             # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
                                        sorting=self._sorting)
-            # TODO: Use only items, which are visible to the current user (access rights). 
+            # TODO: Use only items, which are visible to the current user (access rights).
             if rows:
                 raise wiking.Redirect('/'+self._menu_item_identifier(rows[0]))
             else:
@@ -296,7 +296,7 @@ class Menu(RestrictedPytisModule):
             # Module access is logged in EmbeddablePytisModule._handle().
             self._module('AccessLog').log(req, None, None)
         return document
-    
+
     def module_uri(self, req, modname):
         row = self._data.get_row(modname=modname)
         if row:
@@ -314,7 +314,7 @@ class UserRoles(RestrictedPytisModule):
     _OLD_SYSTEM_ROLE_MAPPING = {'USER': 'authenticated',
                                 'ANYONE': 'anyone',
                                 'OWNER': 'owner'}
-    
+
     @classmethod
     def role(cls, numeric_role_id, system_role, name):
         if system_role:
@@ -325,14 +325,14 @@ class UserRoles(RestrictedPytisModule):
         else:
             role_id = 'cms-role-%d' % numeric_role_id
         return wiking.Role(role_id, name)
-    
+
     def roles(self, uid):
         """Return list of user's roles as 'wiking.Role' instances."""
         return [self.role(row['role_id'].value(), row['system_role'].value(),
                           row['name'].value())
                 for row in self._data.get_rows(uid=uid)]
 
-    
+
 class Rights(RestrictedPytisModule):
     class Spec(Specification, cms.Rights):
         pass
@@ -351,7 +351,7 @@ class Users(RestrictedPytisModule):
     def _user_row(self, req, login):
         """Override this method to customize the user search condition."""
         return self._data.get_row(login=login)
-                    
+
     def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
@@ -367,7 +367,7 @@ class Users(RestrictedPytisModule):
             return wiking.User(login, **self._user_args(req, row))
         else:
             return None
-    
+
 
 class Session(RestrictedPytisModule, wiking.Session):
     """Implement Wiking session management by storing session information in the database."""
@@ -388,11 +388,11 @@ class Session(RestrictedPytisModule, wiking.Session):
         # Log session start for login history tracking.
         self._module('SessionLog').log(req, now, row['session_id'].value(),
                                        user.uid(), user.login())
-        
+
     def failure(self, req, user, login):
         self._module('SessionLog').log(req, pd.DateTime.datetime(), None,
                                        user and user.uid(), login)
-        
+
     def check(self, req, user, session_key):
         row = self._data.get_row(uid=user.uid(), session_key=session_key)
         if row:
@@ -408,7 +408,7 @@ class Session(RestrictedPytisModule, wiking.Session):
         # value of the deleted row.  Use delete_many() because we don't know session_id.
         self._data.delete_many(pd.AND(pd.EQ('uid', pd.Value(pd.Integer(), user.uid())),
                                       pd.EQ('session_key', pd.Value(pd.DateTime(), session_key))))
-            
+
 
 class SessionLog(RestrictedPytisModule):
     class Spec(wiking.Specification):
@@ -443,21 +443,21 @@ class AccessLog(RestrictedPytisModule):
                                   referer=req.header('Referer'),
                                   user_agent=req.header('User-Agent'))
         self._data.insert(row)
-        
-    
+
+
 class Application(wiking.CookieAuthentication, wiking.Application):
-    
+
     _MAPPING = dict(wiking.Application._MAPPING,
                     _attachments='HttpAttachmentStorageBackend')
-    
+
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
                'Resources': (wiking.Roles.ANYONE,),
                'SiteIcon': (wiking.Roles.ANYONE,),
                'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
-    
+
     def _auth_user(self, req, login):
         return self._module('Users').user(req, login)
-        
+
     def _auth_check_password(self, user, password):
         user_password = user.password()
         if user_password is None:
@@ -481,7 +481,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         h = hashlib.new(hash_alg)
         if isinstance(password, unicode):
             # Passwords in the database are explicitly encoded to utf-8 by the
-            # pytis.data.Password type (on validation).  
+            # pytis.data.Password type (on validation).
             password = password.encode('utf-8')
         h.update(password)
         if encode == "base64":
@@ -489,7 +489,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         else:
             encoded = binascii.b2a_hex(h.digest()).strip()
         return hash_value == encoded
-    
+
     def authorized_roles(self, req, module, action=None, record=None):
         try:
             roles = self._RIGHTS[module.name()]
@@ -499,7 +499,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
             if action is not None and isinstance(roles, dict):
                 roles = roles.get(action, ())
         return roles
-    
+
     def menu(self, req):
         return self._module('Menu').menu(req)
 
@@ -511,7 +511,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
         if uri is None:
             uri = self._module('Menu').module_uri(req, modname)
         return uri
-    
+
     def handle(self, req):
         if req.unresolved_path:
             try:
@@ -525,7 +525,7 @@ class Application(wiking.CookieAuthentication, wiking.Application):
             return req.forward(self._module(modname))
         else:
             return super(Application, self).handle(req)
-    
+
     def panels(self, req, lang):
         return [wiking.LoginPanel()]
 
@@ -539,10 +539,10 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
     display the content.
 
     """
-    
+
     def submenu(self, req, menu_item_id):
         """Return a list of 'MenuItem' instances to insert into the main menu.
-        
+
         The submenu will appear in the main menu under the item of a page which embeds the module.
         The items returned by this method will always be placed above any items defined by the menu
         structure.
@@ -552,10 +552,10 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
 
     def _authorized(self, req, action=None):
         return req.check_roles(wiking.module('Application').authorized_roles(req, self, action=action))
-    
+
     def _default_action(self, req):
         return 'view'
-    
+
     def _handle(self, req, action, **kwargs):
         result = super(EmbeddableModule, self)._handle(req, action, **kwargs)
         if isinstance(result, wiking.Document):
@@ -574,7 +574,7 @@ class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, Embedd
 
       * The method `_document()' automatically adds global variables defined through
         `Menu._SUBSTITUTION_PROVIDERS'.  The variables may be used within all content.
-        
+
       * The methods `_current_base_uri()' and `_binding_parent_uri()' are modified to respect the
         specific way of embedding modules into CMS pages.
 
@@ -585,7 +585,7 @@ class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, Embedd
     """
     _USE_BINDING_PARENT_TITLE = False
     _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
-    
+
     def _current_base_uri(self, req, record=None):
         menu = self._module('Menu')
         uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
@@ -744,7 +744,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
         self._data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
                                         ('key_id', 'username', 'uri', 'readonly', 'key'),
                                         config.dbconnection.select(None))
-    
+
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if not directory or not req.unresolved_path:
@@ -819,7 +819,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
         import json
         result = [[r.filename(), self._resource_info(r)] for r in storage.resources()]
         return wiking.Response(json.dumps(result), content_type='application/json')
-        
+
     def _info(self, req, storage, filename):
         resource = storage.resource(filename)
         if resource:
@@ -828,7 +828,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
             return wiking.Response(json.dumps(info), content_type='application/json')
         else:
             raise wiking.NotFound
-        
+
     def _retrieve(self, req, storage, filename):
         f = storage.retrieve(filename)
         if f:
@@ -855,7 +855,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
         else:
             response = 'OK'
         return wiking.Response(response, content_type='text/plain')
-    
+
     def _update(self, req, storage, filename):
         import json
         values = json.loads(req.param('values'))
@@ -866,5 +866,3 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
         else:
             response = 'OK'
         return wiking.Response(response, content_type='text/plain')
-    
-        
