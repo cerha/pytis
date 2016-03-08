@@ -2,7 +2,7 @@
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
 #
-# Copyright (C) 2002-2015 Brailcom, o.p.s.
+# Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,15 +73,15 @@ class Configuration(object):
 
         """
         __metaclass__ = _OrderedDefinitionClass
-        
+
         _DESCR = None
         """Breif one line option description to be displayed in the user interface.
-        
+
         Required only for options, which are supposed to be exposed in the user
         interface.
 
         """
-        
+
         _DOC = None
         """Additional multiline description of the option to be displayed in the user interface.
 
@@ -89,7 +89,7 @@ class Configuration(object):
         interface and need more explanation than _DESCR gives..
 
         """
-        
+
         _DEFAULT = None
         """Default value of the configuration option.
 
@@ -105,10 +105,10 @@ class Configuration(object):
         """Příznak, zda tato volba může být zadána také z příkazové řádky.
 
         Pravdivou hodnotou této konstanty definujeme, že daná volba."""
-        
+
         _LONG_OPTION = None
         """Specifikace dlouhé volby příkazové řádky pro 'getopt'."""
-        
+
         _ENVIRONMENT = ()
         """Specifikace jmen proměnných prostředí obsahujících hodnotu volby.
 
@@ -133,7 +133,7 @@ class Configuration(object):
 
               configuration -- instance třídy 'Configuration', ve které je
                 konfigurační volba přítomna
-                
+
             """
             self._configuration = configuration
             self._value = self._undefined = object()
@@ -175,17 +175,17 @@ class Configuration(object):
             'None' stands for unspecified type, allowing the value to be any
             Python object.  Otherwise the option values will need to be valid
             inner values of given type.
-            
+
             Instead of overriding this method directly, it is recommended to
             use predefined classes 'StringOption', 'NumericOption' and
             'BooleanOption'.
 
             """
             return self._TYPE
-        
+
         def name(self):
             return self.__class__.__name__[8:]
-        
+
         def init_value(self, force=False):
             """Inicializuj hodnotu proměnné.
 
@@ -220,7 +220,7 @@ class Configuration(object):
             Za změnu je považováno jakékoliv nastavení volby na jinou hodnotu, než
             jakou daná volba nabyla během inicializace (tj. při načítání voleb
             příkazové řádky a konfiguračního souboru).
-            
+
             """
             return self._changed
 
@@ -238,7 +238,7 @@ class Configuration(object):
 
             Specifikaci lze upravit předefinováním konstanty `_OPTION' v
             odvozené třídě.
-            
+
             """
             if self._LONG_OPTION is not None:
                 return self._LONG_OPTION
@@ -264,13 +264,13 @@ class Configuration(object):
 
             Specifikaci lze upravit předefinováním konstanty `_ENVIRONMENT' v
             odvozené třídě.
-            
+
             """
             return self._ENVIRONMENT
 
         def default(self):
             """Return the default value of the configuration option.
-            
+
             The value returned by this method is used if the option value is
             not set explicitly.
 
@@ -280,7 +280,7 @@ class Configuration(object):
 
             """
             return self._DEFAULT
-        
+
         def default_string(self):
             """Vrať výchozí hodnotu konfigurační volby pro dump.
 
@@ -306,7 +306,7 @@ class Configuration(object):
         def type(self):
             """Return data type of the option value as 'pytis.data.Type' instance or None."""
             return self._type_
-        
+
         def visible(self):
             """Vrať příznak viditelnosti volby.
 
@@ -322,13 +322,13 @@ class Configuration(object):
         def description(self):
             """Vrať stručný jednořádkový popis volby 'name' jako řetězec."""
             return self._DESCR
-        
+
         def documentation(self):
             """Vrať podrobný popis volby 'name' jako řetězec nebo None.
-        
+
             Řetězec tak může být víceřádkový a délka jednoho řádku může přesahovat 80 znaků.  Pokud
             podrobný popis není definován, může vrátit též None.
-            
+
             """
             return self._DOC
 
@@ -367,11 +367,11 @@ class Configuration(object):
     class HiddenOption(Option):
         """Mix-in třída pro skryté volby."""
         _VISIBLE = False
-        
+
     class CommandlineOption(Option):
         """Mix-in třída pro volby příkazové řádky."""
         _CMDLINE = True
-        
+
     # Volba pro konfiguraci samu
 
     class _Option_config_file(StringOption, HiddenOption):
@@ -389,7 +389,7 @@ class Configuration(object):
 
     class _Option_user_config_file(StringOption, HiddenOption):
         """User specific configuration file location.
-        
+
         This file, if exists, is loaded in addition to the main configuratiuon
         file (given by the 'config_file' option) and the options defined there
         have higher precedence than the options in the main configuration file
@@ -407,29 +407,29 @@ class Configuration(object):
             else:
                 result = None
             return result
-        
+
     # Volby užitečné hlavně pro ladění
 
     class _Option_help(BooleanOption, CommandlineOption, HiddenOption):
         """Option corresponding to --help command line option."""
         _DEFAULT = False
-        
+
     class _Option_debug(BooleanOption, CommandlineOption):
         u"""Příznak ladícího režimu.
-        
+
         Je-li zapnut, aplikace může běžet s více kontrolami a vypisovat spoustu
         informací, obvykle však za cenu svého výrazného zpomalení.
 
         """
         _DEFAULT = False
-        
+
     class _Option_debug_on_error(BooleanOption, CommandlineOption):
         u"""Příznak vyvolání debuggeru při chybě.
 
         Dojde-li k odchycení neočekávané výjimky a tato volba je zapnuta, je
         vyvolán interaktivní debugger.  Je-li zapnuta volba 'debug', je
         implicitně zapnuta i tato volba.  Užitečné pouze pro ladění.
-        
+
         """
         def default(self):
             return self._configuration.debug
@@ -457,10 +457,10 @@ class Configuration(object):
         Je-li zapnut, aplikace se spustí v profilovacím režimu a ukládá
         informace o trvání jednotlivých volání do souboru.  Zapnutí této volby
         velmi výrazně zpomaluje běh aplikace.
-        
+
         """
         _DEFAULT = False
-        
+
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
         u"""Příznak určující, zda mají být spouštěny i interaktivní testy.
 
@@ -476,7 +476,7 @@ class Configuration(object):
 
     class _Option_search_modules(CommandlineOption):
         """Names of python modules containing pytis specifications.
-        
+
         Sequence of names of python modules which should be searched for pytis
         specifications.  If empty, specification names must by fully qualified
         identifiers of python classes.  If a list is given, the names may be
@@ -488,9 +488,9 @@ class Configuration(object):
 
     class _Option_resolver(Option):
         """Specification name resolver.
-        
+
         Instance of 'pytis.util.Resolver' used globally to resolve specification names.
-        
+
         """
         def default(self):
             return Resolver(search=self._configuration.search_modules)
@@ -499,7 +499,7 @@ class Configuration(object):
         u"""Adresář obsahující soubory s nápovědou.
 
         Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
-        
+
         """
         _ENVIRONMENT = ('PYTISHELPDIR',)
         _DEFAULT = './help'
@@ -562,7 +562,7 @@ class Configuration(object):
     class _Option_dbpass(StringOption, CommandlineOption):
         """Database login password."""
         _DEFAULT = None
-        
+
     class _Option_dbname(StringOption, CommandlineOption):
         """Database name."""
         _DEFAULT = None
@@ -570,11 +570,11 @@ class Configuration(object):
     class _Option_dbhost(StringOption, CommandlineOption):
         """Database host name."""
         _DEFAULT = None
-    
+
     class _Option_dbport(NumericOption, CommandlineOption):
         """Database port number."""
         _DEFAULT = None
-    
+
     class _Option_dbsslm(StringOption, CommandlineOption):
         """Database SSL mode (one of string constants supported by the DB system)."""
         _DEFAULT = None
@@ -582,10 +582,10 @@ class Configuration(object):
     class _Option_dbschemas(StringOption, CommandlineOption):
         """List of database schemas to use in the order of their preference."""
         _DEFAULT = None
-    
+
     class _Option_dbconnections(HiddenOption):
         """Alternative database connections"
-        
+
         The default database connection is normally defined by 'dbconnection'.
         Certain applications, however, may require multiple database
         connections, which are configured using this option.  The value is a
@@ -600,7 +600,7 @@ class Configuration(object):
 
         """
         _DEFAULT = {}
-        
+
     class _Option_dbconnection(HiddenOption):
         """Database connection specification instance ('pytis.data.DBConnection').
 
@@ -672,7 +672,7 @@ class Configuration(object):
         about them in their documentation.
 
         """
-        
+
         _DEFAULT_STRING = '(log.StreamLogger, (sys.stderr,), {})'
         def default(self):
             import log
@@ -724,7 +724,7 @@ class Configuration(object):
         """
         _DEFAULT = None
         _DEFAULT_STRING = "('pytis.data.DBDefaultClass',)"
-            
+
     # Externí programy
 
     class _Option_printing_command(StringOption):
@@ -747,25 +747,25 @@ class Configuration(object):
         u"""Shellový příkaz sendmail včetně celé cesty (DEPRECATED)."""
         # Používáno již jen v pytis-extensions...
         _DEFAULT = '/usr/lib/sendmail'
-        
+
     class _Option_smtp_server(StringOption):
         u"""Jméno serveru odchozí pošty."""
         _DEFAULT = 'localhost'
-        
+
     # Komunikace s klientskými stanicemi
-    
+
     class _Option_rpc_local_port(NumericOption):
         u"""Lokální komunikační port pro naslouchání pytisovým aplikacím."""
         _DEFAULT = 17984
-        
+
     class _Option_rpc_remote_port(NumericOption):
         u"""Vzdálený komunikační port na klientských stanicích."""
         _DEFAULT = 17984
-        
+
     class _Option_rpc_key_file(FileOption):
         u"""Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi."""
         _DEFAULT = 'linux.key'
-        
+
     class _Option_rpc_certificate_file(FileOption):
         u"""Soubor s certifikátem pro komunikaci s klientskými stanicemi."""
         _DEFAULT = 'linux.crt'
@@ -784,7 +784,7 @@ class Configuration(object):
         """X2Go session id."""
         _DESCR = _("For internal use only.")
         _DEFAULT = None
-        
+
     # Ostatní konfigurační volby
 
     class _Option_application_name(StringOption):
@@ -803,7 +803,7 @@ class Configuration(object):
 
         Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy
         'pytis.data.DateTime'.
-        
+
         """
         def default(self):
             import pytis.data
@@ -902,7 +902,7 @@ class Configuration(object):
         u"""HTTP proxy URI used for integrated web browser and other http services.
 
         Example: 'http://127.0.0.1:3129'
-        
+
         """
         _DEFAULT = None
 
@@ -921,7 +921,7 @@ class Configuration(object):
 
         Počet sekund, po kterých se uživateli nabídne přerušení zdlouhavého
         otevírání formuláře.
-        
+
         """
         _DEFAULT = 40
 
@@ -940,7 +940,7 @@ class Configuration(object):
 
         Maximální počet řádků, pro který se v tiskových sestavách formátuje
         datová tabulka bez potvrzení uživatele.
-        
+
         """
         _DEFAULT = 1000
 
@@ -948,7 +948,7 @@ class Configuration(object):
         """Time limit for an open transaction in seconds.
 
         When the time is exceeded, some action may be taken on the transaction.
-        
+
         """
         _DESCR = _("Maximum time in seconds to leave an open transaction untouched.")
         _DEFAULT = None
@@ -957,11 +957,11 @@ class Configuration(object):
         """Time limit for an idle transaction in seconds.
 
         When the time is exceeded, some action may be taken on the transaction.
-        
+
         """
         _DESCR = _("Maximum time in seconds to leave an idle transaction untouched.")
         _DEFAULT = None
-        
+
     class _Option_login_selection(Option):
         """Selection of available login names for database login dialog.
 
@@ -979,22 +979,22 @@ class Configuration(object):
         """Show tooltips."""
         _DESCR = _("Show tooltips.")
         _DEFAULT = True
-        
+
     class _Option_stretch_tables(BooleanOption):
         """Stretch table columns to fit full window width."""
         _DESCR = _("Stretch table columns to fit full window width.")
         _DEFAULT = True
-        
+
     class _Option_show_splash(BooleanOption):
         """Show the initial splash screen.
-        
+
         The splash screen is actually displayed by application specific code,
         so the filal interpretation of this option depends on the application.
 
         """
         _DESCR = _("Show the initial splash screen.")
         _DEFAULT = True
-        
+
     class _Option_auto_menu_accel(BooleanOption):
         """Enable automatic menu accelerators.
 
@@ -1007,10 +1007,10 @@ class Configuration(object):
         _DESCR = _("Enable automatic keyboard shortcut accelerators in menu items.")
         _DOC = _("Change requires the application to be restarted.")
         _DEFAULT = True
-        
+
     class _Option_cache_spec_onstart(BooleanOption):
         """Cache all specifications on application startup.
-        
+
         The caching is actually performed by application specific code, so the
         filal interpretation of this option depends on the application.
 
@@ -1027,7 +1027,7 @@ class Configuration(object):
 
     class _Option_keyboard_layouts(Option):
         """Sequence of keyboard layout specifications for built-in layout swither.
-        
+
         The sequence consists of triplets (title, icon, command), where 'title'
         is the label for the UI layout selector (basestring), 'icon' is the
         corresponding icon identifier for 'pytis.form.get_icon()' -- name of a
@@ -1040,7 +1040,7 @@ class Configuration(object):
 
     class _Option_initial_keyboard_layout(StringOption):
         """System command for switching the initial keyboard layout.
-        
+
         The value must be one of the commands specified within the
         'keyboard_layouts' option.  Only if it is present there, the command
         will be invoked on application startup and the keyboard switcher will
@@ -1059,9 +1059,9 @@ class Configuration(object):
 
     class _Option_cell_highlight_color(ColorOption):
         """Current table cell highlight color.
-        
+
         The current table cell has a thin colored border around.
-        
+
         """
         _DESCR = _("Current cell highlight color in table forms.")
         _DEFAULT = '#ffa000'
@@ -1079,7 +1079,7 @@ class Configuration(object):
         """Edited table row highlight color.
 
         The current row border has a different color during inline editation.
-        
+
         """
         _DESCR = _("Current row highlight color in table forms during inline editation.")
         _DEFAULT = '#ff0000'
@@ -1098,7 +1098,7 @@ class Configuration(object):
         """Current table row border width.
 
         The border width in pixels.
-        
+
         """
         _DESCR = _("Current table row highlight border width in pixels.")
         _DEFAULT = 3
@@ -1110,14 +1110,14 @@ class Configuration(object):
         """Table grid line color.
 
         Color of the lines between table cells.
-        
+
         """
         _DESCR = _("Grid line color in table forms.")
         _DEFAULT = '#6482be'
 
     class _Option_grouping_background_downgrade(ColorOption):
         """Grouping background downgrade.
-        
+
         Grouping may be used to visually distinguish table rows that belong to
         the same group.  Table background color is changing between the groups
         of rows, so that lighter colored rows are followed by darker colored
@@ -1144,7 +1144,7 @@ class Configuration(object):
         """Ineditable input field background color."""
         _DESCR = _("Ineditable input field background color.")
         _DEFAULT = '#d8d8d8'
-        
+
     class _Option_field_denied_color(ColorOption):
         """Color of input field ineditable due to access rights."""
         _DESCR = _("Color of input field ineditable due to access rights.")
@@ -1156,14 +1156,14 @@ class Configuration(object):
 
     class _Option_field_invalid_color(ColorOption):
         """Invalid input field background color.
-        
+
         Background color during field editation when the current value doesn't
         pass validation.
 
         """
         _DESCR = _("Background color during field editation when the current value is not valid.")
         _DEFAULT = '#ffffc0'
-        
+
     class _Option_filter_color(ColorOption):
         u"""Barva záhlaví tabulky při zapnutém filtrování."""
         _DEFAULT = '#82c882'
@@ -1277,7 +1277,7 @@ class Configuration(object):
         Arguments:
 
           filename -- name of the pytis configuration file, basestring
-          
+
         """
         assert isinstance(filename, basestring), filename
         return self._read_configuration_file(filename)
@@ -1312,7 +1312,7 @@ class Configuration(object):
 
         'name' must be a string name of an existing configuration option.  'AttributeError' is
         raised if no such option exists.
-        
+
         """
         if name in self.__dict__['_options']:
             self.__dict__['_options'][name].set_value(value)
@@ -1339,7 +1339,7 @@ class Configuration(object):
             z příkazové řádky.  Pravdivá hodnota tohoto argumentu způsobí, že
             budou přenastaveny všechny nalezené konfigurační volby včetně těch
             z příkazového řádku.
-            
+
         """
         options = self._options
         clopt = self.command_line_options
