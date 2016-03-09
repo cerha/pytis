@@ -77,6 +77,21 @@ class _TextValidator(wx.PyValidator):
             event.Skip()
             return True
 
+
+class _ReadOnlyValidator(wx.PyValidator):
+
+    def __init__(self):
+        wx.PyValidator.__init__(self)
+        # Eat all interaction events without calling e.Skip()
+        # so no default event processing takes place.
+        wx_callback(wx.EVT_KEY_DOWN, self, lambda e: None)
+        wx_callback(wx.EVT_LEFT_DOWN, self, lambda e: None)
+        wx_callback(wx.EVT_LEFT_DCLICK, self, lambda e: None)
+
+    def Clone(self):
+        return _ReadOnlyValidator()
+
+
 class _Completer(wx.PopupWindow):
     """Autocompletion selection control."""
 
@@ -1067,6 +1082,13 @@ class CheckBoxField(Unlabeled, InputField):
         assert value in ('T', 'F', ''), ('Invalid value', value)
         self._ctrl.SetValue(value == 'T')
         self._on_change()  # call manually, since SetValue() doesn't emit an event.
+
+    def _set_ctrl_editable(self, ctrl, editable):
+        if self._readonly:
+            # Avoid graying the field out in read only forms.
+            ctrl.SetValidator(_ReadOnlyValidator())
+        else:
+            ctrl.Enable(editable)
 
 
 class GenericEnumerationField(InputField):
