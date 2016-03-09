@@ -148,14 +148,26 @@ class PytisUserService(PytisService):
         If the text can't be retrieved, return 'None'.
 
         """
-        import win32clipboard
-        win32clipboard.OpenClipboard()
-        try:
-            data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
-        except:                   # may happen when there is no clipboard data
-            data = None
-        win32clipboard.CloseClipboard()
-        return data
+        if self._pytis_on_windows():
+            import win32clipboard
+            win32clipboard.OpenClipboard()
+            try:
+                data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
+            except:                   # may happen when there is no clipboard data
+                data = None
+            win32clipboard.CloseClipboard()
+            return data
+        else:
+            try:
+                import wx
+            except ImportError:
+                return None
+            if wx.TheClipboard.Open():
+                data = wx.TextDataObject()
+                success = wx.TheClipboard.GetData(data)
+                wx.TheClipboard.Close()
+                if success:
+                    return data.GetText()
 
     def exposed_set_clipboard_text(self, text):
         """Set clipboard content to text.
@@ -166,11 +178,22 @@ class PytisUserService(PytisService):
 
         """
         assert isinstance(text, unicode), text
-        import win32clipboard
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
-        win32clipboard.CloseClipboard()
+        if self._pytis_on_windows():
+            import win32clipboard
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
+            win32clipboard.CloseClipboard()
+        else:
+            try:
+                import wx
+            except ImportError:
+                return
+            if wx.TheClipboard.Open():
+                data = wx.TextDataObject()
+                data.SetText(text)
+                wx.TheClipboard.SetData(data)
+                wx.TheClipboard.Close()
 
     def exposed_launch_file(self, path):
         """Start associated application on path.
