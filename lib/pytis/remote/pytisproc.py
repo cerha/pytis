@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2011-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,31 +33,144 @@ import time
 
 import rpyc
 
-class PytisService(rpyc.Service):
+class PortableFileSelection(object):
+    """Implements protable file selection dialogs to be used on client side.
 
-    registration = None
-    authenticator = None
+    Defined as a separate class to allow standalone testing of file dialogs on
+    different platforms without rpyc communication.
 
-    def _pytis_on_windows(self):
-        return sys.platform == 'win32'
+    """
 
-    def _zenity_file_dialog(self, directory=None, filename=None, template=None, save=False):
-        args = ['zenity', '--file-selection']
-        patterns = []
-        if filename is not None:
-            __name, ext = os.path.splitext(filename)
+    def _select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
+        """Return the file name(s) of user selected file(s).
+
+        The file is selected by the user using a GUI dialog.  If the user
+        cancels the dialog, 'None' is returned.
+
+        Best effort is made to use the best GUI dialog on a given platform.
+        wxWidgets dialog is tried first, win32 API second, Tkinter third and Zenity
+        as the last resort.
+
+        Arguments:
+
+          directory -- initial directory for the dialog
+          filename -- default filename or None
+          template -- a string defining the required file name pattern, or 'None'
+          save -- True iff the file is to be open for writing
+          multi -- iff true, allow selecting multiple files (not possible when save is True)
+
+        """
+        assert directory is None or isinstance(directory, basestring), directory
+        assert filename is None or isinstance(filename, basestring), filename
+        assert template is None or isinstance(template, basestring), template
+        assert isinstance(save, bool), save
+        assert isinstance(multi, bool), multi
+        assert not (save and multi), (save, multi)
+        extension = None
+        filters = [(u"Všechny soubory (*.*)", "*.*")]
+        if filename:
+            name, ext = os.path.splitext(filename)
             if ext:
-                patterns.append('*' + ext)
+                template = "*" + ext
+                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
+                extension = ext[1:]
+        else:
+            filename = "*.*"
+            if template:
+                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
+        def coerce(x):
+            if isinstance(x, (tuple, list)):
+                x = [coerce(y) for y in x]
+            elif not isinstance(x, unicode) and x is not None:
+                x = unicode(x, sys.getfilesystemencoding())
+            return x
+        for select_file in (self._wx_select_file,
+                            self._win32_select_file,
+                            self._tk_select_file,
+                            self._zenity_select_file):
+            try:
+                result = select_file(directory, filename, filters, extension, save, multi)
+            except ImportError:
+                continue
+            else:
+                return coerce(result)
+        raise Exception(u'Nebyla nalezena žádná použitelná implementace dialogu.')
+
+    def _wx_select_file(self, directory, filename, filters, extension, save, multi):
+        import wx
+        app = wx.App(False)
+        style = 0
+        if save:
+            style |= wx.SAVE | wx.OVERWRITE_PROMPT
+        else:
+            style |= wx.OPEN
+        if multi:
+            style |= wx.MULTIPLE
+        dialog = wx.FileDialog(None, defaultDir=directory, defaultFile=filename or '',
+                               wildcard='|'.join(["%s|%s" % item for item in filters]),
+                               style=style)
+        result = dialog.ShowModal()
+        app.ExitMainLoop()
+        app.Destroy()
+        if result != wx.ID_OK:
+            return None
+        elif multi:
+            return dialog.GetPaths()
+        else:
+            return dialog.GetPath()
+
+    def _win32_select_file(self, directory, filename, filters, extension, save, multi):
+        import win32ui
+        import win32con
+        flags = win32con.OFN_HIDEREADONLY
+        if save:
+            flags |= win32con.OFN_OVERWRITEPROMPT
+            mode = 0
+        else:
+            mode = 1
+        if multi:
+            flags |= win32con.OFN_ALLOWMULTISELECT
+        # This hack with finding non-specified windows is used so that
+        # we get some parent window for CreateFileDialog.
+        # Without this parent windows the method DoModal doesn't show
+        # the dialog window on top...
+        parent = win32ui.FindWindow(None, None)
+        dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename, flags,
+                                          '|'.join(["%s|%s" % item for item in filters]) + '||',
+                                          parent)
+        if directory:
+            dialog.SetOFNInitialDir(directory)
+        result = dialog.DoModal()
+        if result != 1:
+            return None
+        if multi:
+            return dialog.GetPathNames()
+        else:
+            return dialog.GetPathName()
+
+    def _tk_select_file(self, directory, filename, filters, extension, save, multi):
+        import Tkinter
+        import tkFileDialog
+        root = Tkinter.Tk()
+        root.withdraw()
+        result = tkFileDialog.askopenfilename(parent=root, initialdir=directory,
+                                              initialfile=filename,
+                                              defaultextension=extension, multiple=multi)
+        filenames = root.tk.splitlist(result)
+        root = None
+        if multi:
+            return filenames
+        else:
+            return result
+
+    def _zenity_select_file(self, directory, filename, filters, extension, save, multi):
+        args = ['zenity', '--file-selection']
         if directory is not None:
             filename = os.path.join(directory, filename or '')
         if filename is not None:
             args.extend(('--filename', filename,))
-        if template is not None:
-            patterns.append(template)
-        if patterns and '*' not in patterns:
-            patterns.append('*')
-        for p in patterns:
-            args.extend(('--file-filter', p,))
+        for title, pattern in filters:
+            args.extend(('--file-filter', pattern,))
         if save:
             args.append('--save')
         try:
@@ -65,6 +178,15 @@ class PytisService(rpyc.Service):
         except subprocess.CalledProcessError:
             return None
         return output.rstrip('\r\n')
+
+
+class PytisService(rpyc.Service, PortableFileSelection):
+
+    registration = None
+    authenticator = None
+
+    def _pytis_on_windows(self):
+        return sys.platform == 'win32'
 
     def exposed_authenticate_server(self, challenge):
         """Return password hash based on 'challenge'.
@@ -326,29 +448,7 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        if self._pytis_on_windows():
-            import win32ui
-            import win32con
-            extension = None
-            if template:
-                file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
-                               (template, template,))
-                filename = template
-                if template.find('.') != -1:
-                    extension = template.split('.')[-1]
-            else:
-                file_filter = u"Všechny soubory (*.*)|*.*||"
-                filename = "*.*"
-            parent = win32ui.FindWindow(None, None)
-            flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
-            dialog = win32ui.CreateFileDialog(1, extension, "%s" % filename, flags,
-                                              file_filter, parent)
-            result = dialog.DoModal()
-            if result != 1:
-                return None
-            filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
-        else:
-            filename = self._zenity_file_dialog(template=template)
+        filename = self._select_file(template=template)
         if filename is None:
             return None
         if encrypt is not None:
@@ -388,46 +488,12 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        if self._pytis_on_windows():
-            import win32ui
-            import win32con
-            file_filter = u"Všechny soubory (*.*)|*.*||"
-            extension = None
-            if filename:
-                name, ext = os.path.splitext(filename)
-                if ext:
-                    template = "*" + ext
-                    file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                                   (template, template, file_filter))
-                    extension = ext[1:]
-            else:
-                filename = "*.*"
-                if template:
-                    file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                                   (template, template, file_filter))
-            # This hack with finding non-specified windows is used so that
-            # we get some parent window for CreateFileDialog.
-            # Without this parent windows the method DoModal doesn't show
-            # the dialog window on top...
-            parent = win32ui.FindWindow(None, None)
-            flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
-            dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename, flags,
-                                              file_filter, parent)
-            if directory:
-                dialog.SetOFNInitialDir(directory)
-            result = dialog.DoModal()
-            if result != 1:
-                return None
-            filename = dialog.GetPathName()
-            if filename is None:
-                return None
-            filename = unicode(filename, sys.getfilesystemencoding())
+        filename = self._select_file(directory=directory, filename=filename, template=template,
+                                     save=True)
+        if filename is None:
+            return None
         else:
-            filename = self._zenity_file_dialog(directory=directory, filename=filename,
-                                                template=template, save=True)
-            if filename is None:
-                return None
-        return self._open_file(filename, encoding, mode, decrypt=decrypt)
+            return self._open_file(filename, encoding, mode, decrypt=decrypt)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
         """Create a temporary file and return its instance.
@@ -515,29 +581,7 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         assert filename is None or isinstance(filename, basestring), filename
         assert isinstance(multi, bool), multi
-        import Tkinter
-        import tkFileDialog
-        root = Tkinter.Tk()
-        root.withdraw()
-        file_filter = []
-        extension = None
-        if filename:
-            name, ext = os.path.splitext(filename)
-            if ext:
-                template = "*" + ext
-                file_filter.append((u"Soubory požadovaného typu (%s)" % template, template))
-                extension = ext[1:]
-        else:
-            filename = None
-            if template:
-                file_filter.append((u"Soubory požadovaného typu (%s)" % template, template))
-        if len(file_filter) == 0:
-            file_filter.append((u"Všechny soubory (*.*)", "*.*"))
-        result = tkFileDialog.askopenfilename(parent=root, initialfile=filename,
-                                              defaultextension=extension, multiple=multi)
-        filenames = root.tk.splitlist(result)
-        root = None
-        return [unicode(f, sys.getfilesystemencoding()) for f in filenames]
+        return self._select_file(filename=filename, template=template, multi=multi)
 
 class PytisAdminService(PytisService):
 
