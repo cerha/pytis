@@ -246,6 +246,60 @@ class ClientSideOperations(object):
                                           self._zenity_select_directory),
                                          directory)
 
+    def _win32_get_clipboard_text(self):
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        try:
+            data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
+        except: # may happen when there is no clipboard data
+            data = None
+        win32clipboard.CloseClipboard()
+        return data
+
+    def _wx_get_clipboard_text(self):
+        import wx
+        if wx.TheClipboard.Open():
+            data = wx.TextDataObject()
+            success = wx.TheClipboard.GetData(data)
+            wx.TheClipboard.Close()
+            if success:
+                return data.GetText()
+
+    def get_clipboard_text(self):
+        """Return the text stored in system clipboard on user's machine."""
+        return self._try_implementations((self._win32_get_clipboard_text,
+                                          #self._in_wx_app(self._wx_get_clipboard_text),
+                                          lambda: None))
+
+    def _win32_set_clipboard_text(self, text):
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
+        win32clipboard.CloseClipboard()
+
+    def _wx_set_clipboard_text(self, text):
+        import wx
+        if wx.TheClipboard.Open():
+            data = wx.TextDataObject()
+            data.SetText(text)
+            wx.TheClipboard.SetData(data)
+            wx.TheClipboard.Close()
+
+    def set_clipboard_text(self, text):
+        """Store given text in system clipboard on user's machine.
+
+        Arguments:
+
+          text -- the text to be stored in the clipboard.
+
+        """
+        assert text is None or isinstance(text, basestring), text
+        return self._try_implementations((self._win32_set_clipboard_text,
+                                          #self._in_wx_app(self._wx_set_clipboard_text
+                                          lambda text: None),
+                                         text)
+
 
 class PytisService(rpyc.Service):
 
@@ -338,26 +392,7 @@ class PytisUserService(PytisService):
         If the text can't be retrieved, return 'None'.
 
         """
-        if self._pytis_on_windows():
-            import win32clipboard
-            win32clipboard.OpenClipboard()
-            try:
-                data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
-            except:                   # may happen when there is no clipboard data
-                data = None
-            win32clipboard.CloseClipboard()
-            return data
-        else:
-            try:
-                import wx
-            except ImportError:
-                return None
-            if wx.TheClipboard.Open():
-                data = wx.TextDataObject()
-                success = wx.TheClipboard.GetData(data)
-                wx.TheClipboard.Close()
-                if success:
-                    return data.GetText()
+        return self._client.get_clipboard_text()
 
     def exposed_set_clipboard_text(self, text):
         """Set clipboard content to text.
@@ -368,22 +403,8 @@ class PytisUserService(PytisService):
 
         """
         assert isinstance(text, unicode), text
-        if self._pytis_on_windows():
-            import win32clipboard
-            win32clipboard.OpenClipboard()
-            win32clipboard.EmptyClipboard()
-            win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
-            win32clipboard.CloseClipboard()
-        else:
-            try:
-                import wx
-            except ImportError:
-                return
-            if wx.TheClipboard.Open():
-                data = wx.TextDataObject()
-                data.SetText(text)
-                wx.TheClipboard.SetData(data)
-                wx.TheClipboard.Close()
+        return self._client.set_clipboard_text(text)
+
 
     def exposed_launch_file(self, path):
         """Start associated application on path.
