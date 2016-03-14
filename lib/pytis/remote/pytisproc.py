@@ -46,6 +46,21 @@ class ClientSideOperations(object):
 
     """
 
+    def _try_implementations(self, methods, *args, **kwargs):
+        for method in methods:
+            try:
+                return method(*args, **kwargs)
+            except ImportError:
+                pass
+        raise Exception(u'Nebyla nalezena žádná použitelná implementace operace.')
+
+    def _unicode(self, x):
+        if isinstance(x, (tuple, list)):
+            x = [self._unicode(y) for y in x]
+        elif not isinstance(x, unicode) and x is not None:
+            x = unicode(x, sys.getfilesystemencoding())
+        return x
+
     def _wx_select_file(self, directory, filename, filters, extension, save, multi):
         import wx
         app = wx.App(False)
@@ -65,9 +80,9 @@ class ClientSideOperations(object):
         if result != wx.ID_OK:
             return None
         elif multi:
-            return dialog.GetPaths()
+            return self._unicode(dialog.GetPaths())
         else:
-            return dialog.GetPath()
+            return self._unicode(dialog.GetPath())
 
     def _win32_select_file(self, directory, filename, filters, extension, save, multi):
         import win32ui
@@ -94,9 +109,9 @@ class ClientSideOperations(object):
         if result != 1:
             return None
         if multi:
-            return dialog.GetPathNames()
+            return self._unicode(dialog.GetPathNames())
         else:
-            return dialog.GetPathName()
+            return self._unicode(dialog.GetPathName())
 
     def _tk_select_file(self, directory, filename, filters, extension, save, multi):
         import Tkinter
@@ -109,9 +124,9 @@ class ClientSideOperations(object):
         filenames = root.tk.splitlist(result)
         root = None
         if multi:
-            return filenames
+            return self._unicode(filenames)
         else:
-            return result
+            return self._unicode(result)
 
     def _zenity_select_file(self, directory, filename, filters, extension, save, multi):
         args = ['zenity', '--file-selection']
@@ -127,7 +142,7 @@ class ClientSideOperations(object):
             output = subprocess.check_output(args)
         except subprocess.CalledProcessError:
             return None
-        return output.rstrip('\r\n')
+        return self._unicode(output.rstrip('\r\n'))
 
     def select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
         """Return the file name(s) of user selected file(s).
@@ -162,23 +177,11 @@ class ClientSideOperations(object):
             filename = "*.*"
             if template:
                 filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        def coerce(x):
-            if isinstance(x, (tuple, list)):
-                x = [coerce(y) for y in x]
-            elif not isinstance(x, unicode) and x is not None:
-                x = unicode(x, sys.getfilesystemencoding())
-            return x
-        for select_file in (self._wx_select_file,
-                            self._win32_select_file,
-                            self._tk_select_file,
-                            self._zenity_select_file):
-            try:
-                result = select_file(directory, filename, filters, extension, save, multi)
-            except ImportError:
-                continue
-            else:
-                return coerce(result)
-        raise Exception(u'Nebyla nalezena žádná použitelná implementace dialogu.')
+        return self._try_implementations((self._wx_select_file,
+                                          self._tk_select_file,
+                                          self._win32_select_file,
+                                          self._zenity_select_file),
+                                         directory, filename, filters, extension, save, multi)
 
 
 class PytisService(rpyc.Service):
