@@ -33,68 +33,18 @@ import time
 
 import rpyc
 
-class PortableFileSelection(object):
-    """Implements protable file selection dialogs to be used on client side.
+class ClientSideOperations(object):
+    """Implement protable operations running on the client side.
 
-    Defined as a separate class to allow standalone testing of file dialogs on
-    different platforms without rpyc communication.
+    Various client side operations, such as running file selection dialogs are
+    implemented by this class.  We don't want to be very strict on client side
+    requirements, so we usually try several libraries or approaches which may
+    solve the same problem on different platforms and configurations.
+
+    Defined as a separate class to allow standalone testing on different
+    platforms without rpyc communication.
 
     """
-
-    def _select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
-        """Return the file name(s) of user selected file(s).
-
-        The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
-
-        Best effort is made to use the best GUI dialog on a given platform.
-        wxWidgets dialog is tried first, win32 API second, Tkinter third and Zenity
-        as the last resort.
-
-        Arguments:
-
-          directory -- initial directory for the dialog
-          filename -- default filename or None
-          template -- a string defining the required file name pattern, or 'None'
-          save -- True iff the file is to be open for writing
-          multi -- iff true, allow selecting multiple files (not possible when save is True)
-
-        """
-        assert directory is None or isinstance(directory, basestring), directory
-        assert filename is None or isinstance(filename, basestring), filename
-        assert template is None or isinstance(template, basestring), template
-        assert isinstance(save, bool), save
-        assert isinstance(multi, bool), multi
-        assert not (save and multi), (save, multi)
-        extension = None
-        filters = [(u"Všechny soubory (*.*)", "*.*")]
-        if filename:
-            name, ext = os.path.splitext(filename)
-            if ext:
-                template = "*" + ext
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-                extension = ext[1:]
-        else:
-            filename = "*.*"
-            if template:
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        def coerce(x):
-            if isinstance(x, (tuple, list)):
-                x = [coerce(y) for y in x]
-            elif not isinstance(x, unicode) and x is not None:
-                x = unicode(x, sys.getfilesystemencoding())
-            return x
-        for select_file in (self._wx_select_file,
-                            self._win32_select_file,
-                            self._tk_select_file,
-                            self._zenity_select_file):
-            try:
-                result = select_file(directory, filename, filters, extension, save, multi)
-            except ImportError:
-                continue
-            else:
-                return coerce(result)
-        raise Exception(u'Nebyla nalezena žádná použitelná implementace dialogu.')
 
     def _wx_select_file(self, directory, filename, filters, extension, save, multi):
         import wx
@@ -179,8 +129,59 @@ class PortableFileSelection(object):
             return None
         return output.rstrip('\r\n')
 
+    def select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
+        """Return the file name(s) of user selected file(s).
 
-class PytisService(rpyc.Service, PortableFileSelection):
+        The file is selected by the user using a GUI dialog.  If the user
+        cancels the dialog, 'None' is returned.
+
+        Arguments:
+
+          directory -- initial directory for the dialog
+          filename -- default filename or None
+          template -- a string defining the required file name pattern, or 'None'
+          save -- True iff the file is to be open for writing
+          multi -- iff true, allow selecting multiple files (not possible when save is True)
+
+        """
+        assert directory is None or isinstance(directory, basestring), directory
+        assert filename is None or isinstance(filename, basestring), filename
+        assert template is None or isinstance(template, basestring), template
+        assert isinstance(save, bool), save
+        assert isinstance(multi, bool), multi
+        assert not (save and multi), (save, multi)
+        extension = None
+        filters = [(u"Všechny soubory (*.*)", "*.*")]
+        if filename:
+            name, ext = os.path.splitext(filename)
+            if ext:
+                template = "*" + ext
+                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
+                extension = ext[1:]
+        else:
+            filename = "*.*"
+            if template:
+                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
+        def coerce(x):
+            if isinstance(x, (tuple, list)):
+                x = [coerce(y) for y in x]
+            elif not isinstance(x, unicode) and x is not None:
+                x = unicode(x, sys.getfilesystemencoding())
+            return x
+        for select_file in (self._wx_select_file,
+                            self._win32_select_file,
+                            self._tk_select_file,
+                            self._zenity_select_file):
+            try:
+                result = select_file(directory, filename, filters, extension, save, multi)
+            except ImportError:
+                continue
+            else:
+                return coerce(result)
+        raise Exception(u'Nebyla nalezena žádná použitelná implementace dialogu.')
+
+
+class PytisService(rpyc.Service):
 
     registration = None
     authenticator = None
@@ -255,6 +256,7 @@ class PytisUserService(PytisService):
 
     def __init__(self, *args, **kwargs):
         self._gpg_instance = None
+        self._client = ClientSideOperations()
         super(PytisUserService, self).__init__(*args, **kwargs)
 
     def exposed_restart(self):
@@ -448,7 +450,7 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        filename = self._select_file(template=template)
+        filename = self._client.select_file(template=template)
         if filename is None:
             return None
         if encrypt is not None:
@@ -488,8 +490,8 @@ class PytisUserService(PytisService):
 
         """
         assert template is None or isinstance(template, basestring), template
-        filename = self._select_file(directory=directory, filename=filename, template=template,
-                                     save=True)
+        filename = self._client.select_file(directory=directory, filename=filename,
+                                            template=template, save=True)
         if filename is None:
             return None
         else:
@@ -581,7 +583,7 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         assert filename is None or isinstance(filename, basestring), filename
         assert isinstance(multi, bool), multi
-        return self._select_file(filename=filename, template=template, multi=multi)
+        return self._client.select_file(filename=filename, template=template, multi=multi)
 
 class PytisAdminService(PytisService):
 
