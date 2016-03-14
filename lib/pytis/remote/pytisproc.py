@@ -319,6 +319,24 @@ class ClientSideOperations(object):
         else:
             return text.rstrip('\r\n')
 
+    def select_option(title="Select", columns=(), data=()):
+        """Prompt the user to select from a given list of options.
+
+        Arguments:
+
+          title -- text entry dialog title
+          columns -- sequence of column labels
+          data -- sequence of tuples containing the values to be displayed in
+            the selection.  The items of each tuple are displayed as one table
+            row.  Thus the length of each tuple must match the number of
+            columns.
+
+        Returns the tuple matching the selected row.
+
+        """
+        import PyZenity
+        answer = PyZenity.List(columns, title=title, data=data)
+
 
 class PytisService(rpyc.Service):
 
@@ -459,9 +477,8 @@ class PytisUserService(PytisService):
         elif n_keys == 1:
             selected_key = keys[0]['keyid']
         else:
-            import PyZenity
             data = [(k['keyid'], string.join(k['uids']), ', ') for k in keys]
-            answer = PyZenity.List(["Id", "Uids"], title="Select key", data=data)
+            answer = self._client.select_option("Select key", columns=("Id", "Uids",), data=data)
             if not answer:
                 raise Exception("Canceled")
             selected_key = answer[0]
