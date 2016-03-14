@@ -61,9 +61,19 @@ class ClientSideOperations(object):
             x = unicode(x, sys.getfilesystemencoding())
         return x
 
+    def _in_wx_app(self, function):
+        def run(*args, **kwargs):
+            import wx
+            app = wx.App(False)
+            try:
+                return function(*args, **kwargs)
+            finally:
+                app.ExitMainLoop()
+                app.Destroy()
+        return run
+
     def _wx_select_file(self, directory, filename, filters, extension, save, multi):
         import wx
-        app = wx.App(False)
         style = 0
         if save:
             style |= wx.SAVE | wx.OVERWRITE_PROMPT
@@ -75,8 +85,6 @@ class ClientSideOperations(object):
                                wildcard='|'.join(["%s|%s" % item for item in filters]),
                                style=style)
         result = dialog.ShowModal()
-        app.ExitMainLoop()
-        app.Destroy()
         if result != wx.ID_OK:
             return None
         elif multi:
@@ -177,7 +185,7 @@ class ClientSideOperations(object):
             filename = "*.*"
             if template:
                 filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        return self._try_implementations((self._wx_select_file,
+        return self._try_implementations((self._in_wx_app(self._wx_select_file),
                                           self._tk_select_file,
                                           self._win32_select_file,
                                           self._zenity_select_file),
