@@ -300,6 +300,25 @@ class ClientSideOperations(object):
                                           lambda text: None),
                                          text)
 
+    def enter_text(self, title="Enter Text", label=None, password=False):
+        """Prompt the user to enter text and return the text.
+
+        Arguments:
+
+          title -- text entry dialog title
+          label -- text field label; If None, title is used
+          password -- if True, text entered should be hidden by stars
+
+        """
+        import PyZenity
+        if label is None:
+            label = title
+        text = PyZenity.GetText(title=title, text=label, password=password)
+        if text is None:
+            return None
+        else:
+            return text.rstrip('\r\n')
+
 
 class PytisService(rpyc.Service):
 
@@ -448,14 +467,6 @@ class PytisUserService(PytisService):
             selected_key = answer[0]
         return [selected_key]
 
-    def _select_decryption_passphrase(self):
-        import PyZenity
-        passphrase = PyZenity.GetText(text="Decryption key password", password=True,
-                                      title="Decryption key password")
-        if passphrase is None:
-            return None
-        return passphrase.rstrip('\r\n')
-
     def _open_file(self, filename, encoding, mode, encrypt=None, decrypt=False):
         service = self
         class Wrapper(object):
@@ -489,7 +500,8 @@ class PytisUserService(PytisService):
                     if encrypted:
                         gpg = service._gpg()
                         while True:
-                            passphrase = service._select_decryption_passphrase()
+                            passphrase = service._client.enter_text("Decryption key password",
+                                                                    password=True)
                             if passphrase is None:
                                 decrypted = ''
                                 break
@@ -620,7 +632,8 @@ class PytisUserService(PytisService):
                     if encrypted:
                         gpg = service._gpg()
                         while True:
-                            passphrase = service._select_decryption_passphrase()
+                            passphrase = service._client.enter_text("Decryption key password",
+                                                                    password=True)
                             if passphrase is None:
                                 decrypted = ''
                                 break
