@@ -191,6 +191,48 @@ class ClientSideOperations(object):
                                           self._zenity_select_file),
                                          directory, filename, filters, extension, save, multi)
 
+    def _win32_select_directory(self, directory):
+        import win32gui
+        from win32com.shell import shell, shellcon
+        def callback(hwnd, msg, lp, data):
+            if msg == shellcon.BFFM_INITIALIZED:
+                win32gui.SendMessage(hwnd, shellcon.BFFM_SETSELECTION, 1, directory);
+        pidl, dname, imglist = shell.SHBrowseForFolder(
+            win32gui.GetDesktopWindow(),
+            # Get PIDL of the topmost folder for the dialog
+            shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0),
+            u"Výběr adresáře",
+            0,
+            callback,
+            None,
+        )
+        # Transform PIDL back to a directory name and return it
+        return shell.SHGetPathFromIDList(pidl)
+
+    def _zenity_select_directory(self, directory):
+        import PyZenity as zenity
+        directory_list = zenity.GetDirectory(selected=directory)
+        if directory_list and len(directory_list) > 0:
+            return directory_list[0]
+        else:
+            return None
+
+    def select_directory(self, directory=None):
+        """Return the name of user selected directory.
+
+        The directory is selected by the user using a GUI dialog.  If the user
+        cancels the dialog, 'None' is returned.
+
+        Arguments:
+
+          directory -- initial directory for the dialog
+
+        """
+        assert directory is None or isinstance(directory, basestring), directory
+        return self._try_implementations((self._win32_select_directory,
+                                          self._zenity_select_directory),
+                                         directory)
+
 
 class PytisService(rpyc.Service):
 
@@ -561,22 +603,7 @@ class PytisUserService(PytisService):
         return Wrapper(handle, filename, encoding, mode)
 
     def exposed_select_directory(self):
-        if self._pytis_on_windows():
-            import win32gui
-            from win32com.shell import shell, shellcon
-            # Get PIDL of the topmost folder for the dialog
-            desktop_pidl = shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0)
-            pidl, display_name, image_list = shell.SHBrowseForFolder(
-                win32gui.GetDesktopWindow(), desktop_pidl, u"Výběr adresáře", 0, None, None)
-            # Transform PIDL back to a directory name and return it
-            return shell.SHGetPathFromIDList(pidl)
-        else:
-            import PyZenity as zenity
-            directory_list = zenity.GetDirectory()
-            if directory_list and len(directory_list) > 0:
-                return directory_list[0]
-            else:
-                return None
+        return self._client.select_directory()
 
     def exposed_select_file(self, filename=None, template=None, multi=False):
         """Return a list of filenames selected by user in GUI dialog.
