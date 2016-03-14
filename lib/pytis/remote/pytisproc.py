@@ -191,6 +191,18 @@ class ClientSideOperations(object):
                                           self._zenity_select_file),
                                          directory, filename, filters, extension, save, multi)
 
+    def _wx_select_directory(self, directory):
+        import wx
+        app = wx.App(False)
+        dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
+        result = dialog.ShowModal()
+        path = dialog.GetPath()
+        dialog.Destroy()
+        if result == wx.ID_OK:
+            return self._unicode(path)
+        else:
+            return None
+
     def _win32_select_directory(self, directory):
         import win32gui
         from win32com.shell import shell, shellcon
@@ -229,7 +241,8 @@ class ClientSideOperations(object):
 
         """
         assert directory is None or isinstance(directory, basestring), directory
-        return self._try_implementations((self._win32_select_directory,
+        return self._try_implementations((self._in_wx_app(self._wx_select_directory),
+                                          self._win32_select_directory,
                                           self._zenity_select_directory),
                                          directory)
 
