@@ -352,15 +352,17 @@ class ExposedFileWrapper(object):
 
         filename -- name of the underlying file on client's filesystem.
         handle -- file descriptor; If None, the file is opened by filename.
-        mode -- mode for opening the file
-        encoding -- file content output encoding, string or None; applicable
-          only for output modes
-        encrypt -- list of encryption keys to use to encrypt the file; if 'None' then
-          don't encrypt the file; applicable only for input modes
-        decrypt -- if true then decrypt the file contents; applicable only
-          for output modes
-        gpg -- GnuPG instance to use for encryption or decryption if 'encrypt'
-          or 'decrypt' are in use.
+        mode -- mode for opening the file.
+        encoding -- file content output encoding, string or None.  Applicable
+          only for output modes.
+        encrypt -- function performing data encryption.  The function must
+          accept a file like object as argument and return its encrypted
+          contents as a string.  If 'None' then don't encrypt the file;
+          applicable only for input modes
+        decrypt -- function performing data decryption.  The function must
+          accept a string argument and return its decrypted content as a
+          string.  If 'None' then don't decrypt the file.  Applicable only for
+          output modes
 
         """
         if handle is None:
@@ -368,16 +370,17 @@ class ExposedFileWrapper(object):
         else:
             f = os.fdopen(handle, mode)
         if encrypt is not None:
-            f = cStringIO.StringIO(str(gpg.encrypt_file(f, encrypt)))
-        self._decrypted = None
+            f = cStringIO.StringIO(encrypt(f))
         if decrypt:
             assert mode[0] != 'r', mode
             self._decrypted = f
             f = cStringIO.StringIO()
+        else:
+            self._decrypted = None
         self._f = f
         self._filename = filename
         self._encoding = encoding
-        self._gpg = gpg
+        self._decrypt = decrypt
 
     def exposed_name(self):
         return self._filename
@@ -414,15 +417,7 @@ class ExposedFileWrapper(object):
         if self._decrypted is not None:
             encrypted = self._f.getvalue()
             if encrypted:
-                while True:
-                    passphrase = ClientSideOperations().enter_text("Decryption key password",
-                                                                   password=True)
-                    if passphrase is None:
-                        decrypted = ''
-                        break
-                    decrypted = self._gpg.decrypt(encrypted, passphrase=passphrase).data
-                    if decrypted:
-                        break
+                decrypted = self._decrypt(encrypted)
                 if self._encoding is not None:
                     decrypted = decrypted.encode(self._encoding)
                 self._decrypted.write(decrypted)
@@ -576,12 +571,35 @@ class PytisUserService(PytisService):
             selected_key = answer[0]
         return [selected_key]
 
+    def _encrypt(self, keys):
+        def encrypt(f):
+            gpg = self._gpg()
+            keys = self._select_encryption_keys(gpg, keys)
+            return str(gpg.encrypt_file(f, keys))
+        if keys is not None:
+            return encrypt
+        else:
+            return None
+
+    def _decrypt(self, decrypt):
+        def decrypt_(encrypted):
+            gpg = self._gpg()
+            while True:
+                passphrase = self._client.enter_text("Decryption key password", password=True)
+                if passphrase is None:
+                    return ''
+                decrypted = gpg.decrypt(encrypted, passphrase=passphrase).data
+                if decrypted:
+                    return decrypted
+        if decrypt:
+            return decrypt_
+        else:
+            return None
+
     def _open_file(self, filename, encoding, mode, encrypt=None, decrypt=False):
-        gpg = self._gpg() if encrypt is not None or decrypt else None
-        if encrypt is not None and mode[0] == 'r':
-            encrypt = self._select_encryption_keys(gpg, encrypt)
         return ExposedFileWrapper(filename, encoding=encoding, mode=mode,
-                                  encrypt=encrypt, decrypt=decrypt, gpg=gpg)
+                                  encrypt=self._encrypt(encrypt),
+                                  decrypt=self._decrypt(decrypt))
 
     def exposed_open_file(self, filename, mode, encoding=None, encrypt=None, decrypt=False):
         """Return a read-only 'file' like object of the given file.
@@ -618,11 +636,7 @@ class PytisUserService(PytisService):
         filename = self._client.select_file(template=template)
         if filename is None:
             return None
-        gpg = None
-        if encrypt is not None:
-            gpg = self._gpg()
-            encrypt = self._select_encryption_keys(gpg, encrypt)
-        return ExposedFileWrapper(filename, mode='rb', encrypt=encrypt, gpg=gpg)
+        return ExposedFileWrapper(filename, mode='rb', encrypt=self._encrypt(encrypt))
 
     def exposed_make_selected_file(self, directory=None, filename=None, template=None,
                                    encoding=None, mode='wb', decrypt=False):
@@ -665,7 +679,7 @@ class PytisUserService(PytisService):
         """
         handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
         return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
-                                  decrypt=decrypt, gpg=self._gpg() if decrypt else None)
+                                  decrypt=self._decrypt(decrypt))
 
     def exposed_select_directory(self):
         return self._client.select_directory()
