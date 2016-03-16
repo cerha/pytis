@@ -49,8 +49,11 @@ class ClientSideOperations(object):
     def _try_implementations(self, methods, *args, **kwargs):
         for method in methods:
             try:
-                return method(*args, **kwargs)
+                result = method(*args, **kwargs)
+                #print "Succeeded: %s" % method
+                return result
             except ImportError:
+                #print "Failed: %s" % method
                 pass
         raise Exception(u'Nebyla nalezena žádná použitelná implementace operace.')
 
@@ -62,15 +65,20 @@ class ClientSideOperations(object):
         return x
 
     def _in_wx_app(self, function):
-        def run(*args, **kwargs):
-            import wx
-            app = wx.App(False)
-            try:
-                return function(*args, **kwargs)
-            finally:
-                app.ExitMainLoop()
-                app.Destroy()
-        return run
+        class run(object):
+            # The only reason for this being a class instead of a function
+            # is __str__() to get the orginal method name
+            # in _try_implementations() debug prints.
+            def __str__(self):
+                return str(function)
+            def __call__(self, *args, **kwargs):
+                import wx
+                app = wx.App(False)
+                try:
+                    return function(*args, **kwargs)
+                finally:
+                    app.ExitMainLoop()
+        return run()
 
     def _wx_select_file(self, directory, filename, filters, extension, save, multi):
         import wx
