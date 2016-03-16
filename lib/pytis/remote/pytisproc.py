@@ -319,12 +319,14 @@ class ClientSideOperations(object):
         else:
             return text.rstrip('\r\n')
 
-    def select_option(self, title=u"Výběr položky", columns=(), data=()):
+    def select_option(self, title=u"Výběr položky",
+                      label=u"Zvolte jednu z níže uvedených položek:", columns=(), data=()):
         """Prompt the user to select from a given list of options.
 
         Arguments:
 
           title -- text entry dialog title
+          label -- selection field label
           columns -- sequence of column labels
           data -- sequence of tuples containing the values to be displayed in
             the selection.  The items of each tuple are displayed as one table
@@ -335,7 +337,7 @@ class ClientSideOperations(object):
 
         """
         import PyZenity
-        return PyZenity.List(columns, title=title, data=data)
+        return PyZenity.List(columns, title=title, text=label, data=data)
 
 
 class ExposedFileWrapper(object):
@@ -566,7 +568,8 @@ class PytisUserService(PytisService):
             selected_key = keys[0]['keyid']
         else:
             data = [(k['keyid'], string.join(k['uids']), ', ') for k in keys]
-            answer = self._client.select_option("Vyberte šifrovací klíč",
+            answer = self._client.select_option(title="Výběr šifrovacího klíče",
+                                                label="Vyberte šifrovací klíč",
                                                 columns=(u"Id", u"Uživatel",),
                                                 data=data)
             if not answer:
