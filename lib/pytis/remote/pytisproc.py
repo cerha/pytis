@@ -88,9 +88,11 @@ class ClientSideOperations(object):
         if result != wx.ID_OK:
             return None
         elif multi:
-            return self._unicode(dialog.GetPaths())
+            result = dialog.GetPaths()
         else:
-            return self._unicode(dialog.GetPath())
+            result = dialog.GetPath()
+        dialog.Destroy()
+        return self._unicode(result)
 
     def _win32_select_file(self, directory, filename, filters, extension, save, multi):
         import win32ui
