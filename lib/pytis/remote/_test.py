@@ -24,6 +24,15 @@ import cStringIO as StringIO
 import os
 
 
+class Client(unittest.TestCase):
+
+    def test_clipboard(self):
+        client = pytis.remote.pytisproc.ClientSideOperations()
+        for text in ('foo', u'foo', u'Žluťoučký kůň!'):
+            client.set_clipboard_text(text)
+            self.assertEqual(client.get_clipboard_text(), text)
+
+
 class FileWrapper(unittest.TestCase):
 
     def _encrypt(self, f):
