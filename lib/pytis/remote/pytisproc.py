@@ -193,7 +193,6 @@ class ClientSideOperations(object):
 
     def _wx_select_directory(self, directory):
         import wx
-        app = wx.App(False)
         dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
         result = dialog.ShowModal()
         path = dialog.GetPath()
