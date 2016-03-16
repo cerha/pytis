@@ -370,6 +370,7 @@ class ExposedFileWrapper(object):
         else:
             f = os.fdopen(handle, mode)
         if encrypt is not None:
+            assert mode[0] == 'r', mode
             f = cStringIO.StringIO(encrypt(f))
         if decrypt:
             assert mode[0] != 'r', mode
