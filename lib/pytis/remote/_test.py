@@ -32,6 +32,20 @@ class Client(unittest.TestCase):
             client.set_clipboard_text(text)
             self.assertEqual(client.get_clipboard_text(), text)
 
+    def test_enter_text(self):
+        client = pytis.remote.pytisproc.ClientSideOperations()
+        text = client.enter_text(label='Enter "foo":')
+        self.assertEqual(text, 'foo')
+
+    def test_select_option(self):
+        client = pytis.remote.pytisproc.ClientSideOperations()
+        option = client.select_option(label="Select the second option",
+                                      columns=('Option', 'Description'),
+                                      data=(('First', 'blah...'),
+                                            ('Second', 'blah blah...'),
+                                            ('Third', 'blah blah blah...')))
+        self.assertEqual(option[0], 'Second')
+
 
 class FileWrapper(unittest.TestCase):
 
