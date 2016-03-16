@@ -268,7 +268,7 @@ class ClientSideOperations(object):
     def get_clipboard_text(self):
         """Return the text stored in system clipboard on user's machine."""
         return self._try_implementations((self._win32_get_clipboard_text,
-                                          #self._in_wx_app(self._wx_get_clipboard_text),
+                                          self._in_wx_app(self._wx_get_clipboard_text),
                                           lambda: None))
 
     def _win32_set_clipboard_text(self, text):
@@ -296,7 +296,7 @@ class ClientSideOperations(object):
         """
         assert text is None or isinstance(text, basestring), text
         return self._try_implementations((self._win32_set_clipboard_text,
-                                          #self._in_wx_app(self._wx_set_clipboard_text
+                                          self._in_wx_app(self._wx_set_clipboard_text),
                                           lambda text: None),
                                          text)
 
