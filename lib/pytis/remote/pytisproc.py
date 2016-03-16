@@ -65,20 +65,16 @@ class ClientSideOperations(object):
         return x
 
     def _in_wx_app(self, function):
-        class run(object):
-            # The only reason for this being a class instead of a function
-            # is __str__() to get the orginal method name
-            # in _try_implementations() debug prints.
-            def __str__(self):
-                return str(function)
-            def __call__(self, *args, **kwargs):
-                import wx
-                app = wx.App(False)
-                try:
-                    return function(*args, **kwargs)
-                finally:
-                    app.ExitMainLoop()
-        return run()
+        def run(*args, **kwargs):
+            import wx
+            app = wx.App(False)
+            try:
+                return function(*args, **kwargs)
+            finally:
+                app.ExitMainLoop()
+        # Hack to get the expected method name in _try_implementations debug prints.
+        run.__name__ = function.__name__
+        return run
 
     def _wx_select_file(self, directory, filename, filters, extension, save, multi):
         import wx
