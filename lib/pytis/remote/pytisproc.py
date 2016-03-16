@@ -300,7 +300,7 @@ class ClientSideOperations(object):
                                           lambda text: None),
                                          text)
 
-    def enter_text(self, title="Enter Text", label=None, password=False):
+    def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
 
         Arguments:
@@ -319,7 +319,7 @@ class ClientSideOperations(object):
         else:
             return text.rstrip('\r\n')
 
-    def select_option(self, title="Select", columns=(), data=()):
+    def select_option(self, title=u"Výběr položky", columns=(), data=()):
         """Prompt the user to select from a given list of options.
 
         Arguments:
@@ -566,7 +566,9 @@ class PytisUserService(PytisService):
             selected_key = keys[0]['keyid']
         else:
             data = [(k['keyid'], string.join(k['uids']), ', ') for k in keys]
-            answer = self._client.select_option("Select key", columns=("Id", "Uids",), data=data)
+            answer = self._client.select_option("Vyberte šifrovací klíč",
+                                                columns=(u"Id", u"Uživatel",),
+                                                data=data)
             if not answer:
                 raise Exception("Canceled")
             selected_key = answer[0]
@@ -586,7 +588,9 @@ class PytisUserService(PytisService):
         def decrypt_(encrypted):
             gpg = self._gpg()
             while True:
-                passphrase = self._client.enter_text("Decryption key password", password=True)
+                passphrase = self._client.enter_text(u"Zadejte heslo",
+                                                     label=u"Heslo k dešifrovacímu klíči",
+                                                     password=True)
                 if passphrase is None:
                     return ''
                 decrypted = gpg.decrypt(encrypted, passphrase=passphrase).data
