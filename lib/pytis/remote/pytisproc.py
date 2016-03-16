@@ -335,7 +335,7 @@ class ClientSideOperations(object):
 
         """
         import PyZenity
-        answer = PyZenity.List(columns, title=title, data=data)
+        return PyZenity.List(columns, title=title, data=data)
 
 
 class ExposedFileWrapper(object):
