@@ -85,7 +85,7 @@ class ClientSideOperations(object):
             style |= wx.OPEN
         if multi:
             style |= wx.MULTIPLE
-        dialog = wx.FileDialog(None, defaultDir=directory, defaultFile=filename or '',
+        dialog = wx.FileDialog(None, defaultDir=directory or '', defaultFile=filename or '',
                                wildcard='|'.join(["%s|%s" % item for item in filters]),
                                style=style)
         result = dialog.ShowModal()
