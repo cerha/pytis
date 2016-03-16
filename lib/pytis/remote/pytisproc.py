@@ -319,7 +319,7 @@ class ClientSideOperations(object):
         else:
             return text.rstrip('\r\n')
 
-    def select_option(title="Select", columns=(), data=()):
+    def select_option(self, title="Select", columns=(), data=()):
         """Prompt the user to select from a given list of options.
 
         Arguments:
