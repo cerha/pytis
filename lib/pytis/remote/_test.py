@@ -46,6 +46,22 @@ class Client(unittest.TestCase):
                                             ('Third', 'blah blah blah...')))
         self.assertEqual(option[0], 'Second')
 
+    def test_select_directory(self):
+        client = pytis.remote.pytisproc.ClientSideOperations()
+        directory = client.select_directory()
+        option = client.select_option(label='You selected "%s"' % directory,
+                                      columns=('Confirm',),
+                                      data=(('Yes',), ('No',)))
+        self.assertEqual(option[0], 'Yes')
+
+    def test_select_file(self):
+        client = pytis.remote.pytisproc.ClientSideOperations()
+        filename = client.select_file()
+        option = client.select_option(label='You selected "%s"' % filename,
+                                      columns=('Confirm',),
+                                      data=(('Yes',), ('No',)))
+        self.assertEqual(option[0], 'Yes')
+
 
 class FileWrapper(unittest.TestCase):
 
