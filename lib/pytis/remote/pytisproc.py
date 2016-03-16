@@ -67,11 +67,11 @@ class ClientSideOperations(object):
     def _in_wx_app(self, function):
         def run(*args, **kwargs):
             import wx
-            app = wx.App(False)
-            try:
-                return function(*args, **kwargs)
-            finally:
-                app.ExitMainLoop()
+            class App(wx.App):
+                def OnInit(self):
+                    self.result = function(*args, **kwargs)
+                    return True
+            return App(False).result
         # Hack to get the expected method name in _try_implementations debug prints.
         run.__name__ = function.__name__
         return run
