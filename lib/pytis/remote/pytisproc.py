@@ -347,7 +347,7 @@ class ExposedFileWrapper(object):
 
     """
     def __init__(self, filename, mode='r', handle=None, encoding=None,
-                 encrypt=None, decrypt=False, gpg=None):
+                 encrypt=None, decrypt=False):
         """Arguments:
 
         filename -- name of the underlying file on client's filesystem.
