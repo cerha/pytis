@@ -3313,8 +3313,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         # argument list.
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
         expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
-        return sqlalchemy.sql.expression.literal_column(expression,
-                                                        type_=self.result_type.sqlalchemy_type())
+        result_type = self.result_type
+        if result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
+            return sqlalchemy.sql.expression.TextClause(expression)
+        else:
+            return sqlalchemy.sql.expression.literal_column(expression,
+                                                            type_=result_type.sqlalchemy_type())
 
     def body(self):
         """Return function body as basestring.
