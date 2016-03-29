@@ -33,317 +33,7 @@ import time
 
 import rpyc
 
-class ClientSideOperations(object):
-    """Implement protable operations running on the client side.
-
-    Various client side operations, such as running file selection dialogs are
-    implemented by this class.  We don't want to be very strict on client side
-    requirements, so we usually try several libraries or approaches which may
-    solve the same problem on different platforms and configurations.
-
-    Defined as a separate class to allow standalone testing on different
-    platforms without rpyc communication.
-
-    """
-
-    def _try_implementations(self, methods, *args, **kwargs):
-        for method in methods:
-            try:
-                result = method(*args, **kwargs)
-                #print "Succeeded: %s" % method
-                return result
-            except ImportError:
-                #print "Failed: %s" % method
-                pass
-        raise Exception(u'Nebyla nalezena žádná použitelná implementace operace.')
-
-    def _unicode(self, x):
-        if isinstance(x, (tuple, list)):
-            x = [self._unicode(y) for y in x]
-        elif not isinstance(x, unicode) and x is not None:
-            x = unicode(x, sys.getfilesystemencoding())
-        return x
-
-    def _in_wx_app(self, function):
-        def run(*args, **kwargs):
-            import wx
-            class App(wx.App):
-                def OnInit(self):
-                    self.result = function(*args, **kwargs)
-                    return True
-            return App(False).result
-        # Hack to get the expected method name in _try_implementations debug prints.
-        run.__name__ = function.__name__
-        return run
-
-    def _wx_select_file(self, directory, filename, filters, extension, save, multi):
-        import wx
-        style = 0
-        if save:
-            style |= wx.SAVE | wx.OVERWRITE_PROMPT
-        else:
-            style |= wx.OPEN
-        if multi:
-            style |= wx.MULTIPLE
-        dialog = wx.FileDialog(None, defaultDir=directory or '', defaultFile=filename or '',
-                               wildcard='|'.join(["%s|%s" % item for item in filters]),
-                               style=style)
-        result = dialog.ShowModal()
-        if result != wx.ID_OK:
-            return None
-        elif multi:
-            result = dialog.GetPaths()
-        else:
-            result = dialog.GetPath()
-        dialog.Destroy()
-        return self._unicode(result)
-
-    def _win32_select_file(self, directory, filename, filters, extension, save, multi):
-        import win32ui
-        import win32con
-        flags = win32con.OFN_HIDEREADONLY
-        if save:
-            flags |= win32con.OFN_OVERWRITEPROMPT
-            mode = 0
-        else:
-            mode = 1
-        if multi:
-            flags |= win32con.OFN_ALLOWMULTISELECT
-        # This hack with finding non-specified windows is used so that
-        # we get some parent window for CreateFileDialog.
-        # Without this parent windows the method DoModal doesn't show
-        # the dialog window on top...
-        parent = win32ui.FindWindow(None, None)
-        dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename, flags,
-                                          '|'.join(["%s|%s" % item for item in filters]) + '||',
-                                          parent)
-        if directory:
-            dialog.SetOFNInitialDir(directory)
-        result = dialog.DoModal()
-        if result != 1:
-            return None
-        if multi:
-            return self._unicode(dialog.GetPathNames())
-        else:
-            return self._unicode(dialog.GetPathName())
-
-    def _tk_select_file(self, directory, filename, filters, extension, save, multi):
-        import Tkinter
-        import tkFileDialog
-        root = Tkinter.Tk()
-        root.withdraw()
-        result = tkFileDialog.askopenfilename(parent=root, initialdir=directory,
-                                              initialfile=filename,
-                                              defaultextension=extension, multiple=multi)
-        filenames = root.tk.splitlist(result)
-        root = None
-        if multi:
-            return self._unicode(filenames)
-        else:
-            return self._unicode(result)
-
-    def _zenity_select_file(self, directory, filename, filters, extension, save, multi):
-        args = ['zenity', '--file-selection']
-        if directory is not None:
-            filename = os.path.join(directory, filename or '')
-        if filename is not None:
-            args.extend(('--filename', filename,))
-        for title, pattern in filters:
-            args.extend(('--file-filter', pattern,))
-        if save:
-            args.append('--save')
-        try:
-            output = subprocess.check_output(args)
-        except subprocess.CalledProcessError:
-            return None
-        return self._unicode(output.rstrip('\r\n'))
-
-    def select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
-        """Return the file name(s) of user selected file(s).
-
-        The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
-
-        Arguments:
-
-          directory -- initial directory for the dialog
-          filename -- default filename or None
-          template -- a string defining the required file name pattern, or 'None'
-          save -- True iff the file is to be open for writing
-          multi -- iff true, allow selecting multiple files (not possible when save is True)
-
-        """
-        assert directory is None or isinstance(directory, basestring), directory
-        assert filename is None or isinstance(filename, basestring), filename
-        assert template is None or isinstance(template, basestring), template
-        assert isinstance(save, bool), save
-        assert isinstance(multi, bool), multi
-        assert not (save and multi), (save, multi)
-        extension = None
-        filters = [(u"Všechny soubory (*.*)", "*.*")]
-        if filename:
-            name, ext = os.path.splitext(filename)
-            if ext:
-                template = "*" + ext
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-                extension = ext[1:]
-        else:
-            filename = "*.*"
-            if template:
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        return self._try_implementations((self._in_wx_app(self._wx_select_file),
-                                          self._tk_select_file,
-                                          self._win32_select_file,
-                                          self._zenity_select_file),
-                                         directory, filename, filters, extension, save, multi)
-
-    def _wx_select_directory(self, directory):
-        import wx
-        dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
-        result = dialog.ShowModal()
-        path = dialog.GetPath()
-        dialog.Destroy()
-        if result == wx.ID_OK:
-            return self._unicode(path)
-        else:
-            return None
-
-    def _win32_select_directory(self, directory):
-        import win32gui
-        from win32com.shell import shell, shellcon
-        def callback(hwnd, msg, lp, data):
-            if msg == shellcon.BFFM_INITIALIZED:
-                win32gui.SendMessage(hwnd, shellcon.BFFM_SETSELECTION, 1, directory);
-        pidl, dname, imglist = shell.SHBrowseForFolder(
-            win32gui.GetDesktopWindow(),
-            # Get PIDL of the topmost folder for the dialog
-            shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0),
-            u"Výběr adresáře",
-            0,
-            callback,
-            None,
-        )
-        # Transform PIDL back to a directory name and return it
-        return shell.SHGetPathFromIDList(pidl)
-
-    def _zenity_select_directory(self, directory):
-        import PyZenity as zenity
-        directory_list = zenity.GetDirectory(selected=directory)
-        if directory_list and len(directory_list) > 0:
-            return directory_list[0]
-        else:
-            return None
-
-    def select_directory(self, directory=None):
-        """Return the name of user selected directory.
-
-        The directory is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
-
-        Arguments:
-
-          directory -- initial directory for the dialog
-
-        """
-        assert directory is None or isinstance(directory, basestring), directory
-        return self._try_implementations((self._in_wx_app(self._wx_select_directory),
-                                          self._win32_select_directory,
-                                          self._zenity_select_directory),
-                                         directory)
-
-    def _win32_get_clipboard_text(self):
-        import win32clipboard
-        win32clipboard.OpenClipboard()
-        try:
-            data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
-        except: # may happen when there is no clipboard data
-            data = None
-        win32clipboard.CloseClipboard()
-        return data
-
-    def _wx_get_clipboard_text(self):
-        import wx
-        if wx.TheClipboard.Open():
-            data = wx.TextDataObject()
-            success = wx.TheClipboard.GetData(data)
-            wx.TheClipboard.Close()
-            if success:
-                return data.GetText()
-
-    def get_clipboard_text(self):
-        """Return the text stored in system clipboard on user's machine."""
-        return self._try_implementations((self._win32_get_clipboard_text,
-                                          self._in_wx_app(self._wx_get_clipboard_text),
-                                          lambda: None))
-
-    def _win32_set_clipboard_text(self, text):
-        import win32clipboard
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
-        win32clipboard.CloseClipboard()
-
-    def _wx_set_clipboard_text(self, text):
-        import wx
-        if wx.TheClipboard.Open():
-            data = wx.TextDataObject()
-            data.SetText(text)
-            wx.TheClipboard.SetData(data)
-            wx.TheClipboard.Close()
-
-    def set_clipboard_text(self, text):
-        """Store given text in system clipboard on user's machine.
-
-        Arguments:
-
-          text -- the text to be stored in the clipboard.
-
-        """
-        assert text is None or isinstance(text, basestring), text
-        return self._try_implementations((self._win32_set_clipboard_text,
-                                          self._in_wx_app(self._wx_set_clipboard_text),
-                                          lambda text: None),
-                                         text)
-
-    def enter_text(self, title=u"Zadejte text", label=None, password=False):
-        """Prompt the user to enter text and return the text.
-
-        Arguments:
-
-          title -- text entry dialog title
-          label -- text field label; If None, title is used
-          password -- if True, text entered should be hidden by stars
-
-        """
-        import PyZenity
-        if label is None:
-            label = title
-        text = PyZenity.GetText(title=title, text=label, password=password)
-        if text is None:
-            return None
-        else:
-            return text.rstrip('\r\n')
-
-    def select_option(self, title=u"Výběr položky",
-                      label=u"Zvolte jednu z níže uvedených položek:", columns=(), data=()):
-        """Prompt the user to select from a given list of options.
-
-        Arguments:
-
-          title -- text entry dialog title
-          label -- selection field label
-          columns -- sequence of column labels
-          data -- sequence of tuples containing the values to be displayed in
-            the selection.  The items of each tuple are displayed as one table
-            row.  Thus the length of each tuple must match the number of
-            columns.
-
-        Returns the tuple matching the selected row.
-
-        """
-        import PyZenity
-        return PyZenity.List(columns, title=title, text=label, data=data)
-
+from .clientui import ClientUIBackend
 
 class ExposedFileWrapper(object):
     """Exposed 'file' like object.
@@ -508,7 +198,7 @@ class PytisUserService(PytisService):
 
     def __init__(self, *args, **kwargs):
         self._gpg_instance = None
-        self._client = ClientSideOperations()
+        self._client = ClientUIBackend()
         super(PytisUserService, self).__init__(*args, **kwargs)
 
     def exposed_restart(self):
@@ -536,7 +226,6 @@ class PytisUserService(PytisService):
         """
         assert isinstance(text, unicode), text
         return self._client.set_clipboard_text(text)
-
 
     def exposed_launch_file(self, path):
         """Start associated application on path.
@@ -573,20 +262,19 @@ class PytisUserService(PytisService):
             selected_key = keys[0]['keyid']
         else:
             data = [(k['keyid'], string.join(k['uids']), ', ') for k in keys]
-            answer = self._client.select_option(title="Výběr šifrovacího klíče",
-                                                label="Vyberte šifrovací klíč",
-                                                columns=(u"Id", u"Uživatel",),
-                                                data=data)
+            selected_key = self._client.select_option(title="Výběr šifrovacího klíče",
+                                                      label="Vyberte šifrovací klíč",
+                                                      columns=(u"Id", u"Uživatel",),
+                                                      data=data)
             if not answer:
                 raise Exception("Canceled")
-            selected_key = answer[0]
         return [selected_key]
 
     def _encrypt(self, keys):
         def encrypt(f):
             gpg = self._gpg()
-            keys = self._select_encryption_keys(gpg, keys)
-            return str(gpg.encrypt_file(f, keys))
+            selected_keys = self._select_encryption_keys(gpg, keys)
+            return str(gpg.encrypt_file(f, selected_keys))
         if keys is not None:
             return encrypt
         else:
