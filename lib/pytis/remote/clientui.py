@@ -262,9 +262,8 @@ class WxUIBackend(ClientUIBackend):
         dialog = wx.FileDialog(None, defaultDir=directory or '', defaultFile=filename or '',
                                wildcard='|'.join(["%s|%s" % item for item in filters]),
                                style=style)
-        result = dialog.ShowModal()
-        if result != wx.ID_OK:
-            return None
+        if dialog.ShowModal() != wx.ID_OK:
+            result = None
         elif multi:
             result = dialog.GetPaths()
         else:
