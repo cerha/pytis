@@ -240,6 +240,10 @@ class WxUIBackend(ClientUIBackend):
     @_in_wx_app
     def _select_option(self, title, label, columns, data, return_column):
         import wx
+        # TODO: The column labels are not displayed and columns may not be aligned properly,
+        # but is this really necessary for the puropse where it is used (encryption key
+        # selection in 'pytis.remote.PytisService')?  Maybe the definition of
+        # 'select_option()' should be simplified.
         dialog = wx.SingleChoiceDialog(None, message=label, caption=title,
                                        choices=['\t'.join(item) for item in data])
         if dialog.ShowModal() != wx.ID_OK:
