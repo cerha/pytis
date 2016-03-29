@@ -426,7 +426,7 @@ class ZenityUIBackend(ClipboardUIBackend):
             args.extend(row)
         answer = self._run_zenity('--list', '--title', title, '--text', label,
                                   '--print-column', str(return_column), *args)
-        if '|' in answer:
+        if answer and '|' in answer:
             # This is a bug in version 3.8.0.
             answer = answer.split('|')[0]
         return answer
