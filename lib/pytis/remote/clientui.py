@@ -92,7 +92,7 @@ class ClientUIBackend(object):
                                                extension, save, multi))
 
     def _select_file(self, directory, filename, filters, extension, save, multi):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def select_directory(self, directory=None):
         """Return the name of user selected directory.
@@ -109,14 +109,14 @@ class ClientUIBackend(object):
         return self._unicode(self._select_directory(directory))
 
     def _select_directory(self, directory):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_clipboard_text(self):
         """Return the text stored in system clipboard on user's machine."""
         return self._get_clipboard_text()
 
     def _get_clipboard_text(self, directory):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_clipboard_text(self, text):
         """Store given text in system clipboard on user's machine.
@@ -130,7 +130,7 @@ class ClientUIBackend(object):
         return self._set_clipboard_text(text)
 
     def _set_clipboard_text(self, text):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
