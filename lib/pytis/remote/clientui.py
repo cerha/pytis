@@ -398,36 +398,6 @@ class TkUIBackend(ClipboardUIBackend):
             return result
 
 
-class PyZenityUIBackend(ClipboardUIBackend):
-
-    def __init__(self):
-        try:
-            import PyZenity
-        except ImportError as e:
-            raise BackendNotAvailable(e)
-        super(PyZenityUIBackend, self).__init__()
-
-    def _select_directory(self, title, directory):
-        import PyZenity
-        directory_list = PyZenity.GetDirectory(title=title, selected=directory)
-        if directory_list and len(directory_list) > 0:
-            return directory_list[0]
-        else:
-            return None
-
-    def _enter_text(self, title, label, password):
-        import PyZenity
-        text = PyZenity.GetText(title=title, text=label, password=password)
-        if text is None:
-            return None
-        else:
-            return text.rstrip('\r\n')
-
-    def _select_option(self, title, label, columns, data, return_column):
-        import PyZenity
-        return PyZenity.List(columns, title=title, text=label, data=data)
-
-
 class ZenityUIBackend(ClipboardUIBackend):
 
     def __init__(self):
@@ -480,3 +450,46 @@ class ZenityUIBackend(ClipboardUIBackend):
         if directory is not None:
             args.extend(('--filename', directory,))
         return self._run_zenity('--file-selection', '--title', title, '--directory', *args)
+
+
+class PyZenityUIBackend(ClipboardUIBackend):
+    # This backend is unused because it only adds another dependency
+    # compared to 'ZenityUIBackend'.
+
+    def __init__(self):
+        try:
+            import PyZenity
+        except ImportError as e:
+            raise BackendNotAvailable(e)
+        super(PyZenityUIBackend, self).__init__()
+
+    def _enter_text(self, title, label, password):
+        import PyZenity
+        text = PyZenity.GetText(title=title, text=label, password=password)
+        if text is None:
+            return None
+        else:
+            return text.rstrip('\r\n')
+
+    def _select_option(self, title, label, columns, data, return_column):
+        import PyZenity
+        return PyZenity.List(columns, title=title, text=label, data=data)
+
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+        import PyZenity
+        # TODO: Pass the remaining arguments (undocumented in PyZenity).
+        files = PyZenity.GetFilename(title=title, multiple=multi)
+        if not files:
+            return None
+        elif not multi:
+            return files[0]
+        else:
+            return files
+
+    def _select_directory(self, title, directory):
+        import PyZenity
+        directory_list = PyZenity.GetDirectory(title=title, selected=directory)
+        if directory_list and len(directory_list) > 0:
+            return directory_list[0]
+        else:
+            return None
