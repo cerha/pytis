@@ -211,8 +211,8 @@ class WxUIBackend(ClientUIBackend):
     def __init__(self):
         try:
             import wx
-        except ImportError:
-            raise BackendNotAvailable("Python module 'wx' not installed.")
+        except ImportError as e:
+            raise BackendNotAvailable(e)
 
     def _in_wx_app(method):
         def run(*args, **kwargs):
@@ -285,8 +285,10 @@ class Win32UIBackend(ClientUIBackend):
         try:
             import win32ui
             import win32con
-        except ImportError:
-            raise BackendNotAvailable("Python module 'win32ui' not available.")
+            import win32gui
+            import win32clipboard
+        except ImportError as e:
+            raise BackendNotAvailable(e)
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
@@ -358,8 +360,8 @@ class TkUIBackend(ClientUIBackend):
     def __init__(self):
         try:
             import Tkinter
-        except ImportError:
-            raise BackendNotAvailable("Python module 'Tkinter' not installed.")
+        except ImportError as e:
+            raise BackendNotAvailable(e)
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
@@ -382,8 +384,8 @@ class PyZenityUIBackend(ClientUIBackend):
     def __init__(self):
         try:
             import PyZenity
-        except ImportError:
-            raise BackendNotAvailable("Python module 'PyZenity' not installed.")
+        except ImportError as e:
+            raise BackendNotAvailable(e)
 
     def _select_directory(self, title, directory):
         import PyZenity
