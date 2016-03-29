@@ -450,6 +450,8 @@ class ZenityUIBackend(ClientUIBackend):
             args.extend(('--file-filter', pattern,))
         if save:
             args.append('--save')
+        if multi:
+            args.append('--multiple')
         return self._run_zenity('--file-selection', '--title', title, *args)
 
     def _select_directory(self, title, directory):
