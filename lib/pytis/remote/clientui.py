@@ -55,7 +55,8 @@ class ClientUIBackend(object):
     def ok(cls):
         return False
 
-    def select_file(self, directory=None, filename=None, template=None, save=False, multi=False):
+    def select_file(self, title=None, directory=None, filename=None, template=None,
+                    save=False, multi=False):
         """Return the file name(s) of user selected file(s).
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -63,6 +64,7 @@ class ClientUIBackend(object):
 
         Arguments:
 
+          title -- dialog title
           directory -- initial directory for the dialog
           filename -- default filename or None
           template -- a string defining the required file name pattern, or 'None'
@@ -70,12 +72,20 @@ class ClientUIBackend(object):
           multi -- iff true, allow selecting multiple files (not possible when save is True)
 
         """
+        assert isinstance(title, basestring), title
         assert directory is None or isinstance(directory, basestring), directory
         assert filename is None or isinstance(filename, basestring), filename
         assert template is None or isinstance(template, basestring), template
         assert isinstance(save, bool), save
         assert isinstance(multi, bool), multi
         assert not (save and multi), (save, multi)
+        if title is None:
+            if save:
+                title = u"Uložit soubor"
+            elif multi:
+                title = u"Výběr souborů"
+            else:
+                title = u"Výběr souboru"
         extension = None
         filters = [(u"Všechny soubory (*.*)", "*.*")]
         if filename:
@@ -88,13 +98,13 @@ class ClientUIBackend(object):
             filename = "*.*"
             if template:
                 filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        return self._unicode(self._select_file(directory, filename, filters,
+        return self._unicode(self._select_file(title, directory, filename, filters,
                                                extension, save, multi))
 
-    def _select_file(self, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
         raise NotImplementedError()
 
-    def select_directory(self, directory=None):
+    def select_directory(self, title=u"Výběr adresáře", directory=None):
         """Return the name of user selected directory.
 
         The directory is selected by the user using a GUI dialog.  If the user
@@ -105,10 +115,11 @@ class ClientUIBackend(object):
           directory -- initial directory for the dialog
 
         """
+        assert isinstance(title, basestring), title
         assert directory is None or isinstance(directory, basestring), directory
-        return self._unicode(self._select_directory(directory))
+        return self._unicode(self._select_directory(title, directory))
 
-    def _select_directory(self, directory):
+    def _select_directory(self, title, directory):
         raise NotImplementedError()
 
     def get_clipboard_text(self):
@@ -194,7 +205,7 @@ class WxUIBackend(ClientUIBackend):
         return run
 
     @_in_wx_app
-    def _select_file(self, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import wx
         style = 0
         if save:
@@ -217,7 +228,7 @@ class WxUIBackend(ClientUIBackend):
         return result
 
     @_in_wx_app
-    def _select_directory(self, directory):
+    def _select_directory(self, title, directory):
         import wx
         dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
         result = dialog.ShowModal()
@@ -260,7 +271,7 @@ class Win32UIBackend(ClientUIBackend):
         else:
             return win32ui and win32con and True
 
-    def _select_file(self, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
         import win32con
         flags = win32con.OFN_HIDEREADONLY
@@ -289,7 +300,7 @@ class Win32UIBackend(ClientUIBackend):
         else:
             return dialog.GetPathName()
 
-    def _select_directory(self, directory):
+    def _select_directory(self, title, directory):
         import win32gui
         from win32com.shell import shell, shellcon
         def callback(hwnd, msg, lp, data):
@@ -299,7 +310,7 @@ class Win32UIBackend(ClientUIBackend):
             win32gui.GetDesktopWindow(),
             # Get PIDL of the topmost folder for the dialog
             shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0),
-            u"Výběr adresáře",
+            title,
             0,
             callback,
             None,
@@ -336,7 +347,7 @@ class TkUIBackend(ClientUIBackend):
         else:
             return Tkinter and True
 
-    def _select_file(self, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
         import tkFileDialog
         root = Tkinter.Tk()
@@ -363,7 +374,7 @@ class ZenityUIBackend(ClientUIBackend):
         else:
             return PyZenity and True
 
-    def _select_file(self, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, filters, extension, save, multi):
         args = ['zenity', '--file-selection']
         if directory is not None:
             filename = os.path.join(directory, filename or '')
@@ -379,7 +390,7 @@ class ZenityUIBackend(ClientUIBackend):
             return None
         return output.rstrip('\r\n')
 
-    def _select_directory(self, directory):
+    def _select_directory(self, title, directory):
         import PyZenity as zenity
         directory_list = zenity.GetDirectory(selected=directory)
         if directory_list and len(directory_list) > 0:
