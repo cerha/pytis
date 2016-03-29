@@ -19,48 +19,63 @@
 
 import unittest
 import pytis.remote.pytisproc
+import pytis.remote.clientui
 import tempfile
 import cStringIO as StringIO
 import os
 
+class ClientUIBackend(unittest.TestCase):
+    _BACKEND = None
 
-class Client(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if cls._BACKEND is None:
+            raise unittest.SkipTest('')
+        cls._backend = cls._BACKEND()
 
     def test_clipboard(self):
-        client = pytis.remote.pytisproc.ClientSideOperations()
         for text in ('foo', u'foo', u'Žluťoučký kůň!'):
-            client.set_clipboard_text(text)
-            self.assertEqual(client.get_clipboard_text(), text)
+            self._backend.set_clipboard_text(text)
+            self.assertEqual(self._backend.get_clipboard_text(), text)
 
     def test_enter_text(self):
-        client = pytis.remote.pytisproc.ClientSideOperations()
-        text = client.enter_text(label='Enter "foo":')
+        text = self._backend.enter_text(label='Enter "foo":')
         self.assertEqual(text, 'foo')
 
     def test_select_option(self):
-        client = pytis.remote.pytisproc.ClientSideOperations()
-        option = client.select_option(label="Select the second option",
-                                      columns=('Option', 'Description'),
-                                      data=(('First', 'blah...'),
-                                            ('Second', 'blah blah...'),
-                                            ('Third', 'blah blah blah...')))
-        self.assertEqual(option[0], 'Second')
+        answer = self._backend.select_option(label="Select the second option",
+                                             columns=('Option', 'Description'),
+                                             data=(('First', 'blah...'),
+                                                   ('Second', 'blah blah...'),
+                                                   ('Third', 'blah blah blah...')))
+        self.assertEqual(answer, 'Second')
 
     def test_select_directory(self):
-        client = pytis.remote.pytisproc.ClientSideOperations()
-        directory = client.select_directory()
-        option = client.select_option(label='You selected "%s"' % directory,
+        directory = self._backend.select_directory()
+        answer = self._backend.select_option(label='You selected "%s"' % directory,
                                       columns=('Confirm',),
                                       data=(('Yes',), ('No',)))
-        self.assertEqual(option[0], 'Yes')
+        self.assertEqual(answer, 'Yes')
 
     def test_select_file(self):
-        client = pytis.remote.pytisproc.ClientSideOperations()
-        filename = client.select_file()
-        option = client.select_option(label='You selected "%s"' % filename,
-                                      columns=('Confirm',),
-                                      data=(('Yes',), ('No',)))
-        self.assertEqual(option[0], 'Yes')
+        filename = self._backend.select_file()
+        answer = self._backend.select_option(label='You selected "%s"' % filename,
+                                     columns=('Confirm',),
+                                     data=(('Yes',), ('No',)))
+        self.assertEqual(answer, 'Yes')
+
+
+class WxUIBackend(ClientUIBackend):
+    _BACKEND = pytis.remote.clientui.WxUIBackend
+
+class TkUIBackend(ClientUIBackend):
+    _BACKEND = pytis.remote.clientui.TkUIBackend
+
+class ZenityUIBackend(ClientUIBackend):
+    _BACKEND = pytis.remote.clientui.ZenityUIBackend
+
+class Win32UIBackend(ClientUIBackend):
+    _BACKEND = pytis.remote.clientui.Win32UIBackend
 
 
 class FileWrapper(unittest.TestCase):
