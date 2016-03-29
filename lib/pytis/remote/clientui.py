@@ -225,6 +225,19 @@ class WxUIBackend(ClientUIBackend):
         return run
 
     @_in_wx_app
+    def _enter_text(self, title, label, password):
+        import wx
+        if password:
+            cls = wx.PasswordEntryDialog
+        else:
+            cls = wx.TextEntryDialog
+        dialog = cls(None, message=label, caption=title)
+        dialog.ShowModal()
+        result = dialog.GetValue()
+        dialog.Destroy()
+        return result
+
+    @_in_wx_app
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import wx
         style = 0
