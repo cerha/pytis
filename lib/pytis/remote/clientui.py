@@ -55,6 +55,58 @@ class ClientUIBackend(object):
     def ok(cls):
         return False
 
+    def enter_text(self, title=u"Zadejte text", label=None, password=False):
+        """Prompt the user to enter text and return the text.
+
+        Arguments:
+
+          title -- text entry dialog title
+          label -- text field label; If None, title is used
+          password -- if True, text entered should be hidden by stars
+
+        """
+        assert isinstance(title, basestring), title
+        assert label is None or isinstance(label, basestring), label
+        assert isinstance(password, bool), password
+        if label is None:
+            label = title
+        return self._enter_text(title, label, password)
+
+    def _enter_text(self, title, label, password):
+        raise NotImplementedError()
+
+    def select_option(self, title=u"Výběr položky",
+                      label=u"Zvolte jednu z níže uvedených položek:",
+                      columns=(), data=(), return_column=1):
+        """Prompt the user to select from a given list of options.
+
+        Arguments:
+
+          title -- text entry dialog title
+          label -- selection field label
+          columns -- sequence of column labels
+          data -- sequence of tuples containing the values to be displayed in
+            the selection.  The items of each tuple are displayed as one table
+            row.  Thus the length of each tuple must match the number of
+            columns.
+          return_column -- number of column (beginning from one).  The value
+            of this column in the selected row will be returned.
+
+        Returns the value of 'return_column' in the selected row or None if
+        nothing selected.
+
+        """
+        assert isinstance(title, basestring), title
+        assert label is None or isinstance(label, basestring), label
+        assert isinstance(columns, (tuple, list)), columns
+        assert isinstance(data, (tuple, list)), data
+        assert isinstance(return_column, int) \
+            and return_column >= 1 and return_column <= len(columns), return_column
+        return self._select_option(title, label, columns, data, return_column)
+
+    def _select_option(self, title, label, columns, data, return_column):
+        raise NotImplementedError()
+
     def select_file(self, title=None, directory=None, filename=None, template=None,
                     save=False, multi=False):
         """Return the file name(s) of user selected file(s).
@@ -142,45 +194,6 @@ class ClientUIBackend(object):
 
     def _set_clipboard_text(self, text):
         raise NotImplementedError()
-
-    def enter_text(self, title=u"Zadejte text", label=None, password=False):
-        """Prompt the user to enter text and return the text.
-
-        Arguments:
-
-          title -- text entry dialog title
-          label -- text field label; If None, title is used
-          password -- if True, text entered should be hidden by stars
-
-        """
-        import PyZenity
-        if label is None:
-            label = title
-        text = PyZenity.GetText(title=title, text=label, password=password)
-        if text is None:
-            return None
-        else:
-            return text.rstrip('\r\n')
-
-    def select_option(self, title=u"Výběr položky",
-                      label=u"Zvolte jednu z níže uvedených položek:", columns=(), data=()):
-        """Prompt the user to select from a given list of options.
-
-        Arguments:
-
-          title -- text entry dialog title
-          label -- selection field label
-          columns -- sequence of column labels
-          data -- sequence of tuples containing the values to be displayed in
-            the selection.  The items of each tuple are displayed as one table
-            row.  Thus the length of each tuple must match the number of
-            columns.
-
-        Returns the tuple matching the selected row.
-
-        """
-        import PyZenity
-        return PyZenity.List(columns, title=title, text=label, data=data)
 
 
 class WxUIBackend(ClientUIBackend):
