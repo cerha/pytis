@@ -437,7 +437,7 @@ class ZenityUIBackend(ClipboardUIBackend):
             filename = os.path.join(directory, filename or '')
         if filename is not None:
             args.extend(('--filename', filename,))
-        for title, pattern in filters:
+        for name, pattern in filters:
             args.extend(('--file-filter', pattern,))
         if save:
             args.append('--save')
