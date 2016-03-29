@@ -363,7 +363,7 @@ class TkUIBackend(ClientUIBackend):
             return result
 
 
-class ZenityUIBackend(ClientUIBackend):
+class PyZenityUIBackend(ClientUIBackend):
 
     @classmethod
     def ok(cls):
@@ -374,8 +374,61 @@ class ZenityUIBackend(ClientUIBackend):
         else:
             return PyZenity and True
 
+    def _select_directory(self, title, directory):
+        import PyZenity
+        directory_list = PyZenity.GetDirectory(title=title, selected=directory)
+        if directory_list and len(directory_list) > 0:
+            return directory_list[0]
+        else:
+            return None
+
+    def _enter_text(self, title, label, password):
+        import PyZenity
+        text = PyZenity.GetText(title=title, text=label, password=password)
+        if text is None:
+            return None
+        else:
+            return text.rstrip('\r\n')
+
+    def _select_option(self, title, label, columns, data, return_column):
+        import PyZenity
+        return PyZenity.List(columns, title=title, text=label, data=data)
+
+
+class ZenityUIBackend(ClientUIBackend):
+
+    @classmethod
+    def ok(cls):
+        return cls._run_zenity('--version') is not None
+
+    @classmethod
+    def _run_zenity(cls, *args):
+        import subprocess
+        try:
+            output = subprocess.check_output(('zenity',) + args)
+        except subprocess.CalledProcessError:
+            return None
+        return output.rstrip('\r\n')
+
+    def _enter_text(self, title, label, password):
+        args = ('--password',) if password else ()
+        return self._run_zenity('--entry', '--title', title, '--text', label, *args)
+
+    def _select_option(self, title, label, columns, data, return_column):
+        args = []
+        for column in columns:
+            args.extend(('--column', column))
+        for row in data:
+            args.extend(row)
+        answer = self._run_zenity('--list', '--title', title, '--text', label,
+                                  '--print-column', str(return_column), *args)
+        if '|' in answer:
+            # This is a bug in version 3.8.0.
+            answer = answer.split('|')[0]
+        return answer
+
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
-        args = ['zenity', '--file-selection']
+        args = []
         if directory is not None:
             filename = os.path.join(directory, filename or '')
         if filename is not None:
@@ -384,16 +437,10 @@ class ZenityUIBackend(ClientUIBackend):
             args.extend(('--file-filter', pattern,))
         if save:
             args.append('--save')
-        try:
-            output = subprocess.check_output(args)
-        except subprocess.CalledProcessError:
-            return None
-        return output.rstrip('\r\n')
+        return self._run_zenity('--file-selection', '--title', title, *args)
 
     def _select_directory(self, title, directory):
-        import PyZenity as zenity
-        directory_list = zenity.GetDirectory(selected=directory)
-        if directory_list and len(directory_list) > 0:
-            return directory_list[0]
-        else:
-            return None
+        args = []
+        if directory is not None:
+            args.extend(('--filename', directory,))
+        return self._run_zenity('--file-selection', '--title', title, '--directory', *args)
