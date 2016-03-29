@@ -238,6 +238,18 @@ class WxUIBackend(ClientUIBackend):
         return result
 
     @_in_wx_app
+    def _select_option(self, title, label, columns, data, return_column):
+        import wx
+        dialog = wx.SingleChoiceDialog(None, message=label, caption=title,
+                                       choices=['\t'.join(item) for item in data])
+        if dialog.ShowModal() != wx.ID_OK:
+            result = None
+        else:
+            result = data[dialog.GetSelection()][return_column - 1]
+        dialog.Destroy()
+        return result
+
+    @_in_wx_app
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import wx
         style = 0
