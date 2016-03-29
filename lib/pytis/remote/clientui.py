@@ -275,13 +275,12 @@ class WxUIBackend(ClientUIBackend):
     def _select_directory(self, title, directory):
         import wx
         dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
-        result = dialog.ShowModal()
-        path = dialog.GetPath()
-        dialog.Destroy()
-        if result == wx.ID_OK:
-            return path
+        if dialog.ShowModal() == wx.ID_OK:
+            result = dialog.GetPath()
         else:
-            return None
+            result = None
+        dialog.Destroy()
+        return result
 
     @_in_wx_app
     def _get_clipboard_text(self):
