@@ -73,7 +73,7 @@ class ClientUIBackend(object):
         return self._enter_text(title, label, password)
 
     def _enter_text(self, title, label, password):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
     def select_option(self, title=u"Výběr položky",
                       label=u"Zvolte jednu z níže uvedených položek:",
@@ -105,7 +105,7 @@ class ClientUIBackend(object):
         return self._select_option(title, label, columns, data, return_column)
 
     def _select_option(self, title, label, columns, data, return_column):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
     def select_file(self, title=None, directory=None, filename=None, template=None,
                     save=False, multi=False):
@@ -154,7 +154,7 @@ class ClientUIBackend(object):
                                                extension, save, multi))
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
     def select_directory(self, title=u"Výběr adresáře", directory=None):
         """Return the name of user selected directory.
@@ -172,14 +172,14 @@ class ClientUIBackend(object):
         return self._unicode(self._select_directory(title, directory))
 
     def _select_directory(self, title, directory):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
     def get_clipboard_text(self):
         """Return the text stored in system clipboard on user's machine."""
         return self._get_clipboard_text()
 
     def _get_clipboard_text(self, directory):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
     def set_clipboard_text(self, text):
         """Store given text in system clipboard on user's machine.
@@ -193,19 +193,16 @@ class ClientUIBackend(object):
         return self._set_clipboard_text(text)
 
     def _set_clipboard_text(self, text):
-        raise NotImplementedError()
+        raise NotImplementedError(self)
 
 
 class WxUIBackend(ClientUIBackend):
 
-    @classmethod
-    def ok(cls):
+    def __init__(self):
         try:
             import wx
         except ImportError:
-            return False
-        else:
-            return wx and True
+            raise BackendNotAvailable()
 
     def _in_wx_app(method):
         def run(*args, **kwargs):
