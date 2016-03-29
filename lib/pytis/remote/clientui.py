@@ -355,13 +355,32 @@ class Win32UIBackend(ClientUIBackend):
         win32clipboard.CloseClipboard()
 
 
-class TkUIBackend(ClientUIBackend):
+class ClipboardUIBackend(ClientUIBackend):
+    """Implements clipboard operations using the Python module clipboard."""
+
+    def __init__(self):
+        try:
+            import clipboard
+        except ImportError as e:
+            raise BackendNotAvailable(e)
+
+    def _get_clipboard_text(self):
+        import clipboard
+        return clipboard.paste()
+
+    def _set_clipboard_text(self, text):
+        import clipboard
+        clipboard.copy(text)
+
+
+class TkUIBackend(ClipboardUIBackend):
 
     def __init__(self):
         try:
             import Tkinter
         except ImportError as e:
             raise BackendNotAvailable(e)
+        super(TkUIBackend, self).__init__()
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
@@ -379,13 +398,14 @@ class TkUIBackend(ClientUIBackend):
             return result
 
 
-class PyZenityUIBackend(ClientUIBackend):
+class PyZenityUIBackend(ClipboardUIBackend):
 
     def __init__(self):
         try:
             import PyZenity
         except ImportError as e:
             raise BackendNotAvailable(e)
+        super(PyZenityUIBackend, self).__init__()
 
     def _select_directory(self, title, directory):
         import PyZenity
@@ -408,11 +428,12 @@ class PyZenityUIBackend(ClientUIBackend):
         return PyZenity.List(columns, title=title, text=label, data=data)
 
 
-class ZenityUIBackend(ClientUIBackend):
+class ZenityUIBackend(ClipboardUIBackend):
 
     def __init__(self):
         if self._run_zenity('--version') is None:
             raise BackendNotAvailable("Zenity command line interface not installed.")
+        super(ZenityUIBackend, self).__init__()
 
     @classmethod
     def _run_zenity(cls, *args):
