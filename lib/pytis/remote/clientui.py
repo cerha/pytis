@@ -19,6 +19,17 @@
 import os
 import sys
 
+
+class BackendNotAvailable(Exception):
+    """Error raised in backend constructor when the backend is unavailable.
+
+    This typically means that certain Python library of other dependency is not
+    installed.
+
+    """
+    pass
+
+
 class ClientUIBackend(object):
     """Backend for UI operations running on the client side.
 
@@ -34,12 +45,15 @@ class ClientUIBackend(object):
                 WxUIBackend,
                 TkUIBackend,
                 ZenityUIBackend,
-                #Win32UIBackend,
+                Win32UIBackend,
             )
-            for backend in backends:
-                if backend.ok():
-                    print "Using %s" % backend
-                    return backend.__new__(backend, *args, **kwargs)
+            for subclass in backends:
+                try:
+                    backend = subclass.__new__(subclass, *args, **kwargs)
+                except BackendNotAvailable:
+                    continue
+                #print "Using %s" % backend
+                return backend
             raise Exception(u'No suitable UI backend found.')
         else:
             return object.__new__(cls)
@@ -50,10 +64,6 @@ class ClientUIBackend(object):
         elif not isinstance(x, unicode) and x is not None:
             x = unicode(x, sys.getfilesystemencoding())
         return x
-
-    @classmethod
-    def ok(cls):
-        return False
 
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
@@ -271,15 +281,12 @@ class WxUIBackend(ClientUIBackend):
 
 class Win32UIBackend(ClientUIBackend):
 
-    @classmethod
-    def ok(cls):
+    def __init__(self):
         try:
             import win32ui
             import win32con
         except ImportError:
-            return False
-        else:
-            return win32ui and win32con and True
+            raise BackendNotAvailable()
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
@@ -348,14 +355,11 @@ class Win32UIBackend(ClientUIBackend):
 
 class TkUIBackend(ClientUIBackend):
 
-    @classmethod
-    def ok(cls):
+    def __init__(self):
         try:
             import Tkinter
         except ImportError:
-            return False
-        else:
-            return Tkinter and True
+            raise BackendNotAvailable()
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
@@ -375,14 +379,11 @@ class TkUIBackend(ClientUIBackend):
 
 class PyZenityUIBackend(ClientUIBackend):
 
-    @classmethod
-    def ok(cls):
+    def __init__(self):
         try:
             import PyZenity
         except ImportError:
-            return False
-        else:
-            return PyZenity and True
+            raise BackendNotAvailable()
 
     def _select_directory(self, title, directory):
         import PyZenity
@@ -407,9 +408,9 @@ class PyZenityUIBackend(ClientUIBackend):
 
 class ZenityUIBackend(ClientUIBackend):
 
-    @classmethod
-    def ok(cls):
-        return cls._run_zenity('--version') is not None
+    def __init__(self):
+        if self._run_zenity('--version') is None:
+            raise BackendNotAvailable()
 
     @classmethod
     def _run_zenity(cls, *args):
