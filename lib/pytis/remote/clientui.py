@@ -124,7 +124,7 @@ class ClientUIBackend(object):
           multi -- iff true, allow selecting multiple files (not possible when save is True)
 
         """
-        assert isinstance(title, basestring), title
+        assert title is None or isinstance(title, basestring), title
         assert directory is None or isinstance(directory, basestring), directory
         assert filename is None or isinstance(filename, basestring), filename
         assert template is None or isinstance(template, basestring), template
