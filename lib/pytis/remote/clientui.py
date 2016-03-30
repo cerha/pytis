@@ -38,6 +38,10 @@ class ClientUIBackend(object):
     client's file system.
 
     """
+    class _Object(object):
+        """Helper class for method result storage."""
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
 
     def __new__(cls, *args, **kwargs):
         if cls is ClientUIBackend:
@@ -446,6 +450,7 @@ class TkUIBackend(ClipboardUIBackend):
     def __init__(self):
         try:
             import Tkinter
+            import ttk
         except ImportError as e:
             raise BackendNotAvailable(e)
         super(TkUIBackend, self).__init__()
@@ -462,6 +467,42 @@ class TkUIBackend(ClipboardUIBackend):
         text = tkSimpleDialog.askstring(title, label, parent=root, **kwargs)
         root.destroy()
         return text
+
+    def _select_option(self, title, label, columns, data, return_column):
+        import Tkinter
+        import ttk
+        rows = ['   '.join(row) for row in data]
+        root = Tkinter.Tk()
+        root.title(title)
+        try:
+            result = self._Object(selection=None)
+            tklabel = ttk.Label(root, text=label)
+            tklabel.pack(padx=5, pady=2, anchor=Tkinter.W)
+            listbox = Tkinter.Listbox(root, listvariable=Tkinter.StringVar(value=tuple(rows)),
+                                      height=len(rows))
+            listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
+            def submit(*args):
+                idxs = listbox.curselection()
+                if len(idxs) == 1:
+                    result.selection = int(idxs[0])
+                root.destroy()
+            button = ttk.Button(root, text=u"Ok", command=submit, default='active')
+            button.pack(pady=5, padx=5, side=Tkinter.RIGHT)
+            listbox.bind('<Double-1>', submit)
+            root.bind('<Return>', submit)
+            root.bind('<Escape>', lambda e: root.destroy())
+            # TODO: This doesn't seem to quit the main loop!!!
+            root.protocol("WM_DELETE_WINDOW", lambda: root.destroy())
+            root.update()
+            root.minsize(root.winfo_width() + 50, root.winfo_height())
+            root.mainloop()
+            if result.selection is not None:
+                return data[result.selection][return_column - 1]
+            else:
+                return None
+        except:
+            root.destroy()
+            raise
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
