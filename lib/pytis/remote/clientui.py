@@ -322,6 +322,42 @@ class Win32UIBackend(ClientUIBackend):
         import pywin.mfc.dialog
         return pywin.mfc.dialog.GetSimpleInput(label)
 
+    def _select_option(self, title, label, columns, data, return_column):
+        import win32con
+        from pywin.mfc.dialog import Dialog
+        rows = ['  '.join(row) for row in data]
+        width = max(max(len(row) for row in rows) * 4, 100)
+        height = len(rows) * 8 + 4
+        IDC_LIST = 9000
+        IDC_TEXT = 9001
+        selection = [None]
+        class SelectionDialog(Dialog):
+            def OnSelect(self, ctrl, action):
+                if ctrl == IDC_LIST:
+                    selection[0] = self.GetDlgItem(IDC_LIST).GetCurSel()
+            def OnInitDialog(self):
+                rc = Dialog.OnInitDialog(self)
+                self.SetDlgItemText(IDC_TEXT, label)
+                listbox = self.GetDlgItem(IDC_LIST)
+                for row in data:
+                    listbox.AddString(' \t '.join(row))
+                self.HookCommand(self.OnSelect, IDC_LIST)
+                return rc
+        template = [
+            [title, (0, 0, width + 10, height + 38), win32con.WS_CAPTION | win32con.DS_MODALFRAME,
+             None, (8, "MS SansSerif")],
+            ["static", "", IDC_TEXT, (5, 4, 150, 14), win32con.WS_CHILD | win32con.WS_VISIBLE],
+            ["listbox", "List", IDC_LIST, (5, 16, width, height), win32con.WS_VISIBLE],
+            [128, u"Ok", win32con.IDOK, (width - 45, height + 18, 50, 14),
+             win32con.BS_PUSHBUTTON | win32con.WS_VISIBLE],
+        ]
+        dialog = SelectionDialog(template)
+        dialog.DoModal()
+        if selection[0] is None:
+            return None
+        else:
+            return data[selection[0]][return_column - 1]
+
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
         import win32con
