@@ -186,7 +186,7 @@ class ClientUIBackend(object):
 
     def get_clipboard_text(self):
         """Return the text stored in system clipboard on user's machine."""
-        return self._get_clipboard_text()
+        return self._unicode(self._get_clipboard_text())
 
     def _get_clipboard_text(self, directory):
         raise NotImplementedError('%s._get_clipboard_text()' % self.__class__.__name__)
@@ -200,7 +200,7 @@ class ClientUIBackend(object):
 
         """
         assert text is None or isinstance(text, basestring), text
-        return self._set_clipboard_text(text)
+        self._set_clipboard_text(self._unicode(text))
 
     def _set_clipboard_text(self, text):
         raise NotImplementedError('%s._set_clipboard_text()' % self.__class__.__name__)
