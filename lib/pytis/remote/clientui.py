@@ -450,6 +450,19 @@ class TkUIBackend(ClipboardUIBackend):
             raise BackendNotAvailable(e)
         super(TkUIBackend, self).__init__()
 
+    def _enter_text(self, title, label, password):
+        import Tkinter
+        import tkSimpleDialog
+        root = Tkinter.Tk()
+        root.withdraw()
+        if password:
+            kwargs = dict(show='*')
+        else:
+            kwargs = {}
+        text = tkSimpleDialog.askstring(title, label, parent=root, **kwargs)
+        root.destroy()
+        return text
+
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
         import tkFileDialog
@@ -459,7 +472,7 @@ class TkUIBackend(ClipboardUIBackend):
                                               initialfile=filename,
                                               defaultextension=extension, multiple=multi)
         filenames = root.tk.splitlist(result)
-        root = None
+        root.destroy()
         if multi:
             return filenames
         else:
