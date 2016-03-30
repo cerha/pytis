@@ -314,8 +314,13 @@ class Win32UIBackend(ClientUIBackend):
             import win32con
             import win32gui
             import win32clipboard
+            import pywin.mfc.dialog
         except ImportError as e:
             raise BackendNotAvailable(e)
+
+    def _enter_text(self, title, label, password):
+        import pywin.mfc.dialog
+        return pywin.mfc.dialog.GetSimpleInput(label)
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
