@@ -392,7 +392,7 @@ class Win32UIBackend(ClientUIBackend):
         from win32com.shell import shell, shellcon
         def callback(hwnd, msg, lp, data):
             if msg == shellcon.BFFM_INITIALIZED:
-                win32gui.SendMessage(hwnd, shellcon.BFFM_SETSELECTION, 1, directory);
+                win32gui.SendMessage(hwnd, shellcon.BFFM_SETSELECTION, 1, directory)
         pidl, dname, imglist = shell.SHBrowseForFolder(
             win32gui.GetDesktopWindow(),
             # Get PIDL of the topmost folder for the dialog
