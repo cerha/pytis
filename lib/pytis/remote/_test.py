@@ -43,7 +43,7 @@ class ClientUIBackend(unittest.TestCase):
         self.assertEqual(text, 'foo')
 
     def test_select_option(self):
-        answer = self._backend.select_option(label="Select the second option",
+        answer = self._backend.select_option(label="Select the second option:",
                                              columns=('Option', 'Description'),
                                              data=(('First', 'blah...'),
                                                    ('Second', 'blah blah...'),
