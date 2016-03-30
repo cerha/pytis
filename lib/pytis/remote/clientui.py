@@ -334,11 +334,11 @@ class Win32UIBackend(ClientUIBackend):
         height = len(rows) * 8 + 4
         IDC_LIST = 9000
         IDC_TEXT = 9001
-        selection = [None]
+        result = self._Object(selection=None)
         class SelectionDialog(Dialog):
             def OnSelect(self, ctrl, action):
                 if ctrl == IDC_LIST:
-                    selection[0] = self.GetDlgItem(IDC_LIST).GetCurSel()
+                    result.selection = self.GetDlgItem(IDC_LIST).GetCurSel()
             def OnInitDialog(self):
                 rc = Dialog.OnInitDialog(self)
                 self.SetDlgItemText(IDC_TEXT, label)
@@ -357,10 +357,10 @@ class Win32UIBackend(ClientUIBackend):
         ]
         dialog = SelectionDialog(template)
         dialog.DoModal()
-        if selection[0] is None:
-            return None
+        if result.selection is not None:
+            return data[result.selection][return_column - 1]
         else:
-            return data[selection[0]][return_column - 1]
+            return None
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import win32ui
