@@ -509,8 +509,8 @@ class TkUIBackend(ClipboardUIBackend):
         import tkFileDialog
         root = Tkinter.Tk()
         root.withdraw()
-        result = tkFileDialog.askopenfilename(parent=root, initialdir=directory,
-                                              initialfile=filename,
+        result = tkFileDialog.askopenfilename(parent=root, title=title, initialdir=directory,
+                                              initialfile=filename, filetypes=filters,
                                               defaultextension=extension, multiple=multi)
         filenames = root.tk.splitlist(result)
         root.destroy()
