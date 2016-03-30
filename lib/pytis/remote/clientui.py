@@ -329,8 +329,8 @@ class Win32UIBackend(ClientUIBackend):
     def _select_option(self, title, label, columns, data, return_column):
         import win32con
         from pywin.mfc.dialog import Dialog
-        rows = ['  '.join(row) for row in data]
-        width = max(max(len(row) for row in rows) * 4, 100)
+        rows = ['   '.join(row) for row in data]
+        width = max(max(len(row) for row in rows) * 4, len(label) * 4, 100)
         height = len(rows) * 8 + 4
         IDC_LIST = 9000
         IDC_TEXT = 9001
@@ -344,7 +344,7 @@ class Win32UIBackend(ClientUIBackend):
                 self.SetDlgItemText(IDC_TEXT, label)
                 listbox = self.GetDlgItem(IDC_LIST)
                 for row in data:
-                    listbox.AddString(' \t '.join(row))
+                    listbox.AddString('   '.join(row))
                 self.HookCommand(self.OnSelect, IDC_LIST)
                 return rc
         template = [
