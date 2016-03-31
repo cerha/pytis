@@ -537,8 +537,7 @@ class ZenityUIBackend(ClipboardUIBackend):
             raise BackendNotAvailable("Zenity command line interface not installed.")
         super(ZenityUIBackend, self).__init__()
 
-    @classmethod
-    def _run_zenity(cls, *args):
+    def _run_zenity(self, *args):
         import subprocess
         try:
             output = subprocess.check_output(('zenity',) + args)
