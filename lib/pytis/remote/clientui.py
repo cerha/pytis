@@ -529,6 +529,11 @@ class TkUIBackend(ClipboardUIBackend):
         else:
             return result
 
+    @_in_tk_app
+    def _select_directory(self, root, title, directory):
+        import tkFileDialog
+        return tkFileDialog.askdirectory(title=title, parent=root, initialdir=directory)
+
 
 class ZenityUIBackend(ClipboardUIBackend):
 
