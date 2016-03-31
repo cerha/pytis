@@ -513,9 +513,15 @@ class TkUIBackend(ClipboardUIBackend):
     @_in_tk_app
     def _select_file(self, root, title, directory, filename, filters, extension, save, multi):
         import tkFileDialog
-        result = tkFileDialog.askopenfilename(parent=root, title=title, initialdir=directory,
-                                              initialfile=filename, filetypes=filters,
-                                              defaultextension=extension, multiple=multi)
+        if save:
+            dialog = tkFileDialog.asksaveasfile
+            kwargs = dict()
+        else:
+            dialog = tkFileDialog.askopenfilename
+            kwargs = dict(multiple=multi)
+        result = dialog(parent=root, title=title, initialdir=directory,
+                        initialfile=filename, filetypes=filters,
+                        defaultextension=extension, **kwargs)
         if not result:
             return None
         elif multi:
