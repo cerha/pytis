@@ -481,18 +481,18 @@ class TkUIBackend(ClipboardUIBackend):
             listbox = Tkinter.Listbox(root, listvariable=Tkinter.StringVar(value=tuple(rows)),
                                       height=len(rows))
             listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
-            def submit(*args):
+            def submit():
                 idxs = listbox.curselection()
                 if len(idxs) == 1:
                     result.selection = int(idxs[0])
                 root.destroy()
             button = ttk.Button(root, text=u"Ok", command=submit, default='active')
             button.pack(pady=5, padx=5, side=Tkinter.RIGHT)
-            listbox.bind('<Double-1>', submit)
-            root.bind('<Return>', submit)
+            listbox.bind('<Double-1>', lambda e: submit())
+            root.bind('<Return>', lambda e: submit())
             root.bind('<Escape>', lambda e: root.destroy())
-            # TODO: This doesn't seem to quit the main loop!!!
-            root.protocol("WM_DELETE_WINDOW", lambda: root.destroy())
+            # TODO: This doesn't seem to quit completely.  Something hangs!!!
+            root.protocol('WM_DELETE_WINDOW', root.destroy)
             root.update()
             root.minsize(root.winfo_width() + 50, root.winfo_height())
             root.mainloop()
