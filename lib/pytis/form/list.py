@@ -3551,24 +3551,27 @@ class SideBrowseForm(BrowseForm):
           row -- main form selected row as a PresentedRow instance.
 
         """
-        def inner_value(value):
-            if isinstance(value, pytis.data.Value):
-                return value.value()
-            else:
-                return value
         # log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
         self._main_form_row = row
         if self._xarguments is not None:
             self._selection_arguments = self._xarguments(row)
         if self._side_prefill:
             prefill = self._side_prefill(row)
+            if prefill:
+                def value_instance(cid, value):
+                    # Beware, we can not cast all values to their row types here, because
+                    # some fields may not exist in the row.  This happens when side form
+                    # prefill (specified for given Binding) contains values for another
+                    # form than for itself when it redirects new record insertion to
+                    # the other form through on_new_record.
+                    if isinstance(value, pytis.data.Value):
+                        return value
+                    else:
+                        return pytis.data.Value(self._row.type(cid), value)
+                self._prefill = dict([(cid, value_instance(cid, val))
+                                      for cid, val in prefill.items()])
         elif self._binding_column:
-            prefill = {self._side_binding_column: row[self._binding_column].value()}
-        else:
-            prefill = {}
-        if prefill:
-            self._prefill = dict([(cid, pytis.data.Value(self._row.type(cid), inner_value(value)))
-                                  for cid, value in prefill.items()])
+            self._prefill = {self._side_binding_column: row[self._binding_column].value()}
         if self._selection_condition is not None:
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
