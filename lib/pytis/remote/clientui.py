@@ -479,7 +479,7 @@ class TkUIBackend(ClipboardUIBackend):
             tklabel = ttk.Label(root, text=label)
             tklabel.pack(padx=5, pady=2, anchor=Tkinter.W)
             listbox = Tkinter.Listbox(root, listvariable=Tkinter.StringVar(value=tuple(rows)),
-                                      height=len(rows))
+                                      height=len(rows), activestyle='dotbox')
             listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
             def submit():
                 idxs = listbox.curselection()
