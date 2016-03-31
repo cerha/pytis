@@ -62,16 +62,25 @@ class ClientUIBackend(object):
                                      data=(('Yes',), ('No',)))
         self.assertEqual(answer, 'Yes')
 
+def skip_unless_enabled(name):
+    envvar = 'PYTIS_TEST_UI_BACKENDS'
+    backends = os.getenv(envvar) or ''
+    return unittest.skipUnless(name in backends.split(','),
+                               "Backend '%s' not in %s" % (name, envvar))
 
+@skip_unless_enabled('wx')
 class WxUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.WxUIBackend
 
+@skip_unless_enabled('tk')
 class TkUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.TkUIBackend
 
+@skip_unless_enabled('zenity')
 class ZenityUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.ZenityUIBackend
 
+@skip_unless_enabled('win32')
 class Win32UIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.Win32UIBackend
 
