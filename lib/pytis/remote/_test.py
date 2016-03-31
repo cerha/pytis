@@ -24,13 +24,11 @@ import tempfile
 import cStringIO as StringIO
 import os
 
-class ClientUIBackend(unittest.TestCase):
+class ClientUIBackend(object):
     _BACKEND = None
 
     @classmethod
     def setUpClass(cls):
-        if cls._BACKEND is None:
-            raise unittest.SkipTest('')
         cls._backend = cls._BACKEND()
 
     def test_clipboard(self):
@@ -65,16 +63,16 @@ class ClientUIBackend(unittest.TestCase):
         self.assertEqual(answer, 'Yes')
 
 
-class WxUIBackend(ClientUIBackend):
+class WxUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.WxUIBackend
 
-class TkUIBackend(ClientUIBackend):
+class TkUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.TkUIBackend
 
-class ZenityUIBackend(ClientUIBackend):
+class ZenityUIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.ZenityUIBackend
 
-class Win32UIBackend(ClientUIBackend):
+class Win32UIBackend(ClientUIBackend, unittest.TestCase):
     _BACKEND = pytis.remote.clientui.Win32UIBackend
 
 
