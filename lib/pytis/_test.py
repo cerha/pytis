@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Brailcom, o.p.s.
+# Copyright (C) 2015, 2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,19 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import unittest
+import pytis.util.test
 
 
-
-tests = unittest.TestSuite()
-for module_name in ('pytis.data', 'pytis.presentation', 'pytis.util'):
+tests = pytis.util.test.TestSuite()
+for module_name in ('pytis.data', 'pytis.presentation', 'pytis.util', 'pytis.remote'):
     module = __import__(module_name + '._test', globals(), locals(), ['get_tests'])
-    tests.addTest(module.get_tests())
+    if hasattr(module, 'get_tests'):
+        tests.addTest(module.get_tests())
+    else:
+        for attr in dir(module):
+            obj = getattr(module, attr)
+            if type(obj) == type(unittest.TestCase) and issubclass(obj, unittest.TestCase):
+                tests.add(obj)
 
 
 def get_tests():
