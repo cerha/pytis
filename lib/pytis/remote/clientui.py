@@ -451,72 +451,75 @@ class TkUIBackend(ClipboardUIBackend):
         try:
             import Tkinter
             import ttk
+            import tkSimpleDialog
+            import tkFileDialog
         except ImportError as e:
             raise BackendNotAvailable(e)
         super(TkUIBackend, self).__init__()
 
-    def _enter_text(self, title, label, password):
-        import Tkinter
+    def _in_tk_app(method):
+        def run(self, *args, **kwargs):
+            import Tkinter
+            root = Tkinter.Tk()
+            root.withdraw()
+            try:
+                return method(self, root, *args, **kwargs)
+            finally:
+                root.destroy()
+        return run
+
+    @_in_tk_app
+    def _enter_text(self, root, title, label, password):
         import tkSimpleDialog
-        root = Tkinter.Tk()
-        root.withdraw()
         if password:
             kwargs = dict(show='*')
         else:
             kwargs = {}
-        text = tkSimpleDialog.askstring(title, label, parent=root, **kwargs)
-        root.destroy()
-        return text
+        return tkSimpleDialog.askstring(title, label, parent=root, **kwargs)
 
-    def _select_option(self, title, label, columns, data, return_column):
+    @_in_tk_app
+    def _select_option(self, root, title, label, columns, data, return_column):
         import Tkinter
         import ttk
         rows = ['   '.join(row) for row in data]
-        root = Tkinter.Tk()
-        root.withdraw()
-        root.title(title)
-        try:
-            result = self._Object(selection=None)
-            dialog = Tkinter.Toplevel(root)
-            dialog.title(title)
-            tklabel = ttk.Label(dialog, text=label)
-            tklabel.pack(padx=5, pady=2, anchor=Tkinter.W)
-            listbox = Tkinter.Listbox(dialog, listvariable=Tkinter.StringVar(value=tuple(rows)),
-                                      height=len(rows), activestyle='dotbox')
-            listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
-            def submit():
-                idxs = listbox.curselection()
-                if len(idxs) == 1:
-                    result.selection = int(idxs[0])
-                dialog.quit()
-            button = ttk.Button(dialog, text=u"Ok", command=submit, default='active')
-            button.pack(pady=5, padx=5, side=Tkinter.RIGHT)
-            listbox.bind('<Double-1>', lambda e: submit())
-            dialog.bind('<Return>', lambda e: submit())
-            dialog.bind('<Escape>', lambda e: dialog.quit())
-            dialog.protocol('WM_DELETE_WINDOW', dialog.quit)
-            dialog.update()
-            dialog.minsize(dialog.winfo_width() + 50, dialog.winfo_height())
-            root.mainloop()
-            if result.selection is not None:
-                return data[result.selection][return_column - 1]
-            else:
-                return None
-        finally:
-            root.destroy()
+        result = self._Object(selection=None)
+        dialog = Tkinter.Toplevel(root)
+        dialog.title(title)
+        tklabel = ttk.Label(dialog, text=label)
+        tklabel.pack(padx=5, pady=2, anchor=Tkinter.W)
+        listbox = Tkinter.Listbox(dialog, listvariable=Tkinter.StringVar(value=tuple(rows)),
+                                  height=len(rows), activestyle='dotbox')
+        listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
+        def submit():
+            idxs = listbox.curselection()
+            if len(idxs) == 1:
+                result.selection = int(idxs[0])
+            dialog.quit()
+        button = ttk.Button(dialog, text=u"Ok", command=submit, default='active')
+        button.pack(pady=5, padx=5, side=Tkinter.RIGHT)
+        listbox.bind('<Double-1>', lambda e: submit())
+        dialog.bind('<Return>', lambda e: submit())
+        dialog.bind('<Escape>', lambda e: dialog.quit())
+        dialog.protocol('WM_DELETE_WINDOW', dialog.quit)
+        dialog.update()
+        dialog.minsize(dialog.winfo_width() + 50, dialog.winfo_height())
+        dialog.after(1, lambda: listbox.focus_force())
+        root.mainloop()
+        if result.selection is not None:
+            return data[result.selection][return_column - 1]
+        else:
+            return None
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
-        import Tkinter
+    @_in_tk_app
+    def _select_file(self, root, title, directory, filename, filters, extension, save, multi):
         import tkFileDialog
-        root = Tkinter.Tk()
-        root.withdraw()
         result = tkFileDialog.askopenfilename(parent=root, title=title, initialdir=directory,
                                               initialfile=filename, filetypes=filters,
                                               defaultextension=extension, multiple=multi)
-        filenames = root.tk.splitlist(result)
-        root.destroy()
-        if multi:
-            return filenames
+        if not result:
+            return None
+        elif multi:
+            return root.tk.splitlist(result)
         else:
             return result
 
