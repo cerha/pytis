@@ -473,36 +473,37 @@ class TkUIBackend(ClipboardUIBackend):
         import ttk
         rows = ['   '.join(row) for row in data]
         root = Tkinter.Tk()
+        root.withdraw()
         root.title(title)
         try:
             result = self._Object(selection=None)
-            tklabel = ttk.Label(root, text=label)
+            dialog = Tkinter.Toplevel(root)
+            dialog.title(title)
+            tklabel = ttk.Label(dialog, text=label)
             tklabel.pack(padx=5, pady=2, anchor=Tkinter.W)
-            listbox = Tkinter.Listbox(root, listvariable=Tkinter.StringVar(value=tuple(rows)),
+            listbox = Tkinter.Listbox(dialog, listvariable=Tkinter.StringVar(value=tuple(rows)),
                                       height=len(rows), activestyle='dotbox')
             listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
             def submit():
                 idxs = listbox.curselection()
                 if len(idxs) == 1:
                     result.selection = int(idxs[0])
-                root.destroy()
-            button = ttk.Button(root, text=u"Ok", command=submit, default='active')
+                dialog.quit()
+            button = ttk.Button(dialog, text=u"Ok", command=submit, default='active')
             button.pack(pady=5, padx=5, side=Tkinter.RIGHT)
             listbox.bind('<Double-1>', lambda e: submit())
-            root.bind('<Return>', lambda e: submit())
-            root.bind('<Escape>', lambda e: root.destroy())
-            # TODO: This doesn't seem to quit completely.  Something hangs!!!
-            root.protocol('WM_DELETE_WINDOW', root.destroy)
-            root.update()
-            root.minsize(root.winfo_width() + 50, root.winfo_height())
+            dialog.bind('<Return>', lambda e: submit())
+            dialog.bind('<Escape>', lambda e: dialog.quit())
+            dialog.protocol('WM_DELETE_WINDOW', dialog.quit)
+            dialog.update()
+            dialog.minsize(dialog.winfo_width() + 50, dialog.winfo_height())
             root.mainloop()
             if result.selection is not None:
                 return data[result.selection][return_column - 1]
             else:
                 return None
-        except:
+        finally:
             root.destroy()
-            raise
 
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import Tkinter
