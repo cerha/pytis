@@ -528,7 +528,9 @@ class TkUIBackend(ClipboardUIBackend):
         if not result:
             return None
         elif multi:
-            return root.tk.splitlist(result)
+            # Work around a strange problem which appears on Linux - a file named '*.*' prefixed
+            # with the selected dirtectory name is added as the first item to the returned list.
+            return [fname for fname in root.tk.splitlist(result) if not fname.endswith('*.*')]
         else:
             return result
 
