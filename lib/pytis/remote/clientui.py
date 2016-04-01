@@ -514,7 +514,7 @@ class TkUIBackend(ClipboardUIBackend):
     def _select_file(self, root, title, directory, filename, filters, extension, save, multi):
         import tkFileDialog
         if save:
-            dialog = tkFileDialog.asksaveasfile
+            dialog = tkFileDialog.asksaveasfilename
             kwargs = dict()
         else:
             dialog = tkFileDialog.askopenfilename
