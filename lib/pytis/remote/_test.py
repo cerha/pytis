@@ -49,12 +49,13 @@ class ClientUIBackend(object):
         self.assertEqual(text, 'foo')
 
     def test_select_option(self):
-        answer = self._backend.select_option(label="Select the second option:",
-                                             columns=('Option', 'Description'),
-                                             data=(('First', 'blah...'),
-                                                   ('Second', 'blah blah...'),
-                                                   ('Third', 'blah blah blah...')))
-        self.assertEqual(answer, 'Second')
+        answer = self._backend.select_option(title="Selection dialog test",
+                                             label="Select the second option:",
+                                             columns=('Id', 'Title'),
+                                             data=(('001', 'First option'),
+                                                   ('002', 'Second option'),
+                                                   ('003', 'Third Option')))
+        self.assertEqual(answer, '002')
 
     def test_select_file(self):
         filename = self._backend.select_file()
