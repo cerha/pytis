@@ -18,7 +18,7 @@ install:
   - "sudo service postgresql stop"
   - "sudo service postgresql start $PGVER"
   - "sudo apt-get -y install libpq-dev postgresql-plpython-$PGVER"
-  - "pip install psycopg2 sqlalchemy coveralls unittest2"
+  - "pip install psycopg2 sqlalchemy coveralls unittest2 rpyc"
   # install wx 2.8
   # the following commented-out lines are for installing wxGTK along with wxPython from upstream, useful if we decide to test with non-Debian upstream versions in the future
   #- "sudo apt-get -y build-dep python-wxgtk2.8"
