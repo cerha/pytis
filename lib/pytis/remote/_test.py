@@ -43,8 +43,9 @@ class ClientUIBackend(object):
             self._backend.set_clipboard_text(text)
             self.assertEqual(self._backend.get_clipboard_text(), text)
 
-    def test_enter_text(self):
-        text = self._backend.enter_text(label='Enter "foo":')
+    def test_enter_password(self):
+        text = self._backend.enter_text(title="Password dialog test",
+                                        label='Enter password "foo":', password=True)
         self.assertEqual(text, 'foo')
 
     def test_select_option(self):
