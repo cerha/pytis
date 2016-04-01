@@ -519,8 +519,11 @@ class TkUIBackend(ClipboardUIBackend):
         else:
             dialog = tkFileDialog.askopenfilename
             kwargs = dict(multiple=multi)
-        result = dialog(parent=root, title=title, initialdir=directory,
-                        initialfile=filename, filetypes=filters,
+        if sys.platform != 'darwin':
+            # The filters don't work on Mac OS X.  If present, all files are grayed out...
+            kwargs['filetypes'] = [(label, pattern[1:] if pattern.startswith('*.') else pattern)
+                                   for label, pattern in filters]
+        result = dialog(parent=root, title=title, initialdir=directory, initialfile=filename,
                         defaultextension=extension, **kwargs)
         if not result:
             return None
