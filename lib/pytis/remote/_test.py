@@ -38,17 +38,17 @@ class ClientUIBackend(object):
                                              data=(('Yes',), ('No',)))
         self.assertEqual(answer, 'Yes')
 
-    def test_clipboard(self):
+    def test_00_clipboard(self):
         for text in ('foo', u'foo', u'Žluťoučký kůň!'):
             self._backend.set_clipboard_text(text)
             self.assertEqual(self._backend.get_clipboard_text(), text)
 
-    def test_enter_password(self):
+    def test_01_enter_password(self):
         text = self._backend.enter_text(title="Password dialog test",
                                         label='Enter password "foo":', password=True)
         self.assertEqual(text, 'foo')
 
-    def test_select_option(self):
+    def test_02_select_option(self):
         answer = self._backend.select_option(title="Selection dialog test",
                                              label="Select the second option:",
                                              columns=('Id', 'Title'),
@@ -57,15 +57,15 @@ class ClientUIBackend(object):
                                                    ('003', 'Third Option')))
         self.assertEqual(answer, '002')
 
-    def test_select_file(self):
+    def test_03_select_file(self):
         filename = self._backend.select_file()
         self._confirm('You selected "%s"' % filename)
 
-    def test_select_files(self):
+    def test_04_select_files(self):
         filenames = self._backend.select_file(multi=True)
         self._confirm('You selected %d files' % len(filenames or ()))
 
-    def test_select_directory(self):
+    def test_05_select_directory(self):
         directory = self._backend.select_directory()
         self._confirm('You selected "%s"' % directory)
 
