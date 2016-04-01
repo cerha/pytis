@@ -61,11 +61,15 @@ class ClientUIBackend(object):
         filename = self._backend.select_file()
         self._confirm('You selected "%s"' % filename)
 
-    def test_04_select_files(self):
+    def test_04_select_file_save(self):
+        filename = self._backend.select_file(save=True)
+        self._confirm('You selected "%s"' % filename)
+
+    def test_05_select_multiple_files(self):
         filenames = self._backend.select_file(multi=True)
         self._confirm('You selected %d files' % len(filenames or ()))
 
-    def test_05_select_directory(self):
+    def test_06_select_directory(self):
         directory = self._backend.select_directory()
         self._confirm('You selected "%s"' % directory)
 
