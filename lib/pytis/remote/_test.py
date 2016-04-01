@@ -76,7 +76,7 @@ class ClientUIBackend(object):
 def skip_unless_enabled(name):
     envvar = 'PYTIS_TEST_UI_BACKENDS'
     backends = os.getenv(envvar) or ''
-    return unittest.skipUnless(name in backends.split(','),
+    return unittest.skipUnless(backends == 'all' or name in backends.split(','),
                                "Backend '%s' not in %s" % (name, envvar))
 
 @skip_unless_enabled('wx')
