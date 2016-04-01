@@ -262,6 +262,7 @@ class WxUIBackend(ClientUIBackend):
         import wx
         style = 0
         if save:
+            # TODO: Overwrite prompt doesn't seem to appear on Mac OS X.
             style |= wx.SAVE | wx.OVERWRITE_PROMPT
         else:
             style |= wx.OPEN
