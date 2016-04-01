@@ -24,12 +24,19 @@ import tempfile
 import cStringIO as StringIO
 import os
 
+
 class ClientUIBackend(object):
     _BACKEND = None
 
     @classmethod
     def setUpClass(cls):
         cls._backend = cls._BACKEND()
+
+    def _confirm(self, text):
+        answer = self._backend.select_option(title="Confirm test result",
+                                             label=text, columns=('Confirm',),
+                                             data=(('Yes',), ('No',)))
+        self.assertEqual(answer, 'Yes')
 
     def test_clipboard(self):
         for text in ('foo', u'foo', u'Žluťoučký kůň!'):
@@ -48,19 +55,13 @@ class ClientUIBackend(object):
                                                    ('Third', 'blah blah blah...')))
         self.assertEqual(answer, 'Second')
 
-    def test_select_directory(self):
-        directory = self._backend.select_directory()
-        answer = self._backend.select_option(label='You selected "%s"' % directory,
-                                      columns=('Confirm',),
-                                      data=(('Yes',), ('No',)))
-        self.assertEqual(answer, 'Yes')
-
     def test_select_file(self):
         filename = self._backend.select_file()
-        answer = self._backend.select_option(label='You selected "%s"' % filename,
-                                     columns=('Confirm',),
-                                     data=(('Yes',), ('No',)))
-        self.assertEqual(answer, 'Yes')
+        self._confirm('You selected "%s"' % filename)
+
+    def test_select_directory(self):
+        directory = self._backend.select_directory()
+        self._confirm('You selected "%s"' % directory)
 
 def skip_unless_enabled(name):
     envvar = 'PYTIS_TEST_UI_BACKENDS'
