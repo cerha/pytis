@@ -37,6 +37,15 @@ class ClientUIBackend(object):
     operations, such as running a file selection dialog with access to the
     client's file system.
 
+    Derived classes (the actual backends) implement the API for a particular
+    GUI toolkit/library.  Backends should always override the private
+    counterpart of given public API method (the same name, just beginning with
+    an underscore).
+
+    Instantiating 'ClientUIBackend' performs selection of available backends
+    and actually returns an instance of a particular backend (subclass), rather
+    than 'ClientUIBackend' itself.
+
     """
     class _Object(object):
         """Helper class for method result storage."""
@@ -211,6 +220,7 @@ class ClientUIBackend(object):
 
 
 class WxUIBackend(ClientUIBackend):
+    """Implements UI backend operations using wx Widgets (requires wxPython)."""
 
     def __init__(self):
         try:
@@ -318,6 +328,7 @@ class WxUIBackend(ClientUIBackend):
 
 
 class Win32UIBackend(ClientUIBackend):
+    """Implements UI backend operations using win32 Python API."""
 
     def __init__(self):
         try:
@@ -435,7 +446,7 @@ class Win32UIBackend(ClientUIBackend):
 
 
 class ClipboardUIBackend(ClientUIBackend):
-    """Implements clipboard operations using the Python module clipboard."""
+    """Implements clipboard operations using the Python module 'clipboard'."""
 
     def __init__(self):
         try:
@@ -453,6 +464,7 @@ class ClipboardUIBackend(ClientUIBackend):
 
 
 class TkUIBackend(ClipboardUIBackend):
+    """Implements UI backend operations using Tkinter."""
 
     def __init__(self):
         try:
@@ -548,6 +560,7 @@ class TkUIBackend(ClipboardUIBackend):
 
 
 class ZenityUIBackend(ClipboardUIBackend):
+    """Implements UI backend operations using the Zenity command line tool."""
 
     def __init__(self):
         if self._run_zenity('--version') is None:
@@ -601,6 +614,7 @@ class ZenityUIBackend(ClipboardUIBackend):
 
 
 class PyZenityUIBackend(ClipboardUIBackend):
+    """Implements UI backend operations using the PyZenity Python module."""
     # This backend is unused because it only adds another dependency
     # compared to 'ZenityUIBackend'.
 
