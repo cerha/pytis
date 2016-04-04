@@ -273,9 +273,9 @@ class WxUIBackend(ClientUIBackend):
             style |= wx.OPEN
         if multi:
             style |= wx.MULTIPLE
-        dialog = wx.FileDialog(None, defaultDir=directory or '', defaultFile=filename or '',
-                               wildcard='|'.join(["%s|%s" % item for item in filters]),
-                               style=style)
+        dialog = wx.FileDialog(None, style=style, message=title,
+                               defaultDir=directory or '', defaultFile=filename or '',
+                               wildcard='|'.join(["%s|%s" % item for item in filters]))
         if dialog.ShowModal() != wx.ID_OK:
             result = None
         elif multi:
@@ -288,7 +288,7 @@ class WxUIBackend(ClientUIBackend):
     @_in_wx_app
     def _select_directory(self, title, directory):
         import wx
-        dialog = wx.DirDialog(None, defaultPath=directory or '',
+        dialog = wx.DirDialog(None, message=title, defaultPath=directory or '',
                               style=wx.DD_DEFAULT_STYLE | wx.STAY_ON_TOP)
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.GetPath()
