@@ -236,6 +236,9 @@ class WxUIBackend(ClientUIBackend):
         else:
             cls = wx.TextEntryDialog
         dialog = cls(None, message=label, caption=title)
+        if not dialog.HasFlag(wx.STAY_ON_TOP):
+            dialog.ToggleWindowStyle(wx.STAY_ON_TOP)
+        wx.STAY_ON_TOP
         dialog.ShowModal()
         result = dialog.GetValue()
         dialog.Destroy()
@@ -250,6 +253,8 @@ class WxUIBackend(ClientUIBackend):
         # 'select_option()' should be simplified.
         dialog = wx.SingleChoiceDialog(None, message=label, caption=title,
                                        choices=['\t'.join(item) for item in data])
+        if not dialog.HasFlag(wx.STAY_ON_TOP):
+            dialog.ToggleWindowStyle(wx.STAY_ON_TOP)
         if dialog.ShowModal() != wx.ID_OK:
             result = None
         else:
@@ -260,7 +265,7 @@ class WxUIBackend(ClientUIBackend):
     @_in_wx_app
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import wx
-        style = 0
+        style = wx.STAY_ON_TOP
         if save:
             # TODO: Overwrite prompt doesn't seem to appear on Mac OS X.
             style |= wx.SAVE | wx.OVERWRITE_PROMPT
@@ -283,7 +288,8 @@ class WxUIBackend(ClientUIBackend):
     @_in_wx_app
     def _select_directory(self, title, directory):
         import wx
-        dialog = wx.DirDialog(None, defaultPath=directory or '', style=wx.DD_DEFAULT_STYLE)
+        dialog = wx.DirDialog(None, defaultPath=directory or '',
+                              style=wx.DD_DEFAULT_STYLE | wx.STAY_ON_TOP)
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.GetPath()
         else:
