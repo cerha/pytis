@@ -1024,11 +1024,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
     def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
-        process = None
+        server = None
         while True:
             if self._pytis_terminate.is_set():
-                if process is not None:
-                    process.kill()
+                if server is not None:
+                    server.close()
                 return
             # Look for a running RPyC instance
             running = True
@@ -1052,8 +1052,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if not rpyc_stop_queue.empty():
                 while not rpyc_stop_queue.empty():
                     rpyc_stop_queue.get()
-                if running and process is not None:
-                    process.kill()
+                if running and server is not None:
+                    server.close()
                 running = False
             # Maybe the instance was started by another process so we must set
             # the parameters.
@@ -1063,6 +1063,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 self._pytis_password_value.set(rpyc_info.password())
             # If no running RPyC instance was found then start one
             if not running:
+                if server is not None:
+                    server.close()
                 authenticator = pytisproc.PasswordAuthenticator()
                 default_port = self._DEFAULT_RPYC_PORT
                 port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS

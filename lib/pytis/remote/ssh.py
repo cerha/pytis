@@ -37,7 +37,7 @@ from pytis.util import log, EVENT, OPERATIONAL
 
 
 class AuthHandler(paramiko.auth_handler.AuthHandler):
-    
+
     def __init__(self, transport):
         super(AuthHandler, self).__init__(transport)
         self._public_key = None
@@ -165,7 +165,7 @@ def ssh_connect(hostname, **kwargs):
     client.load_system_host_keys()
     client.connect(hostname, **kwargs)
     return client
-    
+
 def ssh_exec(command, hostname):
     """Execute given 'command' on 'hostname' using X11 forwarding.
 
@@ -173,12 +173,12 @@ def ssh_exec(command, hostname):
 
       command -- command name and its arguments; list of strings
       hostname -- host to execute the given command on; basestring
-    
+
     """
     # Paramiko doesn't handle X11 forwarding very well, so it's much easier to
     # use just subprocess here.
     return gevent.subprocess.Popen(['ssh', '-X', hostname] + command)
-    
+
 class ReverseTunnel(gevent.Greenlet):
     """Process running reverse ssh forward connection.
 
@@ -219,7 +219,7 @@ class ReverseTunnel(gevent.Greenlet):
           strict_forward_port -- iff True, use only the given ssh_forward_port
             number; if it is not free then don't attempt to find another port
             and raise 'paramiko.SSHException' instead
-        
+
         """
         super(ReverseTunnel, self).__init__()
         self._ssh_host = ssh_host
@@ -233,7 +233,8 @@ class ReverseTunnel(gevent.Greenlet):
         self._actual_ssh_forward_port = ssh_forward_port_result
         self._gss_auth = gss_auth
         self._strict_forward_port = strict_forward_port
-        
+        self._ssh_client = None
+
     def _handler(self, chan, host, port):
         sock = socket.socket()
         try:
@@ -242,7 +243,7 @@ class ReverseTunnel(gevent.Greenlet):
             log(OPERATIONAL, 'Forwarding request to %s:%d failed: %r' % (host, port, e))
             return
         log(EVENT, 'Tunnel open %r -> %r -> %r' % (chan.origin_addr, chan.getpeername(),
-                                                  (host, port)))
+                                                   (host, port)))
         while True:
             r, w, x = select.select([sock, chan], [], [])
             if sock in r:
@@ -287,7 +288,6 @@ class ReverseTunnel(gevent.Greenlet):
             gevent.spawn(self._handler, chan, forward_host, forward_port)
 
     def run(self):
-        self._actual_ssh_port = None
         # Get parameters
         ssh_host = self._ssh_host
         ssh_port = self._ssh_port
@@ -301,7 +301,7 @@ class ReverseTunnel(gevent.Greenlet):
             if not os.path.exists(key_filename):
                 key_filename = None
         # Create client
-        client = paramiko.SSHClient()
+        self._ssh_client = client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.WarningPolicy())
         # Connect to the ssh host
@@ -316,6 +316,20 @@ class ReverseTunnel(gevent.Greenlet):
         log(EVENT, 'Forwarding remote port %d+ to %s:%d' %
             (self._ssh_forward_port or self._DEFAULT_SSH_FORWARD_PORT, forward_host, forward_port,))
         self._reverse_forward_tunnel(client.get_transport())
+
+    def kill(self):
+        if self._ssh_client:
+            while True:
+                transport = self._ssh_client.get_transport()
+                active = transport.is_active()
+                if active:
+                    transport.cancel_port_forward(self._forward_host, self._forward_port)
+                    transport.close()
+                else:
+                    self._ssh_client.close()
+                    self._ssh_client = None
+                    break
+        super(ReverseTunnel, self).kill()
 
     def _run(self):
         return self.run()
