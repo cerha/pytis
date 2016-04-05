@@ -3315,7 +3315,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
         result_type = self.result_type
         if result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER or \
-           isinstance(result_type, (tuple, list,)):
+           isinstance(result_type, (tuple, list,)) or result_type == self.RECORD:
             return sqlalchemy.sql.expression.TextClause(expression)
         else:
             return sqlalchemy.sql.expression.literal_column(expression,
