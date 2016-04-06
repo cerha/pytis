@@ -266,7 +266,7 @@ class PytisUserService(PytisService):
                                                       label="Vyberte šifrovací klíč",
                                                       columns=(u"Id", u"Uživatel",),
                                                       data=data)
-            if not answer:
+            if not selected_key:
                 raise Exception("Canceled")
         return [selected_key]
 
