@@ -3571,7 +3571,8 @@ class SideBrowseForm(BrowseForm):
                 self._prefill = dict([(cid, value_instance(cid, val))
                                       for cid, val in prefill.items()])
         elif self._binding_column:
-            self._prefill = {self._side_binding_column: row[self._binding_column].value()}
+            bcol, sbcol = self._binding_column, self._side_binding_column
+            self._prefill = {sbcol: row[bcol].retype(self._row.type(sbcol))}
         if self._selection_condition is not None:
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
