@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -667,8 +667,7 @@ pytis.Form = Class.create({
             if (response_number === this._last_request_number) {
 		document.body.style.cursor = "default";
             }
-	}
-        else {
+	} else {
             console.log("Empty AJAX response");
         }
     }
