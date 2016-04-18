@@ -1029,6 +1029,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if self._pytis_terminate.is_set():
                 if server is not None:
                     server.close()
+                    server = None
                 return
             # Look for a running RPyC instance
             running = True
@@ -1054,6 +1055,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     rpyc_stop_queue.get()
                 if running and server is not None:
                     server.close()
+                    server = None
                 running = False
             # Maybe the instance was started by another process so we must set
             # the parameters.
@@ -1065,6 +1067,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if not running:
                 if server is not None:
                     server.close()
+                    server = None
                 authenticator = pytisproc.PasswordAuthenticator()
                 default_port = self._DEFAULT_RPYC_PORT
                 port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
