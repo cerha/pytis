@@ -411,7 +411,8 @@ pytis.BrowseForm = Class.create({
 	    }.bind(this));
 	}
 	if (thead && thead.up('table').hasClassName('expansible-rows')) {
-	    thead.down('tr').insert({top: new Element('th', {'class': 'column-heading'})});
+	    var th = new Element('th', {'class': 'column-heading expansion-ctrl-heading'});
+	    thead.down('tr').insert({top: th});
 	}
     },
 

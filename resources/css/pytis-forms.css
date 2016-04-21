@@ -208,6 +208,12 @@
     width: 15px;
     padding: 0;
 }
+@media print {
+    .pytis-form.browse-form table.data-table.expansible-rows th.expansion-ctrl-heading,
+    .pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl {
+	display: none;
+    }
+}
 .pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl a.expand-row {
     width: 15px;
     height: 18px;
