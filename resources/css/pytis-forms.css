@@ -304,7 +304,7 @@
 }
 
 .pytis-form.browse-form #found-record {
-    background-color: #fc8 !important;
+    background-color: #fc8;
 }
 .pytis-form.browse-form .results {
     font-weight: bold;
