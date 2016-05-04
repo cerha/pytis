@@ -4760,6 +4760,7 @@ class StatusField(object):
         assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
         self._id = id
         self._label = label
+        self._tooltip = None
         self._refresh = refresh
         self._refresh_interval = refresh_interval
         self._width = width
@@ -4782,6 +4783,12 @@ class StatusField(object):
 
     def icon_position(self):
         return self._icon_position
+
+    def set_tooltip(self, tooltip):
+        self._tooltip = tooltip
+
+    def tooltip(self):
+        return self._tooltip or self._label
 
 
 class SpecificationBase(object):

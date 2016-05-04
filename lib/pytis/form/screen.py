@@ -1507,12 +1507,18 @@ class StatusBar(object):
                 timer.Start(interval)
             if refresh:
                 status = refresh()
+                tooltip = None
                 if status is not None:
                     if isinstance(status, (tuple, list)):
-                        text, icon = status
+                        if len(status) > 2:
+                            text, icon, tooltip = status
+                        else:
+                            text, icon = status
                     else:
                         text, icon = status, None
                     self._set_status(i, text, icon)
+                    if tooltip:
+                        field.set_tooltip(tooltip)
 
     def _on_motion(self, event):
         x = event.GetX()
@@ -1520,7 +1526,7 @@ class StatusBar(object):
             rect = self._sb.GetFieldRect(i)
             if x >= rect.x and x <= rect.x + rect.width:
                 window = event.GetEventObject()
-                text = self._fields[i].label()
+                text = self._fields[i].tooltip()
                 if text:
                     tip = window.GetToolTip()
                     if tip is None:
