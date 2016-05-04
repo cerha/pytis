@@ -1465,7 +1465,14 @@ class StatusBar(object):
         def __init__(self, text=None, icon=None, tooltip=None):
             self.text = text
             self.icon = icon
-            self.tooltip = tooltip
+            self._tooltip = tooltip
+
+        def tooltip(self):
+            tooltip = self._tooltip
+            if isinstance(tooltip, collections.Callable):
+                tooltip = self._tooltip = tooltip()
+            return tooltip
+
 
     def __init__(self, parent, fields):
         """Inicializuj StatusBar a vytvoř pojmenovaná pole.
@@ -1528,7 +1535,7 @@ class StatusBar(object):
             rect = self._sb.GetFieldRect(i)
             if x >= rect.x and x <= rect.x + rect.width:
                 window = event.GetEventObject()
-                text = self._state[i].tooltip or self._fields[i].label()
+                text = self._state[i].tooltip() or self._fields[i].label()
                 if text:
                     tip = window.GetToolTip()
                     if tip is None:
@@ -1561,10 +1568,10 @@ class StatusBar(object):
         bitmap.SetPosition((x, rect.y + 3))
 
     def _set_status(self, i, text, icon, tooltip):
-        sb = self._sb
         text = unicode(text or '')
         current_state = self._state[i]
         self._state[i] = self.State(text, icon, tooltip)
+        sb = self._sb
         if icon != current_state.icon:
             current_bitmap = self._bitmaps[i]
             if current_bitmap is not None:
@@ -1612,10 +1619,14 @@ class StatusBar(object):
             the field specification ('icon_position' passed to 'StatusField'
             constructor).
 
-          tooltip -- basestring to be displayed as the field's tooltip.  Note
-            that field label is displeyed in field tooltip by default, so you
-            may want to add the label here too to make the meaning of the field
-            clear.
+          tooltip -- basestring to be displayed as the field's tooltip.  May be
+            also a function with no arguments returning basestring.  In this
+            case the function is called when the tooltip is really needed at
+            the moment when the user hovers above the field.  Note that the
+            function is called only once and its result is cached until the
+            next call to 'set_status'.  Also note that field label is displeyed
+            in field tooltip by default, so you may want to add the label here
+            too to make the meaning of the field clear.
 
         Returns True on success or False when no such field was found in the
         status bar.
