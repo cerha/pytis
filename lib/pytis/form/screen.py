@@ -372,7 +372,7 @@ class Window(wx.Panel, Restorable):
         try:
             self.defocus()
             self.Enable(False)
-            self.Show(False) # nutné i před uzavřením
+            self.Show(False)  # nutné i před uzavřením
         finally:
             self._hide_form_requested = orig_hide_form_requested
 
@@ -872,8 +872,8 @@ class KeyHandler:
             if __debug__:
                 log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
-            pytis.form.message('Prefixová klávesa: %s (%s)' % (' '.join(self._prefix_key_sequence),
-                                                               ', '.join(keydef.keys()),))
+            pytis.form.message('Prefixová klávesa: {} ({})'.format(
+                ' '.join(self._prefix_key_sequence), ', '.join(keydef.keys())))
             self._current_keymap = keydef
             return True
         else:
@@ -1769,8 +1769,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 self._append_profile(profile, i, profile is current)
         self.SetColumnWidth(0, minWidth)
-        self.SetSize((1, 1)) # Needed for GetViewRect to work consistently.
-        width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
+        self.SetSize((1, 1))  # Needed for GetViewRect to work consistently.
+        width, height = self.GetViewRect()[2:]  # Returned sizes are 16 px greater than the reality.
         return wx.Size(max(width - 16, minWidth), min(height - 16, maxHeight))
 
     def SetStringValue(self, value):
@@ -2938,7 +2938,7 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         assert width is None
         width = dlg2px(ctrl, 4 * length)
         if _spin:
-            width += 20 # Add some space for spin buttons...
+            width += 20  # Add some space for spin buttons...
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
