@@ -4736,14 +4736,22 @@ class StatusField(object):
           id -- field identifier as a basestring.
           label -- field label as a basestring.  The label will be displayed
             as a tooltip.
-          refresh -- callable object returning the current field value
-            text as a basestring when called with no arguments.  The
-            function will be called periodically on user interface
-            refresh events (on idle).  If None the field will not be
-            updated periodically.  Such fields may be updated
-            imperatively by calling 'pytis.form.set_status()'.
-            The function should not perform any demanding processing
-            and should return promptly.
+
+          refresh -- callable object returning the current field state when
+            called with no arguments.  The returned value may be either a
+            basestring or a tuple.  If basestring is returned, it is used as
+            the diplayed field value text.  If a tuple is returned it may be
+            either a pair of (value, icon) or a tripple (value, icon, tooltip).
+            Icon is the icon identifier as in 'pytis.form.get_icon()' and
+            tooltip is a basestring to be displayed as the field's tooltip.  Note
+            that field label is displeyed in field tooltip by default, so you
+            may want to add the label manually here to make the meaning of the
+            field clear.  The function will be called periodically on user
+            interface refresh events (on idle).  If None the field will not be
+            updated periodically.  Such fields may be updated imperatively by
+            calling 'pytis.form.set_status()'.  The function should not perform
+            any demanding processing and should return promptly.
+
           refresh_interval -- minimal delay between two successive
             calls of the 'refresh' function in miliseconds.
           width -- field width as a number of characters.
@@ -4760,7 +4768,6 @@ class StatusField(object):
         assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
         self._id = id
         self._label = label
-        self._tooltip = None
         self._refresh = refresh
         self._refresh_interval = refresh_interval
         self._width = width
@@ -4783,12 +4790,6 @@ class StatusField(object):
 
     def icon_position(self):
         return self._icon_position
-
-    def set_tooltip(self, tooltip):
-        self._tooltip = tooltip
-
-    def tooltip(self):
-        return self._tooltip or self._label
 
 
 class SpecificationBase(object):

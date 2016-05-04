@@ -1461,6 +1461,12 @@ class StatusBar(object):
                 self.Stop()
             super(StatusBar._Timer, self).Start(timeout, True)
 
+    class State(object):
+        def __init__(self, text=None, icon=None, tooltip=None):
+            self.text = text
+            self.icon = icon
+            self.tooltip = tooltip
+
     def __init__(self, parent, fields):
         """Inicializuj StatusBar a vytvoř pojmenovaná pole.
 
@@ -1488,7 +1494,7 @@ class StatusBar(object):
         self._widths = widths
         self._orig_widths = tuple(widths)
         self._field_ids = [f.id() for f in fields]
-        self._state = [(None, None) for f in fields]
+        self._state = [self.State() for f in fields]
         self._bitmaps = [None for f in fields]
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
@@ -1507,18 +1513,14 @@ class StatusBar(object):
                 timer.Start(interval)
             if refresh:
                 status = refresh()
-                tooltip = None
                 if status is not None:
-                    if isinstance(status, (tuple, list)):
-                        if len(status) > 2:
-                            text, icon, tooltip = status
-                        else:
-                            text, icon = status
+                    if not isinstance(status, (tuple, list)):
+                        text, icon, tooltip = status, None, None
+                    elif len(status) == 2:
+                        text, icon, tooltip = status[0], status[1], None
                     else:
-                        text, icon = status, None
-                    self._set_status(i, text, icon)
-                    if tooltip:
-                        field.set_tooltip(tooltip)
+                        text, icon, tooltip = status
+                    self._set_status(i, text, icon, tooltip)
 
     def _on_motion(self, event):
         x = event.GetX()
@@ -1526,7 +1528,7 @@ class StatusBar(object):
             rect = self._sb.GetFieldRect(i)
             if x >= rect.x and x <= rect.x + rect.width:
                 window = event.GetEventObject()
-                text = self._fields[i].tooltip()
+                text = self._state[i].tooltip or self._fields[i].label()
                 if text:
                     tip = window.GetToolTip()
                     if tip is None:
@@ -1558,12 +1560,12 @@ class StatusBar(object):
             x = rect.x + rect.width - 2 - bitmap.GetSize().width
         bitmap.SetPosition((x, rect.y + 3))
 
-    def _set_status(self, i, text, icon):
+    def _set_status(self, i, text, icon, tooltip):
         sb = self._sb
         text = unicode(text or '')
-        current_text, current_icon = self._state[i]
-        self._state[i] = (text, icon)
-        if icon != current_icon:
+        current_state = self._state[i]
+        self._state[i] = self.State(text, icon, tooltip)
+        if icon != current_state.icon:
             current_bitmap = self._bitmaps[i]
             if current_bitmap is not None:
                 current_bitmap.Destroy()
@@ -1577,7 +1579,7 @@ class StatusBar(object):
             else:
                 self._bitmaps[i] = None
         # Prevent status bar blinking by checking against the current value.
-        if text != current_text:
+        if text != current_state.text:
             if text and icon:
                 if self._fields[i].icon_position() == StatusField.ICON_LEFT:
                     text = '      ' + text
@@ -1595,7 +1597,7 @@ class StatusBar(object):
                     self._update_bitmap_positions()
             sb.SetStatusText(text, i)
 
-    def set_status(self, field_id, text, icon=None):
+    def set_status(self, field_id, text, icon=None, tooltip=None):
         """Set the text and/or icon displayed in the field 'field_id'.
 
         Arguments:
@@ -1610,6 +1612,11 @@ class StatusBar(object):
             the field specification ('icon_position' passed to 'StatusField'
             constructor).
 
+          tooltip -- basestring to be displayed as the field's tooltip.  Note
+            that field label is displeyed in field tooltip by default, so you
+            may want to add the label here too to make the meaning of the field
+            clear.
+
         Returns True on success or False when no such field was found in the
         status bar.
 
@@ -1619,7 +1626,7 @@ class StatusBar(object):
         except ValueError:
             return False
         else:
-            self._set_status(i, text, icon)
+            self._set_status(i, text, icon, tooltip)
             return True
 
     def get_status_text(self, field_id):
@@ -1637,7 +1644,7 @@ class StatusBar(object):
         else:
             # Get the original text from self._state as the text returned by
             # self._sb.GetStatusText() may contain spaces to make room for icons.
-            return self._state[i][0]
+            return self._state[i].text
 
     def get_status_icon(self, field_id):
         """Get the identifier of the icon displayed in field 'field_id' or None.
@@ -1652,7 +1659,7 @@ class StatusBar(object):
         except ValueError:
             return None
         else:
-            return self._state[i][1]
+            return self._state[i].icon
 
 
 class InfoWindow(object):
