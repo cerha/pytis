@@ -2014,9 +2014,9 @@ def built_in_status_fields():
     def _refresh_remote_status():
         import pytis.remote
         if pytis.remote.client_available():
-            return (_("Ok"), 'connected')
+            return (_("Ok"), 'connected', _("Spojeno."))
         else:
-            return (_('N/A'), 'disconnected')
+            return (_('N/A'), 'disconnected', _("Není k dispozici."))
 
     return (
         StatusField('message', width=None),
