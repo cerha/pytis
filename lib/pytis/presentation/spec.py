@@ -4730,34 +4730,37 @@ class StatusField(object):
     """Place icon on right edge of the status field (the text is displayed left of the icon)."""
 
     def __init__(self, id, label=None, refresh=None, refresh_interval=None, width=10,
-                 icon_position=ICON_LEFT):
+                 icon_position=ICON_LEFT, on_click=None):
         """Arguments:
 
           id -- field identifier as a basestring.
           label -- field label as a basestring.  The label will be displayed
             as a tooltip.
-
           refresh -- callable object returning the current field state when
             called with no arguments.  The returned value may be either a
             basestring or a tuple.  If basestring is returned, it is used as
             the diplayed field value text.  If a tuple is returned it may be
             either a pair of (value, icon) or a tripple (value, icon, tooltip).
             Icon is the icon identifier as in 'pytis.form.get_icon()' and
-            tooltip is a basestring to be displayed as the field's tooltip.  Note
-            that field label is displeyed in field tooltip by default, so you
-            may want to add the label manually here to make the meaning of the
-            field clear.  The function will be called periodically on user
-            interface refresh events (on idle).  If None the field will not be
-            updated periodically.  Such fields may be updated imperatively by
-            calling 'pytis.form.set_status()'.  The function should not perform
-            any demanding processing and should return promptly.
-
-          refresh_interval -- minimal delay between two successive
-            calls of the 'refresh' function in miliseconds.
+            tooltip is a basestring to be displayed as the field's tooltip.
+            Note that field label is displeyed in field tooltip by default, so
+            you may want to add the label manually here to make the meaning of
+            the field clear.  The tooltip may be also passed as a function in
+            which case the function will be called without arguments only when
+            the tooltip is needed and should return the tooltip string.  The
+            function will be called periodically on user interface refresh
+            events (on idle).  If None the field will not be updated
+            periodically.  Such fields may be updated imperatively by calling
+            'pytis.form.set_status()'.  The function should not perform any
+            demanding processing and should return promptly.
+          refresh_interval -- minimal delay between two successive calls of the
+            'refresh' function in miliseconds.
           width -- field width as a number of characters.
           icon_position -- position to be used for placement of an icon
             if the field status is set to contain an icon.  It may be
             one of class constants 'ICON_LEFT' or 'ICON_RIGHT'.
+          on_click -- function called with no arguments when user clicks the
+            status bar field.
 
         """
         assert isinstance(id, basestring), id
@@ -4766,12 +4769,14 @@ class StatusField(object):
         assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
         assert width is None or isinstance(width, int) and width > 0
         assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
+        assert on_click is None or isinstance(on_click, collections.Callable), on_click
         self._id = id
         self._label = label
         self._refresh = refresh
         self._refresh_interval = refresh_interval
         self._width = width
         self._icon_position = icon_position
+        self._on_click = on_click
 
     def id(self):
         return self._id
@@ -4790,6 +4795,9 @@ class StatusField(object):
 
     def icon_position(self):
         return self._icon_position
+
+    def on_click(self):
+        return self._on_click
 
 
 class SpecificationBase(object):

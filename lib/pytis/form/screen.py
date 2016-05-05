@@ -1508,6 +1508,7 @@ class StatusBar(object):
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
         wx_callback(wx.EVT_MOTION, sb, self._on_motion)
+        wx_callback(wx.EVT_LEFT_DOWN, sb, self._on_click)
         wx_callback(wx.EVT_SIZE, sb, self._on_size)
 
     def _on_idle(self, event):
@@ -1529,23 +1530,37 @@ class StatusBar(object):
                         text, icon, tooltip = status
                     self._set_status(i, text, icon, tooltip)
 
-    def _on_motion(self, event):
-        x = event.GetX()
+    def _field_index_for_position(self, x):
         for i, field in enumerate(self._fields):
             rect = self._sb.GetFieldRect(i)
             if x >= rect.x and x <= rect.x + rect.width:
-                window = event.GetEventObject()
-                text = self._state[i].tooltip() or self._fields[i].label()
-                if text:
-                    tip = window.GetToolTip()
-                    if tip is None:
-                        tip = wx.ToolTip(text)
-                        window.SetToolTip(tip)
-                    elif tip.GetTip() != text:
-                        tip.SetTip(text)
-                else:
-                    window.SetToolTip(None)
-                break
+                return i
+        return None
+
+    def _on_click(self, event):
+        i = self._field_index_for_position(event.GetX())
+        if i is not None:
+            self._on_field_click(i)
+
+    def _on_field_click(self, i):
+        handler = self._fields[i].on_click()
+        if handler:
+            handler()
+
+    def _on_motion(self, event):
+        i = self._field_index_for_position(event.GetX())
+        if i is not None:
+            window = event.GetEventObject()
+            text = self._state[i].tooltip() or self._fields[i].label()
+            if text:
+                tip = window.GetToolTip()
+                if tip is None:
+                    tip = wx.ToolTip(text)
+                    window.SetToolTip(tip)
+                elif tip.GetTip() != text:
+                    tip.SetTip(text)
+            else:
+                window.SetToolTip(None)
         event.Skip()
 
     def _on_size(self, event):
@@ -1579,7 +1594,8 @@ class StatusBar(object):
             if icon is not None:
                 bitmap = get_icon(icon)
                 if bitmap:
-                    self._bitmaps[i] = wx.StaticBitmap(sb, bitmap=bitmap)
+                    self._bitmaps[i] = bmp = wx.StaticBitmap(sb, bitmap=bitmap)
+                    wx_callback(wx.EVT_LEFT_DOWN, bmp, lambda e: self._on_field_click(i))
                     self._update_bitmap_position(i)
                 else:
                     self._bitmaps[i] = None
