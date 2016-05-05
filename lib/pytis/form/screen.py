@@ -45,6 +45,7 @@ import lcg
 
 import wx
 import wx.combo
+import wx.lib.agw.supertooltip
 
 import pytis.form
 import pytis.presentation
@@ -1438,8 +1439,36 @@ class MenuBar(wx.MenuBar):
                 else:
                     self._keys[k] = cmd
 
-# Status bar
 
+class ToolTip(wx.lib.agw.supertooltip.SuperToolTip):
+
+    def __init__(self, window):
+        super(ToolTip, self).__init__('')
+        self.SetTarget(window)
+        self.SetDropShadow(False)
+        self.ApplyStyle("Yellow")
+
+    def OnStartTimer(self):
+        label = self._label
+        content = self._content()
+        if label is not None or content is not None:
+            self.SetHeader(label or '')
+            self.SetDrawHeaderLine(label is not None)
+            self.SetMessage(content or '')
+            super(ToolTip, self).OnStartTimer()
+
+    def SetContent(self, label, content):
+        self._label = label
+        self._content = content
+        if self.GetTipWindow():
+            # If the tooltip window is currently active, force redraw it.
+            # This relies on the fact, that SetContent is never called
+            # repeatedly for the same field.
+            self.OnEndTimer()
+            self.OnStartTimer()
+
+
+# Status bar
 
 class StatusBar(object):
     """Pytis application main frame status bar.
@@ -1503,6 +1532,8 @@ class StatusBar(object):
         self._field_ids = [f.id() for f in fields]
         self._state = [self.State() for f in fields]
         self._bitmaps = [None for f in fields]
+        self._tooltip = ToolTip(sb)
+        self._last_tooltip_index = None
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
         parent.SetStatusBar(sb)
@@ -1549,18 +1580,12 @@ class StatusBar(object):
 
     def _on_motion(self, event):
         i = self._field_index_for_position(event.GetX())
-        if i is not None:
-            window = event.GetEventObject()
-            text = self._state[i].tooltip() or self._fields[i].label()
-            if text:
-                tip = window.GetToolTip()
-                if tip is None:
-                    tip = wx.ToolTip(text)
-                    window.SetToolTip(tip)
-                elif tip.GetTip() != text:
-                    tip.SetTip(text)
-            else:
-                window.SetToolTip(None)
+        if i is not None and i != self._last_tooltip_index:
+            self._last_tooltip_index = i
+            self._tooltip.SetContent(
+                self._fields[i].label(),
+                lambda: self._state[i].tooltip() or self._state[i].text or None
+            )
         event.Skip()
 
     def _on_size(self, event):
