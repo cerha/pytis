@@ -1,0 +1,191 @@
+* Poznámky k vývoji X2Go klienta
+
+** Úvod
+
+Pro vytvoření vlastního klienta (bin/x2goclient.py) používáme python-x2go API.
+Pak existuje pyhoca-cli a pyhoca-gui, což jsou dva oficiální příklady klienta,
+postaveného nad python-x2go API.  CLI/GUI je to z pohledu správy x2go sezení a
+protože my GUI pro výběr sezení nepotřebujeme, použili jsme pyhoca-cli a
+snažili jsme se na to naroubovat doplňkovou službu běžícího rpyc serveru, se
+kterým komunikuje pytis.
+
+Nicméně pdm se moc nechtělo hrabat v tom API a tak už na začátku to pojal dost
+po svém a teprve, když jsem s ním probral, že by asi bylo praktičtější držet se
+více toho jejich API, tak to tam postupně doplnil.  Přesto je ten náš rpyc
+server pořád ještě postaven jinak, než jak x2go samo implementuje doplňkové
+služby.
+
+Uživatel má mít na ploše ikonu aplikace, a kliknutím prostě spustí aplikaci na
+vzdáleném serveru, kde i management oken je lokální, neboli používáme rootless
+sessions.
+
+Do budoucna má pytis2go nahradit všude windows-server.py, ale zatím se ten
+windows-server.py ještě používá.
+
+** Nepřehlednost
+
+V jednom souboru jsou smíchané věci jako dialogová komunikační okna, parsování
+voleb příkazové řádky, zpracování informací o session poskytovaných ssh
+brokerem apod.  Už jenom rozseparování na dobře členěné celky by bylo užitečné.
+Když ale teď pominu ty doplňkové části, tak naprostým základem je třída
+PytisClient, odvozená od Pyhoca klienta.  pdm říkal, že to nějak moc nešlo
+udělat čistě a spoustu věcí z toho pyhoca převzal formou copy/paste.
+Např. zpracování voleb příkazové řádky.  Nicméně třeba i v tomto by možná
+nebylo špatné, kdyby takto převzaté věci byly někde v samostatném modulu, aby
+byl člověk schopen rozlišit, co tam doplňoval sám pro naše potřeby a co je
+převzato tak, aby byla v podstatě zachována funkcionalita, kterou poskytuje
+pyhoca-cli.  Další věc je, že ten náš klient holt musí na začátku komunikovat s
+uživatelem a tak je tam také zase zřejmě duplikovaná funkcionalita wx dialogů.
+
+** Spuštění
+
+Aplikační volby jsou naprosto shodné s pyhoca-cli.  Takže např.
+
+x2goclient.py --add-to-known-hosts --server ... -c xterm
+
+na daném serveru spustí xterm včetně toho, že se vytvoří onen komunikační kanál
+pro rpyc server.  Pokud např. na dotyčný server člověk dá soubor x2go-ping
+(který je v pytis/bin), tak i může otestovat, že to spolu komunikuje.  Když se
+namísto xterm použije spouštěcí skript pro pytis-demo, se přes x2goclienta
+spustí pytis-demo.  Nebo jakoukoli jinou (pytis) aplikaci.
+
+Jsou tam určitá specifika, která mohou způsobit to, že se to vlastně na nic
+neptá a jen se zobrazí progressbar.  Např. když se to spouští s tím, že se
+seznam session získává přes x2go broker a ještě je zadaná session_id a je známo
+uživatelské jméno a je možno autorizovat přes ssh agenta.  Tedy např.
+x2goclient.py --add-to-known-hosts
+--broker-url=ssh://hanak@server/usr/bin/x2gobroker -P my_session V tomto
+případě se uživatel zjistí z toho broker-url, takže se už neptá.  A pokud je
+možno ověřit ssh spojení díky ssh agentovi, tak se to na nic neptá.
+
+** Progress bar
+
+Start aplikace trvá relativně dlouhou dobu.  Byla snaha, zobrazit uživateli co
+nejdříve progress bar, aby věděl, že se něco děje a nepokoušel se usilovně
+dvojklikat na spouštěcí ikonu několikrát po sobě v domnění, že se nic neděje.
+
+Proto se v x2goclient.py provádějí importy modulů postupně, prokládané updaty
+progressbaru.  Např. import x2go modulů trvá celkem dlouho a byla snaha, aby už
+uživatel mezitím viděl nějaké okno...
+
+** Vzdálená komunikace
+
+V podstatě to funguje tak, že x2goclient.py nastartuje dvě samostatná
+vlákna. Jedno vlákno hlídá běh rpyc serveru na portu, který je od 10000 výše
+(hledá první volný port). Druhé vlákno vytvoří pro tento port reverezní ssh
+tunel, tedy přihlásí se přes ssh na aplikační serveru a vytvoří reverzní tunel,
+který na lokální uživatelově stanici končí na tom portu rpyc serveru.  Pytis
+aplikace si pak dokáže zjistit, na jaký port se má hlásit, aby se přes ten
+tunel dostala na uživatelův rpyc server.  Ono je to celé vlastně celkem
+jednoduché, složitým to dělá jen ta nepřehledná implementace.
+
+Přitom samotné x2go realizuje také doplňkové služby, ale implementují to
+trochu jinak zdá se, že by nebylo na škodu to pojmout více tím jejich způsobem.
+Konkrétně x2go realizuje služby: pulseaudio přes reverzní tunel na uživatelovu
+stanici, dále tisk přes reverzní tunel na uživatelově stanici a nakonec ještě
+sshfs, tedy sdílení uživatelova lokálního adresáře na aplikačním serveru.
+Nicméně případnému našemu přepisu či úpravě té naší implementace rpyc serveru
+by zřejmě mělo předcházet rozumné vyčištění a zpřehlednění stávajícího kódu.
+
+X2Go API už má implementován i reverzní tunel.  Takže by v podstatě pak šlo o
+to, udělat napojení našeho rpyc serveru přes takovouto implementaci reverzního
+tunelu.  Zatím používáme vlastní jednoduchou podobu reverzního tunelu, která je
+v pytis.remote.ssh
+
+Komunikace přes tunel řeší přesně ty služby, které ve specifikacích používají
+to pytis.remote. Tedy otevírání souborů, načítání či ukládání souborů a
+případně i ty clipboardové operace.  Nemůžeme použít sshfs, protože to umožňuje
+jen sdílet nějaký vydefinovaný adresář, proto skutečně potřebujeme otevírat
+file dialogu na klientovi.  Nicméně v současné době to dělá to, co to dělat má,
+jen je to nepřehledné a tedy náchylné k chybám, přičemž nějaké chyby se
+objevují již nyní.
+
+** Šifrované otevírání/ukládání vzdálených souborů
+
+V pytis aplikacích se používají kryptované sloupce v databázových políčkách. V
+nich mohou být ukládány třeba i přílohy a uživatel třeba potřebuje takovou
+přílohu uložit u sebe na usb disk.  A byl požadavek, aby se v žádné fázi
+neobjevil na jeho disku nezašifrovaný soubor, takže pdm doplnil i podporu do
+pytis.remote tak, aby se ten soubor na uživatelově stanici rovnou ukládal
+zašifrovaný jeho klíčem.
+
+** Broker
+
+Broker je v podstatě nástroj pro centralizovanou správu session.  Uživatel
+disponující klientem x2go musí normálně parametry session definovat buď při
+spouštění klienta pomocí parametrů příkazové řádky nebo pomocí konfiguračního
+souboru. Pokud je k dispozici server s brokerem, tak na příkazové řádce jen
+předá URL toho brokeru a po autentizaci mu broker vrátí seznam session, které
+jsou mu k dispozici včetně parametrů jako adresa serveru nebo spouštěcí skript
+na onom cílovém serveru.  U našich uživatelů nám tak stačí vytvořit jednu
+spouštěcí ikonu s příkazem
+
+x2goclient.py --broker-url=ssh://broker.is-it.eu/usr/bin/x2gobroker
+
+a pak už u nich do budoucna nemusíme nic měnit ani přenastavovat, i kdybychom
+měnili umístění aplikačních serverů nebo měnili parametry aplikací.  Prostě na
+broker.is-it.eu změníme konfiguraci brokeru a uživateli se to při spuštění
+aplikace ihned projeví.
+
+Broker může být realizován pomocí dvou backendů: http a ssh.  My zatím
+používáme jen ssh.  Asi ani nemáme důvod to v budoucnu měnit.  Podrobnější
+informace nejen o brokeru, ale i dalších advanced rysech x2go, jsou na
+
+http://wiki.x2go.org/doku.php/wiki:advanced:start
+
+Nicméně v python-x2go je komletní zrovna ta http verze brokeru a ssh broker je
+tam nedodělaný. Takže onu správu session pomocí ssh spojení doděláváme taky v
+našem x2goclient.py.
+
+Jedeme v režimu, kdy je externím uživatelům umožněno jen přihlašování klíčem,
+nikoli heslem.
+
+Interně to funguje tak, že se provede připojení na daný server a tam se pro
+získání seznamu dostupným session zavolá "x2gobroker --task listsessions" a pro
+získání parametrů vybrané session se zavolá "x2gobroker --task selectsession
+<session_id>".  V plánu např. máme používání single-sign-on s autentizací přes
+Kerberos (zde se neví, jak by to fungovalo přes HTTP, zatímco u ssh je to
+triviální).  Na to by se při případné úpravě x2goclient.py měl brát zřetel.
+
+** Úkoly k řešení
+
+*** Tuhnutí
+
+Obecně by bylo vhodnější udělat rpyc server s reverzním tunelem podobně, jako
+to dělá x2go s tím sshfs nebo s pulseaudio.  U mnoha věcí se už snažíme pojmout
+to ala python-x2go (viz i různé monkey patchované metody x2go tříd), ale zrovna
+ta komunikace takto pojatá není.
+
+*** Úvodní komunikace
+
+V současné době je komunikace s uživatelem pojata jako série jednoduchých
+dialogů (textové vstupy a dotazovací dialogy).  Bylo by hezčí a pro uživatele
+přehlednější, kdyby se vytvořil regulérní aplikační wx frame, kde by se třeba
+více věcí dalo vyplnit či zvolit najednou.  Typicky se vyplňuje:
+
+- uživatelské jméno (defaultně aktuální jméno)
+- typ autentizace (klíč x heslo)
+- výběr klíče + heslo ke klíči
+- heslo (pokud není přihlašování klíčem)
+- výběr z předdefinovaných session získaných z x2go brokeru.
+
+Úvodní dialogy mohou být implementovány pouze nad wx, protože se to distribuuje
+jako celek včetně PortablePython, který wx obsahuje.  Viz
+git.is-it.eu/var/lib/git/pytis2go.  Balík pytis2go vlastně obsahuje základní
+PortablePython, dále jsou doplněné další python moduly jako paramiko či x2go a
+také je tam malá podmnožina pytisu.  pytis.remote se používá i u starší podoby
+používání, kdy na windows stanici běží samostatný windows-server.py. Přičemž
+tam nebývá k dispozici wx.
+
+Jakékoli dialogy (kromě progressbaru) se mají objevit jen tehdy, pokud jsou
+opravdu zapotřebí.  Jestliže je například zřejmé uživatelské jméno a lze
+provést Kerberos autentizace přes gssapi, tak není zapotřebí zobrazovat dialog,
+ve kterém se hledá cesta k ssh klíči nebo se zadává heslo.  To stávající podoba
+respektuje.  Ta se nejprve pokouší o autentizaci přes Kerberos, pokud neprojde,
+tak hledá defaultní ssh klíče a pokud je najde, tak je zkouší použít (zeptá se
+případně na heslo ke klíči) a teprve pokud to nevyjde, tak se zeptá, jestli
+chce uživatel autentizovat klíčem nebo heslem.  Pokud vybere klíč, tak se zeptá
+na jeho heslo, pokud se vybere heslo, tak se zeptá na heslo.  Tuto dotazovací
+fázi by bylo dobré udělat nějak hezčeji a přehledněji.  Např. jako jedno okno,
+které by bylo od počátku zobrazeno a obsahovalo by progressbar a ostatní
+widgety, u kterých by se dynamicky měnil vzhled podle vývoje situace.
