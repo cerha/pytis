@@ -2265,7 +2265,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # We buffer exported data before writing them to the file in order
             # to prevent numerous rpc calls in case of remote export.
             csv_buffer = cStringIO.StringIO()
-            for column in self._columns:
+            for i, column in enumerate(self._columns):
+                if i > 0:
+                    csv_buffer.write('\t')
                 label = column.column_label()
                 if label is None:
                     label = column.label()
@@ -2273,22 +2275,34 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     if not isinstance(label, unicode):
                         label = unicode(label, db_encoding)
                     label = label.encode(export_encoding)
-                csv_buffer.write(label + '\t')
+                csv_buffer.write(label)
             csv_buffer.write('\n')
+            only_selected = False
+            if len(self.selected_rows()) > 0:
+                msg = _("Some rows are selected. Should only selected rows be exported?")
+                if run_dialog(Question, msg, False):
+                    only_selected = True
             for r in range(0, number_rows):
                 if not update(int(float(r) / number_rows * 100)):
                     break
+                if only_selected and not self._grid.IsInSelection(r, 0):
+                    continue
+                i = 0
                 for cid, ctype in column_list:
+                    if i > 0:
+                        csv_buffer.write('\t')
+                    i += 1
                     presented_row = self._table.row(r)
                     if isinstance(ctype, pytis.data.Float):
                         s = presented_row.format(cid, secure=True, locale_format=False)
                     else:
                         s = presented_row.format(cid, secure=True)
+                    field = ';'.join(s.split('\n'))
                     if export_encoding and export_encoding != db_encoding:
-                        if not isinstance(s, unicode):
-                            s = unicode(s, db_encoding)
-                        s = s.encode(export_encoding)
-                    csv_buffer.write(';'.join(s.split('\n')) + '\t')
+                        if not isinstance(field, unicode):
+                            field = unicode(field, db_encoding)
+                        field = field.encode(export_encoding)
+                    csv_buffer.write(field)
                 csv_buffer.write('\n')
             export_file.write(csv_buffer.getvalue())
             export_file.close()
@@ -2361,6 +2375,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                             col_fmt=_get_format(col_type)))
                 col_position = col_position + 1
             number_rows = self._table.number_of_rows()
+            only_selected = False
+            if len(self.selected_rows()) > 0:
+                msg = _("Some rows are selected. Should only selected rows be exported?")
+                if run_dialog(Question, msg, False):
+                    only_selected = True
             # Worksheet column settings
             bold = w.add_format({'bold': True})
             merge_bold = w.add_format({'align': 'center', 'bold': True})
@@ -2378,9 +2397,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     skip_next = True
                 else:
                     ws.write(0, position, unicode(label), bold)
+            r_out = 0
             for r in range(0, number_rows):
                 if not update(int(float(r) / number_rows * 100)):
                     break
+                if only_selected and not self._grid.IsInSelection(r, 0):
+                    continue
+                r_out = r_out + 1
                 presented_row = self._table.row(r)
                 for col in column_list:
                     cid = col['col_id']
@@ -2396,14 +2419,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         elif col_range == 'upper':
                             v = v.upper()
                         if isinstance(ctype, pytis.data.Float) or isinstance(ctype, pytis.data.Integer):
-                            ws.write_number(r + 1, position, v, fmt)
+                            ws.write_number(r_out + 1, position, v, fmt)
                         elif isinstance(ctype, pytis.data.DateTime):
-                            ws.write_datetime(r + 1, position, v, fmt)
+                            ws.write_datetime(r_out + 1, position, v, fmt)
                         elif col_range is not None and isinstance(ctype, pytis.data.String):
-                            ws.write(r + 1, position, v)
+                            ws.write(r_out + 1, position, v)
                         else:
                             s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
-                            ws.write_string(r + 1, position, s)
+                            ws.write_string(r_out + 1, position, s)
             w.close()
             with open(tmp_file_name, 'rb') as f:
                 file_.write(f.read())
