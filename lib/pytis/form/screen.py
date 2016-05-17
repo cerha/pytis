@@ -1645,7 +1645,7 @@ class StatusBar(object):
             x = rect.x + 4
         else:
             x = rect.x + rect.width - 2 - bitmap.GetSize().width
-        bitmap.SetPosition((x, rect.y + 3))
+        bitmap.SetPosition((x, rect.y + 4))
 
     def _set_status(self, i, text, icon, tooltip):
         text = unicode(text or '')
@@ -1670,15 +1670,15 @@ class StatusBar(object):
         if text != current_state.text:
             if text and icon:
                 if self._fields[i].icon_position() == StatusField.ICON_LEFT:
-                    text = '      ' + text
+                    text = '     ' + text
                 else:
-                    text += '       '
+                    text += '      '
             if self._widths[i] > 0:
                 # Adjust the field width to fit the new text (for fixed width fields only).  The
                 # "fixed" fields don't change their width as a percentage of the application frame
                 # width, but are not completely fixed...
                 # Add 6 pixels below for the borders.
-                width = max(sb.GetTextExtent(text)[0] + 6, self._orig_widths[i])
+                width = max(sb.GetTextExtent(text)[0] + 8, self._orig_widths[i])
                 if width != self._widths[i]:
                     self._widths[i] = width
                     sb.SetStatusWidths(self._widths)
