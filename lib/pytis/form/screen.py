@@ -45,7 +45,14 @@ import lcg
 
 import wx
 import wx.combo
-import wx.lib.agw.supertooltip
+
+import wx.lib.agw.supertooltip as supertooltip
+if not hasattr(supertooltip.SuperToolTip, 'DoHideNow'):
+    # Hack: Older wx versions (including wx 2.8) include a very old version of SuperToolTip.
+    # If that's the case, use the more recent version included in Pytis (which is compatible
+    # with older wx versions).  Once we drop support for wx 2.8, this hack can be removed
+    # together with the file supertooltip.py in lib/pytis/form.
+    from . import supertooltip
 
 import pytis.form
 import pytis.presentation
@@ -1440,7 +1447,33 @@ class MenuBar(wx.MenuBar):
                     self._keys[k] = cmd
 
 
-class ToolTip(wx.lib.agw.supertooltip.SuperToolTip):
+# StatusBar tooltips use the SuperToolTip class, but it is not very
+# customizable, thus the hacks below.
+
+class ToolTipWindow(supertooltip.ToolTipWindow):
+
+    def OnPaint(self, event):
+        # The superclass is a mess - OnPaint is used (apart from
+        # actually painting) also to compute the tooltip size.
+        # Here we just need to enlarge the window vertically.
+        result = super(ToolTipWindow, self).OnPaint(event)
+        if event is None:
+            return result[0], result[1] + 8
+
+    def CalculateBestPosition(self, widget):
+        size = self.GetSize()
+        screen = wx.ClientDisplayRect()[2:]
+        position = wx.GetMousePosition()
+        if position.x + size.x > screen[0]:
+            position.x -= size.x
+        # Y position must be always above the pointer, otherwise the tooltip doesn't
+        # show at all when it gets below the main application frame (which is always
+        # the case for status bar tooltips).
+        self.SetPosition((position.x, position.y - size.y))
+
+supertooltip.ToolTipWindow = ToolTipWindow
+
+class ToolTip(supertooltip.SuperToolTip):
 
     def __init__(self, window):
         super(ToolTip, self).__init__('')
@@ -1458,15 +1491,16 @@ class ToolTip(wx.lib.agw.supertooltip.SuperToolTip):
             super(ToolTip, self).OnStartTimer()
 
     def SetContent(self, label, content):
+        # Here we rely on the fact, that this method is not called twice
+        # for the same field.  Thus we know that the content has changed
+        # (we are above a different field) and we should hide the old
+        # content (if shown) and restart timers.
         self._label = label
         self._content = content
         if self.GetTipWindow():
-            # If the tooltip window is currently active, force redraw it.
-            # This relies on the fact, that SetContent is never called
-            # repeatedly for the same field.
             self.OnEndTimer()
-            self.OnStartTimer()
-
+        if not self._startTimer.IsRunning():
+            self._startTimer.Start(self._startDelayTime*1000)
 
 # Status bar
 
