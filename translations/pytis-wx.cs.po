@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2016-05-17 17:37+0200\n"
-"PO-Revision-Date: 2016-05-19 16:26+0200\n"
+"PO-Revision-Date: 2016-05-19 16:33+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -302,7 +302,7 @@ msgstr "Spojeno."
 
 #: ../lib/pytis/form/application.py:2019
 msgid "N/A"
-msgstr "N/A."
+msgstr "N/A"
 
 #: ../lib/pytis/form/application.py:2019
 #, fuzzy
