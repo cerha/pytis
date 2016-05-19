@@ -53,7 +53,8 @@ from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     Attribute, ProgramError, ResolverError, SimpleCache, Structure, \
     UNDEFINED, compare_objects, find, form_view_data, log, sameclass
 import pytis.remote
-from dialog import AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question
+from dialog import AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question, \
+    CheckListDialog
 from event import UserBreakException, wx_callback
 from form import BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm, \
     QueryFieldsForm, \
@@ -1184,20 +1185,39 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g = self._grid
         return g.GetViewStart()[0] * g.GetScrollPixelsPerUnit()[0]
 
-    def _displayed_columns_menu(self, col):
+    def _available_columns(self):
         select_columns = self._select_columns()
         if select_columns is None:
             columns = self._fields
         else:
             columns = [self._view.field(cid) for cid in select_columns]
+        columns = [c for c in columns if c and not c.disable_column()]
         import locale
         columns.sort(key=lambda c: locale.strxfrm(c.column_label()))
-        return [CheckItem(_("Row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
-                          state=lambda: self._grid.GetRowLabelSize() != 0)] + \
-               [CheckItem(c.column_label(),
-                          command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=col),
-                          state=lambda c=c: c in self._columns)
-                for c in columns if c and not c.disable_column()]
+        return columns
+
+    def _displayed_columns_menu(self, column_index):
+        columns = self._available_columns()
+        if len(columns) > 12:
+            return (MItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()),)
+        else:
+            if column_index is not None:
+                position = column_index
+            else:
+                position = len(self._columns)
+            menu = (
+                [CheckItem(_("Row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
+                           state=lambda: self._grid.GetRowLabelSize() != 0)] +
+                [CheckItem(c.column_label(),
+                           command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(),
+                                                                  position=position),
+                           state=lambda c=c: c in self._columns)
+                 for c in columns]
+            )
+            if column_index is None:
+                return menu
+            else:
+                return (Menu(_("Displayed columns"), menu),)
 
     def _aggregation_menu(self):
         menu = [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
@@ -1234,41 +1254,40 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return menu
 
     def _column_context_menu(self, col):
-        M = Menu
-        I = MItem
-        ________ = MSeparator()
-        ASC = LookupForm.SORTING_ASCENDENT
-        DESC = LookupForm.SORTING_DESCENDANT
-        c = self._columns[col]
-        items = (M(_("Primary Sorting"),
-                   (I(_("Sort Ascending"),
-                      command=LookupForm.COMMAND_SORT(direction=ASC, col=col, primary=True)),
-                    I(_("Sort Descending"),
-                      command=LookupForm.COMMAND_SORT(direction=DESC, col=col, primary=True)),)),
-                 M(_("Secondary Sorting"),
-                   (I(_("Sort Ascending"),
-                      command=LookupForm.COMMAND_SORT(direction=ASC, col=col)),
-                    I(_("Sort Descending"),
-                      command=LookupForm.COMMAND_SORT(direction=DESC, col=col)),)),
-                 I(_("Omit this column from sorting"),
-                   command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
-                 I(_("Cancel sorting completely"),
-                   command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
-                 ________,
-                 I(_("Group up to this column"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
-                 I(_("Cancel visual grouping"),
-                   command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
-                 ________,
-                 I(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
-                 I(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER),
-                 ________,
-                 I(_("Hide this column"),
-                   command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=None)),
-                 M(_("Displayed columns"),
-                   self._displayed_columns_menu(col=col)),
-                 )
-        return items
+        return (
+            Menu(_("Primary Sorting"), (
+                MItem(_("Sort Ascending"),
+                      command=LookupForm.COMMAND_SORT(col=col, primary=True,
+                                                      direction=LookupForm.SORTING_ASCENDENT)),
+                MItem(_("Sort Descending"),
+                      command=LookupForm.COMMAND_SORT(col=col, primary=True,
+                                                      direction=LookupForm.SORTING_DESCENDANT)),
+            )),
+            Menu(_("Secondary Sorting"), (
+                MItem(_("Sort Ascending"),
+                      command=LookupForm.COMMAND_SORT(col=col,
+                                                      direction=LookupForm.SORTING_DESCENDANT)),
+                MItem(_("Sort Descending"),
+                      command=LookupForm.COMMAND_SORT(col=col,
+                                                      direction=LookupForm.SORTING_DESCENDANT)),
+            )),
+            MItem(_("Omit this column from sorting"),
+                  command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
+            MItem(_("Cancel sorting completely"),
+                  command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
+            MSeparator(),
+            MItem(_("Group up to this column"),
+                  command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
+            MItem(_("Cancel visual grouping"),
+                  command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
+            MSeparator(),
+            MItem(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
+            MItem(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER),
+            MSeparator(),
+            MItem(_("Hide this column"),
+                  command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=self._columns[col].id(),
+                                                         position=None)),
+        ) + self._displayed_columns_menu(col)
 
     def _aggregation_info_by_position(self, y):
         if y > self._label_height and self._aggregations:
@@ -1290,7 +1309,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                                            operation=aggregation[0])
                 menu[0:0] = (MItem(_("Copy the Result"), command=cmd), MSeparator())
         elif col == -1:
-            menu = self._displayed_columns_menu(len(self._columns))
+            menu = self._displayed_columns_menu(None)
         else:
             menu = self._column_context_menu(col)
         self._popup_menu(menu)
@@ -1859,13 +1878,29 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
 
-    def _cmd_toggle_column(self, column_id, col=None):
+    def _cmd_toggle_column(self, column_id, position=None):
         c = find(column_id, self._columns, key=lambda c: c.id())
         if c:
             self._update_grid(delete_column=c)
         else:
             self._update_grid(insert_column=self._view.field(column_id),
-                              inserted_column_index=col)
+                              inserted_column_index=position)
+
+    def _cmd_toggle_columns(self):
+        columns = self._available_columns()
+        state = [c in self._columns for c in columns]
+        result = run_dialog(CheckListDialog, title=_("Displayed columns"),
+                            message=_("Select the columns to be displayed:"),
+                            items=[(checked, c.column_label(), c.descr() or '')
+                                   for checked, c in zip(state, columns)],
+                            columns=(_("Column"), _("Description")))
+        if result:
+            for c, present, checked, i in zip(columns, state, result, range(len(columns))):
+                if present and not checked:
+                    self._update_grid(delete_column=c)
+                elif not present and checked:
+                    self._update_grid(insert_column=self._view.field(c.id()),
+                                      inserted_column_index=result[:i].count(True))
 
     def _cmd_toggle_row_labels(self):
         g = self._grid

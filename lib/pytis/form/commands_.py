@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # Definice uživatelských příkazů
-# 
-# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+#
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ Class constants named after the command with a 'COMMAND_' prefix are automatical
 defined commands.  For example the definition:
 
   Command(Application, 'EXIT', 'Exit the application.')
-  
+
 will automatically create a constant 'Application.COMMAND_EXIT' and this constant may be further
 used to invoke the command, etc.
 
@@ -55,7 +55,7 @@ import config
 
 _ = pytis.util.translations('pytis-wx')
 
-    
+
 Command(Application, 'EXIT',
         "Ukončení aplikace")
 Command(Application, 'HELP',
@@ -203,7 +203,9 @@ Command(ListForm, 'RESIZE_COLUMN',
 Command(ListForm, 'MOVE_COLUMN',
         "Přesunutí sloupce doprava/doleva (arg. 'diff' +/- number of columns)")
 Command(ListForm, 'TOGGLE_COLUMN',
-        "Skrytí/zobrazení sloupce")
+        "Show/hide given column (arguments 'column_id' and 'position')")
+Command(ListForm, 'TOGGLE_COLUMNS',
+        "Display a dialog for selection of displayed columns.")
 Command(ListForm, 'TOGGLE_ROW_LABELS',
         "Skrytí/zobrazení sloupce záhlaví řádků")
 Command(ListForm, 'CONTEXT_MENU',
@@ -487,7 +489,7 @@ COMMAND_ICONS = (
     (ListForm.COMMAND_INSERT_LINE(before=True),            'insert-line-before'),
     (ListForm.COMMAND_INSERT_LINE(copy=True),              'insert-line-copy'),
     (ListForm.COMMAND_INSERT_LINE,                         'insert-line'),
-    (ListForm.COMMAND_TOGGLE_COLUMN(col=None),             'hide-column'),
+    (ListForm.COMMAND_TOGGLE_COLUMN(position=None),        'hide-column'),
     (ListForm.COMMAND_AGGREGATE,                           'aggregate'),
     (ListForm.COMMAND_UNAGGREGATE,                         'unaggregate'),
     (ListForm.COMMAND_COPY_AGGREGATION_RESULT,             wx.ART_COPY),
