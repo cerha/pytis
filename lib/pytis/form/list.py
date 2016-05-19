@@ -1197,27 +1197,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return columns
 
     def _displayed_columns_menu(self, column_index):
-        columns = self._available_columns()
-        if len(columns) > 12:
-            return (MItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()),)
+        menu = [CheckItem(_("Display row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
+                          state=lambda: self._grid.GetRowLabelSize() != 0)]
+        if column_index is not None:
+            cid = self._columns[column_index].id()
+            menu.append(MItem(_("Hide this column"),
+                              command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid, position=None)))
+
+        hidden_columns = [c for c in self._available_columns() if c not in self._columns]
+        if hidden_columns:
+            position = column_index + 1 if column_index is not None else len(self._columns)
+            menu.append(Menu(_("Add column"),
+                             [MItem(c.column_label(),
+                                    command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(),
+                                                                           position=position))
+                              for c in hidden_columns]))
         else:
-            if column_index is not None:
-                position = column_index
-            else:
-                position = len(self._columns)
-            menu = (
-                [CheckItem(_("Row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
-                           state=lambda: self._grid.GetRowLabelSize() != 0)] +
-                [CheckItem(c.column_label(),
-                           command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(),
-                                                                  position=position),
-                           state=lambda c=c: c in self._columns)
-                 for c in columns]
-            )
-            if column_index is None:
-                return menu
-            else:
-                return (Menu(_("Displayed columns"), menu),)
+            menu.append(MItem(_("Add column"), command=Application.COMMAND_NOTHING(enabled=False)))
+        menu.append(MItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()))
+        return menu
 
     def _aggregation_menu(self):
         menu = [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
@@ -1284,10 +1282,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             MItem(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
             MItem(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER),
             MSeparator(),
-            MItem(_("Hide this column"),
-                  command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=self._columns[col].id(),
-                                                         position=None)),
-        ) + self._displayed_columns_menu(col)
+        ) + tuple(self._displayed_columns_menu(col))
 
     def _aggregation_info_by_position(self, y):
         if y > self._label_height and self._aggregations:
