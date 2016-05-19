@@ -100,27 +100,29 @@ class _Completer(wx.PopupWindow):
         super(_Completer, self).__init__(ctrl.GetParent())
         self._ctrl = ctrl
         self._last_insertion_point = 0
-        style = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER | wx.SIMPLE_BORDER
-        self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=style)
+        self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=(wx.LC_REPORT |
+                                                                             wx.LC_SINGLE_SEL |
+                                                                             wx.LC_NO_HEADER |
+                                                                             wx.BORDER_NONE))
         self.update(ctrl.GetValue(), False)
-        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_close)
-        wx_callback(wx.EVT_LEFT_DOWN, ctrl, self._on_toggle_down)
-        wx_callback(wx.EVT_LEFT_UP, ctrl, self._on_toggle_up)
+        wx_callback(wx.EVT_LEFT_DOWN, ctrl, self._on_ctrl_mouse_down)
+        wx_callback(wx.EVT_LEFT_UP, ctrl, self._on_ctrl_mouse_up)
+        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_ctrl_kill_focus)
         wx_callback(wx.EVT_LISTBOX, listctrl, listctrl.GetId(), self._on_list_item_selected)
         wx_callback(wx.EVT_LEFT_DOWN, listctrl, self._on_list_click)
         wx_callback(wx.EVT_LEFT_DCLICK, listctrl, self._on_list_dclick)
 
-    def _on_close(self, event):
-        self._show(False)
-        event.Skip()
-
-    def _on_toggle_down(self, event):
+    def _on_ctrl_mouse_down(self, event):
         self._last_insertion_point = self._ctrl.GetInsertionPoint()
         event.Skip()
 
-    def _on_toggle_up(self, event):
+    def _on_ctrl_mouse_up(self, event):
         if self._ctrl.GetInsertionPoint() == self._last_insertion_point and self._ctrl.IsEditable():
             self._show(not self.IsShown())
+        event.Skip()
+
+    def _on_ctrl_kill_focus(self, event):
+        self._show(False)
         event.Skip()
 
     def _on_list_item_selected(self, event):
@@ -128,6 +130,9 @@ class _Completer(wx.PopupWindow):
         event.Skip()
 
     def _on_list_click(self, event):
+        # TODO: Mouse events on the popup frame don't work when the parent form is
+        # a modal form (displayed using .ShowModal()).  If we want the events to
+        # work as expected, we need to avoid displaying popup forms modally.
         sel, flag = self._list.HitTest(event.GetPosition())
         if sel != -1:
             self._list.Select(sel)
