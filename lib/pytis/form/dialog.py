@@ -58,19 +58,19 @@ class Dialog(KeyHandler, CommandHandler, object):
     dialogu však sama o sobě neobsahuje žádné objekty uživatelského rozhraní,
     pouze si pamatuje jejich vlastnosti.  K vytvoření okna a jeho prvků dochází
     až při volání metody 'run()'.
-    
+
     Tato třída pouze definuje abstraktní metodu 'run()'.
-    
+
     """
     def _get_command_handler_instance(cls):
         return pytis.form.top_window()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
-    
+
     def __init__(self, parent):
         self._parent = parent
         KeyHandler.__init__(self)
         self._key_guardian = None
-        
+
     def run(self):
         """Vyvolej dialog a počkej na odpověď.
 
@@ -86,7 +86,7 @@ class GenericDialog(Dialog):
 
     Univerzální dialogová třída, od které je možno odvodit specializované třídy
     konkrétních dialogů pomocí předefinování některých metod.
-    
+
     """
     _COMMIT_BUTTON = None
     _HELP_TOPIC = 'dialog'
@@ -100,7 +100,7 @@ class GenericDialog(Dialog):
     "Nápis pro tlačítko souhlasu."
     BUTTON_NO = _("No")
     "Nápis pro tlačítko nesouhlasu."
-    
+
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN, report_size=(None, None)):
         """Inicializuj dialog.
@@ -125,7 +125,7 @@ class GenericDialog(Dialog):
             height) in characters.  If any of the numbers is 'None' given size
             will be will automatically accommodate to the size of the contents
             (for plain text) or use a default value.
-            
+
         """
         assert isinstance(title, basestring), title
         assert isinstance(buttons, (list, tuple)), buttons
@@ -145,7 +145,7 @@ class GenericDialog(Dialog):
 
     def _create_dialog(self):
         """Vytvoř celý dialog (postupně okno, jeho obsah a tlačítka).
-        
+
         Nejprve je vytvořeno okno dialogu jako takové ('wx.Dialog') a potom
         je zavolána metoda `_create_dialog_elements'.
 
@@ -162,7 +162,7 @@ class GenericDialog(Dialog):
 
     def _create_dialog_elements(self, dialog):
         """Vlož do dialogu jeho vnitřní prvky.
-        
+
         Pomocí sizerů je do dialogu vložen hlavní obsah (výsledek metody
         '_create_content()') a tlačítka (výsledek metody '_create_buttons()').
 
@@ -199,10 +199,10 @@ class GenericDialog(Dialog):
 
         This method must be defined by all derived classes.  The base class
         implementation does nothing.
-        
+
         """
         pass
-    
+
     def _create_buttons(self):
         """Create dialog buttons and return them as a sequence of wx widgets."""
         self._buttons = []
@@ -239,7 +239,7 @@ class GenericDialog(Dialog):
 
     def _on_show(self):
         pass
-    
+
     def _navigate(self):
         nav = wx.NavigationKeyEvent()
         nav.SetDirection(True)
@@ -248,10 +248,10 @@ class GenericDialog(Dialog):
 
     def _end_modal(self, result):
         self._dialog.EndModal(result)
-    
+
     def _on_button(self, event):
         self._end_modal(event.GetId())
-    
+
     def _button_label(self, id):
         # Vrať nápis tlačítka s daným id.
         button = pytis.util.find(id, self._buttons, key=lambda b: b.GetId())
@@ -288,10 +288,10 @@ class GenericDialog(Dialog):
             self._end_modal(widget.GetId())
         else:
             self._navigate()
-        
+
     def _cmd_close_dialog(self):
         self._end_modal(wx.ID_CANCEL)
-        
+
     def _cmd_help(self):
         pytis.form.Application.COMMAND_HELP.invoke(topic='pytis/' + self._HELP_TOPIC)
 
@@ -331,7 +331,7 @@ class GenericDialog(Dialog):
 
     def focus(self):
         self._dialog.SetFocus()
-        
+
 class Message(GenericDialog):
     """Dialog zobrazující zprávu a vracející odpověď.
 
@@ -356,7 +356,7 @@ class Message(GenericDialog):
     "Ikona opuštění aplikace."
 
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
-    
+
     def __init__(self, parent, message, icon=ICON_INFO, title=_("Message"),
                  buttons=(GenericDialog.BUTTON_OK,), default=GenericDialog.BUTTON_OK, **kwargs):
         """Inicializuj dialog.
@@ -366,7 +366,7 @@ class Message(GenericDialog):
           'parent', 'buttons', 'title' a 'default' -- jako u 'GenericDialog'.
           'message' -- Zpráva zobrazená v těle dialogu (string).
           'icon' -- Jedna z ICON_* konstant třídy ('ICON_INFO' atd.).
-          
+
         """
         super_(Message).__init__(self, parent, title, buttons,
                                  default=default, **kwargs)
@@ -389,7 +389,7 @@ class Message(GenericDialog):
             content = message
         sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
 
-    
+
 class Warning(Message):
     """Dialog pro zobrazení varovné zprávy."""
 
@@ -419,7 +419,7 @@ class Error(Message):
 
     def __init__(self, parent, message, title=_("Error"), **kwargs):
         """Inicializuj dialog.
-        
+
         Argumenty:
 
 
@@ -444,7 +444,7 @@ class MultiQuestion(Message):
                  title=_("Question"), icon=Message.ICON_QUESTION, **kwargs):
         super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
                                        default=default, icon=icon, **kwargs)
-    
+
 
 class Question(MultiQuestion):
     """Dialog vyžadující odpověď ano/ne na zobrazenou zprávu (otázku).
@@ -457,7 +457,7 @@ class Question(MultiQuestion):
                  title=_("Question"), icon=Message.ICON_QUESTION, timeout=None,
                  **kwargs):
         """Inicializuj dialog.
-        
+
         Argumenty:
 
           default -- pokud je pravda, bude předvoleným tlačítkem tlačítko
@@ -467,7 +467,7 @@ class Question(MultiQuestion):
             shown for more than the given time, it gets automatically closed
             and 'None' is returned as the answer.  If the argument value is
             'None' then the dialog is shown until user chooses an answer.
-        
+
           Ostatní argumenty odpovídají stejným argumentům rodičovské třídy s
           tím, že následující argumenty tato třída definuje vždy napevno:
 
@@ -476,7 +476,7 @@ class Question(MultiQuestion):
         Klíčový argument 'default' může být uváděn i bez explicitního
         pojmenování, takže musí být do budoucna zaručeno jeho zachování včetně
         pořadí.
-            
+
         """
         if default:
             default = self.BUTTON_YES
@@ -498,7 +498,7 @@ class Question(MultiQuestion):
                     # The wx instance of `self' may already be inactive
                     pass
             wx.FutureCall(self._timeout_limit * 1000, destroy)
-        
+
     def _customize_result(self, result):
         if result == -1000:
             return None
@@ -507,7 +507,7 @@ class Question(MultiQuestion):
         else:
             return False
 
-        
+
 class InputDialog(Message):
     """Dialog pro zadání textu.
 
@@ -518,7 +518,7 @@ class InputDialog(Message):
 
     """
     _COMMIT_BUTTON = GenericDialog.BUTTON_OK
-    
+
     def __init__(self, parent, message=None, value=None, prompt=None,
                  title=_("Enter value"), passwd=False,
                  input_width=None, input_height=1, allow_empty=True, **kwargs):
@@ -601,12 +601,12 @@ class InputDialog(Message):
         else:
             return None
 
-        
+
 class InputDate(InputDialog):
     """Dialog pro zadání datumu.
 
     Speciální případ dialogu 'InputDialog' určený pro zadávání datumu.
-    
+
     """
     def __init__(self, *args, **kwargs):
         kwargs['allow_empty'] = kwargs.get('allow_empty', False)
@@ -637,9 +637,9 @@ class InputNumeric(InputDialog):
     """Dialog pro zadávání čísel.
 
     Speciální případ dialogu 'InputDialog' určený pro zadávání čísel.
-    
+
     """
-  
+
     def __init__(self, parent, message=None, value=None, prompt=None,
                  title=_("Enter value"), integer_width=10,
                  allow_empty=False, decimal_width=0,
@@ -701,13 +701,13 @@ class InputNumeric(InputDialog):
             content = control
         self._handle_keys(control)
         sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
-        
+
     def _on_kill_control_focus(self, e):
         if not self._control.IsInBounds(self._control.GetValue()):
             beep()
             self._control.SetFocus()
         e.Skip()
-        
+
     def _customize_result(self, result):
         if self._button_label(result) == GenericDialog.BUTTON_OK:
             if not self._control.IsInBounds(self._control.GetValue()):
@@ -732,11 +732,11 @@ class InputNumeric(InputDialog):
 
 class OperationDialog(Message):
     """Dialog pro spuštění dlouhotrvající operace.
-    
+
     Spuštěním dialogu metodou 'run()' bude zobrazen modální dialog a spuštěna
     funkce zadaná v konstruktoru.  Dialog je ukončen automaticky po skončení
     funkce.  Do té doby uživatel nemůže dělat nic, než čekat...
-    
+
     """
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"),
@@ -749,7 +749,7 @@ class OperationDialog(Message):
           function -- funkce, která má být spuštěna.
           args -- argumenty spouštěné funkce jako tuple.
           kwargs -- klíčové argumenty spouštěné funkce jako dictionary.
-          
+
         """
         super_(OperationDialog).__init__(self, parent, message=message,
                                          title=title, icon=self.ICON_TIP,
@@ -765,14 +765,14 @@ class OperationDialog(Message):
         self._result = self._function(*self._args, **self._kwargs)
         pytis.form.wx_yield_(full=True)
         self._end_modal(wx.ID_OK)
-        
+
     def _customize_result(self, result):
         return self._result
 
 
 class ProgressDialog(OperationDialog):
     """Dialog pro spuštění dlouhotrvající operace s ProgressBarem.
-    
+
     Spuštěním dialogu metodou 'run()' bude zobrazen modální dialog a spuštěna
     funkce zadaná v konstruktoru s argumenty předanými konstruktoru.
 
@@ -808,7 +808,7 @@ class ProgressDialog(OperationDialog):
           can_abort -- Pokud je 'True', bude možno vykonávání funkce přerušit,
             pokud to funkce vykonávající operaci umožňuje (viz. docstring
             třídy).
-          
+
         """
 
         super_(ProgressDialog).__init__(self, parent, function, args=args,
@@ -853,7 +853,7 @@ class RepeatedOperationDialog(ProgressDialog):
     Tento dialog je speciálním případem použití 'ProgressDialog' pro cyklické
     spouštění operace nad seznamem argumentů.  Uživatel pouze nemusí psát
     funkci provádějící cyklus a aktualizující ProgressBar.
-    
+
     """
     def __init__(self, parent, function, args=(), step=None, **kwargs):
         """Inicializuj dialog.
@@ -867,7 +867,7 @@ class RepeatedOperationDialog(ProgressDialog):
             progressbar aktualizován.  Pokud je step
 
           Ostatní argumenty jsou shodné jako u rodičovské třídy.
-          
+
         """
         assert (step is None or
                 isinstance(step, types.IntType) and step in range(1, 100))
@@ -885,7 +885,7 @@ class RepeatedOperationDialog(ProgressDialog):
                     if not update(status, newmsg=msg):
                         break
                 function(arg)
-            
+
         super_(RepeatedOperationDialog).__init__(self, parent, do, args=args,
                                                  **kwargs)
 
@@ -896,7 +896,7 @@ class Calendar(GenericDialog):
     Datum na kalendáři může být přednastaven parametrem konstruktoru. Metoda
     'run()' vrací vybraný datum jako instanci 'datetime.datetime', nebo None, pokud
     byl dialog opuštěn.
-    
+
     """
     _COMMIT_BUTTON = GenericDialog.BUTTON_OK
 
@@ -943,7 +943,7 @@ class Calendar(GenericDialog):
         else:
             assert isinstance(date, datetime.date), date
             self._date = date
-        
+
     def _create_content(self, sizer):
         cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
         size = cal.GetSize()
@@ -960,7 +960,7 @@ class Calendar(GenericDialog):
 
     def _can_commit(self, widget):
         return super(Calendar, self)._can_commit(widget) or widget == self._cal
-    
+
     def _customize_result(self, result):
         if result == self._cal.GetId() or self._button_label(result) == GenericDialog.BUTTON_OK:
             date_string = str(self._cal.GetDate().FormatISODate())
@@ -971,14 +971,14 @@ class Calendar(GenericDialog):
     def _on_calendar(self, event):
         return self._end_modal(self._button_id(GenericDialog.BUTTON_OK))
 
-    
+
 class ColorSelector(GenericDialog):
     """Dialog umožňující výběr barvy.
 
     Výchozí barva může být přednastavena parametrem konstruktoru.  Metoda
     'run()' vrací barvu jako řetězec '#RRGGBB', nebo None, pokud byl dialog
     opuštěn.
-    
+
     """
 
     def __init__(self, parent, color=None, title=_("Color selection")):
@@ -994,7 +994,7 @@ class ColorSelector(GenericDialog):
         super_(ColorSelector).__init__(self, parent, title=title, buttons=())
         assert isinstance(color, basestring) or color is None
         self._color = color
-        
+
     def _create_dialog(self):
         data = None
         if self._color is not None:
@@ -1022,7 +1022,7 @@ class BugReport(GenericDialog):
       prázdný string -- požaduje-li uživatel chybu ignorovat
       neprázdný string -- požaduje-li uživatel poslat oznámení o chybě s textem
         stringu
-    
+
     """
     # Existuje sice wxPython.pytis.ErrorDialogs, ale to vypadá jako těžký a
     # nepříliš funkční hack.
@@ -1032,7 +1032,7 @@ class BugReport(GenericDialog):
     _EXIT_LABEL = _("Exit application")
     _COMMIT_BUTTON = _EXIT_LABEL
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-    
+
     def __init__(self, parent, einfo, message=None):
         """Inicializuj instanci.
 
@@ -1138,7 +1138,7 @@ class CheckListDialog(Message):
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-    
+
     def __init__(self, parent, columns=(), items=(), **kwargs):
         """Arguments:
              columns -- sequence of column labels (strings).
@@ -1160,14 +1160,14 @@ class CheckListDialog(Message):
         super(CheckListDialog, self)._create_content(sizer)
         self._checklist = _CheckListCtrl(self._dialog, self._columns, self._items)
         sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
-        
+
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
             return [self._checklist.IsChecked(i) for i, triple in enumerate(self._items)]
         else:
             return None
 
-        
+
 class CheckMatrixDialog(Message):
     """A dialog with a matrix of checkable items.
 
@@ -1182,7 +1182,7 @@ class CheckMatrixDialog(Message):
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-    
+
     def __init__(self, parent, columns=(), rows=(), values=None, enabled=None, **kwargs):
         """Arguments:
              columns -- sequence of column labels (strings).
@@ -1246,7 +1246,7 @@ class CheckMatrixDialog(Message):
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self._dialog.SetClientSize(size)
         return super(CheckMatrixDialog, self)._run_dialog()
-        
+
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
             return [[ctrl.IsChecked() for ctrl in controls]
@@ -1269,14 +1269,14 @@ class AggregationSetupDialog(GenericDialog):
       (column_id, function), where function is the name of the grouping
       function from 'grouping_functions' constructor argument or None if the
       column is used directly with no function applied.
-               
+
     aggregation_columns -- preselected aggregation columns as a sequence of
       pairs (column_id, operation), where operation is the name of the
       aggregation function from 'aggregation_functions' constructor argument.
-    
+
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-    
+
     def __init__(self, parent, aggregation_functions, grouping_functions, columns,
                  name, group_by_columns, aggregation_columns, aggregation_valid,
                  title=_("Aggregated view parameters")):
@@ -1312,7 +1312,7 @@ class AggregationSetupDialog(GenericDialog):
         self._name = name
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
-        
+
     def _create_content(self, sizer):
         super(AggregationSetupDialog, self)._create_content(sizer)
         self._name_control = wx_text_ctrl(self._dialog, value=self._name, length=50,
@@ -1378,7 +1378,7 @@ class AggregationSetupDialog(GenericDialog):
                        sizer_size.height + grid_size.height)
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self._dialog.SetClientSize(size)
-        
+
     def _run_dialog(self):
         self._resize()
         return super(AggregationSetupDialog, self)._run_dialog()
@@ -1401,8 +1401,8 @@ class AggregationSetupDialog(GenericDialog):
             return self._name, tuple(self._group_by_columns), tuple(self._aggregation_columns)
         else:
             return None
-        
-        
+
+
 class ExitDialog(Question):
     """Application exit question with a choice of items to save for next startup.
 
@@ -1417,7 +1417,7 @@ class ExitDialog(Question):
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-    
+
     def __init__(self, parent, title=_("Exit application"),
                  message=_("Really quit the application?"), icon=Message.ICON_QUIT,
                  save_label=_("Automatically open the checked forms on next startup"),
@@ -1433,7 +1433,7 @@ class ExitDialog(Question):
              item.  The following values are textual fields describing the item.  The number of
              textual fields must be the same as the numer of column labels passed in
              'save_columns'.  These fields are presented in a table-like list.
-    
+
         """
         super(ExitDialog, self).__init__(parent, message, title=title, default=True, icon=icon)
         assert isinstance(save_state, bool)
@@ -1453,7 +1453,7 @@ class ExitDialog(Question):
             self._checkbox.SetValue(self._save_state)
             sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
             sizer.Add(self._checkbox, 0, wx.ALL | wx.ALIGN_LEFT, 5)
-        
+
     def _customize_result(self, result):
         exit = super(ExitDialog, self)._customize_result(result)
         if self._save_items and self._checkbox.IsChecked():
@@ -1462,7 +1462,7 @@ class ExitDialog(Question):
             items = None
         return (exit, items)
 
-    
+
 class FileDialog(Dialog):
     """Dialog pro výběr souboru.
 
@@ -1550,7 +1550,7 @@ class FileDialog(Dialog):
         else:
             return None
 
-        
+
 class DirDialog(Dialog):
     """Dialog for directory selection.
 
