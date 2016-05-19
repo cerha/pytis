@@ -1129,12 +1129,13 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
 class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
-    The dialog displays a question with a list of items and a checkbox for each of the items.
-    Items can
+    The dialog displays a question with a list of items and a checkbox for each
+    of the items.  Items can consist of several columns aligned vertically in a
+    tabular fashion.
 
-    The result returned by the `run()' method is a sequence of boolean values, one for each item of
-    'items' passed to the constructor.  The value is True for items which were checked and False
-    for unchecked items.
+    The result returned by the `run()' method is a sequence of boolean values,
+    one for each item of 'items' passed to the constructor.  The value is True
+    for items which were checked and False for unchecked items.
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
@@ -1142,10 +1143,11 @@ class CheckListDialog(Message):
     def __init__(self, parent, columns=(), items=(), **kwargs):
         """Arguments:
              columns -- sequence of column labels (strings).
-             items -- a sequence of checkable items.  Each item is a sequence.  The first value
-               in this sequence is a boolean flag indicating the initial checkbox state for this
-               item.  The following values are textual fields describing the item.  The number of
-               textual fields must be the same as the numer of column labels passed in
+             items -- a sequence of checkable items.  Each item is a sequence.
+               The first value in this sequence is a boolean flag indicating
+               the initial checkbox state for this item.  The following values
+               are textual fields describing the item.  The number of textual
+               fields must be the same as the numer of column labels passed in
                'columns'.  These fields are presented in a table-like list.
         """
         super(CheckListDialog, self).__init__(parent, buttons=(GenericDialog.BUTTON_OK,
