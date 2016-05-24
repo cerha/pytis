@@ -2583,7 +2583,8 @@ class IN(pytis.data.Operator):
 
     """
 
-    def __init__(self, column_id, spec_name, table_column_id, profile_id, arguments=None):
+    def __init__(self, column_id, spec_name, table_column_id, profile_id,
+                 arguments=None, condition=None):
         """Arguments:
 
           column_id -- string identifier of the column which should belong to
@@ -2603,6 +2604,8 @@ class IN(pytis.data.Operator):
             condition shall be applied.
           arguments -- arguments passed to the data object (if it is a table
             function); dictionary or 'None'
+          condition -- additional condition to be applied together with the
+            condition of the current profile (given by 'profile_id') or 'None'
 
         """
         self._column_id = column_id
@@ -2617,16 +2620,19 @@ class IN(pytis.data.Operator):
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 manager = pytis.form.profile_manager()
-                condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
+                profile_condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
             else:
                 profile = find(profile_id, view_spec.profiles().unnest(), lambda p: p.id())
                 if not profile:
                     raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
-                condition = profile.filter()
+                profile_condition = profile.filter()
                 profile_name = profile.title()
+            if condition:
+                condition = pytis.data.AND(condition, profile_condition)
+            else:
+                condition = profile_condition
         else:
             profile_name = None
-            condition = None
         self._profile_name = profile_name
         self._spec_title = view_spec.title()
         self._table_column_label = view_spec.field(table_column_id).label()
