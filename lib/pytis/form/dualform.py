@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2014, 2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import copy
 import re
 import wx
 
+import pytis.data
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 from dialog import MultiQuestion
@@ -1049,10 +1050,15 @@ class MultiSideForm(MultiForm):
         menu = (MItem(_("Close this form"), help=_("Close this form"),
                       command=self.COMMAND_TOGGLE_SIDEFORM(binding=self._forms[selection].binding(),
                                                            _command_handler=self)),
-                MItem(_("Filter the main form by this side form"),
+                MItem(_("Filter the main form for non-empty side form"),
                       help=_("Show only those rows of the main form, which have "
                              "at least one row in this side form."),
                       command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
+                                                              _command_handler=self)),
+                MItem(_("Filter the main form for empty side form"),
+                      help=_("Show only those rows of the main form, which have "
+                             "no rows in this side form."),
+                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection, not_in=True,
                                                               _command_handler=self)),
                 self._displayed_forms_menu(),
                 )
@@ -1114,12 +1120,12 @@ class MultiSideForm(MultiForm):
                     self._tab_order[i] -= 1
             nb.DeletePage(index)
         self._save_binding_order()
-        
-    def _can_filter_by_sideform(self, index):
+
+    def _can_filter_by_sideform(self, index, not_in=False):
         form = self._forms[index]
         return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
-        
-    def _cmd_filter_by_sideform(self, index):
+
+    def _cmd_filter_by_sideform(self, index, not_in=False):
         form = self._forms[index]
         if form.COMMAND_UPDATE_PROFILE.enabled():
             msg = _("Can't filter when the current profile is not saved!")
@@ -1128,6 +1134,8 @@ class MultiSideForm(MultiForm):
                 return
             form.COMMAND_UPDATE_PROFILE.invoke()
         condition = form.side_form_in_condition()
+        if not_in:
+            condition = pytis.data.NOT(condition)
         self._main_form.filter(condition, append=True)
         
     def select_binding(self, id):
