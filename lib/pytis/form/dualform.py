@@ -84,7 +84,7 @@ class DualForm(Form, Refreshable):
 
         Argumenty jsou stejné jako v předkovi, specifikují však hlavní formulář
         duálního formuláře.
-        
+
         """
         super(DualForm, self)._full_init(*args, **kwargs)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
@@ -95,7 +95,7 @@ class DualForm(Form, Refreshable):
 
         Všechny klíčové argumenty jsou posléze předány konstruktoru hlavního
         formuláře.
-        
+
         """
         super(DualForm, self)._init_attributes()
         self._unprocessed_kwargs = kwargs
@@ -155,7 +155,7 @@ class DualForm(Form, Refreshable):
         self._select_form(self._main_form)
         self._set_main_form_callbacks()
         self._set_side_form_callbacks()
-    
+
     def _create_main_form(self, parent, **kwargs):
         return None
 
@@ -164,10 +164,10 @@ class DualForm(Form, Refreshable):
 
     def _set_main_form_callbacks(self):
         pass
-    
+
     def _set_side_form_callbacks(self):
         pass
-    
+
     def _other_form(self, form):
         if form is self._main_form:
             other_form = self._side_form
@@ -197,7 +197,7 @@ class DualForm(Form, Refreshable):
             return self._main_form.apply_profile(*args, **kwargs)
         else:
             log(EVENT, "Main form doesn't support `apply_profile()'!")
-        
+
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))
 
@@ -216,7 +216,7 @@ class DualForm(Form, Refreshable):
     def main_form(self):
         """Return the instance of the upper (main) form."""
         return self._main_form
-    
+
     def side_form(self):
         """Return the instance of the lower (side) form."""
         return self._side_form
@@ -224,7 +224,7 @@ class DualForm(Form, Refreshable):
     def active_form(self):
         """Vrať aktivní formulář tohoto duálního formuláře."""
         return self._active_form
-    
+
     def inactive_form(self):
         """Vrať neaktivní formulář tohoto duálního formuláře."""
         return self._other_form(self._active_form)
@@ -262,7 +262,7 @@ class DualForm(Form, Refreshable):
 
     def _exit_check(self):
         return self._main_form._exit_check() and self._side_form._exit_check()
-            
+
     def _cleanup(self):
         try:
             self._side_form.close(force=True)
@@ -281,7 +281,7 @@ class DualForm(Form, Refreshable):
             self._splitter.Destroy()
         except:
             pass
-        
+
     def focus(self):
         active = self._active_form
         if active:
@@ -314,7 +314,7 @@ class DualForm(Form, Refreshable):
         else:
             r = self._default_sash_ratio()
             return dimension(wx.Size(total_size.width * r, total_size.height * r))
-            
+
     def _on_sash_changed(self, event):
         self._set_saved_setting('sash_position', event.GetSashPosition())
         # Sometimes the form is not redrawn correctly...
@@ -342,14 +342,14 @@ class DualForm(Form, Refreshable):
         # being closed.
         self._side_form._leave_form_requested = True
         return super(DualForm, self).close(force=force)
-            
+
     def _print_form_kwargs(self):
         return dict(form_bindings=self._main_form.bindings())
 
-        
+
 class ImmediateSelectionDualForm(DualForm):
     """Duální formulář s okamžitou obnovou vedlejšího formuláře."""
-    
+
     def _full_init(self, *args, **kwargs):
         self._selection_data = None
         super(ImmediateSelectionDualForm, self)._full_init(*args, **kwargs)
@@ -363,11 +363,11 @@ class ImmediateSelectionDualForm(DualForm):
 
     def _do_selection(self, row):
         return True
-    
-    
+
+
 class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     """Duální formulář se zpožděnou obnovou vedlejšího formuláře."""
-    
+
     _SELECTION_TICK = 2
 
     def _full_init(self, *args, **kwargs):
@@ -392,7 +392,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
                 self._selection_candidate = row
                 microsleep(100)
                 event.RequestMore()
-                
+
     def _on_main_selection(self, row):
         r = row and row.row()
         if r != self._selection_data:
@@ -400,10 +400,10 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
             self._selection_candidate = copy.copy(row)
             self._selection_tick = self._SELECTION_TICK
 
-    
+
 class SideBrowseDualForm(PostponedSelectionDualForm):
     """Duální formulář s vedlejším formulářem 'SideBrowseForm'."""
-        
+
     def _create_side_form(self, parent):
         return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
                               main_form=self._main_form,
@@ -440,11 +440,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
 class BrowseDualForm(SideBrowseDualForm):
     """Duální formulář s hlavním formulářem 'BrowseForm'.
-    
+
     Hlavním formulářem je instance třídy 'BrowseForm', vedlejším formulářem je
     instance třídy 'SideBrowseForm'.  Formuláře jsou vzájemně propojeny
     prostřednictvím vazebních sloupců daných specifikací `BindingSpec'.
-    
+
     """
 
     def _create_main_form(self, parent, **kwargs):
@@ -455,7 +455,7 @@ class BrowseDualForm(SideBrowseDualForm):
         f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
         f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
-    
+
     def _on_main_activation(self, alternate=False):
         if alternate:
             form, name = (DescriptiveDualForm, self._main_form.name())
@@ -465,11 +465,11 @@ class BrowseDualForm(SideBrowseDualForm):
 
 class AggregationDualForm(PostponedSelectionDualForm):
     """Dual form with 'AggregationForm' main form and 'BrowseForm' sideform.
-    
+
     The side form shows all records corresponding to the currently selected
     aggregation form row.  This means records having the values of all "group
     by" columns same as the selected row.
-    
+
     """
     class _SideForm(SideBrowseForm):
         def _default_columns(self):
@@ -484,13 +484,13 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
     def _create_view_spec(self):
         return None
-    
+
     def _default_orientation(self):
         return Orientation.HORIZONTAL
-    
+
     def _initial_sash_position(self, size):
         return size.height / 2
-        
+
     def _create_main_form(self, parent, **kwargs):
         return AggregationForm(parent, self._resolver, self._name, guardian=self, **kwargs)
 
@@ -498,12 +498,12 @@ class AggregationDualForm(PostponedSelectionDualForm):
         return self._SideForm(parent, self._resolver, self._name, guardian=self,
                               main_form=self._main_form,
                               condition=self._main_form.side_form_condition)
-    
+
     def _set_main_form_callbacks(self):
         f = self._main_form
         f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
-    
+
     def _set_side_form_callbacks(self):
         f = self._side_form
         f.set_callback(f.CALL_MODIFICATION, self._main_form.refresh)
@@ -530,7 +530,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
     def title(self):
         return self._main_form.title()
 
-        
+
 class ShowDualForm(SideBrowseDualForm):
     """Duální formulář s hlavním formulářem 'BrowsableShowForm'.
 
@@ -545,7 +545,7 @@ class ShowDualForm(SideBrowseDualForm):
         if not self._initialization_done:
             self._initialization_done = True
             self._select_form(self._main_form, force=True)
-        
+
     def _create_main_form(self, parent, **kwargs):
         return BrowsableShowForm(parent, self._resolver, self._main_name, guardian=self, **kwargs)
 
@@ -562,7 +562,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 
     """
     DESCR = _("dual view")
-    
+
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
 
@@ -584,7 +584,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
             self._select_form(self._main_form, force=True)
         return True
 
-        
+
 class DescriptiveDualForm(BrowseShowDualForm):
     """Duální formulář s řádkovým seznamem nahoře a náhledem dole.
 
@@ -615,10 +615,10 @@ class DescriptiveDualForm(BrowseShowDualForm):
         self._in_mainform_selection = False
         self._orientation = orientation
         super(DescriptiveDualForm, self)._init_attributes(**kwargs)
-        
+
     def _default_orientation(self):
         return self._orientation
-        
+
     def _create_view_spec(self):
         return None
 
@@ -627,7 +627,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
     def _set_side_form_callbacks(self):
         self._side_form.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)
-    
+
     def _do_selection(self, row):
         if self._side_form is not None:
             self._in_mainform_selection = True
@@ -644,7 +644,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
     def title(self):
         return self._main_form.title()
 
-            
+
 class MultiForm(Form, Refreshable):
     """Form container showing multiple inner forms in separate notebook tabs.
 
@@ -657,7 +657,7 @@ class MultiForm(Form, Refreshable):
         if isinstance(form, DualForm):
             form = form.active_form()
         return form
-    
+
     def _full_init(self, *args, **kwargs):
         self._block_on_page_change = False
         self._form_callbacks_args = []
@@ -667,14 +667,14 @@ class MultiForm(Form, Refreshable):
 
     def _create_view_spec(self):
         return None
-    
+
     def _create_data_object(self):
         return None
-    
+
     def _create_forms(self, parent):
         # To be overridden in derived classes.
         pass
-        
+
     def _create_form(self):
         import wx.aui
         self._notebook = nb = wx.aui.AuiNotebook(self, style=(wx.aui.AUI_NB_TOP |
@@ -718,14 +718,14 @@ class MultiForm(Form, Refreshable):
 
     def _on_tab_mouse_right(self, event):
         event.Skip()
-        
+
     def _on_notebook_mouse_right(self, event):
         event.Skip()
-        
+
     def _on_mouse_left(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         event.Skip()
-        
+
     def _init_subform(self, form):
         if form.initialized():
             return
@@ -754,7 +754,7 @@ class MultiForm(Form, Refreshable):
         self._notebook.SetSelection(i)
         if self._old_notebook_selection != self._notebook.GetSelection():
             self._on_page_change()
-        
+
     def _on_page_change(self, event=None):
         if self._leave_form_requested or self._hide_form_requested or not self.IsShown():
             # Prevent (possibly expensive) database queries on NotebookEvent
@@ -805,7 +805,7 @@ class MultiForm(Form, Refreshable):
     def _on_tab_move_started(self, event):
         self._moved_notebook_tab = event.GetSelection()
         event.Skip()
-                        
+
     def _on_tab_move_done(self, event):
         old_position = self._moved_notebook_tab
         if old_position is not None:
@@ -819,13 +819,13 @@ class MultiForm(Form, Refreshable):
         index = tab_order[old_position]
         del tab_order[old_position]
         tab_order.insert(new_position, index)
-    
+
     def _exit_check(self):
         for form in self._forms:
             if form and form.initialized() and not form._exit_check():
                 return False
         return True
-            
+
     def _cleanup(self):
         self._leave_form_requested = True
         try:
@@ -853,7 +853,7 @@ class MultiForm(Form, Refreshable):
         except:
             pass
         super(MultiForm, self)._cleanup()
-        
+
     def _on_size(self, event):
         size = event.GetSize()
         self._notebook.SetSize(size)
@@ -868,7 +868,7 @@ class MultiForm(Form, Refreshable):
 
     def forms(self):
         return self._forms
-        
+
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
         active = self.active_form()
@@ -901,7 +901,7 @@ class MultiForm(Form, Refreshable):
         for form in self._forms:
             if form and hasattr(form, kind) and form.initialized():
                 form.set_callback(kind, function)
-        
+
     def active_form(self):
         """Return the currently active form of this form group."""
         selection = self._notebook.GetSelection()
@@ -944,11 +944,11 @@ class MultiForm(Form, Refreshable):
         active = self.active_form()
         if active and isinstance(active, Refreshable):
             active.refresh(interactive=interactive)
-            
+
 
 class MultiSideForm(MultiForm):
     CALL_BINDING_SELECTED = 'CALL_BINDING_SELECTED'
-    
+
     class TabbedForm(object):
         def __init__(self, *args, **kwargs):
             self._binding = kwargs['binding']
@@ -963,7 +963,7 @@ class MultiSideForm(MultiForm):
             if nb.GetPageIndex(self) == nb.GetSelection():
                 # Only perform focus if the form is currently selected in the notebook.
                 super(MultiSideForm.TabbedForm, self).focus()
-        
+
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
         _ALLOW_TITLE_BAR = False
         def _init_attributes(self, binding, **kwargs):
@@ -976,7 +976,7 @@ class MultiSideForm(MultiForm):
                           condition=binding.condition(), arguments=binding.arguments(),
                           prefill=binding.prefill(), search=binding.search())
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
-            
+
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
@@ -985,7 +985,7 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedShowForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
-            
+
     class TabbedWebForm(TabbedForm, WebForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             if binding.uri():
@@ -1003,7 +1003,7 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
             self._load_content(row)
-            
+
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
@@ -1068,14 +1068,14 @@ class MultiSideForm(MultiForm):
     def _on_notebook_mouse_right(self, event):
         popup_menu(self._notebook, (self._displayed_forms_menu(),), self._get_keymap())
         event.Skip()
-        
+
     def _on_page_change(self, event=None):
         if self._leave_form_requested or self._block_on_page_change:
             return
         super(MultiSideForm, self)._on_page_change(event=event)
         binding = self._forms[self._notebook.GetSelection()].binding()
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
-        
+
     def _save_binding_order(self):
         binding_order = [self._forms[i].binding().id() for i in self._tab_order]
         self._set_saved_setting('binding_order', tuple(binding_order))
@@ -1137,7 +1137,7 @@ class MultiSideForm(MultiForm):
         if not_in:
             condition = pytis.data.NOT(condition)
         self._main_form.filter(condition, append=True)
-        
+
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
 
@@ -1146,7 +1146,7 @@ class MultiSideForm(MultiForm):
         is raised.  If the corresponding form is not active (e.g. the user has no access rights for
         the form), False is returned and an error message is displayed.  Otherwise the form is
         raised and 'True' is returned.
-        
+
         """
         for i, form in enumerate(self._forms):
             if form and form.binding().id() == id:
@@ -1155,13 +1155,13 @@ class MultiSideForm(MultiForm):
                 return True
         message(_("The requested side form is not available."), beep_=True)
         return False
-    
+
 
 class MultiBrowseDualForm(BrowseDualForm):
     """Dual form with a 'BrowseForm' up and multiple side forms.
 
     Specific constructor arguments:
-    
+
       binding -- has the same effect as calling the method 'select_binding' with
         given argument after the form is created.
 
@@ -1182,23 +1182,23 @@ class MultiBrowseDualForm(BrowseDualForm):
                 pass
             else:
                 self._guardian._do_selection(row)
-    
+
     def _create_view_spec(self):
         return None
 
     def _create_data_object(self):
         return None
-    
+
     def _default_orientation(self):
         return self._main_form.orientation()
-        
+
     def _default_sash_position(self, total_size):
         return total_size.height / 2
-        
+
     def _create_main_form(self, parent, binding=None, **kwargs):
         self._selected_binding = binding
         return self.MainForm(parent, self._resolver, self._name, guardian=self, **kwargs)
-    
+
     def _create_side_form(self, parent):
         form = MultiSideForm(parent, self._resolver, self._name, guardian=self,
                              main_form=self._main_form)
@@ -1214,17 +1214,17 @@ class MultiBrowseDualForm(BrowseDualForm):
 
     def _on_binding_selection(self, binding):
         self._set_saved_setting('binding', binding.id())
-        
+
     def _on_main_activation(self, alternate=False):
         if alternate:
             form, name = (DescriptiveDualForm, self._name)
         else:
             form, name = (BrowsableShowForm, self._name)
         run_form(form, name, select_row=self._main_form.current_key())
-        
+
     def title(self):
         return self._main_form.title()
-    
+
     def select_binding(self, id):
         return self._side_form.select_binding(id)
 
