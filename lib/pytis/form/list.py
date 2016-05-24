@@ -3569,6 +3569,7 @@ class SideBrowseForm(BrowseForm):
         self._binding_column = binding_column
         self._side_binding_column = side_binding_column
         self._hide_binding_column = hide_binding_column
+        self._binding_condition = condition
         self._xarguments = arguments
         self._selection_arguments = {}
         self._side_prefill = prefill
@@ -3659,7 +3660,8 @@ class SideBrowseForm(BrowseForm):
         if not self.initialized():
             self.full_init()
         bcol, sbcol = self._binding_column, self._side_binding_column
-        if bcol is None or self._current_profile.id() == '__constructor_profile__':
+        if ((bcol is None or self._binding_condition is not None
+             or self._current_profile.id() == '__constructor_profile__')):
             return None
         else:
             if self._current_profile.id() == self._default_profile.id():
