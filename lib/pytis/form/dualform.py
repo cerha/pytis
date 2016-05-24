@@ -1052,12 +1052,12 @@ class MultiSideForm(MultiForm):
                                                            _command_handler=self)),
                 MItem(_("Filter the main form for non-empty side form"),
                       help=_("Show only those rows of the main form, which have "
-                             "at least one row in this side form."),
+                             "at least one row in this side form in its current profile."),
                       command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
                                                               _command_handler=self)),
                 MItem(_("Filter the main form for empty side form"),
                       help=_("Show only those rows of the main form, which have "
-                             "no rows in this side form."),
+                             "no rows in this side form in its current profile."),
                       command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection, not_in=True,
                                                               _command_handler=self)),
                 self._displayed_forms_menu(),
