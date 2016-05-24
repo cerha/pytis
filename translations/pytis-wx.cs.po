@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-05-19 16:43+0200\n"
-"PO-Revision-Date: 2016-05-19 16:44+0200\n"
+"POT-Creation-Date: 2016-05-24 12:04+0200\n"
+"PO-Revision-Date: 2016-05-24 12:05+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -677,7 +677,7 @@ msgstr "konfigurační formulář"
 msgid "Apply changes without closing the form"
 msgstr "Uplatnit změny bez uzavření formuláře"
 
-#: ../lib/pytis/form/dialog.py:97 ../lib/pytis/form/dualform.py:1126
+#: ../lib/pytis/form/dialog.py:97 ../lib/pytis/form/dualform.py:1132
 #: ../lib/pytis/form/list.py:3456
 msgid "Cancel"
 msgstr "Zrušit"
@@ -794,53 +794,65 @@ msgstr "Uložit soubor"
 msgid "Directory selection"
 msgstr "Výběr adresáře"
 
-#: ../lib/pytis/form/dualform.py:79
+#: ../lib/pytis/form/dualform.py:80
 msgid "dual form"
 msgstr "duální formulář"
 
-#: ../lib/pytis/form/dualform.py:563
+#: ../lib/pytis/form/dualform.py:564
 msgid "dual view"
 msgstr "duální náhled"
 
-#: ../lib/pytis/form/dualform.py:794
+#: ../lib/pytis/form/dualform.py:795
 msgid "Form disabled"
 msgstr "Formulář není dostupný"
 
-#: ../lib/pytis/form/dualform.py:1039
+#: ../lib/pytis/form/dualform.py:1040
 msgid "Available forms"
 msgstr "Zobrazené formuláře"
 
-#: ../lib/pytis/form/dualform.py:1049
+#: ../lib/pytis/form/dualform.py:1050
 msgid "Close this form"
 msgstr "Zavřít tento formulář"
 
-#: ../lib/pytis/form/dualform.py:1052
-msgid "Filter the main form by this side form"
-msgstr "Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"
-
 #: ../lib/pytis/form/dualform.py:1053
+msgid "Filter the main form for non-empty side form"
+msgstr "Filtrovat hlavní formulář na neprázdný vedlejší formulář"
+
+#: ../lib/pytis/form/dualform.py:1054
 msgid ""
 "Show only those rows of the main form, which have at least one row in this "
-"side form."
+"side form in its current profile."
 msgstr ""
 "Zobrazit pouze ty řádky hlavního formuláře, pro které tento vedlejší "
 "formulář obsahuje v aktuálním profilu nenulový počet řádků."
 
-#: ../lib/pytis/form/dualform.py:1125
+#: ../lib/pytis/form/dualform.py:1058
+msgid "Filter the main form for empty side form"
+msgstr "Filtrovat hlavní formulář na prázdný vedlejší formulář"
+
+#: ../lib/pytis/form/dualform.py:1059
+msgid ""
+"Show only those rows of the main form, which have no rows in this side form "
+"in its current profile."
+msgstr ""
+"Zobrazit pouze ty řádky hlavního formuláře, pro které tento vedlejší "
+"formulář neobsahuje v aktuálním profilu žádné řádky."
+
+#: ../lib/pytis/form/dualform.py:1131
 msgid "Can't filter when the current profile is not saved!"
 msgstr "Filtrování nemůže být provedeno, pokud aktuální profil není uložen!"
 
-#: ../lib/pytis/form/dualform.py:1126 ../lib/pytis/form/inputfield.py:2221
+#: ../lib/pytis/form/dualform.py:1132 ../lib/pytis/form/inputfield.py:2221
 #: ../lib/pytis/form/list.py:876 ../lib/pytis/form/list.py:3456
 #: ../lib/pytis/form/screen.py:1938
 msgid "Save"
 msgstr "Uložit"
 
-#: ../lib/pytis/form/dualform.py:1148
+#: ../lib/pytis/form/dualform.py:1156
 msgid "The requested side form is not available."
 msgstr "Požadovaný vedlejší formulář není dostupný."
 
-#: ../lib/pytis/form/dualform.py:1161
+#: ../lib/pytis/form/dualform.py:1169
 msgid "tabbed dual form"
 msgstr "vícenásobný duální formulář"
 
@@ -2291,7 +2303,7 @@ msgstr ""
 "Zobraz aktuální záznam v hlavním formuláři se souvisejícími daty ve "
 "vedlejších formulářích."
 
-#: ../lib/pytis/form/list.py:3790
+#: ../lib/pytis/form/list.py:3792
 msgid "Aggregated View"
 msgstr "Agregovaný náhled"
 
@@ -2454,12 +2466,12 @@ msgstr "Adresa"
 msgid "Current browser URI."
 msgstr "Aktuální adresa prohlížeče."
 
-#: ../lib/pytis/form/screen.py:2764
+#: ../lib/pytis/form/screen.py:2770
 #, python-format
 msgid "Unable to create temporary file: %s"
 msgstr "Nelze vytvořit pomocný soubor: %s"
 
-#: ../lib/pytis/form/screen.py:2794
+#: ../lib/pytis/form/screen.py:2800
 #, python-format
 msgid "External veiwer for '%s' not found."
 msgstr "Nenalezen odpovídající prohlížeč pro '%s'."
