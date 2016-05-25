@@ -172,6 +172,12 @@
     border: 1px solid #ddd;
     margin-top: .3em;
 }
+.pytis-form.browse-form table.data-table thead {
+    display: table-header-group;
+}
+.pytis-form.browse-form table.data-table tr {
+    page-break-inside: avoid;
+}
 .pytis-form.browse-form table.data-table tr.data-row td,
 .pytis-form.browse-form table.data-table tr.row-expansion td,
 .pytis-form.browse-form table.data-table tr.column-headings th,
