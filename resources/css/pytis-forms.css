@@ -456,16 +456,20 @@
     margin-left: 2px;
 }
 
-.pytis-form.browse-form > .ajax-container > .body,
-.pytis-form.browse-form > .body {
-    display: inline-block;
-}
-.pytis-form.browse-form .summary {
-    background-color: #eee;
-    border: 1px solid #ddd;
-    border-top: 0;
-    padding: 1px 3px;
-    text-align: right;
+@media screen {
+    /* Avoid inline-block in print as it triggers Firefox bug which causes
+     * that only the first page of the table is printed. */
+    .pytis-form.browse-form > .ajax-container > .body,
+    .pytis-form.browse-form > .body {
+	display: inline-block;
+    }
+    .pytis-form.browse-form .summary {
+	background-color: #eee;
+	border: 1px solid #ddd;
+	border-top: 0;
+	padding: 1px 3px;
+	text-align: right;
+    }
 }
 .pytis-form.list-view .summary {
     margin-top: 1.2em;
