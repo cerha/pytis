@@ -103,14 +103,14 @@ class UserSetttingsManager(object):
 
     def _unpickle(self, value):
         return pickle.loads(base64.b64decode(value))
-    
+
     def _load(self, transaction=None, pickled_column='pickle', **key):
         row = self._row(transaction=transaction, **key)
         if row:
             return self._unpickle(row[pickled_column].value())
         else:
             return None
-    
+
     def _save(self, values, transaction=None, **key):
         row = self._row(transaction=transaction, **key)
         if row:
@@ -146,7 +146,7 @@ class ApplicationConfigManager(UserSetttingsManager):
         rows = self._rows()
         return [(r['option'].value(), self._unpickle(r['value'].value()))
                 for r in rows]
-    
+
     def save(self, config, transaction=None):
         """Store configuration options as a tuple of (name, value) pairs."""
         assert isinstance(config, (tuple, list))
@@ -171,8 +171,8 @@ class ApplicationConfigManager(UserSetttingsManager):
                 result, success = self._data.insert(row, transaction=transaction)
                 if not success:
                     raise pytis.data.DBException(result)
-                                            
-            
+
+
 class FormSettingsManager(UserSetttingsManager):
     """Accessor of database storage of form settings other than profiles.
 
@@ -242,10 +242,10 @@ class FormProfileManager(UserSetttingsManager):
     simple structure of basic immutable python objects and restore
     'pytis.data.Operator' instances back after unpickling (the form's data
     object is needed to do that).
-    
+
     Forms are referenced by unique string identifiers (see the 'spec_name' and
     'form_name' arguements of the manager's methods).
-        
+
     """
     _TABLE = 'e_pytis_form_profile_base'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
@@ -259,7 +259,7 @@ class FormProfileManager(UserSetttingsManager):
 
     User defined profiles are recognized from system profiles (defined in
     specifications) by this prefix.
-    
+
     """
 
     def __init__(self, dbconnection, username=None):
@@ -346,7 +346,7 @@ class FormProfileManager(UserSetttingsManager):
         indent = '\n  ' + ' ' * len(key)
         formatted = indent.join(pp.pformat(value).splitlines())
         return '%s: %s' % (key, formatted)
-    
+
     def _dump_filter(self, filter):
         return self._format_item('filter', filter and self._pack_filter(filter))
 
@@ -427,10 +427,10 @@ class FormProfileManager(UserSetttingsManager):
 
     def _profile_params(self, profile):
         return dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
-            
+
     def save_profile(self, spec_name, form_name, profile, transaction=None):
         """Save user specific configuration of a form.
-        
+
         Arguments:
 
           spec_name, form_name -- unique string identification of a form to which the
@@ -519,7 +519,7 @@ class FormProfileManager(UserSetttingsManager):
                                     errors=filter_errors + param_errors,
                                     **params))
         return profiles
-           
+
     def load_filter(self, spec_name, data_object, profile_id, transaction=None):
         """Return a previously saved user defined filter.
 
@@ -547,7 +547,7 @@ class FormProfileManager(UserSetttingsManager):
             return filter, row['title'].value()
         else:
             raise Exception("Saved profile %s for %s doesn't exist!" % (profile_id, spec_name))
-           
+
     def drop_profile(self, spec_name, form_name, profile_id, transaction=None):
         """Remove the previously saved form configuration.
 
@@ -566,13 +566,13 @@ class FormProfileManager(UserSetttingsManager):
         else:
             # Only drop user specific form parameters for system profiles.
             self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
-        
+
     def list_spec_names(self, transaction=None):
         """Return a sequence of distinct specification names for which profiles were saved."""
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
         return [v.value() for v in values]
-    
+
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of distinct form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
@@ -585,7 +585,7 @@ class FormProfileManager(UserSetttingsManager):
                                 and profile.id()[len(prefix):].isdigit()]
         return prefix + str(max(user_profile_numbers + [0]) + 1)
 
-    
+
 class FormProfileParamsManager(UserSetttingsManager):
     """Accessor of database storage of form profile parameters.
 
@@ -602,7 +602,7 @@ class FormProfileParamsManager(UserSetttingsManager):
         """Return previously stored form profile parameters dictionary."""
         return self._load(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                           transaction=transaction) or {}
-    
+
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of form names for which profiles were saved."""
         condition = self._condition(spec_name=spec_name)
@@ -617,7 +617,7 @@ class FormProfileParamsManager(UserSetttingsManager):
                       errors=errors)
         self._save(values, spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                    transaction=transaction)
-    
+
     def drop(self, spec_name, form_name, profile_id, transaction=None):
         """Remove the previously saved form parameters.
 
@@ -630,7 +630,7 @@ class FormProfileParamsManager(UserSetttingsManager):
         self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                    transaction=transaction)
 
-        
+
 class AggregatedViewsManager(UserSetttingsManager):
     """Accessor of database storage of saved aggregation form setups.
 
@@ -641,14 +641,14 @@ class AggregatedViewsManager(UserSetttingsManager):
     separate items in the aggregarion menu in a form toolbar.  instance and are
     related to a specification, so all forms above given specification share
     the list of available aggregation setups.
-        
+
     """
     _TABLE = 'e_pytis_aggregated_views'
     _COLUMNS = ('id', 'username', 'spec_name', 'aggregated_view_id', 'title', 'pickle')
 
     def save(self, spec_name, aggregated_view, transaction=None):
         """Save aggregation form setup.
-        
+
         Arguments:
 
           spec_name -- specification name as a string.
