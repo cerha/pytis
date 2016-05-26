@@ -251,6 +251,11 @@
     display: block;
     float: right;
 }
+@media print {
+    .pytis-form.browse-form table.data-table .popup-menu-ctrl-widget {
+	display: none;
+    }
+}
 .pytis-form.browse-form table.data-table pre {
     background-color: transparent;
     border: none;
