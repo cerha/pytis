@@ -391,6 +391,22 @@ class FormProfileManager(UserSetttingsManager):
                         errors.append((param, "Disabled column '%s'" % col))
         return tuple(errors)
 
+    def _update_params(self, params, rename_columns, delete_columns):
+        for param, getcol, getitem in (('columns', lambda x: x, lambda x, col: col),
+                                       ('sorting', lambda x: x[0], lambda x, col: (col, x[1])),
+                                       ('grouping', lambda x: x, lambda x, col: col)):
+            sequence = params.get(param)
+            if sequence is not None:
+                updated_sequence = []
+                for x in sequence:
+                    col = getcol(x)
+                    if col not in delete_columns:
+                        for old, new in rename_columns:
+                            if old == col:
+                                col = new
+                        updated_sequence.append(getitem(x, col))
+                params[param] = tuple(updated_sequence)
+
     def _in_transaction(self, transaction, operation, *args, **kwargs):
         if transaction is None:
             transaction = pytis.data.DBTransactionDefault(self._dbconnection)
@@ -448,7 +464,7 @@ class FormProfileManager(UserSetttingsManager):
             save_params(transaction)
 
     def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
-                      transaction=None):
+                      transaction=None, rename_columns=(), delete_columns=()):
         """Return list of form profiles including previously saved user customizations.
 
         Arguments:
@@ -460,6 +476,9 @@ class FormProfileManager(UserSetttingsManager):
             profile validation
           default_profile -- 'pytis.presentation.Profile' instance representing
             form's default profile
+          rename_columns -- sequence of pairs (old_id, new_id) to use for renaming
+            columns in all loaded profiles
+          delete_columns -- sequence of column ids to drop from all loaded profiles
 
         Returns a list of 'pytis.presentation.Profile' instances including
         predefined system profiles (possibly with their user customizations) as
@@ -469,6 +488,8 @@ class FormProfileManager(UserSetttingsManager):
         def load_params(profile_id):
             params = self._params_manager.load(spec_name, form_name, profile_id,
                                                transaction=transaction)
+            if rename_columns or delete_columns:
+                self._update_params(params, rename_columns, delete_columns)
             errors = self._validate_params(view_spec, params)
             return params, errors
         profiles = []

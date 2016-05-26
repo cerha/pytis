@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011, 2016 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -17,35 +17,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt, types
-import pytis.util, pytis.data, config
+import sys
+import getopt
+import argparse
+import pytis.util
+import pytis.data
 
 from pytis.form import FormProfileManager
 from pytis.presentation import Profile
 
-def usage(msg=None):
-    sys.stderr.write("""Validate saved form profiles.
-Usage: %s [options]
-Options: Pytis command line options, such as --config or --dbhost and --dbname.
-""" % sys.argv[0])
-    if msg:
-        sys.stderr.write(msg)
-        sys.stderr.write('\n')
-    sys.exit(1)
-
-    
 # Cache of ViewSpec instances and data objects.
 cache = {}
 
 def run():
-    if '--help' in sys.argv:
-        usage()
+    parser = argparse.ArgumentParser(
+        description="Validate and optionally fix saved form profiles",
+        epilog=("Additionally, you can pass other valid Pytis command line arguments, "
+                "such as --dbhost or --dbname to override certain configuration file "
+                "options."),
+    )
+    parser.add_argument('-d', '--delete-column', nargs='+', metavar='SPEC_NAME:COLUMN',
+                        default=(), help="Delete COLUMN of SPEC_NAME from all existing profiles")
+    parser.add_argument('-r', '--rename-column', nargs='+', metavar='SPEC_NAME:OLD:NEW',
+                        default=(), help="Rename column OLD of SPEC_NAME to NEW in all existing profiles")
+    parser.add_argument('--config', required=True, metavar='PATH',
+                        help="Configuration file path")
+    args, argv = parser.parse_known_args()
+    import config
     try:
-        config.add_command_line_options(sys.argv)
-        if len(sys.argv) > 1:
-            usage()
-    except getopt.GetoptError as e:
-        usage(e.msg)
+        config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
+        delete_columns = {}
+        for spec_name, column in [x.split(':') for x in args.delete_column]:
+            delete_columns.setdefault(spec_name, []).append(column)
+        rename_columns = {}
+        for spec_name, old, new in [x.split(':') for x in args.rename_column]:
+            rename_columns.setdefault(spec_name, []).append((old, new))
+    except (getopt.GetoptError, ValueError):
+        parser.print_help()
+        sys.exit(1)
     # Disable pytis logging and notification thread (may cause troubles when
     # creating data objects for profile validation).
     config.dblisten = False
@@ -88,12 +97,15 @@ def run():
                     view_spec, data_object,  error = None, None, e
                 else:
                     error = None
-                cache[spec_name] = view_spec, data_object,  error
+                cache[spec_name] = view_spec, data_object, error
             if not error:
                 for form_name in manager.list_form_names(spec_name):
-                    for profile in manager.load_profiles(spec_name, form_name,
-                                                         view_spec, data_object,
-                                                         Profile('__default_profile__', '-')):
+                    for profile in manager.load_profiles(
+                            spec_name, form_name, view_spec, data_object,
+                            Profile('__default_profile__', '-'),
+                            delete_columns=delete_columns.get(spec_name, ()),
+                            rename_columns=rename_columns.get(spec_name, ()),
+                    ):
                         # Update the 'errors' column in the database table.
                         manager.save_profile(spec_name, form_name, profile)
                         for param, error in profile.errors():
