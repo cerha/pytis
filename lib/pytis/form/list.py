@@ -3338,16 +3338,24 @@ class BrowseForm(FoldableForm):
             enumerator = self._row.type(f.id()).enumerator()
             codebook = self._row.codebook(f.id())
             if enumerator and codebook:
-                links = automatic_links.setdefault(codebook, [])
+                if codebook in automatic_links:
+                    binding, links = automatic_links[codebook]
+                else:
+                    bindings = config.resolver.get(codebook, 'view_spec').bindings()
+                    binding = bindings[0].id() if bindings else None
+                    links = []
+                    automatic_links[codebook] = (binding, links)
                 item = (codebook, enumerator.value_column(), f)
                 if item not in links:
                     links.append(item)
                 in_item = (codebook, enumerator.value_column(), f, spec_title(codebook), None)
                 if in_item not in self._automatic_in_operator_links:
                     self._automatic_in_operator_links.append(in_item)
-        self._automatic_links = [(link_label(spec_title(name)),
-                                  [(f, Link(name, column)) for name, column, f in items])
-                                 for name, items in sorted(automatic_links.items())]
+        self._automatic_links = [
+            (link_label(spec_title(name)),
+             [(f, Link(name, column, binding=binding)) for name, column, f in items])
+            for name, (binding, items) in sorted(automatic_links.items())
+        ]
         self._explicit_in_operator_links.sort()
         self._automatic_in_operator_links.sort()
 
@@ -3505,12 +3513,13 @@ class BrowseForm(FoldableForm):
         dual = self._dualform()
         if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm)
                                           and dual.main_form() == self):
-            command = Application.COMMAND_RUN_FORM(name=self._name,
-                                                   form_class=pytis.form.MultiBrowseDualForm,
-                                                   select_row=self._current_key())
             menu += (MSeparator(),
                      MItem(_("Open with side forms"),
-                           command=command,
+                           command=Application.COMMAND_RUN_FORM(
+                               name=self._name,
+                               form_class=pytis.form.MultiBrowseDualForm,
+                               select_row=self._current_key(),
+                           ),
                            help=_("Open the current record in a main form with "
                                   "related data in side forms."),
                            icon='link'))
