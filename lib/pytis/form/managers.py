@@ -292,13 +292,22 @@ class FormProfileManager(UserSetttingsManager):
         else:
             raise pytis.util.ProgramError("Unknown object in filter operator:", something)
 
-    def _unpack_filter(self, packed, data_object):
+    def _unpack_filter(self, packed, data_object, delete_columns=(), rename_columns={}):
+        def find_column(col):
+            col = rename_columns.get(col, col)
+            column = data_object.find_column(col)
+            if column is None:
+                note = " (can't remove from filter)" if col in delete_columns else ""
+                raise Exception("Unknown column '%s'%s" % (col, note))
+            return column
         name, packed_args, kwargs = packed
         if name not in self._OPERATORS:
             raise Exception("Invalid filter operator '%s'." % name)
         op = getattr(pytis.data, name)
         if name in ('AND', 'OR'):
-            args = [self._unpack_filter(arg, data_object) for arg in packed_args]
+            args = [self._unpack_filter(arg, data_object, delete_columns=delete_columns,
+                                        rename_columns=rename_columns)
+                    for arg in packed_args]
         elif name == 'IN':
             op = pytis.form.IN
             args = packed_args
@@ -307,15 +316,12 @@ class FormProfileManager(UserSetttingsManager):
                 raise Exception("Invalid number of filter operator arguments: %s" %
                                 repr(packed_args))
             if isinstance(packed_args[1], list):
-                col, val = packed_args[0], packed_args[1][0]
+                column, val = find_column(packed_args[0]), packed_args[1][0]
                 if isinstance(val, str):
                     try:
                         val = val.decode('utf-8')
                     except UnicodeDecodeError:
                         val = val.decode('iso-8859-2')
-                column = data_object.find_column(col)
-                if column is None:
-                    raise Exception("Unknown column '%s'" % col)
                 t = column.type()
                 if name in ('WM', 'NW'):
                     value, err = t.wm_validate(val)
@@ -331,13 +337,10 @@ class FormProfileManager(UserSetttingsManager):
                         validation_kwargs['locale_format'] = False
                     value, err = t.validate(val, strict=False, **validation_kwargs)
                 if err is not None:
-                    raise Exception("Invalid filter operand value for '%s': %s" % (col, err))
-                args = col, value
+                    raise Exception("Invalid filter operand for '%s': %s" % (column.id(), err))
+                args = column.id(), value
             else:
-                args = packed_args
-                for col in args:
-                    if data_object.find_column(col) is None:
-                        raise Exception("Unknown column '%s'" % col)
+                args = tuple([find_column(col).id() for col in packed_args])
         return op(*args, **kwargs)
 
     def _format_item(self, key, value):
@@ -364,10 +367,12 @@ class FormProfileManager(UserSetttingsManager):
         else:
             return None
 
-    def _validate_filter(self, data_object, packed_filter):
+    def _load_filter(self, data_object, packed_filter, delete_columns=(), rename_columns={}):
         if packed_filter:
             try:
-                filter = self._unpack_filter(packed_filter, data_object)
+                filter = self._unpack_filter(packed_filter, data_object,
+                                             delete_columns=delete_columns,
+                                             rename_columns=rename_columns)
             except Exception as e:
                 return None, (('filter', str(e)),)
             else:
@@ -395,17 +400,13 @@ class FormProfileManager(UserSetttingsManager):
         for param, getcol, getitem in (('columns', lambda x: x, lambda x, col: col),
                                        ('sorting', lambda x: x[0], lambda x, col: (col, x[1])),
                                        ('grouping', lambda x: x, lambda x, col: col)):
-            sequence = params.get(param)
-            if sequence is not None:
-                updated_sequence = []
-                for x in sequence:
-                    col = getcol(x)
-                    if col not in delete_columns:
-                        for old, new in rename_columns:
-                            if old == col:
-                                col = new
-                        updated_sequence.append(getitem(x, col))
-                params[param] = tuple(updated_sequence)
+            items = params.get(param)
+            if items is not None:
+                params[param] = tuple(
+                    getitem(item, rename_columns.get(col, col))
+                    for item, col in [(x, getcol(x)) for x in items]
+                    if col not in delete_columns
+                )
 
     def _in_transaction(self, transaction, operation, *args, **kwargs):
         if transaction is None:
@@ -464,7 +465,7 @@ class FormProfileManager(UserSetttingsManager):
             save_params(transaction)
 
     def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
-                      transaction=None, rename_columns=(), delete_columns=()):
+                      transaction=None, rename_columns={}, delete_columns=()):
         """Return list of form profiles including previously saved user customizations.
 
         Arguments:
@@ -476,8 +477,9 @@ class FormProfileManager(UserSetttingsManager):
             profile validation
           default_profile -- 'pytis.presentation.Profile' instance representing
             form's default profile
-          rename_columns -- sequence of pairs (old_id, new_id) to use for renaming
-            columns in all loaded profiles
+          rename_columns -- dictionary to use for renaming columns in all
+            loaded profiles.  Keys are the column identifiers to rename and
+            values are the new column identifiers.
           delete_columns -- sequence of column ids to drop from all loaded profiles
 
         Returns a list of 'pytis.presentation.Profile' instances including
@@ -511,7 +513,9 @@ class FormProfileManager(UserSetttingsManager):
         # Now load also user defined profiles.
         for row in self._rows(spec_name=spec_name, transaction=transaction):
             packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
-            filter, filter_errors = self._validate_filter(data_object, packed_filter)
+            filter, filter_errors = self._load_filter(data_object, packed_filter,
+                                                      delete_columns=delete_columns,
+                                                      rename_columns=rename_columns)
             params, param_errors = load_params(row['profile_id'].value())
             profiles.append(Profile(row['profile_id'].value(),
                                     row['title'].value(),
@@ -541,7 +545,7 @@ class FormProfileManager(UserSetttingsManager):
         row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
         if row:
             packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
-            filter, errors = self._validate_filter(data_object, packed_filter)
+            filter, errors = self._load_filter(data_object, packed_filter)
             if errors:
                 raise Exception("Saved profile %s for %s is invalid!" % (profile_id, spec_name))
             return filter, row['title'].value()

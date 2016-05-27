@@ -51,7 +51,7 @@ def run():
             delete_columns.setdefault(spec_name, []).append(column)
         rename_columns = {}
         for spec_name, old, new in [x.split(':') for x in args.rename_column]:
-            rename_columns.setdefault(spec_name, []).append((old, new))
+            rename_columns.setdefault(spec_name, {})[old] = new
     except (getopt.GetoptError, ValueError):
         parser.print_help()
         sys.exit(1)
@@ -104,7 +104,7 @@ def run():
                             spec_name, form_name, view_spec, data_object,
                             Profile('__default_profile__', '-'),
                             delete_columns=delete_columns.get(spec_name, ()),
-                            rename_columns=rename_columns.get(spec_name, ()),
+                            rename_columns=rename_columns.get(spec_name, {}),
                     ):
                         # Update the 'errors' column in the database table.
                         manager.save_profile(spec_name, form_name, profile)
