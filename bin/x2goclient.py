@@ -1094,6 +1094,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
     def _check_ssh_tunnel(self, _configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         hostname = _auth_info.get('hostname')
+        ssh_port = _auth_info.get('port')
         username = _auth_info.get('username')
         password = _auth_info.get('password')
         key_filename = _auth_info.get('key_filename')
@@ -1106,7 +1107,9 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             current_rpyc_port = rpyc_port.get()
             port = gevent.event.AsyncResult()
             tunnel = pytis.remote.ReverseTunnel(hostname,
-                                                current_rpyc_port, ssh_forward_port=0,
+                                                current_rpyc_port,
+                                                ssh_port=ssh_port,
+                                                ssh_forward_port=0,
                                                 ssh_user=username,
                                                 ssh_password=password,
                                                 key_filename=key_filename,
