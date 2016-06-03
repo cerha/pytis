@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-04-18 19:31'
+_VERSION = '2016-06-03 17:59'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
