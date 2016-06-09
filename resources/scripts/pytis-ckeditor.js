@@ -1312,12 +1312,12 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     };
 
     var update_mathml_from_ascii = function(element) {
+        var dlg = CKEDITOR.dialog.getCurrent();
 	var node = parseMath(dlg.getValueOf('main', 'source-ascii'), false);
         /* Convert MathML DOM node to text using a helper element */
         var helper = document.createElement('span');
         helper.appendChild(node);
 	var mathml = clean_mathml(helper.innerHTML , "", true);
-        var dlg = CKEDITOR.dialog.getCurrent();
         dlg.setValueOf('main', 'source-mathml', mathml);
     };
 
