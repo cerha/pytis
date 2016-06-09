@@ -1383,7 +1383,8 @@ function ck_language_combo(editor, languages) {
         className: 'cke_format',
         multiSelect: false,
         panel: {
-            css: [editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css')]
+            css: [editor.config.contentsCss,
+		  CKEDITOR.getUrl(CKEDITOR.skin.getPath('editor') + 'editor.css')]
         },
         init: function() {
 	    var i;
