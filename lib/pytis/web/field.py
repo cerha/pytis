@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2015 Brailcom, o.p.s.
+# Copyright (C) 2006-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,10 +81,10 @@ class UriType(object):
     field value.  If None is returned, the field is not supposed to be
     printable.  The provider will only be queried for fields with printable=True
     in their specification for this kind of URI.
-    
+
     """
 
-    
+
 class Link(object):
     """Link representation for 'uri_provider' returned value.
 
@@ -93,7 +93,7 @@ class Link(object):
     wants to also specify the title or target of the link (as defined by the
     corresponding HTML A tag attributtes) it may return an instance of this
     class instead of a string.
-    
+
     """
     def __init__(self, uri, title=None, target=None):
         self._uri = uri
@@ -123,7 +123,7 @@ def localizable_export(value, **kwargs):
     Thus it is safer to limit special handling to direct pytis.data.Date
     instances here, althought it is unpleasant, that derived types are not
     localized automatically.
-    
+
     """
     if value.value() is not None:
         type_cls = value.type().__class__
@@ -145,7 +145,7 @@ def localizable_export(value, **kwargs):
     else:
         return ''
 
-    
+
 class Content(pd.Type):
     """Data type for representation of lcg.Content within pytis fields.
 
@@ -171,7 +171,7 @@ class Field(object):
     user interface and behavior.  A new instance is created by the static
     method 'create()', which automatically decides which particular subclass
     must be used for given field according to specification.
-    
+
     """
     _HANDLER = 'pytis.Field'
 
@@ -190,7 +190,7 @@ class Field(object):
             the row identification (will be suffixed by the exported row key
             value separated by a dash from the name and id of the field
             itself).  If False, no suffix is used.
-        
+
         """
         data_type = row.type(spec.id())
         if isinstance(data_type, pd.Password):
@@ -291,7 +291,7 @@ class Field(object):
 
     def _exported_value(self):
         return localizable_export(self._value())
-    
+
     def _display(self, context):
         """Additional information about the field value (see '_format()' for more info)."""
         return None
@@ -299,7 +299,7 @@ class Field(object):
     def _value(self):
         """Return the field value as a 'pytis.data.Value' instance."""
         return self._row[self.id]
-    
+
     def _editor_kwargs(self, context):
         """Return editor field keyword arguemnts as a dictionary.
 
@@ -453,7 +453,7 @@ class TextField(Field):
             # call the login name field 'login' instead of 'username' (Wiking).
             html_id += '-username'
         return html_id
-    
+
     def _editor_kwargs(self, context):
         kwargs = super(TextField, self)._editor_kwargs(context)
         invalid_string = self._row.invalid_string(self.id)
@@ -469,7 +469,7 @@ class TextField(Field):
     def _editor(self, context, **kwargs):
         return context.generator().input(**kwargs)
 
-    
+
 class NumericField(TextField):
 
     def _validate(self, value, locale_data, **kwargs):
@@ -487,16 +487,16 @@ class NumericField(TextField):
                 value = value.replace(decimal_point, '.')
         return super(NumericField, self)._validate(value, locale_data, **kwargs)
 
-    
+
 class StringField(TextField):
-    
+
     def _maxlen(self):
         return self.type.maxlen()
-    
+
 
 class PasswordField(StringField):
     _HANDLER = 'pytis.PasswordField'
-    
+
     def _validate(self, value, locale_data, **kwargs):
         if self.type.verify():
             if isinstance(value, tuple) and len(value) == 2:
@@ -546,7 +546,7 @@ class MultilineField(Field):
     def _editor(self, context, **kwargs):
         return context.generator().textarea(**kwargs)
 
-    
+
 class StructuredTextField(MultilineField):
 
     def __init__(self, *args, **kwargs):
@@ -588,7 +588,7 @@ class HtmlField(MultilineField):
             if (self.classes):
                 res += " (" + ", ".join(self.classes) + ")"
             return res
-        
+
     class AcfRequiredAttribute(object):
         """Required attribute in ACF rule for CKEditor"""
         def __init__(self, attribute):
@@ -600,7 +600,7 @@ class HtmlField(MultilineField):
         exported = self._value().export()
         escape = not isinstance(exported, (lcg.HtmlEscapedUnicode, lcg.Concatenation,))
         return lcg.HtmlEscapedUnicode(context.localize(exported), escape=escape)
-    
+
     def _editor(self, context, **kwargs):
         content = super(HtmlField, self)._editor(context, **kwargs)
         if context.resource('ckeditor/ckeditor.js'):
@@ -610,7 +610,6 @@ class HtmlField(MultilineField):
             context.resource('flash.js')
             context.resource('ckeditor.css')
             context.resource('ASCIIMathML.js')
-            context.resource('ckeditor.css')
             toolbar = (
                 ('clipboard', ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
                                '-', 'Undo', 'Redo')),
@@ -711,10 +710,10 @@ class HtmlField(MultilineField):
             content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
 
-    
+
 class DateTimeField(TextField):
     _HANDLER = 'pytis.DateTimeField'
-    
+
     def datetime_format(self, locale_data):
         if hasattr(self.type, 'exact') and not self.type.exact(): # for wiking.DateTime
             time_format = locale_data.time_format
@@ -725,7 +724,7 @@ class DateTimeField(TextField):
     def _maxlen(self):
         # TODO: Respect date format!
         return 19
-    
+
     def _editor(self, context, **kwargs):
         result = super(DateTimeField, self)._editor(context, **kwargs)
         g = context.generator()
@@ -762,7 +761,7 @@ class DateTimeField(TextField):
                                                     format=self.datetime_format(locale_data),
                                                     **kwargs)
 
-    
+
 class DateField(DateTimeField):
 
     def datetime_format(self, locale_data):
@@ -808,7 +807,7 @@ class CheckboxField(Field):
 
     def label_in_front(self):
         return False
-        
+
 
 class FileUploadField(Field):
     _HANDLER = 'pytis.FileUploadField'
@@ -873,9 +872,9 @@ class FileUploadField(Field):
         return self.type.not_null() and self._row.new()
 
 
-    
+
 class EnumerationField(Field):
-    
+
     def _format(self, context):
         fid = self.id
         if self._row.prefer_display(fid):
@@ -894,7 +893,7 @@ class EnumerationField(Field):
             return context.generator().abbr(value, title=display)
         else:
             return value
-        
+
     def _display(self, context):
         # Display is only shown in showform.  In other form types it is shown
         # as ABBR within the value (see _format).  This is quite a hack and
@@ -914,7 +913,7 @@ class EnumerationField(Field):
 
 class RadioField(EnumerationField):
     _HANDLER = 'pytis.RadioField'
-    
+
     def _editor(self, context, id, **kwargs):
         g = context.generator()
         value = self._value()
@@ -940,7 +939,7 @@ class RadioField(EnumerationField):
 
 class ChoiceField(EnumerationField):
     _HANDLER = 'pytis.ChoiceField'
-    
+
     def _editor(self, context, **kwargs):
         g = context.generator()
         enumeration = self._row.enumerate(self.id)
@@ -953,7 +952,7 @@ class ChoiceField(EnumerationField):
         else:
             selected = None
         return g.select(options=options, selected=selected, **kwargs)
-    
+
 
 class ArrayField(EnumerationField):
 
@@ -981,13 +980,13 @@ class ArrayField(EnumerationField):
 
 class ChecklistField(ArrayField):
     _HANDLER = 'pytis.ChecklistField'
-    
+
     def _format(self, context):
         if self._showform:
             return self._editor(context, id=self.html_id(), readonly=True)
         else:
             return super(ChecklistField, self)._format(context)
-        
+
     def _editor(self, context, id, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
         values = [v.value() for v in self._value().value() or ()]
@@ -1028,7 +1027,7 @@ class ChecklistField(ArrayField):
 
 class CodebookField(EnumerationField, TextField):
     pass
-    
+
 
 class FileField(TextField):
     """Special case of string fields with 'filename' specification.
