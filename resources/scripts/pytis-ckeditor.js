@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2012-2015 Brailcom, o.p.s.
+ * Copyright (C) 2012-2016 Brailcom, o.p.s.
  * Author: Hynek Hanke
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.lengt
 pytis.HtmlField.plugin = function(editor) {
     // Construct dialog and add toolbar button
     var types = ['Image', 'Audio', 'Video', 'Resource', 'Exercise', 'MathML', 'IndexItem'];
-    var i, type, ltype, icon;
+    var i, type, ltype, icon, iconOffset;
     editor.addMenuGroup('PytisGroup');
     for (i=0; i<types.length; i++) {
         type = types[i];
@@ -57,12 +57,14 @@ pytis.HtmlField.plugin = function(editor) {
         CKEDITOR.dialog.add('pytis-' + ltype, pytis.HtmlField[ltype + '_dialog']);
         /* Add command */
         editor.addCommand('insertPytis' + type, new CKEDITOR.dialogCommand('pytis-' + ltype));
-        icon = pytis.HtmlField.base_uri + '/editor-' + ltype + '.png';
+        icon = pytis.HtmlField.base_uri + '/editor-icons.png';
+	iconOffset = -i*16;
         /* Add UI button */
         editor.ui.addButton('Pytis' + type, {
             label: pytis._(types[i]),
             command: 'insertPytis' + type,
-            icon: icon
+            icon: icon,
+	    iconOffset: iconOffset
         });
         /* Add context menu entry */
         if (editor.contextMenu) {
@@ -70,7 +72,8 @@ pytis.HtmlField.plugin = function(editor) {
                 label: pytis._('Edit') + ' ' + pytis._(type),
                 command: 'insertPytis' + type,
                 group: 'PytisGroup',
-                icon: icon
+                icon: icon,
+		iconOffset: iconOffset
             });
 
         }
@@ -159,7 +162,8 @@ pytis.HtmlField.plugin = function(editor) {
     editor.ui.addButton('BlockquoteFooter', {
         label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
-        icon: pytis.HtmlField.base_uri + '/editor-quotation-source.png'
+        icon: pytis.HtmlField.base_uri + '/editor-icons.png',
+	iconOffset: -8*16
     });
 
     /* Add support for reindent */
@@ -217,7 +221,8 @@ pytis.HtmlField.plugin = function(editor) {
     editor.ui.addButton('DefinitionList', {
         label: pytis._("Definition list"),
         command: 'definition-list',
-        icon: pytis.HtmlField.base_uri + '/editor-definition-list.png'
+        icon: pytis.HtmlField.base_uri + '/editor-icons.png',
+	iconOffset: -7*16
     });
 
     /* Add support for marking languages */
