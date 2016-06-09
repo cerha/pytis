@@ -1,5 +1,11 @@
 /* Styles for the edited contents (inside the editor iframe). */
 
+body {
+    /* Reset editor colors (Firefox sometimes uses white on white inside editor) */
+    color: #000;
+    backgrounf: #fff;
+}
+
 pre.lcg-exercise {
     background: #eee;
     width: 100%;
