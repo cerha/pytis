@@ -5,12 +5,14 @@ import rpyc.utils.authenticators
 import socket
 import sys
 
+sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
+
 import pytis.remote
 import pytis.remote.pytisproc as pytisproc
 
 def report(message):
     sys.stderr.write(message + '\n')
-    
+
 def main():
     session_id = pytis.remote.x2go_session_id()
     if not session_id:
