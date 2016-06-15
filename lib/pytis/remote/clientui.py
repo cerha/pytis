@@ -54,12 +54,20 @@ class ClientUIBackend(object):
 
     def __new__(cls, *args, **kwargs):
         if cls is ClientUIBackend:
-            backends = (
-                WxUIBackend,
-                TkUIBackend,
-                ZenityUIBackend,
-                Win32UIBackend,
-            )
+            if sys.platform == 'win32':
+                backends = (
+                    TkUIBackend,
+                    WxUIBackend,
+                    ZenityUIBackend,
+                    Win32UIBackend,
+                )
+            else:
+                backends = (
+                    WxUIBackend,
+                    ZenityUIBackend,
+                    TkUIBackend,
+                    Win32UIBackend,
+                )
             for subclass in backends:
                 try:
                     backend = subclass.__new__(subclass, *args, **kwargs)
@@ -223,10 +231,9 @@ class WxUIBackend(ClientUIBackend):
     """Implements UI backend operations using wx Widgets (requires wxPython)."""
 
     def __init__(self):
-        try:
-            import wx
-        except ImportError as e:
-            raise BackendNotAvailable(e)
+        import pkgutil
+        if not pkgutil.find_loader('wx'):
+            raise BackendNotAvailable()
 
     def _in_wx_app(method):
         def run(*args, **kwargs):
@@ -331,14 +338,10 @@ class Win32UIBackend(ClientUIBackend):
     """Implements UI backend operations using win32 Python API."""
 
     def __init__(self):
-        try:
-            import win32ui
-            import win32con
-            import win32gui
-            import win32clipboard
-            import pywin.mfc.dialog
-        except ImportError as e:
-            raise BackendNotAvailable(e)
+        import pkgutil
+        for m in ('win32ui', 'win32con', 'win32gui', 'win32clipboard', 'pywin.mfc.dialog'):
+            if not pkgutil.find_loader(m):
+                raise BackendNotAvailable()
 
     def _enter_text(self, title, label, password):
         import pywin.mfc.dialog
@@ -432,7 +435,7 @@ class Win32UIBackend(ClientUIBackend):
         win32clipboard.OpenClipboard()
         try:
             data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
-        except: # may happen when there is no clipboard data
+        except:  # may happen when there is no clipboard data
             data = None
         win32clipboard.CloseClipboard()
         return data
@@ -446,34 +449,33 @@ class Win32UIBackend(ClientUIBackend):
 
 
 class ClipboardUIBackend(ClientUIBackend):
-    """Implements clipboard operations using the Python module 'clipboard'."""
+    """Implements clipboard operations using the Python module 'pyperclip'."""
 
     def __init__(self):
-        try:
-            import clipboard
-        except ImportError as e:
-            raise BackendNotAvailable(e)
+        import pkgutil
+        if not pkgutil.find_loader('pyperclip'):
+            import pip
+            pip.main(['install', 'pyperclip'])
+            if not pkgutil.find_loader('pyperclip'):
+                raise BackendNotAvailable()
 
     def _get_clipboard_text(self):
-        import clipboard
-        return clipboard.paste()
+        import pyperclip
+        return pyperclip.paste()
 
     def _set_clipboard_text(self, text):
-        import clipboard
-        clipboard.copy(text)
+        import pyperclip
+        pyperclip.copy(text)
 
 
 class TkUIBackend(ClipboardUIBackend):
     """Implements UI backend operations using Tkinter."""
 
     def __init__(self):
-        try:
-            import Tkinter
-            import ttk
-            import tkSimpleDialog
-            import tkFileDialog
-        except ImportError as e:
-            raise BackendNotAvailable(e)
+        import pkgutil
+        for m in ('Tkinter', 'ttk', 'tkSimpleDialog', 'tkFileDialog'):
+            if not pkgutil.find_loader(m):
+                raise BackendNotAvailable()
         super(TkUIBackend, self).__init__()
 
     def _in_tk_app(method):
@@ -619,10 +621,9 @@ class PyZenityUIBackend(ClipboardUIBackend):
     # compared to 'ZenityUIBackend'.
 
     def __init__(self):
-        try:
-            import PyZenity
-        except ImportError as e:
-            raise BackendNotAvailable(e)
+        import pkgutil
+        if not pkgutil.find_loader('PyZenity'):
+            raise BackendNotAvailable()
         super(PyZenityUIBackend, self).__init__()
 
     def _enter_text(self, title, label, password):
