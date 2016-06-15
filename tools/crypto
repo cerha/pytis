@@ -50,7 +50,7 @@ class Configuration(object):
                 raw_config[p] = value
         self._connection_data = dbconnection
         self._schemas = dbconnection.schemas()
-        
+
     def connection_data(self):
         return self._connection_data
 
@@ -91,7 +91,7 @@ def check_password(key, password, connection_data):
 
 def admin_key(area, connection_data):
     return pytis.extensions.crypto_admin_key(area, admin_user, connection_data)
-    
+
 def command_new_key(configuration, args):
     if not args:
         print "Error: encryption area not specified"
@@ -203,7 +203,7 @@ def command_add_user_password(configuration, args):
                                                  None, connection_data, user_password=password)
     if error:
         print "Error: %s" % (error,)
-        
+
 def command_delete_user(configuration, args):
     if len(args) < 2:
         print "Error: not enough arguments"
@@ -319,7 +319,7 @@ def command_new_communication_key(configuration, args):
     cursor = connection.cursor()
     cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
     connection.commit()
-    
+
 def find_command(command_string):
     command = command_string.replace('-', '_')
     command_function = globals().get('command_' + command)

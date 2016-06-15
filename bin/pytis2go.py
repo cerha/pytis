@@ -124,7 +124,7 @@ class App(wx.App):
         username = self._username
         if not username:
             import getpass
-            username = getpass.getuser() #x2go.defaults.CURRENT_LOCAL_USER,
+            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
         self._username_field = field = ui.field(parent, username,
                                                 disabled=self._username is not None)
         def on_login(event):
