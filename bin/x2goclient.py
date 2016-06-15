@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-06-03 17:59'
+_VERSION = '2016-06-14 22:13'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -1346,6 +1346,18 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     shutil.move(fpath, scripts_install_dir)
                 except Exception:
                     pass
+        # Execute supplied update procedure if exists
+        updatescript = os.path.join(tmp_directory, 'updatescript.py')
+        updateproc = None
+        if os.access(updatescript, os.R_OK):
+            sys.path.append(tmp_directory)
+            try:
+                import updatescript
+                updateproc = getattr(updatescript, 'run')
+            except:
+                pass
+        if updateproc:
+            updateproc(version=_VERSION, path=path)
         shutil.rmtree(tmp_directory)
         app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
