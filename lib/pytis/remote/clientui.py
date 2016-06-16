@@ -56,8 +56,8 @@ class ClientUIBackend(object):
         if cls is ClientUIBackend:
             if sys.platform == 'win32':
                 backends = (
-                    WxUIBackend,
                     TkUIBackend,
+                    WxUIBackend,
                     ZenityUIBackend,
                     Win32UIBackend,
                 )
