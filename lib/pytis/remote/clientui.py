@@ -56,8 +56,8 @@ class ClientUIBackend(object):
         if cls is ClientUIBackend:
             if sys.platform == 'win32':
                 backends = (
-                    TkUIBackend,
                     WxUIBackend,
+                    TkUIBackend,
                     ZenityUIBackend,
                     Win32UIBackend,
                 )
@@ -454,10 +454,7 @@ class ClipboardUIBackend(ClientUIBackend):
     def __init__(self):
         import pkgutil
         if not pkgutil.find_loader('pyperclip'):
-            import pip
-            pip.main(['install', 'pyperclip'])
-            if not pkgutil.find_loader('pyperclip'):
-                raise BackendNotAvailable()
+            raise BackendNotAvailable()
 
     def _get_clipboard_text(self):
         import pyperclip
