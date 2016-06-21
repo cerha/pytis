@@ -480,6 +480,14 @@ class TkUIBackend(ClipboardUIBackend):
             import Tkinter
             root = Tkinter.Tk()
             root.withdraw()
+            # Make it almost invisible - no decorations, 0 size, top left corner.
+            root.overrideredirect(True)
+            root.geometry('0x0+0+0')
+            # Show window again and lift it to top so it can get focus,
+            # otherwise dialogs will end up behind the terminal.
+            root.deiconify()
+            root.lift()
+            root.focus_force()
             try:
                 return method(self, root, *args, **kwargs)
             finally:
