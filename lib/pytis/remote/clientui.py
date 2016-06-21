@@ -231,21 +231,12 @@ class WxUIBackend(ClientUIBackend):
     """Implements UI backend operations using wx Widgets (requires wxPython)."""
 
     def __init__(self):
-        import pkgutil
-        if not pkgutil.find_loader('wx'):
-            raise BackendNotAvailable()
-
-    def _in_wx_app(method):
-        def run(*args, **kwargs):
+        try:
             import wx
-            class App(wx.App):
-                def OnInit(self):
-                    self.result = method(*args, **kwargs)
-                    return True
-            return App(False).result
-        return run
+        except ImportError:
+            raise BackendNotAvailable()
+        self._app = wx.App(False)
 
-    @_in_wx_app
     def _enter_text(self, title, label, password):
         import wx
         if password:
@@ -261,7 +252,6 @@ class WxUIBackend(ClientUIBackend):
         dialog.Destroy()
         return result
 
-    @_in_wx_app
     def _select_option(self, title, label, columns, data, return_column):
         import wx
         # TODO: The column labels are not displayed and columns may not be aligned properly,
@@ -279,7 +269,6 @@ class WxUIBackend(ClientUIBackend):
         dialog.Destroy()
         return result
 
-    @_in_wx_app
     def _select_file(self, title, directory, filename, filters, extension, save, multi):
         import wx
         style = wx.STAY_ON_TOP
@@ -302,7 +291,6 @@ class WxUIBackend(ClientUIBackend):
         dialog.Destroy()
         return result
 
-    @_in_wx_app
     def _select_directory(self, title, directory):
         import wx
         dialog = wx.DirDialog(None, message=title, defaultPath=directory or '',
@@ -314,7 +302,6 @@ class WxUIBackend(ClientUIBackend):
         dialog.Destroy()
         return result
 
-    @_in_wx_app
     def _get_clipboard_text(self):
         import wx
         if wx.TheClipboard.Open():
@@ -324,7 +311,6 @@ class WxUIBackend(ClientUIBackend):
             if success:
                 return data.GetText()
 
-    @_in_wx_app
     def _set_clipboard_text(self, text):
         import wx
         if wx.TheClipboard.Open():
