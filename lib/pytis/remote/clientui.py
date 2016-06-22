@@ -235,7 +235,12 @@ class WxUIBackend(ClientUIBackend):
             import wx
         except ImportError:
             raise BackendNotAvailable()
-        self._app = wx.App(False)
+        # TODO: This is now commented out because x2goclient.py creates a 'wx.App'
+        # already at startup and this application stays running during the whole
+        # Pytis run.  Starting another here would cause conflicts and might crash
+        # the whole Python process.  Thus we avoid starting a new wx.App here until
+        # pytis2go.py is ready to replace x2goclient.py.
+        #self._app = wx.App(False)
 
     def _enter_text(self, title, label, password):
         import wx
