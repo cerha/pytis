@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2014, 2015, 2016 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2014, 2015 Brailcom, o.p.s.
 # Copyright (C) 2010-2014 by Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1543,8 +1543,6 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         client._pytis_setup_configuration = True
         client.authenticate()
         app.close_progress_dialog()
-        app.Exit()
-        app.Destroy()
         client.pytis_maybe_resume_session(s_uuid)
         client.MainLoop()
 
