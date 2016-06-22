@@ -168,7 +168,7 @@ více věcí dalo vyplnit či zvolit najednou.  Typicky se vyplňuje:
 - výběr klíče + heslo ke klíči
 - heslo (pokud není přihlašování klíčem)
 - výběr z předdefinovaných session získaných z x2go brokeru.
-
+  
 Úvodní dialogy mohou být implementovány pouze nad wx, protože se to distribuuje
 jako celek včetně PortablePython, který wx obsahuje.  Viz
 git.is-it.eu/var/lib/git/pytis2go.  Balík pytis2go vlastně obsahuje základní
@@ -181,11 +181,56 @@ Jakékoli dialogy (kromě progressbaru) se mají objevit jen tehdy, pokud jsou
 opravdu zapotřebí.  Jestliže je například zřejmé uživatelské jméno a lze
 provést Kerberos autentizace přes gssapi, tak není zapotřebí zobrazovat dialog,
 ve kterém se hledá cesta k ssh klíči nebo se zadává heslo.  To stávající podoba
-respektuje.  Ta se nejprve pokouší o autentizaci přes Kerberos, pokud neprojde,
-tak hledá defaultní ssh klíče a pokud je najde, tak je zkouší použít (zeptá se
-případně na heslo ke klíči) a teprve pokud to nevyjde, tak se zeptá, jestli
-chce uživatel autentizovat klíčem nebo heslem.  Pokud vybere klíč, tak se zeptá
-na jeho heslo, pokud se vybere heslo, tak se zeptá na heslo.  Tuto dotazovací
-fázi by bylo dobré udělat nějak hezčeji a přehledněji.  Např. jako jedno okno,
-které by bylo od počátku zobrazeno a obsahovalo by progressbar a ostatní
-widgety, u kterých by se dynamicky měnil vzhled podle vývoje situace.
+respektuje.  
+
+**** Autentizace:
+
+Pokud je uživatelské jméno k dispozici v některém z parametrů příkazové řádky,
+bude políčko s uživatelským jménem zašedlé a tlačítko pro spuštění autentizace
+tam nebude - spustí se automaticky.  Pokud není jméno předáno explicitně,
+autentizace se spustí až po stisku tlačítka (a případné editaci políčka s
+uživatelským jménem).
+
+Po spuštění autentizace probíhá takto:
+
+- Nejprve se zkouší Kerberos.
+
+- Jako druhá možnost se hledají výchozí SSH klíče.  Pokud je klíč nalezen,
+  pokusí se o autentizaci přes SSH agenta (bez nutnosti zadávat passphrase).
+
+- Teprve pokud neprojde žádná varianta automatického přihlášení (bez nutnosti
+  interakce), bude zobrazen dialog umožňující výběr ze dvou možností
+  přihlášení (SSH klíč nebo heslo) a zadání potřebných údajů (soubor a
+  passphrase v případě klíče a heslo v druhém případě).
+
+**** Výběr profilu:
+
+Profil zastřešuje definované parametry.  Dostupné profily řeší tzv. broker.
+Profily nesouvisí s již běžícími sessions na aplikačních serverech, takže o
+těch již broker nic neví.  K tomu mají v x2go jiný nástroj, který zatím
+nepoužívám a který oni nazývají x2go agent.  Ten umožňuje brokeru přihlašovat
+se na ty ostatní aplikační servery a zjišťovat tam existující suspendované nebo
+běžící instance sessions.  Hlavní smyslem onoho x2go agenta je pak využítí při
+load-balancing, kdy daný profil může být spuštěn na více aplikačních serverech
+a broker pak zjišťuje, který je momentálně nejvhodnější.  Ale tím se zatím
+nezabýváme.  My ten broker zatím využíváme jen pro centralizovanou správu
+aplikací a jejich parametrů, protože pak se u uživatele nemusí vůbec nic
+nastavovat.
+
+Parametr "--task listsesions" v x2gobroker, v podstatě vypisuje seznam profilů.
+Parametr "--task selectsession --sid <profile_id>" vybírá profil.
+
+Když se do x2goclient předá --broker-url a k tomu ještě "-P <profile_id>", tak
+se z brokeru zjišťují jen parametry daného profilu.  Tedy seznam dostupných
+profilů se nezjišťuje.
+
+**** Výběr session:
+
+Když je znám profil, zjišťuje se jestli existují suspendované sessions s daným
+profile_id.  Pokud existují, tak se zobrazí jejich seznam a umožní se buď
+některou suspendovanou session obnovit nebo ukončit nebo nastartovat zcela
+novou.
+
+Když si uživatel vybere session, měl by mít možnost také zaškrtnout, zda pro ní
+chce vytvořit zástupce na ploše.  Pokud již daný zástupce existuje, měl by být
+checkbox neaktivní (a zaškrtnutý?).
