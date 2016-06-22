@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import gevent.monkey
 gevent.monkey.patch_all()
 import os
@@ -346,8 +347,17 @@ class X2GoClient(object):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Pytis X2Go client startup application")
+    parser.add_argument('-u', '--username', metavar='USER_NAME',
+                        help="Startup profile")
+    parser.add_argument('-p', '--profile', metavar='PROFILE_ID',
+                        help="Startup profile")
+    parser.add_argument('-s', '--session', metavar='SESSION_ID',
+                        help="Session to resume")
+    args = parser.parse_args()
+
     client = X2GoClient()
-    app = App(client, username=None, profile=None, session=None)
+    app = App(client, username=args.username, profile=args.profile, session=args.session)
     app.MainLoop()
 
 if __name__ == '__main__':
