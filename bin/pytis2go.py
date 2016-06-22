@@ -260,6 +260,8 @@ class App(wx.App):
             ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
         ))
         dialog.Fit()
+        pos, fsize, dsize = self._frame.GetPosition(), self._frame.GetSize(), dialog.GetSize()
+        dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
         dialog.ShowModal()
         dialog.Destroy()
         if log_in:
