@@ -35,7 +35,8 @@ class ui(object):
         for item in items:
             if not isinstance(item, (tuple, list)):
                 item = (item,)
-            sizer.Add(*item)
+            if item[0]:
+                sizer.Add(*item)
         return sizer
 
     @staticmethod
@@ -90,6 +91,9 @@ class App(wx.App):
         self._authentication = None
         super(App, self).__init__(False)
 
+    def _on_login_button(self, event):
+        self._run()
+
     def _on_select_profile(self, event):
         profile = self._profiles_field.GetStringSelection()
         print "PROFILE SELECTED:", profile
@@ -126,15 +130,11 @@ class App(wx.App):
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
-        self._username_field = field = ui.field(parent, username,
-                                                disabled=self._username is not None)
-        def on_login(event):
-            pass
-        return ui.hgroup(
-            (label, 0, wx.RIGHT | wx.TOP, 2),
-            field,
-            ui.button(parent, _("Log in"), on_login, disabled=self._username is not None),
-        )
+            button = ui.button(parent, _("Log in"), self._on_login_button)
+        else:
+            button = None
+        self._username_field = field = ui.field(parent, username, disabled=button is None)
+        return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
 
     def _create_profiles(self, parent):
         self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
@@ -175,7 +175,7 @@ class App(wx.App):
         )
 
     def _create_status(self, parent):
-        self._status = status = wx.StaticText(parent, -1, 'Bla')
+        self._status = status = wx.StaticText(parent, -1, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
         return ui.vgroup((gauge, 0, wx.EXPAND), (status, 0, wx.EXPAND | wx.BOTTOM, 4))
 
@@ -296,6 +296,12 @@ class App(wx.App):
             self._status.SetLabel(message)
         self.Yield()
 
+    def _run(self):
+        authentication = self._authenticate()
+        if not authentication:
+            self.Exit()
+        self._list_profiles()
+
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))
         ui.panel(frame, self._create_main_content)
@@ -303,10 +309,12 @@ class App(wx.App):
         frame.SetSize((440, 500))
         frame.Show()
         self.Yield()
-        authentication = self._authenticate()
-        if not authentication:
-            self.Exit()
-        self._list_profiles()
+        if self._username is not None:
+            # Start automatically when username was passed explicitly.
+            self._run()
+        else:
+            self._update_progress(_("Waiting for login name confirmation. "
+                                    "Press “Log in” to start."))
         return True
 
 
