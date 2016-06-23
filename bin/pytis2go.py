@@ -213,20 +213,21 @@ class App(wx.App):
 
     def _authenticate(self):
         self._update_progress(_("Trying Kerberos authentication."))
-        result = self._client.do_kerberos_authentication()
+        login = self._username_field.GetValue()
+        result = self._client.do_kerberos_authentication(login)
         if not result:
             self._update_progress(_("Trying SSH Agent authentication."))
-            result = self._client.do_ssh_agent_authentication()
+            result = self._client.do_ssh_agent_authentication(login)
         if not result:
             while not result:
                 self._update_progress(_("Trying password or public key authentication."))
                 method, args = self._show_authentication_dialog()
                 if method == 'password':
                     self._update_progress(_("Trying password authentication."))
-                    result = self._client.do_password_authentication(*args)
+                    result = self._client.do_password_authentication(login, *args)
                 elif method == 'publickey':
                     self._update_progress(_("Trying public key authentication."))
-                    result = self._client.do_publickey_authentication(*args)
+                    result = self._client.do_publickey_authentication(login, *args)
                 else:
                     break
         return result
@@ -325,25 +326,25 @@ class App(wx.App):
 
 class X2GoClient(object):
 
-    def do_kerberos_authentication(self):
+    def do_kerberos_authentication(self, login):
         time.sleep(1)
         return None
 
-    def do_ssh_agent_authentication(self):
+    def do_ssh_agent_authentication(self, login):
         time.sleep(1)
         return None
+
+    def allow_publickey_authentication(self):
+        return True
+
+    def do_publickey_authentication(self, login, filename, passphrase):
+        time.sleep(1)
+        return True
 
     def allow_password_authentication(self):
         return True
 
     def do_password_authentication(self, login, password):
-        time.sleep(1)
-        return True
-
-    def allow_publickey_authentication(self):
-        return True
-
-    def do_publickey_authentication(self, filename, passphrase):
         time.sleep(1)
         return True
 
