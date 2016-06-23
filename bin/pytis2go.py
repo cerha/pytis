@@ -137,6 +137,8 @@ class App(wx.App):
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
 
     def _create_profiles(self, parent):
+        if self._profile:
+            return
         self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
         listbox.Enable(False)
         button = ui.button(parent, _("Select Profile"), self._on_select_profile,
@@ -300,13 +302,16 @@ class App(wx.App):
         authentication = self._authenticate()
         if not authentication:
             self.Exit()
-        self._list_profiles()
+        if not self._profile:
+            self._list_profiles()
+        elif not self._session:
+            self._list_sessions()
 
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))
         ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
-        frame.SetSize((440, 500))
+        frame.SetSize((500, 300 if self._profile else 500))
         frame.Show()
         self.Yield()
         if self._username is not None:
