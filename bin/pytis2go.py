@@ -265,6 +265,7 @@ class App(wx.App):
         dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
         dialog.ShowModal()
         dialog.Destroy()
+        self._frame.Raise()
         if log_in:
             m = method()
             if m == 'password':
