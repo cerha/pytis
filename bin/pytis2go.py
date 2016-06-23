@@ -82,12 +82,11 @@ class App(wx.App):
 
     _MAX_PROGRESS = 40
 
-    def __init__(self, client, username=None, profile=None, session=None):
+    def __init__(self, client, username=None, profile=None):
         self._progress = 1
         self._client = client
         self._username = username
         self._profile = profile
-        self._session = session
         self._authentication = None
         super(App, self).__init__(False)
 
@@ -307,7 +306,7 @@ class App(wx.App):
             self.Exit()
         if not self._profile:
             self._list_profiles()
-        elif not self._session:
+        else:
             self._list_sessions()
 
     def OnInit(self):
@@ -369,12 +368,10 @@ def main():
                         help="Startup profile")
     parser.add_argument('-p', '--profile', metavar='PROFILE_ID',
                         help="Startup profile")
-    parser.add_argument('-s', '--session', metavar='SESSION_ID',
-                        help="Session to resume")
     args = parser.parse_args()
 
     client = X2GoClient()
-    app = App(client, username=args.username, profile=args.profile, session=args.session)
+    app = App(client, username=args.username, profile=args.profile)
     app.MainLoop()
 
 if __name__ == '__main__':
