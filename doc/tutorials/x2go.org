@@ -111,14 +111,14 @@ zašifrovaný jeho klíčem.
 
 ** Broker
 
-Broker je v podstatě nástroj pro centralizovanou správu session.  Uživatel
-disponující klientem x2go musí normálně parametry session definovat buď při
-spouštění klienta pomocí parametrů příkazové řádky nebo pomocí konfiguračního
-souboru. Pokud je k dispozici server s brokerem, tak na příkazové řádce jen
-předá URL toho brokeru a po autentizaci mu broker vrátí seznam session, které
-jsou mu k dispozici včetně parametrů jako adresa serveru nebo spouštěcí skript
-na onom cílovém serveru.  U našich uživatelů nám tak stačí vytvořit jednu
-spouštěcí ikonu s příkazem
+Broker je v podstatě nástroj pro centralizovanou správu parametrů session
+(profilů).  Uživatel disponující klientem x2go musí normálně parametry session
+definovat buď při spouštění klienta pomocí parametrů příkazové řádky nebo
+pomocí konfiguračního souboru. Pokud je k dispozici server s brokerem, tak na
+příkazové řádce jen předá URL toho brokeru a po autentizaci mu broker vrátí
+seznam profilů, které jsou mu k dispozici včetně parametrů jako adresa serveru
+nebo spouštěcí skript na onom cílovém serveru.  U našich uživatelů nám tak
+stačí vytvořit jednu spouštěcí ikonu s příkazem
 
 x2goclient.py --broker-url=ssh://broker.is-it.eu/usr/bin/x2gobroker
 
@@ -141,22 +141,53 @@ Jedeme v režimu, kdy je externím uživatelům umožněno jen přihlašování 
 nikoli heslem.
 
 Interně to funguje tak, že se provede připojení na daný server a tam se pro
-získání seznamu dostupným session zavolá "x2gobroker --task listsessions" a pro
+získání seznamu dostupných session zavolá "x2gobroker --task listsessions" a pro
 získání parametrů vybrané session se zavolá "x2gobroker --task selectsession
 <session_id>".  V plánu např. máme používání single-sign-on s autentizací přes
 Kerberos (zde se neví, jak by to fungovalo přes HTTP, zatímco u ssh je to
 triviální).  Na to by se při případné úpravě x2goclient.py měl brát zřetel.
 
-** Úkoly k řešení
+Je potřeba rozlišovat profily (parametry pro vytvoření session) a skutečné již
+běžící sessions na aplikačních serverech.  O těch již broker nic neví.  K tomu
+mají v x2go jiný nástroj, který zatím nepoužívám a který oni nazývají x2go
+agent.  Ten umožňuje brokeru přihlašovat se na ty ostatní aplikační servery a
+zjišťovat tam existující suspendované nebo běžící instance sessions.  Hlavní
+smyslem onoho x2go agenta je pak využítí při load-balancing, kdy daný profil
+může být spuštěn na více aplikačních serverech a broker pak zjišťuje, který je
+momentálně nejvhodnější.  Ale tím se zatím nezabýváme.  My ten broker zatím
+využíváme jen pro centralizovanou správu aplikací a jejich parametrů, protože
+pak se u uživatele nemusí vůbec nic nastavovat.
 
-*** Tuhnutí
+** Asynchronní komunikace
 
-Obecně by bylo vhodnější udělat rpyc server s reverzním tunelem podobně, jako
-to dělá x2go s tím sshfs nebo s pulseaudio.  U mnoha věcí se už snažíme pojmout
-to ala python-x2go (viz i různé monkey patchované metody x2go tříd), ale zrovna
-ta komunikace takto pojatá není.
+Po prvních pokusech o synchronizaci s moduly 'threading' a posléze
+'multiprocessing' se stávalo, že start aplikace v různých situacích tuhnul.
+Objevovaly se klasické problémy s GIL.
 
-*** Úvodní komunikace
+Proto byla nakonec použita knihovna 'gevent' pro kooperativní multitasking.
+Dobrý tutoriál je např http://sdiehl.github.io/gevent-tutorial/.  V našem
+případě používáme greenlety na nastartování dvou základních spolupracujících
+korutin check_rpyc_server a check_ssh_tunnel, přičemž check_ssh_tunnel čeká,
+dokud se té proceduře check_rpyc_server nepodaří nastartovat na nějakém volném
+portu rpyc službu. Ten port se nastaví díky gevent.event.AsyncResult, přes
+který si to procedura check_ssh_tunnel přečte a vytvoří ten ssh reverzní tunel
+tak, aby končil na tom portu běžícího rpyc. To je v podstatě vše, co
+potřebujeme, pomineme-li ošetření pádu rpyc serveru nebo ssh tunelu.  Ostatní
+je v podstatě věcí python-x2go knihoven.
+
+Samotné python-x2go také používá gevent pro start dalších spolupracujících
+rutin, např. serveru pro forwardování zvuku pomocí pulseaudio, nebo sshfs pro
+sdílení adresářů mezi klientem a serverem.  V podstatě nejsprávnější by asi
+bylo, kdybychom ten vlastní rpyc server pojali podobně, jako oni řeší to sshfs
+nebo pulseaudio, ale pdm se moc nechtělo se v tom jejich kódu hrabat a chtěl si
+to raději udělat po svém.  Což ale mělo mimojiné za následek tuhnutí toho
+našeho x2goclienta (které se posléze podařilo nějak vyřešit), ale přesto se
+zdá, že obecně by bylo vhodnější udělat rpyc server s reverzním tunelem
+podobně, jako to dělá x2go s tím sshfs nebo s pulseaudio.  U mnoha věcí se už
+snažíme pojmout to ala python-x2go (viz i různé monkey patchované metody x2go
+tříd), ale zrovna ta komunikace takto pojatá není.
+
+** Úvodní komunikace
 
 V současné době je komunikace s uživatelem pojata jako série jednoduchých
 dialogů (textové vstupy a dotazovací dialogy).  Bylo by hezčí a pro uživatele
@@ -183,7 +214,7 @@ provést Kerberos autentizace přes gssapi, tak není zapotřebí zobrazovat dia
 ve kterém se hledá cesta k ssh klíči nebo se zadává heslo.  To stávající podoba
 respektuje.  
 
-**** Autentizace:
+*** Autentizace
 
 Pokud je uživatelské jméno k dispozici v některém z parametrů příkazové řádky,
 bude políčko s uživatelským jménem zašedlé a tlačítko pro spuštění autentizace
@@ -203,19 +234,7 @@ Po spuštění autentizace probíhá takto:
   přihlášení (SSH klíč nebo heslo) a zadání potřebných údajů (soubor a
   passphrase v případě klíče a heslo v druhém případě).
 
-**** Výběr profilu:
-
-Profil zastřešuje definované parametry.  Dostupné profily řeší tzv. broker.
-Profily nesouvisí s již běžícími sessions na aplikačních serverech, takže o
-těch již broker nic neví.  K tomu mají v x2go jiný nástroj, který zatím
-nepoužívám a který oni nazývají x2go agent.  Ten umožňuje brokeru přihlašovat
-se na ty ostatní aplikační servery a zjišťovat tam existující suspendované nebo
-běžící instance sessions.  Hlavní smyslem onoho x2go agenta je pak využítí při
-load-balancing, kdy daný profil může být spuštěn na více aplikačních serverech
-a broker pak zjišťuje, který je momentálně nejvhodnější.  Ale tím se zatím
-nezabýváme.  My ten broker zatím využíváme jen pro centralizovanou správu
-aplikací a jejich parametrů, protože pak se u uživatele nemusí vůbec nic
-nastavovat.
+*** Výběr profilu
 
 Parametr "--task listsesions" v x2gobroker, v podstatě vypisuje seznam profilů.
 Parametr "--task selectsession --sid <profile_id>" vybírá profil.
@@ -224,7 +243,7 @@ Když se do x2goclient předá --broker-url a k tomu ještě "-P <profile_id>", 
 se z brokeru zjišťují jen parametry daného profilu.  Tedy seznam dostupných
 profilů se nezjišťuje.
 
-**** Výběr session:
+*** Výběr session
 
 Když je znám profil, zjišťuje se jestli existují suspendované sessions s daným
 profile_id.  Pokud existují, tak se zobrazí jejich seznam a umožní se buď
