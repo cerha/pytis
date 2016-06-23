@@ -53,9 +53,9 @@ class ui(object):
         return ui._add_to_sizer(wx.StaticBoxSizer(box, wx.VERTICAL), items)
 
     @staticmethod
-    def panel(parent, method):
+    def panel(parent, method, *args, **kwargs):
         p = wx.Panel(parent)
-        p.SetSizer(method(p))
+        p.SetSizer(method(p, *args, **kwargs))
         return p
 
     @staticmethod
@@ -184,19 +184,21 @@ class App(wx.App):
     def _create_main_content(self, parent):
         return ui.vgroup(
             (self._create_username(parent), 0, wx.EXPAND | wx.ALL, 8),
-            #(self._create_authentication(parent), 0, wx.EXPAND),
             (self._create_profiles(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_sessions(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_status(parent), 0, wx.EXPAND),
         )
 
     def _create_publickey_authentication(self, parent):
+        path = os.path.join(os.path.expanduser('~'), '.ssh', '')
         def on_select_key_file(event):
-            directory = os.path.join(os.path.expanduser('~'), '.ssh', '')
-            filename = wx.FileSelector(_(u"Select ssh key file"), default_path=directory)
+            filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
             self._keyfile_field.SetValue(filename)
         label1 = wx.StaticText(parent, -1, _("Key File:"))
-        self._keyfile_field = field1 = ui.field(parent, length=40, style=wx.TE_READONLY)
+        keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
+                if os.access(os.path.join(path, name), os.R_OK)]
+        filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
+        self._keyfile_field = field1 = ui.field(parent, filename, length=40, style=wx.TE_READONLY)
         button1 = ui.button(parent, _("Select"), on_select_key_file)
         label2 = wx.StaticText(parent, -1, _("Passphrase:"))
         self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD)
