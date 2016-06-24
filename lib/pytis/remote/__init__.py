@@ -17,15 +17,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+X2GOCLIENT_VERSION = None
+
 try:
     from proxy import run_proxy
 except ImportError as e:
     def run_proxy(*args, **kwargs):
         raise e
 from remote import nx_ip, client_ip, x2go_ip, client_available, version, \
-    get_clipboard_text, set_clipboard_text, \
+    x2goclient_version, get_clipboard_text, set_clipboard_text, \
     launch_file, launch_url, make_selected_file, make_temporary_file, \
-    open_file, open_selected_file, select_directory, select_file, \
+    open_file, open_selected_file, select_directory, select_file, run_python, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException
 

@@ -64,7 +64,7 @@ def x2go_ip():
     """Return IP address of the x2go client, as a string.
 
     If pytis is not run from an x2go client, return 'None'.
-    
+
     """
     global _x2go_ip
     if _x2go_ip is not None:
@@ -86,7 +86,7 @@ def client_ip():
     """Return IP address of the x2go client or nx client, as a string.
 
     If pytis is not run from an x2go or nx client, return 'None'.
-    
+
     """
     if config.session_id:
         ip = '127.0.0.1'
@@ -237,7 +237,21 @@ def version():
                 version = ''
         except:
             version = ''
-    return version
+    return version or ''
+
+def x2goclient_version():
+    try:
+        version = _request('x2goclient_version')
+    except:
+        try:
+            if _request('echo', 'hello') == 'hello':
+                version = '-old-'
+            else:
+                version = ''
+        except:
+            version = ''
+    return version or ''
+
 
 def get_clipboard_text():
     try:
@@ -335,3 +349,9 @@ def select_file(filename=None, template=None, multi=False):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
                               _("Failed selecting file: %s") % (e,))
+
+def run_python(script):
+    try:
+        return _request('run_python', script)
+    except:
+        return None

@@ -345,6 +345,7 @@ import x2go.defaults
 import x2go.log
 import x2go.xserver
 import pytis.remote
+pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
 app.update_progress_dialog(message=_(u"Initializing application. Please wait..."))
 
