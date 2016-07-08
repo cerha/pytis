@@ -39,7 +39,7 @@ before_script:
   - "createlang -U postgres plpythonu test"
   - "psql -U postgres -1c \"ALTER DATABASE test SET default_text_search_config to \'simple\'\" test"
   - "psql -U postgres -1c 'CREATE EXTENSION pgcrypto;' test"
-  - "PYTHONPATH=lib tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql -1f - test"
+  - "PYTHONPATH=lib tools/gsql.py pytis.dbdefs.db_pytis_crypto > pytis_crypto.sql && psql -1f pytis_crypto.sql test"
 script:
   - "PYTHONPATH=lcg/lib:lib:wiking/lib:wxwidgets${WXVERDEB}-${WXVERFULL}/wxPython:$PYTHONPATH coverage run --source=lib/pytis lib/pytis/_test.py"
 after_success:
