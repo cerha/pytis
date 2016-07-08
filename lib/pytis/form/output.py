@@ -2,7 +2,7 @@
 
 # Formulář s tiskovým preview a tiskem
 #
-# Copyright (C) 2002-2014 Brailcom, o.p.s.
+# Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ class _Ghostscript(pytis.util.Tmpdir):
 
 class PostscriptViewer(wx.ScrolledWindow):
     """Posuvné okno zobrazující postscriptová data."""
-    
+
     def __init__(self, parent, stream, zoom):
         """Inicializuj prohlížečku.
 
@@ -161,7 +161,7 @@ class PostscriptViewer(wx.ScrolledWindow):
           zoom -- kladný integer nebo float odpovídající požadovanému zvětšení
             náhledu, přičemž standardní velikost je 1, menší hodnoty znamenají
             zmenšení, větší hodnoty znamenají zvětšení
-                    
+
         """
         if __debug__:
             pytis.util.log(pytis.util.DEBUG, 'Startuji PostScriptovou prohlížečku:', zoom)
@@ -181,7 +181,7 @@ class PostscriptViewer(wx.ScrolledWindow):
     def _init_gs(self, stream):
         self._gs_old = self._gs
         self._gs = _Ghostscript(stream, self._zoom)
-        
+
     def _wait_for_gs(self):
         if __debug__:
             pytis.util.log(pytis.util.DEBUG, 'Čekání na dokončení běhu Ghostscriptu')
@@ -203,12 +203,12 @@ class PostscriptViewer(wx.ScrolledWindow):
         Vrací: Dvojici (NUMBER_OF_PAGES, FINAL), kde NUMBER_OF_PAGES je
         odpovídající počet stran a FINAL je pravdivé právě tehdy, je-li
         NUMBER_OF_PAGES číslo konečné.
-        
+
         """
         if not current:
             self._wait_for_gs()
         return self._gs.number_of_pages()
-    
+
     def show_page(self, page_number):
         """Zobraz stránku číslo `page_number'.
 
@@ -297,14 +297,14 @@ class PostscriptViewer(wx.ScrolledWindow):
         """
         self._restarted = True
         self._init_gs(stream)
-        
+
     # wx metody
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
         self.PrepareDC(dc)
         self.DoDrawing(dc)
-        
+
     def DoDrawing(self, dc):
         bitmap = self._current_page_bitmap
         if bitmap is None:
@@ -312,7 +312,7 @@ class PostscriptViewer(wx.ScrolledWindow):
         dc.BeginDrawing()
         dc.DrawBitmap(bitmap, 0, 0, False)
         dc.EndDrawing()
-    
+
 
 def print_form():
     """Return proper print preview class."""
@@ -339,7 +339,7 @@ class PrintForm(Form):
         return result
 
 class PrintFormExternal(PrintForm, PopupForm):
-    
+
     def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
@@ -349,13 +349,13 @@ class PrintFormExternal(PrintForm, PopupForm):
             file_ = pytis.util.TemporaryFile()
         self._formatter.printout(file_, hook=hook)
         return file_
-        
+
     def _run_viewer(self, file_):
         run_viewer(file_)
         
     def show(self):
         pass
-    
+
     def run(self, *args, **kwargs):
         file_ = pytis.util.TemporaryFile()
         def previewer():

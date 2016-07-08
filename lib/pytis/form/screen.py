@@ -60,8 +60,8 @@ from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
 from pytis.form import wx_callback
-from command import Command, CommandHandler, UICommand, command_icon
-from managers import FormProfileManager
+from .command import Command, CommandHandler, UICommand, command_icon
+from .managers import FormProfileManager
 
 import config
 if config.http_proxy is not None:
@@ -1500,7 +1500,7 @@ class ToolTip(supertooltip.SuperToolTip):
         if self.GetTipWindow():
             self.OnEndTimer()
         if not self._startTimer.IsRunning():
-            self._startTimer.Start(self._startDelayTime*1000)
+            self._startTimer.Start(self._startDelayTime * 1000)
 
 # Status bar
 
@@ -1535,7 +1535,6 @@ class StatusBar(object):
             if isinstance(tooltip, collections.Callable):
                 tooltip = self._tooltip = tooltip()
             return tooltip
-
 
     def __init__(self, parent, fields):
         """Inicializuj StatusBar a vytvoř pojmenovaná pole.
@@ -2620,7 +2619,8 @@ class IN(pytis.data.Operator):
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 manager = pytis.form.profile_manager()
-                profile_condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
+                profile_condition, profile_name = manager.load_filter(spec_name, data_object,
+                                                                      profile_id)
             else:
                 profile = find(profile_id, view_spec.profiles().unnest(), lambda p: p.id())
                 if not profile:
