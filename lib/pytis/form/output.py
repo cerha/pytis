@@ -36,7 +36,8 @@ import time
 import wx
 
 import lcg
-from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, wx_callback
+from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, wx_callback, \
+    run_dialog, launch_file
 import pytis.output
 import pytis.util
 import pytis.remote
@@ -331,7 +332,6 @@ class PrintForm(Form):
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
-            from pytis.form import run_dialog
             run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
                                 "Maybe use `current_row' instead?"))
         except UserBreakException:
@@ -346,67 +346,18 @@ class PrintFormExternal(PrintForm, PopupForm):
 
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:
-            file_ = pytis.util.TemporaryFile()
+            file_ = pytis.util.TemporaryFile(suffix='.pdf')
         self._formatter.printout(file_, hook=hook)
         return file_
 
     def _run_viewer(self, file_):
-        run_viewer(file_)
-        
+        launch_file(file_.name)
+
     def show(self):
         pass
 
     def run(self, *args, **kwargs):
-        file_ = pytis.util.TemporaryFile()
+        file_ = pytis.util.TemporaryFile(suffix='.pdf')
         def previewer():
             thread.start_new_thread(self._run_viewer, (file_,))
         self._run_formatter_process(None, hook=previewer, file_=file_)
-
-
-def run_viewer(file_):
-    """Run PDF viewer on given file.
-
-    Run it on a remote station if requested in configuration and the remote
-    station is available.
-
-    Arguments:
-
-      file_ -- tempfile.NamedTemporaryFile instance
-
-    """
-    import subprocess
-    file_name = file_.name
-    viewer = config.postscript_viewer
-    remote = (config.rpc_remote_view and pytis.remote.client_available())
-    if remote:
-        suffix = (os.path.splitext(file_name)[1] or '.pdf')
-        try:
-            remote_file = pytis.remote.make_temporary_file(suffix=suffix)
-            if remote_file is None:
-                remote = False
-        except:
-            remote = False
-    if remote:
-        try:
-            f = open(file_name)
-            while True:
-                data = f.read(10000000)
-                if not data:
-                    break
-                remote_file.write(data)
-            f.close()
-        finally:
-            remote_file.close()
-        pytis.remote.launch_file(remote_file.name())
-    elif viewer:
-        call_args = viewer.split()
-        subprocess.call(call_args + [file_name])
-    else:
-        import mailcap
-        match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
-        if match:
-            command = match['view'] % (file_name,)
-            os.system(command)
-        else:
-            from pytis.form import run_dialog
-            run_dialog(Error, _("No PDF viewer found."))

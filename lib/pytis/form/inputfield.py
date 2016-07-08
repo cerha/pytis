@@ -42,7 +42,6 @@ from pytis.presentation import AttachmentStorage, CodebookSpec, Field, Orientati
     TextFilter, TextFormat, computer
 from pytis.util import EVENT, Popen, ProgramError, ResolverError, \
     dev_null_stream, find, format_byte_size, log, argument_names
-import pytis.remote
 from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
@@ -1929,87 +1928,47 @@ class FileField(Invocable, InputField):
         return self._enabled
 
     def _cmd_load(self):
-        def load(data, filename):
+        template = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
+        #msg = _("Select the file for field '%s'", self.spec().label())
+        #directory = FileField._last_load_dir or FileField._last_save_dir or ''
+        fh, filename = pytis.form.open_selected_file(template=template)
+        if fh:
             try:
-                if self._buffer:
-                    self._buffer.load(data, filename=filename)
+                try:
+                    if self._buffer:
+                        self._buffer.load(fh, filename=filename)
+                    else:
+                        self._buffer = self._type.Buffer(fh, filename=filename)
+                except pytis.data.ValidationError as e:
+                    message(e.message(), beep_=True)
+                except IOError as e:
+                    message(_("Error reading file:") + ' ' + str(e), beep_=True)
                 else:
-                    self._buffer = self._type.Buffer(data, filename=filename)
-            except pytis.data.ValidationError as e:
-                message(e.message(), beep_=True)
-            except IOError as e:
-                message(_("Error reading file:") + ' ' + str(e), beep_=True)
-            else:
-                self._on_change()
-                message(_("File loaded."))
-        filename_extensions = self._spec.filename_extensions()
-        if filename_extensions:
-            template = ';'.join(['*.%s' % ext for ext in filename_extensions])
-        else:
-            template = None
-        msg = _("Select the file for field '%s'", self.spec().label())
-        if pytis.remote.client_available():
-            f = pytis.remote.open_selected_file(template=template)
-            if f is None:
-                return
-            fname = f.name()
-            if '\\' in fname:
-                import ntpath
-                p = ntpath
-            else:
-                p = os.path
-            filename = p.split(fname)[-1]
-            try:
-                load(f, filename)
+                    self._on_change()
+                    message(_("File loaded."))
             finally:
-                f.close()
+                fh.close()
         else:
-            directory = FileField._last_load_dir or FileField._last_save_dir or ''
-            filters = _("All files") + " (*.*)|*.*"
-            if filename_extensions:
-                # Construct filename matchers to be case insensitive, such as '*.[jJ][pP][gG]'.
-                # This will only work on GTK!
-                matchers = ';'.join(['*.' + ''.join(['[%s%s]' % (c.lower(), c.upper())
-                                                     for c in ext])
-                                     for ext in filename_extensions])
-                filters = (_("Files of allowed type (%s)") %
-                           (template + '|' + matchers + '|' + filters,))
-            dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
-                                defaultDir=directory, wildcard=filters)
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-            path = dlg.GetPath()
-            filename = os.path.split(path)[1]
-            FileField._last_load_dir = os.path.dirname(path)
-            load(path, filename)
+            message(_("Loading file canceled."))
+
 
     def _can_save(self):
         return self._buffer is not None
 
     def _cmd_save(self):
-        default_filename = self._row.filename(self._id)
-        if pytis.remote.client_available():
-            f = pytis.remote.make_selected_file(filename=default_filename)
+        #msg = _("Save value of %s") % self.spec().label()
+        #directory = FileField._last_save_dir or FileField._last_load_dir or ''
+        try:
+            saved = pytis.form.write_selected_file(self._buffer.buffer(), mode='wb',
+                                                   filename=self._row.filename(self._id))
+        except IOError as e:
+            message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
         else:
-            msg = _("Save value of %s") % self.spec().label()
-            dir = FileField._last_save_dir or FileField._last_load_dir or ''
-            dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
-                                defaultFile=default_filename or '')
-            if dlg.ShowModal() == wx.ID_OK:
-                path = dlg.GetPath()
-                FileField._last_save_dir = os.path.dirname(path)
-                f = open(path, 'wb')
-            else:
-                f = None
-        if f:
-            try:
-                f.write(self._buffer.buffer())
-            except IOError as e:
-                message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
-            else:
+            if saved:
                 message(_("File saved."))
-            finally:
-                f.close()
+            else:
+                message(_("Saving file canceled."))
+
 
     def _can_clear(self):
         return self._enabled and self._buffer is not None
@@ -2503,39 +2462,21 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        if pytis.remote.client_available():
-            file_object = pytis.remote.open_selected_file()
-            if file_object is None:
-                return
-            fname = file_object.name()
-            if '\\' in fname:
-                import ntpath
-                p = ntpath
-            else:
-                p = os.path
-            filename = p.split(fname)[-1]
-        else:
-            dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.OPEN,
-                                defaultDir=self._last_load_dir or '')
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-            path = dlg.GetPath()
-            self._last_load_dir = os.path.dirname(path)
-            file_object = open(path)
-            filename = os.path.split(path)[1]
-        if 'size' in row:
-            size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
-            values = dict(has_thumbnail=(size is not None),
-                          thumbnail_size=size)
-        else:
-            values = dict()
-        try:
-            self._storage_op('insert', filename, file_object, values,
-                             transaction=self._row.transaction())
-        finally:
-            file_object.close()
-        row.form().field('filename').reload_enumeration()
-        row['filename'] = pytis.data.Value(row.type('filename'), filename)
+        # defaultDir=self._last_load_dir or ''
+        fh, filename = pytis.form.open_selected_file()
+        if fh:
+            try:
+                if 'size' in row:
+                    size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
+                    values = dict(has_thumbnail=(size is not None), thumbnail_size=size)
+                else:
+                    values = dict()
+                self._storage_op('insert', filename, fh, values,
+                                 transaction=self._row.transaction())
+            finally:
+                fh.close()
+            row.form().field('filename').reload_enumeration()
+            row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
     def _image_preview_computer(self, row, filename):
         if filename:

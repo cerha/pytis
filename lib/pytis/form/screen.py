@@ -2760,46 +2760,6 @@ def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
     return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
 
-def open_data_as_file(data, suffix, decrypt=False):
-    remote_file = None
-    if pytis.remote.client_available():
-        try:
-            remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
-        except Exception as e:
-            log(OPERATIONAL, "Can't create remote temporary file: %s" % (e,))
-            pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file: %s" % (e,)))
-    if remote_file:
-        client_ip = pytis.remote.client_ip()
-        log(OPERATIONAL, "Launching file on Windows at %s:" % client_ip, remote_file.name())
-        try:
-            remote_file.write(data)
-        finally:
-            remote_file.close()
-        pytis.remote.launch_file(remote_file.name())
-    else:
-        import mailcap
-        import mimetypes
-        path = os.tempnam() + suffix
-        mime_type = mimetypes.guess_type(path)[0]
-        if mime_type:
-            match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
-            if match:
-                command = match['view'] % path
-                log(OPERATIONAL, "Running external file viewer:", command)
-                try:
-                    f = open(path, 'wb')
-                    try:
-                        f.write(data)
-                    finally:
-                        f.close()
-                        os.system(command)
-                finally:
-                    os.remove(path)
-                return
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("External veiwer for '%s' not found." % suffix))
-
-
 def popup_menu(parent, items, keymap=None, position=None):
     """Pop-up a wx context menu.
 
@@ -3133,3 +3093,321 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             height = 30
         browser.SetSize(char2px(parent, width, height))
     return browser
+
+
+# The functions below are conterparts of pytis.remote public funtions
+# implementing also a local variant in the case that the remote connection is
+# not avbailable.  These functions should be used in Pytis applications as well
+# as Pytis itself instead of using the pytis.remote functions directly because
+# they hide the details of remote vs. local invocation under the hood.  Not all
+# arguments of the functions defined in pytis.remote are usually supported.
+# Only those combinations which were practically in use at the time of this
+# writing were implemented.  Others may be added later as necessary.
+
+def _wildcards(template=None):
+    # TODO: We may need to construct the filename matchers to be case insensitive,
+    # such as '*.[jJ][pP][gG]' on GTK:
+    # ''.join(['[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c for c in template])
+    wildcards = (_("Files of allowed type (%s)", template), template) if template else ()
+    return wildcards + (_("All files") + " (*.*)", "*.*")
+
+def select_file(filename=None, template=None):
+    """Return a filename selected by the user in a GUI dialog.
+
+    Returns None if the user cancels the dialog.  If remote client connection
+    exists, the returned filename belongs to the client's filesystem.
+
+    Arguments:
+
+      filename -- initial (default) filename or None
+      template -- a string defining the required file name pattern, or 'None'
+
+    """
+    if pytis.remote.client_available():
+        result = pytis.remote.select_file(filename=filename, template=template, multi=False)
+    else:
+        result = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
+                                       mode=pytis.form.FileDialog.OPEN,
+                                       wildcards=_wildcards(template))
+    return result
+
+def select_files(directory=None, template=None):
+    """Return a tuple of filenames selected by the user in a GUI dialog.
+
+    Returns empty tuple if the user cancels the dialog.  If remote client
+    connection exists, the returned filenames belong to the client's
+    filesystem.
+
+    Arguments:
+
+      directory -- the initial directory or None
+      template -- a string defining the required file name pattern, or 'None'
+
+    """
+    # TODO: directory is ignored in the remote variant.
+    if pytis.remote.client_available():
+        result = pytis.remote.select_file(multi=True)
+    else:
+        result = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
+                                       mode=pytis.form.FileDialog.OPEN,
+                                       wildcards=_wildcards(template))
+    return result
+
+def select_directory():
+    """Return a directory selected by the user in a GUI dialog.
+
+    Returns None if the user cancels the dialog.  If remote client connection
+    exists, the returned directory belongs to the client's filesystem.
+
+    """
+    if pytis.remote.client_available():
+        result = pytis.remote.select_directory()
+    else:
+        result = pytis.form.run_dialog(pytis.form.DirDialog)
+    return result
+
+def make_selected_file(filename, mode='w', encoding='utf-8', template=None):
+    """Return a write-only 'file' like object of a user selected file.
+
+    The file is selected by the user using a GUI dialog.  Returns 'None' if the
+    user cancels the dialog.  If remote client connection exists, the returned
+    file is created in the client's filesystem (the returned object is an
+    'ExposedFileWrapper' instance).
+
+    Arguments:
+
+      filename -- default filename or None
+      mode -- default mode for opening the file
+      encoding -- output encoding, string or None
+      template -- a string defining the required file name pattern, or 'None'
+
+    """
+    if pytis.remote.client_available():
+        f = pytis.remote.make_selected_file(filename=filename, mode=str(mode),
+                                            encoding=encoding, template=template)
+    else:
+        path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename,
+                                     mode=pytis.form.FileDialog.SAVE,
+                                     wildcards=_wildcards(template))
+        if path:
+            f = open(path, str(mode))
+        else:
+            f = None
+    return f
+
+def write_selected_file(data, filename, mode='w', encoding='utf-8', template=None):
+    """Write 'data' to a file selected by the user using a GUI dialog.
+
+    The file is selected by the user using a GUI dialog.  Returns 'True' if the
+    file was created and written succesfully or 'False' if the user cancels the
+    dialog.  If remote client connection exists, the file is created in the
+    client's filesystem.
+
+    Arguments:
+
+      data -- the (possibly binary) data as a basestring
+      filename -- default filename or None
+      mode -- default mode for opening the file
+      encoding -- output encoding, string or None
+      template -- a string defining the required file name pattern, or 'None'
+
+    """
+    f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding, template=template)
+    if f:
+        try:
+            f.write(data)
+        finally:
+            f.close()
+        return True
+    else:
+        return False
+
+def open_selected_file(template=None, encrypt=None):
+    """Return a read-only 'file' like object of a user selected file and its filename.
+
+    The file is selected by the user using a GUI dialog.  Returns a pair (fh,
+    filename) where 'fh' is the file like object and 'filename' is the file
+    part of its path.  Both values are None if the user cancels the dialog.
+
+    Arguments:
+
+      template -- a string defining the required file name pattern, or 'None'
+      encrypt -- list of encryption keys to use to encrypt the file; if the
+        list is empty then let the user select the keys; if 'None' then
+        don't encrypt the file
+
+    """
+    # TODO: Encryption not supported for the local variant.
+    if pytis.remote.client_available():
+        f = pytis.remote.open_selected_file(template=template, encrypt=encrypt)
+        if f:
+            path = f.name()
+            if '\\' in path:
+                import ntpath as splitter
+            else:
+                splitter = os.path
+            filename = splitter.split(path)[-1]
+        else:
+            filename = None
+    else:
+        path = pytis.form.run_dialog(pytis.form.FileDialog, mode=pytis.form.FileDialog.OPEN,
+                                     wildcards=_wildcards(template))
+        if path:
+            f = open(path)
+            filename = os.path.split(path)[-1]
+        else:
+            f = None
+            filename = None
+    return f, filename
+
+def open_file(filename, mode='w'):
+    """Return a read-only 'file' like object of the given file.
+
+    Arguments:
+
+      filename -- name of the file to open, basestring
+      mode -- mode for opening the file
+
+    """
+    if pytis.remote.client_available():
+        f = pytis.remote.open_file(filename, mode=str(mode))
+    else:
+        f = open(filename, str(mode))
+    return f
+
+def write_file(data, filename, mode='w'):
+    """Write given 'data' to given file.
+
+    Arguments:
+
+      data -- the (possibly binary) data as a basestring
+      filename -- name of the file to write to, basestring
+      mode -- mode for opening the file
+
+    """
+    f = open_file(filename, mode=str(mode))
+    try:
+        f.write(data)
+    finally:
+        f.close()
+
+def _launch_file_or_data(filename, data=None, decrypt=False):
+    import config
+    import mimetypes
+    mime_type = mimetypes.guess_type(filename)[0]
+    if mime_type == 'application/pdf':
+        allow_remote_viewer = config.rpc_remote_view
+    else:
+        allow_remote_viewer = False
+    # Try to launch the file remotely first.
+    if allow_remote_viewer and pytis.remote.client_available():
+        suffix = os.path.splitext(filename)[1]
+        try:
+            remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
+        except Exception as e:
+            log(OPERATIONAL, "Can't create remote temporary file: %s" % (e,))
+            pytis.form.run_dialog(pytis.form.Error,
+                                  _("Unable to create temporary file: %s" % (e,)))
+        else:
+            if remote_file:
+                try:
+                    f = open(filename)
+                    try:
+                        if data is not None:
+                            f.write(data)
+                        else:
+                            while True:
+                                data = f.read(10000000)
+                                if not data:
+                                    break
+                                remote_file.write(data)
+                    finally:
+                        f.close()
+                finally:
+                    remote_file.close()
+                log(OPERATIONAL, "Launching file on Windows at %s:" % pytis.remote.client_ip(),
+                    remote_file.name())
+                pytis.remote.launch_file(remote_file.name())
+                return
+    viewer = None
+    if mime_type == 'application/pdf' and config.postscript_viewer:
+        # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.
+        import subprocess
+        command = config.postscript_viewer + ' ' + filename
+        log(OPERATIONAL, "Running external PDF viewer:", command)
+        viewer = lambda: subprocess.call(command.split())
+    elif mime_type:
+        # Find a local viewer through mailcap.
+        import mailcap
+        match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
+        if match:
+            command = match['view'] % (filename,)
+            log(OPERATIONAL, "Running external file viewer:", command)
+            viewer = lambda: os.system(command)
+    if viewer:
+        if data is not None:
+            try:
+                f = open(filename, 'wb')
+                try:
+                    f.write(data)
+                finally:
+                    f.close()
+                viewer()
+            finally:
+                os.remove(filename)
+        else:
+            viewer()
+    else:
+        pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
+                                                  filename, mime_type or 'unknown'))
+
+def launch_file(filename):
+    """Launch a viewer for given file.
+
+    filename -- name of the file in the local (server side when running
+      remotely) filesystem.
+
+    The viewer will be launched on the client machine (remotely) if remote
+    client connection exists.  The file will be temporarily copied to the
+    client machine in this case and cleaned up automatically afterwards.
+
+    If the viewer is run remotely on a client machine (such as on Windows),
+    client side file associations will take effect.  If the viewer is run
+    locally (on the application server), the viewer is determined through
+    Mailcap.  For PDF files, the viewer set through the configuration option
+    'postscript_viewer' (if set) takes precedence.
+
+    """
+    return _launch_file_or_data(filename)
+
+def open_data_as_file(data, suffix, decrypt=False):
+    """Save given data to a temporary file and launch a viewer.
+
+    Arguments:
+
+      data -- the (possibly binary) data as a basestring.  This the contents
+        of the file to be viewed.
+      suffix -- the filename suffix including the leading dot.
+      decrypt -- if true then decrypt the file contents before saving.
+
+    The viewer will be launched on the client machine (remotely) if remote
+    client connection exists.  The data are saved to a temporary file and
+    cleaned up automatically afterwards (the temporary file is created on the
+    client machine in the case of remote viewer invocation).
+
+    """
+    filename = os.tempnam() + suffix
+    return _launch_file_or_data(filename, decrypt=decrypt, data=data)
+
+def launch_url(url):
+    """Open given URL in a web browser.
+
+    The browser will be launched on the client machine (remotely) if remote
+    client connection exists.
+
+    """
+    if pytis.remote.client_available():
+        pytis.remote.launch_url(url)
+    else:
+        import webbrowser
+        webbrowser.open(url)

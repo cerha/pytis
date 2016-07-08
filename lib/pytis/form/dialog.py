@@ -1518,8 +1518,10 @@ class FileDialog(Dialog):
         super_(FileDialog).__init__(self, parent)
         assert mode in (FileDialog.OPEN, FileDialog.SAVE)
         if title is None:
-            title = {FileDialog.OPEN: _("Open file"),
-                     FileDialog.SAVE: _("Save file")}[mode]
+            title = {(FileDialog.OPEN, False): _("Open file"),
+                     (FileDialog.OPEN, True): _("Open files"),
+                     (FileDialog.SAVE, False): _("Save file"),
+                     (FileDialog.SAVE, True): _("Save files")}[(mode, multi)]
         assert dir is None or isinstance(dir, basestring)
         assert file is None or isinstance(file, basestring)
         self._title = unicode(title)
@@ -1537,8 +1539,7 @@ class FileDialog(Dialog):
         řetězců.
 
         """
-        dir = self._dir or FileDialog._last_directory.get(self._mode, '')
-        file = self._file or ''
+        directory = self._dir or FileDialog._last_directory.get(self._mode, '')
         style = {FileDialog.OPEN: wx.OPEN,
                  FileDialog.SAVE: wx.SAVE}[self._mode]
         if self._multi and self._mode == FileDialog.OPEN:
@@ -1547,7 +1548,8 @@ class FileDialog(Dialog):
             style = style | wx.OVERWRITE_PROMPT
         self._dialog = d = wx.FileDialog(self._parent,
                                          message=self._title,
-                                         defaultDir=dir, defaultFile=file,
+                                         defaultDir=directory,
+                                         defaultFile=self._file or '',
                                          wildcard='|'.join(self._wildcards),
                                          style=style)
         result = d.ShowModal()
@@ -1601,7 +1603,7 @@ class DirDialog(Dialog):
         result = d.ShowModal()
         path = d.GetPath()
         d.Destroy()
-        FileDialog._last_directory = path
+        DirDialog._last_directory = path
         if result == wx.ID_OK:
             return path
         else:

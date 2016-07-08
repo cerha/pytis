@@ -330,8 +330,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     if output_file:
         formatter.printout(output_file)
     else:
-        file_ = pytis.util.TemporaryFile()
-        formatter.printout(file_, hook=(lambda: pytis.form.run_viewer(file_)))
+        file_ = pytis.util.TemporaryFile(suffix='.pdf')
+        formatter.printout(file_, hook=lambda: pytis.form.launch_file(file_.name))
     return True
 
 
