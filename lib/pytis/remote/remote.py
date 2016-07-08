@@ -339,16 +339,14 @@ def select_directory():
         return _request('select_directory')
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Failed selecting directory: %s") % (e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
 
 def select_file(filename=None, template=None, multi=False):
     try:
         return _request('select_file', filename=filename, template=template, multi=multi)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Failed selecting file: %s") % (e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))
 
 def run_python(script):
     try:
