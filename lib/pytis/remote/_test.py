@@ -58,7 +58,8 @@ class ClientUIBackend(object):
         self.assertEqual(answer, '002')
 
     def test_03_select_file(self):
-        filename = self._backend.select_file()
+        filename = self._backend.select_file(patterns=(('Image files',
+                                                        ('*.jpg', '*.jpeg', '*.png')),))
         self._confirm('You selected "%s"' % filename)
 
     def test_04_select_file_save(self):

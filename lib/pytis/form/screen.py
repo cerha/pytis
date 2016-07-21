@@ -3104,14 +3104,21 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
 # Only those combinations which were practically in use at the time of this
 # writing were implemented.  Others may be added later as necessary.
 
-def _wildcards(template=None):
+def _wildcards(patterns, pattern):
     # TODO: We may need to construct the filename matchers to be case insensitive,
     # such as '*.[jJ][pP][gG]' on GTK:
     # ''.join(['[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c for c in template])
-    wildcards = (_("Files of allowed type (%s)", template), template) if template else ()
-    return wildcards + (_("All files") + " (*.*)", "*.*")
+    patterns = list(patterns) + [(_("All files"), "*.*")]
+    if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
+        patterns.insert(0, (_("Files of the required type", pattern)))
+    return reduce(
+        lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
+                          ';'.join(xtuple(b[1]))),
+        patterns,
+        (),
+    )
 
-def select_file(filename=None, template=None):
+def select_file(filename=None, patterns=(), pattern=None):
     """Return a filename selected by the user in a GUI dialog.
 
     Returns None if the user cancels the dialog.  If remote client connection
@@ -3120,18 +3127,31 @@ def select_file(filename=None, template=None):
     Arguments:
 
       filename -- initial (default) filename or None
-      template -- a string defining the required file name pattern, or 'None'
+      patterns -- a sequence of pairs (LABEL, PATTERN) determining the
+        filename filters available within the dialog (for backends which
+        support it).  Label is a user visible description of the filter,
+        such as "PDF document".  PATTERN is a filename pattern as a
+        basestring, such as '*.pdf', or a sequence of such patterns, such
+        as ('*.jpg', '*.jpeg', '*.png', '*.gif') if multiple file types are
+        to match a single filter.  An additional entry "All files" with
+        pattern '*.*' is always added automatically to the end.  The first
+        item is the initially selected filter in the dialog.
+      pattern -- the required file name pattern as a basestring, sequence of
+        basestrings or 'None'.  If 'patterns' don't already contain an entry
+        for given pattern(s), such item is added as the first (and thus the
+        initially selected) entry with label "Files of the required type".
 
     """
     if pytis.remote.client_available():
-        result = pytis.remote.select_file(filename=filename, template=template, multi=False)
+        result = pytis.remote.select_file(filename=filename, multi=False,
+                                          patterns=patterns, pattern=pattern)
     else:
         result = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
                                        mode=pytis.form.FileDialog.OPEN,
-                                       wildcards=_wildcards(template))
+                                       wildcards=_wildcards(patterns, pattern))
     return result
 
-def select_files(directory=None, template=None):
+def select_files(directory=None, patterns=(), pattern=None):
     """Return a tuple of filenames selected by the user in a GUI dialog.
 
     Returns empty tuple if the user cancels the dialog.  If remote client
@@ -3141,16 +3161,16 @@ def select_files(directory=None, template=None):
     Arguments:
 
       directory -- the initial directory or None
-      template -- a string defining the required file name pattern, or 'None'
+      patterns, pattern -- see 'pyts.form.select_file()'
 
     """
     # TODO: directory is ignored in the remote variant.
     if pytis.remote.client_available():
-        result = pytis.remote.select_file(multi=True)
+        result = pytis.remote.select_file(patterns=patterns, pattern=pattern, multi=True)
     else:
         result = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
                                        mode=pytis.form.FileDialog.OPEN,
-                                       wildcards=_wildcards(template))
+                                       wildcards=_wildcards(patterns, pattern))
     return result
 
 def select_directory():
@@ -3166,7 +3186,7 @@ def select_directory():
         result = pytis.form.run_dialog(pytis.form.DirDialog)
     return result
 
-def make_selected_file(filename, mode='w', encoding='utf-8', template=None):
+def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
     """Return a write-only 'file' like object of a user selected file.
 
     The file is selected by the user using a GUI dialog.  Returns 'None' if the
@@ -3179,23 +3199,23 @@ def make_selected_file(filename, mode='w', encoding='utf-8', template=None):
       filename -- default filename or None
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
-      template -- a string defining the required file name pattern, or 'None'
+      patterns, pattern -- see 'pyts.form.select_file()'
 
     """
     if pytis.remote.client_available():
-        f = pytis.remote.make_selected_file(filename=filename, mode=str(mode),
-                                            encoding=encoding, template=template)
+        f = pytis.remote.make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
+                                            patterns=patterns, pattern=pattern)
     else:
         path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename,
                                      mode=pytis.form.FileDialog.SAVE,
-                                     wildcards=_wildcards(template))
+                                     wildcards=_wildcards(patterns, pattern))
         if path:
             f = open(path, str(mode))
         else:
             f = None
     return f
 
-def write_selected_file(data, filename, mode='w', encoding='utf-8', template=None):
+def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
     """Write 'data' to a file selected by the user using a GUI dialog.
 
     The file is selected by the user using a GUI dialog.  Returns 'True' if the
@@ -3209,10 +3229,11 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', template=Non
       filename -- default filename or None
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
-      template -- a string defining the required file name pattern, or 'None'
+      patterns, pattern -- see 'pyts.form.select_file()'
 
     """
-    f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding, template=template)
+    f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
+                           patterns=patterns, pattern=pattern)
     if f:
         try:
             f.write(data)
@@ -3222,7 +3243,7 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', template=Non
     else:
         return False
 
-def open_selected_file(template=None, encrypt=None):
+def open_selected_file(patterns=(), pattern=None, encrypt=None):
     """Return a read-only 'file' like object of a user selected file and its filename.
 
     The file is selected by the user using a GUI dialog.  Returns a pair (fh,
@@ -3231,7 +3252,7 @@ def open_selected_file(template=None, encrypt=None):
 
     Arguments:
 
-      template -- a string defining the required file name pattern, or 'None'
+      patterns, pattern -- see 'pyts.form.select_file()'
       encrypt -- list of encryption keys to use to encrypt the file; if the
         list is empty then let the user select the keys; if 'None' then
         don't encrypt the file
@@ -3239,7 +3260,7 @@ def open_selected_file(template=None, encrypt=None):
     """
     # TODO: Encryption not supported for the local variant.
     if pytis.remote.client_available():
-        f = pytis.remote.open_selected_file(template=template, encrypt=encrypt)
+        f = pytis.remote.open_selected_file(patterns=patterns, pattern=pattern, encrypt=encrypt)
         if f:
             path = f.name()
             if '\\' in path:
@@ -3251,7 +3272,7 @@ def open_selected_file(template=None, encrypt=None):
             filename = None
     else:
         path = pytis.form.run_dialog(pytis.form.FileDialog, mode=pytis.form.FileDialog.OPEN,
-                                     wildcards=_wildcards(template))
+                                     wildcards=_wildcards(patterns, pattern))
         if path:
             f = open(path)
             filename = os.path.split(path)[-1]

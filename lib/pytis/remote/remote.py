@@ -300,25 +300,38 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
                                                   filename=filename, error=e))
 
-def open_selected_file(template=None, encrypt=None):
-    assert template is None or isinstance(template, basestring), template
+def open_selected_file(patterns=(), pattern=None, template=None, encrypt=None):
+    assert isinstance(patterns, (tuple, list)), patterns
+    assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert encrypt is None or isinstance(encrypt, list), encrypt
+    if template:
+        # TODO: template is just for backwards compatibility. REMOVE THIS
+        assert isinstance(template, basestring), template
+        assert not pattern, (template, pattern)
+        pattern = template
     try:
-        return _request('open_selected_file', template, encrypt=encrypt)
+        return _request('open_selected_file', patterns=patterns, pattern=pattern, encrypt=encrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
 
-def make_selected_file(directory=None, filename=None, template=None, encoding=None, mode='wb',
-                       decrypt=False):
+def make_selected_file(directory=None, filename=None, patterns=(), pattern=None, template=None,
+                       encoding=None, mode='wb', decrypt=False):
     assert directory is None or isinstance(directory, basestring), directory
     assert filename is None or isinstance(filename, basestring), filename
-    assert template is None or isinstance(template, basestring), template
+    assert isinstance(patterns, (tuple, list)), patterns
+    assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
+    if template:
+        # TODO: template is just for backwards compatibility. REMOVE THIS
+        assert isinstance(template, basestring), template
+        assert not pattern, (template, pattern)
+        pattern = template
     try:
         return _request('make_selected_file', directory=directory, filename=filename,
-                        template=template, encoding=encoding, mode=mode, decrypt=decrypt)
+                        patterns=patterns, pattern=pattern, encoding=encoding,
+                        mode=mode, decrypt=decrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file to save: %s", e))
@@ -341,9 +354,19 @@ def select_directory():
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
 
-def select_file(filename=None, template=None, multi=False):
+def select_file(filename=None, patterns=(), pattern=None, template=None, multi=False):
+    assert filename is None or isinstance(filename, basestring), filename
+    assert isinstance(patterns, (tuple, list)), patterns
+    assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
+    assert isinstance(multi, bool), multi
+    if template:
+        # TODO: template is just for backwards compatibility. REMOVE THIS
+        assert isinstance(template, basestring), template
+        assert not pattern, (template, pattern)
+        pattern = template
     try:
-        return _request('select_file', filename=filename, template=template, multi=multi)
+        return _request('select_file', filename=filename, patterns=patterns,
+                        pattern=pattern, multi=multi)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))

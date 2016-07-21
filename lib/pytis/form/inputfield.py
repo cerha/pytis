@@ -1928,10 +1928,10 @@ class FileField(Invocable, InputField):
         return self._enabled
 
     def _cmd_load(self):
-        template = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
+        pattern = ['*.%s' % ext for ext in self._spec.filename_extensions()] or None
         #msg = _("Select the file for field '%s'", self.spec().label())
         #directory = FileField._last_load_dir or FileField._last_save_dir or ''
-        fh, filename = pytis.form.open_selected_file(template=template)
+        fh, filename = pytis.form.open_selected_file(pattern=pattern)
         if fh:
             try:
                 try:

@@ -86,6 +86,12 @@ class ClientUIBackend(object):
             x = unicode(x, sys.getfilesystemencoding())
         return x
 
+    def _pattern_label(self, label, patterns):
+        # This method is called from the backend only if needed because some
+        # backends (actually Tk) don't need it (they add the list of patterns
+        # to the label automatically).
+        return "%s (%s)" % (label, ', '.join(patterns))
+
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
 
@@ -138,8 +144,8 @@ class ClientUIBackend(object):
     def _select_option(self, title, label, columns, data, return_column):
         raise NotImplementedError('%s._select_option()' % self.__class__.__name__)
 
-    def select_file(self, title=None, directory=None, filename=None, template=None,
-                    save=False, multi=False):
+    def select_file(self, title=None, directory=None, filename=None,
+                    patterns=(), pattern=None, save=False, multi=False):
         """Return the file name(s) of user selected file(s).
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -150,7 +156,20 @@ class ClientUIBackend(object):
           title -- dialog title
           directory -- initial directory for the dialog
           filename -- default filename or None
-          template -- a string defining the required file name pattern, or 'None'
+          patterns -- a sequence of pairs (LABEL, PATTERN) determining the
+            filename filters available within the dialog (for backends which
+            support it).  Label is a user visible description of the filter,
+            such as "PDF document".  PATTERN is a filename pattern as a
+            basestring, such as '*.pdf', or a sequence of such patterns, such
+            as ('*.jpg', '*.jpeg', '*.png', '*.gif') if multiple file types are
+            to match a single filter.  An additional entry "All files" with
+            pattern '*.*' is always added automatically to the end.  The first
+            item is the initially selected filter in the dialog.
+          pattern -- the required file name pattern as a basestring, sequence
+            of basestrings or 'None'.  If 'patterns' don't already contain an
+            entry for given pattern(s), such item is added as the first (and
+            thus the initially selected) entry with label "Files of the
+            required type".
           save -- True iff the file is to be open for writing
           multi -- iff true, allow selecting multiple files (not possible when save is True)
 
@@ -158,10 +177,12 @@ class ClientUIBackend(object):
         assert title is None or isinstance(title, basestring), title
         assert directory is None or isinstance(directory, basestring), directory
         assert filename is None or isinstance(filename, basestring), filename
-        assert template is None or isinstance(template, basestring), template
+        assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
+        assert isinstance(patterns, (tuple, list)), patterns
         assert isinstance(save, bool), save
         assert isinstance(multi, bool), multi
         assert not (save and multi), (save, multi)
+        xtuple = lambda x: tuple(x) if isinstance(x, (tuple, list)) else (x,)
         if title is None:
             if save:
                 title = u"Uložit soubor"
@@ -169,22 +190,21 @@ class ClientUIBackend(object):
                 title = u"Výběr souborů"
             else:
                 title = u"Výběr souboru"
-        extension = None
-        filters = [(u"Všechny soubory (*.*)", "*.*")]
         if filename:
-            name, ext = os.path.splitext(filename)
-            if ext:
-                template = "*" + ext
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-                extension = ext[1:]
+            extension = os.path.splitext(filename)[1].lstrip('.') or None
+            if extension and not pattern:
+                pattern = "*." + extension
         else:
+            extension = None
             filename = "*.*"
-            if template:
-                filters.insert(0, (u"Soubory požadovaného typu (%s)" % template, template))
-        return self._unicode(self._select_file(title, directory, filename, filters,
+        patterns = list(patterns) + [(u"Všechny soubory", "*.*")]
+        if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
+            patterns.insert(0, (u"Soubory požadovaného typu", pattern))
+        return self._unicode(self._select_file(title, directory, filename,
+                                               [(label, xtuple(pat)) for label, pat in patterns],
                                                extension, save, multi))
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         raise NotImplementedError('%s._select_file()' % self.__class__.__name__)
 
     def select_directory(self, title=u"Výběr adresáře", directory=None):
@@ -274,7 +294,7 @@ class WxUIBackend(ClientUIBackend):
         dialog.Destroy()
         return result
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         import wx
         style = wx.STAY_ON_TOP
         if save:
@@ -286,7 +306,9 @@ class WxUIBackend(ClientUIBackend):
             style |= wx.MULTIPLE
         dialog = wx.FileDialog(None, style=style, message=title,
                                defaultDir=directory or '', defaultFile=filename or '',
-                               wildcard='|'.join(["%s|%s" % item for item in filters]))
+                               wildcard='|'.join(["%s|%s" % (self._pattern_label(label, pat),
+                                                             ';'.join(pat))
+                                                  for label, pat in patterns]))
         if dialog.ShowModal() != wx.ID_OK:
             result = None
         elif multi:
@@ -359,22 +381,21 @@ class Win32UIBackend(ClientUIBackend):
                     listbox.AddString('   '.join(row))
                 self.HookCommand(self.OnSelect, IDC_LIST)
                 return rc
-        template = [
+        dialog = SelectionDialog([
             [title, (0, 0, width + 10, height + 38), win32con.WS_CAPTION | win32con.DS_MODALFRAME,
              None, (8, "MS SansSerif")],
             ["static", "", IDC_TEXT, (5, 4, 150, 14), win32con.WS_CHILD | win32con.WS_VISIBLE],
             ["listbox", "List", IDC_LIST, (5, 16, width, height), win32con.WS_VISIBLE],
             [128, u"Ok", win32con.IDOK, (width - 45, height + 18, 50, 14),
              win32con.BS_PUSHBUTTON | win32con.WS_VISIBLE],
-        ]
-        dialog = SelectionDialog(template)
+        ])
         dialog.DoModal()
         if result.selection is not None:
             return data[result.selection][return_column - 1]
         else:
             return None
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         import win32ui
         import win32con
         flags = win32con.OFN_HIDEREADONLY
@@ -391,7 +412,9 @@ class Win32UIBackend(ClientUIBackend):
         # the dialog window on top...
         parent = win32ui.FindWindow(None, None)
         dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename, flags,
-                                          '|'.join(["%s|%s" % item for item in filters]) + '||',
+                                          '|'.join(["%s|%s" % (self._pattern_label(label, pat),
+                                                               ';'.join(pat))
+                                                    for label, pat in patterns]) + '||',
                                           parent)
         if directory:
             dialog.SetOFNInitialDir(directory)
@@ -528,7 +551,7 @@ class TkUIBackend(ClipboardUIBackend):
             return None
 
     @_in_tk_app
-    def _select_file(self, root, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, root, title, directory, filename, patterns, extension, save, multi):
         import tkFileDialog
         if save:
             dialog = tkFileDialog.asksaveasfilename
@@ -537,9 +560,12 @@ class TkUIBackend(ClipboardUIBackend):
             dialog = tkFileDialog.askopenfilename
             kwargs = dict(multiple=multi)
         if sys.platform != 'darwin':
-            # The filters don't work on Mac OS X.  If present, all files are grayed out...
-            kwargs['filetypes'] = [(label, pattern[1:] if pattern.startswith('*.') else pattern)
-                                   for label, pattern in filters]
+            # The patterns don't work on Mac OS X.  If present, all files are grayed out...
+            filetypes = []
+            for label, pat in patterns:
+                for pattern in pat:
+                    filetypes.append((label, pattern[1:] if pattern.startswith('*.') else pattern))
+            kwargs['filetypes'] = filetypes
         result = dialog(parent=root, title=title, initialdir=directory, initialfile=filename,
                         defaultextension=extension, **kwargs)
         if not result:
@@ -590,14 +616,14 @@ class ZenityUIBackend(ClipboardUIBackend):
             answer = answer.split('|')[0]
         return answer
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         args = []
         if directory is not None:
             filename = os.path.join(directory, filename or '')
         if filename is not None:
             args.extend(('--filename', filename,))
-        for name, pattern in filters:
-            args.extend(('--file-filter', pattern,))
+        for label, pat in patterns:
+            args.extend(('--file-filter', self._pattern_label(label, pat) + ' | ' + ' '.join(pat)))
         if save:
             args.append('--save')
         if multi:
@@ -634,7 +660,7 @@ class PyZenityUIBackend(ClipboardUIBackend):
         import PyZenity
         return PyZenity.List(columns, title=title, text=label, data=data)
 
-    def _select_file(self, title, directory, filename, filters, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         import PyZenity
         # TODO: Pass the remaining arguments (undocumented in PyZenity).
         files = PyZenity.GetFilename(title=title, multiple=multi)
