@@ -157,7 +157,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_view(self, view, create_ok=False):
         replace = 'OR REPLACE ' if view._REPLACE_ON_CREATE else ''
         command = 'CREATE %s%s "%s"."%s" AS\n' % (replace, view._DB_OBJECT, view.schema, view.name,)
-        with _local_search_path(self._set_search_path(view.search_path())):
+        with local_search_path(self._set_search_path(view.search_path())):
             query = view.query()
             query.pytis_prefix = command
             self.connection.execute(query)
@@ -171,7 +171,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
         self.visit_view(view, create_ok=create_ok)
 
     def visit_foreign_table(self, table, create_ok=False):
-        with _local_search_path(self._set_search_path(table.search_path())):
+        with local_search_path(self._set_search_path(table.search_path())):
             sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in table.fields]
             def compile(c):
                 # Any better way to reach the column compiler?
@@ -184,7 +184,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             self.connection.execute(command)
 
     def visit_type(self, type_, create_ok=False):
-        with _local_search_path(self._set_search_path(type_.search_path())):
+        with local_search_path(self._set_search_path(type_.search_path())):
             self.make_type(type_.name, type_.fields)
             type_.dispatch.after_create(type_, self.connection, checkfirst=self.checkfirst,
                                         _ddl_runner=self)
@@ -201,7 +201,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_function(self, function, create_ok=False, result_type=None, suffix=''):
         search_path = function.search_path()
-        with _local_search_path(self._set_search_path(search_path)):
+        with local_search_path(self._set_search_path(search_path)):
             _rename_replaced_function(self, function, True)
             if isinstance(function.result_type, (tuple, list,)):
                 self.make_type('t_' + function.pytis_name() + suffix, function.result_type)
@@ -251,7 +251,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_aggregate(self, aggregate, create_ok=False):
         search_path = aggregate.search_path()
-        with _local_search_path(self._set_search_path(search_path)):
+        with local_search_path(self._set_search_path(search_path)):
             self.visit_function(aggregate, create_ok=create_ok, suffix='_agg')
             name = aggregate.pytis_name(real=True)
             arguments = _function_arguments_seq(aggregate, types_only=True)
@@ -274,7 +274,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_trigger(self, trigger, create_ok=False):
         for search_path in _expand_schemas(trigger):
-            with _local_search_path(self._set_search_path(search_path)):
+            with local_search_path(self._set_search_path(search_path)):
                 if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
                     trigger._DB_OBJECT = 'FUNCTION' # hack for comments
                     try:
@@ -346,7 +346,7 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
 
     def visit_trigger(self, trigger, checkfirst=False):
         for search_path in _expand_schemas(trigger):
-            with _local_search_path(self._set_search_path(search_path)):
+            with local_search_path(self._set_search_path(search_path)):
                 table = trigger.table
                 if table is not None:
                     self.connection.execute('DROP TRIGGER "%s" ON "%s"' %
@@ -914,7 +914,7 @@ def _warn(message):
 
 _current_search_path = None
 @contextmanager
-def _local_search_path(search_path):
+def local_search_path(search_path):
     assert isinstance(search_path, (tuple, list,)), search_path
     global _current_search_path
     orig_search_path = _current_search_path
@@ -1151,7 +1151,7 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                 for search_path in schemas:
                     if _debug:
                         sys.stderr.write('*** %s\n' % (cls.__name__,))
-                    with _local_search_path(search_path):
+                    with local_search_path(search_path):
                         if may_alter_schema and _enforced_schema:
                             search_path = [_enforced_schema] + search_path
                         if issubclass(cls, SQLSequence):
@@ -2544,7 +2544,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         self._pytis_create_p = True
-        with _local_search_path(self._set_search_path(bind)):
+        with local_search_path(self._set_search_path(bind)):
             try:
                 super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
             finally:
@@ -2828,7 +2828,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     primary_column = None
 
     def __new__(cls, metadata, search_path):
-        with _local_search_path(search_path):
+        with local_search_path(search_path):
             columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
             primary = cls.primary_column
             if primary is not None:
@@ -2912,7 +2912,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
 
     @classmethod
     def specification_fields(class_):
-        with _local_search_path(class_.default_search_path()):
+        with local_search_path(class_.default_search_path()):
             query = class_.query()
         def original_column(c):
             result = None
@@ -3162,7 +3162,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     RECORD = 'RECORD'
 
     def __new__(cls, metadata, search_path):
-        with _local_search_path(search_path):
+        with local_search_path(search_path):
             # It would be nice to utilize specification_fields here.
             result_type = cls.result_type
             if result_type is None:
@@ -3263,7 +3263,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             # the following cases:
             # - overloaded functions
             # - some schema related situations
-            with _local_search_path(self.search_path()):
+            with local_search_path(self.search_path()):
                 body = self.body()
             if not isinstance(body, basestring):
                 body = unicode(body)
