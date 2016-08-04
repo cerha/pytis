@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2006-2015 Brailcom, o.p.s.
+# Copyright (C) 2006-2016 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-05-17 17:34+0200\n"
-"PO-Revision-Date: 2015-01-28 17:32+0100\n"
+"POT-Creation-Date: 2016-08-04 13:58+0200\n"
+"PO-Revision-Date: 2016-08-04 13:59+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -21,36 +21,44 @@ msgstr ""
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/field.py:742
+#. Accessible label of password confirmation field (for entering
+#. the password again to reveal possible typos.  Use imperative.
+#. %s is replaced by the field label.
+#: ../lib/pytis/web/field.py:532
+#, python-format
+msgid "Repeat %s"
+msgstr "Zopakujte %s"
+
+#: ../lib/pytis/web/field.py:751
 msgid "today"
 msgstr "dnes"
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
+#: ../lib/pytis/web/field.py:805 ../lib/pytis/web/field.py:895
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/field.py:796 ../lib/pytis/web/field.py:886
+#: ../lib/pytis/web/field.py:805 ../lib/pytis/web/field.py:895
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/field.py:826
+#: ../lib/pytis/web/field.py:835
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Nedodržena minimální velikost %(minlen)s"
 
-#: ../lib/pytis/web/field.py:830
+#: ../lib/pytis/web/field.py:839
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Překročana maximální velikost %(maxlen)s"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:856
+#: ../lib/pytis/web/field.py:865
 msgid "image"
 msgstr "obrázek"
 
-#: ../lib/pytis/web/field.py:858
+#: ../lib/pytis/web/field.py:867
 msgid "file"
 msgstr "soubor"
 
@@ -90,66 +98,66 @@ msgstr "Neplatné hodnoty vnořeného formuláře."
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
+#: ../lib/pytis/web/form.py:1019
+msgid "Profile"
+msgstr "Profil"
+
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1053
+#: ../lib/pytis/web/form.py:1060
 msgid "All items"
 msgstr "Všechny položky"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1070
+#: ../lib/pytis/web/form.py:1077
 msgid "Change filters"
 msgstr "Změnit filtry"
 
-#: ../lib/pytis/web/form.py:1104
+#: ../lib/pytis/web/form.py:1111
 msgid "Save"
 msgstr "Uložit"
 
-#: ../lib/pytis/web/form.py:1119
+#: ../lib/pytis/web/form.py:1126
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:1121
+#: ../lib/pytis/web/form.py:1128
 msgid "Apply Filter"
 msgstr "Aplikovat filtr"
 
-#: ../lib/pytis/web/form.py:1356
-msgid "Profile"
-msgstr "Profil"
-
-#: ../lib/pytis/web/form.py:1577
+#: ../lib/pytis/web/form.py:1578
 msgid "Popup the menu of actions for this record"
 msgstr "Zobrazit menu akcí pro tento záznam"
 
-#: ../lib/pytis/web/form.py:1692
+#: ../lib/pytis/web/form.py:1693
 msgid "Sum"
 msgstr "Součet"
 
-#: ../lib/pytis/web/form.py:1693
+#: ../lib/pytis/web/form.py:1694
 msgid "Average"
 msgstr "Průměr"
 
-#: ../lib/pytis/web/form.py:1694
+#: ../lib/pytis/web/form.py:1695
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1695
+#: ../lib/pytis/web/form.py:1696
 msgid "Maximum"
 msgstr "Maximum"
 
-#: ../lib/pytis/web/form.py:1759
+#: ../lib/pytis/web/form.py:1760
 msgid "Loading form data..."
 msgstr "Načítám data formuláře..."
 
-#: ../lib/pytis/web/form.py:1897
+#: ../lib/pytis/web/form.py:1898
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1905
+#: ../lib/pytis/web/form.py:1906
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
@@ -169,13 +177,13 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1976
+#: ../lib/pytis/web/form.py:1977
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1981
+#: ../lib/pytis/web/form.py:1982
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Přejít na první záznam začínající na „%s“"
@@ -184,7 +192,7 @@ msgstr "Přejít na první záznam začínající na „%s“"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1994
+#: ../lib/pytis/web/form.py:1995
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -194,7 +202,7 @@ msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:2000
+#: ../lib/pytis/web/form.py:2001
 msgid "No records."
 msgstr "Žádné záznamy."
 
@@ -247,71 +255,71 @@ msgstr "s filtry: "
 msgid "Remove this row"
 msgstr "Odstranit tento řádek"
 
-#: ../resources/scripts/pytis-ckeditor.js:70
+#: ../resources/scripts/pytis-ckeditor.js:72
 msgid "Edit"
 msgstr "Upravit"
 
-#: ../resources/scripts/pytis-ckeditor.js:95
+#: ../resources/scripts/pytis-ckeditor.js:98
 msgid "Insert space before"
 msgstr "Vložit mezeru před"
 
-#: ../resources/scripts/pytis-ckeditor.js:105
+#: ../resources/scripts/pytis-ckeditor.js:108
 msgid "Insert space after"
 msgstr "Vložit mezeru za"
 
-#: ../resources/scripts/pytis-ckeditor.js:155
+#: ../resources/scripts/pytis-ckeditor.js:158
 msgid "Create the quotation first, then you can supply the source inside it."
 msgstr "Nejprve vytvořte citaci a potom můžete vložit její zdroj uvnitř."
 
-#: ../resources/scripts/pytis-ckeditor.js:160
+#: ../resources/scripts/pytis-ckeditor.js:163
 msgid "Supply Quotation Source"
 msgstr "Uvést zdroj citace"
 
-#: ../resources/scripts/pytis-ckeditor.js:197
+#: ../resources/scripts/pytis-ckeditor.js:201
 msgid "Add figure caption"
 msgstr "Nastavit popisek obrázku"
 
-#: ../resources/scripts/pytis-ckeditor.js:218
+#: ../resources/scripts/pytis-ckeditor.js:222
 msgid "Definition list"
 msgstr "Seznam definic"
 
-#: ../resources/scripts/pytis-ckeditor.js:225
+#: ../resources/scripts/pytis-ckeditor.js:230
 msgid "Default"
 msgstr "Výchozí"
 
-#: ../resources/scripts/pytis-ckeditor.js:226
+#: ../resources/scripts/pytis-ckeditor.js:231
 msgid "Czech"
 msgstr "čeština"
 
-#: ../resources/scripts/pytis-ckeditor.js:227
+#: ../resources/scripts/pytis-ckeditor.js:232
 msgid "English"
 msgstr "angličtina"
 
-#: ../resources/scripts/pytis-ckeditor.js:228
+#: ../resources/scripts/pytis-ckeditor.js:233
 msgid "German"
 msgstr "němčina"
 
-#: ../resources/scripts/pytis-ckeditor.js:229
+#: ../resources/scripts/pytis-ckeditor.js:234
 msgid "Spanish"
 msgstr "španělština"
 
-#: ../resources/scripts/pytis-ckeditor.js:230
+#: ../resources/scripts/pytis-ckeditor.js:235
 msgid "French"
 msgstr "francouzština"
 
-#: ../resources/scripts/pytis-ckeditor.js:231
+#: ../resources/scripts/pytis-ckeditor.js:236
 msgid "Russian"
 msgstr "ruština"
 
-#: ../resources/scripts/pytis-ckeditor.js:232
+#: ../resources/scripts/pytis-ckeditor.js:237
 msgid "Latin"
 msgstr "latina"
 
-#: ../resources/scripts/pytis-ckeditor.js:323
+#: ../resources/scripts/pytis-ckeditor.js:328
 msgid "Braille Transformations"
 msgstr "Transformace pro Braillský výstup"
 
-#: ../resources/scripts/pytis-ckeditor.js:328
+#: ../resources/scripts/pytis-ckeditor.js:333
 msgid ""
 "How should the table be transformed for the Braille output when it doesn't "
 "fit the output media in its original form?"
@@ -319,151 +327,151 @@ msgstr ""
 "Jak vytisknout tabulku v Braillském výstupu, pokud se tabulka v původní "
 "podobě nevejde na stránku?"
 
-#: ../resources/scripts/pytis-ckeditor.js:333
+#: ../resources/scripts/pytis-ckeditor.js:338
 msgid "Can be spread across facing pages"
 msgstr "Lze vytisknout na dvojstranu"
 
-#: ../resources/scripts/pytis-ckeditor.js:340
+#: ../resources/scripts/pytis-ckeditor.js:345
 msgid "Can be transposed (swap rows and columns)"
 msgstr "Lze transponovat (prohodit řádky a sloupce)"
 
-#: ../resources/scripts/pytis-ckeditor.js:347
+#: ../resources/scripts/pytis-ckeditor.js:352
 msgid "When this is not sufficient:"
 msgstr "V případě, že toto nepostačuje:"
 
-#: ../resources/scripts/pytis-ckeditor.js:349
+#: ../resources/scripts/pytis-ckeditor.js:354
 msgid "Expand to list by rows"
 msgstr "Rozvinout do seznamu podle řádků"
 
-#: ../resources/scripts/pytis-ckeditor.js:350
+#: ../resources/scripts/pytis-ckeditor.js:355
 msgid "Expand to list by columns"
 msgstr "Rozvinout do seznamu podle sloupců"
 
-#: ../resources/scripts/pytis-ckeditor.js:351
+#: ../resources/scripts/pytis-ckeditor.js:356
 msgid "Split vertically into several narrower tables"
 msgstr "Rozdělit svisle na několik užších tabulek"
 
-#: ../resources/scripts/pytis-ckeditor.js:574
+#: ../resources/scripts/pytis-ckeditor.js:579
 msgid "You must choose an object to include"
 msgstr "Musíte zvolit objekt, který má být použit"
 
-#: ../resources/scripts/pytis-ckeditor.js:698
+#: ../resources/scripts/pytis-ckeditor.js:703
 msgid "Upload successful"
 msgstr "Soubor nahrán úspěšně"
 
-#: ../resources/scripts/pytis-ckeditor.js:712
+#: ../resources/scripts/pytis-ckeditor.js:717
 msgid "Upload new file"
 msgstr "Nahrát nový soubor"
 
-#: ../resources/scripts/pytis-ckeditor.js:724
+#: ../resources/scripts/pytis-ckeditor.js:729
 msgid "First select a file to be uploaded."
 msgstr "Nejprve vyberte soubor, který má být vložen."
 
-#: ../resources/scripts/pytis-ckeditor.js:733
+#: ../resources/scripts/pytis-ckeditor.js:738
 msgid "Title"
 msgstr "Název"
 
-#: ../resources/scripts/pytis-ckeditor.js:746
+#: ../resources/scripts/pytis-ckeditor.js:751
 msgid "Accessible description"
 msgstr "Popis pro zpřístupnění"
 
-#: ../resources/scripts/pytis-ckeditor.js:804
+#: ../resources/scripts/pytis-ckeditor.js:809
 msgid "Image"
 msgstr "Obrázek"
 
-#: ../resources/scripts/pytis-ckeditor.js:873
+#: ../resources/scripts/pytis-ckeditor.js:878
 msgid "Display as"
 msgstr "Zobrazit jako"
 
-#: ../resources/scripts/pytis-ckeditor.js:874
+#: ../resources/scripts/pytis-ckeditor.js:879
 msgid "Full size"
 msgstr "V plné velikosti"
 
-#: ../resources/scripts/pytis-ckeditor.js:875
+#: ../resources/scripts/pytis-ckeditor.js:880
 msgid "Small preview"
 msgstr "Malý náhled"
 
-#: ../resources/scripts/pytis-ckeditor.js:876
+#: ../resources/scripts/pytis-ckeditor.js:881
 msgid "Medium preview"
 msgstr "Středně velký náhled"
 
-#: ../resources/scripts/pytis-ckeditor.js:877
+#: ../resources/scripts/pytis-ckeditor.js:882
 msgid "Large preview"
 msgstr "Velký náhled"
 
-#: ../resources/scripts/pytis-ckeditor.js:881
+#: ../resources/scripts/pytis-ckeditor.js:886
 msgid "Text wrapping"
 msgstr "Obtékání textu"
 
-#: ../resources/scripts/pytis-ckeditor.js:882
+#: ../resources/scripts/pytis-ckeditor.js:887
 msgid "No wrapping"
 msgstr "Neobtékat"
 
-#: ../resources/scripts/pytis-ckeditor.js:883
+#: ../resources/scripts/pytis-ckeditor.js:888
 msgid "Wrap right"
 msgstr "Obtékat zprava"
 
-#: ../resources/scripts/pytis-ckeditor.js:884
+#: ../resources/scripts/pytis-ckeditor.js:889
 msgid "Wrap left"
 msgstr "Obtékat zleva"
 
-#: ../resources/scripts/pytis-ckeditor.js:932
+#: ../resources/scripts/pytis-ckeditor.js:937
 msgid "Behavior"
 msgstr "Chování"
 
-#: ../resources/scripts/pytis-ckeditor.js:933
+#: ../resources/scripts/pytis-ckeditor.js:938
 msgid "Enlarge on click"
 msgstr "Na kliknutí zvětšit"
 
-#: ../resources/scripts/pytis-ckeditor.js:935
+#: ../resources/scripts/pytis-ckeditor.js:940
 msgid "Link"
 msgstr "Odkaz"
 
-#: ../resources/scripts/pytis-ckeditor.js:936
+#: ../resources/scripts/pytis-ckeditor.js:941
 msgid "Link to anchor"
 msgstr "Odkaz na kotvu"
 
-#: ../resources/scripts/pytis-ckeditor.js:980
+#: ../resources/scripts/pytis-ckeditor.js:985
 msgid "Select the anchor"
 msgstr "Vyberte kotvu"
 
-#: ../resources/scripts/pytis-ckeditor.js:1011
+#: ../resources/scripts/pytis-ckeditor.js:1016
 msgid "Link target (URL)"
 msgstr "Cíl odkazu (URL)"
 
-#: ../resources/scripts/pytis-ckeditor.js:1032
+#: ../resources/scripts/pytis-ckeditor.js:1037
 msgid "Audio"
 msgstr "Audio"
 
-#: ../resources/scripts/pytis-ckeditor.js:1049
+#: ../resources/scripts/pytis-ckeditor.js:1054
 msgid "Video"
 msgstr "Video"
 
-#: ../resources/scripts/pytis-ckeditor.js:1063
+#: ../resources/scripts/pytis-ckeditor.js:1068
 msgid "Attachment"
 msgstr "Příloha"
 
-#: ../resources/scripts/pytis-ckeditor.js:1097
+#: ../resources/scripts/pytis-ckeditor.js:1102
 msgid "Exercise"
 msgstr "Cvičení"
 
-#: ../resources/scripts/pytis-ckeditor.js:1107
+#: ../resources/scripts/pytis-ckeditor.js:1112
 msgid "Exercise Type"
 msgstr "Typ cvičení"
 
-#: ../resources/scripts/pytis-ckeditor.js:1114
+#: ../resources/scripts/pytis-ckeditor.js:1119
 msgid "Exercise Definition"
 msgstr "Definice cvičení"
 
-#: ../resources/scripts/pytis-ckeditor.js:1189
+#: ../resources/scripts/pytis-ckeditor.js:1194
 msgid "MathML"
 msgstr "MathML"
 
-#: ../resources/scripts/pytis-ckeditor.js:1222
+#: ../resources/scripts/pytis-ckeditor.js:1227
 msgid "Guide on "
 msgstr "Příručka na "
 
-#: ../resources/scripts/pytis-ckeditor.js:1234
+#: ../resources/scripts/pytis-ckeditor.js:1239
 msgid ""
 "To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from "
 "external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)"
@@ -471,49 +479,49 @@ msgstr ""
 "K překopírování textu do externího editoru využijte Ctrl+A Ctrl+X. K vložení "
 "textu z externího editoru Ctrl+V. (Na Macu stiskněte místo Ctrl klávesu CMD.)"
 
-#: ../resources/scripts/pytis-ckeditor.js:1239
+#: ../resources/scripts/pytis-ckeditor.js:1244
 msgid "Switch ASCII / MathML editing"
 msgstr "Přepnout editaci ASCII / MathML"
 
-#: ../resources/scripts/pytis-ckeditor.js:1360
+#: ../resources/scripts/pytis-ckeditor.js:1365
 msgid "Editing MathML will destroy your ASCII formula. Continue?"
 msgstr "Úprava MathML zničí vzorec původně zadaný v ASCII. Pokračovat?"
 
-#: ../resources/scripts/pytis-ckeditor.js:1376
-#: ../resources/scripts/pytis-ckeditor.js:1377
+#: ../resources/scripts/pytis-ckeditor.js:1381
+#: ../resources/scripts/pytis-ckeditor.js:1382
 msgid "Language"
 msgstr "Jazyk"
 
-#: ../resources/scripts/pytis-ckeditor.js:1503
-#: ../resources/scripts/pytis-ckeditor.js:1506
+#: ../resources/scripts/pytis-ckeditor.js:1509
+#: ../resources/scripts/pytis-ckeditor.js:1512
 msgid "Index item"
 msgstr "Rejstříková položka"
 
-#: ../resources/scripts/pytis-ckeditor.js:1513
+#: ../resources/scripts/pytis-ckeditor.js:1519
 msgid "Index"
 msgstr "Rejstřík"
 
-#: ../resources/scripts/pytis-ckeditor.js:1515
+#: ../resources/scripts/pytis-ckeditor.js:1521
 msgid "You must choose an index"
 msgstr "Musíte zvolit rejstřík"
 
-#: ../resources/scripts/pytis-ckeditor.js:1517
+#: ../resources/scripts/pytis-ckeditor.js:1523
 msgid "Index of Terms"
 msgstr "Rejstřík pojmů"
 
-#: ../resources/scripts/pytis-ckeditor.js:1518
+#: ../resources/scripts/pytis-ckeditor.js:1524
 msgid "Name Index"
 msgstr "Jmenný rejstřík"
 
-#: ../resources/scripts/pytis-ckeditor.js:1519
+#: ../resources/scripts/pytis-ckeditor.js:1525
 msgid "Index of Places"
 msgstr "Rejstřík míst"
 
-#: ../resources/scripts/pytis-ckeditor.js:1524
+#: ../resources/scripts/pytis-ckeditor.js:1530
 msgid "Item"
 msgstr "Položka"
 
-#: ../resources/scripts/pytis-ckeditor.js:1526
+#: ../resources/scripts/pytis-ckeditor.js:1532
 msgid "Index item cannot be empty."
 msgstr "Rejstříková položka nemůže být prázdná."
 
@@ -541,6 +549,9 @@ msgstr "zobrazit podrobnosti"
 #: ../resources/scripts/pytis.js:422
 msgid "Double click the cell to edit the value."
 msgstr "Dvojím kliknutím na této buňce tabulky můžete její hodnotu upravit."
+
+#~ msgid "Confirm %s"
+#~ msgstr "Potvrďte %s"
 
 #, fuzzy
 #~ msgid "Invalid broker address"
