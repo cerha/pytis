@@ -110,9 +110,7 @@
 .pytis-form div.horizontal-group table.horizontal-group.expanded {
     width: auto;
 }
-.pytis-form table.horizontal-group > tbody > tr > th,
 .pytis-form table.horizontal-group > tbody > tr > td,
-.pytis-form table.vertical-group > tbody > tr > th,
 .pytis-form table.vertical-group > tbody > tr > td {
     vertical-align: top;
 }
@@ -390,15 +388,15 @@
 .pytis-form.show-form td.ctrl, .pytis-form.list-view td.ctrl { 
     line-height: 1.4em;
 }
-.pytis-form th.label { 
+.pytis-form td.label {
     line-height: 1.4em;
     white-space: nowrap;
 }
-.pytis-form.edit-form th.label {
+.pytis-form.edit-form td.label {
     /* To display labels vertically centered with form controls. */
     line-height: 1.5em;
 }
-.pytis-form.show-form th.label { 
+.pytis-form.show-form td.label {
     /* Force normal line height in a show form embedded in an edit form. */
     line-height: 1.4em; 
 } 

@@ -456,7 +456,7 @@ class LayoutForm(FieldForm):
                                 cls='horizontal-group')]
             else:
                 result = [g.table(
-                    [g.tr([((g.th(label, cls='label') if label else '') +
+                    [g.tr([((g.td(label, cls='label') if label else '') +
                             g.td(content_, cls='ctrl'))
                            for i, (label, content_, __, ___) in enumerate(content.content())])],
                     role='presentation',
@@ -472,7 +472,7 @@ class LayoutForm(FieldForm):
                     else:
                         spacer = ''
                         kwargs = dict(cls='ctrl expanded', colspan=normalspan)
-                    return (g.th(label or '', cls='label', align='right') +
+                    return (g.td(label or '', cls='label', align='right') +
                             g.td(content_, **kwargs) + spacer)
             if content.has_labeled_items():
                 if content.allow_right_aligned_fields():
