@@ -290,7 +290,11 @@ class Field(object):
         return value
 
     def _exported_value(self):
-        return localizable_export(self._value())
+        invalid_string = self._row.invalid_string(self.id)
+        if invalid_string is not None:
+            return invalid_string
+        else:
+            return localizable_export(self._value())
 
     def _display(self, context):
         """Additional information about the field value (see '_format()' for more info)."""
@@ -417,6 +421,11 @@ class Field(object):
         kwargs = self._editor_kwargs(context)
         return self._editor(context, **kwargs)
 
+    def hidden(self, context):
+        """Return a hidden form field for passing the current field value on form submission."""
+        g = context.generator()
+        return g.hidden(name=self.name(), value=self._exported_value())
+
     def state(self):
         """Return the string representation of field runtime filters and arguments state.
 
@@ -456,15 +465,14 @@ class TextField(Field):
 
     def _editor_kwargs(self, context):
         kwargs = super(TextField, self)._editor_kwargs(context)
-        invalid_string = self._row.invalid_string(self.id)
-        if invalid_string is not None:
-            value = invalid_string
-        else:
-            value = self._exported_value()
         maxlen = self._maxlen()
-        size = self.spec.width(maxlen)
-        return dict(kwargs, value=value, size=size, maxlength=maxlen,
-                    cls=((kwargs.get('cls') or '') + ' text-field').strip())
+        return dict(
+            kwargs,
+            value=self._exported_value(),
+            size=self.spec.width(maxlen),
+            maxlength=maxlen,
+            cls=((kwargs.get('cls') or '') + ' text-field').strip(),
+        )
 
     def _editor(self, context, **kwargs):
         return context.generator().input(**kwargs)
@@ -532,16 +540,14 @@ class MultilineField(Field):
 
     def _editor_kwargs(self, context):
         kwargs = super(MultilineField, self)._editor_kwargs(context)
-        invalid_string = self._row.invalid_string(self.id)
-        if invalid_string is not None:
-            value = invalid_string
-        else:
-            value = self._value().export()
-        width, height = self.spec.width(), self.spec.height()
-        cls = kwargs.get('cls')
-        if width >= 80:
-            cls = (cls and cls + ' ' or '') + 'fullsize'
-        return dict(kwargs, value=value, rows=height, cols=width, cls=cls)
+        width = self.spec.width()
+        return dict(
+            kwargs,
+            value=self._exported_value(),
+            cols=width,
+            rows=self.spec.height(),
+            cls=((kwargs.get('cls') or '') + ' fullsize' if width >= 80 else '').strip() or None,
+        )
 
     def _editor(self, context, **kwargs):
         return context.generator().textarea(**kwargs)
@@ -943,14 +949,15 @@ class ChoiceField(EnumerationField):
     def _editor(self, context, **kwargs):
         g = context.generator()
         enumeration = self._row.enumerate(self.id)
-        options = [(self.spec.null_display() or g.noescape("&nbsp;"), "")] + \
-                  [(self._format_display_value(context, display), self.type.export(val))
+        options = [(self._format_display_value(context, display), self.type.export(val))
                    for val, display in enumeration]
         value = self._value().value()
         if value in [val for val, display in enumeration]:
             selected = self.type.export(value)
         else:
             selected = None
+        if selected is None or not self.type.not_null():
+            options.insert(0, (self.spec.null_display() or g.noescape("&nbsp;"), ""))
         return g.select(options=options, selected=selected, **kwargs)
 
 
@@ -975,7 +982,14 @@ class ArrayField(EnumerationField):
         return None
 
     def _editor(self, context, **kwargs):
-        raise Exception("Array field editation unsupported.")
+        raise NotImplementedError("Array field editation unsupported.")
+
+    def hidden(self, context):
+        g = context.generator()
+        return lcg.concat([
+            g.hidden(name=self.name(), value=value.export())
+            for value in self._value().value()
+        ])
 
 
 class ChecklistField(ArrayField):
@@ -1049,3 +1063,6 @@ class FileField(TextField):
             return pytis.util.format_byte_size(len(value))
         else:
             return None
+
+    def hidden(self, context):
+        raise NotImplementedError()

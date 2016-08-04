@@ -994,7 +994,7 @@ class QueryFieldsForm(VirtualForm):
     _ALLOW_NOT_NULL_INDICATORS = False
     _SAVED_EMPTY_VALUE = '-'
 
-    def __init__(self, req, resolver, query_fields, filter_sets, immediate_filters=True,
+    def __init__(self, req, resolver, query_fields, profiles, filter_sets, immediate_filters=True,
                  async_load=False):
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
@@ -1012,6 +1012,13 @@ class QueryFieldsForm(VirtualForm):
                     layout = pytis.presentation.HGroup(*(ids + layout.items()))
                 else:
                     layout = pytis.presentation.HGroup(ids, layout)
+        if profiles:
+            assert 'profile' not in [f.id() for f in fields]
+            class Enumeration(pytis.presentation.Enumeration):
+                enumeration = [(p.id(), p.title()) for p in profiles.unnest()]
+            fields.insert(0, pytis.presentation.Field('profile', profiles.label() or _("Profile"),
+                                                      not_null=True, enumerator=Enumeration,
+                                                      default=profiles.default()))
         super(QueryFieldsForm, self).__init__(req, resolver,
                                               dict(fields=fields, layout=layout, **spec_kwargs))
         row = self._row
@@ -1052,11 +1059,11 @@ class QueryFieldsForm(VirtualForm):
             # records to be displayed.
             null_display = _("All items")
             filters = filter_set
-        class Enum(pytis.presentation.Enumeration):
+        class Enumeration(pytis.presentation.Enumeration):
             enumeration = [(f.id(), f.title()) for f in filters]
         return pytis.presentation.Field(filter_set.id(), filter_set.title(),
                                         null_display=null_display, not_null=False,
-                                        enumerator=Enum, default=filter_set.default())
+                                        enumerator=Enumeration, default=filter_set.default())
 
     def _export_form(self, context):
         g = context.generator()
@@ -1340,30 +1347,22 @@ class BrowseForm(LayoutForm):
                     return value
             else:
                 return default
-        # Process filter sets and profiles first.
-        if filter_sets is None:
-            filter_sets = self._view.filter_sets()
+        # Process query fields, filter sets and profiles first.
+        if query_fields is None:
+            query_fields = self._view.query_fields()
         if profiles is None:
             profiles = self._view.profiles()
         elif not isinstance(profiles, Profiles):
             profiles = Profiles(*profiles)
+        if filter_sets is None:
+            filter_sets = self._view.filter_sets()
         self._profiles = profiles
         self._filter = filter
         self._filters = []
-        if profiles:
-            assert 'profile' not in [fs.id() for fs in filter_sets]
-            # Add profile selection as another filter set, since the user interface is the same.
-            filter_set = FilterSet('profile', profiles.label() or _("Profile"),
-                                   [Filter(p.id(), p.title(), p.filter())
-                                    for p in profiles.unnest()],
-                                   default=profiles.default())
-            filter_sets = (filter_set,) + tuple(filter_sets)
         self._filter_sets = filter_sets
-        if query_fields is None:
-            query_fields = self._view.query_fields()
-        if query_fields or filter_sets:
+        if query_fields or filter_sets or profiles:
             self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(),
-                                                             query_fields, filter_sets,
+                                                             query_fields, profiles, filter_sets,
                                                              immediate_filters=immediate_filters,
                                                              async_load=async_load)
             query_fields_row = form.row()
@@ -1389,6 +1388,8 @@ class BrowseForm(LayoutForm):
                     sorting = profile.sorting()
                 if profile.grouping() is not None:
                     grouping = profile.grouping()
+                if profile.filter():
+                    self._filters.append(profile.filter())
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
@@ -2011,12 +2012,11 @@ class BrowseForm(LayoutForm):
         content = []
         show_search_field = self._show_search_field
         if self._query_fields_form:
-            exported_query_fields = self._query_fields_form.export(context)
             if bottom:
-                # The form must be present to preserve the query field values
-                # when the bottom controls are used.  Simple hidden fields
-                # don't work for all field types (datetime etc.).
-                exported_query_fields = g.div(exported_query_fields, style='display: none;')
+                exported_query_fields = lcg.concat([f.hidden(context)
+                                                    for f in self._query_fields_form.fields()])
+            else:
+                exported_query_fields = self._query_fields_form.export(context)
             # TODO: Hide when there are no records and no active filtering conditions?
             #       and (count or [v for v in self._filter_ids.values() if v is not None])
             content.append(exported_query_fields)
