@@ -516,7 +516,7 @@ class LayoutForm(FieldForm):
             if self._EDITABLE:
                 html_id = field.html_id()
                 if field.indicate_not_null() and self._ALLOW_NOT_NULL_INDICATORS:
-                    sign = g.sup('*', cls='not-null', aria_hidden='true')
+                    sign = g.sup('*', cls='not-null-indicator', aria_hidden='true')
                 if not self._row.editable(field.id):
                     cls += ' disabled'
             return g.label((field.label, sign, ':'), for_=html_id, cls=cls)
@@ -774,7 +774,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             for f in self._fields.values():
                 if f.label and f.indicate_not_null() and f.id in self._layout.order():
                     g = context.generator()
-                    return [g.div(g.span("*", cls="not-null") + ") " +
+                    return [g.div(g.span('*', cls='not-null-indicator') + ") " +
                                   _("Fields marked by an asterisk are mandatory."),
                                   cls='footer')]
         return []

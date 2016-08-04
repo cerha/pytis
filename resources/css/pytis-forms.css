@@ -358,13 +358,21 @@
 .pytis-form .field-label { 
     white-space: nowrap;
     font-weight: bold;
+    position: relative;
 }
 .pytis-form.query-fields-form .field-label {
     font-weight: normal;
 }
-.pytis-form .field-label .not-null { color: #dd0000; line-height: 1em; }
+.pytis-form .not-null-indicator {
+    color: #dd0000;
+}
+.pytis-form .field-label .not-null-indicator {
+    position: absolute;
+    top: -5px;
+    right: -3px;
+}
 .pytis-form .field-label.disabled { color: #444; }
-.pytis-form .field-label.disabled .not-null { display: none; }
+.pytis-form .field-label.disabled .not-null-indicator { display: none; }
 
 .pytis-form .radio-group {
     margin-bottom: 0.3em;
