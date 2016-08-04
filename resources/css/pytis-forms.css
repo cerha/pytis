@@ -362,7 +362,7 @@
 .pytis-form.query-fields-form .field-label {
     font-weight: normal;
 }
-.pytis-form .field-label .not-null { color: #f00; line-height: 1em; }
+.pytis-form .field-label .not-null { color: #dd0000; line-height: 1em; }
 .pytis-form .field-label.disabled { color: #444; }
 .pytis-form .field-label.disabled .not-null { display: none; }
 
