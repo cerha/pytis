@@ -516,7 +516,7 @@ class LayoutForm(FieldForm):
             if self._EDITABLE:
                 html_id = field.html_id()
                 if field.indicate_not_null() and self._ALLOW_NOT_NULL_INDICATORS:
-                    sign = g.sup("*", cls="not-null")
+                    sign = g.sup('*', cls='not-null', aria_hidden='true')
                 if not self._row.editable(field.id):
                     cls += ' disabled'
             return g.label((field.label, sign, ':'), for_=html_id, cls=cls)
