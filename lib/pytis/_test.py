@@ -17,12 +17,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+TESTED_MODULES = (
+    'pytis.data',
+    'pytis.presentation',
+    'pytis.util',
+    'pytis.remote',
+    'pytis.web',
+)
+
 import unittest
 import pytis.util.test
 
-
 tests = pytis.util.test.TestSuite()
-for module_name in ('pytis.data', 'pytis.presentation', 'pytis.util', 'pytis.remote'):
+for module_name in TESTED_MODULES:
     module = __import__(module_name + '._test', globals(), locals(), ['get_tests'])
     if hasattr(module, 'get_tests'):
         tests.addTest(module.get_tests())
