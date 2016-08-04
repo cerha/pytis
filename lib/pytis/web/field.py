@@ -526,7 +526,11 @@ class PasswordField(StringField):
             # Note, the 'confirm' substring in the id is important for Safari's password
             # suggestion functionality.
             kwargs['id'] += '-confirm-password'
-            result += g.br() + g.input(type='password', **kwargs)
+            # Translators: Accessible label of password confirmation field (for entering
+            # the password again to reveal possible typos.  Use imperative.
+            # %s is replaced by the field label.
+            label = _("Repeat %s", self.spec.label())
+            result += g.br() + g.input(type='password', aria_label=label, **kwargs)
         return result
 
 
