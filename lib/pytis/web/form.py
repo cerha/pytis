@@ -1019,6 +1019,11 @@ class QueryFieldsForm(VirtualForm):
             fields.insert(0, pytis.presentation.Field('profile', profiles.label() or _("Profile"),
                                                       not_null=True, enumerator=Enumeration,
                                                       default=profiles.default()))
+            if 'profile' not in layout.order():
+                if layout.orientation() == pytis.presentation.Orientation.HORIZONTAL:
+                    layout = pytis.presentation.HGroup(*(('profile',) + layout.items()))
+                else:
+                    layout = pytis.presentation.HGroup('profile', layout)
         super(QueryFieldsForm, self).__init__(req, resolver,
                                               dict(fields=fields, layout=layout, **spec_kwargs))
         row = self._row
