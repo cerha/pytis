@@ -38,6 +38,7 @@ import wx.lib.mixins.listctrl
 import collections
 import datetime
 import types
+import decimal
 
 import pytis.data
 import pytis.form
@@ -682,11 +683,20 @@ class InputNumeric(InputDialog):
                                  **kwargs
                                  )
         if self._value is not None:
-            control.SetValue(self._value)
+            if isinstance(self._value, decimal.Decimal):
+                control.SetValue(float(self._value))
+            else:
+                control.SetValue(self._value)
         if self._min_value is not None:
-            control.SetMin(self._min_value)
+            if isinstance(self._value, decimal.Decimal):
+                control.SetValue(float(self._min_value))
+            else:
+                control.SetMin(self._min_value)
         if self._max_value is not None:
-            control.SetMax(self._max_value)
+            if isinstance(self._value, decimal.Decimal):
+                control.SetValue(float(self._max_value))
+            else:
+                control.SetMax(self._max_value)
         if self._limited:
             control.SetLimited(True)
         self._control = control
@@ -718,10 +728,10 @@ class InputNumeric(InputDialog):
                         pytis.data.Float(precision=self._decimal_width), None)
             if self._decimal_width == 0:
                 value = pytis.data.Value(pytis.data.Integer(),
-                                       self._control.GetValue())
+                                         self._control.GetValue())
             else:
                 value = pytis.data.Value(pytis.data.Float(),
-                                       self._control.GetValue())
+                                         self._control.GetValue())
             return value
         else:
             if self._decimal_width == 0:
@@ -1077,7 +1087,7 @@ class BugReport(GenericDialog):
                 pointer += step
                 traceback.SetSize(char2px(traceback, 140, 35))
         else:
-            style = wx.TE_MULTILINE | wx.TE_DONTWRAP #|wx.TE_READONLY
+            style = wx.TE_MULTILINE | wx.TE_DONTWRAP  # |wx.TE_READONLY
             traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
             font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
             traceback.SetFont(font)
