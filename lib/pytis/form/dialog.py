@@ -688,12 +688,12 @@ class InputNumeric(InputDialog):
             else:
                 control.SetValue(self._value)
         if self._min_value is not None:
-            if isinstance(self._value, decimal.Decimal):
+            if isinstance(self._min_value, decimal.Decimal):
                 control.SetValue(float(self._min_value))
             else:
                 control.SetMin(self._min_value)
         if self._max_value is not None:
-            if isinstance(self._value, decimal.Decimal):
+            if isinstance(self._max_value, decimal.Decimal):
                 control.SetValue(float(self._max_value))
             else:
                 control.SetMax(self._max_value)
