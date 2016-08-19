@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-08-04 13:55+0200\n"
-"PO-Revision-Date: 2016-05-24 12:05+0200\n"
+"POT-Creation-Date: 2016-08-19 20:44+0200\n"
+"PO-Revision-Date: 2016-08-19 21:02+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -213,7 +213,7 @@ msgstr "Vymazat"
 msgid "Clear the menu of recent forms"
 msgstr "Vymazat menu posledně otevřených formulářů"
 
-#: ../lib/pytis/form/application.py:740 ../lib/pytis/form/dialog.py:1324
+#: ../lib/pytis/form/application.py:740 ../lib/pytis/form/dialog.py:1334
 #: ../lib/pytis/form/inputfield.py:2671 ../lib/pytis/form/inputfield.py:2697
 msgid "Title"
 msgstr "Název"
@@ -292,7 +292,7 @@ msgstr "Zkusit znovu?"
 msgid "Enter your password"
 msgstr "Zadejte heslo"
 
-#: ../lib/pytis/form/application.py:2017 ../lib/pytis/form/dialog.py:95
+#: ../lib/pytis/form/application.py:2017 ../lib/pytis/form/dialog.py:96
 msgid "Ok"
 msgstr "Ok"
 
@@ -308,11 +308,25 @@ msgstr "N/A"
 msgid "Not available."
 msgstr "Není k dispozici"
 
-#: ../lib/pytis/form/application.py:2023
+#: ../lib/pytis/form/application.py:2022
+msgid ""
+"Username: {}\n"
+"Database host: {}\n"
+"Database name: {}"
+msgstr ""
+"Uživatel: {}\n"
+"Databázový server: {}\n"
+"Název databáze: {}"
+
+#: ../lib/pytis/form/application.py:2028
 msgid "List position"
 msgstr "Pozice v seznamu"
 
-#: ../lib/pytis/form/application.py:2025
+#: ../lib/pytis/form/application.py:2030
+msgid "User and database parameters"
+msgstr "Uživatel a databázové parametry"
+
+#: ../lib/pytis/form/application.py:2033
 msgid "Remote communication status"
 msgstr "Stav vzdálené komunikace"
 
@@ -677,80 +691,80 @@ msgstr "konfigurační formulář"
 msgid "Apply changes without closing the form"
 msgstr "Uplatnit změny bez uzavření formuláře"
 
-#: ../lib/pytis/form/dialog.py:97 ../lib/pytis/form/dualform.py:1132
+#: ../lib/pytis/form/dialog.py:98 ../lib/pytis/form/dualform.py:1132
 #: ../lib/pytis/form/list.py:3464
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/form/dialog.py:99 ../lib/pytis/form/inputfield.py:1664
+#: ../lib/pytis/form/dialog.py:100 ../lib/pytis/form/inputfield.py:1664
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/form/dialog.py:101 ../lib/pytis/form/inputfield.py:1664
+#: ../lib/pytis/form/dialog.py:102 ../lib/pytis/form/inputfield.py:1664
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/form/dialog.py:360
+#: ../lib/pytis/form/dialog.py:361
 msgid "Message"
 msgstr "Zpráva"
 
-#: ../lib/pytis/form/dialog.py:396
+#: ../lib/pytis/form/dialog.py:397
 msgid "Warning"
 msgstr "Varování"
 
-#: ../lib/pytis/form/dialog.py:420
+#: ../lib/pytis/form/dialog.py:421
 msgid "Error"
 msgstr "Chyba"
 
-#: ../lib/pytis/form/dialog.py:444 ../lib/pytis/form/dialog.py:457
+#: ../lib/pytis/form/dialog.py:445 ../lib/pytis/form/dialog.py:458
 msgid "Question"
 msgstr "Otázka"
 
-#: ../lib/pytis/form/dialog.py:523 ../lib/pytis/form/dialog.py:644
+#: ../lib/pytis/form/dialog.py:524 ../lib/pytis/form/dialog.py:645
 msgid "Enter value"
 msgstr "Zadejte hodnotu"
 
-#: ../lib/pytis/form/dialog.py:742 ../lib/pytis/form/dialog.py:795
+#: ../lib/pytis/form/dialog.py:752 ../lib/pytis/form/dialog.py:805
 msgid "Operation in progress"
 msgstr "Provádí se operace"
 
-#: ../lib/pytis/form/dialog.py:743 ../lib/pytis/form/dialog.py:795
+#: ../lib/pytis/form/dialog.py:753 ../lib/pytis/form/dialog.py:805
 msgid "Please wait..."
 msgstr "Čekejte prosím..."
 
-#: ../lib/pytis/form/dialog.py:903
+#: ../lib/pytis/form/dialog.py:913
 msgid "Calendar"
 msgstr "Kalendář"
 
-#: ../lib/pytis/form/dialog.py:984
+#: ../lib/pytis/form/dialog.py:994
 msgid "Color selection"
 msgstr "Výběr barvy"
 
-#: ../lib/pytis/form/dialog.py:1030
+#: ../lib/pytis/form/dialog.py:1040
 msgid "Ignore"
 msgstr "Ignorovat"
 
-#: ../lib/pytis/form/dialog.py:1031
+#: ../lib/pytis/form/dialog.py:1041
 msgid "Send error report"
 msgstr "Poslat oznámení o chybě"
 
-#: ../lib/pytis/form/dialog.py:1032 ../lib/pytis/form/dialog.py:1423
+#: ../lib/pytis/form/dialog.py:1042 ../lib/pytis/form/dialog.py:1433
 msgid "Exit application"
 msgstr "Ukončit aplikaci"
 
-#: ../lib/pytis/form/dialog.py:1047
+#: ../lib/pytis/form/dialog.py:1057
 msgid "Unhandled exception"
 msgstr "Neočekávaná chyba"
 
-#: ../lib/pytis/form/dialog.py:1057
+#: ../lib/pytis/form/dialog.py:1067
 msgid "Oops"
 msgstr "Nevyšlo to"
 
-#: ../lib/pytis/form/dialog.py:1284
+#: ../lib/pytis/form/dialog.py:1294
 msgid "Aggregated view parameters"
 msgstr "Parametry agregačního náhledu"
 
-#: ../lib/pytis/form/dialog.py:1321
+#: ../lib/pytis/form/dialog.py:1331
 msgid ""
 "Enter the name for saving the view, or leave empty, if you prefer not to "
 "save it."
@@ -758,39 +772,39 @@ msgstr ""
 "Zadejte název pod kterým se má náhled uložit, nebo ponechte prázdné, pokud "
 "náhled nechcete ukládat."
 
-#: ../lib/pytis/form/dialog.py:1333
+#: ../lib/pytis/form/dialog.py:1343
 msgid "Group by"
 msgstr "Seskupování"
 
-#: ../lib/pytis/form/dialog.py:1344
+#: ../lib/pytis/form/dialog.py:1354
 msgid "Function"
 msgstr "Funkce"
 
-#: ../lib/pytis/form/dialog.py:1397
+#: ../lib/pytis/form/dialog.py:1407
 msgid "You need to select at least one grouping column."
 msgstr "Musíte zvolit alespoň jeden sloupec pro seskupování."
 
-#: ../lib/pytis/form/dialog.py:1424
+#: ../lib/pytis/form/dialog.py:1434
 msgid "Really quit the application?"
 msgstr "Opravdu chcete ukončit aplikaci?"
 
-#: ../lib/pytis/form/dialog.py:1425
+#: ../lib/pytis/form/dialog.py:1435
 msgid "Automatically open the checked forms on next startup"
 msgstr "Zapamatovat označené formuláře pro příští spuštění"
 
-#: ../lib/pytis/form/dialog.py:1482 ../lib/pytis/form/inputfield.py:1968
+#: ../lib/pytis/form/dialog.py:1492 ../lib/pytis/form/inputfield.py:1968
 msgid "All files"
 msgstr "Všechny soubory"
 
-#: ../lib/pytis/form/dialog.py:1511
+#: ../lib/pytis/form/dialog.py:1521
 msgid "Open file"
 msgstr "Otevřít soubor"
 
-#: ../lib/pytis/form/dialog.py:1512
+#: ../lib/pytis/form/dialog.py:1522
 msgid "Save file"
 msgstr "Uložit soubor"
 
-#: ../lib/pytis/form/dialog.py:1566
+#: ../lib/pytis/form/dialog.py:1576
 msgid "Directory selection"
 msgstr "Výběr adresáře"
 
