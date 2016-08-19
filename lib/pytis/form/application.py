@@ -2018,10 +2018,18 @@ def built_in_status_fields():
         else:
             return (_('N/A'), 'disconnected', _("Not available."))
 
+    def _refresh_user_config():
+        tooltip_text = _("Username: {}\nDatabase host: {}\nDatabase name: {}")
+        return (config.dbuser, 'user-icon',
+                tooltip_text.format(config.dbuser, config.dbhost, config.dbname))
+
     return (
         StatusField('message', width=None),
         StatusField('list-position', _("List position"),
                     refresh=_refresh_list_position, width=15),
+        StatusField('user', _("User and database parameters"),
+                    refresh=_refresh_user_config,
+                    refresh_interval=10000000, width=15),
         StatusField('remote-status', _("Remote communication status"),
                     refresh=_refresh_remote_status,
                     refresh_interval=10000, width=5),
