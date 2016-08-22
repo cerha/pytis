@@ -3332,18 +3332,18 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
         else:
             if remote_file:
                 try:
-                    f = open(filename)
-                    try:
-                        if data is not None:
-                            f.write(data)
-                        else:
+                    if data is None:
+                        f = open(filename)
+                        try:
                             while True:
                                 data = f.read(10000000)
                                 if not data:
                                     break
                                 remote_file.write(data)
-                    finally:
-                        f.close()
+                        finally:
+                            f.close()
+                    else:
+                        remote_file.write(data)
                 finally:
                     remote_file.close()
                 log(OPERATIONAL, "Launching file on Windows at %s:" % pytis.remote.client_ip(),
