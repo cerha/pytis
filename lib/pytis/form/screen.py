@@ -3319,7 +3319,7 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
     if mime_type == 'application/pdf':
         allow_remote_viewer = config.rpc_remote_view
     else:
-        allow_remote_viewer = False
+        allow_remote_viewer = True
     # Try to launch the file remotely first.
     if allow_remote_viewer and pytis.remote.client_available():
         suffix = os.path.splitext(filename)[1]
