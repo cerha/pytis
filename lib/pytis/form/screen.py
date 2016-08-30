@@ -3110,7 +3110,7 @@ def _wildcards(patterns, pattern):
     # ''.join(['[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c for c in template])
     patterns = list(patterns) + [(_("All files"), "*.*")]
     if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
-        patterns.insert(0, (_("Files of the required type", pattern)))
+        patterns.insert(0, (_("Files of the required type"), pattern))
     return reduce(
         lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
                           ';'.join(xtuple(b[1]))),
