@@ -212,7 +212,7 @@ def hotkey_string(hotkey):
     return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
 
 def file_menu_items(fields, row, select_arguments):
-    from application import Application, decrypted_names
+    from .application import Application, decrypted_names
     def file_field_data(field_id):
         value = row[field_id]
         if isinstance(value.type(), pytis.data.Binary):
