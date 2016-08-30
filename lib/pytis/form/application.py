@@ -328,6 +328,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
         wx.CallAfter(self._init)
+        import pytis.remote
+        self._remote_connection_initially_available = pytis.remote.client_available()
         return True
 
     def _frame_title(self, title=None):
@@ -2034,3 +2036,7 @@ def built_in_status_fields():
                     refresh=_refresh_remote_status,
                     refresh_interval=10000, width=5),
     )
+
+def remote_connection_initially_available():
+    """Return True if the remote connection was available at application startup."""
+    return _application._remote_connection_initially_available

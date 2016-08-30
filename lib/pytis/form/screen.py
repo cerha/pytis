@@ -3118,6 +3118,33 @@ def _wildcards(patterns, pattern):
         (),
     )
 
+def _client_mode():
+    """Return the client operation mode as one of 'remote', 'local' or None.
+
+    If the remote connection exists, 'remote' is returned.  If it existed at
+    the application startup, but doesn't exist now, the user is asked whether
+    to continue locally or cancel the operation.  If the user decides to
+    cancel, None is returned.  In all other cases 'local' is returned.
+
+    """
+    if pytis.remote.client_available():
+        return 'remote'
+    else:
+        from .application import remote_connection_initially_available
+        if remote_connection_initially_available():
+            cancel = _("Cancel")
+            answer = pytis.form.run_dialog(pytis.form.Message,
+                                           _("This operation requires remote client connection "
+                                             "which is currently broken.\nYou may complete the "
+                                             "operation with restriction to server's local "
+                                             "resources or cancel."),
+                                           icon=Message.ICON_ERROR,
+                                           buttons=(_("Continue"), cancel),
+                                           default=cancel)
+            if answer == cancel:
+                return None
+        return 'local'
+
 def select_file(filename=None, patterns=(), pattern=None):
     """Return a filename selected by the user in a GUI dialog.
 
@@ -3142,14 +3169,14 @@ def select_file(filename=None, patterns=(), pattern=None):
         initially selected) entry with label "Files of the required type".
 
     """
-    if pytis.remote.client_available():
-        result = pytis.remote.select_file(filename=filename, multi=False,
-                                          patterns=patterns, pattern=pattern)
-    else:
-        result = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
-                                       mode=pytis.form.FileDialog.OPEN,
-                                       wildcards=_wildcards(patterns, pattern))
-    return result
+    mode = _client_mode()
+    if mode == 'remote':
+        return pytis.remote.select_file(filename=filename, multi=False,
+                                        patterns=patterns, pattern=pattern)
+    elif mode == 'local':
+        return pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
+                                     mode=pytis.form.FileDialog.OPEN,
+                                     wildcards=_wildcards(patterns, pattern))
 
 def select_files(directory=None, patterns=(), pattern=None):
     """Return a tuple of filenames selected by the user in a GUI dialog.
@@ -3165,13 +3192,13 @@ def select_files(directory=None, patterns=(), pattern=None):
 
     """
     # TODO: directory is ignored in the remote variant.
-    if pytis.remote.client_available():
-        result = pytis.remote.select_file(patterns=patterns, pattern=pattern, multi=True)
-    else:
-        result = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
-                                       mode=pytis.form.FileDialog.OPEN,
-                                       wildcards=_wildcards(patterns, pattern))
-    return result
+    mode = _client_mode()
+    if mode == 'remote':
+        return pytis.remote.select_file(patterns=patterns, pattern=pattern, multi=True)
+    elif mode == 'local':
+        return pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
+                                     mode=pytis.form.FileDialog.OPEN,
+                                     wildcards=_wildcards(patterns, pattern))
 
 def select_directory():
     """Return a directory selected by the user in a GUI dialog.
@@ -3180,11 +3207,11 @@ def select_directory():
     exists, the returned directory belongs to the client's filesystem.
 
     """
-    if pytis.remote.client_available():
-        result = pytis.remote.select_directory()
-    else:
-        result = pytis.form.run_dialog(pytis.form.DirDialog)
-    return result
+    mode = _client_mode()
+    if mode == 'remote':
+        return pytis.remote.select_directory()
+    elif mode == 'local':
+        return pytis.form.run_dialog(pytis.form.DirDialog)
 
 def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
     """Return a write-only 'file' like object of a user selected file.
@@ -3202,18 +3229,17 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
       patterns, pattern -- see 'pyts.form.select_file()'
 
     """
-    if pytis.remote.client_available():
-        f = pytis.remote.make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
-                                            patterns=patterns, pattern=pattern)
-    else:
+    mode = _client_mode()
+    if mode == 'remote':
+        return pytis.remote.make_selected_file(filename=filename, mode=str(mode),
+                                               encoding=encoding,
+                                               patterns=patterns, pattern=pattern)
+    elif mode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename,
                                      mode=pytis.form.FileDialog.SAVE,
                                      wildcards=_wildcards(patterns, pattern))
         if path:
-            f = open(path, str(mode))
-        else:
-            f = None
-    return f
+            return open(path, str(mode))
 
 def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
     """Write 'data' to a file selected by the user using a GUI dialog.
@@ -3259,7 +3285,8 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
 
     """
     # TODO: Encryption not supported for the local variant.
-    if pytis.remote.client_available():
+    mode = _client_mode()
+    if mode == 'remote':
         f = pytis.remote.open_selected_file(patterns=patterns, pattern=pattern, encrypt=encrypt)
         if f:
             path = f.name()
