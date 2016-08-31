@@ -3294,19 +3294,13 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
                 import ntpath as splitter
             else:
                 splitter = os.path
-            filename = splitter.split(path)[-1]
-        else:
-            filename = None
-    else:
+            return f, splitter.split(path)[-1]
+    elif mode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, mode=pytis.form.FileDialog.OPEN,
                                      wildcards=_wildcards(patterns, pattern))
         if path:
-            f = open(path)
-            filename = os.path.split(path)[-1]
-        else:
-            f = None
-            filename = None
-    return f, filename
+            return open(path), os.path.split(path)[-1]
+    return None, None
 
 def open_file(filename, mode='w'):
     """Return a read-only 'file' like object of the given file.
