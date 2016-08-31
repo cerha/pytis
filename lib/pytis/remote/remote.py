@@ -205,6 +205,22 @@ def _connect():
 
 _connection = None
 def _request(request, *args, **kwargs):
+    def retype(arg):
+        # Convert lcg.TranslatableText instances to unicode before passing
+        # to the remote side.  This is because rpyc doesn't create the
+        # remote instances with the right encoding, while it does it
+        # correctly for pure unicode instances (even though
+        # lcg.TranslatableText is a unicode subclass).
+        if isinstance(arg, tuple):
+            return tuple(retype(a) for a in arg)
+        elif isinstance(arg, list):
+            return [retype(a) for a in arg]
+        elif isinstance(arg, dict):
+            return dict((retype(k), retype(v)) for k, v in arg.items())
+        elif isinstance(arg, unicode) and type(arg).__name__ == 'TranslatableText':
+            return unicode(arg)
+        else:
+            return arg
     global _connection, _direct_connection
     if _connection is None:
         # Make sure _direct_connection is initialized before first use
@@ -224,7 +240,7 @@ def _request(request, *args, **kwargs):
             _connection = _connect()
             r = _connection.root.request
         args = (target_ip, user_name, request,) + args
-    return r(*args, **kwargs)
+    return r(*retype(args), **retype(kwargs))
 
 def version():
     try:
