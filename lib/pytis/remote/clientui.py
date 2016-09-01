@@ -565,6 +565,8 @@ class TkUIBackend(ClipboardUIBackend):
             for label, pat in patterns:
                 for pattern in pat:
                     filetypes.append((label, pattern[1:] if pattern.startswith('*.') else pattern))
+            if sys.platform == 'win32':
+                filetypes.reverse()
             kwargs['filetypes'] = filetypes
         result = dialog(parent=root, title=title, initialdir=directory, initialfile=filename,
                         defaultextension=extension, **kwargs)
