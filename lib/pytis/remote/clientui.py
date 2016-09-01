@@ -196,7 +196,6 @@ class ClientUIBackend(object):
                 pattern = "*." + extension
         else:
             extension = None
-            filename = "*.*"
         patterns = list(patterns) + [(u"Všechny soubory", "*.*")]
         if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
             patterns.insert(0, (u"Soubory požadovaného typu", pattern))
@@ -253,6 +252,7 @@ class WxUIBackend(ClientUIBackend):
     def __init__(self):
         try:
             import wx
+            assert wx
         except ImportError:
             raise BackendNotAvailable()
         # TODO: This is now commented out because x2goclient.py creates a 'wx.App'
@@ -411,7 +411,7 @@ class Win32UIBackend(ClientUIBackend):
         # Without this parent windows the method DoModal doesn't show
         # the dialog window on top...
         parent = win32ui.FindWindow(None, None)
-        dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename, flags,
+        dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename or '*.*', flags,
                                           '|'.join(["%s|%s" % (self._pattern_label(label, pat),
                                                                ';'.join(pat))
                                                     for label, pat in patterns]) + '||',
