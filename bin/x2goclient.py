@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-09-01 14:43'
+_VERSION = '2016-09-01 19:50'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
@@ -924,6 +924,16 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 app.update_progress_dialog(message=_(u"Opening selected profile. Please wait..."))
                 _auth_info.update_from_profile(profile)
                 _auth_info.update_args(self.args)
+                # We have to check, if we are able to connect to application server
+                # with current connect_parameters.
+                test_client = PytisClient.pytis_ssh_connect()
+                if test_client:
+                    auth_password = _auth_info.get('password')
+                    if auth_password and auth_password != self.args.password:
+                        self.args.password = auth_password
+                    test_client.close()
+                else:
+                    raise Exception(_("Couldn't connect to application server %s." % self.args.server))
                 params = profiles.to_session_params(profile_id)
                 # Start xserver according to the selected profile
                 rootless = profile.get('rootless', True)
