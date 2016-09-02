@@ -775,11 +775,6 @@ class Configuration(object):
         _DESCR = _("Enable RPC communication with Windows client machines.")
         _DEFAULT = True
 
-    class _Option_rpc_remote_view(BooleanOption):
-        """Enable viewing print files remotely on a client machine."""
-        _DESCR = _("Enable viewing print files remotely on a client machine.")
-        _DEFAULT = True
-
     class _Option_session_id(StringOption, CommandlineOption):
         """X2Go session id."""
         _DESCR = _("For internal use only.")

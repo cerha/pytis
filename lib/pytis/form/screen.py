@@ -3335,14 +3335,8 @@ def write_file(data, filename, mode='w'):
 
 def _launch_file_or_data(filename, data=None, decrypt=False):
     import config
-    import mimetypes
-    mime_type = mimetypes.guess_type(filename)[0]
-    if mime_type == 'application/pdf':
-        allow_remote_viewer = config.rpc_remote_view
-    else:
-        allow_remote_viewer = True
     # Try to launch the file remotely first.
-    if allow_remote_viewer and pytis.remote.client_available():
+    if pytis.remote.client_available():
         suffix = os.path.splitext(filename)[1]
         try:
             remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
@@ -3371,6 +3365,8 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
                     remote_file.name)
                 pytis.remote.launch_file(remote_file.name)
                 return
+    import mimetypes
+    mime_type = mimetypes.guess_type(filename)[0]
     viewer = None
     if mime_type == 'application/pdf' and config.postscript_viewer:
         # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.

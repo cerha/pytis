@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2014, 2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,7 +61,6 @@ _LAYOUT = (
                 'show_splash',
                 'cache_spec_onstart',
                 'rpc_communication_enabled',
-                'rpc_remote_view',
                 ),
         LVGroup(_("Other"),
                 'sender_address'),
@@ -91,7 +90,6 @@ _LABELS = {
     'export_directory': _("Default directory"),
     'export_encoding': _("Character encoding"),
     'rpc_communication_enabled': _("Windows workstation support"),
-    'rpc_remote_view': _("Open PDF documents on Windows workstation"),
 }
 
 _FIELDSPEC_KWARGS = {
@@ -132,7 +130,7 @@ def configurable_options():
 
 class _ConfigData(pytis.data.RestrictedData):
     """Falešná datová třída."""
-    
+
     def __init__(self, columns, **kwargs):
         super(_ConfigData, self).__init__(columns=columns, key=columns[0], **kwargs)
         self._giveone = False
@@ -162,7 +160,7 @@ class _ConfigData(pytis.data.RestrictedData):
         self.select()
         new_row = self.fetchone()
         return new_row, True
-        
+
 
 class ConfigForm(PopupEditForm):
     """Formulář pro editaci konfiguračních voleb.
@@ -170,16 +168,16 @@ class ConfigForm(PopupEditForm):
     Argument 'name' konstruktoru zde nemá obvyklý význam.  Slouží jako klíč do
     seznamu layoutů definovaného výše (konstanta '_LAYOUT').  Datová i
     prezentační specifikace pro tento layout jsou vytvořeny automaticky.
-    
+
     Formulář po svém ukončení automaticky aktualizuje konfiguraci novými
     hodnotami.
 
     """
     DESCR = _("configuration form")
-    
+
     def __init__(self, *args, **kwargs):
         super(ConfigForm, self).__init__(*args, **dict(kwargs, mode=self.MODE_EDIT, select_row=0))
-        
+
     def _layout(self):
         return dict(_LAYOUT)[self._name]
 
@@ -201,10 +199,10 @@ class ConfigForm(PopupEditForm):
         columns = [pytis.data.ColumnSpec(option, config.option(option).type())
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()
-    
+
     def _print_menu(self):
         return None
-    
+
     def _buttons(self):
         button = dict(id=wx.ID_APPLY,
                       tooltip=_("Apply changes without closing the form"),
