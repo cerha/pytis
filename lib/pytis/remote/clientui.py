@@ -47,6 +47,14 @@ class ClientUIBackend(object):
     than 'ClientUIBackend' itself.
 
     """
+
+    _DEPENDS = ()
+    """Tuple of all python module names required by the backend.
+
+    Creation of module instance will fail with 'BackendNotAvailable' if one of
+    the named modules is not available.
+
+    """
     class _Object(object):
         """Helper class for method result storage."""
         def __init__(self, **kwargs):
@@ -78,6 +86,12 @@ class ClientUIBackend(object):
             raise Exception(u'No suitable UI backend found.')
         else:
             return object.__new__(cls)
+
+    def __init__(self):
+        import pkgutil
+        for module in self._DEPENDS:
+            if not pkgutil.find_loader(module):
+                raise BackendNotAvailable("Module %s not installed." % module)
 
     def _unicode(self, x):
         if isinstance(x, (tuple, list)):
@@ -249,17 +263,16 @@ class ClientUIBackend(object):
 class WxUIBackend(ClientUIBackend):
     """Implements UI backend operations using wx Widgets (requires wxPython)."""
 
+    _DEPENDS = ('wx',)
+
     def __init__(self):
-        try:
-            import wx
-            assert wx
-        except ImportError:
-            raise BackendNotAvailable()
+        super(WxUIBackend, self).__init__()
         # TODO: This is now commented out because x2goclient.py creates a 'wx.App'
         # already at startup and this application stays running during the whole
         # Pytis run.  Starting another here would cause conflicts and might crash
         # the whole Python process.  Thus we avoid starting a new wx.App here until
         # pytis2go.py is ready to replace x2goclient.py.
+        #import wx
         #self._app = wx.App(False)
 
     def _enter_text(self, title, label, password):
@@ -350,11 +363,7 @@ class WxUIBackend(ClientUIBackend):
 class Win32UIBackend(ClientUIBackend):
     """Implements UI backend operations using win32 Python API."""
 
-    def __init__(self):
-        import pkgutil
-        for m in ('win32ui', 'win32con', 'win32gui', 'win32clipboard', 'pywin.mfc.dialog'):
-            if not pkgutil.find_loader(m):
-                raise BackendNotAvailable()
+    _DEPENDS = ('win32ui', 'win32con', 'win32gui', 'win32clipboard', 'pywin.mfc.dialog')
 
     def _enter_text(self, title, label, password):
         import pywin.mfc.dialog
@@ -465,10 +474,7 @@ class Win32UIBackend(ClientUIBackend):
 class ClipboardUIBackend(ClientUIBackend):
     """Implements clipboard operations using the Python module 'pyperclip'."""
 
-    def __init__(self):
-        import pkgutil
-        if not pkgutil.find_loader('pyperclip'):
-            raise BackendNotAvailable()
+    _DEPENDS = ('pyperclip',)
 
     def _get_clipboard_text(self):
         import pyperclip
@@ -482,12 +488,7 @@ class ClipboardUIBackend(ClientUIBackend):
 class TkUIBackend(ClipboardUIBackend):
     """Implements UI backend operations using Tkinter."""
 
-    def __init__(self):
-        import pkgutil
-        for m in ('Tkinter', 'ttk', 'tkSimpleDialog', 'tkFileDialog'):
-            if not pkgutil.find_loader(m):
-                raise BackendNotAvailable()
-        super(TkUIBackend, self).__init__()
+    _DEPENDS = ClipboardUIBackend._DEPENDS + ('Tkinter', 'ttk', 'tkSimpleDialog', 'tkFileDialog')
 
     def _in_tk_app(method):
         def run(self, *args, **kwargs):
@@ -644,11 +645,7 @@ class PyZenityUIBackend(ClipboardUIBackend):
     # This backend is unused because it only adds another dependency
     # compared to 'ZenityUIBackend'.
 
-    def __init__(self):
-        import pkgutil
-        if not pkgutil.find_loader('PyZenity'):
-            raise BackendNotAvailable()
-        super(PyZenityUIBackend, self).__init__()
+    _DEPENDS = ClipboardUIBackend._DEPENDS + ('PyZenity',)
 
     def _enter_text(self, title, label, password):
         import PyZenity
