@@ -80,6 +80,7 @@ class ExposedFileWrapper(object):
         self._encoding = encoding
         self._decrypt = decrypt
 
+    @property
     def exposed_name(self):
         return self._filename
 

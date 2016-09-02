@@ -3289,7 +3289,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
     if cmode == 'remote':
         f = pytis.remote.open_selected_file(patterns=patterns, pattern=pattern, encrypt=encrypt)
         if f:
-            path = f.name()
+            path = f.name
             if '\\' in path:
                 import ntpath as splitter
             else:
@@ -3368,8 +3368,8 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
                 finally:
                     remote_file.close()
                 log(OPERATIONAL, "Launching file on Windows at %s:" % pytis.remote.client_ip(),
-                    remote_file.name())
-                pytis.remote.launch_file(remote_file.name())
+                    remote_file.name)
+                pytis.remote.launch_file(remote_file.name)
                 return
     viewer = None
     if mime_type == 'application/pdf' and config.postscript_viewer:
