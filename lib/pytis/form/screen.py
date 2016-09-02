@@ -3169,11 +3169,11 @@ def select_file(filename=None, patterns=(), pattern=None):
         initially selected) entry with label "Files of the required type".
 
     """
-    mode = _client_mode()
-    if mode == 'remote':
+    cmode = _client_mode()
+    if cmode == 'remote':
         return pytis.remote.select_file(filename=filename, multi=False,
                                         patterns=patterns, pattern=pattern)
-    elif mode == 'local':
+    elif cmode == 'local':
         return pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
                                      mode=pytis.form.FileDialog.OPEN,
                                      wildcards=_wildcards(patterns, pattern))
@@ -3192,10 +3192,10 @@ def select_files(directory=None, patterns=(), pattern=None):
 
     """
     # TODO: directory is ignored in the remote variant.
-    mode = _client_mode()
-    if mode == 'remote':
+    cmode = _client_mode()
+    if cmode == 'remote':
         return pytis.remote.select_file(patterns=patterns, pattern=pattern, multi=True)
-    elif mode == 'local':
+    elif cmode == 'local':
         return pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
                                      mode=pytis.form.FileDialog.OPEN,
                                      wildcards=_wildcards(patterns, pattern))
@@ -3207,10 +3207,10 @@ def select_directory():
     exists, the returned directory belongs to the client's filesystem.
 
     """
-    mode = _client_mode()
-    if mode == 'remote':
+    cmode = _client_mode()
+    if cmode == 'remote':
         return pytis.remote.select_directory()
-    elif mode == 'local':
+    elif cmode == 'local':
         return pytis.form.run_dialog(pytis.form.DirDialog)
 
 def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
@@ -3229,12 +3229,12 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
       patterns, pattern -- see 'pyts.form.select_file()'
 
     """
-    mode = _client_mode()
-    if mode == 'remote':
+    cmode = _client_mode()
+    if cmode == 'remote':
         return pytis.remote.make_selected_file(filename=filename, mode=str(mode),
                                                encoding=encoding,
                                                patterns=patterns, pattern=pattern)
-    elif mode == 'local':
+    elif cmode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename,
                                      mode=pytis.form.FileDialog.SAVE,
                                      wildcards=_wildcards(patterns, pattern))
@@ -3285,8 +3285,8 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
 
     """
     # TODO: Encryption not supported for the local variant.
-    mode = _client_mode()
-    if mode == 'remote':
+    cmode = _client_mode()
+    if cmode == 'remote':
         f = pytis.remote.open_selected_file(patterns=patterns, pattern=pattern, encrypt=encrypt)
         if f:
             path = f.name()
@@ -3295,7 +3295,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
             else:
                 splitter = os.path
             return f, splitter.split(path)[-1]
-    elif mode == 'local':
+    elif cmode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, mode=pytis.form.FileDialog.OPEN,
                                      wildcards=_wildcards(patterns, pattern))
         if path:
