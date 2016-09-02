@@ -2265,7 +2265,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
-            exported_filename = export_file.name()
+            exported_filename = export_file.name
             export_file.close()
             pytis.form.launch_file(exported_filename)
 
