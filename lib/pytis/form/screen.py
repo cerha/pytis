@@ -3138,7 +3138,7 @@ def _client_mode():
                                              "which is currently broken.\nYou may complete the "
                                              "operation with restriction to server's local "
                                              "resources or cancel."),
-                                           icon=Message.ICON_ERROR,
+                                           icon=pytis.form.Message.ICON_ERROR,
                                            buttons=(_("Continue"), cancel),
                                            default=cancel)
             if answer == cancel:
