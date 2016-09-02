@@ -3353,8 +3353,8 @@ class BrowseForm(FoldableForm):
                     self._automatic_in_operator_links.append(in_item)
         self._automatic_links = [
             (link_label(spec_title(name)),
-             [(f, Link(name, column, binding=binding)) for name, column, f in items])
-            for name, (binding, items) in sorted(automatic_links.items())
+             [(f, Link(name, column, binding=_binding)) for name, column, f in items])
+            for name, (_binding, items) in sorted(automatic_links.items())
         ]
         self._explicit_in_operator_links.sort()
         self._automatic_in_operator_links.sort()
@@ -3518,8 +3518,7 @@ class BrowseForm(FoldableForm):
                            command=Application.COMMAND_RUN_FORM(
                                name=self._name,
                                form_class=pytis.form.MultiBrowseDualForm,
-                               select_row=self._current_key(),
-                           ),
+                               select_row=self._current_key(),),
                            help=_("Open the current record in a main form with "
                                   "related data in side forms."),
                            icon='link'))
