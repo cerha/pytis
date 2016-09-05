@@ -2267,7 +2267,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if export_function(export_file) and remote:
             exported_filename = export_file.name
             export_file.close()
-            pytis.form.launch_file(exported_filename)
+            pytis.remote.launch_file(exported_filename)
 
     def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
