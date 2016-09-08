@@ -82,6 +82,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
+    _STATE_RECENT_DIRECTORIES = 'recent_directories'
 
     def _get_command_handler_instance(cls):
         global _application
@@ -311,6 +312,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             else:
                 log(OPERATIONAL, "Ignoring recent form:", args)
         self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
+        # Init the recent directories memory.
+        directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, (), tuple, tuple)
+        self._recent_directories.update(dict(directories))
         # Initialize the menubar.
         mb = self._create_menubar()
         if mb is None:
@@ -751,6 +755,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 else:
                     self._unset_state_param(self._STATE_STARTUP_FORMS)
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
+            self._set_state_param(self._STATE_RECENT_DIRECTORIES,
+                                  tuple(self._recent_directories.items()))
         except Exception as e:
             safelog(str(e))
         try:
@@ -2054,8 +2060,10 @@ def remote_connection_initially_available():
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""
+    print '===', key, _application._recent_directories.get(key)
     return _application._recent_directories.get(key)
 
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
+    print '==>', key, directory
     _application._recent_directories[key] = directory
