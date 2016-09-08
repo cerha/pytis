@@ -3145,7 +3145,28 @@ def _client_mode():
                 return None
         return 'local'
 
-def select_file(filename=None, patterns=(), pattern=None):
+def _dirname(client_mode, filename):
+    """Return the directory name for given file name in given client mode.
+
+    Arguments:
+
+      client_mode -- 'local' for local file names (in application server's
+        filesystem) or 'remote' for file names from remote client's filesystem.
+      filename -- file name as a string.
+
+    """
+    if filename:
+        if client_mode == 'local':
+            pathmod = os.path
+        elif '\\' in filename:
+            import ntpath as pathmod
+        else:
+            import posixpath as pathmod
+        return pathmod.dirname(filename)
+    else:
+        return None
+
+def select_file(filename=None, patterns=(), pattern=None, context='default'):
     """Return a filename selected by the user in a GUI dialog.
 
     Returns None if the user cancels the dialog.  If remote client connection
@@ -3167,18 +3188,30 @@ def select_file(filename=None, patterns=(), pattern=None):
         basestrings or 'None'.  If 'patterns' don't already contain an entry
         for given pattern(s), such item is added as the first (and thus the
         initially selected) entry with label "Files of the required type".
+      context -- selector of the memory for keeping track of the most recently
+        used directory.  In not None, the initial dialog directory will be
+        loaded from given memory and the memory will be updated by the path of
+        the selected file when the dialog is closed.  The selector is an
+        arbitrary string - for each unique string the most recently used
+        directory is stored separately.
 
     """
     cmode = _client_mode()
+    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
     if cmode == 'remote':
-        return pytis.remote.select_file(filename=filename, multi=False,
-                                        patterns=patterns, pattern=pattern)
+        result = pytis.remote.select_file(filename=filename, directory=directory,
+                                          patterns=patterns, pattern=pattern, multi=False)
     elif cmode == 'local':
-        return pytis.form.run_dialog(pytis.form.FileDialog, file=filename, multi=False,
-                                     mode=pytis.form.FileDialog.OPEN,
-                                     wildcards=_wildcards(patterns, pattern))
+        result = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, dir=directory,
+                                       mode=pytis.form.FileDialog.OPEN, multi=False,
+                                       wildcards=_wildcards(patterns, pattern))
+    else:
+        result = None
+    if context and result:
+        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result))
+    return result
 
-def select_files(directory=None, patterns=(), pattern=None):
+def select_files(directory=None, patterns=(), pattern=None, context='default'):
     """Return a tuple of filenames selected by the user in a GUI dialog.
 
     Returns empty tuple if the user cancels the dialog.  If remote client
@@ -3189,31 +3222,53 @@ def select_files(directory=None, patterns=(), pattern=None):
 
       directory -- the initial directory or None
       patterns, pattern -- see 'pyts.form.select_file()'
+      context -- see 'pyts.form.select_file()' - unused if 'directory' not None.
 
     """
     # TODO: directory is ignored in the remote variant.
     cmode = _client_mode()
+    if cmode and context and directory is None:
+        directory = pytis.form.get_recent_directory((cmode, context))
+    else:
+        context = None # Prevent storing the passed directory when dialog closed.
     if cmode == 'remote':
-        return pytis.remote.select_file(patterns=patterns, pattern=pattern, multi=True)
+        result = pytis.remote.select_file(directory=directory,
+                                          patterns=patterns, pattern=pattern, multi=True)
     elif cmode == 'local':
-        return pytis.form.run_dialog(pytis.form.FileDialog, dir=directory, multi=True,
-                                     mode=pytis.form.FileDialog.OPEN,
-                                     wildcards=_wildcards(patterns, pattern))
+        result = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory,
+                                       mode=pytis.form.FileDialog.OPEN, multi=True,
+                                       wildcards=_wildcards(patterns, pattern))
+    else:
+        result = None
+    if context and result:
+        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result[0]))
+    return result
 
-def select_directory():
+def select_directory(context='default'):
     """Return a directory selected by the user in a GUI dialog.
+
+    Arguments:
+
+      context -- see 'pyts.form.select_file()'
 
     Returns None if the user cancels the dialog.  If remote client connection
     exists, the returned directory belongs to the client's filesystem.
 
     """
     cmode = _client_mode()
+    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
     if cmode == 'remote':
-        return pytis.remote.select_directory()
+        result = pytis.remote.select_directory(directory=directory)
     elif cmode == 'local':
-        return pytis.form.run_dialog(pytis.form.DirDialog)
+        result = pytis.form.run_dialog(pytis.form.DirDialog, path=directory)
+    else:
+        result = None
+    if context and result:
+        pytis.form.set_recent_directory((cmode, context), result)
+    return result
 
-def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
+def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
+                       context='default'):
     """Return a write-only 'file' like object of a user selected file.
 
     The file is selected by the user using a GUI dialog.  Returns 'None' if the
@@ -3227,21 +3282,31 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
       patterns, pattern -- see 'pyts.form.select_file()'
+      context -- see 'pyts.form.select_file()'
 
     """
     cmode = _client_mode()
+    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
     if cmode == 'remote':
-        return pytis.remote.make_selected_file(filename=filename, mode=str(mode),
-                                               encoding=encoding,
-                                               patterns=patterns, pattern=pattern)
+        result = pytis.remote.make_selected_file(filename=filename, directory=directory,
+                                                 mode=str(mode), encoding=encoding,
+                                                 patterns=patterns, pattern=pattern)
     elif cmode == 'local':
-        path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename,
+        path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, dir=directory,
                                      mode=pytis.form.FileDialog.SAVE,
                                      wildcards=_wildcards(patterns, pattern))
         if path:
-            return open(path, str(mode))
+            result = open(path, str(mode))
+        else:
+            result = None
+    else:
+        result = None
+    if context and result:
+        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result.name))
+    return result
 
-def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None):
+def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
+                        context='default'):
     """Write 'data' to a file selected by the user using a GUI dialog.
 
     The file is selected by the user using a GUI dialog.  Returns 'True' if the
@@ -3256,10 +3321,11 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(),
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
       patterns, pattern -- see 'pyts.form.select_file()'
+      context -- see 'pyts.form.select_file()'
 
     """
     f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
-                           patterns=patterns, pattern=pattern)
+                           patterns=patterns, pattern=pattern, context=context)
     if f:
         try:
             f.write(data)
@@ -3269,7 +3335,7 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(),
     else:
         return False
 
-def open_selected_file(patterns=(), pattern=None, encrypt=None):
+def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default'):
     """Return a read-only 'file' like object of a user selected file and its filename.
 
     The file is selected by the user using a GUI dialog.  Returns a pair (fh,
@@ -3282,24 +3348,32 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None):
       encrypt -- list of encryption keys to use to encrypt the file; if the
         list is empty then let the user select the keys; if 'None' then
         don't encrypt the file
+      context -- see 'pyts.form.select_file()'
 
     """
     # TODO: Encryption not supported for the local variant.
     cmode = _client_mode()
+    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
     if cmode == 'remote':
-        f = pytis.remote.open_selected_file(patterns=patterns, pattern=pattern, encrypt=encrypt)
+        f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
+                                            patterns=patterns, pattern=pattern)
         if f:
-            path = f.name
-            if '\\' in path:
-                import ntpath as splitter
+            filename = f.name
+            if '\\' in filename:
+                import ntpath as pathmod
             else:
-                splitter = os.path
-            return f, splitter.split(path)[-1]
+                import posixpath as pathmod
+            if context:
+                pytis.form.set_recent_directory((cmode, context), pathmod.dirname(filename))
+            return f, pathmod.basename(filename)
     elif cmode == 'local':
-        path = pytis.form.run_dialog(pytis.form.FileDialog, mode=pytis.form.FileDialog.OPEN,
-                                     wildcards=_wildcards(patterns, pattern))
-        if path:
-            return open(path), os.path.split(path)[-1]
+        filename = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory,
+                                         mode=pytis.form.FileDialog.OPEN,
+                                         wildcards=_wildcards(patterns, pattern))
+        if filename:
+            if context:
+                pytis.form.set_recent_directory((cmode, context), os.path.dirname(filename))
+            return open(filename), os.path.basename(filename)
     return None, None
 
 def open_file(filename, mode='w'):

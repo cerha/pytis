@@ -326,7 +326,7 @@ class PytisUserService(PytisService):
         """
         return self._open_file(filename, encoding, mode, encrypt=encrypt, decrypt=decrypt)
 
-    def exposed_open_selected_file(self, patterns=(), pattern=None, encrypt=None):
+    def exposed_open_selected_file(self, directory=None, patterns=(), pattern=None, encrypt=None):
         """Return a read-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -334,6 +334,7 @@ class PytisUserService(PytisService):
 
         Arguments:
 
+          directory -- initial directory of the GUI dialog
           patterns -- a sequence of pairs (label, pattern) for file filtering
             as described in 'pytis.remote.ClientUIBackend.select_file()'.
           pattern -- a string defining the required file name pattern, or 'None'
@@ -344,7 +345,8 @@ class PytisUserService(PytisService):
         """
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
-        filename = self._client.select_file(patterns=patterns, pattern=pattern)
+        filename = self._client.select_file(directory=directory,
+                                            patterns=patterns, pattern=pattern)
         if filename is None:
             return None
         return ExposedFileWrapper(filename, mode='rb', encrypt=self._encrypt(encrypt))
@@ -358,7 +360,7 @@ class PytisUserService(PytisService):
 
         Arguments:
 
-          directory -- initial directory for the dialog
+          directory -- initial directory of the GUI dialog
           filename -- default filename or None
           patterns -- a sequence of pairs (label, pattern) for file filtering
             as described in 'pytis.remote.ClientUIBackend.select_file()'.
@@ -370,7 +372,7 @@ class PytisUserService(PytisService):
         """
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
-        filename = self._client.select_file(directory=directory, filename=filename,
+        filename = self._client.select_file(filename=filename, directory=directory,
                                             patterns=patterns, pattern=pattern, save=True)
         if filename is None:
             return None
@@ -395,10 +397,11 @@ class PytisUserService(PytisService):
         return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
                                   decrypt=self._decrypt(decrypt))
 
-    def exposed_select_directory(self):
-        return self._client.select_directory()
+    def exposed_select_directory(self, directory=None):
+        return self._client.select_directory(directory=directory)
 
-    def exposed_select_file(self, filename=None, patterns=(), pattern=None, multi=False):
+    def exposed_select_file(self, filename=None, directory=None, patterns=(), pattern=None,
+                            multi=False):
         """Return a list of filenames selected by user in GUI dialog.
 
         The filenames are selected by the user using a GUI dialog.  If the user
@@ -407,18 +410,20 @@ class PytisUserService(PytisService):
         Arguments:
 
           filename -- default filename or None
+          directory -- initial directory of the GUI dialog
           patterns -- a sequence of pairs (label, pattern) for file filtering
             as described in 'pytis.remote.ClientUIBackend.select_file()'.
           pattern -- a string defining the required file name pattern, or 'None'
           multi -- iff true, allow selecting multiple files
 
         """
+        assert filename is None or isinstance(filename, basestring), filename
+        assert directory is None or isinstance(directory, (str, unicode)), directory
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
-        assert filename is None or isinstance(filename, basestring), filename
         assert isinstance(multi, bool), multi
-        return self._client.select_file(filename=filename, patterns=patterns,
-                                        pattern=pattern, multi=multi)
+        return self._client.select_file(filename=filename, directory=directory,
+                                        patterns=patterns, pattern=pattern, multi=multi)
 
 class PytisAdminService(PytisService):
 

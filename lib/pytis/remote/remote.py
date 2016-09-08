@@ -316,7 +316,8 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
                                                   filename=filename, error=e))
 
-def open_selected_file(patterns=(), pattern=None, template=None, encrypt=None):
+def open_selected_file(directory=None, patterns=(), pattern=None, template=None, encrypt=None):
+    assert directory is None or isinstance(directory, basestring), directory
     assert isinstance(patterns, (tuple, list)), patterns
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert encrypt is None or isinstance(encrypt, list), encrypt
@@ -326,7 +327,8 @@ def open_selected_file(patterns=(), pattern=None, template=None, encrypt=None):
         assert not pattern, (template, pattern)
         pattern = template
     try:
-        return _request('open_selected_file', patterns=patterns, pattern=pattern, encrypt=encrypt)
+        return _request('open_selected_file', directory=directory,
+                        patterns=patterns, pattern=pattern, encrypt=encrypt)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
@@ -363,15 +365,18 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     except:
         return None
 
-def select_directory():
+def select_directory(directory=None):
+    assert directory is None or isinstance(directory, (str, unicode)), directory
     try:
-        return _request('select_directory')
+        return _request('select_directory', directory=directory)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
 
-def select_file(filename=None, patterns=(), pattern=None, template=None, multi=False):
+def select_file(filename=None, directory=None, patterns=(), pattern=None, template=None,
+                multi=False):
     assert filename is None or isinstance(filename, basestring), filename
+    assert directory is None or isinstance(directory, (str, unicode)), directory
     assert isinstance(patterns, (tuple, list)), patterns
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert isinstance(multi, bool), multi
@@ -381,8 +386,8 @@ def select_file(filename=None, patterns=(), pattern=None, template=None, multi=F
         assert not pattern, (template, pattern)
         pattern = template
     try:
-        return _request('select_file', filename=filename, patterns=patterns,
-                        pattern=pattern, multi=multi)
+        return _request('select_file', filename=filename, directory=directory,
+                        patterns=patterns, pattern=pattern, multi=multi)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))

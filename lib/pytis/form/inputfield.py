@@ -1829,9 +1829,6 @@ class FileField(Invocable, InputField):
     _INVOKE_HELP = _("Show a dialog to browse files in the file system.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
-    _last_load_dir = None
-    _last_save_dir = None
-
     def _init_attributes(self):
         self._buffer = None
         super(FileField, self)._init_attributes()
@@ -1930,8 +1927,7 @@ class FileField(Invocable, InputField):
     def _cmd_load(self):
         pattern = ['*.%s' % ext for ext in self._spec.filename_extensions()] or None
         #msg = _("Select the file for field '%s'", self.spec().label())
-        #directory = FileField._last_load_dir or FileField._last_save_dir or ''
-        fh, filename = pytis.form.open_selected_file(pattern=pattern)
+        fh, filename = pytis.form.open_selected_file(pattern=pattern, context='file-field')
         if fh:
             try:
                 try:
@@ -1957,10 +1953,10 @@ class FileField(Invocable, InputField):
 
     def _cmd_save(self):
         #msg = _("Save value of %s") % self.spec().label()
-        #directory = FileField._last_save_dir or FileField._last_load_dir or ''
         try:
             saved = pytis.form.write_selected_file(self._buffer.buffer(), mode='wb',
-                                                   filename=self._row.filename(self._id))
+                                                   filename=self._row.filename(self._id),
+                                                   context='file-field')
         except IOError as e:
             message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
         else:
@@ -2312,7 +2308,6 @@ class StructuredTextField(TextField):
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
         self._completer = None
         self._update_completions = None
-        self._last_load_dir = None
         self._storage = self._row.attachment_storage(self._id)
         return ctrl
 
@@ -2462,8 +2457,7 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        # defaultDir=self._last_load_dir or ''
-        fh, filename = pytis.form.open_selected_file()
+        fh, filename = pytis.form.open_selected_file(context='attachments')
         if fh:
             try:
                 if 'size' in row:

@@ -75,6 +75,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     """
     _menubar_forms = {}
     _log_login = True
+    _recent_directories = {}
 
     _WINDOW_MENU_TITLE = _("&Windows")
 
@@ -2042,6 +2043,19 @@ def built_in_status_fields():
                     refresh_interval=10000, width=5),
     )
 
+# Duplication of application methods here is a huge mess, so we
+# don't do so for the functions below.  If the 'application' object
+# is made public in future (which seems most desirable), these
+# functions can be turned into its methods.
+
 def remote_connection_initially_available():
     """Return True if the remote connection was available at application startup."""
     return _application._remote_connection_initially_available
+
+def get_recent_directory(key):
+    """Return the last directory set for given 'key' as a string or None."""
+    return _application._recent_directories.get(key)
+
+def set_recent_directory(key, directory):
+    """Remember given 'directory' for given 'key'."""
+    _application._recent_directories[key] = directory
