@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014, 2015, 2016 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -3318,8 +3318,10 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
            isinstance(result_type, (tuple, list,)) or result_type == self.RECORD:
             return sqlalchemy.sql.expression.TextClause(expression)
         else:
-            return sqlalchemy.sql.expression.literal_column(expression,
-                                                            type_=result_type.sqlalchemy_type())
+            return sqlalchemy.sql.expression.literal_column(
+                expression,
+                type_=result_type.sqlalchemy_type() if result_type else None
+            )
 
     def body(self):
         """Return function body as basestring.
