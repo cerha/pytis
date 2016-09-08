@@ -3314,14 +3314,14 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
         expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
         result_type = self.result_type
-        if result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER or \
-           isinstance(result_type, (tuple, list,)) or result_type == self.RECORD:
+        if ((result_type is None or
+             result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER or
+             result_type == self.RECORD or
+             isinstance(result_type, (tuple, list,)))):
             return sqlalchemy.sql.expression.TextClause(expression)
         else:
-            return sqlalchemy.sql.expression.literal_column(
-                expression,
-                type_=result_type.sqlalchemy_type() if result_type else None
-            )
+            return sqlalchemy.sql.expression.literal_column(expression,
+                                                            type_=result_type.sqlalchemy_type())
 
     def body(self):
         """Return function body as basestring.
