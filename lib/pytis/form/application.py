@@ -2016,7 +2016,12 @@ def built_in_status_fields():
     def _refresh_remote_status():
         import pytis.remote
         if pytis.remote.client_available():
-            return (_("Ok"), 'connected', _("Connected."))
+            tooltip_text = _("Connected.\nClient version: {}")
+            try:
+                version = pytis.remote.x2goclient_version()
+            except Exception:
+                version = _("Not available")
+            return (_("Ok"), 'connected', tooltip_text.format(version))
         else:
             return (_('N/A'), 'disconnected', _("Not available."))
 
