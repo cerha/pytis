@@ -2232,7 +2232,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         remote = False
         if pytis.remote.client_available():
             client_ip = pytis.remote.client_ip()
-            log(EVENT, 'Windows service on %s available' % client_ip)
+            log(EVENT, 'RPC communication on %s available' % client_ip)
             try:
                 export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
             except:

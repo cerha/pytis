@@ -771,8 +771,8 @@ class Configuration(object):
         _DEFAULT = 'linux.crt'
 
     class _Option_rpc_communication_enabled(BooleanOption):
-        """Enable RPC communication with Windows client machines."""
-        _DESCR = _("Enable RPC communication with Windows client machines.")
+        """Enable RPC communication with client machines."""
+        _DESCR = _("Enable RPC communication with client machines.")
         _DEFAULT = True
 
     class _Option_session_id(StringOption, CommandlineOption):
