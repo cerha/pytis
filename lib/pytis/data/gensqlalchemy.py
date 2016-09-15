@@ -1851,12 +1851,15 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             sqlalchemy.event.listen(self, 'after_create',
                                     _ObjectComment(self, self._DB_OBJECT, doc))
 
+    def _alter_owner_command(self):
+        return ('ALTER %s "%s"."%s" OWNER TO "%s"' %
+                (self._DB_OBJECT, self.schema, self.name, self.owner,))
+
     def _register_access_rights(self):
         for o in self._access_right_objects:
             sqlalchemy.event.listen(self, 'after_create', o)
         if self.owner:
-            command = ('ALTER %s "%s"."%s" OWNER TO "%s"' %
-                       (self._DB_OBJECT, self.schema, self.name, self.owner,))
+            command = self._alter_owner_command()
             sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
     def _create_rules(self):
@@ -3369,6 +3372,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                          self._LANGUAGE, stability, security, marker,))
         query_suffix = '\n%s' % (marker,)
         return query_prefix, query_suffix
+
+    def _alter_owner_command(self):
+        arguments = _function_arguments(self)
+        return ('ALTER %s "%s"."%s" (%s) OWNER TO "%s"' %
+                (self._DB_OBJECT, self.schema, self.name, arguments, self.owner,))
+
 
 class SQLFunction(_SQLQuery, SQLFunctional):
     """SQL function definition.
