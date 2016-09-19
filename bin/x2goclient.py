@@ -18,17 +18,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-09-02 15:26'
+_VERSION = '2016-09-19 22:05'
 
-XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
-XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
+XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
+XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis_old'
 
 import os
 
 XCONFIG_DEFAULTS = {
     'XServers': {
         'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
-                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop'],
+                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop', 'VcXsrv_pytis_old'],
     },
     'VcXsrv_pytis': {
         'display': 'localhost:20',
@@ -39,13 +39,22 @@ XCONFIG_DEFAULTS = {
         'parameters': [':20', '-clipboard', '-noprimary', '-multiwindow',
                        '-nowinkill', '-nounixkill', '-swcursor'],
     },
-    'VcXsrv_pytis_desktop': {
+    'VcXsrv_pytis_old': {
         'display': 'localhost:30',
         'last_display': 'localhost:30',
+        'process_name': 'vcxsrv_pytis_old.exe',
+        'test_installed': os.path.join(os.getcwd(), 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
+        'run_command': os.path.join(os.getcwd(), 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
+        'parameters': [':30', '-clipboard', '-noclipboardprimary', '-multiwindow',
+                       '-nowinkill', '-nounixkill', '-swcursor'],
+    },
+    'VcXsrv_pytis_desktop': {
+        'display': 'localhost:50',
+        'last_display': 'localhost:50',
         'process_name': 'vcxsrv_pytis_desktop.exe',
         'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
         'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-        'parameters': [':30', '-clipboard', 'noprimary', '-nowinkill',
+        'parameters': [':50', '-clipboard', 'noprimary', '-nowinkill',
                        '-nounixkill', '-swcursor', ],
     },
 }
