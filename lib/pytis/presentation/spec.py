@@ -3899,22 +3899,7 @@ class AttachmentStorage(object):
 
     def _resource_cls(self, filename):
         import lcg
-        try:
-            ext = filename.rsplit('.', 1)[1].lower()
-        except IndexError:
-            cls = lcg.Resource
-        else:
-            if ext in ('jpeg', 'jpg', 'gif', 'png'):
-                cls = lcg.Image
-            elif ext in ('mp3', 'ogg'):
-                cls = lcg.Audio
-            elif ext in ('flv', 'ogv', 'mp4'):
-                cls = lcg.Video
-            elif ext == 'swf':
-                cls = lcg.Flash
-            else:
-                cls = lcg.Resource
-        return cls
+        return lcg.Resource.subclass(filename)
 
     def _resource_uri(self, filename):
         """Return the URI of a resource of given 'filename'.
