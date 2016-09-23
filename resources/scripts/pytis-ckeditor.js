@@ -17,33 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*jhlint browser: true */
-/*jshint es3: true */
-/*jshint -W097 */ // allow direct "use strict"
-/*jhlint regexp: true */
-/*global Class */
-/*global Element */
-/*global Hash */
-/*global pytis */
-/*global alert */
-/*global confirm */
-/*global document */
-/*global $ */
-/*global CKEDITOR */
-/*global ck_get_ascendant */
-/*global ck_get_dom_subelement */
-/*global ck_language_combo */
-/*global embed_swf_object */
-/*global parseMath */
-/*global Node */
-/*global Option */
+/* eslint no-unused-vars: 0 */
+/* global Element, Hash, $, pytis, alert, confirm */
+/* global CKEDITOR, ck_get_ascendant, ck_get_dom_subelement, ck_language_combo, Node, Option */
+/* global embed_swf_object, parseMath */
 
 "use strict";
 
 // Remember the base uri of the current script here for later use (hack).
-pytis.HtmlField.scripts = document.getElementsByTagName('script');
-pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.length-1]
-    .src.replace(/\/[^\/]+$/, '');
+pytis.HtmlField.base_uri = (function() {
+    var scripts = document.getElementsByTagName('script');
+    return scripts[scripts.length - 1].src.replace(/\/[^\/]+$/, '');
+})();
 
 pytis.HtmlField.plugin = function(editor) {
     // Construct dialog and add toolbar button
@@ -58,13 +43,13 @@ pytis.HtmlField.plugin = function(editor) {
         /* Add command */
         editor.addCommand('insertPytis' + type, new CKEDITOR.dialogCommand('pytis-' + ltype));
         icon = pytis.HtmlField.base_uri + '/editor-icons.png';
-	iconOffset = -i*16;
+        iconOffset = -i*16;
         /* Add UI button */
         editor.ui.addButton('Pytis' + type, {
             label: pytis._(types[i]),
             command: 'insertPytis' + type,
             icon: icon,
-	    iconOffset: iconOffset
+            iconOffset: iconOffset
         });
         /* Add context menu entry */
         if (editor.contextMenu) {
@@ -73,7 +58,7 @@ pytis.HtmlField.plugin = function(editor) {
                 command: 'insertPytis' + type,
                 group: 'PytisGroup',
                 icon: icon,
-		iconOffset: iconOffset
+                iconOffset: iconOffset
             });
 
         }
@@ -81,101 +66,101 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Create insertSpaceBefore and insertSpaceAfter menu items */
     function insert_space(direction, element) {
-	var elem = ck_get_ascendant(editor, 'div') || ck_get_ascendant(editor, 'table');
-	var paragraph = new CKEDITOR.dom.element('p');
-	if (direction === 'before') {
-	    paragraph.insertBefore(elem);
-	} else if (direction === 'after') {
-	    paragraph.insertAfter(elem);
-	}
+        var elem = ck_get_ascendant(editor, 'div') || ck_get_ascendant(editor, 'table');
+        var paragraph = new CKEDITOR.dom.element('p');
+        if (direction === 'before') {
+            paragraph.insertBefore(elem);
+        } else if (direction === 'after') {
+            paragraph.insertAfter(elem);
+        }
     }
     editor.addCommand('insertSpaceBefore', new CKEDITOR.command(editor, {
-	exec: function(editor) {
-	    insert_space('before');
-	}
+        exec: function(editor) {
+            insert_space('before');
+        }
     }));
     editor.addMenuItem('insertSpaceBefore', {
-	label: pytis._("Insert space before"),
-	command: 'insertSpaceBefore',
-	group: 'PytisGroup'
+        label: pytis._("Insert space before"),
+        command: 'insertSpaceBefore',
+        group: 'PytisGroup'
     });
     editor.addCommand('insertSpaceAfter', new CKEDITOR.command(editor, {
-	exec: function(editor) {
-	    insert_space('after');
-	}
+        exec: function(editor) {
+            insert_space('after');
+        }
     }));
     editor.addMenuItem('insertSpaceAfter', {
-	label: pytis._("Insert space after"),
-	command: 'insertSpaceAfter',
-	group: 'PytisGroup'
+        label: pytis._("Insert space after"),
+        command: 'insertSpaceAfter',
+        group: 'PytisGroup'
     });
 
      /* Add a common context menu listener handling all the attachment types */
     if (editor.contextMenu) {
-	editor.contextMenu.addListener(function(element) {
+        editor.contextMenu.addListener(function(element) {
             if (element) {
-		element = (element.getAscendant('a', true) ||
-			   element.getAscendant('div', true) ||
-			   element.getAscendant('span', true) ||
-			   element.getAscendant('table', true));
-	    }
+                element = (element.getAscendant('a', true) ||
+                           element.getAscendant('div', true) ||
+                           element.getAscendant('span', true) ||
+                           element.getAscendant('table', true));
+            }
             if (element && !element.data('cke-realelement')) {
-		var result = {};
-		for (i=0; i<types.length; i++) {
+                var result = {};
+                for (i=0; i<types.length; i++) {
                     if (element.hasClass('lcg-'+types[i].toLowerCase())) {
-			result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
+                        result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
                     }
-		}
-		if (((element.getName() === 'div') && (element.isReadOnly())) ||
-		    element.getName() === 'table') {
+                }
+                if (((element.getName() === 'div') && (element.isReadOnly())) ||
+                    element.getName() === 'table') {
                     result.insertSpaceBefore = CKEDITOR.TRISTATE_OFF;
                     result.insertSpaceAfter = CKEDITOR.TRISTATE_OFF;
                 }
                 if (element.hasClass('lcg-image')) {
                     result.figureCaption = CKEDITOR.TRISTATE_OFF;
-		}
+                }
                 return result;
             }
-	});
+        });
     }
 
     /* Add support for blockquote foters */
     editor.addCommand('blockquote-footer', {
         exec: function(editor) {
             var blockquote = ck_get_ascendant(editor, 'blockquote');
-	    if (blockquote) {
-		/* Check existing or create new footer */
-		var footer = ck_get_dom_subelement(blockquote, ['footer']);
-		if (!footer) {
+            if (blockquote) {
+                /* Check existing or create new footer */
+                var footer = ck_get_dom_subelement(blockquote, ['footer']);
+                if (!footer) {
                     footer = CKEDITOR.dom.element.createFromHtml("<footer>—&nbsp;</footer>");
                     blockquote.append(footer);
-		}
-		/* Move caret to footer element */
-		var range = new CKEDITOR.dom.range(editor.document);
-		range.moveToElementEditablePosition(footer, true);
-		editor.getSelection().selectRanges([range]);
-	    } else {
-		alert(pytis._("Create the quotation first, then you can supply the source inside it."));
-	    }
+                }
+                /* Move caret to footer element */
+                var range = new CKEDITOR.dom.range(editor.document);
+                range.moveToElementEditablePosition(footer, true);
+                editor.getSelection().selectRanges([range]);
+            } else {
+                alert(pytis._("Create the quotation first, then you can supply the source inside it."));
+            }
         }
     });
     editor.ui.addButton('BlockquoteFooter', {
         label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
         icon: pytis.HtmlField.base_uri + '/editor-icons.png',
-	iconOffset: -8*16
+        iconOffset: -8*16
     });
 
     /* Add support for reindent */
     editor.addCommand('reindent', {
         exec: function(editor) {
-	    var sel = editor.getSelection();
-	    var text = sel.getSelectedText();
-	    if (text) {
-		var p = new CKEDITOR.dom.element('p');
-		p.setText(text.replace(/-\s*[\n\r]+/gm, '')); // remove word breaks
+            var sel = editor.getSelection();
+            var text = sel.getSelectedText();
+            if (text) {
+                var p = new CKEDITOR.dom.element('p');
+                p.setText(text.replace(/-\s*[\n\r]+/gm, '')); // remove word breaks
                 editor.insertElement(p);
-	    }
+            }
         }
     });
     editor.keystrokeHandler.keystrokes[CKEDITOR.CTRL + 32 /*space*/] = 'reindent';
@@ -222,7 +207,7 @@ pytis.HtmlField.plugin = function(editor) {
         label: pytis._("Definition list"),
         command: 'definition-list',
         icon: pytis.HtmlField.base_uri + '/editor-icons.png',
-	iconOffset: -7*16
+        iconOffset: -7*16
     });
 
     /* Add support for marking languages */
@@ -257,132 +242,132 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Simplify table dialog and add transformation options */
     CKEDITOR.on('dialogDefinition', function(event) {
-	function has_transformation(table, transformation) {
-	    var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
-	    var transformations = table.getAttribute('data-lcg-transformations');
-	    if (transformations === null) {
-		// Use default transformations for tables which don't have the
-		// 'data-lcg-transformations' attribute. These were created before
-		// the functionality was added so they deserve the defaults
-		// unlike the tables which have the attribute, but it is empty
-		// (no transformations allowed).
-		transformations = 'facing transpose';
-	    }
-	    return regex.test(transformations);
-	}
-	function add_transformation(table, transformation) {
-	    var regex = new RegExp('(?:^|\\s)' + transformation + '(?:\\s|$)', '');
-	    var transformations = table.getAttribute('data-lcg-transformations');
-	    if (!transformations) {
-		transformations = transformation;
-	    } else if (!regex.test(transformations)) {
-		transformations += ' ' + transformation;
-	    }
-	    table.setAttribute('data-lcg-transformations', transformations || '');
-	}
-	function remove_transformation(table, transformation) {
-	    var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
-	    var transformations = table.getAttribute('data-lcg-transformations');
-	    if (transformations && regex.test(transformations)) {
-		transformations = transformations.replace(regex, '').replace(/^\s+/, '');
-	    }
-	    table.setAttribute('data-lcg-transformations', transformations || '');
-	}
-	function setup_checkbox(table) {
-	    this.setValue(has_transformation(table, this.id));
-	}
-	function commit_checkbox(data, table) {
-	    if (this.getValue()) {
-		add_transformation(table, this.id);
-	    } else {
-		remove_transformation(table, this.id);
-	    }
-	}
-	function setup_radio(table) {
-	    ['row-expand', 'column-expand', 'split'].each(function(item) {
-		if (has_transformation(table, item)) {
-		    this.setValue(item);
-		}
-	    }.bind(this));
-	}
-	function commit_radio(data, table) {
-	    var transformation = this.getValue();
-	    ['row-expand', 'column-expand', 'split'].each(function(item) {
-		if (item === transformation) {
-		    add_transformation(table, item);
-		} else {
-		    remove_transformation(table, item);
-		}
-	    });
-	}
+        function has_transformation(table, transformation) {
+            var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
+            var transformations = table.getAttribute('data-lcg-transformations');
+            if (transformations === null) {
+                // Use default transformations for tables which don't have the
+                // 'data-lcg-transformations' attribute. These were created before
+                // the functionality was added so they deserve the defaults
+                // unlike the tables which have the attribute, but it is empty
+                // (no transformations allowed).
+                transformations = 'facing transpose';
+            }
+            return regex.test(transformations);
+        }
+        function add_transformation(table, transformation) {
+            var regex = new RegExp('(?:^|\\s)' + transformation + '(?:\\s|$)', '');
+            var transformations = table.getAttribute('data-lcg-transformations');
+            if (!transformations) {
+                transformations = transformation;
+            } else if (!regex.test(transformations)) {
+                transformations += ' ' + transformation;
+            }
+            table.setAttribute('data-lcg-transformations', transformations || '');
+        }
+        function remove_transformation(table, transformation) {
+            var regex = new RegExp('(?:^|\\s+)' + transformation + '(?=\\s|$)', '');
+            var transformations = table.getAttribute('data-lcg-transformations');
+            if (transformations && regex.test(transformations)) {
+                transformations = transformations.replace(regex, '').replace(/^\s+/, '');
+            }
+            table.setAttribute('data-lcg-transformations', transformations || '');
+        }
+        function setup_checkbox(table) {
+            this.setValue(has_transformation(table, this.id));
+        }
+        function commit_checkbox(data, table) {
+            if (this.getValue()) {
+                add_transformation(table, this.id);
+            } else {
+                remove_transformation(table, this.id);
+            }
+        }
+        function setup_radio(table) {
+            ['row-expand', 'column-expand', 'split'].each(function(item) {
+                if (has_transformation(table, item)) {
+                    this.setValue(item);
+                }
+            }.bind(this));
+        }
+        function commit_radio(data, table) {
+            var transformation = this.getValue();
+            ['row-expand', 'column-expand', 'split'].each(function(item) {
+                if (item === transformation) {
+                    add_transformation(table, item);
+                } else {
+                    remove_transformation(table, item);
+                }
+            });
+        }
         if (event.data.name === 'table' || event.data.name === 'tableProperties') {
             var dialog_definition = event.data.definition;
             dialog_definition.removeContents('advanced');
             var info_tab = dialog_definition.getContents('info');
             ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight',
-	     'txtCellSpace', 'txtCellPad', 'txtSummary'].each(function(item) {
+             'txtCellSpace', 'txtCellPad', 'txtSummary'].each(function(item) {
                  info_tab.remove(item);
              });
-	    dialog_definition.addContents({
-		id: 'transformations',
-		label: pytis._("Braille Transformations"),
-		elements: [{
-		    type: 'vbox',
-		    children: [
-			{type: 'html',
-			 html: pytis._("How should the table be transformed " +
-				       "for the Braille output when it doesn't fit " +
-				       "the output media in its original form?")},
-			{type: 'checkbox',
-			 id: 'facing',
-			 label: pytis._("Can be spread across facing pages"),
- 			 'default': true,
-			 setup: setup_checkbox,
-			 commit: commit_checkbox,
-			 value: '1'},
-			{type: 'checkbox',
-			 id: 'transpose',
-			 label: pytis._("Can be transposed (swap rows and columns)"),
-			 'default': true,
-			 setup: setup_checkbox,
-			 commit: commit_checkbox,
-			 value: '1'},
-			{type: 'radio',
-			 id: 'transform',
-			 label: pytis._("When this is not sufficient:"),
-			 items: [
-			     [pytis._("Expand to list by rows"), 'row-expand'],
-			     [pytis._("Expand to list by columns"), 'column-expand'],
-			     [pytis._("Split vertically into several narrower tables"), 'split']],
-			 setup: setup_radio,
-			 commit: commit_radio,
-			 buttonLayout: 'vertical'
-			}
-		    ]}]
-	    });
-	}
+            dialog_definition.addContents({
+                id: 'transformations',
+                label: pytis._("Braille Transformations"),
+                elements: [{
+                    type: 'vbox',
+                    children: [
+                        {type: 'html',
+                         html: pytis._("How should the table be transformed " +
+                                       "for the Braille output when it doesn't fit " +
+                                       "the output media in its original form?")},
+                        {type: 'checkbox',
+                         id: 'facing',
+                         label: pytis._("Can be spread across facing pages"),
+                         'default': true,
+                         setup: setup_checkbox,
+                         commit: commit_checkbox,
+                         value: '1'},
+                        {type: 'checkbox',
+                         id: 'transpose',
+                         label: pytis._("Can be transposed (swap rows and columns)"),
+                         'default': true,
+                         setup: setup_checkbox,
+                         commit: commit_checkbox,
+                         value: '1'},
+                        {type: 'radio',
+                         id: 'transform',
+                         label: pytis._("When this is not sufficient:"),
+                         items: [
+                             [pytis._("Expand to list by rows"), 'row-expand'],
+                             [pytis._("Expand to list by columns"), 'column-expand'],
+                             [pytis._("Split vertically into several narrower tables"), 'split']],
+                         setup: setup_radio,
+                         commit: commit_radio,
+                         buttonLayout: 'vertical'
+                        }
+                    ]}]
+            });
+        }
     });
 
     editor.on('key', function(event) {
-	var format = null;
-	var keyCode = event.data.keyCode;
+        var format = null;
+        var keyCode = event.data.keyCode;
         if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 49) { // CTRL+SHIFT+1
-	    format = CKEDITOR.config.format_h1;
+            format = CKEDITOR.config.format_h1;
         } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 50) { // CTRL+SHIFT+2
-	    format = CKEDITOR.config.format_h2;
+            format = CKEDITOR.config.format_h2;
         } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 51) { // CTRL+SHIFT+3
-	    format = CKEDITOR.config.format_h3;
+            format = CKEDITOR.config.format_h3;
         } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 52) { // CTRL+SHIFT+4
-	    format = CKEDITOR.config.format_h4;
+            format = CKEDITOR.config.format_h4;
         } else if (keyCode === CKEDITOR.CTRL + CKEDITOR.SHIFT + 53) { // CTRL+SHIFT+5
-	    format = CKEDITOR.config.format_h5;
-	}
-	if (format) {
+            format = CKEDITOR.config.format_h5;
+        }
+        if (format) {
             this.fire('saveSnapshot');
-	    var style = new CKEDITOR.style(format);
+            var style = new CKEDITOR.style(format);
             var elementPath = this.elementPath();
-	    this[style.checkActive(elementPath) ? 'removeStyle' : 'applyStyle'](style);
-	    this.fire('saveSnapshot');
+            this[style.checkActive(elementPath) ? 'removeStyle' : 'applyStyle'](style);
+            this.fire('saveSnapshot');
         }
     });
 };
@@ -403,25 +388,25 @@ function ck_element (dialog, id) {
      */
     var i, result;
     function ck_get_element_from_list (elements, id) {
-	var j, el;
+        var j, el;
         for (j = 0; j < elements.length; j++) {
             if (elements[j].id === id) {
                 return elements[j];
-	    }
-	    if (elements[j].type === 'hbox' || elements[j].type === 'vbox') {
+            }
+            if (elements[j].type === 'hbox' || elements[j].type === 'vbox') {
                 el = ck_get_element_from_list(elements[j].children, id);
                 if (el) {
                     return el;
-		}
+                }
             }
         }
         return null;
     }
     for (i=0; i < dialog.contents.length; i++) {
-	result = ck_get_element_from_list(dialog.contents[i].elements, id);
-	if (result) {
-	    return result;
-	}
+        result = ck_get_element_from_list(dialog.contents[i].elements, id);
+        if (result) {
+            return result;
+        }
     }
     return null;
 }
@@ -457,16 +442,16 @@ function ck_get_dom_subelement (element, path) {
     var ch = element.getChildren();
     var i, item;
     for (i=0; i < ch.count(); i++) {
-    	item = ch.getItem(i);
-    	if (typeof(item.getName) === 'function') { // e.g. comments do not have a name
-    	    if ((item.getName() === path[0]) ||  // match element name
-    		((path[0][0] === '.') && item.hasClass(path[0].slice(1)))) { // match element class
-    		if (path.length > 1) {
-    		    return ck_get_dom_subelement(item, path.slice(1));
-    		}
-    		return item;
-    	    }
-    	}
+        item = ch.getItem(i);
+        if (typeof(item.getName) === 'function') { // e.g. comments do not have a name
+            if ((item.getName() === path[0]) ||  // match element name
+                ((path[0][0] === '.') && item.hasClass(path[0].slice(1)))) { // match element class
+                if (path.length > 1) {
+                    return ck_get_dom_subelement(item, path.slice(1));
+                }
+                return item;
+            }
+        }
     }
     return null;
 }
@@ -487,7 +472,7 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type, keep_
     // Save field value before options update
     var value;
     if (keep_value) {
-	value = field.getValue();
+        value = field.getValue();
     }
     var i, a, label;
     // Update options
@@ -564,7 +549,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
         title: attachment_name,
         contents: [
             // Main Tab
-	    {id: 'main',
+            {id: 'main',
              label: attachment_name,
              elements: [
                  {type: 'hbox',
@@ -580,16 +565,16 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        label: attachment_name,
                        className: 'attachment-selector',
                        items: [],
-		       updateAttachmentList: function(element, keep_value) {
-			   ck_dialog_update_attachment_list(editor, this, attachment_type, keep_value);
-		       },
+                       updateAttachmentList: function(element, keep_value) {
+                           ck_dialog_update_attachment_list(editor, this, attachment_type, keep_value);
+                       },
                        updatePreview: function(attachment) {
                            // Update preview (to be overriden in children)
-			   return undefined;
+                           return undefined;
                        },
                        onChange: function(element) {
                            var filename = this.getValue();
-			   var i;
+                           var i;
                            if (filename) {
                                var field = $(editor.config.pytisFieldId)._pytis_field_instance;
                                var attachment = field.get_attachment(filename);
@@ -597,13 +582,13 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                    this.attachment = attachment;
                                    var dialog = CKEDITOR.dialog.getCurrent();
                                    var fields = attachment_properties;
-				   var pytis_field_name;
+                                   var pytis_field_name;
                                    for (i = 0; i < fields.length; i++) {
                                        pytis_field_name = fields[i];
                                        if (pytis_field_name === 'description') {
-					   /* Hack to overcome pytis attributes naming inconsistency */
-					   pytis_field_name = 'descr';
-				       }
+                                           /* Hack to overcome pytis attributes naming inconsistency */
+                                           pytis_field_name = 'descr';
+                                       }
                                        dialog.setValueOf('main', fields[i], attachment[pytis_field_name]);
                                    }
                                    this.updatePreview(attachment);
@@ -616,7 +601,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            var resource = element.data('lcg-resource');
                            if (resource) {
                                this.setValue(resource);
-			   }
+                           }
                        },
                        commit: function(element) {
                            if (this.attachment) {
@@ -639,7 +624,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                       {type: 'file',
                        id: 'upload',
                        label: '',
-		       size: '30',
+                       size: '30',
                        setup: function(element) {
                            // Register onload hook to respond to upload actions
                            var frame = CKEDITOR.document.getById(this._.frameId);
@@ -669,22 +654,22 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                if (form.getAttribute('action') !== field._form.getAttribute('action')) {
                                    form.setAttribute('action', field._form.getAttribute('action'));
                                    var hidden_fields = new Hash({
-				       '_pytis_form_update_request': 1,
+                                       '_pytis_form_update_request': 1,
                                        '_pytis_attachment_storage_field': field._id,
                                        '_pytis_attachment_storage_request': 'insert'
-				   });
-				   var i, elem;
+                                   });
+                                   var i, elem;
                                    for (i = 0; i < field._form.elements.length; i++) {
                                        elem = field._form.elements[i];
                                        if (elem.type === 'hidden') { // && e.name != 'submit')
                                            hidden_fields.set(elem.name, elem.value);
-				       }
+                                       }
                                    }
                                    hidden_fields.each(function (item) {
                                        Element.insert(form,
-						      new Element('input', {'type': 'hidden',
-									    'name': item.key,
-									    'value': item.value}));
+                                                      new Element('input', {'type': 'hidden',
+                                                                            'name': item.key,
+                                                                            'value': item.value}));
                                    });
                                }
                            }
@@ -703,7 +688,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                    msg = pytis._("Upload successful");
                                    cls = "ckeditor-success";
                                    field.update_attachment(reply.filename, {'listed': false});
-				   dialog.getContentElement('main', 'identifier').setValue(reply.filename);
+                                   dialog.getContentElement('main', 'identifier').setValue(reply.filename);
                                } else {
                                    msg = reply.message;
                                    cls = "ckeditor-error";
@@ -719,16 +704,16 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        onClick: function() {
                            var dialog = CKEDITOR.dialog.getCurrent();
                            var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-			   if (dialog.getContentElement('main', 'upload').getValue()) {
+                           if (dialog.getContentElement('main', 'upload').getValue()) {
                                // We can't simply call form.submit(), because Wiking
                                // uses a hidden field named 'submit' for its internal
                                // purposes and this hidden field masks the submit method
                                // (not really clever...).
                                document.createElement('form').submit.call(field._file_upload_form);
-			   } else {
+                           } else {
                                $('ckeditor-upload-result').update(pytis._("First select a file to be uploaded."));
-			   }
-			   return false;
+                           }
+                           return false;
                        }
                       }
                   ]
@@ -737,13 +722,13 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                   id: 'title',
                   label: pytis._('Title'),
                   commit: function(element) {
-		      var value = this.getValue();
-		      if (value) {
-			  element.setText(this.getValue());
-		      } else {
-			  var dialog = CKEDITOR.dialog.getCurrent();
-			  element.setText(dialog.getValueOf('main', 'identifier'));
-		      }
+                      var value = this.getValue();
+                      if (value) {
+                          element.setText(this.getValue());
+                      } else {
+                          var dialog = CKEDITOR.dialog.getCurrent();
+                          element.setText(dialog.getValueOf('main', 'identifier'));
+                      }
                   }
                  },
                  {type: 'text',
@@ -763,7 +748,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                 element = editor.document.createElement(html_elements[0]);
                 element.addClass(attachment_class);
                 var parent = element;
-		var i, child;
+                var i, child;
                 for (i = 1; i < html_elements.length; i++) {
                     child = editor.document.createElement(html_elements[1]);
                     parent.append(child);
@@ -772,7 +757,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                 this.insertMode = true;
             } else {
                 this.insertMode = false;
-	    }
+            }
             this.element = element;
             this.setupContent(this.element);
         },
@@ -782,19 +767,19 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
             var filename = dialog.getValueOf('main', 'identifier');
             var field = $(editor.config.pytisFieldId)._pytis_field_instance;
             var attributes = {};
-	    var i, value;
+            var i, value;
             for (i=0; i<=attachment_properties.length; i++) {
-		value = dialog.getValueOf('main', attachment_properties[i]);
-	        if (attachment_properties[i] === 'thumbnail_size' && value === 'full') {
-		    value = null;
-		}
+                value = dialog.getValueOf('main', attachment_properties[i]);
+                if (attachment_properties[i] === 'thumbnail_size' && value === 'full') {
+                    value = null;
+                }
                 attributes[attachment_properties[i]] = value;
-	    }
+            }
 
-	    // TODO: Display error message when error != null.
+            // TODO: Display error message when error != null.
             var error = field.update_attachment(filename, attributes);
 
-	    // Insert or update the HTML element
+            // Insert or update the HTML element
             if (this.insertMode) {
                 editor.insertElement(this.element);
             }
@@ -816,7 +801,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                 $('image-preview').src = attachment.thumbnail.uri;
             } else {
                 $('image-preview').src = attachment.uri;
-	    }
+            }
             $('image-preview').alt = attachment.description;
         }
     };
@@ -829,7 +814,7 @@ pytis.HtmlField.image_dialog = function(editor) {
             var attachment = img.data('lcg-resource');
             if (attachment) {
                 this.setValue(attachment);
-	    }
+            }
         }
     };
 
@@ -839,18 +824,18 @@ pytis.HtmlField.image_dialog = function(editor) {
             var img = element.getFirst();
             if (img) {
                 var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
-		// Append cache killer suffix to the uri to force reloading the displayed
-		// image when thumbnail size is changed.
-		uri += (uri.indexOf('?') === -1 ? '?' : '&') + 'time=' + new Date().getTime();
-		img.removeAttribute('width');
-		img.removeAttribute('height');
-		// This doesn't seem to work so the selection stays at the
-		// previous size iv the thumbnail size is changed.
-		/* img.onload = function () {
-		    editor.getSelection().selectElement(img);
-		    console.log('...');
-		}; */
-		ck_set_protected_attribute(img, 'src',  uri);
+                // Append cache killer suffix to the uri to force reloading the displayed
+                // image when thumbnail size is changed.
+                uri += (uri.indexOf('?') === -1 ? '?' : '&') + 'time=' + new Date().getTime();
+                img.removeAttribute('width');
+                img.removeAttribute('height');
+                // This doesn't seem to work so the selection stays at the
+                // previous size iv the thumbnail size is changed.
+                /* img.onload = function () {
+                    editor.getSelection().selectElement(img);
+                    console.log('...');
+                }; */
+                ck_set_protected_attribute(img, 'src',  uri);
                 img.data('lcg-resource', attachment.filename);
             }
         }
@@ -861,15 +846,15 @@ pytis.HtmlField.image_dialog = function(editor) {
     ck_element(dialog, 'title').commit = function(element) {
         var img = element.getFirst();
         if (img) {
-	    img.setAttribute('title', this.getValue());
-	}
+            img.setAttribute('title', this.getValue());
+        }
     };
 
     ck_element(dialog, 'description').commit = function(element) {
         var img = element.getFirst();
         if (img) {
             img.setAttribute('alt', this.getValue());
-	}
+        }
     };
 
     dialog.contents[0].elements = dialog.contents[0].elements.concat([
@@ -892,30 +877,30 @@ pytis.HtmlField.image_dialog = function(editor) {
              var img = element.getFirst();
              var figure = element.getAscendant('figure');
              if (img) {
-		 var align;
+                 var align;
                  if (figure) {
-		     align = figure.getAttribute('data-lcg-align');
+                     align = figure.getAttribute('data-lcg-align');
                  } else {
-		     align = img.getAttribute('align');
-		 }
+                     align = img.getAttribute('align');
+                 }
                  if (align) {
                      this.setValue(align);
                  } else {
                      this.setValue('inline');
-		 }
+                 }
              }
          },
          commit: function(element) {
              // Set image alignment
              var img = element.getFirst();
-	     var figure = element.getAscendant('figure');
+             var figure = element.getAscendant('figure');
              if (img) {
-		 var align = this.getValue();
+                 var align = this.getValue();
                  if (align === 'inline') {
                      img.removeAttribute('align');
                      if (figure) {
-			 figure.removeAttribute('data-lcg-align');
-		     }
+                         figure.removeAttribute('data-lcg-align');
+                     }
                  } else {
                      if (figure) {
                          img.removeAttribute('align');
@@ -924,9 +909,9 @@ pytis.HtmlField.image_dialog = function(editor) {
                          img.setAttribute('align', align);
                      }
                  }
-	     }
+             }
          }
-	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
+         // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
         },
         {type: 'hbox',
          widths: ['20%', '80%'],
@@ -951,7 +936,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                           this.setValue('external');
                       } else {
                           this.setValue('enlarge');
-		      }
+                      }
                   }
                   this.onChange(element);
               },
@@ -965,7 +950,7 @@ pytis.HtmlField.image_dialog = function(editor) {
               onChange: function(element) {
                   var dlg = CKEDITOR.dialog.getCurrent();
                   var fields = ['anchor-link', 'external-link'];
-		  var i, image;
+                  var i, image;
                   for (i = 0; i < fields.length; i++) {
                       image = dlg.getContentElement('main',  fields[i]);
                       image.getElement().getParent().hide();
@@ -988,7 +973,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                   // Construct a list of anchors in this page
                   var anchorList = new CKEDITOR.dom.nodeList(editor.document.$.anchors);
                   var options = this.getInputElement().$.options;
-		  var i, count, item;
+                  var i, count, item;
                   options.length = 0;
                   for (i = 0, count = anchorList.count(); i < count; i++) {
                       item = anchorList.getItem(i);
@@ -1039,9 +1024,9 @@ pytis.HtmlField.audio_dialog = function(editor) {
         ['a']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-	if (attachment) {
-	    ck_dialog_update_media_preview(attachment, 'audio-preview');
-	}
+        if (attachment) {
+            ck_dialog_update_media_preview(attachment, 'audio-preview');
+        }
     };
 
     ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="audio-preview"></div></div>';
@@ -1055,9 +1040,9 @@ pytis.HtmlField.video_dialog = function(editor) {
         ['title', 'description'],
         ['a']);
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-	if (attachment) {
-	    ck_dialog_update_media_preview(attachment, 'video-preview');
-	}
+        if (attachment) {
+            ck_dialog_update_media_preview(attachment, 'video-preview');
+        }
     };
     ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="video-preview"></div></div>';
     return dialog;
@@ -1092,8 +1077,8 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     var exercise_types = [];
     var i, item;
     for (i=0; i<editor.config.lcgExerciseTypes.length; i++) {
-	item = editor.config.lcgExerciseTypes[i];
-	exercise_types[exercise_types.length] = [item[1], item[0]];
+        item = editor.config.lcgExerciseTypes[i];
+        exercise_types[exercise_types.length] = [item[1], item[0]];
     }
 
     var dialog = {
@@ -1101,90 +1086,90 @@ pytis.HtmlField.exercise_dialog = function(editor) {
         minHeight: 440,
         title: pytis._("Exercise"),
         contents: [
-	    {id: 'main',
-	     elements: [
-		 {type: 'hbox',
-		  children: [
-		      {type: 'vbox',
-		       children: [
-			   {type: 'select',
-			    id: 'type',
-			    label: pytis._('Exercise Type'),
-			    items: exercise_types
-			   },
-			   {type: 'textarea',
-			    id: 'src',
-			    rows: 28,
-			    cols: 70,
-			    label: pytis._('Exercise Definition')
-			   }
-		       ]},
-		      {type: 'html',
-		       id: 'help',
-		       html: '<div id="exercise-help"></div>'
-		      }
-		  ]}
-	     ]}
-	],
-	onShow: function() {
+            {id: 'main',
+             elements: [
+                 {type: 'hbox',
+                  children: [
+                      {type: 'vbox',
+                       children: [
+                           {type: 'select',
+                            id: 'type',
+                            label: pytis._('Exercise Type'),
+                            items: exercise_types
+                           },
+                           {type: 'textarea',
+                            id: 'src',
+                            rows: 28,
+                            cols: 70,
+                            label: pytis._('Exercise Definition')
+                           }
+                       ]},
+                      {type: 'html',
+                       id: 'help',
+                       html: '<div id="exercise-help"></div>'
+                      }
+                  ]}
+             ]}
+        ],
+        onShow: function() {
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
             if (element) {
-		element = element.getAscendant('pre', true);
-	    }
+                element = element.getAscendant('pre', true);
+            }
             if (!element || element.getName() !== 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
-		// Create a new exercise element
-		element = editor.document.createElement('pre',
-							{'attributes': {'contenteditable': 'false'},
-							 'styles': {'display': 'inline-block'}});
-		element.addClass('lcg-exercise');
-		element.setAttribute('contenteditable', 'false');
-		this.insertMode = true;
+                // Create a new exercise element
+                element = editor.document.createElement('pre',
+                                                        {'attributes': {'contenteditable': 'false'},
+                                                         'styles': {'display': 'inline-block'}});
+                element.addClass('lcg-exercise');
+                element.setAttribute('contenteditable', 'false');
+                this.insertMode = true;
             } else {
-		this.insertMode = false;
-	    }
+                this.insertMode = false;
+            }
             this.element = element;
             this.setupContent(this.element);
-	},
-	onOk: function(element) {
+        },
+        onOk: function(element) {
             if (this.insertMode) {
-		editor.insertElement(this.element);
+                editor.insertElement(this.element);
             }
             this.commitContent(this.element);
-	}
+        }
     };
 
     ck_element(dialog, 'type').setup = function(element) {
-	// Using HTML 5 data attributes to store exercise type
-	this.setValue(element.data('type'));
+        // Using HTML 5 data attributes to store exercise type
+        this.setValue(element.data('type'));
     };
 
     ck_element(dialog, 'type').commit = function(element) {
-	element.data('type', this.getValue());
+        element.data('type', this.getValue());
     };
 
     ck_element(dialog, 'type').onChange = function(element) {
-	var j, jtem;
-	for (j=0; j<editor.config.lcgExerciseTypes.length; j++) {
-	    jtem = editor.config.lcgExerciseTypes[j];
-	    if (jtem[0] === this.getValue()) {
-		$('exercise-help').update(jtem[2]);
-		return;
-	    }
-	}
-	$('exercise-help').update('');
+        var j, jtem;
+        for (j=0; j<editor.config.lcgExerciseTypes.length; j++) {
+            jtem = editor.config.lcgExerciseTypes[j];
+            if (jtem[0] === this.getValue()) {
+                $('exercise-help').update(jtem[2]);
+                return;
+            }
+        }
+        $('exercise-help').update('');
     };
 
     ck_element(dialog, 'src').setup = function(element) {
-    	this.setValue(element.getHtml());
+        this.setValue(element.getHtml());
     };
 
     ck_element(dialog, 'src').commit = function(element) {
-    	element.setHtml(this.getValue());
+        element.setHtml(this.getValue());
     };
 
     ck_element(dialog, 'help').setup = function(element) {
-	$('exercise-help').update('');
+        $('exercise-help').update('');
     };
 
     return dialog;
@@ -1193,18 +1178,18 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 pytis.HtmlField.mathml_dialog = function(editor) {
     var name = pytis._("MathML");
     var switch_method = function (method) {
-	var dialog = CKEDITOR.dialog.getCurrent();
+        var dialog = CKEDITOR.dialog.getCurrent();
         var mathml = dialog.getContentElement('main',  'source-mathml-box');
         var ascii = dialog.getContentElement('main',  'source-ascii-box');
 
-	if (method === 'mathml') {
-	    mathml.getElement().show();
-	    ascii.getElement().hide();
-	}
-	if (method === 'ascii') {
-	    mathml.getElement().hide();
-	    ascii.getElement().show();
-	}
+        if (method === 'mathml') {
+            mathml.getElement().show();
+            ascii.getElement().hide();
+        }
+        if (method === 'ascii') {
+            mathml.getElement().hide();
+            ascii.getElement().show();
+        }
     };
 
     var dialog = {
@@ -1215,30 +1200,30 @@ pytis.HtmlField.mathml_dialog = function(editor) {
             {id: 'main',
              label: name,
              elements: [
-		 {type: 'vbox',
-		  id: 'source-ascii-box',
-		  children:
-		  [
+                 {type: 'vbox',
+                  id: 'source-ascii-box',
+                  children:
+                  [
                       {type: 'textarea',
                        id: 'source-ascii',
                        label: "ASCII"
                       },
-		      {type: 'html',
-		       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
-		      }
-		  ]},
-		 {type: 'vbox',
-		  id: 'source-mathml-box',
-		  children:
-		  [
+                      {type: 'html',
+                       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
+                      }
+                  ]},
+                 {type: 'vbox',
+                  id: 'source-mathml-box',
+                  children:
+                  [
                       {type: 'textarea',
                        id: 'source-mathml',
                        label: "MathML"
                       },
-		      {type: 'html',
-		       html: '<div class="ckeditor-help">'+pytis._("To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)")+'</div>'
-		      }
-		  ]},
+                      {type: 'html',
+                       html: '<div class="ckeditor-help">'+pytis._("To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)")+'</div>'
+                      }
+                  ]},
                  {type: 'button',
                   id: 'toggle-input',
                   label: pytis._("Switch ASCII / MathML editing")
@@ -1256,30 +1241,30 @@ pytis.HtmlField.mathml_dialog = function(editor) {
             var element = ck_get_ascendant(editor, tag);
             if (!element || element.getName() !== tag) {
                 element = editor.document.createElement(
-		    tag,
-		    {'attributes': {'contenteditable': 'false'},
-		     'styles': {'display': 'inline-block'}});
-		element.addClass('lcg-mathml');
-		// We do not setup the inner <math> element here because without
-		// a reliable support for .setHtml()/.getHtml() in CKEditor or
-		// innerHTML in browsers, we would have no way to acces its contents
+                    tag,
+                    {'attributes': {'contenteditable': 'false'},
+                     'styles': {'display': 'inline-block'}});
+                element.addClass('lcg-mathml');
+                // We do not setup the inner <math> element here because without
+                // a reliable support for .setHtml()/.getHtml() in CKEditor or
+                // innerHTML in browsers, we would have no way to acces its contents
                 this.insertMode = true;
             } else {
                 this.insertMode = false;
-	    }
+            }
             this.element = element;
             this.setupContent(this.element);
 
-	    if (this.insertMode) {
-		switch_method('ascii');
-	    } else {
-		if (this.getValueOf('main', 'source-ascii')) {
-		    switch_method('ascii');
-		    this.setValueOf('main', 'source-mathml', "");
-		} else {
-		    switch_method('mathml');
-		}
-	    }
+            if (this.insertMode) {
+                switch_method('ascii');
+            } else {
+                if (this.getValueOf('main', 'source-ascii')) {
+                    switch_method('ascii');
+                    this.setValueOf('main', 'source-mathml', "");
+                } else {
+                    switch_method('mathml');
+                }
+            }
 
         },
         onOk: function(element) {
@@ -1291,33 +1276,33 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     };
 
     var clean_mathml = function(mathml, annotation, source) {
-	var production_args = "";
-	// Strip outer math tags, ignoring their attributes
-	var inner_mathml = mathml.replace(/<\/?math.*?>/gi, "");
-	// Rewrap in <math> tags with desired attributes and annotations
-	if (!source) {
-	    production_args = 'contenteditable="false" style="display:inline-block"';
-	}
-	if (annotation.length > 0) {
-	    return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
-		    '<semantics>' +
-		    inner_mathml +
-		    '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>' +
-		    '</semantics>' +
-		    '</math>');
-	}
-	return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
-		inner_mathml +
-		'</math>');
+        var production_args = "";
+        // Strip outer math tags, ignoring their attributes
+        var inner_mathml = mathml.replace(/<\/?math.*?>/gi, "");
+        // Rewrap in <math> tags with desired attributes and annotations
+        if (!source) {
+            production_args = 'contenteditable="false" style="display:inline-block"';
+        }
+        if (annotation.length > 0) {
+            return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
+                    '<semantics>' +
+                    inner_mathml +
+                    '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>' +
+                    '</semantics>' +
+                    '</math>');
+        }
+        return ('<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>' +
+                inner_mathml +
+                '</math>');
     };
 
     var update_mathml_from_ascii = function(element) {
         var dlg = CKEDITOR.dialog.getCurrent();
-	var node = parseMath(dlg.getValueOf('main', 'source-ascii'), false);
+        var node = parseMath(dlg.getValueOf('main', 'source-ascii'), false);
         /* Convert MathML DOM node to text using a helper element */
         var helper = document.createElement('span');
         helper.appendChild(node);
-	var mathml = clean_mathml(helper.innerHTML , "", true);
+        var mathml = clean_mathml(helper.innerHTML , "", true);
         dlg.setValueOf('main', 'source-mathml', mathml);
     };
 
@@ -1328,25 +1313,25 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 
     ck_element(dialog, 'source-mathml').commit = function(element) {
         var dlg = CKEDITOR.dialog.getCurrent();
-	var ascii_source = dlg.getValueOf('main', 'source-ascii');
-     	element.$.innerHTML = clean_mathml(this.getValue(), ascii_source, false);
+        var ascii_source = dlg.getValueOf('main', 'source-ascii');
+        element.$.innerHTML = clean_mathml(this.getValue(), ascii_source, false);
     };
 
     ck_element(dialog, 'source-mathml').onChange = function(element) {
-	$('math-preview').innerHTML = clean_mathml(this.getValue(), "", false);
+        $('math-preview').innerHTML = clean_mathml(this.getValue(), "", false);
     };
 
     ck_element(dialog, 'source-ascii').setup = function(element) {
-	var annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
-	if (annotation) {
-	    this.setValue(annotation.$.textContent.unescapeHTML());
-	}
+        var annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
+        if (annotation) {
+            this.setValue(annotation.$.textContent.unescapeHTML());
+        }
     };
 
     ck_element(dialog, 'source-ascii').onShow = function(element) {
-	if (this.getValue()) {
+        if (this.getValue()) {
             update_mathml_from_ascii(element);
-	}
+        }
     };
 
     ck_element(dialog, 'source-ascii').onKeyUp = function(element) {
@@ -1354,22 +1339,22 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     };
 
     ck_element(dialog, 'toggle-input').onClick = function(element) {
-	var dlg = CKEDITOR.dialog.getCurrent();
+        var dlg = CKEDITOR.dialog.getCurrent();
         var mathml_box = dlg.getContentElement('main',  'source-mathml-box');
         var ascii = dlg.getContentElement('main',  'source-ascii');
 
-	if (mathml_box.getElement().isVisible()) {
-	    switch_method('ascii');
-	} else {
-	    if (ascii.getValue()) {
-		var answer = confirm(pytis._("Editing MathML will destroy your ASCII formula. Continue?"));
-		if (answer === false) {
-		    return;
-		}
-		ascii.setValue("");
-	    }
-	    switch_method('mathml');
-	}
+        if (mathml_box.getElement().isVisible()) {
+            switch_method('ascii');
+        } else {
+            if (ascii.getValue()) {
+                var answer = confirm(pytis._("Editing MathML will destroy your ASCII formula. Continue?"));
+                if (answer === false) {
+                    return;
+                }
+                ascii.setValue("");
+            }
+            switch_method('mathml');
+        }
     };
 
     return dialog;
@@ -1384,10 +1369,10 @@ function ck_language_combo(editor, languages) {
         multiSelect: false,
         panel: {
             css: [editor.config.contentsCss,
-		  CKEDITOR.getUrl(CKEDITOR.skin.getPath('editor') + 'editor.css')]
+                  CKEDITOR.getUrl(CKEDITOR.skin.getPath('editor') + 'editor.css')]
         },
         init: function() {
-	    var i;
+            var i;
             this.startGroup("Language");
             for (i=0; i<languages.length; i++) {
                 this.add(languages[i][0], languages[i][1], languages[i][1]); //id, caption, title
@@ -1406,11 +1391,11 @@ function ck_language_combo(editor, languages) {
                 /* Find the direct child of common ancestor which holds the anchor element. */
                 var parents = node.getParents();
                 var parent = null;
-		var i;
+                var i;
                 for (i = parents.length-1; i >= 0; i--) {
                     if (parents[i].$ === ancestor.$) {
                         return parent;
-		    }
+                    }
                     parent = parents[i];
                 }
                 return null;
@@ -1421,7 +1406,7 @@ function ck_language_combo(editor, languages) {
                     element.removeAttribute('lang');
                     element.removeClass('cke-explicit-language');
                     var children = element.getChildren();
-		    var i;
+                    var i;
                     for (i = 0; i < children.length; i++) {
                         remove_lang(children[i]);
                     }
@@ -1445,15 +1430,15 @@ function ck_language_combo(editor, languages) {
                                 'header', 'footer', 'ul', 'ol', 'li', 'pre',
                                 'section', 'tbody', 'tfoot', 'th', 'tr',
                                 'caption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-		var i;
+                var i;
                 for (i = 0; i < elements.length; i++) {
                     if (tag === elements[i]) {
-			return true;
-		    }
-		}
+                        return true;
+                    }
+                }
                 return false;
             }
-	    var el;
+            var el;
             if (value !== 'default') {
                 /* Mark any block elements in the selection with lang attribute.
                    Ignoring exact offsets inside start and end blocks is intentional. */
@@ -1469,7 +1454,7 @@ function ck_language_combo(editor, languages) {
                     }
                     if (el.$ === end_block.$) {
                         break;
-		    }
+                    }
                     el = el.getNext();
                 }
                 /* If there are no blocks in this selection, mark/unmark inline with a span */
@@ -1482,8 +1467,8 @@ function ck_language_combo(editor, languages) {
                 while(el) {
                     remove_lang(el);
                     if (el.$ === end_block.$) {
-			break;
-		    }
+                        break;
+                    }
                     el = el.getNext();
                 }
             }
@@ -1539,7 +1524,7 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
             var element = editor.getSelection().getStartElement();
             if (element) {
                 element = element.getAscendant('span', true);
-	    }
+            }
             if (!element || element.getName() !== 'span' || element.data('cke-realelement') || !element.hasClass('lcg-indexitem')) {
                 var sel = editor.getSelection();
                 element = new CKEDITOR.dom.element('span');
@@ -1548,7 +1533,7 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
                 this.insertMode = true;
             } else {
                 this.insertMode = false;
-	    }
+            }
             this.element = element;
             this.setupContent(this.element);
         },
