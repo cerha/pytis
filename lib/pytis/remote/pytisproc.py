@@ -247,7 +247,7 @@ class PytisUserService(PytisService):
         if self._pytis_on_windows():
             os.startfile(path)
         else:
-            subprocess.call(['xdg-open', path])
+            subprocess.Popen(['xdg-open', path])
 
     def _gpg(self):
         if self._gpg_instance is None:

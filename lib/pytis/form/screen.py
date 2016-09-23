@@ -3368,12 +3368,12 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
     import mimetypes
     mime_type = mimetypes.guess_type(filename)[0]
     viewer = None
+    import subprocess
     if mime_type == 'application/pdf' and config.postscript_viewer:
         # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.
-        import subprocess
-        command = config.postscript_viewer + ' ' + filename
-        log(OPERATIONAL, "Running external PDF viewer:", command)
-        viewer = lambda: subprocess.call(command.split())
+        command = (config.postscript_viewer, filename)
+        log(OPERATIONAL, "Running external PDF viewer:", ' '.join(command))
+        viewer = lambda: subprocess.Popen(command)
     elif mime_type:
         # Find a local viewer through mailcap.
         import mailcap
@@ -3381,7 +3381,7 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
         if match:
             command = match['view'] % (filename,)
             log(OPERATIONAL, "Running external file viewer:", command)
-            viewer = lambda: os.system(command)
+            viewer = lambda: subprocess.Popen(command, shell=True)
     if viewer:
         if data is not None:
             try:
@@ -3415,6 +3415,9 @@ def launch_file(filename):
     Mailcap.  For PDF files, the viewer set through the configuration option
     'postscript_viewer' (if set) takes precedence.
 
+    This function is non-blocking.  It returns immediately and the viewer is
+    run in the background in all cases.
+
     """
     return _launch_file_or_data(filename)
 
@@ -3433,6 +3436,9 @@ def open_data_as_file(data, suffix, decrypt=False):
     cleaned up automatically afterwards (the temporary file is created on the
     client machine in the case of remote viewer invocation).
 
+    This function is non-blocking.  It returns immediately and the viewer is
+    run in the background in all cases.
+
     """
     filename = os.tempnam() + suffix
     return _launch_file_or_data(filename, decrypt=decrypt, data=data)
@@ -3442,6 +3448,9 @@ def launch_url(url):
 
     The browser will be launched on the client machine (remotely) if remote
     client connection exists.
+
+    This function is non-blocking.  It returns immediately and the browser is
+    run in the background in all cases.
 
     """
     if pytis.remote.client_available():
