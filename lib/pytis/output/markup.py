@@ -426,6 +426,7 @@ class _Group(_Container):
                   box_radius=None,
                   box_width=None,
                   box_color=None,
+                  box_mask=None,
                   padding=None,
                   padding_top=None,
                   padding_bottom=None,
@@ -455,6 +456,7 @@ class _Group(_Container):
             presentation.box_radius = unit(self.arg_box_radius)
             presentation.box_width = unit(self.arg_box_width)
             presentation.box_color = _color(self.arg_box_color)
+            presentation.box_mask = self.arg_box_mask
         contents = self._lcg_contents()
         orientation = self._orientation()
         if orientation == lcg.Orientation.VERTICAL:
@@ -504,6 +506,8 @@ class HGroup(_Group):
           argument(s).
       box_radius -- if not None and not 0, box corners will be rounded
         with given radius as 'Unit' instance
+      box_mask -- Mask of visible box sides as a sequence of 4 bools (top,
+        right, bottom, left) or None for all sides visible.
       padding -- space around group contents.  This space is added to
         box_margin for a boxed group, but there are major differences between
         box_margin and padding.  Box margin only applies to boxed groups and is
