@@ -784,18 +784,18 @@ class ProgressDialog(OperationDialog):
     """Dialog pro spuštění dlouhotrvající operace s ProgressBarem.
 
     Spuštěním dialogu metodou 'run()' bude zobrazen modální dialog a spuštěna
-    funkce zadaná v konstruktoru s argumenty předanými konstruktoru.
-
-    Navíc bude funkci vždy předán první argument, kterým je funkce
-    aktualizující stav progress baru.  Za její volání v průběhu operace je
-    funkce vykonávající operaci zodpovědná.  Aktualizační funkce vyžaduje jeden
-    argument, kterým je stav operace v procentech (integer).  Aktualizační
-    funkce také vrací nepravdivou hodnotu, pokud má být operace ukončena
-    (uživatelské přerušení, je-li povoleno).  Za ukončení je však opět
-    zodpovědná funkce vykonávající operaci.  Druhým nepovinným argumentem je
-    klíčový argument 'newmsg'.  Pokud je předán neprázdný řetězec, bude také
-    aktualizována zpráva zobrazená na dialogu (tato zpráva nahradí původní
-    zprávu zadanou v konstruktoru).
+    funkce zadaná v konstruktoru s argumenty předanými konstruktoru.  Navíc je
+    funkci jako první argument předán callback sloužící k aktualizaci stavu
+    progress baru.  Za jeho volání v průběhu operace je funkce vykonávající
+    operaci zodpovědná.  Tento callback vyžaduje jeden argument, kterým je stav
+    operace v procentech (integer).  Je li namísto číselné hodnoty předána
+    hodnota None, bude ukazatel průběhu změněn na pulzující pruh bez zobrazení
+    konkrétní hodnoty.  Návratová hodnota callbacku bude pravdivá, pokud má být
+    operace ukončena (uživatelské přerušení, je-li povoleno).  Za ukončení je
+    však opět zodpovědná funkce vykonávající operaci.  Druhým nepovinným
+    argumentem je klíčový argument 'newmsg'.  Pokud je předán neprázdný
+    řetězec, bude také aktualizována zpráva zobrazená na dialogu (tato zpráva
+    nahradí původní zprávu zadanou v konstruktoru).
 
     Po ukončení dialogu (ať už z důvodu uživatelského přerušení, či dokončení
     operace) je vrácena návratová hodnota funkce vykonávající operaci.
@@ -848,7 +848,10 @@ class ProgressDialog(OperationDialog):
         current_size = self._dialog.GetSize()
         if new_width > current_size.width:
             self._dialog.SetSize((new_width, current_size.height))
-        return self._dialog.Update(progress, newmsg=newmsg)
+        if progress is None:
+            return self._dialog.UpdatePulse(newmsg=newmsg)
+        else:
+            return self._dialog.Update(progress, newmsg=newmsg)
 
     def _run_dialog(self):
         return self._function(self._update, *self._args, **self._kwargs)
