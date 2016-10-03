@@ -82,6 +82,10 @@ class _Mark(object):
     def _lcg(self):
         return lcg.Content()
 
+    def _dimension(self, x):
+        return x if x is None or isinstance(x, lcg.Unit) else lcg.UMm(x)
+
+
 
 class _Container(_Mark):
 
@@ -199,11 +203,7 @@ class _Space(_Mark):
             mark = lcg.HSpace
         else:
             raise Exception('Unexpected orientation', self._orientation)
-        size = self._size
-        if size is None:
-            size = lcg.UAny(1)
-        elif not isinstance(size, lcg.Unit):
-            size = lcg.UMm(self._size)
+        size = self._dimension(self._size) or lcg.UAny(1)
         return mark(size)
 
 class VSpace(_Space):
@@ -255,9 +255,7 @@ class HLine(_Mark):
           instance with given constructor argument(s).
 
         """
-        if thickness is not None and not isinstance(thickness, lcg.Unit):
-            thickness = lcg.UMm(thickness)
-        self._thickness = thickness
+        self._thickness = self._dimension(thickness)
         self._color = _color(color)
         super(HLine, self).__init__()
 
@@ -441,10 +439,6 @@ class _Group(_Container):
     def _lcg(self):
         def coalesce(a, b):
             return a if a is not None else b
-        def unit(x):
-            if x is not None and not isinstance(x, lcg.Unit):
-                x = lcg.UMm(x)
-            return x
         presentation = lcg.Presentation()
         padding_top = coalesce(self.arg_padding_top, self.arg_padding)
         padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
@@ -452,9 +446,9 @@ class _Group(_Container):
         padding_right = coalesce(self.arg_padding_right, self.arg_padding)
         if self.arg_boxed:
             presentation.boxed = True
-            presentation.box_margin = unit(self.arg_box_margin)
-            presentation.box_radius = unit(self.arg_box_radius)
-            presentation.box_width = unit(self.arg_box_width)
+            presentation.box_margin = self._dimension(self.arg_box_margin)
+            presentation.box_radius = self._dimension(self.arg_box_radius)
+            presentation.box_width = self._dimension(self.arg_box_width)
             presentation.box_color = _color(self.arg_box_color)
             presentation.box_mask = self.arg_box_mask
         contents = self._lcg_contents()
@@ -873,24 +867,30 @@ class LongTable(Table):
                          halign=lcg.HorizontalAlignment.LEFT)
 
 class Image(_Mark):
-    """EPS obrázek."""
+    """EPS image."""
 
-    def __init__(self, file_name, standalone=True):
-        """Inicializuj instanci.
+    def __init__(self, file_name, standalone=True, width=None, height=None):
+        """Arguments:
 
-        Argumenty:
-
-          file_name -- jméno souboru obrázku, relativní k adresáři definovanému
-            konfigurační volbou 'print_spec_dir'.
-          standalone -- určuje, zda obrázek má být vykreslen jako samostatný
-            (True) nebo jako součást textu (False).  Pokud je obrázek vykreslen
-            jako součást textu, může být na výstupu upravena jeho velikost
-            (větší obrázky budou automaticky zmenšeny).
+          file_name -- image file name relative to the directory given by
+            configuration option 'print_spec_dir'.
+          width -- explicit output image width as lcg.Unit subclass instance.
+            If only one of width/height is specified (not None), the other
+            dimension is computed to maintain the original image proportions.
+          height -- output image height as lcg.Unit subclass instance.  See
+            also 'width'.
+          standalone -- if True, the image is drawn separately.  If False, the
+            image is embedded within the surrounding paragraph text (if any).
+            When inside paragraph (standalone is False) and size is not given
+            explicitly through 'width' and/or 'height' the output image may be
+            resized automatically to fit inside the current context.
 
         """
         super(Image, self).__init__()
         self._file_name = file_name
         self._standalone = standalone
+        self._width = width
+        self._height = height
 
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
@@ -899,8 +899,10 @@ class Image(_Mark):
     def _lcg(self):
         import config
         file_name = os.path.join(config.print_spec_dir, self._file_name)
-        image = lcg.Image(file_name, src_file=file_name)
-        return lcg.InlineImage(image, standalone=self._standalone)
+        return lcg.InlineImage(lcg.Image(file_name, src_file=file_name),
+                               width=self._dimension(self._width),
+                               height=self._dimension(self._height),
+                               standalone=self._standalone)
 
 class StructuredText(_Mark):
     """LCG structured text."""
@@ -908,8 +910,7 @@ class StructuredText(_Mark):
     _ITERATOR_MATCHER = re.compile(r'\|([^|]*\${(?:data\.|[^}]+\.(?:data|codebook)\.))')
 
     def __init__(self, text):
-        """
-        Arguments:
+        """Arguments:
 
           text -- the structured text; basestring
 
