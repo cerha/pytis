@@ -1016,9 +1016,11 @@ class QueryFieldsForm(VirtualForm):
             assert 'profile' not in [f.id() for f in fields]
             class Enumeration(pytis.presentation.Enumeration):
                 enumeration = [(p.id(), p.title()) for p in profiles.unnest()]
-            fields.insert(0, pytis.presentation.Field('profile', profiles.label() or _("Profile"),
-                                                      not_null=True, enumerator=Enumeration,
-                                                      default=profiles.default()))
+            fields.insert(0, pytis.presentation.Field(
+                'profile', profiles.label() or _("Profile"),
+                not_null=True, enumerator=Enumeration,
+                default=profiles.default() or profiles.unnest()[0].id())
+            )
             if 'profile' not in layout.order():
                 if layout.orientation() == pytis.presentation.Orientation.HORIZONTAL:
                     layout = pytis.presentation.HGroup(*(('profile',) + layout.items()))
