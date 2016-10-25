@@ -1044,11 +1044,15 @@ class PasswordField(StringField):
 
     def _on_defocus(self):
         super(PasswordField, self)._on_defocus()
-        if not self._valid():  # See TextField._on_defocus() for info on this hack.
+        if self._ctrl2 and not self._valid():
+            # See TextField._on_defocus() for info on this hack.
             self._ctrl2.SetSelection(0, 0)
 
     def tab_navigated_widgets(self):
-        return super(PasswordField, self).tab_navigated_widgets() + (self._ctrl2,)
+        widgets = super(PasswordField, self).tab_navigated_widgets()
+        if self._ctrl2:
+            widgets += (self._ctrl2,)
+        return widgets
 
 class SpinnableField(InputField):
     """Field capable of spinning its value up/down (incrementing/decrementing)."""
