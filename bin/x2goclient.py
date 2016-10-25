@@ -18,9 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2016-09-19 22:05'
+_VERSION = '2016-09-23 23:34'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
+# TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
+# we use older variant of VcXsrv. Later we will switch back to the current version.
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis_old'
 
 import os
@@ -710,12 +712,12 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _changed = False
         _defaults = XCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
-            if option == 'test_installed':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv_pytis.exe'))
-            elif option == 'run_command':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv_pytis.exe'))
+            if option in ('test_installed', 'run_command'):
+                win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
+                defaults_path = _defaults[option]
+                d, f = os.path.split(defaults_path)
+                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path,
+                                                                          os.path.split(d)[-1], f))
             elif option in ('display', 'last_display', 'process_name', 'parameters'):
                 _xserver_config[option] = _defaults[option]
             else:
@@ -951,7 +953,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 if not rootless:
                     variant = 'VcXsrv_pytis_desktop'
                 else:
-                    variant = 'VcXsrv_pytis'
+                    variant = XSERVER_VARIANT_DEFAULT
                 self._X2GoClient__start_xserver_pytis(variant=variant)
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
@@ -1377,7 +1379,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             except:
                 pass
         if updateproc:
-            updateproc(version=_VERSION, path=path)
+            updateproc(version=_VERSION, path=path, client=client,
+                       install_directory=install_directory, tmp_directory=tmp_directory)
         shutil.rmtree(tmp_directory)
         app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
