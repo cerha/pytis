@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2464,20 +2464,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pg_select_transaction is None:
             self.select(condition=condition, transaction=transaction)
             close_select = True
-        try:
-            data = self._pg_select_aggregate_1(operation, colids, condition,
-                                               transaction=transaction, arguments=arguments)
-        except:
-            cls, e, tb = sys.exc_info()
+        if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
+            data = [[None for x in colids]]
+        else:
             try:
-                if transaction is None:
-                    self._pg_select_transaction.rollback()
+                data = self._pg_select_aggregate_1(operation, colids, condition,
+                                                   transaction=transaction, arguments=arguments)
             except:
-                pass
-            self._pg_select_transaction = None
-            raise cls, e, tb
-        if close_select:
-            self.close()
+                cls, e, tb = sys.exc_info()
+                try:
+                    if transaction is None:
+                        self._pg_select_transaction.rollback()
+                except:
+                    pass
+                self._pg_select_transaction = None
+                raise cls, e, tb
+            if close_select:
+                self.close()
         I = Integer()
         F = Float()
         def make_value(cid, dbvalue):
