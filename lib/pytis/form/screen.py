@@ -3166,6 +3166,15 @@ def _dirname(client_mode, filename):
     else:
         return None
 
+def _get_recent_directory(client_mode, context):
+    if client_mode and context:
+        directory = pytis.form.get_recent_directory((client_mode, context))
+        if directory is None:
+            directory = pytis.form.get_recent_directory((client_mode, 'default'))
+    else:
+        directory = None
+    return directory
+
 def select_file(filename=None, patterns=(), pattern=None, context='default'):
     """Return a filename selected by the user in a GUI dialog.
 
@@ -3197,7 +3206,7 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
 
     """
     cmode = _client_mode()
-    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
+    directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.select_file(filename=filename, directory=directory,
                                           patterns=patterns, pattern=pattern, multi=False)
@@ -3227,8 +3236,8 @@ def select_files(directory=None, patterns=(), pattern=None, context='default'):
     """
     # TODO: directory is ignored in the remote variant.
     cmode = _client_mode()
-    if cmode and context and directory is None:
-        directory = pytis.form.get_recent_directory((cmode, context))
+    if directory is None:
+        directory = _get_recent_directory(cmode, context)
     else:
         context = None # Prevent storing the passed directory when dialog closed.
     if cmode == 'remote':
@@ -3256,7 +3265,7 @@ def select_directory(context='default'):
 
     """
     cmode = _client_mode()
-    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
+    directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.select_directory(directory=directory)
     elif cmode == 'local':
@@ -3286,7 +3295,7 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
 
     """
     cmode = _client_mode()
-    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
+    directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.make_selected_file(filename=filename, directory=directory,
                                                  mode=str(mode), encoding=encoding,
@@ -3353,7 +3362,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
     """
     # TODO: Encryption not supported for the local variant.
     cmode = _client_mode()
-    directory = pytis.form.get_recent_directory((cmode, context)) if cmode and context else None
+    directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
                                             patterns=patterns, pattern=pattern)
