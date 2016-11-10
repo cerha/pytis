@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 X2GOCLIENT_VERSION = None
+X2GOCLIENT_REQUIRED_VERSION = '2016-11-09 22:35'
 
 try:
     from proxy import run_proxy

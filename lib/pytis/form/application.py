@@ -38,6 +38,7 @@ import pytis.data
 import pytis.form
 from pytis.presentation import Field, Specification, StatusField, computer
 import pytis.util
+import pytis.remote
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     ProgramError, ResolverError, Stack, XStack, \
     argument_names, find, format_traceback, identity, log, rsa_encrypt
@@ -76,6 +77,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _menubar_forms = {}
     _log_login = True
     _recent_directories = {}
+    _remote_client_version = None
+
 
     _WINDOW_MENU_TITLE = _("&Windows")
 
@@ -333,8 +336,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
         wx.CallAfter(self._init)
-        import pytis.remote
         self._remote_connection_initially_available = pytis.remote.client_available()
+        if self._remote_connection_initially_available:
+            try:
+                self._remote_client_version = version = pytis.remote.x2goclient_version()
+                log(OPERATIONAL, _("RPC communication available. Version: {}.").format(version))
+            except Exception:
+                log(OPERATIONAL, _("RPC communication available. Version: unknown."))
+        else:
+            log(OPERATIONAL, _("RPC communication unavailable"))
+
+
         return True
 
     def _frame_title(self, title=None):
@@ -360,6 +372,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._frame.SetTitle(title)
 
     def _init(self):
+        # Check RPC client version
+        self._check_x2goclient()
         # Run application specific initialization.
         self._specification.init()
         if self._windows.empty():
@@ -1309,6 +1323,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
         assert isinstance(args, dict), args
         return command, args
 
+    def _check_x2goclient(self):
+        if pytis.remote.client_available():
+            version_template = '%Y-%m-%d %H:%M'
+            version = pytis.remote.x2goclient_version()
+            try:
+                version_date = datetime.datetime.strptime(version, version_template)
+                required_version = pytis.remote.X2GOCLIENT_REQUIRED_VERSION
+            except Exception:
+                return
+            required_date = datetime.datetime.strptime(required_version, version_template)
+            if version_date < required_date:
+                msg = _("POZOR!\n\n"
+                        "Provozujete nekompatibilní verzi pytis2go ({}).\n"
+                        "Některé funkce nemusí fungovat nebo se mohou objevovat chyby.\n\n"
+                        "Proveďte prosím aktualizaci Pytis2go, která se nabízí při startu aplikace.\n\n"
+                        "Mám nyní aplikaci ukončit, abyste mohli provést aktualizaci Pytis2go?"
+                        )
+                if pytis.form.run_dialog(pytis.form.Question, msg.format(version)):
+                    self.COMMAND_EXIT.invoke()
 
 class DbActionLogger(object):
 
@@ -2021,13 +2054,16 @@ def built_in_status_fields():
             return ''
 
     def _refresh_remote_status():
-        import pytis.remote
         if pytis.remote.client_available():
             tooltip_text = _("Connected.\nClient version: {}")
-            try:
-                version = pytis.remote.x2goclient_version()
-            except Exception:
-                version = _("Not available")
+            if _application._remote_client_version:
+                version = _application._remote_client_version
+            else:
+                try:
+                    version = pytis.remote.x2goclient_version()
+                    _application._remote_client_version = version
+                except Exception:
+                    version = _("Not available")
             return (_("Ok"), 'connected', tooltip_text.format(version))
         else:
             return (_('N/A'), 'disconnected', _("Not available."))
