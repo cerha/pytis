@@ -853,7 +853,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             if version and version > _VERSION:
                 p = profiles.pytis_upgrade_parameter
                 upgrade_url = p('command')
-                if upgrade_url:
+                if upgrade_url and on_windows():
                     if app.question_dialog(_(u"New pytis client version available. Install?")):
                         self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
