@@ -89,7 +89,7 @@ _LABELS = {
     'sender_address': _("E-mail address"),
     'export_directory': _("Default directory"),
     'export_encoding': _("Character encoding"),
-    'rpc_communication_enabled': _("Windows workstation support"),
+    'rpc_communication_enabled': _("Communication with remote workstation"),
 }
 
 _FIELDSPEC_KWARGS = {
