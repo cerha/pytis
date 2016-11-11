@@ -1277,16 +1277,14 @@ class X2GoStartAppClientAPI(object):
     def terminate_session(self, session):
         return self._client.pytis_terminate_session(session)
 
-    def resume_session(self, session, callback):
+    def resume_session(self, session):
         self._args.resume = session.name
         self._args.new = False
-        callback()
         self._client.MainLoop()
 
-    def start_new_session(self, callback):
+    def start_new_session(self):
         self._args.resume = None
         self._args.new = True
-        callback()
         self._client.MainLoop()
 
 # Local Variables:
