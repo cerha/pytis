@@ -141,15 +141,15 @@ Jedeme v režimu, kdy je externím uživatelům umožněno jen přihlašování 
 nikoli heslem.
 
 Interně to funguje tak, že se provede připojení na daný server a tam se pro
-získání seznamu dostupných session zavolá "x2gobroker --task listsessions" a pro
-získání parametrů vybrané session se zavolá "x2gobroker --task selectsession
+získání seznamu dostupných profilů zavolá "x2gobroker --task listsessions" a pro
+získání parametrů vybraného profilu se zavolá "x2gobroker --task selectsession
 <session_id>".  V plánu např. máme používání single-sign-on s autentizací přes
 Kerberos (zde se neví, jak by to fungovalo přes HTTP, zatímco u ssh je to
 triviální).  Na to by se při případné úpravě x2goclient.py měl brát zřetel.
 
 Je potřeba rozlišovat profily (parametry pro vytvoření session) a skutečné již
 běžící sessions na aplikačních serverech.  O těch již broker nic neví.  K tomu
-mají v x2go jiný nástroj, který zatím nepoužívám a který oni nazývají x2go
+mají v x2go jiný nástroj, který zatím nepoužíváme a který oni nazývají x2go
 agent.  Ten umožňuje brokeru přihlašovat se na ty ostatní aplikační servery a
 zjišťovat tam existující suspendované nebo běžící instance sessions.  Hlavní
 smyslem onoho x2go agenta je pak využítí při load-balancing, kdy daný profil
@@ -157,6 +157,15 @@ může být spuštěn na více aplikačních serverech a broker pak zjišťuje, 
 momentálně nejvhodnější.  Ale tím se zatím nezabýváme.  My ten broker zatím
 využíváme jen pro centralizovanou správu aplikací a jejich parametrů, protože
 pak se u uživatele nemusí vůbec nic nastavovat.
+
+Implementačně by bylo vhodné přesunout kód z x2goclient.py zabývající se
+zpracováním dostupných profilů do python-x2go, protože nyní si některé věci
+musíme řešit sami kvůli tomu, že v python-x2go je práce s brokerem přes ssh
+nedotažená, zatímco HTTP broker je tam kompletní, viz
+.../x2go/backends/profiles/sshbroker.py a
+.../x2go/backends/profiles/httpbroker.py.  Kdyby sshbroker.py implementovalo ty
+všechny odpovídající metody v třídě X2GoSessionProfiles jako má třída
+X2GoSessionProfiles v httpbroker.py, tak by to bylo určitě lepší.
 
 ** Asynchronní komunikace
 
