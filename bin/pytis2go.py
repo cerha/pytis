@@ -17,361 +17,367 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
 import gevent.monkey
 gevent.monkey.patch_all()
+
+# ---------------------
+# Taken from pyhoca-cli
+
 import os
-import time
-import wx
+import sys
+import argparse
 
-_ = lambda x, *a, **kw: x % (a or kw) if a or kw else x
+import x2go
+import paramiko
 
+import pytis.remote
+from pytis.remote.x2goclient import on_windows, runtime_error
 
-class ui(object):
-    """Just a few helper methods for simple UI construction."""
+logger = x2go.X2GoLogger()
+liblogger = x2go.X2GoLogger()
 
-    @staticmethod
-    def _add_to_sizer(sizer, items, expand=False):
-        for item in items:
-            if not isinstance(item, (tuple, list)):
-                item = (item,)
-            if item[0]:
-                sizer.Add(*item)
-        return sizer
+# exclusive client control options
+action_options = [
+    {'args': ['-N', '--new'], 'default': False, 'action': 'store_true',
+     'help': 'start a new X2Go session on server (default)', },
+    {'args': ['-R', '--resume'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'resume a suspended X2Go session with name SESSION_NAME', },
+    {'args': ['-D', '--share-desktop'], 'default': None, 'metavar': 'USER@DISPLAY',
+     'help': 'share an X2Go session on server specified by USER@DISPLAY', },
+    {'args': ['-S', '--suspend'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'suspend running X2Go session SESSION_NAME', },
+    {'args': ['-T', '--terminate'], 'default': None, 'metavar': 'SESSION_NAME',
+     'help': 'terminate running X2Go session SESSION_NAME', },
+    {'args': ['-L', '--list-sessions'], 'default': False, 'action': 'store_true', 'help':
+     'list user\'s X2Go sessions on server', },
+    {'args': ['--list-desktops'], 'default': False, 'action': 'store_true',
+     'help': 'list X2Go desktop sessions that are available for sharing', },
+    {'args': ['-l', '--list-profiles'], 'default': False, 'action': 'store_true',
+     'help': 'list user\'s X2Go pre-configured session profiles', },
+    {'args': ['-P', '--session-profile'], 'default': None,
+     'help': 'load x2goclient session profiles and use the session profile SESSION_PROFILE', },
+]
+if not on_windows():
+    action_options.append(
+        {'args': ['--from-stdin'], 'default': False, 'action': 'store_true',
+         'help': ('for LightDM remote login: '
+                  'read <username> <password> <host[:port]> <desktopshell> from STDIN'),
+         },
+    )
+# debug options...
+debug_options = [
+    {'args': ['-d', '--debug'], 'default': False, 'action': 'store_true',
+     'help': 'enable application debugging code', },
+    {'args': ['--quiet'], 'default': False, 'action': 'store_true',
+     'help': 'disable any kind of log output', },
+    {'args': ['--libdebug'], 'default': False, 'action': 'store_true',
+     'help': 'enable debugging code of the underlying Python X2Go module', },
+    {'args': ['--libdebug-sftpxfer'], 'default': False, 'action': 'store_true',
+     'help': ('enable debugging code of Python X2Go\'s sFTP server code '
+              '(very verbose, and even promiscuous)'),
+     },
+    {'args': ['-V', '--version'], 'default': False, 'action': 'store_true',
+     'help': 'print version number and exit', },
+]
+# possible programme options are
+x2go_options = [
+    {'args': ['-c', '--command'],
+     'help': 'command to run with -R mode on server (default: xterm)', },
+    {'args': ['-u', '--username'],
+     'help': 'username for the session (default: current user)', },
+    {'args': ['--password'], 'default': None, 'help': 'user password for session authentication', },
+    {'args': ['-p', '--remote-ssh-port'], 'default': '22',
+     'help': 'remote SSH port (default: 22)', },
+    {'args': ['-k', '--ssh-privkey'], 'default': None,
+     'help': 'use file \'SSH_PRIVKEY\' as private key for the SSH connection (e.g. ~/.ssh/id_rsa)',
+     },
+    {'args': ['--add-to-known-hosts'], 'default': False, 'action': 'store_true',
+     'help': ('add RSA host key fingerprint to ~/.ssh/known_hosts '
+              'if authenticity of server can\'t be established (default: not set)'),
+     },
+    {'args': ['--sound'], 'default': 'pulse', 'choices': ('pulse', 'esd', 'none'),
+     'help': 'X2Go server sound system (default: \'pulse\')', },
+    {'args': ['--printing'], 'default': False, 'action': 'store_true',
+     'help': 'use X2Go printing (default: disabled)', },
+    {'args': ['--share-mode'], 'default': 0,
+     'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
+    {'args': ['-F', '--share-local-folders'], 'metavar': '<folder1>[,<folder2[,...]]',
+     'default': None,
+     'help': 'a comma separated list of local folder names to mount in the X2Go session', },
+    {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
+     'help': 'clean all suspended sessions before starting a new one', },
+    {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
+     'help': ('terminate the connected session when pressing CTRL+C '
+              '(instead of suspending the session)'), },
+    {'args': ['--auth-attempts'], 'default': 3,
+     'help': 'number of authentication attempts before authentication fails (default: 3)', },
+]
+print_options = [
+    {'args': ['--print-action'], 'default': 'PDFVIEW',
+     'choices': x2go.defaults.X2GO_PRINT_ACTIONS.keys(),
+     'help': 'action to be performed for incoming X2Go print jobs (default: \'PDFVIEW\')', },
+    {'args': ['--pdfview-cmd'], 'default': None,
+     'help': (('PDF viewer command for displaying incoming X2Go print jobs (default: \'%s\');'
+              ' this option selects \'--print-action PDFVIEW\'') %
+              x2go.defaults.DEFAULT_PDFVIEW_CMD), },
+    {'args': ['--save-to-folder'], 'default': None, 'metavar': 'PRINT_DEST',
+     'help': (('save print jobs as PDF files to folder PRINT_DEST (default: \'%s\'); '
+               'this option selects \'--print-action PDFSAVE\'') %
+              x2go.defaults.DEFAULT_PDFSAVE_LOCATION), },
+    {'args': ['--printer'], 'default': None,
+     'help': ('target CUPS print queue for incoming X2Go print jobs '
+              '(default: CUPS default printer); this option selects \'--print-action CUPS\''), },
+    {'args': ['--print-cmd'], 'default': None,
+     'help': (('print command including cmd line arguments (default: \'%s\'); '
+               'this option selects \'--print-action PRINTCMD\'') %
+              x2go.defaults.DEFAULT_PRINTCMD_CMD), },
+]
+broker_options = [
+    {'args': ['-B', '--broker-url'], 'default': None,
+     'help': 'retrieve session profiles via an X2Go Session Broker under the given URL', },
+    {'args': ['--broker-password'], 'default': None,
+     'help': 'password for authenticating against the X2Go Session Broker', },
+]
+nx_options = [
+    {'args': ['-g', '--geometry'], 'default': '800x600',
+     'help': 'screen geometry: \'<width>x<height>\' or \'fullscreen\' (default: \'800x600\')', },
+    {'args': ['-q', '--link'], 'default': 'adsl',
+     'choices': ('modem', 'isdn', 'adsl', 'wan', 'lan'),
+     'help': 'link quality (default: \'adsl\')', },
+    {'args': ['-t', '--session-type'], 'default': 'application',
+     'choices': ('desktop', 'application'), 'help': 'session type (default: \'application\')', },
+    {'args': ['--pack'], 'default': '16m-jpeg-9',
+     'help': 'compression methods (see below for possible values)', },
+    {'args': ['--kbd-layout'], 'default': 'us',
+     'help': 'use keyboard layout (default: \'us\')', },
+    {'args': ['--kbd-type'], 'default': 'pc105/us',
+     'help': 'set Keyboard type (default: \'pc105/us\')', },
+]
+compat_options = [
+    {'args': ['--port'], 'default': None,
+     'help': 'compatibility option, synonymous to --remote-ssh-port PORT', },
+    {'args': ['--ssh-key'], 'default': None,
+     'help': 'compatibility option, synonymous to --ssh-privkey SSH_KEY', },
+    {'args': ['--use-sound'], 'default': None, 'choices': ('yes', 'no'),
+     'help': 'compatibility option, synonymous to --sound {pulse|none}', },
+    {'args': ['--client-ssh-port'], 'default': None,
+     'help': ('compatibility option for the x2goclient GUI; as Python X2Go brings its own internal '
+              'SFTP server, this option will be ignored'), },
+]
+if on_windows():
+    pytis2go_options = [
+        {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
+         'help': 'create desktop shortcut if not present (default: disabled)', },
+        {'args': ['--calling-script'], 'default': False,
+         'help': 'full file name of the script invoking this command', },
+    ]
+_profiles_backend_default = x2go.BACKENDS['X2GoSessionProfiles']['default']
+_settings_backend_default = x2go.BACKENDS['X2GoClientSettings']['default']
+_printing_backend_default = x2go.BACKENDS['X2GoClientPrinting']['default']
+if on_windows():
+    _config_backends = ('FILE', 'WINREG')
+else:
+    _config_backends = ('FILE', 'GCONF')
+backend_options = [
+    {'args': ['--backend-controlsession'], 'default': None, 'metavar': '<CONTROLSESSION_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoControlSession'].keys(),
+     'help': ('force usage of a certain CONTROLSESSION_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-terminalsession'], 'default': None, 'metavar': '<TERMINALSESSION_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoTerminalSession'].keys(),
+     'help': ('force usage of a certain TERMINALSESSION_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-serversessioninfo'], 'default': None,
+     'metavar': '<SERVERSESSIONINFO_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoServerSessionInfo'].keys(),
+     'help': ('force usage of a certain SERVERSESSIONINFO_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-serversessionlist'], 'default': None,
+     'metavar': '<SERVERSESSIONLIST_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoServerSessionList'].keys(),
+     'help': ('force usage of a certain SERVERSESSIONLIST_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-proxy'], 'default': None, 'metavar': '<PROXY_BACKEND>',
+     'choices': x2go.BACKENDS['X2GoProxy'].keys(),
+     'help': ('force usage of a certain PROXY_BACKEND '
+              '(do not use this unless you know exactly what you are doing)'), },
+    {'args': ['--backend-sessionprofiles'], 'default': None, 'metavar': '<SESSIONPROFILES_BACKEND>',
+     'choices': _config_backends,
+     'help': ('use given backend for accessing session profiles, available backends on your system:'
+              ' %s (default: %s)') % (', '.join(_config_backends), _profiles_backend_default), },
+    {'args': ['--backend-clientsettings'], 'default': None, 'metavar': '<CLIENTSETTINGS_BACKEND>',
+     'choices': _config_backends,
+     'help': (('use given backend for accessing the client settings configuration, '
+               'available backends on your system: %s (default: %s)') %
+              (', '.join(_config_backends), _settings_backend_default)), },
+    {'args': ['--backend-clientprinting'], 'default': None, 'metavar': '<CLIENTPRINTING_BACKEND>',
+     'choices': _config_backends,
+     'help': (('use given backend for accessing the client printing configuration, '
+               'available backends on your system: %s (default: %s)') %
+              (', '.join(_config_backends), _printing_backend_default)), },
+]
 
-    @staticmethod
-    def vgroup(*items):
-        return ui._add_to_sizer(wx.BoxSizer(wx.VERTICAL), items)
+# print version text and exit
+def version():
+    sys.stderr.write("%s\n" % (pytis.remote.X2GOCLIENT_VERSION,))
+    sys.exit(0)
 
-    @staticmethod
-    def hgroup(*items):
-        return ui._add_to_sizer(wx.BoxSizer(wx.HORIZONTAL), items)
+def parseargs():
+    global logger
+    global liblogger
+    p = argparse.ArgumentParser(description='X2Go pytis client.',
+                                epilog="""
+Possible values for the --pack NX option are:
+    %s
+""" % x2go.defaults.pack_methods_nx3_formatted,
+                                formatter_class=argparse.RawDescriptionHelpFormatter,
+                                add_help=True, argument_default=None)
+    p_reqargs = p.add_argument_group('X2Go server name')
+    p_reqargs.add_argument('--server', help='server hostname or IP address')
+    p_actionopts = p.add_argument_group('client actions')
+    p_debugopts = p.add_argument_group('debug options')
+    p_x2goopts = p.add_argument_group('X2Go options')
+    p_printopts = p.add_argument_group('X2Go print options')
+    p_brokeropts = p.add_argument_group('X2Go Session Broker client options')
+    p_nxopts = p.add_argument_group('NX options')
+    p_backendopts = p.add_argument_group('Python X2Go backend options (for experts only)')
+    p_compatopts = p.add_argument_group('compatibility options')
+    option_groups = [(p_x2goopts, x2go_options), (p_printopts, print_options),
+                     (p_brokeropts, broker_options), (p_actionopts, action_options),
+                     (p_debugopts, debug_options), (p_nxopts, nx_options),
+                     (p_backendopts, backend_options), (p_compatopts, compat_options)]
+    if on_windows():
+        p_pytis2goopts = p.add_argument_group('pytis2go options')
+        option_groups.append((p_pytis2goopts, pytis2go_options))
+    for (p_group, opts) in option_groups:
+        for opt in opts:
+            args = opt['args']
+            del opt['args']
+            p_group.add_argument(*args, **opt)
+    a = p.parse_args()
+    if a.debug:
+        logger.set_loglevel_debug()
+    if a.libdebug:
+        liblogger.set_loglevel_debug()
+    if a.quiet:
+        logger.set_loglevel_quiet()
+        liblogger.set_loglevel_quiet()
+    if a.libdebug_sftpxfer:
+        liblogger.enable_debug_sftpxfer()
+    if a.password and on_windows():
+        runtime_error("The --password option is forbidden on Windows platforms", parser=p,
+                      exitcode=222)
+    if a.version:
+        version()
+    if not (a.session_profile or a.list_profiles):
+        # check for mutual exclusiveness of -N, -R, -S, -T and -L, -N is
+        # default if none of them is set
+        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+             bool(a.list_profiles)) > 1):
+            runtime_error("modes --new, --resume, --share-desktop, --suspend, --terminate, "
+                          "--list-sessions, --list-desktops and "
+                          "--list-profiles are mutually exclusive", parser=p, exitcode=2)
+        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+             bool(a.list_profiles)) == 0):
+            a.new = True
+        # check if pack method is available
+        if not x2go.utils.is_in_nx3packmethods(a.pack):
+            runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
+    else:
+        if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
+                a.list_desktops or a.list_profiles):
+            a.new = True
+    # X2Go printing
+    if (((a.pdfview_cmd and a.printer) or
+         (a.pdfview_cmd and a.save_to_folder) or
+         (a.pdfview_cmd and a.print_cmd) or
+         (a.printer and a.save_to_folder) or
+         (a.printer and a.print_cmd) or
+         (a.print_cmd and a.save_to_folder))):
+        runtime_error(("--pdfviewer, --save-to-folder, --printer and --print-cmd options are "
+                       "mutually exclusive"), parser=p, exitcode=81)
+    if a.pdfview_cmd:
+        a.print_action = 'PDFVIEW'
+    elif a.save_to_folder:
+        a.print_action = 'PDFSAVE'
+    elif a.printer:
+        a.print_action = 'PRINT'
+    elif a.print_cmd:
+        a.print_action = 'PRINTCMD'
+    if a.pdfview_cmd is None and a.print_action == 'PDFVIEW':
+        a.pdfview_cmd = x2go.defaults.DEFAULT_PDFVIEW_CMD
+    if a.save_to_folder is None and a.print_action == 'PDFSAVE':
+        a.save_to_folder = x2go.defaults.DEFAULT_PDFSAVE_LOCATION
+    if a.printer is None and a.print_action == 'PRINT':
+        # None means CUPS default printer...
+        a.printer = None
+    if a.print_cmd is None and a.print_action == 'PRINTCMD':
+        a.print_cmd = x2go.defaults.DEFAULT_PRINTCMD_CMD
+    a.print_action_args = {}
+    if a.pdfview_cmd:
+        a.print_action_args = {'pdfview_cmd': a.pdfview_cmd, }
+    elif a.save_to_folder:
+        a.print_action_args = {'save_to_folder': a.save_to_folder, }
+    elif a.printer:
+        a.print_action_args = {'printer': a.printer, }
+    elif a.print_cmd:
+        a.print_action_args = {'print_cmd': a.print_cmd, }
+    # take care of compatibility options
+    # option --use-sound yes as synonomyn for --sound
+    if a.use_sound is not None:
+        if a.use_sound == 'yes':
+            a.sound = 'pulse'
+        if a.use_sound == 'no':
+            a.sound = 'none'
+    if a.ssh_key is not None:
+        a.ssh_privkey = a.ssh_key
+    if a.port is not None:
+        a.remote_ssh_port = a.port
+    if a.share_local_folders is not None:
+        a.share_local_folders = a.share_local_folders.split(',')
+    try:
+        int(a.auth_attempts)
+    except ValueError:
+        runtime_error("value for cmd line argument --auth-attempts has to be of type integer",
+                      parser=p, exitcode=1)
+    if a.server:
+        # check if SERVER is in .ssh/config file, extract information from there...
+        ssh_config = paramiko.SSHConfig()
+        from pyhoca.cli import ssh_config_filename
+        ssh_config_fileobj = open(ssh_config_filename)
+        ssh_config.parse(ssh_config_fileobj)
+        ssh_host = ssh_config.lookup(a.server)
+        if ssh_host:
+            if 'hostname' in ssh_host.keys():
+                a.server = ssh_host['hostname']
+            if 'port' in ssh_host.keys():
+                a.remote_ssh_port = ssh_host['port']
+        ssh_config_fileobj.close()
+    # check if ssh priv key exists
+    if a.ssh_privkey and not os.path.isfile(a.ssh_privkey):
+        runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
+                      exitcode=30)
+    # lightdm remote login magic takes place here
+    if not on_windows() and a.from_stdin:
+        lightdm_remote_login_buffer = sys.stdin.readline()
+        (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
+        a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
+        if ":" in a.server:
+            a.remote_ssh_port = a.server.split(':')[-1]
+            a.server = ':'.join(a.server.split(':')[:-1])
+        a.command = a.command.upper()
+        a.geometry = 'fullscreen'
+    return p, a
 
-    @staticmethod
-    def vbox(parent, label, items):
-        box = wx.StaticBox(parent, label=label)
-        return ui._add_to_sizer(wx.StaticBoxSizer(box, wx.VERTICAL), items)
-
-    @staticmethod
-    def panel(parent, method, *args, **kwargs):
-        p = wx.Panel(parent)
-        p.SetSizer(method(p, *args, **kwargs))
-        return p
-
-    @staticmethod
-    def field(parent, value=None, length=20, style=wx.DEFAULT, disabled=False):
-        ctrl = wx.TextCtrl(parent, -1, value or '', style=style)
-        width, height = parent.GetTextExtent('x' * length)
-        ctrl.SetMinSize((width, ctrl.GetSize().height))
-        if disabled:
-            ctrl.Enable(False)
-        return ctrl
-
-    @staticmethod
-    def button(parent, label, callback, updateui=None, disabled=False):
-        button = wx.Button(parent, -1, label=label)
-        button.Bind(wx.EVT_BUTTON, callback)
-        if updateui:
-            button.Bind(wx.EVT_UPDATE_UI, updateui)
-        if disabled:
-            button.Enable(False)
-        return button
-
-
-class App(wx.App):
-
-    _MAX_PROGRESS = 40
-
-    def __init__(self, client, username=None, profile=None):
-        self._progress = 1
-        self._client = client
-        self._username = username
-        self._profile = profile
-        self._authentication = None
-        super(App, self).__init__(False)
-
-    def _on_login_button(self, event):
-        self._run()
-
-    def _on_select_profile(self, event):
-        profile = self._profiles_field.GetStringSelection()
-        print "PROFILE SELECTED:", profile
-        self._profile = profile
-        self._list_sessions()
-
-    def _on_terminate_session(self, event):
-        session = self._sessions_field.GetStringSelection()
-        self._update_progress(_("Terminating session: %s", session), 0)
-        self._client.terminate_session(session)
-        self._sessions_field.Delete(self._sessions_field.GetSelection())
-        self._update_progress(_("Session terminated: %s", session), 0)
-
-    def _on_resume_session(self, event):
-        session = self._sessions_field.GetStringSelection()
-        print "RESUME SESSION:", session
-        self._update_progress(_("Resuming session: %s", session), 10)
-        time.sleep(3)
-        self.Exit()
-
-    def _on_new_session(self, event):
-        print "NEW SESSION"
-        self._update_progress(_("Starting new session."), 10)
-        time.sleep(3)
-        self.Exit()
-
-    def _on_exit(self, event):
-        print "EXIT"
-        self.Exit()
-
-    def _create_username(self, parent):
-        label = wx.StaticText(parent, -1, _("Login name:"))
-        username = self._username
-        if not username:
-            import getpass
-            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
-            button = ui.button(parent, _("Log in"), self._on_login_button)
-        else:
-            button = None
-        self._username_field = field = ui.field(parent, username, disabled=button is None)
-        return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
-
-    def _create_profiles(self, parent):
-        if self._profile:
-            return
-        self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
-        listbox.Enable(False)
-        button = ui.button(parent, _("Select Profile"), self._on_select_profile,
-                           lambda e: e.Enable(listbox.GetSelection() != -1))
-        checkbox = wx.CheckBox(parent, label=_("Create despktop shortcut"))
-        return ui.vgroup(
-            wx.StaticText(parent, -1, _("Available profiles:")),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(button, (checkbox, 0, wx.TOP, 10)), 0, wx.LEFT, 8),
-            ), 1, wx.EXPAND)
-        )
-
-    def _create_sessions(self, parent):
-        self._sessions_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
-        listbox.Enable(False)
-        return ui.vgroup(
-            wx.StaticText(parent, -1, _("Existing sessions:")),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(*[
-                    (ui.button(parent, label, callback, updateui, disabled=True),
-                     0, wx.BOTTOM, 2)
-                    for label, callback, updateui in (
-                        (_(u"Resume"), self._on_resume_session,
-                         lambda e: e.Enable(self._sessions_field.GetSelection() != -1)),
-                        (_(u"Terminate"), self._on_terminate_session,
-                         lambda e: e.Enable(self._sessions_field.GetSelection() != -1)),
-                    )]), 0, wx.LEFT, 8)),
-             1, wx.EXPAND),
-            (ui.hgroup(
-                ui.button(parent, _("Start New Session"), self._on_new_session,
-                          lambda e: e.Enable(self._profile is not None)),
-                (ui.button(parent, _("Exit"), self._on_exit), 0, wx.LEFT, 10),
-            ), 0, wx.TOP, 8),
-        )
-
-    def _create_status(self, parent):
-        self._status = status = wx.StaticText(parent, -1, '')
-        self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
-        return ui.vgroup((gauge, 0, wx.EXPAND), (status, 0, wx.EXPAND | wx.BOTTOM, 4))
-
-    def _create_main_content(self, parent):
-        return ui.vgroup(
-            (self._create_username(parent), 0, wx.EXPAND | wx.ALL, 8),
-            (self._create_profiles(parent), 1, wx.EXPAND | wx.ALL, 8),
-            (self._create_sessions(parent), 1, wx.EXPAND | wx.ALL, 8),
-            (self._create_status(parent), 0, wx.EXPAND),
-        )
-
-    def _create_publickey_authentication(self, parent):
-        path = os.path.join(os.path.expanduser('~'), '.ssh', '')
-        def on_select_key_file(event):
-            filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
-            self._keyfile_field.SetValue(filename)
-        label1 = wx.StaticText(parent, -1, _("Key File:"))
-        keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
-                if os.access(os.path.join(path, name), os.R_OK)]
-        filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
-        self._keyfile_field = field1 = ui.field(parent, filename, length=40, style=wx.TE_READONLY)
-        button1 = ui.button(parent, _("Select"), on_select_key_file)
-        label2 = wx.StaticText(parent, -1, _("Passphrase:"))
-        self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD)
-        return ui.vgroup(
-            (ui.hgroup((label1, 0, wx.RIGHT | wx.TOP, 2), field1,
-                       (button1, 0, wx.LEFT, 3)), 0, wx.ALL, 2),
-            (ui.hgroup((label2, 0, wx.RIGHT | wx.TOP, 2), field2), 0, wx.ALL, 2),
-        )
-
-    def _create_password_authentication(self, parent):
-        label = wx.StaticText(parent, -1, _("Password:"))
-        self._password_field = field = ui.field(parent, style=wx.PASSWORD)
-        return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
-
-    def _authenticate(self):
-        self._update_progress(_("Trying Kerberos authentication."))
-        login = self._username_field.GetValue()
-        result = self._client.do_kerberos_authentication(login)
-        if not result:
-            self._update_progress(_("Trying SSH Agent authentication."))
-            result = self._client.do_ssh_agent_authentication(login)
-        if not result:
-            while not result:
-                self._update_progress(_("Trying password or public key authentication."))
-                method, args = self._show_authentication_dialog()
-                if method == 'password':
-                    self._update_progress(_("Trying password authentication."))
-                    result = self._client.do_password_authentication(login, *args)
-                elif method == 'publickey':
-                    self._update_progress(_("Trying public key authentication."))
-                    result = self._client.do_publickey_authentication(login, *args)
-                else:
-                    break
-        return result
-
-    def _show_authentication_dialog(self):
-        dialog = wx.Dialog(self._frame, -1, title=_("Authentication"))
-        log_in = []
-        def on_log_in(event):
-            log_in.append(True)
-            dialog.Close()
-        def on_cancel(event):
-            dialog.Close()
-        allow_publickey = self._client.allow_publickey_authentication()
-        allow_password = self._client.allow_password_authentication()
-        if allow_password and allow_publickey:
-            nb = wx.Notebook(dialog, -1)
-            nb.AddPage(ui.panel(nb, self._create_publickey_authentication), _(u"Public Key"))
-            nb.AddPage(ui.panel(nb, self._create_password_authentication), _(u"Password"))
-            content = nb
-            method = lambda: 'publickey' if nb.GetSelection() == 0 else 'password'
-        elif allow_publickey:
-            content = ui.panel(dialog, self._create_publickey_authentication)
-            method = lambda: 'publickey'
-        elif allow_password:
-            content = ui.panel(dialog, self._create_password_authentication)
-            method = lambda: 'password'
-        else:
-            raise Exception(_(u"No supported ssh connection method available"))
-        dialog.SetSizer(ui.vgroup(
-            content,
-            (ui.hgroup(
-                (ui.button(dialog, _("Log in"), on_log_in), 0, wx.RIGHT, 20),
-                ui.button(dialog, _("Cancel"), on_cancel),
-            ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
-        ))
-        dialog.Fit()
-        pos, fsize, dsize = self._frame.GetPosition(), self._frame.GetSize(), dialog.GetSize()
-        dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
-        dialog.ShowModal()
-        dialog.Destroy()
-        self._frame.Raise()
-        if log_in:
-            m = method()
-            if m == 'password':
-                fields = (self._username_field, self._password_field)
-            else:
-                fields = (self._keyfile_field, self._passphrase_field)
-            return (m, tuple([f.GetValue() for f in fields]))
-        else:
-            return (None, ())
-
-    def _list_profiles(self):
-        self._update_progress(_("Retrieving available profiles."))
-        profiles = self._client.list_profiles()
-        self._profiles_field.InsertItems(profiles, 0)
-        self._profiles_field.Enable(True)
-        self._update_progress(_("Waiting for profile selection."))
-
-    def _list_sessions(self):
-        self._update_progress(_("Retrieving available sessions."))
-        profiles = self._client.list_sessions()
-        self._sessions_field.InsertItems(profiles, 0)
-        self._sessions_field.Enable(True)
-        self._update_progress(_("Waiting for session selection."))
-
-    def _update_progress(self, message=None, progress=1):
-        self._gauge.SetValue(self._gauge.GetValue() + progress)
-        if message:
-            self._status.SetLabel(message)
-        self.Yield()
-
-    def _run(self):
-        authentication = self._authenticate()
-        if not authentication:
-            self.Exit()
-        if not self._profile:
-            self._list_profiles()
-        else:
-            self._list_sessions()
-
-    def OnInit(self):
-        self._frame = frame = wx.Frame(None, -1, _("Starting application"))
-        ui.panel(frame, self._create_main_content)
-        self.SetTopWindow(frame)
-        frame.SetSize((500, 300 if self._profile else 500))
-        frame.Show()
-        self.Yield()
-        if self._username is not None:
-            # Start automatically when username was passed explicitly.
-            self._run()
-        else:
-            self._update_progress(_("Waiting for login name confirmation. "
-                                    "Press “Log in” to start."))
-        return True
-
-
-class X2GoClient(object):
-
-    def do_kerberos_authentication(self, login):
-        time.sleep(1)
-        return None
-
-    def do_ssh_agent_authentication(self, login):
-        time.sleep(1)
-        return None
-
-    def allow_publickey_authentication(self):
-        return True
-
-    def do_publickey_authentication(self, login, filename, passphrase):
-        time.sleep(1)
-        return True
-
-    def allow_password_authentication(self):
-        return True
-
-    def do_password_authentication(self, login, password):
-        time.sleep(1)
-        return True
-
-    def list_profiles(self):
-        time.sleep(2)
-        return ('Profile 1', 'Profile 2')
-
-    def list_sessions(self):
-        time.sleep(2)
-        return ('Session 1', 'Session 2')
-
-    def terminate_session(self, session):
-        time.sleep(2)
-        return True
-
+# -----
+# Start
 
 def main():
-    parser = argparse.ArgumentParser(description="Pytis X2Go client startup application")
-    parser.add_argument('-u', '--username', metavar='USER_NAME',
-                        help="Startup profile")
-    parser.add_argument('-p', '--profile', metavar='PROFILE_ID',
-                        help="Startup profile")
-    args = parser.parse_args()
-
-    client = X2GoClient()
-    app = App(client, username=args.username, profile=args.profile)
+    parser, args = parseargs()
+    args.parser = parser
+    app = pytis.remote.X2GoStartApp(args)
     app.MainLoop()
 
 if __name__ == '__main__':

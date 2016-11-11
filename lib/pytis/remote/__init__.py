@@ -21,19 +21,22 @@ X2GOCLIENT_VERSION = None
 X2GOCLIENT_REQUIRED_VERSION = '2016-11-09 22:35'
 
 try:
-    from proxy import run_proxy
+    from .proxy import run_proxy
 except ImportError as e:
     def run_proxy(*args, **kwargs):
         raise e
-from remote import nx_ip, client_ip, x2go_ip, client_available, version, \
+
+from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     x2goclient_version, get_clipboard_text, set_clipboard_text, \
     launch_file, launch_url, make_selected_file, make_temporary_file, \
     open_file, open_selected_file, select_directory, select_file, run_python, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException
 
+from .startapp import X2GoStartApp
+
 try:
-    from ssh import ReverseTunnel, public_key_acceptable, ssh_connect, ssh_exec
+    from .ssh import ReverseTunnel, public_key_acceptable, ssh_connect, ssh_exec
 except ImportError as e:
     def ReverseTunnel(*args, **kwargs):
         raise e
