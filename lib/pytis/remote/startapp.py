@@ -83,14 +83,15 @@ class X2GoStartApp(wx.App):
 
     _MAX_PROGRESS = 40
 
-    def __init__(self, args):
+    def __init__(self, args, client):
         self._progress = 1
         self._args = args
+        self._client = client
         self._username = args.username
         self._authentication = None
         self._selected_session_profile = args.session_profile
         self._log_in = False
-        super(X2GoStartApp, self).__init__(False)
+        super(X2GoStartApp, self).__init__(redirect=False)
 
     def _on_login_button(self, event):
         self._run()
@@ -347,8 +348,6 @@ class X2GoStartApp(wx.App):
 
     def _run(self):
         self._update_progress(_("Starting Pytis client. Please wait..."))
-        import pytis.remote.x2goclient
-        self._client = pytis.remote.x2goclient.X2GoStartAppClientAPI(self._args)
         self._authenticate()
         self._check_upgrade()
         if not self._selected_session_profile:

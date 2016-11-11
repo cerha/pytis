@@ -31,7 +31,7 @@ import x2go
 import paramiko
 
 import pytis.remote
-from pytis.remote.x2goclient import on_windows, runtime_error
+from pytis.remote.x2goclient import on_windows, runtime_error, X2GoStartAppClientAPI
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -377,7 +377,8 @@ Possible values for the --pack NX option are:
 def main():
     parser, args = parseargs()
     args.parser = parser
-    app = pytis.remote.X2GoStartApp(args)
+    client = X2GoStartAppClientAPI(args)
+    app = pytis.remote.X2GoStartApp(args, client)
     app.MainLoop()
 
 if __name__ == '__main__':
