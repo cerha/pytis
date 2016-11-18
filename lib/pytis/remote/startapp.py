@@ -90,14 +90,11 @@ class X2GoStartApp(wx.App):
         self._username = args.username
         self._authentication = None
         self._selected_session_profile = args.session_profile
-        self._log_in = False
         super(X2GoStartApp, self).__init__(redirect=False)
 
-    def _on_login_button(self, event):
-        self._run()
 
-    def _on_log_in(self, event):
-        self._log_in = True
+    def _on_submit_authentication(self, event):
+        self._authentication_dialog_confirmed = True
         dialog = event.GetEventObject()
         while not isinstance(dialog, wx.Dialog):
             dialog = dialog.GetParent()
@@ -106,7 +103,7 @@ class X2GoStartApp(wx.App):
     def _on_select_profile(self, event):
         profile = self._profiles_field.GetStringSelection()
         self._selected_session_profile = profile
-        self._list_sessions()
+        self._load_sessions()
 
     def _on_terminate_session(self, event):
         selection = self._sessions_field.GetSelection()
@@ -136,27 +133,28 @@ class X2GoStartApp(wx.App):
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
-            button = ui.button(parent, _("Log in"), self._on_login_button)
+            button = ui.button(parent, _("Continue"), lambda e: self._start())
         else:
             button = None
         self._username_field = field = ui.field(parent, username, disabled=button is None)
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
 
     def _create_profiles(self, parent):
-        if self._selected_session_profile:
-            return
-        self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
-        listbox.Enable(False)
-        button = ui.button(parent, _("Select Profile"), self._on_select_profile,
-                           lambda e: e.Enable(listbox.GetSelection() != -1))
-        checkbox = wx.CheckBox(parent, label=_("Create despktop shortcut"))
-        return ui.vgroup(
-            wx.StaticText(parent, -1, _("Available profiles:")),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(button, (checkbox, 0, wx.TOP, 10)), 0, wx.LEFT, 8),
-            ), 1, wx.EXPAND)
-        )
+        if self._args.broker_url is None or self._args.session_profile is not None:
+            self._profiles_field = None
+        else:
+            self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
+            listbox.Enable(False)
+            button = ui.button(parent, _("Select Profile"), self._on_select_profile,
+                               lambda e: e.Enable(listbox.GetSelection() != -1))
+            checkbox = wx.CheckBox(parent, label=_("Create despktop shortcut"))
+            return ui.vgroup(
+                wx.StaticText(parent, -1, _("Available profiles:")),
+                (ui.hgroup(
+                    (listbox, 1, wx.EXPAND),
+                    (ui.vgroup(button, (checkbox, 0, wx.TOP, 10)), 0, wx.LEFT, 8),
+                ), 1, wx.EXPAND)
+            )
 
     def _create_sessions(self, parent):
         self._sessions_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
@@ -177,7 +175,7 @@ class X2GoStartApp(wx.App):
              1, wx.EXPAND),
             (ui.hgroup(
                 ui.button(parent, _("Start New Session"), self._on_new_session,
-                          lambda e: e.Enable(self._selected_session_profile is not None)),
+                          lambda e: e.Enable(self._sessions_field.IsEnabled())),
                 (ui.button(parent, _("Exit"), self._on_exit), 0, wx.LEFT, 10),
             ), 0, wx.TOP, 8),
         )
@@ -208,7 +206,7 @@ class X2GoStartApp(wx.App):
         button1 = ui.button(parent, _("Select"), on_select_key_file)
         label2 = wx.StaticText(parent, -1, _("Passphrase:"))
         self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
-                                                   on_enter=self._on_log_in)
+                                                   on_enter=self._on_submit_authentication)
         return ui.vgroup(
             (ui.hgroup((label1, 0, wx.RIGHT | wx.TOP, 2), field1,
                        (button1, 0, wx.LEFT, 3)), 0, wx.ALL, 2),
@@ -220,13 +218,19 @@ class X2GoStartApp(wx.App):
         self._password_field = field = ui.field(parent, style=wx.PASSWORD)
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
 
-    def _authenticate(self):
+    def _start(self):
+        if self._args.broker_url:
+            self._load_profiles()
+        else:
+            self._connect()
+
+    def _connect(self):
         username = self._username_field.GetValue()
-        self._update_progress(_("Trying Kerberos authentication."))
-        success = self._client.connect(username, gss_auth=True)
+        self._update_progress(_("Trying SSH Agent authentication."))
+        success = self._client.connect(username)
         if not success:
-            self._update_progress(_("Trying SSH Agent authentication."))
-            success = self._client.connect(username)
+            self._update_progress(_("Trying Kerberos authentication."))
+            success = self._client.connect(username, gss_auth=True)
         if not success:
             self._update_progress(_("Retrieving supported authentication methods."))
             methods = self._client.authentication_methods()
@@ -243,10 +247,14 @@ class X2GoStartApp(wx.App):
                     success = self._client.connect(username, **kwargs)
             else:
                 raise Exception(_(u"No supported ssh connection method available"))
-        if not success:
+        if success:
+            self._update_progress(_("Starting Pytis client."))
+            self._load_sessions()
+        else:
             self.Exit()
 
     def _show_authentication_dialog(self, methods):
+        self._authentication_dialog_confirmed = False
         dialog = wx.Dialog(self._frame, -1, title=_("Authentication"))
         if 'password' in methods and 'publickey' in methods:
             nb = wx.Notebook(dialog, -1)
@@ -265,7 +273,7 @@ class X2GoStartApp(wx.App):
         dialog.SetSizer(ui.vgroup(
             content,
             (ui.hgroup(
-                (ui.button(dialog, _("Log in"), self._on_log_in), 0, wx.RIGHT, 20),
+                (ui.button(dialog, _("Log in"), self._on_submit_authentication), 0, wx.RIGHT, 20),
                 ui.button(dialog, _("Cancel"), lambda e: dialog.Close()),
             ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
         ))
@@ -278,7 +286,7 @@ class X2GoStartApp(wx.App):
         dialog.ShowModal()
         dialog.Destroy()
         self._frame.Raise()
-        if self._log_in:
+        if self._authentication_dialog_confirmed:
             if method is None:
                 method = 'publickey' if nb.GetSelection() == 0 else 'password'
             if method == 'password':
@@ -297,39 +305,67 @@ class X2GoStartApp(wx.App):
                 if self._question(_(u"New pytis client version available. Install?")):
                     self._client.pytis_upgrade()
 
-    def _list_profiles(self):
-        self._update_progress(_("Retrieving available profiles."))
-        profiles = self._client.list_profiles()
+    def _session_profiles(self):
+        username = self._username_field.GetValue()
+        self._update_progress(_("Broker: Trying Agent authentication."))
+        profiles = self._client.list_profiles(username=username)
+        if profiles is None:
+            self._update_progress(_("Broker: Trying Kerberos authentication."))
+            profiles = self._client.list_profiles(username=username, gss_auth=True)
+        while profiles is None:
+            self._update_progress(_("Broker: Trying interactive authentication."))
+            method, kwargs = self._show_authentication_dialog(('password', 'publickey'))
+            if method == 'password':
+                self._update_progress(_("Broker: Trying password authentication."))
+            elif method == 'publickey':
+                self._update_progress(_("Broker: Trying public key authentication."))
+            else:
+                break
+            profiles = self._client.list_profiles(username=username, **kwargs)
+        if profiles is None:
+            raise Exception('Broker connection failed.')
+        return profiles
+
+    def _load_profiles(self):
+        profiles = self._session_profiles()
         if self._args.list_profiles:
-            import pprint
-            print
-            print "Available X2Go session profiles"
-            print "==============================="
-            if hasattr(profiles, 'config_files') and profiles.config_files is not None:
-                print "configuration files: %s" % profiles.config_files
-            if hasattr(profiles, 'user_config_file') and profiles.user_config_file is not None:
-                print "user configuration file: %s" % profiles.user_config_file
-            if hasattr(profiles, 'broker_url') and profiles.broker_url is not None:
-                print "X2Go Session Broker URL: %s" % profiles.broker_url
-            for profile_id in profiles.profile_ids:
-                profile_config = profiles.get_profile_config(profile_id)
-                session_params = profiles.to_session_params(profile_id)
-                print 'Profile ID: %s' % profile_id
-                print 'Profile Name: %s' % session_params['profile_name']
-                print 'Profile Configuration:'
-                pprint.pprint(profile_config)
-                print 'Derived session parameters:'
-                pprint.pprint(session_params)
-                print
+            self._list_profiles(profiles)
             self.Exit()
+        elif self._args.session_profile:
+            if not self._args.session_profile in profiles.profile_ids:
+                raise "Unknown profile %s!" % self._args.session_profile
+            self._connect()
         else:
-            self._profiles_field.Append(_("Default profile"))
-            for profile_id in profiles.profile_ids:
-                session_params = profiles.to_session_params(profile_id)
-                self._profiles_field.Append(session_params['profile_name'], profile_id)
+            items = [(profile_id, profiles.to_session_params(profile_id)['profile_name'])
+                     for profile_id in profiles.profile_ids]
+            for profile_id, name in sorted(items, key=lambda x: x[1]):
+                self._profiles_field.Append(name, profile_id)
             self._profiles_field.Enable(True)
 
-    def _list_sessions(self):
+    def _list_profiles(self, profiles):
+        import pprint
+        print
+        print "Available X2Go session profiles"
+        print "==============================="
+        if hasattr(profiles, 'config_files') and profiles.config_files is not None:
+            print "configuration files: %s" % profiles.config_files
+        if hasattr(profiles, 'user_config_file') and profiles.user_config_file is not None:
+            print "user configuration file: %s" % profiles.user_config_file
+        if hasattr(profiles, 'broker_url') and profiles.broker_url is not None:
+            print "X2Go Session Broker URL: %s" % profiles.broker_url
+        for profile_id in profiles.profile_ids:
+            profile_config = profiles.get_profile_config(profile_id)
+            session_params = profiles.to_session_params(profile_id)
+            print 'Profile ID: %s' % profile_id
+            print 'Profile Name: %s' % session_params['profile_name']
+            print 'Profile Configuration:'
+            pprint.pprint(profile_config)
+            print 'Derived session parameters:'
+            pprint.pprint(session_params)
+            print
+
+    def _load_sessions(self):
+        self._check_upgrade()
         args = self._args
         if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
              args.list_desktops or args.list_profiles)):
@@ -340,7 +376,7 @@ class X2GoStartApp(wx.App):
                                   (session.date_created or '').replace('T', ' '),)
             self._sessions_field.Append(label, session)
         self._sessions_field.Enable(True)
-        self._update_progress(_("Waiting for session selection."))
+        self._update_progress(_("Resume an existing session or start a new one."))
 
     def _update_progress(self, message=None, progress=1):
         self._gauge.SetValue(self._gauge.GetValue() + progress)
@@ -348,26 +384,16 @@ class X2GoStartApp(wx.App):
             self._status.SetLabel(message)
         self.Yield()
 
-    def _run(self):
-        self._update_progress(_("Starting Pytis client. Please wait..."))
-        self._authenticate()
-        self._check_upgrade()
-        if not self._selected_session_profile:
-            self._list_profiles()
-        else:
-            self._list_sessions()
-
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))
         ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
-        frame.SetSize((500, 300 if self._selected_session_profile else 500))
+        frame.SetSize((500, 500 if self._profiles_field else 300))
         frame.Show()
         self.Yield()
         if self._username is not None:
             # Start automatically when username was passed explicitly.
-            self._run()
+            self._start()
         else:
-            self._update_progress(_("Waiting for login name confirmation. "
-                                    "Press “Log in” to start."))
+            self._update_progress(_("Enter your user name and press “Continue” to start."))
         return True
