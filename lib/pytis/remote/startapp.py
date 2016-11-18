@@ -116,13 +116,16 @@ class X2GoStartApp(wx.App):
     def _on_resume_session(self, event):
         session = self._sessions_field.GetClientData(self._sessions_field.GetSelection())
         self._update_progress(_("Resuming session: %s", session.name), 10)
-        self.Exit()
-        self._client.resume_session(session)
+        self._client.resume_session(session, callback=self._on_session_started)
 
     def _on_new_session(self, event):
         self._update_progress(_("Starting new session."), 10)
-        self.Exit()
-        self._client.start_new_session()
+        self._client.start_new_session(callback=self._on_session_started)
+
+    def _on_session_started(self):
+        self.ExitMainLoop()
+        self._frame.Show(False)
+        wx.Yield()
 
     def _on_exit(self, event):
         self.Exit()

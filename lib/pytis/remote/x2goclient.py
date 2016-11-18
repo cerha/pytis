@@ -700,6 +700,17 @@ class PytisClient(PyHocaCLI):
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
 
+    def set_callback(self, callback, function):
+        self._callbacks[callback] = function
+
+    def _run_callback(self, callback, *args, **kwargs):
+        try:
+            function = self._callbacks[callback]
+        except KeyError:
+            pass
+        else:
+            function(*args, **kwargs)
+
     def pytis_setup(self, s_uuid):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
@@ -980,7 +991,11 @@ class PytisClient(PyHocaCLI):
                     self.pytis_handle_info()
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
-        #app.close_progress_dialog()
+        self._run_callback('session-started')
+
+    def resume_session(self, s_hash):
+        super(PytisClient, self).resume_session(s_hash)
+        self._run_callback('session-started')
 
     def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
         import urlparse
@@ -1245,14 +1260,18 @@ class X2GoStartAppClientAPI(object):
     def terminate_session(self, session):
         return self._client.pytis_terminate_session(session)
 
-    def resume_session(self, session):
+    def resume_session(self, session, callback=None):
         self._args.resume = session.name
         self._args.new = False
+        if callback:
+            self._client.set_callback('session-started', callback)
         self._client.MainLoop()
 
-    def start_new_session(self):
+    def start_new_session(self, callback=None):
         self._args.resume = None
         self._args.new = True
+        if callback:
+            self._client.set_callback('session-started', callback)
         self._client.MainLoop()
 
 # Local Variables:
