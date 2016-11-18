@@ -127,6 +127,17 @@ měnili umístění aplikačních serverů nebo měnili parametry aplikací.  Pr
 broker.is-it.eu změníme konfiguraci brokeru a uživateli se to při spuštění
 aplikace ihned projeví.
 
+Spuštění, při kterém je potřeba zvolit profil nastává typicky jen jednou při
+prvním spuštění aplikace (pokud je předáno --broker-url a přitom není předáno
+--session-profile).  Po zvolení profilu je automaticky nabídnuto vytvoření
+zástupce, přes kterého už se daná aplikace spouští s předáním --session-profile.
+
+Uživatelské jméno k brokeru může být zadáno jako součást --broker-url.  Pokud
+není, je třeba se na něj v úvodu zeptat.  V každém případě se potom stejné jméno
+používá i k přihlášení k aplikačnímu serveru.  Teoreticky by mohla být jména
+různá, ale v tuto chvíli by to byla zbytečná komplikace (vše je beztak přes
+LDAP).
+
 Broker může být realizován pomocí dvou backendů: http a ssh.  My zatím
 používáme jen ssh.  Asi ani nemáme důvod to v budoucnu měnit.  Podrobnější
 informace nejen o brokeru, ale i dalších advanced rysech x2go, jsou na
@@ -137,15 +148,15 @@ Nicméně v python-x2go je komletní zrovna ta http verze brokeru a ssh broker j
 tam nedodělaný. Takže onu správu session pomocí ssh spojení doděláváme taky v
 našem x2goclient.py.
 
-Jedeme v režimu, kdy je externím uživatelům umožněno jen přihlašování klíčem,
-nikoli heslem.
+Externím uživatelům je běžně umožněno jen přihlašování klíčem, nikoli heslem.
 
-Interně to funguje tak, že se provede připojení na daný server a tam se pro
-získání seznamu dostupných profilů zavolá "x2gobroker --task listsessions" a pro
-získání parametrů vybraného profilu se zavolá "x2gobroker --task selectsession
-<session_id>".  V plánu např. máme používání single-sign-on s autentizací přes
-Kerberos (zde se neví, jak by to fungovalo přes HTTP, zatímco u ssh je to
-triviální).  Na to by se při případné úpravě x2goclient.py měl brát zřetel.
+Broker v podstatě funguje tak, že se provede připojení na daný server a tam se
+pro získání seznamu dostupných profilů zavolá "x2gobroker --task listsessions" a
+pro získání parametrů vybraného profilu se zavolá "x2gobroker --task
+selectsession <session_id>".  V plánu např. máme používání single-sign-on s
+autentizací přes Kerberos (zde se neví, jak by to fungovalo přes HTTP, zatímco u
+ssh je to triviální).  Na to by se při případné úpravě x2goclient.py měl brát
+zřetel.
 
 Je potřeba rozlišovat profily (parametry pro vytvoření session) a skutečné již
 běžící sessions na aplikačních serverech.  O těch již broker nic neví.  K tomu
