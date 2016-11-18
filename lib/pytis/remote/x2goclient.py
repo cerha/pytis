@@ -576,14 +576,12 @@ class PytisClient(PyHocaCLI):
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, args, logger=None, liblogger=None, on_update_progress=None, **kwargs):
+    def __init__(self, args, params, logger=None, liblogger=None, on_update_progress=None,
+                 xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
         self._callbacks = {}
         if on_update_progress:
             self.set_callback('update-progress', on_update_progress)
         self._update_progress(_("Client setup."))
-        ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
-                                                'known_hosts')
-        #
         self.args = args
         if on_windows():
             self.args.from_stdin = None
@@ -592,112 +590,22 @@ class PytisClient(PyHocaCLI):
         else:
             self._pyhoca_logger = copy.deepcopy(logger)
             self._pyhoca_logger.tag = 'PyHocaCLI'
-        _backend_kwargs = copy.copy(kwargs)
-        if self.args.backend_controlsession is not None:
-            _backend_kwargs['control_backend'] = self.args.backend_controlsession
-        if self.args.backend_terminalsession is not None:
-            _backend_kwargs['terminal_backend'] = self.args.backend_terminalsession
-        if self.args.backend_serversessioninfo is not None:
-            _backend_kwargs['info_backend'] = self.args.backend_serversessioninfo
-        if self.args.backend_serversessionlist is not None:
-            _backend_kwargs['list_backend'] = self.args.backend_serversessionlist
-        if self.args.backend_proxy is not None:
-            _backend_kwargs['proxy_backend'] = self.args.backend_proxy
-        if self.args.backend_sessionprofiles is not None:
-            _backend_kwargs['profiles_backend'] = self.args.backend_sessionprofiles
-        if self.args.backend_clientsettings is not None:
-            _backend_kwargs['settings_backend'] = self.args.backend_clientsettings
-        if self.args.backend_clientprinting is not None:
-            _backend_kwargs['printing_backend'] = self.args.backend_clientprinting
+        for (arg, param) in (('backend_controlsession', 'control_backend'),
+                             ('backend_terminalsession', 'terminal_backend'),
+                             ('backend_serversessioninfo', 'info_backend'),
+                             ('backend_serversessionlist', 'list_backend'),
+                             ('backend_proxy', 'proxy_backend'),
+                             ('backend_sessionprofiles', 'profiles_backend'),
+                             ('backend_clientsettings', 'settings_backend'),
+                             ('backend_clientprinting', 'printing_backend')):
+            value = getattr(self.args, arg)
+            if value is not None:
+                kwargs[param] = value
         self._pyhoca_logger('preparing requested X2Go session', loglevel=x2go.loglevel_NOTICE, )
-        broker_url = self.args.broker_url
-        ssh_p = broker_url and broker_url.lower().startswith('ssh')
-        if not ssh_p:
-            _backend_kwargs['broker_url'] = broker_url
-            _backend_kwargs['broker_password'] = self.args.broker_password
-        x2go.X2GoClient.__init__(self, logger=liblogger, **_backend_kwargs)
-        if not broker_url:
-            # Start xserver with default variant
-            self._X2GoClient__start_xserver_pytis(variant=XSERVER_VARIANT_DEFAULT)
-        # Let's substitute unimplemented sshbroker backend
-        if broker_url is not None and ssh_p:
-            self.profiles_backend = PytisSshProfiles
-        self.session_profiles = self.profiles_backend(logger=self.logger, broker_url=broker_url,
-                                                      broker_password=self.args.broker_password)
-        # TODO: Check for upgrade was originally here
+        x2go.X2GoClient.__init__(self, logger=liblogger, **kwargs)
+        self._X2GoClient__start_xserver_pytis(variant=xserver_variant)
         self.auth_attempts = int(self.args.auth_attempts)
-        if self.args.session_profile and not args.broker_url:
-            _cmdlineopt_to_sessionopt = {
-                'command': 'cmd',
-                'kb_layout': 'kblayout',
-                'kb_type': 'kbtype',
-                'sound': 'snd_system',
-                'ssh_privkey': 'key_filename',
-                'server': 'hostname',
-                'remote_ssh_port': 'port',
-            }
-            # Override session profile options by command line options.
-            kwargs = {}
-            if hasattr(self.args, 'parser'):
-                for a, v in self.args._get_kwargs():
-                    if v != self.args.parser.get_default(a):
-                        try:
-                            kwargs[_cmdlineopt_to_sessionopt[a]] = v
-                        except KeyError:
-                            kwargs[a] = v
-            # Set up the session profile based X2Go session.
-            self.x2go_session_hash = self._X2GoClient__register_session(
-                profile_name=self.args.session_profile,
-                known_hosts=ssh_known_hosts_filename,
-                **kwargs
-            )
-
-        else:
-            # Select session.
-            profile_id = self.args.session_profile
-            profile_name = 'Pyhoca-Client_Session'
-            if args.broker_url is not None:
-                params = profiles.to_session_params(profile_id)
-                # Start xserver according to the selected profile
-                rootless = profile.get('rootless', True)
-                if not rootless or int(rootless) == 0:
-                    rootless = False
-                if not rootless:
-                    variant = 'VcXsrv_pytis_desktop'
-                else:
-                    variant = 'VcXsrv_pytis'
-                self._X2GoClient__start_xserver_pytis(variant=variant)
-                self.x2go_session_hash = self._X2GoClient__register_session(
-                    **params)
-                if on_windows() and args.create_shortcut:
-                    self._update_progress(_("Checking desktop shortcut."))
-                    self._create_shortcut(broker_url, args.server, profile_id,
-                                          params['profile_name'], args.calling_script)
-            else:
-                # setup up the manually configured X2Go session
-                self.x2go_session_hash = self._X2GoClient__register_session(
-                    args.server,
-                    port=int(self.args.remote_ssh_port),
-                    known_hosts=ssh_known_hosts_filename,
-                    username=self.args.username,
-                    key_filename=self.args.ssh_privkey,
-                    add_to_known_hosts=self.args.add_to_known_hosts,
-                    profile_id=profile_id,
-                    profile_name=profile_name,
-                    session_type=self.args.session_type,
-                    link=self.args.link,
-                    geometry=self.args.geometry,
-                    pack=self.args.pack,
-                    cache_type='unix-kde',
-                    kblayout=self.args.kbd_layout,
-                    kbtype=self.args.kbd_type,
-                    snd_system=self.args.sound,
-                    printing=self.args.printing,
-                    print_action=self.args.print_action,
-                    print_action_args=self.args.print_action_args,
-                    share_local_folders=self.args.share_local_folders,
-                    allow_share_local_folders=True,
-                    cmd=self.args.command)
+        self.x2go_session_hash = self._X2GoClient__register_session(**params)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
@@ -770,16 +678,6 @@ class PytisClient(PyHocaCLI):
 
     def pytis_terminate_session(self, session):
         self._X2GoClient__terminate_session(self.x2go_session_hash, session.name)
-
-    def pytis_needs_upgrade(self):
-        # We can use only supported parameters from session_profiles
-        # So we'll use 'name' for the version and 'command' for url
-        version = self.session_profiles.pytis_upgrade_parameter('name')
-        if version and version > _VERSION:
-            upgrade_url = self.session_profiles.pytis_upgrade_parameter('command')
-            if upgrade_url:
-                return True
-        return False
 
     def pytis_upgrade(self):
         upgrade_url = self.session_profiles.pytis_upgrade_parameter('command')
@@ -1186,6 +1084,66 @@ class X2GoStartAppClientAPI(object):
             'password' is given
 
         """
+        args = self._args
+        known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'known_hosts')
+        xserver_variant = XSERVER_VARIANT_DEFAULT
+        if args.broker_url:
+            profile = self._profiles.broker_selectsession(args.session_profile)
+            rootless = profile.get('rootless', True)
+            if not rootless or int(rootless) == 0:
+                xserver_variant = 'VcXsrv_pytis_desktop'
+            params = self._profiles.to_session_params(args.session_profile)
+            if isinstance(params['server'], list):
+                params['server'] = params['server'][0]
+        elif args.session_profile:
+            # Set up the session profile based X2Go session.
+            params = dict(
+                profile_name=args.session_profile,
+                known_hosts=known_hosts_filename,
+            )
+            # Override session profile options by command line options.
+            arg_to_session_param = {
+                'command': 'cmd',
+                'kb_layout': 'kblayout',
+                'kb_type': 'kbtype',
+                'sound': 'snd_system',
+                'ssh_privkey': 'key_filename',
+                'server': 'hostname',
+                'remote_ssh_port': 'port',
+            }
+            if hasattr(args, 'parser'):
+                for a, v in args._get_kwargs():
+                    if v != args.parser.get_default(a):
+                        try:
+                            params[arg_to_session_param[a]] = v
+                        except KeyError:
+                            params[a] = v
+        else:
+            # Set up the manually configured X2Go session.
+            params = dict(
+                server=args.server,
+                port=int(args.remote_ssh_port),
+                known_hosts=known_hosts_filename,
+                username=args.username,
+                key_filename=args.ssh_privkey,
+                add_to_known_hosts=args.add_to_known_hosts,
+                profile_id=args.session_profile,
+                profile_name='Pyhoca-Client_Session',
+                session_type=args.session_type,
+                link=args.link,
+                geometry=args.geometry,
+                pack=args.pack,
+                cache_type='unix-kde',
+                kblayout=args.kbd_layout,
+                kbtype=args.kbd_type,
+                snd_system=args.sound,
+                printing=args.printing,
+                print_action=args.print_action,
+                print_action_args=args.print_action_args,
+                share_local_folders=args.share_local_folders,
+                allow_share_local_folders=True,
+                cmd=args.command,
+            )
         _auth_info.update(username=username,
                           gss_auth=gss_auth,
                           key_filename=key_filename,
@@ -1203,9 +1161,10 @@ class X2GoStartAppClientAPI(object):
                     pass
         # Create client
         _auth_info.update_args(self._args)
-        self._client = client = PytisClient(self._args,
+        self._client = client = PytisClient(self._args, params,
                                             use_cache=False,
                                             start_xserver=False,
+                                            xserver_variant=xserver_variant,
                                             loglevel=x2go.log.loglevel_DEBUG,
                                             **kwargs)
         session = client.session_registry(client.x2go_session_hash)
@@ -1252,13 +1211,25 @@ class X2GoStartAppClientAPI(object):
 
     def list_profiles(self, **kwargs):
         try:
-            return PytisSshProfiles(logger=x2go.X2GoLogger(tag='PyHocaCLI'),
-                                    broker_url=self._args.broker_url,
-                                    add_to_known_hosts=self._args.add_to_known_hosts,
-                                    connection_parameters=kwargs,
-                                    broker_password=self._args.broker_password)
+            profiles = PytisSshProfiles(logger=x2go.X2GoLogger(tag='PyHocaCLI'),
+                                        broker_url=self._args.broker_url,
+                                        add_to_known_hosts=self._args.add_to_known_hosts,
+                                        connection_parameters=kwargs,
+                                        broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
+        self._profiles = profiles
+        return profiles
+
+    def needs_upgrade(self):
+        # We can use only supported parameters from session_profiles
+        # So we'll use 'name' for the version and 'command' for url
+        version = self._profiles.pytis_upgrade_parameter('name')
+        if version and version > _VERSION:
+            upgrade_url = self._profiles.pytis_upgrade_parameter('command')
+            if upgrade_url:
+                return True
+        return False
 
     def list_sessions(self):
         return self._client.pytis_list_sessions()

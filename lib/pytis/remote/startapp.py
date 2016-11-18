@@ -89,9 +89,7 @@ class X2GoStartApp(wx.App):
         self._client = client
         self._username = args.username
         self._authentication = None
-        self._selected_session_profile = args.session_profile
         super(X2GoStartApp, self).__init__(redirect=False)
-
 
     def _on_submit_authentication(self, event):
         self._authentication_dialog_confirmed = True
@@ -101,9 +99,10 @@ class X2GoStartApp(wx.App):
         dialog.Close()
 
     def _on_select_profile(self, event):
-        profile = self._profiles_field.GetStringSelection()
-        self._selected_session_profile = profile
-        self._load_sessions()
+        selection = self._profiles_field.GetSelection()
+        profile_id = self._profiles_field.GetClientData(selection)
+        self._args.session_profile = profile_id
+        self._connect()
 
     def _on_terminate_session(self, event):
         selection = self._sessions_field.GetSelection()
@@ -254,6 +253,10 @@ class X2GoStartApp(wx.App):
             else:
                 raise Exception(_(u"No supported ssh connection method available"))
         if success:
+            #if on_windows() and args.create_shortcut:
+            #    self._update_progress(_("Checking desktop shortcut."))
+            #    self._create_shortcut(broker_url, args.server, profile_id,
+            #                          params['profile_name'], args.calling_script)
             self._update_progress(_("Starting Pytis client."))
             self._load_sessions()
         else:
@@ -307,7 +310,8 @@ class X2GoStartApp(wx.App):
     def _check_upgrade(self):
         if self._args.broker_url is not None:
             self._update_progress(_("Checking for new client version."))
-            if self._client.pytis_needs_upgrade():
+            if self._client.needs_upgrade():
+                return # TODO: finish
                 if self._question(_(u"New pytis client version available. Install?")):
                     self._client.pytis_upgrade()
 
