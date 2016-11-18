@@ -576,9 +576,11 @@ class PytisClient(PyHocaCLI):
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, args, logger=None, liblogger=None, **kwargs):
-        import pprint
-        #app.update_progress(_("Client setup."))
+    def __init__(self, args, logger=None, liblogger=None, on_update_progress=None, **kwargs):
+        self._callbacks = {}
+        if on_update_progress:
+            self.set_callback('update-progress', on_update_progress)
+        self._update_progress(_("Client setup."))
         ssh_known_hosts_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
                                                 'known_hosts')
         #
@@ -668,7 +670,7 @@ class PytisClient(PyHocaCLI):
                 self.x2go_session_hash = self._X2GoClient__register_session(
                     **params)
                 if on_windows() and args.create_shortcut:
-                    app.update_progress(_("Checking desktop shortcut."))
+                    self._update_progress(_("Checking desktop shortcut."))
                     self._create_shortcut(broker_url, args.server, profile_id,
                                           params['profile_name'], args.calling_script)
             else:
@@ -710,6 +712,9 @@ class PytisClient(PyHocaCLI):
             pass
         else:
             function(*args, **kwargs)
+
+    def _update_progress(self, *args, **kwargs):
+        self._run_callback('update-progress', *args, **kwargs)
 
     def pytis_setup(self, s_uuid):
         # Configuration transfer to the server
@@ -967,11 +972,11 @@ class PytisClient(PyHocaCLI):
         ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
         args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
-        # TODO: app.update_progress(_("Starting server connections."))
+        self._update_progress(_("Starting server connections."))
         gevent.spawn(self._check_rpyc_server, *args)
-        #app.update_progress()
+        self._update_progress()
         gevent.spawn(self._check_ssh_tunnel, *args)
-        #app.update_progress()
+        self._update_progress()
 
     def terminate_session(self, *args, **kwargs):
         try:
@@ -980,10 +985,10 @@ class PytisClient(PyHocaCLI):
             self._pytis_terminate.set()
 
     def new_session(self, s_hash):
-        #app.update_progress(_("Creating new session."))
+        self._update_progress(_("Creating new session."))
         super(PytisClient, self).new_session(s_hash)
         if self._pytis_setup_configuration:
-            #app.update_progress(_("Setting up new session."))
+            self._update_progress(_("Setting up new session."))
             self.pytis_setup(s_hash)
             self._pytis_setup_configuration = False
             def info_handler():
@@ -1159,7 +1164,7 @@ class X2GoStartAppClientAPI(object):
         s.close()
         return methods
 
-    def connect(self, username, gss_auth=False, key_filename=None, password=None):
+    def connect(self, username, gss_auth=False, key_filename=None, password=None, **kwargs):
         """Arguments:
 
           username -- user's login name as a string or unicode
@@ -1201,13 +1206,14 @@ class X2GoStartAppClientAPI(object):
         self._client = client = PytisClient(self._args,
                                             use_cache=False,
                                             start_xserver=False,
-                                            loglevel=x2go.log.loglevel_DEBUG)
+                                            loglevel=x2go.log.loglevel_DEBUG,
+                                            **kwargs)
         session = client.session_registry(client.x2go_session_hash)
         session.sshproxy_params['key_filename'] = _auth_info.get('key_filename')
         session.sshproxy_params['look_for_keys'] = False
         client.pytis_start_processes(self._configuration)
-        #TODO: app.update_progress(_("Authenticating."))
         client._pytis_setup_configuration = True
+        #self._update_progress(_("Authenticating."))
         client.authenticate()
         return True
 
