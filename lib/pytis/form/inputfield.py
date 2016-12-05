@@ -1925,7 +1925,7 @@ class FileField(Invocable, InputField):
         return self._enabled
 
     def _cmd_load(self):
-        pattern = ['*.%s' % ext for ext in self._spec.filename_extensions()] or None
+        pattern = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
         #msg = _("Select the file for field '%s'", self.spec().label())
         fh, filename = pytis.form.open_selected_file(pattern=pattern, context='file-field')
         if fh:
@@ -1947,7 +1947,6 @@ class FileField(Invocable, InputField):
         else:
             message(_("Loading file canceled."))
 
-
     def _can_save(self):
         return self._buffer is not None
 
@@ -1964,7 +1963,6 @@ class FileField(Invocable, InputField):
                 message(_("File saved."))
             else:
                 message(_("Saving file canceled."))
-
 
     def _can_clear(self):
         return self._enabled and self._buffer is not None
