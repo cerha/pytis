@@ -926,7 +926,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     else:
                         b = find(binding, spec.bindings(), key=lambda b: b.id())
                         assert b is not None, "Unknown binding for %s: %s" % (name, binding)
-                        return has_access(b.name())
+                        if b.name():
+                            return has_access(b.name())
+                        else:
+                            return True
                 return True
             else:
                 return False
