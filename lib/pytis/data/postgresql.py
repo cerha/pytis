@@ -4136,6 +4136,6 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                         except:
                             # The callback may crash if the wx class is already inactive.
                             try:
-                                del class_._watched_transactions[t]
+                                class_._watched_transactions.remove(t)
                             except KeyError:
                                 pass
