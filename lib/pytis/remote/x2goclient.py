@@ -1144,12 +1144,13 @@ class X2GoStartAppClientAPI(object):
                 allow_share_local_folders=True,
                 cmd=args.command,
             )
-        _auth_info.update(username=username,
+        _auth_info.update(hostname=params['server'],
+                          username=username,
                           gss_auth=gss_auth,
                           key_filename=key_filename,
                           password=password,
                           look_for_keys=key_filename is not None)
-        if not self._args.broker_url and not PytisClient.pytis_ssh_connect():
+        if not PytisClient.pytis_ssh_connect():
             return False
         # Clean tempdir.
         tempdir = tempfile.gettempdir()
