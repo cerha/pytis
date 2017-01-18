@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2016 Brailcom, o.p.s.
+# Copyright (C) 2011-2017 Brailcom, o.p.s.
 # Copyright (C) 2010-2014 by Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -101,7 +101,7 @@ class X2GoStartApp(wx.App):
     def _on_select_profile(self, event):
         selection = self._profiles_field.GetSelection()
         profile_id = self._profiles_field.GetClientData(selection)
-        self._args.session_profile = profile_id
+        self._client.select_profile(profile_id)
         self._connect()
 
     def _on_terminate_session(self, event):
@@ -141,7 +141,7 @@ class X2GoStartApp(wx.App):
         self._username_field = field = ui.field(parent, username, disabled=button is None)
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
 
-    def _create_profiles(self, parent):
+    def _create_profiles_field(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
             self._profiles_field = None
         else:
@@ -158,7 +158,7 @@ class X2GoStartApp(wx.App):
                 ), 1, wx.EXPAND)
             )
 
-    def _create_sessions(self, parent):
+    def _create_sessions_field(self, parent):
         self._sessions_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
         listbox.Enable(False)
         return ui.vgroup(
@@ -190,8 +190,8 @@ class X2GoStartApp(wx.App):
     def _create_main_content(self, parent):
         return ui.vgroup(
             (self._create_username(parent), 0, wx.EXPAND | wx.ALL, 8),
-            (self._create_profiles(parent), 1, wx.EXPAND | wx.ALL, 8),
-            (self._create_sessions(parent), 1, wx.EXPAND | wx.ALL, 8),
+            (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
+            (self._create_sessions_field(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_status(parent), 0, wx.EXPAND),
         )
 
@@ -334,16 +334,19 @@ class X2GoStartApp(wx.App):
             profiles = self._client.list_profiles(username=username, **kwargs)
         if profiles is None:
             raise Exception('Broker connection failed.')
+        self._update_progress(_("Broker: Successfully retrieved broker profiles."))
         return profiles
 
     def _load_profiles(self):
         profiles = self._session_profiles()
+        profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)
             self.Exit()
-        elif self._args.session_profile:
-            if not self._args.session_profile in profiles.profile_ids:
-                raise "Unknown profile %s!" % self._args.session_profile
+        elif profile_id:
+            if profile_id not in profiles.profile_ids:
+                raise Exception("Unknown profile %s!" % profile_id)
+            self._client.select_profile(profile_id)
             self._connect()
         else:
             items = [(profile_id, profiles.to_session_params(profile_id)['profile_name'])
