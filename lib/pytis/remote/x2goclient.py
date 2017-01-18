@@ -1203,12 +1203,6 @@ class X2GoStartAppClientAPI(object):
                 continue
         return False
 
-    def default_username(self):
-        return None
-
-    def default_profile(self):
-        return None
-
     def list_profiles(self, **kwargs):
         try:
             profiles = PytisSshProfiles(logger=x2go.X2GoLogger(tag='PyHocaCLI'),
