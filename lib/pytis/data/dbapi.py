@@ -312,6 +312,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._postgresql_reset_connection_info(connection_, ['commit'])
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
+        except dbapi.InterfaceError as e:
+            self._maybe_connection_error(e)
+        except dbapi.InternalError as e:
+            self._maybe_connection_error(e)
         if new:
             self._pg_return_connection(connection_)
 
@@ -325,6 +329,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             raw_connection.rollback()
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
+        except dbapi.InterfaceError as e:
+            self._maybe_connection_error(e)
+        except dbapi.InternalError as e:
+            self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         self._postgresql_reset_connection_info(connection_, ['rollback'])
@@ -334,6 +342,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             cursor.execute(query)
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
+        except dbapi.InterfaceError as e:
+            self._maybe_connection_error(e)
+        except dbapi.InternalError as e:
+            self._maybe_connection_error(e)
         # We commit the transaction immediately to prevent an open
         # (maybe) idle transaction.
         raw_connection.commit()
@@ -341,7 +353,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._pg_return_connection(connection_)
 
     def _maybe_connection_error(self, e):
-        if e.args[0].find('server closed the connection unexpectedly') != -1:
+        position = e.args[0].find
+        if (position('server closed the connection unexpectedly') != -1 or
+            position('terminating connection due to idle-in-transaction timeout') != -1 or
+            position('connection allready closed') != -1):
             raise DBSystemException(_(u"Database connection error"), e, e.args)
 
 
