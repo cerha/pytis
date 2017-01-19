@@ -114,6 +114,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
 
     def _postgresql_query(self, connection, query, outside_transaction, _retry=True):
         result = None
+
         def transform_arg(arg):
             if isinstance(arg, Range.Range):
                 lower = arg.lower()
@@ -138,6 +139,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         else:
             query, args = query.query()
             query_args = dict([(k, transform_arg(v)) for k, v in args.items()])
+
         def do_query(connection, query):
             raw_connection = connection.connection()
             standard_strings = connection.connection_info('standard_strings')
@@ -181,6 +183,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if callback is not None:
                 callback(query, start_time, time.time())
             return cursor
+
         def retry(message, exception):
             connection.set_connection_info('broken', True)
             if _retry:
@@ -354,9 +357,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
 
     def _maybe_connection_error(self, e):
         position = e.args[0].find
-        if (position('server closed the connection unexpectedly') != -1 or
-            position('terminating connection due to idle-in-transaction timeout') != -1 or
-            position('connection allready closed') != -1):
+        if position('server closed the connection unexpectedly') != -1 or \
+           position('terminating connection due to idle-in-transaction timeout') != -1 or \
+           position('connection allready closed') != -1:
             raise DBSystemException(_(u"Database connection error"), e, e.args)
 
 
@@ -378,7 +381,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
     class _PgNotifier(_DBAPIAccessor, PostgreSQLNotifier._PgNotifier):
 
         def __init__(self, connection_data, connection_name=None):
-            self._sql_logger = None # difficult to call superclass constructors properly
+            self._sql_logger = None  # difficult to call superclass constructors properly
             PostgreSQLNotifier._PgNotifier.__init__(self, connection_data,
                                                     connection_name=connection_name)
 
@@ -399,6 +402,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations
+
             def lfunction():
                 return self._postgresql_query(connection, query, True)
             _result, self._pgnotif_connection = \
@@ -418,11 +422,12 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection = connection_.connection()
                 if __debug__:
                     log(DEBUG, 'Listening for notifications:', connection)
+
                 def lfunction():
                     cursor = connection.cursor()
                     try:
                         fileno = connection.fileno()
-                    except AttributeError: # older psycogp2 versions
+                    except AttributeError:  # older psycopg2 versions
                         fileno = cursor.fileno()
                     return cursor, fileno
                 cursor, fileno = with_lock(self._pg_query_lock, lfunction)
@@ -434,12 +439,13 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     break
                 if __debug__:
                     log(DEBUG, 'Input received')
+
                 def lfunction():
                     notifications = []
                     try:
                         connection.poll()
                         ready = True
-                    except AttributeError: # older psycopg2 versions
+                    except AttributeError:  # older psycopg2 versions
                         try:
                             ready = cursor.isready()
                         except dbapi.OperationalError:
@@ -512,9 +518,12 @@ DBTransactionDefault = DBAPITransaction
 
 def _postgresql_access_groups(connection_data):
     import pytis.data.dbapi
+
     class PgUserGroups(pytis.data.dbapi._DBAPIAccessor,
                        PostgreSQLUserGroups):
         pass
     return PgUserGroups(connection_data).access_groups()
+
+
 default_access_groups = _postgresql_access_groups
 """Funkce vracející seznam skupin uživatele specifikovaného spojení."""
