@@ -249,7 +249,13 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 raise DBLockException()
             result, connection = retry(_(u"Database operational error"), e)
         except dbapi.InternalError as e:
-            raise DBException(None, e, query)
+            if e.args and e.args[0].find('terminating connection due to idle-in-transaction timeout') != -1:
+                # We believe this shouldn't happen as a program error and it
+                # may occur as a result of database engine connection crash.
+                log(OPERATIONAL, "Access to closed database connection")
+                result, connection = retry(_(u"Database internal error"), e)
+            else:
+                raise DBException(None, e, query)
         except dbapi.IntegrityError as e:
             raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
