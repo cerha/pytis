@@ -178,6 +178,7 @@ class PytisService(rpyc.Service):
 
         """
         assert isinstance(script, basestring), script
+
         def get_pythonw_interpreter():
             osfile = os.__file__
             libpath = os.path.split(osfile)[0]
@@ -447,6 +448,7 @@ class PytisAdminService(PytisService):
                                                None,
                                                pythoncom.CLSCTX_INPROC_SERVER,
                                                taskscheduler.IID_ITaskScheduler)
+
         def add_task(name, command, run_time):
             if '%s.job' % (name,) in scheduler.Enum():
                 scheduler.Delete(name)

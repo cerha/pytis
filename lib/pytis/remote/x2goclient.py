@@ -93,7 +93,9 @@ def on_windows():
 def run_directory():
     return sys.path[0]
 
+
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
+
 if on_windows():
     X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.remote.XCONFIG_DEFAULTS)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
@@ -139,6 +141,7 @@ def get_language_windows(system_lang=True):
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
+
 _auth_info = None
 class SSHClient(paramiko.SSHClient):
     pytis_client = True
@@ -146,6 +149,7 @@ class SSHClient(paramiko.SSHClient):
         if gss_auth is None:
             gss_auth = _auth_info.get('gss_auth', False)
         return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
+
 
 try:
     paramiko.SSHClient.pytis_client
@@ -201,6 +205,7 @@ class AuthInfo(dict):
             v = self.get(p)
             if v is not None and v != '':
                 setattr(args, a, unicode(v))
+
 
 _auth_info = AuthInfo()
 
@@ -304,8 +309,8 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         try:
             client.connect(look_for_keys=False, **self._parameters)
         except (paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException, # Happens on GSS auth failure.
-                ImportError): # Happens on GSS auth attempt with GSS libs uninstalled.
+                paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
+                ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
             raise self.ConnectionFailed()
         return client
 
@@ -515,6 +520,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             self.write()
         return _xserver_config
 
+
 x2go.client.X2GoClientXConfig = X2GoClientXConfig
 
 class X2GoClient(x2go.X2GoClient):
@@ -567,8 +573,9 @@ class X2GoClient(x2go.X2GoClient):
                         os.environ.update({'DISPLAY': 'localhost:0'})
     __start_xserver_pytis = start_xserver_pytis
 
+
 x2go.X2GoClient = X2GoClient
-from pyhoca.cli import PyHocaCLI, runtime_error
+from pyhoca.cli import PyHocaCLI
 
 
 class PytisClient(PyHocaCLI):
@@ -636,18 +643,24 @@ class PytisClient(PyHocaCLI):
         session_id = self.session_registry(s_uuid).terminal_session.session_info.name
         server_file_name = '%s/.x2go/ssh/pytis.%s' % (control_session._x2go_remote_home,
                                                       session_id,)
+
         class ServerInfo(object):
             def __init__(self):
                 self._port = None
                 self._password = None
+
             def port(self):
                 return self._port
+
             def set_port(self, port):
                 self._port = port
+
             def password(self):
                 return self._password
+
             def set_password(self, password):
                 self._password = password
+
             def write(self):
                 if self._port is None or self._password is None:
                     return
@@ -702,7 +715,8 @@ class PytisClient(PyHocaCLI):
         path = parameters.get('path')
         client = PytisClient.pytis_ssh_connect()
         if client is None:
-            app.info_dialog(_(u"Couldn't connect to upgrade server"), error=True)
+            # TODO: Some new dialog should be used...
+            # app.info_dialog(_(u"Couldn't connect to upgrade server"), error=True)
             return
         install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
         old_install_directory = install_directory + '.old'
@@ -714,7 +728,8 @@ class PytisClient(PyHocaCLI):
         f = sftp.open(path)
         tarfile.open(fileobj=f).extractall(path=tmp_directory)
         if not os.path.isdir(pytis_directory):
-            app.info_dialog(_(u"Package unpacking failed"), error=True)
+            # TODO: Some new dialog should be used...
+            # app.info_dialog(_(u"Package unpacking failed"), error=True)
             return
         if os.path.exists(old_install_directory):
             shutil.rmtree(old_install_directory)
@@ -747,7 +762,8 @@ class PytisClient(PyHocaCLI):
         if updateproc:
             updateproc(version=_VERSION, path=path)
         shutil.rmtree(tmp_directory)
-        app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
+        # TODO: Some new dialog should be used...
+        # app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
         sys.exit(0)
 
     def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
@@ -889,6 +905,7 @@ class PytisClient(PyHocaCLI):
             self._update_progress(_("Setting up new session."))
             self.pytis_setup(s_hash)
             self._pytis_setup_configuration = False
+
             def info_handler():
                 while self.session_ok(s_hash):
                     self.pytis_handle_info()
@@ -950,8 +967,8 @@ class PytisClient(PyHocaCLI):
         shortcut_exists = False
         shortcut_list = [os.path.join(winshell.desktop(), d)
                          for d in os.listdir(winshell.desktop())
-                         if os.path.isfile(os.path.join(winshell.desktop(), d))
-                         and os.path.splitext(d)[1].lower() == '.lnk']
+                         if os.path.isfile(os.path.join(winshell.desktop(), d)) and
+                         os.path.splitext(d)[1].lower() == '.lnk']
         for lpath in shortcut_list:
             try:
                 with winshell.shortcut(lpath) as link:
@@ -961,7 +978,9 @@ class PytisClient(PyHocaCLI):
             except Exception:
                 pass
         if ((shortcut_exists or
-             not app.question_dialog(_(u"Create desktop shortcut for this session profile?")))):
+             # TODO: some new question dialog should be used
+             # not app.question_dialog(_(u"Create desktop shortcut for this session profile?")))):
+             True)):
             return
         # Create shortcut on desktop
         shortcut_name = profile_name
@@ -970,9 +989,11 @@ class PytisClient(PyHocaCLI):
             if not os.path.exists(shortcut_path):
                 break
             else:
-                msg = _(u"Shortcut %s allready exists. Please, rename it:") % shortcut_name
-                new_name = app.text_dialog(msg, caption=_(u"Edit shortcut name"),
-                                           default_value=shortcut_name)
+                # TODO: some new text_dialog should be used
+                # msg = _(u"Shortcut %s allready exists. Please, rename it:") % shortcut_name
+                # new_name = app.text_dialog(msg, caption=_(u"Edit shortcut name"),
+                #                            default_value=shortcut_name)
+                new_name = None
                 if not new_name:
                     return
                 elif shortcut_name != new_name:
@@ -997,8 +1018,8 @@ class PytisClient(PyHocaCLI):
         try:
             client.connect(**params)
         except (paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException, # Happens on GSS auth failure.
-                ImportError): # Happens on GSS auth attempt with GSS libs uninstalled.
+                paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
+                ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
             return None
         return client
 
@@ -1023,6 +1044,7 @@ class X2GoStartAppClientAPI(object):
         self._configuration = configuration = Configuration()
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
         self._session_parameters = {}
+
         def cfg(*params):
             if args.broker_url is None:
                 try:
