@@ -97,7 +97,7 @@ def run_directory():
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 
 if on_windows():
-    X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.remote.XCONFIG_DEFAULTS)
+    X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
 
 sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
