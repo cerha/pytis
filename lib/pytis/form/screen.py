@@ -1507,11 +1507,10 @@ class ToolTip(supertooltip.SuperToolTip):
 class StatusBar(object):
     """Pytis application main frame status bar.
 
-    Stavový řádek slouží pro zobrazování krátkých zpráv uživateli a zobrazování
-    stavových informací.  Může být rozdělen do více polí, z nichž každé slouží
-    k zobrazení samostatné informace.  Tato třída rozšiřuje třídu
-    'wxStatusBar' z wxWindows, měly by však být volány pouze její vlastní
-    metody a ne metody poděděné z třídy 'wxStatusBar'.
+    The status bar is located at the bottom of the main application window and
+    may be used to display global application status information in a set of
+    dedicated fields.  The application defines the available status bar fields
+    through the specification method 'Application.status_fields()'.
 
     """
     class _Timer(wx.Timer):
@@ -1537,20 +1536,10 @@ class StatusBar(object):
             return tooltip
 
     def __init__(self, parent, fields):
-        """Inicializuj StatusBar a vytvoř pojmenovaná pole.
+        """Arguments:
 
-        Argumenty:
-
-          parent -- rodičovské okno
-          fields -- sekvence specifikací polí
-
-        Každá položka sekvence 'fields' je dvojice (ID, WIDTH), kde ID je jméno
-        pole jako neprázdný string a WIDTH je jeho šířka v dialogových
-        jednotkách.  Je-li WIDTH rovno None, pole je roztaženo na maximální
-        možnou šířku po odečtení šířek ostatních polí; WIDTH smí být None pouze
-        pro jediné pole.  ID pole jednoznačně identifikuje a k poli se jeho
-        prostřednictvím přistupuje v metodách této třídy.  Žádná dvě pole nesmí
-        mít stejné ID.
+          parent -- parent wx Window.
+          fields -- sequence of 'pytis.presentation.StatusField' instances.
 
         """
         self._sb = sb = wx.StatusBar(parent, -1)
