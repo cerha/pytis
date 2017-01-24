@@ -83,10 +83,11 @@ class X2GoStartApp(wx.App):
 
     _MAX_PROGRESS = 40
 
-    def __init__(self, args, client):
+    def __init__(self, args):
+        from pytis.remote.x2goclient import X2GoStartAppClientAPI
         self._progress = 1
         self._args = args
-        self._client = client
+        self._client = X2GoStartAppClientAPI(args, self._update_progress)
         self._username = args.username
         self._authentication = None
         super(X2GoStartApp, self).__init__(redirect=False)
@@ -229,11 +230,10 @@ class X2GoStartApp(wx.App):
     def _connect(self):
         username = self._username_field.GetValue()
         self._update_progress(_("Trying SSH Agent authentication."))
-        success = self._client.connect(username, on_update_progress=self._update_progress)
+        success = self._client.connect(username)
         if not success:
             self._update_progress(_("Trying Kerberos authentication."))
-            success = self._client.connect(username, gss_auth=True,
-                                           on_update_progress=self._update_progress)
+            success = self._client.connect(username, gss_auth=True)
         if not success:
             self._update_progress(_("Retrieving supported authentication methods."))
             methods = self._client.authentication_methods()
@@ -247,9 +247,7 @@ class X2GoStartApp(wx.App):
                         self._update_progress(_("Trying public key authentication."))
                     else:
                         break
-                    success = self._client.connect(username,
-                                                   on_update_progress=self._update_progress,
-                                                   **kwargs)
+                    success = self._client.connect(username, **kwargs)
             else:
                 raise Exception(_(u"No supported ssh connection method available"))
         if success:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2016 Brailcom, o.p.s.
+# Copyright (C) 2011-2017 Brailcom, o.p.s.
 # Copyright (C) 2010-2014 by Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import x2go
 import paramiko
 
 import pytis.remote
-from pytis.remote.x2goclient import on_windows, runtime_error, X2GoStartAppClientAPI
+from pytis.remote.x2goclient import on_windows, runtime_error
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -377,8 +377,7 @@ Possible values for the --pack NX option are:
 def main():
     parser, args = parseargs()
     args.parser = parser
-    client = X2GoStartAppClientAPI(args)
-    app = pytis.remote.X2GoStartApp(args, client)
+    app = pytis.remote.X2GoStartApp(args)
     app.MainLoop()
 
 if __name__ == '__main__':

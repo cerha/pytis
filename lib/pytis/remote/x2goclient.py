@@ -1039,8 +1039,9 @@ class X2GoStartAppClientAPI(object):
 
     """
 
-    def __init__(self, args):
+    def __init__(self, args, update_progress):
         self._args = args
+        self._update_progress = update_progress
         self._configuration = configuration = Configuration()
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
         self._session_parameters = {}
@@ -1141,7 +1142,7 @@ class X2GoStartAppClientAPI(object):
         s.close()
         return methods
 
-    def connect(self, username, gss_auth=False, key_filename=None, password=None, **kwargs):
+    def connect(self, username, gss_auth=False, key_filename=None, password=None):
         """Arguments:
 
           username -- user's login name as a string or unicode
@@ -1186,7 +1187,7 @@ class X2GoStartAppClientAPI(object):
                                                 start_xserver=False,
                                                 xserver_variant=self._xserver_variant,
                                                 loglevel=x2go.log.loglevel_DEBUG,
-                                                **kwargs)
+                                                on_update_progress=self._update_progress)
             session = client.session_registry(client.x2go_session_hash)
             session.sshproxy_params['key_filename'] = key_filename
             session.sshproxy_params['look_for_keys'] = False
