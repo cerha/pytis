@@ -221,45 +221,6 @@ class X2GoStartApp(wx.App):
         self._password_field = field = ui.field(parent, style=wx.PASSWORD)
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
 
-    def _start(self):
-        if self._args.broker_url:
-            self._load_profiles()
-        else:
-            self._connect()
-
-    def _connect(self):
-        username = self._username_field.GetValue()
-        self._update_progress(_("Trying SSH Agent authentication."))
-        success = self._client.connect(username)
-        if not success:
-            self._update_progress(_("Trying Kerberos authentication."))
-            success = self._client.connect(username, gss_auth=True)
-        if not success:
-            self._update_progress(_("Retrieving supported authentication methods."))
-            methods = self._client.authentication_methods()
-            if 'password' in methods or 'publickey' in methods:
-                self._update_progress(_("Trying interactive authentication."))
-                while not success:
-                    method, kwargs = self._show_authentication_dialog(methods)
-                    if method == 'password':
-                        self._update_progress(_("Trying password authentication."))
-                    elif method == 'publickey':
-                        self._update_progress(_("Trying public key authentication."))
-                    else:
-                        break
-                    success = self._client.connect(username, **kwargs)
-            else:
-                raise Exception(_(u"No supported ssh connection method available"))
-        if success:
-            #if on_windows() and args.create_shortcut:
-            #    self._update_progress(_("Checking desktop shortcut."))
-            #    self._create_shortcut(broker_url, args.server, profile_id,
-            #                          params['profile_name'], args.calling_script)
-            self._update_progress(_("Starting Pytis client."))
-            self._load_sessions()
-        else:
-            self.Exit()
-
     def _show_authentication_dialog(self, methods):
         self._authentication_dialog_confirmed = False
         dialog = wx.Dialog(self._frame, -1, title=_("Authentication"))
@@ -305,38 +266,33 @@ class X2GoStartApp(wx.App):
         else:
             return (None, ())
 
-    def _check_upgrade(self):
-        if self._args.broker_url is not None:
-            self._update_progress(_("Checking for new client version."))
-            if self._client.needs_upgrade():
-                return # TODO: finish
-                if self._question(_(u"New pytis client version available. Install?")):
-                    self._client.pytis_upgrade()
+    def _update_progress(self, message=None, progress=1):
+        self._gauge.SetValue(self._gauge.GetValue() + progress)
+        if message:
+            self._status.SetLabel(message)
+        self.Yield()
 
-    def _session_profiles(self):
+    def _start(self):
+        if self._args.broker_url:
+            self._load_profiles()
+        else:
+            self._connect()
+
+    def _connect(self):
         username = self._username_field.GetValue()
-        self._update_progress(_("Broker: Trying Agent authentication."))
-        profiles = self._client.list_profiles(username=username)
-        if profiles is None:
-            self._update_progress(_("Broker: Trying Kerberos authentication."))
-            profiles = self._client.list_profiles(username=username, gss_auth=True)
-        while profiles is None:
-            self._update_progress(_("Broker: Trying interactive authentication."))
-            method, kwargs = self._show_authentication_dialog(('password', 'publickey'))
-            if method == 'password':
-                self._update_progress(_("Broker: Trying password authentication."))
-            elif method == 'publickey':
-                self._update_progress(_("Broker: Trying public key authentication."))
-            else:
-                break
-            profiles = self._client.list_profiles(username=username, **kwargs)
-        if profiles is None:
-            raise Exception('Broker connection failed.')
-        self._update_progress(_("Broker: Successfully retrieved broker profiles."))
-        return profiles
+        if self._client.connect(username, self._show_authentication_dialog):
+            #if on_windows() and args.create_shortcut:
+            #    self._update_progress(_("Checking desktop shortcut."))
+            #    self._create_shortcut(broker_url, args.server, profile_id,
+            #                          params['profile_name'], args.calling_script)
+            self._update_progress(_("Starting Pytis client."))
+            self._load_sessions()
+        else:
+            self.Exit()
 
     def _load_profiles(self):
-        profiles = self._session_profiles()
+        username = self._username_field.GetValue()
+        profiles = self._client.list_profiles(username, self._show_authentication_dialog)
         profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)
@@ -389,11 +345,13 @@ class X2GoStartApp(wx.App):
         self._sessions_field.Enable(True)
         self._update_progress(_("Resume an existing session or start a new one."))
 
-    def _update_progress(self, message=None, progress=1):
-        self._gauge.SetValue(self._gauge.GetValue() + progress)
-        if message:
-            self._status.SetLabel(message)
-        self.Yield()
+    def _check_upgrade(self):
+        if self._args.broker_url is not None:
+            self._update_progress(_("Checking for new client version."))
+            if self._client.needs_upgrade():
+                return # TODO: finish
+                if self._question(_(u"New pytis client version available. Install?")):
+                    self._client.pytis_upgrade()
 
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))

@@ -1128,7 +1128,7 @@ class X2GoStartAppClientAPI(object):
         )
         _auth_info.update_args(self._args)
 
-    def authentication_methods(self):
+    def _authentication_methods(self):
         import socket
         s = socket.socket()
         s.connect((_auth_info.get('hostname'), _auth_info.get('port')))
@@ -1140,10 +1140,25 @@ class X2GoStartAppClientAPI(object):
             methods = e.allowed_types
         transport.close()
         s.close()
+        if 'password' not in methods and 'publickey' not in methods:
+            raise Exception(_(u"No supported ssh authentication method available."))
         return methods
 
-    def connect(self, username, gss_auth=False, key_filename=None, password=None):
-        """Arguments:
+    def _authenticate(self, connect, target, username, askpass):
+        """Try calling 'connect' with different authentication methods.
+
+        Arguments:
+          connect -- connection function to be called with different arguments
+            to try different authentication methods.  The arguments are
+            described below.  The function must return a result which evaluates
+            to True to indicate success or False for failure.
+          target -- name of the connection target to display in connection
+            progress messages.
+          username -- user name to use for authentication.
+          askpass -- function called when authentication credentials need
+            to be obtained interactively from the user.
+
+        Arguments passed to 'connect':
 
           username -- user's login name as a string or unicode
           gss_auth -- True if GSS-API (Kerberos) authentication is to be used
@@ -1164,6 +1179,30 @@ class X2GoStartAppClientAPI(object):
             'password' is given
 
         """
+        def message(msg):
+            self._update_progress(target + ': ' + msg)
+        message(_("Trying SSH Agent authentication."))
+        success = connect(username=username)
+        if not success:
+            message(_("Trying Kerberos authentication."))
+            success = connect(username=username, gss_auth=True)
+        if not success:
+            message(_("Retrieving supported authentication methods."))
+            methods = self._authentication_methods()
+            while not success:
+                message(_("Trying interactive authentication."))
+                method, kwargs = askpass(methods)
+                if method == 'password':
+                    message(_("Trying password authentication."))
+                elif method == 'publickey':
+                    message(_("Trying public key authentication."))
+                else:
+                    break
+                success = connect(username=username, **kwargs)
+        message(_("Connected successfully."))
+        return success
+
+    def _connect(self, username=None, gss_auth=False, key_filename=None, password=None):
         self._update_session_parameters(
             username=username,
             gss_auth=gss_auth,
@@ -1199,6 +1238,9 @@ class X2GoStartAppClientAPI(object):
         else:
             return False
 
+    def connect(self, username, askpass):
+        return self._authenticate(self._connect, self._args.server, username, askpass)
+
     def search_key_files(self, username):
         def key_acceptable(key_filename):
             public_key_filename = key_filename + '.pub'
@@ -1226,7 +1268,7 @@ class X2GoStartAppClientAPI(object):
                 continue
         return False
 
-    def list_profiles(self, **kwargs):
+    def _list_profiles(self, **kwargs):
         try:
             profiles = PytisSshProfiles(logger=x2go.X2GoLogger(tag='PyHocaCLI'),
                                         broker_url=self._args.broker_url,
@@ -1236,7 +1278,12 @@ class X2GoStartAppClientAPI(object):
         except PytisSshProfiles.ConnectionFailed:
             return None
         self._profiles = profiles
+        if not profiles:
+            raise Exception('Broker connection failed.')
         return profiles
+
+    def list_profiles(self, username, askpass):
+        return self._authenticate(self._list_profiles, _("Broker"), username, askpass)
 
     def select_profile(self, profile_id):
         profile = self._profiles.broker_selectsession(profile_id)
