@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -250,8 +250,7 @@ class FormProfileManager(UserSetttingsManager):
     _TABLE = 'e_pytis_form_profile_base'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
                 'pickle', 'dump', 'errors')
-    _OPERATORS = ('AND', 'OR', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE',
-                  'IN',) # NOT is not allowed!
+    _OPERATORS = ('AND', 'OR', 'NOT', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE', 'IN')
     _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations', 'column_widths')
 
     USER_PROFILE_PREFIX = '_user_profile_'
@@ -304,7 +303,7 @@ class FormProfileManager(UserSetttingsManager):
         if name not in self._OPERATORS:
             raise Exception("Invalid filter operator '%s'." % name)
         op = getattr(pytis.data, name)
-        if name in ('AND', 'OR'):
+        if name in ('AND', 'OR', 'NOT'):
             args = [self._unpack_filter(arg, data_object, delete_columns=delete_columns,
                                         rename_columns=rename_columns)
                     for arg in packed_args]
