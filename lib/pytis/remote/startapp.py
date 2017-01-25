@@ -158,9 +158,11 @@ class X2GoStartApp(wx.App):
         class Dialog(wx.Dialog):
             result = None
             callback = None
+
             def close(self, result):
                 self.result = result
                 self.Close()
+
             def set_callback(self, callback):
                 self.callback = callback
         dialog = Dialog(self._frame, -1, title=title)
@@ -190,8 +192,10 @@ class X2GoStartApp(wx.App):
                               ('password', self._passphrase_field),)
                 auth_kwargs = dict([(param, f.GetValue().rstrip('\r\n')) for param, f in fields])
             dialog.close((method, auth_kwargs))
+
         def publickey_authentication(parent):
             path = os.path.join(os.path.expanduser('~'), '.ssh', '')
+
             def on_select_key_file(event):
                 filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
                 self._keyfile_field.SetValue(filename)
@@ -210,11 +214,13 @@ class X2GoStartApp(wx.App):
                            (button1, 0, wx.LEFT, 3)), 0, wx.BOTTOM, 4),
                 ui.hgroup((label2, 0, wx.RIGHT | wx.TOP, 2), field2),
             )
+
         def password_authentication(parent):
             label = wx.StaticText(parent, -1, _("Password:"))
             self._password_field = field = ui.field(parent, style=wx.PASSWORD,
                                                     on_enter=lambda e: close('password'))
             return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
+
         def on_show_dialog():
             for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
                 if f and f.IsShown():
@@ -225,6 +231,7 @@ class X2GoStartApp(wx.App):
             nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
             nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
             content = nb
+
             def method():
                 return 'publickey' if nb.GetSelection() == 0 else 'password'
         elif 'publickey' in methods:
@@ -248,6 +255,7 @@ class X2GoStartApp(wx.App):
 
     def _session_selection_dialog(self, dialog, sessions):
         listbox = wx.ListBox(dialog, -1, choices=(), style=wx.LB_SINGLE)
+
         def on_terminate_session(event):
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
@@ -256,9 +264,9 @@ class X2GoStartApp(wx.App):
             listbox.Delete(selection)
             self._update_progress(_("Session terminated: %s", session.name), 0)
         for session in sessions:
-            label = '%s@%s %s' % (session.username or '', session.hostname or '',
-                                  (session.date_created or '').replace('T', ' '),)
-            listbox.Append(label, session)
+            session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
+                                          (session.date_created or '').replace('T', ' '),)
+            listbox.Append(session_label, session)
         dialog.set_callback(lambda: listbox.SetFocus())
         return ui.vgroup(
             wx.StaticText(dialog, -1, _("Existing sessions:")),
@@ -367,7 +375,7 @@ class X2GoStartApp(wx.App):
         if self._args.broker_url is not None:
             self._update_progress(_("Checking for new client version."))
             if self._client.needs_upgrade():
-                return # TODO: finish
+                return  # TODO: finish
                 if self._question(_(u"New pytis client version available. Install?")):
                     self._client.pytis_upgrade()
 
