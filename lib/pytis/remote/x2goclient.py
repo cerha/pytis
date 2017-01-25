@@ -1199,7 +1199,8 @@ class X2GoStartAppClientAPI(object):
                 else:
                     break
                 success = connect(username=username, **kwargs)
-        message(_("Connected successfully."))
+        if success:
+            message(_("Connected successfully."))
         return success
 
     def _connect(self, username=None, gss_auth=False, key_filename=None, password=None):
