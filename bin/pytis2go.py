@@ -20,11 +20,16 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
+import os
+import sys
+
+pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
+if os.path.isdir(pytislib) and pytislib not in sys.path:
+    sys.path.append(pytislib)
+
 # ---------------------
 # Taken from pyhoca-cli
 
-import os
-import sys
 import argparse
 
 import x2go
