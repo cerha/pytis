@@ -110,9 +110,8 @@ class X2GoStartApp(wx.App):
         label = wx.StaticText(parent, -1, _("Login name:"))
         username = self._args.username
         if not username and self._args.broker_url:
-            start, end = self._args.broker_url.find('//'), self._args.broker_url.find('@')
-            if -1 not in (start, end):
-                username = self._args.broker_url[start + 2:end]
+            from pytis.remote.x2goclient import X2GoStartAppClientAPI
+            username = X2GoStartAppClientAPI.parse_broker_url(self._args.broker_url).get('username')
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,

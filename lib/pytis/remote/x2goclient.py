@@ -263,18 +263,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
     def __init__(self, broker_url, logger=None, loglevel=x2go.log.loglevel_DEFAULT,
                  connection_parameters=None, default_broker_path='/usr/bin/x2gobroker',
                  add_to_known_hosts=False, **kwargs):
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|(?P<path>/.*)$)'), broker_url)
-        if match is None:
-            raise Exception(_("Invalid broker address"), broker_url)
-        url = match.groupdict()
-        protocol = url['protocol']
-        if protocol != 'ssh':
-            raise Exception(_(u"Unsupported broker protocol"), protocol)
+        url = X2GoStartAppClientAPI.parse_broker_url(broker_url)
         parameters = connection_parameters or {}
         self._parameters = dict(
             parameters,
@@ -1262,6 +1251,22 @@ class X2GoStartAppClientAPI(object):
     def connect(self, username, askpass, keyring=None):
         return self._authenticate(self._connect, self._args.server, username, askpass,
                                   keyring=keyring)
+
+    @classmethod
+    def parse_broker_url(cls, broker_url):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|(?P<path>/.*)$)'), broker_url)
+        if match is None:
+            raise Exception(_("Invalid broker address"), broker_url)
+        parameters = match.groupdict()
+        protocol = parameters['protocol']
+        if protocol != 'ssh':
+            raise Exception(_(u"Unsupported broker protocol"), protocol)
+        return parameters
 
     def search_key_files(self, username):
         def key_acceptable(key_filename):
