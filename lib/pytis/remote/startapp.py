@@ -99,23 +99,6 @@ class X2GoStartApp(wx.App):
         self._client.select_profile(profile_id)
         self._connect()
 
-    def _on_terminate_session(self, event):
-        selection = self._sessions_field.GetSelection()
-        session = self._sessions_field.GetClientData(selection)
-        self._update_progress(_("Terminating session: %s", session.name), 0)
-        self._client.terminate_session(session)
-        self._sessions_field.Delete(selection)
-        self._update_progress(_("Session terminated: %s", session.name), 0)
-
-    def _on_resume_session(self, event):
-        session = self._sessions_field.GetClientData(self._sessions_field.GetSelection())
-        self._update_progress(_("Resuming session: %s", session.name), 10)
-        self._client.resume_session(session, callback=self._on_session_started)
-
-    def _on_new_session(self, event):
-        self._update_progress(_("Starting new session."), 10)
-        self._client.start_new_session(callback=self._on_session_started)
-
     def _on_session_started(self):
         self.ExitMainLoop()
         self._frame.Show(False)
@@ -153,30 +136,6 @@ class X2GoStartApp(wx.App):
                 ), 1, wx.EXPAND)
             )
 
-    def _create_sessions_field(self, parent):
-        self._sessions_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
-        listbox.Enable(False)
-        return ui.vgroup(
-            wx.StaticText(parent, -1, _("Existing sessions:")),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(*[
-                    (ui.button(parent, label, callback, updateui, disabled=True),
-                     0, wx.BOTTOM, 2)
-                    for label, callback, updateui in (
-                        (_(u"Resume"), self._on_resume_session,
-                         lambda e: e.Enable(self._sessions_field.GetSelection() != -1)),
-                        (_(u"Terminate"), self._on_terminate_session,
-                         lambda e: e.Enable(self._sessions_field.GetSelection() != -1)),
-                    )]), 0, wx.LEFT, 8)),
-             1, wx.EXPAND),
-            (ui.hgroup(
-                ui.button(parent, _("Start New Session"), self._on_new_session,
-                          lambda e: e.Enable(self._sessions_field.IsEnabled())),
-                (ui.button(parent, _("Exit"), self._on_exit), 0, wx.LEFT, 10),
-            ), 0, wx.TOP, 8),
-        )
-
     def _create_status(self, parent):
         self._status = status = wx.StaticText(parent, -1, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
@@ -186,7 +145,6 @@ class X2GoStartApp(wx.App):
         return ui.vgroup(
             (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
-            (self._create_sessions_field(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_status(parent), 0, wx.EXPAND),
         )
 
@@ -282,6 +240,36 @@ class X2GoStartApp(wx.App):
     def _show_authentication_dialog(self, methods):
         return self._show_dialog(_("Authentication"), self._authentication_dialog, methods)
 
+    def _session_selection_dialog(self, dialog, sessions):
+        listbox = wx.ListBox(dialog, -1, choices=(), style=wx.LB_SINGLE)
+        def on_terminate_session(event):
+            selection = listbox.GetSelection()
+            session = listbox.GetClientData(selection)
+            self._update_progress(_("Terminating session: %s", session.name), 0)
+            self._client.terminate_session(session)
+            listbox.Delete(selection)
+            self._update_progress(_("Session terminated: %s", session.name), 0)
+        for session in sessions:
+            label = '%s@%s %s' % (session.username or '', session.hostname or '',
+                                  (session.date_created or '').replace('T', ' '),)
+            listbox.Append(label, session)
+        dialog.set_callback(lambda: listbox.SetFocus())
+        return ui.vgroup(
+            wx.StaticText(dialog, -1, _("Existing sessions:")),
+            (ui.hgroup(
+                (listbox, 1, wx.EXPAND),
+                (ui.vgroup(*[
+                    (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
+                    for label, callback, updateui in (
+                        (_(u"Resume"),
+                         lambda e: dialog.close(listbox.GetClientData(listbox.GetSelection())),
+                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                        (_(u"Terminate"), on_terminate_session,
+                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND),
+            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.TOP, 8),
+        )
+
 
     def _update_progress(self, message=None, progress=1):
         self._gauge.SetValue(self._gauge.GetValue() + progress)
@@ -303,7 +291,7 @@ class X2GoStartApp(wx.App):
             #    self._create_shortcut(broker_url, args.server, profile_id,
             #                          params['profile_name'], args.calling_script)
             self._update_progress(_("Starting Pytis client."))
-            self._load_sessions()
+            self._start_session()
         else:
             self.Exit()
 
@@ -348,19 +336,25 @@ class X2GoStartApp(wx.App):
             pprint.pprint(session_params)
             print
 
-    def _load_sessions(self):
+    def _start_session(self):
         self._check_upgrade()
         args = self._args
         if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
              args.list_desktops or args.list_profiles)):
             return
         self._update_progress(_("Retrieving available sessions."))
-        for session in self._client.list_sessions():
-            label = '%s@%s %s' % (session.username or '', session.hostname or '',
-                                  (session.date_created or '').replace('T', ' '),)
-            self._sessions_field.Append(label, session)
-        self._sessions_field.Enable(True)
-        self._update_progress(_("Resume an existing session or start a new one."))
+        sessions = self._client.list_sessions()
+        if len(sessions) == 0:
+            session = None
+        else:
+            session = self._show_dialog(_("Select session"),
+                                        self._session_selection_dialog, sessions)
+        if session:
+            self._update_progress(_("Resuming session: %s", session.name), 10)
+            self._client.resume_session(session, callback=self._on_session_started)
+        else:
+            self._update_progress(_("Starting new session."), 10)
+            self._client.start_new_session(callback=self._on_session_started)
 
     def _check_upgrade(self):
         if self._args.broker_url is not None:
@@ -374,7 +368,7 @@ class X2GoStartApp(wx.App):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))
         ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
-        frame.SetSize((500, 500 if self._profiles_field else 300))
+        frame.SetSize((500, 360 if self._profiles_field else 146))
         frame.Show()
         self.Yield()
         if self._username is not None:
