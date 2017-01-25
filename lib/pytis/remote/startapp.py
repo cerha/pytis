@@ -19,6 +19,7 @@
 
 import os
 import wx
+import collections
 
 def _(x, *args, **kwargs):
     return x % (args or kwargs) if args or kwargs else x
@@ -91,13 +92,6 @@ class X2GoStartApp(wx.App):
         self._username = args.username
         self._authentication = None
         super(X2GoStartApp, self).__init__(redirect=False)
-
-    def _on_submit_authentication(self, event):
-        self._authentication_dialog_confirmed = True
-        dialog = event.GetEventObject()
-        while not isinstance(dialog, wx.Dialog):
-            dialog = dialog.GetParent()
-        dialog.Close()
 
     def _on_select_profile(self, event):
         selection = self._profiles_field.GetSelection()
@@ -196,75 +190,98 @@ class X2GoStartApp(wx.App):
             (self._create_status(parent), 0, wx.EXPAND),
         )
 
-    def _create_publickey_authentication(self, parent):
-        path = os.path.join(os.path.expanduser('~'), '.ssh', '')
-        def on_select_key_file(event):
-            filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
-            self._keyfile_field.SetValue(filename)
-        label1 = wx.StaticText(parent, -1, _("Key File:"))
-        keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
-                if os.access(os.path.join(path, name), os.R_OK)]
-        filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
-        self._keyfile_field = field1 = ui.field(parent, filename, length=40, style=wx.TE_READONLY)
-        button1 = ui.button(parent, _("Select"), on_select_key_file)
-        label2 = wx.StaticText(parent, -1, _("Passphrase:"))
-        self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
-                                                   on_enter=self._on_submit_authentication)
-        return ui.vgroup(
-            (ui.hgroup((label1, 0, wx.RIGHT | wx.TOP, 2), field1,
-                       (button1, 0, wx.LEFT, 3)), 0, wx.ALL, 2),
-            (ui.hgroup((label2, 0, wx.RIGHT | wx.TOP, 2), field2), 0, wx.ALL, 2),
-        )
-
-    def _create_password_authentication(self, parent):
-        label = wx.StaticText(parent, -1, _("Password:"))
-        self._password_field = field = ui.field(parent, style=wx.PASSWORD)
-        return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
-
-    def _show_authentication_dialog(self, methods):
-        self._authentication_dialog_confirmed = False
-        dialog = wx.Dialog(self._frame, -1, title=_("Authentication"))
-        if 'password' in methods and 'publickey' in methods:
-            nb = wx.Notebook(dialog, -1)
-            nb.AddPage(ui.panel(nb, self._create_publickey_authentication), _(u"Public Key"))
-            nb.AddPage(ui.panel(nb, self._create_password_authentication), _(u"Password"))
-            content = nb
-            method = None
-        elif 'publickey' in methods:
-            content = ui.panel(dialog, self._create_publickey_authentication)
-            method = 'publickey'
-        elif 'password' in methods:
-            content = ui.panel(dialog, self._create_password_authentication)
-            method = 'password'
-        else:
-            raise Exception(_(u"No supported ssh connection method available"))
-        dialog.SetSizer(ui.vgroup(
-            content,
-            (ui.hgroup(
-                (ui.button(dialog, _("Log in"), self._on_submit_authentication), 0, wx.RIGHT, 20),
-                ui.button(dialog, _("Cancel"), lambda e: dialog.Close()),
-            ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
-        ))
+    def _show_dialog(self, title, method, *args, **kwargs):
+        class Dialog(wx.Dialog):
+            result = None
+            callback = None
+            def close(self, result):
+                self.result = result
+                self.Close()
+            def set_callback(self, callback):
+                self.callback = callback
+        dialog = Dialog(self._frame, -1, title=title)
+        content = method(dialog, *args, **kwargs)
+        dialog.SetSizer(content)
         dialog.Fit()
-        for f in self._password_field, self._passphrase_field:
-            if f.IsShown():
-                f.SetFocus()
         pos, fsize, dsize = self._frame.GetPosition(), self._frame.GetSize(), dialog.GetSize()
         dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
+        if dialog.callback:
+            dialog.callback()
         dialog.ShowModal()
         dialog.Destroy()
         self._frame.Raise()
-        if self._authentication_dialog_confirmed:
+        return dialog.result
+
+    def _authentication_dialog(self, dialog, methods):
+        def close(method):
             if method is None:
-                method = 'publickey' if nb.GetSelection() == 0 else 'password'
-            if method == 'password':
-                fields = (('password', self._password_field),)
+                auth_kwargs = {}
             else:
-                fields = (('key_filename', self._keyfile_field),
-                          ('password', self._passphrase_field),)
-            return (method, dict([(param, f.GetValue().rstrip('\r\n')) for param, f in fields]))
+                if isinstance(method, collections.Callable):
+                    method = method()
+                if method == 'password':
+                    fields = (('password', self._password_field),)
+                else:
+                    fields = (('key_filename', self._keyfile_field),
+                              ('password', self._passphrase_field),)
+                auth_kwargs = dict([(param, f.GetValue().rstrip('\r\n')) for param, f in fields])
+            dialog.close((method, auth_kwargs))
+        def publickey_authentication(parent):
+            path = os.path.join(os.path.expanduser('~'), '.ssh', '')
+            def on_select_key_file(event):
+                filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
+                self._keyfile_field.SetValue(filename)
+            label1 = wx.StaticText(parent, -1, _("Key File:"))
+            keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
+                    if os.access(os.path.join(path, name), os.R_OK)]
+            filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
+            self._keyfile_field = field1 = ui.field(parent, filename, length=40,
+                                                    style=wx.TE_READONLY)
+            button1 = ui.button(parent, _("Select"), on_select_key_file)
+            label2 = wx.StaticText(parent, -1, _("Passphrase:"))
+            self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
+                                                       on_enter=lambda e: close('publickey'))
+            return ui.vgroup(
+                (ui.hgroup((label1, 0, wx.RIGHT | wx.TOP, 2), field1,
+                           (button1, 0, wx.LEFT, 3)), 0, wx.BOTTOM, 4),
+                ui.hgroup((label2, 0, wx.RIGHT | wx.TOP, 2), field2),
+            )
+        def password_authentication(parent):
+            label = wx.StaticText(parent, -1, _("Password:"))
+            self._password_field = field = ui.field(parent, style=wx.PASSWORD,
+                                                    on_enter=lambda e: close('password'))
+            return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
+        def on_show_dialog():
+            for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
+                if f and f.IsShown():
+                    f.SetFocus()
+        dialog.set_callback(on_show_dialog)
+        if 'password' in methods and 'publickey' in methods:
+            nb = wx.Notebook(dialog, -1)
+            nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
+            nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
+            content = nb
+            def method():
+                return 'publickey' if nb.GetSelection() == 0 else 'password'
+        elif 'publickey' in methods:
+            content = ui.panel(dialog, publickey_authentication)
+            method = 'publickey'
+        elif 'password' in methods:
+            content = ui.panel(dialog, password_authentication)
+            method = 'password'
         else:
-            return (None, ())
+            raise Exception(_(u"No supported ssh connection method available"))
+        return ui.vgroup(
+            (content, 0, wx.LEFT | wx.RIGHT, 8),
+            (ui.hgroup(
+                (ui.button(dialog, _("Log in"), lambda e: close(method)), 0, wx.RIGHT, 20),
+                ui.button(dialog, _("Cancel"), lambda e: close(None)),
+            ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
+        )
+
+    def _show_authentication_dialog(self, methods):
+        return self._show_dialog(_("Authentication"), self._authentication_dialog, methods)
+
 
     def _update_progress(self, message=None, progress=1):
         self._gauge.SetValue(self._gauge.GetValue() + progress)
