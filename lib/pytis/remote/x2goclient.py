@@ -1279,8 +1279,6 @@ class X2GoStartAppClientAPI(object):
         except PytisSshProfiles.ConnectionFailed:
             return None
         self._profiles = profiles
-        if not profiles:
-            raise Exception('Broker connection failed.')
         return profiles
 
     def list_profiles(self, username, askpass):
