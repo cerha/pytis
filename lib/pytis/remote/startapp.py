@@ -89,7 +89,7 @@ class X2GoStartApp(wx.App):
         self._progress = 1
         self._args = args
         self._client = X2GoStartAppClientAPI(args, self._update_progress)
-        self._authentication = None
+        self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _on_select_profile(self, event):
@@ -289,7 +289,7 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        if self._client.connect(self._username(), self._show_authentication_dialog):
+        if self._client.connect(self._username(), self._show_authentication_dialog, self._keyring):
             # if on_windows() and args.create_shortcut:
             #     self._update_progress(_("Checking desktop shortcut."))
             #     self._create_shortcut(broker_url, args.server, profile_id,
@@ -300,7 +300,8 @@ class X2GoStartApp(wx.App):
             self.Exit()
 
     def _load_profiles(self):
-        profiles = self._client.list_profiles(self._username(), self._show_authentication_dialog)
+        profiles = self._client.list_profiles(self._username(), self._show_authentication_dialog,
+                                              self._keyring)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             self.Exit()

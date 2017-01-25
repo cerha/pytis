@@ -1144,7 +1144,7 @@ class X2GoStartAppClientAPI(object):
             raise Exception(_(u"No supported ssh authentication method available."))
         return methods
 
-    def _authenticate(self, connect, target, username, askpass):
+    def _authenticate(self, connect, target, username, askpass, keyring=None):
         """Try calling 'connect' with different authentication methods.
 
         Arguments:
@@ -1157,6 +1157,14 @@ class X2GoStartAppClientAPI(object):
           username -- user name to use for authentication.
           askpass -- function called when authentication credentials need
             to be obtained interactively from the user.
+          keyring -- known authentication credentials as a list of pairs
+            (key_filename, password), where key_filename is a string path
+            to a SSH private key and password is its passphrase or
+            key_filename is None and password is the password for password
+            authentication.  The credentials present in the list will be
+            used for authentication.  Also any successfull newly entered
+            credentials obtained from the user (using 'askpass') will be
+            added to list if it is not None.
 
         Arguments passed to 'connect':
 
@@ -1189,6 +1197,16 @@ class X2GoStartAppClientAPI(object):
         if not success:
             message(_("Retrieving supported authentication methods."))
             methods = self._authentication_methods()
+            for key_filename, password in (keyring or ()):
+                if key_filename and password and 'publickey' in methods:
+                    message(_("Trying public key authentication."))
+                    success = connect(username=username, key_filename=key_filename,
+                                      password=password)
+                elif key_filename is None and password and 'password' in methods:
+                    message(_("Trying password authentication."))
+                    success = connect(username=username, password=password)
+                if success:
+                    break
             while not success:
                 message(_("Trying interactive authentication."))
                 method, kwargs = askpass(methods)
@@ -1197,8 +1215,10 @@ class X2GoStartAppClientAPI(object):
                 elif method == 'publickey':
                     message(_("Trying public key authentication."))
                 else:
-                    break
+                    return None
                 success = connect(username=username, **kwargs)
+                if success and keyring is not None:
+                    keyring.append((kwargs.get('key_filename'), kwargs.get('password')))
         if success:
             message(_("Connected successfully."))
         return success
@@ -1239,8 +1259,9 @@ class X2GoStartAppClientAPI(object):
         else:
             return False
 
-    def connect(self, username, askpass):
-        return self._authenticate(self._connect, self._args.server, username, askpass)
+    def connect(self, username, askpass, keyring=None):
+        return self._authenticate(self._connect, self._args.server, username, askpass,
+                                  keyring=keyring)
 
     def search_key_files(self, username):
         def key_acceptable(key_filename):
@@ -1281,8 +1302,9 @@ class X2GoStartAppClientAPI(object):
         self._profiles = profiles
         return profiles
 
-    def list_profiles(self, username, askpass):
-        return self._authenticate(self._list_profiles, _("Broker"), username, askpass)
+    def list_profiles(self, username, askpass, keyring=None):
+        return self._authenticate(self._list_profiles, _("Broker"), username, askpass,
+                                  keyring=keyring)
 
     def select_profile(self, profile_id):
         profile = self._profiles.broker_selectsession(profile_id)
