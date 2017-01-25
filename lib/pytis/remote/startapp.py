@@ -89,7 +89,6 @@ class X2GoStartApp(wx.App):
         self._progress = 1
         self._args = args
         self._client = X2GoStartAppClientAPI(args, self._update_progress)
-        self._username = args.username
         self._authentication = None
         super(X2GoStartApp, self).__init__(redirect=False)
 
@@ -109,7 +108,11 @@ class X2GoStartApp(wx.App):
 
     def _create_username_field(self, parent):
         label = wx.StaticText(parent, -1, _("Login name:"))
-        username = self._username
+        username = self._args.username
+        if not username and self._args.broker_url:
+            start, end = self._args.broker_url.find('//'), self._args.broker_url.find('@')
+            if -1 not in (start, end):
+                username = self._args.broker_url[start + 2:end]
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
@@ -118,6 +121,9 @@ class X2GoStartApp(wx.App):
             button = None
         self._username_field = field = ui.field(parent, username, disabled=button is None)
         return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
+
+    def _username(self):
+        return self._username_field.GetValue()
 
     def _create_profiles_field(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
@@ -270,7 +276,6 @@ class X2GoStartApp(wx.App):
             (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.TOP, 8),
         )
 
-
     def _update_progress(self, message=None, progress=1):
         self._gauge.SetValue(self._gauge.GetValue() + progress)
         if message:
@@ -284,20 +289,18 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        username = self._username_field.GetValue()
-        if self._client.connect(username, self._show_authentication_dialog):
-            #if on_windows() and args.create_shortcut:
-            #    self._update_progress(_("Checking desktop shortcut."))
-            #    self._create_shortcut(broker_url, args.server, profile_id,
-            #                          params['profile_name'], args.calling_script)
+        if self._client.connect(self._username(), self._show_authentication_dialog):
+            # if on_windows() and args.create_shortcut:
+            #     self._update_progress(_("Checking desktop shortcut."))
+            #     self._create_shortcut(broker_url, args.server, profile_id,
+            #                           params['profile_name'], args.calling_script)
             self._update_progress(_("Starting Pytis client."))
             self._start_session()
         else:
             self.Exit()
 
     def _load_profiles(self):
-        username = self._username_field.GetValue()
-        profiles = self._client.list_profiles(username, self._show_authentication_dialog)
+        profiles = self._client.list_profiles(self._username(), self._show_authentication_dialog)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             self.Exit()
@@ -374,9 +377,9 @@ class X2GoStartApp(wx.App):
         frame.SetSize((500, 360 if self._profiles_field else 146))
         frame.Show()
         self.Yield()
-        if self._username is not None:
+        if self._username_field.IsEnabled():
+            self._update_progress(_("Enter your user name and press “Continue” to start."))
+        else:
             # Start automatically when username was passed explicitly.
             self._start()
-        else:
-            self._update_progress(_("Enter your user name and press “Continue” to start."))
         return True
