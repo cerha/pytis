@@ -124,7 +124,7 @@ class X2GoStartApp(wx.App):
     def _on_exit(self, event):
         self.Exit()
 
-    def _create_username(self, parent):
+    def _create_username_field(self, parent):
         label = wx.StaticText(parent, -1, _("Login name:"))
         username = self._username
         if not username:
@@ -184,7 +184,7 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (self._create_username(parent), 0, wx.EXPAND | wx.ALL, 8),
+            (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_sessions_field(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_status(parent), 0, wx.EXPAND),
