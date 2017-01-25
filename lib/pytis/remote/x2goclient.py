@@ -264,26 +264,26 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
                  connection_parameters=None, default_broker_path='/usr/bin/x2gobroker',
                  add_to_known_hosts=False, **kwargs):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<user>[a-zA-Z0-9_\.-]+)'
+                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
-                          '(?P<host>[a-zA-Z0-9\.-]+)'
+                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
                           '(|:(?P<port>[0-9]+))'
                           '($|(?P<path>/.*)$)'), broker_url)
         if match is None:
             raise Exception(_("Invalid broker address"), broker_url)
-        parameters = match.groupdict()
-        protocol = parameters['protocol']
+        url = match.groupdict()
+        protocol = url['protocol']
         if protocol != 'ssh':
             raise Exception(_(u"Unsupported broker protocol"), protocol)
-        p = connection_parameters or {}
+        parameters = connection_parameters or {}
         self._parameters = dict(
-            p,
-            hostname=parameters['host'],
-            username=parameters['user'],
-            password=parameters.get('password') or p.get('password'),
-            port=int(parameters.get('port') or '22') or p.get('port'),
+            parameters,
+            hostname=url['hostname'],
+            username=url.get('username') or parameters.get('username'),
+            password=url.get('password') or parameters.get('password'),
+            port=int(url.get('port') or '22') or parameters.get('port'),
         )
-        self._broker_path = parameters.get('path') or default_broker_path
+        self._broker_path = url.get('path') or default_broker_path
         self._broker_profiles = None
         self._broker_profile_cache = {}
         self._ssh_client_ = None
