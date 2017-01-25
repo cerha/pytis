@@ -1120,7 +1120,17 @@ class X2GoStartAppClientAPI(object):
     def _authentication_methods(self):
         import socket
         s = socket.socket()
-        s.connect((_auth_info.get('hostname'), _auth_info.get('port')))
+        host = _auth_info.get('hostname')
+        port = _auth_info.get('port')
+        if not host and self._args.broker_url:
+            params = X2GoStartAppClientAPI.parse_broker_url(self._args.broker_url)
+            host = params.get('hostname')
+            port = params.get('port')
+        if not host:
+            raise Exception(_(u"No hostname specified for ssh connection."))
+        if not port:
+            port = '22'
+        s.connect((host, port))
         transport = paramiko.Transport(s)
         transport.connect()
         try:
