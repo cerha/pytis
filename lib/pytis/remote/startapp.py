@@ -311,8 +311,8 @@ class X2GoStartApp(wx.App):
             self._client.select_profile(profile_id)
             self._connect()
         else:
-            items = [(profile_id, profiles.to_session_params(profile_id)['profile_name'])
-                     for profile_id in profiles.profile_ids]
+            items = [(pid, profiles.to_session_params(pid)['profile_name'])
+                     for pid in profiles.profile_ids]
             for profile_id, name in sorted(items, key=lambda x: x[1]):
                 self._profiles_field.Append(name, profile_id)
             self._profiles_field.Enable(True)
