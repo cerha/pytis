@@ -298,6 +298,9 @@ class X2GoStartApp(wx.App):
     def _load_profiles(self):
         username = self._username_field.GetValue()
         profiles = self._client.list_profiles(username, self._show_authentication_dialog)
+        if not profiles:
+            # Happens when the user cancels the broker authentication dialog.
+            self.Exit()
         profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)
