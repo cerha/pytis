@@ -256,23 +256,16 @@ class RpycInfo(object):
 class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     defaultSessionProfile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
+    _DEFAULT_BROKER_PATH = '/usr/bin/x2gobroker'
 
     class ConnectionFailed(Exception):
         pass
 
-    def __init__(self, broker_url, logger=None, loglevel=x2go.log.loglevel_DEFAULT,
-                 connection_parameters=None, default_broker_path='/usr/bin/x2gobroker',
+    def __init__(self, connection_parameters, broker_path=None,
+                 logger=None, loglevel=x2go.log.loglevel_DEFAULT,
                  add_to_known_hosts=False, **kwargs):
-        url = X2GoStartAppClientAPI.parse_broker_url(broker_url)
-        parameters = connection_parameters or {}
-        self._parameters = dict(
-            parameters,
-            hostname=url['hostname'],
-            username=url.get('username') or parameters.get('username'),
-            password=url.get('password') or parameters.get('password'),
-            port=int(url.get('port') or '22') or parameters.get('port'),
-        )
-        self._broker_path = url.get('path') or default_broker_path
+        self._connection_parameters = connection_parameters
+        self._broker_path = broker_path or self._DEFAULT_BROKER_PATH
         self._broker_profiles = None
         self._broker_profile_cache = {}
         self._ssh_client_ = None
@@ -296,7 +289,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         if self._add_to_known_hosts:
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect(look_for_keys=False, **self._parameters)
+            client.connect(**dict(self._connection_parameters, look_for_keys=False))
         except (paramiko.ssh_exception.AuthenticationException,
                 paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
                 ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
@@ -683,6 +676,7 @@ class PytisClient(PyHocaCLI):
 
     def pytis_upgrade(self):
         upgrade_url = self.session_profiles.pytis_upgrade_parameter('command')
+        # TODO: Use _parse_url()?
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<username>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
@@ -702,7 +696,7 @@ class PytisClient(PyHocaCLI):
                                     password=password)
 
         path = parameters.get('path')
-        client = PytisClient.pytis_ssh_connect()
+        client = PytisClient.pytis_ssh_connect(_auth_info.connection_parameters())
         if client is None:
             # TODO: Some new dialog should be used...
             # app.info_dialog(_(u"Couldn't connect to upgrade server"), error=True)
@@ -924,6 +918,7 @@ class PytisClient(PyHocaCLI):
             if os.path.exists(calling_script):
                 with open(calling_script, 'r') as f:
                     broker_src = f.read()
+                # TODO: Use _parse_url()?
                 match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                                   '(|(?P<username>[a-zA-Z0-9_\.-]+)'
                                   '(|:(?P<password>.*))@)'
@@ -996,16 +991,15 @@ class PytisClient(PyHocaCLI):
                 link.icon_location = (icon_location, 0)
 
     @classmethod
-    def pytis_ssh_connect(cls):
-        if not _auth_info.get('password'):
-            _auth_info['password'] = 'X'
+    def pytis_ssh_connect(cls, connection_parameters):
+        if not connection_parameters['password']:
+            connection_parameters['password'] = 'X'
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         if _auth_info.get('_add_to_known_hosts'):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        params = _auth_info.connection_parameters()
         try:
-            client.connect(**params)
+            client.connect(**connection_parameters)
         except (paramiko.ssh_exception.AuthenticationException,
                 paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
                 ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
@@ -1056,7 +1050,11 @@ class X2GoStartAppClientAPI(object):
         if args.broker_url:
             # If broker_url is given, the session parameters will be updated
             # later from the selected profile in select_profile().
-            pass
+            self._broker_url = url = self._parse_url(args.broker_url)
+            if url is None:
+                raise Exception(_("Invalid broker URL:"), args.broker_url)
+            if url['protocol'] != 'ssh':
+                raise Exception(_(u"Unsupported broker protocol"), url['protocol'])
         elif args.session_profile:
             # Override session profile options by command line options.
             arg_to_session_param = {
@@ -1102,6 +1100,18 @@ class X2GoStartAppClientAPI(object):
         quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
         gevent.signal(quit_signal, gevent.kill)
 
+    def _parse_url(cls, url):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|(?P<path>/.*)$)'), url)
+        if match:
+            return match.groupdict()
+        else:
+            return None
+
     def _update_session_parameters(self, **kwargs):
         self._session_parameters.update(**kwargs)
         parameters = self._session_parameters
@@ -1117,43 +1127,38 @@ class X2GoStartAppClientAPI(object):
         )
         _auth_info.update_args(self._args)
 
-    def _authentication_methods(self):
+    def _authentication_methods(self, connection_parameters):
         import socket
-        s = socket.socket()
-        host = _auth_info.get('hostname')
-        port = _auth_info.get('port')
-        if not host and self._args.broker_url:
-            params = X2GoStartAppClientAPI.parse_broker_url(self._args.broker_url)
-            host = params.get('hostname')
-            port = params.get('port')
-        if not host:
-            raise Exception(_(u"No hostname specified for ssh connection."))
-        if not port:
-            port = '22'
-        s.connect((host, port))
-        transport = paramiko.Transport(s)
+        sock = socket.socket()
+        sock.connect((connection_parameters['hostname'], connection_parameters['port']))
+        transport = paramiko.Transport(sock)
         transport.connect()
         try:
             transport.auth_none('')
         except paramiko.ssh_exception.BadAuthenticationType as e:
             methods = e.allowed_types
         transport.close()
-        s.close()
+        sock.close()
         if 'password' not in methods and 'publickey' not in methods:
             raise Exception(_(u"No supported ssh authentication method available."))
         return methods
 
-    def _authenticate(self, connect, target, username, askpass, keyring=None):
-        """Try calling 'connect' with different authentication methods.
+    def _authenticate(self, function, connection_parameters, askpass, keyring=None, **kwargs):
+        """Try calling 'method' with different authentication parameters.
 
         Arguments:
-          connect -- connection function to be called with different arguments
-            to try different authentication methods.  The arguments are
-            described below.  The function must return a result which evaluates
-            to True to indicate success or False for failure.
-          target -- name of the connection target to display in connection
-            progress messages.
-          username -- user name to use for authentication.
+          function -- connection function to be called with different
+            connection parameters to try different authentication methods.  The
+            function must accept the dictionary of connection parameters as its
+            first positional argument plus optionally any keyword arguemnts
+            passed in '**kwargs'.  The function must return a result which (in
+            boolean context) evaluates to True to indicate success or False for
+            failure.  If failure is returned for one authentication method,
+            another method may be tried (with different connection parameters).
+          connection_parameters -- initial connection parameters as a
+            dictionary with keys such as 'hostname', 'port', 'username', etc.
+            Authentication related keys in this dictionary will be overriden
+            before passing the parameters to 'function' as described below.
           askpass -- function called when authentication credentials need to be
             obtained interactively from the user.  The function must accept a
             sequence of allowed authentication methods as an argument and
@@ -1170,9 +1175,11 @@ class X2GoStartAppClientAPI(object):
             obtained from the user (using 'askpass') will be added to list if
             it is not None.
 
-        Arguments passed to 'connect':
+          **kwargs -- all remaining keyword arguments will be passed on to
+            'function'.
 
-          username -- user's login name as a string or unicode
+        Authentication related connection parameters:
+
           gss_auth -- True if GSS-API (Kerberos) authentication is to be used
             or False for other authentication schemes
           key_filename -- file name of the private SSH key to use for
@@ -1192,23 +1199,32 @@ class X2GoStartAppClientAPI(object):
 
         """
         def message(msg):
-            self._update_progress(target + ': ' + msg)
+            self._update_progress(connection_parameters['hostname'] + ': ' + msg)
+        def connect(gss_auth=False, key_filename=None, password=None):
+            parameters = dict(
+                connection_parameters,
+                gss_auth=gss_auth,
+                key_filename=key_filename,
+                password=password,
+                look_for_keys=key_filename is not None,
+                allow_agent=True,
+            )
+            return function(parameters, **kwargs)
         message(_("Trying SSH Agent authentication."))
-        success = connect(username=username)
+        success = connect()
         if not success:
             message(_("Trying Kerberos authentication."))
-            success = connect(username=username, gss_auth=True)
+            success = connect(gss_auth=True)
         if not success:
             message(_("Retrieving supported authentication methods."))
-            methods = self._authentication_methods()
+            methods = self._authentication_methods(connection_parameters)
             for key_filename, password in (keyring or ()):
                 if key_filename and password and 'publickey' in methods:
                     message(_("Trying public key authentication."))
-                    success = connect(username=username, key_filename=key_filename,
-                                      password=password)
+                    success = connect(key_filename=key_filename, password=password)
                 elif key_filename is None and password and 'password' in methods:
                     message(_("Trying password authentication."))
-                    success = connect(username=username, password=password)
+                    success = connect(password=password)
                 if success:
                     break
             while not success:
@@ -1227,16 +1243,9 @@ class X2GoStartAppClientAPI(object):
             message(_("Connected successfully."))
         return success
 
-    def _connect(self, username=None, gss_auth=False, key_filename=None, password=None):
-        self._update_session_parameters(
-            username=username,
-            gss_auth=gss_auth,
-            key_filename=key_filename,
-            password=password,
-            look_for_keys=key_filename is not None,
-            allow_agent=True,
-        )
-        if PytisClient.pytis_ssh_connect():
+    def _connect(self, parameters):
+        self._update_session_parameters(**parameters)
+        if PytisClient.pytis_ssh_connect(parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1253,7 +1262,7 @@ class X2GoStartAppClientAPI(object):
                                                 loglevel=x2go.log.loglevel_DEBUG,
                                                 on_update_progress=self._update_progress)
             session = client.session_registry(client.x2go_session_hash)
-            session.sshproxy_params['key_filename'] = key_filename
+            session.sshproxy_params['key_filename'] = parameters['key_filename']
             session.sshproxy_params['look_for_keys'] = False
             client.pytis_start_processes(self._configuration)
             client._pytis_setup_configuration = True
@@ -1264,24 +1273,8 @@ class X2GoStartAppClientAPI(object):
             return False
 
     def connect(self, username, askpass, keyring=None):
-        return self._authenticate(self._connect, self._args.server, username, askpass,
-                                  keyring=keyring)
-
-    @classmethod
-    def parse_broker_url(cls, broker_url):
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|(?P<path>/.*)$)'), broker_url)
-        if match is None:
-            raise Exception(_("Invalid broker address"), broker_url)
-        parameters = match.groupdict()
-        protocol = parameters['protocol']
-        if protocol != 'ssh':
-            raise Exception(_(u"Unsupported broker protocol"), protocol)
-        return parameters
+        parameters = _auth_info.connection_parameters()
+        return self._authenticate(self._connect, parameters, askpass, keyring=keyring)
 
     def search_key_files(self, username):
         def key_acceptable(key_filename):
@@ -1310,12 +1303,11 @@ class X2GoStartAppClientAPI(object):
                 continue
         return False
 
-    def _list_profiles(self, **kwargs):
+    def _list_profiles(self, connection_parameters, broker_path=None):
         try:
-            profiles = PytisSshProfiles(logger=x2go.X2GoLogger(tag='PyHocaCLI'),
-                                        broker_url=self._args.broker_url,
+            profiles = PytisSshProfiles(connection_parameters, broker_path=broker_path,
+                                        logger=x2go.X2GoLogger(tag='PyHocaCLI'),
                                         add_to_known_hosts=self._args.add_to_known_hosts,
-                                        connection_parameters=kwargs,
                                         broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
@@ -1323,8 +1315,18 @@ class X2GoStartAppClientAPI(object):
         return profiles
 
     def list_profiles(self, username, askpass, keyring=None):
-        return self._authenticate(self._list_profiles, _("Broker"), username, askpass,
-                                  keyring=keyring)
+        url = self._broker_url
+        parameters = dict(
+            hostname=url['hostname'],
+            port=int(url.get('port') or '22'),
+            username=url.get('username') or username,
+            password=url.get('password'),
+        )
+        return self._authenticate(self._list_profiles, parameters, askpass, keyring=keyring,
+                                  broker_path=url.get('path'))
+
+    def broker_url_username(self):
+        self._broker_url.get('username')
 
     def select_profile(self, profile_id):
         profile = self._profiles.broker_selectsession(profile_id)

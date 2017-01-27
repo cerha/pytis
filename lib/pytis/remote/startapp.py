@@ -111,7 +111,7 @@ class X2GoStartApp(wx.App):
         username = self._args.username
         if not username and self._args.broker_url:
             from pytis.remote.x2goclient import X2GoStartAppClientAPI
-            username = X2GoStartAppClientAPI.parse_broker_url(self._args.broker_url).get('username')
+            username = self._client.broker_url_username()
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
