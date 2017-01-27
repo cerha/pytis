@@ -78,6 +78,9 @@ class ui(object):
             button.Enable(False)
         return button
 
+    @staticmethod
+    def label(parent, text):
+        return wx.StaticText(parent, -1, text)
 
 class X2GoStartApp(wx.App):
     """X2Go startup application."""
@@ -107,7 +110,7 @@ class X2GoStartApp(wx.App):
         self.Exit()
 
     def _create_username_field(self, parent):
-        label = wx.StaticText(parent, -1, _("Login name:"))
+        label = ui.label(parent, _("Login name:"))
         username = self._args.username
         if not username and self._args.broker_url:
             from pytis.remote.x2goclient import X2GoStartAppClientAPI
@@ -134,7 +137,7 @@ class X2GoStartApp(wx.App):
                                lambda e: e.Enable(listbox.GetSelection() != -1))
             checkbox = wx.CheckBox(parent, label=_("Create despktop shortcut"))
             return ui.vgroup(
-                wx.StaticText(parent, -1, _("Available profiles:")),
+                ui.label(parent, _("Available profiles:")),
                 (ui.hgroup(
                     (listbox, 1, wx.EXPAND),
                     (ui.vgroup(button, (checkbox, 0, wx.TOP, 10)), 0, wx.LEFT, 8),
@@ -142,7 +145,7 @@ class X2GoStartApp(wx.App):
             )
 
     def _create_status(self, parent):
-        self._status = status = wx.StaticText(parent, -1, '')
+        self._status = status = ui.label(parent, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
         return ui.vgroup((gauge, 0, wx.EXPAND), (status, 0, wx.EXPAND | wx.BOTTOM, 4))
 
@@ -196,14 +199,14 @@ class X2GoStartApp(wx.App):
             def on_select_key_file(event):
                 filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
                 self._keyfile_field.SetValue(filename)
-            label1 = wx.StaticText(parent, -1, _("Key File:"))
+            label1 = ui.label(parent, _("Key File:"))
             keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
                     if os.access(os.path.join(path, name), os.R_OK)]
             filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
             self._keyfile_field = field1 = ui.field(parent, filename, length=40,
                                                     style=wx.TE_READONLY)
             button1 = ui.button(parent, _("Select"), on_select_key_file)
-            label2 = wx.StaticText(parent, -1, _("Passphrase:"))
+            label2 = ui.label(parent, _("Passphrase:"))
             self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
                                                        on_enter=lambda e: close('publickey'))
             return ui.vgroup(
@@ -213,7 +216,7 @@ class X2GoStartApp(wx.App):
             )
 
         def password_authentication(parent):
-            label = wx.StaticText(parent, -1, _("Password:"))
+            label = ui.label(parent, _("Password:"))
             self._password_field = field = ui.field(parent, style=wx.PASSWORD,
                                                     on_enter=lambda e: close('password'))
             return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
@@ -231,6 +234,7 @@ class X2GoStartApp(wx.App):
 
             def method():
                 return 'publickey' if nb.GetSelection() == 0 else 'password'
+
         elif 'publickey' in methods:
             content = ui.panel(dialog, publickey_authentication)
             method = 'publickey'
@@ -260,13 +264,14 @@ class X2GoStartApp(wx.App):
             self._client.terminate_session(session)
             listbox.Delete(selection)
             self._update_progress(_("Session terminated: %s", session.name), 0)
+
         for session in sessions:
             session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
                                           (session.date_created or '').replace('T', ' '),)
             listbox.Append(session_label, session)
         dialog.set_callback(lambda: listbox.SetFocus())
         return ui.vgroup(
-            wx.StaticText(dialog, -1, _("Existing sessions:")),
+            ui.label(dialog, _("Existing sessions:")),
             (ui.hgroup(
                 (listbox, 1, wx.EXPAND),
                 (ui.vgroup(*[
@@ -280,6 +285,27 @@ class X2GoStartApp(wx.App):
                     )]), 0, wx.LEFT, 8)), 1, wx.EXPAND),
             (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.TOP, 8),
         )
+
+    def _question(self, title, question):
+        def create_dialog(dialog):
+            buttons = (ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True)),
+                       ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
+            dialog.set_callback(lambda: buttons[0].SetFocus())
+            return ui.vgroup(
+                (ui.label(dialog, question), 0, wx.ALL, 10),
+                (ui.hgroup(*[(b, 0, wx.ALL, 10) for b in buttons]), 1, wx.ALIGN_CENTER),
+            )
+        return self._show_dialog(title, create_dialog)
+
+    def _info(self, title, text):
+        def create_dialog(dialog):
+            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
+            dialog.set_callback(lambda: button.SetFocus())
+            return ui.vgroup(
+                (ui.label(dialog, text), 0, wx.ALL, 10),
+                (button, 1, wx.ALIGN_CENTER | wx.ALL, 10),
+            )
+        return self._show_dialog(title, create_dialog)
 
     def _update_progress(self, message=None, progress=1):
         self._gauge.SetValue(self._gauge.GetValue() + progress)
@@ -369,12 +395,20 @@ class X2GoStartApp(wx.App):
             self._client.start_new_session(callback=self._on_session_started)
 
     def _check_upgrade(self):
-        if self._args.broker_url is not None:
-            self._update_progress(_("Checking for new client version."))
-            if self._client.needs_upgrade():
-                return  # TODO: finish
-                if self._question(_(u"New pytis client version available. Install?")):
-                    self._client.pytis_upgrade()
+        if self._args.broker_url is None or not self._client.on_windows():
+            return
+        self._update_progress(_("Checking for new client version."))
+        url = self._client.upgrade_url()
+        if url and self._question(_("Upgrade available"),
+                                  _(u"New pytis client version available. Install?")):
+            error = self._client.upgrade(url)
+            if error:
+                # TODO: Specific dialog for error messages (icons)?
+                self._info(_("Upgrade failed"), error)
+            else:
+                self._info(_(u"Upgrade finished"),
+                           _(u"Pytis successfully upgraded. Restart the application."))
+                self.Exit()
 
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))

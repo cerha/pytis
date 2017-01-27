@@ -432,7 +432,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 class PytisSshProfiles(SshProfiles):
 
     def __init__(self, *args, **kwargs):
-        self._pytis_client_upgrade = {}
+        self._pytis_upgrade_parameters = (None, None)
         SshProfiles.__init__(self, *args, **kwargs)
 
     def broker_listprofiles(self):
@@ -440,13 +440,15 @@ class PytisSshProfiles(SshProfiles):
         filtered_profiles = {}
         for section, data in profiles.items():
             if section == 'pytis-client-upgrade':
-                self._pytis_client_upgrade = data
+                # We can use only supported parameters from session_profiles
+                # So we'll use 'name' for the version and 'command' for url.
+                self._pytis_upgrade_parameters = (data['name'], data['command'])
             else:
                 filtered_profiles[section] = data
         return filtered_profiles
 
-    def pytis_upgrade_parameter(self, parameter, default=None):
-        return self._pytis_client_upgrade.get(parameter, default)
+    def pytis_upgrade_parameters(self):
+        return self._pytis_upgrade_parameters
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
@@ -673,81 +675,6 @@ class PytisClient(PyHocaCLI):
 
     def pytis_terminate_session(self, session):
         self._X2GoClient__terminate_session(self.x2go_session_hash, session.name)
-
-    def pytis_upgrade(self):
-        upgrade_url = self.session_profiles.pytis_upgrade_parameter('command')
-        # TODO: Use _parse_url()?
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|/(?P<path>.*)$)'), upgrade_url)
-        if match is None:
-            raise Exception(_(u"Invalid broker address"), upgrade_url)
-        parameters = match.groupdict()
-        protocol = parameters['protocol']
-        if protocol != 'ssh':
-            raise Exception(_(u"Unsupported broker protocol"), protocol)
-        password = parameters.get('password')
-        port = int(parameters.get('port') or '22')
-
-        _auth_info.update_non_empty(hostname=parameters['hostname'], port=port,
-                                    password=password)
-
-        path = parameters.get('path')
-        client = PytisClient.pytis_ssh_connect(_auth_info.connection_parameters())
-        if client is None:
-            # TODO: Some new dialog should be used...
-            # app.info_dialog(_(u"Couldn't connect to upgrade server"), error=True)
-            return
-        install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
-        old_install_directory = install_directory + '.old'
-        tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
-        pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
-        scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
-        scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
-        sftp = client.open_sftp()
-        f = sftp.open(path)
-        tarfile.open(fileobj=f).extractall(path=tmp_directory)
-        if not os.path.isdir(pytis_directory):
-            # TODO: Some new dialog should be used...
-            # app.info_dialog(_(u"Package unpacking failed"), error=True)
-            return
-        if os.path.exists(old_install_directory):
-            shutil.rmtree(old_install_directory)
-        shutil.move(install_directory, old_install_directory)
-        shutil.move(pytis_directory, install_directory)
-        shutil.rmtree(old_install_directory)
-        f_config = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
-        if os.access(f_config, os.W_OK):
-            os.remove(f_config)
-        if os.access(scripts_directory, os.R_OK):
-            for fname in os.listdir(scripts_directory):
-                fpath = os.path.join(scripts_directory, fname)
-                dpath = os.path.normpath(os.path.join(scripts_install_dir, fname))
-                if os.access(dpath, os.W_OK):
-                    os.remove(dpath)
-                try:
-                    shutil.move(fpath, scripts_install_dir)
-                except Exception:
-                    pass
-        # Execute supplied update procedure if exists
-        updatescript = os.path.join(tmp_directory, 'updatescript.py')
-        updateproc = None
-        if os.access(updatescript, os.R_OK):
-            sys.path.append(tmp_directory)
-            try:
-                import updatescript
-                updateproc = getattr(updatescript, 'run')
-            except:
-                pass
-        if updateproc:
-            updateproc(version=_VERSION, path=path)
-        shutil.rmtree(tmp_directory)
-        # TODO: Some new dialog should be used...
-        # app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
-        sys.exit(0)
 
     def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
@@ -1050,11 +977,7 @@ class X2GoStartAppClientAPI(object):
         if args.broker_url:
             # If broker_url is given, the session parameters will be updated
             # later from the selected profile in select_profile().
-            self._broker_url = url = self._parse_url(args.broker_url)
-            if url is None:
-                raise Exception(_("Invalid broker URL:"), args.broker_url)
-            if url['protocol'] != 'ssh':
-                raise Exception(_(u"Unsupported broker protocol"), url['protocol'])
+            self._broker_parameters, self._broker_path = self._parse_url(args.broker_url)
         elif args.session_profile:
             # Override session profile options by command line options.
             arg_to_session_param = {
@@ -1108,9 +1031,14 @@ class X2GoStartAppClientAPI(object):
                           '(|:(?P<port>[0-9]+))'
                           '($|(?P<path>/.*)$)'), url)
         if match:
-            return match.groupdict()
+            parameters = match.groupdict()
+            parameters['port'] = int(parameters['port'] or 22)
+            if parameters.pop('protocol') != 'ssh':
+                raise Exception(_(u"Unsupported broker protocol"), url)
+            path = parameters.pop('path')
+            return parameters, path
         else:
-            return None
+            raise Exception(_("Invalid broker URL:"), args.broker_url)
 
     def _update_session_parameters(self, **kwargs):
         self._session_parameters.update(**kwargs)
@@ -1315,18 +1243,15 @@ class X2GoStartAppClientAPI(object):
         return profiles
 
     def list_profiles(self, username, askpass, keyring=None):
-        url = self._broker_url
-        parameters = dict(
-            hostname=url['hostname'],
-            port=int(url.get('port') or '22'),
-            username=url.get('username') or username,
-            password=url.get('password'),
-        )
-        return self._authenticate(self._list_profiles, parameters, askpass, keyring=keyring,
-                                  broker_path=url.get('path'))
+        if not self._broker_parameters['username']:
+            self._broker_parameters['username'] = username
+        return self._authenticate(self._list_profiles, self._broker_parameters,
+                                  askpass, keyring=keyring, broker_path=self._broker_path)
 
     def broker_url_username(self):
-        self._broker_url.get('username')
+        # This is actually caled before list_profiles() and it provides the default value
+        # for its username argument (which may be altered by user in the UI).
+        self._broker_parameters['username']
 
     def select_profile(self, profile_id):
         profile = self._profiles.broker_selectsession(profile_id)
@@ -1338,15 +1263,61 @@ class X2GoStartAppClientAPI(object):
             parameters['server'] = parameters['server'][0]
         self._update_session_parameters(**parameters)
 
-    def needs_upgrade(self):
-        # We can use only supported parameters from session_profiles
-        # So we'll use 'name' for the version and 'command' for url
-        version = self._profiles.pytis_upgrade_parameter('name')
-        if version and version > _VERSION:
-            upgrade_url = self._profiles.pytis_upgrade_parameter('command')
-            if upgrade_url:
-                return True
-        return False
+    def upgrade_url(self):
+        version, url = self._profiles.pytis_upgrade_parameters()
+        if version and url and version > _VERSION:
+            return url
+        else:
+            return None
+
+    def upgrade(self, url):
+        parameters, path = self._parse_url(url)
+        client = PytisClient.pytis_ssh_connect(parameters)
+        if client is None:
+            return _(u"Couldn't connect to upgrade server")
+        sftp = client.open_sftp()
+        upgrade_file = sftp.open(path)
+        # Unpack the upgrade file and replace the current installation.
+        install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
+        old_install_directory = install_directory + '.old'
+        tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
+        pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
+        scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
+        scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
+        tarfile.open(fileobj=upgrade_file).extractall(path=tmp_directory)
+        if not os.path.isdir(pytis_directory):
+            return _(u"Package unpacking failed")
+        if os.path.exists(old_install_directory):
+            shutil.rmtree(old_install_directory)
+        shutil.move(install_directory, old_install_directory)
+        shutil.move(pytis_directory, install_directory)
+        shutil.rmtree(old_install_directory)
+        xconfig = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
+        if os.access(xconfig, os.W_OK):
+            os.remove(xconfig)
+        if os.access(scripts_directory, os.R_OK):
+            for fname in os.listdir(scripts_directory):
+                fpath = os.path.join(scripts_directory, fname)
+                dpath = os.path.normpath(os.path.join(scripts_install_dir, fname))
+                if os.access(dpath, os.W_OK):
+                    os.remove(dpath)
+                try:
+                    shutil.move(fpath, scripts_install_dir)
+                except Exception:
+                    pass
+        # Execute supplied update procedure if it exists.
+        if os.access(os.path.join(tmp_directory, 'updatescript.py'), os.R_OK):
+            sys.path.append(tmp_directory)
+            try:
+                import updatescript
+            except:
+                pass
+            else:
+                updatescript.run(version=_VERSION, path=path)
+        shutil.rmtree(tmp_directory)
+
+    def on_windows(self):
+        return on_windows()
 
     def list_sessions(self):
         return self._client.pytis_list_sessions()
