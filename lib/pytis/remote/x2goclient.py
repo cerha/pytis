@@ -1154,16 +1154,21 @@ class X2GoStartAppClientAPI(object):
           target -- name of the connection target to display in connection
             progress messages.
           username -- user name to use for authentication.
-          askpass -- function called when authentication credentials need
-            to be obtained interactively from the user.
+          askpass -- function called when authentication credentials need to be
+            obtained interactively from the user.  The function must accept a
+            sequence of allowed authentication methods as an argument and
+            return a two-tuple of (key_filename, password), where
+            'key_filename' is the SSH private key and 'password' is its
+            passphrase 'key_filename' is None and 'password' is the password
+            for password authentication.
           keyring -- known authentication credentials as a list of pairs
-            (key_filename, password), where key_filename is a string path
-            to a SSH private key and password is its passphrase or
-            key_filename is None and password is the password for password
-            authentication.  The credentials present in the list will be
-            used for authentication.  Also any successfull newly entered
-            credentials obtained from the user (using 'askpass') will be
-            added to list if it is not None.
+            (key_filename, password), where 'key_filename' is a string path to
+            a SSH private key and 'password' is its passphrase or
+            'key_filename' is None and 'password' is the password for password
+            authentication.  The credentials present in the list will be used
+            for authentication.  Also any successfull newly entered credentials
+            obtained from the user (using 'askpass') will be added to list if
+            it is not None.
 
         Arguments passed to 'connect':
 
@@ -1208,16 +1213,16 @@ class X2GoStartAppClientAPI(object):
                     break
             while not success:
                 message(_("Trying interactive authentication."))
-                method, kwargs = askpass(methods)
-                if method == 'password':
-                    message(_("Trying password authentication."))
-                elif method == 'publickey':
+                key_filename, password = askpass(methods)
+                if key_filename:
                     message(_("Trying public key authentication."))
+                elif password:
+                    message(_("Trying password authentication."))
                 else:
                     return None
-                success = connect(username=username, **kwargs)
+                success = connect(key_filename=key_filename, password=password)
                 if success and keyring is not None:
-                    keyring.append((kwargs.get('key_filename'), kwargs.get('password')))
+                    keyring.append((key_filename, password))
         if success:
             message(_("Connected successfully."))
         return success

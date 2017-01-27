@@ -179,18 +179,16 @@ class X2GoStartApp(wx.App):
 
     def _authentication_dialog(self, dialog, methods):
         def close(method):
+            if isinstance(method, collections.Callable):
+                method = method()
             if method is None:
-                auth_kwargs = {}
+                result = (None, None)
+            elif method == 'password':
+                result = (None, self._password_field.GetValue().rstrip('\r\n'))
             else:
-                if isinstance(method, collections.Callable):
-                    method = method()
-                if method == 'password':
-                    fields = (('password', self._password_field),)
-                else:
-                    fields = (('key_filename', self._keyfile_field),
-                              ('password', self._passphrase_field),)
-                auth_kwargs = dict([(param, f.GetValue().rstrip('\r\n')) for param, f in fields])
-            dialog.close((method, auth_kwargs))
+                result = (self._keyfile_field.GetValue().rstrip('\r\n'),
+                          self._passphrase_field.GetValue().rstrip('\r\n'))
+            dialog.close(result)
 
         def publickey_authentication(parent):
             path = os.path.join(os.path.expanduser('~'), '.ssh', '')
