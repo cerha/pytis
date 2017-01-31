@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-01-31 17:03'
+_VERSION = '2017-01-31 17:44'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
@@ -75,6 +75,7 @@ def on_windows():
 def run_directory():
     return sys.path[0]
 
+
 # Windows specific setup
 if on_windows():
     reload(sys)
@@ -108,6 +109,7 @@ def get_language_windows(system_lang=True):
     else:
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
+
 
 t = gettext.translation('pytis-x2go',
                         os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
@@ -211,6 +213,7 @@ class App(wx.App):
 
     def _button_choice_dialog(self, prompt, choices, index, buttons):
         self.hide_progress_dialog()
+
         class Dialog(wx.Dialog):
             def __init__(self):
                 super(Dialog, self).__init__(None, -1, title=prompt)
@@ -239,6 +242,7 @@ class App(wx.App):
                     wx_button = wx.Button(button_panel, id=button_id, label=b)
                     button_sizer.Add(wx_button)
                     button_panel.SetSizer(button_sizer)
+
                     def callback(event, button=b):
                         self._pytis_button = button
                         self.Close()
@@ -248,8 +252,10 @@ class App(wx.App):
                 main_sizer.Add(listbox_panel, 1, wx.ALL | wx.CENTER | wx.EXPAND, 5)
                 main_sizer.Add(button_panel, 0, wx.ALL | wx.CENTER, 5)
                 self.SetSizer(main_sizer)
+
             def on_listbox(self, event):
                 self._pytis_selected = event.GetSelection()
+
             def result(self):
                 return self._pytis_button, self._pytis_selected
         dlg = Dialog()
@@ -314,6 +320,7 @@ class App(wx.App):
             self._pytis_progress = None
             self.Yield()
 
+
 app = App()
 
 app.progress_dialog(_(u"Starting application"), _(u"Initializing libraries. Please wait..."), 20)
@@ -343,6 +350,8 @@ class SSHClient(paramiko.SSHClient):
         if gss_auth is None:
             gss_auth = _auth_info.get('gss_auth', False)
         return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
+
+
 try:
     paramiko.SSHClient.pytis_client
 except AttributeError:
@@ -419,6 +428,7 @@ class AuthInfo(dict):
             v = self.get(p)
             if v is not None and v != '':
                 setattr(args, a, unicode(v))
+
 
 _auth_info = AuthInfo()
 
@@ -670,9 +680,13 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
+        last_version = _VERSION
         for section, data in profiles.items():
-            if section == 'pytis-client-upgrade':
-                self._pytis_client_upgrade = data
+            if section.startswith('pytis-client-upgrade'):
+                version = data.get('name')
+                if version and version > last_version:
+                    self._pytis_client_upgrade = data
+                    last_version = version
             else:
                 filtered_profiles[section] = data
         return filtered_profiles
@@ -786,6 +800,7 @@ class X2GoClient(x2go.X2GoClient):
                         self.logger('using fallback display for X-server: localhost:0', loglevel=x2go.log.loglevel_WARN)
                         os.environ.update({'DISPLAY': 'localhost:0'})
     __start_xserver_pytis = start_xserver_pytis
+
 
 x2go.X2GoClient = X2GoClient
 
@@ -1003,18 +1018,24 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         session_id = self.session_registry(s_uuid).terminal_session.session_info.name
         server_file_name = '%s/.x2go/ssh/pytis.%s' % (control_session._x2go_remote_home,
                                                       session_id,)
+
         class ServerInfo(object):
             def __init__(self):
                 self._port = None
                 self._password = None
+
             def port(self):
                 return self._port
+
             def set_port(self, port):
                 self._port = port
+
             def password(self):
                 return self._password
+
             def set_password(self, password):
                 self._password = password
+
             def write(self):
                 if self._port is None or self._password is None:
                     return
@@ -1224,6 +1245,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             f = os.path.join(os.path.expanduser('~'), '.ssh', name)
             if os.access(f, os.R_OK):
                 key_files.append(f)
+
         def ok_password(key_filename, password=''):
             for h in key_handlers:
                 try:
@@ -1232,6 +1254,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 except:
                     pass
             return False
+
         def key_password(key_filename, password=''):
             while True:
                 if ok_password(key_filename, password):
@@ -1240,6 +1263,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                                            password=True)
                 if password is None:
                     return None
+
         def key_acceptable(key_filename):
             public_key_filename = key_filename + '.pub'
             acceptable = True
@@ -1392,6 +1416,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             app.update_progress_dialog(message=_(u"Setting up new session. Please wait..."))
             self.pytis_setup(s_hash)
             self._pytis_setup_configuration = False
+
             def info_handler():
                 while self.session_ok(s_hash):
                     self.pytis_handle_info()
@@ -1412,6 +1437,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             session_infos.sort(lambda i1, i2: (cmp(i1.username, i2.username) or
                                                cmp(i1.hostname, i2.hostname) or
                                                cmp(i2.date_created, i1.date_created)))
+
             def session(info):
                 return '%s@%s %s' % (info.username or '', info.hostname or '',
                                      (info.date_created or '').replace('T', ' '),)
@@ -1487,8 +1513,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
         shortcut_exists = False
         shortcut_list = [os.path.join(winshell.desktop(), d)
                          for d in os.listdir(winshell.desktop())
-                         if os.path.isfile(os.path.join(winshell.desktop(), d))
-                         and os.path.splitext(d)[1].lower() == '.lnk']
+                         if os.path.isfile(os.path.join(winshell.desktop(), d)) and
+                         os.path.splitext(d)[1].lower() == '.lnk']
         for lpath in shortcut_list:
             try:
                 with winshell.shortcut(lpath) as link:
@@ -1571,6 +1597,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
 
 # ---------------------
 # Taken from pyhoca-cli
+
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -1923,6 +1950,7 @@ def main():
     quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
     gevent.signal(quit_signal, gevent.kill)
     PytisClient.run(args)
+
 
 app.update_progress_dialog(message=_(u"Launching application. Please wait..."))
 

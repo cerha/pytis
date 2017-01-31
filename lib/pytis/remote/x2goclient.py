@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-01-31 17:04'
+_VERSION = '2017-01-31 17:44'
 
 import signal
 
