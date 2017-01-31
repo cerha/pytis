@@ -31,6 +31,7 @@ import string
 import sys
 import thread
 import time
+import datetime
 import wx
 import wx.html
 
