@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# ATTENTION: This should be updated on each code change.
+_VERSION = '2017-01-31 17:04'
+
 import signal
 
 import os
@@ -44,9 +47,6 @@ import x2go.defaults
 import x2go.log
 import x2go.xserver
 import pytis.remote
-
-# ATTENTION: This should be updated on each code change.
-_VERSION = '2016-06-22 08:08'
 
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
