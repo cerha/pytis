@@ -127,7 +127,7 @@ def _get_default_select(spec):
         print "Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,)
         data.fetchone()
 
-        
+
 def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
     resolver = pytis.util.resolver()
@@ -165,7 +165,7 @@ def check_form():
         # Default select
         _get_default_select(spec)
         pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
-        
+
 cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                   dict(handler=check_form))
 
@@ -186,7 +186,7 @@ class CheckReporter(object):
 class MenuChecker(object):
     _specnames = None
     _codebook_form_users_ = None
-    
+
     def __init__(self, spec_name_prefix=None):
         """
         Arguments:
@@ -248,7 +248,7 @@ class MenuChecker(object):
                     except pytis.util.ResolverError as e:
                         errors.append("Failed to load print specification: " + str(e))
         return errors
-    
+
     def check_bindings(self, main, side):
         errors = []
         try:
@@ -267,7 +267,7 @@ class MenuChecker(object):
             else:
                 errors.append("Binding item for %s not found." % (side,))
         return errors
-        
+
     def check_codebook_rights(self, spec_name, field=None, new=False, no_spec_error=False):
         errors = []
         try:
@@ -371,7 +371,7 @@ class MenuChecker(object):
         except Exception as e:
             errors.append(str(e))
         return errors
-    
+
     def _check_spec(self, name):
         if name.find('::') != -1:
             main, side = name.split('::')
@@ -465,7 +465,7 @@ class MenuChecker(object):
                                   report="\n".join(errors))
 
 class AppChecker(MenuChecker):
-    
+
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
         form_specs = get_form_defs(self._resolver, errors)
@@ -489,7 +489,7 @@ class DevelChecker(MenuChecker):
 
     def check_reverse_codebook_rights(self, *args, **kwargs):
         return []
-    
+
 def check_menus_defs():
     """Zkontroluje všechny specifikace uvedené v menu aplikace."""
     MenuChecker().interactive_check()
@@ -514,7 +514,7 @@ def cache_spec(*args, **kwargs):
                     resolver.get(name, spec)
                 except pytis.util.ResolverError:
                     pass
-            
+
         total = len(specs)
         last_status = 0
         step = 5 # aktualizujeme jen po každých 'step' procentech...
