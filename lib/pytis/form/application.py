@@ -79,7 +79,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _recent_directories = {}
     _remote_client_version = None
 
-
     _WINDOW_MENU_TITLE = _("&Windows")
 
     _STATE_RECENT_FORMS = 'recent_forms'
@@ -100,18 +99,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
             class LegacyApplication(object):
                 def init(self):
                     return self._spec('init')
+
                 def post_init(self):
                     return self._spec('post_init')
+
                 def menu(self):
                     return self._spec('menu', ())
+
                 def login_hook(self, success):
                     hook = self._spec('login_hook')
                     if hook:
                         hook(success)
+
                 def keymap(self):
                     return self._spec('keymap', ())
+
                 def status_fields(self):
                     return self._spec('status_fields', ())
+
                 def _spec(self, name, default=None):
                     try:
                         return config.resolver.get('application', name)
@@ -309,8 +314,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
         for title, args in recent_forms:
-            if ((self._is_valid_spec(args['name'])
-                 and issubclass(args['form_class'], pytis.form.Form))):
+            if ((self._is_valid_spec(args['name']) and
+                 issubclass(args['form_class'], pytis.form.Form))):
                 self._recent_forms.append((title, args))
             else:
                 log(OPERATIONAL, "Ignoring recent form:", args)
@@ -345,7 +350,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(OPERATIONAL, _("RPC communication available. Version: unknown."))
         else:
             log(OPERATIONAL, _("RPC communication unavailable"))
-
 
         return True
 
@@ -1789,6 +1793,7 @@ def block_refresh(function, *args, **kwargs):
     """
     return pytis.form.Refreshable.block_refresh(function, *args, **kwargs)
 
+
 _access_rights = None
 _access_dbconnection = None
 _user_roles = ()
@@ -1977,6 +1982,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
             result = perm in permissions
     return result
 
+
 _yield_lock = None
 
 
@@ -2003,6 +2009,7 @@ def wx_yield_(full=False):
             wx.SafeYield()
     finally:
         _yield_lock.release()
+
 
 _yield_blocked = False
 

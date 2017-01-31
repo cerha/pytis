@@ -1128,6 +1128,7 @@ class X2GoStartAppClientAPI(object):
         """
         def message(msg):
             self._update_progress(connection_parameters['hostname'] + ': ' + msg)
+
         def connect(gss_auth=False, key_filename=None, password=None):
             parameters = dict(
                 connection_parameters,

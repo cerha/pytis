@@ -36,8 +36,8 @@ class CheckReporterExt(pytis.extensions.CheckReporter):
     def end(self):
         end_time = datetime.datetime.now()
         diff = end_time - self._start_time
-        print "="*80
-        print "Checked %s specifications in %s seconds" % (self._number_of_items, diff.seconds) 
+        print "=" * 80
+        print "Checked %s specifications in %s seconds" % (self._number_of_items, diff.seconds)
 
     def info(self, message):
         self._current += 1
@@ -97,6 +97,7 @@ def run():
         config.log_logger = (NullLogger, (), {})
     reporter = CheckReporterExt()
     checker_class(spec_name_prefix=spec_name_prefix).batch_check(reporter)
+
 
 if __name__ == '__main__':
     run()
