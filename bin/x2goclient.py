@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-01-31 17:44'
+_VERSION = '2017-01-31 18:53'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
@@ -869,7 +869,10 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                 p = profiles.pytis_upgrade_parameter
                 upgrade_url = p('command')
                 if upgrade_url and on_windows():
-                    if app.question_dialog(_(u"New pytis client version available. Install?")):
+                    if app.question_dialog(_(u"New pytis client version available.\n\n"
+                                             u"Current version: {}\n"
+                                             u"New version: {}\n\n"
+                                             u"Install?").format(_VERSION, version)):
                         self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
