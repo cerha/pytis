@@ -386,5 +386,6 @@ def main():
     app = pytis.remote.X2GoStartApp(args)
     app.MainLoop()
 
+
 if __name__ == '__main__':
     main()

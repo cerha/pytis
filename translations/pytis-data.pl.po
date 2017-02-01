@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-05-17 17:34+0200\n"
+"POT-Creation-Date: 2017-01-31 18:38+0100\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -30,23 +30,27 @@ msgstr ""
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:212
+#: ../lib/pytis/data/dbapi.py:215
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:231
+#: ../lib/pytis/data/dbapi.py:234
 msgid "Database connection timeout"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:233 ../lib/pytis/data/dbapi.py:345
+#: ../lib/pytis/data/dbapi.py:236 ../lib/pytis/data/dbapi.py:369
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:247
+#: ../lib/pytis/data/dbapi.py:250
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:251
+#: ../lib/pytis/data/dbapi.py:256
+msgid "Database internal error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:260
 msgid "Database integrity violation"
 msgstr ""
 
@@ -72,7 +76,7 @@ msgstr ""
 msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3808
+#: ../lib/pytis/data/postgresql.py:3811
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Niewłaściwy format daty lub czasu"
