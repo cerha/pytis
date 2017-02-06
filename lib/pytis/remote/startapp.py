@@ -340,17 +340,29 @@ class X2GoStartApp(wx.App):
         if self._args.list_profiles:
             self._list_profiles(profiles)
             self.Exit()
-        elif profile_id:
-            if profile_id not in profiles.profile_ids:
-                raise Exception("Unknown profile %s!" % profile_id)
-            self._client.select_profile(profile_id)
-            self._connect()
         else:
-            items = [(pid, profiles.to_session_params(pid)['profile_name'])
-                     for pid in profiles.profile_ids]
-            for profile_id, name in sorted(items, key=lambda x: x[1]):
-                self._profiles_field.Append(name, profile_id)
-            self._profiles_field.Enable(True)
+            if ((self._client.upgrade_available() and
+                 self._question(_("Upgrade available"),
+                                _(u"New pytis client version available. Install?")))):
+                error = self._client.upgrade()
+                if error:
+                    # TODO: Specific dialog for error messages (icons)?
+                    self._info(_("Upgrade failed"), error)
+            else:
+                self._info(_(u"Upgrade finished"),
+                           _(u"Pytis successfully upgraded. Restart the application."))
+                self.Exit()
+            if profile_id:
+                if profile_id not in profiles.profile_ids:
+                    raise Exception("Unknown profile %s!" % profile_id)
+                self._client.select_profile(profile_id)
+                self._connect()
+            else:
+                items = [(pid, profiles.to_session_params(pid)['profile_name'])
+                         for pid in profiles.profile_ids]
+                for profile_id, name in sorted(items, key=lambda x: x[1]):
+                    self._profiles_field.Append(name, profile_id)
+                self._profiles_field.Enable(True)
 
     def _list_profiles(self, profiles):
         import pprint
@@ -375,7 +387,6 @@ class X2GoStartApp(wx.App):
             print
 
     def _start_session(self):
-        self._check_upgrade()
         args = self._args
         if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
              args.list_desktops or args.list_profiles)):
@@ -393,22 +404,6 @@ class X2GoStartApp(wx.App):
         else:
             self._update_progress(_("Starting new session."), 10)
             self._client.start_new_session(callback=self._on_session_started)
-
-    def _check_upgrade(self):
-        if self._args.broker_url is None or not self._client.on_windows():
-            return
-        self._update_progress(_("Checking for new client version."))
-        url = self._client.upgrade_url()
-        if url and self._question(_("Upgrade available"),
-                                  _(u"New pytis client version available. Install?")):
-            error = self._client.upgrade(url)
-            if error:
-                # TODO: Specific dialog for error messages (icons)?
-                self._info(_("Upgrade failed"), error)
-            else:
-                self._info(_(u"Upgrade finished"),
-                           _(u"Pytis successfully upgraded. Restart the application."))
-                self.Exit()
 
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))

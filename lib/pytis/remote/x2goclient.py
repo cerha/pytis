@@ -1264,14 +1264,16 @@ class X2GoStartAppClientAPI(object):
             parameters['server'] = parameters['server'][0]
         self._update_session_parameters(**parameters)
 
-    def upgrade_url(self):
-        version, url = self._profiles.pytis_upgrade_parameters()
-        if version and url and version > _VERSION:
-            return url
-        else:
-            return None
+    def upgrade_available(self):
+        if on_windows():
+            self._update_progress(_("Checking for new client version."))
+            version, url = self._profiles.pytis_upgrade_parameters()
+            if version and url and version > _VERSION:
+                return True
+        return False
 
-    def upgrade(self, url):
+    def upgrade(self):
+        url = self._profiles.pytis_upgrade_parameters()[1]
         parameters, path = self._parse_url(url)
         client = PytisClient.pytis_ssh_connect(parameters)
         if client is None:
@@ -1316,9 +1318,6 @@ class X2GoStartAppClientAPI(object):
             else:
                 updatescript.run(version=_VERSION, path=path)
         shutil.rmtree(tmp_directory)
-
-    def on_windows(self):
-        return on_windows()
 
     def list_sessions(self):
         return self._client.pytis_list_sessions()
