@@ -148,7 +148,7 @@ class X2GoStartApp(wx.App):
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
-            if self._client.on_windows():
+            if self._client.on_windows() and self._args.calling_script:
                 buttons.append((ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                           lambda e: e.Enable(listbox.GetSelection() != -1 and
                                                              self._can_create_shortcut())),
