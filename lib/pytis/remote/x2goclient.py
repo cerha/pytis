@@ -785,96 +785,6 @@ class PytisClient(PyHocaCLI):
         super(PytisClient, self).resume_session(s_hash)
         self._run_callback('session-started')
 
-    def _create_shortcut(self, broker_url, host, profile_id, profile_name, calling_script):
-        import urlparse
-        import winshell
-        scripts_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'scripts'))
-        if not os.path.isdir(scripts_path):
-            return
-        broker_host = urlparse.urlparse(broker_url).netloc
-        username = _auth_info.username or ''
-        vbs_name = '%s__%s__%s.vbs' % (broker_host, host, profile_id,)
-        if username:
-            vbs_name = '%s__%s' % (username, vbs_name)
-        vbs_path = os.path.join(scripts_path, vbs_name)
-        if not os.path.exists(vbs_path):
-            if calling_script:
-                calling_script = os.path.join(scripts_path, os.path.basename(calling_script))
-            if os.path.exists(calling_script):
-                with open(calling_script, 'r') as f:
-                    broker_src = f.read()
-                # TODO: Use _parse_url()?
-                match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                                  '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                                  '(|:(?P<password>.*))@)'
-                                  '(?P<hostname>[a-zA-Z0-9\.-]+)'
-                                  '(|:(?P<port>[0-9]+))'
-                                  '($|/(?P<path>.*)$)'), broker_url)
-                parameters = match.groupdict()
-                password = parameters['password'] and ":" + parameters['password'] or ''
-                port = parameters['port'] and ":" + parameters['port'] or ''
-                broker_url_tmpl = "--broker-url=%s://%s%s@%s%s/%s -P %s"
-                profile_src = re.sub(r'(--broker-url=[^"\s]+)',
-                                     broker_url_tmpl % (parameters['protocol'],
-                                                        username,
-                                                        password,
-                                                        parameters['hostname'],
-                                                        port,
-                                                        parameters['path'],
-                                                        profile_id),
-                                     broker_src)
-                profile_src = re.sub(r'--create-shortcut', r'', profile_src)
-                profile_src = re.sub(r'--calling-script=', r'', profile_src)
-                profile_src = re.sub(r'&\s+Wscript.ScriptFullName', r'', profile_src)
-                profile_src = re.sub(r'&\s+Wscript.ScriptName', r'', profile_src)
-                with open(vbs_path, 'w') as f:
-                    f.write(profile_src)
-        # check if vbs script was created properly
-        if not os.path.exists(vbs_path):
-            return
-        # Check if shortcut for vbs_path allready exists
-        shortcut_exists = False
-        shortcut_list = [os.path.join(winshell.desktop(), d)
-                         for d in os.listdir(winshell.desktop())
-                         if os.path.isfile(os.path.join(winshell.desktop(), d)) and
-                         os.path.splitext(d)[1].lower() == '.lnk']
-        for lpath in shortcut_list:
-            try:
-                with winshell.shortcut(lpath) as link:
-                    if link.path.lower() == vbs_path.lower():
-                        shortcut_exists = True
-                        break
-            except Exception:
-                pass
-        if ((shortcut_exists or
-             # TODO: some new question dialog should be used
-             # not app.question_dialog(_(u"Create desktop shortcut for this session profile?")))):
-             True)):
-            return
-        # Create shortcut on desktop
-        shortcut_name = profile_name
-        while True:
-            shortcut_path = os.path.join(winshell.desktop(), '%s.lnk' % shortcut_name)
-            if not os.path.exists(shortcut_path):
-                break
-            else:
-                # TODO: some new text_dialog should be used
-                # msg = _(u"Shortcut %s allready exists. Please, rename it:") % shortcut_name
-                # new_name = app.text_dialog(msg, caption=_(u"Edit shortcut name"),
-                #                            default_value=shortcut_name)
-                new_name = None
-                if not new_name:
-                    return
-                elif shortcut_name != new_name:
-                    shortcut_name = new_name
-        with winshell.shortcut(shortcut_path) as link:
-            link.path = vbs_path
-            link.description = profile_id
-            link.working_directory = scripts_path
-            icon_location = os.path.normpath(os.path.join(scripts_path, '..', 'icons', 'p2go.ico'))
-            if os.path.exists(icon_location):
-                link.icon_location = (icon_location, 0)
-
     @classmethod
     def pytis_ssh_connect(cls, connection_parameters, autoadd=False):
         if not connection_parameters['password']:
@@ -1213,15 +1123,18 @@ class X2GoStartAppClientAPI(object):
         # for its username argument (which may be altered by user in the UI).
         self._broker_parameters['username']
 
+    def _profile_session_parameters(self, profile_id):
+        parameters = self._profiles.to_session_params(profile_id)
+        if isinstance(parameters['server'], list):
+            parameters['server'] = parameters['server'][0]
+        return parameters
+
     def select_profile(self, profile_id):
         profile = self._profiles.broker_selectsession(profile_id)
         rootless = profile.get('rootless', True)
         if not rootless or int(rootless) == 0:
             self._xserver_variant = 'VcXsrv_pytis_desktop'
-        parameters = self._profiles.to_session_params(profile_id)
-        if isinstance(parameters['server'], list):
-            parameters['server'] = parameters['server'][0]
-        self._update_session_parameters(**parameters)
+        self._update_session_parameters(**self._profile_session_parameters(profile_id))
 
     def upgrade_available(self):
         if on_windows():
@@ -1278,6 +1191,9 @@ class X2GoStartAppClientAPI(object):
                 updatescript.run(version=_VERSION, path=path)
         shutil.rmtree(tmp_directory)
 
+    def on_windows(self):
+        return on_windows()
+
     def list_sessions(self):
         return self._client.pytis_list_sessions()
 
@@ -1297,6 +1213,86 @@ class X2GoStartAppClientAPI(object):
         if callback:
             self._client.set_callback('session-started', callback)
         self._client.MainLoop()
+
+    def _vbs_path(self, directory, username, profile_id):
+        return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
+            username,
+            self._broker_parameters['hostname'],
+            self._profile_session_parameters(profile_id)['server'],
+            profile_id,
+        ))
+
+    def _scripts_directory(self):
+        return os.path.normpath(os.path.join(run_directory(), '..', '..', 'scripts'))
+
+    def shortcut_exists(self, username, profile_id):
+        import winshell
+        vbs_path = self._vbs_path(self._scripts_directory(), username, profile_id)
+        if not os.path.exists(vbs_path):
+            return False
+        for name in os.listdir(winshell.desktop()):
+            if os.path.splitext(name)[1].lower() == '.lnk':
+                link_path = os.path.join(winshell.desktop(), name)
+                if os.path.isfile(link_path):
+                    try:
+                        with winshell.shortcut(link_path) as link:
+                            if link.path.lower() == vbs_path.lower():
+                                return True
+                    except Exception:
+                        pass
+        return False
+
+    def create_shortcut(self, username, profile_id):
+        import winshell
+        directory = self._scripts_directory()
+        if not os.path.isdir(directory):
+            return _("Unable to find the scripts directory: %s") % directory
+        vbs_path = self._vbs_path(directory, username, profile_id)
+        # Create the VBS script to which the shortcut will point to.
+        if not os.path.exists(vbs_path):
+            calling_script = os.path.join(directory, os.path.basename(self._args.calling_script))
+            if not os.path.exists(calling_script):
+                # Check if the VBS script was created properly.
+                return _("Unable to find the calling script: %s") % calling_script
+            with open(calling_script, 'r') as f:
+                script_src = f.read()
+            broker_parameters = self._broker_parameters
+            broker_url = "%s://%s%s@%s%s/%s" % (
+                broker_parameters['protocol'],
+                username,
+                ':' + broker_parameters['password'] if broker_parameters['password'] else '',
+                broker_parameters['hostname'],
+                ':' + broker_parameters['port'] if broker_parameters['port'] else '',
+                broker_parameters['path'],
+            )
+            for regexp, replacement in (
+                    (r'--broker-url=[^"\s]+', '--broker-url=%s -P %s' % (broker_url, profile_id)),
+                    (r'--create-shortcut', ''),
+                    (r'--calling-script=', ''),
+                    (r'&\s+Wscript.ScriptFullName', ''),
+                    (r'&\s+Wscript.ScriptName', ''),
+                    (r'&\s+Wscript.ScriptName', ''),
+            ):
+                script_src = re.sub(regexp, replacement, script_src)
+            with open(vbs_path, 'w') as f:
+                f.write(script_src)
+        # Create the shortcut on the desktop.
+        profile_name = self._profile_session_parameters(profile_id)['profile_name']
+        shortcut_path, n = os.path.join(winshell.desktop(), '%s.lnk' % profile_name), 0
+        while os.path.exists(shortcut_path):
+            # If the shortcut of given name already exists, it is probably something else as
+            # it was not found by shortcut_exists(), so try to find the first unused name.
+            n += 1
+            shortcut_path = os.path.join(winshell.desktop(), '%s(%d).lnk' % (profile_name, n))
+        with winshell.shortcut(shortcut_path) as link:
+            link.path = vbs_path
+            link.description = profile_id
+            link.working_directory = directory
+            icon_location = os.path.normpath(os.path.join(directory, '..', 'icons', 'p2go.ico'))
+            if os.path.exists(icon_location):
+                link.icon_location = (icon_location, 0)
+        return None
+
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"

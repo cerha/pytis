@@ -95,11 +95,23 @@ class X2GoStartApp(wx.App):
         self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
 
+    def _selected_profile_id(self):
+        return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
+
     def _on_select_profile(self, event):
-        selection = self._profiles_field.GetSelection()
-        profile_id = self._profiles_field.GetClientData(selection)
-        self._client.select_profile(profile_id)
+        self._client.select_profile(self._selected_profile_id())
         self._connect()
+
+    def _on_create_shortcut(self, event):
+        error = self._client.create_shortcut(self._username(), self._selected_profile_id())
+        if error:
+            # TODO: Specific dialog for error messages (icons)?
+            self._info(_("Failed creating desktop shortcut"), error)
+        else:
+            self._update_progress(_("Shortcut created successfully."))
+
+    def _can_create_shortcut(self):
+        return not self._client.shortcut_exists(self._username(), self._selected_profile_id())
 
     def _on_session_started(self):
         self.ExitMainLoop()
@@ -130,17 +142,23 @@ class X2GoStartApp(wx.App):
     def _create_profiles_field(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
             self._profiles_field = None
+            return None
         else:
             self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
             listbox.Enable(False)
-            button = ui.button(parent, _("Select Profile"), self._on_select_profile,
-                               lambda e: e.Enable(listbox.GetSelection() != -1))
-            checkbox = wx.CheckBox(parent, label=_("Create despktop shortcut"))
+            buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
+                                  lambda e: e.Enable(listbox.GetSelection() != -1)),
+                        0, wx.EXPAND)]
+            if self._client.on_windows():
+                buttons.append((ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
+                                          lambda e: e.Enable(listbox.GetSelection() != -1 and
+                                                             self._can_create_shortcut())),
+                                0, wx.EXPAND | wx.TOP, 10))
             return ui.vgroup(
                 ui.label(parent, _("Available profiles:")),
                 (ui.hgroup(
                     (listbox, 1, wx.EXPAND),
-                    (ui.vgroup(button, (checkbox, 0, wx.TOP, 10)), 0, wx.LEFT, 8),
+                    (ui.vgroup(*buttons), 0, wx.LEFT, 8),
                 ), 1, wx.EXPAND)
             )
 
@@ -321,10 +339,6 @@ class X2GoStartApp(wx.App):
 
     def _connect(self):
         if self._client.connect(self._username(), self._show_authentication_dialog, self._keyring):
-            # if on_windows() and args.create_shortcut:
-            #     self._update_progress(_("Checking desktop shortcut."))
-            #     self._create_shortcut(broker_url, args.server, profile_id,
-            #                           params['profile_name'], args.calling_script)
             self._update_progress(_("Starting Pytis client."))
             self._start_session()
         else:
