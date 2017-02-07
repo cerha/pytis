@@ -154,6 +154,7 @@ class AuthInfo(object):
     allow_agent = False
     gss_auth = False
 
+
 _auth_info = AuthInfo()
 
 
@@ -401,11 +402,13 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
+        last_version = _VERSION
         for section, data in profiles.items():
-            if section == 'pytis-client-upgrade':
-                # We can use only supported parameters from session_profiles
-                # So we'll use 'name' for the version and 'command' for url.
-                self._pytis_upgrade_parameters = (data['name'], data['command'])
+            if section.startswith('pytis-client-upgrade'):
+                if data['name'] > last_version:
+                    # We can use only supported parameters from session_profiles
+                    # So we'll use 'name' for the version and 'command' for url.
+                    self._pytis_upgrade_parameters = (data['name'], data['command'])
             else:
                 filtered_profiles[section] = data
         return filtered_profiles
