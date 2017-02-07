@@ -362,7 +362,8 @@ class X2GoStartApp(wx.App):
                                                _("Current version: %s") % current_version,
                                                _("New version: %s") % available_version,
                                                _("Install?")))))):
-                    error = self._client.upgrade()
+                    error = self._client.upgrade(self._username(),
+                                                 self._show_authentication_dialog, self._keyring)
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
                         self._info(_("Upgrade failed"), error)

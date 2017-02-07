@@ -1154,10 +1154,13 @@ class X2GoStartAppClientAPI(object):
         else:
             return None
 
-    def upgrade(self):
-        url = self._profiles.pytis_upgrade_parameters()[1]
-        parameters, path = self._parse_url(url)
-        client = PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
+    def upgrade(self, username, askpass, keyring=None):
+        def connect(parameters):
+            return PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
+        parameters, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
+        if not parameters['username']:
+            parameters['username'] = username
+        client = self._authenticate(connect, parameters, askpass, keyring=keyring)
         if client is None:
             return _(u"Couldn't connect to upgrade server")
         sftp = client.open_sftp()
