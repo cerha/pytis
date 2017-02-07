@@ -142,20 +142,6 @@ def get_language_windows(system_lang=True):
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
 
-_auth_info = None
-class SSHClient(paramiko.SSHClient):
-    pytis_client = True
-    def connect(self, hostname, gss_auth=None, **kwargs):
-        if gss_auth is None:
-            gss_auth = _auth_info.get('gss_auth', False)
-        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
-
-
-try:
-    paramiko.SSHClient.pytis_client
-except AttributeError:
-    paramiko.SSHClient = SSHClient
-
 class ClientException(Exception):
     pass
 
@@ -207,6 +193,20 @@ class AuthInfo(dict):
 
 
 _auth_info = AuthInfo()
+
+
+class SSHClient(paramiko.SSHClient):
+    pytis_client = True
+    def connect(self, hostname, gss_auth=None, **kwargs):
+        if gss_auth is None:
+            gss_auth = _auth_info.get('gss_auth', False)
+        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
+
+
+try:
+    paramiko.SSHClient.pytis_client
+except AttributeError:
+    paramiko.SSHClient = SSHClient
 
 
 class Configuration(x2go.X2GoClientSettings):
