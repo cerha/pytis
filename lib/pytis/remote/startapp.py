@@ -353,7 +353,6 @@ class X2GoStartApp(wx.App):
             self.Exit()
         else:
             if self._client.on_windows():
-                self._update_progress(_("Checking for new client version."))
                 current_version = self._client.current_version()
                 available_version = self._client.available_upgrade_version()
                 if ((available_version and available_version > current_version and
