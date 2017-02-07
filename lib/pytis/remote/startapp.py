@@ -348,10 +348,10 @@ class X2GoStartApp(wx.App):
                 if error:
                     # TODO: Specific dialog for error messages (icons)?
                     self._info(_("Upgrade failed"), error)
-            else:
-                self._info(_(u"Upgrade finished"),
-                           _(u"Pytis successfully upgraded. Restart the application."))
-                self.Exit()
+                else:
+                    self._info(_(u"Upgrade finished"),
+                               _(u"Pytis successfully upgraded. Restart the application."))
+                    self.Exit()
             if profile_id:
                 if profile_id not in profiles.profile_ids:
                     raise Exception("Unknown profile %s!" % profile_id)
