@@ -1235,20 +1235,21 @@ class X2GoStartAppClientAPI(object):
 
     def _list_profiles(self, connection_parameters, broker_path=None):
         try:
-            profiles = PytisSshProfiles(connection_parameters, broker_path=broker_path,
-                                        logger=x2go.X2GoLogger(tag='PyHocaCLI'),
-                                        autoadd=self._args.add_to_known_hosts,
-                                        broker_password=self._args.broker_password)
+            return PytisSshProfiles(connection_parameters, broker_path=broker_path,
+                                    logger=x2go.X2GoLogger(tag='PyHocaCLI'),
+                                    autoadd=self._args.add_to_known_hosts,
+                                    broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
-        self._profiles = profiles
-        return profiles
 
     def list_profiles(self, username, askpass, keyring=None):
         if not self._broker_parameters['username']:
             self._broker_parameters['username'] = username
-        return self._authenticate(self._list_profiles, self._broker_parameters,
-                                  askpass, keyring=keyring, broker_path=self._broker_path)
+        self._profiles = self._authenticate(self._list_profiles, self._broker_parameters, askpass,
+                                            keyring=keyring, broker_path=self._broker_path)
+        self._update_progress(self._broker_parameters['hostname'] + ': ' +
+                              _("Returned %d profiles.") % len(self._profiles.profile_ids))
+        return self._profiles
 
     def broker_url_username(self):
         # This is actually caled before list_profiles() and it provides the default value
