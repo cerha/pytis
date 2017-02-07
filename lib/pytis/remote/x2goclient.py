@@ -145,52 +145,14 @@ def get_language_windows(system_lang=True):
 class ClientException(Exception):
     pass
 
-class AuthInfo(dict):
-
-    _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',
-                     'gss_auth',)
-    _EXTRA_KEYS = ('_command', '_method',)
-
-    _ARGS_PARAMETERS = (('server', 'hostname'),
-                        ('remote_ssh_port', 'port'),
-                        ('username', 'username'),
-                        ('password', 'password'),
-                        ('ssh_privkey', 'key_filename'),
-                        ('command', '_command'),)
-
-    def _check_key(self, key):
-        if key not in self._CONNECT_KEYS + self._EXTRA_KEYS:
-            raise KeyError(key)
-
-    def __getitem__(self, key):
-        self._check_key(key)
-        return super(AuthInfo, self).__getitem__(key)
-
-    def __setitem__(self, key, value):
-        self._check_key(key)
-        return super(AuthInfo, self).__setitem__(key, value)
-
-    def update_non_empty(self, **kwargs):
-        kwargs = dict([a for a in kwargs.items() if a[1]])
-        return self.update(**kwargs)
-
-    def connection_parameters(self):
-        return dict([(k, v,) for k, v in self.items() if k in self._CONNECT_KEYS])
-
-    def update_from_profile(self, profile):
-        for a, p in (('host', 'hostname'),
-                     ('user', 'username'),
-                     ('sshport', 'port'),):
-            v = profile.get(a)
-            if v is not None and v != '':
-                self[p] = v
-
-    def update_args(self, args):
-        for a, p in self._ARGS_PARAMETERS:
-            v = self.get(p)
-            if v is not None and v != '':
-                setattr(args, a, unicode(v))
-
+class AuthInfo(object):
+    hostname = None
+    port = 22
+    username = None
+    password = None
+    key_filename = None
+    allow_agent = False
+    gss_auth = False
 
 _auth_info = AuthInfo()
 
@@ -199,7 +161,7 @@ class SSHClient(paramiko.SSHClient):
     pytis_client = True
     def connect(self, hostname, gss_auth=None, **kwargs):
         if gss_auth is None:
-            gss_auth = _auth_info.get('gss_auth', False)
+            gss_auth = _auth_info.gss_auth
         return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
 
 
@@ -749,12 +711,6 @@ class PytisClient(PyHocaCLI):
             gevent.sleep(1)
 
     def _check_ssh_tunnel(self, _configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
-        hostname = _auth_info.get('hostname')
-        ssh_port = _auth_info.get('port')
-        username = _auth_info.get('username')
-        password = _auth_info.get('password')
-        key_filename = _auth_info.get('key_filename')
-        gss_auth = _auth_info.get('gss_auth')
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -762,15 +718,15 @@ class PytisClient(PyHocaCLI):
                 gevent.sleep(0.1)
             current_rpyc_port = rpyc_port.get()
             port = gevent.event.AsyncResult()
-            tunnel = pytis.remote.ReverseTunnel(hostname,
+            tunnel = pytis.remote.ReverseTunnel(_auth_info.hostname,
                                                 current_rpyc_port,
-                                                ssh_port=ssh_port,
+                                                ssh_port=_auth_info.port,
                                                 ssh_forward_port=0,
-                                                ssh_user=username,
-                                                ssh_password=password,
-                                                key_filename=key_filename,
+                                                ssh_user=_auth_info.username,
+                                                ssh_password=_auth_info.password,
+                                                key_filename=_auth_info.key_filename,
                                                 ssh_forward_port_result=port,
-                                                gss_auth=gss_auth)
+                                                gss_auth=_auth_info.gss_auth)
             tunnel.start()
             while not tunnel.ready():
                 if port.wait(0.1) is not None:
@@ -836,7 +792,7 @@ class PytisClient(PyHocaCLI):
         if not os.path.isdir(scripts_path):
             return
         broker_host = urlparse.urlparse(broker_url).netloc
-        username = _auth_info.get('username') or ''
+        username = _auth_info.username or ''
         vbs_name = '%s__%s__%s.vbs' % (broker_host, host, profile_id,)
         if username:
             vbs_name = '%s__%s' % (username, vbs_name)
@@ -1044,17 +1000,19 @@ class X2GoStartAppClientAPI(object):
     def _update_session_parameters(self, **kwargs):
         self._session_parameters.update(**kwargs)
         parameters = self._session_parameters
-        _auth_info.update(
-            hostname=parameters['server'],
-            port=parameters['port'],
-            username=parameters['username'],
-            password=parameters['password'],
-            key_filename=parameters['key_filename'],
-            gss_auth=parameters['gss_auth'],
-            look_for_keys=parameters['look_for_keys'],
-            allow_agent=parameters['allow_agent'],
-        )
-        _auth_info.update_args(self._args)
+        _auth_info.hostname = parameters['server']
+        _auth_info.port = parameters['port']
+        _auth_info.username = parameters['username']
+        _auth_info.password = parameters['password']
+        _auth_info.key_filename = parameters['key_filename']
+        _auth_info.allow_agent = parameters['allow_agent']
+        _auth_info.gss_auth = parameters['gss_auth']
+        self._args.server = parameters['server']
+        self._args.remote_ssh_port = parameters['port']
+        self._args.username = parameters['username']
+        self._args.password = parameters['password']
+        self._args.ssh_privkey = parameters['key_filename']
+        #self._args.command = parameters['cmd']
 
     def _authentication_methods(self, connection_parameters):
         import socket
@@ -1203,8 +1161,7 @@ class X2GoStartAppClientAPI(object):
             return False
 
     def connect(self, username, askpass, keyring=None):
-        parameters = _auth_info.connection_parameters()
-        return self._authenticate(self._connect, parameters, askpass, keyring=keyring)
+        return self._authenticate(self._connect, _auth_info.__dict__, askpass, keyring=keyring)
 
     def search_key_files(self, username):
         def key_acceptable(key_filename):
@@ -1213,10 +1170,10 @@ class X2GoStartAppClientAPI(object):
             if os.access(public_key_filename, os.R_OK):
                 try:
                     acceptable = pytis.remote.public_key_acceptable(
-                        _auth_info.get('hostname'),
+                        _auth_info.hostname,
                         username,
                         public_key_filename,
-                        port=_auth_info.get('port'))
+                        port=_auth_info.port)
                 except:
                     pass
             return acceptable
