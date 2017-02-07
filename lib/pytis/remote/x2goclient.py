@@ -163,14 +163,13 @@ class AuthInfo(dict):
 
     _CONNECT_KEYS = ('hostname', 'port', 'username', 'password', 'key_filename', 'allow_agent',
                      'gss_auth',)
-    _EXTRA_KEYS = ('_add_to_known_hosts', '_command', '_method',)
+    _EXTRA_KEYS = ('_command', '_method',)
 
     _ARGS_PARAMETERS = (('server', 'hostname'),
                         ('remote_ssh_port', 'port'),
                         ('username', 'username'),
                         ('password', 'password'),
                         ('ssh_privkey', 'key_filename'),
-                        ('add_to_known_hosts', '_add_to_known_hosts'),
                         ('command', '_command'),)
 
     def _check_key(self, key):
@@ -221,6 +220,7 @@ class Configuration(x2go.X2GoClientSettings):
                                            key_filename=None,
                                            command=default_command)
 
+
 class RpycInfo(object):
 
     def __init__(self, configuration, port=None, password=None):
@@ -253,6 +253,7 @@ class RpycInfo(object):
     def password(self):
         return self._password
 
+
 class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     defaultSessionProfile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
@@ -261,15 +262,14 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
     class ConnectionFailed(Exception):
         pass
 
-    def __init__(self, connection_parameters, broker_path=None,
-                 logger=None, loglevel=x2go.log.loglevel_DEFAULT,
-                 add_to_known_hosts=False, **kwargs):
+    def __init__(self, connection_parameters, broker_path=None, autoadd=False,
+                 logger=None, loglevel=x2go.log.loglevel_DEFAULT, **kwargs):
         self._connection_parameters = connection_parameters
         self._broker_path = broker_path or self._DEFAULT_BROKER_PATH
+        self._autoadd = autoadd
         self._broker_profiles = None
         self._broker_profile_cache = {}
         self._ssh_client_ = None
-        self._add_to_known_hosts = add_to_known_hosts
         x2go.backends.profiles.base.X2GoSessionProfiles.__init__(self, logger=logger,
                                                                  loglevel=loglevel, **kwargs)
 
@@ -286,7 +286,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
     def _make_ssh_client(self):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
-        if self._add_to_known_hosts:
+        if self._autoadd:
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(**dict(self._connection_parameters, look_for_keys=False))
@@ -429,6 +429,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         selected_session = self.broker_selectsession(profile_id)
         return int(selected_session['sshport'])
 
+
 class PytisSshProfiles(SshProfiles):
 
     def __init__(self, *args, **kwargs):
@@ -449,6 +450,7 @@ class PytisSshProfiles(SshProfiles):
 
     def pytis_upgrade_parameters(self):
         return self._pytis_upgrade_parameters
+
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
@@ -918,12 +920,12 @@ class PytisClient(PyHocaCLI):
                 link.icon_location = (icon_location, 0)
 
     @classmethod
-    def pytis_ssh_connect(cls, connection_parameters):
+    def pytis_ssh_connect(cls, connection_parameters, autoadd=False):
         if not connection_parameters['password']:
             connection_parameters['password'] = 'X'
         client = paramiko.SSHClient()
         client.load_system_host_keys()
-        if _auth_info.get('_add_to_known_hosts'):
+        if autoadd:
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(**connection_parameters)
@@ -1019,7 +1021,6 @@ class X2GoStartAppClientAPI(object):
                 allow_share_local_folders=True,
                 cmd=args.command,
             )
-        _auth_info['_add_to_known_hosts'] = args.add_to_known_hosts
         quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
         gevent.signal(quit_signal, gevent.kill)
 
@@ -1174,7 +1175,7 @@ class X2GoStartAppClientAPI(object):
 
     def _connect(self, parameters):
         self._update_session_parameters(**parameters)
-        if PytisClient.pytis_ssh_connect(parameters):
+        if PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1236,7 +1237,7 @@ class X2GoStartAppClientAPI(object):
         try:
             profiles = PytisSshProfiles(connection_parameters, broker_path=broker_path,
                                         logger=x2go.X2GoLogger(tag='PyHocaCLI'),
-                                        add_to_known_hosts=self._args.add_to_known_hosts,
+                                        autoadd=self._args.add_to_known_hosts,
                                         broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
@@ -1275,7 +1276,7 @@ class X2GoStartAppClientAPI(object):
     def upgrade(self):
         url = self._profiles.pytis_upgrade_parameters()[1]
         parameters, path = self._parse_url(url)
-        client = PytisClient.pytis_ssh_connect(parameters)
+        client = PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
         if client is None:
             return _(u"Couldn't connect to upgrade server")
         sftp = client.open_sftp()
