@@ -1121,7 +1121,7 @@ class X2GoStartAppClientAPI(object):
     def broker_url_username(self):
         # This is actually caled before list_profiles() and it provides the default value
         # for its username argument (which may be altered by user in the UI).
-        self._broker_parameters['username']
+        return self._broker_parameters['username']
 
     def _profile_session_parameters(self, profile_id):
         parameters = self._profiles.to_session_params(profile_id)
