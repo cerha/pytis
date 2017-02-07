@@ -352,17 +352,24 @@ class X2GoStartApp(wx.App):
             self._list_profiles(profiles)
             self.Exit()
         else:
-            if ((self._client.upgrade_available() and
-                 self._question(_("Upgrade available"),
-                                _(u"New pytis client version available. Install?")))):
-                error = self._client.upgrade()
-                if error:
-                    # TODO: Specific dialog for error messages (icons)?
-                    self._info(_("Upgrade failed"), error)
-                else:
-                    self._info(_(u"Upgrade finished"),
-                               _(u"Pytis successfully upgraded. Restart the application."))
-                    self.Exit()
+            if self._client.on_windows():
+                self._update_progress(_("Checking for new client version."))
+                current_version = self._client.current_version()
+                available_version = self._client.available_upgrade_version()
+                if ((available_version and available_version > current_version and
+                     self._question(_("Upgrade available"),
+                                    '\n'.join((_("New pytis client version available."),
+                                               _("Current version: %s") % current_version,
+                                               _("New version: %s") % available_version,
+                                               _("Install?")))))):
+                    error = self._client.upgrade()
+                    if error:
+                        # TODO: Specific dialog for error messages (icons)?
+                        self._info(_("Upgrade failed"), error)
+                    else:
+                        self._info(_(u"Upgrade finished"),
+                                   _(u"Pytis successfully upgraded. Restart the application."))
+                        self.Exit()
             if profile_id:
                 if profile_id not in profiles.profile_ids:
                     raise Exception("Unknown profile %s!" % profile_id)

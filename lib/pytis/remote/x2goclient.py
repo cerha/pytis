@@ -1144,13 +1144,15 @@ class X2GoStartAppClientAPI(object):
             self._xserver_variant = 'VcXsrv_pytis_desktop'
         self._update_session_parameters(**self._profile_session_parameters(profile_id))
 
-    def upgrade_available(self):
-        if on_windows():
-            self._update_progress(_("Checking for new client version."))
-            version, url = self._profiles.pytis_upgrade_parameters()
-            if version and url and version > _VERSION:
-                return True
-        return False
+    def current_version(self):
+        return _VERSION
+
+    def available_upgrade_version(self):
+        version, url = self._profiles.pytis_upgrade_parameters()
+        if version and url:
+            return version
+        else:
+            return None
 
     def upgrade(self):
         url = self._profiles.pytis_upgrade_parameters()[1]
