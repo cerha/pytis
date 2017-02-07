@@ -197,7 +197,7 @@ class X2GoStartApp(wx.App):
         self._frame.Raise()
         return dialog.result
 
-    def _authentication_dialog(self, dialog, methods):
+    def _authentication_dialog(self, dialog, methods, key_files):
         def close(method):
             if isinstance(method, collections.Callable):
                 method = method()
@@ -211,17 +211,15 @@ class X2GoStartApp(wx.App):
             dialog.close(result)
 
         def publickey_authentication(parent):
-            path = os.path.join(os.path.expanduser('~'), '.ssh', '')
-
             def on_select_key_file(event):
-                filename = wx.FileSelector(_(u"Select ssh key file"), default_path=path)
+                filename = wx.FileSelector(
+                    _(u"Select ssh key file"),
+                    default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
+                )
                 self._keyfile_field.SetValue(filename)
             label1 = ui.label(parent, _("Key File:"))
-            keys = [name for name in ('id_rsa', 'id_dsa', 'id_ecdsa')
-                    if os.access(os.path.join(path, name), os.R_OK)]
-            filename = os.path.join(path, keys[0]) if len(keys) == 1 else None
-            self._keyfile_field = field1 = ui.field(parent, filename, length=40,
-                                                    style=wx.TE_READONLY)
+            self._keyfile_field = field1 = ui.field(parent, key_files[0] if key_files else None,
+                                                    length=40, style=wx.TE_READONLY)
             button1 = ui.button(parent, _("Select"), on_select_key_file)
             label2 = ui.label(parent, _("Passphrase:"))
             self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
@@ -268,8 +266,8 @@ class X2GoStartApp(wx.App):
             ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
         )
 
-    def _show_authentication_dialog(self, methods):
-        return self._show_dialog(_("Authentication"), self._authentication_dialog, methods)
+    def _show_authentication_dialog(self, *args):
+        return self._show_dialog(_("Authentication"), self._authentication_dialog, *args)
 
     def _session_selection_dialog(self, dialog, sessions):
         listbox = wx.ListBox(dialog, -1, choices=(), style=wx.LB_SINGLE)

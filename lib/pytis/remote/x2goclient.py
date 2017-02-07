@@ -943,6 +943,23 @@ class X2GoStartAppClientAPI(object):
             raise Exception(_(u"No supported ssh authentication method available."))
         return methods
 
+    def _acceptable_key_files(self, connection_parameters):
+        def key_acceptable(path):
+            if os.access(path, os.R_OK):
+                try:
+                    return pytis.remote.public_key_acceptable(
+                        connection_parameters['hostname'],
+                        connection_parameters['username'],
+                        path,
+                        port=connection_parameters['port'])
+                except:
+                    return True
+            else:
+                return True
+        return [path for path in [os.path.join(os.path.expanduser('~'), '.ssh', name)
+                                  for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
+                if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
+
     def _authenticate(self, function, connection_parameters, askpass, keyring=None, **kwargs):
         """Try calling 'method' with different authentication parameters.
 
@@ -960,12 +977,14 @@ class X2GoStartAppClientAPI(object):
             Authentication related keys in this dictionary will be overriden
             before passing the parameters to 'function' as described below.
           askpass -- function called when authentication credentials need to be
-            obtained interactively from the user.  The function must accept a
-            sequence of allowed authentication methods as an argument and
-            return a two-tuple of (key_filename, password), where
-            'key_filename' is the SSH private key and 'password' is its
-            passphrase 'key_filename' is None and 'password' is the password
-            for password authentication.
+            obtained interactively from the user.  The function must accept two
+            arguments.  The first is the sequence of authentication methods
+            supported by the server and the second is the list of SSH private
+            key files on local machine for which the server has a public key
+            (if public key authentication is supported).  The return value is a
+            two-tuple of (key_filename, password), where 'key_filename' is the
+            SSH private key and 'password' is its passphrase 'key_filename' is
+            None and 'password' is the password for password authentication.
           keyring -- known authentication credentials as a list of pairs
             (key_filename, password), where 'key_filename' is a string path to
             a SSH private key and 'password' is its passphrase or
@@ -1028,9 +1047,13 @@ class X2GoStartAppClientAPI(object):
                     success = connect(password=password)
                 if success:
                     break
+            if not success and 'publickey' in methods:
+                key_files = self._acceptable_key_files(connection_parameters)
+            else:
+                key_files = ()
             while not success:
                 message(_("Trying interactive authentication."))
-                key_filename, password = askpass(methods)
+                key_filename, password = askpass(methods, key_files)
                 if key_filename:
                     message(_("Trying public key authentication."))
                 elif password:
@@ -1075,24 +1098,6 @@ class X2GoStartAppClientAPI(object):
 
     def connect(self, username, askpass, keyring=None):
         return self._authenticate(self._connect, _auth_info.__dict__, askpass, keyring=keyring)
-
-    def search_key_files(self, username):
-        def key_acceptable(key_filename):
-            public_key_filename = key_filename + '.pub'
-            acceptable = True
-            if os.access(public_key_filename, os.R_OK):
-                try:
-                    acceptable = pytis.remote.public_key_acceptable(
-                        _auth_info.hostname,
-                        username,
-                        public_key_filename,
-                        port=_auth_info.port)
-                except:
-                    pass
-            return acceptable
-        return [path for path in [os.path.join(os.path.expanduser('~'), '.ssh', name)
-                                  for name in ('id_rsa', 'id_dsa', 'id_ecdsa',)]
-                if os.access(path, os.R_OK) and key_acceptable(path)]
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
