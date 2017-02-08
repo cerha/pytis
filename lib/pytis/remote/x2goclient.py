@@ -534,12 +534,8 @@ class PytisClient(PyHocaCLI):
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, args, params, logger=None, liblogger=None, on_update_progress=None,
+    def __init__(self, args, params, logger=None, liblogger=None,
                  xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
-        self._callbacks = {}
-        if on_update_progress:
-            self.set_callback('update-progress', on_update_progress)
-        self._update_progress(_("Client setup."))
         self.args = args
         if on_windows():
             self.args.from_stdin = None
@@ -567,6 +563,7 @@ class PytisClient(PyHocaCLI):
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
+        self._callbacks = {}
 
     def set_callback(self, callback, function):
         self._callbacks[callback] = function
@@ -578,9 +575,6 @@ class PytisClient(PyHocaCLI):
             pass
         else:
             function(*args, **kwargs)
-
-    def _update_progress(self, *args, **kwargs):
-        self._run_callback('update-progress', *args, **kwargs)
 
     def pytis_setup(self, s_uuid):
         # Configuration transfer to the server
@@ -757,11 +751,8 @@ class PytisClient(PyHocaCLI):
         ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
         args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
-        self._update_progress(_("Starting server connections."))
         gevent.spawn(self._check_rpyc_server, *args)
-        self._update_progress()
         gevent.spawn(self._check_ssh_tunnel, *args)
-        self._update_progress()
 
     def terminate_session(self, *args, **kwargs):
         try:
@@ -770,10 +761,8 @@ class PytisClient(PyHocaCLI):
             self._pytis_terminate.set()
 
     def new_session(self, s_hash):
-        self._update_progress(_("Creating new session."))
         super(PytisClient, self).new_session(s_hash)
         if self._pytis_setup_configuration:
-            self._update_progress(_("Setting up new session."))
             self.pytis_setup(s_hash)
             self._pytis_setup_configuration = False
 
@@ -1079,18 +1068,19 @@ class X2GoStartAppClientAPI(object):
                     except:
                         pass
             # Create client
+            self._update_progress(_("Client setup."))
             self._client = client = PytisClient(self._args, self._session_parameters,
                                                 use_cache=False,
                                                 start_xserver=False,
                                                 xserver_variant=self._xserver_variant,
-                                                loglevel=x2go.log.loglevel_DEBUG,
-                                                on_update_progress=self._update_progress)
+                                                loglevel=x2go.log.loglevel_DEBUG)
             session = client.session_registry(client.x2go_session_hash)
             session.sshproxy_params['key_filename'] = parameters['key_filename']
             session.sshproxy_params['look_for_keys'] = False
+            self._update_progress(_("Starting server connections."))
             client.pytis_start_processes(self._configuration)
             client._pytis_setup_configuration = True
-            #self._update_progress(_("Authenticating."))
+            self._update_progress(_("Authenticating."))
             client.authenticate()
             return True
         else:
