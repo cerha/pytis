@@ -141,6 +141,42 @@ def get_language_windows(system_lang=True):
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
+def ssh_connect(parameters, autoadd=False):
+    """Establish SSH connection according to given parameters.
+
+    Arguments:
+      parameters -- dictionary of connection parameters with keys described below.
+      autoadd -- Iff true, server keys not already present in known hosts will be
+        automatically added.
+
+    Connection parameters:
+      hostname -- remote server host name (string)
+      port -- remote server port (int)
+      username -- remote user name (string)
+      password -- remote user password or passphrase (if key_filename is not None) (string)
+      key_filename -- name of the SSH private key file (string)
+      allow_agent -- true if SSH agent should be allowed (bool)
+      gss_auth -- true if GSS (Kerberos) authenticationexception should be allowed (bool)
+
+    Returns 'paramiko.SSHClient' instance if successfully connected or None if
+    connection fails.
+
+    """
+    if not parameters['password']:
+        # TODO: Is this really needed?
+        parameters['password'] = 'X'
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    if autoadd:
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(**parameters)
+    except (paramiko.ssh_exception.AuthenticationException,
+            paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
+            ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
+        return None
+    return client
+
 
 class ClientException(Exception):
     pass
@@ -232,7 +268,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         self._autoadd = autoadd
         self._broker_profiles = None
         self._broker_profile_cache = {}
-        self._ssh_client_ = None
+        self._ssh_client_instance = None
         x2go.backends.profiles.base.X2GoSessionProfiles.__init__(self, logger=logger,
                                                                  loglevel=loglevel, **kwargs)
 
@@ -242,22 +278,14 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         return self.get_profile_config(profile_id=_profile_id)
 
     def _ssh_client(self):
-        if self._ssh_client_ is None:
-            self._ssh_client_ = self._make_ssh_client()
-        return self._ssh_client_
-
-    def _make_ssh_client(self):
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        if self._autoadd:
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            client.connect(**dict(self._connection_parameters, look_for_keys=False))
-        except (paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
-                ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
-            raise self.ConnectionFailed()
-        return client
+        if self._ssh_client_instance is None:
+            client = ssh_connect(dict(self._connection_parameters, look_for_keys=False),
+                                 autoadd=self._autoadd)
+            if client:
+                self._ssh_client_instance = client
+            else:
+                raise self.ConnectionFailed()
+        return self._ssh_client_instance
 
     def broker_listprofiles(self):
         if self._broker_profiles is not None:
@@ -777,22 +805,6 @@ class PytisClient(PyHocaCLI):
         super(PytisClient, self).resume_session(s_hash)
         self._run_callback('session-started')
 
-    @classmethod
-    def pytis_ssh_connect(cls, connection_parameters, autoadd=False):
-        if not connection_parameters['password']:
-            connection_parameters['password'] = 'X'
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        if autoadd:
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            client.connect(**connection_parameters)
-        except (paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
-                ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
-            return None
-        return client
-
 
 class StartupController(object):
     """Interface between the start-up application and X2GoClient.
@@ -1058,7 +1070,7 @@ class StartupController(object):
 
     def _connect(self, parameters):
         self._update_session_parameters(**parameters)
-        if PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts):
+        if ssh_connect(parameters, autoadd=self._args.add_to_known_hosts):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1146,7 +1158,7 @@ class StartupController(object):
 
     def upgrade(self, username, askpass, keyring=None):
         def connect(parameters):
-            return PytisClient.pytis_ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
+            return ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
         parameters, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         if not parameters['username']:
             parameters['username'] = username
