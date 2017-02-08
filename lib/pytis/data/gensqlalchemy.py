@@ -96,6 +96,7 @@ G_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
 def _function_arguments_seq(function, types_only=False):
     search_path = function.search_path()
+
     def arg(column):
         a_column = column.sqlalchemy_column(search_path, None, None, None)
         in_out = 'out ' if column.out() and not types_only else ''
@@ -173,6 +174,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_foreign_table(self, table, create_ok=False):
         with local_search_path(self._set_search_path(table.search_path())):
             sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in table.fields]
+
             def compile(c):
                 # Any better way to reach the column compiler?
                 cc = sqlalchemy.sql.ddl.CreateColumn(c)
@@ -191,6 +193,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
+
         def ctype(c):
             return c.type.compile(_engine.dialect)
         column_string = string.join(['%s %s' % (self.preparer.format_column(c), ctype(c),)
@@ -606,6 +609,7 @@ class LTreeType(sqlalchemy.types.UserDefinedType):
             return value
         return process
 
+
 INT4RANGE = sqlalchemy.dialects.postgresql.INT4RANGE
 INT8RANGE = sqlalchemy.dialects.postgresql.INT8RANGE
 NUMRANGE = sqlalchemy.dialects.postgresql.NUMRANGE
@@ -623,6 +627,7 @@ def visit_create_table(element, compiler, **kwargs):
         inherited = [table._table_name(t) for t in table.inherits]
         result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), string.join(inherited, ', '),)
     return result
+
 
 _ANY_REGEXP = re.compile('.*')
 @compiles(sqlalchemy.sql.expression.Alias)
@@ -739,8 +744,8 @@ class Column(pytis.data.ColumnSpec):
         assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
             original_column
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
-        if (((primary_key or original_column is not None and original_column.primary_key)
-             and (not type.not_null() or not type.unique()))):
+        if (((primary_key or original_column is not None and original_column.primary_key) and
+             (not type.not_null() or not type.unique()))):
             type = type.clone(type.__class__(not_null=True, unique=True))
         pytis.data.ColumnSpec.__init__(self, name, type)
         self._label = label
@@ -912,6 +917,7 @@ def _error(message, error=True):
 def _warn(message):
     _error(message, error=False)
 
+
 _current_search_path = None
 @contextmanager
 def local_search_path(search_path):
@@ -954,6 +960,7 @@ def _is_specification_name(name):
     return (not name.startswith('SQL') and
             not name.startswith('_') and
             not name.startswith('Base_'))
+
 
 _enforced_schema = None
 _enforced_schema_objects = None
@@ -1070,6 +1077,7 @@ class SQLFlexibleValue(object):
         """
         class_._values[name] = value
 
+
 _default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT_SCHEMAS',
                                     default=(('public',),))
 
@@ -1147,6 +1155,7 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
         if cls._is_specification(clsname):
             schemas = _expand_schemas(cls)
+
             def init_function(cls=cls, may_alter_schema=False, schemas=schemas):
                 for search_path in schemas:
                     if _debug:
@@ -1309,6 +1318,8 @@ class TableLookup(object):
     """
     def __getattr__(self, specification):
         return object_by_specification_name(specification)
+
+
 t = TableLookup()
 
 class ColumnLookup(object):
@@ -1330,6 +1341,8 @@ class ColumnLookup(object):
     """
     def __getattr__(self, specification):
         return object_by_specification_name(specification).c
+
+
 c = ColumnLookup()
 
 class ReferenceLookup(object):
@@ -1381,6 +1394,8 @@ class ReferenceLookup(object):
             return ReferenceLookup.Reference(self._name, column)
     def __getattr__(self, specification):
         return self.ColumnLookup(specification)
+
+
 r = ReferenceLookup()
 
 class Arguments(object):
@@ -1399,6 +1414,8 @@ class Arguments(object):
         return self._args
     def kwargs(self):
         return self._kwargs
+
+
 a = Arguments
 
 def reorder_columns(columns, column_ordering):
@@ -1424,6 +1441,7 @@ def reorder_columns(columns, column_ordering):
         else:
             raise SQLException("Column not found", o, columns)
     return ordered_columns
+
 
 _forward_foreign_keys = []
 _ForwardForeignKey = collections.namedtuple('_ForwardForeignKey',
@@ -1584,6 +1602,8 @@ class SQLSchematicObject(SQLObject):
 
 def gA(table, **kwargs):
     return Arguments(object_by_reference(table), **kwargs)
+
+
 gL = sqlalchemy.sql.literal_column
 gO = object_by_path
 gR = RawCondition
@@ -1779,6 +1799,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return ''
         lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
                  isinstance(column_2.type, sqlalchemy.Boolean))
+
         def textify(default):
             for_update = ' FOR UPDATE' if default.for_update else ''
             if not isinstance(default, basestring):
@@ -2391,6 +2412,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     def _pytis_simplified_constraints(self, constraints):
         simplified = {}
+
         def simplify(constraint):
             if isinstance(constraint, sqlalchemy.PrimaryKeyConstraint):
                 return
@@ -2519,6 +2541,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
             if not isinstance(t, (tuple, list,)):
                 t = (t,)
             trigger = t[0]
+
             class T(trigger):
                 __doc__ = trigger.__doc__
                 name = '%s__%s' % (self.name, trigger.name,)
@@ -2616,6 +2639,7 @@ class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
 @compiles(SQLForeignServer)
 def visit_foreign_server(element, compiler, **kw):
     options = []
+
     def add_option(name, value):
         options.append("%s %s" % (name, _sql_value_escape(unicode(value)),))
     for p, o in (('host', 'host'), ('database', 'dbname'), ('port', 'port'),):
@@ -2917,6 +2941,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     def specification_fields(class_):
         with local_search_path(class_.default_search_path()):
             query = class_.query()
+
         def original_column(c):
             result = None
             if len(c.base_columns) == 1:
@@ -2930,6 +2955,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                     elif isinstance(table, SQLView):
                         result = original_column(base_column)
             return result
+
         def make_column(c):
             return Column(c.name, _alchemy2pytis_type(c.type), original_column=original_column(c))
         fields = [make_column(c) for c in query.c]
@@ -3471,12 +3497,14 @@ class SQLPyFunction(SQLFunctional):
             if len(self.arguments) == 1:
                 l += '[0]'
             lines.append(l)
+
         def strip_header(lines):
             while lines and not lines[0].rstrip().endswith('):'):
                 lines.pop(0)
             lines.pop(0)
         main_lines = self._method_source_lines(main_method_name, getattr(self, main_method_name), 0)
         strip_header(main_lines)
+
         # Auxiliary objects
         def output_method(name, method, indentation, prefix=None):
             function_lines = self._method_source_lines(name, method, indentation)
@@ -3489,6 +3517,7 @@ class SQLPyFunction(SQLFunctional):
             else:
                 function_lines.insert(0, ' ' * indentation + '@staticmethod')
             lines.extend(function_lines)
+
         def output_class(name, class_, indentation, prefix=None):
             class_lines = self._method_source_lines(name, class_, indentation)
             if prefix:
@@ -3497,6 +3526,7 @@ class SQLPyFunction(SQLFunctional):
                 j = i + len(prefix)
                 class_lines[0] = first_line[:i] + first_line[j:]
             lines.extend(class_lines)
+
         def output_attribute(name, value, indentation):
             line = '%s%s = %s' % (' ' * indentation, name, repr(value),)
             lines.append(line)
@@ -3753,9 +3783,11 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
 
 def _db_dependencies(metadata):
     connection = metadata.pytis_engine.connect()
+
     def row_identifier(row):
         schema, name = row
         return '"%s"."%s"' % (schema, name,)
+
     def load(query, otype, row_identifier=row_identifier):
         dictionary = {}
         for row in connection.execute(sqlalchemy.text(query)):
@@ -3818,6 +3850,7 @@ def _db_dependencies(metadata):
     result.close()
     connection.close()
     return dependencies
+
 
 _engine = None
 def _make_sql_command(sql, *multiparams, **params):
@@ -3886,6 +3919,7 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
+
 _output = None
 def _gsql_output(output):
     try:
@@ -3893,6 +3927,7 @@ def _gsql_output(output):
     except UnicodeEncodeError:
         _output.write(output.encode('utf-8'))
     _output.write('\n')
+
 
 _debug = False
 _pretty = 0
@@ -3938,6 +3973,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
+
     def matching(o):
         result = True
         if isinstance(o, SQLObject):
@@ -3975,6 +4011,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                     matched.add(o)
                     return result
         return False
+
     def output_name(obj):
         kind = obj.pytis_kind()
         name = obj.pytis_name(real=True)
@@ -4028,6 +4065,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
     if not full_init and names_only:
         return
+
     # Process all available objects
     def obj_identifier(o):
         if isinstance(o, SQLTrigger) and o.table is not None:
@@ -4121,6 +4159,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                     node_edges[x] = set()
                 node_edges[x].add(y)
             nodes = list(cycle_nodes)
+
             def search(path):
                 head = path[0]
                 next_nodes = node_edges[path[-1]].intersection(cycle_nodes)
@@ -4269,6 +4308,7 @@ def specification_instances():
     for o, f in _PytisSchematicMetaclass.init_function_list:
         _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
     return _PytisSimpleMetaclass.objects + _PytisSchematicMetaclass.objects
+
 
 # Make sure _metadata and _engine are initialized to prevent crashes
 clear()
