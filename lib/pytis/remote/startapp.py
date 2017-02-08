@@ -208,6 +208,9 @@ class X2GoStartApp(wx.App):
             else:
                 result = (self._keyfile_field.GetValue().rstrip('\r\n'),
                           self._passphrase_field.GetValue().rstrip('\r\n'))
+                if not result[0]:
+                    self._keyfile_field.SetFocus()
+                    return
             dialog.close(result)
 
         def publickey_authentication(parent):
