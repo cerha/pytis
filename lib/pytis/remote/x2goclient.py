@@ -794,13 +794,13 @@ class PytisClient(PyHocaCLI):
         return client
 
 
-class X2GoStartAppClientAPI(object):
+class StartupController(object):
     """Interface between the start-up application and X2GoClient.
 
     It will be probably more logical to rearrange the code in the following way:
 
       - methods working before PytisClient instance creation can stay in a separate
-        class (with a different name).
+        class (this one).
 
       - the method connect() would return a PytisClient instance.
 

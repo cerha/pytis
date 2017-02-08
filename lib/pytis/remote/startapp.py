@@ -88,10 +88,10 @@ class X2GoStartApp(wx.App):
     _MAX_PROGRESS = 40
 
     def __init__(self, args):
-        from pytis.remote.x2goclient import X2GoStartAppClientAPI
+        from pytis.remote.x2goclient import StartupController
         self._progress = 1
         self._args = args
-        self._client = X2GoStartAppClientAPI(args, self._update_progress)
+        self._controller = StartupController(args, self._update_progress)
         self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
 
@@ -99,11 +99,11 @@ class X2GoStartApp(wx.App):
         return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
 
     def _on_select_profile(self, event):
-        self._client.select_profile(self._selected_profile_id())
+        self._controller.select_profile(self._selected_profile_id())
         self._connect()
 
     def _on_create_shortcut(self, event):
-        error = self._client.create_shortcut(self._username(), self._selected_profile_id())
+        error = self._controller.create_shortcut(self._username(), self._selected_profile_id())
         if error:
             # TODO: Specific dialog for error messages (icons)?
             self._info(_("Failed creating desktop shortcut"), error)
@@ -111,7 +111,7 @@ class X2GoStartApp(wx.App):
             self._update_progress(_("Shortcut created successfully."))
 
     def _can_create_shortcut(self):
-        return not self._client.shortcut_exists(self._username(), self._selected_profile_id())
+        return not self._controller.shortcut_exists(self._username(), self._selected_profile_id())
 
     def _on_session_started(self):
         self.ExitMainLoop()
@@ -125,7 +125,7 @@ class X2GoStartApp(wx.App):
         label = ui.label(parent, _("Login name:"))
         username = self._args.username
         if not username and self._args.broker_url:
-            username = self._client.broker_url_username()
+            username = self._controller.broker_url_username()
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
@@ -148,7 +148,7 @@ class X2GoStartApp(wx.App):
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
-            if self._client.on_windows() and self._args.calling_script:
+            if self._controller.on_windows() and self._args.calling_script:
                 buttons.append((ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                           lambda e: e.Enable(listbox.GetSelection() != -1 and
                                                              self._can_create_shortcut())),
@@ -197,7 +197,7 @@ class X2GoStartApp(wx.App):
         self._frame.Raise()
         return dialog.result
 
-    def _authentication_dialog(self, dialog, methods, key_files):
+    def _create_authentication_dialog(self, dialog, methods, key_files):
         def close(method):
             if isinstance(method, collections.Callable):
                 method = method()
@@ -269,8 +269,8 @@ class X2GoStartApp(wx.App):
             ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
         )
 
-    def _show_authentication_dialog(self, *args):
-        return self._show_dialog(_("Authentication"), self._authentication_dialog, *args)
+    def _authentication_dialog(self, *args):
+        return self._show_dialog(_("Authentication"), self._create_authentication_dialog, *args)
 
     def _session_selection_dialog(self, dialog, sessions):
         listbox = wx.ListBox(dialog, -1, choices=(), style=wx.LB_SINGLE)
@@ -279,7 +279,7 @@ class X2GoStartApp(wx.App):
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
             self._update_progress(_("Terminating session: %s", session.name), 0)
-            self._client.terminate_session(session)
+            self._controller.terminate_session(session)
             listbox.Delete(selection)
             self._update_progress(_("Session terminated: %s", session.name), 0)
 
@@ -338,15 +338,15 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        if self._client.connect(self._username(), self._show_authentication_dialog, self._keyring):
+        if self._controller.connect(self._username(), self._authentication_dialog, self._keyring):
             self._update_progress(_("Starting Pytis client."))
             self._start_session()
         else:
             self.Exit()
 
     def _load_profiles(self):
-        profiles = self._client.list_profiles(self._username(), self._show_authentication_dialog,
-                                              self._keyring)
+        profiles = self._controller.list_profiles(self._username(),
+                                                  self._authentication_dialog, self._keyring)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             self.Exit()
@@ -355,17 +355,17 @@ class X2GoStartApp(wx.App):
             self._list_profiles(profiles)
             self.Exit()
         else:
-            if self._client.on_windows():
-                current_version = self._client.current_version()
-                available_version = self._client.available_upgrade_version()
+            if self._controller.on_windows():
+                current_version = self._controller.current_version()
+                available_version = self._controller.available_upgrade_version()
                 if ((available_version and available_version > current_version and
                      self._question(_("Upgrade available"),
                                     '\n'.join((_("New pytis client version available."),
                                                _("Current version: %s") % current_version,
                                                _("New version: %s") % available_version,
                                                _("Install?")))))):
-                    error = self._client.upgrade(self._username(),
-                                                 self._show_authentication_dialog, self._keyring)
+                    error = self._controller.upgrade(self._username(),
+                                                     self._authentication_dialog, self._keyring)
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
                         self._info(_("Upgrade failed"), error)
@@ -376,7 +376,7 @@ class X2GoStartApp(wx.App):
             if profile_id:
                 if profile_id not in profiles.profile_ids:
                     raise Exception("Unknown profile %s!" % profile_id)
-                self._client.select_profile(profile_id)
+                self._controller.select_profile(profile_id)
                 self._connect()
             else:
                 items = [(pid, profiles.to_session_params(pid)['profile_name'])
@@ -413,7 +413,7 @@ class X2GoStartApp(wx.App):
              args.list_desktops or args.list_profiles)):
             return
         self._update_progress(_("Retrieving available sessions."))
-        sessions = self._client.list_sessions()
+        sessions = self._controller.list_sessions()
         if len(sessions) == 0:
             session = None
         else:
@@ -421,10 +421,10 @@ class X2GoStartApp(wx.App):
                                         self._session_selection_dialog, sessions)
         if session:
             self._update_progress(_("Resuming session: %s", session.name), 10)
-            self._client.resume_session(session, callback=self._on_session_started)
+            self._controller.resume_session(session, callback=self._on_session_started)
         else:
             self._update_progress(_("Starting new session."), 10)
-            self._client.start_new_session(callback=self._on_session_started)
+            self._controller.start_new_session(callback=self._on_session_started)
 
     def OnInit(self):
         self._frame = frame = wx.Frame(None, -1, _("Starting application"))
