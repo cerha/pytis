@@ -105,6 +105,14 @@ class X2GoStartApp(wx.App):
         self._controller.select_profile(profile_id)
         self._connect()
 
+    def _on_listbox_key(self, event, on_confirm):
+        # Bind to EVT_UPDATE_UP as EVT_KEY_DOWN doesn't process the Enter key...
+        if ((self._profiles_field.GetSelection() != -1 and
+             event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER))):
+            on_confirm(event)
+        else:
+            event.Skip()
+
     def _on_create_shortcut(self, event):
         error = self._controller.create_shortcut(self._username(), self._selected_profile_id())
         if error:
@@ -148,6 +156,7 @@ class X2GoStartApp(wx.App):
         else:
             self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
             listbox.Enable(False)
+            listbox.Bind(wx.EVT_KEY_UP, lambda e: self._on_listbox_key(e, self._on_select_profile))
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
@@ -286,6 +295,10 @@ class X2GoStartApp(wx.App):
             listbox.Delete(selection)
             self._update_progress(_("Session terminated: %s", session.name), 0)
 
+        def on_resume_session(event):
+            dialog.close(listbox.GetClientData(listbox.GetSelection()))
+
+        listbox.Bind(wx.EVT_KEY_UP, lambda e: self._on_listbox_key(e, on_resume_session))
         for session in sessions:
             session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
                                           (session.date_created or '').replace('T', ' '),)
@@ -298,8 +311,7 @@ class X2GoStartApp(wx.App):
                 (ui.vgroup(*[
                     (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
                     for label, callback, updateui in (
-                        (_(u"Resume"),
-                         lambda e: dialog.close(listbox.GetClientData(listbox.GetSelection())),
+                        (_(u"Resume"), on_resume_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
                         (_(u"Terminate"), on_terminate_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
