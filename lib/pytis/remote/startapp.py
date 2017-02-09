@@ -305,7 +305,7 @@ class X2GoStartApp(wx.App):
             listbox.Append(session_label, session)
         dialog.set_callback(lambda: listbox.SetFocus())
         return ui.vgroup(
-            ui.label(dialog, _("Existing sessions:")),
+            (ui.label(dialog, _("Existing sessions:")), 0, wx.LEFT | wx.RIGHT, 8),
             (ui.hgroup(
                 (listbox, 1, wx.EXPAND),
                 (ui.vgroup(*[
@@ -315,8 +315,8 @@ class X2GoStartApp(wx.App):
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
                         (_(u"Terminate"), on_terminate_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
-                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND),
-            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.TOP, 8),
+                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
+            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.ALL, 8),
         )
 
     def _question(self, title, question):
