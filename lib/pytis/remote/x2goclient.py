@@ -144,36 +144,30 @@ def get_language_windows(system_lang=True):
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
-def ssh_connect(parameters, autoadd=False):
+def ssh_connect(server, password=None, add_to_known_hosts=False, **kwargs):
     """Establish SSH connection according to given parameters.
 
     Arguments:
-      parameters -- dictionary of connection parameters with keys described below.
-      autoadd -- Iff true, server keys not already present in known hosts will be
-        automatically added.
-
-    Connection parameters:
-      hostname -- remote server host name (string)
+      server -- remote server host name (string)
       port -- remote server port (int)
       username -- remote user name (string)
       password -- remote user password or passphrase (if key_filename is not None) (string)
       key_filename -- name of the SSH private key file (string)
       allow_agent -- true if SSH agent should be allowed (bool)
       gss_auth -- true if GSS (Kerberos) authenticationexception should be allowed (bool)
+      add_to_known_hosts -- Iff true, server keys not already present in known hosts will be
+        automatically added.
 
     Returns 'paramiko.SSHClient' instance if successfully connected or None if
     connection fails.
 
     """
-    if not parameters['password']:
-        # TODO: Is this really needed?
-        parameters['password'] = 'X'
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    if autoadd:
+    if add_to_known_hosts:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        client.connect(**parameters)
+        client.connect(server, password=password or 'X', **kwargs)
     except (paramiko.ssh_exception.AuthenticationException,
             paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
             ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
@@ -186,7 +180,7 @@ class ClientException(Exception):
 
 
 class AuthInfo(object):
-    hostname = None
+    server = None
     port = 22
     username = None
     password = None
@@ -263,11 +257,10 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
     class ConnectionFailed(Exception):
         pass
 
-    def __init__(self, connection_parameters, broker_path=None, autoadd=False,
+    def __init__(self, connection_parameters, broker_path=None,
                  logger=None, loglevel=x2go.log.loglevel_DEFAULT, **kwargs):
         self._connection_parameters = connection_parameters
         self._broker_path = broker_path or self._DEFAULT_BROKER_PATH
-        self._autoadd = autoadd
         self._broker_profiles = None
         self._broker_profile_cache = {}
         self._ssh_client_instance = None
@@ -281,8 +274,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     def _ssh_client(self):
         if self._ssh_client_instance is None:
-            client = ssh_connect(dict(self._connection_parameters, look_for_keys=False),
-                                 autoadd=self._autoadd)
+            client = ssh_connect(**dict(self._connection_parameters, look_for_keys=False))
             if client:
                 self._ssh_client_instance = client
             else:
@@ -745,7 +737,7 @@ class PytisClient(PyHocaCLI):
                 gevent.sleep(0.1)
             current_rpyc_port = rpyc_port.get()
             port = gevent.event.AsyncResult()
-            tunnel = pytis.remote.ReverseTunnel(_auth_info.hostname,
+            tunnel = pytis.remote.ReverseTunnel(_auth_info.server,
                                                 current_rpyc_port,
                                                 ssh_port=_auth_info.port,
                                                 ssh_forward_port=0,
@@ -900,7 +892,7 @@ class StartupController(object):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<username>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
-                          '(?P<hostname>[a-zA-Z0-9\.-]+)'
+                          '(?P<server>[a-zA-Z0-9\.-]+)'
                           '(|:(?P<port>[0-9]+))'
                           '($|(?P<path>/.*)$)'), url)
         if match:
@@ -916,7 +908,7 @@ class StartupController(object):
     def _authentication_methods(self, connection_parameters):
         import socket
         sock = socket.socket()
-        sock.connect((connection_parameters['hostname'], connection_parameters['port']))
+        sock.connect((connection_parameters['server'], connection_parameters['port']))
         transport = paramiko.Transport(sock)
         transport.connect()
         try:
@@ -934,7 +926,7 @@ class StartupController(object):
             if os.access(path, os.R_OK):
                 try:
                     return pytis.remote.public_key_acceptable(
-                        connection_parameters['hostname'],
+                        connection_parameters['server'],
                         connection_parameters['username'],
                         path,
                         port=connection_parameters['port'])
@@ -959,7 +951,7 @@ class StartupController(object):
             failure.  If failure is returned for one authentication method,
             another method may be tried (with different connection parameters).
           connection_parameters -- initial connection parameters as a
-            dictionary with keys such as 'hostname', 'port', 'username', etc.
+            dictionary with keys such as 'server', 'port', 'username', etc.
             Authentication related keys in this dictionary will be overriden
             before passing the parameters to 'function' as described below.
           askpass -- function called when authentication credentials need to be
@@ -1004,18 +996,19 @@ class StartupController(object):
 
         """
         def message(msg):
-            self._update_progress(connection_parameters['hostname'] + ': ' + msg)
+            self._update_progress(connection_parameters['server'] + ': ' + msg)
 
         def connect(gss_auth=False, key_filename=None, password=None):
-            parameters = dict(
+            return function(**dict(
                 connection_parameters,
                 gss_auth=gss_auth,
                 key_filename=key_filename,
                 password=password,
                 look_for_keys=key_filename is not None,
                 allow_agent=True,
-            )
-            return function(parameters, **kwargs)
+                add_to_known_hosts=self._args.add_to_known_hosts,
+                **kwargs
+            ))
         message(_("Trying SSH Agent authentication."))
         success = connect()
         if not success:
@@ -1053,8 +1046,8 @@ class StartupController(object):
             message(_("Connected successfully."))
         return success
 
-    def _connect(self, parameters):
-        if ssh_connect(parameters, autoadd=self._args.add_to_known_hosts):
+    def _connect(self, **connection_parameters):
+        if ssh_connect(**connection_parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1065,13 +1058,13 @@ class StartupController(object):
                         pass
             # Keep all parameters in sync.  The arguments are used by PyhocaCli
             # and _auth_info is used by ReverseTunnel and SSHClient.
-            self._session_parameters.update(parameters)
-            _auth_info.hostname = self._args.server = parameters['hostname']
-            _auth_info.port = self._args.remote_ssh_port = parameters['port']
-            _auth_info.username = self._args.username = parameters['username']
-            _auth_info.password = self._args.password = parameters['password']
-            _auth_info.key_filename = self._args.ssh_privkey = parameters['key_filename']
-            _auth_info.gss_auth = parameters['gss_auth']
+            self._session_parameters.update(connection_parameters)
+            _auth_info.server = self._args.server = connection_parameters['server']
+            _auth_info.port = self._args.remote_ssh_port = connection_parameters['port']
+            _auth_info.username = self._args.username = connection_parameters['username']
+            _auth_info.password = self._args.password = connection_parameters['password']
+            _auth_info.key_filename = self._args.ssh_privkey = connection_parameters['key_filename']
+            _auth_info.gss_auth = connection_parameters['gss_auth']
             # Create client
             self._update_progress(_("Client setup."))
             self._client = client = PytisClient(self._args, self._session_parameters,
@@ -1080,7 +1073,7 @@ class StartupController(object):
                                                 xserver_variant=self._xserver_variant,
                                                 loglevel=x2go.log.loglevel_DEBUG)
             session = client.session_registry(client.x2go_session_hash)
-            session.sshproxy_params['key_filename'] = parameters['key_filename']
+            session.sshproxy_params['key_filename'] = connection_parameters['key_filename']
             session.sshproxy_params['look_for_keys'] = False
             self._update_progress(_("Starting server connections."))
             client.pytis_start_processes(self._configuration)
@@ -1092,12 +1085,10 @@ class StartupController(object):
             return False
 
     def connect(self, username, askpass, keyring=None):
-        parameters = dict(
-            [(k, self._session_parameters[k])
-             for k in ('port', 'username', 'password', 'key_filename', 'allow_agent', 'gss_auth')],
-            hostname=self._session_parameters['server'],
-        )
-        return self._authenticate(self._connect, parameters, askpass, keyring=keyring)
+        connection_parameters = dict([(k, self._session_parameters[k])
+                                      for k in ('server', 'port', 'username', 'password',
+                                                'key_filename', 'allow_agent', 'gss_auth')])
+        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1108,21 +1099,20 @@ class StartupController(object):
                 continue
         return False
 
-    def _list_profiles(self, connection_parameters, broker_path=None):
+    def _list_profiles(self, broker_path=None, **connection_parameters):
         try:
             return PytisSshProfiles(connection_parameters, broker_path=broker_path,
                                     logger=x2go.X2GoLogger(tag='PyHocaCLI'),
-                                    autoadd=self._args.add_to_known_hosts,
                                     broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
 
     def list_profiles(self, username, askpass, keyring=None):
-        if not self._broker_parameters['username']:
-            self._broker_parameters['username'] = username
-        self._profiles = self._authenticate(self._list_profiles, self._broker_parameters, askpass,
+        connection_parameters = dict(self._broker_parameters,
+                                     username=self._broker_parameters['username'] or username)
+        self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
                                             keyring=keyring, broker_path=self._broker_path)
-        self._update_progress(self._broker_parameters['hostname'] + ': ' +
+        self._update_progress(self._broker_parameters['server'] + ': ' +
                               _("Returned %d profiles.") % len(self._profiles.profile_ids))
         return self._profiles
 
@@ -1155,14 +1145,11 @@ class StartupController(object):
             return None
 
     def upgrade(self, username, askpass, keyring=None):
-        def connect(parameters):
-            return ssh_connect(parameters, autoadd=self._args.add_to_known_hosts)
-        parameters, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
-        if not parameters['username']:
-            parameters['username'] = username
-        client = self._authenticate(connect, parameters, askpass, keyring=keyring)
+        url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
+        connection_parameters = dict(url_params, username=url_params['username'] or username)
+        client = self._authenticate(ssh_connect, connection_parameters, askpass, keyring=keyring)
         if client is None:
-            return _(u"Couldn't connect to upgrade server")
+            return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()
         upgrade_file = sftp.open(path)
         # Unpack the upgrade file and replace the current installation.
@@ -1174,7 +1161,7 @@ class StartupController(object):
         scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
         tarfile.open(fileobj=upgrade_file).extractall(path=tmp_directory)
         if not os.path.isdir(pytis_directory):
-            return _(u"Package unpacking failed")
+            return _(u"Package unpacking failed.")
         if os.path.exists(old_install_directory):
             shutil.rmtree(old_install_directory)
         shutil.move(install_directory, old_install_directory)
@@ -1230,7 +1217,7 @@ class StartupController(object):
     def _vbs_path(self, directory, username, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
             username,
-            self._broker_parameters['hostname'],
+            self._broker_parameters['server'],
             self._profile_session_parameters(profile_id)['server'],
             profile_id,
         ))
@@ -1274,7 +1261,7 @@ class StartupController(object):
                 broker_parameters['protocol'],
                 username,
                 ':' + broker_parameters['password'] if broker_parameters['password'] else '',
-                broker_parameters['hostname'],
+                broker_parameters['server'],
                 ':' + broker_parameters['port'] if broker_parameters['port'] else '',
                 broker_parameters['path'],
             )
