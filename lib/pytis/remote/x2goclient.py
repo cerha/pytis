@@ -820,6 +820,8 @@ class StartupController(object):
 
     """
 
+    DEFAULT_SSH_PORT = 22
+
     def __init__(self, args, update_progress):
         self._args = args
         self._update_progress = update_progress
@@ -893,7 +895,7 @@ class StartupController(object):
         quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
         gevent.signal(quit_signal, gevent.kill)
 
-    def _parse_url(cls, url):
+    def _parse_url(self, url):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
                           '(|(?P<username>[a-zA-Z0-9_\.-]+)'
                           '(|:(?P<password>.*))@)'
@@ -902,8 +904,8 @@ class StartupController(object):
                           '($|(?P<path>/.*)$)'), url)
         if match:
             parameters = match.groupdict()
-            parameters['port'] = int(parameters['port'] or 22)
-            if parameters.pop('protocol') != 'ssh':
+            parameters['port'] = int(parameters['port'] or self.DEFAULT_SSH_PORT)
+            if parameters.get('protocol') != 'ssh':
                 raise Exception(_(u"Unsupported broker protocol"), url)
             path = parameters.pop('path')
             return parameters, path
@@ -1108,6 +1110,7 @@ class StartupController(object):
     def list_profiles(self, username, askpass, keyring=None):
         connection_parameters = dict(self._broker_parameters,
                                      username=self._broker_parameters['username'] or username)
+        connection_parameters.pop('protocol', None)
         self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
                                             keyring=keyring, broker_path=self._broker_path)
         self._update_progress(self._broker_parameters['server'] + ': ' +
@@ -1145,6 +1148,7 @@ class StartupController(object):
     def upgrade(self, username, askpass, keyring=None):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
+        connection_parameters.pop('protocol', None)
         client = self._authenticate(ssh_connect, connection_parameters, askpass, keyring=keyring)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
@@ -1255,13 +1259,16 @@ class StartupController(object):
             with open(calling_script, 'r') as f:
                 script_src = f.read()
             broker_parameters = self._broker_parameters
+            broker_port = broker_parameters['port']
+            if broker_port == self.DEFAULT_SSH_PORT:
+                broker_port = None
             broker_url = "%s://%s%s@%s%s/%s" % (
                 broker_parameters['protocol'],
                 username,
                 ':' + broker_parameters['password'] if broker_parameters['password'] else '',
                 broker_parameters['server'],
-                ':' + broker_parameters['port'] if broker_parameters['port'] else '',
-                broker_parameters['path'],
+                ':' + str(broker_port) if broker_port else '',
+                self._broker_path,
             )
             for regexp, replacement in (
                     (r'--broker-url=[^"\s]+', '--broker-url=%s -P %s' % (broker_url, profile_id)),
