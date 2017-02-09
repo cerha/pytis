@@ -90,9 +90,14 @@ XCONFIG_DEFAULTS = {
 def on_windows():
     return platform.system() == 'Windows'
 
-def run_directory():
-    return sys.path[0]
+def pytis_path(*path):
+    """Return absolute path given by path components relative to the current Pytis base directory.
 
+    It is assumed, that the currently running script is located in the 'bin'
+    subdirectory of the Pytis base directory.
+
+    """
+    return os.path.normpath(os.path.join(sys.path[0], '..', *path))
 
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 
@@ -100,19 +105,17 @@ if on_windows():
     X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
 
-sys.path.append(os.path.normpath(os.path.join(run_directory(), '..', 'lib')))
+sys.path.append(pytis_path('lib'))
 
-t = gettext.translation('pytis-x2go',
-                        os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
-                        fallback=True)
+t = gettext.translation('pytis-x2go', pytis_path('translations'), fallback=True)
 _ = t.ugettext
 
 # Windows specific setup
 if on_windows():
     reload(sys)
     sys.setdefaultencoding('cp1250')
-    win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
-    os.environ['NXPROXY_BINARY'] = os.path.join(win_apps_path, 'nxproxy', 'nxproxy.exe')
+    WIN_APPS_PATH = pytis_path('..', 'win_apps')
+    os.environ['NXPROXY_BINARY'] = os.path.join(WIN_APPS_PATH, 'nxproxy', 'nxproxy.exe')
     # Set locale language
     import ctypes
     lcid_user = ctypes.windll.kernel32.GetUserDefaultLCID()
@@ -477,11 +480,11 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _defaults = XCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
             if option == 'test_installed':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv_pytis.exe'))
+                _xserver_config[option] = self._fix_win_path(
+                    os.path.join(WIN_APPS_PATH, 'VcXsrv', 'vcxsrv_pytis.exe'))
             elif option == 'run_command':
-                _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path, 'VcXsrv',
-                                                                          'vcxsrv_pytis.exe'))
+                _xserver_config[option] = self._fix_win_path(
+                    os.path.join(WIN_APPS_PATH, 'VcXsrv', 'vcxsrv_pytis.exe'))
             elif option in ('display', 'last_display', 'process_name', 'parameters'):
                 _xserver_config[option] = _defaults[option]
             else:
@@ -1163,7 +1166,7 @@ class StartupController(object):
         sftp = client.open_sftp()
         upgrade_file = sftp.open(path)
         # Unpack the upgrade file and replace the current installation.
-        install_directory = os.path.normpath(os.path.join(run_directory(), '..', ''))
+        install_directory = pytis_path()
         old_install_directory = install_directory + '.old'
         tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
         pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
@@ -1233,7 +1236,7 @@ class StartupController(object):
         ))
 
     def _scripts_directory(self):
-        return os.path.normpath(os.path.join(run_directory(), '..', '..', 'scripts'))
+        return pytis_path('..', 'scripts')
 
     def shortcut_exists(self, username, profile_id):
         import winshell
