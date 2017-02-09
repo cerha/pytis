@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-02-07 18:05'
+_VERSION = '2017-02-09 22:59'
 
 import signal
 
@@ -50,8 +50,11 @@ import pytis.remote
 
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
-XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_desktop')
-XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis'
+XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
+# TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
+# we use older variant of VcXsrv. Later we will switch back to the current version.
+XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis_old'
+
 
 XCONFIG_DEFAULTS = {
     'XServers': {
@@ -98,6 +101,7 @@ def pytis_path(*path):
 
     """
     return os.path.normpath(os.path.join(sys.path[0], '..', *path))
+
 
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 
