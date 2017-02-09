@@ -181,15 +181,14 @@ def ssh_connect(parameters, autoadd=False):
 class ClientException(Exception):
     pass
 
+
 class AuthInfo(object):
     hostname = None
     port = 22
     username = None
     password = None
     key_filename = None
-    allow_agent = False
     gss_auth = False
-
 
 _auth_info = AuthInfo()
 
@@ -1069,7 +1068,6 @@ class StartupController(object):
             _auth_info.username = self._args.username = parameters['username']
             _auth_info.password = self._args.password = parameters['password']
             _auth_info.key_filename = self._args.ssh_privkey = parameters['key_filename']
-            _auth_info.allow_agent = parameters['allow_agent']
             _auth_info.gss_auth = parameters['gss_auth']
             # Create client
             self._update_progress(_("Client setup."))
