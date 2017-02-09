@@ -351,7 +351,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(OPERATIONAL, _("RPC communication available. Version: unknown."))
         else:
             log(OPERATIONAL, _("RPC communication unavailable"))
-
         return True
 
     def _frame_title(self, title=None):

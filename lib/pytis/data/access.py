@@ -77,11 +77,11 @@ class Permission:
     ALL = 'ALL'
     """All rights to the given object."""
 
+    @classmethod
     def all_permissions(class_):
         """Return tuple of all the non-general permissions constants."""
         return (class_.VIEW, class_.INSERT, class_.UPDATE, class_.DELETE,
                 class_.CALL, class_.EXPORT, class_.PRINT,)
-    all_permissions = classmethod(all_permissions)
 
 
 class AccessRights(object):
