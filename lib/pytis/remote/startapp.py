@@ -105,10 +105,11 @@ class X2GoStartApp(wx.App):
         self._controller.select_profile(profile_id)
         self._connect()
 
-    def _on_listbox_key(self, event, on_confirm):
+    def _on_listbox_selection(self, event, on_confirm):
         # Bind to EVT_UPDATE_UP as EVT_KEY_DOWN doesn't process the Enter key...
         if ((self._profiles_field.GetSelection() != -1 and
-             event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER))):
+             (isinstance(event, wx.MouseEvent) or
+              event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER)))):
             on_confirm(event)
         else:
             event.Skip()
@@ -156,7 +157,8 @@ class X2GoStartApp(wx.App):
         else:
             self._profiles_field = listbox = wx.ListBox(parent, -1, choices=(), style=wx.LB_SINGLE)
             listbox.Enable(False)
-            listbox.Bind(wx.EVT_KEY_UP, lambda e: self._on_listbox_key(e, self._on_select_profile))
+            for evt in (wx.EVT_KEY_UP, wx.EVT_LEFT_DCLICK):
+                listbox.Bind(evt, lambda e: self._on_listbox_selection(e, self._on_select_profile))
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
@@ -298,7 +300,8 @@ class X2GoStartApp(wx.App):
         def on_resume_session(event):
             dialog.close(listbox.GetClientData(listbox.GetSelection()))
 
-        listbox.Bind(wx.EVT_KEY_UP, lambda e: self._on_listbox_key(e, on_resume_session))
+        for evt in (wx.EVT_KEY_UP, wx.EVT_LEFT_DCLICK):
+            listbox.Bind(evt, lambda e: self._on_listbox_selection(e, on_resume_session))
         for session in sessions:
             session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
                                           (session.date_created or '').replace('T', ' '),)
