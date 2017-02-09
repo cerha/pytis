@@ -138,17 +138,21 @@ class X2GoStartApp(wx.App):
         username = self._args.username
         if not username and self._args.broker_url:
             username = self._controller.broker_url_username()
-        if not username:
-            import getpass
-            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER,
-            button = ui.button(parent, _("Continue"), lambda e: self._start())
+        if username:
+            self._username_value = username
+            self._username_field = None
+            return ui.hgroup((label, 0, wx.RIGHT, 2), ui.label(parent, username))
         else:
-            button = None
-        self._username_field = field = ui.field(parent, username, disabled=button is None)
-        return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field, button)
+            import getpass
+            username = getpass.getuser() # x2go.defaults.CURRENT_LOCAL_USER
+            field = ui.field(parent, username, on_enter=lambda e: self._start())
+            self._username_value = None
+            self._username_field = field
+            return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field,
+                             ui.button(parent, _("Continue"), lambda e: self._start()))
 
     def _username(self):
-        return self._username_field.GetValue()
+        return self._username_value or self._username_field.GetValue()
 
     def _create_profiles_field(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
@@ -451,7 +455,7 @@ class X2GoStartApp(wx.App):
         frame.SetSize((500, 360 if self._profiles_field else 146))
         frame.Show()
         self.Yield()
-        if self._username_field.IsEnabled():
+        if self._username_field:
             self._update_progress(_("Enter your user name and press “Continue” to start."))
         else:
             # Start automatically when username was passed explicitly.
