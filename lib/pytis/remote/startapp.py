@@ -180,9 +180,9 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
+            (self._create_username_field(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
-            (self._create_status(parent), 0, wx.EXPAND),
+            (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
         )
 
     def _show_dialog(self, title, method, *args, **kwargs):
