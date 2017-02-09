@@ -179,22 +179,13 @@ class ClientException(Exception):
     pass
 
 
-class AuthInfo(object):
-    server = None
-    port = 22
-    username = None
-    password = None
-    key_filename = None
-    gss_auth = False
-
-_auth_info = AuthInfo()
-
-
 class SSHClient(paramiko.SSHClient):
     pytis_client = True
+    _pytis_gss_auth = False
+
     def connect(self, hostname, gss_auth=None, **kwargs):
         if gss_auth is None:
-            gss_auth = _auth_info.gss_auth
+            gss_auth = SSHClient._pytis_gss_auth
         return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
 
 
@@ -556,9 +547,17 @@ class PytisClient(PyHocaCLI):
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, args, params, logger=None, liblogger=None,
+    def __init__(self, args, session_parameters, logger=None, liblogger=None,
                  xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
+        # Keep the arguments in sync with current session's connection
+        # parameters because PyhocaCli relies on them at different places.
+        args.server = session_parameters['server']
+        args.remote_ssh_port = session_parameters['port']
+        args.username = session_parameters['username']
+        args.password = session_parameters['password']
+        args.ssh_privkey = session_parameters['key_filename']
         self.args = args
+        self._session_parameters = session_parameters
         if on_windows():
             self.args.from_stdin = None
         if logger is None:
@@ -581,7 +580,7 @@ class PytisClient(PyHocaCLI):
         x2go.X2GoClient.__init__(self, logger=liblogger, **kwargs)
         self._X2GoClient__start_xserver_pytis(variant=xserver_variant)
         self.auth_attempts = int(self.args.auth_attempts)
-        self.x2go_session_hash = self._X2GoClient__register_session(**params)
+        self.x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
@@ -737,15 +736,17 @@ class PytisClient(PyHocaCLI):
                 gevent.sleep(0.1)
             current_rpyc_port = rpyc_port.get()
             port = gevent.event.AsyncResult()
-            tunnel = pytis.remote.ReverseTunnel(_auth_info.server,
-                                                current_rpyc_port,
-                                                ssh_port=_auth_info.port,
-                                                ssh_forward_port=0,
-                                                ssh_user=_auth_info.username,
-                                                ssh_password=_auth_info.password,
-                                                key_filename=_auth_info.key_filename,
-                                                ssh_forward_port_result=port,
-                                                gss_auth=_auth_info.gss_auth)
+            tunnel = pytis.remote.ReverseTunnel(
+                self._session_parameters['server'],
+                current_rpyc_port,
+                ssh_port=self._session_parameters['port'],
+                ssh_forward_port=0,
+                ssh_user=self._session_parameters['username'],
+                ssh_password=self._session_parameters['password'],
+                key_filename=self._session_parameters['key_filename'],
+                ssh_forward_port_result=port,
+                gss_auth=self._session_parameters['gss_auth'],
+            )
             tunnel.start()
             while not tunnel.ready():
                 if port.wait(0.1) is not None:
@@ -1056,20 +1057,13 @@ class StartupController(object):
                         os.remove(os.path.join(tempdir, f))
                     except:
                         pass
-            # Keep all parameters in sync.  The arguments are used by PyhocaCli
-            # and _auth_info is used by ReverseTunnel and SSHClient.
-            self._session_parameters.update(connection_parameters)
-            _auth_info.server = self._args.server = connection_parameters['server']
-            _auth_info.port = self._args.remote_ssh_port = connection_parameters['port']
-            _auth_info.username = self._args.username = connection_parameters['username']
-            _auth_info.password = self._args.password = connection_parameters['password']
-            _auth_info.key_filename = self._args.ssh_privkey = connection_parameters['key_filename']
-            _auth_info.gss_auth = connection_parameters['gss_auth']
-            # Create client
+            # TODO: Is this really necessary?
+            SSHClient._pytis_gss_auth = connection_parameters['gss_auth']
+            # Create and set up the client instance.
             self._update_progress(_("Client setup."))
-            self._client = client = PytisClient(self._args, self._session_parameters,
-                                                use_cache=False,
-                                                start_xserver=False,
+            session_parameters = dict(self._session_parameters, **connection_parameters)
+            self._client = client = PytisClient(self._args, session_parameters,
+                                                use_cache=False, start_xserver=False,
                                                 xserver_variant=self._xserver_variant,
                                                 loglevel=x2go.log.loglevel_DEBUG)
             session = client.session_registry(client.x2go_session_hash)
