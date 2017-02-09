@@ -82,6 +82,7 @@ class ui(object):
     def label(parent, text):
         return wx.StaticText(parent, -1, text)
 
+
 class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
@@ -99,7 +100,9 @@ class X2GoStartApp(wx.App):
         return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
 
     def _on_select_profile(self, event):
-        self._controller.select_profile(self._selected_profile_id())
+        profile_id = self._selected_profile_id()
+        self._update_progress(_("Selected profile %s: Contacting server...") % profile_id)
+        self._controller.select_profile(profile_id)
         self._connect()
 
     def _on_create_shortcut(self, event):
