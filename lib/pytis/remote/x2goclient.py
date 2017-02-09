@@ -835,7 +835,7 @@ class StartupController(object):
                 except ClientException:
                     pass
             return None
-        self._update_session_parameters(
+        self._session_parameters.update(
             server=args.server or cfg('pytis', 'hostname'),
             port=int(args.remote_ssh_port or cfg('pytis', 'port', int)),
             username=args.username or None,
@@ -867,13 +867,13 @@ class StartupController(object):
                         except KeyError:
                             param = arg
                         parameters[param] = value
-            self._update_session_parameters(
+            self._session_parameters.update(
                 profile_name=args.session_profile,
                 **parameters
             )
         else:
             # Set up the manually configured X2Go session.
-            self._update_session_parameters(
+            self._session_parameters.update(
                 profile_id=args.session_profile,
                 profile_name='Pyhoca-Client_Session',
                 session_type=args.session_type,
@@ -910,23 +910,6 @@ class StartupController(object):
             return parameters, path
         else:
             raise Exception(_("Invalid broker URL:"), args.broker_url)
-
-    def _update_session_parameters(self, **kwargs):
-        self._session_parameters.update(**kwargs)
-        parameters = self._session_parameters
-        _auth_info.hostname = parameters['server']
-        _auth_info.port = parameters['port']
-        _auth_info.username = parameters['username']
-        _auth_info.password = parameters['password']
-        _auth_info.key_filename = parameters['key_filename']
-        _auth_info.allow_agent = parameters['allow_agent']
-        _auth_info.gss_auth = parameters['gss_auth']
-        self._args.server = parameters['server']
-        self._args.remote_ssh_port = parameters['port']
-        self._args.username = parameters['username']
-        self._args.password = parameters['password']
-        self._args.ssh_privkey = parameters['key_filename']
-        #self._args.command = parameters['cmd']
 
     def _authentication_methods(self, connection_parameters):
         import socket
@@ -1069,7 +1052,6 @@ class StartupController(object):
         return success
 
     def _connect(self, parameters):
-        self._update_session_parameters(**parameters)
         if ssh_connect(parameters, autoadd=self._args.add_to_known_hosts):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
@@ -1079,6 +1061,16 @@ class StartupController(object):
                         os.remove(os.path.join(tempdir, f))
                     except:
                         pass
+            # Keep all parameters in sync.  The arguments are used by PyhocaCli
+            # and _auth_info is used by ReverseTunnel and SSHClient.
+            self._session_parameters.update(parameters)
+            _auth_info.hostname = self._args.server = parameters['hostname']
+            _auth_info.port = self._args.remote_ssh_port = parameters['port']
+            _auth_info.username = self._args.username = parameters['username']
+            _auth_info.password = self._args.password = parameters['password']
+            _auth_info.key_filename = self._args.ssh_privkey = parameters['key_filename']
+            _auth_info.allow_agent = parameters['allow_agent']
+            _auth_info.gss_auth = parameters['gss_auth']
             # Create client
             self._update_progress(_("Client setup."))
             self._client = client = PytisClient(self._args, self._session_parameters,
@@ -1099,7 +1091,12 @@ class StartupController(object):
             return False
 
     def connect(self, username, askpass, keyring=None):
-        return self._authenticate(self._connect, _auth_info.__dict__, askpass, keyring=keyring)
+        parameters = dict(
+            [(k, self._session_parameters[k])
+             for k in ('port', 'username', 'password', 'key_filename', 'allow_agent', 'gss_auth')],
+            hostname=self._session_parameters['server'],
+        )
+        return self._authenticate(self._connect, parameters, askpass, keyring=keyring)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1144,7 +1141,7 @@ class StartupController(object):
         rootless = profile.get('rootless', True)
         if not rootless or int(rootless) == 0:
             self._xserver_variant = 'VcXsrv_pytis_desktop'
-        self._update_session_parameters(**self._profile_session_parameters(profile_id))
+        self._session_parameters.update(self._profile_session_parameters(profile_id))
 
     def current_version(self):
         return _VERSION
