@@ -376,11 +376,11 @@ class X2GoStartApp(wx.App):
                                                   self._authentication_dialog, self._keyring)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
-            self.Exit()
+            return self.Exit() # Return is necessary because Exit() doesn't quit immediately.
         profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)
-            self.Exit()
+            return self.Exit()
         else:
             if self._controller.on_windows():
                 current_version = self._controller.current_version()
@@ -399,7 +399,7 @@ class X2GoStartApp(wx.App):
                     else:
                         self._info(_(u"Upgrade finished"),
                                    _(u"Pytis successfully upgraded. Restart the application."))
-                        self.Exit()
+                        return self.Exit()
             if profile_id:
                 if profile_id not in profiles.profile_ids:
                     raise Exception("Unknown profile %s!" % profile_id)

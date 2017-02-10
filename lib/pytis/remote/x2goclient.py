@@ -1112,8 +1112,9 @@ class StartupController(object):
                                      username=self._broker_parameters['username'] or username)
         self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
                                             keyring=keyring, broker_path=self._broker_path)
-        self._update_progress(self._broker_parameters['server'] + ': ' +
-                              _("Returned %d profiles.") % len(self._profiles.profile_ids))
+        if self._profiles:
+            self._update_progress(self._broker_parameters['server'] + ': ' +
+                                  _("Returned %d profiles.") % len(self._profiles.profile_ids))
         return self._profiles
 
     def broker_url_username(self):
