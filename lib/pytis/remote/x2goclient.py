@@ -904,8 +904,8 @@ class StartupController(object):
         if match:
             parameters = match.groupdict()
             parameters['port'] = int(parameters['port'] or self.DEFAULT_SSH_PORT)
-            if parameters.get('protocol') != 'ssh':
-                raise Exception(_(u"Unsupported broker protocol"), url)
+            if parameters.pop('protocol', None) not in (None, 'ssh'):
+                raise Exception(_(u"Unsupported broker protocol: %s") % url)
             path = parameters.pop('path')
             return parameters, path
         else:
@@ -1109,7 +1109,6 @@ class StartupController(object):
     def list_profiles(self, username, askpass, keyring=None):
         connection_parameters = dict(self._broker_parameters,
                                      username=self._broker_parameters['username'] or username)
-        connection_parameters.pop('protocol', None)
         self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
                                             keyring=keyring, broker_path=self._broker_path)
         self._update_progress(self._broker_parameters['server'] + ': ' +
@@ -1147,7 +1146,6 @@ class StartupController(object):
     def upgrade(self, username, askpass, keyring=None):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
-        connection_parameters.pop('protocol', None)
         client = self._authenticate(ssh_connect, connection_parameters, askpass, keyring=keyring)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
@@ -1261,8 +1259,7 @@ class StartupController(object):
             broker_port = broker_parameters['port']
             if broker_port == self.DEFAULT_SSH_PORT:
                 broker_port = None
-            broker_url = "%s://%s%s@%s%s/%s" % (
-                broker_parameters['protocol'],
+            broker_url = "ssh://%s%s@%s%s/%s" % (
                 username,
                 ':' + broker_parameters['password'] if broker_parameters['password'] else '',
                 broker_parameters['server'],
