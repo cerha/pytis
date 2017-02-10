@@ -1255,15 +1255,12 @@ class StartupController(object):
                 return _("Unable to find the calling script: %s") % calling_script
             with open(calling_script, 'r') as f:
                 script_src = f.read()
-            broker_parameters = self._broker_parameters
-            broker_port = broker_parameters['port']
-            if broker_port == self.DEFAULT_SSH_PORT:
-                broker_port = None
+            params = self._broker_parameters
             broker_url = "ssh://%s%s@%s%s/%s" % (
                 username,
-                ':' + broker_parameters['password'] if broker_parameters['password'] else '',
-                broker_parameters['server'],
-                ':' + str(broker_port) if broker_port else '',
+                ':' + params['password'] if params['password'] else '',
+                params['server'],
+                ':' + params['port'] if params['port'] != self.DEFAULT_SSH_PORT else '',
                 self._broker_path,
             )
             for regexp, replacement in (
