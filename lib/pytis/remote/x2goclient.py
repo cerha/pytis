@@ -421,6 +421,7 @@ class PytisSshProfiles(SshProfiles):
                 if data['name'] > last_version:
                     # We can use only supported parameters from session_profiles
                     # So we'll use 'name' for the version and 'command' for url.
+                    last_version = data['name']
                     self._pytis_upgrade_parameters = (data['name'], data['command'])
             else:
                 filtered_profiles[section] = data
