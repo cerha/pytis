@@ -923,8 +923,6 @@ class StartupController(object):
             methods = e.allowed_types
         transport.close()
         sock.close()
-        if 'password' not in methods and 'publickey' not in methods:
-            raise Exception(_(u"No supported ssh authentication method available."))
         return methods
 
     def _acceptable_key_files(self, connection_parameters):

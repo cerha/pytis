@@ -286,7 +286,7 @@ class X2GoStartApp(wx.App):
             content = ui.panel(dialog, password_authentication)
             method = 'password'
         else:
-            raise Exception(_(u"No supported ssh connection method available"))
+            raise Exception(_("No supported SSH authentication method available."))
         return ui.vgroup(
             (content, 0, wx.LEFT | wx.RIGHT, 8),
             (ui.hgroup(
