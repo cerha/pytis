@@ -170,8 +170,14 @@ compat_options = [
      'help': ('compatibility option for the x2goclient GUI; as Python X2Go brings its own internal '
               'SFTP server, this option will be ignored'), },
 ]
+pytis2go_options = [
+    {'args': ['--window-title'], 'default': None,
+     'help': 'Override startup application main window title (default: Starting application)', },
+    {'args': ['--heading'], 'default': None,
+     'help': 'Override startup application main window heading (default: Pytis2Go)', },
+]
 if on_windows():
-    pytis2go_options = [
+    pytis2go_options += [
         {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
          'help': 'create desktop shortcut if not present (default: disabled)', },
         {'args': ['--calling-script'], 'default': False,
@@ -252,9 +258,8 @@ Possible values for the --pack NX option are:
                      (p_brokeropts, broker_options), (p_actionopts, action_options),
                      (p_debugopts, debug_options), (p_nxopts, nx_options),
                      (p_backendopts, backend_options), (p_compatopts, compat_options)]
-    if on_windows():
-        p_pytis2goopts = p.add_argument_group('pytis2go options')
-        option_groups.append((p_pytis2goopts, pytis2go_options))
+    p_pytis2goopts = p.add_argument_group('pytis2go options')
+    option_groups.append((p_pytis2goopts, pytis2go_options))
     for (p_group, opts) in option_groups:
         for opt in opts:
             args = opt['args']

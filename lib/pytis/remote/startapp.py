@@ -149,7 +149,8 @@ class X2GoStartApp(wx.App):
         self.Exit()
 
     def _create_main_heading(self, parent):
-        return ui.label(parent, _("Pytis2Go"), size=18, bold=True)
+        heading = self._args.heading or _("Pytis2Go")
+        return ui.label(parent, heading, size=18, bold=True)
 
     def _create_username_field(self, parent):
         label = ui.label(parent, _("Login name:"))
@@ -464,7 +465,8 @@ class X2GoStartApp(wx.App):
             self._controller.start_new_session(callback=self._on_session_started)
 
     def OnInit(self):
-        self._frame = frame = wx.Frame(None, -1, _("Starting application"))
+        title = self._args.window_title or _("Starting application")
+        self._frame = frame = wx.Frame(None, -1, title)
         ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
         frame.SetSize((500, 360 if self._profiles_field else 146))
