@@ -180,6 +180,7 @@ class X2GoStartApp(wx.App):
         else:
             self._profiles_field = listbox = ui.listbox(parent, on_select=self._on_select_profile)
             listbox.Enable(False)
+            listbox.SetMinSize((360, 180))
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
@@ -199,13 +200,14 @@ class X2GoStartApp(wx.App):
     def _create_status(self, parent):
         self._status = status = ui.label(parent, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
+        gauge.SetMinSize((450, 10))
         return ui.vgroup((gauge, 0, wx.EXPAND), (status, 0, wx.EXPAND | wx.BOTTOM, 4))
 
     def _create_main_content(self, parent):
         return ui.vgroup(
             (self._create_main_heading(parent), 0, wx.EXPAND | wx.ALIGN_CENTER |  wx.ALL, 6),
-            (self._create_username_field(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8),
-            (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
+            (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
+            (self._create_profiles_field(parent), 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8),
             (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
         )
 
@@ -467,9 +469,9 @@ class X2GoStartApp(wx.App):
     def OnInit(self):
         title = self._args.window_title or _("Starting application")
         self._frame = frame = wx.Frame(None, -1, title)
-        ui.panel(frame, self._create_main_content)
+        panel = ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
-        frame.SetSize((500, 360 if self._profiles_field else 146))
+        frame.SetClientSize(panel.GetBestSize())
         frame.Show()
         self.Yield()
         if self._username_field:
