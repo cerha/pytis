@@ -411,6 +411,7 @@ class X2GoStartApp(wx.App):
                 for profile_id, name in sorted(items, key=lambda x: x[1]):
                     self._profiles_field.Append(name, profile_id)
                 self._profiles_field.Enable(True)
+                self._profiles_field.SetFocus()
 
     def _list_profiles(self, profiles):
         import pprint
