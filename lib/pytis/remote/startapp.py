@@ -475,7 +475,7 @@ class X2GoStartApp(wx.App):
         frame.Show()
         self.Yield()
         if self._username_field:
-            self._update_progress(_("Enter your user name and press “Continue” to start."))
+            self._update_progress(_("Enter your user name and press Continue to start."))
         else:
             # Start automatically when username was passed explicitly.
             self._start()
