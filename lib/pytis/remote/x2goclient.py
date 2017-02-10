@@ -102,20 +102,16 @@ def pytis_path(*path):
     """
     return os.path.normpath(os.path.join(sys.path[0], '..', *path))
 
+sys.path.append(pytis_path('lib'))
+
+_ = gettext.translation('pytis-x2go', pytis_path('translations'), fallback=True).ugettext
 
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 
+# Windows specific setup
 if on_windows():
     X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
     x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
-
-sys.path.append(pytis_path('lib'))
-
-t = gettext.translation('pytis-x2go', pytis_path('translations'), fallback=True)
-_ = t.ugettext
-
-# Windows specific setup
-if on_windows():
     reload(sys)
     sys.setdefaultencoding('cp1250')
     WIN_APPS_PATH = pytis_path('..', 'win_apps')
