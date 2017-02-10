@@ -83,8 +83,8 @@ class ui(object):
         label = wx.StaticText(parent, -1, text)
         if size or face or bold or italic or underline:
             label.SetFont(wx.Font(size, wx.DEFAULT, faceName=(face or ''), underline=underline,
-                                  style=wx.ITALIC if italic else wx.NORMAL, #, wx.SLANT
-                                  weight=wx.BOLD if bold else wx.NORMAL)) # wx.LIGHT
+                                  style=wx.ITALIC if italic else wx.NORMAL,  # wx.SLANT
+                                  weight=wx.BOLD if bold else wx.NORMAL))  # wx.LIGHT
         return label
 
     @staticmethod
@@ -163,7 +163,7 @@ class X2GoStartApp(wx.App):
             return ui.hgroup((label, 0, wx.RIGHT, 2), ui.label(parent, username))
         else:
             import getpass
-            username = getpass.getuser() # x2go.defaults.CURRENT_LOCAL_USER
+            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
             field = ui.field(parent, username, on_enter=lambda e: self._start())
             self._username_value = None
             self._username_field = field
@@ -205,7 +205,7 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (self._create_main_heading(parent), 0, wx.EXPAND | wx.ALIGN_CENTER |  wx.ALL, 6),
+            (self._create_main_heading(parent), 0, wx.EXPAND | wx.ALIGN_CENTER | wx.ALL, 6),
             (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8),
             (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
@@ -388,7 +388,7 @@ class X2GoStartApp(wx.App):
                                                   self._authentication_dialog, self._keyring)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
-            return self.Exit() # Return is necessary because Exit() doesn't quit immediately.
+            return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
         profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)

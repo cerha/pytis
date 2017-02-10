@@ -102,6 +102,7 @@ def pytis_path(*path):
     """
     return os.path.normpath(os.path.join(sys.path[0], '..', *path))
 
+
 sys.path.append(pytis_path('lib'))
 
 _ = gettext.translation('pytis-x2go', pytis_path('translations'), fallback=True).ugettext
