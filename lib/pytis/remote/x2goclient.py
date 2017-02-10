@@ -466,12 +466,11 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _changed = False
         _defaults = XCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
-            if option == 'test_installed':
+            if option in ('test_installed', 'run_command'):
+                defaults_path = _defaults[option]
+                d, f = os.path.split(defaults_path)
                 _xserver_config[option] = self._fix_win_path(
-                    os.path.join(WIN_APPS_PATH, 'VcXsrv', 'vcxsrv_pytis.exe'))
-            elif option == 'run_command':
-                _xserver_config[option] = self._fix_win_path(
-                    os.path.join(WIN_APPS_PATH, 'VcXsrv', 'vcxsrv_pytis.exe'))
+                    os.path.join(WIN_APPS_PATH, os.path.split(d)[-1], f))
             elif option in ('display', 'last_display', 'process_name', 'parameters'):
                 _xserver_config[option] = _defaults[option]
             else:
