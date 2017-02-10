@@ -1015,29 +1015,32 @@ class StartupController(object):
                 add_to_known_hosts=self._args.add_to_known_hosts,
                 **kwargs
             ))
-        message(_("Trying SSH Agent authentication."))
-        success = connect()
+
+        success = False
+        message(_("Retrieving supported authentication methods."))
+        methods = self._authentication_methods(connection_parameters)
+        for key_filename, password in (keyring or ()):
+            if key_filename and password and 'publickey' in methods:
+                message(_("Trying public key authentication."))
+                success = connect(key_filename=key_filename, password=password)
+            elif key_filename is None and password and 'password' in methods:
+                message(_("Trying password authentication."))
+                success = connect(password=password)
+            if success:
+                break
+        if not success:
+            message(_("Trying SSH Agent authentication."))
+            success = connect()
         if not success:
             message(_("Trying Kerberos authentication."))
             success = connect(gss_auth=True)
         if not success:
-            message(_("Retrieving supported authentication methods."))
-            methods = self._authentication_methods(connection_parameters)
-            for key_filename, password in (keyring or ()):
-                if key_filename and password and 'publickey' in methods:
-                    message(_("Trying public key authentication."))
-                    success = connect(key_filename=key_filename, password=password)
-                elif key_filename is None and password and 'password' in methods:
-                    message(_("Trying password authentication."))
-                    success = connect(password=password)
-                if success:
-                    break
-            if not success and 'publickey' in methods:
+            message(_("Trying interactive authentication."))
+            if 'publickey' in methods:
                 key_files = self._acceptable_key_files(connection_parameters)
             else:
                 key_files = ()
             while not success:
-                message(_("Trying interactive authentication."))
                 key_filename, password = askpass(methods, key_files)
                 if key_filename:
                     message(_("Trying public key authentication."))
