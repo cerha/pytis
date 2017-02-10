@@ -79,8 +79,13 @@ class ui(object):
         return button
 
     @staticmethod
-    def label(parent, text):
-        return wx.StaticText(parent, -1, text)
+    def label(parent, text, size=None, face=None, bold=False, italic=False, underline=False):
+        label = wx.StaticText(parent, -1, text)
+        if size or face or bold or italic or underline:
+            label.SetFont(wx.Font(size, wx.DEFAULT, faceName=(face or ''), underline=underline,
+                                  style=wx.ITALIC if italic else wx.NORMAL, #, wx.SLANT
+                                  weight=wx.BOLD if bold else wx.NORMAL)) # wx.LIGHT
+        return label
 
     @staticmethod
     def listbox(parent, choices=(), on_select=None):
@@ -143,6 +148,9 @@ class X2GoStartApp(wx.App):
     def _on_exit(self, event):
         self.Exit()
 
+    def _create_main_heading(self, parent):
+        return ui.label(parent, _("Pytis2Go"), size=18, bold=True)
+
     def _create_username_field(self, parent):
         label = ui.label(parent, _("Login name:"))
         username = self._args.username
@@ -194,7 +202,8 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (self._create_username_field(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
+            (self._create_main_heading(parent), 0, wx.EXPAND | wx.ALIGN_CENTER |  wx.ALL, 6),
+            (self._create_username_field(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.ALL, 8),
             (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
         )
