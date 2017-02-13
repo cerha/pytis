@@ -6,7 +6,7 @@ import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
-    default_access_rights
+    default_access_rights, dmp_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
 class EPytisDisabledDmpTriggers(sql.SQLTable):
@@ -19,6 +19,7 @@ class EPytisDisabledDmpTriggers(sql.SQLTable):
     note this way of doing it is not safe in case of parallel table updates
     """
     name = 'e_pytis_disabled_dmp_triggers'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('id', pytis.data.Name()),)
     inherits = (XChanges,)
     with_oids = True
@@ -33,6 +34,7 @@ class CPytisRolePurposes(sql.SQLTable):
     3. Pure application roles.
     """
     name = 'c_pytis_role_purposes'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
               sql.Column('purpose', pytis.data.String(maxlen=32, not_null=True), unique=True),
               )
@@ -49,6 +51,7 @@ class CPytisRolePurposes(sql.SQLTable):
 class EPytisRoles(Base_LogSQLTable):
     """Application user roles."""
     name = 'e_pytis_roles'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('name', pytis.data.Name()),
               sql.Column('description', pytis.data.String(maxlen=64, not_null=False)),
               sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True),
@@ -69,6 +72,7 @@ class EPytisRoles(Base_LogSQLTable):
 
 class EvPytisValidRoles(sql.SQLView):
     name = 'ev_pytis_valid_roles'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         main = sql.t.EPytisRoles.alias('main')
@@ -88,6 +92,7 @@ class EvPytisValidRoles(sql.SQLView):
 
 class EvPytisRoles(sql.SQLView):
     name = 'ev_pytis_roles'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         t1 = sql.t.EPytisRoles.alias('t1')
@@ -109,6 +114,7 @@ class EPytisRoleMembers(Base_LogSQLTable):
     Entries in this table define members of each roleid.
     """
     name = 'e_pytis_role_members'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
               sql.Column('roleid', pytis.data.Name(not_null=True),
                          references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
@@ -126,6 +132,7 @@ class EPytisRoleMembers(Base_LogSQLTable):
 
 class EvPytisValidRoleMembers(sql.SQLView):
     name = 'ev_pytis_valid_role_members'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         main = sql.t.EPytisRoleMembers.alias('main')
@@ -152,6 +159,7 @@ class APytisValidRoleMembers(sql.SQLTable):
     This table is modified only by triggers.
     """
     name = 'a_pytis_valid_role_members'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('roleid', pytis.data.Name(not_null=True),
                          references=sql.a(sql.r.EPytisRoles.name,
                                           onupdate='CASCADE', ondelete='CASCADE')),
@@ -166,6 +174,7 @@ class APytisValidRoleMembers(sql.SQLTable):
 
 class PytisUpdateTransitiveRoles(Base_PyFunction):
     name = 'pytis_update_transitive_roles'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = pytis.data.Boolean()
     multirow = False
@@ -206,6 +215,7 @@ class PytisUpdateTransitiveRoles(Base_PyFunction):
 
 class EPytisRolesTrigger(Base_PyTriggerFunction):
     name = 'e_pytis_roles_trigger'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -219,6 +229,7 @@ class EPytisRolesTrigger(Base_PyTriggerFunction):
         class Roles(EPytisRolesTrigger.Util.BaseTriggerObject):
             def _update_roles(self):
                 plpy.execute("select pytis_update_transitive_roles()")
+
             def _do_after_insert(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
@@ -226,11 +237,13 @@ class EPytisRolesTrigger(Base_PyTriggerFunction):
                 plpy.execute(("insert into a_pytis_valid_role_members(roleid, member) "
                               "values ('%s', '%s')") %
                              (role, role,))
+
             def _do_after_update(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
                 if self._new['deleted'] != self._old['deleted']:
                     self._update_roles()
+
             def _do_after_delete(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
@@ -240,6 +253,7 @@ class EPytisRolesTrigger(Base_PyTriggerFunction):
 
 class EPytisRolesTriggers(sql.SQLRaw):
     name = 'e_pytis_roles_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -251,6 +265,7 @@ for each row execute procedure e_pytis_roles_trigger();
 class PytisCopyRole(sql.SQLFunction):
     """Make application roles of a user the same as those of another user."""
     name = 'pytis_copy_role'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = None
@@ -263,6 +278,7 @@ class PytisUser(sql.SQLFunction):
     """Return current pytis user.
     By redefining this function, debugging of user behavior or sulogin may be possible."""
     name = 'pytis_user'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = pytis.data.Name()
     multirow = False
@@ -276,6 +292,7 @@ class PytisUser(sql.SQLFunction):
 class CPytisActionTypes(sql.SQLTable):
     """List of defined action types."""
     name = 'c_pytis_action_types'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('type', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
               sql.Column('description', pytis.data.String(not_null=False)),
               )
@@ -298,6 +315,7 @@ class CPytisActionTypes(sql.SQLTable):
 class CPytisMenuActions(sql.SQLTable):
     """List of available application actions."""
     name = 'c_pytis_menu_actions'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('fullname', pytis.data.String(not_null=False)),
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('action_title', pytis.data.String(not_null=False)),
@@ -312,6 +330,7 @@ class CPytisMenuActions(sql.SQLTable):
 
 class CPytisMenuActionsTriggerBefore(sql.SQLRaw):
     name = 'c_pytis_menu_actions_trigger_before'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -335,6 +354,7 @@ $$ language plpgsql;
 
 class EvPytisShortActions(sql.SQLRaw):
     name = 'ev_pytis_short_actions'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -346,6 +366,7 @@ as select distinct shortname from c_pytis_menu_actions ORDER BY c_pytis_menu_act
 class EPytisMenu(Base_LogSQLTable):
     """Menu structure definition."""
     name = 'e_pytis_menu'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('menuid', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=False),
                          doc=("Unique identifiers of terminal menu items. "
@@ -380,6 +401,7 @@ class EPytisMenu(Base_LogSQLTable):
 
 class EPytisMenuTrigger(Base_PyTriggerFunction):
     name = 'e_pytis_menu_trigger'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -542,6 +564,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
 
 class EPytisMenuTriggers(sql.SQLRaw):
     name = 'e_pytis_menu_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -554,6 +577,7 @@ for each row execute procedure e_pytis_menu_trigger();
 
 class EPytisMenuSpecialTriggers(sql.SQLRaw):
     name = 'e_pytis_menu_special_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -582,6 +606,7 @@ for each statement execute procedure e_pytis_menu_check_trigger();
 class CPytisMenuLanguages(sql.SQLTable):
     """Codebook of available menu languages."""
     name = 'c_pytis_menu_languages'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('language', pytis.data.String(not_null=False)),
               sql.Column('description', pytis.data.String(not_null=True)),
               )
@@ -595,12 +620,13 @@ class CPytisMenuLanguages(sql.SQLTable):
 class EPytisMenuTranslations(sql.SQLTable):
     """Translations of menu titles."""
     name = 'e_pytis_menu_translations'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('menuid', pytis.data.Integer(not_null=False),
                          references=sql.gA('e_pytis_menu', onupdate='CASCADE', ondelete='CASCADE'),
                          index=True),
               sql.Column('language', pytis.data.String(not_null=True),
                          references=sql.gA('c_pytis_menu_languages',
-                                          onupdate='CASCADE', ondelete='CASCADE')),
+                                           onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('t_title', pytis.data.String(not_null=True)),
               sql.Column('dirty', pytis.data.Boolean(not_null=True)),
               )
@@ -611,6 +637,7 @@ class EPytisMenuTranslations(sql.SQLTable):
 
 class EvPytisMenu(sql.SQLView):
     name = 'ev_pytis_menu'
+    schemas = dmp_schemas.value(globals())
     primary_column = 'menuid'
     @classmethod
     def query(cls):
@@ -635,6 +662,7 @@ class EvPytisMenu(sql.SQLView):
 
 class UpdateEPytisMenuTranslations(sql.SQLRaw):
     name = 'update_e_pytis_menu_translations'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -651,6 +679,7 @@ $$ language sql;
 
 class EvPytisTranslatedMenu(sql.SQLView):
     name = 'ev_pytis_translated_menu'
+    schemas = dmp_schemas.value(globals())
     special_insert_columns = ((EvPytisMenu, 'menuid', "substring(new.id from '/(.*)$')::int",),)
     @classmethod
     def query(cls):
@@ -691,6 +720,7 @@ class EvPytisTranslatedMenu(sql.SQLView):
 
 class PytisFirstPosition(Base_PyFunction):
     name = 'pytis_first_position'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = pytis.data.String()
     multirow = False
@@ -709,32 +739,36 @@ class PytisFirstPosition(Base_PyFunction):
 
 class EvPytisMenuAllPositions(sql.SQLView):
     name = 'ev_pytis_menu_all_positions'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         def select_1():
             menu1 = sql.t.EPytisMenu.alias('menu1')
             return sqlalchemy.select(
                 sql.reorder_columns([sql.gL("position"),
-                sql.gL("coalesce(menu1.title, '――――')").label('xtitle')], ['position', 'xtitle']),
+                                     sql.gL("coalesce(menu1.title, '――――')").label('xtitle')],
+                                    ['position', 'xtitle']),
                 from_obj=[menu1]
             )
+
         def select_2():
             menu2 = sql.t.EPytisMenu.alias('menu2')
             return sqlalchemy.select(
                 sql.reorder_columns([sql.gL("next_position").label('position'),
-                sql.gL("''").label('xtitle')], ['position', 'xtitle']),
+                                     sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu2],
                 whereclause='position != \'\''
             )
         set_1 = sqlalchemy.union(select_1(), select_2())
+
         def select_3():
             menu3 = sql.t.EPytisMenu.alias('menu3')
             return sqlalchemy.select(
                 sql.reorder_columns([
                     sql.gL("menu3.position||pytis_first_position(subpath((select position "
-                          "from e_pytis_menu where position <@ menu3.position and "
-                          "position != menu3.position union select '9' order by position limit 1),"
-                          " -1)::text)::ltree").label('position'),
+                           "from e_pytis_menu where position <@ menu3.position and "
+                           "position != menu3.position union select '9' order by position limit 1),"
+                           " -1)::text)::ltree").label('position'),
                     sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu3],
                 whereclause='name is NULL and title is not NULL'
@@ -748,6 +782,7 @@ class EvPytisMenuAllPositions(sql.SQLView):
 
 class EvPytisMenuPositions(sql.SQLView):
     name = 'ev_pytis_menu_positions'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         positions = sql.t.EvPytisMenuAllPositions.alias('positions')
@@ -767,6 +802,7 @@ class EvPytisMenuPositions(sql.SQLView):
 class CPytisAccessRights(sql.SQLTable):
     """Available rights.  Not all rights make sense for all actions and menus."""
     name = 'c_pytis_access_rights'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('rightid', pytis.data.String(maxlen=8, not_null=False)),
               sql.Column('description', pytis.data.String(not_null=True)),
               )
@@ -837,6 +873,7 @@ class EPytisActionRights(Base_LogSQLTable):
 
 class PytisConvertSystemRights(Base_PyFunction):
     name = 'pytis_convert_system_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = None
     multirow = False
@@ -887,6 +924,7 @@ class PytisConvertSystemRights(Base_PyFunction):
 
 class PytisUpdateRightsRedundancy(Base_PyFunction):
     name = 'pytis_update_rights_redundancy'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = pytis.data.Boolean()
     multirow = False
@@ -1053,6 +1091,7 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
 
 class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
     name = 'e_pytis_role_members_trigger'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -1084,6 +1123,7 @@ class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
 
 class EPytisRoleMembersTriggers(sql.SQLRaw):
     name = 'e_pytis_role_members_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -1095,6 +1135,7 @@ for each row execute procedure e_pytis_role_members_trigger();
 
 class EPytisActionRightsTrigger(Base_PyTriggerFunction):
     name = 'e_pytis_action_rights_trigger'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -1127,6 +1168,7 @@ class EPytisActionRightsTrigger(Base_PyTriggerFunction):
 
 class EPytisActionRightsTriggers(sql.SQLRaw):
     name = 'e_pytis_action_rights_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -1140,6 +1182,7 @@ for each statement execute procedure e_pytis_action_rights_trigger();
 
 class EvPytisActionRights(sql.SQLView):
     name = 'ev_pytis_action_rights'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         rights = sql.t.EPytisActionRights.alias('rights')
@@ -1170,6 +1213,7 @@ update e_pytis_action_rights set status=-1 where id=old.id and status=0;
 
 class TypActionRightsFoldable(sql.SQLType):
     name = 'typ_action_rights_foldable'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('id', pytis.data.Integer(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('purpose', pytis.data.String(not_null=False)),
@@ -1187,6 +1231,7 @@ class TypActionRightsFoldable(sql.SQLType):
 
 class PytisActionRightsFoldable(Base_PyFunction):
     name = 'pytis_action_rights_foldable'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = TypActionRightsFoldable
@@ -1249,6 +1294,7 @@ class PytisActionRightsFoldable(Base_PyFunction):
 class PytisCopyRights(sql.SQLFunction):
     """Make access rights of a menu item the same as of another menu item."""
     name = 'pytis_copy_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = None
@@ -1260,6 +1306,7 @@ class PytisCopyRights(sql.SQLFunction):
 class PytisColumnsInRights(sql.SQLFunction):
     """Return column names appearing in rights assigned to given shortname."""
     name = 'pytis_columns_in_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = pytis.data.Name()
     multirow = True
@@ -1270,6 +1317,7 @@ class PytisColumnsInRights(sql.SQLFunction):
 class PytisRemoveRedundant(sql.SQLFunction):
     """Remove redundant rights of the given action."""
     name = 'pytis_remove_redundant'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = None
     multirow = False
@@ -1280,6 +1328,7 @@ class PytisRemoveRedundant(sql.SQLFunction):
 class PytisActionsLockId(sql.SQLFunction):
     """Id of the advisory lock for a_pytis_actions_structure."""
     name = 'pytis_actions_lock_id'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = pytis.data.LargeInteger()
     multirow = False
@@ -1292,6 +1341,7 @@ class PytisActionsLockId(sql.SQLFunction):
 
 class TypSummaryRights(sql.SQLType):
     name = 'typ_summary_rights'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
@@ -1302,6 +1352,7 @@ class TypSummaryRights(sql.SQLType):
 
 class PytisComputeSummaryRights(Base_PyFunction):
     name = 'pytis_compute_summary_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.Boolean()),
@@ -1538,6 +1589,7 @@ class PytisComputeSummaryRights(Base_PyFunction):
 
 class PytisUpdateSummaryRights(sql.SQLFunction):
     name = 'pytis_update_summary_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = None
     multirow = False
@@ -1551,6 +1603,7 @@ class APytisActionsStructure(sql.SQLTable):
     This table is modified only by triggers.
     """
     name = 'a_pytis_actions_structure'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('fullname', pytis.data.String(not_null=True)),
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('menuid', pytis.data.Integer(not_null=False)),
@@ -1566,6 +1619,7 @@ class APytisActionsStructure(sql.SQLTable):
 
 class EvPytisMenuStructure(sql.SQLView):
     name = 'ev_pytis_menu_structure'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         structure = sql.t.APytisActionsStructure.alias('structure')
@@ -1598,6 +1652,7 @@ class EvPytisMenuStructure(sql.SQLView):
 
 class PytisUpdateActionsStructure(Base_PyFunction):
     name = 'pytis_update_actions_structure'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = pytis.data.Boolean()
     multirow = False
@@ -1699,6 +1754,7 @@ class PytisUpdateActionsStructure(Base_PyFunction):
 
 class CPytisMenuActionsTrigger(Base_PyTriggerFunction):
     name = 'c_pytis_menu_actions_trigger'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -1724,6 +1780,7 @@ class CPytisMenuActionsTrigger(Base_PyTriggerFunction):
 
 class CPytisMenuActionsTriggers(sql.SQLRaw):
     name = 'c_pytis_menu_actions_triggers'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -1739,6 +1796,7 @@ for each row execute procedure c_pytis_menu_actions_trigger_before();
 
 class EPytisMenuTriggerRights(Base_PyTriggerFunction):
     name = 'e_pytis_menu_trigger_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
@@ -1766,6 +1824,7 @@ class EPytisMenuTriggerRights(Base_PyTriggerFunction):
 
 class EPytisMenuTriggersRights(sql.SQLRaw):
     name = 'e_pytis_menu_triggers_rights'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -1776,6 +1835,7 @@ for each statement execute procedure e_pytis_menu_trigger_rights();
 
 class PytisMultiformSpec(sql.SQLFunction):
     name = 'pytis_multiform_spec'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = pytis.data.Boolean()
     multirow = False
@@ -1788,6 +1848,7 @@ class PytisMultiformSpec(sql.SQLFunction):
 
 class TypPreviewSummaryRights(sql.SQLType):
     name = 'typ_preview_summary_rights'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
@@ -1807,6 +1868,7 @@ class TypPreviewSummaryRights(sql.SQLType):
 
 class PytisViewSummaryRights(sql.SQLFunction):
     name = 'pytis_view_summary_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.Boolean()),
@@ -1820,6 +1882,7 @@ class PytisViewSummaryRights(sql.SQLFunction):
 
 class TypPreviewRoleMenu(sql.SQLType):
     name = 'typ_preview_role_menu'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('title', pytis.data.String(not_null=False)),
               sql.Column('position', pytis.data.LTree()),
@@ -1840,6 +1903,7 @@ class TypPreviewRoleMenu(sql.SQLType):
 
 class PytisViewRoleMenu(sql.SQLFunction):
     name = 'pytis_view_role_menu'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.Boolean()),)
     result_type = TypPreviewRoleMenu
@@ -1851,6 +1915,7 @@ class PytisViewRoleMenu(sql.SQLFunction):
 
 class TypPreviewExtendedRoleMenu(sql.SQLType):
     name = 'typ_preview_extended_role_menu'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('position', pytis.data.LTree()),
               sql.Column('type', pytis.data.String(minlen=4, maxlen=4)),
@@ -1879,6 +1944,7 @@ class TypPreviewExtendedRoleMenu(sql.SQLType):
 
 class PytisViewExtendedRoleMenu(sql.SQLFunction):
     name = 'pytis_view_extended_role_menu'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.Boolean()),)
     result_type = TypPreviewExtendedRoleMenu
@@ -1891,6 +1957,7 @@ class PytisViewExtendedRoleMenu(sql.SQLFunction):
 
 class TypPreviewUserMenu(sql.SQLType):
     name = 'typ_preview_user_menu'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('name', pytis.data.String(not_null=False)),
               sql.Column('title', pytis.data.String(not_null=False)),
@@ -1907,6 +1974,7 @@ class TypPreviewUserMenu(sql.SQLType):
 
 class PytisViewUserMenu(sql.SQLFunction):
     name = 'pytis_view_user_menu'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = TypPreviewUserMenu
     multirow = True
@@ -1917,6 +1985,7 @@ class PytisViewUserMenu(sql.SQLFunction):
 
 class TypPreviewRights(sql.SQLType):
     name = 'typ_preview_rights'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
               sql.Column('columns', pytis.data.String(not_null=False)),
@@ -1926,6 +1995,7 @@ class TypPreviewRights(sql.SQLType):
 
 class PytisViewUserRights(sql.SQLFunction):
     name = 'pytis_view_user_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = ()
     result_type = TypPreviewRights
     multirow = True
@@ -1935,6 +2005,7 @@ class PytisViewUserRights(sql.SQLFunction):
 
 class EvPytisUserRoles(sql.SQLView):
     name = 'ev_pytis_user_roles'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         members = sql.t.APytisValidRoleMembers.alias('members')
@@ -1951,6 +2022,7 @@ class EvPytisUserRoles(sql.SQLView):
 
 class EvPytisUserSystemRights(sql.SQLView):
     name = 'ev_pytis_user_system_rights'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def query(cls):
         rights = sql.t.EPytisActionRights.alias('rights')
@@ -1968,6 +2040,7 @@ class EvPytisUserSystemRights(sql.SQLView):
 
 class EvPytisColnames(sql.SQLRaw):
     name = 'ev_pytis_colnames'
+    schemas = dmp_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -1982,6 +2055,7 @@ insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, 
 
 class PytisCheckCodebookRights(sql.SQLFunction):
     name = 'pytis_check_codebook_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
@@ -1994,6 +2068,7 @@ class PytisCheckCodebookRights(sql.SQLFunction):
 
 class TypChangedRights(sql.SQLType):
     name = 'typ_changed_rights'
+    schemas = dmp_schemas.value(globals())
     fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
@@ -2014,6 +2089,7 @@ class TypChangedRights(sql.SQLType):
 
 class PytisChangedRights(sql.SQLFunction):
     name = 'pytis_changed_rights'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.Boolean()),)
@@ -2025,6 +2101,7 @@ class PytisChangedRights(sql.SQLFunction):
 
 class PytisChangeShortname(Base_PyFunction):
     name = 'pytis_change_shortname'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
@@ -2050,6 +2127,7 @@ class PytisChangeShortname(Base_PyFunction):
 
 class PytisChangeFullname(Base_PyFunction):
     name = 'pytis_change_fullname'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
@@ -2078,6 +2156,7 @@ class PytisChangeFullname(Base_PyFunction):
 
 class PytisChangeSpecificationName(sql.SQLFunction):
     name = 'pytis_change_specification_name'
+    schemas = dmp_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = None
