@@ -660,6 +660,32 @@ class Configuration(object):
         """
         _DEFAULT = None
 
+    # Access rights options
+
+    class _Option_use_dmp_roles(BooleanOption):
+        u"""Use of dmp roles if available.
+
+        This option specifies if access groups should be taken
+        from the database specific dmp tables. If True
+        and if valid view 'ev_pytis_role_members' is in the database
+        then these specific application roles (groups) will be used,
+        otherwise normal postgresql cluster roles will be used.
+
+        """
+        _DEFAULT = True
+
+    class _Option_use_dmp_rights(BooleanOption):
+        u"""Use of dmp rights if available.
+
+        This option specifies if access rights for menus, application
+        specifications and actions are stored in dmp tables.
+        If True and valid dmp tables exists and 'use_dmp_roles' is set
+        then dmp rights will be used, otherwise access rights from
+        specifications will be used.
+
+        """
+        _DEFAULT = True
+
     # Logovací volby
 
     class _Option_log_logger(Option):

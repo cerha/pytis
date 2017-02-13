@@ -1858,6 +1858,9 @@ def init_access_rights(connection_data):
     """
     global _access_rights, _user_roles, _access_dbconnection
     _access_dbconnection = connection_data
+    import config
+    if not config.use_dmp_roles:
+        return
     try:
         roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
@@ -1867,6 +1870,8 @@ def init_access_rights(connection_data):
         _access_rights = 'nonuser'
         return
     _user_roles = roles
+    if not config.use_dmp_rights:
+        return
     S = pytis.data.String()
     _access_rights = {}
     # Prefill _access_rights so that default access by specification rights in

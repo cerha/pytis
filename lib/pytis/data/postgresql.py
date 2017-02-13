@@ -792,28 +792,32 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         connection_data = self._pg_connection_data()
         if PostgreSQLUserGroups._logical_access_groups is UNDEFINED:
             PostgreSQLUserGroups._logical_access_groups = None
-            # Check for ev_pytis_user_roles presence first, to prevent logging
-            # error messages in non-DMP applications
-            tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data,
-                             connection_name=self._connection_name)
-            roles_data = None
-            try:
-                n = tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles')))
-                if (n > 0):
-                    try:
-                        roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
-                    except DBException:
-                        pass
-                    else:
-                        def process(row):
-                            return row[0].value()
-                        logical_access_groups = roles_data.select_map(process)
-                        PostgreSQLUserGroups._logical_access_groups = logical_access_groups
-            finally:
+            import config
+            if config.use_dmp_roles:
+                # Check for ev_pytis_user_roles presence first, to prevent logging
+                # error messages in non-DMP applications
+                tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data,
+                                 connection_name=self._connection_name)
+                roles_data = None
                 try:
-                    tables.close()
-                except:
-                    pass
+                    n = tables.select(condition=EQ('relname',
+                                                   Value(String(), 'evv_pytis_user_roles')))
+                    if (n > 0):
+                        try:
+                            roles_data = dbtable('ev_pytis_user_roles', ('roleid',),
+                                                 connection_data)
+                        except DBException:
+                            pass
+                        else:
+                            def process(row):
+                                return row[0].value()
+                            logical_access_groups = roles_data.select_map(process)
+                            PostgreSQLUserGroups._logical_access_groups = logical_access_groups
+                finally:
+                    try:
+                        tables.close()
+                    except:
+                        pass
         if PostgreSQLUserGroups._logical_access_groups is None:
             key = self._pgg_connection_key(connection_data)
             groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
@@ -866,6 +870,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             # z `register' i naslouchacího threadu.
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
+
             def lfunction():
                 self._notif_init_connection()
                 self._notif_do_registration(notification)
