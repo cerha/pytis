@@ -27,17 +27,13 @@ pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
 
-# ---------------------
-# Taken from pyhoca-cli
-
 import argparse
 
 import x2go
 import paramiko
 
 import pytis.remote
-from pytis.remote.x2goclient import on_windows
-from pyhoca.cli import runtime_error
+from pytis.remote.x2goclient import on_windows, runtime_error
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -356,7 +352,12 @@ Possible values for the --pack NX option are:
     if a.server:
         # check if SERVER is in .ssh/config file, extract information from there...
         ssh_config = paramiko.SSHConfig()
-        from pyhoca.cli import ssh_config_filename
+        ssh_config_filename = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'config')
+        if not os.path.isfile(ssh_config_filename):
+            try:
+                x2go.utils.touch_file(ssh_config_filename)
+            except OSError:
+                pass
         ssh_config_fileobj = open(ssh_config_filename)
         ssh_config.parse(ssh_config_fileobj)
         ssh_host = ssh_config.lookup(a.server)

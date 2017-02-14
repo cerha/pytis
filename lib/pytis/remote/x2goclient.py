@@ -33,6 +33,7 @@ import shutil
 import tarfile
 import tempfile
 import types
+import time
 
 import gevent
 import gevent.event
@@ -101,6 +102,12 @@ def pytis_path(*path):
 
     """
     return os.path.normpath(os.path.join(sys.path[0], '..', *path))
+
+def runtime_error(message, exitcode=-1):
+    # TODO: Raise an exception instead and catch it in the
+    # startup application to display errors in the UI.
+    sys.stderr.write("%s: error: %s\n" % (os.path.basename(sys.argv[0]), message))
+    sys.exit(exitcode)
 
 
 sys.path.append(pytis_path('lib'))
@@ -196,10 +203,10 @@ except AttributeError:
     paramiko.SSHClient = SSHClient
 
 
-class Configuration(x2go.X2GoClientSettings):
+class X2GoClientSettings(x2go.X2GoClientSettings):
 
     def __init__(self, *args, **kwargs):
-        super(Configuration, self).__init__(*args, **kwargs)
+        super(X2GoClientSettings, self).__init__(*args, **kwargs)
         default_command = x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS['command']
         self.defaultValues['pytis'] = dict(hostname=None,
                                            password=None,
@@ -210,8 +217,8 @@ class Configuration(x2go.X2GoClientSettings):
 
 class RpycInfo(object):
 
-    def __init__(self, configuration, port=None, password=None):
-        self._filename = os.path.join(os.path.dirname(configuration.config_files[0]), 'pytis-rpyc')
+    def __init__(self, settings, port=None, password=None):
+        self._filename = os.path.join(os.path.dirname(settings.config_files[0]), 'pytis-rpyc')
         self._port = port
         self._password = password
 
@@ -486,119 +493,61 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return _xserver_config
 
 
-x2go.client.X2GoClientXConfig = X2GoClientXConfig
-
 class X2GoClient(x2go.X2GoClient):
-
-    def start_xserver_pytis(self, variant=None):
-        if on_windows() and variant:
-            if self.client_rootdir:
-                _xconfig_config_file = os.path.join(self.client_rootdir,
-                                                    x2go.defaults.X2GO_XCONFIG_FILENAME)
-                self.client_xconfig = x2go.client.X2GoClientXConfig(
-                    config_files=[_xconfig_config_file],
-                    logger=self.logger
-                )
-            else:
-                self.client_xconfig = x2go.client.X2GoClientXConfig(logger=self.logger)
-            if not self.client_xconfig.installed_xservers:
-                self.HOOK_no_installed_xservers_found()
-            else:
-                last_display = None
-                if isinstance(variant, types.BooleanType):
-                    p_xs_name = self.client_xconfig.preferred_xserver_names[0]
-                    last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
-                    new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
-                    p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
-                elif isinstance(variant, types.StringType):
-                    last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
-                    new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
-                    p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
-                if not self.client_xconfig.running_xservers:
-                    if p_xs is not None:
-                        self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1],
-                                                                logger=self.logger)
-                else:
-                    if p_xs is not None and last_display is not None:
-                        if last_display == new_display:
-                            #
-                            # FIXME: this trick is nasty, client implementation should rather
-                            # cleanly shutdown launch X-server processes
-                            #
-                            # re-use a left behind X-server instance of a previous/crashed
-                            # run of Python X2Go Client
-                            self.logger('found a running (and maybe stray) X-server, trying to '
-                                        're-use it on X DISPLAY port: %s' % last_display,
-                                        loglevel=x2go.log.loglevel_WARN)
-                            os.environ.update({'DISPLAY': last_display})
-                    else:
-                        # presume the running XServer listens on :0
-                        self.logger('using fallback display for X-server: localhost:0',
-                                    loglevel=x2go.log.loglevel_WARN)
-                        os.environ.update({'DISPLAY': 'localhost:0'})
-    __start_xserver_pytis = start_xserver_pytis
-
-
-x2go.X2GoClient = X2GoClient
-from pyhoca.cli import PyHocaCLI
-
-
-class PytisClient(PyHocaCLI):
 
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, args, session_parameters, logger=None, liblogger=None,
+    def __init__(self, session_parameters, settings, update_progress,
                  xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
-        # Keep the arguments in sync with current session's connection
-        # parameters because PyhocaCli relies on them at different places.
-        args.server = session_parameters['server']
-        args.remote_ssh_port = session_parameters['port']
-        args.username = session_parameters['username']
-        args.password = session_parameters['password']
-        args.ssh_privkey = session_parameters['key_filename']
-        self.args = args
         self._session_parameters = session_parameters
-        if on_windows():
-            self.args.from_stdin = None
-        if logger is None:
-            self._pyhoca_logger = x2go.X2GoLogger(tag='PyHocaCLI')
-        else:
-            self._pyhoca_logger = copy.deepcopy(logger)
-            self._pyhoca_logger.tag = 'PyHocaCLI'
-        for (arg, param) in (('backend_controlsession', 'control_backend'),
-                             ('backend_terminalsession', 'terminal_backend'),
-                             ('backend_serversessioninfo', 'info_backend'),
-                             ('backend_serversessionlist', 'list_backend'),
-                             ('backend_proxy', 'proxy_backend'),
-                             ('backend_sessionprofiles', 'profiles_backend'),
-                             ('backend_clientsettings', 'settings_backend'),
-                             ('backend_clientprinting', 'printing_backend')):
-            value = getattr(self.args, arg)
-            if value is not None:
-                kwargs[param] = value
-        self._pyhoca_logger('preparing requested X2Go session', loglevel=x2go.loglevel_NOTICE, )
-        x2go.X2GoClient.__init__(self, logger=liblogger, **kwargs)
-        self._X2GoClient__start_xserver_pytis(variant=xserver_variant)
-        self.auth_attempts = int(self.args.auth_attempts)
-        self.x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
+        self._update_progress = update_progress
+        self._update_progress(_("Preparing X2Go session."))
+        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
+                                 #logger = x2go.X2GoLogger(tag='PytisClient')
+        if on_windows() and xserver_variant:
+            self._update_progress(_("Starting up X11 server."))
+            self._start_xserver(xserver_variant)
+        self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         self._pytis_port_value = gevent.event.AsyncResult()
         self._pytis_password_value = gevent.event.AsyncResult()
         self._pytis_terminate = gevent.event.Event()
-        self._callbacks = {}
+        session = self.session_registry(self._x2go_session_hash)
+        session.sshproxy_params['key_filename'] = session_parameters['key_filename']
+        session.sshproxy_params['look_for_keys'] = False
+        self._update_progress(_("Starting up server connections."))
+        self._start_processes(settings)
+        self._run_pytis_setup = True
+        self._update_progress(_("Connecting to X2Go session."))
+        # try:
+        self._X2GoClient__connect_session(self._x2go_session_hash,
+                                          username=session_parameters['username'],
+                                          password=session_parameters['password'])
+        # TODO: We don't handle these exceptions because we should already have
+        # valid authentication credentials thanks to calling 'ssh_connect()' prior
+        # to X2GoClient instance creation.  But maybe at least some (socket error,
+        # key error, ...) of them would still be worth catching.
+        #
+        # except x2go.PasswordRequiredException, e:
+        # except x2go.AuthenticationException, e:
+        # except x2go.BadHostKeyException:
+        #     runtime_error('SSH host key verification for remote host [%s]:%s failed' %
+        #                   (session_parameters['server'], session_parameters['port']),
+        #                   exitcode=-254)
+        # except x2go.SSHException, e:
+        #     if str(e) not in ('not a valid DSA private key file',
+        #                       'Incompatible ssh peer (no acceptable kex algorithm)',
+        #                       'No authentication methods available'):
+        #         runtime_error(str(e), exitcode=253)
+        #     self.logger('passwordless login for ,,%s\'\' failed' % _username,
+        #                 loglevel=x2go.loglevel_WARN)
+        #     self.logger('proceeding to interactive login for user ,,%s\'\'' % _username,
+        #                 loglevel=x2go.loglevel_NOTICE)
+        # except socket.error, e:
+        #     runtime_error('a socket error occured while establishing the connection: %s' %
+        #                   str(e), exitcode=-245)
 
-    def set_callback(self, callback, function):
-        self._callbacks[callback] = function
-
-    def _run_callback(self, callback, *args, **kwargs):
-        try:
-            function = self._callbacks[callback]
-        except KeyError:
-            pass
-        else:
-            function(*args, **kwargs)
-
-    def pytis_setup(self, s_uuid):
+    def _pytis_setup(self, s_uuid):
         # Configuration transfer to the server
         session = self.get_session(s_uuid)
         control_session = session.control_session
@@ -635,7 +584,7 @@ class PytisClient(PyHocaCLI):
                 control_session._x2go_sftp_write(server_file_name, data)
         self._pytis_server_info = ServerInfo()
 
-    def pytis_handle_info(self):
+    def _handle_info(self):
         try:
             password = self._pytis_password_value.get_nowait()
             port = self._pytis_port_value.get_nowait()
@@ -647,19 +596,7 @@ class PytisClient(PyHocaCLI):
             info.set_port(port)
             info.write()
 
-    def pytis_list_sessions(self):
-        sessions = [info for info in
-                    self._X2GoClient__list_sessions(self.x2go_session_hash).values()
-                    if info.status == 'S']
-        sessions.sort(lambda a, b: (cmp(a.username, b.username) or
-                                    cmp(a.hostname, b.hostname) or
-                                    cmp(b.date_created, a.date_created)))
-        return sessions
-
-    def pytis_terminate_session(self, session):
-        self._X2GoClient__terminate_session(self.x2go_session_hash, session.name)
-
-    def _check_rpyc_server(self, configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+    def _check_rpyc_server(self, settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
         server = None
         while True:
@@ -670,7 +607,7 @@ class PytisClient(PyHocaCLI):
                 return
             # Look for a running RPyC instance
             running = True
-            rpyc_info = RpycInfo(configuration)
+            rpyc_info = RpycInfo(settings)
             try:
                 rpyc_info.read()
             except ClientException:
@@ -722,14 +659,13 @@ class PytisClient(PyHocaCLI):
                                           (default_port, port_limit - 1,))
                 server.service.authenticator = authenticator
                 rpyc_port.set(port)
-                rpyc_info = RpycInfo(configuration, port=port,
-                                     password=authenticator.password())
+                rpyc_info = RpycInfo(settings, port=port, password=authenticator.password())
                 rpyc_info.store()
                 gevent.spawn(server.start)
                 self._pytis_password_value.set(rpyc_info.password())
             gevent.sleep(1)
 
-    def _check_ssh_tunnel(self, _configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+    def _check_ssh_tunnel(self, settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -768,38 +704,135 @@ class PytisClient(PyHocaCLI):
                 else:
                     gevent.sleep(1)
 
-    def pytis_start_processes(self, configuration):
+    def _start_processes(self, settings):
         # RPyC server
         rpyc_stop_queue = gevent.queue.Queue()
         rpyc_port = gevent.event.AsyncResult()
         ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
-        args = (configuration, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
+        args = (settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
         gevent.spawn(self._check_rpyc_server, *args)
         gevent.spawn(self._check_ssh_tunnel, *args)
 
-    def terminate_session(self, *args, **kwargs):
+    def _start_xserver(self, variant=None):
+        if self.client_rootdir:
+            kwargs = dict(config_files=os.path.join(self.client_rootdir,
+                                                    x2go.defaults.X2GO_XCONFIG_FILENAME))
+        else:
+            kwargs = dict()
+        self.client_xconfig = X2GoClientXConfig(logger=self.logger, **kwargs)
+        if not self.client_xconfig.installed_xservers:
+            self.HOOK_no_installed_xservers_found()
+        else:
+            last_display = None
+            if isinstance(variant, types.BooleanType):
+                p_xs_name = self.client_xconfig.preferred_xserver_names[0]
+                last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
+                new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
+                p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
+            elif isinstance(variant, types.StringType):
+                last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
+                new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
+                p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
+            if not self.client_xconfig.running_xservers:
+                if p_xs is not None:
+                    self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1], logger=self.logger)
+            else:
+                if p_xs is not None and last_display is not None:
+                    if last_display == new_display:
+                        #
+                        # FIXME: this trick is nasty, client implementation should rather
+                        # cleanly shutdown launch X-server processes
+                        #
+                        # re-use a left behind X-server instance of a previous/crashed
+                        # run of Python X2Go Client
+                        self.logger('found a running (and maybe stray) X-server, trying to '
+                                    're-use it on X DISPLAY port: %s' % last_display,
+                                    loglevel=x2go.log.loglevel_WARN)
+                        os.environ.update({'DISPLAY': last_display})
+                else:
+                    # presume the running XServer listens on :0
+                    self.logger('using fallback display for X-server: localhost:0',
+                                loglevel=x2go.log.loglevel_WARN)
+                    os.environ.update({'DISPLAY': 'localhost:0'})
+
+    def _main_loop(self):
         try:
-            return super(PytisClient, self).terminate_session(*args, **kwargs)
+            session_hash = self._x2go_session_hash
+            while 0 < self.get_session(session_hash).get_progress_status() < 100:
+                time.sleep(1)
+            if self._X2GoClient__session_ok(session_hash):
+                profile_name = self._X2GoClient__get_session_profile_name(session_hash)
+                session_name = self._X2GoClient__get_session_name(session_hash)
+                self.logger("X2Go session is now running, the X2Go client's profile name is: %s" %
+                            profile_name, loglevel=x2go.loglevel_INFO)
+                self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
+                while self._X2GoClient__session_ok(session_hash):
+                    time.sleep(2)
+        except x2go.X2GoSessionException, e:
+            self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
+            self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
+
+    def list_sessions(self):
+        sessions = [info for info in
+                    self._X2GoClient__list_sessions(self._x2go_session_hash).values()
+                    if info.status == 'S']
+        sessions.sort(lambda a, b: (cmp(a.username, b.username) or
+                                    cmp(a.hostname, b.hostname) or
+                                    cmp(b.date_created, a.date_created)))
+        return sessions
+
+    def terminate_session(self, session):
+        """Terminate given X2Go Session."""
+        try:
+            # send a terminate request to a session
+            self.logger('Requesting X2Go session terminate of session: %s' % session.name,
+                        loglevel=x2go.loglevel_INFO)
+            available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
+            if session.name in available_sessions.keys():
+                self._X2GoClient__terminate_session(self._x2go_session_hash, session.name)
+                self.logger("X2Go session %s has been terminated" % session.name,
+                            loglevel=x2go.loglevel_NOTICE)
+            else:
+                runtime_error('Session %s not available on X2Go server [%s]:%s' %
+                              (self._session_parameters['server'],
+                               self._session_parameters['port']),
+                              exitcode=22)
         finally:
             self._pytis_terminate.set()
 
-    def new_session(self, s_hash):
-        super(PytisClient, self).new_session(s_hash)
-        if self._pytis_setup_configuration:
-            self.pytis_setup(s_hash)
-            self._pytis_setup_configuration = False
+    def start_new_session(self, callback=None):
+        """Launch a new X2Go session."""
+        self.logger('starting a new X2Go session', loglevel=x2go.loglevel_INFO)
+        self.logger('command for new session is: %s' % self._session_parameters['cmd'],
+                    loglevel=x2go.loglevel_DEBUG)
+        self._X2GoClient__start_session(self._x2go_session_hash)
+        if self._run_pytis_setup:
+            self._pytis_setup(self._x2go_session_hash)
+            self._run_pytis_setup = False
 
             def info_handler():
-                while self.session_ok(s_hash):
-                    self.pytis_handle_info()
+                while self.session_ok(self._x2go_session_hash):
+                    self._handle_info()
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
-        self._run_callback('session-started')
+        if callback:
+            callback()
+        self._main_loop()
 
-    def resume_session(self, s_hash):
-        super(PytisClient, self).resume_session(s_hash)
-        self._run_callback('session-started')
+    def resume_session(self, session, callback=None):
+        """Resume given server-side suspended X2Go session."""
+        self.logger('resuming X2Go session: %s' % session.name, loglevel=x2go.loglevel_INFO)
+        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
+        if session.name in available_sessions.keys():
+            self._X2GoClient__resume_session(self._x2go_session_hash, session.name)
+        else:
+            runtime_error('Session %s not available on X2Go server [%s]:%s' %
+                          (self._session_parameters['server'], self._session_parameters['port']),
+                          exitcode=20)
+        if callback:
+            callback()
+        self._main_loop()
 
 
 class StartupController(object):
@@ -807,12 +840,12 @@ class StartupController(object):
 
     It will be probably more logical to rearrange the code in the following way:
 
-      - methods working before PytisClient instance creation can stay in a separate
+      - methods working before X2GoClient instance creation can stay in a separate
         class (this one).
 
-      - the method connect() would return a PytisClient instance.
+      - the method connect() would return a X2GoClient instance.
 
-      - methods working on PytisClient instance can be moved to PytisClient
+      - methods working on X2GoClient instance can be moved to X2GoClient
         itself and called from the startup application directly
 
     """
@@ -822,14 +855,14 @@ class StartupController(object):
     def __init__(self, args, update_progress):
         self._args = args
         self._update_progress = update_progress
-        self._configuration = configuration = Configuration()
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
         self._session_parameters = {}
+        self._settings = settings = X2GoClientSettings()
 
         def cfg(*params):
             if args.broker_url is None:
                 try:
-                    return configuration.get_value(*params)
+                    return settings.get_value(*params)
                 except ClientException:
                     pass
             return None
@@ -873,7 +906,7 @@ class StartupController(object):
             # Set up the manually configured X2Go session.
             self._session_parameters.update(
                 profile_id=args.session_profile,
-                profile_name='Pyhoca-Client_Session',
+                profile_name='Pytis-Client-Session',
                 session_type=args.session_type,
                 link=args.link,
                 geometry=args.geometry,
@@ -1051,7 +1084,7 @@ class StartupController(object):
             message(_("Connected successfully."))
         return success
 
-    def _connect(self, **connection_parameters):
+    def _connect(self, client_kwargs, **connection_parameters):
         if ssh_connect(**connection_parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
@@ -1064,20 +1097,10 @@ class StartupController(object):
             # TODO: Is this really necessary?
             SSHClient._pytis_gss_auth = connection_parameters['gss_auth']
             # Create and set up the client instance.
-            self._update_progress(_("Client setup."))
             session_parameters = dict(self._session_parameters, **connection_parameters)
-            self._client = client = PytisClient(self._args, session_parameters,
-                                                use_cache=False, start_xserver=False,
-                                                xserver_variant=self._xserver_variant,
-                                                loglevel=x2go.log.loglevel_DEBUG)
-            session = client.session_registry(client.x2go_session_hash)
-            session.sshproxy_params['key_filename'] = connection_parameters['key_filename']
-            session.sshproxy_params['look_for_keys'] = False
-            self._update_progress(_("Starting server connections."))
-            client.pytis_start_processes(self._configuration)
-            client._pytis_setup_configuration = True
-            self._update_progress(_("Authenticating."))
-            client.authenticate()
+            self._client = X2GoClient(session_parameters, self._settings, self._update_progress,
+                                      xserver_variant=self._xserver_variant,
+                                      loglevel=x2go.log.loglevel_DEBUG, **client_kwargs)
             return True
         else:
             return False
@@ -1086,7 +1109,18 @@ class StartupController(object):
         connection_parameters = dict([(k, self._session_parameters[k])
                                       for k in ('server', 'port', 'username', 'password',
                                                 'key_filename', 'allow_agent', 'gss_auth')])
-        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring)
+        client_kwargs = dict((param, getattr(self._args, arg))
+                             for (arg, param) in (('backend_controlsession', 'control_backend'),
+                                                  ('backend_terminalsession', 'terminal_backend'),
+                                                  ('backend_serversessioninfo', 'info_backend'),
+                                                  ('backend_serversessionlist', 'list_backend'),
+                                                  ('backend_proxy', 'proxy_backend'),
+                                                  ('backend_sessionprofiles', 'profiles_backend'),
+                                                  ('backend_clientsettings', 'settings_backend'),
+                                                  ('backend_clientprinting', 'printing_backend'))
+                      if getattr(self._args, arg) is not None)
+        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring,
+                                  client_kwargs=client_kwargs)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1099,8 +1133,9 @@ class StartupController(object):
 
     def _list_profiles(self, broker_path=None, **connection_parameters):
         try:
-            return PytisSshProfiles(connection_parameters, broker_path=broker_path,
-                                    logger=x2go.X2GoLogger(tag='PyHocaCLI'),
+            return PytisSshProfiles(connection_parameters,
+                                    logger=x2go.X2GoLogger(tag='PytisClient'),
+                                    broker_path=broker_path,
                                     broker_password=self._args.broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
@@ -1194,24 +1229,16 @@ class StartupController(object):
         return on_windows()
 
     def list_sessions(self):
-        return self._client.pytis_list_sessions()
+        return self._client.list_sessions()
 
     def terminate_session(self, session):
-        return self._client.pytis_terminate_session(session)
+        return self._client.terminate_session(session)
 
     def resume_session(self, session, callback=None):
-        self._args.resume = session.name
-        self._args.new = False
-        if callback:
-            self._client.set_callback('session-started', callback)
-        self._client.MainLoop()
+        self._client.resume_session(session, callback=callback)
 
     def start_new_session(self, callback=None):
-        self._args.resume = None
-        self._args.new = True
-        if callback:
-            self._client.set_callback('session-started', callback)
-        self._client.MainLoop()
+        self._client.start_new_session(callback=callback)
 
     def _vbs_path(self, directory, username, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
