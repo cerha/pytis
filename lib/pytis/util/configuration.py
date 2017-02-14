@@ -614,6 +614,7 @@ class Configuration(object):
                    'dbuser': 'user',
                    'dbpass': 'password',
                    'dbsslm': 'sslmode'}
+
             def connection_options(items):
                 # Transform configuration option names to DBConnection option names.
                 return dict([(map[key], value) for key, value in items

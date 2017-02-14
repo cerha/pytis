@@ -691,6 +691,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         # Proveď dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query.format())
+
         def lfunction(connection=connection):
             try:
                 self._postgresql_initialize_search_path(connection,
@@ -911,6 +912,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def _notif_invoke_callbacks(self, notifications):
             if __debug__:
                 log(DEBUG, 'Volám callbacky')
+
             def lfunction():
                 return copy.copy(self._notif_data_objects)
             data_objects = with_lock(self._notif_data_lock, lfunction)
@@ -925,6 +927,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def register_notification(self, data, notification):
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
+
             def lfunction():
                 try:
                     notifications = self._notif_data_objects[data]
@@ -1272,6 +1275,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table_key)
         if table_data is None:
             table_data = self._pdbb_get_table_column_data(table)
+
         def lookup_column(data):
             if isinstance(column, int):
                 row = data[column]
@@ -1387,9 +1391,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 # Maybe a crypto column
                 ctype = btype
             else:
-                assert (isinstance(btype, ctype.__class__)
-                        or isinstance(btype, TimeInterval)  # temporary hack
-                        and ctype.__class__ == Time), \
+                assert (isinstance(btype, ctype.__class__) or
+                        isinstance(btype, TimeInterval) and  # temporary hack
+                        ctype.__class__ == Time), \
                     "%s.%s: User type doesn't match DB type: %s, %s" % \
                     (binding.table(), binding.column(), btype, ctype)
                 ctype = ctype.clone(btype)
@@ -1405,9 +1409,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         columns = []
         do_introspection = (
             # No introspection needed when DB specification is available.
-            self._pdbb_db_spec is None
+            self._pdbb_db_spec is None and
             # Introspection not possible for table functions.
-            and self._arguments is None
+            self._arguments is None
         )
         for b in bindings:
             if not b.id():              # skrytý sloupec
@@ -1562,6 +1566,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             distinct_on = _Query('')
             distinct_on_ordering = _Query('')
         sort_exclude = aggregate_columns + [g[0] for g in function_column_groups]
+
         def sortspec(direction):
             items = []
             bindings = [b for b in self._key_binding
@@ -1583,6 +1588,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             filter_condition = _Query('true')
         else:
             filter_condition = self._pdbb_condition2sql(self._condition).wrap()
+
         def make_lock_command():
             if self._pdbb_db_spec is not None:
                 from pytis.data.gensqlalchemy import SQLTable
@@ -1627,6 +1633,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             ev_rtable = ev_action[0]['rtable']
             lock_candidates = [table['eref']['aliasname']
                                for table in ev_rtable if table['inFromCl']]
+
             def check_candidate(candidate_table):
                 try:
                     self._pg_query(lock_query + (" for update of %s nowait limit 1" %
@@ -1637,7 +1644,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     return True
                 except DBUserException:
                     return False
+
             lock_tables = [c for c in lock_candidates if check_candidate(c)]
+
             def find_real_key():
                 keyname = first_key_column.template().split('.')[-1]
                 for colspec in ev_action[0]['targetList']:
@@ -1868,6 +1877,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return _Query('true')
         op_name, op_args, op_kwargs = \
             condition.name(), condition.args(), condition.kwargs()
+
         def function_call(op_args):
             assert len(op_args) >= 1, ('Invalid number of arguments', op_args)
             function, args = op_args[0], op_args[1:]
@@ -1880,6 +1890,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 else:
                     raise ProgramError("Invalid function condition argument", a)
             return _QFunction(function, queries)
+
         def colarg(colid):
             if isinstance(colid, Operator) and colid.name() == 'Function':
                 return function_call(colid.args()), None
@@ -1889,6 +1900,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             a = self._pdbb_btabcol(col)
             t = self.find_column(colid).type()
             return a, t
+
         def relop(rel, args, kwargs):
             assert len(args) == 2, ('Invalid number or arguments', args)
             arg1, arg2 = args
@@ -1999,10 +2011,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for g in (self._pdbb_column_groups or []):
             if g[2] is not None:
                 function_column_dict[g[0]] = g
+
         def full_text_handler(binding):
             column_name = self._pdbb_btabcol(binding)
             query = self._pdbb_fulltext_query_name(binding.column())
             return _QFunction('ts_rank_cd', (column_name, query,))
+
         def item2sql(item, self=self):
             if isinstance(item, tuple):
                 id, dirspec = item
@@ -2134,6 +2148,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sorting = reversed_sorting(sorting)
         else:
             raise ProgramError('Invalid direction', direction)
+
         def sorting_condition(sorting, forwards, row, mayeq):
             # - forwards je True:
             #   pak je row řádek, na kterém stojíme a hledáme všechny řádky
@@ -2488,6 +2503,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self.close()
         I = Integer()
         F = Float()
+
         def make_value(cid, dbvalue):
             if operation == self.AGG_COUNT:
                 t = I
@@ -2649,6 +2665,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         for c, v in zip(cols[1:], vals[1:]):
             settings = settings + _Query(', ' + c + '=') + _Query.next_arg_query(v)
         cond_query = self._pdbb_condition2sql(condition)
+
         def extract_result(d):
             try:
                 return int(d[0][0])
@@ -3304,6 +3321,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         aggregate_results = self._pg_select_aggregate(operation, number_columns,
                                                       condition=condition, transaction=transaction,
                                                       arguments=arguments)
+
         def aggregate_value(cid):
             if number_columns and cid == number_columns[0]:
                 del number_columns[0]
@@ -3367,12 +3385,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             # kolabují při překročení hranic dat a mnohdy správně nefunguje
             # FETCH BACKWARD.  V následujícím kódu se snažíme některé
             # nejčastější chyby PostgreSQL obejít.
+
             def stop_counting():
                 if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                     self._pg_number_of_rows.stop()
+
             def start_counting():
                 if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                     self._pg_number_of_rows.restart()
+
             def skip():
                 xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
                 if xcount < 0:
@@ -3902,6 +3923,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                 assert data, ('No such function', self._name)
                 assert len(data) == 1, ('Overloaded functions not supported', self._name)
                 r_set, r_type, arg_types = data[0]
+
                 def type_instances(tnum):
                     query = _Query("select typname, nspname, typlen, typtype "
                                    "from pg_type join "

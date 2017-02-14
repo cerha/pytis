@@ -1344,7 +1344,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 msg = _("POZOR!\n\n"
                         "Provozujete nekompatibilní verzi pytis2go ({}).\n"
                         "Některé funkce nemusí fungovat nebo se mohou objevovat chyby.\n\n"
-                        "Proveďte prosím aktualizaci Pytis2go, která se nabízí při startu aplikace.\n\n"
+                        "Proveďte prosím aktualizaci Pytis2go, která se nabízí při startu "
+                        "aplikace.\n\n"
                         "Mám nyní aplikaci ukončit, abyste mohli provést aktualizaci Pytis2go?"
                         )
                 if pytis.form.run_dialog(pytis.form.Question, msg.format(version)):
