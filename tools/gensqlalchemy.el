@@ -160,6 +160,7 @@ Currently the mode just defines some key bindings."
   nil " gsql" '(("\C-c\C-qe" . gensqlalchemy-eval)
                 ("\C-c\C-q\C-q" . gensqlalchemy-eval)
                 ("\C-c\C-qa" . gensqlalchemy-add)
+                ("\C-c\C-q\C-a" . gensqlalchemy-add-ask)
                 ("\C-c\C-qd" . gensqlalchemy-dependencies)
                 ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
                 ("\C-c\C-qi" . gensqlalchemy-info)
@@ -190,7 +191,7 @@ Currently the mode just defines some key bindings."
 
 (defun gensqlalchemy-process-directory (&optional buffer require)
   (gensqlalchemy-specification-directory buffer require))
-  
+
 (defun gensqlalchemy-buffer-name (ext &optional buffer)
   (let ((directory (directory-file-name (gensqlalchemy-specification-directory buffer)))
         name)
@@ -233,7 +234,7 @@ Currently the mode just defines some key bindings."
 
 (defun gensqlalchemy-empty-file (file-name)
   (= (or (nth 7 (file-attributes file-name)) 0) 0))
-  
+
 (defun gensqlalchemy-prepare-output-buffer (base-buffer erase)
   (let ((directory (gensqlalchemy-process-directory base-buffer t))
         (buffer (gensqlalchemy-buffer-name "sql" base-buffer)))
@@ -294,10 +295,23 @@ If called with a prefix argument then show dependent objects as well."
     (when buffer
       (pop-to-buffer buffer))))
 
-(defun gensqlalchemy-display (erase dependencies schema upgrade)
+(defun gensqlalchemy-add-ask (&optional dependencies)
+  "Convert specification with given name to SQL and add it to the displayed SQL.
+If called with a prefix argument then show dependent objects as well."
+  (interactive "P")
+  (let* ((spec-name (read-string (format "word (%s): " (thing-at-point 'word))
+                                 nil nil (thing-at-point 'word)))
+        (buffer (gensqlalchemy-display nil dependencies nil nil spec-name))
+        )
+    (when buffer
+      (pop-to-buffer buffer))))
+
+(cancel-debug-on-entry 'gensqlalchemy-display)
+
+(defun gensqlalchemy-display (erase dependencies schema upgrade &optional spec-name)
   (with-gensqlalchemy-pythonpath
-    (let* ((spec-name (gensqlalchemy-specification))
-           (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
+    (let* ((output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
+           (spec-name (or spec-name (gensqlalchemy-specification)))
            (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
                          (when upgrade
                            '("--upgrade"))
@@ -339,7 +353,7 @@ If called with a prefix argument then show dependent objects as well."
               (gensqlalchemy-show-error)
               nil)
           output-buffer)))))
-  
+
 (defun gensqlalchemy-show-sql-buffer ()
   "Show the buffer with converted SQL output."
   (interactive)
@@ -631,7 +645,7 @@ objects."
                   (unless result
                     (error "Object %s not found" name))
                   result)))))))))
-  
+
 (defun gensqlalchemy-dependencies ()
   "Show information about dependencies of the current specification.
 Currently __init__.py file is shown with the point at the first imported file
