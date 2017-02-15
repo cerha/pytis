@@ -498,9 +498,19 @@ class X2GoClient(x2go.X2GoClient):
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
-    def __init__(self, session_parameters, settings, update_progress,
+    def __init__(self, session_parameters, update_progress,
                  xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
         self._session_parameters = session_parameters
+        self._settings = settings = X2GoClientSettings()
+        for param, option, t in (('server', 'hostname', None),
+                                 ('port', 'port', int),
+                                 ('password', 'password', None),
+                                 ('key_filename', 'key_filename', None)):
+            if not session_parameters[param]:
+                try:
+                    session_parameters[param] = settings.get_value('pytis', option, t)
+                except ClientException:
+                    pass
         self._update_progress = update_progress
         self._update_progress(_("Preparing X2Go session."))
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
@@ -516,7 +526,7 @@ class X2GoClient(x2go.X2GoClient):
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
         self._update_progress(_("Starting up server connections."))
-        self._start_processes(settings)
+        self._start_processes()
         self._run_pytis_setup = True
         self._update_progress(_("Connecting to X2Go session."))
         # try:
@@ -596,7 +606,7 @@ class X2GoClient(x2go.X2GoClient):
             info.set_port(port)
             info.write()
 
-    def _check_rpyc_server(self, settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+    def _check_rpyc_server(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
         server = None
         while True:
@@ -607,7 +617,7 @@ class X2GoClient(x2go.X2GoClient):
                 return
             # Look for a running RPyC instance
             running = True
-            rpyc_info = RpycInfo(settings)
+            rpyc_info = RpycInfo(self._settings)
             try:
                 rpyc_info.read()
             except ClientException:
@@ -659,13 +669,13 @@ class X2GoClient(x2go.X2GoClient):
                                           (default_port, port_limit - 1,))
                 server.service.authenticator = authenticator
                 rpyc_port.set(port)
-                rpyc_info = RpycInfo(settings, port=port, password=authenticator.password())
+                rpyc_info = RpycInfo(self._settings, port=port, password=authenticator.password())
                 rpyc_info.store()
                 gevent.spawn(server.start)
                 self._pytis_password_value.set(rpyc_info.password())
             gevent.sleep(1)
 
-    def _check_ssh_tunnel(self, settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+    def _check_ssh_tunnel(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         while True:
             while not rpyc_port.ready():
                 if self._pytis_terminate.is_set():
@@ -704,13 +714,13 @@ class X2GoClient(x2go.X2GoClient):
                 else:
                     gevent.sleep(1)
 
-    def _start_processes(self, settings):
+    def _start_processes(self):
         # RPyC server
         rpyc_stop_queue = gevent.queue.Queue()
         rpyc_port = gevent.event.AsyncResult()
         ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
-        args = (settings, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
+        args = (rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
         gevent.spawn(self._check_rpyc_server, *args)
         gevent.spawn(self._check_ssh_tunnel, *args)
 
@@ -856,22 +866,12 @@ class StartupController(object):
         self._args = args
         self._update_progress = update_progress
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
-        self._session_parameters = {}
-        self._settings = settings = X2GoClientSettings()
-
-        def cfg(*params):
-            if args.broker_url is None:
-                try:
-                    return settings.get_value(*params)
-                except ClientException:
-                    pass
-            return None
-        self._session_parameters.update(
-            server=args.server or cfg('pytis', 'hostname'),
-            port=int(args.remote_ssh_port or cfg('pytis', 'port', int)),
-            username=args.username or None,
-            password=args.password or cfg('pytis', 'password'),
-            key_filename=args.ssh_privkey or cfg('pytis', 'key_filename'),
+        self._session_parameters = dict(
+            server=args.server,
+            port=int(args.remote_ssh_port),
+            username=args.username,
+            password=args.password,
+            key_filename=args.ssh_privkey,
             gss_auth=False,
             look_for_keys=True,
             allow_agent=True,
