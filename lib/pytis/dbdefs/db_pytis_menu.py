@@ -53,7 +53,7 @@ class EPytisRoles(Base_LogSQLTable):
     name = 'e_pytis_roles'
     schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('name', pytis.data.Name()),
-              sql.Column('description', pytis.data.String(maxlen=64, not_null=False)),
+              sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True),
                          default='appl', references=sql.r.CPytisRolePurposes.purposeid),
               sql.Column('deleted', pytis.data.Date(not_null=False)),

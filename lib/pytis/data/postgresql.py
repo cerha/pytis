@@ -744,6 +744,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     _access_groups = {}
     _access_groups_data_objects = {}
     _logical_access_groups = UNDEFINED
+    DMP_GROUPS_TABLE = 'ev_pytis_user_roles'
 
     def __init__(self, *args, **kwargs):
         super(PostgreSQLUserGroups, self).__init__(*args, **kwargs)
@@ -797,16 +798,21 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
             if config.use_dmp_roles:
                 # Check for ev_pytis_user_roles presence first, to prevent logging
                 # error messages in non-DMP applications
-                tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data,
-                                 connection_name=self._connection_name)
+                tables = dbtable('information_schema.tables', ('table_name', 'table_schema'),
+                                 connection_data, connection_name=self._connection_name)
                 roles_data = None
                 try:
-                    n = tables.select(condition=EQ('relname',
-                                                   Value(String(), 'evv_pytis_user_roles')))
-                    if (n > 0):
+                    n = tables.select(condition=EQ('table_name',
+                                                   Value(String(),
+                                                         PostgreSQLUserGroups.DMP_GROUPS_TABLE)))
+                    if (n > 1):
+                        raise Exception("Ambiguous DMP groups table.")
+                    elif (n > 0):
+                        schema_name = tables.fetchone()['table_schema'].value()
                         try:
-                            roles_data = dbtable('ev_pytis_user_roles', ('roleid',),
-                                                 connection_data)
+                            table_name = '{}.{}'.format(schema_name,
+                                                        PostgreSQLUserGroups.DMP_GROUPS_TABLE)
+                            roles_data = dbtable(table_name, ('roleid',), connection_data)
                         except DBException:
                             pass
                         else:
@@ -1340,6 +1346,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'macaddr': Macaddr,
                         'bytea': Binary,
                         'oid': pytis.data.Oid,  # for backward compatibility
+                        'sql_identifier': String,
                         }
         if type_ and type_[0] == '_':
             array = True
