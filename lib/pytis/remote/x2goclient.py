@@ -860,7 +860,7 @@ class StartupController(object):
 
     """
 
-    DEFAULT_SSH_PORT = 22
+    _DEFAULT_SSH_PORT = 22
     _DEFAULT_SESSION_PARAMETERS = dict(
         gss_auth=False,
         look_for_keys=True,
@@ -899,7 +899,7 @@ class StartupController(object):
                           '($|(?P<path>/.*)$)'), url)
         if match:
             parameters = match.groupdict()
-            parameters['port'] = int(parameters['port'] or self.DEFAULT_SSH_PORT)
+            parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
             if parameters.pop('protocol', None) not in (None, 'ssh'):
                 raise Exception(_(u"Unsupported broker protocol: %s") % url)
             path = parameters.pop('path')
@@ -1244,7 +1244,7 @@ class StartupController(object):
                 username,
                 ':' + params['password'] if params['password'] else '',
                 params['server'],
-                ':' + params['port'] if params['port'] != self.DEFAULT_SSH_PORT else '',
+                ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
                 self._broker_path,
             )
             for regexp, replacement in (
