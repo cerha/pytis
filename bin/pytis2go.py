@@ -40,32 +40,32 @@ liblogger = x2go.X2GoLogger()
 
 # exclusive client control options
 action_options = [
-    {'args': ['-N', '--new'], 'default': False, 'action': 'store_true',
-     'help': 'start a new X2Go session on server (default)', },
-    {'args': ['-R', '--resume'], 'default': None, 'metavar': 'SESSION_NAME',
-     'help': 'resume a suspended X2Go session with name SESSION_NAME', },
-    {'args': ['-D', '--share-desktop'], 'default': None, 'metavar': 'USER@DISPLAY',
-     'help': 'share an X2Go session on server specified by USER@DISPLAY', },
-    {'args': ['-S', '--suspend'], 'default': None, 'metavar': 'SESSION_NAME',
-     'help': 'suspend running X2Go session SESSION_NAME', },
-    {'args': ['-T', '--terminate'], 'default': None, 'metavar': 'SESSION_NAME',
-     'help': 'terminate running X2Go session SESSION_NAME', },
-    {'args': ['-L', '--list-sessions'], 'default': False, 'action': 'store_true', 'help':
-     'list user\'s X2Go sessions on server', },
-    {'args': ['--list-desktops'], 'default': False, 'action': 'store_true',
-     'help': 'list X2Go desktop sessions that are available for sharing', },
+    #{'args': ['-N', '--new'], 'default': False, 'action': 'store_true',
+    # 'help': 'start a new X2Go session on the server even if suspended sessions exist', },
+    #{'args': ['-R', '--resume'], 'default': None, 'metavar': 'SESSION_NAME',
+    # 'help': 'resume a suspended X2Go session with name SESSION_NAME', },
+    #{'args': ['-D', '--share-desktop'], 'default': None, 'metavar': 'USER@DISPLAY',
+    # 'help': 'share an X2Go session on server specified by USER@DISPLAY', },
+    #{'args': ['-S', '--suspend'], 'default': None, 'metavar': 'SESSION_NAME',
+    # 'help': 'suspend running X2Go session SESSION_NAME', },
+    #{'args': ['-T', '--terminate'], 'default': None, 'metavar': 'SESSION_NAME',
+    # 'help': 'terminate running X2Go session SESSION_NAME', },
+    #{'args': ['-L', '--list-sessions'], 'default': False, 'action': 'store_true', 'help':
+    # 'list user\'s X2Go sessions on server', },
+    #{'args': ['--list-desktops'], 'default': False, 'action': 'store_true',
+    # 'help': 'list X2Go desktop sessions that are available for sharing', },
     {'args': ['-l', '--list-profiles'], 'default': False, 'action': 'store_true',
      'help': 'list user\'s X2Go pre-configured session profiles', },
     {'args': ['-P', '--session-profile'], 'default': None,
-     'help': 'load x2goclient session profiles and use the session profile SESSION_PROFILE', },
+     'help': 'load x2goclient session profiles and use given profile to start a session', },
 ]
-if not on_windows():
-    action_options.append(
-        {'args': ['--from-stdin'], 'default': False, 'action': 'store_true',
-         'help': ('for LightDM remote login: '
-                  'read <username> <password> <host[:port]> <desktopshell> from STDIN'),
-         },
-    )
+#if not on_windows():
+#    action_options.append(
+#        {'args': ['--from-stdin'], 'default': False, 'action': 'store_true',
+#         'help': ('for LightDM remote login: '
+#                  'read <username> <password> <host[:port]> <desktopshell> from STDIN'),
+#         },
+#    )
 # debug options...
 debug_options = [
     {'args': ['-d', '--debug'], 'default': False, 'action': 'store_true',
@@ -76,43 +76,42 @@ debug_options = [
      'help': 'enable debugging code of the underlying Python X2Go module', },
     {'args': ['--libdebug-sftpxfer'], 'default': False, 'action': 'store_true',
      'help': ('enable debugging code of Python X2Go\'s sFTP server code '
-              '(very verbose, and even promiscuous)'),
-     },
+              '(very verbose, and even promiscuous)'), },
     {'args': ['-V', '--version'], 'default': False, 'action': 'store_true',
      'help': 'print version number and exit', },
 ]
-# possible programme options are
+# X2Go session options
 x2go_options = [
     {'args': ['-c', '--command'],
      'help': 'command to run with -R mode on server (default: xterm)', },
     {'args': ['-u', '--username'],
      'help': 'username for the session (default: current user)', },
-    {'args': ['--password'], 'default': None, 'help': 'user password for session authentication', },
+    {'args': ['--password'], 'default': None,
+     'help': 'user password for session authentication', },
     {'args': ['-p', '--remote-ssh-port'], 'default': '22',
      'help': 'remote SSH port (default: 22)', },
     {'args': ['-k', '--ssh-privkey'], 'default': None,
-     'help': 'use file \'SSH_PRIVKEY\' as private key for the SSH connection (e.g. ~/.ssh/id_rsa)',
-     },
+     'help': ('use file \'SSH_PRIVKEY\' as private key for the '
+              'SSH connection (e.g. ~/.ssh/id_rsa)'), },
     {'args': ['--add-to-known-hosts'], 'default': False, 'action': 'store_true',
      'help': ('add RSA host key fingerprint to ~/.ssh/known_hosts '
-              'if authenticity of server can\'t be established (default: not set)'),
-     },
+              'if authenticity of server can\'t be established (default: not set)'), },
     {'args': ['--sound'], 'default': 'pulse', 'choices': ('pulse', 'esd', 'none'),
      'help': 'X2Go server sound system (default: \'pulse\')', },
     {'args': ['--printing'], 'default': False, 'action': 'store_true',
      'help': 'use X2Go printing (default: disabled)', },
-    {'args': ['--share-mode'], 'default': 0,
-     'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
+#    {'args': ['--share-mode'], 'default': 0,
+#     'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
     {'args': ['-F', '--share-local-folders'], 'metavar': '<folder1>[,<folder2[,...]]',
      'default': None,
      'help': 'a comma separated list of local folder names to mount in the X2Go session', },
-    {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
-     'help': 'clean all suspended sessions before starting a new one', },
-    {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
-     'help': ('terminate the connected session when pressing CTRL+C '
-              '(instead of suspending the session)'), },
-    {'args': ['--auth-attempts'], 'default': 3,
-     'help': 'number of authentication attempts before authentication fails (default: 3)', },
+#    {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
+#     'help': 'clean all suspended sessions before starting a new one', },
+#    {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
+#     'help': ('terminate the connected session when pressing CTRL+C '
+#              '(instead of suspending the session)'), },
+#    {'args': ['--auth-attempts'], 'default': 3,
+#     'help': 'number of authentication attempts before authentication fails (default: 3)', },
 ]
 print_options = [
     {'args': ['--print-action'], 'default': 'PDFVIEW',
@@ -154,17 +153,6 @@ nx_options = [
      'help': 'use keyboard layout (default: \'us\')', },
     {'args': ['--kbd-type'], 'default': 'pc105/us',
      'help': 'set Keyboard type (default: \'pc105/us\')', },
-]
-compat_options = [
-    {'args': ['--port'], 'default': None,
-     'help': 'compatibility option, synonymous to --remote-ssh-port PORT', },
-    {'args': ['--ssh-key'], 'default': None,
-     'help': 'compatibility option, synonymous to --ssh-privkey SSH_KEY', },
-    {'args': ['--use-sound'], 'default': None, 'choices': ('yes', 'no'),
-     'help': 'compatibility option, synonymous to --sound {pulse|none}', },
-    {'args': ['--client-ssh-port'], 'default': None,
-     'help': ('compatibility option for the x2goclient GUI; as Python X2Go brings its own internal '
-              'SFTP server, this option will be ignored'), },
 ]
 pytis2go_options = [
     {'args': ['--window-title'], 'default': None,
@@ -249,11 +237,13 @@ Possible values for the --pack NX option are:
     p_brokeropts = p.add_argument_group('X2Go Session Broker client options')
     p_nxopts = p.add_argument_group('NX options')
     p_backendopts = p.add_argument_group('Python X2Go backend options (for experts only)')
-    p_compatopts = p.add_argument_group('compatibility options')
-    option_groups = [(p_x2goopts, x2go_options), (p_printopts, print_options),
-                     (p_brokeropts, broker_options), (p_actionopts, action_options),
-                     (p_debugopts, debug_options), (p_nxopts, nx_options),
-                     (p_backendopts, backend_options), (p_compatopts, compat_options)]
+    option_groups = [(p_x2goopts, x2go_options),
+                     (p_printopts, print_options),
+                     (p_brokeropts, broker_options),
+                     (p_actionopts, action_options),
+                     (p_debugopts, debug_options),
+                     (p_nxopts, nx_options),
+                     (p_backendopts, backend_options)]
     p_pytis2goopts = p.add_argument_group('pytis2go options')
     option_groups.append((p_pytis2goopts, pytis2go_options))
     for (p_group, opts) in option_groups:
@@ -279,23 +269,23 @@ Possible values for the --pack NX option are:
     if not (a.session_profile or a.list_profiles):
         # check for mutual exclusiveness of -N, -R, -S, -T and -L, -N is
         # default if none of them is set
-        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
-             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
-             bool(a.list_profiles)) > 1):
-            runtime_error("modes --new, --resume, --share-desktop, --suspend, --terminate, "
-                          "--list-sessions, --list-desktops and "
-                          "--list-profiles are mutually exclusive", parser=p, exitcode=2)
-        if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
-             bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
-             bool(a.list_profiles)) == 0):
-            a.new = True
+        #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+        #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+        #     bool(a.list_profiles)) > 1):
+        #    runtime_error("modes --new, --resume, --share-desktop, --suspend, --terminate, "
+        #                  "--list-sessions, --list-desktops and "
+        #                  "--list-profiles are mutually exclusive", parser=p, exitcode=2)
+        #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
+        #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
+        #     bool(a.list_profiles)) == 0):
+        #    a.new = True
         # check if pack method is available
         if not x2go.utils.is_in_nx3packmethods(a.pack):
             runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
-    else:
-        if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
-                a.list_desktops or a.list_profiles):
-            a.new = True
+    #else:
+    #    if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
+    #            a.list_desktops or a.list_profiles):
+    #        a.new = True
     # X2Go printing
     if (((a.pdfview_cmd and a.printer) or
          (a.pdfview_cmd and a.save_to_folder) or
@@ -322,33 +312,6 @@ Possible values for the --pack NX option are:
         a.printer = None
     if a.print_cmd is None and a.print_action == 'PRINTCMD':
         a.print_cmd = x2go.defaults.DEFAULT_PRINTCMD_CMD
-    a.print_action_args = {}
-    if a.pdfview_cmd:
-        a.print_action_args = {'pdfview_cmd': a.pdfview_cmd, }
-    elif a.save_to_folder:
-        a.print_action_args = {'save_to_folder': a.save_to_folder, }
-    elif a.printer:
-        a.print_action_args = {'printer': a.printer, }
-    elif a.print_cmd:
-        a.print_action_args = {'print_cmd': a.print_cmd, }
-    # take care of compatibility options
-    # option --use-sound yes as synonomyn for --sound
-    if a.use_sound is not None:
-        if a.use_sound == 'yes':
-            a.sound = 'pulse'
-        if a.use_sound == 'no':
-            a.sound = 'none'
-    if a.ssh_key is not None:
-        a.ssh_privkey = a.ssh_key
-    if a.port is not None:
-        a.remote_ssh_port = a.port
-    if a.share_local_folders is not None:
-        a.share_local_folders = a.share_local_folders.split(',')
-    try:
-        int(a.auth_attempts)
-    except ValueError:
-        runtime_error("value for cmd line argument --auth-attempts has to be of type integer",
-                      parser=p, exitcode=1)
     if a.server:
         # check if SERVER is in .ssh/config file, extract information from there...
         ssh_config = paramiko.SSHConfig()
@@ -372,15 +335,15 @@ Possible values for the --pack NX option are:
         runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
                       exitcode=30)
     # lightdm remote login magic takes place here
-    if not on_windows() and a.from_stdin:
-        lightdm_remote_login_buffer = sys.stdin.readline()
-        (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
-        a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
-        if ":" in a.server:
-            a.remote_ssh_port = a.server.split(':')[-1]
-            a.server = ':'.join(a.server.split(':')[:-1])
-        a.command = a.command.upper()
-        a.geometry = 'fullscreen'
+    #if not on_windows() and a.from_stdin:
+    #    lightdm_remote_login_buffer = sys.stdin.readline()
+    #    (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
+    #    a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
+    #    if ":" in a.server:
+    #        a.remote_ssh_port = a.server.split(':')[-1]
+    #        a.server = ':'.join(a.server.split(':')[:-1])
+    #    a.command = a.command.upper()
+    #    a.geometry = 'fullscreen'
     return p, a
 
 # -----
@@ -389,7 +352,54 @@ Possible values for the --pack NX option are:
 def main():
     parser, args = parseargs()
     args.parser = parser
-    app = pytis.remote.X2GoStartApp(args)
+    session_parameters = dict(
+        server=args.server,
+        port=int(args.remote_ssh_port),
+        username=args.username,
+        password=args.password,
+        key_filename=args.ssh_privkey,
+        profile_id=args.session_profile,
+        session_type=args.session_type,
+        link=args.link,
+        geometry=args.geometry,
+        pack=args.pack,
+        kblayout=args.kbd_layout,
+        kbtype=args.kbd_type,
+        snd_system=args.sound,
+        printing=args.printing,
+        print_action=args.print_action,
+        print_action_args=dict((arg, getattr(args, arg)) for arg in
+                               ('pdfview_cmd', 'save_to_folder', 'printer', 'print_cmd')
+                               if getattr(args, arg)),
+        share_local_folders=args.share_local_folders,
+        cmd=args.command,
+    )
+    param2arg = {
+        'cmd': 'command',
+        'kblayout': 'kbd_layout',
+        'kbtype': 'kbd_type',
+        'snd_system': 'sound',
+        'port': 'remote_ssh_port',
+    }
+    # Command line options with non-default values will override session profile parameters.
+    force_parameters = [
+        param for param, value in session_parameters.items()
+        # Apply str() because of 'port' which is int in session_parameters and str in args.
+        if value and str(value) != args.parser.get_default(param2arg.get(param, param)) and
+        # TODO: print_action_arg is omited because the arg parser doesn't know its default.
+        param != 'print_action_arg'
+    ]
+    backends = {
+        'control': args.backend_controlsession,
+        'terminal': args.backend_terminalsession,
+        'info': args.backend_serversessioninfo,
+        'list': args.backend_serversessionlist,
+        'proxy': args.backend_proxy,
+        'profiles': args.backend_sessionprofiles,
+        'settings': args.backend_clientsettings,
+        'printing': args.backend_clientprinting,
+    }
+    app = pytis.remote.X2GoStartApp(args, session_parameters, force_parameters, backends)
     app.MainLoop()
 
 

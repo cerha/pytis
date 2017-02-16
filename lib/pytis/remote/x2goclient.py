@@ -861,69 +861,34 @@ class StartupController(object):
     """
 
     DEFAULT_SSH_PORT = 22
+    _DEFAULT_SESSION_PARAMETERS = dict(
+        gss_auth=False,
+        look_for_keys=True,
+        allow_agent=True,
+        known_hosts=os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'known_hosts'),
+        profile_name='Pytis-Client-Session',
+        cache_type='unix-kde',
+        allow_share_local_folders=True
+    )
 
-    def __init__(self, args, update_progress):
-        self._args = args
+    def __init__(self, session_parameters, force_parameters=None,
+                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None,
+                 calling_script=None, update_progress=None):
+        # If broker_url is given, the session parameters will be updated
+        # later from the selected profile in select_profile().
+        self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
+        self._force_parameters = force_parameters
         self._update_progress = update_progress
+        self._add_to_known_hosts = add_to_known_hosts
+        self._calling_script = calling_script
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
-        self._session_parameters = dict(
-            server=args.server,
-            port=int(args.remote_ssh_port),
-            username=args.username,
-            password=args.password,
-            key_filename=args.ssh_privkey,
-            gss_auth=False,
-            look_for_keys=True,
-            allow_agent=True,
-            known_hosts=os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'known_hosts'),
-        )
-        if args.broker_url:
-            # If broker_url is given, the session parameters will be updated
-            # later from the selected profile in select_profile().
-            self._broker_parameters, self._broker_path = self._parse_url(args.broker_url)
-        elif args.session_profile:
-            # Override session profile options by command line options.
-            arg_to_session_param = {
-                'command': 'cmd',
-                'kb_layout': 'kblayout',
-                'kb_type': 'kbtype',
-                'sound': 'snd_system',
-            }
-            parameters = {}
-            if hasattr(args, 'parser'):
-                for arg, value in args._get_kwargs():
-                    if value != args.parser.get_default(arg):
-                        try:
-                            param = arg_to_session_param[arg]
-                        except KeyError:
-                            param = arg
-                        parameters[param] = value
-            self._session_parameters.update(
-                profile_name=args.session_profile,
-                **parameters
-            )
+        if broker_url:
+            self._broker_parameters, self._broker_path = self._parse_url(broker_url)
+            self._broker_password = broker_password
         else:
-            # Set up the manually configured X2Go session.
-            self._session_parameters.update(
-                profile_id=args.session_profile,
-                profile_name='Pytis-Client-Session',
-                session_type=args.session_type,
-                link=args.link,
-                geometry=args.geometry,
-                pack=args.pack,
-                cache_type='unix-kde',
-                kblayout=args.kbd_layout,
-                kbtype=args.kbd_type,
-                snd_system=args.sound,
-                printing=args.printing,
-                print_action=args.print_action,
-                print_action_args=args.print_action_args,
-                share_local_folders=args.share_local_folders,
-                allow_share_local_folders=True,
-                cmd=args.command,
-            )
-        quit_signal = signal.SIGTERM if on_windows() else signal.SIGQUIT
-        gevent.signal(quit_signal, gevent.kill)
+            self._broker_parameters = self._broker_path = self._broker_password = None
+        self._client_kwargs = dict((key, value) for key, value in backends.items()
+                                   if value is not None)
 
     def _parse_url(self, url):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
@@ -940,7 +905,7 @@ class StartupController(object):
             path = parameters.pop('path')
             return parameters, path
         else:
-            raise Exception(_("Invalid broker URL:"), args.broker_url)
+            raise Exception(_("Invalid URL:"), url)
 
     def _authentication_methods(self, connection_parameters):
         import socket
@@ -1041,7 +1006,7 @@ class StartupController(object):
                 password=password,
                 look_for_keys=key_filename is not None,
                 allow_agent=True,
-                add_to_known_hosts=self._args.add_to_known_hosts,
+                add_to_known_hosts=self._add_to_known_hosts,
                 **kwargs
             ))
 
@@ -1084,7 +1049,7 @@ class StartupController(object):
             message(_("Connected successfully."))
         return success
 
-    def _connect(self, client_kwargs, **connection_parameters):
+    def _connect(self, **connection_parameters):
         if ssh_connect(**connection_parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
@@ -1098,9 +1063,9 @@ class StartupController(object):
             SSHClient._pytis_gss_auth = connection_parameters['gss_auth']
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
-            self._client = X2GoClient(session_parameters, self._settings, self._update_progress,
+            self._client = X2GoClient(session_parameters, self._update_progress,
                                       xserver_variant=self._xserver_variant,
-                                      loglevel=x2go.log.loglevel_DEBUG, **client_kwargs)
+                                      loglevel=x2go.log.loglevel_DEBUG, **self._client_kwargs)
             return True
         else:
             return False
@@ -1109,18 +1074,7 @@ class StartupController(object):
         connection_parameters = dict([(k, self._session_parameters[k])
                                       for k in ('server', 'port', 'username', 'password',
                                                 'key_filename', 'allow_agent', 'gss_auth')])
-        client_kwargs = dict((param, getattr(self._args, arg))
-                             for (arg, param) in (('backend_controlsession', 'control_backend'),
-                                                  ('backend_terminalsession', 'terminal_backend'),
-                                                  ('backend_serversessioninfo', 'info_backend'),
-                                                  ('backend_serversessionlist', 'list_backend'),
-                                                  ('backend_proxy', 'proxy_backend'),
-                                                  ('backend_sessionprofiles', 'profiles_backend'),
-                                                  ('backend_clientsettings', 'settings_backend'),
-                                                  ('backend_clientprinting', 'printing_backend'))
-                      if getattr(self._args, arg) is not None)
-        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring,
-                                  client_kwargs=client_kwargs)
+        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1136,7 +1090,7 @@ class StartupController(object):
             return PytisSshProfiles(connection_parameters,
                                     logger=x2go.X2GoLogger(tag='PytisClient'),
                                     broker_path=broker_path,
-                                    broker_password=self._args.broker_password)
+                                    broker_password=self._broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
 
@@ -1166,7 +1120,10 @@ class StartupController(object):
         rootless = profile.get('rootless', True)
         if not rootless or int(rootless) == 0:
             self._xserver_variant = 'VcXsrv_pytis_desktop'
-        self._session_parameters.update(self._profile_session_parameters(profile_id))
+        self._session_parameters.update(
+            (k, v) for k, v in self._profile_session_parameters(profile_id).items()
+            if k not in self._force_parameters
+        )
 
     def current_version(self):
         return _VERSION
@@ -1276,7 +1233,7 @@ class StartupController(object):
         vbs_path = self._vbs_path(directory, username, profile_id)
         # Create the VBS script to which the shortcut will point to.
         if not os.path.exists(vbs_path):
-            calling_script = os.path.join(directory, os.path.basename(self._args.calling_script))
+            calling_script = os.path.join(directory, os.path.basename(self._calling_script))
             if not os.path.exists(calling_script):
                 # Check if the VBS script was created properly.
                 return _("Unable to find the calling script: %s") % calling_script

@@ -112,11 +112,18 @@ class X2GoStartApp(wx.App):
 
     _MAX_PROGRESS = 40
 
-    def __init__(self, args):
+    def __init__(self, args, session_parameters, force_parameters, backends):
         from pytis.remote.x2goclient import StartupController
         self._progress = 1
         self._args = args
-        self._controller = StartupController(args, self._update_progress)
+        self._controller = StartupController(session_parameters,
+                                             force_parameters=force_parameters,
+                                             backends=backends,
+                                             add_to_known_hosts=args.add_to_known_hosts,
+                                             broker_url=args.broker_url,
+                                             broker_password=args.broker_password,
+                                             calling_script=getattr(args, 'calling_script', None),
+                                             update_progress=self._update_progress)
         self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
 
@@ -389,7 +396,6 @@ class X2GoStartApp(wx.App):
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
-        profile_id = self._args.session_profile
         if self._args.list_profiles:
             self._list_profiles(profiles)
             return self.Exit()
@@ -412,6 +418,7 @@ class X2GoStartApp(wx.App):
                         self._info(_(u"Upgrade finished"),
                                    _(u"Pytis successfully upgraded. Restart the application."))
                         return self.Exit()
+            profile_id = self._args.session_profile
             if profile_id:
                 if profile_id not in profiles.profile_ids:
                     raise Exception("Unknown profile %s!" % profile_id)
@@ -448,10 +455,6 @@ class X2GoStartApp(wx.App):
             print
 
     def _start_session(self):
-        args = self._args
-        if ((args.share_desktop or args.suspend or args.terminate or args.list_sessions or
-             args.list_desktops or args.list_profiles)):
-            return
         self._update_progress(_("Retrieving available sessions."))
         sessions = self._controller.list_sessions()
         if len(sessions) == 0:
