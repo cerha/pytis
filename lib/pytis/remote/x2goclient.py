@@ -801,17 +801,17 @@ class X2GoClient(x2go.X2GoClient):
 
 
 class StartupController(object):
-    """Interface between the start-up application and X2GoClient.
+    """Interface between the start-up application and X2Go.
 
-    It will be probably more logical to rearrange the code in the following way:
+    The public methods of this class implement various X2Go related
+    functionality needed by the startup application to isolate the startup
+    application from the details of X2Go problematics.
 
-      - methods working before X2GoClient instance creation can stay in a separate
-        class (this one).
-
-      - the method connect() would return a X2GoClient instance.
-
-      - methods working on X2GoClient instance can be moved to X2GoClient
-        itself and called from the startup application directly
+    The methods 'list_profiles()' and 'select_profile()' will handle
+    interaction with X2Go broker, the method 'connect()' will create the actual
+    'X2GoClient' instance, which may be used to start/resume sessions.  Other
+    methods provide auxilary functions such as upgrade or shortcut icon
+    creation.
 
     """
 
@@ -842,6 +842,7 @@ class StartupController(object):
             self._broker_password = broker_password
         else:
             self._broker_parameters = self._broker_path = self._broker_password = None
+        # TODO: Maybe move 'backends' argument to 'connect()'?
         self._client_kwargs = dict((key, value) for key, value in backends.items()
                                    if value is not None)
 
@@ -1016,12 +1017,11 @@ class StartupController(object):
                         pass
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
-            self._client = X2GoClient(session_parameters, self._update_progress,
-                                      xserver_variant=self._xserver_variant,
-                                      loglevel=x2go.log.loglevel_DEBUG, **self._client_kwargs)
-            return True
+            return X2GoClient(session_parameters, self._update_progress,
+                              xserver_variant=self._xserver_variant,
+                              loglevel=x2go.log.loglevel_DEBUG, **self._client_kwargs)
         else:
-            return False
+            return None
 
     def connect(self, username, askpass, keyring=None):
         connection_parameters = dict([(k, self._session_parameters[k])
@@ -1138,18 +1138,6 @@ class StartupController(object):
 
     def on_windows(self):
         return on_windows()
-
-    def list_sessions(self):
-        return self._client.list_sessions()
-
-    def terminate_session(self, session):
-        return self._client.terminate_session(session)
-
-    def resume_session(self, session, callback=None):
-        self._client.resume_session(session, callback=callback)
-
-    def start_new_session(self, callback=None):
-        self._client.start_new_session(callback=callback)
 
     def _vbs_path(self, directory, username, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (

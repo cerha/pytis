@@ -317,12 +317,12 @@ class X2GoStartApp(wx.App):
     def _authentication_dialog(self, *args):
         return self._show_dialog(_("Authentication"), self._create_authentication_dialog, *args)
 
-    def _session_selection_dialog(self, dialog, sessions):
+    def _session_selection_dialog(self, dialog, client, sessions):
         def on_terminate_session(event):
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
             self._update_progress(_("Terminating session: %s", session.name), 0)
-            self._controller.terminate_session(session)
+            client.terminate_session(session)
             listbox.Delete(selection)
             self._update_progress(_("Session terminated: %s", session.name), 0)
 
@@ -384,9 +384,11 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        if self._controller.connect(self._username(), self._authentication_dialog, self._keyring):
+        client = self._controller.connect(self._username(), self._authentication_dialog,
+                                          self._keyring)
+        if client:
             self._update_progress(_("Starting Pytis client."))
-            self._start_session()
+            self._start_session(client)
         else:
             self.Exit()
 
@@ -454,20 +456,20 @@ class X2GoStartApp(wx.App):
             pprint.pprint(session_params)
             print
 
-    def _start_session(self):
+    def _start_session(self, client):
         self._update_progress(_("Retrieving available sessions."))
-        sessions = self._controller.list_sessions()
+        sessions = client.list_sessions()
         if len(sessions) == 0:
             session = None
         else:
             session = self._show_dialog(_("Select session"),
-                                        self._session_selection_dialog, sessions)
+                                        self._session_selection_dialog, client, sessions)
         if session:
             self._update_progress(_("Resuming session: %s", session.name), 10)
-            self._controller.resume_session(session, callback=self._on_session_started)
+            client.resume_session(session, callback=self._on_session_started)
         else:
             self._update_progress(_("Starting new session."), 10)
-            self._controller.start_new_session(callback=self._on_session_started)
+            client.start_new_session(callback=self._on_session_started)
 
     def OnInit(self):
         title = self._args.window_title or _("Starting application")
