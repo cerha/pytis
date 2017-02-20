@@ -152,7 +152,7 @@ def get_language_windows(system_lang=True):
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
-def ssh_connect(server, password=None, add_to_known_hosts=False, **kwargs):
+def ssh_connect(server, add_to_known_hosts=False, **kwargs):
     """Establish SSH connection according to given parameters.
 
     Arguments:
@@ -175,7 +175,7 @@ def ssh_connect(server, password=None, add_to_known_hosts=False, **kwargs):
     if add_to_known_hosts:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        client.connect(server, password=password or 'X', **kwargs)
+        client.connect(server, **kwargs)
     except (paramiko.ssh_exception.AuthenticationException,
             paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
             ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
