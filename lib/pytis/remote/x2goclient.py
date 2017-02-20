@@ -187,22 +187,6 @@ class ClientException(Exception):
     pass
 
 
-class SSHClient(paramiko.SSHClient):
-    pytis_client = True
-    _pytis_gss_auth = False
-
-    def connect(self, hostname, gss_auth=None, **kwargs):
-        if gss_auth is None:
-            gss_auth = SSHClient._pytis_gss_auth
-        return super(SSHClient, self).connect(hostname, gss_auth=gss_auth, **kwargs)
-
-
-try:
-    paramiko.SSHClient.pytis_client
-except AttributeError:
-    paramiko.SSHClient = SSHClient
-
-
 class X2GoClientSettings(x2go.X2GoClientSettings):
 
     def __init__(self, *args, **kwargs):
@@ -1059,8 +1043,6 @@ class StartupController(object):
                         os.remove(os.path.join(tempdir, f))
                     except:
                         pass
-            # TODO: Is this really necessary?
-            SSHClient._pytis_gss_auth = connection_parameters['gss_auth']
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
             self._client = X2GoClient(session_parameters, self._update_progress,
