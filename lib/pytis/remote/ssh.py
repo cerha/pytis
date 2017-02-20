@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2014, 2015, 2017 Brailcom, o.p.s.
 # Copyright (C) 2008 Robey Pointer <robeypointer@gmail.com>
 #
 # COPYRIGHT NOTICE
@@ -150,20 +150,36 @@ def public_key_acceptable(hostname, username, key_filename, port=22):
     s.close()
     return result
 
-def ssh_connect(hostname, **kwargs):
-    """Create and return ssh connection to 'hostname'.
+def ssh_connect(server, add_to_known_hosts=False, **kwargs):
+    """Establish SSH connection according to given parameters.
 
     Arguments:
+      server -- remote server host name (string)
+      port -- remote server port (int)
+      username -- remote user name (string)
+      password -- remote user password or passphrase (if key_filename is not
+        None) (string)
+      key_filename -- name of the SSH private key file (string)
+      allow_agent -- true if SSH agent should be allowed (bool)
+      gss_auth -- true if GSS (Kerberos) authenticationexception should be
+        allowed (bool)
+      add_to_known_hosts -- Iff true, server keys not already present in known
+        hosts will be automatically added.
 
-      hostname -- host to connect to; basestring
-      kwargs -- arguments to pass on 'paramiko.SSHClient.connect'
-
-    The return value is 'paramiko.SSHClient' instance.
+    Returns 'paramiko.SSHClient' instance if successfully connected or None if
+    connection fails.
 
     """
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    client.connect(hostname, **kwargs)
+    if add_to_known_hosts:
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(server, **kwargs)
+    except (paramiko.ssh_exception.AuthenticationException,
+            paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
+            ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
+        return None
     return client
 
 def ssh_exec(command, hostname):

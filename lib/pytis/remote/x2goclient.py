@@ -152,36 +152,6 @@ def get_language_windows(system_lang=True):
         lcids = [lcid_user]
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
-def ssh_connect(server, add_to_known_hosts=False, **kwargs):
-    """Establish SSH connection according to given parameters.
-
-    Arguments:
-      server -- remote server host name (string)
-      port -- remote server port (int)
-      username -- remote user name (string)
-      password -- remote user password or passphrase (if key_filename is not None) (string)
-      key_filename -- name of the SSH private key file (string)
-      allow_agent -- true if SSH agent should be allowed (bool)
-      gss_auth -- true if GSS (Kerberos) authenticationexception should be allowed (bool)
-      add_to_known_hosts -- Iff true, server keys not already present in known hosts will be
-        automatically added.
-
-    Returns 'paramiko.SSHClient' instance if successfully connected or None if
-    connection fails.
-
-    """
-    client = paramiko.SSHClient()
-    client.load_system_host_keys()
-    if add_to_known_hosts:
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    try:
-        client.connect(server, **kwargs)
-    except (paramiko.ssh_exception.AuthenticationException,
-            paramiko.ssh_exception.SSHException,  # Happens on GSS auth failure.
-            ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
-        return None
-    return client
-
 
 class ClientException(Exception):
     pass
@@ -257,7 +227,8 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     def _ssh_client(self):
         if self._ssh_client_instance is None:
-            client = ssh_connect(**dict(self._connection_parameters, look_for_keys=False))
+            client = pytis.remote.ssh_connect(**dict(self._connection_parameters,
+                                                     look_for_keys=False))
             if client:
                 self._ssh_client_instance = client
             else:
@@ -1034,7 +1005,7 @@ class StartupController(object):
         return success
 
     def _connect(self, **connection_parameters):
-        if ssh_connect(**connection_parameters):
+        if pytis.remote.ssh_connect(**connection_parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1120,7 +1091,8 @@ class StartupController(object):
     def upgrade(self, username, askpass, keyring=None):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
-        client = self._authenticate(ssh_connect, connection_parameters, askpass, keyring=keyring)
+        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters,
+                                    askpass, keyring=keyring)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()
