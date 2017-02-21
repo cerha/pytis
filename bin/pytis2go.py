@@ -100,18 +100,18 @@ x2go_options = [
      'help': 'X2Go server sound system (default: \'pulse\')', },
     {'args': ['--printing'], 'default': False, 'action': 'store_true',
      'help': 'use X2Go printing (default: disabled)', },
-#    {'args': ['--share-mode'], 'default': 0,
-#     'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
+    # {'args': ['--share-mode'], 'default': 0,
+    #  'help': 'share mode for X2Go desktop sharing (0: view-only, 1: full access)', },
     {'args': ['-F', '--share-local-folders'], 'metavar': '<folder1>[,<folder2[,...]]',
      'default': None,
      'help': 'a comma separated list of local folder names to mount in the X2Go session', },
-#    {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
-#     'help': 'clean all suspended sessions before starting a new one', },
-#    {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
-#     'help': ('terminate the connected session when pressing CTRL+C '
-#              '(instead of suspending the session)'), },
-#    {'args': ['--auth-attempts'], 'default': 3,
-#     'help': 'number of authentication attempts before authentication fails (default: 3)', },
+    # {'args': ['--clean-sessions'], 'default': False, 'action': 'store_true',
+    #  'help': 'clean all suspended sessions before starting a new one', },
+    # {'args': ['--terminate-on-ctrl-c'], 'default': False, 'action': 'store_true',
+    #  'help': ('terminate the connected session when pressing CTRL+C '
+    #           '(instead of suspending the session)'), },
+    # {'args': ['--auth-attempts'], 'default': 3,
+    #  'help': 'number of authentication attempts before authentication fails (default: 3)', },
 ]
 print_options = [
     {'args': ['--print-action'], 'default': 'PDFVIEW',

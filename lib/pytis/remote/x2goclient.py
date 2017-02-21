@@ -20,8 +20,6 @@
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2017-02-09 22:59'
 
-import signal
-
 import os
 import gettext
 import platform
@@ -468,8 +466,9 @@ class X2GoClient(x2go.X2GoClient):
                     pass
         self._update_progress = update_progress
         self._update_progress(_("Preparing X2Go session."))
-        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
-                                 #logger = x2go.X2GoLogger(tag='PytisClient')
+        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
+                                 # logger = x2go.X2GoLogger(tag='PytisClient'
+                                 )
         if on_windows() and xserver_variant:
             self._update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
