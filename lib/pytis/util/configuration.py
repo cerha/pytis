@@ -668,7 +668,7 @@ class Configuration(object):
 
         This option specifies if access groups should be taken
         from the database specific dmp tables. If True
-        and if valid view 'ev_pytis_role_members' is in the database
+        and if valid view 'ev_pytis_user_roles' is in the database
         then these specific application roles (groups) will be used,
         otherwise normal postgresql cluster roles will be used.
 
