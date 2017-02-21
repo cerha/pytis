@@ -849,6 +849,7 @@ class StartupController(object):
         # TODO: Maybe move 'backends' argument to 'connect()'?
         self._client_kwargs = dict((key, value) for key, value in backends.items()
                                    if value is not None)
+        self._keyring = []
 
     def _parse_url(self, url):
         match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
@@ -898,7 +899,7 @@ class StartupController(object):
                                   for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
                 if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
 
-    def _authenticate(self, function, connection_parameters, askpass, keyring=None, **kwargs):
+    def _authenticate(self, function, connection_parameters, askpass, **kwargs):
         """Try calling 'method' with different authentication parameters.
 
         Arguments:
@@ -923,14 +924,10 @@ class StartupController(object):
             two-tuple of (key_filename, password), where 'key_filename' is the
             SSH private key and 'password' is its passphrase 'key_filename' is
             None and 'password' is the password for password authentication.
-          keyring -- known authentication credentials as a list of pairs
-            (key_filename, password), where 'key_filename' is a string path to
-            a SSH private key and 'password' is its passphrase or
-            'key_filename' is None and 'password' is the password for password
-            authentication.  The credentials present in the list will be used
-            for authentication.  Also any successfull newly entered credentials
-            obtained from the user (using 'askpass') will be added to list if
-            it is not None.
+            Credentials obtained from 'askpass' which lead to a successfull
+            authentication will be autematically stored in an internal keyring
+            and reused later for any other authentication attempts (before
+            asking through 'askpass' again).
 
           **kwargs -- all remaining keyword arguments will be passed on to
             'function'.
@@ -973,7 +970,7 @@ class StartupController(object):
         success = False
         message(_("Retrieving supported authentication methods."))
         methods = self._authentication_methods(connection_parameters)
-        for key_filename, password in (keyring or ()):
+        for key_filename, password in self._keyring:
             if key_filename and password and 'publickey' in methods:
                 message(_("Trying public key authentication."))
                 success = connect(key_filename=key_filename, password=password)
@@ -1003,8 +1000,8 @@ class StartupController(object):
                 else:
                     return None
                 success = connect(key_filename=key_filename, password=password)
-                if success and keyring is not None:
-                    keyring.append((key_filename, password))
+                if success:
+                    self._keyring.append((key_filename, password))
         if success:
             message(_("Connected successfully."))
         return success
@@ -1027,11 +1024,11 @@ class StartupController(object):
         else:
             return None
 
-    def connect(self, username, askpass, keyring=None):
+    def connect(self, username, askpass):
         connection_parameters = dict([(k, self._session_parameters[k])
                                       for k in ('server', 'port', 'username', 'password',
                                                 'key_filename', 'allow_agent', 'gss_auth')])
-        return self._authenticate(self._connect, connection_parameters, askpass, keyring=keyring)
+        return self._authenticate(self._connect, connection_parameters, askpass)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1051,11 +1048,11 @@ class StartupController(object):
         except PytisSshProfiles.ConnectionFailed:
             return None
 
-    def list_profiles(self, username, askpass, keyring=None):
+    def list_profiles(self, username, askpass):
         connection_parameters = dict(self._broker_parameters,
                                      username=self._broker_parameters['username'] or username)
         self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
-                                            keyring=keyring, broker_path=self._broker_path)
+                                            broker_path=self._broker_path)
         if self._profiles:
             self._update_progress(self._broker_parameters['server'] + ': ' +
                                   _("Returned %d profiles.") % len(self._profiles.profile_ids))
@@ -1092,11 +1089,10 @@ class StartupController(object):
         else:
             return None
 
-    def upgrade(self, username, askpass, keyring=None):
+    def upgrade(self, username, askpass):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
-        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters,
-                                    askpass, keyring=keyring)
+        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters, askpass)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()

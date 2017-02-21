@@ -124,7 +124,6 @@ class X2GoStartApp(wx.App):
                                              broker_password=args.broker_password,
                                              calling_script=getattr(args, 'calling_script', None),
                                              update_progress=self._update_progress)
-        self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _selected_profile_id(self):
@@ -379,8 +378,7 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        client = self._controller.connect(self._username(), self._authentication_dialog,
-                                          self._keyring)
+        client = self._controller.connect(self._username(), self._authentication_dialog)
         if client:
             self._update_progress(_("Starting Pytis client."))
             self._start_session(client)
@@ -388,8 +386,7 @@ class X2GoStartApp(wx.App):
             self.Exit()
 
     def _load_profiles(self):
-        profiles = self._controller.list_profiles(self._username(),
-                                                  self._authentication_dialog, self._keyring)
+        profiles = self._controller.list_profiles(self._username(), self._authentication_dialog)
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
@@ -406,8 +403,7 @@ class X2GoStartApp(wx.App):
                                                _("Current version: %s") % current_version,
                                                _("New version: %s") % available_version,
                                                _("Install?")))))):
-                    error = self._controller.upgrade(self._username(),
-                                                     self._authentication_dialog, self._keyring)
+                    error = self._controller.upgrade(self._username(), self._authentication_dialog)
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
                         self._info(_("Upgrade failed"), error)
