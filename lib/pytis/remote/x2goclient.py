@@ -722,13 +722,17 @@ class X2GoClient(x2go.X2GoClient):
                     os.environ.update({'DISPLAY': 'localhost:0'})
 
     def list_sessions(self):
-        sessions = [info for info in
-                    self._X2GoClient__list_sessions(self._x2go_session_hash).values()
-                    if info.status == 'S']
-        sessions.sort(lambda a, b: (cmp(a.username, b.username) or
+        """Return a list of suspended sessions found on the server.
+
+        Returns a list of 'X2GoServerSessionInfo' instances.
+
+        """
+        return sorted([info for info in
+                       self._X2GoClient__list_sessions(self._x2go_session_hash).values()
+                       if info.status == 'S'],
+                      lambda a, b: (cmp(a.username, b.username) or
                                     cmp(a.hostname, b.hostname) or
                                     cmp(b.date_created, a.date_created)))
-        return sessions
 
     def terminate_session(self, session):
         """Terminate given X2Go Session."""
