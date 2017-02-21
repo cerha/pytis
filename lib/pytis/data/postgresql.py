@@ -805,10 +805,19 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                     n = tables.select(condition=EQ('table_name',
                                                    Value(String(),
                                                          PostgreSQLUserGroups.DMP_GROUPS_TABLE)))
-                    if (n > 1):
-                        raise Exception("Ambiguous DMP groups table.")
-                    elif (n > 0):
-                        schema_name = tables.fetchone()['table_schema'].value()
+                    schema_name = None
+                    schemas = config.dbschemas
+                    if not schemas:
+                        schemas = 'public'
+                    for i in range(n):
+                        s_name = tables.fetchone()['table_schema'].value()
+                        for s in schemas.split(','):
+                            if s == s_name:
+                                schema_name = s
+                                break
+                        if schema_name:
+                            break
+                    if schema_name:
                         try:
                             table_name = '{}.{}'.format(schema_name,
                                                         PostgreSQLUserGroups.DMP_GROUPS_TABLE)
