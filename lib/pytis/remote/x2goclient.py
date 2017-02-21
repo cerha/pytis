@@ -1217,6 +1217,26 @@ class StartupController(object):
                 link.icon_location = (icon_location, 0)
         return None
 
+    def cleanup_shortcuts(self):
+        """Cleanup desktop shortcuts."""
+        pass
+
+    def generate_key(self):
+        """Generate new SSH key pair."""
+        pass
+
+    def change_key_passphrase(self):
+        """Change key passphrase."""
+        pass
+
+    def upload_key(self):
+        """Upload public key to server."""
+        pass
+
+    def send_key(self):
+        """Send public key to admin."""
+        pass
+
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"

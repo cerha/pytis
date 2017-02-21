@@ -153,6 +153,25 @@ class X2GoStartApp(wx.App):
         heading = self._args.heading or _("Pytis2Go")
         return ui.label(parent, heading, size=18, bold=True)
 
+    def _create_menu_button(self, parent):
+        items = [
+            (_("Generate new SSH key pair"), self._controller.generate_key),
+            (_("Change key passphrase"), self._controller.change_key_passphrase),
+            (_("Upload public key to server"), self._controller.upload_key),
+            (_("Send public key to admin"), self._controller.send_key),
+        ]
+        if self._controller.on_windows():
+            items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
+        menu = wx.Menu()
+        for label, callback in items:
+            item = wx.MenuItem(menu, -1, label)
+            menu.Bind(wx.EVT_MENU, lambda e: callback(), item)
+            menu.AppendItem(item)
+        bitmap = wx.ArtProvider_GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, (16, 16))
+        button = wx.BitmapButton(parent, -1, bitmap, style=wx.BU_EXACTFIT)
+        button.Bind(wx.EVT_BUTTON, lambda e: parent.PopupMenu(menu))
+        return button
+
     def _create_username_field(self, parent):
         label = ui.label(parent, _("Login name:"))
         username = self._args.username
@@ -206,7 +225,9 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (self._create_main_heading(parent), 0, wx.EXPAND | wx.ALIGN_CENTER | wx.ALL, 6),
+            (ui.hgroup((self._create_main_heading(parent), 1),
+                       self._create_menu_button(parent),
+            ), 0, wx.EXPAND | wx.ALIGN_CENTER | wx.ALL, 6),
             (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
             (self._create_profiles_field(parent), 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8),
             (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
