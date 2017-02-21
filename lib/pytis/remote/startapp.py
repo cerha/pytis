@@ -147,11 +147,6 @@ class X2GoStartApp(wx.App):
     def _can_create_shortcut(self):
         return not self._controller.shortcut_exists(self._username(), self._selected_profile_id())
 
-    def _on_session_started(self):
-        self.ExitMainLoop()
-        self._frame.Show(False)
-        wx.Yield()
-
     def _on_exit(self, event):
         self.Exit()
 
@@ -466,10 +461,14 @@ class X2GoStartApp(wx.App):
                                         self._session_selection_dialog, client, sessions)
         if session:
             self._update_progress(_("Resuming session: %s", session.name), 10)
-            client.resume_session(session, callback=self._on_session_started)
+            client.resume_session(session)
         else:
             self._update_progress(_("Starting new session."), 10)
-            client.start_new_session(callback=self._on_session_started)
+            client.start_new_session()
+        self.ExitMainLoop()
+        self._frame.Show(False)
+        wx.Yield()
+        client.main_loop()
 
     def OnInit(self):
         title = self._args.window_title or _("Starting application")

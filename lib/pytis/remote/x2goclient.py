@@ -721,23 +721,6 @@ class X2GoClient(x2go.X2GoClient):
                                 loglevel=x2go.log.loglevel_WARN)
                     os.environ.update({'DISPLAY': 'localhost:0'})
 
-    def _main_loop(self):
-        try:
-            session_hash = self._x2go_session_hash
-            while 0 < self.get_session(session_hash).get_progress_status() < 100:
-                time.sleep(1)
-            if self._X2GoClient__session_ok(session_hash):
-                profile_name = self._X2GoClient__get_session_profile_name(session_hash)
-                session_name = self._X2GoClient__get_session_name(session_hash)
-                self.logger("X2Go session is now running, the X2Go client's profile name is: %s" %
-                            profile_name, loglevel=x2go.loglevel_INFO)
-                self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
-                while self._X2GoClient__session_ok(session_hash):
-                    time.sleep(2)
-        except x2go.X2GoSessionException, e:
-            self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
-            self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
-
     def list_sessions(self):
         sessions = [info for info in
                     self._X2GoClient__list_sessions(self._x2go_session_hash).values()
@@ -766,7 +749,7 @@ class X2GoClient(x2go.X2GoClient):
         finally:
             self._pytis_terminate.set()
 
-    def start_new_session(self, callback=None):
+    def start_new_session(self):
         """Launch a new X2Go session."""
         self.logger('starting a new X2Go session', loglevel=x2go.loglevel_INFO)
         self.logger('command for new session is: %s' % self._session_parameters['cmd'],
@@ -781,11 +764,8 @@ class X2GoClient(x2go.X2GoClient):
                     self._handle_info()
                     gevent.sleep(0.1)
             gevent.spawn(info_handler)
-        if callback:
-            callback()
-        self._main_loop()
 
-    def resume_session(self, session, callback=None):
+    def resume_session(self, session):
         """Resume given server-side suspended X2Go session."""
         self.logger('resuming X2Go session: %s' % session.name, loglevel=x2go.loglevel_INFO)
         available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
@@ -795,9 +775,30 @@ class X2GoClient(x2go.X2GoClient):
             runtime_error('Session %s not available on X2Go server [%s]:%s' %
                           (self._session_parameters['server'], self._session_parameters['port']),
                           exitcode=20)
-        if callback:
-            callback()
-        self._main_loop()
+
+    def main_loop(self):
+        """Monitor the running the X2Go session and wait for its completiona.
+
+        Periodically checks the state of the running session and waits for its
+        completion.  Call this method after 'start_new_session()' or
+        'resume_session()'.
+
+        """
+        try:
+            session_hash = self._x2go_session_hash
+            while 0 < self.get_session(session_hash).get_progress_status() < 100:
+                time.sleep(1)
+            if self._X2GoClient__session_ok(session_hash):
+                profile_name = self._X2GoClient__get_session_profile_name(session_hash)
+                session_name = self._X2GoClient__get_session_name(session_hash)
+                self.logger("X2Go session is now running, the X2Go client's profile name is: %s" %
+                            profile_name, loglevel=x2go.loglevel_INFO)
+                self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
+                while self._X2GoClient__session_ok(session_hash):
+                    time.sleep(2)
+        except x2go.X2GoSessionException, e:
+            self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
+            self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
 
 
 class StartupController(object):
