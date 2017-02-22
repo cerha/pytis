@@ -142,14 +142,13 @@ class X2GoStartApp(wx.App):
         from pytis.remote.x2goclient import StartupController
         self._progress = 1
         self._args = args
-        self._controller = StartupController(session_parameters,
+        self._controller = StartupController(self, session_parameters,
                                              force_parameters=force_parameters,
                                              backends=backends,
                                              add_to_known_hosts=args.add_to_known_hosts,
                                              broker_url=args.broker_url,
                                              broker_password=args.broker_password,
-                                             calling_script=getattr(args, 'calling_script', None),
-                                             update_progress=self._update_progress)
+                                             calling_script=getattr(args, 'calling_script', None))
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _selected_profile_id(self):
@@ -157,7 +156,7 @@ class X2GoStartApp(wx.App):
 
     def _on_select_profile(self, event):
         profile_id = self._selected_profile_id()
-        self._update_progress(_("Selected profile %s: Contacting server...") % profile_id)
+        self.update_progress(_("Selected profile %s: Contacting server...") % profile_id)
         self._controller.select_profile(profile_id)
         self._connect()
 
@@ -167,7 +166,7 @@ class X2GoStartApp(wx.App):
             # TODO: Specific dialog for error messages (icons)?
             self._info(_("Failed creating desktop shortcut"), error)
         else:
-            self._update_progress(_("Shortcut created successfully."))
+            self.update_progress(_("Shortcut created successfully."))
 
     def _can_create_shortcut(self):
         return not self._controller.shortcut_exists(self._username(), self._selected_profile_id())
@@ -179,26 +178,6 @@ class X2GoStartApp(wx.App):
         heading = self._args.heading or _("Pytis2Go")
         return ui.label(parent, heading, size=18, bold=True)
 
-    def _confirm_shortcuts(self, shortcuts):
-        def create_dialog(dialog):
-            checklist = ui.checklist(dialog, (_("Name"),),
-                                     [(True, name) for name, shortcut in shortcuts])
-            dialog.set_callback(lambda: checklist.SetFocus())
-            return ui.vgroup(
-                (ui.label(dialog, _("The following desktop shortcuts are invalid.") + "\n" +
-                          _("Press Ok to remove the checked items.")), 0, wx.ALL, 10),
-                (checklist, 1, wx.LEFT | wx.RIGHT, 10),
-                (ui.hgroup(
-                    ui.button(dialog, _(u"Ok"),
-                              lambda e: dialog.close([shortcut for i, (name, shortcut)
-                                                      in enumerate(shortcuts)
-                                                      if checklist.IsChecked(i)])),
-                    ui.button(dialog, _(u"Cancel"),
-                              lambda e: dialog.close(None)),
-                ), 0, wx.ALIGN_CENTER | wx.ALL, 10),
-            )
-        return self._show_dialog(_("Confirm shortcuts removal"), create_dialog)
-
     def _create_menu_button(self, parent):
         items = [
             (_("Generate new SSH key pair"), self._controller.generate_key),
@@ -206,9 +185,8 @@ class X2GoStartApp(wx.App):
             (_("Upload public key to server"), self._controller.upload_key),
             (_("Send public key to admin"), self._controller.send_key),
         ]
-        if self._controller.on_windows():
-            items.append((_("Cleanup desktop shortcuts"),
-                          lambda: self._controller.cleanup_shortcuts(self._confirm_shortcuts)))
+        if True or self._controller.on_windows():
+            items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
         menu = wx.Menu()
         for label, callback in items:
             item = wx.MenuItem(menu, -1, label)
@@ -304,6 +282,161 @@ class X2GoStartApp(wx.App):
         self._frame.Raise()
         return dialog.result
 
+    def _session_selection_dialog(self, dialog, client, sessions):
+        def on_terminate_session(event):
+            selection = listbox.GetSelection()
+            session = listbox.GetClientData(selection)
+            self.update_progress(_("Terminating session: %s", session.name), 0)
+            client.terminate_session(session)
+            listbox.Delete(selection)
+            self.update_progress(_("Session terminated: %s", session.name), 0)
+
+        def on_resume_session(event):
+            dialog.close(listbox.GetClientData(listbox.GetSelection()))
+
+        listbox = ui.listbox(dialog, on_select=on_resume_session)
+        for session in sessions:
+            session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
+                                          (session.date_created or '').replace('T', ' '),)
+            listbox.Append(session_label, session)
+        dialog.set_callback(lambda: listbox.SetFocus())
+        return ui.vgroup(
+            (ui.label(dialog, _("Existing sessions:")), 0, wx.LEFT | wx.RIGHT, 8),
+            (ui.hgroup(
+                (listbox, 1, wx.EXPAND),
+                (ui.vgroup(*[
+                    (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
+                    for label, callback, updateui in (
+                        (_(u"Resume"), on_resume_session,
+                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                        (_(u"Terminate"), on_terminate_session,
+                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
+            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.ALL, 8),
+        )
+
+    def _question(self, title, question):
+        def create_dialog(dialog):
+            buttons = (ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True)),
+                       ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
+            dialog.set_callback(lambda: buttons[0].SetFocus())
+            return ui.vgroup(
+                (ui.label(dialog, question), 0, wx.ALL, 10),
+                (ui.hgroup(*[(b, 0, wx.ALL, 10) for b in buttons]), 1, wx.ALIGN_CENTER),
+            )
+        return self._show_dialog(title, create_dialog)
+
+    def _info(self, title, text):
+        def create_dialog(dialog):
+            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
+            dialog.set_callback(lambda: button.SetFocus())
+            return ui.vgroup(
+                (ui.label(dialog, text), 0, wx.ALL, 10),
+                (button, 1, wx.ALIGN_CENTER | wx.ALL, 10),
+            )
+        return self._show_dialog(title, create_dialog)
+
+    def _start(self):
+        if self._args.broker_url:
+            self._load_profiles()
+        else:
+            self._connect()
+
+    def _connect(self):
+        client = self._controller.connect(self._username())
+        if client:
+            self.update_progress(_("Starting Pytis client."))
+            self._start_session(client)
+        else:
+            self.Exit()
+
+    def _load_profiles(self):
+        profiles = self._controller.list_profiles(self._username())
+        if not profiles:
+            # Happens when the user cancels the broker authentication dialog.
+            return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
+        if self._args.list_profiles:
+            self._list_profiles(profiles)
+            return self.Exit()
+        else:
+            if self._controller.on_windows():
+                current_version = self._controller.current_version()
+                available_version = self._controller.available_upgrade_version()
+                if ((available_version and available_version > current_version and
+                     self._question(_("Upgrade available"),
+                                    '\n'.join((_("New pytis client version available."),
+                                               _("Current version: %s") % current_version,
+                                               _("New version: %s") % available_version,
+                                               _("Install?")))))):
+                    error = self._controller.upgrade(self._username())
+                    if error:
+                        # TODO: Specific dialog for error messages (icons)?
+                        self._info(_("Upgrade failed"), error)
+                    else:
+                        self._info(_(u"Upgrade finished"),
+                                   _(u"Pytis successfully upgraded. Restart the application."))
+                        return self.Exit()
+            profile_id = self._args.session_profile
+            if profile_id:
+                if profile_id not in profiles.profile_ids:
+                    raise Exception("Unknown profile %s!" % profile_id)
+                self._controller.select_profile(profile_id)
+                self._connect()
+            else:
+                items = [(pid, profiles.to_session_params(pid)['profile_name'])
+                         for pid in profiles.profile_ids]
+                for profile_id, name in sorted(items, key=lambda x: x[1]):
+                    self._profiles_field.Append(name, profile_id)
+                self._profiles_field.Enable(True)
+                self._profiles_field.SetFocus()
+
+    def _list_profiles(self, profiles):
+        import pprint
+        print
+        print "Available X2Go session profiles"
+        print "==============================="
+        if hasattr(profiles, 'config_files') and profiles.config_files is not None:
+            print "configuration files: %s" % profiles.config_files
+        if hasattr(profiles, 'user_config_file') and profiles.user_config_file is not None:
+            print "user configuration file: %s" % profiles.user_config_file
+        if hasattr(profiles, 'broker_url') and profiles.broker_url is not None:
+            print "X2Go Session Broker URL: %s" % profiles.broker_url
+        for profile_id in profiles.profile_ids:
+            profile_config = profiles.get_profile_config(profile_id)
+            session_params = profiles.to_session_params(profile_id)
+            print 'Profile ID: %s' % profile_id
+            print 'Profile Name: %s' % session_params['profile_name']
+            print 'Profile Configuration:'
+            pprint.pprint(profile_config)
+            print 'Derived session parameters:'
+            pprint.pprint(session_params)
+            print
+
+    def _start_session(self, client):
+        self.update_progress(_("Retrieving available sessions."))
+        sessions = client.list_sessions()
+        if len(sessions) == 0:
+            session = None
+        else:
+            session = self._show_dialog(_("Select session"),
+                                        self._session_selection_dialog, client, sessions)
+        if session:
+            self.update_progress(_("Resuming session: %s", session.name), 10)
+            client.resume_session(session)
+        else:
+            self.update_progress(_("Starting new session."), 10)
+            client.start_new_session()
+        self.ExitMainLoop()
+        self._frame.Show(False)
+        wx.Yield()
+        client.main_loop()
+
+    def update_progress(self, message=None, progress=1):
+        self._gauge.SetValue(self._gauge.GetValue() + progress)
+        if message:
+            self._status.SetLabel(message)
+        self.Yield()
+
     def _create_authentication_dialog(self, dialog, methods, key_files):
         def close(method):
             if isinstance(method, collections.Callable):
@@ -376,163 +509,42 @@ class X2GoStartApp(wx.App):
             ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
         )
 
-    def _authentication_dialog(self, *args):
-        return self._show_dialog(_("Authentication"), self._create_authentication_dialog, *args)
+    def authentication_dialog(self, methods, key_files):
+        """Interactively ask the user for authentication credentials.
 
-    def _session_selection_dialog(self, dialog, client, sessions):
-        def on_terminate_session(event):
-            selection = listbox.GetSelection()
-            session = listbox.GetClientData(selection)
-            self._update_progress(_("Terminating session: %s", session.name), 0)
-            client.terminate_session(session)
-            listbox.Delete(selection)
-            self._update_progress(_("Session terminated: %s", session.name), 0)
+        Arguments:
+          methods -- sequence of authentication methods supported by the
+            server (strings 'password', 'publickey').
+          key_files -- sequence of SSH private key files present on local
+            machine for which the server has a public key (if public key
+            authentication is supported).
 
-        def on_resume_session(event):
-            dialog.close(listbox.GetClientData(listbox.GetSelection()))
+        The return value is a two-tuple (key_filename, password). If
+        'key_filename' is not None, the user prefers public key authentication.
+        In this case 'key_filename' is the file name of the SSH private key
+        (string) and 'password' is its passphrase.  If 'key_filename' is None,
+        the user prefers password authentication with given password.
 
-        listbox = ui.listbox(dialog, on_select=on_resume_session)
-        for session in sessions:
-            session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
-                                          (session.date_created or '').replace('T', ' '),)
-            listbox.Append(session_label, session)
-        dialog.set_callback(lambda: listbox.SetFocus())
-        return ui.vgroup(
-            (ui.label(dialog, _("Existing sessions:")), 0, wx.LEFT | wx.RIGHT, 8),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(*[
-                    (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
-                    for label, callback, updateui in (
-                        (_(u"Resume"), on_resume_session,
-                         lambda e: e.Enable(listbox.GetSelection() != -1)),
-                        (_(u"Terminate"), on_terminate_session,
-                         lambda e: e.Enable(listbox.GetSelection() != -1)),
-                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
-            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.ALL, 8),
-        )
+        """
+        return self._show_dialog(_("Authentication"), self._create_authentication_dialog,
+                                 methods, key_files)
 
-    def _question(self, title, question):
+    def checklist_dialog(self, title, message, columns, items):
         def create_dialog(dialog):
-            buttons = (ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True)),
-                       ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
-            dialog.set_callback(lambda: buttons[0].SetFocus())
+            checklist = ui.checklist(dialog, columns, items)
+            dialog.set_callback(lambda: checklist.SetFocus())
             return ui.vgroup(
-                (ui.label(dialog, question), 0, wx.ALL, 10),
-                (ui.hgroup(*[(b, 0, wx.ALL, 10) for b in buttons]), 1, wx.ALIGN_CENTER),
+                (ui.label(dialog, message), 0, wx.ALL, 10),
+                (checklist, 1, wx.LEFT | wx.RIGHT, 10),
+                (ui.hgroup(
+                    ui.button(dialog, _(u"Ok"),
+                              lambda e: dialog.close([checklist.IsChecked(i)
+                                                      for i in range(len(items))])),
+                    ui.button(dialog, _(u"Cancel"),
+                              lambda e: dialog.close(None)),
+                ), 0, wx.ALIGN_CENTER | wx.ALL, 10),
             )
         return self._show_dialog(title, create_dialog)
-
-    def _info(self, title, text):
-        def create_dialog(dialog):
-            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
-            dialog.set_callback(lambda: button.SetFocus())
-            return ui.vgroup(
-                (ui.label(dialog, text), 0, wx.ALL, 10),
-                (button, 1, wx.ALIGN_CENTER | wx.ALL, 10),
-            )
-        return self._show_dialog(title, create_dialog)
-
-    def _update_progress(self, message=None, progress=1):
-        self._gauge.SetValue(self._gauge.GetValue() + progress)
-        if message:
-            self._status.SetLabel(message)
-        self.Yield()
-
-    def _start(self):
-        if self._args.broker_url:
-            self._load_profiles()
-        else:
-            self._connect()
-
-    def _connect(self):
-        client = self._controller.connect(self._username(), self._authentication_dialog)
-        if client:
-            self._update_progress(_("Starting Pytis client."))
-            self._start_session(client)
-        else:
-            self.Exit()
-
-    def _load_profiles(self):
-        profiles = self._controller.list_profiles(self._username(), self._authentication_dialog)
-        if not profiles:
-            # Happens when the user cancels the broker authentication dialog.
-            return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
-        if self._args.list_profiles:
-            self._list_profiles(profiles)
-            return self.Exit()
-        else:
-            if self._controller.on_windows():
-                current_version = self._controller.current_version()
-                available_version = self._controller.available_upgrade_version()
-                if ((available_version and available_version > current_version and
-                     self._question(_("Upgrade available"),
-                                    '\n'.join((_("New pytis client version available."),
-                                               _("Current version: %s") % current_version,
-                                               _("New version: %s") % available_version,
-                                               _("Install?")))))):
-                    error = self._controller.upgrade(self._username(), self._authentication_dialog)
-                    if error:
-                        # TODO: Specific dialog for error messages (icons)?
-                        self._info(_("Upgrade failed"), error)
-                    else:
-                        self._info(_(u"Upgrade finished"),
-                                   _(u"Pytis successfully upgraded. Restart the application."))
-                        return self.Exit()
-            profile_id = self._args.session_profile
-            if profile_id:
-                if profile_id not in profiles.profile_ids:
-                    raise Exception("Unknown profile %s!" % profile_id)
-                self._controller.select_profile(profile_id)
-                self._connect()
-            else:
-                items = [(pid, profiles.to_session_params(pid)['profile_name'])
-                         for pid in profiles.profile_ids]
-                for profile_id, name in sorted(items, key=lambda x: x[1]):
-                    self._profiles_field.Append(name, profile_id)
-                self._profiles_field.Enable(True)
-                self._profiles_field.SetFocus()
-
-    def _list_profiles(self, profiles):
-        import pprint
-        print
-        print "Available X2Go session profiles"
-        print "==============================="
-        if hasattr(profiles, 'config_files') and profiles.config_files is not None:
-            print "configuration files: %s" % profiles.config_files
-        if hasattr(profiles, 'user_config_file') and profiles.user_config_file is not None:
-            print "user configuration file: %s" % profiles.user_config_file
-        if hasattr(profiles, 'broker_url') and profiles.broker_url is not None:
-            print "X2Go Session Broker URL: %s" % profiles.broker_url
-        for profile_id in profiles.profile_ids:
-            profile_config = profiles.get_profile_config(profile_id)
-            session_params = profiles.to_session_params(profile_id)
-            print 'Profile ID: %s' % profile_id
-            print 'Profile Name: %s' % session_params['profile_name']
-            print 'Profile Configuration:'
-            pprint.pprint(profile_config)
-            print 'Derived session parameters:'
-            pprint.pprint(session_params)
-            print
-
-    def _start_session(self, client):
-        self._update_progress(_("Retrieving available sessions."))
-        sessions = client.list_sessions()
-        if len(sessions) == 0:
-            session = None
-        else:
-            session = self._show_dialog(_("Select session"),
-                                        self._session_selection_dialog, client, sessions)
-        if session:
-            self._update_progress(_("Resuming session: %s", session.name), 10)
-            client.resume_session(session)
-        else:
-            self._update_progress(_("Starting new session."), 10)
-            client.start_new_session()
-        self.ExitMainLoop()
-        self._frame.Show(False)
-        wx.Yield()
-        client.main_loop()
 
     def OnInit(self):
         title = self._args.window_title or _("Starting application")
@@ -543,7 +555,7 @@ class X2GoStartApp(wx.App):
         frame.Show()
         self.Yield()
         if self._username_field:
-            self._update_progress(_("Enter your user name and press Continue to start."))
+            self.update_progress(_("Enter your user name and press Continue to start."))
         else:
             # Start automatically when username was passed explicitly.
             self._start()

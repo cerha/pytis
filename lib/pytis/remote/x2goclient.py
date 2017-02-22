@@ -464,13 +464,11 @@ class X2GoClient(x2go.X2GoClient):
                     session_parameters[param] = settings.get_value('pytis', option, t)
                 except ClientException:
                     pass
-        self._update_progress = update_progress
-        self._update_progress(_("Preparing X2Go session."))
-        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
-                                 # logger = x2go.X2GoLogger(tag='PytisClient'
-                                 )
+        update_progress(_("Preparing X2Go session."))
+        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
+                                 #logger = x2go.X2GoLogger(tag='PytisClient')
         if on_windows() and xserver_variant:
-            self._update_progress(_("Starting up X11 server."))
+            update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         self._pytis_port_value = gevent.event.AsyncResult()
@@ -479,10 +477,10 @@ class X2GoClient(x2go.X2GoClient):
         session = self.session_registry(self._x2go_session_hash)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
-        self._update_progress(_("Starting up server connections."))
+        update_progress(_("Starting up server connections."))
         self._start_processes()
         self._run_pytis_setup = True
-        self._update_progress(_("Connecting to X2Go session."))
+        update_progress(_("Connecting to X2Go session."))
         # try:
         self._X2GoClient__connect_session(self._x2go_session_hash,
                                           username=session_parameters['username'],
@@ -808,14 +806,17 @@ class StartupController(object):
     """Interface between the start-up application and X2Go.
 
     The public methods of this class implement various X2Go related
-    functionality needed by the startup application to isolate the startup
-    application from the details of X2Go problematics.
+    functionality needed by the startup application
+    ('pytis.remote.X2GoStartApp' instance).  Whenever the methods of this class
+    need a UI interaction, they call the public methods of the startup
+    application.  Thus the two classes call each other.  This class implements
+    the X2Go related functionality, the application implements the UI.
 
     The methods 'list_profiles()' and 'select_profile()' will handle
     interaction with X2Go broker, the method 'connect()' will create the actual
     'X2GoClient' instance, which may be used to start/resume sessions.  Other
     methods provide auxilary functions such as upgrade or shortcut icon
-    creation.
+    creation etc.
 
     """
 
@@ -830,14 +831,14 @@ class StartupController(object):
         allow_share_local_folders=True
     )
 
-    def __init__(self, session_parameters, force_parameters=None,
+    def __init__(self, application, session_parameters, force_parameters=None,
                  backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None,
-                 calling_script=None, update_progress=None):
+                 calling_script=None):
+        self._app = application
         # If broker_url is given, the session parameters will be updated
         # later from the selected profile in select_profile().
         self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
         self._force_parameters = force_parameters
-        self._update_progress = update_progress
         self._add_to_known_hosts = add_to_known_hosts
         self._calling_script = calling_script
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
@@ -899,7 +900,7 @@ class StartupController(object):
                                   for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
                 if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
 
-    def _authenticate(self, function, connection_parameters, askpass, **kwargs):
+    def _authenticate(self, function, connection_parameters, **kwargs):
         """Try calling 'method' with different authentication parameters.
 
         Arguments:
@@ -915,20 +916,6 @@ class StartupController(object):
             dictionary with keys such as 'server', 'port', 'username', etc.
             Authentication related keys in this dictionary will be overriden
             before passing the parameters to 'function' as described below.
-          askpass -- function called when authentication credentials need to be
-            obtained interactively from the user.  The function must accept two
-            arguments.  The first is the sequence of authentication methods
-            supported by the server and the second is the list of SSH private
-            key files on local machine for which the server has a public key
-            (if public key authentication is supported).  The return value is a
-            two-tuple of (key_filename, password), where 'key_filename' is the
-            SSH private key and 'password' is its passphrase 'key_filename' is
-            None and 'password' is the password for password authentication.
-            Credentials obtained from 'askpass' which lead to a successfull
-            authentication will be autematically stored in an internal keyring
-            and reused later for any other authentication attempts (before
-            asking through 'askpass' again).
-
           **kwargs -- all remaining keyword arguments will be passed on to
             'function'.
 
@@ -953,7 +940,7 @@ class StartupController(object):
 
         """
         def message(msg):
-            self._update_progress(connection_parameters['server'] + ': ' + msg)
+            self._app.update_progress(connection_parameters['server'] + ': ' + msg)
 
         def connect(gss_auth=False, key_filename=None, password=None):
             return function(**dict(
@@ -992,7 +979,7 @@ class StartupController(object):
             else:
                 key_files = ()
             while not success:
-                key_filename, password = askpass(methods, key_files)
+                key_filename, password = self._app.authentication_dialog(methods, key_files)
                 if key_filename:
                     message(_("Trying public key authentication."))
                 elif password:
@@ -1018,17 +1005,17 @@ class StartupController(object):
                         pass
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
-            return X2GoClient(session_parameters, self._update_progress,
+            return X2GoClient(session_parameters, self._app.update_progress,
                               xserver_variant=self._xserver_variant,
                               loglevel=x2go.log.loglevel_DEBUG, **self._client_kwargs)
         else:
             return None
 
-    def connect(self, username, askpass):
+    def connect(self, username):
         connection_parameters = dict([(k, self._session_parameters[k])
                                       for k in ('server', 'port', 'username', 'password',
                                                 'key_filename', 'allow_agent', 'gss_auth')])
-        return self._authenticate(self._connect, connection_parameters, askpass)
+        return self._authenticate(self._connect, connection_parameters)
 
     def check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
@@ -1048,14 +1035,14 @@ class StartupController(object):
         except PytisSshProfiles.ConnectionFailed:
             return None
 
-    def list_profiles(self, username, askpass):
+    def list_profiles(self, username):
         connection_parameters = dict(self._broker_parameters,
                                      username=self._broker_parameters['username'] or username)
-        self._profiles = self._authenticate(self._list_profiles, connection_parameters, askpass,
+        self._profiles = self._authenticate(self._list_profiles, connection_parameters,
                                             broker_path=self._broker_path)
         if self._profiles:
-            self._update_progress(self._broker_parameters['server'] + ': ' +
-                                  _("Returned %d profiles.") % len(self._profiles.profile_ids))
+            self._app.update_progress(self._broker_parameters['server'] + ': ' +
+                                      _("Returned %d profiles.") % len(self._profiles.profile_ids))
         return self._profiles
 
     def broker_url_username(self):
@@ -1089,10 +1076,10 @@ class StartupController(object):
         else:
             return None
 
-    def upgrade(self, username, askpass):
+    def upgrade(self, username):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
-        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters, askpass)
+        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()
@@ -1223,13 +1210,20 @@ class StartupController(object):
                 link.icon_location = (icon_location, 0)
         return None
 
-    def cleanup_shortcuts(self, confirm):
+    def cleanup_shortcuts(self):
         """Cleanup desktop shortcuts."""
-        for shortcut in confirm([(os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],
-                                  shortcut)
-                                 for shortcut in self._desktop_shortcuts()
-                     if not os.path.isfile(shortcut.path)]):
-            os.remove(shortcut.lnk_filepath)
+        shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
+        confirmed = self._app.checklist_dialog(
+            title=_("Confirm shortcuts removal"),
+            message=(_("The following desktop shortcuts are invalid.") + "\n" +
+                     _("Press Ok to remove the checked items.")),
+            columns=(_("Name"),),
+            items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
+                   for shortcut in shortcuts],
+        )
+        for shortcut, checked in zip(shortcuts, confirmed):
+            if checked:
+                os.remove(shortcut.lnk_filepath)
 
     def generate_key(self):
         """Generate new SSH key pair."""
