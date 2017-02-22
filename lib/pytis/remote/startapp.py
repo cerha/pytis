@@ -185,7 +185,7 @@ class X2GoStartApp(wx.App):
             (_("Upload public key to server"), self._controller.upload_key),
             (_("Send public key to admin"), self._controller.send_key),
         ]
-        if True or self._controller.on_windows():
+        if self._controller.on_windows():
             items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
         menu = wx.Menu()
         for label, callback in items:
