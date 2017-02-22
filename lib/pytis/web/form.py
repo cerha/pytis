@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2016 Brailcom, o.p.s.
+# Copyright (C) 2006-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -456,7 +456,7 @@ class LayoutForm(FieldForm):
                                 cls='horizontal-group')]
             else:
                 result = [g.table(
-                    [g.tr([((g.td(label, cls='label') if label else '') +
+                    [g.tr([((g.td(label, cls='label') if label else g.noescape('')) +
                             g.td(content_, cls='ctrl'))
                            for i, (label, content_, __, ___) in enumerate(content.content())])],
                     role='presentation',
