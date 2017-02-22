@@ -437,6 +437,9 @@ class X2GoStartApp(wx.App):
             self._status.SetLabel(message)
         self.Yield()
 
+    def message(self, message):
+        self.update_progress(message, progress=0)
+
     def _create_authentication_dialog(self, dialog, methods, key_files):
         def close(method):
             if isinstance(method, collections.Callable):

@@ -1224,6 +1224,8 @@ class StartupController(object):
         for shortcut, checked in zip(shortcuts, confirmed):
             if checked:
                 os.remove(shortcut.lnk_filepath)
+        #TODO: We need ngettext for correct plural forms.
+        #self._app.message(_("%d shortcuts removed succesfully."))
 
     def generate_key(self):
         """Generate new SSH key pair."""
