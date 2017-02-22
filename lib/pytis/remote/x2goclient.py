@@ -1150,21 +1150,27 @@ class StartupController(object):
     def _scripts_directory(self):
         return pytis_path('..', 'scripts')
 
+    def _desktop_shortcuts(self):
+        import winshell
+        directory = winshell.desktop()
+        for name in os.listdir(directory):
+            if os.path.splitext(name)[1].lower() == '.lnk':
+                filename = os.path.join(directory, name)
+                if os.path.isfile(filename):
+                    try:
+                        with winshell.shortcut(filename) as shortcut:
+                            yield shortcut
+                    except Exception:
+                        pass
+
     def shortcut_exists(self, username, profile_id):
         import winshell
         vbs_path = self._vbs_path(self._scripts_directory(), username, profile_id)
         if not os.path.exists(vbs_path):
             return False
-        for name in os.listdir(winshell.desktop()):
-            if os.path.splitext(name)[1].lower() == '.lnk':
-                link_path = os.path.join(winshell.desktop(), name)
-                if os.path.isfile(link_path):
-                    try:
-                        with winshell.shortcut(link_path) as link:
-                            if link.path.lower() == vbs_path.lower():
-                                return True
-                    except Exception:
-                        pass
+        for shortcut in self._desktop_shortcuts():
+            if shortcut.path.lower() == vbs_path.lower():
+                return True
         return False
 
     def create_shortcut(self, username, profile_id):
@@ -1217,9 +1223,13 @@ class StartupController(object):
                 link.icon_location = (icon_location, 0)
         return None
 
-    def cleanup_shortcuts(self):
+    def cleanup_shortcuts(self, confirm):
         """Cleanup desktop shortcuts."""
-        pass
+        for shortcut in confirm([(os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],
+                                  shortcut)
+                                 for shortcut in self._desktop_shortcuts()
+                     if not os.path.isfile(shortcut.path)]):
+            os.remove(shortcut.lnk_filepath)
 
     def generate_key(self):
         """Generate new SSH key pair."""

@@ -107,6 +107,32 @@ class ui(object):
             listbox.Bind(wx.EVT_LEFT_DCLICK, on_dclick)
         return listbox
 
+    @staticmethod
+    def checklist(parent, columns, items):
+        import wx.lib.mixins.listctrl
+        class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+            def __init__(self, parent, columns, items):
+                wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
+                wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
+                self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda e: self.ToggleItem(e.m_itemIndex))
+                for i, label in enumerate(columns):
+                    self.InsertColumn(i, label)
+                for i, item in enumerate(items):
+                    self.InsertStringItem(i, item[1])
+                    self.CheckItem(i, item[0])
+                    for j, value in enumerate(item[1:]):
+                        self.SetStringItem(i, j, value)
+                width = 4
+                for i in range(len(columns)):
+                    self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
+                    width += self.GetColumnWidth(i)
+                height = min(320, len(items) * 27 + 31)
+                # The resulting height is (at least on Linux) actually 40px less than
+                # what we request, so request 40px more (yet another wx weirdness...).
+                self.SetMinSize((width, height + 40))
+        return CheckListCtrl(parent, columns, items)
+
+
 class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
@@ -153,6 +179,26 @@ class X2GoStartApp(wx.App):
         heading = self._args.heading or _("Pytis2Go")
         return ui.label(parent, heading, size=18, bold=True)
 
+    def _confirm_shortcuts(self, shortcuts):
+        def create_dialog(dialog):
+            checklist = ui.checklist(dialog, (_("Name"),),
+                                     [(True, name) for name, shortcut in shortcuts])
+            dialog.set_callback(lambda: checklist.SetFocus())
+            return ui.vgroup(
+                (ui.label(dialog, _("The following desktop shortcuts are invalid.") + "\n" +
+                          _("Press Ok to remove the checked items.")), 0, wx.ALL, 10),
+                (checklist, 1, wx.LEFT | wx.RIGHT, 10),
+                (ui.hgroup(
+                    ui.button(dialog, _(u"Ok"),
+                              lambda e: dialog.close([shortcut for i, (name, shortcut)
+                                                      in enumerate(shortcuts)
+                                                      if checklist.IsChecked(i)])),
+                    ui.button(dialog, _(u"Cancel"),
+                              lambda e: dialog.close(None)),
+                ), 0, wx.ALIGN_CENTER | wx.ALL, 10),
+            )
+        return self._show_dialog(_("Confirm shortcuts removal"), create_dialog)
+
     def _create_menu_button(self, parent):
         items = [
             (_("Generate new SSH key pair"), self._controller.generate_key),
@@ -161,7 +207,8 @@ class X2GoStartApp(wx.App):
             (_("Send public key to admin"), self._controller.send_key),
         ]
         if self._controller.on_windows():
-            items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
+            items.append((_("Cleanup desktop shortcuts"),
+                          lambda: self._controller.cleanup_shortcuts(self._confirm_shortcuts)))
         menu = wx.Menu()
         for label, callback in items:
             item = wx.MenuItem(menu, -1, label)
