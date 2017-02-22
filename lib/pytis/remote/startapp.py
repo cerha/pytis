@@ -147,8 +147,7 @@ class X2GoStartApp(wx.App):
                                              backends=backends,
                                              add_to_known_hosts=args.add_to_known_hosts,
                                              broker_url=args.broker_url,
-                                             broker_password=args.broker_password,
-                                             calling_script=getattr(args, 'calling_script', None))
+                                             broker_password=args.broker_password)
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _selected_profile_id(self):
@@ -229,7 +228,7 @@ class X2GoStartApp(wx.App):
             buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1)),
                         0, wx.EXPAND)]
-            if self._controller.on_windows() and self._args.calling_script:
+            if self._controller.on_windows():
                 buttons.append((ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                           lambda e: e.Enable(listbox.GetSelection() != -1 and
                                                              self._can_create_shortcut())),

@@ -164,8 +164,6 @@ if on_windows():
     pytis2go_options += [
         {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
          'help': 'create desktop shortcut if not present (default: disabled)', },
-        {'args': ['--calling-script'], 'default': False,
-         'help': 'full file name of the script invoking this command', },
     ]
 _profiles_backend_default = x2go.BACKENDS['X2GoSessionProfiles']['default']
 _settings_backend_default = x2go.BACKENDS['X2GoClientSettings']['default']

@@ -832,15 +832,13 @@ class StartupController(object):
     )
 
     def __init__(self, application, session_parameters, force_parameters=None,
-                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None,
-                 calling_script=None):
+                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None):
         self._app = application
         # If broker_url is given, the session parameters will be updated
         # later from the selected profile in select_profile().
         self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
         self._force_parameters = force_parameters
         self._add_to_known_hosts = add_to_known_hosts
-        self._calling_script = calling_script
         self._xserver_variant = XSERVER_VARIANT_DEFAULT
         if broker_url:
             self._broker_parameters, self._broker_path = self._parse_url(broker_url)
@@ -1168,12 +1166,6 @@ class StartupController(object):
         vbs_path = self._vbs_path(directory, username, profile_id)
         # Create the VBS script to which the shortcut will point to.
         if not os.path.exists(vbs_path):
-            calling_script = os.path.join(directory, os.path.basename(self._calling_script))
-            if not os.path.exists(calling_script):
-                # Check if the VBS script was created properly.
-                return _("Unable to find the calling script: %s") % calling_script
-            with open(calling_script, 'r') as f:
-                script_src = f.read()
             params = self._broker_parameters
             broker_url = "ssh://%s%s@%s%s/%s" % (
                 username,
@@ -1182,17 +1174,20 @@ class StartupController(object):
                 ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
                 self._broker_path,
             )
-            for regexp, replacement in (
-                    (r'--broker-url=[^"\s]+', '--broker-url=%s -P %s' % (broker_url, profile_id)),
-                    (r'--create-shortcut', ''),
-                    (r'--calling-script=', ''),
-                    (r'&\s+Wscript.ScriptFullName', ''),
-                    (r'&\s+Wscript.ScriptName', ''),
-                    (r'&\s+Wscript.ScriptName', ''),
-            ):
-                script_src = re.sub(regexp, replacement, script_src)
+            vbs_script = '\n'.join((
+                "'P2GO - menu aplikací",
+                'dim scriptdir, appshell',
+                'Set appshell = CreateObject("Shell.Application")',
+                'appshell.MinimizeAll',
+                'Set fso = CreateObject("Scripting.FileSystemObject")',
+                'scriptdir = fso.GetParentFolderName(Wscript.ScriptFullName)',
+                'Set WshShell = CreateObject("WScript.Shell")',
+                'WshShell.CurrentDirectory = scriptdir',
+                ('WshShell.RUN "cmd /c ..\ppython27\app\python.exe ..\pytis\bin\x2goclient.py '
+                 '--add-to-known-hosts --broker-url=%s -P %s"' % (broker_url, profile_id)),
+            ))
             with open(vbs_path, 'w') as f:
-                f.write(script_src)
+                f.write(vbs_script)
         # Create the shortcut on the desktop.
         profile_name = self._profile_session_parameters(profile_id)['profile_name']
         shortcut_path, n = os.path.join(winshell.desktop(), '%s.lnk' % profile_name), 0
