@@ -466,7 +466,7 @@ class X2GoClient(x2go.X2GoClient):
                     pass
         update_progress(_("Preparing X2Go session."))
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
-                                 #logger = x2go.X2GoLogger(tag='PytisClient')
+                                 # logger = x2go.X2GoLogger(tag='PytisClient')
         if on_windows() and xserver_variant:
             update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
@@ -1219,8 +1219,8 @@ class StartupController(object):
         for shortcut, checked in zip(shortcuts, confirmed):
             if checked:
                 os.remove(shortcut.lnk_filepath)
-        #TODO: We need ngettext for correct plural forms.
-        #self._app.message(_("%d shortcuts removed succesfully."))
+        # TODO: We need ngettext for correct plural forms.
+        # self._app.message(_("%d shortcuts removed succesfully."))
 
     def generate_key(self):
         """Generate new SSH key pair."""
