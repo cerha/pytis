@@ -1174,7 +1174,7 @@ class StartupController(object):
                 ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
                 self._broker_path,
             )
-            vbs_script = '\n'.join((
+            vbs_script = '\r\n'.join((
                 "'P2GO - menu aplikací",
                 'dim scriptdir, appshell',
                 'Set appshell = CreateObject("Shell.Application")',
