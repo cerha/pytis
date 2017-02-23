@@ -1165,6 +1165,7 @@ class StartupController(object):
             return _("Unable to find the scripts directory: %s") % directory
         vbs_path = self._vbs_path(directory, username, profile_id)
         # Create the VBS script to which the shortcut will point to.
+        profile_name = self._profile_session_parameters(profile_id)['profile_name']
         if not os.path.exists(vbs_path):
             params = self._broker_parameters
             broker_url = "ssh://%s%s@%s%s/%s" % (
@@ -1174,8 +1175,8 @@ class StartupController(object):
                 ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
                 self._broker_path,
             )
-            vbs_script = '\r\n'.join((
-                "'P2GO - menu aplikací",
+            vbs_script = '\n'.join((
+                "'{}".format(profile_name),
                 'dim scriptdir, appshell',
                 'Set appshell = CreateObject("Shell.Application")',
                 'appshell.MinimizeAll',
@@ -1183,14 +1184,17 @@ class StartupController(object):
                 'scriptdir = fso.GetParentFolderName(Wscript.ScriptFullName)',
                 'Set WshShell = CreateObject("WScript.Shell")',
                 'WshShell.CurrentDirectory = scriptdir',
-                ('WshShell.RUN "cmd /c ..\\ppython27\\app\\python.exe '
-                 '..\\pytis\\bin\\x2goclient.py '
-                 '--add-to-known-hosts --broker-url=%s -P %s"' % (broker_url, profile_id)),
+                ('WshShell.RUN "cmd /c {} {} '
+                 '--add-to-known-hosts '
+                 '--broker-url={} -P {}" , 0'.format(
+                     sys.executable,
+                     os.path.abspath(sys.argv[0]),
+                     broker_url,
+                     profile_id)),
             ))
             with open(vbs_path, 'w') as f:
                 f.write(vbs_script)
         # Create the shortcut on the desktop.
-        profile_name = self._profile_session_parameters(profile_id)['profile_name']
         shortcut_path, n = os.path.join(winshell.desktop(), '%s.lnk' % profile_name), 0
         while os.path.exists(shortcut_path):
             # If the shortcut of given name already exists, it is probably something else as
