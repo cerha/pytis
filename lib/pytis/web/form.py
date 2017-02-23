@@ -180,6 +180,11 @@ class Form(lcg.Content):
         else:
             return []
 
+    def _call_if_callable(self, value, *args, **kwargs):
+        if isinstance(value, collections.Callable):
+            value = value(*args, **kwargs)
+        return value
+
     def _visible_actions(self, context, record):
         if record is not None:
             required_context = ActionContext.RECORD
@@ -1624,19 +1629,16 @@ class BrowseForm(LayoutForm):
         field_style = field.style
         if isinstance(field_style, collections.Callable):
             field_style = field_style(row)
-        kwargs = {}
-        if field_style is not None:
+        cls = []
+        if field_style:
             name = field_style.name()
             if name:
-                kwargs['cls'] = name
+                cls.append(name)
             style = self._style(field_style)
-            if style:
-                kwargs['style'] = style
+        else:
+            style = None
         if self._cell_editable(row, field.id):
-            if 'cls' in kwargs:
-                kwargs['cls'] += ' editable-cell'
-            else:
-                kwargs['cls'] = 'editable-cell'
+            cls.append('editable-cell')
             if isinstance(field, DateTimeField):
                 # This is a quick hack to make date fields inline editable
                 # (their UI depends on those additional resources).  Better
@@ -1645,7 +1647,9 @@ class BrowseForm(LayoutForm):
                 # dependencies) or at least asking the field instance.
                 context.resource('calendarview.js')
                 context.resource('calendarview.css')
-        return kwargs
+        if field.id == self._column_fields[0].id and self._row_actions:
+            cls.append('with-popup-menu')
+        return dict((k, v) for k, v in dict(cls=' '.join(cls), style=style).items() if v)
 
     def _row_attr(self, row, n):
         row_style = self._view.row_style()
