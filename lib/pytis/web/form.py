@@ -194,21 +194,14 @@ class Form(lcg.Content):
             function_args = (self._req,)
         def is_visible(action):
             context = action.context()
-            if context != required_context:
+            if context == required_context:
+                return self._call_if_callable(action.visible(), *function_args)
+            else:
                 return False
-            visible = action.visible()
-            if isinstance(visible, collections.Callable):
-                visible = visible(*function_args)
-            return visible
         def is_enabled(action):
-            enabled = action.enabled()
-            if isinstance(enabled, collections.Callable):
-                enabled = enabled(*function_args)
-            return enabled
+            return self._call_if_callable(action.enabled(), *function_args)
         if self._actions is not None:
-            actions = self._actions
-            if isinstance(actions, collections.Callable):
-                actions = actions(self, record)
+            actions = self._call_if_callable(self._actions, self, record)
         else:
             actions = self._view.actions()
         return [(action, is_enabled(action)) for action in actions if is_visible(action)]
@@ -308,8 +301,7 @@ class FieldForm(Form):
                 return self._export_field(context, self._fields[fid])
             else:
                 return g.escape('')
-        if isinstance(template, collections.Callable):
-            template = template(row)
+        template = self._call_if_callable(template, row)
         # Translation is called immediately to force immediate interpolation
         # (with the current row data).  Delayed translation (which invokes the
         # interpolation) would use invalid row data (the 'PresentedRow'
@@ -396,11 +388,8 @@ class LayoutForm(FieldForm):
         content = self._GroupContent()
         subgroup_number = 0
         for i, item in enumerate(group.items()):
-            if isinstance(item, collections.Callable):
-                item = item(self._row)
-            if item is None:
-                pass
-            elif isinstance(item, basestring):
+            item = self._call_if_callable(item, self._row)
+            if isinstance(item, basestring):
                 if self._row.visible(item):
                     field = self._fields[item]
                     if omit_first_field_label and i == 0:
@@ -450,7 +439,7 @@ class LayoutForm(FieldForm):
                 content.append(text, fullsize=False, needs_panel=True)
             elif isinstance(item, Button):
                 pass
-            else:
+            elif item is not None:
                 raise pytis.util.ProgramError("Unsupported layout item type:", item)
         if group.orientation() == Orientation.HORIZONTAL:
             if not content.content():
@@ -828,8 +817,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _find_subform(self, group):
         for item in group.items():
-            if isinstance(item, collections.Callable):
-                item = item(self._row)
+            item = self._call_if_callable(item, self._row)
             if isinstance(item, GroupSpec):
                 result = self._find_subform(item)
                 if result is not None:
@@ -1626,10 +1614,8 @@ class BrowseForm(LayoutForm):
         return '; '.join(styles)
 
     def _field_style(self, context, field, row):
-        field_style = field.style
-        if isinstance(field_style, collections.Callable):
-            field_style = field_style(row)
         cls = []
+        field_style = self._call_if_callable(field.style, row)
         if field_style:
             name = field_style.name()
             if name:
@@ -1652,9 +1638,7 @@ class BrowseForm(LayoutForm):
         return dict((k, v) for k, v in dict(cls=' '.join(cls), style=style).items() if v)
 
     def _row_attr(self, row, n):
-        row_style = self._view.row_style()
-        if isinstance(row_style, collections.Callable):
-            row_style = row_style(row)
+        row_style = self._call_if_callable(self._view.row_style(), row)
         cls = ['data-row',
                n % 2 and 'even' or 'odd',
                self._group and 'even-group' or 'odd-group']
