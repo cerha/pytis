@@ -298,8 +298,8 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
         client = self._ssh_client()
         if client is None:
             return {}
-        session_data = self._broker_profile_cache[profile_id] = \
-            copy.copy(self._broker_profiles[profile_id])
+        session_data = self._broker_profile_cache[profile_id] = copy.copy(
+            self._broker_profiles[profile_id])
         server_regexp = re.compile('^SERVER:(.*):(.*)$')
         text = ''
         command = "%s --task selectsession --sid %s" % (self._broker_path, profile_id)
@@ -465,8 +465,9 @@ class X2GoClient(x2go.X2GoClient):
                 except ClientException:
                     pass
         update_progress(_("Preparing X2Go session."))
-        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs)
-                                 # logger = x2go.X2GoLogger(tag='PytisClient')
+        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
+                                 # logger = x2go.X2GoLogger(tag='PytisClient'
+                                 )
         if on_windows() and xserver_variant:
             update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
@@ -1149,7 +1150,6 @@ class StartupController(object):
                         pass
 
     def shortcut_exists(self, username, profile_id):
-        import winshell
         vbs_path = self._vbs_path(self._scripts_directory(), username, profile_id)
         if not os.path.exists(vbs_path):
             return False
@@ -1183,7 +1183,8 @@ class StartupController(object):
                 'scriptdir = fso.GetParentFolderName(Wscript.ScriptFullName)',
                 'Set WshShell = CreateObject("WScript.Shell")',
                 'WshShell.CurrentDirectory = scriptdir',
-                ('WshShell.RUN "cmd /c ..\ppython27\app\python.exe ..\pytis\bin\x2goclient.py '
+                ('WshShell.RUN "cmd /c ..\\ppython27\\app\\python.exe '
+                 '..\\pytis\\bin\\x2goclient.py '
                  '--add-to-known-hosts --broker-url=%s -P %s"' % (broker_url, profile_id)),
             ))
             with open(vbs_path, 'w') as f:
