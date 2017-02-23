@@ -466,7 +466,8 @@ class RpycInfo(object):
             f.write('%s\n%s' % (self._port, self._password,))
             f.close()
         except Exception as e:
-            raise ClientException(_(u"Error when writing RPyC info file: %s") % (self._filename,), e)
+            msg = _(u"Error when writing RPyC info file: {}").format(self._filename)
+            raise ClientException(msg, e)
 
     def port(self):
         return self._port
@@ -727,7 +728,8 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         _defaults = XCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
             if option in ('test_installed', 'run_command'):
-                win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..', 'win_apps'))
+                win_apps_path = os.path.normpath(os.path.join(run_directory(), '..', '..',
+                                                              'win_apps'))
                 defaults_path = _defaults[option]
                 d, f = os.path.split(defaults_path)
                 _xserver_config[option] = self._fix_win_path(os.path.join(win_apps_path,
@@ -761,9 +763,10 @@ class X2GoClient(x2go.X2GoClient):
     def start_xserver_pytis(self, variant=None):
         if on_windows() and variant:
             if self.client_rootdir:
-                _xconfig_config_file = os.path.join(self.client_rootdir, x2go.defaults.X2GO_XCONFIG_FILENAME)
-                self.client_xconfig = x2go.client.X2GoClientXConfig(config_files=[_xconfig_config_file],
-                                                                    logger=self.logger)
+                _xconfig_config_file = os.path.join(self.client_rootdir,
+                                                    x2go.defaults.X2GO_XCONFIG_FILENAME)
+                self.client_xconfig = x2go.client.X2GoClientXConfig(
+                    config_files=[_xconfig_config_file], logger=self.logger)
             else:
                 self.client_xconfig = x2go.client.X2GoClientXConfig(logger=self.logger)
             if not self.client_xconfig.installed_xservers:
@@ -772,7 +775,8 @@ class X2GoClient(x2go.X2GoClient):
                 _last_display = None
                 if isinstance(variant, types.BooleanType):
                     p_xs_name = self.client_xconfig.preferred_xserver_names[0]
-                    _last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
+                    _last_display = self.client_xconfig.get_xserver_config(
+                        p_xs_name)['last_display']
                     _new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
                     p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
                 elif isinstance(variant, types.StringType):
@@ -781,13 +785,14 @@ class X2GoClient(x2go.X2GoClient):
                     p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
                 if not self.client_xconfig.running_xservers:
                     if p_xs is not None:
-                        self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1], logger=self.logger)
+                        self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1],
+                                                                logger=self.logger)
                 else:
                     if p_xs is not None and _last_display is not None:
                         if _last_display == _new_display:
                             #
-                            # FIXME: this trick is nasty, client implementation should rather cleanly
-                            # shutdown launch X-server processes
+                            # FIXME: this trick is nasty, client implementation should rather
+                            # cleanly shutdown launch X-server processes
                             #
                             # re-use a left behind X-server instance of a previous/crashed
                             # run of Python X2Go Client
@@ -797,7 +802,8 @@ class X2GoClient(x2go.X2GoClient):
                             os.environ.update({'DISPLAY': _last_display})
                     else:
                         # presume the running XServer listens on :0
-                        self.logger('using fallback display for X-server: localhost:0', loglevel=x2go.log.loglevel_WARN)
+                        self.logger('using fallback display for X-server: localhost:0',
+                                    loglevel=x2go.log.loglevel_WARN)
                         os.environ.update({'DISPLAY': 'localhost:0'})
     __start_xserver_pytis = start_xserver_pytis
 
@@ -806,6 +812,7 @@ x2go.X2GoClient = X2GoClient
 
 import pyhoca.cli
 from pyhoca.cli import runtime_error
+
 
 class PytisClient(pyhoca.cli.PyHocaCLI):
 
@@ -962,7 +969,8 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                         self.args.password = auth_password
                     test_client.close()
                 else:
-                    raise Exception(_("Couldn't connect to application server %s." % self.args.server))
+                    msg = _("Couldn't connect to application server %s.") % self.args.server
+                    raise Exception(msg)
                 params = profiles.to_session_params(profile_id)
                 # Start xserver according to the selected profile
                 rootless = profile.get('rootless', True)
