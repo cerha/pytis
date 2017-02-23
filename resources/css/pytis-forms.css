@@ -29,12 +29,12 @@
     padding: 0.4em 0.6em;
 }
 .pytis-form .submit-buttons {
-    margin-top: .5em;
-    padding: .5em;
+    margin-top: 6px;
+    padding: 5px;
     text-align: center;
 }
 .pytis-form .submit-buttons button {
-    margin: 0 .6em;
+    margin: 3px 4px;
 }
 
 .pytis-form.query-fields-form > table {
