@@ -169,6 +169,12 @@ NOVÉ VLASTNOSTI:
    - Enter ve formuláøích (odeslat celý formuláø)?
    - Tab v tabulce (pohybuje kurzorem, ale to dìlají i ¹ipky) -- mohl vyvolat COMMAND_OTHER_FORM
    
+ * Doplnit pro pytis.extensions.dbselect parametr "limit" pro mo¾nost omezit poèet hledaných
+   øádkù. Pøi kontrolách staèí èasto najít, ¾e existuje jeden hledaný øádek jako chyba a není
+   získat seznam v¹ech øádkù. (Pou¾ít agregace a zjistit poèet øádkù je por tyto úèely na zápis
+   kódu ponìkud nepøehledné). Mo¾ná by stálo za úvahu zavést i funkci dbexists(spec, cond,
+   transaction). 
+
 
 2) Specifikace
 
