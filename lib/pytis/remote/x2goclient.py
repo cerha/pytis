@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-02-09 22:59'
+_VERSION = '2017-02-24 13:19'
 
 import os
 import gettext
