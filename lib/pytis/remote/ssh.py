@@ -262,9 +262,9 @@ class ReverseTunnel(gevent.Greenlet):
             return
         log(EVENT, 'Tunnel open %r -> %r -> %r' % (chan.origin_addr, chan.getpeername(),
                                                    (host, port)))
-        while True:
-            r, w, x = select.select([sock, chan], [], [])
-            try:
+        try:
+            while True:
+                r, w, x = select.select([sock, chan], [], [])
                 if sock in r:
                     data = sock.recv(1024)
                     if len(data) == 0:
@@ -275,12 +275,16 @@ class ReverseTunnel(gevent.Greenlet):
                     if len(data) == 0:
                         break
                     sock.send(data)
-            except Exception as e:
-                log(OPERATIONAL,
-                    'Reverse tunnel {} encountered socket error: {}'.format(
-                        chan, str(e)))
-        chan.close()
-        sock.close()
+        except Exception as e:
+            log(OPERATIONAL,
+                'Reverse tunnel {} encountered socket error: {}'.format(
+                    chan, str(e)))
+        try:
+            chan.close()
+            sock.close()
+        except Exception as e:
+            log(OPERATIONAL, 'Tunnel closing failed: {}'.format(str(e)))
+            return
         log(EVENT, 'Tunnel closed from %r' % (chan.origin_addr,))
 
     def _reverse_forward_tunnel(self, transport):
