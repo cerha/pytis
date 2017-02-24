@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -921,16 +921,7 @@ class Profiles(list):
 
 
 class Filter(Profile):
-    """Predefined filter specification to be used within 'FilterSet'.
-
-    Filter is actually just a special case of Profile, which only defines the
-    filtering condition.
-
-    They can also be used within the deprecated 'filters' parameter of
-    'ViewSpec' for backwards compatibility, but such specifications should be
-    updated to use 'profiles' instead.
-
-    """
+    """Deprecated: Use Profile instead."""
     def __init__(self, id, name, condition=None):
         super(Filter, self).__init__(id, name, filter=condition)
 
@@ -940,61 +931,6 @@ class Filter(Profile):
 
 Condition = Filter
 """Deprecated: Use 'Profile' instead."""
-
-
-class FilterSet(list):
-    """Uniquely identified set of filters.
-
-    'FilterSet', unlike a plain list, adds some properties to a set of 'Filter'
-    instances.  This is currently used only in Web applications.
-
-    You can work with 'FilterSet' the same way as with lists and additionaly
-    you can examine the special 'FilterSet' properties (e.g. its unique
-    identifier).
-
-    """
-    _ID_MATCHER = re.compile('[a-z0-9_]+')
-
-    def __init__(self, id, title, filters, default=None):
-        """Arguments:
-
-          id -- filter set identifier as a non-empty string.  It must be unique
-            among all objects identifiers within a given form and it may
-            contain only lower-case English alphabet letters, digits and
-            underscores.
-          title -- label of the filter to be displayed to the user, basestring
-          filters -- sequence of 'Filter' instances
-          default -- identifier of the filter (from 'filters') to be selected by default
-
-        """
-        assert isinstance(id, basestring), id
-        assert self._ID_MATCHER.match(id), id
-        assert isinstance(title, basestring)
-        assert isinstance(filters, (tuple, list)), filters
-        if __debug__:
-            filter_identifiers = []
-            for f in filters:
-                assert isinstance(f, Filter), f
-                assert f.id() not in filter_identifiers, \
-                    "Duplicate filter id '%s' in filter set '%s'" % (f.id(), id)
-                filter_identifiers.append(f.id())
-            assert default is None or default in filter_identifiers, default
-        super(FilterSet, self).__init__(filters)
-        self._id = id
-        self._title = title
-        self._default = default
-
-    def id(self):
-        """Return identifier of the filter set, string."""
-        return self._id
-
-    def title(self):
-        """Return title of the filter set, basestring."""
-        return self._title
-
-    def default(self):
-        """Return identifier of the filter to be selected by default."""
-        return self._default
 
 
 class GroupSpec(object):
@@ -1573,8 +1509,6 @@ class ViewSpec(object):
             allows grouping of profiles into titled groups for presentation
             purposes.
 
-          filter_sets -- Deprecated: Use query_fields instead.
-
           aggregations -- a sequence aggregation functions which should be
             turned on automatically for this view (in forms which support
             that).  The items are 'AGG_*' constants of 'pytis.data.Data'.
@@ -1685,7 +1619,7 @@ class ViewSpec(object):
               actions=(), sorting=None, grouping=None, group_heading=None, check=(), cleanup=None,
               on_new_record=None, on_copy_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
-              profiles=(), filters=(), default_filter=None, filter_sets=(),
+              profiles=(), filters=(), default_filter=None,
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               orientation=Orientation.HORIZONTAL, folding=None, initial_folding=None,
               arguments=None, argument_provider=None, condition_provider=None,
@@ -1796,21 +1730,16 @@ class ViewSpec(object):
                 assert isinstance(f, collections.Callable)
         if filters:
             # `filters' are for backwards compatibility.
-            if isinstance(filters[0], FilterSet):
-                filter_sets = filters
-                assert default_filter is None, default_filter
-            else:
-                # Filters are compatible with profiles (they only define the
-                # 'filter' property of the profile) so we can use them as
-                # profiles directly.
-                assert not profiles, "When using 'profiles', 'filters' can not be used."
-                profiles = Profiles(*filters, **{'default': default_filter})
+            # Filters are compatible with profiles (they only define the
+            # 'filter' property of the profile) so we can use them as
+            # profiles directly.
+            assert not profiles, "When using 'profiles', 'filters' can not be used."
+            profiles = Profiles(*filters, **{'default': default_filter})
         else:
             assert default_filter is None, default_filter
         if not isinstance(profiles, Profiles):
             assert isinstance(profiles, (tuple, list)), profiles
             profiles = Profiles(*profiles)
-        assert isinstance(filter_sets, (tuple, list))
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1835,8 +1764,6 @@ class ViewSpec(object):
                 assert agg in [getattr(pytis.data.Data, attr)
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
-            for fs in filter_sets:
-                assert isinstance(fs, FilterSet), fs
         assert orientation in public_attributes(Orientation)
         assert cleanup is None or isinstance(cleanup, collections.Callable)
         assert on_new_record is None or isinstance(on_new_record, collections.Callable)
@@ -1879,7 +1806,6 @@ class ViewSpec(object):
         self._help = help
         self._row_style = row_style
         self._profiles = profiles
-        self._filter_sets = tuple(filter_sets)
         self._aggregations = tuple(aggregations)
         self._grouping_functions = tuple(grouping_functions)
         self._aggregated_views = tuple(aggregated_views)
@@ -2004,10 +1930,6 @@ class ViewSpec(object):
 
     def profiles(self):
         return self._profiles
-
-    def filter_sets(self):
-        """Return the filter sets as a tuple of 'FilterSet' instances."""
-        return self._filter_sets
 
     def aggregations(self):
         """Return default aggregation functions as a tuple."""

@@ -41,7 +41,7 @@ import re
 import pytis.data as pd
 
 from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, Text, Button, \
-    Profiles, FilterSet, Filter
+    Profiles, Filter
 import pytis.util
 
 from .field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
@@ -987,7 +987,7 @@ class QueryFieldsForm(VirtualForm):
     _ALLOW_NOT_NULL_INDICATORS = False
     _SAVED_EMPTY_VALUE = '-'
 
-    def __init__(self, req, resolver, query_fields, profiles, filter_sets, immediate_filters=True,
+    def __init__(self, req, resolver, query_fields, profiles, immediate_filters=True,
                  async_load=False):
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
@@ -997,14 +997,6 @@ class QueryFieldsForm(VirtualForm):
             spec_kwargs = {}
             fields = []
             layout = pytis.presentation.HGroup()
-        if filter_sets:
-            fields[0:0] = [self._filter_set_field(fs) for fs in filter_sets]
-            ids = tuple([fs.id() for fs in filter_sets])
-            if not any(fsid in layout.order() for fsid in ids):
-                if layout.orientation() == pytis.presentation.Orientation.HORIZONTAL:
-                    layout = pytis.presentation.HGroup(*(ids + layout.items()))
-                else:
-                    layout = pytis.presentation.HGroup(ids, layout)
         if profiles:
             assert 'profile' not in [f.id() for f in fields]
             class Enumeration(pytis.presentation.Enumeration):
@@ -1046,24 +1038,6 @@ class QueryFieldsForm(VirtualForm):
                         if saved_value == self._SAVED_EMPTY_VALUE:
                             saved_value = ''
                         row.validate(field.id, saved_value)
-
-    def _filter_set_field(self, filter_set):
-        # Determine the current set of user selectable filters.
-        null_filter = pytis.util.find(None, filter_set, key=lambda f: f.condition())
-        if null_filter:
-            null_display = null_filter.title()
-            filters = [f for f in filter_set if f is not null_filter]
-        else:
-            # Translators: Label used in filter selection box for the
-            # option which disables filtering and thus results in all
-            # records to be displayed.
-            null_display = _("All items")
-            filters = filter_set
-        class Enumeration(pytis.presentation.Enumeration):
-            enumeration = [(f.id(), f.title()) for f in filters]
-        return pytis.presentation.Field(filter_set.id(), filter_set.title(),
-                                        null_display=null_display, not_null=False,
-                                        enumerator=Enumeration, default=filter_set.default())
 
     def _export_form(self, context):
         g = context.generator()
@@ -1145,7 +1119,7 @@ class BrowseForm(LayoutForm):
                  columns=None, sorting=None, transform_sorting=None, grouping=None, message=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None,
                  allow_text_search=None, text_search_condition=None, permanent_text_search=False,
-                 filter=None, filter_sets=None, profiles=None, query_fields=None,
+                 filter=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  cell_editable=None, expand_row=None, async_row_expansion=False,
@@ -1251,8 +1225,6 @@ class BrowseForm(LayoutForm):
             condition will be appended to 'condition', but the difference is
             that 'condition' is invisible to the user, but 'filter' may be
             indicated in the user interface.
-          filter_sets -- Deprecated. Filter sets can be implemented using query
-            fields.
           profiles -- specification of form profiles as a 'Profiles' instance
             or a sequence of 'Profile' instances.  These profiles will be
             available in the user interface for user's selection.  If None, the
@@ -1354,29 +1326,18 @@ class BrowseForm(LayoutForm):
             profiles = self._view.profiles()
         elif not isinstance(profiles, Profiles):
             profiles = Profiles(*profiles)
-        if filter_sets is None:
-            filter_sets = self._view.filter_sets()
         self._profiles = profiles
         self._filter = filter
         self._filters = []
-        self._filter_sets = filter_sets
-        if query_fields or filter_sets or profiles:
+        if query_fields or profiles:
             self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(),
-                                                             query_fields, profiles, filter_sets,
+                                                             query_fields, profiles,
                                                              immediate_filters=immediate_filters,
                                                              async_load=async_load)
             query_fields_row = form.row()
         else:
             self._query_fields_form = None
         self._current_profile = None
-        for filter_set in filter_sets:
-            filter_id = query_fields_row[filter_set.id()].value()
-            if filter_id:
-                matching_filter = pytis.util.find(filter_id, filter_set, key=lambda f: f.id())
-                if matching_filter:
-                    cond = matching_filter.condition()
-                    if cond:
-                        self._filters.append(cond)
         if profiles:
             profile_id = query_fields_row['profile'].value() or profiles.default()
             profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
@@ -2154,28 +2115,25 @@ class BrowseForm(LayoutForm):
             return super(BrowseForm, self).export(context)
 
     def heading_info(self):
-        if self._query_fields_form:
-            row = self._query_fields_form.row()
-            filter_names = []
-            for filter_set in self._filter_sets:
-                f = pytis.util.find(row[filter_set.id()].value(), filter_set, key=lambda x: x.id())
-                if f and f.condition():
-                    filter_names.append(f.title())
-            if filter_names:
-                return _("filtered by: ") + lcg.concat(filter_names, separator=', ')
+        # TODO: This was implemented for filter sets only (now removed).  It would
+        # probably make sense for query_fields as well.
+        #if self._query_fields_form:
+        #    row = self._query_fields_form.row()
+        #    filter_names = []
+        #    if filter_names:
+        #        return _("filtered by: ") + lcg.concat(filter_names, separator=', ')
         return None
 
     def query_field_values(self):
-        """Return the current filter field values as a list of pairs (field_id, value).
+        """Return the current query field values as a list of pairs (field_id, value).
 
-        Filter id is the id from the 'query_fields' specification.  Values are
-        'pytis.data.Value' instances.  All fields present in the 'query_fields'
-        specification are returned.
+        Field ids match those from the 'query_fields' specification.  Values
+        are 'pytis.data.Value' instances.  All fields present in the
+        'query_fields' specification are returned.
 
         """
         row = self._query_fields_form.row()
-        fs_keys = [fs.id() for fs in self._filter_sets]
-        return [(key, row[key]) for key in row.keys() if key not in fs_keys]
+        return [(key, row[key]) for key in row.keys()]
 
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
