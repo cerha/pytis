@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-02-24 17:09'
+_VERSION = '2017-02-27 17:39'
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
@@ -1182,6 +1182,11 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     ssh_tunnel_dead.set()
                     # We must restart RPyC as well in order to prevent password leak
                     rpyc_stop_queue.put(True)
+                    break
+                elif tunnel.handler_failed():
+                    ssh_tunnel_dead.set()
+                    rpyc_stop_queue.put(True)
+                    tunnel.kill()
                     break
                 elif rpyc_port.get() != current_rpyc_port:
                     tunnel.kill()

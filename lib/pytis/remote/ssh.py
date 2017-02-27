@@ -251,6 +251,7 @@ class ReverseTunnel(gevent.Greenlet):
         self._gss_auth = gss_auth
         self._strict_forward_port = strict_forward_port
         self._ssh_client = None
+        self._handler_failed = False
 
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -258,6 +259,7 @@ class ReverseTunnel(gevent.Greenlet):
         try:
             sock.connect((host, port))
         except Exception as e:
+            self._handler_failed = True
             log(OPERATIONAL, 'Forwarding request to %s:%d failed: %r' % (host, port, e))
             return
         log(EVENT, 'Tunnel open %r -> %r -> %r' % (chan.origin_addr, chan.getpeername(),
@@ -276,6 +278,7 @@ class ReverseTunnel(gevent.Greenlet):
                         break
                     sock.send(data)
         except Exception as e:
+            self._handler_failed = True
             log(OPERATIONAL,
                 'Reverse tunnel {} encountered socket error: {}'.format(
                     chan, str(e)))
@@ -283,6 +286,7 @@ class ReverseTunnel(gevent.Greenlet):
             chan.close()
             sock.close()
         except Exception as e:
+            self._handler_failed = True
             log(OPERATIONAL, 'Tunnel closing failed: {}'.format(str(e)))
             return
         log(EVENT, 'Tunnel closed from %r' % (chan.origin_addr,))
@@ -361,6 +365,8 @@ class ReverseTunnel(gevent.Greenlet):
     def _run(self):
         return self.run()
 
+    def handler_failed(self):
+        return self._handler_failed
 
 # Just for testing:
 if __name__ == '__main__':
