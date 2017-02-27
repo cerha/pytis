@@ -1442,10 +1442,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return ((x, y), (x + 2 * r, y), (x + r, y + r))
             else:
                 return ((x + r, y), (x + 2 * r, y + r), (x, y + r))
+
         def arrow(x, y, r=5, l=4):
             # Return polygon coordinates for an arrow.
             return ((x, y), (x - r, y - r), (x - r / 2, y - r), (x - r / 2, y - r - l),
                     (x + r / 2, y - r - l), (x + r / 2, y - r), (x + r, y - r))
+
         def funnel(x, y, r=3, l=8):
             # Return polygon coordinates for a funnel.
             return ((x, y), (x + r, y + r), (x + r, y + l), (x + r + 2, y + l),
@@ -2291,6 +2293,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             export_file = file_
         number_rows = self._table.number_of_rows()
+
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
             # to prevent numerous rpc calls in case of remote export.
@@ -2343,6 +2346,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, 'Called XLSX export')
         MINIMAL_COLUMN_WIDTH = 12
         import xlsxwriter
+
         def _process_table(update):
             column_list = []
             col_position = 0
@@ -2350,6 +2354,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             tmp_file_name = tmp_file.name
             w = xlsxwriter.Workbook(tmp_file)
             ws = w.add_worksheet('Export')
+
             def _get_format(ctype):
                 if isinstance(ctype, pytis.data.Float):
                     precision = ctype.precision()
@@ -2448,7 +2453,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             v = v.lower()
                         elif col_range == 'upper':
                             v = v.upper()
-                        if isinstance(ctype, pytis.data.Float) or isinstance(ctype, pytis.data.Integer):
+                        if isinstance(ctype, pytis.data.Float) or isinstance(ctype,
+                                                                             pytis.data.Integer):
                             ws.write_number(r_out + 1, position, v, fmt)
                         elif isinstance(ctype, pytis.data.DateTime):
                             ws.write_datetime(r_out + 1, position, v, fmt)
@@ -2583,6 +2589,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._run_callback(self.CALL_USER_INTERACTION)
         if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
             return True
+
         def evil_key(event):
             # Tato věc je tu kvůli eliminaci vstupu do editace políčka
             # libovolnou klávesou.  Není mi znám jiný způsob, jak této
@@ -2745,6 +2752,7 @@ class FoldableForm(ListForm):
             return result
         def condition(self, column_id):
             queries = []
+
             def add(path, state):
                 state_level = state.level()
                 subnodes = state.subnodes()
@@ -2959,7 +2967,7 @@ class FoldableForm(ListForm):
                     x2 = self._grid.GetTextExtent(value[:pos + 1])[0]
                     x = event.GetPosition()[0] - 2  # don't count grid padding.
                     offset = self._grid.CellToRect(row, col)[0]
-                    if x1 - 2 < x - offset < x2 + 2:  # enlarge the active area by 2px for easier hit
+                    if x1 - 2 < x - offset < x2 + 2:  # enlarge active area by 2px for easier hit
                         if event.ControlDown():
                             level = None
                         else:
@@ -3297,6 +3305,7 @@ class BrowseForm(FoldableForm):
         if action_items:
             menu += (MSeparator(),) + tuple(action_items)
         self._context_menu_static_part = menu
+
         # The dynamic part of the menu is created based on the links.
         def spec_title(name, binding=None):
             if name.find('::') != -1:
@@ -3312,6 +3321,7 @@ class BrowseForm(FoldableForm):
                     assert b is not None, "Unknown binding for %s: %s" % (name, binding)
                     title += ' / ' + config.resolver.get(b.name(), 'view_spec').title()
             return title
+
         def link_label(title, type=FormType.BROWSE):
             mapping = {FormType.BROWSE: _("Link - %s"),
                        FormType.EDIT: _("Edit %s"),
@@ -3454,6 +3464,7 @@ class BrowseForm(FoldableForm):
                 select_row = {column: row[f.id()]}
                 ititle = _('Filter "%(view_title)s" for rows contained in '
                            'column "%(column)s" of the current form.')
+
             def handler(form_class, name, **kwargs):
                 # The main reason for wrapping COMMAND_RUN_FORM in a function
                 # run through COMMAND_HANDLED_ACTION here is to postpone the
@@ -3502,17 +3513,17 @@ class BrowseForm(FoldableForm):
             else:
                 separator = []
             menu += (Menu(_("Filter existing values (operator IN)"),
-                          (self._in_operator_mitems(row, self._explicit_in_operator_links)
-                           + separator +
+                          (self._in_operator_mitems(row, self._explicit_in_operator_links) +
+                           separator +
                            self._in_operator_mitems(row, self._automatic_in_operator_links))),
                      Menu(_("Filter missing values (operator NOT IN)"),
-                          (self._in_operator_mitems(row, self._explicit_in_operator_links, True)
-                           + separator +
+                          (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
+                           separator +
                            self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
                      )
         dual = self._dualform()
-        if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm)
-                                          and dual.main_form() == self):
+        if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
+                                          dual.main_form() == self):
             menu += (MSeparator(),
                      MItem(_("Open with side forms"),
                            command=Application.COMMAND_RUN_FORM(
@@ -3668,8 +3679,8 @@ class SideBrowseForm(BrowseForm):
         if not self.initialized():
             self.full_init()
         bcol, sbcol = self._binding_column, self._side_binding_column
-        if ((bcol is None or self._binding_condition is not None
-             or self._current_profile.id() == '__constructor_profile__')):
+        if ((bcol is None or self._binding_condition is not None or
+             self._current_profile.id() == '__constructor_profile__')):
             return None
         else:
             if self._current_profile.id() == self._default_profile.id():
@@ -3754,6 +3765,7 @@ class AggregationForm(BrowseForm):
         # to perform the distinct operation manually here.
         seen = set()
         distinct = []
+
         def process(row):
             if len(distinct) > limit:
                 return
