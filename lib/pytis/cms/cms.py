@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ class Modules(Specification):
                         return module
         return None
     def _descr(self, rrecord, modname):
-        module = self._module(modname)
+        module = wiking.module(modname)
         if module:
             return module.descr() or module.title()
         else:
@@ -163,7 +163,7 @@ class Modules(Specification):
                 method = getattr(module, 'action_' + action)
                 docstring = method.__doc__
                 return docstring and docstring.splitlines()[0] or _("Neuvedeno")
-        module = self._module(record['modname'].value())
+        module = wiking.module(record['modname'].value())
         if module:
             from pytis.form import run_dialog, CheckListDialog, create_data_object
             data = create_data_object(self._spec_name('Actions'))
@@ -204,7 +204,7 @@ class Modules(Specification):
                             data.insert(pd.Row(rowdata))
                         else:
                             data.update((key,), pd.Row((('description', description_value),)))
-                        
+
     _DEFAULT_ACTIONS = (
         ('view', _("Zobrazení záznam")),
         ('list', _("Výpis všech záznamů")),
@@ -219,7 +219,7 @@ class Modules(Specification):
     """Defines list of names python modules which should be searched for available Wiking modules.
 
     Should be defined in the derived class to make module descriptions work.
-    
+
     """
 
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -153,7 +153,7 @@ class Menu(RestrictedPytisModule):
     def permitted_roles(self, req, module, action=None, record=None, **kwargs):
         #wiking.debug("...", module.name(), action, hasattr(req, 'cms_current_menu_record'))
         if hasattr(req, 'cms_current_menu_record'):
-            rights = self._module('Rights')
+            rights = wiking.module.Rights
             menu_record = req.cms_current_menu_record
             menu_item_id = menu_record['menu_item_id'].value()
             if module is self and action == 'view' and record is not None \
@@ -188,7 +188,7 @@ class Menu(RestrictedPytisModule):
     def menu(self, req):
         children = {None: []}
         translations = {}
-        rights = self._module('Rights')
+        rights = wiking.module.Rights
         def item(row):
             menu_item_id = row['menu_item_id'].value()
             identifier = self._menu_item_identifier(row)
@@ -198,7 +198,7 @@ class Menu(RestrictedPytisModule):
             modname = row['modname'].value()
             if modname is not None:
                 try:
-                    module = self._module(modname)
+                    module = wiking.module(modname)
                 except AttributeError:
                     # We want the website to work even if the module was uninstalled or renamed.
                     submenu = []
@@ -240,7 +240,7 @@ class Menu(RestrictedPytisModule):
     def globals(self, req):
         globals = {}
         for modname in self._SUBSTITUTION_PROVIDERS:
-            module = self._module(modname)
+            module = wiking.module(modname)
             globals.update(module.variables(req))
         return globals
 
@@ -264,7 +264,7 @@ class Menu(RestrictedPytisModule):
             pre, post = [], []
         if modname is not None:
             binding = self._embed_binding(modname)
-            result = req.forward(self._module(modname), binding=binding, record=record,
+            result = req.forward(wiking.module(modname), binding=binding, record=record,
                                  title=record['title'].value())
             if isinstance(result, wiking.Document):
                 # Embed the resulting document into the current menu item content.
@@ -294,7 +294,7 @@ class Menu(RestrictedPytisModule):
                                       record, globals=globals)
         if modname is None:
             # Module access is logged in EmbeddablePytisModule._handle().
-            self._module('AccessLog').log(req, None, None)
+            wiking.module.AccessLog.log(req, None, None)
         return document
 
     def module_uri(self, req, modname):
@@ -355,7 +355,7 @@ class Users(RestrictedPytisModule):
     def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
-        roles = [wiking.Roles.AUTHENTICATED] + self._module('UserRoles').roles(uid)
+        roles = [wiking.Roles.AUTHENTICATED] + wiking.module.UserRoles.roles(uid)
         return dict(uid=uid,
                     name=row['fullname'].value(),
                     password=row['passwd'].value(),
@@ -386,12 +386,10 @@ class Session(RestrictedPytisModule, wiking.Session):
                                                  session_key=session_key,
                                                  last_access=now))
         # Log session start for login history tracking.
-        self._module('SessionLog').log(req, now, row['session_id'].value(),
-                                       user.uid(), user.login())
+        wiking.module.SessionLog.log(req, now, row['session_id'].value(), user.uid(), user.login())
 
     def failure(self, req, user, login):
-        self._module('SessionLog').log(req, pd.DateTime.datetime(), None,
-                                       user and user.uid(), login)
+        wiking.module.SessionLog.log(req, pd.DateTime.datetime(), None, user and user.uid(), login)
 
     def check(self, req, user, session_key):
         row = self._data.get_row(uid=user.uid(), session_key=session_key)
@@ -456,7 +454,7 @@ class Application(wiking.Application):
                'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
 
     def user(self, req, login):
-        return self._module('Users').user(req, login)
+        return wiking.module.Users.user(req, login)
 
     def verify_password(self, user, password):
         user_password = user.password()
@@ -494,22 +492,22 @@ class Application(wiking.Application):
         try:
             roles = self._RIGHTS[module.name()]
         except KeyError:
-            roles = self._module('Menu').permitted_roles(req, module, action=action, record=record)
+            roles = wiking.module.Menu.permitted_roles(req, module, action=action, record=record)
         else:
             if action is not None and isinstance(roles, dict):
                 roles = roles.get(action, ())
         return roles
 
     def menu(self, req):
-        return self._module('Menu').menu(req)
+        return wiking.module.Menu.menu(req)
 
     def languages(self):
-        return self._module('Languages').languages()
+        return wiking.module.Languages.languages()
 
     def module_uri(self, req, modname):
         uri = super(Application, self).module_uri(req, modname)
         if uri is None:
-            uri = self._module('Menu').module_uri(req, modname)
+            uri = wiking.module.Menu.module_uri(req, modname)
         return uri
 
     def handle(self, req):
@@ -522,7 +520,7 @@ class Application(wiking.Application):
                 # Consume the unresolved path if it was in static mapping or leave it for further
                 # resolution when passing to Menu.
                 del req.unresolved_path[0]
-            return req.forward(self._module(modname))
+            return req.forward(wiking.module(modname))
         else:
             return super(Application, self).handle(req)
 
@@ -561,7 +559,7 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         if isinstance(result, wiking.Document):
             # Log only displayed pages, not objects displayed on them, such as images.  If logging
             # of downloaded files is desired, the module will need to do it explicitly.
-            self._module('AccessLog').log(req, self.name(), action)
+            wiking.module.AccessLog.log(req, self.name(), action)
         return result
 
 
@@ -587,7 +585,7 @@ class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, Embedd
     _BROWSE_FORM_LIMITS = (50, 100, 200, 300, 500)
 
     def _current_base_uri(self, req, record=None):
-        menu = self._module('Menu')
+        menu = wiking.module.Menu
         uri = super(EmbeddablePytisModule, self)._current_base_uri(req, record=record)
         if len(uri.lstrip('/').split('/')) == menu.ITEM_PATH_LENGTH:
             uri += '/'+ menu.EMBED_BINDING_ID
@@ -597,13 +595,13 @@ class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, Embedd
         fw = self._binding_forward(req)
         if fw:
             path = fw.uri().lstrip('/').split('/')
-            path_length = self._module('Menu').ITEM_PATH_LENGTH
+            path_length = wiking.module.Menu.ITEM_PATH_LENGTH
             if len(path) == path_length+2 and path[-1] == fw.arg('binding').id():
                 return '/'+ '/'.join(path[:path_length])
         return super(EmbeddablePytisModule, self)._binding_parent_uri(req)
 
     def _document(self, req, content, record=None, **kwargs):
-        globals = self._module('Menu').globals(req)
+        globals = wiking.module.Menu.globals(req)
         if 'globals' in kwargs and kwargs['globals'] is not None:
             kwargs['globals'].update(globals)
         else:
