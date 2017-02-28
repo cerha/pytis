@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,20 +37,27 @@ import wx.lib.colourselect
 import lcg
 import pytis.data
 import pytis.form
-from pytis.presentation import AttachmentStorage, CodebookSpec, Field, Orientation, \
-    PostProcess, PresentedRow, SelectionType, \
-    TextFilter, TextFormat, computer
-from pytis.util import EVENT, Popen, ProgramError, ResolverError, \
-    dev_null_stream, find, format_byte_size, log, argument_names
+from pytis.presentation import (
+    AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
+    Field, HGroup, Orientation, PostProcess, PresentedRow,
+    SelectionType, TextFilter, TextFormat, computer
+)
+from pytis.util import (
+    EVENT, Popen, ProgramError, ResolverError,
+    dev_null_stream, find, format_byte_size, log, argument_names,
+)
 from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
-from screen import CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector, \
-    char2px, dlg2px, file_menu_items, mitem, open_data_as_file, paste_from_clipboard, popup_menu, \
-    wx_button, wx_focused_window
-from application import Application, create_data_object, \
-    decrypted_names, delete_record, \
-    global_keymap, message, new_record, run_dialog, run_form
+from screen import (
+    CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
+    char2px, dlg2px, file_menu_items, mitem, open_data_as_file,
+    paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
+)
+from application import (
+    Application, create_data_object, decrypted_names, delete_record,
+    global_keymap, message, new_record, run_dialog, run_form,
+)
 import config
 
 _ = pytis.util.translations('pytis-wx')
@@ -1047,8 +1054,8 @@ class NumericField(TextField, SpinnableField):
         if self._spec.slider():
             slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
                                minValue=self._type.minimum() or 0,
-                               maxValue=(self._type.maximum() is None
-                                         and 100 or self._type.maximum()),
+                               maxValue=(self._type.maximum() is None and
+                                         100 or self._type.maximum()),
                                size=(200, 25))
             self._controls.append((slider, lambda c, e: c.Enable(e), lambda c, e: None))
             def on_slider(event):
@@ -1926,7 +1933,7 @@ class FileField(Invocable, InputField):
 
     def _cmd_load(self):
         pattern = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
-        #msg = _("Select the file for field '%s'", self.spec().label())
+        # msg = _("Select the file for field '%s'", self.spec().label())
         fh, filename = pytis.form.open_selected_file(pattern=pattern, context='file-field')
         if fh:
             try:
@@ -1951,7 +1958,7 @@ class FileField(Invocable, InputField):
         return self._buffer is not None
 
     def _cmd_save(self):
-        #msg = _("Save value of %s") % self.spec().label()
+        # msg = _("Save value of %s") % self.spec().label()
         try:
             saved = pytis.form.write_selected_file(self._buffer.buffer(), mode='wb',
                                                    filename=self._row.filename(self._id),
@@ -1987,7 +1994,7 @@ class ImageField(FileField):
         return (x + 4, x + 2)
 
     def _create_invocation_button(self, parent):
-        if self._spec.editable() == pytis.presentation.Editable.NEVER:
+        if self._spec.editable() == Editable.NEVER:
             # Hide the button only when the field is statically
             # ineditable (may not become dynamically editable).
             # The button looks odd when image field is used as
@@ -2042,11 +2049,11 @@ class StructuredTextField(TextField):
                            message=_("Error accessing attachment storrage") + ':\n' + e)
                 return []
 
-    class ImageAlignments(pytis.presentation.Enumeration):
+    class ImageAlignments(Enumeration):
         enumeration = (('inline', _("Inline")),
                        ('left', _("Left")),
                        ('right', _("Right")))
-    class ImageSizes(pytis.presentation.Enumeration):
+    class ImageSizes(Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
         enumeration = (('small-thumbnail', _("Small preview (%d px), click to enlarge" %
@@ -2535,25 +2542,25 @@ class StructuredTextField(TextField):
         fields = (
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
-                  selection_type=pytis.presentation.SelectionType.LISTBOX),
+                  selection_type=SelectionType.LISTBOX),
             Field('preview', _("Preview"), compact=True, width=200, height=200,
                   computer=computer(self._image_preview_computer),
-                  editable=pytis.presentation.Editable.NEVER,
+                  editable=Editable.NEVER,
                   type=pytis.data.Image(not_null=True, maxlen=5 * 1024 * 1024),
                   descr=_("Choose one of available files "
                           "or insert a new file from your computer.")),
             Field('size', _("Display in page as"), enumerator=self.ImageSizes,
-                  selection_type=pytis.presentation.SelectionType.RADIO,
-                  editable=pytis.presentation.Editable.ALWAYS, not_null=True,
+                  selection_type=SelectionType.RADIO,
+                  editable=Editable.ALWAYS, not_null=True,
                   computer=computer(self._size_computer),
                   descr=_("Choose the size and behavior of the image within the page.")),
-            Field('orig_size', _("Original size"), editable=pytis.presentation.Editable.NEVER,
+            Field('orig_size', _("Original size"), editable=Editable.NEVER,
                   computer=computer(self._orig_size_computer)),
             Field('preview_size', _("Preview size"),
-                  editable=pytis.presentation.Editable.NEVER,
+                  editable=Editable.NEVER,
                   computer=computer(self._preview_size_computer)),
             Field('resize', _("Resize ratio"),
-                  editable=pytis.presentation.Editable.NEVER,
+                  editable=Editable.NEVER,
                   computer=computer(self._resize_computer)),
             Field('align', _("Alignment"), not_null=True,
                   enumerator=self.ImageAlignments),
@@ -2565,13 +2572,12 @@ class StructuredTextField(TextField):
                   descr=_("Enter the text displayed in baloon help above "
                           "the image when the mouse moves over.")),
         )
-        button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
-        Columns = pytis.presentation.ColumnLayout
+        button = Button(_("Insert new"), self._load_new_file)
         row = run_form(pytis.form.InputForm, title=_("Insert Image"), fields=fields,
                        prefill=dict(filename=filename,
                                     align=link.align(),
                                     tooltip=link.tooltip()),
-                       layout=(Columns(('filename', button), 'preview'),
+                       layout=(HGroup(('filename', button), 'preview'),
                                'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
                        transaction=transaction)
         if row:
@@ -2600,7 +2606,7 @@ class StructuredTextField(TextField):
         fields = (
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
-                  selection_type=pytis.presentation.SelectionType.LISTBOX),
+                  selection_type=SelectionType.LISTBOX),
             Field('title', _(u"Title"), width=50,
                   descr=_("Enter the link label displayed within document text. "
                           "Leave empty if you want to dispaly the file name directly.")),
@@ -2608,7 +2614,7 @@ class StructuredTextField(TextField):
                   descr=_("Enter the text displayed in baloon help above the "
                           "link when the mouse moves over.")),
         )
-        button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
+        button = Button(_("Insert new"), self._load_new_file)
         row = run_form(pytis.form.InputForm, title=_("Insert attachment"), fields=fields,
                        prefill=dict(filename=filename,
                                     title=link.title(),
