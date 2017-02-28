@@ -3715,10 +3715,6 @@ class Field(object):
         self._type = self._kwargs['type'] = type_.__class__(*args, **kwargs)
 
 
-# Backwards compatibility alias
-FieldSpec = Field
-
-
 class Fields(object):
     """Deprecated -- use `Specification._inherited_fields()' instead."""
 
