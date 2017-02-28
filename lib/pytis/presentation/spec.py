@@ -1068,30 +1068,29 @@ class GroupSpec(object):
         return self._flexible
 
 
-class FieldSet(GroupSpec):
-    """Labeled field group with a frame for grouping of fields in form layout.
+class HGroup(GroupSpec):
+    """Horizontal group in 'layout' specification passed to 'ViewSpec'.
 
-    This class is derived from 'GroupSpec' (it is actually just its
-    specialization with more convenient constructor interface for this kind of
-    layout) so its instances may be used as items of 'ViewSpec' 'layout'
-    specification.
+    The items contained in this group are arranged horizontally (side by side),
+    while the default arrangement (when items are passed as a list or tuple) is
+    vertical.
+
+    """
+    def __init__(self, *items, **kwargs):
+        super(HGroup, self).__init__(items, orientation=Orientation.HORIZONTAL, **kwargs)
+
+
+class FieldSet(GroupSpec):
+    """Labeled group with a border in 'layout' specification passed to 'ViewSpec'.
+
+    The items inside this group will be visually surrounded by a thin border
+    around and given label will be displayed at the top of this rectangle.  The
+    items are arranged vertically inside the rectangle.  Use an 'HGroup' within
+    group items to force horizontal arrangement.
 
     """
     def __init__(self, label, items):
         super(FieldSet, self).__init__(items, label=label, orientation=Orientation.VERTICAL)
-
-
-class ColumnLayout(GroupSpec):
-    """Set of horizontally (side by side) composed field groups in form layout.
-
-    This class is derived from 'GroupSpec' (it is actually just its
-    specialization with more convenient constructor interface for this kind of
-    layout) so its instances may be used as items of 'ViewSpec' 'layout'
-    specification.
-
-    """
-    def __init__(self, *items):
-        super(ColumnLayout, self).__init__(items, orientation=Orientation.HORIZONTAL)
 
 
 class TabGroup(GroupSpec):
@@ -1110,43 +1109,25 @@ class TabGroup(GroupSpec):
         super(TabGroup, self).__init__(items, orientation=Orientation.VERTICAL)
 
 
-class HGroup(GroupSpec):
-    """Horizontální seskupení políček.
-
-    Tato třída je pouze pohodlnějším rozhraním k třídě 'GroupSpec'.
-
-    """
-    def __init__(self, *items, **kwargs):
-        super(HGroup, self).__init__(items, orientation=Orientation.HORIZONTAL, **kwargs)
+ColumnLayout = HGroup
+"""Deprecated: Use HGroup instead."""
 
 
 class VGroup(GroupSpec):
-    """Vertikální seskupení políček.
-
-    Tato třída je pouze pohodlnějším rozhraním k třídě 'GroupSpec'.
-
-    """
+    """Deprecated: Use a list or tuple instead."""
     def __init__(self, *items, **kwargs):
         super(VGroup, self).__init__(items, orientation=Orientation.VERTICAL, **kwargs)
 
 
 class LHGroup(HGroup):
-    """Horizontální seskupení políček s nadpisem a orámováním.
-
-    Tato třída je pouze pohodlnějším rozhraním k třídě 'GroupSpec'.
-
-    """
+    """Deprecated: Use FieldSet with a HGroup."""
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LHGroup, self).__init__(*items, **kwargs)
 
 
 class LVGroup(VGroup):
-    """Vertikální seskupení políček s labelem a orámováním.
-
-    Tato třída je pouze pohodlnějším rozhraním k třídě 'GroupSpec'.
-
-    """
+    """Deprecated: Use FieldSet instead."""
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LVGroup, self).__init__(*items, **kwargs)
@@ -1325,7 +1306,7 @@ class ViewSpec(object):
           layout -- single record form layout specification as a 'GroupSpec'
             instance.  It is also possible to pass a sequence of items, which
             are automatically wrapped into a newly created 'GroupSpec' instance
-            with horizontal arrangement.  The items must be compatible with
+            with vertical arrangement.  The items must be compatible with
             item types supported by 'GroupSpec'.  If None, the default layout
             will automatically contain all fields defined by 'fields'.
             'LayoutSpec' instance is also accepted for backwards compatibility,
