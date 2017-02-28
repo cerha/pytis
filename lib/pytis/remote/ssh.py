@@ -349,6 +349,7 @@ class ReverseTunnel(gevent.Greenlet):
         self._reverse_forward_tunnel(client.get_transport())
 
     def kill(self):
+        self._handler_failed = False
         if self._ssh_client:
             while True:
                 transport = self._ssh_client.get_transport()
@@ -367,6 +368,7 @@ class ReverseTunnel(gevent.Greenlet):
 
     def handler_failed(self):
         return self._handler_failed
+
 
 # Just for testing:
 if __name__ == '__main__':
