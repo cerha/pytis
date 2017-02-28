@@ -1193,9 +1193,11 @@ class StartupController(object):
                 'WshShell.CurrentDirectory = scriptdir',
                 ('WshShell.RUN "cmd /c {} {} '
                  '--add-to-known-hosts '
+                 '--heading=""{}"" '
                  '--broker-url={} -P {}" , 0'.format(
                      sys.executable,
                      os.path.abspath(sys.argv[0]),
+                     profile_name,
                      broker_url,
                      profile_id)),
             ))
