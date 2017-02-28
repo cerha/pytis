@@ -79,6 +79,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _log_login = True
     _recent_directories = {}
     _remote_client_version = None
+    _remote_status_info = (False, time.time())
 
     _WINDOW_MENU_TITLE = _("&Windows")
 
@@ -344,12 +345,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         wx.CallAfter(self._init)
         self._remote_connection_initially_available = pytis.remote.client_available()
         if self._remote_connection_initially_available:
+            self._remote_status_info = (True, time.time())
             try:
                 self._remote_client_version = version = pytis.remote.x2goclient_version()
                 log(OPERATIONAL, _("RPC communication available. Version: {}.").format(version))
             except Exception:
                 log(OPERATIONAL, _("RPC communication available. Version: unknown."))
         else:
+            self._remote_status_info = (False, time.time())
             log(OPERATIONAL, _("RPC communication unavailable"))
         return True
 
@@ -2070,8 +2073,14 @@ def built_in_status_fields():
             return ''
 
     def _refresh_remote_status():
+        last_status, last_time = _application._remote_status_info
+        last_change = time.strftime('%Y-%m-%d %H:%M:%S',
+                                    time.localtime(last_time))
         if pytis.remote.client_available():
-            tooltip_text = _("Connected.\nClient version: {}")
+            if not last_status:
+                _application._remote_status_info = (True, time.time())
+            tooltip_text = _("Connected.\nClient version: {}\n"
+                             "Status changed: {}")
             if _application._remote_client_version:
                 version = _application._remote_client_version
             else:
@@ -2080,9 +2089,13 @@ def built_in_status_fields():
                     _application._remote_client_version = version
                 except Exception:
                     version = _("Not available")
-            return (_("Ok"), 'connected', tooltip_text.format(version))
+            return (_("Ok"), 'connected', tooltip_text.format(version, last_change))
         else:
-            return (_('N/A'), 'disconnected', _("Not available."))
+            if last_status:
+                _application._remote_status_info = (True, time.time())
+            tooltip_text = _("Not available.\n"
+                             "Status changed: {}")
+            return (_('N/A'), 'disconnected', tooltip_text.format(last_change))
 
     def _refresh_user_config():
         tooltip_text = _("Username: {}\nDatabase host: {}\nDatabase name: {}")
