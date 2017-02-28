@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-02-24 13:19'
+_VERSION = '2017-02-28 17:07'
 
 import os
 import gettext
@@ -660,6 +660,13 @@ class X2GoClient(x2go.X2GoClient):
                     ssh_tunnel_dead.set()
                     # We must restart RPyC as well in order to prevent password leak
                     rpyc_stop_queue.put(True)
+                    break
+                elif tunnel.handler_failed():
+                    # If some exception in the tunnel handler occurs,
+                    # it will be better to restart rpyc and tunnel
+                    ssh_tunnel_dead.set()
+                    rpyc_stop_queue.put(True)
+                    tunnel.kill()
                     break
                 elif rpyc_port.get() != current_rpyc_port:
                     tunnel.kill()
