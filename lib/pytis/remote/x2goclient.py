@@ -1238,7 +1238,83 @@ class StartupController(object):
 
     def generate_key(self):
         """Generate new SSH key pair."""
+        sshdir = x2go.defaults.X2GO_SSH_ROOTDIR
+        if not os.path.exists(sshdir):
+            os.mkdir(sshdir)
+        # Check if key exists
+        key_file = None
+        for name in ('id_rsa', 'id_dsa'):
+            fname = os.path.join(sshdir, name)
+            if os.access(fname, os.R_OK):
+                key_file = fname
+                break
+        if key_file:
+            # Key file allready exists, do nothing
+            return
+        key_file = os.path.join(sshdir, 'id_rsa')
+        passwd = self.get_password()
+        if passwd:
+            pub_key_file = key_file + '.pub'
+            key = paramiko.RSAKey.generate(2048)
+            # Write private part
+            key.write_private_key_file(key_file, password=passwd)
+            # Write public part
+            # How to get username?
+            username = ''
+            with open(pub_key_file, 'w') as f:
+                if isinstance(username, unicode):
+                    username = username.encode('utf-8')
+                f.write(str("ssh-rsa "))
+                f.write(key.get_base64())
+                f.write(str(" "))
+                f.write(username)
+            if os.access(key_file, os.R_OK):
+                pass
+                # info_dialog("Klíče byly vytvořeny v adresáři %s." % sshdir)
+
+    def get_password(self, new_password=False):
+        """Password dialog with a simple checker."""
         pass
+    #     while True:
+    #         if new_password:
+    #             msg = "Zadejte nové heslo pro privátní klíč: "
+    #         else:
+    #             msg = "Zadejte heslo pro privátní klíč: "
+    #         passwd = text_dialog(msg, "Heslo pro klíč", password=True)
+    #         if passwd is not None:
+    #             check_result = check_password(passwd)
+    #             if check_result == 'unallowed':
+    #                 import string
+    #                 allowed_chars = string.digits + string.ascii_letters + string.punctuation
+    #                 msg = ("Heslo obsahuje nepovolené znaky. \n"
+    #                     "Povolené znaky jsou '%s'.\n\n"
+    #                     "Zadejte heslo znovu.") % allowed_chars
+    #                 info_dialog(msg, error=True)
+    #                 continue
+    #             elif check_result == 'too short':
+    #                 info_dialog("Heslo je příliš krátké. \n"
+    #                             "Délka musí být alespoň 10 znaků.\n\n"
+    #                             "Zadejte heslo znovu.", error=True)
+    #                 continue
+    #             elif check_result == 'not complex':
+    #                 info_dialog("Heslo je příliš jednoduché. \n"
+    #                             "Heslo musí obsahovat alespoň jedno velké písmeno a jednu číslici.\n\n"
+    #                             "Zadejte heslo znovu.", error=True)
+    #                 continue
+    #             passwd2 = text_dialog("Zadejte heslo ještě jednou pro kontrolu: ",
+    #                                 "Heslo pro klíč", password=True)
+    #             if passwd != passwd2:
+    #                 if question_dialog("Chyba v zadání hesla.\n\n"
+    #                                 "Chcete proceduru pro zadání hesla zopakovat?"):
+    #                     continue
+    #                 else:
+    #                     break
+    #             else:
+    #                 return passwd
+    #         else:
+    #             break
+    #     return None
+
 
     def change_key_passphrase(self):
         """Change key passphrase."""
