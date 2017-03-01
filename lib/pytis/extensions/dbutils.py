@@ -23,6 +23,7 @@ import pytis.util
 
 import config
 
+_ = pytis.util.translations('pytis-wx')
 
 def data_object(spec):
     """Vrať sestavený datový objekt na základě názvu specifikace.
@@ -33,6 +34,7 @@ def data_object(spec):
     """
     if isinstance(spec, basestring):
         spec = pytis.util.resolver().get(spec, 'data_spec')
+
     def conn_spec():
         return config.dbconnection
     success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
@@ -40,6 +42,7 @@ def data_object(spec):
     #    errmsg = "Nepodařilo se vytvořit datový objekt pro %s!" % (spec)
     #    raise ProgramError(errmsg)
     return data
+
 
 # Alias
 data_create = data_object
@@ -126,6 +129,7 @@ def dbupdate(row, values=(), transaction=None):
         updaterow[col] = val
     return pytis.form.db_operation(data.update, row[key.id()], updaterow, transaction=transaction)
 
+
 # Alias
 row_update = dbupdate
 
@@ -183,6 +187,7 @@ def dbfunction(name, *args, **kwargs):
             value = v.value()
             if value is None or value == '':
                 return None
+
     def conn_spec():
         return config.dbconnection
     success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
@@ -211,6 +216,7 @@ def enum(name, **kwargs):
 def is_in_groups(groups):
     if isinstance(groups, basestring):
         groups = pytis.util.xtuple(groups)
+
     def conn_spec():
         return config.dbconnection
     dbgroups = pytis.data.default_access_groups(conn_spec)
@@ -277,3 +283,37 @@ def save_field(field, spec_name, column, condition):
             data = data_object(spec_name)
             data.update_many(condition, row)
     return save
+
+def safe_commit(transaction, msg=None):
+    """Commit transaction and handle possible timeout errors.
+
+    Arguments:
+      transaction -- transaction to commit
+      msg -- message to show, when database error occurs
+
+    Returns True if commit was successful, otherwise return False.
+    """
+    DEFAULT_MSG = _("Database connection was closed because of the long inactivity.")
+    try:
+        transaction.commit()
+        return True
+    except pytis.data.DBSystemException:
+        pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
+        return False
+
+def safe_rollback(transaction, msg=None):
+    """Rollback transaction and handle possible timeout errors.
+
+    Arguments:
+      transaction -- transaction to commit
+      msg -- message to show, when database error occurs
+
+    Returns True if rollback was successful, otherwise return False.
+    """
+    DEFAULT_MSG = _("Database connection was closed because of the long inactivity.")
+    try:
+        transaction.rollback()
+        return True
+    except pytis.data.DBSystemException:
+        pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
+        return False
