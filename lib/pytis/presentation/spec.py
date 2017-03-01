@@ -2103,8 +2103,9 @@ class Binding(object):
     main form and defines its connection to the side form.
 
     """
-    def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
-                 single=False, arguments=None, prefill=None, search=None, uri=None, content=None):
+    def __init__(self, id, title, name=None, binding_column=None, condition=None,
+                 descr=None, single=False, enabled=True, arguments=None,
+                 prefill=None, search=None, uri=None, content=None):
         """Arguments:
 
           id -- identifier of the binding as a string.  It must be unique among
@@ -2145,6 +2146,12 @@ class Binding(object):
             column must exist in the related view and must have a codebook
             (foreign key) specification pointing to the main form (the view for
             which the binding is used).
+          enabled -- boolean value or a function of one argument
+            ('PresentedRow' instance).  If the value is True or if the function
+            returns True for given main form row, the side form defined by this
+            binding is displayed, otherwise it is inactive (currently only
+            implemented for web forms, where the side form is actually
+            completely left out).
           prefill -- function of one argument (the main form record) returning
             a dictionary of values to prefill in the side form's new record.
             The dictionary keys are field identifiers and values are internal
@@ -2198,6 +2205,7 @@ class Binding(object):
                 assert isinstance(content, collections.Callable), content
                 assert uri is None, uri
             assert name is binding_column is condition is arguments is prefill is None
+        assert enabled is None or isinstance(enabled, (bool, collections.Callable)), enabled
         self._id = id
         self._title = title
         self._name = name
@@ -2205,6 +2213,7 @@ class Binding(object):
         self._condition = condition
         self._descr = descr
         self._single = single
+        self._enabled = enabled
         self._arguments = arguments
         self._prefill = prefill
         self._search = search
@@ -2231,6 +2240,9 @@ class Binding(object):
 
     def single(self):
         return self._single
+
+    def enabled(self):
+        return self._enabled
 
     def arguments(self):
         return self._arguments
