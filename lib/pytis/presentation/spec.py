@@ -1229,8 +1229,8 @@ class QueryFields(object):
 
         """
         assert fields and isinstance(fields, (tuple, list)), fields
-        assert (on_main_form_selection is None
-                or isinstance(on_main_form_selection, collections.Callable)), \
+        assert (on_main_form_selection is None or
+                isinstance(on_main_form_selection, collections.Callable)), \
             on_main_form_selection
         if __debug__:
             for f in fields:
@@ -3430,11 +3430,11 @@ class Field(object):
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
-        if isinstance(style, collections.Callable):
+        if isinstance(style, collections.Callable) and len(argument_names(style)) == 2:
             s_func = style
-            if len(argument_names(s_func)) == 2:
-                # For backwards compatibility
-                style = lambda r: s_func(id, r)
+            # For backwards compatibility
+            def style(row):
+                return s_func(id, row)
         self._style = style
         self._links = links
         self._filename = filename
@@ -5321,8 +5321,9 @@ class Specification(SpecificationBase):
                           **f.type_kwargs())
                         for f in self._fields if not f.virtual()]
             bindings.extend([B(f.inline_display(), table_name, f.inline_display())
-                             for f in self._fields if f.inline_display()
-                             and f.inline_display() not in [b.id() for b in bindings]])
+                             for f in self._fields
+                             if (f.inline_display() and
+                                 f.inline_display() not in [b.id() for b in bindings])])
             if self.key:
                 keyid = self.key
                 if isinstance(keyid, (list, tuple)):
