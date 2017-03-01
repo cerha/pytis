@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 Brailcom, o.p.s.
+# Copyright (C) 2006-2017 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -116,7 +116,7 @@ class Menu(RestrictedPytisModule):
         return self._data.get_rows(**kwargs)
 
     def _embed_binding(self, modname):
-        return wiking.Binding(self.EMBED_BINDING_ID, '', modname, condition=lambda r: None)
+        return pp.Binding(self.EMBED_BINDING_ID, '', modname, condition=lambda r: None)
 
     def _bindings(self, req, record):
         bindings = list(super(Menu, self)._bindings(req, record))
