@@ -2363,6 +2363,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     value = pytis.data.Value(type, value)
                 self._row[key] = value
 
+    def _disable_buttons(self, w):
+        for c in w.GetChildren():
+            if isinstance(c, wx.Button):
+                if c.GetId() != wx.ID_CANCEL:
+                    c.Enable(False)
+            else:
+                self._disable_buttons(c)
+
     def _on_idle_close_transactions(self):
         age = pytis.form.last_event_age()
         if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
@@ -2371,14 +2379,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                         "Do you want to continue?"),
                               timeout=20)
             if not edit:
-                def disable_buttons(w):
-                    for c in w.GetChildren():
-                        if isinstance(c, wx.Button):
-                            if c.GetId() != wx.ID_CANCEL:
-                                c.Enable(False)
-                        else:
-                            disable_buttons(c)
-                disable_buttons(self._parent)
+                self._disable_buttons(self._parent)
                 callback = self._transaction_timeout_callback
                 if callback is not None:
                     callback()
@@ -2644,7 +2645,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     f.set_focus()
                     return False
         # Ověření integrity záznamu (funkce check).
-        failed_id = self._check_record(self._row)
+        try:
+            failed_id = self._check_record(self._row)
+        except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+            self._disable_buttons(self._parent)
+            run_dialog(pytis.form.Error,
+                       _("Database connection was closed due to the long inactivity.\n"
+                         "Please close the form with the Cancel button."))
+            return False
         if failed_id:
             f = self._field(failed_id)
             if f:
