@@ -258,7 +258,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._top_level_sizer = sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_form_parts(sizer)
         self.SetSizer(sizer)
-        sizer.Fit(self) # Set the size of window `self' to size of the sizer.
+        sizer.Fit(self)  # Set the size of window `self' to size of the sizer.
 
     def _form_log_info(self):
         return ''
@@ -899,8 +899,8 @@ class LookupForm(InnerForm):
             if profile_id is not None:
                 check_profile_id = True
             else:
-                profile_id = (self._get_saved_setting('initial_profile')
-                              or self._view.profiles().default())
+                profile_id = (self._get_saved_setting('initial_profile') or
+                              self._view.profiles().default())
                 check_profile_id = False
             if profile_id:
                 profile = find(profile_id, self._profiles, key=lambda p: p.id())
@@ -995,6 +995,7 @@ class LookupForm(InnerForm):
         # field value is used.  See list.py for an overloaded version, which
         # supports query fields UI.
         values = self._query_field_values or {}
+
         def value(f):
             t = f.type() or pytis.data.String()
             try:
@@ -1188,10 +1189,10 @@ class LookupForm(InnerForm):
         if condition is not None and next:
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
-            direction, condition = block_refresh(lambda:
-                 run_dialog(pytis.form.SearchDialog, self._lf_sfs_columns(),
-                            self.current_row(), col=self._current_column_id(),
-                            condition=self._lf_search_condition))
+            direction, condition = block_refresh(
+                lambda: run_dialog(pytis.form.SearchDialog, self._lf_sfs_columns(),
+                                   self.current_row(), col=self._current_column_id(),
+                                   condition=self._lf_search_condition))
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
@@ -1203,6 +1204,7 @@ class LookupForm(InnerForm):
 
     def _filtered_columns(self):
         columns = []
+
         def analyze(operator):
             for a in operator.args():
                 if isinstance(a, pytis.data.Operator):
@@ -1348,8 +1350,8 @@ class LookupForm(InnerForm):
         self.focus()
 
     def _can_update_profile(self):
-        return (self._current_profile.id() != '__constructor_profile__'
-                and self._current_profile_changed())
+        return (self._current_profile.id() != '__constructor_profile__' and
+                self._current_profile_changed())
 
     def _cmd_update_profile(self):
         current = self._current_profile
@@ -1673,11 +1675,13 @@ class RecordForm(LookupForm):
         # row_number starts with 0
         data = self._data
         current_row_number = data.last_row_number()
+
         def dbop():
             data.rewind()
             data.skip(row_number)
             return data.fetchone()
         success, row = db_operation(dbop)
+
         def dbop():
             data.rewind()
             data.skip(current_row_number + 1)
@@ -1709,6 +1713,7 @@ class RecordForm(LookupForm):
             return self._find_row_by_key(values)
         cond = pytis.data.AND(*[pytis.data.EQ(c, v) for c, v in zip(cols, values)])
         condition = pytis.data.AND(cond, self._current_condition())
+
         def dbop(condition):
             data.select(condition, columns=self._select_columns(),
                         transaction=self._open_transaction())
@@ -1735,6 +1740,7 @@ class RecordForm(LookupForm):
         """
         data = self._data
         key = data.key()[0].id()
+
         def dbop():
             data.rewind()
             return data.search(pytis.data.EQ(key, row[key]), transaction=self._open_transaction(),
@@ -1894,10 +1900,13 @@ class RecordForm(LookupForm):
                     """See '_grid.TableRowIterator' for documentation."""
                     def __init__(self, form):
                         self._form = form
+
                     def __len__(self):
                         return 1
+
                     def __iter__(self):
                         return iter([self._form.current_row()])
+
                     def form(self):
                         return self._form
                 result = CurrentRowIterator(form)
@@ -2238,8 +2247,10 @@ class RecordForm(LookupForm):
             def __init__(self, table):
                 self._table = table
                 self._row_number = 0
+
             def __iter__(self):
                 return self
+
             def next(self):
                 if self._row_number >= self._table.GetNumberRows():
                     raise StopIteration
@@ -2303,8 +2314,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 width = max(page_size.width, width)
                 height = max(page_size.height, height)
             # Modify the computed size by some empiric numbers...
-            width += 8 # Add space for border manually.
-            height += 53 # Add space for border and Notebook tabs.
+            width += 8  # Add space for border manually.
+            height += 53  # Add space for border and Notebook tabs.
         size.width = max(size.width, width)
         size.height += height
         self._size = size
@@ -2464,9 +2475,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             tooltip = button.tooltip() or action.descr()
             cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)
         return wx_button(parent, label, command=(cmd, args), tooltip=tooltip,
-                         enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))
-                         and (button.active_in_readonly_form() or not self.readonly())
-                         and cmd.enabled(**args),
+                         enabled=(button.active_in_popup_form() or not
+                                  isinstance(self, PopupForm)) and
+                         (button.active_in_readonly_form() or not self.readonly()) and
+                         cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4 * button.width()))
 
     def _create_text(self, parent, text):
@@ -2939,7 +2951,7 @@ class PopupEditForm(PopupForm, EditForm):
                         tooltip=_("Close the form without saving"),
                         command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
-            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"), #icon=wx.ART_GO_FORWARD,
+            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"),  # icon=wx.ART_GO_FORWARD,
                              tooltip=_("Save the current record and read next record into "
                                        "the form."),
                              command=self.COMMAND_COMMIT_RECORD(next=True)),)
@@ -3037,8 +3049,8 @@ class _VirtualEditForm(EditForm):
         else:
             additional_kwargs = dict()
         super(_VirtualEditForm, self)._full_init(parent, resolver, name, guardian=guardian,
-                                             mode=self.MODE_INSERT, prefill=prefill,
-                                             transaction=transaction, **additional_kwargs)
+                                                 mode=self.MODE_INSERT, prefill=prefill,
+                                                 transaction=transaction, **additional_kwargs)
 
     def _create_view_spec(self):
         return self._specification.view_spec()
@@ -3224,7 +3236,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                                          _(u"Ignore the concurrent changes"))
                 answer = run_dialog(pytis.form.MultiQuestion, title=_(u"Conflicting modifications"),
                                     message=msg, report=diff, report_format=TextFormat.HTML,
-                                    buttons=(revert, ignore)) # TODO: Add merge button.
+                                    buttons=(revert, ignore))  # TODO: Add merge button.
                 if answer == merge:
                     result = self._editor_field_id
                 elif answer == ignore:
