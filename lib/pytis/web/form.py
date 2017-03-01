@@ -987,7 +987,7 @@ class QueryFieldsForm(VirtualForm):
     _ALLOW_NOT_NULL_INDICATORS = False
     _SAVED_EMPTY_VALUE = '-'
 
-    def __init__(self, req, resolver, query_fields, profiles, immediate_filters=True,
+    def __init__(self, req, resolver, name, query_fields, profiles, immediate_filters=True,
                  async_load=False):
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
@@ -1012,7 +1012,8 @@ class QueryFieldsForm(VirtualForm):
                 else:
                     layout = pytis.presentation.HGroup('profile', layout)
         super(QueryFieldsForm, self).__init__(req, resolver,
-                                              dict(fields=fields, layout=layout, **spec_kwargs))
+                                              dict(fields=fields, layout=layout, **spec_kwargs),
+                                              name=name)
         row = self._row
         self._immediate_filters = (immediate_filters and
                                    all(row.type(f).enumerator() is not None
@@ -1330,7 +1331,7 @@ class BrowseForm(LayoutForm):
         self._filter = filter
         self._filters = []
         if query_fields or profiles:
-            self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(),
+            self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(), self._name,
                                                              query_fields, profiles,
                                                              immediate_filters=immediate_filters,
                                                              async_load=async_load)
