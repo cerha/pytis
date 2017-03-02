@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1704,12 +1704,12 @@ def frame_title(title):
 
 # Ostatní funkce.
 
-def set_status(id, text, log_=True):
+def set_status(id, text, log_=True, **kwargs):
     """Set status bar field 'id' to display given 'text'."""
     if __debug__:
         if log_:
             log(DEBUG, u"Status text updated:", (id, text))
-    return _application._statusbar.set_status(id, text)
+    return _application._statusbar.set_status(id, text, **kwargs)
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
