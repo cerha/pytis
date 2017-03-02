@@ -485,11 +485,13 @@ class X2GoStartApp(wx.App):
             for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
                 if f and f.IsShown():
                     f.SetFocus()
+
         dialog.set_callback(on_show_dialog)
         if 'password' in methods and 'publickey' in methods:
             nb = wx.Notebook(dialog, -1)
             nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
             nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
+            nb.SetSelection(0 if key_files else 1)
             content = nb
 
             def method():
