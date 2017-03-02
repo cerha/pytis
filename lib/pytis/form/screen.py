@@ -213,6 +213,7 @@ def hotkey_string(hotkey):
 
 def file_menu_items(fields, row, select_arguments):
     from .application import Application, decrypted_names
+
     def file_field_data(field_id):
         value = row[field_id]
         if isinstance(value.type(), pytis.data.Binary):
@@ -241,11 +242,14 @@ def file_menu_items(fields, row, select_arguments):
             else:
                 data = None
         return data
+
     def open_file(data, filename):
         suffix = os.path.splitext(filename)[1]
         open_data_as_file(data, suffix=suffix)
+
     def can_open(fspec):
         crypto_name = fspec.crypto_name()
+
         def can_open_file(data, filename):
             if crypto_name is None:
                 return True
@@ -1280,6 +1284,7 @@ class MItem(_TitledMenuObject):
         """
         components = action.split('/')
         kind = components[0]
+
         def find_symbol(symbol):
             # temporary hack to not crash on special situations to be solved
             # later
@@ -1470,6 +1475,7 @@ class ToolTipWindow(supertooltip.ToolTipWindow):
         # show at all when it gets below the main application frame (which is always
         # the case for status bar tooltips).
         self.SetPosition((position.x, position.y - size.y))
+
 
 supertooltip.ToolTipWindow = ToolTipWindow
 
@@ -1846,6 +1852,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self._current_form = form = pytis.form.current_form()
         profiles = form.profiles()
         current = form.current_profile()
+
         def append_system_profiles(items, level=0):
             indent = 3 * level * ' '
             for item in items:
@@ -1969,6 +1976,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
 
     def _edit_profile_title(self, cmd, clear=False):
         ctrl = self.GetTextCtrl()
+
         def perform():
             title = self.GetValue()
             ctrl.SetEditable(False)
@@ -2427,9 +2435,9 @@ class Browser(wx.Panel, CommandHandler):
             return True
         else:
             restricted_navigation_uri = self._restricted_navigation_uri
-            if ((not uri.startswith(self._resource_base_uri)
-                 and restricted_navigation_uri is not None
-                 and not uri.startswith(restricted_navigation_uri))):
+            if ((not uri.startswith(self._resource_base_uri) and
+                 restricted_navigation_uri is not None and not
+                 uri.startswith(restricted_navigation_uri))):
                 decision.ignore()
                 pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
                 return True
@@ -2883,6 +2891,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     if command:
         assert callback is None
         cmd, args = command
+
         def callback(e, args=args, button=button):
             if button._pytis_in_button_handler:
                 # The handler may get invoked recursively and break things,
@@ -3075,8 +3084,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
                            '<head>'
                            '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
                            '</head>'
-                           '<body>'
-                           + content +
+                           '<body>' + content +
                            '</body>'
                            '</html>')
             browser.load_html(content)
@@ -3237,7 +3245,7 @@ def select_files(directory=None, patterns=(), pattern=None, context='default'):
     if directory is None:
         directory = _get_recent_directory(cmode, context)
     else:
-        context = None # Prevent storing the passed directory when dialog closed.
+        context = None  # Prevent storing the passed directory when dialog closed.
     if cmode == 'remote':
         result = pytis.remote.select_file(directory=directory,
                                           patterns=patterns, pattern=pattern, multi=True)
