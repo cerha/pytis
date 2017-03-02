@@ -1742,7 +1742,7 @@ class StatusBar(object):
                 indexes = (i,)
         else:
             indexes = range(len(self._fields))
-        return any(*[self._refresh(i) for i in indexes])
+        return any([self._refresh(id) for id in indexes])
 
 
 class InfoWindow(object):
