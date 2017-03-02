@@ -2074,11 +2074,10 @@ def built_in_status_fields():
 
     def _refresh_remote_status():
         last_status, last_time = _application._remote_status_info
-        last_change = time.strftime('%Y-%m-%d %H:%M:%S',
-                                    time.localtime(last_time))
         if pytis.remote.client_available():
             if not last_status:
-                _application._remote_status_info = (True, time.time())
+                last_time = time.time()
+                _application._remote_status_info = (True, last_time)
             tooltip_text = _("Connected.\nClient version: {}\n"
                              "Status changed: {}")
             if _application._remote_client_version:
@@ -2089,13 +2088,22 @@ def built_in_status_fields():
                     _application._remote_client_version = version
                 except Exception:
                     version = _("Not available")
-            return (_("Ok"), 'connected', tooltip_text.format(version, last_change))
+            status = _('OK')
+            icon = 'connected'
+            tooltip_args = [version]
         else:
             if last_status:
-                _application._remote_status_info = (True, time.time())
+                last_time = time.time()
+                _application._remote_status_info = (False, time.time())
             tooltip_text = _("Not available.\n"
                              "Status changed: {}")
-            return (_('N/A'), 'disconnected', tooltip_text.format(last_change))
+            status = _('N/A')
+            icon = 'disconnected'
+            tooltip_args = []
+        changed = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_time))
+        tooltip_args.append(changed)
+        tooltip = tooltip_text.format(*tooltip_args)
+        return (status, icon, tooltip)
 
     def _refresh_user_config():
         tooltip_text = _("Username: {}\nDatabase host: {}\nDatabase name: {}")
