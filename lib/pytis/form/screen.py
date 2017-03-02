@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1566,22 +1566,28 @@ class StatusBar(object):
 
     def _on_idle(self, event):
         for i, field in enumerate(self._fields):
-            refresh, interval = field.refresh(), field.refresh_interval()
+            interval = field.refresh_interval()
             if interval:
                 timer = self._timers[i]
                 if timer.IsRunning():
                     continue
                 timer.Start(interval)
-            if refresh:
-                status = refresh()
-                if status is not None:
-                    if not isinstance(status, (tuple, list)):
-                        text, icon, tooltip = status, None, None
-                    elif len(status) == 2:
-                        text, icon, tooltip = status[0], status[1], None
-                    else:
-                        text, icon, tooltip = status
-                    self._set_status(i, text, icon, tooltip)
+            self._refresh(i)
+
+    def _refresh(self, i):
+        refresh = self._fields[i].refresh()
+        if refresh:
+            status = refresh()
+            if status is not None:
+                if not isinstance(status, (tuple, list)):
+                    text, icon, tooltip = status, None, None
+                elif len(status) == 2:
+                    text, icon, tooltip = status[0], status[1], None
+                else:
+                    text, icon, tooltip = status
+                self._set_status(i, text, icon, tooltip)
+            return True
+        return False
 
     def _field_index_for_position(self, x):
         for i, field in enumerate(self._fields):
@@ -1720,20 +1726,23 @@ class StatusBar(object):
             # self._sb.GetStatusText() may contain spaces to make room for icons.
             return self._state[i].text
 
-    def get_status_icon(self, field_id):
-        """Get the identifier of the icon displayed in field 'field_id' or None.
+    def refresh(self, field_id=None):
+        """Refresh the field 'field_id' or all refreshable fields if 'field_id' is None.
 
-        None is returned if given field does not exists in the status bar or if
-        the field exists but does not currently display an icon.  If not None,
-        it is the last icon identifier as passed to 'set_status()'.
+        True is returned if at least one field was refreshed (has the 'refresh'
+        function defined).
 
         """
-        try:
-            i = self._field_ids.index(field_id)
-        except ValueError:
-            return None
+        if field_id is not None:
+            try:
+                i = self._field_ids.index(field_id)
+            except ValueError:
+                indexes = ()
+            else:
+                indexes = (i,)
         else:
-            return self._state[i].icon
+            indexes = range(len(self._fields))
+        return any(*[self._refresh(i) for i in indexes])
 
 
 class InfoWindow(object):

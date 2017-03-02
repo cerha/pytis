@@ -1711,6 +1711,10 @@ def set_status(id, text, log_=True, **kwargs):
             log(DEBUG, u"Status text updated:", (id, text))
     return _application._statusbar.set_status(id, text, **kwargs)
 
+def refresh_status(id=None):
+    """Refresh given status bar field or all fields if 'id' is None."""
+    return _application._statusbar.refresh(id)
+
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
     """Display a non-interactive message in the status bar 'message' field.
