@@ -28,21 +28,61 @@ class ui(object):
     """Private helper methods for simple UI construction (not to be used outside this module)."""
 
     @staticmethod
-    def _add_to_sizer(sizer, items, expand=False):
+    def _add_to_sizer(sizer, items, padding=None, spacing=0):
         for item in items:
-            if not isinstance(item, (tuple, list)):
-                item = (item,)
-            if item[0]:
-                sizer.Add(*item)
+            if isinstance(item, ui.spacer):
+                sizer.AddSpacer(item.size)
+                continue
+            if not isinstance(item, ui.item):
+                item = ui.item(item)
+            if item.content is not None:
+                flag = 0
+                if item.expand:
+                    flag |= wx.EXPAND
+                if item.center:
+                    flag |= wx.ALIGN_CENTER
+                border = space = 0
+                if item.padding is not None:
+                    if isinstance(item.padding, tuple):
+                        if sizer.GetOrientation() == wx.VERTICAL:
+                            flag |= wx.LEFT | wx.RIGHT
+                            space, border = item.padding
+                        else:
+                            flag |= wx.TOP | wx.BOTTOM
+                            border, space = item.padding
+                    else:
+                        flag |= wx.ALL
+                        border = item.padding
+                if spacing and sizer.GetItemCount() != 0:
+                    sizer.AddSpacer(spacing + space)
+                elif space:
+                    sizer.AddSpacer(space)
+                sizer.Add(item.content, item.proportion, flag, border)
+                if space:
+                    sizer.AddSpacer(space)
+        if padding:
+            sizer = ui.hgroup(ui.item(sizer, padding=padding))
         return sizer
 
-    @staticmethod
-    def vgroup(*items):
-        return ui._add_to_sizer(wx.BoxSizer(wx.VERTICAL), items)
+    class item(object):
+        def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
+            self.content = content
+            self.proportion = proportion
+            self.expand = expand
+            self.padding = padding
+            self.center = center
+
+    class spacer(object):
+        def __init__(self, size):
+            self.size = size
 
     @staticmethod
-    def hgroup(*items):
-        return ui._add_to_sizer(wx.BoxSizer(wx.HORIZONTAL), items)
+    def vgroup(*items, **kwargs):
+        return ui._add_to_sizer(wx.BoxSizer(wx.VERTICAL), items, **kwargs)
+
+    @staticmethod
+    def hgroup(*items, **kwargs):
+        return ui._add_to_sizer(wx.BoxSizer(wx.HORIZONTAL), items, **kwargs)
 
     @staticmethod
     def vbox(parent, label, items):
@@ -204,14 +244,14 @@ class X2GoStartApp(wx.App):
         if username:
             self._username_value = username
             self._username_field = None
-            return ui.hgroup((label, 0, wx.RIGHT, 2), ui.label(parent, username))
+            return ui.hgroup(label, ui.label(parent, username), spacing=2)
         else:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
             field = ui.field(parent, username, on_enter=lambda e: self._start())
             self._username_value = None
             self._username_field = field
-            return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field,
+            return ui.hgroup(ui.hgroup(label, padding=2), field,
                              ui.button(parent, _("Continue"), lambda e: self._start()))
 
     def _username(self):
@@ -225,39 +265,45 @@ class X2GoStartApp(wx.App):
             self._profiles_field = listbox = ui.listbox(parent, on_select=self._on_select_profile)
             listbox.Enable(False)
             listbox.SetMinSize((360, 180))
-            buttons = [(ui.button(parent, _("Start session"), self._on_select_profile,
-                                  lambda e: e.Enable(listbox.GetSelection() != -1)),
-                        0, wx.EXPAND)]
+            buttons = [ui.button(parent, _("Start session"), self._on_select_profile,
+                                  lambda e: e.Enable(listbox.GetSelection() != -1))]
             if self._controller.on_windows():
-                buttons.append((ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
+                buttons.append(ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                           lambda e: e.Enable(listbox.GetSelection() != -1 and
-                                                             self._can_create_shortcut())),
-                                0, wx.EXPAND | wx.TOP, 10))
+                                                             self._can_create_shortcut())))
             return ui.vgroup(
                 ui.label(parent, _("Available profiles:")),
-                (ui.hgroup(
-                    (listbox, 1, wx.EXPAND),
-                    (ui.vgroup(*buttons), 0, wx.LEFT, 8),
-                ), 1, wx.EXPAND)
+                ui.item(
+                    ui.hgroup(
+                        ui.item(listbox, proportion=1, expand=True),
+                        ui.vgroup(*[ui.item(b, expand=True) for b in buttons], spacing=10),
+                        spacing=8,
+                    ),
+                    proportion=1, expand=True,
+                )
             )
 
     def _create_status(self, parent):
         self._status = status = ui.label(parent, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
         gauge.SetMinSize((450, 10))
-        return ui.vgroup((gauge, 0, wx.EXPAND), (status, 0, wx.EXPAND | wx.BOTTOM, 4))
+        return ui.vgroup(
+            ui.item(gauge, expand=True),
+            ui.item(status, expand=True),
+        )
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            (ui.hgroup((self._create_main_heading(parent), 1),
-                       self._create_menu_button(parent),
-            ), 0, wx.EXPAND | wx.ALIGN_CENTER | wx.ALL, 6),
-            (self._create_username_field(parent), 0, wx.EXPAND | wx.ALL, 8),
-            (self._create_profiles_field(parent), 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8),
-            (self._create_status(parent), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
+            ui.item(ui.hgroup(ui.item(self._create_main_heading(parent), proportion=1),
+                              self._create_menu_button(parent)),
+                    expand=True, center=True),
+            ui.item(self._create_username_field(parent), expand=True),
+            ui.item(self._create_profiles_field(parent), proportion=1, expand=True),
+            ui.item(self._create_status(parent), expand=True),
+            padding=(0, 8), spacing=8,
         )
 
-    def _show_dialog(self, title, method, *args, **kwargs):
+    def _show_dialog(self, title, create, *args, **kwargs):
         class Dialog(wx.Dialog):
             result = None
             callback = None
@@ -269,7 +315,7 @@ class X2GoStartApp(wx.App):
             def set_callback(self, callback):
                 self.callback = callback
         dialog = Dialog(self._frame, -1, title=title)
-        content = method(dialog, *args, **kwargs)
+        content = create(dialog, *args, **kwargs)
         dialog.SetSizer(content)
         dialog.Fit()
         dialog.SetClientSize(dialog.GetBestSize())
@@ -301,18 +347,22 @@ class X2GoStartApp(wx.App):
             listbox.Append(session_label, session)
         dialog.set_callback(lambda: listbox.SetFocus())
         return ui.vgroup(
-            (ui.label(dialog, _("Existing sessions:")), 0, wx.LEFT | wx.RIGHT, 8),
-            (ui.hgroup(
-                (listbox, 1, wx.EXPAND),
-                (ui.vgroup(*[
+            ui.label(dialog, _("Existing sessions:")),
+            ui.item(ui.hgroup(
+                ui.item(listbox, proportion=1, expand=True),
+                ui.item(ui.vgroup(*[
                     (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
                     for label, callback, updateui in (
                         (_(u"Resume"), on_resume_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
                         (_(u"Terminate"), on_terminate_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
-                    )]), 0, wx.LEFT, 8)), 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8),
-            (ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)), 0, wx.ALL, 8),
+                    )], spacing=6)),
+                spacing=8
+            ), proportion=1, expand=True),
+            ui.item(ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
+                    padding=(10, 0)),
+            padding=(0, 10),
         )
 
     def _question(self, title, question):
@@ -321,8 +371,9 @@ class X2GoStartApp(wx.App):
                        ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
             dialog.set_callback(lambda: buttons[0].SetFocus())
             return ui.vgroup(
-                (ui.label(dialog, question), 0, wx.ALL, 10),
-                (ui.hgroup(*[(b, 0, wx.ALL, 10) for b in buttons]), 1, wx.ALIGN_CENTER),
+                ui.label(dialog, question),
+                ui.item(ui.hgroup(*buttons, spacing=10), center=True),
+                padding=10, spacing=10,
             )
         return self._show_dialog(title, create_dialog)
 
@@ -331,8 +382,9 @@ class X2GoStartApp(wx.App):
             button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
             dialog.set_callback(lambda: button.SetFocus())
             return ui.vgroup(
-                (ui.label(dialog, text), 0, wx.ALL, 10),
-                (button, 1, wx.ALIGN_CENTER | wx.ALL, 10),
+                ui.label(dialog, text),
+                ui.item(button, center=True),
+                padding=10, spacing=10,
             )
         return self._show_dialog(title, create_dialog)
 
@@ -471,16 +523,16 @@ class X2GoStartApp(wx.App):
             self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
                                                        on_enter=lambda e: close('publickey'))
             return ui.vgroup(
-                (ui.hgroup((label1, 0, wx.RIGHT | wx.TOP, 2), field1,
-                           (button1, 0, wx.LEFT, 3)), 0, wx.BOTTOM, 4),
-                ui.hgroup((label2, 0, wx.RIGHT | wx.TOP, 2), field2),
+                ui.hgroup(ui.item(label1, padding=(3, 0)), field1, button1, spacing=2),
+                ui.hgroup(ui.item(label2, padding=(3, 0)), field2, spacing=2),
+                padding=10, spacing=8,
             )
 
         def password_authentication(parent):
             label = ui.label(parent, _("Password:"))
             self._password_field = field = ui.field(parent, style=wx.PASSWORD,
                                                     on_enter=lambda e: close('password'))
-            return ui.hgroup((label, 0, wx.RIGHT | wx.TOP, 2), field)
+            return ui.hgroup(ui.item(label, padding=(3, 0)), field, padding=10, spacing=2)
 
         def on_show_dialog():
             for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
@@ -499,19 +551,23 @@ class X2GoStartApp(wx.App):
                 return 'publickey' if nb.GetSelection() == 0 else 'password'
 
         elif 'publickey' in methods:
-            content = ui.panel(dialog, publickey_authentication)
+            content = publickey_authentication(dialog)
             method = 'publickey'
         elif 'password' in methods:
-            content = ui.panel(dialog, password_authentication)
+            content = password_authentication(dialog)
             method = 'password'
         else:
             raise Exception(_("No supported SSH authentication method available."))
         return ui.vgroup(
-            (content, 0, wx.LEFT | wx.RIGHT, 8),
-            (ui.hgroup(
-                (ui.button(dialog, _("Log in"), lambda e: close(method)), 0, wx.RIGHT, 20),
-                ui.button(dialog, _("Cancel"), lambda e: close(None)),
-            ), 0, wx.ALIGN_CENTER | wx.ALL, 14),
+            content,
+            ui.item(
+                ui.hgroup(
+                    ui.button(dialog, _("Log in"), lambda e: close(method)),
+                    ui.button(dialog, _("Cancel"), lambda e: close(None)),
+                    spacing=20, padding=12,
+                ),
+                center=True),
+            padding=(0, 10),
         )
 
     def authentication_dialog(self, methods, key_files):
@@ -532,22 +588,27 @@ class X2GoStartApp(wx.App):
 
         """
         return self._show_dialog(_("Authentication"), self._create_authentication_dialog,
-                                 methods, key_files)
+                                 ('password', 'publickey'), ('x',)) #methods, key_files)
 
     def checklist_dialog(self, title, message, columns, items):
         def create_dialog(dialog):
             checklist = ui.checklist(dialog, columns, items)
             dialog.set_callback(lambda: checklist.SetFocus())
             return ui.vgroup(
-                (ui.label(dialog, message), 0, wx.ALL, 10),
-                (checklist, 1, wx.LEFT | wx.RIGHT, 10),
-                (ui.hgroup(
-                    ui.button(dialog, _(u"Ok"),
-                              lambda e: dialog.close([checklist.IsChecked(i)
-                                                      for i in range(len(items))])),
-                    ui.button(dialog, _(u"Cancel"),
-                              lambda e: dialog.close(None)),
-                ), 0, wx.ALIGN_CENTER | wx.ALL, 10),
+                ui.label(dialog, message),
+                ui.item(checklist, proportion=1, expand=True),
+                ui.item(
+                    ui.hgroup(
+                        ui.button(dialog, _(u"Ok"),
+                                  lambda e: dialog.close([checklist.IsChecked(i)
+                                                          for i in range(len(items))])),
+                        ui.button(dialog, _(u"Cancel"),
+                                  lambda e: dialog.close(None)),
+                        spacing=20,
+                    ),
+                    center=True, padding=12,
+                ),
+                padding=(0, 12),
             )
         return self._show_dialog(title, create_dialog)
 
