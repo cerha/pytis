@@ -164,14 +164,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        # TODO: This is temporary backwards compatible conversion of status_fields()
-        # specifications.  It should be removed when all applications are updated.
-        default_fields = dict([(f.id(), f)
-                               for f in pytis.presentation.Application().status_fields()])
-        status_fields = [default_fields.get(x[0], StatusField(x[0], width=x[1]))
-                         if isinstance(x, tuple) else x
-                         for x in self._specification.status_fields()]
-        self._statusbar = StatusBar(frame, status_fields)
+        self._statusbar = None
         self._help_browser = None
         self._login_success = False
         keymap = self.keymap = Keymap()
@@ -185,14 +178,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
-        # Initialize login and password.
 
+        # Initialize login and password.
         def test():
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id)
                         for id in ('tablename',)]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             factory.create(connection_data=config.dbconnection)
         db_operation(test)
+        # Define statusbar
+        # TODO: This is temporary backwards compatible conversion of status_fields()
+        # specifications.  It should be removed when all applications are updated.
+        default_fields = dict([(f.id(), f)
+                               for f in pytis.presentation.Application().status_fields()])
+        status_fields = [default_fields.get(x[0], StatusField(x[0], width=x[1]))
+                         if isinstance(x, tuple) else x
+                         for x in self._specification.status_fields()]
+        self._statusbar = StatusBar(frame, status_fields)
         self._initial_config = [
             (o, copy.copy(getattr(config, o)))
             for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
@@ -1748,6 +1750,8 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         if isinstance(modal, pytis.form.Form) and modal.set_status('message', message):
             return
     sb = _application._statusbar
+    if not sb:
+        return
     if timeout:
         class Timer(wx.Timer):
             def Notify(self):
