@@ -65,6 +65,31 @@ class ui(object):
         return sizer
 
     class item(object):
+        """Item of 'ui.hgroup' or 'ui.vgroup' providing more arrangement information.
+
+        Arguments:
+
+          content -- the actual content to be placed into the group ('wx.Window' or nested
+            'wx.Sizer').
+          proportion -- indicate if this item can change its size in the main
+            orientation of the group, where 0 stands for not changeable and a
+            value of more than zero is interpreted relative (a proportion of
+            the total) to the value of other items of the same group.  This
+            makes the item stretchable vertically in a vertical group or
+            horizontally in a horizontal group.  The value determines the share
+            of the space among other stretchable items in the group.
+          expand -- resize the item to fit the full space available to the
+            sizer in the opposite direction to the direction of the group
+            (width in a vertical group and height in a horizontal group).
+          padding -- margin around the item in pixels or as a tuple of two int
+            values, where the first value determines the padding at the top and
+            bottom and the second value determines the padding on right and
+            left side.  Tho order of these velue is the same in a vertical as
+            well as in a horizontal group.
+          center -- iff True, center the item content inside the space
+            available for it.
+
+        """
         def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
             self.content = content
             self.proportion = proportion
@@ -78,10 +103,33 @@ class ui(object):
 
     @staticmethod
     def vgroup(*items, **kwargs):
+        """Arrange UI items into a vertical group returning 'wx.BoxSizer'.
+
+        Arguments:
+
+          items -- sequence of group items as instances of 'wx.Window', nested
+            'wx.Sizer' or 'ui.item' (when more control of placing the item
+            within the group is needed (see 'ui.item' arguments).  Items may
+            also be None in which case they are ignored.
+          spacing -- space between individual items in the grouping direction
+            (vertical in this method) in pixels (int).
+          padding -- margin around the whole group in pixels or as a tuple of
+            two int values, where the first value determines the padding at the
+            top and bottom and the second value determines the padding on right
+            and left side.  Tho order of these velue is the same in a vertical
+            as well as in a horizontal group.
+
+        """
         return ui._add_to_sizer(wx.BoxSizer(wx.VERTICAL), items, **kwargs)
 
     @staticmethod
     def hgroup(*items, **kwargs):
+        """Arrange UI items into a horizontal group returning 'wx.BoxSizer'.
+
+        See 'ui.vgroup' for more information with the only difference that the
+        items are arranged horizontally in this case.
+
+        """
         return ui._add_to_sizer(wx.BoxSizer(wx.HORIZONTAL), items, **kwargs)
 
     @staticmethod
