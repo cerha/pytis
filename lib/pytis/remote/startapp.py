@@ -278,7 +278,7 @@ class X2GoStartApp(wx.App):
         menu = wx.Menu()
         for label, callback in items:
             item = wx.MenuItem(menu, -1, label)
-            menu.Bind(wx.EVT_MENU, lambda e: callback(), item)
+            menu.Bind(wx.EVT_MENU, lambda e, callback=callback: callback(), item)
             menu.AppendItem(item)
         bitmap = wx.ArtProvider_GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, (16, 16))
         button = wx.BitmapButton(parent, -1, bitmap, style=wx.BU_EXACTFIT)
