@@ -20,6 +20,7 @@
 import os
 import wx
 import collections
+import string
 
 def _(x, *args, **kwargs):
     return x % (args or kwargs) if args or kwargs else x
@@ -657,6 +658,53 @@ class X2GoStartApp(wx.App):
                     center=True, padding=12,
                 ),
                 padding=(0, 12),
+            )
+        return self._show_dialog(title, create_dialog)
+
+    def passphrase_dialog(self, title, check=None):
+        """Display a dialog to enter a key passphrase with strength checking."""
+        def create_dialog(dialog):
+            def submit(event):
+                password = field1.GetValue()
+                password2 = field2.GetValue()
+                for value, f in ((password, field1), (password2, field2)):
+                    if not value:
+                        f.SetFocus()
+                        return
+                error = None
+                if password != password2:
+                    error = _("Passphrases don't match.")
+                elif check:
+                    check_result = check(password)
+                    if check_result is not None:
+                        if check_result == 'unallowed':
+                            error = _("Unallowed characters.")
+                        elif check_result == 'too short':
+                            error = _("Passphrase too short (minimum is 10 characters).")
+                        else:
+                            error = _("Passphrase too weak (add capitals and numbers).")
+                if error:
+                    message.SetLabel(error)
+                    field1.SetFocus()
+                else:
+                    dialog.close(password)
+            message = ui.label(dialog, "")
+            field1 = ui.field(dialog, style=wx.PASSWORD, on_enter=submit)
+            field2 = ui.field(dialog, style=wx.PASSWORD, on_enter=submit)
+            return ui.vgroup(
+                ui.item(ui.label(dialog, _("Enter the same passphrase into both fields.")),
+                        padding=4),
+                ui.hgroup(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), field1),
+                ui.hgroup(ui.item(ui.label(dialog, _("Repeat:")), padding=3), field2),
+                ui.item(message, padding=4),
+                ui.item(
+                    ui.hgroup(
+                        ui.button(dialog, _("Ok"), submit),
+                        ui.button(dialog, _("Cancel"), lambda e: dialog.close(None)),
+                        spacing=20, padding=12,
+                    ),
+                    center=True),
+                padding=(0, 10), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
 
