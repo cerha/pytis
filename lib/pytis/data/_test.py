@@ -1342,8 +1342,14 @@ class DBDataDefault(_DBTest):
         d = self.dcosi
         for v in ("'...", "\\'...", "'...\x00", "'...\n"):
             condition = pytis.data.AND(pytis.data.EQ('popis', pytis.data.sval(v)))
-            d.select(condition)
-            self.assertIsNone(d.fetchone(), 'too many lines')
+            try:
+                d.select(condition)
+                row = d.fetchone()
+            except ValueError as e:
+                # psycopg2 doesn't allow null bytes since version 2.7.
+                if str(e) != 'A string literal cannot contain NUL (0x00) characters.':
+                    raise
+            self.assertIsNone(row, 'too many lines')
             d.close()
     def test_select_sorting(self):
         A = pytis.data.ASCENDENT
