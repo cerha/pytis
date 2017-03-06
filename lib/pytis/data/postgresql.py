@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2097,14 +2097,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                             try:
                                 raise DBUserException("Time value without time zone", None,
                                                       (value.value(), b.table(), colid,))
-                            except:
+                            except DBUserException as e:
                                 import pytis.form
                                 if pytis.form.top_window() is not None:
                                     message = _("Application error. "
                                                 "You can report it to get it fixed soon.")
                                     pytis.form.top_level_exception(message)
                                 else:
-                                    raise
+                                    raise e
                         value = Value(ctype, tz_value)
             if crypto_name is not None:
                 if isinstance(ctype, String):
