@@ -2335,6 +2335,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                 exclude = exclude[:-1]
             else:
                 kw = {}
+            exclude = [(sqlalchemy.sql.expression.literal_column(c), o) for c, o in exclude]
             args += (sqlalchemy.dialects.postgresql.ExcludeConstraint(*exclude, **kw),)
         for foreign_key in cls.foreign_keys:
             columns, refcolumns = foreign_key.args()
