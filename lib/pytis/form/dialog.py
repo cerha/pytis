@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014, 2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2014, 2016, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -230,7 +230,8 @@ class GenericDialog(Dialog):
     def _on_idle(self, event):
         event.Skip()
         if self._dialog.IsShown():
-            if self._want_focus is not None:
+            # Note, self._want_focus may be set (not None), but dead (evaluate to False).
+            if self._want_focus:
                 self._want_focus.SetFocus()
                 self._want_focus.SetFocusFromKbd()
                 self._want_focus = None
