@@ -333,6 +333,20 @@
 
 * INTERNÍ ZÁLEŽITOSTI [2/4] [50%]
 
+** FEEDBACK Přihlášení k databázi neřešit v db_operation
+
+   Prvotní záměr byl, aby se přihlášení k databázi provedlo automaticky až když
+   je to potřeba.  Potom se ale zjistilo, že je přihlášení stejně potřeba vždy
+   už v brzkém stádiu inicializace aplikace, tak bylo volání db_operation
+   přidáno natvrdo na potřebné místo.  Tím to ale pozbývá smyslu ponechávat v
+   db_operation a stačilo by ošetření přihlášení přesunout přímo do oné části
+   inicializace aplikace.  Naopak v db_operation by se hodilo ošetřit běžné
+   stavy, které mohou nastat během provozu aplikace, jako např. uzavření spojení
+   serverem kvůli IDLE transakci.  Také by bylo vhodné pomocí db_operation
+   obalit všechna volání kódu definovaného ve specifikacích, aby už uvnitř
+   specifikací, ani ve funkcích volaných ze specifikací nebylo nutné
+   db_operation volat.
+
 ** VERIFY Zamezit reinicializaci všech sloupců při inline editaci buňky
 
    Je třeba aby editory vždy byly vytvořeny pro aktuální editovaný řádek.
