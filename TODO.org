@@ -6,50 +6,61 @@
   :COOKIE_DATA: todo recursive
   :END:
 
-** VERIFY Chyba při vyvolání tisk. sestavy
+** VERIFY Chyba při vyvolání tiskové sestavy
 
-   Při vyvolání formuláře přes Enter nebo Space v BrowseFormu a následného vyvolání tiskové sestavy
-   vyskočí chybové okno.
+   Při vyvolání formuláře přes Enter nebo Space v BrowseFormu a následného
+   vyvolání tiskové sestavy vyskočí chybové okno.
 
 ** FEEDBACK Deadlock při zamykání
 
-   Mějme tabulku T1, kde políčko p1 má "references=C1 ON UPDATE CASCADE".  Při otevření editačního
-   formuláře nad T1 dojde k uzamčení T1.  Pokud nad tímto editačním formulářem otevřeme číselník C1
-   a provedeme editaci referenčního sloupce (většinou klíčového) v záznamu referovaném z uzamčeného
-   řádku T1, dojde k dead-locku, protože databáze nemůže provést "ON UPDATE CASCADE".
+   Mějme tabulku T1, kde políčko p1 má "references=C1 ON UPDATE CASCADE".  Při
+   otevření editačního formuláře nad T1 dojde k uzamčení T1.  Pokud nad tímto
+   editačním formulářem otevřeme číselník C1 a provedeme editaci referenčního
+   sloupce (většinou klíčového) v záznamu referovaném z uzamčeného řádku T1,
+   dojde k dead-locku, protože databáze nemůže provést "ON UPDATE CASCADE".
 
    Návrh řešení:
 
-   Evidovat v datovém rozhraní zamknuté sloupce tabulek odkazovaných v REFERENCES.  Při lock_record
-   do této evidence přidat všechny sloupce v odkazovaných tabulkách, které jsou z uzamykané tabulky
-   odkazovány, pokud mají nastaveno ON UPDATE CASCADE (při unlock_record je opět odebrat).
+   Evidovat v datovém rozhraní zamknuté sloupce tabulek odkazovaných v
+   REFERENCES.  Při lock_record do této evidence přidat všechny sloupce v
+   odkazovaných tabulkách, které jsou z uzamykané tabulky odkazovány, pokud mají
+   nastaveno ON UPDATE CASCADE (při unlock_record je opět odebrat).
 
-   Díky tomu by bylo možné při zápisu do datového objektu zjistit, jestli není některý ze sloupců
-   aktualizované tabulky v této evidenci a např. vyvolat výjimku a předejít tím zatuhnutí.
+   Díky tomu by bylo možné při zápisu do datového objektu zjistit, jestli není
+   některý ze sloupců aktualizované tabulky v této evidenci a např. vyvolat
+   výjimku a předejít tím zatuhnutí.
 
-   Dále by bylo možné tuto informaci z datového objektu nějak vytáhnout a např. učinit příslušné
-   políčko needitovatelné.
+   Dále by bylo možné tuto informaci z datového objektu nějak vytáhnout a
+   např. učinit příslušné políčko needitovatelné.
 
-** TODO Zamrznutí aplikace při použití tlačítek s EVT_UPDATE_UI ve formulářích.
+** TODO Zamrznutí aplikace při použití tlačítek s EVT_UPDATE_UI ve formulářích
 
-   Pokud ve funkci `wx_button()' povolím navázání `EVT_UPDATE_UI' pro aktualizaci stavu tlačítka v
-   závislosti na dostupnosti příkazu, dojde při uzavření jakéhokoliv dialogu nad otevřeným
-   editačním formulářem (ve kterém je takové tlačítko použito) k zatuhnutí celé aplikace (Formulář
-   přestane reagovat, celé okno je zašedlé).  Aby k tomu nedocházelo, je příslušný kód nyní
-   zablokován, ale bude potřeba to nějak dořešit, aby tlačítka mohla dynamicky reagovat na změnu
-   dostupnosti příkazů...
+   Pokud ve funkci `wx_button()' povolím navázání `EVT_UPDATE_UI' pro
+   aktualizaci stavu tlačítka v závislosti na dostupnosti příkazu, dojde při
+   uzavření jakéhokoliv dialogu nad otevřeným editačním formulářem (ve kterém je
+   takové tlačítko použito) k zatuhnutí celé aplikace (Formulář přestane
+   reagovat, celé okno je zašedlé).  Aby k tomu nedocházelo, je příslušný kód
+   nyní zablokován, ale bude potřeba to nějak dořešit, aby tlačítka mohla
+   dynamicky reagovat na změnu dostupnosti příkazů...
 
-** VERIFY Při ukládání pojmenovaného filtru upozornit, že filtr se stejným jménem už existuje.
+** VERIFY Upozornit na duplicitní název pojmenovaného filtru
 
-** VERIFY Tiskové menu je zobrazeno pro všechny formuláře ale příkaz PRINT je ošetřen jen pro BrowseForm.
+   Při ukládání pojmenovaného filtru upozornit, že filtr se stejným jménem už
+   existuje.
+
+** VERIFY Příkaz PRINT v tiskovém menu nefunguje mimo BrowseForm
+
+   Tiskové menu je zobrazeno pro všechny formuláře ale příkaz PRINT je ošetřen
+   jen pro BrowseForm.
 
 ** VERIFY Kombinace default, computer a prefill
 
-   Při použití prefillu při zobrazení formuláře pro nový záznam by měl mít computer přednost před
-   default, pokud jsou v prefillu políčka, na kterých computer závisí.  Jinak má přednost default a
-   computer se použije až během editace.
+   Při použití prefillu při zobrazení formuláře pro nový záznam by měl mít
+   computer přednost před default, pokud jsou v prefillu políčka, na kterých
+   computer závisí.  Jinak má přednost default a computer se použije až během
+   editace.
 
-** FEEDBACK Zapamatovaná pozice oddělovače dualformu.
+** FEEDBACK Zapamatovaná pozice oddělovače dualformu
 
    Momentálně se počíátá se stejnou velikostí okna při dalším startu aplikace.
    Např. při maximalizaci okna ale dojde k uložení pozice a při dalším startu
@@ -81,13 +92,14 @@
 ** VERIFY Problém s notifikačním threadem při startu aplikace
 
    Při volání funkce v rámci Application.Init, která pracuje nad daty v databázi
-   (např. insert_new_user nebo obecně operace nad DBConfig), hlásí notification thread
-   na pozadí chybové hlášení AttributeError pro atribut connection.
+   (např. insert_new_user nebo obecně operace nad DBConfig), hlásí notification
+   thread na pozadí chybové hlášení AttributeError pro atribut connection.
 
 *** DONE Oprava Range políček při exportu
     CLOSED: [2016-03-02 Wed 15:47]
 
-*** DONE Opravit odkazy na sloupce funkcí vracejících tabulky v gensqlalchemy
+
+*** DONE Opravit odkazy na sloupce tabulkových funkcí v gensqlalchemy
     CLOSED: [2017-03-02 Thu 21:38]
 
          class TableFunction(sql.SQLPyFunction):
@@ -127,158 +139,175 @@
 
     V tuto chvíli nefunguje např. otevření přílohy.
 
-*** DONE Po ukončení spojení kvůli idle transaction na serveru nelze vyskočit z náhledu, protože
+*** DONE Po ukončení IDLE spojení nelze vyskočit z formuláře
     CLOSED: [2017-03-02 Thu 21:38]
-    se datové rozhraní stále snaží o akci nad spojením... Bylo by záhadno mít
-    možnost daný řádkový náhled uzavřít.
 
-*** DONE Bylo by zajímavé pokusit se o rozumnější podobu uživatelské hlášky, pokud dojde
+    Po ukončení spojení kvůli idle transaction na serveru nelze vyskočit z
+    náhledu, protože se datové rozhraní stále snaží o akci nad spojením... Bylo
+    by záhadno mít možnost daný řádkový náhled uzavřít.
+
+*** DONE Rozumnější hláška při uzavření transakce serverem
     CLOSED: [2017-03-02 Thu 21:38]
-    k uzavření transakce serverem.
+
+   Bylo by zajímavé pokusit se o rozumnější podobu uživatelské hlášky, pokud
+   dojde k uzavření transakce serverem.
 
 
-* NOVĚ VLASTNOSTI [3/24] [12%]
+* NOVÉ VLASTNOSTI [3/24] [12%]
   :PROPERTIES:
   :COOKIE_DATA: todo recursive
   :END:
 
-** VERIFY Optické zvýraznění políček Editformu při změně hodnoty tohoto políčka
+** VERIFY Optické zvýraznění změněných políček v Editformu
 
-   V Editformu rozlišit opticky políčka, u kterých uživatel změnil hodnotu nebo hodnota byla
-   změněna funkcionalitou (Computerem). Uživatel tak bude mít přehled, která políčka zeditoval.
+   V Editformu rozlišit opticky políčka, u kterých uživatel změnil hodnotu nebo
+   hodnota byla změněna funkcionalitou (Computerem). Uživatel tak bude mít
+   přehled, která políčka zeditoval.
 
-** VERIFY Omezit max. šířku okna číselníku
-
+** VERIFY Omezit maximální šířku okna číselníku
 ** TODO Nová položka v menu sloupce: Vrátit výchozí řazení
-
-** FEEDBACK Umožnit definici hierarchie a skupin filtrů podobně jako u actions.
-
+** FEEDBACK Umožnit definici hierarchie a skupin filtrů podobně jako u actions
 ** VERIFY Umožnit definici `editable' i na úrovni ViewSpec
 
-   Editovatelnost záznamu je třeba kontrolovat jak před editací ve formuláři, tak před inline
-   editací.  V případě needitovatelnosti by někdy bylo vhodné mít možnost zobrazit zprávu proč
-   editace není přípustná.
+   Editovatelnost záznamu je třeba kontrolovat jak před editací ve formuláři,
+   tak před inline editací.  V případě needitovatelnosti by někdy bylo vhodné
+   mít možnost zobrazit zprávu proč editace není přípustná.
 
-** VERIFY Pokud je default hodnota políčka typu CHOICE None, přidat do výběru None položku
+** VERIFY Prázdná hodnota ve výběrovém políčku
+
+   Pokud je default hodnota políčka typu CHOICE None, přidat do výběru None
+   položku.
 
 ** VERIFY Ve specifikaci unique datového typu předávat datový objekt
 
-   To by jednak umožnilo provádět validaci unique přímo jako součást validace datového typu (nyní
-   to musí být řešeno až na úrovni PresentedRow) a jednak by bylo možné provádět validaci oproti
-   jinému datovému objektu, než do kterého vkládáme - ten totiž již může být vyfiltrovaný, takže
-   unikátnost nelze spolehlivě ověřit.
+   To by jednak umožnilo provádět validaci unique přímo jako součást validace
+   datového typu (nyní to musí být řešeno až na úrovni PresentedRow) a jednak by
+   bylo možné provádět validaci oproti jinému datovému objektu, než do kterého
+   vkládáme - ten totiž již může být vyfiltrovaný, takže unikátnost nelze
+   spolehlivě ověřit.
+
 
 ** Práva [1/4] [25%]
 
-*** TODO Rozlišit položky menu nedostupné kvůli přístupovým právům.
-
-*** VERIFY Omezení view na jednotlivé sloupce.
-
-*** DONE Správa práv přes databázi a formulář, nikoli přes specifikace.
+*** TODO Rozlišit položky menu nedostupné kvůli přístupovým právům
+*** VERIFY Omezení view na jednotlivé sloupce
+*** DONE Správa práv přes databázi a formulář, nikoli přes specifikace
     CLOSED: [2017-03-02 Thu 21:07]
 
-*** FEEDBACK Detailnější kontrola nad rozlišením práv při UPDATE/INSERT.
+*** FEEDBACK Detailnější kontrola nad rozlišením práv při UPDATE/INSERT
 
      Pokud není na políčko právo UPDATE, zakázat jej i při INSERTU, ale umožnit
      některá políčka explicitně povolit (pouze pro INSERT).  Nebo také povolit
      úplně vše, nehledě na práva pro UPDATE.
 
-** TODO Automatické doplňování.
+
+** TODO Automatické doplňování
 
    Widget nabídky doplnění momentálně nereaguje na myš.
 
-   Pro velké číselníky trvá select neúměrně dlouho kvůli "select count".  Přitom pokud výsledek
-   selectu obsahuje více než X (např. 50) záznamů, nemá smysl výběr zobrazovat.  Řešením by bylo
-   vyvolat select bez "select count" a provést fetch prvních maximálně X záznamů.  Potom pokud lze
-   provést i fetch záznamu X+1, je možné vše zahodit.  To by mělo fungovat stejně rychle nezávisle
-   na velikosti číselníku.
+   Pro velké číselníky trvá select neúměrně dlouho kvůli "select count".  Přitom
+   pokud výsledek selectu obsahuje více než X (např. 50) záznamů, nemá smysl
+   výběr zobrazovat.  Řešením by bylo vyvolat select bez "select count" a
+   provést fetch prvních maximálně X záznamů.  Potom pokud lze provést i fetch
+   záznamu X+1, je možné vše zahodit.  To by mělo fungovat stejně rychle
+   nezávisle na velikosti číselníku.
 
-   V seznamu doplnění by pro číselníky s displejem bylo možné zobrazovat i druhý sloupec s hodnotou
-   displeje.
+   V seznamu doplnění by pro číselníky s displejem bylo možné zobrazovat i druhý
+   sloupec s hodnotou displeje.
 
-** TODO Využití vyhledávacího panelu i pro vyhledávání s podmínkou zadanou přes formulář.
+** TODO Využití vyhledávacího panelu i pro složitější podmínky
 
-** DONE Použití externího PS prohlížeče.
+   Nyní je vyhledávací panel využíván pro inkrementální vyhledávání textového
+   výrazu.  Po zadání výrazu umožňuje pohub vpřed/vzad po odpovídajících
+   záznamech.  Bylo by praktické mít možnost tento panel využít i pro složitější
+   vyhledávací podmínky zadané přes vyhledávací formulář (jehož modální oknok by
+   bylo možno po zadání podmínky skrýt).
+
+** DONE Použití externího PS prohlížeče
    CLOSED: [2017-03-02 Thu 21:08]
 
-** DONE Současný výběr několika řádků v řádkovém formuláři.
+** DONE Současný výběr několika řádků v řádkovém formuláři
    CLOSED: [2017-03-02 Thu 21:09]
 
    Práce s výběrem je nyní problematická, protože výběr je používán také k
    vysvícení aktuálního řádku.  Je třeba nejprve vymyslet, jak se to má
    chovat.  Více viz news 2006-02-27.
 
-** FEEDBACK Rozšířit řádek po dobu inline editace víceřádkového textu.
-
-** FEEDBACK Zarovnávání, atributy a masky vstupních políček.
-
-** VERIFY Přepočítání závislých políček při výběru z ListField.
+** FEEDBACK Rozšířit řádek po dobu inline editace víceřádkového textu
+** FEEDBACK Zarovnávání, atributy a masky vstupních políček
+** VERIFY Přepočítání závislých políček při výběru z ListField
 
    V současné době se děje jen při změně hodnoty.  Chtěli bychom ale, aby k
    přepočítání došlo při každém dvojkliku (nebo výběru pravým tlačítkem).
 
-** TODO Pro datumová políčka umožnit display ukazující odpovídající den v týdnu.
+** TODO Pro datumová políčka umožnit display ukazující odpovídající den v týdnu
+** FEEDBACK Zobrazení editovatelných/needitovatelných políček v ShowFormu
+** FEEDBACK Zamezit výpočtu editovatelnosti políček v ShowFormu
 
-** FEEDBACK Zobrazení editovatelných/needitovatelných políček v ShowFormu.
-
-** FEEDBACK Zamezit výpočtu editovatelnosti políček v ShowFormu - je to zbytečné...
+   Je to zbytečné...
 
 ** TODO Zobrazení názvu aktivního filtru
 
-   Pokud se při otevření filtračního dialogu zjistí, že podmínka aktivního filtru
-   odpovídá nějakému pojmenovanému filtru, zobrazí se místo "Poslední aplikovaný filtr"
-   název pojmenovaného filtru.
+   Pokud se při otevření filtračního dialogu zjistí, že podmínka aktivního
+   filtru odpovídá nějakému pojmenovanému filtru, zobrazí se místo "Poslední
+   aplikovaný filtr" název pojmenovaného filtru.
 
-** FEEDBACK Důsledněji promyslet klávesové zkratky.
+** FEEDBACK Důsledněji promyslet klávesové zkratky
 
    Např.:
 
    - Escape a Enter ve filtračním dialogu
    - Enter v přihlašovacím dialogu
    - Enter ve formulářích (odeslat celý formulář)?
-   - Tab v tabulce (pohybuje kurzorem, ale to dělají i šipky) -- mohl vyvolat COMMAND_OTHER_FORM
+   - Tab v tabulce (pohybuje kurzorem, ale to dělají i šipky) -- mohl vyvolat
+     COMMAND_OTHER_FORM
 
-** FEEDBACK Doplnit pro pytis.extensions.dbselect parametr "limit" pro možnost omezit počet hledaných
-   řádků. Při kontrolách stačí často najít, že existuje jeden hledaný řádek jako chyba a není
-   získat seznam všech řádků. (Použít agregace a zjistit počet řádků je por tyto účely na zápis
-   kódu poněkud nepřehledné). Možná by stálo za úvahu zavést i funkci dbexists(spec, cond,
+** FEEDBACK Možnost omezit počet vrácených záznamů ve funkci dbselect
+
+   Doplnit pro pytis.extensions.dbselect parametr "limit" pro možnost omezit
+   počet hledaných řádků. Při kontrolách stačí často najít, že existuje jeden
+   hledaný řádek jako chyba a není získat seznam všech řádků. (Použít agregace a
+   zjistit počet řádků je por tyto účely na zápis kódu poněkud
+   nepřehledné). Možná by stálo za úvahu zavést i funkci dbexists(spec, cond,
    transaction).
 
 ** TODO Upravit gensqlalchemy pro partial unique (např. pro e_bankovni_ucty)
-
 ** DONE Přepsat exports s využitím novější knihovny xlsxwriter
    CLOSED: [2016-03-02 Wed 15:47]
 
-** FEEDBACK Zamyslet se nad možnostmi nevyvolávat computery a další callbacky
+** FEEDBACK Zamyslet se nad omezením volání computerů a dalších callbacků
 
-    V současnosti se computery vyvolávají při zapsání každého jednotlivého
-    znaku do políčka, přičemž mnohdy je ona hodnota dokonce nevalidní a je proto
-    naprosto zbytečné ty callbacky s předanou nevalidní hodnotou vůbec volat.
-    Typicky třeba u číselníků nebo u datumových políček.
-    Nabízí se ošetřit to buď jen u těchto typů políček, nebo by se mohlo
-    zvážit použití nového parametru, něco jako validate_immediately nebo něco takového.
+   V současnosti se computery vyvolávají při zapsání každého jednotlivého znaku
+   do políčka, přičemž mnohdy je ona hodnota dokonce nevalidní a je proto
+   naprosto zbytečné ty callbacky s předanou nevalidní hodnotou vůbec volat.
+   Typicky třeba u číselníků nebo u datumových políček.  Nabízí se ošetřit to
+   buď jen u těchto typů políček, nebo by se mohlo zvážit použití nového
+   parametru, něco jako validate_immediately nebo něco takového.
 
-** TODO Doplnit do dialogů možnost stanovit timeout a vrátit buď default volbu
-   nebo "Nevybráno".
+** TODO Umožnit nastavit timeout dialogu s vrácením výchozí hodnoty
+
+   Po vypršení timeoutu vrátit buď výchozí volbu nebo "Nevybráno".
 
 
 * SPECIFIKACE [0/6] [0%]
 
-** FEEDBACK Dynamické určení parametrů odkazu.
+** FEEDBACK Dynamické určení parametrů odkazu
 
    Prozatím lze specifikaci odkazu předat pouze statické hodnoty.  Jak název
    odkazované specifikace, tak argument `select_row' by však bylo možné určit
-   dynamicky podle obsahu aktuálního řádku pomocí funkce, která dostane
-   aktuální řádek jako argument.
+   dynamicky podle obsahu aktuálního řádku pomocí funkce, která dostane aktuální
+   řádek jako argument.
 
-** TODO after_new_record, after_edit_record, before_new_record apod.
+** TODO Callbacky před/po editaci/vložení záznamu
 
-   Nyní je možné přidat kód, který se provede po vložení nového záznamu buďto
-   do cleanup, nebo definovat on_new_record, a v něm nejprve zavolat výchozí
-   new_record s block_on_new_record.  Jednodušší a přehlednější by bylo mít
-   pro tento případ explicitní podporu.
+   Např. after_new_record, after_edit_record, before_new_record apod.
 
-** TODO Změny ohledně nastavení šířky sloupců/políček.
+   Nyní je možné přidat kód, který se provede po vložení nového záznamu buďto do
+   cleanup, nebo definovat on_new_record, a v něm nejprve zavolat výchozí
+   new_record s block_on_new_record.  Jednodušší a přehlednější by bylo mít pro
+   tento případ explicitní podporu.
+
+** TODO Změny ohledně nastavení šířky sloupců/políček
 
    `width = 0' zakázat a všechna taková políčka vyřadit z layoutu (nejprve
    logovat jako deprecated).
@@ -286,9 +315,9 @@
    `column_width = 0' nijak speciálně neošetřovat (stejně je šířka minimálně
    taková, aby se vešel label)
 
-** TODO V tiskovém menu umožnit definovat separátor a klávesové zkratky.
+** TODO V tiskovém menu umožnit definovat separátor a klávesové zkratky
 
-** FEEDBACK Sestavování paměťového datového objektu ve třídě `Specification'.
+** FEEDBACK Sestavování paměťového datového objektu ve třídě `Specification'
 
    Sestavování datových typů sloupečků pro nedatabázové datové objektu má
    několik omezení.  Například pokud je třeba určit typ číselníkového políčka
@@ -299,21 +328,23 @@
    využití datového typu z FieldSpec před typem z DataSpec.  Je ovšem třeba
    ověřit, jestli se toho někde nevyužívá.
 
-** FEEDBACK Kontrola práv při volání funkcí jako dbupdatemany apod.
+** FEEDBACK Kontrola práv při volání funkcí jako dbupdatemany apod
 
 
 * INTERNÍ ZÁLEŽITOSTI [2/4] [50%]
 
-** VERIFY Neprovádět reinicializaci všech sloupců při vstupu do inline editace buňky.
+** VERIFY Zamezit reinicializaci všech sloupců při inline editaci buňky
 
-   Je třeba aby editory vždy byly vytvořeny pro aktuální editovaný řádek.  Provádět kvůli tomu
-   reinicializaci všech sloupců je zbytečné, ale prozatím to tak alespoň funguje.  Do budoucna by
-   bylo vhodné editory inicializovat při vstupu do inline editace a po jejím ukončení je zrušit.
+   Je třeba aby editory vždy byly vytvořeny pro aktuální editovaný řádek.
+   Provádět kvůli tomu reinicializaci všech sloupců při vstupu do editace
+   jednotlivé buňky je zbytečné, ale prozatím to tak alespoň funguje.  Do
+   budoucna by bylo vhodné editory inicializovat při vstupu do inline editace a
+   po jejím ukončení je zrušit.
 
-** DONE Nepoužívat mx.DateTime, ale Pythonový modul datetime.
+** DONE Nepoužívat mx.DateTime, ale Pythonový modul datetime
    CLOSED: [2017-03-02 Thu 21:18]
 
-** FEEDBACK Mezivrstva pro práci s aktuálním selectem, kurzory apod.
+** FEEDBACK Mezivrstva pro práci s aktuálním selectem a kurzory
 
    Je třeba oddělit veškerý kód týkající se práce s aktuálním selectem,
    získáváním dat podle čísla řádků (práce s kurzorem) a cachování řádků, který
@@ -322,7 +353,7 @@
    netabulkových formulářích a je třeba je mít na jednom místě, nezávisle na
    formulářových třídách.
 
-** DONE Přepracování stavového řádku.
+** DONE Přepracování stavového řádku
    CLOSED: [2017-03-02 Thu 21:19]
 
    Pole definovaná aplikací (message, list-position, ...) by měla být přítomna
@@ -334,47 +365,51 @@
 
 * ČIŠTĚNÍ [0/6] [0%]
 
-** VERIFY Odstraní argumentu `key' funkcí `on_new_record()'.
+** VERIFY Odstraní argumentu `key' funkcí `on_new_record()'
 
    Tento argument je tam patrně z historických důvodů, kdy se tak řešilo
    kopírování záznamu.  To je dnes prováděno přes `prefill', takže funkce
    `on_new_record()' arument `key' nikdy nedostane.  V některých defsech se s
    ním však stále počítá.
 
-** VERIFY Specifikace okrajů a mezer ve formulářích.
+** VERIFY Specifikace okrajů a mezer ve formulářích
 
-   Argument `border_style' ne pravděpodobně zcela nepoužívaný.  `gap', `space' a `border' by bylo
-   lépe definovat pro celý layout globálně, než zvlášť pro každou `GroupSpec'.
+   Argument `border_style' ne pravděpodobně zcela nepoužívaný.  `gap', `space' a
+   `border' by bylo lépe definovat pro celý layout globálně, než zvlášť pro
+   každou `GroupSpec'.
+   
+** FEEDBACK Nedostupnost příkazu vs. přístupová práva
 
-** FEEDBACK Nedostupnost příkazu vs. přístupová práva.
+   Pokud není příkaz dostupný z důvodu nedostatečných přístupových práv, bylo by
+   dobré o tom uživatele nějak informovat.  Bude to však třeba nejprve nějak
+   rozlišit -- buďto pomocí návratové hodnoty funkce enabled, nebo ještě další
+   funkcí pro zjištění přístupových práv.
 
-   Pokud není příkaz dostupný z důvodu nedostatečných přístupových práv,
-   bylo by dobré o tom uživatele nějak informovat.  Bude to však třeba nejprve
-   nějak rozlišit -- buďto pomocí návratové hodnoty funkce enabled, nebo ještě
-   další funkcí pro zjištění přístupových práv.
-
-** FEEDBACK Validace hodnot konfiguračních voleb.
+** FEEDBACK Validace hodnot konfiguračních voleb
 
    Pro každou konfigurační volbu je nyní znám její datový typ, takže by nebyl
    problém do metody `Option.set_value()' přidat kontrolu, zda předaná hodnota
    skutečně odpovídá deklarovanému typu volby.
-
-** FEEDBACK S groupingem pracovat jako s celým číslem.
+   
+** FEEDBACK S groupingem pracovat jako s celým číslem
 
    Problém bude hlavně v defsech, kde bývá grouping často specifikován jako
    název sloupce.
 
-** FEEDBACK Implementovat také None context pro spouštění akcí.
+** FEEDBACK Implementovat také None context pro spouštění akcí
 
    Specifikace kontextu akce nyní umožňuje také hodnotu None, která by měla
    zaručit, že akci nejsou předány žádné argumenty.  Toho je však zatím
-   využíváno jen ve webových formulářích.  Bylo by dobré to samé
-   doimplementovat i do GUI formulářů.
+   využíváno jen ve webových formulářích.  Bylo by dobré to samé doimplementovat
+   i do GUI formulářů.
 
 
 * wx-2.8 [0/2] [0%]
 
-** VERIFY Po změně ve filtračním formuláři se "zboří" layout celého formuláře.
+** VERIFY Problémy při úpravách filtrů ve filtračním formuláři
 
-** VERIFY Tracebackový dialog má chybný layout: Tlačítka jsou uvnitř tracebackového
-   okna.
+   Po změně ve filtračním formuláři se "zboří" layout celého formuláře.
+
+** VERIFY Chybný layout tracebackového formuláře
+
+   Tlačítka jsou uvnitř tracebackového okna.
