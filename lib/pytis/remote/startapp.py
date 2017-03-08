@@ -198,6 +198,22 @@ class ui(object):
 
     @staticmethod
     def checklist(parent, columns, items):
+        """Create a control to check/uncheck individual items in a tabular list.
+
+        Arguments:
+          columns -- sequence of column labels -- selectable items may contain
+            multiple values to be displayed in a tabular layout in columns.
+            This sequence defines the column headers.
+          items -- sequence of sequences, where the top level sequence
+            determines the options which may be checked/unchecked individually
+            (table rows) and the inner sequences determine the values displayed
+            in table columns for given row plus the initial checbox state.  The
+            first value in each inner sequence is a bool (True for a checked
+            item, False for unchecked) and the following are the string values
+            for table columns.  Thus each inner sequence has n + 1 items where
+            n is the length of 'columns'.
+
+        """
         import wx.lib.mixins.listctrl
         class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
             def __init__(self, parent, columns, items):
@@ -533,12 +549,27 @@ class X2GoStartApp(wx.App):
         client.main_loop()
 
     def update_progress(self, message=None, progress=1):
+        """Update progress bar and display a progress message.
+
+        Arguments:
+          message -- Message roughly describing the current progress of
+            application startup to the user.  Messages can also help to diagnose
+            problems.  If None, the previous progress message is kept.
+          progress -- progress bar increment in percents (int).
+
+        """
         self._gauge.SetValue(self._gauge.GetValue() + progress)
         if message:
             self._status.SetLabel(message)
         self.Yield()
 
     def message(self, message):
+        """Display a status message.
+
+        Status message replaces any previous progress message, but doesn't
+        change the progress bar state.
+
+        """
         self.update_progress(message, progress=0)
 
     def _create_authentication_dialog(self, dialog, methods, key_files):
@@ -640,6 +671,24 @@ class X2GoStartApp(wx.App):
                                  ('password', 'publickey'), ('x',)) #methods, key_files)
 
     def checklist_dialog(self, title, message, columns, items):
+        """Display a dialog to select multiple items from a list.
+
+        Arguments:
+          title -- Dialog window top title as a string
+          message -- Short prompt displayed above the list of choices
+          columns -- sequence of column labels -- selectable items may contain
+            multiple values to be displayed in a tabular layout in columns.
+            This sequence defines the column headers.
+          items -- sequence of sequences, where the top level sequence
+            determines the options which may be checked/unchecked individually
+            (table rows) and the inner sequences determine the values displayed
+            in table columns for given row plus the initial checbox state.  The
+            first value in each inner sequence is a bool (True for a checked
+            item, False for unchecked) and the following are the string values
+            for table columns.  Thus each inner sequence has n + 1 items where
+            n is the length of 'columns'.
+
+        """
         def create_dialog(dialog):
             checklist = ui.checklist(dialog, columns, items)
             dialog.set_callback(lambda: checklist.SetFocus())
@@ -662,7 +711,18 @@ class X2GoStartApp(wx.App):
         return self._show_dialog(title, create_dialog)
 
     def passphrase_dialog(self, title, check=None):
-        """Display a dialog to enter a key passphrase with strength checking."""
+        """Display a dialog to enter a key passphrase with strength checking.
+
+        Arguments:
+          title -- Dialog window top title as a string
+          check -- function of one argument (the passphrase entered by the
+            user) returning None if the passphrase is ok or a string
+            determining the kind of error if the passphrase is not acceptable.
+            The following values are recognized: 'unallowed' if the passphrase
+            contains unallowed characters, 'short' if the passphrase is too
+            short or 'weak' if the passphrase is not strong enough.
+
+        """
         def create_dialog(dialog):
             def submit(event):
                 password = field1.GetValue()
@@ -676,13 +736,14 @@ class X2GoStartApp(wx.App):
                     error = _("Passphrases don't match.")
                 elif check:
                     check_result = check(password)
-                    if check_result is not None:
-                        if check_result == 'unallowed':
-                            error = _("Unallowed characters.")
-                        elif check_result == 'too short':
-                            error = _("Passphrase too short (minimum is 10 characters).")
-                        else:
-                            error = _("Passphrase too weak (add capitals and numbers).")
+                    if check_result == 'unallowed':
+                        error = _("Unallowed characters.")
+                    elif check_result == 'short':
+                        error = _("Passphrase too short (minimum is 10 characters).")
+                    elif check_result == 'weak':
+                        error = _("Passphrase too weak (use capitals and numbers).")
+                    elif check_result is not None:
+                        raise Exception('Unsupported check result: %s' % check_result)
                 if error:
                     message.SetLabel(error)
                     field1.SetFocus()
