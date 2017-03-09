@@ -41,7 +41,7 @@ def smssend(tel, message, server='192.168.1.55'):
     UID = 'sms'
     PWD = 'sms'
     DB = 'SMS'
-    MAX_LENGTH = 480 # 3 SMS po 160 znacích
+    MAX_LENGTH = 480  # 3 SMS po 160 znacích
     SQSH = '/usr/bin/sqsh'
     TEMPLATE = """
     insert into sms_request
@@ -99,6 +99,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
     assert isinstance(address, basestring), address
     assert isinstance(subject, basestring), subject
     assert isinstance(msg, basestring), msg
+
     def get_utf8_argument(arg):
         if isinstance(arg, str):
             try:
@@ -189,7 +190,7 @@ class UserDefaultPrinter(object):
 
     def __repr__(self):
         return "<UserDefaultPrinter (%s)>" % repr(self.get())
-    
+
 def set_default_printer():
     try:
         import cups
@@ -223,14 +224,15 @@ def set_default_printer():
         user_default.set(result['printer'].value())
     return None
 
+
 cmd_set_default_printer = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                            dict(handler=set_default_printer))
 
 # Additional constraints
-            
+
 def constraints_email(email):
     """Ověř platnost zápisu e-mailové adresy.
-    
+
     Pokud má adresa platný tvar, nebo je None vrací None.  Jinak vrací řetězec
     s chybovou hláškou
 
@@ -255,7 +257,7 @@ def constraints_email_many(emails):
     not_match = []
     for email in emails.split(','):
         result = constraints_email(email)
-        if not result is None:
+        if result is not None:
             not_match.append(result)
     if len(not_match) == 0:
         return None
@@ -336,7 +338,7 @@ def check_crypto_password(key, password, connection_data):
       password -- password to the key; basestring
       connection_data -- database connection data; 'pytis.data.DBConnection'
         instance
-     
+
     """
     function = pytis.data.DBFunctionDefault('pytis_crypto_extract_key', connection_data)
     row = pytis.data.Row((('encrypted', key,), ('psw', pytis.data.sval(password),),))
@@ -401,12 +403,15 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
             return "user key installation failed"
         if send_password:
             subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
-            text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
+            text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (
+                area, user_password
+            )
             error = send_mail(email, admin_address, subject, text, key=gpg_key)
             if error:
                 return "failure when sending mail to the user: %s" % (error,)
         else:
-            data = pytis.data.dbtable('e_pytis_crypto_keys', ('key_id', 'name', 'username', 'fresh'),
+            data = pytis.data.dbtable('e_pytis_crypto_keys',
+                                      ('key_id', 'name', 'username', 'fresh'),
                                       connection_data)
             row = pytis.data.Row((('fresh', pytis.data.bval(False),),))
             condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
