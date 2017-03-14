@@ -122,8 +122,7 @@ class Users(Specification):
             Field('admin_password', _(u"Heslo přihlášeného uživatele"),
                   width=24, virtual=True,
                   type=pytis.data.Password(not_null=True, verify=False),
-                  editable=pytis.presentation.Computer(self._editable, depends=('name',)),
-                  default=lambda: config.dbpass
+                  editable=pytis.presentation.Computer(self._editable, depends=('name',))
                   ))
         fields.append(
             Field('admin_address', _(u"E-mailová adresa administrátora"),
