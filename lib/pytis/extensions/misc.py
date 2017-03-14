@@ -413,7 +413,7 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
             data = pytis.data.dbtable('e_pytis_crypto_keys',
                                       ('key_id', 'name', 'username', 'fresh'),
                                       connection_data)
-            row = pytis.data.Row((('fresh', pytis.data.bval(False),),))
+            row = pytis.data.Row((('fresh', pytis.data.bval(True),),))
             condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
                                        pytis.data.EQ('username', pytis.data.sval(user)))
             result = data.update_many(condition, row, transaction=transaction_)

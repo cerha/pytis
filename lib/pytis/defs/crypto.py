@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
+import config
 
 import pytis.data
 import pytis.extensions
@@ -112,44 +112,120 @@ class Users(Specification):
     title = _(u"Uživatelé")
 
     def _customize_fields(self, fields):
-        fields.append(Field('admin_address', _(u"E-mailová adresa administrátora"),
-                            virtual=True, type=pytis.data.String(not_null=True)))
-        fields.append(Field('admin_password', _(u"Heslo administrátora"),
-                            virtual=True, type=pytis.data.Password(not_null=True, verify=False)))
-    columns = ('username', 'fresh',)
-    layout = ('name', 'username', 'admin_address', 'admin_password',)
+        fields.modify('name',
+                      editable=pytis.presentation.Computer(
+                          self._editable, depends=()))
+        fields.modify('username',
+                      editable=pytis.presentation.Computer(
+                          self._editable, depends=('name',)))
+        fields.append(
+            Field('admin_password', _(u"Heslo přihlášeného uživatele"),
+                  width=24, virtual=True,
+                  type=pytis.data.Password(not_null=True, verify=False),
+                  editable=pytis.presentation.Computer(self._editable, depends=('name',)),
+                  default=config.dbpass
+                  ))
+        fields.append(
+            Field('admin_address', _(u"E-mailová adresa administrátora"),
+                  width=24, virtual=True,
+                  type=pytis.data.String(not_null=True),
+                  editable=pytis.presentation.Computer(self._editable, depends=('name',)),
+                  ))
+        fields.append(
+            Field('user_password', _(u"Nové heslo pro uživatele"),
+                  virtual=True, type=pytis.data.String(),
+                  editable=pytis.presentation.Editable.NEVER
+                  ))
 
-    class _InsertForm(pytis.form.PopupInsertForm):
-        def _exit_check(self):
+    columns = ('username', 'fresh',)
+    # layout = ('name', 'username', 'admin_address', 'admin_password',)
+
+    def layout(self):
+        return pytis.presentation.VGroup(
+            'name', 'admin_password', 'username', 'admin_address',
+            pytis.presentation.HGroup(
+                'user_password',
+                pytis.presentation.Button(
+                    _("Generovat heslo"), self._gen_password),
+                pytis.presentation.Button(
+                    _("Zrušit heslo"), self._clear_password)
+            ))
+
+    def _editable(self, row, col):
+        name = row['name'].value()
+        if col == 'name':
+            return not name
+        elif col == 'admin_password':
+            return name is not None
+        if name and name not in pytis.form.decrypted_names():
+            return False
+        else:
             return True
-        def _commit_form(self, close=True):
-            import config
-            connection_data = config.dbconnection
-            row = self._row
-            error = pytis.extensions.add_crypto_user(row['name'].value(),
-                                                     row['username'].value(),
-                                                     'admin',
-                                                     row['admin_password'].value(),
-                                                     row['admin_address'].value(),
-                                                     connection_data, transaction=self._transaction)
-            if error:
-                pytis.form.run_dialog(pytis.form.Error, "Error: %s" % (error,))
-                return None
-            if self._governing_transaction is None and self._transaction is not None:
-                self._transaction.commit()
-                self.close()
-            return self._row
+
+    def _clear_password(self, row):
+        row['user_password'] = pytis.data.sval(None)
+
+    def _gen_password(self, row):
+        import os
+        import random
+        import string
+        length = 10
+        chars = string.ascii_letters + string.digits
+        random.seed = (os.urandom(1024))
+        password = ''.join(random.choice(chars) for i in range(length))
+        row['user_password'] = pytis.data.sval(password)
 
     def on_new_record(self, prefill=None, transaction=None):
-        area = pytis.form.current_form()._main_form.current_row()['name']
-        if prefill is None:
-            prefill = {}
+        area = pytis.form.current_form()._main_form.current_row()['name'].value()
+        fields = [f for f in self.view_spec().fields()
+                  if f.id() in ('name', 'username', 'admin_address', 'admin_password',
+                                'user_password')]
+        fields = self._Fields(fields)
+        for f in fields:
+            if f.virtual():
+                fields.modify(f.id(), virtual=False)
+        title = _("Nový uživatel šifrované oblasti")
+        prefill = {'name': area}
+        record = pytis.form.run_form(pytis.form.InputForm, title=title, fields=fields,
+                                     layout=self.view_spec().layout(),
+                                     check=self.view_spec().check(),
+                                     prefill=prefill)
+        user_password = record['user_password'].value()
+        crypto_password = record['admin_password'].value()
+        username = record['username'].value()
+        admin_address = record['admin_address'].value()
+        transaction = transaction
+        if not transaction:
+            transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+        error = pytis.extensions.add_crypto_user(area,
+                                                 username,
+                                                 config.dbuser,
+                                                 crypto_password,
+                                                 admin_address,
+                                                 config.dbconnection,
+                                                 transaction=transaction,
+                                                 user_password=user_password)
+        if error:
+            transaction.rollback()
+            pytis.form.run_dialog(pytis.form.Error, "Error: %s" % (error,))
         else:
-            prefill = copy.copy(prefill)
-        prefill['name'] = area
-        spec = self._action_spec_name()
-        return pytis.form.run_form(self._InsertForm, spec,
-                                   prefill=prefill, transaction=transaction)
+            transaction.commit()
+
+    def check(self, row):
+        area = row['name'].value()
+        if not area or area not in pytis.form.decrypted_names():
+            return
+        import config
+        connection_data = config.dbconnection
+        key_id, key = pytis.extensions.crypto_admin_key(area, config.dbuser, connection_data)
+        if not key_id or not key:
+            pytis.form.run_dialog(pytis.form.Error,
+                                  _(u"Nebyl nalezen klíč pro tuto oblast"))
+            return 'name'
+        crypto_password = row['admin_password'].value()
+        if not pytis.extensions.check_crypto_password(key, crypto_password, connection_data):
+            pytis.form.run_dialog(pytis.form.Error, _(u"Chybné heslo"))
+            return 'admin_password'
 
     def on_edit_record(self, row):
         pytis.form.run_dialog(pytis.form.Warning, _(u"Uživatele lze jen přidávat a odebírat"))
