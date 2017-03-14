@@ -123,7 +123,7 @@ class Users(Specification):
                   width=24, virtual=True,
                   type=pytis.data.Password(not_null=True, verify=False),
                   editable=pytis.presentation.Computer(self._editable, depends=('name',)),
-                  default=config.dbpass
+                  default=lambda: config.dbpass
                   ))
         fields.append(
             Field('admin_address', _(u"E-mailová adresa administrátora"),
@@ -190,6 +190,8 @@ class Users(Specification):
                                      layout=self.view_spec().layout(),
                                      check=self.view_spec().check(),
                                      prefill=prefill)
+        if not record:
+            return
         user_password = record['user_password'].value()
         crypto_password = record['admin_password'].value()
         username = record['username'].value()
