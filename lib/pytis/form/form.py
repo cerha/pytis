@@ -2740,7 +2740,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _exit_check(self):
         if self.changed():
-            q = _(u"Unsaved changed in form data!") + "\n" + \
+            q = _(u"Unsaved changes in form data!") + "\n" + \
                 _(u"Do you really want to close the form?")
             if not run_dialog(pytis.form.Question, q):
                 return False
