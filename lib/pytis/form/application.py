@@ -350,9 +350,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._remote_status_info = (True, time.time())
             try:
                 self._remote_client_version = version = pytis.remote.x2goclient_version()
-                log(OPERATIONAL, _("RPC communication available. Version: {}.").format(version))
             except Exception:
-                log(OPERATIONAL, _("RPC communication available. Version: unknown."))
+                version = _("unknown")
+            log(OPERATIONAL, _("RPC communication available. Version: %s.") % (version,))
         else:
             self._remote_status_info = (False, time.time())
             log(OPERATIONAL, _("RPC communication unavailable"))
