@@ -2070,7 +2070,12 @@ def translations(domain, origin='en'):
     try:
         import lcg
     except ImportError:
-        return identity
+        def interpolate(text, *args, **kwargs):
+            values = args or kwargs
+            if values:
+                text %= values
+            return text
+        return interpolate
     lang = environment_language(default=origin)
     path = translation_path()
     return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
