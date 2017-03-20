@@ -1346,14 +1346,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 return
             required_date = datetime.datetime.strptime(required_version, version_template)
             if version_date < required_date:
-                msg = _("POZOR!\n\n"
-                        "Provozujete nekompatibilní verzi pytis2go ({}).\n"
-                        "Některé funkce nemusí fungovat nebo se mohou objevovat chyby.\n\n"
-                        "Proveďte prosím aktualizaci Pytis2go, která se nabízí při startu "
-                        "aplikace.\n\n"
-                        "Mám nyní aplikaci ukončit, abyste mohli provést aktualizaci Pytis2go?"
-                        )
-                if pytis.form.run_dialog(pytis.form.Question, msg.format(version)):
+                msg = _("BEWARE!\n\n"
+                        "You are running an incompatible version of Pytis2go (%s).\n"
+                        "Some functionality may not be available and errors may occur.\n\n"
+                        "Please perform Pytis2go update during application startup.\n\n"
+                        "Shall the application be terminated now to allow Pytis2go update?",
+                        version)
+                if pytis.form.run_dialog(pytis.form.Question, msg):
                     self.COMMAND_EXIT.invoke()
 
 class DbActionLogger(object):
