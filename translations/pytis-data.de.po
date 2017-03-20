@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-01-31 18:38+0100\n"
+"POT-Creation-Date: 2017-03-17 14:38+0100\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -70,11 +70,11 @@ msgstr "Falsches Format für Datum oder Zeit "
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:2068
+#: ../lib/pytis/data/postgresql.py:2103
 msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3811
+#: ../lib/pytis/data/postgresql.py:3853
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Falsches Datum oder Zeit "

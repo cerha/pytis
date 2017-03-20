@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-01-31 18:38+0100\n"
+"POT-Creation-Date: 2017-03-17 14:38+0100\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -69,11 +69,11 @@ msgstr ""
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:2068
+#: ../lib/pytis/data/postgresql.py:2103
 msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3811
+#: ../lib/pytis/data/postgresql.py:3853
 msgid "Invalid database counter value"
 msgstr ""
 
