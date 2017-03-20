@@ -260,7 +260,7 @@ class X2GoStartApp(wx.App):
 
     def _on_select_profile(self, event):
         profile_id = self._selected_profile_id()
-        self.update_progress(_("Selected profile %s: Contacting server...") % profile_id)
+        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
         self._controller.select_profile(profile_id)
         self._connect()
 
@@ -481,9 +481,9 @@ class X2GoStartApp(wx.App):
                 available_version = self._controller.available_upgrade_version()
                 if ((available_version and available_version > current_version and
                      self._question(_("Upgrade available"),
-                                    '\n'.join((_("New pytis client version available."),
-                                               _("Current version: %s") % current_version,
-                                               _("New version: %s") % available_version,
+                                    '\n'.join((_("New Pytis client version available."),
+                                               _("Current version: %s", current_version),
+                                               _("New version: %s", available_version),
                                                _("Install?")))))):
                     error = self._controller.upgrade(self._username())
                     if error:
@@ -591,7 +591,7 @@ class X2GoStartApp(wx.App):
         def publickey_authentication(parent):
             def on_select_key_file(event):
                 filename = wx.FileSelector(
-                    _(u"Select ssh key file"),
+                    _(u"Select SSH key file"),
                     default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
                 )
                 self._keyfile_field.SetValue(filename)

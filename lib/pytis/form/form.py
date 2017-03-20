@@ -2650,8 +2650,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         except (pytis.data.DBRetryException, pytis.data.DBSystemException):
             self._disable_buttons(self._parent)
             run_dialog(pytis.form.Error,
-                       _("Database connection was closed due to the long inactivity.\n"
-                         "Please close the form with the Cancel button."))
+                       _("The database connection was closed because of long inactivity.") + "\n" +
+                       _("Please close the form using the Cancel button."))
             return False
         if failed_id:
             f = self._field(failed_id)

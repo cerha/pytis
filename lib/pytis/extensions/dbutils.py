@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -291,9 +291,10 @@ def safe_commit(transaction, msg=None):
       transaction -- transaction to commit
       msg -- message to show, when database error occurs
 
-    Returns True if commit was successful, otherwise return False.
+    Returns True if commit was successful, otherwise returns False.
+
     """
-    DEFAULT_MSG = _("Database connection was closed because of the long inactivity.")
+    DEFAULT_MSG = _("The database connection was closed because of long inactivity.")
     try:
         transaction.commit()
         return True
@@ -310,7 +311,7 @@ def safe_rollback(transaction, msg=None):
 
     Returns True if rollback was successful, otherwise return False.
     """
-    DEFAULT_MSG = _("Database connection was closed because of the long inactivity.")
+    DEFAULT_MSG = _("The database connection was closed because of long inactivity.")
     try:
         transaction.rollback()
         return True

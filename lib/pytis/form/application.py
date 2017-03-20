@@ -292,7 +292,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     bad = True
                 else:
                     break
-                message = _("Enter the password to unlock the encryption area %s.") % name
+                message = _("Enter the password to unlock the encryption area %s.", name)
                 if bad:
                     message += "\n(" + _("This is probably your old login password.") + ")"
                 password = password_dialog(_("Encryption key password"), message=message)
@@ -351,7 +351,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             try:
                 self._remote_client_version = version = pytis.remote.x2goclient_version()
             except Exception:
-                version = _("unknown")
+                version = 'unknown'
             log(OPERATIONAL, "RPC communication available. Version:", version)
         else:
             self._remote_status_info = (False, time.time())
@@ -969,7 +969,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if form is not None:
                 busy_cursor(False)
                 self._raise_form(form)
-                message(_('Form "%s" found between opened windows.') % form.title())
+                message(_('Form "%s" found between opened windows.', form.title()))
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
                 if 'filter' in kwargs and kwargs['filter'] is not None:
@@ -995,7 +995,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(pytis.form.Error, _("Form creation failed: %s") % name)
+                self.run_dialog(pytis.form.Error, _("Form creation failed: %s", name))
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
@@ -2085,8 +2085,6 @@ def built_in_status_fields():
             if not last_status:
                 last_time = time.time()
                 _application._remote_status_info = (True, last_time)
-            tooltip_text = _("Connected.\nClient version: {}\n"
-                             "Status changed: {}")
             if _application._remote_client_version:
                 version = _application._remote_client_version
             else:
@@ -2095,27 +2093,26 @@ def built_in_status_fields():
                     _application._remote_client_version = version
                 except Exception:
                     version = _("Not available")
-            status = _('OK')
+            status = _("Ok")
             icon = 'connected'
-            tooltip_args = [version]
+            tooltip = [version]
+            tooltip_text = _("Connected.") + "\n" + _("Client version: %s", version)
         else:
             if last_status:
                 last_time = time.time()
                 _application._remote_status_info = (False, time.time())
-            tooltip_text = _("Not available.\n"
-                             "Status changed: {}")
-            status = _('N/A')
+            tooltip = _("Not available.")
+            status = _("N/A")
             icon = 'disconnected'
-            tooltip_args = []
         changed = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_time))
-        tooltip_args.append(changed)
-        tooltip = tooltip_text.format(*tooltip_args)
+        tooltip += '\n' + _("Status changed: %s", changed)
         return (status, icon, tooltip)
 
     def _refresh_user_config():
-        tooltip_text = _("Username: {}\nDatabase host: {}\nDatabase name: {}")
-        return (config.dbuser, 'user-icon',
-                tooltip_text.format(config.dbuser, config.dbhost, config.dbname))
+        tooltip = "\n".join((_("Username: %s", config.dbuser),
+                             _("Database host: %s", config.dbhost),
+                             _("Database name: %s", config.dbname)))
+        return (config.dbuser, 'user-icon', tooltip)
 
     return (
         StatusField('message', width=None),
