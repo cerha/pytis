@@ -2694,7 +2694,21 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             original_row = copy.copy(self._row)
             if new_row is None:
                 new_row = self._row.row()
-            self._row.set_row(new_row, reset=True)
+            # Refresh the form values from the saved DB row (the DB operation may
+            # actually change some values (triggers, rules, views, ...) but preserve
+            # virtual fields.  We can't use set_row(), because it would reset all
+            # virtual fields to their default values.  Only virtual fields depending
+            # on changed DB values must be recomputed.
+            # Doing this carefully is particularly necessary in InputForm, where
+            # we need to preserve the values in the returned row.
+            for k in new_row.keys():
+                if self._row[k].value() != new_row[k].value():
+                    self._row[k] = new_row[k]
+            # Calling set_row() after previous cycle is needed just to mark the row
+            # as unchanged without actually changing any field values (reset=True).
+            self._row.set_row(self._row.row(), reset=True, prefill=dict(
+                [(k, self._row[k]) for k in self._row.keys() if k not in new_row.keys()]
+            ))
             self._signal_update()
             if op is not None:
                 if self._mode == self.MODE_INSERT:
