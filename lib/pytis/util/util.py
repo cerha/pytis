@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ Tento modul je výjimečný ve dvou směrech:
 1. Vzhledem k triviálnímu charakteru zde obsažených funkcí a vzhledem k tomu,
    že jejich primárním účelem je zkrátit a zčitelnit kód, je povoleno jej
    importovat následujícím způsobem:
-   
+
      from util import *
 
 """
@@ -71,7 +71,7 @@ class ProgramError(Exception):
     případně i s možností uzdravení reinicializací.)
 
     Výjimka pouze dědí obecnou výjimkovou třídu a nedefinuje nic nového.
-    
+
     """
     pass
 
@@ -105,7 +105,7 @@ class NotImplementedException(Exception):
     """
     pass
 
-    
+
 class Counter:
     """Jednoduchý čítač.
 
@@ -127,7 +127,7 @@ class Counter:
     def current(self):
         """Vrať aktuální hodnotu čítače bez jejího zvýšení."""
         return self._value
-        
+
     def reset(self):
         """Nastav hodnotu čítače na 0."""
         self._value = 0
@@ -166,7 +166,7 @@ class Pipe:
     #   nebo volání close, a pak už nikdy není nastaven na dobu delší než
     #   okamžik
     # - zámek _read_lock smí uvolnit pouze držitel zámku _read_lock_lock
-    
+
     def __init__(self, cc=(), encoder=None, decoder=None):
         """Inicializuj rouru.
 
@@ -286,7 +286,7 @@ class Popen:
     Streamy pro komunikaci s procesem jsou dostupné prostřednictvím metod
     'from_child()' a 'to_child()'.  Process id spuštěného programu je
     dostupné přes metodu 'pid()'.
-    
+
     """
     def __init__(self, command, to_child=None, from_child=None,
                  directory=None):
@@ -399,7 +399,7 @@ class Tmpdir(object):
         self._tmpdir = TemporaryDirectory(prefix=prefix)
         super(Tmpdir, self).__init__(*args, **kwargs)
 
-        
+
 class TemporaryDirectory(object):
     """Create a temporary directory and delete it together with the instance.
 
@@ -423,10 +423,10 @@ class TemporaryDirectory(object):
     def name(self):
         "Return the name of the temporary directory, basestring."
         return self._directory
-    
+
     def __del__(self):
         self._cleanup()
-        
+
     def _cleanup(self):
         if os.getpid() == self._pid:
             for dirpath, dirnames, filenames in os.walk(self._directory, topdown=False):
@@ -461,7 +461,7 @@ class TemporaryFile(object):
 
     def __getattr__(self, name):
         return getattr(self._file, name)
-        
+
     def __del__(self):
         if not self._file.delete and os.getpid() == self._pid:
             try:
@@ -479,7 +479,7 @@ class Stack(object):
 
     def __init__(self):
         self._list = []
-        
+
     def __str__(self):
         classname = str(self.__class__).split('.')[-1]
         contents = ', '.join(map(str, self._list))
@@ -492,20 +492,20 @@ class Stack(object):
 
         """
         self._list.append(item)
-        
+
     def pop(self):
         """Odeber objekt z vrcholu zásobníku.
 
         Při pokusu o odebrání z prázdného zásobníku vyvolej `IndexError'.
-        
+
         """
         return self._list.pop()
-            
+
     def top(self):
         """Vrať nejvrchnější prvek ze zásobníku.
 
         Pokud je zásobník prázdný, vrať None.
-        
+
         """
         if self.empty():
             return None
@@ -514,7 +514,7 @@ class Stack(object):
     def empty(self):
         """Vrať pravdu, je-li zásobník prázdný."""
         return len(self._list) == 0
-        
+
 
 class XStack(Stack):
     """Zásobník s aktivním prvkem a dalšími rozšířenými možnostmi.
@@ -539,7 +539,7 @@ class XStack(Stack):
         self._active = None
         self._mru = []
         super(XStack, self).__init__()
-        
+
     def push(self, item):
         """Push the element just below the currently active element.
 
@@ -557,7 +557,7 @@ class XStack(Stack):
 
         Při odebrání aktivního prvku se stává aktivním prvkem vrchní prvek
         zásobníku.
-        
+
         """
         item = self.top()
         self._mru.remove(item)
@@ -570,7 +570,7 @@ class XStack(Stack):
 
         If 'item' is currently the active element, the following element is
         activated (or the preceding one when no such element exists).
-        
+
         """
         if item is self.top():
             to_activate = self.prev()
@@ -594,7 +594,7 @@ class XStack(Stack):
 
         Aktivní prvek je první, za ním následuje prvek, který byl aktivní před
         tím, než se aktivní prvek stal aktivním, atd.
-        
+
         """
         return tuple(self._mru)
 
@@ -606,7 +606,7 @@ class XStack(Stack):
             if item in self._mru:
                 self._mru.remove(item)
             self._mru.insert(0, item)
-        
+
     def active(self):
         """Vrať právě aktivní prvek"""
         assert self._active in self._list or (self._active is None and self.empty())
@@ -641,7 +641,7 @@ class XStack(Stack):
 
 class Attribute(object):
     """Definition of a 'Structure' attribute."""
-    
+
     def __init__(self, name, type=object, default=None, mutable=False):
         """
         Arguments:
@@ -665,13 +665,13 @@ class Attribute(object):
         return self._default
     def mutable(self):
         return self._mutable
-                 
+
 class Structure (object):
     """Simple data structures.
-    
+
     Attribute names of the instance are listed in the sequence '_attributes'.
     Each element of '_attributes' is an 'Attribute' instance.
-    
+
     """
     _attributes = ()
 
@@ -740,7 +740,7 @@ class object_2_5(object):
 
     Unlike 'object' class in Python 2.6 it consumes any keyword arguments.
     This makes handling some multiple inheritance situations easier.
-    
+
     """
 
     def __init__(self, **kwargs):
@@ -762,7 +762,7 @@ def is_(x, y):
     """
     return x is y
 
-    
+
 def xor(x, y):
     """Vrať pravdivostní hodnotu exkluzivního OR výrazů 'x' a 'y'."""
     return (x and not y) or (not x and y)
@@ -785,13 +785,13 @@ def some(predicate, *sequences):
     else:
         return False
 
-        
+
 def xtuple(x):
     """Vrať 'x' jako tuple.
 
     Je-li 'x' sekvence, vrať tuple, jehož prvky se shodují s prvky 'x'.  Jinak
     vrať tuple, jehož jediným prvkem je 'x'.
-    
+
     """
     if is_sequence(x):
         return tuple(x)
@@ -804,7 +804,7 @@ def xlist(x):
 
     Je-li 'x' sekvence, vrať list, jehož prvky se shodují s prvky 'x'.  Jinak
     vrať list, jehož jediným prvkem je 'x'.
-    
+
     """
     if is_sequence(x):
         return list(x)
@@ -817,7 +817,7 @@ def safedel(object, element):
 
     Provádí příkaz 'del object[element]', avšak odchytává případnou výjimku
     'KeyError', resp. 'IndexError', místo ní nedělá nic.
-    
+
     Argumenty:
 
       object -- dictionary nebo list, ze kterého má být odstraněn 'element'
@@ -838,13 +838,13 @@ def safedel(object, element):
         except IndexError:
             pass
     return object
-        
-    
+
+
 def position(element, sequence, key=identity):
     """Vrať pozici 'element' v 'sequence'.
 
     Pokud se 'element' v 'sequence' nenachází, vrať 'None'.
-    
+
     Porovnání prvků je prováděno operátorem '=='.  Hodnoty prvků 'sequence'
     jsou získávány funkcí 'key', která musí jako svůj jediný argument přijímat
     prvky 'sequence'.
@@ -864,7 +864,7 @@ else:
 
 def find(element, sequence, key=identity, test=_eq):
     """Vrať nejlevější prvek 'sequence' rovnající se 'element'.
-    
+
     Pokud se 'element' v 'sequence' nenachází, vrať 'None'.
 
     Argumenty:
@@ -888,7 +888,7 @@ def assoc(item, alist):
 
     Pokud takový prvek neexistuje, vrať 'None'.  Porovnání se provádí
     operátorem '='.
-    
+
     'alist' musí být sekvence neprázdných sekvencí.
 
     """
@@ -900,7 +900,7 @@ def rassoc(item, alist):
 
     Pokud takový prvek neexistuje, vrať 'None'.  Porovnání se provádí
     operátorem '='.
-    
+
     'alist' musí být sekvence dvouprvkových sekvencí.
 
     """
@@ -911,7 +911,7 @@ def remove_duplicates(list, keep_order=False):
     """Vrať prvky 'list', avšak bez jejich násobných výskytů.
 
     Násobnost se testuje porovnáním prvků pomocí operátoru '='.
-    
+
     Argumenty:
 
       keep_order -- při výchozí hodnotě funkce nezachovává pořadí prvků, ale
@@ -1012,7 +1012,7 @@ def next_subclass(class_, instance):
     hloubky.  'instance' musí být instancí 'class_'.
 
     Vrací: Odpovídající třídu; pokud taková není tak 'None'.
-    
+
     """
     iclass = instance.__class__
     try:
@@ -1096,7 +1096,7 @@ def argument_names(callable):
     The method argument 'self' is ignored.  The names are returned in the order in which the
     arguments are defined, including all keyword arguments.  Only named arguments are taken into
     account, so any `*' and `**' arguments are ignored.
-    
+
     """
     args, __, __, __ = inspect.getargspec(callable)
     if args and args[0] == 'self':
@@ -1140,7 +1140,7 @@ def compare_objects(o1, o2):
 
     - Neplatí-li žádná z předchozích podmínek, vrátí se výsledek volání
       'cmp(o1, o2)'.
-      
+
     """
     c1 = o1.__class__
     c2 = o2.__class__
@@ -1161,7 +1161,7 @@ def less(o1, o2):
     If 'o2' is 'None', return False.
     Else if 'o1' is 'None', return True.
     Else return the result of 'o1 < o2'.
-    
+
     """
     if o2 is None:
         return False
@@ -1180,7 +1180,7 @@ def less_equal(o1, o2):
     Else if 'o2' is 'None', return False.
     Else if 'o1' is 'None', return True.
     Else return the result of 'o1 <= o2'.
-    
+
     """
     if o2 is None:
         return o1 is None
@@ -1230,7 +1230,7 @@ def hash_attr(self, attributes):
       self -- instance třídy, pro níž má být hash kód vytvořen
       attributes -- sekvence jmen atributů (strings), jejichž hodnoty mají být
         při vytváření kódu uvažovány
-    
+
     """
     dict = self.__dict__
     def h(obj):
@@ -1281,7 +1281,7 @@ def ecase(value, *settings):
 
     Pokud 'value' není v 'settings' obsaženo, vyvolej výjimku 'ProgramError'.
     Je-li v 'settings' 'value' obsaženo vícekrát, je uvažován první výskyt.
-    
+
     Argumenty:
 
       value -- libovolný objekt; je porovnáván s prvními prvky prvků 'settings'
@@ -1348,7 +1348,7 @@ def with_lock(lock, function):
                 _active_locks[thread_id].remove(lock)
             finally:
                 _with_lock_lock.release()
-            
+
 
 def with_locks(locks, function):
     """The same as 'with_lock' except multiple locks are given.
@@ -1364,10 +1364,10 @@ def with_locks(locks, function):
         return_value = with_lock(lock, lfunction)
     return return_value
 
-    
+
 class _Throw(Exception):
     """Výjimka pro nelokální přechody."""
-    
+
     def __init__(self, tag, value):
         """Inicializuj instanci.
 
@@ -1400,12 +1400,12 @@ def catch(tag, function, *args, **kwargs):
       kwargs -- klíčované argumenty 'function'
 
     Jsou ošetřeny pouze přechody s tagem 'tag', ostatní odchyceny nejsou.
-    
+
     Vrací: Nedošlo-li k přechodu, je vrácena návratová hodnota 'function'.
     Došlo-li k přechodu, je vrácena hodnota z přechodu předaná funkci 'throw_'.
 
     Viz též funkce 'throw_'.
-      
+
     """
     try:
         result = function(*args, **kwargs)
@@ -1415,7 +1415,7 @@ def catch(tag, function, *args, **kwargs):
         else:
             raise
     return result
-    
+
 def throw(tag, value=None):
     """Vyvolej nelokální přechod identifikovaný 'tag'.
 
@@ -1496,11 +1496,11 @@ def mktempdir(prefix='pytis'):
 
     Podadresář je vytvořen s přístupovými právy 0o700.  Není-li možné adresář
     z nějakého důvodu vytvořit, je vyvolána výjimka 'FileError'.
-    
+
     Vrací: Jméno vytvořeného adresáře včetně kompletní cesty.  Žádná dvě volání
     této funkce nevrátí stejné jméno; to však neplatí v případě použití
     threads, protože funkce není thread-safe.
-    
+
     """
     import config
     global _mktempdir_counter
@@ -1560,7 +1560,7 @@ def nextval(seq, connection_name=None):
 
     Designed for convenient specification of 'default' argument in 'Field'
     constructor, such as default=nextval('my_table_id_seq').
-    
+
     """
     import pytis.data
     def conn_spec():
@@ -1619,7 +1619,7 @@ def form_view_data(resolver, name, dbconnection_spec=None):
       resolver -- resolver to use to find the given specification;
         'pytis.util.Resolver' instance
       name -- name of the specification; basestring
-    
+
     """
     import pytis.util
     assert isinstance(resolver, pytis.util.Resolver), resolver
@@ -1750,7 +1750,7 @@ def format_traceback():
     tbstring = string.join(tblist, '')
     return tbstring
 
-    
+
 def exception_info(einfo=None):
     """Vrať podrobný výpis informací o aktuální výjimce, jako string.
 
@@ -1843,7 +1843,7 @@ def stack_info(depth=None):
     frames.
 
     Funkce je typicky určena k ladění.
-    
+
     """
     stack = inspect.stack()[1:]
     if depth is not None:
@@ -1872,9 +1872,9 @@ def positive_id(obj):
 
 def parse_lcg_text(text, resource_path=(), resources=()):
     """Return lcg.ContentNode created by parsing given LCG Structured Text.
-    
+
     Arguments:
-    
+
       text -- The source text in LCG structured text format.
       resource_path -- sequence of filesystem directory names where resource
         files refered from the document (images, style sheets, scripts) are
@@ -1884,7 +1884,7 @@ def parse_lcg_text(text, resource_path=(), resources=()):
         addition with resources searched within the resource path.
 
     The content is returned as an 'lcg.ContentNode' instance.
-    
+
     """
     import lcg
     import os
@@ -1899,7 +1899,7 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     """Return given LCG structured text converted into HTML.
 
     Arguments:
-    
+
       text -- The source text in LCG structured text format.
       styles -- sequence of style sheet file names to be embedded as inline
         styles in the final document.  These files must be located in resource
@@ -1911,7 +1911,7 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
         directory is searched by default.
 
     The exported HTML is returned as UTF-8 encoded string.
-    
+
     """
     import lcg
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
@@ -1933,7 +1933,7 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
       wrapcolumn -- column to wrap longer lines in both texts as int or None
       context -- a context diff is returned if true, full diff otherwise
       numlines -- number of lines before and after change to show in context diff
-    
+
     Returns a string containing a complete HTML document.
 
     """
@@ -1978,7 +1978,7 @@ def set_current_language(language):
     """
     global _current_language
     _current_language = language
-    
+
 def environment_language(default=None):
     """Return code of the language of the current locale environment.
 
@@ -1987,7 +1987,7 @@ def environment_language(default=None):
       default -- default language code; string or 'None'
 
     Just the basic code, without any variant, is returned.
-    
+
     """
     for env in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
         locale = os.getenv(env)
@@ -2057,7 +2057,7 @@ def translations(domain, origin='en'):
 
     Used to define the '_' symbol in modules which define translatable user
     interface strings.
-    
+
     The class 'lcg.TranslatedTextFactory' produces instances of strings, which
     are translated to the current locale, but may be also translated later into
     any of the other supported locales when used properly.  This is necessary
@@ -2087,7 +2087,7 @@ def translate(text):
     Arguments:
 
       text -- text to translate; basestring
-    
+
     The function just returns 'text'.
 
     """
