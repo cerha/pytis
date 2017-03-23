@@ -929,6 +929,7 @@ class Filter(Profile):
         """Return the condition passed to the constructor."""
         return self._filter
 
+
 Condition = Filter
 """Deprecated: Use 'Profile' instead."""
 
@@ -1642,6 +1643,7 @@ class ViewSpec(object):
             assert isinstance(actions, (tuple, list)), actions
             assert isinstance(layout, LayoutSpec), layout
             action_ids = [action.id() for action in ActionGroup.unnest(actions)]
+
             def recourse_group(group):
                 for item in group.items():
                     if isinstance(item, GroupSpec):
@@ -2403,6 +2405,7 @@ def computer(function):
     """
     assert isinstance(function, collections.Callable) and not isinstance(function, Computer)
     columns = argument_names(function)[1:]
+
     def func(row):
         kwargs = dict([(column, row[column].value()) for column in columns])
         return function(row, **kwargs)
@@ -3245,6 +3248,7 @@ class Field(object):
         def err(msg, *args):
             """Return assertion error message."""
             return "Field '%s': " % id + msg % args
+
         def log_(msg, *args):
             import inspect
             filename, line = inspect.stack()[3][1:3]
@@ -3334,6 +3338,7 @@ class Field(object):
                 default = e.default
             if display is None:
                 labels = dict(e.enumeration)
+
                 def display(value):
                     return labels.get(value, value)
             if prefer_display is None:
@@ -3432,6 +3437,7 @@ class Field(object):
         self._filter_list = filter_list
         if isinstance(style, collections.Callable) and len(argument_names(style)) == 2:
             s_func = style
+
             # For backwards compatibility
             def style(row):
                 return s_func(id, row)
@@ -5109,6 +5115,7 @@ class Specification(SpecificationBase):
         rights_data = pytis.data.dbtable('pytis_view_user_rights',
                                          (('shortname', S,), ('rights', S,), ('columns', S,),),
                                          connection_data, arguments=())
+
         def process(row):
             shortname, rights_string, columns_string = \
                 row[0].value(), row[1].value(), row[2].value()
@@ -5136,6 +5143,7 @@ class Specification(SpecificationBase):
                 else:
                     shortname_rights[c] = rights
         rights_data.select_map(process)
+
         # Transform access rights specifications to AccessRights instances
         def process(column, permissions):
             return (column, (None,) + tuple(permissions),)
@@ -5189,13 +5197,6 @@ class Specification(SpecificationBase):
             self._view_spec_kwargs['bindings'] = self.bindings
         else:
             assert isinstance(self.bindings, dict)
-        for arg in ('layout', 'list_layout', 'actions', 'columns', 'grouping'):
-            try:
-                value = self._view_spec_kwargs[arg]
-            except:
-                continue
-            if isinstance(value, collections.Callable):
-                self._view_spec_kwargs[arg] = value()
         table = self.table
         fields = self.fields
         if isinstance(fields, collections.Callable):
@@ -5224,6 +5225,13 @@ class Specification(SpecificationBase):
                         field.set_type(ftype.clone(ftype.__class__(**kwargs)))
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
+        for arg in ('layout', 'list_layout', 'actions', 'columns', 'grouping'):
+            try:
+                value = self._view_spec_kwargs[arg]
+            except:
+                continue
+            if isinstance(value, collections.Callable):
+                self._view_spec_kwargs[arg] = value()
         # if self.__class__.__doc__:
         #     parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
         #     if 'description' not in self._view_spec_kwargs:
