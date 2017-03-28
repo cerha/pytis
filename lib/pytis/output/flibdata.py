@@ -35,6 +35,8 @@ P_ROW = 'P_ROW'
 """Output parameter storing the data row."""
 P_CONDITION = 'P_CONDITION'
 """Output parameter storing the condition for 'pytis.data.Data.select()' call."""
+P_ARGUMENTS = 'P_ARGUMENTS'
+"""Output parameter storing the arguments of the data object function."""
 P_SORTING = 'P_SORTING'
 """Output parameter storing the sorting for 'pytis.data.Data.select()' call."""
 P_DATA = 'P_DATA'
@@ -64,7 +66,7 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
       transaction -- transaction object to use for database operations
       long_table_args -- dodatečné argumenty předané konstruktoru třídy
         'LongTable'
-    
+
     """
     import pytis.data
     import pytis.form
@@ -99,7 +101,7 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
     long_table_args['separator_margin'] = \
         long_table_args['line_separator_margin'] = UFont(0.2)
     return pytis.output.LongTable(columns, table_row, **long_table_args)
-    
+
 
 def data_item(view, data, column, key=None, row=None):
     """Exportovaná hodnota položky záznamu datového objektu.
