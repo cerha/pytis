@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2016 Brailcom, o.p.s.
+# Copyright (C) 2006-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -547,7 +547,7 @@ class MultilineField(Field):
         width = self.spec.width()
         return dict(
             kwargs,
-            value=self._exported_value(),
+            content=self._exported_value(),
             cols=width,
             rows=self.spec.height(),
             cls=((kwargs.get('cls') or '') + ' fullsize' if width >= 80 else '').strip() or None,
@@ -876,7 +876,7 @@ class FileUploadField(Field):
             return None
 
     def _editor(self, context, **kwargs):
-        return context.generator().upload(**kwargs)
+        return context.generator().upload(size=50, **kwargs)
 
     def indicate_not_null(self):
         return self.type.not_null() and self._row.new()
@@ -953,16 +953,20 @@ class ChoiceField(EnumerationField):
     def _editor(self, context, **kwargs):
         g = context.generator()
         enumeration = self._row.enumerate(self.id)
-        options = [(self._format_display_value(context, display), self.type.export(val))
-                   for val, display in enumeration]
         value = self._value().value()
-        if value in [val for val, display in enumeration]:
-            selected = self.type.export(value)
-        else:
-            selected = None
-        if selected is None or not self.type.not_null():
-            options.insert(0, (self.spec.null_display() or g.noescape("&nbsp;"), ""))
-        return g.select(options=options, selected=selected, **kwargs)
+        selected = []
+        def is_selected(val):
+            if val == value:
+                selected.append(val)
+                return True
+            else:
+                return False
+        options = [g.option(self._format_display_value(context, display),
+                            value=self.type.export(val), selected=is_selected(val))
+                   for val, display in enumeration]
+        if not self.type.not_null() or not selected:
+            options.insert(0, g.option(self.spec.null_display() or g.noescape("&nbsp;"), value=""))
+        return g.select(content=options, **kwargs)
 
 
 class ArrayField(EnumerationField):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007, 2008, 2011, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008, 2011, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ class Dialog(lcg.Content):
         self._hidden = list(hidden)
         self._handler = handler
         self._action = action
-    
+
     def _export_content(self, exporter):
         return ()
 
@@ -54,7 +54,7 @@ class Dialog(lcg.Content):
 
 
 class SelectionDialog(Dialog):
-    
+
     def __init__(self, id, label, values, selected=None, **kwargs):
         super(SelectionDialog, self).__init__(**kwargs)
         assert isinstance(id, basestring)
@@ -65,10 +65,10 @@ class SelectionDialog(Dialog):
         self._label = label
         self._values = values
         self._selected = selected
-        
+
     def _export_content(self, exporter):
         g = exporter.generator()
         label = g.label(self._label, self._id)
-        ctrl = g.select(self._id, [(uv, str(v)) for v, uv in self._values],
-                        id=self._id, selected=self._selected)
+        ctrl = g.select(name=self._id, id=self._id, content=[
+            g.option(uv, value=str(v), selected=self._selected) for v, uv in self._values])
         return (label, ": ", ctrl)

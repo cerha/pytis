@@ -487,14 +487,14 @@ class LayoutForm(FieldForm):
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
                 cls += ' label-' + lcg.text_to_id(group.label())
-                result = g.fieldset(group.label() + ':', result, cls=cls)
+                result = g.fieldset([g.legend(group.label() + ':')] + result, cls=cls)
             elif content.needs_panel():
                 # If there are any items which need a panel and there is no
                 # fieldset panel, add a panel styled div.
                 result = g.div(result, cls=cls)
             elif not inner:
                 # This fieldset fixes MSIE display of top-level horizontal groups...
-                result = g.fieldset(None, result, cls='outer')
+                result = g.fieldset([g.legend(None, cls='empty')] + result, cls='outer')
             else:
                 result = lcg.concat(result, separator="\n")
             return result
@@ -1994,10 +1994,12 @@ class BrowseForm(LayoutForm):
                 controls += (
                     g.span((
                         g.label(_("Page") + ':', ids.offset),
-                        g.select(name='offset', id=ids.offset, selected=page * limit,
+                        g.select(name='offset', id=ids.offset,
                                  title=(_("Page") + ' ' + _("(Use ALT+arrow down to select)")),
                                  onchange='this.form.submit(); return true',
-                                 options=[(str(i + 1), i * limit) for i in range(pages)]),
+                                 content=[g.option(str(i + 1), value=i * limit,
+                                                   selected=(i == page))
+                                          for i in range(pages)]),
                         g.span(str(page + 1), cls='current-page'),
                         g.span(' / ', cls='separator'),
                         g.span(str(pages), cls='total-pages'),
@@ -2018,11 +2020,12 @@ class BrowseForm(LayoutForm):
                     ), cls="buttons"),
                 )
             controls += (g.span((g.label(_("Records per page") + ':', ids.limit),
-                                 g.select(name='limit', id=ids.limit, selected=limit,
+                                 g.select(name='limit', id=ids.limit,
                                           title=(_("Records per page") + ' ' +
                                                  _("(Use ALT+arrow down to select)")),
                                           onchange='this.form.submit(); return true',
-                                          options=[(str(i), i) for i in limits])),
+                                          content=[g.option(str(i), value=i, selected=(i==limit))
+                                                   for i in limits])),
                                 cls='limit'),
                          g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
                                              type='submit', cls='goto-page')))
@@ -2274,7 +2277,7 @@ class ListView(BrowseForm):
             self._exported_row_index.append(g.li(g.a(title, href='#' + anchor)))
         if self._row_actions and layout.popup_actions():
             heading += self._export_popup_ctrl(context, row, 'h3')
-        parts = [g.h(heading, level=3)]
+        parts = [g.h3(heading)]
         if self._image and row.visible(self._image.id):
             img = self._export_field(context, self._image)
             if img:
@@ -2319,7 +2322,7 @@ class ListView(BrowseForm):
         return result
 
     def _export_group_heading(self, context):
-        # return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
+        # return context.generator().h3(self._export_field(context, field), cls='group-heading')
         return None
 
     def _wrap_exported_rows(self, context, rows, page, pages):
