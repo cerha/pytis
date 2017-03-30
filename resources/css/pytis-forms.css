@@ -460,6 +460,7 @@
 }
 .pytis-form textarea.fullsize {
     width: 100%;
+    box-sizing: border-box;
 }
 .pytis-form .field div.multiline.scrolled {
     overflow-y: scroll;
