@@ -168,9 +168,8 @@ class Form(lcg.Content):
                      ('__invoked_from', self.__class__.__name__),
                      ] + action.kwargs().items()] +
                    action.form_content(g, record, enabled) +
-                   [g.button(g.span('', cls='icon' + ((' ' + action.icon())
-                                                      if action.icon() else '')) +
-                             g.span(action.title(), cls='label'),
+                   [g.button((g.span('', cls='icon ' + action.icon()) if action.icon() else '',
+                              g.span(action.title(), cls='label')),
                              title=action.descr(), disabled=not enabled, type='submit',
                              cls='action-' + action.id() + (not enabled and ' disabled' or ''))],
                    action=uri)
@@ -1339,6 +1338,7 @@ class BrowseForm(LayoutForm):
         else:
             self._query_fields_form = None
         self._current_profile = None
+        lcg.log('::', profiles)
         if profiles:
             profile_id = query_fields_row['profile'].value() or profiles.default()
             profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
