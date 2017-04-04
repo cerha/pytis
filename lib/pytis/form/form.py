@@ -2691,7 +2691,17 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             result = (None, False)
         if success and result[1]:
             new_row = result[0]
-            original_row = copy.deepcopy(self._row)
+            original_row = copy.copy(self._row)
+            # The set_row() below is necessary to replace the original_row's
+            # data row by a new copied instance, because deepcopy doesn't work here
+            # (causes exception) and shallow copy leaves the data row instance
+            # shared by the original and the copied instance, which is exactly
+            # what we don't need.
+            original_row.set_row(
+                copy.copy(original_row.row()),
+                # Use prefill to keep the previous virtual field values.
+                prefill={k: self._row[k] for k in self._row.keys() if k not in new_row.keys()},
+            )
             if new_row is None:
                 new_row = self._row.row()
             # Refresh the form values from the saved DB row (the DB operation may
@@ -2706,9 +2716,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     self._row[k] = new_row[k]
             # Calling set_row() after previous cycle is needed just to mark the row
             # as unchanged without actually changing any field values (reset=True).
-            self._row.set_row(self._row.row(), reset=True, prefill=dict(
-                [(k, self._row[k]) for k in self._row.keys() if k not in new_row.keys()]
-            ))
+            self._row.set_row(
+                self._row.row(), reset=True,
+                prefill={k: self._row[k] for k in self._row.keys() if k not in new_row.keys()}
+            )
             self._signal_update()
             if op is not None:
                 if self._mode == self.MODE_INSERT:
