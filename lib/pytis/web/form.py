@@ -40,14 +40,18 @@ import re
 
 import pytis.data as pd
 
-from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, Text, Button, \
-    Profiles, Filter
+from pytis.presentation import (
+    ActionContext, Button, Enumeration, Filter, Field, GroupSpec, HGroup,
+    Orientation, PresentedRow, Profiles, Specification, Text, TextFormat,
+    ViewSpec,
+)
 import pytis.util
 
 from .field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
 
 _ = pytis.util.translations('pytis-web')
-
+VERTICAL = Orientation.VERTICAL
+HORIZONTAL = Orientation.HORIZONTAL
 
 class BadRequest(Exception):
     """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
@@ -83,7 +87,7 @@ class Form(lcg.Content):
 
     The function 'uri_provider' must accept three positional arguments:
 
-      record -- the 'pytis.presentation.PresentedRow' instance
+      record -- the 'PresentedRow' instance
       kind -- one of 'UriType' constants.  It is used for distinction of
         the purpose, for which the uri is used (eg. for a field link, image
         src, action link etc.).
@@ -111,10 +115,9 @@ class Form(lcg.Content):
                  uri_provider=None, actions=None, **kwargs):
         """Arguments:
 
-          view -- presentation specification as a 'pytis.presentation.ViewSpec'
-            instance.
+          view -- presentation specification as a 'ViewSpec' instance.
           req -- instance of a class implementing the 'Request' API.
-          row -- 'pytis.presentation.PresentedRow' instance.
+          row -- 'PresentedRow' instance.
           handler -- form handler URI as a string.  This URI is used in the
             form's 'action' attribute.
           uri_provider -- callable object (function) returning URIs for form
@@ -125,19 +128,17 @@ class Form(lcg.Content):
           name -- form name as a string or None.  This name will be sent as a
             hidden field and used to distinguish which request parameters
             belong to which form.
-          actions -- form actions as a sequence of pytis.presentation.Action
-            instances or a callable object returning such a sequence when given
-            two positional arguments: (FORM, RECORD), where FORM is the 'Form'
-            instance and RECORD is the form record as a
-            'pytis.presentation.PresentedRow' instance or None when asking for
-            global actions (see 'pytis.presentation.ActionContext').  The
-            default value (None) means to use the actions as defined in the
-            specification.
+          actions -- form actions as a sequence of 'Action' instances or a
+            callable object returning such a sequence when given two positional
+            arguments: (FORM, RECORD), where FORM is the 'Form' instance and
+            RECORD is the form record as a 'PresentedRow' instance or None when
+            asking for global actions (see 'ActionContext').  The default value
+            (None) means to use the actions as defined in the specification.
 
         """
         super(Form, self).__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
-        assert isinstance(row, pytis.presentation.PresentedRow), row
+        assert isinstance(row, PresentedRow), row
         assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
         assert actions is None or isinstance(actions, (tuple, list, collections.Callable)), actions
@@ -220,7 +221,7 @@ class Form(lcg.Content):
         return self._form_id
 
     def row(self):
-        """Return the form row as a pytis.presentation.PresentedRow' instance."""
+        """Return the form row as a PresentedRow' instance."""
         return self._row
 
     def export(self, context):
@@ -274,7 +275,7 @@ class FieldForm(Form):
             result = field.editor(context)
         else:
             formatted = field.format(context)
-            if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
+            if field.spec.text_format() == TextFormat.LCG:
                 if field.spec.printable():
                     uri = self._uri_provider(self._row, UriType.PRINT, field.id)
                     if uri:
@@ -323,6 +324,14 @@ class LayoutForm(FieldForm):
         the '_export_group()' method more readable.
 
         """
+        class Item(object):
+            def __init__(self, label, content, fullsize, right_aligned, cls):
+                self.label = label
+                self.content = content
+                self.fullsize = fullsize
+                self.right_aligned = right_aligned
+                self.cls = cls
+
         def __init__(self):
             self._content = []
             self._needs_panel = False
@@ -331,7 +340,7 @@ class LayoutForm(FieldForm):
             self._last_field_was_right_aligned = False
 
         def append(self, content, label=None, fullsize=True, right_aligned=False,
-                   needs_panel=False):
+                   cls=None, needs_panel=False):
             """Append exported content to the group .
 
             Arguments:
@@ -345,6 +354,7 @@ class LayoutForm(FieldForm):
               right_aligned -- only relevent for vertical group.  Group allows
                 right aligned fields are aligned to the right, if at least two
                 right aligned fields appear above each other.
+              cls -- CSS class for this item's container or None.
               needs_panel -- boolean indicating that the appended content
                 should appear on a visually distinct panel.  A group will be
                 rendered as a panel if there is at least one item which needs a
@@ -353,7 +363,7 @@ class LayoutForm(FieldForm):
                 visible content needs a panel.
 
             """
-            self._content.append((label, content, fullsize, right_aligned))
+            self._content.append(self.Item(label, content, fullsize, right_aligned, cls))
             if needs_panel:
                 self._needs_panel = needs_panel
             if right_aligned and self._last_field_was_right_aligned:
@@ -377,7 +387,7 @@ class LayoutForm(FieldForm):
         if layout is None:
             layout = view.layout().group()
         if isinstance(layout, (tuple, list)):
-            layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
+            layout = GroupSpec(layout, orientation=VERTICAL)
         assert isinstance(layout, GroupSpec)
         self._layout = layout
         super(LayoutForm, self).__init__(view, req, row, **kwargs)
@@ -386,6 +396,7 @@ class LayoutForm(FieldForm):
         g = context.generator()
         content = self._GroupContent()
         subgroup_number = 0
+        orientation = group.orientation()
         for i, item in enumerate(group.items()):
             item = self._call_if_callable(item, self._row)
             if isinstance(item, basestring):
@@ -399,23 +410,23 @@ class LayoutForm(FieldForm):
                     help = self._export_field_help(context, field)
                     if help is not None:
                         ctrl += help
+                    cls = 'group-field-' + field.id
                     if field.spec.compact():
                         if label:
                             ctrl = g.div(label) + ctrl
-                        content.append(ctrl, needs_panel=True)
+                        content.append(ctrl, needs_panel=True, cls=cls)
                     else:
                         # Codebook field display is not numeric even though the
                         # underlying type is...
                         right_aligned = (self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator()
                                          and isinstance(field.type, pytis.data.Number))
                         content.append(ctrl, label=label, right_aligned=right_aligned,
-                                       needs_panel=True, fullsize=False)
+                                       needs_panel=True, fullsize=False, cls=cls)
             elif isinstance(item, GroupSpec):
                 subgroup_number += 1
                 subgroup_id = '%s-%d' % (id or 'group', subgroup_number)
                 label = None
-                if group.orientation() == Orientation.VERTICAL \
-                        and item.orientation() == Orientation.HORIZONTAL:
+                if orientation == VERTICAL and item.orientation() == HORIZONTAL:
                     items = copy.copy(list(item.items()))
                     while items and isinstance(items[0], basestring):
                         fid = items.pop(0)
@@ -440,48 +451,50 @@ class LayoutForm(FieldForm):
                 pass
             elif item is not None:
                 raise pytis.util.ProgramError("Unsupported layout item type:", item)
-        if group.orientation() == Orientation.HORIZONTAL:
-            if not content.content():
-                result = []
-            elif group.flexible():
-                result = [g.div([g.div((label or '') + content_)
-                                 for i, (label, content_, __, ___) in enumerate(content.content())],
-                                cls='horizontal-group')]
-            else:
-                result = [g.table(
-                    [g.tr([((g.td(label, cls='label') if label else g.noescape('')) +
-                            g.td(content_, cls='ctrl'))
-                           for i, (label, content_, __, ___) in enumerate(content.content())])],
+        if not content.content():
+            result = []
+        elif group.flexible() or orientation == VERTICAL and not content.has_labeled_items():
+            result = g.div(
+                cls='vertical-group' if orientation == VERTICAL else 'horizontal-group',
+                content=[
+                    g.div((x.label or '', x.content), cls=x.cls)
+                    for x in content.content()
+                ],
+            )
+        elif orientation == HORIZONTAL:
+            result = [
+                g.table(
                     role='presentation',
-                    cls='horizontal-group' + (not omit_first_field_label and ' expanded' or ''))]
+                    cls='horizontal-group' + (not omit_first_field_label and ' expanded' or ''),
+                    content=[g.tr([
+                        ((g.td(x.label, cls='label') if x.label else g.noescape('')) +
+                         g.td(x.content, cls='ctrl'))
+                        for x in content.content()
+                    ])],
+                )
+            ]
         else:
-            def td(label, content_, fullsize, right_aligned, fullspan, normalspan):
-                if fullsize:
-                    return g.td(content_, cls='ctrl', colspan=fullspan)
+            def td(x, fullspan, normalspan):
+                if x.fullsize:
+                    return g.td(x.content, cls='ctrl', colspan=fullspan)
                 else:
-                    if content.allow_right_aligned_fields() and right_aligned:
+                    if content.allow_right_aligned_fields() and x.right_aligned:
                         spacer = g.td('', cls='spacer')
                         kwargs = dict(cls='ctrl', align='right')
                     else:
                         spacer = ''
                         kwargs = dict(cls='ctrl expanded', colspan=normalspan)
-                    return (g.td(label or '', cls='label', align='right') +
-                            g.td(content_, **kwargs) + spacer)
-            if content.has_labeled_items():
-                if content.allow_right_aligned_fields():
-                    normalspan = 2
-                    fullspan = 3
-                else:
-                    normalspan = None
-                    fullspan = 2
-                rows = [g.tr(td(label_, content_, fullsize, right_aligned_, fullspan, normalspan))
-                        for label_, content_, fullsize, right_aligned_ in content.content()]
-                if rows:
-                    result = [g.table(rows, cls='vertical-group', role='presentation')]
-                else:
-                    result = []
+                    return (g.td(x.label or '', cls='label', align='right') +
+                            g.td(x.content, **kwargs) + spacer)
+            if content.allow_right_aligned_fields():
+                normalspan = 2
+                fullspan = 3
             else:
-                result = [item_[1] for item_ in content.content()]
+                normalspan = None
+                fullspan = 2
+            result = [g.table([g.tr(td(x, fullspan, normalspan), cls=x.cls)
+                               for x in content.content()],
+                              cls='vertical-group', role='presentation')]
         if result:
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
@@ -958,7 +971,7 @@ class VirtualForm(EditForm):
     """
     _CSS_CLS = 'edit-form virtual-form'
 
-    class FormRecord(pytis.presentation.PresentedRow):
+    class FormRecord(PresentedRow):
 
         def __init__(self, req, *args, **kwargs):
             self._req = req
@@ -968,7 +981,7 @@ class VirtualForm(EditForm):
             return self._req
 
     def __init__(self, req, resolver, spec_kwargs, show_reset_button=False, **kwargs):
-        specification = pytis.presentation.Specification.create_from_kwargs(
+        specification = Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
             **spec_kwargs
@@ -995,21 +1008,21 @@ class QueryFieldsForm(VirtualForm):
         else:
             spec_kwargs = {}
             fields = []
-            layout = pytis.presentation.HGroup()
+            layout = HGroup()
         if profiles:
             assert 'profile' not in [f.id() for f in fields]
-            class Enumeration(pytis.presentation.Enumeration):
+            class Enum(Enumeration):
                 enumeration = [(p.id(), p.title()) for p in profiles.unnest()]
-            fields.insert(0, pytis.presentation.Field(
+            fields.insert(0, Field(
                 'profile', profiles.label() or _("Profile"),
-                not_null=True, enumerator=Enumeration,
+                not_null=True, enumerator=Enum,
                 default=profiles.default() or profiles.unnest()[0].id())
             )
             if 'profile' not in layout.order():
-                if layout.orientation() == pytis.presentation.Orientation.HORIZONTAL:
-                    layout = pytis.presentation.HGroup(*(('profile',) + layout.items()))
+                if layout.orientation() == HORIZONTAL:
+                    layout = HGroup(*(('profile',) + layout.items()))
                 else:
-                    layout = pytis.presentation.HGroup('profile', layout)
+                    layout = HGroup('profile', layout)
         super(QueryFieldsForm, self).__init__(req, resolver,
                                               dict(fields=fields, layout=layout, **spec_kwargs),
                                               name=name)
@@ -1233,8 +1246,8 @@ class BrowseForm(LayoutForm):
             is mostly useful to construct the list of profiles dynamically
             (specification profiles are static).
           query_fields -- Specification of query fields as a sequence of
-            'pytis.presentation.Field' instances.  Overrides the form
-            specification attribute 'query_fields'.
+            'Field' instances.  Overrides the form specification attribute
+            'query_fields'.
           condition_provider -- Overrides the form specification attribute
             'condition_provider'.
           argument_provider -- Overrides the form specification attribute
@@ -2140,7 +2153,7 @@ class BrowseForm(LayoutForm):
         return [(key, row[key]) for key in row.keys()]
 
     def current_profile(self):
-        """Return the current form profile as 'pytis.presentation.Profile' instance."""
+        """Return the current form profile as 'Profile' instance."""
         return self._current_profile
 
     def condition(self):
@@ -2299,7 +2312,7 @@ class ListView(BrowseForm):
                 cls = 'dynamic-content'
             elif row.visible(item) and row[item].value() is not None:
                 field = self._fields[item]
-                if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
+                if field.spec.text_format() == TextFormat.LCG:
                     text = row[item].export()
                     content = lcg.Container(parser.parse(text))
                 else:

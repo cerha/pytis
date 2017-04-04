@@ -990,12 +990,16 @@ class GroupSpec(object):
             parent group, makes it possible to disable this alignment when it
             is not desired.  It is currently only implemented for web forms.
 
-          flexible -- allow horizontal group to be wrapped (arranged
-            vertically) when there is not enough space to fit the items side by
-            side.  It is actually recommended to make all horizontal groups
-            flexible to allow responsive layout in web environment, but the
-            default is False for legacy reasons.  The option has no effect in
-            vertical groups.
+          flexible -- this option currently only makes a difference in web
+            forms.  When False (the default), the layout is enforced using
+            tables.  Such layouts are fixed and can not accommodate to
+            different screen sizes.  When True, tables are avoided which makes
+            the layout more flexible.  Horizontal groups will be automatically
+            wrapped when there is not enough space to fit the items side by
+            side.  Vertical groups will not align fields and labels, but may
+            may be styled easily.  It is actually recommended to make all
+            horizontal groups flexible to allow responsive layout, but the
+            default is False for legacy reasons.
 
         """
         assert is_sequence(items), items
