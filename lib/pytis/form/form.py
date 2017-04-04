@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2691,7 +2691,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             result = (None, False)
         if success and result[1]:
             new_row = result[0]
-            original_row = copy.copy(self._row)
+            original_row = copy.deepcopy(self._row)
             if new_row is None:
                 new_row = self._row.row()
             # Refresh the form values from the saved DB row (the DB operation may
