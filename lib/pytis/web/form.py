@@ -454,7 +454,7 @@ class LayoutForm(FieldForm):
             elif item is not None:
                 raise pytis.util.ProgramError("Unsupported layout item type:", item)
         if not content.content():
-            result = []
+            result = ''
         elif group.flexible() or orientation == VERTICAL and not content.has_labeled_items():
             result = g.div(
                 cls='vertical-group' if orientation == VERTICAL else 'horizontal-group',
@@ -464,17 +464,15 @@ class LayoutForm(FieldForm):
                 ],
             )
         elif orientation == HORIZONTAL:
-            result = [
-                g.table(
-                    role='presentation',
-                    cls='horizontal-group' + (not omit_first_field_label and ' expanded' or ''),
-                    content=[g.tr([
-                        ((g.td(x.label, cls='label') if x.label else g.noescape('')) +
-                         g.td(x.content, cls='ctrl'))
-                        for x in content.content()
-                    ])],
-                )
-            ]
+            result = g.table(
+                role='presentation',
+                cls='horizontal-group' + (not omit_first_field_label and ' expanded' or ''),
+                content=[g.tr([
+                    ((g.td(x.label, cls='label') if x.label else g.noescape('')) +
+                     g.td(x.content, cls='ctrl'))
+                    for x in content.content()
+                ])],
+            )
         else:
             def td(x, fullspan, normalspan):
                 if x.fullsize:
@@ -494,26 +492,23 @@ class LayoutForm(FieldForm):
             else:
                 normalspan = None
                 fullspan = 2
-            result = [g.table([g.tr(td(x, fullspan, normalspan), cls=x.cls)
-                               for x in content.content()],
-                              cls='vertical-group', role='presentation')]
+            result = g.table(cls='vertical-group', role='presentation', content=[
+                g.tr(td(x, fullspan, normalspan), cls=x.cls)
+                for x in content.content()
+            ])
         if result:
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
                 cls += ' label-' + lcg.text_to_id(group.label())
-                result = g.fieldset([g.legend(group.label() + ':')] + result, cls=cls)
+                result = g.fieldset((g.legend(group.label() + ':'), result), cls=cls)
             elif content.needs_panel():
                 # If there are any items which need a panel and there is no
                 # fieldset panel, add a panel styled div.
                 result = g.div(result, cls=cls)
             elif not inner:
                 # This fieldset fixes MSIE display of top-level horizontal groups...
-                result = g.fieldset([g.legend(None, cls='empty')] + result, cls='outer')
-            else:
-                result = lcg.concat(result, separator="\n")
-            return result
-        else:
-            return ''
+                result = g.fieldset((g.legend(None, cls='empty'), result), cls='outer')
+        return result
 
     def _export_field_label(self, context, field):
         if field.label:
