@@ -47,7 +47,9 @@ from pytis.presentation import (
 )
 import pytis.util
 
-from .field import Field, DateTimeField, RadioField, UriType, Link, localizable_export
+from .field import (
+    Field as FormField, DateTimeField, RadioField, UriType, Link, localizable_export,
+)
 
 _ = pytis.util.translations('pytis-web')
 VERTICAL = Orientation.VERTICAL
@@ -267,8 +269,8 @@ class FieldForm(Form):
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
 
     def _field(self, id, multirow=False):
-        return Field.create(self._row, self._view.field(id), self, self._uri_provider,
-                            multirow=multirow)
+        return FormField.create(self._row, self._view.field(id), self, self._uri_provider,
+                                multirow=multirow)
 
     def _export_field(self, context, field, editable=False):
         if editable:
