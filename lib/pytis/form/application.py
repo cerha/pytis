@@ -78,8 +78,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _menubar_forms = {}
     _log_login = True
     _recent_directories = {}
-    _remote_client_version = None
-    _remote_status_info = (False, time.time())
 
     _WINDOW_MENU_TITLE = _("&Windows")
 
@@ -345,16 +343,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
         wx.CallAfter(self._init)
-        self._remote_connection_initially_available = pytis.remote.client_available()
-        if self._remote_connection_initially_available:
-            self._remote_status_info = (True, time.time())
+        rpc_info = pytis.remote.RPCInfo
+        rpc_info.remote_connection_initially_available = pytis.remote.client_available()
+        if rpc_info.remote_connection_initially_available:
+            rpc_info.remote_status_info = (True, time.time())
             try:
-                self._remote_client_version = version = pytis.remote.x2goclient_version()
+                rpc_info.remote_client_version = version = pytis.remote.x2goclient_version()
             except Exception:
                 version = 'unknown'
             log(OPERATIONAL, "RPC communication available. Version:", version)
         else:
-            self._remote_status_info = (False, time.time())
+            rpc_info.remote_status_info = (False, time.time())
             log(OPERATIONAL, "RPC communication unavailable")
         return True
 
@@ -2080,27 +2079,27 @@ def built_in_status_fields():
             return ''
 
     def _refresh_remote_status():
-        last_status, last_time = _application._remote_status_info
+        rpc_info = pytis.remote.RPCInfo
+        last_status, last_time = rpc_info.remote_status_info
         if pytis.remote.client_available():
             if not last_status:
                 last_time = time.time()
-                _application._remote_status_info = (True, last_time)
-            if _application._remote_client_version:
-                version = _application._remote_client_version
+                rpc_info.remote_status_info = (True, last_time)
+            if rpc_info.remote_client_version:
+                version = rpc_info.remote_client_version
             else:
                 try:
                     version = pytis.remote.x2goclient_version()
-                    _application._remote_client_version = version
+                    rpc_info.remote_client_version = version
                 except Exception:
                     version = _("Not available")
             status = _("Ok")
             icon = 'connected'
-            tooltip = [version]
-            tooltip_text = _("Connected.") + "\n" + _("Client version: %s", version)
+            tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
         else:
             if last_status:
                 last_time = time.time()
-                _application._remote_status_info = (False, time.time())
+                rpc_info.remote_status_info = (False, time.time())
             tooltip = _("Not available.")
             status = _("N/A")
             icon = 'disconnected'
@@ -2133,7 +2132,7 @@ def built_in_status_fields():
 
 def remote_connection_initially_available():
     """Return True if the remote connection was available at application startup."""
-    return _application._remote_connection_initially_available
+    return pytis.remote.RPCInfo.remote_connection_initially_available
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""

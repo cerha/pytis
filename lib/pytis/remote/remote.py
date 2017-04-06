@@ -34,6 +34,16 @@ _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _nx_ip = UNDEFINED
 _x2go_ip = None
 
+
+class RPCInfo(object):
+    """Container for RPC communication data."""
+    connection = None
+    direct_connection = False
+    access_data = None
+    remote_client_version = None
+    remote_status_info = (False, time.time())
+    remote_connection_initially_available = False
+
 def nx_ip():
     """Return IP address of the nx client, as a string.
 
@@ -178,32 +188,28 @@ def read_x2go_info_file(rename=False, use_defaults=True):
         access_data = None
     return access_data
 
-_direct_connection = False
-_access_data = None
 def _connect():
     access_data = read_x2go_info_file()
-    global _access_data
+    rpc_info = RPCInfo
     if access_data is None:
-        access_data = _access_data
+        access_data = rpc_info.access_data
     else:
-        _access_data = access_data
+        rpc_info.access_data = access_data
     if access_data is None:
         return None
-    port = access_data['port']
-    password = access_data['password']
-    global _direct_connection
+    port = access_data.get('port')
+    password = access_data.get('password')
     if password is None:
-        _direct_connection = False
+        rpc_info.direct_connection = False
         import rpyc
         connection = rpyc.connect('localhost', port)
     else:
-        _direct_connection = True
+        rpc_info.direct_connection = True
         import pytisproc
         authenticator = pytisproc.PasswordAuthenticator(password)
         connection = authenticator.connect('localhost', port)
     return connection
 
-_connection = None
 def _request(request, *args, **kwargs):
     def retype(arg):
         # Convert lcg.TranslatableText instances to unicode before passing
@@ -221,24 +227,23 @@ def _request(request, *args, **kwargs):
             return unicode(arg)
         else:
             return arg
-    global _connection, _direct_connection
-    if _connection is None:
-        # Make sure _direct_connection is initialized before first use
-        _connection = _connect()
-    if _direct_connection:
+    if RPCInfo.connection is None:
+        # Make sure direct_connection is initialized before first use
+        RPCInfo.connection = _connect()
+    if RPCInfo.direct_connection:
         try:
-            _connection.root.echo
+            RPCInfo.connection.root.echo
         except:
-            _connection = _connect()
-        r = getattr(_connection.root, request)
+            RPCInfo.connection = _connect()
+        r = getattr(RPCInfo.connection.root, request)
     else:
         target_ip = client_ip()
         user_name = getpass.getuser()
         try:
-            r = _connection.root.request
+            r = RPCInfo.connection.root.request
         except:
-            _connection = _connect()
-            r = _connection.root.request
+            RPCInfo.connection = _connect()
+            r = RPCInfo.connection.root.request
         args = (target_ip, user_name, request,) + args
     return r(*retype(args), **retype(kwargs))
 

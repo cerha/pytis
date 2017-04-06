@@ -31,7 +31,7 @@ from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     launch_file, launch_url, make_selected_file, make_temporary_file, \
     open_file, open_selected_file, select_directory, select_file, run_python, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
-    X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException
+    X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException, RPCInfo
 
 from .startapp import X2GoStartApp
 
