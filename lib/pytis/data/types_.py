@@ -3385,7 +3385,7 @@ class WMValue(_Value):
 
 # Shorthand functions for values
 
-def sval(value):
+def sval(value, maxlen=None):
     """Return 'Value' instance of type 'String' with given value.
 
     Arguments:
@@ -3394,7 +3394,7 @@ def sval(value):
 
     """
     assert value is None or isinstance(value, basestring), value
-    return Value(String(), value)
+    return Value(String(maxlen=maxlen), value)
 
 def ival(value):
     """Return 'Value' instance of type 'Integer' with given value.
