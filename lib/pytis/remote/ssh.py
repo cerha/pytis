@@ -204,7 +204,7 @@ class ReverseTunnel(gevent.Greenlet):
 
     """
     _DEFAULT_SSH_FORWARD_PORT = 10000
-    _MAX_SSH_FORWARD_ATTEMPTS = 100
+    _MAX_SSH_FORWARD_ATTEMPTS = 500
 
     def __init__(self, ssh_host, forward_port, ssh_port=22, ssh_user=None,
                  ssh_forward_port=None, forward_host='localhost', key_filename=None,
