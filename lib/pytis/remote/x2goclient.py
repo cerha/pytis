@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2017-02-28 17:07'
+_VERSION = '2017-04-07 01:26'
 
 import os
 import gettext
@@ -169,35 +169,24 @@ class X2GoClientSettings(x2go.X2GoClientSettings):
 
 class RpycInfo(object):
 
-    def __init__(self, settings, port=None, password=None):
-        self._filename = os.path.join(os.path.dirname(settings.config_files[0]), 'pytis-rpyc')
-        self._port = port
-        self._password = password
+    _port = None
+    _password = None
 
-    def read(self):
-        try:
-            f = open(self._filename)
-            port = int(f.next().rstrip())
-            password = f.next().rstrip()
-        except Exception as e:
-            raise ClientException(_(u"Can't read RPyC info file: %s") % (self._filename,), e)
-        self._port = int(port)
-        self._password = password
+    @classmethod
+    def set_port(cls, port):
+        cls._port = port
 
-    def store(self):
-        try:
-            f = open(self._filename, 'w')
-            f.write('%s\n%s' % (self._port, self._password,))
-            f.close()
-        except Exception as e:
-            raise ClientException(_(u"Error when writing RPyC info file: %s") %
-                                  (self._filename,), e)
+    @classmethod
+    def set_password(cls, password):
+        cls._password = password
 
-    def port(self):
-        return self._port
+    @classmethod
+    def port(cls):
+        return cls._port
 
-    def password(self):
-        return self._password
+    @classmethod
+    def password(cls):
+        return cls._password
 
 
 class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
@@ -527,24 +516,34 @@ class X2GoClient(x2go.X2GoClient):
             def __init__(self):
                 self._port = None
                 self._password = None
+                self._changed = False
 
             def port(self):
                 return self._port
 
             def set_port(self, port):
-                self._port = port
+                if self._port != port:
+                    self._changed = True
+                    self._port = port
 
             def password(self):
                 return self._password
 
             def set_password(self, password):
-                self._password = password
+                if self._password != password:
+                    self._changed = True
+                    self._password = password
+
+            def changed(self):
+                return self._changed
 
             def write(self):
                 if self._port is None or self._password is None:
                     return
-                data = '0:%s:%s:' % (self._port, self._password,)
-                control_session._x2go_sftp_write(server_file_name, data)
+                if self._changed:
+                    data = '0:%s:%s:' % (self._port, self._password,)
+                    control_session._x2go_sftp_write(server_file_name, data)
+                    self._changed = False
         self._pytis_server_info = ServerInfo()
 
     def _handle_info(self):
@@ -557,7 +556,8 @@ class X2GoClient(x2go.X2GoClient):
         if password != info.password() or port != info.port():
             info.set_password(password)
             info.set_port(port)
-            info.write()
+            if info.changed():
+                info.write()
 
     def _check_rpyc_server(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
         import pytis.remote.pytisproc as pytisproc
@@ -570,17 +570,14 @@ class X2GoClient(x2go.X2GoClient):
                 return
             # Look for a running RPyC instance
             running = True
-            rpyc_info = RpycInfo(self._settings)
-            try:
-                rpyc_info.read()
-            except ClientException:
+            # Check whether it's our instance
+            # We must be careful here not to send the password to an RPyC instance
+            # of another user.
+            port = RpycInfo.port()
+            password = RpycInfo.password()
+            if not port or not password:
                 running = False
-            if running:
-                # Check whether it's our instance
-                # We must be careful here not to send the password to an RPyC instance
-                # of another user.
-                port = rpyc_info.port()
-                password = rpyc_info.password()
+            else:
                 authenticator = pytisproc.PasswordAuthenticator(password,
                                                                 ssh_tunnel_dead=ssh_tunnel_dead)
                 try:
@@ -594,12 +591,6 @@ class X2GoClient(x2go.X2GoClient):
                     server.close()
                     server = None
                 running = False
-            # Maybe the instance was started by another process so we must set
-            # the parameters.
-            if running and not rpyc_port.ready():
-                rpyc_port.set(port)
-                rpyc_info.store()
-                self._pytis_password_value.set(rpyc_info.password())
             # If no running RPyC instance was found then start one
             if not running:
                 if server is not None:
@@ -622,10 +613,10 @@ class X2GoClient(x2go.X2GoClient):
                                           (default_port, port_limit - 1,))
                 server.service.authenticator = authenticator
                 rpyc_port.set(port)
-                rpyc_info = RpycInfo(self._settings, port=port, password=authenticator.password())
-                rpyc_info.store()
+                RpycInfo.set_port(port)
+                RpycInfo.set_password(authenticator.password())
                 gevent.spawn(server.start)
-                self._pytis_password_value.set(rpyc_info.password())
+                self._pytis_password_value.set(RpycInfo.password())
             gevent.sleep(1)
 
     def _check_ssh_tunnel(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
