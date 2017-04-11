@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 #
-# Copyright (C) 2002-2016 Brailcom, o.p.s.
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -494,7 +494,7 @@ class _Group(_Container):
             if padding_bottom:
                 contents.append(VSpace(padding_bottom).lcg())
             if padding_left or padding_right:
-                group = HGroup(contents,
+                group = HGroup(VGroup(*contents),
                                padding_left=padding_left,
                                padding_right=padding_right)
                 contents = group.lcg()
