@@ -463,6 +463,8 @@ class _Group(_Container):
                   padding_left=None,
                   padding_right=None,
                   spacing=None,
+                  width=None,
+                  height=None,
                   balance=None)
 
     def _orientation(self):
@@ -512,6 +514,8 @@ class _Group(_Container):
                                padding_bottom=padding_bottom)
                 contents = group.lcg()
         return lcg.Container(contents, orientation=orientation,
+                             width=self._dimension(self.arg_width),
+                             height=self._dimension(self.arg_height),
                              presentation=presentation,
                              halign=lcg.HorizontalAlignment.LEFT,
                              valign=lcg.VerticalAlignment.TOP)
@@ -534,6 +538,12 @@ class HGroup(_Group):
         with given radius as 'Unit' instance
       box_mask -- Mask of visible box sides as a sequence of 4 bools (top,
         right, bottom, left) or None for all sides visible.
+      width -- explicit output width as 'Unit' instance or None for default
+        sizing.  Applies to the outer dimension of the whole box including any
+        padding and/or box_margin.
+      height -- explicit output width as 'Unit' instance or None for default
+        sizing.  Applies to the outer dimension of the whole box including any
+        padding and/or box_margin.
       padding -- space around group contents.  This space is added to
         box_margin for a boxed group, but there are major differences between
         box_margin and padding.  Box margin only applies to boxed groups and is
@@ -541,8 +551,8 @@ class HGroup(_Group):
         inherited to any inner boxed groups which don't explicitly override it.
         Padding only applies to the group for which it is defined.  Morover,
         padding can be set differently for each side using 'padding_top',
-        'padding_bottom', 'padding_left', 'padding_right'.  None means or
-        'Unit' instance.
+        'padding_bottom', 'padding_left', 'padding_right'.  None or 'Unit'
+        instance.
       padding_top -- overrides 'padding' for the top side.
       padding_bottom -- overrides 'padding' for the bottom side.
       padding_left -- overrides 'padding' for the left side.
