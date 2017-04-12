@@ -57,9 +57,8 @@ from formatter import (  # noqa: F401
 
 # This import allows application developers to forget about the distinction
 # which identifiers are defined in pytis.output and which in lcg as they are
-# closely related from their perspective.  Also it is necessary for backwards
-# compatibility with applications which often imported these identifiers
-# from pytis.output
+# closely related from their perspective.  UMm is also necessary for backwards
+# compatibility with applications which historically imported it from pytis.output.
 from lcg import (  # noqa: F401
-    UMm,
+    UMm, UPercent
 )

@@ -37,7 +37,7 @@ import os
 import re
 
 import lcg
-from lcg import Unit, UPoint
+from lcg import Unit, UPoint, Color, UPercent
 import pytis.output
 import pytis.util
 from pytis.util import some, super_
