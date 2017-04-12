@@ -473,49 +473,40 @@ class _Group(_Container):
     def _lcg(self):
         def coalesce(a, b):
             return a if a is not None else b
-        presentation = lcg.Presentation()
-        padding_top = coalesce(self.arg_padding_top, self.arg_padding)
-        padding_bottom = coalesce(self.arg_padding_bottom, self.arg_padding)
-        padding_left = coalesce(self.arg_padding_left, self.arg_padding)
-        padding_right = coalesce(self.arg_padding_right, self.arg_padding)
+        padding = self.arg_padding
+        if padding is not None:
+            if not isinstance(padding, (tuple, list)):
+                padding = (padding, padding, padding, padding)
+            elif len(padding) == 2:
+                padding = (padding[0], padding[1], padding[0], padding[1])
+            padding = [self._dimension(coalesce(x, y))
+                       for x, y in zip((self.arg_padding_top,
+                                        self.arg_padding_right,
+                                        self.arg_padding_bottom,
+                                        self.arg_padding_left),
+                                       padding)]
         if self.arg_boxed:
-            presentation.boxed = True
-            presentation.box_margin = self._dimension(self.arg_box_margin)
-            presentation.box_radius = self._dimension(self.arg_box_radius)
-            presentation.box_width = self._dimension(self.arg_box_width)
-            presentation.box_color = _color(self.arg_box_color)
-            presentation.box_mask = self.arg_box_mask
+            presentation = lcg.Presentation(
+                boxed=True,
+                box_margin=self._dimension(self.arg_box_margin),
+                box_radius=self._dimension(self.arg_box_radius),
+                box_width=self._dimension(self.arg_box_width),
+                box_color=_color(self.arg_box_color),
+                box_mask=self.arg_box_mask)
+        else:
+            presentation = lcg.Presentation()
         contents = self._lcg_contents()
         orientation = self._orientation()
-        if orientation == lcg.Orientation.VERTICAL:
-            if self.arg_spacing:
+        if self.arg_spacing:
+            if orientation == lcg.Orientation.VERTICAL:
                 space = [VSpace(self.arg_spacing).lcg()]
-                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
-            if padding_top:
-                contents.insert(0, VSpace(padding_top).lcg())
-            if padding_bottom:
-                contents.append(VSpace(padding_bottom).lcg())
-            if padding_left or padding_right:
-                group = HGroup(VGroup(*contents),
-                               padding_left=padding_left,
-                               padding_right=padding_right)
-                contents = group.lcg()
-        else:
-            if self.arg_spacing:
+            else:
                 space = [HSpace(self.arg_spacing).lcg()]
-                contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
-            if padding_left:
-                contents.insert(0, HSpace(padding_left).lcg())
-            if padding_right:
-                contents.append(HSpace(padding_right).lcg())
-            if padding_top or padding_bottom:
-                group = VGroup(contents,
-                               padding_top=padding_top,
-                               padding_bottom=padding_bottom)
-                contents = group.lcg()
+            contents = reduce(lambda a, b: a + space + [b], contents[1:], contents[0:1])
         return lcg.Container(contents, orientation=orientation,
                              width=self._dimension(self.arg_width),
                              height=self._dimension(self.arg_height),
+                             padding=padding,
                              presentation=presentation,
                              halign=lcg.HorizontalAlignment.LEFT,
                              valign=lcg.VerticalAlignment.TOP)
