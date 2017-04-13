@@ -140,9 +140,10 @@ class ui(object):
 
     @staticmethod
     def panel(parent, method, *args, **kwargs):
-        p = wx.Panel(parent)
-        p.SetSizer(method(p, *args, **kwargs))
-        return p
+        panel = wx.Panel(parent)
+        sizer = method(panel, *args, **kwargs)
+        panel.SetSizer(sizer)
+        return panel
 
     @staticmethod
     def field(parent, value=None, length=20, style=wx.DEFAULT, disabled=False, on_enter=None):
@@ -322,7 +323,7 @@ class X2GoStartApp(wx.App):
     def _username(self):
         return self._username_value or self._username_field.GetValue()
 
-    def _create_profiles_field(self, parent):
+    def _create_profile_selection(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
             self._profiles_field = None
             return None
@@ -363,7 +364,7 @@ class X2GoStartApp(wx.App):
                               self._create_menu_button(parent)),
                     expand=True, center=True),
             ui.item(self._create_username_field(parent), expand=True),
-            ui.item(self._create_profiles_field(parent), proportion=1, expand=True),
+            ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
             ui.item(self._create_status(parent), expand=True),
             padding=(0, 8), spacing=8,
         )
