@@ -159,8 +159,12 @@ class ui(object):
         return ctrl
 
     @staticmethod
-    def button(parent, label, callback, updateui=None, disabled=False):
+    def button(parent, label, callback, updateui=None, icon=None, disabled=False):
         button = wx.Button(parent, -1, label=label)
+        if icon:
+            # This doesn't seem to work...
+            bitmap = wx.ArtProvider_GetBitmap(icon, wx.ART_TOOLBAR, (16, 16))
+            button.SetBitmap(bitmap)
         button.Bind(wx.EVT_BUTTON, callback)
         if updateui:
             button.Bind(wx.EVT_UPDATE_UI, updateui)
@@ -297,10 +301,8 @@ class X2GoStartApp(wx.App):
             item = wx.MenuItem(menu, -1, label)
             menu.Bind(wx.EVT_MENU, lambda e, callback=callback: callback(), item)
             menu.AppendItem(item)
-        bitmap = wx.ArtProvider_GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR, (16, 16))
-        button = wx.BitmapButton(parent, -1, bitmap, style=wx.BU_EXACTFIT)
-        button.Bind(wx.EVT_BUTTON, lambda e: parent.PopupMenu(menu))
-        return button
+        return ui.button(parent, _("More actions..."), #icon=wx.ART_EXECUTABLE_FILE,
+                         callback=lambda e: parent.PopupMenu(menu)) #style=wx.BU_EXACTFIT)
 
     def _create_username_field(self, parent):
         label = ui.label(parent, _("Login name:"))
