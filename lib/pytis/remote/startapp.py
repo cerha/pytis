@@ -62,7 +62,7 @@ class ui(object):
                 if space:
                     sizer.AddSpacer(space)
         if padding:
-            sizer = ui.hgroup(ui.item(sizer, padding=padding))
+            sizer = ui.hgroup(ui.item(sizer, padding=padding, proportion=1, expand=True))
         return sizer
 
     class item(object):
