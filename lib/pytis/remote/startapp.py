@@ -668,7 +668,7 @@ class X2GoStartApp(wx.App):
 
         """
         return self._show_dialog(_("Authentication"), self._create_authentication_dialog,
-                                 ('password', 'publickey'), ('x',)) #methods, key_files)
+                                 methods, key_files)
 
     def checklist_dialog(self, title, message, columns, items):
         """Display a dialog to select multiple items from a list.
