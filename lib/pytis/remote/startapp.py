@@ -360,10 +360,10 @@ class X2GoStartApp(wx.App):
 
     def _create_main_content(self, parent):
         return ui.vgroup(
-            ui.item(ui.hgroup(ui.item(self._create_main_heading(parent), proportion=1),
+            ui.item(self._create_main_heading(parent)),
+            ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
                               self._create_menu_button(parent)),
                     expand=True, center=True),
-            ui.item(self._create_username_field(parent), expand=True),
             ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
             ui.item(self._create_status(parent), expand=True),
             padding=(0, 8), spacing=8,
