@@ -1813,23 +1813,32 @@ class RecordForm(LookupForm):
         else:
             return True
 
+    def _on_closed_connection(self):
+        run_dialog(pytis.form.Error,
+                   _("The database connection was closed because of long inactivity.") + "\n" +
+                   _("Please close the form using the Cancel button."))
+
     def _check_record(self, row):
         # Proveď kontrolu integrity dané instance PresentedRow.
         for check in self._view.check():
-            result = check(row)
+            try:
+                result = check(row)
+            except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+                self._on_closed_connection()
+                return False, None
             if result is not None:
                 if isinstance(result, (tuple, list,)):
-                    failed_id, msg = result
+                    field_id, msg = result
                     message(msg)
                 else:
-                    failed_id = result
+                    field_id = result
                     # TODO: Tím bychom přepsali zprávu nastavenou uvnitř
                     # 'check()'.  Pokud ale žádná zpráva nebyla nastavena,
                     # uživatel netuší...
                     # message(_(u"Kontrola integrity selhala!"))
-                log(EVENT, 'Kontrola integrity selhala:', failed_id)
-                return failed_id
-        return None
+                log(EVENT, 'Kontrola integrity selhala:', field_id)
+                return False, field_id
+        return True, None
 
     def _record_data(self, row, permission=None, updated=False):
         # We must retrieve all the values first, in order to recompute all
@@ -2615,6 +2624,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             success, result = True, (None, True)
         return success, result
 
+    def _on_closed_connection(self):
+        super(EditForm, self)._on_closed_connection()
+        self._disable_buttons(self._parent)
+
     def _commit_form(self, close=True):
         if self._mode == self.MODE_INSERT:
             permission = pytis.data.Permission.INSERT
@@ -2648,20 +2661,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     f.set_focus()
                     return False
         # Ověření integrity záznamu (funkce check).
-        try:
-            failed_id = self._check_record(self._row)
-        except (pytis.data.DBRetryException, pytis.data.DBSystemException):
-            self._disable_buttons(self._parent)
-            run_dialog(pytis.form.Error,
-                       _("The database connection was closed because of long inactivity.") + "\n" +
-                       _("Please close the form using the Cancel button."))
-            return False
-        if failed_id:
-            f = self._field(failed_id)
+        check_success, field_id = self._check_record(row)
+        if field_id:
+            f = self._field(field_id)
             if f:
                 f.set_focus()
             else:
-                log(OPERATIONAL, "Unknown field returned by check():", failed_id)
+                log(OPERATIONAL, "Unknown field returned by check():", field_id)
+        if not check_success:
             return False
         # Vytvoření datového řádku.
         rdata = self._record_data(self._row, permission=permission,
@@ -3290,8 +3297,8 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
         return True
 
     def _check_record(self, row):
-        result = super(StructuredTextEditor, self)._check_record(row)
-        if result is None:
+        success, field_id = super(StructuredTextEditor, self)._check_record(row)
+        if success:
             # Check for possible conflicting changes made since the record was
             # last saved.  If the current value in database doesn't match the
             # value before editation, someone else probably changed it.  The
@@ -3317,13 +3324,13 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                                     message=msg, report=diff, report_format=TextFormat.HTML,
                                     buttons=(revert, ignore))  # TODO: Add merge button.
                 if answer == merge:
-                    result = self._editor_field_id
+                    success, field_id = False, self._editor_field_id
                 elif answer == ignore:
                     pass
                 elif answer == revert:
                     value = pytis.data.Value(row.type(self._editor_field_id), current_db_value)
                     row[self._editor_field_id] = value
-        return result
+        return success, field_id
 
     def size(self):
         return (700, 500)
