@@ -92,6 +92,9 @@ class ui(object):
 
         """
         def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
+            assert (isinstance(content, (wx.Window, wx.Sizer, wx.Size)) or
+                    isinstance(content, (tuple, list)) and len(content) == 2
+                    and all(isinstance(x, int) for x in content)), content
             self.content = content
             self.proportion = proportion
             self.expand = expand
@@ -419,14 +422,14 @@ class X2GoStartApp(wx.App):
             ui.item(ui.hgroup(
                 ui.item(listbox, proportion=1, expand=True),
                 ui.item(ui.vgroup(*[
-                    (ui.button(dialog, label, callback, updateui, disabled=True), 0, wx.BOTTOM, 2)
+                    ui.button(dialog, label, callback, updateui, disabled=True)
                     for label, callback, updateui in (
                         (_(u"Resume"), on_resume_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
                         (_(u"Terminate"), on_terminate_session,
                          lambda e: e.Enable(listbox.GetSelection() != -1)),
                     )], spacing=6)),
-                spacing=8
+                spacing=8,
             ), proportion=1, expand=True),
             ui.item(ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
                     padding=(10, 0)),
