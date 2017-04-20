@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -448,19 +448,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         query_fields = self._view.query_fields()
         if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
-            form = QueryFieldsForm(panel, config.resolver, None, prefill=self._query_field_values,
-                                   **query_fields.view_spec_kwargs())
-            self._query_fields_form = form
-            if not query_fields.autoapply():
-                self._query_fields_apply_button = apply_button = wx_button(
-                    panel, label=_("Apply"),
-                    tooltip=_("Reload form data with current query field values."),
-                    enabled=not query_fields.autoinit(),
-                    callback=lambda e: self._apply_query_fields()
-                )
-            else:
-                self._query_fields_apply_button = apply_button = None
-            self._query_fields_panel_buttons = panel_buttons = (
+            self._query_fields_form = form = QueryFieldsForm(
+                panel, config.resolver, None,
+                query_fields=query_fields,
+                callback=self._apply_query_fields,
+                prefill=self._query_field_values,
+            )
+            self._query_fields_panel_buttons = buttons = (
                 wx_button(panel, label=_("Minimize"),
                           tooltip=_("Minimize/maximize query panel."),
                           icon='minimize-down', noborder=True,
@@ -471,12 +465,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           callback=self._on_move_query_fields))
             panel_sizer = wx.BoxSizer()
             panel_sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
-            if apply_button:
-                panel_sizer.Add((0, 0), 1)
-                panel_sizer.Add(apply_button, 0, wx.ALL | wx.ALIGN_BOTTOM | wx.FIXED_MINSIZE, 4)
-            for button in panel_buttons:
+            panel_sizer.Add((0, 0), 1)
+            for button in buttons:
                 panel_sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
             panel.SetSizer(panel_sizer)
+            panel_sizer.Fit(panel)
             panel.SetAutoLayout(1)
             position = self._get_saved_setting('query-fields-position', 'up')
             if position == 'up':
@@ -486,29 +479,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if self._get_saved_setting('query-fields-minimized', False):
                 self._toggle_query_fields_minimization()
             self._update_query_fields_panel_button_bitmaps()
-            load = self._view.query_fields().load()
+            load = query_fields.load()
             if load:
                 load(self._query_fields_row())
-            form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
             self._query_fields_form = None
-            self._query_fields_apply_button = None
-        self._unapplied_query_field_changes = False
 
-    def _on_query_fields_changed(self):
-        if self._query_fields_apply_button:
-            self._query_fields_apply_button.Enable(True)
-        else:
-            self._apply_query_fields()
-
-    def _apply_query_fields(self):
+    def _apply_query_fields(self, row):
         save = self._view.query_fields().save()
         if save:
-            save(self._query_fields_row())
+            save(row)
         self.refresh(interactive=True, reload_query_fields=False)
-        if self._query_fields_apply_button:
-            self._query_fields_apply_button.Enable(False)
-            self._grid.SetFocus()
+        self._grid.SetFocus()
 
     def refresh(self, reload_query_fields=True, **kwargs):
         query_fields = self._view.query_fields()
@@ -519,8 +501,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return super(ListForm, self).refresh(**kwargs)
 
     def restore(self):
-        if self._query_fields_apply_button and self._query_fields_apply_button.Enabled:
-            self._unapplied_query_field_changes = True
+        if self._query_fields_form:
+            self._query_fields_form.restore()
         return super(ListForm, self).restore()
 
     def _update_query_fields_panel_button_bitmaps(self):
@@ -1112,10 +1094,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
              self._last_updated_row_count != self._table.number_of_rows(timeout=0.3))):
             self._update_grid()
             self._update_list_position()
-        if self._unapplied_query_field_changes:
-            self._unapplied_query_field_changes = False
-            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
-                self._apply_query_fields()
         # V budoucnu by zde mohlo být přednačítání dalších řádků nebo dat
         event.Skip()
         return False

@@ -253,9 +253,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return create_data_object(self._name, spec_kwargs=self._spec_kwargs,
                                   kwargs=self._data_kwargs)
 
+    def _create_top_level_sizer(self):
+        return wx.BoxSizer(wx.VERTICAL)
+
     def _create_form(self):
         # Build the form from parts
-        self._top_level_sizer = sizer = wx.BoxSizer(wx.VERTICAL)
+        self._top_level_sizer = sizer = self._create_top_level_sizer()
         self._create_form_parts(sizer)
         self.SetSizer(sizer)
         sizer.Fit(self)  # Set the size of window `self' to size of the sizer.
@@ -3141,19 +3144,31 @@ class InputForm(_VirtualEditForm, PopupEditForm):
 class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
-    CALL_QUERY_FIELDS_CHANGED = 'CALL_QUERY_FIELDS_CHANGED'
-
-    def _full_init(self, *args, **kwargs):
-        fields = tuple(kwargs['fields'])
-        kwargs['fields'] = fields + (
+    def _full_init(self, parent, resolver, name, query_fields, callback, **kwargs):
+        self._query_fields_apply_callback = callback
+        self._autoapply = autoapply = query_fields.autoapply()
+        self._unapplied_query_field_changes = False
+        kwargs.update(query_fields.view_spec_kwargs())
+        fields = kwargs.pop('fields')
+        layout = kwargs.pop('layout')
+        fields += (
             # Add hidden virtual field just for tracking changes of other fields.
             Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
                   editable=Editable.NEVER,
                   computer=Computer(lambda r: True, depends=[f.id() for f in fields])),
         )
-        _VirtualEditForm._full_init(self, *args, **kwargs)
+        if not autoapply:
+            layout = GroupSpec((layout, GroupSpec((Button(
+                _("Apply"),
+                handler=self._apply_query_fields,
+                tooltip=_("Reload form data with current query field values."),
+            ),))))
+        _VirtualEditForm._full_init(self, parent, resolver, name, layout=layout, fields=fields,
+                                    **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',
-                                    lambda: self._run_callback(self.CALL_QUERY_FIELDS_CHANGED))
+                                    self._on_query_fields_changed)
+        if not autoapply and query_fields.autoinit():
+            self._query_fields_apply_button.Enable(False)
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
@@ -3163,6 +3178,37 @@ class QueryFieldsForm(_VirtualEditForm):
 
     def _create_form_parts(self, sizer):
         sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+
+    def _create_button(self, parent, button):
+        result = super(QueryFieldsForm, self)._create_button(parent, button)
+        if button.handler() == self._apply_query_fields:
+            self._query_fields_apply_button = result
+        return result
+
+    def _on_idle(self, event):
+        if super(QueryFieldsForm, self)._on_idle(event):
+            return True
+        if self._unapplied_query_field_changes:
+            self._unapplied_query_field_changes = False
+            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
+                self._apply_query_fields(self._row)
+        return False
+
+    def _on_query_fields_changed(self):
+        if self._autoapply:
+            self._apply_query_fields(self._row)
+        else:
+            self._query_fields_apply_button.Enable(True)
+
+    def _apply_query_fields(self, row):
+        self._query_fields_apply_callback(row)
+        if not self._autoapply:
+            self._query_fields_apply_button.Enable(False)
+
+    def restore(self):
+        if not self._autoapply and self._query_fields_apply_button.Enabled:
+            self._unapplied_query_field_changes = True
+        return super(QueryFieldsForm, self).restore()
 
     def run(self):
         raise Exception("This form can not be run.")
