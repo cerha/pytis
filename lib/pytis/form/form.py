@@ -2624,6 +2624,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             success, result = True, (None, True)
         return success, result
 
+    def _do_check_record(self, row):
+        success, field_id = self._check_record(row)
+        if field_id:
+            f = self._field(field_id)
+            if f:
+                f.set_focus()
+            else:
+                log(OPERATIONAL, "Unknown field returned by check():", field_id)
+        return success
+
     def _on_closed_connection(self):
         super(EditForm, self)._on_closed_connection()
         self._disable_buttons(self._parent)
@@ -2661,14 +2671,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     f.set_focus()
                     return False
         # Ověření integrity záznamu (funkce check).
-        check_success, field_id = self._check_record(row)
-        if field_id:
-            f = self._field(field_id)
-            if f:
-                f.set_focus()
-            else:
-                log(OPERATIONAL, "Unknown field returned by check():", field_id)
-        if not check_success:
+        if not self._do_check_record():
             return False
         # Vytvoření datového řádku.
         rdata = self._record_data(self._row, permission=permission,
@@ -3208,9 +3211,10 @@ class QueryFieldsForm(_VirtualEditForm):
             self._query_fields_apply_button.Enable(True)
 
     def _apply_query_fields(self, row):
-        self._query_fields_apply_callback(row)
-        if not self._autoapply:
-            self._query_fields_apply_button.Enable(False)
+        if self._do_check_record(row):
+            self._query_fields_apply_callback(row)
+            if not self._autoapply:
+                self._query_fields_apply_button.Enable(False)
 
     def restore(self):
         if not self._autoapply and self._query_fields_apply_button.Enabled:
