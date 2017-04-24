@@ -2671,7 +2671,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     f.set_focus()
                     return False
         # Ověření integrity záznamu (funkce check).
-        if not self._do_check_record():
+        if not self._do_check_record(self._row):
             return False
         # Vytvoření datového řádku.
         rdata = self._record_data(self._row, permission=permission,

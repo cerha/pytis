@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2016 Brailcom, o.p.s.
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -810,8 +810,8 @@ class PresentedRow(object):
         'changed()' and 'field_changed()' methods.  This state is updated after
         each validation attempt.
 
-        Returns: 'ValidationError' instance if an error occurs or None if the
-        string is valid.
+        Returns: 'pytis.data.ValidationError' instance if an error occurs or
+        None if the string is valid.
 
         """
         column = self._coldict[key]

@@ -1203,7 +1203,6 @@ class QueryFields(object):
     constructor arguments define complete presentational and functional aspects
     of the query fields form.
 
-
     """
     def __init__(self, fields, autoapply=False, autoinit=False, layout=None, load=None,
                  save=None, on_main_form_selection=None, **kwargs):
