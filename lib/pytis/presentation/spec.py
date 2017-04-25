@@ -70,6 +70,57 @@ def specification_path(specification_name):
             path = specification_name[:n - 1]
     return path, specification_name
 
+def row_function(function):
+    """If necessary, wrap 'function' converting row values to named arguments.
+
+    Row functions are functions of one argument which is a 'PresentedRow'
+    instance and return a result based on a computation which typically uses
+    current row values and/or other row properties.  This wrapper makes it
+    simple to define row functions working with field values by passing these
+    values as function arguments.
+
+    If 'function' is None, None is returned.  Otherwise it must be a function
+    of one positional argument and zero or more additional arguments
+    (positional or keyword).  The first positional argument is a 'PresentedRow'
+    instance.  If the function defines any additional arguments, it will be
+    wrapped by a function which passes row values of fields matching the
+    argument names as those arguments.  If no such additional arguemnts are
+    defined, the 'function' is returned as is.
+
+    For example:
+        @row_function
+        def func(row, a, b):
+            return a + b
+
+    or:
+
+        func = row_function(lambda r, a, b: a + b)
+
+    is equivalent to:
+
+        def func(row):
+             return row['a'].value() + row['b'].value()
+
+    This makes row functions much more readable.  Many properties of Pytis
+    specifications accept row functions (functions which accept 'PresentedRow'
+    as the only argument).  If documentation of such properties refer to
+    'row_function()', it means that 'row_function' is automatically applied so
+    the user may define the function in the readable form and it is
+    automatically wrapped by 'row_function()' behind the scenes if needed.  The
+    goal is to wrap by 'row_function()' in all cases but it is added gradually
+    so you can rely on it only where documented.  In other cases
+    'row_function()' may be used explicitly.
+
+    """
+    if function is not None:
+        assert isinstance(function, collections.Callable), function
+        arguments = argument_names(function)[1:]
+        if arguments:
+            original_function = function
+            def function(row):
+                kwargs = {name: row[name].value() for name in arguments}
+                return original_function(row, **kwargs)
+    return function
 
 class TextFormat(object):
     """Constants for definition of text format.
@@ -1362,20 +1413,21 @@ class ViewSpec(object):
             formatted row values within given string (with python string
             formatting syntax).
 
-          check -- funkce pro ověření integrity dat celého záznamu.  Jedná se o
-            funkci jednoho argumentu, jímž je instance třídy `PresentedRow',
-            reprezentující aktuální hodnoty všech políček formuláře.  Namísto
-            jediné funkce lze předat také seznam takových funkcí -- v tom
-            případě budou funkce volány v pořadí, ve kterém jsou uvedeny.  Na
-            rozdíl od validace hodnot políček, která závisí na datovém typu a
-            má k dispozici pouze vlastní obsah políčka, má tato funkce k
-            dispozici i hodnoty ostatních políček, takže je vhodná pro ověření
-            vzájemné slučitelnosti těchto hodnot.  Tato funkce vrací None,
-            pokud je vše v pořádku a formulář může být v tomto stavu odeslán,
-            nebo id políčka, jehož hodnota způsobila neplatnost záznamu.
-            Formulář by potom měl uživatele vrátit do editace daného polčka.
-            Je možné vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
-            zpráva, která má být zobrazena uživateli.
+          check -- function to verify the integrity of the whole record.  May
+            be specified as a single row function (automatically wrapped by
+            'row_function()') or a sequence of such functions -- in this case
+            all functions will be called in the order in which they appear in
+            the sequence.  As opposed to "validation" which only verifies
+            whether a single value matches its data type and constraints
+            (values of other fields are not available during validation), the
+            check function verifies mutual compatibility of all form values.
+            The check function is called only after successful validation of
+            all fields.  The check function returns None in case of success or
+            an error message as a string in case of failure.  It is also
+            possible to return a pair (field_id, message) where field_id is the
+            id of the field which causes the problem.  Given field will receive
+            focus in this case, but it is recommended to use separate check
+            functions in 'Field' specification for this purpose.
 
           cleanup -- a function for final actions after inserting/updating a
             record.  The function must accept two arguments -- the first one is
@@ -1709,11 +1761,6 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
-        assert isinstance(check, (collections.Callable, list, tuple))
-        check = xtuple(check)
-        if __debug__:
-            for f in check:
-                assert isinstance(f, collections.Callable)
         if filters:
             # `filters' are for backwards compatibility.
             # Filters are compatible with profiles (they only define the
@@ -1780,7 +1827,7 @@ class ViewSpec(object):
         self._sorting = sorting
         self._grouping = grouping
         self._group_heading = group_heading
-        self._check = check
+        self._check = tuple(map(row_function, xtuple(check)))
         self._cleanup = cleanup
         self._on_new_record = on_new_record
         self._on_copy_record = on_copy_record
@@ -3180,6 +3227,17 @@ class Field(object):
             in the application, protected by different passwords.  Not all data
             types support encryption, it is an error to set encryption here for
             field types which don't support it.
+
+          check -- function to verify the integrity of the whole record.  Is
+            specified as a row function (automatically wrapped by
+            'row_function()').  In contrast to "validation" which only verifies
+            whether a single value matches its data type and constraints
+            (values of other fields are not available during validation), the
+            check function verifies mutual compatibility of all form values and
+            is called only after successful validation.  The check function
+            returns None in case of success or an error message as a string in
+            case of failure.
+
           encrypt_empty -- if True (default) then encrypt also None values (and
             empty values when they are represented by None values).  Otherwise
             store empty values as NULLs in the database.  Empty values should
@@ -3246,7 +3304,7 @@ class Field(object):
               style=None, link=(), filename=None, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
-              validity_condition=None, crypto_name=None, encrypt_empty=True,
+              validity_condition=None, check=None, crypto_name=None, encrypt_empty=True,
               **kwargs):
         def err(msg, *args):
             """Return assertion error message."""
@@ -3452,6 +3510,7 @@ class Field(object):
         self._attachment_storage = attachment_storage
         self._printable = printable
         self._slider = slider
+        self._check = row_function(check)
         self._crypto_name = crypto_name
         self._encrypt_empty = encrypt_empty
 
@@ -3666,6 +3725,9 @@ class Field(object):
 
     def slider(self):
         return self._slider
+
+    def check(self):
+        return self._check
 
     def crypto_name(self):
         return self._crypto_name

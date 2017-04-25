@@ -511,13 +511,21 @@ class InputField(object, KeyHandler, CommandHandler):
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())
 
+    def _check(self):
+        check = self.spec().check()
+        if check:
+            result = check(self._row)
+        else:
+            result = None
+        return result
+
     def _on_idle(self, event):
         if self._needs_validation:
             transaction = self._row.transaction()
             # Don't validate when the transaction is already closed.
             if transaction is None or transaction.open():
                 self._needs_validation = False
-                valid = self._validate() is None
+                valid = self._validate() is None and self._check() is None
                 if valid != self._valid:
                     self._valid = valid
                     self._on_validity_change()
@@ -725,13 +733,15 @@ class InputField(object, KeyHandler, CommandHandler):
         """
         error = self._validate()
         if error:
+            errmsg = error.message()
+        else:
+            errmsg = self._check()
+        if errmsg:
             if interactive:
-                log(EVENT, 'Invalid field:', self.id())
-                run_dialog(Error, title=_("Validation error"),
-                           message=(_("Error validating field value:") + "\n\n" +
-                                    "%s: %s" % (self.spec().label(), error.message())))
+                run_dialog(Error, title=_("Invalid value"),
+                           message=self.spec().label() + ": " + errmsg)
             else:
-                message(error.message(), beep_=True)
+                message(errmsg, beep_=True)
         return error is None
 
     def set_focus(self, reset=False):

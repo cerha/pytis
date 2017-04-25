@@ -1819,23 +1819,32 @@ class RecordForm(LookupForm):
                    _("Please close the form using the Cancel button."))
 
     def _check_record(self, row):
-        # Proveď kontrolu integrity dané instance PresentedRow.
-        for check in self._view.check():
+        # Perform integrity checks for given PresentedRow instance.
+        fields = self._view.fields()
+        for field_id, check in ([(x, None) for x in self._view.check()] +
+                                [(f.id(), f.check()) for f in fields if f.check()]):
             try:
                 result = check(row)
             except (pytis.data.DBRetryException, pytis.data.DBSystemException):
                 self._on_closed_connection()
                 return False, None
             if result is not None:
-                if isinstance(result, (tuple, list,)):
+                if field_id is not None:
+                    # The field's check function returns the error message (or None).
+                    message(result)
+                elif isinstance(result, (tuple, list,)):
+                    # ViewSpec.check may return a pair (field_id, message).
                     field_id, msg = result
                     message(msg)
-                else:
+                elif result in [f.id() for f in fields]:
+                    # Older definition of ViewSpec.check allowed printing the
+                    # message from inside the check function and returning only
+                    # field_id, so we don't print anything to prevent overwriting
+                    # the already displayed message.
                     field_id = result
-                    # TODO: Tím bychom přepsali zprávu nastavenou uvnitř
-                    # 'check()'.  Pokud ale žádná zpráva nebyla nastavena,
-                    # uživatel netuší...
-                    # message(_(u"Kontrola integrity selhala!"))
+                else:
+                    # Otherwise ViewSpec.check returns an error message.
+                    message(result)
                 log(EVENT, 'Kontrola integrity selhala:', field_id)
                 return False, field_id
         return True, None
@@ -2625,6 +2634,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return success, result
 
     def _do_check_record(self, row):
+        # Check record integrity (the global 'check' function as well as per field checks).
         success, field_id = self._check_record(row)
         if field_id:
             f = self._field(field_id)
@@ -2639,12 +2649,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._disable_buttons(self._parent)
 
     def _commit_form(self, close=True):
-        if self._mode == self.MODE_INSERT:
-            permission = pytis.data.Permission.INSERT
-        elif self._mode == self.MODE_EDIT:
-            permission = pytis.data.Permission.UPDATE
-        else:
-            permission = None
         # Re-validate all fields.
         for f in self._fields:
             fid = f.id()
@@ -2654,10 +2658,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._row[fid] = self._row.original_row()[fid]
             elif (self._mode == self.MODE_INSERT and
                   not self._row.permitted(fid, pytis.data.Permission.VIEW)):
-                for rf in self._row.fields():
-                    if rf.id() == fid:
+                for fspec in self._row.fields():
+                    if fspec.id() == fid:
                         type_ = self._row.type(fid)
-                        default = rf.default()
+                        default = fspec.default()
                         if default is not None:
                             if isinstance(default, collections.Callable):
                                 default = default()
@@ -2670,10 +2674,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if f.enabled() and not f.validate():
                     f.set_focus()
                     return False
-        # Ověření integrity záznamu (funkce check).
+        # Check record integrity (the global 'check' function as well as per field checks).
         if not self._do_check_record(self._row):
             return False
-        # Vytvoření datového řádku.
+        # Create the data row.
+        if self._mode == self.MODE_INSERT:
+            permission = pytis.data.Permission.INSERT
+        elif self._mode == self.MODE_EDIT:
+            permission = pytis.data.Permission.UPDATE
+        else:
+            permission = None
         rdata = self._record_data(self._row, permission=permission,
                                   updated=(self._mode == self.MODE_EDIT))
         if not rdata.keys():
@@ -2691,7 +2701,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             op, args = self._update_op_args(rdata)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
-        # Provedení operace
+        # Perform the DB operation.
         transaction = self._open_transaction()
         if transaction is not None:
             success, result = db_op(transaction.set_point, ('commitform',),
