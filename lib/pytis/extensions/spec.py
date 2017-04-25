@@ -87,6 +87,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
         assert isinstance(groups, (tuple, list))
         assert enabled is None or isinstance(enabled, collections.Callable)
         enabled_ = enabled
+
         def enabled(**kwargs_):
             if not pytis.data.is_in_groups(groups):
                 return False
@@ -97,6 +98,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
                             args=dict(spec_name=name, proc_name=proc_name,
                                       enabled=enabled, **kwargs),
                             help='Spustit proceduru "%s"' % title)
+
 
 nr = new_record_mitem
 rp = run_procedure_mitem
@@ -227,6 +229,14 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                filter=filter,
                                transaction=transaction)
 
+def make_presented_row(specname, prefill={}):
+    import config
+    data = pytis.extensions.data_create(specname)
+    resolver = config.resolver
+    spec = resolver.get(specname, 'view_spec')
+    prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
+    return prow
+
 def run_any_form():
     form_types = (
         ("BrowseForm", pytis.form.BrowseForm),
@@ -241,6 +251,7 @@ def run_any_form():
     for d in pytis.extensions.get_form_defs(resolver):
         all_defs.append(specification_path(d)[1])
     all_defs.sort()
+
     def name_runtime_filter(row):
         name_substr = row['name_substr'].value()
         if name_substr:
@@ -263,6 +274,8 @@ def run_any_form():
     if row is not None:
         form_type = dict(form_types)[row['type'].value()]
         pytis.form.run_form(form_type, row['name'].value())
+
+
 cmd_run_any_form = \
     pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
@@ -291,19 +304,25 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
 
     """
     import pytis.output
+
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
+
         class _Spec:
             def body(self, resolver):
                 return None
+
             def doc_header(self, resolver):
                 return None
+
             def doc_footer(self, resolver):
                 return None
+
         def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
             pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
                                                  **kwargs)
             self._old = old
+
         def _get_module(self, module_name):
             if self._old:
                 module_name = os.path.join('output', module_name)
@@ -439,6 +458,7 @@ def mime_type_constraint(*allowed_mime_types):
 
     """
     import magic
+
     def constraint(value):
         m = magic.open(magic.MAGIC_MIME_TYPE)
         try:
