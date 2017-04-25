@@ -3450,7 +3450,8 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
                         remote_file.write(data)
                 finally:
                     remote_file.close()
-                log(OPERATIONAL, "Launching file on Windows at %s:" % pytis.remote.client_ip(),
+                log(OPERATIONAL, "Launching file on remote client at %s:" %
+                    pytis.remote.client_ip(),
                     remote_file.name)
                 pytis.remote.launch_file(remote_file.name)
                 return
@@ -3480,8 +3481,8 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
                 finally:
                     f.close()
                 viewer()
-            finally:
-                os.remove(filename)
+            except Exception:
+                pass
         else:
             viewer()
     else:
