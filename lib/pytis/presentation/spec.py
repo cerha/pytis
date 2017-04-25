@@ -677,7 +677,7 @@ class Profile(object):
 
     Form profiles are a set of predefined form parameters, such as filtering
     condition, sorting, visible columns and their order, grouping, etc. (see
-    constructor arguemnts for a full list).
+    constructor arguments for a full list).
 
     The user interface allows simple switching between available profiles and
     may also implement the option of saving user defined profiles.  Thus
@@ -4030,7 +4030,7 @@ class AttachmentStorage(object):
 class FileAttachmentStorage(AttachmentStorage):
     """Simple AttachmentStorage API implementation storing files in a filesystem.
 
-    The constructor arguemnt 'directory' determines the filesystem path where
+    The constructor argument 'directory' determines the filesystem path where
     attachment files are stored.  This directory must either exist and be
     writable by the users who are expected to edit the field for which the
     storage is used or when it doesn't exist, it will be created automatically,
@@ -4192,7 +4192,7 @@ class FileAttachmentStorage(AttachmentStorage):
 class HttpAttachmentStorage(AttachmentStorage):
     """Remote AttachmentStorage implementation storing files through HTTP.
 
-    The constructor arguemnt 'uri' determines the HTTP uri of a server
+    The constructor argument 'uri' determines the HTTP uri of a server
     application implementing the attachment storage protocol.  One sample
     implementation of the server side as a Wiking module is the module
     'pytis.cms.web.HttpAttachmentStorageBackend'.
@@ -4753,11 +4753,11 @@ class Application(SpecificationBase):
         """Run custom code after login attempt.
 
         The boolean argument indicates login success (True when login was
-        successfull, False otherwise).
+        successful, False otherwise).
 
         The method may be called several times during application startup as
-        long as the login attempts are unsuccessfull (with one or none final
-        successfull call).
+        long as the login attempts are unsuccessful (with one or none final
+        successful call).
 
         """
 
