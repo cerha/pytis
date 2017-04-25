@@ -2704,6 +2704,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             result = (None, False)
         if success and result[1]:
             new_row = result[0]
+            if new_row is None:
+                new_row = self._row.row()
             original_row = copy.copy(self._row)
             # The set_row() below is necessary to replace the original_row's
             # data row by a new copied instance, because deepcopy doesn't work here
@@ -2715,8 +2717,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 # Use prefill to keep the previous virtual field values.
                 prefill={k: self._row[k] for k in self._row.keys() if k not in new_row.keys()},
             )
-            if new_row is None:
-                new_row = self._row.row()
             # Refresh the form values from the saved DB row (the DB operation may
             # actually change some values (triggers, rules, views, ...) but preserve
             # virtual fields.  We can't use set_row(), because it would reset all
