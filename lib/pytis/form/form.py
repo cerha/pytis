@@ -3200,7 +3200,8 @@ class QueryFieldsForm(_VirtualEditForm):
             return True
         if self._unapplied_query_field_changes:
             self._unapplied_query_field_changes = False
-            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
+            if run_dialog(pytis.form.Question,
+                          _("Query fields contain unapplied changes. Apply now?"), True):
                 self._apply_query_fields(self._row)
         return False
 
