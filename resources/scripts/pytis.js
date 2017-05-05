@@ -55,7 +55,7 @@ var pytis = {
         return pytis.gettext.gettext(msg);
     },
 
-    show_tooltip: function(event, uri) {
+    show_tooltip: function (event, uri) {
         // This can't be implemented as a Field method as Field instances are not
         // created in BrowseForm (currently only in edit form).
         var element, tooltip;
@@ -76,7 +76,7 @@ var pytis = {
         }, 500);
     },
 
-    hide_tooltip: function(element) {
+    hide_tooltip: function (element) {
         if (element._pytis_tooltip) {
             element._pytis_tooltip.hide();
         }
@@ -101,7 +101,7 @@ pytis.BrowseForm = Class.create({
     access it as '$(form_id).instance'.
 
      */
-    initialize: function(form_id, form_name, uri, allow_insertion) {
+    initialize: function (form_id, form_name, uri, allow_insertion) {
         /* form_id ... HTML id of the pytis form top level element (string)
            form_name ... Form name used for distinguishing request parameters
              (see form_name in the python class).
@@ -122,7 +122,7 @@ pytis.BrowseForm = Class.create({
             }
             var page = this.form.up('.notebook-widget > div');
             if (page) {
-                lcg.Notebook.on_activation(page, function() {
+                lcg.Notebook.on_activation(page, function () {
                     this.load_form_data(parameters);
                 }.bind(this));
             } else {
@@ -144,7 +144,7 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    send_ajax_request: function(form, parameters, on_success) {
+    send_ajax_request: function (form, parameters, on_success) {
         document.body.style.cursor = "wait";
         if (!form) {
             // If no form is passed, we simply create one just for the request.
@@ -152,7 +152,7 @@ pytis.BrowseForm = Class.create({
         }
         form.request({
             parameters: parameters,
-            onSuccess: function(transport) {
+            onSuccess: function (transport) {
                 try {
                     on_success.bind(this)(transport);
                 } catch (e) {
@@ -164,30 +164,30 @@ pytis.BrowseForm = Class.create({
                     document.body.style.cursor = "default";
                 }
             }.bind(this),
-            onFailure: function(transport) {
+            onFailure: function (transport) {
                 document.body.style.cursor = "default";
             }.bind(this)
         });
     },
 
-    on_edit_cell: function(event) {
+    on_edit_cell: function (event) {
         var td = (event.element().nodeName === 'TD' ? event.element() : event.element().up('td'));
         this.send_edit_cell_request(td);
         event.stop();
     },
 
-    send_edit_cell_request: function(element) {
+    send_edit_cell_request: function (element) {
         var parameters = {_pytis_form_update_request: 1,
                           _pytis_edit_cell: 1,
                           _pytis_row_key: this.pytis_row_key(element),
                           _pytis_column_id: this.pytis_column_id(element)};
         // Note, element.down('form') will not exist on first invocation, but the method
         // send_ajax_request can handle that.
-        this.send_ajax_request(element.down('form'), parameters, function(transport) {
+        this.send_ajax_request(element.down('form'), parameters, function (transport) {
             element.update(transport.responseText);
             var edit_form = element.down('form');
             if (edit_form) {
-                edit_form.down('button.save-edited-cell').on('click',  function(event) {
+                edit_form.down('button.save-edited-cell').on('click',  function (event) {
                     this.send_edit_cell_request(element);
                     event.stop();
                 }.bind(this));
@@ -196,7 +196,7 @@ pytis.BrowseForm = Class.create({
         }.bind(this));
     },
 
-    slide_down: function(element) {
+    slide_down: function (element) {
         if (Effect !== undefined) {
             Effect.SlideDown(element, {duration: 0.25});
         } else {
@@ -204,7 +204,7 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    slide_up: function(element) {
+    slide_up: function (element) {
         if (Effect !== undefined) {
             Effect.SlideUp(element, {duration: 0.25});
         } else {
@@ -212,7 +212,7 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    on_toggle_row_expansion: function(event) {
+    on_toggle_row_expansion: function (event) {
         var tr = event.element().up('tr');
         var expansion;
         if (tr.hasClassName('row-expansion')) {
@@ -250,11 +250,11 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    send_expand_row_request: function(tr) {
+    send_expand_row_request: function (tr) {
         var parameters = {_pytis_form_update_request: 1,
                           _pytis_expand_row: 1,
                           _pytis_row_key: this.pytis_row_key(tr)};
-        this.send_ajax_request(this.form.down('form'), parameters, function(transport) {
+        this.send_ajax_request(this.form.down('form'), parameters, function (transport) {
             var content = new Element('div', {'class': 'row-expansion-content'});
             content.insert(transport.responseText);
             var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
@@ -268,7 +268,7 @@ pytis.BrowseForm = Class.create({
         }.bind(this));
     },
 
-    pytis_row_key: function(element) {
+    pytis_row_key: function (element) {
         // Return pytis row key value for given HTML element inside the pytis table form.
         // Returns null if the element is not inside a pytis table or
         // if the table doesn't contain necessary information.
@@ -279,7 +279,7 @@ pytis.BrowseForm = Class.create({
         return null;
     },
 
-    pytis_column_id: function(element) {
+    pytis_column_id: function (element) {
         // Return pytis column id for given HTML element inside the pytis table form.
         /* The method works with with class names of table th elements, but this
            may be unreliable in some cases, so better we might pass column names
@@ -296,7 +296,7 @@ pytis.BrowseForm = Class.create({
                 if (hr) {
                     var th = hr.childElements()[tr.childElements().indexOf(td)];
                     if (th) {
-                        var cls = th.classNames().find(function(x) {
+                        var cls = th.classNames().find(function (x) {
                             return x.match('^column-id-');
                         });
                         if (cls) {
@@ -309,7 +309,7 @@ pytis.BrowseForm = Class.create({
         return null;
     },
 
-    load_form_data: function(parameters, busy_cursor) {
+    load_form_data: function (parameters, busy_cursor) {
         if (busy_cursor) {
             document.body.style.cursor = "wait";
         }
@@ -317,7 +317,7 @@ pytis.BrowseForm = Class.create({
         new Ajax.Request(this.uri, {
             method: 'get',
             parameters: parameters,
-            onSuccess: function(transport) {
+            onSuccess: function (transport) {
                 try {
                     var container = this.ajax_container;
                     var i, callback;
@@ -344,7 +344,7 @@ pytis.BrowseForm = Class.create({
                     }
                 }
             }.bind(this),
-            onFailure: function(transport) {
+            onFailure: function (transport) {
                 if (busy_cursor) {
                     document.body.style.cursor = "default";
                 }
@@ -367,31 +367,31 @@ pytis.BrowseForm = Class.create({
         });
     },
 
-    bind_controls: function(panel) {
+    bind_controls: function (panel) {
         if (panel) {
-            panel.select('button.prev-page, button.next-page').each(function(ctrl) {
-                ctrl.observe('click', function(event) {
+            panel.select('button.prev-page, button.next-page').each(function (ctrl) {
+                ctrl.observe('click', function (event) {
                     this.reload_form_data(ctrl);
                     event.stop();
                 }.bind(this));
             }.bind(this));
             var apply_button = panel.down('button.apply-filters');
             if (apply_button) {
-                apply_button.observe('click', function(event) {
+                apply_button.observe('click', function (event) {
                     this.reload_form_data(apply_button);
                     event.stop();
                 }.bind(this));
             } else {
-                panel.select('select, checkbox, radio').each(function(ctrl) {
-                    ctrl.observe('change', function(event) {
+                panel.select('select, checkbox, radio').each(function (ctrl) {
+                    ctrl.observe('change', function (event) {
                         this.reload_form_data(ctrl);
                         event.stop();
                     }.bind(this));
                 }.bind(this));
             }
-            panel.select('.index-search-controls a').each(function(ctrl) {
+            panel.select('.index-search-controls a').each(function (ctrl) {
                 var params = ctrl.href.replace(/;/g, '&').parseQuery();
-                ctrl.observe('click', function(event) {
+                ctrl.observe('click', function (event) {
                     this.reload_form_data(ctrl, {index_search: params.index_search,
                                                  sort: params.sort,
                                                  dir: params.dir});
@@ -402,9 +402,9 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    bind_table_headings: function(thead) {
+    bind_table_headings: function (thead) {
         if (thead) {
-            thead.select('th.column-heading').each(function(th) {
+            thead.select('th.column-heading').each(function (th) {
                 if (th.hasClassName('sortable-column')) {
                     th.observe('click', this.on_table_heading_clicked.bind(this));
                 }
@@ -416,14 +416,14 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    bind_table_body: function(tbody) {
+    bind_table_body: function (tbody) {
         if (tbody) {
             tbody.select('td.editable-cell').each(function (element) {
                 element.setAttribute('title', pytis._("Double click the cell to edit the value."));
                 element.on('dblclick', this.on_edit_cell.bind(this));
             }.bind(this));
             var expansible_rows = tbody.up('table').hasClassName('expansible-rows');
-            tbody.select('tr').each(function(tr) {
+            tbody.select('tr').each(function (tr) {
                 var remove_row = tr.down('a.remove-row');
                 if (remove_row) {
                     remove_row.on('click', this.on_remove_row.bind(this));
@@ -439,9 +439,9 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    reload_form_data: function(ctrl, params) {
+    reload_form_data: function (ctrl, params) {
         var parameters = (params !== undefined ? params : {});
-        ctrl.up('form').getElements().each(function(x) {
+        ctrl.up('form').getElements().each(function (x) {
             if (x.tagName !== 'BUTTON') {
                 parameters[x.name] = x.value;
             }
@@ -450,11 +450,11 @@ pytis.BrowseForm = Class.create({
             // Some buttons (apply-filters) have no value, others (prev-page/next-page) do...
             parameters[ctrl.name] = ctrl.value;
         }
-        this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
+        this.ajax_container.select('form.list-form-controls').each(function (f) { f.disable(); });
         this.load_form_data(parameters, true);
     },
 
-    bind_search_controls: function(panel) {
+    bind_search_controls: function (panel) {
         if (panel) {
             var search_button = panel.down('.paging-controls button.search');
             if (search_button) {
@@ -467,12 +467,12 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    on_table_heading_clicked: function(event) {
+    on_table_heading_clicked: function (event) {
         var th = event.element();
         if (th.nodeName !== 'TH') {
             th = th.up('th');
         }
-        var colid_cls = $w(th.className).find(function(x) {
+        var colid_cls = $w(th.className).find(function (x) {
             return x.startsWith('column-id-');
         });
         if (colid_cls) {
@@ -486,7 +486,7 @@ pytis.BrowseForm = Class.create({
             }
             var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
             if (this.async_load) {
-                this.form.select('form.list-form-controls').each(function(f) { f.disable(); });
+                this.form.select('form.list-form-controls').each(function (f) { f.disable(); });
                 this.load_form_data(parameters, true);
             } else {
                 window.location.search = new Hash(parameters).toQueryString();
@@ -495,7 +495,7 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    on_show_search_controls: function(event) {
+    on_show_search_controls: function (event) {
         var search_controls = $(this.form).down('div.query');
         var i, panel, button;
         search_controls.show();
@@ -513,7 +513,7 @@ pytis.BrowseForm = Class.create({
         event.stop();
     },
 
-    on_hide_search_controls: function(event) {
+    on_hide_search_controls: function (event) {
         var search_controls = $(this.form).down('div.query');
         var form = search_controls.up('form');
         form['show-search-field'].value = '';
@@ -522,7 +522,7 @@ pytis.BrowseForm = Class.create({
         event.stop();
     },
 
-    on_insert_new_row: function(event) {
+    on_insert_new_row: function (event) {
         var form = this.form.down('form');
         if (!form) {
             form = this.form.up('form');
@@ -530,7 +530,7 @@ pytis.BrowseForm = Class.create({
         var parameters = {'_pytis_form_update_request': 1,
                           '_pytis_insert_new_row': 1};
         if (form) {
-            this.send_ajax_request(form, parameters, function(transport) {
+            this.send_ajax_request(form, parameters, function (transport) {
                 var tbody = this.form.down('table.data-table tbody');
                 tbody.insert(transport.responseText);
                 form['_pytis_inserted_rows_' + this.form_name].value++;
@@ -568,7 +568,7 @@ pytis.BrowseForm = Class.create({
 });
 
 pytis.Form = Class.create({
-    initialize: function(form_id, fields) {
+    initialize: function (form_id, fields) {
         /* form_id ... HTML id of the pytis form top level element (string)
          * fields ... array of form fields as pytis.Field instances
          */
@@ -590,7 +590,7 @@ pytis.Form = Class.create({
         }
     },
 
-    on_change: function(form, value) {
+    on_change: function (form, value) {
         // Send AJAX request in reaction to user changes of form values.
         // TODO: Avoid AJAX request flooding during typing or other continuous
         // changes.  The problem is that we must always send a request as we
@@ -599,7 +599,7 @@ pytis.Form = Class.create({
         // meantime, but this would slow down the UI responsivity.
         var values = value.parseQuery();
         var last_values = this._observer.lastValue.parseQuery();
-        this._fields.each(function(item) {
+        this._fields.each(function (item) {
             var id = item.key;
             var field = item.value;
             // Disabled fields are not present in values/last_values, but also
@@ -609,7 +609,7 @@ pytis.Form = Class.create({
                  values[id] !== last_values[id])) {
                 document.body.style.cursor = "wait";
                 var states = new Hash();
-                this._fields.each(function(x) {
+                this._fields.each(function (x) {
                     if (x.value.state()) {
                         states.set(x.key, x.value.state());
                     }
@@ -625,7 +625,7 @@ pytis.Form = Class.create({
         }.bind(this));
     },
 
-    update: function(response) {
+    update: function (response) {
         // Update the form state in reaction to previously sent AJAX request.
         var data = response.responseJSON;
         if (data) {
@@ -636,7 +636,7 @@ pytis.Form = Class.create({
             // coming in wrong order (earlier request may be processed longer
             // than a later one).
             if (response_number === this._last_request_number) {
-                new Hash(data.fields).each(function(item) {
+                new Hash(data.fields).each(function (item) {
                     var field = this._fields.get(item.key);
                     if (field) {
                         var cdata = item.value;
@@ -676,7 +676,7 @@ pytis.Form = Class.create({
 });
 
 pytis.Field = Class.create({
-    initialize: function(form_id, field_id, id, state, active, required) {
+    initialize: function (form_id, field_id, id, state, active, required) {
         /* form_id ... HTML id of the pytis form element to which the field
          *    belongs.
          * field_id ... HTML id of the form field element.  The element is
@@ -706,28 +706,28 @@ pytis.Field = Class.create({
         this._element._pytis_field_instance = this;
     },
 
-    id: function() {
+    id: function () {
         return this._id;
     },
 
-    element: function() {
+    element: function () {
         return this._element;
     },
 
-    state: function() {
+    state: function () {
         // Return the last runtime filter/arguments state string representation.
         return this._state;
     },
 
-    active: function() {
+    active: function () {
         return this._active;
     },
 
-    value: function() {
+    value: function () {
         return this._ctrl.value;
     },
 
-    set_editability: function(value) {
+    set_editability: function (value) {
         // Disable/enable field editability.
         var labels = $$('.field-label.id-'+this._id);
         if (labels) {
@@ -744,16 +744,16 @@ pytis.Field = Class.create({
         this._set_editability(value);
     },
 
-    set_state: function(value) {
+    set_state: function (value) {
         // Set runtime filter/arguments state string representation.
         this._state = value;
     },
 
-    _set_editability: function(value) {
+    _set_editability: function (value) {
         this._ctrl.disabled = !value;
     },
 
-    set_value: function(value, localized_value) {
+    set_value: function (value, localized_value) {
         // Set the field value.
         if (localized_value !== undefined) {
             this._ctrl.value = localized_value;
@@ -762,7 +762,7 @@ pytis.Field = Class.create({
         }
     },
 
-    set_enumeration: function(value, links) {
+    set_enumeration: function (value, links) {
         // Update enumeration controls (only for enumeration fields).
         return;
     }
@@ -772,7 +772,7 @@ pytis.Field = Class.create({
 pytis.CheckboxField = Class.create(pytis.Field, {
     // Specific handler for a checkbox field.
 
-    set_value: function(value, localized_value) {
+    set_value: function (value, localized_value) {
         // Set the field value.
         this._ctrl.checked = value === 'T';
     }
@@ -782,7 +782,7 @@ pytis.CheckboxField = Class.create(pytis.Field, {
 pytis.RadioField = Class.create(pytis.Field, {
     // Specific handler for a radio button group.
 
-    set_value: function(value, localized_value) {
+    set_value: function (value, localized_value) {
         var i, radio;
         for (i=0; i<this._ctrl.length; i++) {
             radio = this._ctrl[i];
@@ -790,7 +790,7 @@ pytis.RadioField = Class.create(pytis.Field, {
         }
     },
 
-    _set_editability: function(value) {
+    _set_editability: function (value) {
         var i;
         for (i=0; i<this._ctrl.length; i++) {
             this._ctrl[i].disabled = !value;
@@ -802,14 +802,14 @@ pytis.RadioField = Class.create(pytis.Field, {
 pytis.PasswordField = Class.create(pytis.Field, {
     // Specific handler a password field.
 
-    set_value: function(value, localized_value) {
+    set_value: function (value, localized_value) {
         var i;
         for (i=0; i<this._ctrl.length; i++) {
             this._ctrl[i].value = value;
         }
     },
 
-    _set_editability: function($super, value) {
+    _set_editability: function ($super, value) {
         if (this._ctrl.length === undefined) {
             $super(value);
         } else {
@@ -825,7 +825,7 @@ pytis.PasswordField = Class.create(pytis.Field, {
 pytis.ChoiceField = Class.create(pytis.Field, {
     // Specific handler for codebook field represented by HTML select control.
 
-    set_enumeration: function(value, links) {
+    set_enumeration: function (value, links) {
         var options = this._ctrl.options;
         var selected = $F(this._ctrl);
         var i, len, option, item, attr, text;
@@ -852,21 +852,21 @@ pytis.ChoiceField = Class.create(pytis.Field, {
 pytis.ChecklistField = Class.create(pytis.Field, {
     // Specific handler for a multi select control represented by a group of checkboxes.
 
-    _checkboxes: function() {
-        return this._element.immediateDescendants().collect(function(item) {
+    _checkboxes: function () {
+        return this._element.immediateDescendants().collect(function (item) {
             return item.firstDescendant();
         });
     },
 
-    value: function() {
+    value: function () {
         var checkboxes = this._checkboxes();
-        return checkboxes.map(function(checkbox) {
+        return checkboxes.map(function (checkbox) {
             return checkbox.value;
         });
     },
 
-    set_value: function(value, localized_value) {
-        this._checkboxes().each(function(checkbox) {
+    set_value: function (value, localized_value) {
+        this._checkboxes().each(function (checkbox) {
             checkbox.checked = false;
             if (value) {
                 var j;
@@ -879,13 +879,13 @@ pytis.ChecklistField = Class.create(pytis.Field, {
         });
     },
 
-    _set_editability: function(value) {
-        this._checkboxes().each(function(checkbox) {
+    _set_editability: function (value) {
+        this._checkboxes().each(function (checkbox) {
             checkbox.disabled = !value;
         });
     },
 
-    set_enumeration: function(value, links) {
+    set_enumeration: function (value, links) {
         var elem = this._element;
         var descendants = elem.immediateDescendants();
         var i, len, item, id, text, div, link;
@@ -917,7 +917,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 });
 
 pytis.HtmlField = Class.create(pytis.Field, {
-    initialize: function($super, form_id, field_id, id, state, active, required) {
+    initialize: function ($super, form_id, field_id, id, state, active, required) {
         $super(form_id, field_id, id, state, active, required);
         if (CKEDITOR !== undefined) {
             // The function pytis.HtmlField.plugin is defined in pytis-ckeditor.js.
@@ -926,7 +926,7 @@ pytis.HtmlField = Class.create(pytis.Field, {
         }
     },
 
-    _attachment_storage_request: function(request, parameters) {
+    _attachment_storage_request: function (request, parameters) {
         parameters._pytis_form_update_request = 1;
         parameters._pytis_attachment_storage_field = this._id;
         parameters._pytis_attachment_storage_request = request;
@@ -937,11 +937,11 @@ pytis.HtmlField = Class.create(pytis.Field, {
         return req.transport.responseText.evalJSON();
     },
 
-    get_attachment: function(filename) {
+    get_attachment: function (filename) {
         return this._attachment_storage_request('get', {filename: filename});
     },
 
-    list_attachments: function() {
+    list_attachments: function () {
         return this._attachment_storage_request('list', {});
     },
 
@@ -949,14 +949,14 @@ pytis.HtmlField = Class.create(pytis.Field, {
     // Iframe upload is performed as implemented in CKeditor and
     // customized in ckeditor-plugin.js so a method is not needed here.
 
-    update_attachment: function(filename, values) {
+    update_attachment: function (filename, values) {
         return this._attachment_storage_request('update', {filename: filename,
                                                            values: Object.toJSON(values)});
     }
 });
 
 pytis.DateTimeField = Class.create(pytis.Field, {
-    _set_editability: function(value) {
+    _set_editability: function (value) {
         this._ctrl.disabled = !value;
         var button = $(this._ctrl.id + '-button');
         button.disabled = !value;
@@ -965,7 +965,7 @@ pytis.DateTimeField = Class.create(pytis.Field, {
 
 pytis.FileUploadField = Class.create(pytis.Field, {
 
-    initialize: function($super, form_id, field_id, id, state, active, required) {
+    initialize: function ($super, form_id, field_id, id, state, active, required) {
         $super(form_id, field_id, id, state, active, required);
         // Observe file field changes separately as they are 1) ignored by
         // form.observe (by Prototype.js, not sure why) and 2) only "active"
@@ -976,7 +976,7 @@ pytis.FileUploadField = Class.create(pytis.Field, {
         this._observer = new Form.Element.Observer(this._ctrl, 1, this.on_change.bind(this));
     },
 
-    on_change: function(form, value) {
+    on_change: function (form, value) {
         if (this._ctrl.files && this._ctrl.files.length) {
             var file = this._ctrl.files[0];
             document.body.style.cursor = "wait";
@@ -988,7 +988,7 @@ pytis.FileUploadField = Class.create(pytis.Field, {
         }
     },
 
-    update: function(response) {
+    update: function (response) {
         // Update the form state in reaction to previously sent AJAX request.
         var data = response.responseJSON;
         if (data) {
