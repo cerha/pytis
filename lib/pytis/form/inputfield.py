@@ -525,15 +525,22 @@ class InputField(object, KeyHandler, CommandHandler):
             # Don't validate when the transaction is already closed.
             if transaction is None or transaction.open():
                 valid_before = self.valid()
+                msg = None
                 if self._needs_validation:
                     self._needs_validation = False
-                    self._valid = self._validate() is None
+                    error = self._validate()
+                    msg = error.message() if error else None
+                    self._valid = error is None
                     self._on_change_hook()
                 if self._needs_check:
                     self._needs_check = False
-                    self._check_ok = self._check() is None
+                    error = self._check()
+                    msg = error if msg is None else msg
+                    self._check_ok = error is None
                 if self.valid() != valid_before:
                     self._on_validity_change()
+                if msg:
+                    message(msg)
         if self._want_focus and not self._has_focus():
             self._set_focus(self._want_focus)
         while self._call_on_idle:
