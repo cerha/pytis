@@ -153,7 +153,7 @@
    dojde k uzavření transakce serverem.
 
 
-* NOVÉ VLASTNOSTI [3/24] [12%]
+* NOVÉ VLASTNOSTI [4/29] [13%]
   :PROPERTIES:
   :COOKIE_DATA: todo recursive
   :END:
@@ -186,6 +186,10 @@
    vkládáme - ten totiž již může být vyfiltrovaný, takže unikátnost nelze
    spolehlivě ověřit.
 
+** TODO Extensions procedura na zavření všech oken na zásobníku oken
+
+   Procedura zobrazí seznam oken s dotazem zda-li mají být zavřena. Výchozí text dotazu by mělo jít 
+   předefinovat nastavením argumentu funkce.
 
 ** Práva [1/4] [25%]
 
