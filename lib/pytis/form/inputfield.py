@@ -509,8 +509,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _on_idle(self, event):
         w = wx_focused_window()
-        has_focus = w in [x[0] for x in self._controls]
-        if has_focus:
+        if w in [x[0] for x in self._controls]:
             self._last_focused_ctrl = w
             InputField.set_last_focused_field(self)
         elif self._want_focus and self.enabled():
@@ -539,18 +538,10 @@ class InputField(object, KeyHandler, CommandHandler):
                     message(self._last_validation_error.message())
                 elif self._last_check_result:
                     message(self._last_check_result)
-        if self._had_focus and not has_focus:
-            self._on_defocus()
-        self._had_focus = has_focus
         while self._call_on_idle:
             callback = self._call_on_idle.pop()
             callback()
         event.Skip()
-
-    def _on_defocus(self):
-        """Field lost focus handler."""
-        if not self._valid():
-            message(self.spec().label() + ': ' + self._last_validation_error.message(), beep_=True)
 
     def _on_change_hook(self):
         """Handle field value changes.
@@ -830,6 +821,7 @@ class TextField(InputField):
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
+        wx_callback(wx.EVT_KILL_FOCUS, control, self._on_ctrl_kill_focus)
         if not self._denied and not self._readonly and self._row.has_completer(self.id()):
             self._completer = _Completer(control)
         else:
@@ -873,6 +865,11 @@ class TextField(InputField):
         else:
             event.GetEventObject().Navigate()
 
+    def _on_ctrl_kill_focus(self, event):
+        # Work around the problem of invisible selection text when
+        # the field background color is set.
+        event.GetEventObject().SetSelection(0, 0)
+
     def _on_idle(self, event):
         super(TextField, self)._on_idle(event)
         text = self._update_completions
@@ -882,13 +879,6 @@ class TextField(InputField):
             # user, so we we don't popup the selection (the second argument to update()).
             self._completer.update(self._row.completions(self.id(), prefix=text),
                                    self._enabled and wx_focused_window() == self._ctrl)
-
-    def _on_defocus(self):
-        super(TextField, self)._on_defocus()
-        if not self._valid():
-            # This works around the problem of invisible selection of invalid
-            # field (when the field background color is set).
-            self._ctrl.SetSelection(0, 0)
 
     def _on_change(self, event=None):
         post_process = self._post_process_func()
@@ -1041,12 +1031,6 @@ class PasswordField(StringField):
         else:
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
-
-    def _on_defocus(self):
-        super(PasswordField, self)._on_defocus()
-        if self._ctrl2 and not self._valid():
-            # See TextField._on_defocus() for info on this hack.
-            self._ctrl2.SetSelection(0, 0)
 
     def tab_navigated_widgets(self):
         widgets = super(PasswordField, self).tab_navigated_widgets()
@@ -2786,11 +2770,6 @@ class RangeField(InputField):
         else:
             value = [ctrl.GetValue() for ctrl in self._inputs]
         return self._row.validate(self.id(), tuple(value))
-
-    def _on_defocus(self):
-        super(RangeField, self)._on_defocus()
-        if not self._valid():  # See TextField._on_defocus() for info on this hack.
-            self._input[1].SetSelection(0, 0)
 
     def tab_navigated_widgets(self):
         return self._inputs
