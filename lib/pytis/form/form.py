@@ -1820,34 +1820,29 @@ class RecordForm(LookupForm):
 
     def _check_record(self, row):
         # Perform integrity checks for given PresentedRow instance.
-        fields = self._view.fields()
-        for field_id, check in ([(x, None) for x in self._view.check()] +
-                                [(f.id(), f.check()) for f in fields if f.check()]):
+        fields = [f.id() for f in self._view.fields()]
+        for check in self._view.check():
             try:
                 result = check(row)
             except (pytis.data.DBRetryException, pytis.data.DBSystemException):
                 self._on_closed_connection()
-                return False, None
+                return False, None, None
             if result is not None:
-                if field_id is not None:
-                    # The field's check function returns the error message (or None).
-                    message(result)
-                elif isinstance(result, (tuple, list,)):
+                if isinstance(result, (tuple, list,)):
                     # ViewSpec.check may return a pair (field_id, message).
                     field_id, msg = result
-                    message(msg)
-                elif result in [f.id() for f in fields]:
+                elif result in fields:
                     # Older definition of ViewSpec.check allowed printing the
                     # message from inside the check function and returning only
                     # field_id, so we don't print anything to prevent overwriting
                     # the already displayed message.
-                    field_id = result
+                    field_id, msg = result, None
                 else:
                     # Otherwise ViewSpec.check returns an error message.
-                    message(result)
+                    field_id, msg = None, result
                 log(EVENT, 'Kontrola integrity selhala:', field_id)
-                return False, field_id
-        return True, None
+                return False, field_id, msg
+        return True, None, None
 
     def _record_data(self, row, permission=None, updated=False):
         # We must retrieve all the values first, in order to recompute all
@@ -2634,8 +2629,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return success, result
 
     def _do_check_record(self, row):
-        # Check record integrity (the global 'check' function as well as per field checks).
-        success, field_id = self._check_record(row)
+        # Check record integrity (the global 'check' function).
+        success, field_id, msg = self._check_record(row)
+        if msg:
+            if field_id:
+                msg = self._view.field(field_id).label() + ": " + msg
+            run_dialog(Error, title=_("Integrity check failed"), message=msg)
         if field_id:
             f = self._field(field_id)
             if f:
@@ -2674,7 +2673,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if f.enabled() and not f.validate():
                     f.set_focus()
                     return False
-        # Check record integrity (the global 'check' function as well as per field checks).
+        # Check record integrity (the global 'check' function).
         if not self._do_check_record(self._row):
             return False
         # Create the data row.
@@ -3167,6 +3166,7 @@ class QueryFieldsForm(_VirtualEditForm):
     def _full_init(self, parent, resolver, name, query_fields, callback, **kwargs):
         self._query_fields_apply_callback = callback
         self._autoapply = autoapply = query_fields.autoapply()
+        self._query_fields_applied = False
         self._unapplied_query_field_changes = False
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
@@ -3208,6 +3208,9 @@ class QueryFieldsForm(_VirtualEditForm):
     def _on_idle(self, event):
         if super(QueryFieldsForm, self)._on_idle(event):
             return True
+        if not self._autoapply:
+            enabled = not self._query_fields_applied and all(f.valid() for f in self._fields)
+            self._query_fields_apply_button.Enable(enabled)
         if self._unapplied_query_field_changes:
             self._unapplied_query_field_changes = False
             if run_dialog(pytis.form.Question,
@@ -3216,19 +3219,22 @@ class QueryFieldsForm(_VirtualEditForm):
         return False
 
     def _on_query_fields_changed(self):
+        # Due to the CALL_CHANGE definition, this callback is called only after
+        # all fields become valid (not during editation as long as there are
+        # invalid fields).  Thus we additionaly need to check field validity in
+        # _on_idle() to disable the Apply button before fields become valid.
         if self._autoapply:
             self._apply_query_fields(self._row)
         else:
-            self._query_fields_apply_button.Enable(True)
+            self._query_fields_applied = False
 
     def _apply_query_fields(self, row):
         if self._do_check_record(row):
             self._query_fields_apply_callback(row)
-            if not self._autoapply:
-                self._query_fields_apply_button.Enable(False)
+            self._query_fields_applied = True
 
     def restore(self):
-        if not self._autoapply and self._query_fields_apply_button.Enabled:
+        if not self._autoapply and not self._query_fields_applied:
             self._unapplied_query_field_changes = True
         return super(QueryFieldsForm, self).restore()
 
@@ -3312,7 +3318,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
         return True
 
     def _check_record(self, row):
-        success, field_id = super(StructuredTextEditor, self)._check_record(row)
+        success, field_id, msg = super(StructuredTextEditor, self)._check_record(row)
         if success:
             # Check for possible conflicting changes made since the record was
             # last saved.  If the current value in database doesn't match the
@@ -3345,7 +3351,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                 elif answer == revert:
                     value = pytis.data.Value(row.type(self._editor_field_id), current_db_value)
                     row[self._editor_field_id] = value
-        return success, field_id
+        return success, field_id, msg
 
     def size(self):
         return (700, 500)

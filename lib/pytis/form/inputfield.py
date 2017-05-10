@@ -395,6 +395,8 @@ class InputField(object, KeyHandler, CommandHandler):
         self._skipped_controls = {}
         self._needs_validation = False
         self._valid = False
+        self._needs_check = False
+        self._check_ok = True
         self._init_attributes()
         self._call_on_idle = []
         self._label = self._create_label(parent)
@@ -411,6 +413,8 @@ class InputField(object, KeyHandler, CommandHandler):
             row.register_callback(row.CALL_CHANGE, id, self._change_callback)
             row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
                                   self._editability_change_callback)
+            row.register_callback(row.CALL_CHECK, id, self._check_callback)
+
         value = row.invalid_string(id)
         if value is None:
             value = row.format(id, single=False, secure='')
@@ -512,24 +516,24 @@ class InputField(object, KeyHandler, CommandHandler):
         return self._row.validate(self.id(), self._get_value())
 
     def _check(self):
-        check = self.spec().check()
-        if check:
-            result = check(self._row)
-        else:
-            result = None
+        result = self._row.check(self.id())
         return result
 
     def _on_idle(self, event):
-        if self._needs_validation:
+        if self._needs_validation or self._needs_check:
             transaction = self._row.transaction()
             # Don't validate when the transaction is already closed.
             if transaction is None or transaction.open():
-                self._needs_validation = False
-                valid = self._validate() is None and self._check() is None
-                if valid != self._valid:
-                    self._valid = valid
+                valid_before = self.valid()
+                if self._needs_validation:
+                    self._needs_validation = False
+                    self._valid = self._validate() is None
+                    self._on_change_hook()
+                if self._needs_check:
+                    self._needs_check = False
+                    self._check_ok = self._check() is None
+                if self.valid() != valid_before:
                     self._on_validity_change()
-                self._on_change_hook()
         if self._want_focus and not self._has_focus():
             self._set_focus(self._want_focus)
         while self._call_on_idle:
@@ -591,6 +595,9 @@ class InputField(object, KeyHandler, CommandHandler):
             # The change won't take effect for certain fields if we do it directly!
             self._call_on_idle.append(self._update_background_color)
 
+    def _check_callback(self):
+        self._needs_check = True
+
     def _on_change(self, event=None):
         # Called on user interaction (editation, selection).  The actual processing of the event
         # is postponed to the idle thread to avoid user interface hangs on time-consuming
@@ -629,7 +636,7 @@ class InputField(object, KeyHandler, CommandHandler):
             color = config.field_disabled_color
         elif self._hidden and not self._modified():
             color = config.field_hidden_color
-        elif not self._valid:
+        elif not self.valid():
             color = config.field_invalid_color
         else:
             color = self._DEFAULT_BACKGROUND_COLOR
@@ -743,6 +750,15 @@ class InputField(object, KeyHandler, CommandHandler):
             else:
                 message(errmsg, beep_=True)
         return error is None
+
+    def valid(self):
+        """Return True if the current field value is valid and False otherwise.
+
+        The return value reflects both, the data type validation as well as the
+        per field check function.  If either of these fails, False is returned.
+
+        """
+        return self._valid and self._check_ok
 
     def set_focus(self, reset=False):
         """Make the field active for user input."""

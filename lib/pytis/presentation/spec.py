@@ -88,6 +88,7 @@ def row_function(function):
     defined, the 'function' is returned as is.
 
     For example:
+
         @row_function
         def func(row, a, b):
             return a + b
@@ -2425,41 +2426,48 @@ class Computer(object):
 def computer(function):
     """Return a Computer instance for given function.
 
-    This convenience wrapper creates a Computer instance and wraps the computer function by a code,
-    that automatically converts row values into function arguments.
+    This convenience wrapper creates a Computer instance and wraps the computer
+    function by a code, that automatically converts row values into function
+    arguments.
 
-    Any named (positional) arguments of given 'function' which follow the first argument (which is
-    the current row as usual) are used for automatic construction of the 'depends' list and the
-    function will receive the Python values of the corresponding fields in place of these arguments.
+    Any named (positional) arguments of given 'function' which follow the first
+    argument (which is the current row as usual) are used for automatic
+    construction of the 'depends' list and the function will receive the Python
+    values of the corresponding fields in place of these arguments.
 
     Example:
 
-        def func(row):
-             return row['aa'].value() + row['bb'].value()
-        Computer(func, depends=('aa', 'bb'))
-
-    is equivalent to:
-
-        def func(row, aa, bb):
-            return aa + bb
-        c = computer(func)
+        @computer
+        def c(row, a, b):
+            return a + b
 
     or:
 
-        c = computer(lambda r, aa, bb: aa + bb)
+        c = computer(lambda r, a, b: a + b)
 
-    The first argument (row) is always passed, but should not be used to access field values
-    (fields accessed this way would not be visible in computer's dependencies).  It may still be
-    useful, however, to access other information needed by the computer function.
+    is equivalent to:
+
+        def function(row):
+             return row['a'].value() + row['b'].value()
+        c = Computer(function, depends=('a', 'b'))
+
+
+    The first argument (row) is always passed, but should not be used to access
+    field values (fields accessed this way would not be visible in computer's
+    dependencies).  It may still be useful, however, to access other
+    information needed by the computer function.
 
     """
-    assert isinstance(function, collections.Callable) and not isinstance(function, Computer)
-    columns = argument_names(function)[1:]
-
-    def func(row):
-        kwargs = dict([(column, row[column].value()) for column in columns])
-        return function(row, **kwargs)
-    return Computer(func, depends=columns)
+    if function is None or isinstance(function, Computer):
+        result = function
+    else:
+        assert isinstance(function, collections.Callable), function
+        columns = argument_names(function)[1:]
+        def compute(row):
+            kwargs = dict([(column, row[column].value()) for column in columns])
+            return function(row, **kwargs)
+        result = Computer(compute, depends=columns)
+    return result
 
 
 class CbComputer(Computer):
@@ -3227,17 +3235,16 @@ class Field(object):
             in the application, protected by different passwords.  Not all data
             types support encryption, it is an error to set encryption here for
             field types which don't support it.
-
-          check -- function to verify the integrity of the whole record.  Is
-            specified as a row function (automatically wrapped by
-            'row_function()').  In contrast to "validation" which only verifies
+          check -- 'Computer' instance to verify the integrity of the whole
+            record.  May also by specified as a function in which case it will
+            be automatically turned into a 'Computer' instance using
+            'computer()'.  In contrast to "validation" which only verifies
             whether a single value matches its data type and constraints
             (values of other fields are not available during validation), the
             check function verifies mutual compatibility of all form values and
             is called only after successful validation.  The check function
             returns None in case of success or an error message as a string in
             case of failure.
-
           encrypt_empty -- if True (default) then encrypt also None values (and
             empty values when they are represented by None values).  Otherwise
             store empty values as NULLs in the database.  Empty values should
@@ -3510,7 +3517,7 @@ class Field(object):
         self._attachment_storage = attachment_storage
         self._printable = printable
         self._slider = slider
-        self._check = row_function(check)
+        self._check = pytis.presentation.computer(check)
         self._crypto_name = crypto_name
         self._encrypt_empty = encrypt_empty
 

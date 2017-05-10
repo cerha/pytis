@@ -73,6 +73,13 @@ class PresentedRow(object):
     values provided by data type enumarator.
 
     """
+    CALL_CHECK = 'CALL_CHECK'
+    """Callback called when the field's check function needs to be re-evaluated.
+
+    The field's check function needs to be re-evaluated whenever the values of
+    columns on which it depends change.
+
+    """
     class ProtectionError(Exception):
         """Exception raised on column protection violations."""
 
@@ -108,6 +115,7 @@ class PresentedRow(object):
             self.completer = f.completer
             self.runtime_filter = f.runtime_filter()
             self.runtime_arguments = f.runtime_arguments()
+            self.check = f.check()
             self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
@@ -297,6 +305,7 @@ class PresentedRow(object):
         self._dependent = {}
         self._editability_dependent = {}
         self._visibility_dependent = {}
+        self._check_dependent = {}
         self._runtime_filter_dependent = {}
         self._runtime_arguments_dependent = {}
         # Pro všechna počítaná políčka si pamatuji, zda potřebují přepočítat,
@@ -309,6 +318,8 @@ class PresentedRow(object):
         self._editable = {}
         self._visibility_dirty = {}
         self._visible = {}
+        self._check_dirty = {}
+        self._check_result = {}
         self._runtime_filter_dirty = {}
         self._runtime_filter = {}
         self._runtime_arguments_dirty = {}
@@ -332,6 +343,9 @@ class PresentedRow(object):
             if isinstance(c.visible, Computer):
                 make_deps(c, self._visible, self._visibility_dirty, self._visibility_dependent,
                           c.visible)
+            if c.check is not None:
+                make_deps(c, self._check_result, self._check_dirty,
+                          self._check_dependent, c.check)
             if c.runtime_filter is not None:
                 make_deps(c, self._runtime_filter, self._runtime_filter_dirty,
                           self._runtime_filter_dependent, c.runtime_filter)
@@ -448,6 +462,7 @@ class PresentedRow(object):
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
         self._recompute_visibility(key)
+        self._recompute_check(key)
         for k in remove_duplicates(changed_enumerations):
             self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
         if self._callbacks and key is not None and key in self._dependent:
@@ -505,6 +520,23 @@ class PresentedRow(object):
         func = self._coldict[key].visible.function()
         self._visible[key] = result = func(self)
         self._visibility_dirty[key] = False
+        return result
+
+    def _recompute_check(self, key=None):
+        if key is None:
+            keys = self._check_result.keys()
+        elif key in self._check_dependent:
+            keys = self._check_dependent[key]
+        else:
+            return
+        for k in keys:
+            self._check_dirty[k] = True
+            self._run_callback(self.CALL_CHECK, k)
+
+    def _compute_check(self, key):
+        func = self._coldict[key].check.function()
+        self._check_result[key] = result = func(self)
+        self._check_dirty[key] = False
         return result
 
     def get(self, key, default=None, lazy=False, secure=False):
@@ -785,6 +817,17 @@ class PresentedRow(object):
                 result = self._visible[key]
         else:
             result = self._coldict[key].visible
+        return result
+
+    def check(self, key):
+        """Return the result of 'check' for field identified by 'key'."""
+        if key in self._check_result:
+            if self._check_dirty[key]:
+                result = self._compute_check(key)
+            else:
+                result = self._check_result[key]
+        else:
+            result = None
         return result
 
     def type(self, key):

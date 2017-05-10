@@ -883,7 +883,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         row = editing.row
         the_row = editing.the_row
         # Check record integrity.
-        success, field_id = self._check_record(the_row)
+        success, field_id, msg = self._check_record(the_row)
         if not success:
             if field_id:
                 col = find(field_id, self._columns, key=lambda c: c.id())
@@ -891,6 +891,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     i = self._columns.index(col)
                     self._select_cell(row=row, col=i, invoke_callback=False)
                     self._edit_cell()
+            if msg:
+                message(msg)
             return True
         # Determine the operation and the key.
         newp = editing.the_row.new()
