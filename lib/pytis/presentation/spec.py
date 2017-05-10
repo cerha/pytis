@@ -102,14 +102,15 @@ def row_function(function):
         def func(row):
              return row['a'].value() + row['b'].value()
 
-    This makes row functions much more readable.  Many properties of Pytis
-    specifications accept row functions (functions which accept 'PresentedRow'
-    as the only argument).  If documentation of such properties refer to
-    'row_function()', it means that 'row_function' is automatically applied so
-    the user may define the function in the readable form and it is
-    automatically wrapped by 'row_function()' behind the scenes if needed.  The
-    goal is to wrap by 'row_function()' in all cases but it is added gradually
-    so you can rely on it only where documented.  In other cases
+    This wrapper makes row functions much more readable.  Many properties of
+    Pytis specifications accept row functions (functions which accept
+    'PresentedRow' as the only argument).  If documentation of such properties
+    refer to 'row_function()', it means that 'row_function' is automatically
+    applied so the user may define the function in the readable form and it is
+    automatically wrapped by 'row_function()' behind the scenes if needed.
+
+    Note: The goal is to wrap by 'row_function()' in all cases but it is added
+    gradually so you can rely on it only where documented.  In other cases
     'row_function()' may be used explicitly.
 
     """
