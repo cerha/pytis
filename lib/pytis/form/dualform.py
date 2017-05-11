@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014, 2016 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -371,8 +371,8 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     _SELECTION_TICK = 2
 
     def _full_init(self, *args, **kwargs):
-        super(PostponedSelectionDualForm, self)._full_init(*args, **kwargs)
         self._selection_candidate = None
+        super(PostponedSelectionDualForm, self)._full_init(*args, **kwargs)
 
     def _on_idle(self, event):
         if super(PostponedSelectionDualForm, self)._on_idle(event):
