@@ -1490,6 +1490,8 @@ class ToolTip(supertooltip.SuperToolTip):
         self.SetTarget(window)
         self.SetDropShadow(False)
         self.ApplyStyle("Yellow")
+        self._label = None
+        self._content = None
 
     def OnStartTimer(self):
         label = self._label
@@ -1503,8 +1505,8 @@ class ToolTip(supertooltip.SuperToolTip):
     def SetContent(self, label, content):
         # Here we rely on the fact, that this method is not called twice
         # for the same field.  Thus we know that the content has changed
-        # (we are above a different field) and we should hide the old
-        # content (if shown) and restart timers.
+        # (we are above a different field) and thus we need to hide the
+        # old content (if shown) and restart timers.
         self._label = label
         self._content = content
         if self.GetTipWindow():
