@@ -28,7 +28,7 @@ Basic requirements on their functionality are:
 - Comparing data retrieved from different sources, including some sort of
   non-trivial comparison such as detecting identical menu items at different
   places within the menu.  Strictness of the comparison is adjustable.
-  
+
 - Writing updated data to database DMP tables.
 
 - Generating SQL commands for updates of database DMP tables.
@@ -100,7 +100,7 @@ class DMPMessage(Structure):
     WARNING_MESSAGE = 'Warning'
     NOTE_MESSAGE = 'Note'
     SQL_MESSAGE = 'SQL'
-    
+
     _attributes = (Attribute('kind', basestring),
                    Attribute('message', basestring),
                    Attribute('arguments', tuple, default=()),
@@ -123,7 +123,7 @@ def add_message(messages, kind, message, arguments=()):
       kind -- kind of the message, one of 'DMPMessage' constants
       message -- the message itself, basestring
       arguments -- tuple of message arguments
-      
+
     This function and related facilities should be merged with other
     reporting/logging mechanisms in pytis.
 
@@ -150,7 +150,7 @@ class DMPConfiguration(object):
           schemas -- schemas string (schema names separated by commas) or 'None'
           database, host, port, user, password, sslmode -- common database
             connection parameters
-            
+
         """
         import config
         pytis.util.set_configuration_file(configuration_file)
@@ -177,11 +177,11 @@ class DMPConfiguration(object):
     def connection_data(self):
         """Return 'DBConnection' instance for access to the database."""
         return self._connection_data
-        
+
 
 class DMPItem(Structure):
     """Representation of single DMP items in DMP objects."""
-    
+
     def signature(self):
         """Return hash of the given item for object comparison.
 
@@ -189,7 +189,7 @@ class DMPItem(Structure):
         non-equal may or may not return the same hash.
 
         The return value may be an arbitrary immutable object.
-        
+
         """
         return getattr(self, self._attributes[0].name())
 
@@ -205,7 +205,7 @@ class DMPItem(Structure):
         Arguments:
 
           other -- instance of the same class as 'self'
-          
+
         """
         for attribute in self._attributes:
             name = attribute.name()
@@ -215,12 +215,12 @@ class DMPItem(Structure):
                 return False
         return True
 
-    
+
 class DMPObject(object):
     """Base class of DMP data classes.
 
     It defines common abstract methods of those data classes.
-    
+
     """
     _DB_TABLES = {'e_pytis_disabled_dmp_triggers': ('id',)}
 
@@ -250,7 +250,7 @@ class DMPObject(object):
             self._active = True
         def messages(self):
             return copy.copy(self._messages)
-    
+
     def __init__(self, configuration):
         """
         Arguments:
@@ -261,7 +261,7 @@ class DMPObject(object):
         self._configuration = configuration
         self._logger = self.Logger()
         self._reset()
-        
+
     def _reset(self):
         pass
 
@@ -292,10 +292,10 @@ class DMPObject(object):
 
     def _b_(self, value):
         return pytis.data.Value(pytis.data.Boolean(), value)
-    
+
     def _i_(self, value):
         return pytis.data.Value(pytis.data.Integer(), value)
-    
+
     def _s_(self, value):
         return pytis.data.Value(pytis.data.String(), value)
 
@@ -327,7 +327,7 @@ class DMPObject(object):
     def items(self):
         """Return sequence of all data items registered in the instance."""
         return []
-    
+
     def load_specifications(self, **kwargs):
         """Load DMP data from specifications.
 
@@ -340,7 +340,7 @@ class DMPObject(object):
         """
         self._reset()
         return self._load_specifications(**kwargs)
-    
+
     def retrieve_data(self, transaction=None):
         """Load DMP data from the database."""
         import config
@@ -351,7 +351,7 @@ class DMPObject(object):
 
     def _retrieve_data(self, transaction=None):
         pass
-    
+
     def store_data(self, fake, transaction=None, specifications=None):
         """Store DMP data into the database.
 
@@ -388,7 +388,7 @@ class DMPObject(object):
         """Delete DMP data from the database.
 
         Arguments:
-        
+
           fake -- iff True, don't actually delete the data but return sequence
             of SQL commands (basestrings) that would do so
           transaction -- transaction object to use or 'None'; if not 'None' no
@@ -425,7 +425,7 @@ class DMPObject(object):
         """Print object data.
 
         Arguments:
-        
+
           specifications -- if not 'None' then it is a sequence of specification
             names to restrict the operation to
 
@@ -446,7 +446,7 @@ class DMPObject(object):
                 condition = pytis.data.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
             return condition
         return pytis.data.OR(*[spec2cond(s) for s in specifications])
-    
+
     def dump_specifications(self, stream):
         """Dump DMP data in the form of Python source code."""
         raise Exception('Not implemented')
@@ -487,7 +487,7 @@ class DMPObject(object):
                 differences.append((None, item,))
         return differences
 
-    
+
 class DMPMenu(DMPObject):
     """Representation of an application menu.
 
@@ -560,7 +560,7 @@ class DMPMenu(DMPObject):
     def _reset(self):
         self._menu = []
         self._top_item = None
-        
+
     def items(self):
         return self._menu
 
@@ -616,8 +616,8 @@ class DMPMenu(DMPObject):
                                                       'commit_changes'),
                  pytis.form.MItem(u"Přenačtení menu a práv",
                                   command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),)),
-             )
-            + menu[0]._items)
+             ) + menu[0]._items)
+
         # Load menu
         def load(menu, parent):
             if isinstance(menu, pytis.form.Menu):
@@ -658,6 +658,7 @@ class DMPMenu(DMPObject):
         for item in self.items():
             if item.locked() is None:
                 item.set_locked(False)
+
         # Assign positions
         def assign(item_list, position):
             i = 1111
@@ -667,11 +668,12 @@ class DMPMenu(DMPObject):
                 assign(item.children(), item.position())
         assign(self._top_item.children(), self._top_item.position())
         return messages
-    
+
     def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_menu')
         items_by_position = {}
         children_by_position = {}
+
         def process(row):
             position = str(row['position'].value())
             if row['name'].value():
@@ -714,7 +716,7 @@ class DMPMenu(DMPObject):
             if item.id() < min_id:
                 min_id = item.id()
         self._counter = Counter(value=-min_id)
-    
+
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_menu')
         B = self._b_
@@ -745,7 +747,7 @@ class DMPMenu(DMPObject):
                 if not result:
                     return False
         return True
-    
+
     def _delete_data(self, transaction, condition):
         data = self._data('ev_pytis_menu')
         data.delete_many(condition, transaction=transaction)
@@ -788,7 +790,7 @@ class DMPMenu(DMPObject):
                          (item.id(), label, action.shortname() or '', fullname or '',))
         lines.reverse()
         return lines
-    
+
 
 class DMPRights(DMPObject):
     """Representation of DMP access rights."""
@@ -810,7 +812,7 @@ class DMPRights(DMPObject):
 
     def _reset(self):
         self._rights = []
-        
+
     def items(self):
         return self._rights
 
@@ -833,6 +835,7 @@ class DMPRights(DMPObject):
 
     def _load_specifications(self):
         messages = []
+
         def add_rights(shortname, access_specification, all_columns):
             explicit_columns = {}
             for item in access_specification:
@@ -914,6 +917,7 @@ class DMPRights(DMPObject):
     def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_action_rights')
         condition = pytis.data.LE('status', self._i_(0))
+
         def process(row):
             return self.Right(shortname=row['shortname'].value(),
                               roleid=row['roleid'].value(),
@@ -924,7 +928,7 @@ class DMPRights(DMPObject):
                               redundant=row['redundant'].value(),
                               )
         self._rights = data.select_map(process, condition=condition, transaction=transaction)
-    
+
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_action_rights')
         B = self._b_
@@ -951,7 +955,7 @@ class DMPRights(DMPObject):
     def _delete_data(self, transaction, condition):
         data = self._data('e_pytis_action_rights')
         data.delete_many(condition, transaction=transaction)
-        
+
     def _print_data(self, specifications=None):
         lines = []
         for right in self.items():
@@ -1054,7 +1058,7 @@ class DMPRights(DMPObject):
 
         This makes access rights being prepared in the database tables actually
         effective.
-        
+
         """
         if transaction is None:
             transaction_ = self._transaction()
@@ -1082,7 +1086,8 @@ class DMPRights(DMPObject):
 
 class DMPRoles(DMPObject):
     """Representation of DMP roles and their memberships."""
-    
+
+    EXCLUDED_ROLES = ('postgres',)
     class Role(DMPItem):
         _attributes = (Attribute('name', basestring),
                        Attribute('description', basestring),
@@ -1106,7 +1111,7 @@ class DMPRoles(DMPObject):
 
     def _reset(self):
         self._roles = []
-        
+
     def items(self):
         return self._roles
 
@@ -1126,13 +1131,14 @@ class DMPRoles(DMPObject):
 
     def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_roles')
+
         def process(row):
             return self.Role(name=row['name'].value(),
                              description=row['description'].value(),
                              purposeid=row['purposeid'].value(),
                              )
         self._roles = data.select_map(process, transaction=transaction)
-    
+
     def _store_data(self, transaction, specifications):
         S = self._s_
         data = self._data('e_pytis_roles')
@@ -1146,9 +1152,10 @@ class DMPRoles(DMPObject):
         for role in self.items():
             name = role.name()
             for member in (role.members() or ()):
-                row = pytis.data.Row((('roleid', S(name),),
-                                      ('member', S(member),),))
-                data.insert(row, transaction=transaction)
+                if member not in self.EXCLUDED_ROLES:
+                    row = pytis.data.Row((('roleid', S(name),),
+                                          ('member', S(member),),))
+                    data.insert(row, transaction=transaction)
         return True
 
     def _delete_data(self, transaction, condition):
@@ -1164,17 +1171,17 @@ class DMPRoles(DMPObject):
             lines.append('%-32s %s %s' %
                          (role.name(), role.purposeid(), role.description() or '',))
         return lines
-        
+
     def load_system_roles(self):
         """Load PostgreSQL roles."""
-        excluded_roles = ('postgres',)
-        semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + excluded_roles
+        semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + self.EXCLUDED_ROLES
         roles_by_names = {}
         for role in self._roles:
             roles_by_names[role.name()] = role
         # Roles
         role_oids = {}
         data = self._data('pg_roles')
+
         def process(row):
             oid = row['oid'].value()
             role = str(row['rolname'].value())
@@ -1194,6 +1201,7 @@ class DMPRoles(DMPObject):
         data.select_map(process)
         # Membership
         data = self._data('pg_auth_members')
+
         def process(row):
             try:
                 roleid = role_oids[row['roleid'].value()]
@@ -1221,7 +1229,7 @@ class DMPRoles(DMPObject):
             of SQL commands (basestrings) that would do so
           member -- name of the member to be added, string
           role -- name of the target role, string
-          
+
         """
         messages = []
         member_value = pytis.data.sval(member)
@@ -1307,7 +1315,7 @@ class DMPActions(DMPObject):
                                                          subaction._alternate_fullname)
             else:
                 self._alternate_fullname = fullname
-            
+
         def signature(self):
             return self.fullname()
 
@@ -1331,7 +1339,7 @@ class DMPActions(DMPObject):
                 # Normally the shortname should be given as special_shortname.
                 # But there may be no subform specification in case the subform
                 # is a detail form, web form or so.
-                if len(components) < 5: # only in wrong specifications
+                if len(components) < 5:  # only in wrong specifications
                     subform = 'INVALID'
                 else:
                     subform = components[4]
@@ -1348,7 +1356,7 @@ class DMPActions(DMPObject):
             """Return name of the specification related to the action.
 
             For non-form actions return 'None'.
-            
+
             """
             components = self._components()
             if components[0] == 'form':
@@ -1361,7 +1369,7 @@ class DMPActions(DMPObject):
             """Return class of the action form.
 
             For non-form actions and dummy form actions return 'None'.
-            
+
             """
             components = self._components()
             if components[0] == 'form' and components[1] != '*':
@@ -1387,7 +1395,7 @@ class DMPActions(DMPObject):
                 if spec_name == s or fullname == s:
                     return True
             return False
-            
+
         @classmethod
         def dummy_action(class_, shortname):
             components = shortname.split('/')
@@ -1396,7 +1404,7 @@ class DMPActions(DMPObject):
             else:
                 fullname = shortname
             return class_(None, None, fullname=fullname)
-        
+
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
                       [('c_pytis_menu_actions',
                         ('fullname', 'shortname', 'action_title', 'description',),)])
@@ -1414,7 +1422,7 @@ class DMPActions(DMPObject):
         self._fullnames[fullname] = action
         shortname = action.shortname()
         self._shortnames[shortname] = self._shortnames.get(shortname, []) + [action]
-        
+
     def items(self):
         return self._actions
 
@@ -1435,7 +1443,7 @@ class DMPActions(DMPObject):
                 continue
             action = self.Action(self._resolver(), messages, fullname=fullname, title=menu.title())
             self._load_complete_action(action, messages)
-            
+
     def _load_from_actions(self, actions, messages):
         for action in actions:
             self._load_complete_action(action, messages)
@@ -1456,6 +1464,7 @@ class DMPActions(DMPObject):
             return
         # Subforms
         form_class = action.form_class()
+
         def binding(name):
             spec = self._specification(name, messages)
             if spec is None:
@@ -1513,7 +1522,7 @@ class DMPActions(DMPObject):
             action = self.Action(resolver, messages,
                                  fullname=fullname, title=p.title())
             self._add_action(action)
-        
+
     def _load_from_rights(self, items, messages):
         for right in items:
             if not self._shortnames.get(right.shortname()):
@@ -1521,6 +1530,7 @@ class DMPActions(DMPObject):
 
     def _retrieve_data(self, transaction=None):
         data = self._data('c_pytis_menu_actions')
+
         def process(row):
             action = self.Action(self._resolver(), None,
                                  fullname=str(row['fullname'].value()),
@@ -1529,7 +1539,7 @@ class DMPActions(DMPObject):
                                  description=row['description'].value())
             self._add_action(action)
         data.select_map(process, transaction=transaction)
-    
+
     def _store_data(self, transaction, specifications, subforms_only=False, original_actions=None):
         data = self._data('c_pytis_menu_actions')
         S = self._s_
@@ -1564,7 +1574,7 @@ class DMPActions(DMPObject):
         else:
             transaction.commit()
         return result
-        
+
     def update_forms(self, fake, specification, new_fullname=None, transaction=None,
                      keep_old=False):
         """Check given form specifications and update the database.
@@ -1771,7 +1781,7 @@ class DMPActions(DMPObject):
                 spec_subforms[parent_fullname] = spec_subforms.get(parent_fullname, []) + [action]
         # Return actions
         return fullnames, subforms, spec_fullnames, spec_subforms
-        
+
     def dmp_missing(self):
         messages = []
         fullnames, subforms, spec_fullnames, spec_subforms = \
@@ -1822,7 +1832,7 @@ class DMPActions(DMPObject):
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
                             "Extra action", (fullname,))
         return messages
-        
+
     def convert_system_rights(self, fake, shortname):
         row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
@@ -1852,7 +1862,7 @@ class DMPImport(DMPObject):
         messages += self._dmp_actions.load_specifications(dmp_menu=self._dmp_menu,
                                                           dmp_rights=self._dmp_rights)
         return messages
-    
+
     def delete_data(self, fake, transaction=None):
         if transaction is None:
             transaction_ = self._transaction()
@@ -1869,7 +1879,7 @@ class DMPImport(DMPObject):
             else:
                 transaction_.commit()
         return messages
-    
+
     def store_data(self, fake, transaction=None):
         if transaction is None:
             transaction_ = self._transaction()
@@ -1896,7 +1906,7 @@ class DMPImport(DMPObject):
 
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
-            
+
         """
         transaction = self._transaction()
         self._disable_triggers(transaction=transaction, disable_import=True)
@@ -1996,7 +2006,7 @@ class DMPImport(DMPObject):
         else:
             transaction.commit()
         return messages
-    
+
     def dmp_rename_specification(self, fake, old_name, new_name):
         transaction = self._transaction()
         row = pytis.data.Row((('old_name', pytis.data.sval(old_name),),
