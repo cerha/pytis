@@ -741,9 +741,6 @@ class DateTimeField(TextField):
         result += g.button('...', id='%s-button' % kwargs['id'], type='button',
                            cls='selection-invocation calendar-invocation',
                            disabled=kwargs['disabled'])
-        context.resource('prototype.js')
-        context.resource('calendarview.js')
-        context.resource('calendarview.css')
         locale_data = context.locale_data()
         js_values = dict(
             id=kwargs['id'],

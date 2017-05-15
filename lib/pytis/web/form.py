@@ -1596,14 +1596,6 @@ class BrowseForm(LayoutForm):
             style = None
         if self._cell_editable(row, field.id):
             cls.append('editable-cell')
-            if isinstance(field, DateTimeField):
-                # This is a quick hack to make date fields inline editable
-                # (their UI depends on those additional resources).  Better
-                # might be adding these resources dynamically on AJAX response
-                # (as the ajax response export actually knows about the
-                # dependencies) or at least asking the field instance.
-                context.resource('calendarview.js')
-                context.resource('calendarview.css')
         if field.id == self._column_fields[0].id and self._row_actions:
             cls.append('with-popup-menu')
         return dict((k, v) for k, v in dict(cls=' '.join(cls), style=style).items() if v)
