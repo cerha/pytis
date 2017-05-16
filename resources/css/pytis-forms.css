@@ -176,14 +176,23 @@
 .pytis-form.browse-form table.data-table tr {
     page-break-inside: avoid;
 }
-.pytis-form.browse-form table.data-table tr.data-row td,
-.pytis-form.browse-form table.data-table tr.row-expansion td,
-.pytis-form.browse-form table.data-table tr.column-headings th,
-.pytis-form.browse-form table.data-table tr.group-heading th {
+.pytis-form.browse-form table.data-table tr.data-row > td,
+.pytis-form.browse-form table.data-table tr.row-expansion > td,
+.pytis-form.browse-form table.data-table tr.column-headings > th,
+.pytis-form.browse-form table.data-table tr.group-heading > th {
     padding: 3px;
     vertical-align: top;
     border: 1px solid #ddd;
 }
+.pytis-form.browse-form table.data-table tr.data-row > td.inline-edit {
+    padding: 0;
+}
+.pytis-form.browse-form td.inline-edit > .pytis-form > form > .group,
+.pytis-form.browse-form td.inline-edit > .pytis-form > form > .submit-buttons {
+    margin: 0;
+    border: none;
+}
+
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading,
 .pytis-form.browse-form table.data-table tr.group-heading th { 
     background-color: #eee;

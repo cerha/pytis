@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009-2016 Brailcom, o.p.s.
+ * Copyright (C) 2009-2017 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -83,8 +83,25 @@ var pytis = {
         if (element._pytis_tooltip_timeout) {
             clearTimeout(element._pytis_tooltip_timeout);
         }
-    }
+    },
 
+    on_success: function (callback) {
+        // Errors in asynchronous handlers are otherwise silently
+        // ignored.  This will only work in some browsers,
+        // but it is only useful for debugging anyway...
+        return function(transport) {
+            try {
+                callback(transport);
+            } catch (e) {
+                console.log(e);
+            } finally {
+                if (document.body.style.cursor === "wait") {
+                document.body.style.cursor = "default";
+                }
+            }
+        };
+    }
+    
 };
 
 pytis.BrowseForm = Class.create({
@@ -101,11 +118,24 @@ pytis.BrowseForm = Class.create({
     access it as '$(form_id).instance'.
 
      */
-    initialize: function (form_id, form_name, uri, allow_insertion) {
+    initialize: function (form_id, form_name, uri, inline_editable, allow_insertion) {
         /* form_id ... HTML id of the pytis form top level element (string)
            form_name ... Form name used for distinguishing request parameters
              (see form_name in the python class).
            uri ... URI for AJAX requests
+           inline_editable ... perform basic operations inline.  Currently
+             only the 'update' action is supported, but others, such as
+             insert/delete may be supported in future too.  Inline means,
+             that the operations are not performed on separate pages, but
+             inside the current list form through asynchronous requests.
+             For example 'update' will submit the action URI asynchronously
+             and display the result returned by server inside the table
+             row replacing the original row content.
+           allow_insertion ... Add a button for insertion of new table rows.
+             Note that this has nothing to do with 'inline_insertion' as this
+             option is a feature of 'EditableBrowseForm' Python class while
+             'inline_editable' is a feature of standard 'BrowseForm'.
+
          */
         this.form = $(form_id);
         this.form.instance = this;
@@ -113,6 +143,7 @@ pytis.BrowseForm = Class.create({
         this.uri = uri;
         this.ajax_container = this.form.down('.ajax-container');
         this.on_load_callbacks = [];
+        this.inline_editable = inline_editable;
         if (this.ajax_container && uri) {
             this.async_load = true;
             var parameters = {};
@@ -152,18 +183,7 @@ pytis.BrowseForm = Class.create({
         }
         form.request({
             parameters: parameters,
-            onSuccess: function (transport) {
-                try {
-                    on_success.bind(this)(transport);
-                } catch (e) {
-                    // Errors in asynchronous handlers are otherwise silently
-                    // ignored.  This will only work in some browsers,
-                    // but it is only useful for debugging anyway...
-                    console.log(e);
-                } finally {
-                    document.body.style.cursor = "default";
-                }
-            }.bind(this),
+            onSuccess: pytis.on_success(on_success.bind(this)),
             onFailure: function (transport) {
                 document.body.style.cursor = "default";
             }.bind(this)
@@ -317,33 +337,22 @@ pytis.BrowseForm = Class.create({
         new Ajax.Request(this.uri, {
             method: 'get',
             parameters: parameters,
-            onSuccess: function (transport) {
-                try {
-                    var container = this.ajax_container;
-                    var i, callback;
-                    container.update(transport.responseText);
-                    this.bind_controls(container.down('.list-form-controls', 0));
-                    this.bind_controls(container.down('.list-form-controls', 1));
-                    this.bind_table_headings(container.down('table.data-table thead'));
-                    this.bind_table_body(container.down('table.data-table tbody'));
-                    for (i=0; i<this.on_load_callbacks.length; i++) {
-                        callback = this.on_load_callbacks[i];
-                        callback(this.form);
-                    }
-                    if (container.down('#found-record')) {
-                        window.location.hash = '#found-record';
-                    }
-                } catch (e) {
-                    // Errors in asynchronous handlers are otherwise silently
-                    // ignored.  This will only work in some browsers,
-                    // but it is only useful for debugging anyway...
-                    console.log(e);
-                } finally {
-                    if (busy_cursor) {
-                        document.body.style.cursor = "default";
-                    }
+            onSuccess: pytis.on_success(function (transport) {
+                var container = this.ajax_container;
+                var i, callback;
+                container.update(transport.responseText);
+                this.bind_controls(container.down('.list-form-controls', 0));
+                this.bind_controls(container.down('.list-form-controls', 1));
+                this.bind_table_headings(container.down('table.data-table thead'));
+                this.bind_table_body(container.down('table.data-table tbody'));
+                for (i=0; i<this.on_load_callbacks.length; i++) {
+                    callback = this.on_load_callbacks[i];
+                    callback(this.form);
                 }
-            }.bind(this),
+                if (container.down('#found-record')) {
+                    window.location.hash = '#found-record';
+                }
+            }.bind(this)),
             onFailure: function (transport) {
                 if (busy_cursor) {
                     document.body.style.cursor = "default";
@@ -564,8 +573,53 @@ pytis.BrowseForm = Class.create({
         } else {
             callback(this.form);
         }
+    },
+
+    show_inline_update_form: function (tr, html) {
+        var colspan = 0;
+        while (tr.firstChild) {
+            var td = tr.firstChild;
+            colspan += td.colSpan;
+            tr.removeChild(td);
+        }
+        var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
+        td.update(html);
+        tr.insert(td);
+    },
+    
+    on_inline_update: function (event, element, url) {
+        document.body.style.cursor = "wait";
+        var parameters = url.parseQuery();
+        var url = url.slice(0, url.indexOf('?'));
+        parameters['_pytis_inline_form_request'] = '1';
+        new Ajax.Request(url, {
+            method: 'get',
+            parameters: parameters,
+            onSuccess: pytis.on_success(function (transport) {
+                this.show_inline_update_form(element.up('tr'), transport.responseText);
+            }.bind(this)),
+            onFailure: function (transport) {
+                document.body.style.cursor = "default";
+            }.bind(this)
+        });
     }
+
 });
+
+pytis.BrowseForm.on_action = function (event, element, action, url) {
+    // This must be a "static" method because the menu items don't
+    // exist in the time of form creation so the form can not bind
+    // the events to itself.
+    var form = element.up('.pytis-form').instance;
+    if (form && form.inline_editable) {
+        var method = form['on_inline_' + action];
+        if (method) {
+            method.bind(form)(event, element, url);
+            event.stop();
+        }
+    }
+};
+
 
 pytis.Form = Class.create({
     initialize: function (form_id, fields) {

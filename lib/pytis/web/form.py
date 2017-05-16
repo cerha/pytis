@@ -62,7 +62,7 @@ class BadRequest(Exception):
 class Exporter(lcg.Content):
     """Helper class to simplify returning exported content in AJAX responses.
 
-    The constructor's 'exporter' argument is be a callable object of one
+    The constructor's 'exporter' argument is a callable object of one
     argument -- the LCG's export context (lcg.HtmlExporter.Context instance).
 
     """
@@ -843,7 +843,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         the result of the method 'ajax_response()'.
 
         """
-        return req.param('_pytis_form_update_request') is not None
+        return (req.param('_pytis_form_update_request') is not None or
+                req.param('_pytis_inline_form_request') is not None)
+
 
     def ajax_response(self, req):
         """Return the AJAX request response data.
@@ -861,6 +863,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         don't make sense.
 
         """
+        if req.param('_pytis_inline_form_request'):
+            return self
         if req.param('_pytis_attachment_storage_request'):
             return self._attachment_storage_request(req)
         if req.param('_pytis_insert_new_row'):
@@ -1133,7 +1137,7 @@ class BrowseForm(LayoutForm):
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  cell_editable=None, expand_row=None, async_row_expansion=False,
-                 on_update_row=None, **kwargs):
+                 on_update_row=None, inline_editable=False, **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -1297,6 +1301,12 @@ class BrowseForm(LayoutForm):
             on success or a tuple (FIELD_ID, ERROR) on error, where FIELD_ID is
             the id of the field causing the error or None when the error is not
             related to a particular field and ERROR is the error message string.
+          inline_editable -- allow editing table rows inline.  If True, the
+            'update' action will not open the 'EditForm' on a separate page (by
+            following the 'update' action URI retrieved form the URI provider),
+            but will submit this URI in an asynchronous request and display the
+            result returned from this URI inside the table row replacing the
+            original row content.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1524,6 +1534,7 @@ class BrowseForm(LayoutForm):
         self._expand_row = expand_row
         self._async_row_expansion = async_row_expansion
         self._on_update_row = on_update_row
+        self._inline_editable = inline_editable
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
@@ -1544,8 +1555,11 @@ class BrowseForm(LayoutForm):
                                        tooltip=action.descr(),
                                        enabled=enabled,
                                        icon=action.icon(),
-                                       uri=self._uri_provider(row, UriType.ACTION, action))
-                     for action, enabled in self._visible_actions(context, row)]
+                                       uri=uri,
+                                       callback='pytis.BrowseForm.on_action',
+                                       callback_args=(action.id(), uri))
+                     for action, enabled, uri in
+                     [(a, e, self._uri_provider(row, UriType.ACTION, a)) for a, e in actions]]
             ctrl = lcg.PopupMenuCtrl(_("Popup the menu of actions for this record"),
                                      items, active_area_selector=selector)
             return ctrl.export(context)
@@ -1733,10 +1747,13 @@ class BrowseForm(LayoutForm):
                 context.resource('lcg-widgets.css')
         return content
 
+    def _javascript_args(self, context):
+        uri = self._uri_provider(None, UriType.LINK, None)
+        return (self._form_id, self._name, uri, self._inline_editable)
+
     def _export_javascript(self, context):
         g = context.generator()
-        uri = self._uri_provider(None, UriType.LINK, None)
-        return g.js_call("new pytis.BrowseForm", self._form_id, self._name, uri) + ';'
+        return g.js_call("new pytis.BrowseForm", *self._javascript_args(context)) + ';'
 
     def _set_row(self, row):
         # Please, don't think about passing reset=True here.  See PresentedRow.display()
@@ -2458,10 +2475,11 @@ class EditableBrowseForm(BrowseForm):
     """Web BrowseForm with editable fields in certain columns.
 
     The form is rendered as an ordinary table, but columns given by constructor
-    argument 'editable_columns'.
-
-    are rendered as editable fields in each row.  The form has no submit
-    controls -- it must be used inside another submittable form.
+    argument 'editable_columns' are rendered as editable fields in each row.
+    The form has no submit controls -- it must be used inside another
+    submittable form.  Note the difference to inline editable 'BrowseForm'
+    (argument 'inline_editable' set to True), where the rows can be edited
+    individually, while this forms edits all form rows at once.
 
     Editable fields use row key in field identifier to allow processing the
     form values on submit.  So for example, The value of column 'count' for the
@@ -2573,11 +2591,8 @@ class EditableBrowseForm(BrowseForm):
                 result += context.generator().div(error.message(), cls='validation-error')
         return result
 
-    def _export_javascript(self, context):
-        g = context.generator()
-        uri = self._uri_provider(None, UriType.LINK, None)
-        return g.js_call("new pytis.BrowseForm",
-                         self._form_id, self._name, uri, self._allow_insertion) + ';'
+    def _javascript_args(self, context):
+        return super(EditableBrowseForm, self)._javascript_args(context) + (self._allow_insertion,)
 
     def _removed_keys(self):
         param = '_pytis_removed_row_key_' + self._name
