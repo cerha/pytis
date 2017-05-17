@@ -161,10 +161,10 @@ pytis.BrowseForm = Class.create({
             }
         } else {
             this.async_load = false;
-            this.bind_search_controls(this.form.down('.list-form-controls', 0));
-            this.bind_search_controls(this.form.down('.list-form-controls', 1));
-            this.bind_table_headings(this.form.down('table.data-table thead'));
-            this.bind_table_body(this.form.down('table.data-table tbody'));
+            this.apply(this.bind_search_controls, this.form.down('.list-form-controls', 0));
+            this.apply(this.bind_search_controls, this.form.down('.list-form-controls', 1));
+            this.apply(this.bind_table_headings, this.form.down('table.data-table thead'));
+            this.apply(this.bind_table_body, this.form.down('table.data-table tbody'));
         }
         if (allow_insertion) {
             var insert_button = new Element('button', {'class': 'new-row-button'});
@@ -172,6 +172,12 @@ pytis.BrowseForm = Class.create({
             insert_button.update(insert_label);
             insert_button.observe('click', this.on_insert_new_row.bind(this));
             this.form.insert(insert_button);
+        }
+    },
+
+    apply: function(method, element) {
+        if (element) {
+            return method.bind(this)(element);
         }
     },
 
@@ -341,10 +347,10 @@ pytis.BrowseForm = Class.create({
                 var container = this.ajax_container;
                 var i, callback;
                 container.update(transport.responseText);
-                this.bind_controls(container.down('.list-form-controls', 0));
-                this.bind_controls(container.down('.list-form-controls', 1));
-                this.bind_table_headings(container.down('table.data-table thead'));
-                this.bind_table_body(container.down('table.data-table tbody'));
+                this.apply(this.bind_controls, container.down('.list-form-controls', 0));
+                this.apply(this.bind_controls, container.down('.list-form-controls', 1));
+                this.apply(this.bind_table_headings, container.down('table.data-table thead'));
+                this.apply(this.bind_table_body, container.down('table.data-table tbody'));
                 for (i=0; i<this.on_load_callbacks.length; i++) {
                     callback = this.on_load_callbacks[i];
                     callback(this.form);
@@ -377,75 +383,69 @@ pytis.BrowseForm = Class.create({
     },
 
     bind_controls: function (panel) {
-        if (panel) {
-            panel.select('button.prev-page, button.next-page').each(function (ctrl) {
-                ctrl.observe('click', function (event) {
+        panel.select('button.prev-page, button.next-page').each(function (ctrl) {
+            ctrl.observe('click', function (event) {
+                this.reload_form_data(ctrl);
+                event.stop();
+            }.bind(this));
+        }.bind(this));
+        var apply_button = panel.down('button.apply-filters');
+        if (apply_button) {
+            apply_button.observe('click', function (event) {
+                this.reload_form_data(apply_button);
+                event.stop();
+            }.bind(this));
+        } else {
+            panel.select('select, checkbox, radio').each(function (ctrl) {
+                ctrl.observe('change', function (event) {
                     this.reload_form_data(ctrl);
                     event.stop();
                 }.bind(this));
             }.bind(this));
-            var apply_button = panel.down('button.apply-filters');
-            if (apply_button) {
-                apply_button.observe('click', function (event) {
-                    this.reload_form_data(apply_button);
-                    event.stop();
-                }.bind(this));
-            } else {
-                panel.select('select, checkbox, radio').each(function (ctrl) {
-                    ctrl.observe('change', function (event) {
-                        this.reload_form_data(ctrl);
-                        event.stop();
-                    }.bind(this));
-                }.bind(this));
-            }
-            panel.select('.index-search-controls a').each(function (ctrl) {
-                var params = ctrl.href.replace(/;/g, '&').parseQuery();
-                ctrl.observe('click', function (event) {
-                    this.reload_form_data(ctrl, {index_search: params.index_search,
-                                                 sort: params.sort,
-                                                 dir: params.dir});
-                    event.stop();
-                }.bind(this));
-            }.bind(this));
-            this.bind_search_controls(panel);
         }
+        panel.select('.index-search-controls a').each(function (ctrl) {
+            var params = ctrl.href.replace(/;/g, '&').parseQuery();
+            ctrl.observe('click', function (event) {
+                this.reload_form_data(ctrl, {index_search: params.index_search,
+                                             sort: params.sort,
+                                             dir: params.dir});
+                event.stop();
+            }.bind(this));
+        }.bind(this));
+        this.bind_search_controls(panel);
     },
 
     bind_table_headings: function (thead) {
-        if (thead) {
-            thead.select('th.column-heading').each(function (th) {
-                if (th.hasClassName('sortable-column')) {
-                    th.observe('click', this.on_table_heading_clicked.bind(this));
-                }
-            }.bind(this));
-        }
-        if (thead && thead.up('table').hasClassName('expansible-rows')) {
+        thead.select('th.column-heading').each(function (th) {
+            if (th.hasClassName('sortable-column')) {
+                th.observe('click', this.on_table_heading_clicked.bind(this));
+            }
+        }.bind(this));
+        if (thead.up('table').hasClassName('expansible-rows')) {
             var th = new Element('th', {'class': 'column-heading expansion-ctrl-heading'});
             thead.down('tr').insert({top: th});
         }
     },
 
     bind_table_body: function (tbody) {
-        if (tbody) {
-            tbody.select('td.editable-cell').each(function (element) {
-                element.setAttribute('title', pytis._("Double click the cell to edit the value."));
-                element.on('dblclick', this.on_edit_cell.bind(this));
-            }.bind(this));
-            var expansible_rows = tbody.up('table').hasClassName('expansible-rows');
-            tbody.select('tr').each(function (tr) {
-                var remove_row = tr.down('a.remove-row');
-                if (remove_row) {
-                    remove_row.on('click', this.on_remove_row.bind(this));
-                }
-                if (expansible_rows) {
-                    var ctrl = new Element('a', {'class': 'expand-row'});
-                    ctrl.update(pytis._("Expand Row"));
-                    ctrl.on('click', this.on_toggle_row_expansion.bind(this));
-                    ctrl.update(pytis._("Expand Row"));
-                    tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
-                }
-            }.bind(this));
-        }
+        tbody.select('td.editable-cell').each(function (element) {
+            element.setAttribute('title', pytis._("Double click the cell to edit the value."));
+            element.on('dblclick', this.on_edit_cell.bind(this));
+        }.bind(this));
+        var expansible_rows = tbody.up('table').hasClassName('expansible-rows');
+        tbody.select('tr').each(function (tr) {
+            var remove_row = tr.down('a.remove-row');
+            if (remove_row) {
+                remove_row.on('click', this.on_remove_row.bind(this));
+            }
+            if (expansible_rows) {
+                var ctrl = new Element('a', {'class': 'expand-row'});
+                ctrl.update(pytis._("Expand Row"));
+                ctrl.on('click', this.on_toggle_row_expansion.bind(this));
+                ctrl.update(pytis._("Expand Row"));
+                tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
+            }
+        }.bind(this));
     },
 
     reload_form_data: function (ctrl, params) {
@@ -464,15 +464,13 @@ pytis.BrowseForm = Class.create({
     },
 
     bind_search_controls: function (panel) {
-        if (panel) {
-            var search_button = panel.down('.paging-controls button.search');
-            if (search_button) {
-                search_button.observe('click', this.on_show_search_controls.bind(this));
-            }
-            var cancel_button = panel.down('div.query button.cancel-search');
-            if (cancel_button) {
-                cancel_button.observe('click', this.on_hide_search_controls.bind(this));
-            }
+        var search_button = panel.down('.paging-controls button.search');
+        if (search_button) {
+            search_button.observe('click', this.on_show_search_controls.bind(this));
+        }
+        var cancel_button = panel.down('div.query button.cancel-search');
+        if (cancel_button) {
+            cancel_button.observe('click', this.on_hide_search_controls.bind(this));
         }
     },
 
