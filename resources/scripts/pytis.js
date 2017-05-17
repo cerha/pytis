@@ -531,7 +531,26 @@ pytis.BrowseForm = Class.create({
         }
     },
 
-    show_inline_update_form: function (tr, html) {
+    on_popup_menu_inline_action: function (element, action, uri) {
+        if (action === 'update') {
+            var parameters = uri.parseQuery();
+            var uri = uri.slice(0, uri.indexOf('?'));
+            var form = new Element('form', {action: uri, method: 'GET'});
+            this.send_inline_action_request(element, form, parameters);
+            return true;
+        }
+        return false;
+    },
+
+    send_inline_action_request: function (element, form, parameters) {
+        parameters['_pytis_inline_form_request'] = '1';
+        this.send_ajax_request(form, parameters, function (transport) {
+            this.process_inline_action_response(element, transport);
+        }.bind(this));
+    },
+
+    process_inline_action_response: function (element, transport) {
+        var tr = element.up('tr');
         var colspan = 0;
         while (tr.firstChild) {
             var td = tr.firstChild;
@@ -539,45 +558,45 @@ pytis.BrowseForm = Class.create({
             tr.removeChild(td);
         }
         var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
-        td.update(html);
+        td.update(transport.responseText);
         tr.insert(td);
-    },
-    
-    on_inline_update: function (event, element, url) {
-        document.body.style.cursor = "wait";
-        var parameters = url.parseQuery();
-        var url = url.slice(0, url.indexOf('?'));
-        parameters['_pytis_inline_form_request'] = '1';
-        new Ajax.Request(url, {
-            method: 'get',
-            parameters: parameters,
-            onSuccess: pytis.on_success(function (transport) {
-                this.show_inline_update_form(element.up('tr'), transport.responseText);
-            }.bind(this)),
-            onFailure: function (transport) {
-                document.body.style.cursor = "default";
-            }.bind(this)
-        });
     }
 
 });
 
-pytis.BrowseForm.on_action = function (event, element, action, url) {
+pytis.BrowseForm.on_action = function (event, element, action, uri) {
     // This must be a "static" method because the menu items don't
     // exist in the time of form creation so the form can not bind
-    // the events to itself.
+    // the events to itself.  This method is assigned as popup menu
+    // item callback and we may handle item invocation here.
     var form = element.up('.pytis-form').instance;
-    if (form && form.inline_editable) {
-        var method = form['on_inline_' + action];
-        if (method) {
-            method.bind(form)(event, element, url);
-            event.stop();
-        }
+    if (form && form.inline_editable && form.on_popup_menu_inline_action(element, action, uri)) {
+        event.stop();
     }
 };
 
 
-pytis.ListView = Class.create(pytis.BrowseForm, {});
+pytis.ListView = Class.create(pytis.BrowseForm, {
+
+    initialize: function ($super, form_id, form_name, uri, inline_editable) {
+        $super(form_id, form_name, uri, inline_editable);
+        if (inline_editable) {
+            this.form.select('.actions button.action-update').each(function (button) {
+                button.on('click', function (event) {
+                    this.send_inline_action_request(button, button.up('form'), {})
+                    event.stop();
+                }.bind(this));
+            }.bind(this));
+        }
+    },
+
+    process_inline_action_response: function (element, transport) {
+        // Note that element may be a button or a popup menu item here.
+        var container = element.up('.list-item').down('.list-item-content');
+        container.update(transport.responseText);
+    }
+
+});
 
 
 pytis.ItemizedView = Class.create(pytis.BrowseForm, {});

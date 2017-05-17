@@ -445,11 +445,6 @@
     float: left;
     width: 6em;
 }
-.pytis-form.show-form .group textarea, .pytis-form.list-view .group textarea {
-    background-color: #eee;
-    border: 0px;
-    font-size: 1em;
-}
 .pytis-form.show-form, .pytis-form.edit-form { 
     margin: 0;
     padding: 0;
