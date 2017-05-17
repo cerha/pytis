@@ -1747,13 +1747,18 @@ class BrowseForm(LayoutForm):
                 context.resource('lcg-widgets.css')
         return content
 
+    def _javascript_class(self, context):
+        return 'pytis.' + self.__class__.__name__
+
     def _javascript_args(self, context):
         uri = self._uri_provider(None, UriType.LINK, None)
         return (self._form_id, self._name, uri, self._inline_editable)
 
     def _export_javascript(self, context):
         g = context.generator()
-        return g.js_call("new pytis.BrowseForm", *self._javascript_args(context)) + ';'
+        cls = self._javascript_class(context)
+        args = self._javascript_args(context)
+        return g.js_call("new %s" % cls, *args) + ';'
 
     def _set_row(self, row):
         # Please, don't think about passing reset=True here.  See PresentedRow.display()
@@ -2271,6 +2276,10 @@ class ListView(BrowseForm):
             if anchor:
                 anchor = anchor.replace('%s', '%%(%s)s' % self._key)
             self._anchor = anchor
+
+    def _javascript_class(self, context):
+        cls = self.__class__ if self._list_layout else ListView.__bases__[0]
+        return 'pytis.' + cls.__name__
 
     def export(self, context):
         self._exported_row_index = []

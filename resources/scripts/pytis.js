@@ -166,13 +166,6 @@ pytis.BrowseForm = Class.create({
             this.apply(this.bind_table_headings, this.form.down('table.data-table thead'));
             this.apply(this.bind_table_body, this.form.down('table.data-table tbody'));
         }
-        if (allow_insertion) {
-            var insert_button = new Element('button', {'class': 'new-row-button'});
-            var insert_label = new Element('span').update(pytis._("New row"));
-            insert_button.update(insert_label);
-            insert_button.observe('click', this.on_insert_new_row.bind(this));
-            this.form.insert(insert_button);
-        }
     },
 
     apply: function(method, element) {
@@ -432,20 +425,15 @@ pytis.BrowseForm = Class.create({
             element.setAttribute('title', pytis._("Double click the cell to edit the value."));
             element.on('dblclick', this.on_edit_cell.bind(this));
         }.bind(this));
-        var expansible_rows = tbody.up('table').hasClassName('expansible-rows');
-        tbody.select('tr').each(function (tr) {
-            var remove_row = tr.down('a.remove-row');
-            if (remove_row) {
-                remove_row.on('click', this.on_remove_row.bind(this));
-            }
-            if (expansible_rows) {
+        if (tbody.up('table').hasClassName('expansible-rows')) {
+            tbody.select('tr').each(function (tr) {
                 var ctrl = new Element('a', {'class': 'expand-row'});
                 ctrl.update(pytis._("Expand Row"));
                 ctrl.on('click', this.on_toggle_row_expansion.bind(this));
                 ctrl.update(pytis._("Expand Row"));
                 tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
-            }
-        }.bind(this));
+            }.bind(this));
+        }
     },
 
     reload_form_data: function (ctrl, params) {
@@ -529,33 +517,6 @@ pytis.BrowseForm = Class.create({
         event.stop();
     },
 
-    on_insert_new_row: function (event) {
-        var form = this.form.down('form');
-        if (!form) {
-            form = this.form.up('form');
-        }
-        var parameters = {'_pytis_form_update_request': 1,
-                          '_pytis_insert_new_row': 1};
-        if (form) {
-            this.send_ajax_request(form, parameters, function (transport) {
-                var tbody = this.form.down('table.data-table tbody');
-                tbody.insert(transport.responseText);
-                form['_pytis_inserted_rows_' + this.form_name].value++;
-                this.bind_table_body(tbody);
-            });
-        }
-        event.stop();
-    },
-
-    on_remove_row: function (event) {
-        var tr = event.element().up('tr');
-        tr.up('form').insert(new Element('input', {type: 'hidden',
-                                                   name: '_pytis_removed_row_key_' + this.form_name,
-                                                   value: tr.getAttribute('data-pytis-row-key')}));
-        tr.remove();
-        event.stop();
-    },
-
     on_load: function (callback) {
         /* Call given callback function when the form is fully loaded.
 
@@ -617,6 +578,71 @@ pytis.BrowseForm.on_action = function (event, element, action, url) {
         }
     }
 };
+
+
+pytis.ListView = Class.create(pytis.BrowseForm, {});
+
+
+pytis.ItemizedView = Class.create(pytis.BrowseForm, {});
+
+
+pytis.EditableBrowseForm = Class.create(pytis.BrowseForm, {
+    initialize: function ($super, form_id, form_name, uri, inline_editable, allow_insertion) {
+        /* form_id, form_name, uri, inline_editable ... defined by the
+             super class.
+           allow_insertion ... Add a button for insertion of new table
+             rows.  Note that this is a different feature of this class
+             than 'inline_editable' mode defined by the parent class.
+
+        */
+        $super(form_id, form_name, uri, inline_editable);
+        if (allow_insertion) {
+            var button = new Element('button', {'class': 'new-row-button'});
+            button.update(new Element('span').update(pytis._("New row")));
+            button.on('click', this.on_insert_new_row.bind(this));
+            this.form.insert(button);
+        }
+    },
+
+    bind_table_body: function (tbody) {
+        // We don't call $super here as we don't want editable cells or
+        // expansible rows in EditableBrowseForm, but we may need it in
+        // future if the parent class adds something we want...
+        tbody.select('tr a.remove-row').each(function (link) {
+            link.on('click', this.on_remove_row.bind(this));
+        }.bind(this));
+    },
+
+    on_insert_new_row: function (event) {
+        var form = this.form.down('form');
+        if (!form) {
+            form = this.form.up('form');
+        }
+        var parameters = {'_pytis_form_update_request': 1,
+                          '_pytis_insert_new_row': 1};
+        if (form) {
+            this.send_ajax_request(form, parameters, function (transport) {
+                var tbody = this.form.down('table.data-table tbody');
+                tbody.insert(transport.responseText);
+                form['_pytis_inserted_rows_' + this.form_name].value++;
+                this.bind_table_body(tbody);
+            });
+        }
+        event.stop();
+    },
+
+    on_remove_row: function (event) {
+        var tr = event.element().up('tr');
+        tr.up('form').insert(new Element('input', {
+            type: 'hidden',
+            name: '_pytis_removed_row_key_' + this.form_name,
+            value: tr.getAttribute('data-pytis-row-key')
+        }));
+        tr.remove();
+        event.stop();
+    }
+
+});
 
 
 pytis.Form = Class.create({
@@ -726,6 +752,7 @@ pytis.Form = Class.create({
     }
 
 });
+
 
 pytis.Field = Class.create({
     initialize: function (form_id, field_id, id, state, active, required) {
