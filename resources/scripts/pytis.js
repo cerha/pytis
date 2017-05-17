@@ -176,10 +176,6 @@ pytis.BrowseForm = Class.create({
 
     send_ajax_request: function (form, parameters, on_success) {
         document.body.style.cursor = "wait";
-        if (!form) {
-            // If no form is passed, we simply create one just for the request.
-            form = new Element('form', {action: this.uri, method: 'GET'});
-        }
         form.request({
             parameters: parameters,
             onSuccess: pytis.on_success(on_success.bind(this)),
@@ -200,9 +196,9 @@ pytis.BrowseForm = Class.create({
                           _pytis_edit_cell: 1,
                           _pytis_row_key: this.pytis_row_key(element),
                           _pytis_column_id: this.pytis_column_id(element)};
-        // Note, element.down('form') will not exist on first invocation, but the method
-        // send_ajax_request can handle that.
-        this.send_ajax_request(element.down('form'), parameters, function (transport) {
+        // element.down('form') will not exist on first invocation.
+        var form = element.down('form') || new Element('form', {action: this.uri, method: 'GET'});
+        this.send_ajax_request(form, parameters, function (transport) {
             element.update(transport.responseText);
             var edit_form = element.down('form');
             if (edit_form) {
@@ -270,10 +266,11 @@ pytis.BrowseForm = Class.create({
     },
 
     send_expand_row_request: function (tr) {
+        var form = this.form.down('form.list-form-controls');
         var parameters = {_pytis_form_update_request: 1,
                           _pytis_expand_row: 1,
                           _pytis_row_key: this.pytis_row_key(tr)};
-        this.send_ajax_request(this.form.down('form'), parameters, function (transport) {
+        this.send_ajax_request(form, parameters, function (transport) {
             var content = new Element('div', {'class': 'row-expansion-content'});
             content.insert(transport.responseText);
             var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
@@ -614,13 +611,10 @@ pytis.EditableBrowseForm = Class.create(pytis.BrowseForm, {
     },
 
     on_insert_new_row: function (event) {
-        var form = this.form.down('form');
-        if (!form) {
-            form = this.form.up('form');
-        }
-        var parameters = {'_pytis_form_update_request': 1,
-                          '_pytis_insert_new_row': 1};
+        var form = this.form.down('form') || this.form.up('form');
         if (form) {
+            var parameters = {'_pytis_form_update_request': 1,
+                              '_pytis_insert_new_row': 1};
             this.send_ajax_request(form, parameters, function (transport) {
                 var tbody = this.form.down('table.data-table tbody');
                 tbody.insert(transport.responseText);

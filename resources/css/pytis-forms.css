@@ -287,6 +287,9 @@
     margin: 0.8em 0;
     padding: 0;
 }
+.list-form-controls.empty {
+    margin: 0;
+}
 .list-form-controls .paging-controls.one-page {
     text-align: right;
 }
@@ -322,9 +325,9 @@
 
 @media only screen and (max-width: 700px) {
 .list-form-controls .index-search-controls { display: none; }
-.top-list-form-controls .offset select { display: none; }
-.top-list-form-controls .current-page { display: inline; }
-.top-list-form-controls .limit { display: none; }
+.list-form-controls.top .offset select { display: none; }
+.list-form-controls.top .current-page { display: inline; }
+.list-form-controls.top .limit { display: none; }
 }
 
 .pytis-form.browse-form #found-record {

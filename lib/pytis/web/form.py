@@ -1989,19 +1989,26 @@ class BrowseForm(LayoutForm):
     def _export_controls(self, context, page, pages, bottom=False):
         g = context.generator()
         ids = context.id_generator()
-        content = []
         show_search_field = self._show_search_field
+        content = [g.hidden('list-form-controls-submitted', '1')]
+        if self._name is not None:
+            content.append(g.hidden('form_name', self._name))
+        if self._user_sorting:
+            sorting_column, direction = self._user_sorting
+            content.extend((g.hidden('sort', sorting_column),
+                            g.hidden('dir', self._SORTING_DIRECTIONS[direction])))
+        empty = True
         if self._query_fields_form:
-            if bottom:
-                exported_query_fields = lcg.concat([f.hidden(context)
-                                                    for f in self._query_fields_form.fields()])
-            else:
-                exported_query_fields = self._query_fields_form.export(context)
             # TODO: Hide when there are no records and no active filtering conditions?
             #       and (count or [v for v in self._filter_ids.values() if v is not None])
-            content.append(exported_query_fields)
+            if bottom:
+                content.extend([f.hidden(context) for f in self._query_fields_form.fields()])
+            else:
+                content.append(self._query_fields_form.export(context))
+                empty = False
         count, limit, limits = self._row_count, self._limit, self._limits
         if limit is not None and count > limits[0]:
+            empty = False
             controls = ()
             if count > 100:
                 if not bottom:
@@ -2015,7 +2022,7 @@ class BrowseForm(LayoutForm):
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
                 controls += (
-                    g.span((
+                    g.span(cls="offset", content=(
                         g.label(_("Page") + ':', ids.offset),
                         g.select(name='offset', id=ids.offset,
                                  title=(_("Page") + ' ' + _("(Use ALT+arrow down to select)")),
@@ -2026,8 +2033,8 @@ class BrowseForm(LayoutForm):
                         g.span(str(page + 1), cls='current-page'),
                         g.span(' / ', cls='separator'),
                         g.span(str(pages), cls='total-pages'),
-                    ), cls="offset"),
-                    g.span((
+                    )),
+                    g.span(cls="buttons", content=(
                         g.button(g.span('', cls='icon') + g.span(_("Previous"), cls='label'),
                                  title=_("Go to previous page"),
                                  name='prev', value='1', disabled=(page == 0),
@@ -2040,50 +2047,45 @@ class BrowseForm(LayoutForm):
                                  type='submit', cls='search',
                                  style=show_search_field and 'display:none' or None)
                         if self._allow_search_field else '',
-                    ), cls="buttons"),
+                    )),
                 )
-            controls += (g.span((g.label(_("Records per page") + ':', ids.limit),
-                                 g.select(name='limit', id=ids.limit,
-                                          title=(_("Records per page") + ' ' +
-                                                 _("(Use ALT+arrow down to select)")),
-                                          onchange='this.form.submit(); return true',
-                                          content=[g.option(str(i), value=i, selected=(i==limit))
-                                                   for i in limits])),
-                                cls='limit'),
-                         g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
-                                             type='submit', cls='goto-page')))
-            if controls:
-                cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
-                content.append(g.div(controls, cls=cls))
-        if content:
-            if not bottom and self._allow_search_field:
-                search_field = g.div(
-                    (g.label(_("Search expression") + ':', ids.search),
-                     g.input(type='search', value=self._text_search_string,
-                             name='query', id=ids.search, cls='text-search-field'),
-                     g.hidden('show-search-field', show_search_field and '1' or ''),
-                     # Translators: Search button label.
-                     g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
-                              type='submit', cls='search'),
-                     g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
-                              type='submit', cls='cancel-search')),
-                    cls='query', style=not show_search_field and 'display:none' or None,
-                )
-                content.insert(0, search_field)
-            if self._name is not None:
-                content.append(g.hidden('form_name', self._name))
-            if self._user_sorting:
-                sorting_column, direction = self._user_sorting
-                content.extend((g.hidden('sort', sorting_column),
-                                g.hidden('dir', self._SORTING_DIRECTIONS[direction])))
-            content.append(g.hidden('list-form-controls-submitted', '1'))
-            return g.form(
-                content,
-                action=g.uri(self._handler), method='GET',
-                cls='list-form-controls %s-list-form-controls' % ('bottom' if bottom else 'top'),
+            controls += (
+                g.span((g.label(_("Records per page") + ':', ids.limit),
+                        g.select(name='limit', id=ids.limit,
+                                 title=(_("Records per page") + ' ' +
+                                        _("(Use ALT+arrow down to select)")),
+                                 onchange='this.form.submit(); return true',
+                                 content=[g.option(str(i), value=i, selected=(i==limit))
+                                          for i in limits])),
+                       cls='limit'),
+                g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
+                                             type='submit', cls='goto-page')),
             )
-        else:
-            return None
+            content.append(g.div(controls,
+                                 cls='paging-controls' + (' one-page' if pages == 1 else '')))
+        if self._allow_search_field and not empty and not bottom:
+            style = 'display:none' if not show_search_field else None
+            content.insert(0, g.div(cls='query', style=style, content=(
+                g.label(_("Search expression") + ':', ids.search),
+                g.input(type='search', value=self._text_search_string,
+                        name='query', id=ids.search, cls='text-search-field'),
+                g.hidden('show-search-field', '1' if show_search_field else ''),
+                # Translators: Search button label.
+                g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
+                         type='submit', cls='search'),
+                g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
+                         type='submit', cls='cancel-search'),
+            )))
+        # We need to include the form even if it does not contain any
+        # visible controls, because it may be used by JavaScript code
+        # to submit asynchronous requests, such as row expansion etc.
+        return g.form(
+            content,
+            action=g.uri(self._handler), method='GET',
+            cls=('list-form-controls' +
+                 (' bottom' if bottom else ' top') +
+                 (' empty' if empty else '')),
+        )
 
     def _set_async_request_row(self, req):
         data = self._row.data()
