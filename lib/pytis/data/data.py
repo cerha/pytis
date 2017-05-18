@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -173,6 +173,8 @@ class Operator(object):
                     # this wrapper class for simplicity.
                     value = self.ComparableDateTime(value)
                 return (cls, value)
+            elif isinstance(arg, dict):
+                return tuple((k, relax(v)) for k, v in arg.items())
             else:
                 return arg
         return [relax(arg) for arg in self._args]
