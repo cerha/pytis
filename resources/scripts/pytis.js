@@ -529,21 +529,44 @@ pytis.BrowseForm = Class.create({
     send_inline_action_request: function (element, form, parameters) {
         parameters['_pytis_inline_form_request'] = '1';
         this.send_ajax_request(form, parameters, function (transport) {
-            this.process_inline_action_response(element, transport);
+            var content = this.process_inline_action_response(element, transport);
+            this.bind_cancel_inline_action(content);
+        }.bind(this));
+    },
+
+    bind_cancel_inline_action: function (element) {
+        element.down('button.cancel').on('click', function (event) {
+            this.on_cancel_inline_action(element);
+            event.stop();
         }.bind(this));
     },
 
     process_inline_action_response: function (element, transport) {
         var tr = element.up('tr');
-        var colspan = 0;
-        while (tr.firstChild) {
-            var td = tr.firstChild;
-            colspan += td.colSpan;
-            tr.removeChild(td);
+        var tds = tr.childElements();
+        var i, colspan = 0;
+        for (i=0; i < tds.length; i++) {
+            colspan += tds[i].colSpan;
+            tds[i].hide();
         }
         var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
-        td.update(transport.responseText);
+        var div = new Element('div').update(transport.responseText).hide();
+        td.insert(div);
         tr.insert(td);
+        div.slideDown({duration: 0.25});
+        return div;
+    },
+
+    on_cancel_inline_action: function (element) {
+        // Here 'element' is the result returned by 'process_inline_action_response()'.
+        element.slideUp({
+            duration: 0.25,
+            afterFinish: function () {
+                var tr = element.up('tr');
+                element.up('td').remove();
+                tr.childElements().each(function (x) { x.show(); });
+            }
+        });
     }
 
 });
@@ -576,10 +599,27 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
 
     process_inline_action_response: function (element, transport) {
         // Note that element may be a button or a popup menu item here.
-        var container = element.up('.list-item').down('.list-item-content');
-        container.update(transport.responseText);
-    }
+        var container = new Element('div', {'class': 'inline-form-container'});
+        container.update(transport.responseText).hide();
+        var parent = element.up('.list-item').down('.list-item-content');
+        parent.childElements().each(function (x) { x.slideUp({duration: 0.25}); });
+        parent.insert(container);
+        container.slideDown({delay: 0.2, duration: 0.25});
+        return container;
+    },
 
+    on_cancel_inline_action: function (element) {
+        // Here 'element' is the result returned by 'process_inline_action_response()'. 
+        element.slideUp({
+            duration: 0.25,
+            afterFinish: function () {
+                var parent = element.parentNode;
+                element.remove();
+                parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
+            }
+        });
+    }
+    
 });
 
 
