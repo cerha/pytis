@@ -211,22 +211,6 @@ pytis.BrowseForm = Class.create({
         }.bind(this));
     },
 
-    slide_down: function (element) {
-        if (Effect !== undefined) {
-            Effect.SlideDown(element, {duration: 0.25});
-        } else {
-            element.show();
-        }
-    },
-
-    slide_up: function (element) {
-        if (Effect !== undefined) {
-            Effect.SlideUp(element, {duration: 0.25});
-        } else {
-            element.show();
-        }
-    },
-
     on_toggle_row_expansion: function (event) {
         var tr = event.element().up('tr');
         var expansion;
@@ -239,7 +223,7 @@ pytis.BrowseForm = Class.create({
         var link = tr.down('a.expand-row');
         if (tr.hasClassName('expanded')) {
             tr.removeClassName('expanded');
-            this.slide_up(expansion.down('.row-expansion-content'));
+            expansion.down('.row-expansion-content').slideUp({duration: 0.25});
             link.focus();
             setTimeout(function () {
                 expansion.hide();
@@ -253,7 +237,7 @@ pytis.BrowseForm = Class.create({
                 expansion.setAttribute('style', '');
                 content.setAttribute('style', '');
                 expansion.show();
-                this.slide_down(content);
+                content.slideDown({duration: 0.25});
             } else {
                 this.send_expand_row_request(tr);
             }
@@ -280,7 +264,7 @@ pytis.BrowseForm = Class.create({
             content.hide();
             tr.insert({after: new Element('tr', {'class': 'row-expansion'}).insert(
                 new Element('td', {'colspan': tr.childElements().length}).insert(content))});
-            this.slide_down(content);
+            content.slideDown({duration: 0.25});
         }.bind(this));
     },
 
