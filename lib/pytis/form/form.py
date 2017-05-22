@@ -756,13 +756,17 @@ class PopupForm:
              self._data.arguments() is not None)):
             lock_key = None
         try:
-            if lock_key is not None:
-                if not self._lock_record(lock_key):
-                    return None
-            pytis.form.unlock_callbacks()
-            frame = self._parent
-            frame.SetTitle(self.title())
-            frame.SetClientSize(self.GetSize())
+            busy_cursor(True)
+            try:
+                if lock_key is not None:
+                    if not self._lock_record(lock_key):
+                        return None
+                pytis.form.unlock_callbacks()
+                frame = self._parent
+                frame.SetTitle(self.title())
+                frame.SetClientSize(self.GetSize())
+            finally:
+                busy_cursor(False)
             frame.ShowModal()
         finally:
             if ((self._governing_transaction is None and self._transaction is not None and
