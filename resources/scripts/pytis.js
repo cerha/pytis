@@ -118,7 +118,7 @@ pytis.BrowseForm = Class.create({
     access it as '$(form_id).instance'.
 
      */
-    initialize: function (form_id, form_name, uri, inline_editable, allow_insertion) {
+    initialize: function (form_id, form_name, uri, inline_editable) {
         /* form_id ... HTML id of the pytis form top level element (string)
            form_name ... Form name used for distinguishing request parameters
              (see form_name in the python class).
@@ -131,10 +131,6 @@ pytis.BrowseForm = Class.create({
              For example 'update' will submit the action URI asynchronously
              and display the result returned by server inside the table
              row replacing the original row content.
-           allow_insertion ... Add a button for insertion of new table rows.
-             Note that this has nothing to do with 'inline_insertion' as this
-             option is a feature of 'EditableBrowseForm' Python class while
-             'inline_editable' is a feature of standard 'BrowseForm'.
 
          */
         this.form = $(form_id);
