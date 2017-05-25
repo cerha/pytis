@@ -724,35 +724,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 pass
         return result
 
-    def _selected_rows(self):
-        g = self._grid
-        # It was observed at "certain" configurations, that the methods
-        # g.GetSelectionBlockTopLeft() and g.GetSelectionBlockBottomRight()
-        # don't report a selection made from the keyboard using Shift + Arrow
-        # keys.  Such selection is ignored until the user clicks to the grid
-        # with a mouse.  It is also not reported by EVT_GRID_RANGE_SELECT.  The
-        # only working solution in this case was querying all existing grid
-        # rows by g.IsInSelection().  The problem is, that this method is
-        # inefficient for very long tables, but in practise the delay seems
-        # acceptable up to one milion rows in a table (around 500ms).  The
-        # whole problem, however, only appears only at some systems (TCs Debian
-        # development workstation and Ubuntu notebook) and didn't apear at any
-        # other tested system.  So the work around below is left commanted out
-        # just in case the problem re-appears somewhere...
-        # return filter(lambda row: g.IsInSelection(row, 0), range(g.GetNumberRows()))
-        #
-        # One would say that g.GetSelectedRows() is what we want, but it always
-        # returns an empty list, so we must construct the list ourselves using
-        # g.GetSelectionBlockTopLeft() and g.GetSelectionBlockBottomRight().
-        rows = []
-        for start, end in zip([r for r, c in g.GetSelectionBlockTopLeft()],
-                              [r for r, c in g.GetSelectionBlockBottomRight()]):
-            rows.extend([r for r in range(start, end + 1) if r not in rows])
-        rows.sort()
-        return rows
-
     def selected_rows(self):
-        return _grid.TableRowIterator(self._table, self._selected_rows())
+        return _grid.TableRowIterator(self._table, self._grid.GetSelectedRows())
 
     def unselect_selected_rows(self):
         self._grid.ClearSelection()
