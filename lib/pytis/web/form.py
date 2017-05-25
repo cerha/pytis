@@ -706,6 +706,7 @@ class _SubmittableForm(Form):
 
 
 class ShowForm(_SingleRecordForm):
+    """Read only form displaying a single record in its full layout."""
     _CSS_CLS = 'show-form'
     _ALIGN_NUMERIC_FIELDS = True
 
@@ -713,6 +714,29 @@ class ShowForm(_SingleRecordForm):
         uri = self._req.make_uri(self._req.uri())
         return (super(ShowForm, self)._export_form(context) +
                 self._export_actions(context, self._row, uri))
+
+
+class DeletionForm(_SingleRecordForm, _SubmittableForm):
+    """Special submittable form for record deletion confirmation."""
+    _CSS_CLS = 'deletion-form'
+    _ALIGN_NUMERIC_FIELDS = True
+
+    def __init__(self, view, req, row, prompt=_("Confirm record deletion:"),
+                 show_reset_button=False, submit_buttons=None, **kwargs):
+        submit_buttons = submit_buttons or ((None, _("Confirm Deletion")),)
+        super(DeletionForm, self).__init__(view, req, row, submit_buttons=submit_buttons,
+                                           show_reset_button=show_reset_button, **kwargs)
+        self._prompt = prompt
+
+    def _export_form(self, context):
+        return (self._export_prompt(context) +
+                super(DeletionForm, self)._export_form(context))
+
+    def _export_prompt(self, context):
+        prompt = self._prompt
+        if isinstance(self._prompt, lcg.Content):
+            prompt = prompt.export(context)
+        return [context.generator().div(prompt, cls='deletion-prompt')]
 
 
 class EditForm(_SingleRecordForm, _SubmittableForm):

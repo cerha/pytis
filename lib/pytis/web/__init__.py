@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2008, 2011, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2011, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ from request import FileUpload, Request
 from field import UriType, Link, localizable_export, Content, Field, \
     localizable_export as localizable_datetime # For backwards compatibility.
 
-from form import BadRequest, Form, ShowForm, EditForm, VirtualForm, FilterForm, \
+from form import BadRequest, Form, ShowForm, DeletionForm, EditForm, VirtualForm, FilterForm, \
     BrowseForm, ListView, ItemizedView, CheckRowsForm, EditableBrowseForm
 
 from dialog import Dialog, SelectionDialog
