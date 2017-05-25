@@ -542,6 +542,37 @@ class _SingleRecordForm(LayoutForm):
     def _export_body(self, context):
         return [self._export_group(context, self._layout)]
 
+    def is_ajax_request(self, req):
+        """Return True if the request is an AJAX request.
+
+        If the current request is a pytis form update request, return True,
+        Otherwise return False.  If True is returned, the request should return
+        the result of the method 'ajax_response()'.
+
+        """
+        return req.param('_pytis_inline_form_request') is not None
+
+
+    def ajax_response(self, req):
+        """Return the AJAX request response data.
+
+        This method acts as the server side counter-part of the client side
+        code defined in the pytis form JavaScript code in 'pytis.js'.  The
+        returned value is typically a data structure to be encoded into a JSON
+        string and sent back to the client within the response body with the
+        'application/json' content type set in HTTP response headers.  That way
+        the client side code will be able to process it.  Alternatively, the
+        result may be an 'lcg.Content' instance which should be exported and
+        sent back to the client as 'text/html'.
+
+        May raise 'pytis.web.BadRequest' exception if the request parameters
+        don't make sense.
+
+        """
+        if req.param('_pytis_inline_form_request'):
+            return self
+
+
 
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
@@ -836,117 +867,95 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return None
 
     def is_ajax_request(self, req):
-        """Return True if the request is an AJAX request.
-
-        If the current request is a pytis form update request, return True,
-        Otherwise return False.  If True is returned, the request should return
-        the result of the method 'ajax_response()'.
-
-        """
         return (req.param('_pytis_form_update_request') is not None or
-                req.param('_pytis_inline_form_request') is not None)
-
+                super(EditForm, self).is_ajax_request(req))
 
     def ajax_response(self, req):
-        """Return the AJAX request response data.
-
-        This method acts as the server side counter-part of the client side
-        code defined in the pytis form JavaScript code in 'pytis.js'.  The
-        returned value is typically a data structure to be encoded into a JSON
-        string and sent back to the client within the response body with the
-        'application/json' content type set in HTTP response headers.  That way
-        the client side code will be able to process it.  Alternatively, the
-        result may be an 'lcg.Content' instance which should be exported and
-        sent back to the client as 'text/html'.
-
-        May raise 'pytis.web.BadRequest' exception if the request parameters
-        don't make sense.
-
-        """
-        if req.param('_pytis_inline_form_request'):
-            return self
         if req.param('_pytis_attachment_storage_request'):
             return self._attachment_storage_request(req)
-        if req.param('_pytis_insert_new_row'):
+        elif req.param('_pytis_insert_new_row'):
             form = self._find_subform(self._layout)
             return form.ajax_response(req)
-        request_number = req.param('_pytis_form_update_request')
-        changed_field = str(req.param('_pytis_form_changed_field'))
-        order = self._field_order()
-        # Validate the changed field last (for AJAX update request) to invoke computers correctly.
-        if changed_field:
-            if changed_field in order:
-                order.remove(changed_field)
-            order.append(changed_field)
-        state = req.param('_pytis_form_state')
-        if state:
-            import urlparse
-            field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
+        elif req.param('_pytis_form_update_request'):
+            request_number = req.param('_pytis_form_update_request')
+            changed_field = str(req.param('_pytis_form_changed_field'))
+            order = self._field_order()
+            # Validate the changed field last to invoke computers correctly.
+            if changed_field:
+                if changed_field in order:
+                    order.remove(changed_field)
+                order.append(changed_field)
+            state = req.param('_pytis_form_state')
+            if state:
+                import urlparse
+                field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
+            else:
+                field_states = {}
+            fields = {}
+            localizer = req.localizer()
+            localize = localizer.localize
+            locale_data = localizer.locale_data()
+            row = self._row
+            # Validate all fields first.
+            for fid in order:
+                try:
+                    field = self._fields[fid]
+                except KeyError:
+                    # May happen e.g. in automated attack attempts
+                    return dict(request_number=request_number, fields={})
+                fields[fid] = fdata = {}
+                computer = field.spec.computer()
+                if computer and changed_field and changed_field in computer.depends():
+                    # Don't validate fields which depend on the field currently changed by
+                    # the user during AJAX form updates.
+                    error = None
+                elif row.editable(fid): # non-editable field values are empty in the request!
+                    error = field.validate(req, locale_data)
+                    if error:
+                        fdata['error'] = localize(error.message())
+            # Compute field state after all fields are validated.
+            for fid in order:
+                if fid != changed_field:
+                    field = self._fields[fid]
+                    fdata = fields[fid]
+                    fdata['editable'] = row.editable(fid)
+                    if ((field.spec.computer() and row.invalid_string(fid) is None
+                         and not isinstance(field.type, pd.Binary))):
+                        exported_value = row[fid].export()
+                        localized_value = localize(localizable_export(row[fid]))
+                        # Values of disabled fields are not in the request, so send them always...
+                        if ((not req.has_param(fid) or
+                             req.param(fid) not in (exported_value, localized_value))):
+                            fdata['value'] = exported_value
+                            fdata['localized_value'] = localized_value
+                        # lcg.log('-', fid, localized_value, req.param(fid), field.value());
+                    if fid in field_states:
+                        old_state = field_states[fid]
+                        new_state = field.state()
+                        if new_state != old_state:
+                            enumeration = [(value, localize(label))
+                                           for value, label in row.enumerate(fid)]
+                            fdata['state'] = new_state
+                            fdata['enumeration'] = enumeration
+                            if isinstance(field.type, pd.Array):
+                                func = self._uri_provider(row, UriType.LINK, fid)
+                                def link(value):
+                                    lnk = func(value)
+                                    if isinstance(lnk, Link):
+                                        return dict(href=lnk.uri(),
+                                                    title=localize(lnk.title()),
+                                                    target=lnk.target())
+                                    else:
+                                        return dict(href=lnk)
+                                if func:
+                                    fdata['links'] = dict([(value, link(value))
+                                                           for (value, display) in enumeration])
+            for fid, error in self._check():
+                if fid in fields:
+                    fields[fid]['error'] = localize(error)
+            return dict(request_number=request_number, fields=fields)
         else:
-            field_states = {}
-        fields = {}
-        localizer = req.localizer()
-        localize = localizer.localize
-        locale_data = localizer.locale_data()
-        row = self._row
-        # Validate all fields first.
-        for fid in order:
-            try:
-                field = self._fields[fid]
-            except KeyError:
-                # May happen e.g. in automated attack attempts
-                return dict(request_number=request_number, fields={})
-            fields[fid] = fdata = {}
-            computer = field.spec.computer()
-            if computer and changed_field and changed_field in computer.depends():
-                # Don't validate fields which depend on the field currently changed by
-                # the user during AJAX form updates.
-                error = None
-            elif row.editable(fid): # non-editable field values are empty in the request!
-                error = field.validate(req, locale_data)
-                if error:
-                    fdata['error'] = localize(error.message())
-        # Compute field state after all fields are validated.
-        for fid in order:
-            if fid != changed_field:
-                field = self._fields[fid]
-                fdata = fields[fid]
-                fdata['editable'] = row.editable(fid)
-                if ((field.spec.computer() and row.invalid_string(fid) is None
-                     and not isinstance(field.type, pd.Binary))):
-                    exported_value = row[fid].export()
-                    localized_value = localize(localizable_export(row[fid]))
-                    # Values of disabled fields are not in the request, so send them always...
-                    if ((not req.has_param(fid) or
-                         req.param(fid) not in (exported_value, localized_value))):
-                        fdata['value'] = exported_value
-                        fdata['localized_value'] = localized_value
-                    # lcg.log('-', fid, localized_value, req.param(fid), field.value());
-                if fid in field_states:
-                    old_state = field_states[fid]
-                    new_state = field.state()
-                    if new_state != old_state:
-                        enumeration = [(value, localize(label))
-                                       for value, label in row.enumerate(fid)]
-                        fdata['state'] = new_state
-                        fdata['enumeration'] = enumeration
-                        if isinstance(field.type, pd.Array):
-                            func = self._uri_provider(row, UriType.LINK, fid)
-                            def link(value):
-                                lnk = func(value)
-                                if isinstance(lnk, Link):
-                                    return dict(href=lnk.uri(),
-                                                title=localize(lnk.title()),
-                                                target=lnk.target())
-                                else:
-                                    return dict(href=lnk)
-                            if func:
-                                fdata['links'] = dict([(value, link(value))
-                                                       for (value, display) in enumeration])
-        for fid, error in self._check():
-            if fid in fields:
-                fields[fid]['error'] = localize(error)
-        return dict(request_number=request_number, fields=fields)
+            return super(EditForm, self).ajax_response(req)
 
     def set_error(self, field_id, error):
         """Arguments:
