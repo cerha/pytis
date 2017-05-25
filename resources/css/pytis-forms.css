@@ -187,6 +187,7 @@
 .pytis-form.browse-form table.data-table tr.data-row > td.inline-edit {
     padding: 0;
 }
+.pytis-form.browse-form td.inline-edit .message,
 .pytis-form.browse-form td.inline-edit form > .group,
 .pytis-form.browse-form td.inline-edit .submit-buttons {
     margin: 0;

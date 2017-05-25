@@ -512,7 +512,7 @@ pytis.BrowseForm = Class.create({
     },
 
     on_popup_menu_inline_action: function (element, action, uri) {
-        if (action === 'update') {
+        if (action === 'update' || action === 'delete') {
             var parameters = uri.parseQuery();
             var uri = uri.slice(0, uri.indexOf('?'));
             var form = new Element('form', {action: uri, method: 'GET'});
