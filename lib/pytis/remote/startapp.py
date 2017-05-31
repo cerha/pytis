@@ -94,7 +94,7 @@ class ui(object):
         def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
             assert (isinstance(content, (wx.Window, wx.Sizer, wx.Size)) or
                     isinstance(content, (tuple, list)) and len(content) == 2
-                    and all(isinstance(x, int) for x in content)), content
+                    and all(isinstance(x, int) for x in content) or content is None), content
             self.content = content
             self.proportion = proportion
             self.expand = expand
