@@ -569,12 +569,13 @@
 
 /* Calendar */
 
-div.calendar
-{
+div.calendar {
   font-size: smaller;
   color: #000;
 }
-
+div.calendar.popup {
+  z-index: 1000;
+}
 div.calendar table
 {
   background-color: #eee;
