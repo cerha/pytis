@@ -437,6 +437,44 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
 
 class X2GoClient(x2go.X2GoClient):
 
+    class ServerInfo(object):
+        def __init__(self, session_id, control_session):
+            self._port = None
+            self._password = None
+            self._changed = False
+            self._control_session = control_session
+            self._server_file_name = '%s/.x2go/ssh/pytis.%s' % (
+                control_session._x2go_remote_home,
+                session_id,
+            )
+
+        def port(self):
+            return self._port
+
+        def set_port(self, port):
+            if self._port != port:
+                self._changed = True
+                self._port = port
+
+        def password(self):
+            return self._password
+
+        def set_password(self, password):
+            if self._password != password:
+                self._changed = True
+                self._password = password
+
+        def changed(self):
+            return self._changed
+
+        def write(self):
+            if self._port is None or self._password is None:
+                return
+            if self._changed:
+                data = '0:%s:%s:' % (self._port, self._password,)
+                self._control_session._x2go_sftp_write(self._server_file_name, data)
+                self._changed = False
+
     _DEFAULT_RPYC_PORT = 10000
     _MAX_RPYC_PORT_ATTEMPTS = 100
 
@@ -509,42 +547,7 @@ class X2GoClient(x2go.X2GoClient):
         # application) but this information is often unavailable here for
         # unclear reasons.
         session_id = self.session_registry(s_uuid).terminal_session.session_info.name
-        server_file_name = '%s/.x2go/ssh/pytis.%s' % (control_session._x2go_remote_home,
-                                                      session_id,)
-
-        class ServerInfo(object):
-            def __init__(self):
-                self._port = None
-                self._password = None
-                self._changed = False
-
-            def port(self):
-                return self._port
-
-            def set_port(self, port):
-                if self._port != port:
-                    self._changed = True
-                    self._port = port
-
-            def password(self):
-                return self._password
-
-            def set_password(self, password):
-                if self._password != password:
-                    self._changed = True
-                    self._password = password
-
-            def changed(self):
-                return self._changed
-
-            def write(self):
-                if self._port is None or self._password is None:
-                    return
-                if self._changed:
-                    data = '0:%s:%s:' % (self._port, self._password,)
-                    control_session._x2go_sftp_write(server_file_name, data)
-                    self._changed = False
-        self._pytis_server_info = ServerInfo()
+        self._pytis_server_info = self.ServerInfo(session_id, control_session)
 
     def _handle_info(self):
         try:
