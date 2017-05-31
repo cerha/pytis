@@ -1131,9 +1131,10 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 
 });
 
+pytis.Calendar = Class.create();
 
 //------------------------------------------------------------------------------
-// Follows a copy of CalendarView library for Prototype.js from calendarview.org
+// Customized copy of CalendarView library from calendarview.org
 //------------------------------------------------------------------------------
 //
 // The original maintained by Justin Mecham <justin@aspect.net>
@@ -1153,40 +1154,39 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 // This version used in Pytis web forms includes minor modifications
 // by Tomáš Cerha <cerha@brailcom.org> to allow calendar localization.
 
-var Calendar = Class.create()
 
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
-Calendar.VERSION = '1.2'
+pytis.Calendar.VERSION = '1.2'
 
-Calendar.DAY_NAMES = new Array(
+pytis.Calendar.DAY_NAMES = new Array(
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
   'Sunday'
 )
 
-Calendar.SHORT_DAY_NAMES = new Array(
+pytis.Calendar.SHORT_DAY_NAMES = new Array(
   'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S'
 )
 
-Calendar.MONTH_NAMES = new Array(
+pytis.Calendar.MONTH_NAMES = new Array(
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
   'September', 'October', 'November', 'December'
 )
 
-Calendar.SHORT_MONTH_NAMES = new Array(
+pytis.Calendar.SHORT_MONTH_NAMES = new Array(
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov',
   'Dec' 
 )
-Calendar.TODAY = 'Today'
-Calendar.FIRST_WEEK_DAY = 0
+pytis.Calendar.TODAY = 'Today'
+pytis.Calendar.FIRST_WEEK_DAY = 0
 
-Calendar.NAV_PREVIOUS_YEAR  = -2
-Calendar.NAV_PREVIOUS_MONTH = -1
-Calendar.NAV_TODAY          =  0
-Calendar.NAV_NEXT_MONTH     =  1
-Calendar.NAV_NEXT_YEAR      =  2
+pytis.Calendar.NAV_PREVIOUS_YEAR  = -2
+pytis.Calendar.NAV_PREVIOUS_MONTH = -1
+pytis.Calendar.NAV_TODAY          =  0
+pytis.Calendar.NAV_NEXT_MONTH     =  1
+pytis.Calendar.NAV_NEXT_YEAR      =  2
 
 //------------------------------------------------------------------------------
 // Static Methods
@@ -1195,7 +1195,7 @@ Calendar.NAV_NEXT_YEAR      =  2
 // This gets called when the user presses a mouse button anywhere in the
 // document, if the calendar is shown. If the click was outside the open
 // calendar this function closes it.
-Calendar._checkCalendar = function(event) {
+pytis.Calendar._checkCalendar = function(event) {
   if (!window._popupCalendar)
     return false
   if (Element.descendantOf(Event.element(event), window._popupCalendar.container))
@@ -1208,15 +1208,15 @@ Calendar._checkCalendar = function(event) {
 // Event Handlers
 //------------------------------------------------------------------------------
 
-Calendar.handleMouseDownEvent = function(event)
+pytis.Calendar.handleMouseDownEvent = function(event)
 {
-  Event.observe(document, 'mouseup', Calendar.handleMouseUpEvent)
+  Event.observe(document, 'mouseup', pytis.Calendar.handleMouseUpEvent)
   Event.stop(event)
 }
 
 // XXX I am not happy with how clicks of different actions are handled. Need to
 // clean this up!
-Calendar.handleMouseUpEvent = function(event)
+pytis.Calendar.handleMouseUpEvent = function(event)
 {
   var el        = Event.element(event)
   var calendar  = el.calendar
@@ -1247,7 +1247,7 @@ Calendar.handleMouseUpEvent = function(event)
   {
     var date = new Date(calendar.date)
 
-    if (el.navAction == Calendar.NAV_TODAY)
+    if (el.navAction == pytis.Calendar.NAV_TODAY)
       date.setDateOnly(new Date())
 
     var year = date.getFullYear()
@@ -1261,13 +1261,13 @@ Calendar.handleMouseUpEvent = function(event)
     switch (el.navAction) {
 
       // Previous Year
-      case Calendar.NAV_PREVIOUS_YEAR:
+      case pytis.Calendar.NAV_PREVIOUS_YEAR:
         if (year > calendar.minYear)
           date.setFullYear(year - 1)
         break
 
       // Previous Month
-      case Calendar.NAV_PREVIOUS_MONTH:
+      case pytis.Calendar.NAV_PREVIOUS_MONTH:
         if (mon > 0) {
           setMonth(mon - 1)
         }
@@ -1278,11 +1278,11 @@ Calendar.handleMouseUpEvent = function(event)
         break
 
       // Today
-      case Calendar.NAV_TODAY:
+      case pytis.Calendar.NAV_TODAY:
         break
 
       // Next Month
-      case Calendar.NAV_NEXT_MONTH:
+      case pytis.Calendar.NAV_NEXT_MONTH:
         if (mon < 11) {
           setMonth(mon + 1)
         }
@@ -1293,7 +1293,7 @@ Calendar.handleMouseUpEvent = function(event)
         break
 
       // Next Year
-      case Calendar.NAV_NEXT_YEAR:
+      case pytis.Calendar.NAV_NEXT_YEAR:
         if (year < calendar.maxYear)
           date.setFullYear(year + 1)
         break
@@ -1311,12 +1311,12 @@ Calendar.handleMouseUpEvent = function(event)
   if (isNewDate) event && calendar.callSelectHandler()
   if (calendar.shouldClose) event && calendar.callCloseHandler()
 
-  Event.stopObserving(document, 'mouseup', Calendar.handleMouseUpEvent)
+  Event.stopObserving(document, 'mouseup', pytis.Calendar.handleMouseUpEvent)
 
   return Event.stop(event)
 }
 
-Calendar.defaultSelectHandler = function(calendar)
+pytis.Calendar.defaultSelectHandler = function(calendar)
 {
   if (!calendar.dateField) return false
 
@@ -1334,7 +1334,7 @@ Calendar.defaultSelectHandler = function(calendar)
   if (calendar.shouldClose) calendar.callCloseHandler()
 }
 
-Calendar.defaultCloseHandler = function(calendar)
+pytis.Calendar.defaultCloseHandler = function(calendar)
 {
   calendar.hide()
 }
@@ -1344,7 +1344,7 @@ Calendar.defaultCloseHandler = function(calendar)
 // Calendar Setup
 //------------------------------------------------------------------------------
 
-Calendar.setup = function(params)
+pytis.Calendar.setup = function(params)
 {
 
   function param_default(name, def) {
@@ -1360,8 +1360,8 @@ Calendar.setup = function(params)
   // In-Page Calendar
   if (params.parentElement)
   {
-    var calendar = new Calendar(params.parentElement)
-    calendar.setSelectHandler(params.selectHandler || Calendar.defaultSelectHandler)
+    var calendar = new pytis.Calendar(params.parentElement)
+    calendar.setSelectHandler(params.selectHandler || pytis.Calendar.defaultSelectHandler)
     if (params.dateFormat)
       calendar.setDateFormat(params.dateFormat)
     if (params.dateField) {
@@ -1381,9 +1381,9 @@ Calendar.setup = function(params)
   {
     var triggerElement = $(params.triggerElement || params.dateField)
     triggerElement.onclick = function() {
-      var calendar = new Calendar()
-      calendar.setSelectHandler(params.selectHandler || Calendar.defaultSelectHandler)
-      calendar.setCloseHandler(params.closeHandler || Calendar.defaultCloseHandler)
+      var calendar = new pytis.Calendar()
+      calendar.setSelectHandler(params.selectHandler || pytis.Calendar.defaultSelectHandler)
+      calendar.setCloseHandler(params.closeHandler || pytis.Calendar.defaultCloseHandler)
       if (params.dateFormat)
         calendar.setDateFormat(params.dateFormat)
       if (params.dateField) {
@@ -1391,7 +1391,8 @@ Calendar.setup = function(params)
         calendar.parseDate(calendar.dateField.innerHTML || calendar.dateField.value)
       }
       if (params.dateField)
-        Date.parseDate(calendar.dateField.value || calendar.dateField.innerHTML, calendar.dateFormat)
+        Date.parseDate(calendar.dateField.value || calendar.dateField.innerHTML,
+                       calendar.dateFormat)
       calendar.showAtElement(triggerElement)
       return calendar
     }
@@ -1405,7 +1406,7 @@ Calendar.setup = function(params)
 // Calendar Instance
 //------------------------------------------------------------------------------
 
-Calendar.prototype = {
+pytis.Calendar.prototype = {
 
   // The HTML Container Element
   container: null,
@@ -1465,8 +1466,8 @@ Calendar.prototype = {
 
     date.setDate(1)
     // Calculate the first day to display (including the previous month)
-    var offset = (date.getDay() >= Calendar.FIRST_WEEK_DAY ? +1 : -6) 
-    date.setDate(-date.getDay() + offset + Calendar.FIRST_WEEK_DAY)
+    var offset = (date.getDay() >= pytis.Calendar.FIRST_WEEK_DAY ? +1 : -6) 
+    date.setDate(-date.getDay() + offset + pytis.Calendar.FIRST_WEEK_DAY)
 
     // Fill in the days of the month
     Element.getElementsBySelector(this.container, 'tbody tr').each(
@@ -1513,7 +1514,7 @@ Calendar.prototype = {
     )
 
     this.container.getElementsBySelector('td.title')[0].update(
-      Calendar.MONTH_NAMES[month] + ' ' + this.date.getFullYear()
+      pytis.Calendar.MONTH_NAMES[month] + ' ' + this.date.getFullYear()
     )
   },
 
@@ -1550,17 +1551,17 @@ Calendar.prototype = {
 
     // Calendar Navigation
     row = new Element('tr')
-    this._drawButtonCell(row, '&#x00ab;', 1,     Calendar.NAV_PREVIOUS_YEAR)
-    this._drawButtonCell(row, '&#x2039;', 1,     Calendar.NAV_PREVIOUS_MONTH)
-    this._drawButtonCell(row, Calendar.TODAY, 3, Calendar.NAV_TODAY)
-    this._drawButtonCell(row, '&#x203a;', 1,     Calendar.NAV_NEXT_MONTH)
-    this._drawButtonCell(row, '&#x00bb;', 1,     Calendar.NAV_NEXT_YEAR)
+    this._drawButtonCell(row, '&#x00ab;', 1,     pytis.Calendar.NAV_PREVIOUS_YEAR)
+    this._drawButtonCell(row, '&#x2039;', 1,     pytis.Calendar.NAV_PREVIOUS_MONTH)
+    this._drawButtonCell(row, pytis.Calendar.TODAY, 3, pytis.Calendar.NAV_TODAY)
+    this._drawButtonCell(row, '&#x203a;', 1,     pytis.Calendar.NAV_NEXT_MONTH)
+    this._drawButtonCell(row, '&#x00bb;', 1,     pytis.Calendar.NAV_NEXT_YEAR)
     thead.appendChild(row)
 
     // Day Names
     row = new Element('tr')
     for (var i = 0; i < 7; ++i) {
-      cell = new Element('th').update(Calendar.SHORT_DAY_NAMES[(i + Calendar.FIRST_WEEK_DAY) % 7]);
+      cell = new Element('th').update(pytis.Calendar.SHORT_DAY_NAMES[(i + pytis.Calendar.FIRST_WEEK_DAY) % 7]);
       if (i == 0 || i == 6)
         cell.addClassName('weekend')
       row.appendChild(cell)
@@ -1591,7 +1592,7 @@ Calendar.prototype = {
     this.update(this.date)
 
     // Observe the container for mousedown events
-    Event.observe(this.container, 'mousedown', Calendar.handleMouseDownEvent)
+    Event.observe(this.container, 'mousedown', pytis.Calendar.handleMouseDownEvent)
 
     // Append to parent element
     parent.appendChild(this.container)
@@ -1643,7 +1644,7 @@ Calendar.prototype = {
     this.container.show()
     if (this.isPopup) {
       window._popupCalendar = this
-      Event.observe(document, 'mousedown', Calendar._checkCalendar)
+      Event.observe(document, 'mousedown', pytis.Calendar._checkCalendar)
     }
   },
 
@@ -1665,7 +1666,7 @@ Calendar.prototype = {
   hide: function()
   {
     if (this.isPopup)
-      Event.stopObserving(document, 'mousedown', Calendar._checkCalendar)
+      Event.stopObserving(document, 'mousedown', pytis.Calendar._checkCalendar)
     this.container.hide()
   },
 
@@ -1777,7 +1778,7 @@ Date.parseDate = function(str, fmt) {
       case "%b":
       case "%B":
         for (j = 0; j < 12; ++j) {
-          if (Calendar.MONTH_NAMES[j].substr(0, a[i].length).toLowerCase() == a[i].toLowerCase()) {
+          if (pytis.Calendar.MONTH_NAMES[j].substr(0, a[i].length).toLowerCase() == a[i].toLowerCase()) {
             m = j;
             break;
           }
@@ -1813,7 +1814,7 @@ Date.parseDate = function(str, fmt) {
     if (a[i].search(/[a-zA-Z]+/) != -1) {
       var t = -1;
       for (j = 0; j < 12; ++j) {
-        if (Calendar.MONTH_NAMES[j].substr(0, a[i].length).toLowerCase() == a[i].toLowerCase()) { t = j; break; }
+        if (pytis.Calendar.MONTH_NAMES[j].substr(0, a[i].length).toLowerCase() == a[i].toLowerCase()) { t = j; break; }
       }
       if (t != -1) {
         if (m != -1) {
@@ -1901,10 +1902,10 @@ Date.prototype.print = function (str) {
     ir = 12;
   var min = this.getMinutes();
   var sec = this.getSeconds();
-  s["%a"] = Calendar.SHORT_DAY_NAMES[w]; // abbreviated weekday name [FIXME: I18N]
-  s["%A"] = Calendar.DAY_NAMES[w]; // full weekday name
-  s["%b"] = Calendar.SHORT_MONTH_NAMES[m]; // abbreviated month name [FIXME: I18N]
-  s["%B"] = Calendar.MONTH_NAMES[m]; // full month name
+  s["%a"] = pytis.Calendar.SHORT_DAY_NAMES[w]; // abbreviated weekday name [FIXME: I18N]
+  s["%A"] = pytis.Calendar.DAY_NAMES[w]; // full weekday name
+  s["%b"] = pytis.Calendar.SHORT_MONTH_NAMES[m]; // abbreviated month name [FIXME: I18N]
+  s["%B"] = pytis.Calendar.MONTH_NAMES[m]; // full month name
   // FIXME: %c : preferred date and time representation for the current locale
   s["%C"] = 1 + Math.floor(y / 100); // the century number
   s["%d"] = (d < 10) ? ("0" + d) : d; // the day of the month (range 01 to 31)
