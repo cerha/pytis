@@ -96,7 +96,7 @@ Komunikace přes tunel řeší přesně ty služby, které ve specifikacích pou
 to pytis.remote. Tedy otevírání souborů, načítání či ukládání souborů a
 případně i ty clipboardové operace.  Nemůžeme použít sshfs, protože to umožňuje
 jen sdílet nějaký vydefinovaný adresář, proto skutečně potřebujeme otevírat
-file dialogu na klientovi.  Nicméně v současné době to dělá to, co to dělat má,
+file dialogy na klientovi.  Nicméně v současné době to dělá to, co to dělat má,
 jen je to nepřehledné a tedy náchylné k chybám, přičemž nějaké chyby se
 objevují již nyní.
 
