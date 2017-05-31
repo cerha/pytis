@@ -569,37 +569,37 @@
 
 /* Calendar */
 
-div.calendar {
+.pytis-calendar {
   font-size: smaller;
   color: #000;
 }
-div.calendar.popup {
+.pytis-calendar.popup {
   z-index: 1000;
 }
-div.calendar table
+.pytis-calendar table
 {
   background-color: #eee;
   border: 1px solid #aaa;
   border-collapse: collapse;
 }
 
-div.calendar thead {
+.pytis-calendar thead {
   background-color: white;
 }
 
-div.calendar td,
-div.calendar th
+.pytis-calendar td,
+.pytis-calendar th
 {
   padding: 3px;
   text-align: center;
 }
 
-div.calendar td.title
+.pytis-calendar td.title
 {
   font-weight: bold;
 }
 
-div.calendar th
+.pytis-calendar th
 {
   background: #ddd;
   border-bottom: 1px solid #ccc;
@@ -608,40 +608,40 @@ div.calendar th
   color: #555;
 }
 
-div.calendar tr.days td {
+.pytis-calendar tr.days td {
   width: 2em;
   color: #555;
   text-align: center;
   cursor: pointer;
 }
 
-div.calendar tr.days td:hover,
-div.calendar td.button:hover
+.pytis-calendar tr.days td:hover,
+.pytis-calendar td.button:hover
 {
   background-color: #34ABFA;
   cursor: pointer;
 }
 
-div.calendar tr.days td:active
-div.calendar td.button:active
+.pytis-calendar tr.days td:active
+.pytis-calendar td.button:active
 {
   background-color: #cde;
 }
 
-div.calendar tr.days td.selected
+.pytis-calendar tr.days td.selected
 {
   font-weight: bold;
   background-color: #fff;
   color: #000;
 }
 
-div.calendar tr.days td.today
+.pytis-calendar tr.days td.today
 {
   font-weight: bold;
   color: #D50000;
 }
 
-div.calendar tr.days td.otherDay
+.pytis-calendar tr.days td.otherDay
 {
   color: #bbb;
 }

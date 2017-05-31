@@ -1581,7 +1581,7 @@ pytis.Calendar.prototype = {
 
     // Calendar Container (div)
     this.container = new Element('div')
-    this.container.addClassName('calendar')
+    this.container.addClassName('pytis-calendar')
     if (this.isPopup) {
       this.container.setStyle({ position: 'absolute', display: 'none' })
       this.container.addClassName('popup')
