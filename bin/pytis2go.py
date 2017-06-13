@@ -349,7 +349,6 @@ Possible values for the --pack NX option are:
 
 def main():
     parser, args = parseargs()
-    args.parser = parser
     session_parameters = dict(
         server=args.server,
         port=int(args.remote_ssh_port),
@@ -383,7 +382,7 @@ def main():
     force_parameters = [
         param for param, value in session_parameters.items()
         # Apply str() because of 'port' which is int in session_parameters and str in args.
-        if value and str(value) != args.parser.get_default(param2arg.get(param, param)) and
+        if value and str(value) != parser.get_default(param2arg.get(param, param)) and
         # TODO: print_action_arg is omited because the arg parser doesn't know its default.
         param != 'print_action_arg'
     ]
