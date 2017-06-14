@@ -1301,11 +1301,13 @@ class QueryFields(object):
         self._load = load
         self._save = save
         self._on_main_form_selection = on_main_form_selection
-        self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
+        self._fields = tuple(fields)
+        self._layout = layout
+        self._kwargs = kwargs
 
     def fields(self):
-        """Return value of the argument 'fields' passed to the constructor."""
-        return self._view_spec_kwargs['fields']
+        """Return the 'fields' passed to the constructor as a tuple."""
+        return self._fields
 
     def autoapply(self):
         """Return value of the argument 'autoapply' passed to the constructor."""
@@ -1329,7 +1331,8 @@ class QueryFields(object):
 
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""
-        return self._view_spec_kwargs
+        return dict(fields=self._fields, layout=self._layout, **self._kwargs)
+
 
 
 class ViewSpec(object):
