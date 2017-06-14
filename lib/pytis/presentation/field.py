@@ -118,7 +118,7 @@ class PresentedRow(object):
             self.check = f.check()
             self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
-            self.secret_computer = False # Set dynamically during initialization.
+            self.secret_computer = False  # Set dynamically during initialization.
             self.attachment_storage = f.attachment_storage()
             self.filename = f.filename()
             self.is_range = isinstance(type, pytis.data.Range)
@@ -234,6 +234,7 @@ class PresentedRow(object):
             prefill = dict([(k, value(v).retype(self._coldict[k].type))
                             for k, v in prefill.items()])
         self._cache = {}
+
         def genval(key, virtual):
             if row is None or key not in row:
                 if prefill and key in prefill:
@@ -324,6 +325,7 @@ class PresentedRow(object):
         self._runtime_filter = {}
         self._runtime_arguments_dirty = {}
         self._runtime_arguments = {}
+
         def make_deps(column, value_dict, dirty_dict, dependency_dict, computer):
             key = column.id
             if value_dict is not None:
@@ -352,6 +354,7 @@ class PresentedRow(object):
             if c.runtime_arguments is not None:
                 make_deps(c, self._runtime_arguments, self._runtime_arguments_dirty,
                           self._runtime_arguments_dependent, c.runtime_arguments)
+
         def add_secret(column):
             for key in self._dependent.get(column.id, []):
                 column = self._coldict[key]
@@ -1147,6 +1150,7 @@ class PresentedRow(object):
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
             value_column = enumerator.value_column()
             display = self._display_as_row_function(column)
+
             def check_display(row):
                 result = display(row)
                 assert isinstance(result, basestring), \
