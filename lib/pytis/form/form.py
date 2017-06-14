@@ -2634,7 +2634,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if msg:
             if field_id:
                 msg = self._view.field(field_id).label() + ": " + msg
-            run_dialog(Error, title=_("Integrity check failed"), message=msg)
+            run_dialog(pytis.form.Error, title=_("Integrity check failed"), message=msg)
         if field_id:
             f = self._field(field_id)
             if f:
