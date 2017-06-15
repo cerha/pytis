@@ -3316,6 +3316,7 @@ class BrowseForm(FoldableForm):
         self._explicit_in_operator_links = []
         self._automatic_in_operator_links = []
         for f in self._fields:
+            fid = f.id()
             # Use explicitly defined links from specification.
             for link in f.links():
                 label = link.label()
@@ -3326,17 +3327,21 @@ class BrowseForm(FoldableForm):
                 if item not in self._explicit_in_operator_links:
                     self._explicit_in_operator_links.append(item)
             # Create automatic links for codebook fields.
-            enumerator = self._row.type(f.id()).enumerator()
-            codebook = self._row.codebook(f.id())
+            enumerator = self._row.type(fid).enumerator()
+            codebook = self._row.codebook(fid)
             if enumerator and codebook:
                 if codebook in automatic_links:
-                    binding, links = automatic_links[codebook]
+                    links = automatic_links[codebook][1]
                 else:
                     bindings = config.resolver.get(codebook, 'view_spec').bindings()
                     binding = bindings[0].id() if bindings else None
                     links = []
                     automatic_links[codebook] = (binding, links)
-                item = (codebook, enumerator.value_column(), f)
+                if self._row.runtime_arguments(fid):
+                    kwargs = dict(arguments=lambda row, fid=fid: row.runtime_arguments(fid))
+                else:
+                    kwargs = dict()
+                item = (codebook, enumerator.value_column(), f, kwargs)
                 if item not in links:
                     links.append(item)
                 in_item = (codebook, enumerator.value_column(), f, spec_title(codebook), None)
@@ -3344,8 +3349,9 @@ class BrowseForm(FoldableForm):
                     self._automatic_in_operator_links.append(in_item)
         self._automatic_links = [
             (link_label(spec_title(name)),
-             [(f, Link(name, column, binding=_binding)) for name, column, f in items])
-            for name, (_binding, items) in sorted(automatic_links.items())
+             [(f, Link(name, column, binding=binding, **kwargs))
+              for name, column, f, kwargs in links])
+            for name, (binding, links) in sorted(automatic_links.items())
         ]
         self._explicit_in_operator_links.sort()
         self._automatic_in_operator_links.sort()
@@ -3398,6 +3404,9 @@ class BrowseForm(FoldableForm):
                     filter_func = link.filter()
                     if filter_func:
                         kwargs['filter'] = filter_func(row)
+                    arg_func = link.arguments()
+                    if arg_func:
+                        kwargs['arguments'] = arg_func(row)
                 elif type == FormType.EDIT:
                     cls = PopupEditForm
                     title = _("Edit the record of column %s") % f.label()

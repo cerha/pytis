@@ -2671,7 +2671,7 @@ class Link(object):
 
     """
     def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
-                 enabled=True, filter=None):
+                 enabled=True, filter=None, arguments=None):
         """Arguments:
 
           name -- name of the referred specification as a string.
@@ -2705,6 +2705,11 @@ class Link(object):
             be used for filtering the newly opened form.  Only relevant for
             links with 'type'='FormType.BROWSE'.
 
+          arguments -- function of one argument ('PresentedRow' instance)
+            returning a dictionary of table function arguments to be passed to
+            the form.  Only relevant for links with 'type'='FormType.BROWSE'
+            where the target specifiation is based on a table function.
+
         """
         assert isinstance(name, basestring)
         assert isinstance(column, basestring)
@@ -2714,6 +2719,8 @@ class Link(object):
         assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool)
         assert filter is None or isinstance(filter, collections.Callable), filter
         assert filter is None or type == FormType.BROWSE, (filter, type)
+        assert arguments is None or isinstance(arguments, collections.Callable), arguments
+        assert arguments is None or type == FormType.BROWSE, (arguments, type)
         self._name = name
         self._column = column
         self._binding = binding
@@ -2721,6 +2728,7 @@ class Link(object):
         self._label = label
         self._enabled = enabled
         self._filter = filter
+        self._arguments = arguments
 
     def __str__(self):
         return '<Link %s %s>' % (self._name, self._column,)
@@ -2745,6 +2753,9 @@ class Link(object):
 
     def filter(self):
         return self._filter
+
+    def arguments(self):
+        return self._arguments
 
 
 class ListLayout(object):
