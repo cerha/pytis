@@ -1012,9 +1012,11 @@ class StartupController(object):
             return None
 
     def connect(self, username):
-        connection_parameters = dict([(k, self._session_parameters[k])
-                                      for k in ('server', 'port', 'username', 'password',
-                                                'key_filename', 'allow_agent', 'gss_auth')])
+        connection_parameters = dict(
+            [(k, self._session_parameters[k]) for k in
+             ('server', 'port', 'password', 'key_filename', 'allow_agent', 'gss_auth')],
+            username=self._session_parameters['username'] or username,
+        )
         return self._authenticate(self._connect, connection_parameters)
 
     def check_key_password(self, key_filename, password):
