@@ -47,6 +47,8 @@ import x2go.log
 import x2go.xserver
 import pytis.remote
 
+from pytis.util import log, EVENT, OPERATIONAL
+
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
@@ -434,10 +436,68 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             self.write()
         return _xserver_config
 
+def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port)):
+    """This function redefines 'x2go.rforward.x2go_transport_tcp_handler'.
+
+    The x2go definition specifically handles the tunnels defined by the X2Go
+    module ('sshfs' and 'snd'), but we need to nandle the 'rpyc' tunnel as
+    well.  For some reason, the function can not be defined as 'RPyCTunnel'
+    method (this causes a segfault).
+
+    """
+    transport = chan.get_transport()
+    transport._queue_incoming_channel(chan)
+    for reverse_tunnels in transport.reverse_tunnels.values():
+        for tun_id, (tun_port, tunnel) in reverse_tunnels.items():
+            if int(server_port) == int(tun_port):
+                tunnel.notify()
+                return
+
+class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
+    """Customized X2Go reverse tunnel for tunneling RPyC from X2Go server to the client.
+
+    We overide 'x2go.rforward.X2GoRevFwTunnel' to make automatic selection of
+    available server port (the port on the X2Go server side).  We need to pass
+    0 as server_port when calling 'request_port_forward()', update the
+    'server_port' attribute according to the 'request_port_forward()' return
+    value and run a callback which will update the port number also on the
+    X2GoClient side.
+
+    """
+
+    def __init__(self, rpyc_port, control_session, terminal_session, callback):
+        super(RPyCTunnel, self).__init__(
+            server_port=None,
+            remote_host='127.0.0.1',
+            remote_port=rpyc_port,
+            ssh_transport=control_session.get_transport(),
+            session_instance=terminal_session.session_instance,
+            logger=terminal_session.logger,
+        )
+        self._callback = callback
+
+    def _request_port_forwarding(self):
+        port = self.ssh_transport.request_port_forward('127.0.0.1', 0,
+                                                       handler=tunnel_tcp_handler)
+        log(EVENT, 'Port %d forwarded to RPyC server port %d' % (port, self.remote_port))
+        self.server_port = port
+        self._callback(port)
+
+    def resume(self):
+        if self._accept_channels == False:
+            self._accept_channels = True
+            self._request_port_forwarding()
+            self.logger('resumed thread: %s' % repr(self), loglevel=log.loglevel_DEBUG)
 
 class X2GoClient(x2go.X2GoClient):
 
     class ServerInfo(object):
+        # It would be better to use self.info_backend or
+        # self.get_session_info(s_uuid) as the source of remote_container
+        # (instead of _x2go_remote_home + '/.x2go') and agent_pid (instead of
+        # application) but this information is often unavailable here for
+        # unclear reasons.
+
         def __init__(self, session_id, control_session):
             self._port = None
             self._password = None
@@ -538,16 +598,28 @@ class X2GoClient(x2go.X2GoClient):
         #                   str(e), exitcode=-245)
 
     def _pytis_setup(self, s_uuid):
-        # Configuration transfer to the server
-        session = self.get_session(s_uuid)
-        control_session = session.control_session
-        # It would be better to use self.info_backend or
-        # self.get_session_info(s_uuid) as the source of remote_container
-        # (instead of _x2go_remote_home + '/.x2go') and agent_pid (instead of
-        # application) but this information is often unavailable here for
-        # unclear reasons.
-        session_id = self.session_registry(s_uuid).terminal_session.session_info.name
+        control_session = self.get_session(s_uuid).control_session
+        terminal_session = self.session_registry(s_uuid).terminal_session
+        session_id = terminal_session.session_info.name
+        reverse_tunnels = terminal_session.reverse_tunnels[session_id]
         self._pytis_server_info = self.ServerInfo(session_id, control_session)
+        if 'rpyc' not in reverse_tunnels:
+            reverse_tunnels['rpyc'] = (0, None)
+        if reverse_tunnels['rpyc'][1] is None:
+            rpyc_port = RpycInfo.port()
+            def callback(server_port):
+                self._pytis_port_value.set(server_port)
+                reverse_tunnels['rpyc'] = (server_port, tunnel)
+            tunnel = RPyCTunnel(rpyc_port, control_session, terminal_session, callback=callback)
+            terminal_session.active_threads.append(tunnel)
+            tunnel.start()
+        else:
+            reverse_tunnels['rpyc'][1].resume()
+        def info_handler():
+            while self.session_ok(self._x2go_session_hash):
+                self._handle_info()
+                gevent.sleep(0.1)
+        gevent.spawn(info_handler)
 
     def _handle_info(self):
         try:
@@ -562,7 +634,7 @@ class X2GoClient(x2go.X2GoClient):
             if info.changed():
                 info.write()
 
-    def _check_rpyc_server(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
+    def _check_rpyc_server(self, rpyc_stop_queue, rpyc_port):
         import pytis.remote.pytisproc as pytisproc
         server = None
         while True:
@@ -581,8 +653,7 @@ class X2GoClient(x2go.X2GoClient):
             if not port or not password:
                 running = False
             else:
-                authenticator = pytisproc.PasswordAuthenticator(password,
-                                                                ssh_tunnel_dead=ssh_tunnel_dead)
+                authenticator = pytisproc.PasswordAuthenticator(password)
                 try:
                     authenticator.connect('localhost', port)
                 except:
@@ -622,61 +693,13 @@ class X2GoClient(x2go.X2GoClient):
                 self._pytis_password_value.set(RpycInfo.password())
             gevent.sleep(1)
 
-    def _check_ssh_tunnel(self, rpyc_stop_queue, rpyc_port, ssh_tunnel_dead):
-        while True:
-            while not rpyc_port.ready():
-                if self._pytis_terminate.is_set():
-                    return
-                gevent.sleep(0.1)
-            current_rpyc_port = rpyc_port.get()
-            port = gevent.event.AsyncResult()
-            tunnel = pytis.remote.ReverseTunnel(
-                self._session_parameters['server'],
-                current_rpyc_port,
-                ssh_port=self._session_parameters['port'],
-                ssh_forward_port=0,
-                ssh_user=self._session_parameters['username'],
-                ssh_password=self._session_parameters['password'],
-                key_filename=self._session_parameters['key_filename'],
-                ssh_forward_port_result=port,
-                gss_auth=self._session_parameters['gss_auth'],
-            )
-            tunnel.start()
-            while not tunnel.ready():
-                if port.wait(0.1) is not None:
-                    self._pytis_port_value.set(port.get())
-                    break
-            while True:
-                if self._pytis_terminate.is_set():
-                    tunnel.kill()
-                    return
-                if tunnel.ready():
-                    ssh_tunnel_dead.set()
-                    # We must restart RPyC as well in order to prevent password leak
-                    rpyc_stop_queue.put(True)
-                    break
-                elif tunnel.handler_failed():
-                    # If some exception in the tunnel handler occurs,
-                    # it will be better to restart rpyc and tunnel
-                    ssh_tunnel_dead.set()
-                    rpyc_stop_queue.put(True)
-                    tunnel.kill()
-                    break
-                elif rpyc_port.get() != current_rpyc_port:
-                    tunnel.kill()
-                    break
-                else:
-                    gevent.sleep(1)
-
     def _start_processes(self):
         # RPyC server
         rpyc_stop_queue = gevent.queue.Queue()
         rpyc_port = gevent.event.AsyncResult()
-        ssh_tunnel_dead = gevent.event.Event()
         self._pytis_terminate.clear()
-        args = (rpyc_stop_queue, rpyc_port, ssh_tunnel_dead,)
+        args = (rpyc_stop_queue, rpyc_port)
         gevent.spawn(self._check_rpyc_server, *args)
-        gevent.spawn(self._check_ssh_tunnel, *args)
 
     def _start_xserver(self, variant=None):
         if self.client_rootdir:
@@ -761,12 +784,6 @@ class X2GoClient(x2go.X2GoClient):
         if self._run_pytis_setup:
             self._pytis_setup(self._x2go_session_hash)
             self._run_pytis_setup = False
-
-            def info_handler():
-                while self.session_ok(self._x2go_session_hash):
-                    self._handle_info()
-                    gevent.sleep(0.1)
-            gevent.spawn(info_handler)
 
     def resume_session(self, session):
         """Resume given server-side suspended X2Go session."""
