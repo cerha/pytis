@@ -41,6 +41,7 @@ import paramiko
 import rpyc
 import x2go
 import x2go.backends.profiles.base
+import x2go.backends.terminal.plain
 import x2go.client
 import x2go.defaults
 import x2go.log
@@ -489,6 +490,24 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
             self._request_port_forwarding()
             self.logger('resumed thread: %s' % repr(self), loglevel=log.loglevel_DEBUG)
 
+
+class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
+
+    def start_rpyc_tunnel(self, callback):
+        reverse_tunnels = self.reverse_tunnels[self.session_info.name]
+        if 'rpyc' not in reverse_tunnels:
+            reverse_tunnels['rpyc'] = (0, None)
+        if reverse_tunnels['rpyc'][1] is None:
+            def tunnel_callback(server_port):
+                reverse_tunnels['rpyc'] = (server_port, tunnel)
+                callback(server_port)
+            tunnel = RPyCTunnel(RpycInfo.port(), self, callback=tunnel_callback)
+            self.active_threads.append(tunnel)
+            tunnel.start()
+        else:
+            reverse_tunnels['rpyc'][1].resume()
+
+
 class X2GoClient(x2go.X2GoClient):
 
     class ServerInfo(object):
@@ -555,6 +574,7 @@ class X2GoClient(x2go.X2GoClient):
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
+        self.terminal_backend = TerminalSession
         if on_windows() and xserver_variant:
             update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
@@ -599,20 +619,8 @@ class X2GoClient(x2go.X2GoClient):
 
     def _pytis_setup(self, s_uuid):
         terminal_session = self.session_registry(s_uuid).terminal_session
-        reverse_tunnels = terminal_session.reverse_tunnels[terminal_session.session_info.name]
         self._pytis_server_info = self.ServerInfo(terminal_session)
-        if 'rpyc' not in reverse_tunnels:
-            reverse_tunnels['rpyc'] = (0, None)
-        if reverse_tunnels['rpyc'][1] is None:
-            rpyc_port = RpycInfo.port()
-            def callback(server_port):
-                self._pytis_port_value.set(server_port)
-                reverse_tunnels['rpyc'] = (server_port, tunnel)
-            tunnel = RPyCTunnel(rpyc_port, terminal_session, callback=callback)
-            terminal_session.active_threads.append(tunnel)
-            tunnel.start()
-        else:
-            reverse_tunnels['rpyc'][1].resume()
+        terminal_session.start_rpyc_tunnel(lambda port: self._pytis_port_value.set(port))
         def info_handler():
             while self.session_ok(self._x2go_session_hash):
                 self._handle_info()
