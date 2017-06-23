@@ -454,7 +454,7 @@ def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_po
                 return
 
 class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
-    """Customized X2Go reverse tunnel for tunneling RPyC from X2Go server to the client.
+    """Tunnel RPyC communication from X2Go server to the RPyC server on X2Go client.
 
     We overide 'x2go.rforward.X2GoRevFwTunnel' to make automatic selection of
     available server port (the port on the X2Go server side).  We need to pass
@@ -465,12 +465,12 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
 
     """
 
-    def __init__(self, rpyc_port, control_session, terminal_session, callback):
+    def __init__(self, rpyc_port, terminal_session, callback):
         super(RPyCTunnel, self).__init__(
             server_port=None,
             remote_host='127.0.0.1',
             remote_port=rpyc_port,
-            ssh_transport=control_session.get_transport(),
+            ssh_transport=terminal_session.control_session.get_transport(),
             session_instance=terminal_session.session_instance,
             logger=terminal_session.logger,
         )
@@ -610,7 +610,7 @@ class X2GoClient(x2go.X2GoClient):
             def callback(server_port):
                 self._pytis_port_value.set(server_port)
                 reverse_tunnels['rpyc'] = (server_port, tunnel)
-            tunnel = RPyCTunnel(rpyc_port, control_session, terminal_session, callback=callback)
+            tunnel = RPyCTunnel(rpyc_port, terminal_session, callback=callback)
             terminal_session.active_threads.append(tunnel)
             tunnel.start()
         else:
