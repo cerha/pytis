@@ -587,7 +587,6 @@ class X2GoClient(x2go.X2GoClient):
         session.sshproxy_params['look_for_keys'] = False
         update_progress(_("Starting up server connections."))
         self._start_processes()
-        self._run_pytis_setup = True
         update_progress(_("Connecting to X2Go session."))
         # try:
         self._X2GoClient__connect_session(self._x2go_session_hash,
@@ -617,8 +616,8 @@ class X2GoClient(x2go.X2GoClient):
         #     runtime_error('a socket error occured while establishing the connection: %s' %
         #                   str(e), exitcode=-245)
 
-    def _pytis_setup(self, s_uuid):
-        terminal_session = self.session_registry(s_uuid).terminal_session
+    def _init_session(self):
+        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
         self._pytis_server_info = self.ServerInfo(terminal_session)
         terminal_session.start_rpyc_tunnel(lambda port: self._pytis_port_value.set(port))
         def info_handler():
@@ -787,20 +786,19 @@ class X2GoClient(x2go.X2GoClient):
         self.logger('command for new session is: %s' % self._session_parameters['cmd'],
                     loglevel=x2go.loglevel_DEBUG)
         self._X2GoClient__start_session(self._x2go_session_hash)
-        if self._run_pytis_setup:
-            self._pytis_setup(self._x2go_session_hash)
-            self._run_pytis_setup = False
+        self._init_session()
 
     def resume_session(self, session):
         """Resume given server-side suspended X2Go session."""
         self.logger('resuming X2Go session: %s' % session.name, loglevel=x2go.loglevel_INFO)
         available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
-        if session.name in available_sessions.keys():
-            self._X2GoClient__resume_session(self._x2go_session_hash, session.name)
-        else:
+        if session.name not in available_sessions.keys():
             runtime_error('Session %s not available on X2Go server [%s]:%s' %
-                          (self._session_parameters['server'], self._session_parameters['port']),
+                          (self._session_parameters['server'],
+                           self._session_parameters['port']),
                           exitcode=20)
+        self._X2GoClient__resume_session(self._x2go_session_hash, session.name)
+        self._init_session()
 
     def main_loop(self):
         """Monitor the running X2Go session and wait for its completiona.
