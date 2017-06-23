@@ -797,7 +797,7 @@ class X2GoClient(x2go.X2GoClient):
                           exitcode=20)
 
     def main_loop(self):
-        """Monitor the running the X2Go session and wait for its completiona.
+        """Monitor the running X2Go session and wait for its completiona.
 
         Periodically checks the state of the running session and waits for its
         completion.  Call this method after 'start_new_session()' or
@@ -864,9 +864,6 @@ class StartupController(object):
             self._broker_password = broker_password
         else:
             self._broker_parameters = self._broker_path = self._broker_password = None
-        # TODO: Maybe move 'backends' argument to 'connect()'?
-        self._client_kwargs = dict((key, value) for key, value in backends.items()
-                                   if value is not None)
         self._keyring = []
 
     def _parse_url(self, url):
@@ -1024,7 +1021,7 @@ class StartupController(object):
             session_parameters = dict(self._session_parameters, **connection_parameters)
             return X2GoClient(session_parameters, self._app.update_progress,
                               xserver_variant=self._xserver_variant,
-                              loglevel=x2go.log.loglevel_DEBUG, **self._client_kwargs)
+                              loglevel=x2go.log.loglevel_DEBUG)
         else:
             return None
 

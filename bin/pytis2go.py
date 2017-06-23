@@ -165,51 +165,6 @@ if on_windows():
         {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
          'help': 'create desktop shortcut if not present (default: disabled)', },
     ]
-_profiles_backend_default = x2go.BACKENDS['X2GoSessionProfiles']['default']
-_settings_backend_default = x2go.BACKENDS['X2GoClientSettings']['default']
-_printing_backend_default = x2go.BACKENDS['X2GoClientPrinting']['default']
-if on_windows():
-    _config_backends = ('FILE', 'WINREG')
-else:
-    _config_backends = ('FILE', 'GCONF')
-backend_options = [
-    {'args': ['--backend-controlsession'], 'default': None, 'metavar': '<CONTROLSESSION_BACKEND>',
-     'choices': x2go.BACKENDS['X2GoControlSession'].keys(),
-     'help': ('force usage of a certain CONTROLSESSION_BACKEND '
-              '(do not use this unless you know exactly what you are doing)'), },
-    {'args': ['--backend-terminalsession'], 'default': None, 'metavar': '<TERMINALSESSION_BACKEND>',
-     'choices': x2go.BACKENDS['X2GoTerminalSession'].keys(),
-     'help': ('force usage of a certain TERMINALSESSION_BACKEND '
-              '(do not use this unless you know exactly what you are doing)'), },
-    {'args': ['--backend-serversessioninfo'], 'default': None,
-     'metavar': '<SERVERSESSIONINFO_BACKEND>',
-     'choices': x2go.BACKENDS['X2GoServerSessionInfo'].keys(),
-     'help': ('force usage of a certain SERVERSESSIONINFO_BACKEND '
-              '(do not use this unless you know exactly what you are doing)'), },
-    {'args': ['--backend-serversessionlist'], 'default': None,
-     'metavar': '<SERVERSESSIONLIST_BACKEND>',
-     'choices': x2go.BACKENDS['X2GoServerSessionList'].keys(),
-     'help': ('force usage of a certain SERVERSESSIONLIST_BACKEND '
-              '(do not use this unless you know exactly what you are doing)'), },
-    {'args': ['--backend-proxy'], 'default': None, 'metavar': '<PROXY_BACKEND>',
-     'choices': x2go.BACKENDS['X2GoProxy'].keys(),
-     'help': ('force usage of a certain PROXY_BACKEND '
-              '(do not use this unless you know exactly what you are doing)'), },
-    {'args': ['--backend-sessionprofiles'], 'default': None, 'metavar': '<SESSIONPROFILES_BACKEND>',
-     'choices': _config_backends,
-     'help': ('use given backend for accessing session profiles, available backends on your system:'
-              ' %s (default: %s)') % (', '.join(_config_backends), _profiles_backend_default), },
-    {'args': ['--backend-clientsettings'], 'default': None, 'metavar': '<CLIENTSETTINGS_BACKEND>',
-     'choices': _config_backends,
-     'help': (('use given backend for accessing the client settings configuration, '
-               'available backends on your system: %s (default: %s)') %
-              (', '.join(_config_backends), _settings_backend_default)), },
-    {'args': ['--backend-clientprinting'], 'default': None, 'metavar': '<CLIENTPRINTING_BACKEND>',
-     'choices': _config_backends,
-     'help': (('use given backend for accessing the client printing configuration, '
-               'available backends on your system: %s (default: %s)') %
-              (', '.join(_config_backends), _printing_backend_default)), },
-]
 
 # print version text and exit
 def version():
@@ -234,14 +189,12 @@ Possible values for the --pack NX option are:
     p_printopts = p.add_argument_group('X2Go print options')
     p_brokeropts = p.add_argument_group('X2Go Session Broker client options')
     p_nxopts = p.add_argument_group('NX options')
-    p_backendopts = p.add_argument_group('Python X2Go backend options (for experts only)')
     option_groups = [(p_x2goopts, x2go_options),
                      (p_printopts, print_options),
                      (p_brokeropts, broker_options),
                      (p_actionopts, action_options),
                      (p_debugopts, debug_options),
-                     (p_nxopts, nx_options),
-                     (p_backendopts, backend_options)]
+                     (p_nxopts, nx_options)]
     p_pytis2goopts = p.add_argument_group('pytis2go options')
     option_groups.append((p_pytis2goopts, pytis2go_options))
     for (p_group, opts) in option_groups:
@@ -386,17 +339,7 @@ def main():
         # TODO: print_action_arg is omited because the arg parser doesn't know its default.
         param != 'print_action_arg'
     ]
-    backends = {
-        'control': args.backend_controlsession,
-        'terminal': args.backend_terminalsession,
-        'info': args.backend_serversessioninfo,
-        'list': args.backend_serversessionlist,
-        'proxy': args.backend_proxy,
-        'profiles': args.backend_sessionprofiles,
-        'settings': args.backend_clientsettings,
-        'printing': args.backend_clientprinting,
-    }
-    app = pytis.remote.X2GoStartApp(args, session_parameters, force_parameters, backends)
+    app = pytis.remote.X2GoStartApp(args, session_parameters, force_parameters)
     app.MainLoop()
 
 

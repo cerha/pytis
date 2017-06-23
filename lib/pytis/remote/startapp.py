@@ -251,13 +251,12 @@ class X2GoStartApp(wx.App):
 
     _MAX_PROGRESS = 40
 
-    def __init__(self, args, session_parameters, force_parameters, backends):
+    def __init__(self, args, session_parameters, force_parameters):
         from pytis.remote.x2goclient import StartupController
         self._progress = 1
         self._args = args
         self._controller = StartupController(self, session_parameters,
                                              force_parameters=force_parameters,
-                                             backends=backends,
                                              add_to_known_hosts=args.add_to_known_hosts,
                                              broker_url=args.broker_url,
                                              broker_password=args.broker_password)
