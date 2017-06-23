@@ -498,14 +498,14 @@ class X2GoClient(x2go.X2GoClient):
         # application) but this information is often unavailable here for
         # unclear reasons.
 
-        def __init__(self, session_id, control_session):
+        def __init__(self, terminal_session):
             self._port = None
             self._password = None
             self._changed = False
-            self._control_session = control_session
+            self._control_session = control_session = terminal_session.control_session
             self._server_file_name = '%s/.x2go/ssh/pytis.%s' % (
                 control_session._x2go_remote_home,
-                session_id,
+                terminal_session.session_info.name,
             )
 
         def port(self):
@@ -598,11 +598,9 @@ class X2GoClient(x2go.X2GoClient):
         #                   str(e), exitcode=-245)
 
     def _pytis_setup(self, s_uuid):
-        control_session = self.get_session(s_uuid).control_session
         terminal_session = self.session_registry(s_uuid).terminal_session
-        session_id = terminal_session.session_info.name
-        reverse_tunnels = terminal_session.reverse_tunnels[session_id]
-        self._pytis_server_info = self.ServerInfo(session_id, control_session)
+        reverse_tunnels = terminal_session.reverse_tunnels[terminal_session.session_info.name]
+        self._pytis_server_info = self.ServerInfo(terminal_session)
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
         if reverse_tunnels['rpyc'][1] is None:
