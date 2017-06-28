@@ -466,11 +466,11 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
 
     """
 
-    def __init__(self, rpyc_port, terminal_session, callback):
+    def __init__(self, rpyc_server_port, terminal_session, callback):
         super(RPyCTunnel, self).__init__(
             server_port=None,
             remote_host='127.0.0.1',
-            remote_port=rpyc_port,
+            remote_port=rpyc_server_port,
             ssh_transport=terminal_session.control_session.get_transport(),
             session_instance=terminal_session.session_instance,
             logger=terminal_session.logger,
@@ -494,14 +494,15 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
 class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
     def start_rpyc_tunnel(self, callback):
+        rpyc_server_port = RpycInfo.port()
         reverse_tunnels = self.reverse_tunnels[self.session_info.name]
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
         if reverse_tunnels['rpyc'][1] is None:
-            def tunnel_callback(server_port):
-                reverse_tunnels['rpyc'] = (server_port, tunnel)
-                callback(server_port)
-            tunnel = RPyCTunnel(RpycInfo.port(), self, callback=tunnel_callback)
+            def tunnel_started(forwarded_port):
+                reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
+                callback(forwarded_port)
+            tunnel = RPyCTunnel(rpyc_server_port, self, callback=tunnel_started)
             self.active_threads.append(tunnel)
             tunnel.start()
         else:
