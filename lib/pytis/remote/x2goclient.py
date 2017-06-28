@@ -461,8 +461,8 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
     available server port (the port on the X2Go server side).  We need to pass
     0 as server_port when calling 'request_port_forward()', update the
     'server_port' attribute according to the 'request_port_forward()' return
-    value and run a callback which will update the port number also on the
-    X2GoClient side.
+    value and run a callback which will update the port number also for the
+    X2GoClient instance.
 
     """
 
@@ -480,7 +480,6 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
     def _request_port_forwarding(self):
         port = self.ssh_transport.request_port_forward('127.0.0.1', 0,
                                                        handler=tunnel_tcp_handler)
-        log(EVENT, 'Port %d forwarded to RPyC server port %d' % (port, self.remote_port))
         self.server_port = port
         self._callback(port)
 
@@ -495,6 +494,9 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
     def start_rpyc_tunnel(self, callback):
         rpyc_server_port = RpycInfo.port()
+        if rpyc_server_port is None:
+            log(EVENT, 'RPyC server not running - not starting RPyCTunnel.')
+            return
         reverse_tunnels = self.reverse_tunnels[self.session_info.name]
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
@@ -502,6 +504,8 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
             def tunnel_started(forwarded_port):
                 reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
                 callback(forwarded_port)
+                log(EVENT, 'Port %d on X2Go server forwarded to RPyC server port %d '
+                    'on X2Go client.' % (forwarded_port, rpyc_server_port))
             tunnel = RPyCTunnel(rpyc_server_port, self, callback=tunnel_started)
             self.active_threads.append(tunnel)
             tunnel.start()
