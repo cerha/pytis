@@ -488,7 +488,7 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
         if self._accept_channels == False:
             self._accept_channels = True
             self._request_port_forwarding()
-            self.logger('resumed thread: %s' % repr(self), loglevel=log.loglevel_DEBUG)
+            self.logger('resumed thread: %s' % repr(self), loglevel=x2go.log.loglevel_DEBUG)
 
 
 class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
@@ -785,7 +785,7 @@ class X2GoClient(x2go.X2GoClient):
         """Launch a new X2Go session."""
         self.logger('starting a new X2Go session', loglevel=x2go.loglevel_INFO)
         self.logger('command for new session is: %s' % self._session_parameters['cmd'],
-                    loglevel=x2go.loglevel_DEBUG)
+                    loglevel=x2go.log.loglevel_DEBUG)
         self._X2GoClient__start_session(self._x2go_session_hash)
         self._init_session()
 
