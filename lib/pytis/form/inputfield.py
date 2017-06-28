@@ -547,7 +547,6 @@ class InputField(object, KeyHandler, CommandHandler):
             callback = self._call_on_idle.pop()
             callback()
         event.Skip()
-        return True
 
     def _on_change_hook(self):
         """Handle field value changes.
@@ -874,6 +873,7 @@ class TextField(InputField):
             event.GetEventObject().Navigate()
 
     def _on_idle(self, event):
+        super(TextField, self)._on_idle(event)
         text = self._update_completions
         if text is not None:
             self._update_completions = None
@@ -881,7 +881,6 @@ class TextField(InputField):
             # we we don't popup the selection (the second argument to update()).
             self._completer.update(self._row.completions(self.id(), prefix=text),
                                    self._enabled and self._has_focus())
-        return super(TextField, self)._on_idle(event)
 
     def _on_change(self, event=None):
         post_process = self._post_process_func()
@@ -1150,10 +1149,10 @@ class GenericEnumerationField(InputField):
             self._enumeration_changed = True
 
     def _on_idle(self, event):
+        super(GenericEnumerationField, self)._on_idle(event)
         if self._enumeration_changed:
-            self._reload_enumeration()
             self._enumeration_changed = False
-        return super(GenericEnumerationField, self)._on_idle(event)
+            self._reload_enumeration()
 
     def _reload_enumeration(self):
         raise ProgramError("Runtime enumeration changes not supported for %s." % self.__class__)
@@ -1238,6 +1237,9 @@ class EnumerationField(GenericEnumerationField):
         return value
 
     def _set_value(self, value):
+        if self._enumeration_changed:
+            self._enumeration_changed = False
+            self._reload_enumeration()
         assert isinstance(value, basestring), value
         for i in range(self._ctrl.GetCount()):
             if self._ctrl.GetClientData(i) == value:
