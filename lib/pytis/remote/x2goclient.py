@@ -565,6 +565,10 @@ class RPyCServerLauncher(threading.Thread):
         if self._server:
             self.logger('Terminating RPyC server', loglevel=x2go.log.loglevel_DEBUG)
             self._server.close()
+            gevent.sleep(1)
+            RpycInfo.set_port(None)
+            RpycInfo.set_password(None)
+            self._password.set(None)
         self.logger('RPyC server terminated', loglevel=x2go.log.loglevel_DEBUG)
 
     def password(self):
@@ -785,7 +789,7 @@ class X2GoClient(x2go.X2GoClient):
         """Terminate given X2Go Session."""
         try:
             # send a terminate request to a session
-            self.logger('Requesting X2Go session terminate of session: %s' % session.name,
+            self.logger('Requesting termination od X2Go session: %s' % session.name,
                         loglevel=x2go.loglevel_INFO)
             available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
             if session.name in available_sessions.keys():
