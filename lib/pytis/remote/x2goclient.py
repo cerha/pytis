@@ -786,6 +786,9 @@ class X2GoClient(x2go.X2GoClient):
                                 loglevel=x2go.log.loglevel_WARN)
                     os.environ.update({'DISPLAY': 'localhost:0'})
 
+    def _cleanup(self):
+        self._rpyc_launcher.stop_thread()
+
     def list_sessions(self):
         """Return a list of suspended sessions found on the server.
 
@@ -801,22 +804,19 @@ class X2GoClient(x2go.X2GoClient):
 
     def terminate_session(self, session):
         """Terminate given X2Go Session."""
-        try:
-            # send a terminate request to a session
-            self.logger('Requesting termination od X2Go session: %s' % session.name,
-                        loglevel=x2go.loglevel_INFO)
-            available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
-            if session.name in available_sessions.keys():
-                self._X2GoClient__terminate_session(self._x2go_session_hash, session.name)
-                self.logger("X2Go session %s has been terminated" % session.name,
-                            loglevel=x2go.loglevel_NOTICE)
-            else:
-                runtime_error('Session %s not available on X2Go server [%s]:%s' %
-                              (self._session_parameters['server'],
-                               self._session_parameters['port']),
-                              exitcode=22)
-        finally:
-            self._rpyc_launcher.stop_thread()
+        # send a terminate request to a session
+        self.logger('Requesting termination od X2Go session: %s' % session.name,
+                    loglevel=x2go.loglevel_INFO)
+        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
+        if session.name in available_sessions.keys():
+            self._X2GoClient__terminate_session(self._x2go_session_hash, session.name)
+            self.logger("X2Go session %s has been terminated" % session.name,
+                        loglevel=x2go.loglevel_NOTICE)
+        else:
+            runtime_error('Session %s not available on X2Go server [%s]:%s' %
+                          (self._session_parameters['server'],
+                           self._session_parameters['port']),
+                          exitcode=22)
 
     def start_new_session(self):
         """Launch a new X2Go session."""
@@ -839,7 +839,7 @@ class X2GoClient(x2go.X2GoClient):
         self._init_session()
 
     def main_loop(self):
-        """Monitor the running X2Go session and wait for its completiona.
+        """Monitor the running X2Go session and wait for its completion.
 
         Periodically checks the state of the running session and waits for its
         completion.  Call this method after 'start_new_session()' or
@@ -858,6 +858,7 @@ class X2GoClient(x2go.X2GoClient):
                 self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
                 while self._X2GoClient__session_ok(session_hash):
                     time.sleep(2)
+                self._cleanup()
         except x2go.X2GoSessionException, e:
             self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
             self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
