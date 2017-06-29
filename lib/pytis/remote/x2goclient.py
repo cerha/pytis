@@ -866,10 +866,11 @@ class X2GoClient(x2go.X2GoClient):
                 self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
                 while self._X2GoClient__session_ok(session_hash):
                     time.sleep(2)
-                self._cleanup()
         except x2go.X2GoSessionException, e:
             self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
             self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
+        finally:
+            self._cleanup()
 
 
 class StartupController(object):
