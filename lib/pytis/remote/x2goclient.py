@@ -796,6 +796,7 @@ class X2GoClient(x2go.X2GoClient):
         terminal_session = self.get_session(self._x2go_session_hash).terminal_session
         terminal_session.stop_rpyc_tunnel()
         self._rpyc_launcher.stop_thread()
+        x2go.x2go_cleanup()
 
     def list_sessions(self):
         """Return a list of suspended sessions found on the server.
