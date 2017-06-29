@@ -32,6 +32,7 @@ import tarfile
 import tempfile
 import types
 import time
+import threading
 
 import gevent
 import gevent.event
@@ -49,6 +50,7 @@ import x2go.xserver
 import pytis.remote
 
 from pytis.util import log, EVENT, OPERATIONAL
+import pytis.remote.pytisproc as pytisproc
 
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
@@ -171,6 +173,7 @@ class X2GoClientSettings(x2go.X2GoClientSettings):
 
 
 class RpycInfo(object):
+    # TODO: Remove this class (keep the info in RPyCServerLauncher instance).
 
     _port = None
     _password = None
@@ -490,6 +493,90 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
             self.logger('resumed thread: %s' % repr(self), loglevel=x2go.log.loglevel_DEBUG)
 
 
+class RPyCServerLauncher(threading.Thread):
+    """Thread controlling the RPyC server."""
+
+    _DEFAULT_PORT = 10000
+    _MAX_PORT_ATTEMPTS = 100
+
+    def __init__(self, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
+        if logger is None:
+            self.logger = log.X2GoLogger(loglevel=loglevel)
+        else:
+            self.logger = copy.deepcopy(logger)
+        self.logger.tag = self.__class__.__name__
+        self._keepalive = None
+        self._server = None
+        self._server_thread = None
+        self._password = gevent.event.AsyncResult()
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self.start()
+
+    def _server_running(self):
+        # Look for a running RPyC server instance.
+        # Check whether it is our instance.  We must be careful here not to send
+        # the password to an RPyC instance of another user.
+        if not self._server_thread or not self._server_thread.is_alive():
+            return False
+        port = RpycInfo.port()
+        password = RpycInfo.password()
+        if not port or not password:
+            return False
+        authenticator = pytisproc.PasswordAuthenticator(password)
+        try:
+            authenticator.connect('localhost', port)
+        except:
+            return False
+        return True
+
+    def _start_server(self):
+        default_port = self._DEFAULT_PORT
+        max_port = default_port + self._MAX_PORT_ATTEMPTS
+        authenticator = pytisproc.PasswordAuthenticator()
+        for port in range(default_port, max_port):
+            try:
+                server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
+                                                          hostname='localhost',
+                                                          port=port,
+                                                          authenticator=authenticator)
+            except:
+                continue
+            self.logger('Starting RPyC server thread on port %d' % port,
+                        loglevel=x2go.log.loglevel_DEBUG)
+            self._server = server
+            server.service.authenticator = authenticator
+            password = authenticator.password()
+            RpycInfo.set_port(port)
+            RpycInfo.set_password(password)
+            self._password.set(password)
+            self._server_thread = thread = threading.Thread(target=server.start)
+            thread.start()
+            return
+        raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
+                              (default_port, max_port - 1,))
+
+    def run(self):
+        self._keepalive = True
+        while self._keepalive:
+            if not self._server_running():
+                self._start_server()
+            gevent.sleep(1)
+        if self._server:
+            self.logger('Terminating RPyC server', loglevel=x2go.log.loglevel_DEBUG)
+            self._server.close()
+        self.logger('RPyC server terminated', loglevel=x2go.log.loglevel_DEBUG)
+
+    def password(self):
+        return self._password.get_nowait()
+
+    def stop_thread(self):
+        """Tear down a running RPyC server."""
+        self.logger('RPyCServerLauncher.stop_thread() has been called',
+                    loglevel=x2go.log.loglevel_DEBUG)
+        self._keepalive = False
+
+
 class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
     def start_rpyc_tunnel(self, callback):
@@ -559,9 +646,6 @@ class X2GoClient(x2go.X2GoClient):
                 self._control_session._x2go_sftp_write(self._server_file_name, data)
                 self._changed = False
 
-    _DEFAULT_RPYC_PORT = 10000
-    _MAX_RPYC_PORT_ATTEMPTS = 100
-
     def __init__(self, session_parameters, update_progress,
                  xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
         self._session_parameters = session_parameters
@@ -584,14 +668,12 @@ class X2GoClient(x2go.X2GoClient):
             update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
-        self._pytis_port_value = gevent.event.AsyncResult()
-        self._pytis_password_value = gevent.event.AsyncResult()
-        self._pytis_terminate = gevent.event.Event()
         session = self.session_registry(self._x2go_session_hash)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
         update_progress(_("Starting up server connections."))
-        self._start_processes()
+        self._pytis_port_value = gevent.event.AsyncResult()
+        self._rpyc_launcher = RPyCServerLauncher(logger=self.logger)
         update_progress(_("Connecting to X2Go session."))
         # try:
         self._X2GoClient__connect_session(self._x2go_session_hash,
@@ -633,7 +715,7 @@ class X2GoClient(x2go.X2GoClient):
 
     def _handle_info(self):
         try:
-            password = self._pytis_password_value.get_nowait()
+            password = self._rpyc_launcher.password()
             port = self._pytis_port_value.get_nowait()
         except gevent.Timeout:
             return
@@ -643,73 +725,6 @@ class X2GoClient(x2go.X2GoClient):
             info.set_port(port)
             if info.changed():
                 info.write()
-
-    def _check_rpyc_server(self, rpyc_stop_queue, rpyc_port):
-        import pytis.remote.pytisproc as pytisproc
-        server = None
-        while True:
-            if self._pytis_terminate.is_set():
-                if server is not None:
-                    server.close()
-                    server = None
-                return
-            # Look for a running RPyC instance
-            running = True
-            # Check whether it's our instance
-            # We must be careful here not to send the password to an RPyC instance
-            # of another user.
-            port = RpycInfo.port()
-            password = RpycInfo.password()
-            if not port or not password:
-                running = False
-            else:
-                authenticator = pytisproc.PasswordAuthenticator(password)
-                try:
-                    authenticator.connect('localhost', port)
-                except:
-                    running = False
-            if not rpyc_stop_queue.empty():
-                while not rpyc_stop_queue.empty():
-                    rpyc_stop_queue.get()
-                if running and server is not None:
-                    server.close()
-                    server = None
-                running = False
-            # If no running RPyC instance was found then start one
-            if not running:
-                if server is not None:
-                    server.close()
-                    server = None
-                authenticator = pytisproc.PasswordAuthenticator()
-                default_port = self._DEFAULT_RPYC_PORT
-                port_limit = default_port + self._MAX_RPYC_PORT_ATTEMPTS
-                for port in range(default_port, port_limit):
-                    try:
-                        server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
-                                                                  hostname='localhost',
-                                                                  port=port,
-                                                                  authenticator=authenticator)
-                        break
-                    except:
-                        pass
-                else:
-                    raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
-                                          (default_port, port_limit - 1,))
-                server.service.authenticator = authenticator
-                rpyc_port.set(port)
-                RpycInfo.set_port(port)
-                RpycInfo.set_password(authenticator.password())
-                gevent.spawn(server.start)
-                self._pytis_password_value.set(RpycInfo.password())
-            gevent.sleep(1)
-
-    def _start_processes(self):
-        # RPyC server
-        rpyc_stop_queue = gevent.queue.Queue()
-        rpyc_port = gevent.event.AsyncResult()
-        self._pytis_terminate.clear()
-        args = (rpyc_stop_queue, rpyc_port)
-        gevent.spawn(self._check_rpyc_server, *args)
 
     def _start_xserver(self, variant=None):
         if self.client_rootdir:
@@ -783,7 +798,7 @@ class X2GoClient(x2go.X2GoClient):
                                self._session_parameters['port']),
                               exitcode=22)
         finally:
-            self._pytis_terminate.set()
+            self._rpyc_launcher.stop_thread()
 
     def start_new_session(self):
         """Launch a new X2Go session."""
