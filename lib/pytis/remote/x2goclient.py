@@ -617,6 +617,12 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
         else:
             reverse_tunnels['rpyc'][1].resume()
 
+    def stop_rpyc_tunnel(self):
+        for t in self.active_threads:
+            if type(t) == RPyCTunnel:
+                t.stop_thread()
+                del t
+
 
 class X2GoClient(x2go.X2GoClient):
 
@@ -787,6 +793,8 @@ class X2GoClient(x2go.X2GoClient):
                     os.environ.update({'DISPLAY': 'localhost:0'})
 
     def _cleanup(self):
+        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
+        terminal_session.stop_rpyc_tunnel()
         self._rpyc_launcher.stop_thread()
 
     def list_sessions(self):
