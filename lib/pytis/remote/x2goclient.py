@@ -519,6 +519,8 @@ class RPyCServerLauncher(threading.Thread):
         # the password to an RPyC instance of another user.
         if not self._server_thread or not self._server_thread.is_alive():
             return False
+        if not self._server:
+            return False
         port = RpycInfo.port()
         password = RpycInfo.password()
         if not port or not password:
@@ -534,7 +536,7 @@ class RPyCServerLauncher(threading.Thread):
         default_port = self._DEFAULT_PORT
         max_port = default_port + self._MAX_PORT_ATTEMPTS
         authenticator = pytisproc.PasswordAuthenticator()
-        for port in range(default_port, max_port):
+        for port in xrange(default_port, max_port):
             try:
                 server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
                                                           hostname='localhost',
@@ -542,16 +544,22 @@ class RPyCServerLauncher(threading.Thread):
                                                           authenticator=authenticator)
             except:
                 continue
-            self.logger('Starting RPyC server thread on port %d' % port,
+            server.service.authenticator = authenticator
+            thread = threading.Thread(target=server.start)
+            thread.start()
+            try:
+                # Detect whether it really works, ie. the port is not blocked...
+                authenticator.connect('localhost', port)
+            except:
+                continue
+            self.logger('RPyC server started on port %d' % port,
                         loglevel=x2go.log.loglevel_DEBUG)
             self._server = server
-            server.service.authenticator = authenticator
+            self._server_thread = thread
             password = authenticator.password()
             RpycInfo.set_port(port)
             RpycInfo.set_password(password)
             self._password.set(password)
-            self._server_thread = thread = threading.Thread(target=server.start)
-            thread.start()
             return
         raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
                               (default_port, max_port - 1,))
