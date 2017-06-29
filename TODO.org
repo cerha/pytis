@@ -152,6 +152,13 @@
    Bylo by zajímavé pokusit se o rozumnější podobu uživatelské hlášky, pokud
    dojde k uzavření transakce serverem.
 
+** FEEDBACK Pokud má not null políčko prázdný číselník, nelze pokračovat
+   
+   Číselník může být prázdný např. i kvůli runtime_filteru.  Když potom
+   uživatel do políčka vleze (např. i CHOICE jen rozklikne roletu), políčko
+   už ho nepustí pryč, protože prázdná hodnota je nevalidní a jinou nelze
+   vybrat.  Formulář je nutné uzavřít.
+
 
 * NOVÉ VLASTNOSTI [4/29] [13%]
   :PROPERTIES:
