@@ -564,19 +564,25 @@ class RPyCServerLauncher(threading.Thread):
         raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
                               (default_port, max_port - 1,))
 
+    def _shutdown_server(self):
+        self.logger('Terminating RPyC server on port %d' % self._server.port,
+                    loglevel=x2go.log.loglevel_DEBUG)
+        self._server.close()
+        gevent.sleep(1)
+        RpycInfo.set_port(None)
+        RpycInfo.set_password(None)
+        self._password.set(None)
+
     def run(self):
         self._keepalive = True
         while self._keepalive:
             if not self._server_running():
+                if self._server:
+                    self._shutdown_server()
                 self._start_server()
             gevent.sleep(1)
         if self._server:
-            self.logger('Terminating RPyC server', loglevel=x2go.log.loglevel_DEBUG)
-            self._server.close()
-            gevent.sleep(1)
-            RpycInfo.set_port(None)
-            RpycInfo.set_password(None)
-            self._password.set(None)
+            self._shutdown_server()
         self.logger('RPyC server terminated', loglevel=x2go.log.loglevel_DEBUG)
 
     def password(self):
