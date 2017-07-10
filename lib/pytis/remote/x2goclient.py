@@ -572,7 +572,8 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
         reverse_tunnels = self.reverse_tunnels[self.session_info.name]
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
-        if reverse_tunnels['rpyc'][1] is None:
+        tunnel = reverse_tunnels['rpyc'][1]
+        if tunnel is None:
             def tunnel_started(forwarded_port):
                 reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
                 callback(forwarded_port)
@@ -582,7 +583,8 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
             self.active_threads.append(tunnel)
             tunnel.start()
         else:
-            reverse_tunnels['rpyc'][1].resume()
+            tunnel.resume()
+        return tunnel
 
     def stop_rpyc_tunnel(self):
         for t in self.active_threads:
@@ -705,18 +707,12 @@ class X2GoClient(x2go.X2GoClient):
         self._rpyc_tunnel_port.set(port)
 
     def _init_session(self):
-        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
-        self._pytis_server_info = self.ServerInfo(terminal_session)
-        if self._rpyc_server_port:
-            terminal_session.start_rpyc_tunnel(self._rpyc_server_port,
-                                               callback=self._on_rpyc_tunnel_started)
-        else:
-            log(EVENT, 'RPyC server not running - not starting RPyCTunnel.')
-
         def info_handler():
             while self.session_ok(self._x2go_session_hash):
                 self._handle_info()
                 gevent.sleep(0.1)
+        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
+        self._pytis_server_info = self.ServerInfo(terminal_session)
         gevent.spawn(info_handler)
 
     def _handle_info(self):
@@ -847,7 +843,15 @@ class X2GoClient(x2go.X2GoClient):
                 self.logger("X2Go session is now running, the X2Go client's profile name is: %s" %
                             profile_name, loglevel=x2go.loglevel_INFO)
                 self.logger("X2Go session name is: %s" % session_name, loglevel=x2go.loglevel_INFO)
+                terminal_session = self.get_session(session_hash).terminal_session
+                tunnel = None
                 while self._X2GoClient__session_ok(session_hash):
+                    server_port = self._rpyc_server_port
+                    if server_port and not tunnel:
+                        tunnel = terminal_session.start_rpyc_tunnel(
+                            server_port,
+                            callback=self._on_rpyc_tunnel_started,
+                        )
                     time.sleep(2)
         except x2go.X2GoSessionException, e:
             self.logger("X2GoSessionException occured:", loglevel=x2go.loglevel_ERROR)
