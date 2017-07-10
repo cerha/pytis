@@ -172,29 +172,6 @@ class X2GoClientSettings(x2go.X2GoClientSettings):
                                            command=default_command)
 
 
-class RpycInfo(object):
-    # TODO: Remove this class (keep the info in RPyCServerLauncher instance).
-
-    _port = None
-    _password = None
-
-    @classmethod
-    def set_port(cls, port):
-        cls._port = port
-
-    @classmethod
-    def set_password(cls, password):
-        cls._password = password
-
-    @classmethod
-    def port(cls):
-        return cls._port
-
-    @classmethod
-    def password(cls):
-        return cls._password
-
-
 class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     defaultSessionProfile = copy.deepcopy(x2go.defaults.X2GO_SESSIONPROFILE_DEFAULTS)
@@ -499,7 +476,7 @@ class RPyCServerLauncher(threading.Thread):
     _DEFAULT_PORT = 10000
     _MAX_PORT_ATTEMPTS = 100
 
-    def __init__(self, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
+    def __init__(self, callback, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
         if logger is None:
             self.logger = log.X2GoLogger(loglevel=loglevel)
         else:
@@ -508,7 +485,9 @@ class RPyCServerLauncher(threading.Thread):
         self._keepalive = None
         self._server = None
         self._server_thread = None
-        self._password = gevent.event.AsyncResult()
+        self._callback = callback
+        self._port = None
+        self._password = None
         threading.Thread.__init__(self)
         self.daemon = True
         self.start()
@@ -521,13 +500,11 @@ class RPyCServerLauncher(threading.Thread):
             return False
         if not self._server:
             return False
-        port = RpycInfo.port()
-        password = RpycInfo.password()
-        if not port or not password:
+        if not self._port or not self._password:
             return False
-        authenticator = pytisproc.PasswordAuthenticator(password)
+        authenticator = pytisproc.PasswordAuthenticator(self._password)
         try:
-            authenticator.connect('localhost', port)
+            authenticator.connect('localhost', self._port)
         except:
             return False
         return True
@@ -556,10 +533,9 @@ class RPyCServerLauncher(threading.Thread):
                         loglevel=x2go.log.loglevel_DEBUG)
             self._server = server
             self._server_thread = thread
-            password = authenticator.password()
-            RpycInfo.set_port(port)
-            RpycInfo.set_password(password)
-            self._password.set(password)
+            self._port = port
+            self._password = password = authenticator.password()
+            self._callback(port, password)
             return
         raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
                               (default_port, max_port - 1,))
@@ -569,9 +545,7 @@ class RPyCServerLauncher(threading.Thread):
                     loglevel=x2go.log.loglevel_DEBUG)
         self._server.close()
         gevent.sleep(1)
-        RpycInfo.set_port(None)
-        RpycInfo.set_password(None)
-        self._password.set(None)
+        self._password = self._port = None
 
     def run(self):
         self._keepalive = True
@@ -585,9 +559,6 @@ class RPyCServerLauncher(threading.Thread):
             self._shutdown_server()
         self.logger('RPyC server terminated', loglevel=x2go.log.loglevel_DEBUG)
 
-    def password(self):
-        return self._password.get_nowait()
-
     def stop_thread(self):
         """Tear down a running RPyC server."""
         self.logger('RPyCServerLauncher.stop_thread() has been called',
@@ -597,11 +568,7 @@ class RPyCServerLauncher(threading.Thread):
 
 class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
-    def start_rpyc_tunnel(self, callback):
-        rpyc_server_port = RpycInfo.port()
-        if rpyc_server_port is None:
-            log(EVENT, 'RPyC server not running - not starting RPyCTunnel.')
-            return
+    def start_rpyc_tunnel(self, rpyc_server_port, callback):
         reverse_tunnels = self.reverse_tunnels[self.session_info.name]
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
@@ -696,8 +663,11 @@ class X2GoClient(x2go.X2GoClient):
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
         update_progress(_("Starting up server connections."))
-        self._pytis_port_value = gevent.event.AsyncResult()
-        self._rpyc_launcher = RPyCServerLauncher(logger=self.logger)
+        self._rpyc_tunnel_port = gevent.event.AsyncResult()
+        self._rpyc_server_port = None
+        self._rpyc_server_password = gevent.event.AsyncResult()
+        self._rpyc_launcher = RPyCServerLauncher(callback=self._on_rpyc_server_started,
+                                                 logger=self.logger)
         update_progress(_("Connecting to X2Go session."))
         # try:
         self._X2GoClient__connect_session(self._x2go_session_hash,
@@ -727,10 +697,22 @@ class X2GoClient(x2go.X2GoClient):
         #     runtime_error('a socket error occured while establishing the connection: %s' %
         #                   str(e), exitcode=-245)
 
+    def _on_rpyc_server_started(self, port, password):
+        self._rpyc_server_port = port
+        self._rpyc_server_password.set(password)
+
+    def _on_rpyc_tunnel_started(self, port):
+        self._rpyc_tunnel_port.set(port)
+
     def _init_session(self):
         terminal_session = self.get_session(self._x2go_session_hash).terminal_session
         self._pytis_server_info = self.ServerInfo(terminal_session)
-        terminal_session.start_rpyc_tunnel(lambda port: self._pytis_port_value.set(port))
+        if self._rpyc_server_port:
+            terminal_session.start_rpyc_tunnel(self._rpyc_server_port,
+                                               callback=self._on_rpyc_tunnel_started)
+        else:
+            log(EVENT, 'RPyC server not running - not starting RPyCTunnel.')
+
         def info_handler():
             while self.session_ok(self._x2go_session_hash):
                 self._handle_info()
@@ -739,8 +721,8 @@ class X2GoClient(x2go.X2GoClient):
 
     def _handle_info(self):
         try:
-            password = self._rpyc_launcher.password()
-            port = self._pytis_port_value.get_nowait()
+            password = self._rpyc_server_password.get_nowait()
+            port = self._rpyc_tunnel_port.get_nowait()
         except gevent.Timeout:
             return
         info = self._pytis_server_info
