@@ -573,6 +573,9 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
         tunnel = reverse_tunnels['rpyc'][1]
+        if tunnel and tunnel.remote_port != rpyc_server_port:
+            self.stop_rpyc_tunnel()
+            tunnel = None
         if tunnel is None:
             def tunnel_started(forwarded_port):
                 reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
@@ -847,7 +850,7 @@ class X2GoClient(x2go.X2GoClient):
                 tunnel = None
                 while self._X2GoClient__session_ok(session_hash):
                     server_port = self._rpyc_server_port
-                    if server_port and not tunnel:
+                    if server_port and not (tunnel or tunnel.remote_port != server_port):
                         tunnel = terminal_session.start_rpyc_tunnel(
                             server_port,
                             callback=self._on_rpyc_tunnel_started,
