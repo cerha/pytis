@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2017 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -35,4 +35,8 @@ from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
 
 from .startapp import X2GoStartApp
 
-from .ssh import public_key_acceptable, ssh_connect, ssh_exec
+try:
+    from .ssh import ReverseTunnel, public_key_acceptable, ssh_connect, ssh_exec
+except ImportError as e:
+    def ReverseTunnel(*args, **kwargs):
+        raise e
