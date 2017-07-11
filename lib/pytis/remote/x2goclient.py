@@ -528,6 +528,7 @@ class RPyCServerLauncher(threading.Thread):
                 # Detect whether it really works, ie. the port is not blocked...
                 authenticator.connect('localhost', port)
             except:
+                server.close()
                 continue
             self.logger('RPyC server started on port %d' % port,
                         loglevel=x2go.log.loglevel_DEBUG)
