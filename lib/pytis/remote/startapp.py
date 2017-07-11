@@ -552,6 +552,7 @@ class X2GoStartApp(wx.App):
         self._frame.Show(False)
         wx.Yield()
         client.main_loop()
+        self.Exit()
 
     def update_progress(self, message=None, progress=1):
         """Update progress bar and display a progress message.
