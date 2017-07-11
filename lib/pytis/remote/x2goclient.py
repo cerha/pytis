@@ -850,7 +850,8 @@ class X2GoClient(x2go.X2GoClient):
                 tunnel = None
                 while self._X2GoClient__session_ok(session_hash):
                     server_port = self._rpyc_server_port
-                    if server_port and not (tunnel or tunnel.remote_port != server_port):
+                    if server_port and (not tunnel or tunnel.remote_port != server_port):
+                        # This will actually restart the tunnel if already running.
                         tunnel = terminal_session.start_rpyc_tunnel(
                             server_port,
                             callback=self._on_rpyc_tunnel_started,
