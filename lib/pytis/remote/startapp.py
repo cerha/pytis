@@ -22,8 +22,7 @@ import wx
 import collections
 import pytis.util
 
-def _(x, *args, **kwargs):
-    return x % (args or kwargs) if args or kwargs else x
+_ = pytis.util.translations('pytis-x2go')
 
 class ui(object):
     """Private helper methods for simple UI construction (not to be used outside this module)."""

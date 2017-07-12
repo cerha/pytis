@@ -42,12 +42,13 @@ import x2go.client
 import x2go.defaults
 import x2go.log
 import x2go.xserver
+
+import pytis.util
 import pytis.remote
-
-from pytis.util import log, EVENT, translations, on_windows
 import pytis.remote.pytisproc as pytisproc
+from pytis.util import log, EVENT
 
-_ = translations('pytis-x2go')
+_ = pytis.util.translations('pytis-x2go')
 
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2017-04-07 01:26'
@@ -58,7 +59,6 @@ XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
 # we use older variant of VcXsrv. Later we will switch back to the current version.
 XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis_old'
-
 
 XCONFIG_DEFAULTS = {
     'XServers': {
@@ -606,7 +606,7 @@ class X2GoClient(x2go.X2GoClient):
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
         self.terminal_backend = TerminalSession
-        if on_windows() and xserver_variant:
+        if pytis.util.on_windows() and xserver_variant:
             update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
@@ -870,7 +870,7 @@ class StartupController(object):
             path = parameters.pop('path')
             return parameters, path
         else:
-            raise Exception(_("Invalid URL:"), url)
+            raise Exception(_("Invalid URL: %s", url))
 
     def _authentication_methods(self, connection_parameters):
         import socket
@@ -1047,7 +1047,9 @@ class StartupController(object):
                                             broker_path=self._broker_path)
         if self._profiles:
             self._app.update_progress(self._broker_parameters['server'] + ': ' +
-                                      _("Returned %d profiles.") % len(self._profiles.profile_ids))
+                                      _.ngettext("Returned %d profile.",
+                                                 "Returned %d profiles.",
+                                                 len(self._profiles.profile_ids)))
         return self._profiles
 
     def broker_url_username(self):
@@ -1165,7 +1167,7 @@ class StartupController(object):
         import winshell
         directory = self._scripts_directory()
         if not os.path.isdir(directory):
-            return _("Unable to find the scripts directory: %s") % directory
+            return _("Unable to find the scripts directory: %s", directory)
         vbs_path = self._vbs_path(directory, username, profile_id)
         # Create the VBS script to which the shortcut will point to.
         profile_name = self._profile_session_parameters(profile_id)['profile_name']
@@ -1226,11 +1228,14 @@ class StartupController(object):
             items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
                    for shortcut in shortcuts],
         )
+        n = 0
         for shortcut, checked in zip(shortcuts, confirmed):
             if checked:
                 os.remove(shortcut.lnk_filepath)
-        # TODO: We need ngettext for correct plural forms.
-        # self._app.message(_("%d shortcuts removed succesfully."))
+                n += 1
+        self._app.message(_.ngettext("%d shortcut removed succesfully.",
+                                     "%d shortcuts removed succesfully.",
+                                     n))
 
     def generate_key(self):
         """Generate new SSH key pair."""
@@ -1245,7 +1250,7 @@ class StartupController(object):
                 key_file = fname
                 break
         if key_file:
-            self._app.message(_("An existing key found: %s") % key_file)
+            self._app.message(_("An existing key found: %s", key_file))
             return
         key_file = os.path.join(sshdir, 'id_rsa')
         passwd = self.app.passphrase_dialog(_("Enter new key passphrase"))
@@ -1265,7 +1270,7 @@ class StartupController(object):
                 f.write(username)
             if os.access(key_file, os.R_OK):
                 pass
-            self._app.message(_("Keys created in directory: %s") % sshdir)
+            self._app.message(_("Keys created in directory: %s", sshdir))
 
     def change_key_passphrase(self):
         """Change key passphrase."""
