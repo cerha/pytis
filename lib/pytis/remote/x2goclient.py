@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import gettext
 import platform
 import sys
 
@@ -46,8 +45,10 @@ import x2go.log
 import x2go.xserver
 import pytis.remote
 
-from pytis.util import log, EVENT
+from pytis.util import log, EVENT, translations
 import pytis.remote.pytisproc as pytisproc
+
+_ = translations('pytis-x2go')
 
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2017-04-07 01:26'
@@ -114,8 +115,6 @@ def runtime_error(message, exitcode=-1):
 
 
 sys.path.append(pytis_path('lib'))
-
-_ = gettext.translation('pytis-x2go', pytis_path('translations'), fallback=True).ugettext
 
 X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
 
