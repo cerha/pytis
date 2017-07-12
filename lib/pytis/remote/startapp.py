@@ -20,7 +20,6 @@
 import os
 import wx
 import collections
-import string
 import pytis.util
 
 def _(x, *args, **kwargs):
@@ -94,8 +93,8 @@ class ui(object):
         """
         def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
             assert (isinstance(content, (wx.Window, wx.Sizer, wx.Size)) or
-                    isinstance(content, (tuple, list)) and len(content) == 2
-                    and all(isinstance(x, int) for x in content) or content is None), content
+                    isinstance(content, (tuple, list)) and len(content) == 2 and
+                    all(isinstance(x, int) for x in content) or content is None), content
             self.content = content
             self.proportion = proportion
             self.expand = expand
@@ -337,11 +336,11 @@ class X2GoStartApp(wx.App):
             listbox.Enable(False)
             listbox.SetMinSize((360, 180))
             buttons = [ui.button(parent, _("Start session"), self._on_select_profile,
-                                  lambda e: e.Enable(listbox.GetSelection() != -1))]
+                                 lambda e: e.Enable(listbox.GetSelection() != -1))]
             if pytis.util.on_windows():
                 buttons.append(ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
-                                          lambda e: e.Enable(listbox.GetSelection() != -1 and
-                                                             self._can_create_shortcut())))
+                                         lambda e: e.Enable(listbox.GetSelection() != -1 and
+                                                            self._can_create_shortcut())))
             return ui.vgroup(
                 ui.label(parent, _("Available profiles:")),
                 ui.item(
