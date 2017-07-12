@@ -23,13 +23,10 @@ gevent.monkey.patch_all()
 import os
 import sys
 
-pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
-if os.path.isdir(pytislib) and pytislib not in sys.path:
-    sys.path.append(pytislib)
-
 import argparse
 
 import x2go
+import x2go.defaults
 import paramiko
 
 import pytis.remote
@@ -301,6 +298,26 @@ Possible values for the --pack NX option are:
 # Start
 
 def main():
+    sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
+
+    # Windows specific setup
+    if on_windows():
+        X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
+        X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.remote.XCONFIG_DEFAULTS)
+        x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
+        reload(sys)
+        sys.setdefaultencoding('cp1250')
+        os.environ['NXPROXY_BINARY'] = os.path.normpath(os.path.join(
+            sys.path[0], '..', '..', 'win_apps', 'nxproxy', 'nxproxy.exe',
+        ))
+        # Set locale language
+        import ctypes
+        lcid = ctypes.windll.kernel32.GetUserDefaultLCID()
+        if not lcid:
+            lcid = ctypes.windll.kernel32.GetSystemDefaultLCID()
+        import locale
+        os.environ["LANGUAGE"] = locale.windows_locale.get(lcid)
+
     parser, args = parseargs()
     session_parameters = dict(
         server=args.server,
@@ -331,6 +348,7 @@ def main():
         'snd_system': 'sound',
         'port': 'remote_ssh_port',
     }
+
     # Command line options with non-default values will override session profile parameters.
     force_parameters = [
         param for param, value in session_parameters.items()
@@ -339,6 +357,7 @@ def main():
         # TODO: print_action_arg is omited because the arg parser doesn't know its default.
         param != 'print_action_arg'
     ]
+
     app = pytis.remote.X2GoStartApp(args, session_parameters, force_parameters)
     app.MainLoop()
 
