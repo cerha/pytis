@@ -30,7 +30,8 @@ import x2go.defaults
 import paramiko
 
 import pytis.remote
-from pytis.remote.x2goclient import on_windows, runtime_error
+import pytis.util
+from pytis.remote.x2goclient import runtime_error
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -56,7 +57,7 @@ action_options = [
     {'args': ['-P', '--session-profile'], 'default': None,
      'help': 'load x2goclient session profiles and use given profile to start a session', },
 ]
-#if not on_windows():
+#if not pytis.util.on_windows():
 #    action_options.append(
 #        {'args': ['--from-stdin'], 'default': False, 'action': 'store_true',
 #         'help': ('for LightDM remote login: '
@@ -157,7 +158,7 @@ pytis2go_options = [
     {'args': ['--heading'], 'default': None,
      'help': 'Override startup application main window heading (default: Pytis2Go)', },
 ]
-if on_windows():
+if pytis.util.on_windows():
     pytis2go_options += [
         {'args': ['--create-shortcut'], 'default': False, 'action': 'store_true',
          'help': 'create desktop shortcut if not present (default: disabled)', },
@@ -209,7 +210,7 @@ Possible values for the --pack NX option are:
         liblogger.set_loglevel_quiet()
     if a.libdebug_sftpxfer:
         liblogger.enable_debug_sftpxfer()
-    if a.password and on_windows():
+    if a.password and pytis.util.on_windows():
         runtime_error("The --password option is forbidden on Windows platforms", parser=p,
                       exitcode=222)
     if a.version:
@@ -283,7 +284,7 @@ Possible values for the --pack NX option are:
         runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
                       exitcode=30)
     # lightdm remote login magic takes place here
-    #if not on_windows() and a.from_stdin:
+    #if not pytis.util.on_windows() and a.from_stdin:
     #    lightdm_remote_login_buffer = sys.stdin.readline()
     #    (a.username, a.server, a.command) = lightdm_remote_login_buffer.split()[0:3]
     #    a.password = " ".join(lightdm_remote_login_buffer.split()[3:])
@@ -301,7 +302,7 @@ def main():
     sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
 
     # Windows specific setup
-    if on_windows():
+    if pytis.util.on_windows():
         X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
         X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.remote.XCONFIG_DEFAULTS)
         x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS

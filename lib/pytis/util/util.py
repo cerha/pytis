@@ -48,6 +48,7 @@ import tempfile
 import thread
 import types as pytypes
 import unicodedata
+import platform
 
 
 ### Classes
@@ -2097,3 +2098,7 @@ def translate(text):
 
     """
     return text
+
+def on_windows():
+    """Return True iff we are currently running on Windows."""
+    return platform.system() == 'Windows'

@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import platform
 import sys
 
 import copy
@@ -45,7 +44,7 @@ import x2go.log
 import x2go.xserver
 import pytis.remote
 
-from pytis.util import log, EVENT, translations
+from pytis.util import log, EVENT, translations, on_windows
 import pytis.remote.pytisproc as pytisproc
 
 _ = translations('pytis-x2go')
@@ -94,9 +93,6 @@ XCONFIG_DEFAULTS = {
                        '-nounixkill', '-swcursor', ],
     },
 }
-
-def on_windows():
-    return platform.system() == 'Windows'
 
 def runtime_error(message, exitcode=-1):
     # TODO: Raise an exception instead and catch it in the
@@ -1131,9 +1127,6 @@ class StartupController(object):
             else:
                 updatescript.run(version=_VERSION, path=path)
         shutil.rmtree(tmp_directory)
-
-    def on_windows(self):
-        return on_windows()
 
     def _vbs_path(self, directory, username, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (

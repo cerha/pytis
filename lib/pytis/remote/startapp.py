@@ -21,6 +21,7 @@ import os
 import wx
 import collections
 import string
+import pytis.util
 
 def _(x, *args, **kwargs):
     return x % (args or kwargs) if args or kwargs else x
@@ -296,7 +297,7 @@ class X2GoStartApp(wx.App):
             (_("Upload public key to server"), self._controller.upload_key),
             (_("Send public key to admin"), self._controller.send_key),
         ]
-        if self._controller.on_windows():
+        if pytis.util.on_windows():
             items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
         menu = wx.Menu()
         for label, callback in items:
@@ -337,7 +338,7 @@ class X2GoStartApp(wx.App):
             listbox.SetMinSize((360, 180))
             buttons = [ui.button(parent, _("Start session"), self._on_select_profile,
                                   lambda e: e.Enable(listbox.GetSelection() != -1))]
-            if self._controller.on_windows():
+            if pytis.util.on_windows():
                 buttons.append(ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                           lambda e: e.Enable(listbox.GetSelection() != -1 and
                                                              self._can_create_shortcut())))
@@ -481,7 +482,7 @@ class X2GoStartApp(wx.App):
             self._list_profiles(profiles)
             return self.Exit()
         else:
-            if self._controller.on_windows():
+            if pytis.util.on_windows():
                 current_version = self._controller.current_version()
                 available_version = self._controller.available_upgrade_version()
                 if ((available_version and available_version > current_version and
