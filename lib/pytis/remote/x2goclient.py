@@ -138,23 +138,6 @@ if on_windows():
     import locale
     os.environ["LANGUAGE"] = locale.windows_locale.get(lcid)
 
-def get_language_windows(system_lang=True):
-    """Get language code based on current Windows settings.
-    @return: list of languages.
-    """
-    try:
-        import ctypes
-    except ImportError:
-        return [locale.getdefaultlocale()[0]]
-    # get all locales using windows API
-    lcid_user = ctypes.windll.kernel32.GetUserDefaultLCID()
-    lcid_system = ctypes.windll.kernel32.GetSystemDefaultLCID()
-    if system_lang and lcid_user != lcid_system:
-        lcids = [lcid_user, lcid_system]
-    else:
-        lcids = [lcid_user]
-    return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
-
 
 class ClientException(Exception):
     pass
