@@ -17,9 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# ATTENTION: This should be updated on each code change.
-_VERSION = '2017-04-07 01:26'
-
 import os
 import gettext
 import platform
@@ -49,8 +46,11 @@ import x2go.log
 import x2go.xserver
 import pytis.remote
 
-from pytis.util import log, EVENT, OPERATIONAL
+from pytis.util import log, EVENT
 import pytis.remote.pytisproc as pytisproc
+
+# ATTENTION: This should be updated on each code change.
+_VERSION = '2017-04-07 01:26'
 
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
@@ -464,7 +464,7 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
         self._callback(port)
 
     def resume(self):
-        if self._accept_channels == False:
+        if self._accept_channels is False:
             self._accept_channels = True
             self._request_port_forwarding()
             self.logger('resumed thread: %s' % repr(self), loglevel=x2go.log.loglevel_DEBUG)
