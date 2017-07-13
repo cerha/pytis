@@ -172,12 +172,15 @@ def parseargs():
     global logger
     global liblogger
     p = argparse.ArgumentParser(description='X2Go pytis client.',
-                                epilog="""
-Possible values for the --pack NX option are:
-    %s
-""" % x2go.defaults.pack_methods_nx3_formatted,
+                                epilog=("\nPossible values for the --pack NX option are:\n    %s\n" %
+                                        x2go.defaults.pack_methods_nx3_formatted),
                                 formatter_class=argparse.RawDescriptionHelpFormatter,
                                 add_help=True, argument_default=None)
+
+    def runtime_error(*args, **kwargs):
+        p.print_usage()
+        pytis.x2goclient.runtime_error(*args, **kwargs)
+
     p_reqargs = p.add_argument_group('X2Go server name')
     p_reqargs.add_argument('--server', help='server hostname or IP address')
     p_actionopts = p.add_argument_group('client actions')
@@ -210,8 +213,7 @@ Possible values for the --pack NX option are:
     if a.libdebug_sftpxfer:
         liblogger.enable_debug_sftpxfer()
     if a.password and pytis.util.on_windows():
-        pytis.x2goclient.runtime_error("The --password option is forbidden on Windows platforms",
-                                       parser=p, exitcode=222)
+        runtime_error("The --password option is forbidden on Windows platforms", exitcode=222)
     if a.version:
         version()
     if not (a.session_profile or a.list_profiles):
@@ -220,10 +222,10 @@ Possible values for the --pack NX option are:
         #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
         #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
         #     bool(a.list_profiles)) > 1):
-        #    pytis.x2goclient.runtime_error(
+        #    runtime_error(
         #        "modes --new, --resume, --share-desktop, --suspend, --terminate, "
         #        "--list-sessions, --list-desktops and "
-        #        "--list-profiles are mutually exclusive", parser=p, exitcode=2,
+        #        "--list-profiles are mutually exclusive", exitcode=2,
         #    )
         #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
         #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
@@ -231,7 +233,7 @@ Possible values for the --pack NX option are:
         #    a.new = True
         # check if pack method is available
         if not x2go.utils.is_in_nx3packmethods(a.pack):
-            pytis.x2goclient.runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
+            runtime_error("unknown pack method '%s'" % args.pack, exitcode=10)
     #else:
     #    if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
     #            a.list_desktops or a.list_profiles):
@@ -243,8 +245,8 @@ Possible values for the --pack NX option are:
          (a.printer and a.save_to_folder) or
          (a.printer and a.print_cmd) or
          (a.print_cmd and a.save_to_folder))):
-        pytis.x2goclient.runtime_error("--pdfviewer, --save-to-folder, --printer and --print-cmd "
-                                       "options are mutually exclusive", parser=p, exitcode=81)
+        runtime_error("--pdfviewer, --save-to-folder, --printer and --print-cmd "
+                      "options are mutually exclusive", exitcode=81)
     if a.pdfview_cmd:
         a.print_action = 'PDFVIEW'
     elif a.save_to_folder:
@@ -282,8 +284,7 @@ Possible values for the --pack NX option are:
         ssh_config_fileobj.close()
     # check if ssh priv key exists
     if a.ssh_privkey and not os.path.isfile(a.ssh_privkey):
-        pytis.x2goclient.runtime_error("SSH private key %s file does not exist." % a.ssh_privkey,
-                                       parser=p, exitcode=30)
+        runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, exitcode=30)
     # lightdm remote login magic takes place here
     #if not pytis.util.on_windows() and a.from_stdin:
     #    lightdm_remote_login_buffer = sys.stdin.readline()
