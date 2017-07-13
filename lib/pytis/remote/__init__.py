@@ -34,5 +34,3 @@ from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     open_file, open_selected_file, select_directory, select_file, run_python, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException, RPCInfo
-
-from .ssh import public_key_acceptable, ssh_connect

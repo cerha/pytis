@@ -21,5 +21,6 @@
 X2GOCLIENT_VERSION = '2017-07-13 10:26'
 X2GOCLIENT_REQUIRED_VERSION = '2017-07-13 10:26'
 
+from .ssh import public_key_acceptable, ssh_connect
 from .startapp import X2GoStartApp
 from .x2goclient import XCONFIG_DEFAULTS, runtime_error, StartupController

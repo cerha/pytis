@@ -44,9 +44,10 @@ import x2go.log
 import x2go.xserver
 
 import pytis.util
-import pytis.remote
 import pytis.remote.pytisproc as pytisproc
+
 from pytis.util import log, EVENT
+from pytis.x2goclient import ssh_connect, public_key_acceptable
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -136,8 +137,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
 
     def _ssh_client(self):
         if self._ssh_client_instance is None:
-            client = pytis.remote.ssh_connect(**dict(self._connection_parameters,
-                                                     look_for_keys=False))
+            client = ssh_connect(**dict(self._connection_parameters, look_for_keys=False))
             if client:
                 self._ssh_client_instance = client
             else:
@@ -885,7 +885,7 @@ class StartupController(object):
         def key_acceptable(path):
             if os.access(path, os.R_OK):
                 try:
-                    return pytis.remote.public_key_acceptable(
+                    return public_key_acceptable(
                         connection_parameters['server'],
                         connection_parameters['username'],
                         path,
@@ -992,7 +992,7 @@ class StartupController(object):
         return success
 
     def _connect(self, **connection_parameters):
-        if pytis.remote.ssh_connect(**connection_parameters):
+        if ssh_connect(**connection_parameters):
             # Clean tempdir.
             tempdir = tempfile.gettempdir()
             for f in os.listdir(tempdir):
@@ -1081,7 +1081,7 @@ class StartupController(object):
     def upgrade(self, username):
         url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         connection_parameters = dict(url_params, username=url_params['username'] or username)
-        client = self._authenticate(pytis.remote.ssh_connect, connection_parameters)
+        client = self._authenticate(ssh_connect, connection_parameters)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()

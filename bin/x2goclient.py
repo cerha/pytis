@@ -370,6 +370,7 @@ import x2go.xserver
 import pytis.remote
 pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
+from pytis.x2goclient import public_key_acceptable
 from pytis.util import log, EVENT, OPERATIONAL
 
 app.update_progress_dialog(message=_(u"Initializing application. Please wait..."))
@@ -1457,7 +1458,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             acceptable = True
             if os.access(public_key_filename, os.R_OK):
                 try:
-                    acceptable = pytis.remote.public_key_acceptable(
+                    acceptable = public_key_acceptable(
                         connect_parameters['hostname'],
                         connect_parameters['username'],
                         public_key_filename,
