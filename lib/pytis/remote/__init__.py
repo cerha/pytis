@@ -35,8 +35,4 @@ from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException, RPCInfo
 
-try:
-    from .ssh import ReverseTunnel, public_key_acceptable, ssh_connect, ssh_exec
-except ImportError as e:
-    def ReverseTunnel(*args, **kwargs):
-        raise e
+from .ssh import public_key_acceptable, ssh_connect
