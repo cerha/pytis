@@ -161,8 +161,8 @@ class PytisService(rpyc.Service):
 
     def exposed_x2goclient_version(self):
         """Return x2goclient version."""
-        import pytis.remote
-        version = pytis.remote.X2GOCLIENT_VERSION
+        import pytis.x2goclient
+        version = pytis.x2goclient.X2GOCLIENT_VERSION
         return version
 
     def exposed_run_python(self, script):

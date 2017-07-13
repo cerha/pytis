@@ -287,7 +287,7 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
-        last_version = _VERSION
+        last_version = pytis.x2goclient.X2GOCLIENT_VERSION
         for section, data in profiles.items():
             if section.startswith('pytis-client-upgrade'):
                 if data['name'] > last_version:
@@ -1069,7 +1069,7 @@ class StartupController(object):
         )
 
     def current_version(self):
-        return _VERSION
+        return pytis.x2goclient.X2GOCLIENT_VERSION
 
     def available_upgrade_version(self):
         version, url = self._profiles.pytis_upgrade_parameters()
@@ -1122,7 +1122,7 @@ class StartupController(object):
             except:
                 pass
             else:
-                updatescript.run(version=_VERSION, path=path)
+                updatescript.run(version=pytis.x2goclient.X2GOCLIENT_VERSION, path=path)
         shutil.rmtree(tmp_directory)
 
     def _vbs_path(self, directory, username, profile_id):
