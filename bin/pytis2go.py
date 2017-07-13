@@ -29,6 +29,10 @@ import x2go
 import x2go.defaults
 import paramiko
 
+pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
+if os.path.isdir(pytislib) and pytislib not in sys.path:
+    sys.path.append(pytislib)
+
 import pytis.util
 import pytis.x2goclient
 
@@ -171,11 +175,13 @@ def version():
 def parseargs():
     global logger
     global liblogger
-    p = argparse.ArgumentParser(description='X2Go pytis client.',
-                                epilog=("\nPossible values for the --pack NX option are:\n    %s\n" %
-                                        x2go.defaults.pack_methods_nx3_formatted),
-                                formatter_class=argparse.RawDescriptionHelpFormatter,
-                                add_help=True, argument_default=None)
+    p = argparse.ArgumentParser(
+        description='X2Go pytis client.',
+        epilog=("\nPossible values for the --pack NX option are:\n    %s\n" %
+                x2go.defaults.pack_methods_nx3_formatted),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=True, argument_default=None
+    )
 
     def runtime_error(*args, **kwargs):
         p.print_usage()
