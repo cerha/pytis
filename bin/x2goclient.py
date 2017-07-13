@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2014, 2015, 2017 Brailcom, o.p.s.
 # Copyright (C) 2010-2014 by Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -111,7 +111,7 @@ def get_language_windows(system_lang=True):
     return filter(None, [locale.windows_locale.get(i) for i in lcids]) or None
 
 
-t = gettext.translation('pytis-x2go',
+t = gettext.translation('pytis-x2goclient',
                         os.path.normpath(os.path.join(run_directory(), '..', 'translations')),
                         fallback=True)
 _ = t.ugettext

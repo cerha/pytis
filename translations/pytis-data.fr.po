@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-03-17 14:38+0100\n"
+"POT-Creation-Date: 2017-07-12 18:33+0200\n"
 "PO-Revision-Date: 2011-12-29 12:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: French <wiking@lists.freebsoft.org>\n"
@@ -248,11 +248,11 @@ msgstr "Format de la date ou de l'heure non valide"
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:646
+#: ../lib/pytis/presentation/field.py:681
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:835
+#: ../lib/pytis/presentation/field.py:881
 msgid "Such value already exists."
 msgstr ""
 

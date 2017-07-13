@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-03-17 14:38+0100\n"
+"POT-Creation-Date: 2017-07-12 18:33+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -246,11 +246,11 @@ msgstr "Chybný formát dátumu alebo času"
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:646
+#: ../lib/pytis/presentation/field.py:681
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:835
+#: ../lib/pytis/presentation/field.py:881
 msgid "Such value already exists."
 msgstr ""
 

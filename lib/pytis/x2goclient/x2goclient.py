@@ -50,11 +50,6 @@ from pytis.util import log, EVENT
 
 _ = pytis.util.translations('pytis-x2go')
 
-# ATTENTION: This should be updated on each code change.
-_VERSION = '2017-04-07 01:26'
-
-pytis.remote.X2GOCLIENT_VERSION = _VERSION
-
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
 # we use older variant of VcXsrv. Later we will switch back to the current version.
@@ -815,7 +810,7 @@ class StartupController(object):
 
     The public methods of this class implement various X2Go related
     functionality needed by the startup application
-    ('pytis.remote.X2GoStartApp' instance).  Whenever the methods of this class
+    ('pytis.x2goclient.X2GoStartApp' instance).  Whenever the methods of this class
     need a UI interaction, they call the public methods of the startup
     application.  Thus the two classes call each other.  This class implements
     the X2Go related functionality, the application implements the UI.

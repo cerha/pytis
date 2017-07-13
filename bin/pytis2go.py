@@ -29,9 +29,8 @@ import x2go
 import x2go.defaults
 import paramiko
 
-import pytis.remote
 import pytis.util
-from pytis.remote.x2goclient import runtime_error
+import pytis.x2goclient
 
 logger = x2go.X2GoLogger()
 liblogger = x2go.X2GoLogger()
@@ -166,7 +165,7 @@ if pytis.util.on_windows():
 
 # print version text and exit
 def version():
-    sys.stderr.write("%s\n" % (pytis.remote.X2GOCLIENT_VERSION,))
+    sys.stderr.write("%s\n" % (pytis.x2goclient.X2GOCLIENT_VERSION,))
     sys.exit(0)
 
 def parseargs():
@@ -211,8 +210,8 @@ Possible values for the --pack NX option are:
     if a.libdebug_sftpxfer:
         liblogger.enable_debug_sftpxfer()
     if a.password and pytis.util.on_windows():
-        runtime_error("The --password option is forbidden on Windows platforms", parser=p,
-                      exitcode=222)
+        pytis.x2goclient.runtime_error("The --password option is forbidden on Windows platforms",
+                                       parser=p, exitcode=222)
     if a.version:
         version()
     if not (a.session_profile or a.list_profiles):
@@ -221,16 +220,18 @@ Possible values for the --pack NX option are:
         #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
         #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
         #     bool(a.list_profiles)) > 1):
-        #    runtime_error("modes --new, --resume, --share-desktop, --suspend, --terminate, "
-        #                  "--list-sessions, --list-desktops and "
-        #                  "--list-profiles are mutually exclusive", parser=p, exitcode=2)
+        #    pytis.x2goclient.runtime_error(
+        #        "modes --new, --resume, --share-desktop, --suspend, --terminate, "
+        #        "--list-sessions, --list-desktops and "
+        #        "--list-profiles are mutually exclusive", parser=p, exitcode=2,
+        #    )
         #if ((bool(a.new) + bool(a.resume) + bool(a.share_desktop) + bool(a.suspend) +
         #     bool(a.terminate) + bool(a.list_sessions) + bool(a.list_desktops) +
         #     bool(a.list_profiles)) == 0):
         #    a.new = True
         # check if pack method is available
         if not x2go.utils.is_in_nx3packmethods(a.pack):
-            runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
+            pytis.x2goclient.runtime_error("unknown pack method '%s'" % args.pack, parser=p, exitcode=10)
     #else:
     #    if not (a.resume or a.share_desktop or a.suspend or a.terminate or a.list_sessions or
     #            a.list_desktops or a.list_profiles):
@@ -242,8 +243,8 @@ Possible values for the --pack NX option are:
          (a.printer and a.save_to_folder) or
          (a.printer and a.print_cmd) or
          (a.print_cmd and a.save_to_folder))):
-        runtime_error(("--pdfviewer, --save-to-folder, --printer and --print-cmd options are "
-                       "mutually exclusive"), parser=p, exitcode=81)
+        pytis.x2goclient.runtime_error("--pdfviewer, --save-to-folder, --printer and --print-cmd "
+                                       "options are mutually exclusive", parser=p, exitcode=81)
     if a.pdfview_cmd:
         a.print_action = 'PDFVIEW'
     elif a.save_to_folder:
@@ -281,8 +282,8 @@ Possible values for the --pack NX option are:
         ssh_config_fileobj.close()
     # check if ssh priv key exists
     if a.ssh_privkey and not os.path.isfile(a.ssh_privkey):
-        runtime_error("SSH private key %s file does not exist." % a.ssh_privkey, parser=p,
-                      exitcode=30)
+        pytis.x2goclient.runtime_error("SSH private key %s file does not exist." % a.ssh_privkey,
+                                       parser=p, exitcode=30)
     # lightdm remote login magic takes place here
     #if not pytis.util.on_windows() and a.from_stdin:
     #    lightdm_remote_login_buffer = sys.stdin.readline()
@@ -304,7 +305,7 @@ def main():
     # Windows specific setup
     if pytis.util.on_windows():
         X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
-        X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.remote.XCONFIG_DEFAULTS)
+        X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.x2goclient.XCONFIG_DEFAULTS)
         x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
         reload(sys)
         sys.setdefaultencoding('cp1250')
@@ -359,7 +360,7 @@ def main():
         param != 'print_action_arg'
     ]
 
-    app = pytis.remote.X2GoStartApp(args, session_parameters, force_parameters)
+    app = pytis.x2goclient.X2GoStartApp(args, session_parameters, force_parameters)
     app.MainLoop()
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# These constants are used by the old bin/x2goclient.py script.
+# The new script pytis2go.py uses the pytis.x2goclient.* constants.
 X2GOCLIENT_VERSION = None
 X2GOCLIENT_REQUIRED_VERSION = '2016-11-09 22:35'
 
@@ -32,8 +34,6 @@ from .remote import nx_ip, client_ip, x2go_ip, client_available, version, \
     open_file, open_selected_file, select_directory, select_file, run_python, \
     x2go_session_id, pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file, \
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException, RPCInfo
-
-from .startapp import X2GoStartApp
 
 try:
     from .ssh import ReverseTunnel, public_key_acceptable, ssh_connect, ssh_exec
