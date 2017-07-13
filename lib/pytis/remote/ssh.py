@@ -26,11 +26,9 @@ import select
 import socket
 import sys
 import threading
-
 import Crypto
 import gevent
 import gevent.event
-import gevent.subprocess
 import paramiko
 
 from pytis.util import log, EVENT, OPERATIONAL
@@ -181,19 +179,6 @@ def ssh_connect(server, add_to_known_hosts=False, **kwargs):
             ImportError):  # Happens on GSS auth attempt with GSS libs uninstalled.
         return None
     return client
-
-def ssh_exec(command, hostname):
-    """Execute given 'command' on 'hostname' using X11 forwarding.
-
-    Arguments:
-
-      command -- command name and its arguments; list of strings
-      hostname -- host to execute the given command on; basestring
-
-    """
-    # Paramiko doesn't handle X11 forwarding very well, so it's much easier to
-    # use just subprocess here.
-    return gevent.subprocess.Popen(['ssh', '-X', hostname] + command)
 
 
 class ReverseTunnel(gevent.Greenlet):

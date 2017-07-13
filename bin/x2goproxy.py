@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Brailcom, o.p.s.
+# Copyright (C) 2015, 2017 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -27,6 +27,7 @@ import os
 import sys
 
 import gevent
+import gevent.subprocess
 import paramiko
 
 import pytis.remote
@@ -52,9 +53,11 @@ class Application(object):
             del sys.modules['_config']
 
     def _run_application(self):
-        session_id = pytis.remote.x2go_session_id(fake=True)
-        command = [self._application_command, '--session-id', session_id]
-        return pytis.remote.ssh_exec(command, **self._connection_parameters)
+        # Paramiko doesn't handle X11 forwarding very well, so it's much easier to
+        # use just subprocess here.
+        return gevent.subprocess.Popen(['ssh', '-X', self._connection_parameters['hostname'],
+                                        self._application_command,
+                                        '--session-id', pytis.remote.x2go_session_id(fake=True)])
 
     def _run_tunnel(self):
         parameters = self._connection_parameters
@@ -94,7 +97,7 @@ class Application(object):
                 if os.path.exists(pytis_x2go_file):
                     tunnel.kill()
                     break
-                
+
     def run(self):
         gevent.spawn(self._run_tunnel)
         application = self._run_application()
