@@ -24,15 +24,14 @@ import os
 import sys
 
 import argparse
-
-import x2go
-import x2go.defaults
 import paramiko
 
 pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
 
+import x2go
+import x2go.defaults
 import pytis.util
 import pytis.x2goclient
 
