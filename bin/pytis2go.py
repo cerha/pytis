@@ -307,8 +307,6 @@ def parseargs():
 # Start
 
 def main():
-    sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
-
     # Windows specific setup
     if pytis.util.on_windows():
         X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
