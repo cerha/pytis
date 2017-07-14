@@ -2071,15 +2071,34 @@ def translations(domain, origin='en'):
     try:
         import lcg
     except ImportError:
-        def interpolate(text, *args, **kwargs):
-            values = args or kwargs
-            if values:
-                text %= values
-            return text
-        return interpolate
-    lang = environment_language(default=origin)
-    path = translation_path()
-    return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
+        import gettext
+        class Translator(object):
+            """Implement 'lcg.TranslatedTextFactory' interface using pure gettext."""
+
+            def __init__(self, domain, path):
+                self._gettext = gettext.translation(domain, path[0], fallback=True)
+
+            def _interpolate(self, text, *args, **kwargs):
+                values = args or kwargs
+                if values:
+                    text %= values
+                return text
+
+            def __call__(self, text, *args, **kwargs):
+                return self._interpolate(self._gettext.ugettext(text), *args, **kwargs)
+
+            def ngettext(self, singular, plural, *args, **kwargs):
+                if args:
+                    n = args[0]
+                else:
+                    n = kwargs['n']
+                return self._interpolate(self._gettext.ngettext(singular, plural, n), *args, **kwargs)
+
+        return Translator(domain, translation_path())
+    else:
+        path = translation_path()
+        lang = environment_language(default=origin)
+        return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
 
 def translate(text):
     """Return translation object for given text.
