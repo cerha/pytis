@@ -1340,7 +1340,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             version = pytis.remote.x2goclient_version()
             try:
                 version_date = datetime.datetime.strptime(version, version_template)
-                required_version = pytis.remote.X2GOCLIENT_REQUIRED_VERSION
+                required_version = pytis.x2goclient.X2GOCLIENT_REQUIRED_VERSION
             except Exception:
                 return
             required_date = datetime.datetime.strptime(required_version, version_template)

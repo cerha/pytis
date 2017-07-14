@@ -47,7 +47,7 @@ import pytis.util
 import pytis.remote.pytisproc as pytisproc
 
 from pytis.util import log, EVENT
-from pytis.x2goclient import ssh_connect, public_key_acceptable
+from pytis.x2goclient import ssh_connect, public_key_acceptable, X2GOCLIENT_VERSION
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -287,7 +287,7 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
-        last_version = pytis.x2goclient.X2GOCLIENT_VERSION
+        last_version = X2GOCLIENT_VERSION
         for section, data in profiles.items():
             if section.startswith('pytis-client-upgrade'):
                 if data['name'] > last_version:
@@ -810,7 +810,7 @@ class StartupController(object):
 
     The public methods of this class implement various X2Go related
     functionality needed by the startup application
-    ('pytis.x2goclient.X2GoStartApp' instance).  Whenever the methods of this class
+    ('X2GoStartApp' instance).  Whenever the methods of this class
     need a UI interaction, they call the public methods of the startup
     application.  Thus the two classes call each other.  This class implements
     the X2Go related functionality, the application implements the UI.
@@ -1069,7 +1069,7 @@ class StartupController(object):
         )
 
     def current_version(self):
-        return pytis.x2goclient.X2GOCLIENT_VERSION
+        return X2GOCLIENT_VERSION
 
     def available_upgrade_version(self):
         version, url = self._profiles.pytis_upgrade_parameters()
@@ -1122,7 +1122,7 @@ class StartupController(object):
             except:
                 pass
             else:
-                updatescript.run(version=pytis.x2goclient.X2GOCLIENT_VERSION, path=path)
+                updatescript.run(version=X2GOCLIENT_VERSION, path=path)
         shutil.rmtree(tmp_directory)
 
     def _vbs_path(self, directory, username, profile_id):
@@ -1278,8 +1278,3 @@ class StartupController(object):
     def send_key(self):
         """Send public key to admin."""
         pass
-
-
-# Local Variables:
-# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
-# End:

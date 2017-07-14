@@ -24,3 +24,7 @@ X2GOCLIENT_REQUIRED_VERSION = '2017-07-13 10:26'
 from .ssh import public_key_acceptable, ssh_connect
 from .startapp import X2GoStartApp
 from .x2goclient import XCONFIG_DEFAULTS, runtime_error, StartupController
+
+# Local Variables:
+# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
+# End:

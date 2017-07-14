@@ -17,11 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# These constants are used by the old bin/x2goclient.py script.
-# The new script pytis2go.py uses the pytis.x2goclient.* constants.
-X2GOCLIENT_VERSION = None
-X2GOCLIENT_REQUIRED_VERSION = '2016-11-09 22:35'
-
 try:
     from .proxy import run_proxy
 except ImportError as e:

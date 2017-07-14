@@ -17,8 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# ATTENTION: This should be updated on each code change.
-_VERSION = '2017-04-07 01:26'
+# ATTENTION: pytis.x2goclient.X2GOCLIENT_VERSION should be updated on each code change.
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
 # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
@@ -368,9 +367,8 @@ import x2go.defaults
 import x2go.log
 import x2go.xserver
 import pytis.remote
-pytis.remote.X2GOCLIENT_VERSION = _VERSION
 
-from pytis.x2goclient import public_key_acceptable
+from pytis.x2goclient import public_key_acceptable, X2GOCLIENT_VERSION
 from pytis.util import log, EVENT, OPERATIONAL
 
 app.update_progress_dialog(message=_(u"Initializing application. Please wait..."))
@@ -851,7 +849,7 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
-        last_version = _VERSION
+        last_version = X2GOCLIENT_VERSION
         for section, data in profiles.items():
             if section.startswith('pytis-client-upgrade'):
                 version = data.get('name')
@@ -1042,14 +1040,14 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             # We can use only supported parameters from session_profiles
             # So we'll use 'name' for the version and 'command' for url
             version = profiles.pytis_upgrade_parameter('name')
-            if version and version > _VERSION:
+            if version and version > X2GOCLIENT_VERSION:
                 p = profiles.pytis_upgrade_parameter
                 upgrade_url = p('command')
                 if upgrade_url and on_windows():
                     if app.question_dialog(_(u"New pytis client version available.\n\n"
                                              u"Current version: {}\n"
                                              u"New version: {}\n\n"
-                                             u"Install?").format(_VERSION, version)):
+                                             u"Install?").format(X2GOCLIENT_VERSION, version)):
                         self._pytis_upgrade(upgrade_url)
         _profiles = self._X2GoClient__get_profiles()
         if self.args.session_profile and not _profiles.has_profile(self.args.session_profile):
@@ -1592,7 +1590,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
             except:
                 pass
         if updateproc:
-            updateproc(version=_VERSION, path=path, client=client,
+            updateproc(version=X2GOCLIENT_VERSION, path=path, client=client,
                        install_directory=install_directory, tmp_directory=tmp_directory)
         shutil.rmtree(tmp_directory)
         app.info_dialog(_(u"Pytis successfully upgraded. Restart the application."))
@@ -1974,7 +1972,7 @@ backend_options = [
 
 # print version text and exit
 def version():
-    sys.stderr.write("%s\n" % (_VERSION,))
+    sys.stderr.write("%s\n" % (X2GOCLIENT_VERSION,))
     sys.exit(0)
 
 def parseargs():
@@ -2145,7 +2143,3 @@ app.update_progress_dialog(message=_(u"Launching application. Please wait..."))
 
 if __name__ == '__main__':
     main()
-
-# Local Variables:
-# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
-# End:
