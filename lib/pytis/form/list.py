@@ -3555,7 +3555,7 @@ class BrowseForm(FoldableForm):
         try:
             formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec_path,
                                                form=self, parameters=parameters,
-                                               language=language,
+                                               language=language or pytis.util.current_language(),
                                                translations=pytis.util.translation_path())
         except pytis.output.AbortOutput:
             return
