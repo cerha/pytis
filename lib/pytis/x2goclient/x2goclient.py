@@ -1249,9 +1249,26 @@ class StartupController(object):
                                      "%d shortcuts removed succesfully.",
                                      n))
 
+    def _check_password(self, passwd):
+        """Simple password validator."""
+        import string
+        set_digits = set(string.digits)
+        set_lower = set(string.ascii_lowercase)
+        set_upper = set(string.ascii_uppercase)
+        allowed_chars = string.digits + string.ascii_letters + string.punctuation
+        if any(c not in allowed_chars for c in passwd):
+            return 'unallowed'
+        if len(passwd) < 10:
+            return 'short'
+        if not all(set(passwd) & s for s in (set_digits, set_lower, set_upper)):
+            return 'weak'
+        else:
+            return None
+
     def generate_key(self):
         """Generate new SSH key pair."""
-        sshdir = x2go.defaults.X2GO_SSH_ROOTDIR
+        sshdir = os.path.join(x2go.defaults.LOCAL_HOME,
+                              x2go.defaults.X2GO_SSH_ROOTDIR)
         if not os.path.exists(sshdir):
             os.mkdir(sshdir)
         # Check if key exists
@@ -1265,14 +1282,20 @@ class StartupController(object):
             self._app.info_dialog(_("Generate key"), _("An existing key found: %s", key_file))
             return
         key_file = os.path.join(sshdir, 'id_rsa')
-        passwd = self.app.passphrase_dialog(_("Enter new key passphrase"))
+        passwd = self._app.passphrase_dialog(_("Enter new key passphrase"),
+                                             check=self._check_password)
         if passwd:
             key = paramiko.RSAKey.generate(2048)
             # Write private part
             key.write_private_key_file(key_file, password=passwd)
             # Write public part
-            # How to get username?
-            username = ''
+            if pytis.util.on_windows():
+                userp = os.environ.get('userprofile')
+                if not isinstance(userp, unicode):
+                    userp = userp.decode(sys.getfilesystemencoding())
+                username = os.path.split(userp)[-1] or ''
+            else:
+                username = os.environ.get('USER', '')
             with open(key_file + '.pub', 'w') as f:
                 if isinstance(username, unicode):
                     username = username.encode('utf-8')
