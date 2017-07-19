@@ -279,7 +279,7 @@ class X2GoStartApp(wx.App):
         error = self._controller.create_shortcut(self._username(), self._selected_profile_id())
         if error:
             # TODO: Specific dialog for error messages (icons)?
-            self._info(_("Failed creating desktop shortcut"), error)
+            self.info_dialog(_("Failed creating desktop shortcut"), error)
         else:
             self.update_progress(_("Shortcut created successfully."))
 
@@ -451,7 +451,7 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def _info(self, title, text):
+    def info_dialog(self, title, text):
         def create_dialog(dialog):
             button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
             dialog.set_callback(lambda: button.SetFocus())
@@ -497,10 +497,11 @@ class X2GoStartApp(wx.App):
                     error = self._controller.upgrade(self._username())
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
-                        self._info(_("Upgrade failed"), error)
+                        self.info_dialog(_("Upgrade failed"), error)
                     else:
-                        self._info(_(u"Upgrade finished"),
-                                   _(u"Pytis successfully upgraded. Restart the application."))
+                        self.info_dialog(
+                            _(u"Upgrade finished"),
+                            _(u"Pytis successfully upgraded. Restart the application."))
                         return self.Exit()
             profile_id = self._args.session_profile
             if profile_id:

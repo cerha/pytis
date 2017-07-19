@@ -1262,7 +1262,7 @@ class StartupController(object):
                 key_file = fname
                 break
         if key_file:
-            self._app.message(_("An existing key found: %s", key_file))
+            self._app.info_dialog(_("Generate key"), _("An existing key found: %s", key_file))
             return
         key_file = os.path.join(sshdir, 'id_rsa')
         passwd = self.app.passphrase_dialog(_("Enter new key passphrase"))
@@ -1282,7 +1282,8 @@ class StartupController(object):
                 f.write(username)
             if os.access(key_file, os.R_OK):
                 pass
-            self._app.message(_("Keys created in directory: %s", sshdir))
+            self._app.info_dialog(_("Generate key"),
+                                  _("Keys created in directory: %s", sshdir))
 
     def change_key_passphrase(self):
         """Change key passphrase."""
