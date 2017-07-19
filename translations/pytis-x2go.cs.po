@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-07-13 10:07+0200\n"
-"PO-Revision-Date: 2017-07-13 10:18+0200\n"
+"POT-Creation-Date: 2017-07-19 15:42+0200\n"
+"PO-Revision-Date: 2017-07-19 15:43+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -18,307 +18,311 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/x2goclient/startapp.py:272
+#: ../lib/pytis/x2goclient/startapp.py:273
 #, python-format
 msgid "Selected profile %s: Contacting server..."
 msgstr "Vybrán profil %s: Navazuji spojení se serverem..."
 
-#: ../lib/pytis/x2goclient/startapp.py:280
+#: ../lib/pytis/x2goclient/startapp.py:281
 msgid "Failed creating desktop shortcut"
 msgstr "Chyba při vytváření zástupce na ploše"
 
-#: ../lib/pytis/x2goclient/startapp.py:282
+#: ../lib/pytis/x2goclient/startapp.py:283
 msgid "Shortcut created successfully."
 msgstr "Zástupce úspěšně vytvořen."
 
-#: ../lib/pytis/x2goclient/startapp.py:291
+#: ../lib/pytis/x2goclient/startapp.py:292
 msgid "Pytis2Go"
 msgstr "Pytis2Go"
 
-#: ../lib/pytis/x2goclient/startapp.py:296
+#: ../lib/pytis/x2goclient/startapp.py:297
 msgid "Generate new SSH key pair"
 msgstr "Vygenerovat nový pár SSH klíčů"
 
-#: ../lib/pytis/x2goclient/startapp.py:297
+#: ../lib/pytis/x2goclient/startapp.py:298
 msgid "Change key passphrase"
 msgstr "Změnit heslo klíče"
 
-#: ../lib/pytis/x2goclient/startapp.py:298
+#: ../lib/pytis/x2goclient/startapp.py:299
 msgid "Upload public key to server"
 msgstr "Nahrát veřejný klíč na server"
 
-#: ../lib/pytis/x2goclient/startapp.py:299
+#: ../lib/pytis/x2goclient/startapp.py:300
 msgid "Send public key to admin"
 msgstr "Poslat veřejný klíč správci"
 
-#: ../lib/pytis/x2goclient/startapp.py:302
+#: ../lib/pytis/x2goclient/startapp.py:303
 msgid "Cleanup desktop shortcuts"
 msgstr "Pročistit zástupce na ploše"
 
-#: ../lib/pytis/x2goclient/startapp.py:308
+#: ../lib/pytis/x2goclient/startapp.py:309
 msgid "More actions..."
 msgstr "Další funkce..."
 
-#: ../lib/pytis/x2goclient/startapp.py:312
+#: ../lib/pytis/x2goclient/startapp.py:313
 msgid "Login name:"
 msgstr "Uživatelské jméno:"
 
-#: ../lib/pytis/x2goclient/startapp.py:327
+#: ../lib/pytis/x2goclient/startapp.py:328
 msgid "Continue"
 msgstr "Pokračovat"
 
-#: ../lib/pytis/x2goclient/startapp.py:340
+#: ../lib/pytis/x2goclient/startapp.py:341
 msgid "Start session"
 msgstr "Spustit sezení"
 
-#: ../lib/pytis/x2goclient/startapp.py:343
+#: ../lib/pytis/x2goclient/startapp.py:344
 msgid "Create shortcut"
 msgstr "Vytvořit zástupce"
 
-#: ../lib/pytis/x2goclient/startapp.py:347
+#: ../lib/pytis/x2goclient/startapp.py:348
 msgid "Available profiles:"
 msgstr "Dostupné profily:"
 
-#: ../lib/pytis/x2goclient/startapp.py:407
+#: ../lib/pytis/x2goclient/startapp.py:408
 #, python-format
 msgid "Terminating session: %s"
 msgstr "Ukončení sezení: %s"
 
-#: ../lib/pytis/x2goclient/startapp.py:410
+#: ../lib/pytis/x2goclient/startapp.py:411
 #, python-format
 msgid "Session terminated: %s"
 msgstr "Sezení ukončeno: %s"
 
-#: ../lib/pytis/x2goclient/startapp.py:422
+#: ../lib/pytis/x2goclient/startapp.py:423
 msgid "Existing sessions:"
 msgstr "Stávající sezení:"
 
-#: ../lib/pytis/x2goclient/startapp.py:428
+#: ../lib/pytis/x2goclient/startapp.py:429
 msgid "Resume"
 msgstr "Obnovit"
 
-#: ../lib/pytis/x2goclient/startapp.py:430
+#: ../lib/pytis/x2goclient/startapp.py:431
 msgid "Terminate"
 msgstr "Ukončit"
 
-#: ../lib/pytis/x2goclient/startapp.py:435
+#: ../lib/pytis/x2goclient/startapp.py:436
 msgid "Start New Session"
 msgstr "Spustit nové sezení"
 
-#: ../lib/pytis/x2goclient/startapp.py:442
+#: ../lib/pytis/x2goclient/startapp.py:443
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/x2goclient/startapp.py:443
+#: ../lib/pytis/x2goclient/startapp.py:444
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/x2goclient/startapp.py:454
-#: ../lib/pytis/x2goclient/startapp.py:708
-#: ../lib/pytis/x2goclient/startapp.py:771
+#: ../lib/pytis/x2goclient/startapp.py:455
+#: ../lib/pytis/x2goclient/startapp.py:712
+#: ../lib/pytis/x2goclient/startapp.py:775
 msgid "Ok"
 msgstr "Ok"
 
-#: ../lib/pytis/x2goclient/startapp.py:472
+#: ../lib/pytis/x2goclient/startapp.py:473
 msgid "Starting Pytis client."
 msgstr "Spouštím Pytis klienta"
 
-#: ../lib/pytis/x2goclient/startapp.py:490
+#: ../lib/pytis/x2goclient/startapp.py:491
 msgid "Upgrade available"
 msgstr "Dostupná aktualizace"
 
-#: ../lib/pytis/x2goclient/startapp.py:491
+#: ../lib/pytis/x2goclient/startapp.py:492
 msgid "New Pytis client version available."
 msgstr "Je dostupná nová verze Pytis klienta."
 
-#: ../lib/pytis/x2goclient/startapp.py:492
+#: ../lib/pytis/x2goclient/startapp.py:493
 #, python-format
 msgid "Current version: %s"
 msgstr "Aktuální verze: %s"
 
-#: ../lib/pytis/x2goclient/startapp.py:493
+#: ../lib/pytis/x2goclient/startapp.py:494
 #, python-format
 msgid "New version: %s"
 msgstr "Nová verze: %s"
 
-#: ../lib/pytis/x2goclient/startapp.py:494
+#: ../lib/pytis/x2goclient/startapp.py:495
 msgid "Install?"
 msgstr "Nainstalovat?"
 
-#: ../lib/pytis/x2goclient/startapp.py:498
+#: ../lib/pytis/x2goclient/startapp.py:499
 msgid "Upgrade failed"
 msgstr "Aktualizace selhala"
 
-#: ../lib/pytis/x2goclient/startapp.py:500
+#: ../lib/pytis/x2goclient/startapp.py:501
 msgid "Upgrade finished"
 msgstr "Aktualizace dokončena"
 
-#: ../lib/pytis/x2goclient/startapp.py:501
+#: ../lib/pytis/x2goclient/startapp.py:502
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
 
-#: ../lib/pytis/x2goclient/startapp.py:540
+#: ../lib/pytis/x2goclient/startapp.py:541
 msgid "Retrieving available sessions."
 msgstr "Probíhá zjišťování dostupných sezení."
 
-#: ../lib/pytis/x2goclient/startapp.py:545
+#: ../lib/pytis/x2goclient/startapp.py:546
 msgid "Select session"
 msgstr "Vyberte sezení"
 
-#: ../lib/pytis/x2goclient/startapp.py:548
+#: ../lib/pytis/x2goclient/startapp.py:549
 #, python-format
 msgid "Resuming session: %s"
 msgstr "Obnova sezení: %s"
 
-#: ../lib/pytis/x2goclient/startapp.py:551
+#: ../lib/pytis/x2goclient/startapp.py:552
 msgid "Starting new session."
 msgstr "Spuštění nového sezení."
 
-#: ../lib/pytis/x2goclient/startapp.py:602
+#: ../lib/pytis/x2goclient/startapp.py:559
+msgid "Waiting for the application to come up..."
+msgstr "Čekám na naběhnutí aplikačního okna..."
+
+#: ../lib/pytis/x2goclient/startapp.py:606
 msgid "Select SSH key file"
 msgstr "Vyberte soubor SSH klíče"
 
-#: ../lib/pytis/x2goclient/startapp.py:606
+#: ../lib/pytis/x2goclient/startapp.py:610
 msgid "Key File:"
 msgstr "Soubor s klíčem:"
 
-#: ../lib/pytis/x2goclient/startapp.py:609
+#: ../lib/pytis/x2goclient/startapp.py:613
 msgid "Select"
 msgstr "Vyberte"
 
-#: ../lib/pytis/x2goclient/startapp.py:610
-#: ../lib/pytis/x2goclient/startapp.py:766
+#: ../lib/pytis/x2goclient/startapp.py:614
+#: ../lib/pytis/x2goclient/startapp.py:770
 msgid "Passphrase:"
 msgstr "Heslo:"
 
-#: ../lib/pytis/x2goclient/startapp.py:620
+#: ../lib/pytis/x2goclient/startapp.py:624
 msgid "Password:"
 msgstr "Heslo:"
 
-#: ../lib/pytis/x2goclient/startapp.py:633
+#: ../lib/pytis/x2goclient/startapp.py:637
 msgid "Public Key"
 msgstr "Veřejný klíč"
 
-#: ../lib/pytis/x2goclient/startapp.py:634
+#: ../lib/pytis/x2goclient/startapp.py:638
 msgid "Password"
 msgstr "Heslo"
 
-#: ../lib/pytis/x2goclient/startapp.py:648
+#: ../lib/pytis/x2goclient/startapp.py:652
 msgid "No supported SSH authentication method available."
 msgstr "Není dostupná žádná podporovaná metoda SSH autentizace"
 
-#: ../lib/pytis/x2goclient/startapp.py:653
+#: ../lib/pytis/x2goclient/startapp.py:657
 msgid "Log in"
 msgstr "Přihlášení"
 
-#: ../lib/pytis/x2goclient/startapp.py:654
-#: ../lib/pytis/x2goclient/startapp.py:711
-#: ../lib/pytis/x2goclient/startapp.py:772
+#: ../lib/pytis/x2goclient/startapp.py:658
+#: ../lib/pytis/x2goclient/startapp.py:715
+#: ../lib/pytis/x2goclient/startapp.py:776
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/x2goclient/startapp.py:678
+#: ../lib/pytis/x2goclient/startapp.py:682
 msgid "Authentication"
 msgstr "Autentizace"
 
-#: ../lib/pytis/x2goclient/startapp.py:744
+#: ../lib/pytis/x2goclient/startapp.py:748
 msgid "Passphrases don't match."
 msgstr "Hesla neodpovídají."
 
-#: ../lib/pytis/x2goclient/startapp.py:748
+#: ../lib/pytis/x2goclient/startapp.py:752
 msgid "Unallowed characters."
 msgstr "Nepovolené znaky."
 
-#: ../lib/pytis/x2goclient/startapp.py:750
+#: ../lib/pytis/x2goclient/startapp.py:754
 msgid "Passphrase too short (minimum is 10 characters)."
 msgstr "Heslo je příliš krátké (minimum je 10 znaků)."
 
-#: ../lib/pytis/x2goclient/startapp.py:752
+#: ../lib/pytis/x2goclient/startapp.py:756
 msgid "Passphrase too weak (use capitals and numbers)."
 msgstr "Heslo je příliš slabé (použijte velká písmena a číslice)."
 
-#: ../lib/pytis/x2goclient/startapp.py:764
+#: ../lib/pytis/x2goclient/startapp.py:768
 msgid "Enter the same passphrase into both fields."
 msgstr "Zadejte stejné heslo do obou políček."
 
-#: ../lib/pytis/x2goclient/startapp.py:767
+#: ../lib/pytis/x2goclient/startapp.py:771
 msgid "Repeat:"
 msgstr "Zopakujte:"
 
-#: ../lib/pytis/x2goclient/startapp.py:781
+#: ../lib/pytis/x2goclient/startapp.py:798
 msgid "Starting application"
 msgstr "Start aplikace"
 
-#: ../lib/pytis/x2goclient/startapp.py:789
+#: ../lib/pytis/x2goclient/startapp.py:806
 msgid "Enter your user name and press Continue to start."
 msgstr "Zadejte své uživatelské jméno a stiskněte Pokračovat."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:263
+#: ../lib/pytis/x2goclient/x2goclient.py:230
 msgid "Invalid session format"
 msgstr "Chybný formát sezení"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:514
+#: ../lib/pytis/x2goclient/x2goclient.py:487
 #, python-format
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:632
+#: ../lib/pytis/x2goclient/x2goclient.py:605
 msgid "Preparing X2Go session."
 msgstr "Připravuji X2Go sezení."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:638
+#: ../lib/pytis/x2goclient/x2goclient.py:611
 msgid "Starting up X11 server."
 msgstr "Startuji X11 server."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:644
+#: ../lib/pytis/x2goclient/x2goclient.py:617
 msgid "Starting up server connections."
 msgstr "Navazuji serverová spojení."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:650
+#: ../lib/pytis/x2goclient/x2goclient.py:625
 msgid "Connecting to X2Go session."
 msgstr "Připojuji se k X2Go sezení."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:897
+#: ../lib/pytis/x2goclient/x2goclient.py:879
 #, python-format
 msgid "Unsupported broker protocol: %s"
 msgstr "Nepodporovaný protokol přístupu na broker: %s"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:901
+#: ../lib/pytis/x2goclient/x2goclient.py:883
 #, python-format
 msgid "Invalid URL: %s"
 msgstr "Neplatná URL adresa: %s"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:989
+#: ../lib/pytis/x2goclient/x2goclient.py:971
 msgid "Retrieving supported authentication methods."
 msgstr "Zjišťuji podporované metody autentizace."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:993
-#: ../lib/pytis/x2goclient/x2goclient.py:1015
+#: ../lib/pytis/x2goclient/x2goclient.py:975
+#: ../lib/pytis/x2goclient/x2goclient.py:997
 msgid "Trying public key authentication."
 msgstr "Zkouším autentizaci veřejným klíčem."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:996
-#: ../lib/pytis/x2goclient/x2goclient.py:1017
+#: ../lib/pytis/x2goclient/x2goclient.py:978
+#: ../lib/pytis/x2goclient/x2goclient.py:999
 msgid "Trying password authentication."
 msgstr "Zkouším autentizaci heslem."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1001
+#: ../lib/pytis/x2goclient/x2goclient.py:983
 msgid "Trying SSH Agent authentication."
 msgstr "Zkouším autentizaci pomocí SSH agenta."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1004
+#: ../lib/pytis/x2goclient/x2goclient.py:986
 msgid "Trying Kerberos authentication."
 msgstr "Zkouším autentizaci přes Kerberos."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1007
+#: ../lib/pytis/x2goclient/x2goclient.py:989
 msgid "Trying interactive authentication."
 msgstr "Zkouším interaktivní autentizaci."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1024
+#: ../lib/pytis/x2goclient/x2goclient.py:1006
 msgid "Connected successfully."
 msgstr "Připojení proběhlo úspěšně."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1080
+#: ../lib/pytis/x2goclient/x2goclient.py:1063
 #, python-format
 msgid "Returned %d profile."
 msgid_plural "Returned %d profiles."
@@ -326,36 +330,36 @@ msgstr[0] "Vrácen %d profil."
 msgstr[1] "Vráceny %d profily."
 msgstr[2] "Vráceno %d profilů."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1119
+#: ../lib/pytis/x2goclient/x2goclient.py:1102
 msgid "Couldn't connect to upgrade server."
 msgstr "Nelze se připojit na aktualizační server."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1131
+#: ../lib/pytis/x2goclient/x2goclient.py:1114
 msgid "Package unpacking failed."
 msgstr "Selhalo rozbalení balíku."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1198
+#: ../lib/pytis/x2goclient/x2goclient.py:1181
 #, python-format
 msgid "Unable to find the scripts directory: %s"
 msgstr "Adresář skriptů nenalezen: %s"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1252
+#: ../lib/pytis/x2goclient/x2goclient.py:1235
 msgid "Confirm shortcuts removal"
 msgstr "Potvrďte smazání zástupců"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1253
+#: ../lib/pytis/x2goclient/x2goclient.py:1236
 msgid "The following desktop shortcuts are invalid."
 msgstr "Následující zástupci na ploše jsou neplatní."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1254
+#: ../lib/pytis/x2goclient/x2goclient.py:1237
 msgid "Press Ok to remove the checked items."
 msgstr "Stiskem Ok smažte zaškrtnuté položky."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1255
+#: ../lib/pytis/x2goclient/x2goclient.py:1238
 msgid "Name"
 msgstr "Název"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1264
+#: ../lib/pytis/x2goclient/x2goclient.py:1247
 #, python-format
 msgid "%d shortcut removed succesfully."
 msgid_plural "%d shortcuts removed succesfully."
@@ -363,16 +367,16 @@ msgstr[0] "%d zástupce úspěšně smazán."
 msgstr[1] "%d zástupce úspěšně smazány."
 msgstr[2] "%d zástupců úspěšně smazáno."
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1281
+#: ../lib/pytis/x2goclient/x2goclient.py:1264
 #, python-format
 msgid "An existing key found: %s"
 msgstr "Stávající klíč nalezen: %s"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1284
+#: ../lib/pytis/x2goclient/x2goclient.py:1267
 msgid "Enter new key passphrase"
 msgstr "Zadejte nové heslo ke klíči"
 
-#: ../lib/pytis/x2goclient/x2goclient.py:1301
+#: ../lib/pytis/x2goclient/x2goclient.py:1284
 #, python-format
 msgid "Keys created in directory: %s"
 msgstr "Klíče byly vytvořeny v adresáři: %s"
