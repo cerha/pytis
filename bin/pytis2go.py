@@ -159,6 +159,10 @@ pytis2go_options = [
      'help': 'Override startup application main window title (default: Starting application)', },
     {'args': ['--heading'], 'default': None,
      'help': 'Override startup application main window heading (default: Pytis2Go)', },
+    {'args': ['--nowait', '-n'], 'default': False, 'action': 'store_true',
+     'help': ("Do not wait for Pytis application window to come up. "
+              "Close the startup application window immediately after "
+              "starting the X2Go client.")},
 ]
 if pytis.util.on_windows():
     pytis2go_options += [

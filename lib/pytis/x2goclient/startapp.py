@@ -261,6 +261,7 @@ class X2GoStartApp(wx.App):
             add_to_known_hosts=args.add_to_known_hosts,
             broker_url=args.broker_url,
             broker_password=args.broker_password,
+            wait_for_pytis=not args.nowait,
         )
         super(X2GoStartApp, self).__init__(redirect=False)
 
@@ -550,9 +551,12 @@ class X2GoStartApp(wx.App):
         else:
             self.update_progress(_("Starting new session."), 10)
             client.start_new_session()
-        self.ExitMainLoop()
-        self._frame.Show(False)
-        wx.Yield()
+        if self._args.nowait:
+            # Close automatically right now.
+            self.close()
+        else:
+            # Rely on the client to call 'close()' explicitly from a callback.
+            self.update_progress(_("Waiting for the application to come up..."), 10)
         client.main_loop()
         self.Exit()
 
@@ -776,6 +780,19 @@ class X2GoStartApp(wx.App):
                 padding=(0, 10), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
+
+    def close(self):
+        """Close the startup application window.
+
+        The window is closed automatically after starting the X2Go client when
+        --nowait is passed.  If --nowait is not passed, this public method must
+        be called from an X2Go client callback when an application window comes
+        up.
+
+        """
+        self.ExitMainLoop()
+        self._frame.Show(False)
+        wx.Yield()
 
     def OnInit(self):
         title = self._args.window_title or _("Starting application")

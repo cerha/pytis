@@ -386,7 +386,7 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
 
     """
 
-    def __init__(self, rpyc_server_port, terminal_session, callback):
+    def __init__(self, rpyc_server_port, terminal_session, on_tunnel_started):
         super(RPyCTunnel, self).__init__(
             server_port=None,
             remote_host='127.0.0.1',
@@ -395,13 +395,13 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
             session_instance=terminal_session.session_instance,
             logger=terminal_session.logger,
         )
-        self._callback = callback
+        self._on_tunnel_started = on_tunnel_started
 
     def _request_port_forwarding(self):
         port = self.ssh_transport.request_port_forward('127.0.0.1', 0,
                                                        handler=tunnel_tcp_handler)
         self.server_port = port
-        self._callback(port)
+        self._on_tunnel_started(port)
 
     def resume(self):
         if self._accept_channels is False:
@@ -416,7 +416,7 @@ class RPyCServerLauncher(threading.Thread):
     _DEFAULT_PORT = 10000
     _MAX_PORT_ATTEMPTS = 100
 
-    def __init__(self, callback, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
+    def __init__(self, on_server_started, on_echo, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
         if logger is None:
             self.logger = log.X2GoLogger(loglevel=loglevel)
         else:
@@ -425,7 +425,8 @@ class RPyCServerLauncher(threading.Thread):
         self._keepalive = None
         self._server = None
         self._server_thread = None
-        self._callback = callback
+        self._on_server_started = on_server_started
+        self._on_echo = on_echo
         self._port = None
         self._password = None
         threading.Thread.__init__(self)
@@ -450,12 +451,17 @@ class RPyCServerLauncher(threading.Thread):
         return True
 
     def _start_server(self):
+        callback = self._on_echo
+        class Service(pytisproc.PytisUserService):
+            def exposed_echo(self, text):
+                callback()
+                return super(Service, self).exposed_echo(text)
         default_port = self._DEFAULT_PORT
         max_port = default_port + self._MAX_PORT_ATTEMPTS
         authenticator = pytisproc.PasswordAuthenticator()
         for port in xrange(default_port, max_port):
             try:
-                server = rpyc.utils.server.ThreadedServer(pytisproc.PytisUserService,
+                server = rpyc.utils.server.ThreadedServer(Service,
                                                           hostname='localhost',
                                                           port=port,
                                                           authenticator=authenticator)
@@ -476,7 +482,7 @@ class RPyCServerLauncher(threading.Thread):
             self._server_thread = thread
             self._port = port
             self._password = password = authenticator.password()
-            self._callback(port, password)
+            self._on_server_started(port, password)
             return
         raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
                               (default_port, max_port - 1,))
@@ -509,7 +515,7 @@ class RPyCServerLauncher(threading.Thread):
 
 class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
-    def start_rpyc_tunnel(self, rpyc_server_port, callback):
+    def start_rpyc_tunnel(self, rpyc_server_port, on_tunnel_started):
         reverse_tunnels = self.reverse_tunnels[self.session_info.name]
         if 'rpyc' not in reverse_tunnels:
             reverse_tunnels['rpyc'] = (0, None)
@@ -518,12 +524,12 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
             self.stop_rpyc_tunnel()
             tunnel = None
         if tunnel is None:
-            def tunnel_started(forwarded_port):
+            def callback(forwarded_port):
                 reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
-                callback(forwarded_port)
+                on_tunnel_started(forwarded_port)
                 log(EVENT, 'Port %d on X2Go server forwarded to RPyC server port %d '
                     'on X2Go client.' % (forwarded_port, rpyc_server_port))
-            tunnel = RPyCTunnel(rpyc_server_port, self, callback=tunnel_started)
+            tunnel = RPyCTunnel(rpyc_server_port, self, on_tunnel_started=callback)
             self.active_threads.append(tunnel)
             tunnel.start()
         else:
@@ -583,8 +589,8 @@ class X2GoClient(x2go.X2GoClient):
                 self._control_session._x2go_sftp_write(self._server_file_name, data)
                 self._changed = False
 
-    def __init__(self, session_parameters, update_progress,
-                 xserver_variant=XSERVER_VARIANT_DEFAULT, **kwargs):
+    def __init__(self, session_parameters, app, xserver_variant=XSERVER_VARIANT_DEFAULT,
+                 wait_for_pytis=True, **kwargs):
         self._session_parameters = session_parameters
         self._settings = settings = X2GoClientSettings()
         for param, option, t in (('server', 'hostname', None),
@@ -596,25 +602,27 @@ class X2GoClient(x2go.X2GoClient):
                     session_parameters[param] = settings.get_value('pytis', option, t)
                 except ClientException:
                     pass
-        update_progress(_("Preparing X2Go session."))
+        app.update_progress(_("Preparing X2Go session."))
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
         self.terminal_backend = TerminalSession
         if pytis.util.on_windows() and xserver_variant:
-            update_progress(_("Starting up X11 server."))
+            app.update_progress(_("Starting up X11 server."))
             self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         session = self.session_registry(self._x2go_session_hash)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
-        update_progress(_("Starting up server connections."))
+        app.update_progress(_("Starting up server connections."))
+        self._app = app
+        self._wait_for_pytis = wait_for_pytis
         self._rpyc_tunnel_port = gevent.event.AsyncResult()
         self._rpyc_server_port = None
         self._rpyc_server_password = gevent.event.AsyncResult()
-        self._rpyc_launcher = RPyCServerLauncher(callback=self._on_rpyc_server_started,
-                                                 logger=self.logger)
-        update_progress(_("Connecting to X2Go session."))
+        self._rpyc_launcher = RPyCServerLauncher(on_server_started=self._on_rpyc_server_started,
+                                                 on_echo=self._on_rpyc_echo, logger=self.logger)
+        app.update_progress(_("Connecting to X2Go session."))
         # try:
         self._X2GoClient__connect_session(self._x2go_session_hash,
                                           username=session_parameters['username'],
@@ -646,6 +654,11 @@ class X2GoClient(x2go.X2GoClient):
     def _on_rpyc_server_started(self, port, password):
         self._rpyc_server_port = port
         self._rpyc_server_password.set(password)
+
+    def _on_rpyc_echo(self):
+        if self._wait_for_pytis:
+            self._wait_for_pytis = False
+            self._app.close()
 
     def _on_rpyc_tunnel_started(self, port):
         self._rpyc_tunnel_port.set(port)
@@ -795,7 +808,7 @@ class X2GoClient(x2go.X2GoClient):
                         # This will actually restart the tunnel if already running.
                         tunnel = terminal_session.start_rpyc_tunnel(
                             server_port,
-                            callback=self._on_rpyc_tunnel_started,
+                            on_tunnel_started=self._on_rpyc_tunnel_started,
                         )
                     time.sleep(2)
         except x2go.X2GoSessionException, e:
@@ -835,7 +848,8 @@ class StartupController(object):
     )
 
     def __init__(self, application, session_parameters, force_parameters=None,
-                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None):
+                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None,
+                 wait_for_pytis=True):
         self._app = application
         # If broker_url is given, the session parameters will be updated
         # later from the selected profile in select_profile().
@@ -848,6 +862,7 @@ class StartupController(object):
             self._broker_password = broker_password
         else:
             self._broker_parameters = self._broker_path = self._broker_password = None
+        self._wait_for_pytis = wait_for_pytis
         self._keyring = []
 
     def _parse_url(self, url):
@@ -1003,8 +1018,9 @@ class StartupController(object):
                         pass
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
-            return X2GoClient(session_parameters, self._app.update_progress,
+            return X2GoClient(session_parameters, self._app,
                               xserver_variant=self._xserver_variant,
+                              wait_for_pytis=self._wait_for_pytis,
                               loglevel=x2go.log.loglevel_DEBUG)
         else:
             return None
