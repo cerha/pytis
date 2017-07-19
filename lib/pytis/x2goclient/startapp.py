@@ -223,6 +223,7 @@ class ui(object):
 
         """
         import wx.lib.mixins.listctrl
+
         class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
             def __init__(self, parent, columns, items):
                 wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
@@ -306,8 +307,8 @@ class X2GoStartApp(wx.App):
             item = wx.MenuItem(menu, -1, label)
             menu.Bind(wx.EVT_MENU, lambda e, callback=callback: callback(), item)
             menu.AppendItem(item)
-        return ui.button(parent, _("More actions..."), #icon=wx.ART_EXECUTABLE_FILE,
-                         callback=lambda e: parent.PopupMenu(menu)) #style=wx.BU_EXACTFIT)
+        return ui.button(parent, _("More actions..."),  # icon=wx.ART_EXECUTABLE_FILE,
+                         callback=lambda e: parent.PopupMenu(menu))  # style=wx.BU_EXACTFIT)
 
     def _create_username_field(self, parent):
         label = ui.label(parent, _("Login name:"))

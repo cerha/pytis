@@ -452,6 +452,7 @@ class RPyCServerLauncher(threading.Thread):
 
     def _start_server(self):
         callback = self._on_echo
+
         class Service(pytisproc.PytisUserService):
             def exposed_echo(self, text):
                 callback()
