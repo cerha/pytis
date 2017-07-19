@@ -22,13 +22,25 @@ gevent.monkey.patch_all()
 
 import os
 import sys
-
 import argparse
 import paramiko
+import platform
 
 pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
+
+# Windows setup for locales
+if platform.system() == 'Windows':
+    reload(sys)
+    sys.setdefaultencoding('cp1250')
+    # Set locale language
+    import ctypes
+    lcid = ctypes.windll.kernel32.GetUserDefaultLCID()
+    if not lcid:
+        lcid = ctypes.windll.kernel32.GetSystemDefaultLCID()
+    import locale
+    os.environ["LANGUAGE"] = locale.windows_locale.get(lcid)
 
 import x2go
 import x2go.defaults
@@ -315,19 +327,9 @@ def main():
         X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
         X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.x2goclient.XCONFIG_DEFAULTS)
         x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
-        reload(sys)
-        sys.setdefaultencoding('cp1250')
         os.environ['NXPROXY_BINARY'] = os.path.normpath(os.path.join(
             sys.path[0], '..', '..', 'win_apps', 'nxproxy', 'nxproxy.exe',
         ))
-        # Set locale language
-        import ctypes
-        lcid = ctypes.windll.kernel32.GetUserDefaultLCID()
-        if not lcid:
-            lcid = ctypes.windll.kernel32.GetSystemDefaultLCID()
-        import locale
-        os.environ["LANGUAGE"] = locale.windows_locale.get(lcid)
-
     parser, args = parseargs()
     session_parameters = dict(
         server=args.server,
