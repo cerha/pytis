@@ -297,12 +297,6 @@ class X2GoStartApp(wx.App):
     def _selected_profile_id(self):
         return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
 
-    def _on_select_profile(self, event):
-        profile_id = self._selected_profile_id()
-        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
-        self._controller.select_profile(profile_id)
-        self._connect()
-
     def _on_create_shortcut(self, event):
         error = self._controller.create_shortcut(self._username(), self._selected_profile_id())
         if error:
@@ -367,11 +361,20 @@ class X2GoStartApp(wx.App):
             self._profiles_field = None
             return None
         else:
-            self._profiles_field = listbox = ui.listbox(parent, on_select=self._on_select_profile)
+            connecting = []
+            def start_session(event):
+                connecting.append(True)
+                listbox.Enable(False)
+                profile_id = self._selected_profile_id()
+                self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
+                self._controller.select_profile(profile_id)
+                self._connect()
+            self._profiles_field = listbox = ui.listbox(parent, on_select=start_session)
             listbox.Enable(False)
             listbox.SetMinSize((360, 180))
-            buttons = [ui.button(parent, _("Start session"), self._on_select_profile,
-                                 lambda e: e.Enable(listbox.GetSelection() != -1))]
+            buttons = [ui.button(parent, _("Start session"), start_session,
+                                 lambda e: e.Enable(not connecting and
+                                                    listbox.GetSelection() != -1))]
             if pytis.util.on_windows():
                 buttons.append(ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
                                          lambda e: e.Enable(listbox.GetSelection() != -1 and
