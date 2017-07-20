@@ -353,7 +353,7 @@ class X2GoStartApp(wx.App):
             field = ui.field(parent, username, on_enter=lambda e: self._start())
             self._username_value = None
             self._username_field = field
-            return ui.hgroup(ui.hgroup(label, padding=2), field,
+            return ui.hgroup(ui.hgroup(label, padding=(3, 0)), field,
                              ui.button(parent, _("Continue"), lambda e: self._start()))
 
     def _username(self):
@@ -390,14 +390,18 @@ class X2GoStartApp(wx.App):
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
         gauge.SetMinSize((450, 14))
         return ui.vgroup(
-            ui.item(self._create_main_heading(parent)),
-            ui.item(message, expand=True),
-            ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
-                              self._create_menu_button(parent)),
-                    expand=True, center=True),
-            ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
+            ui.vgroup(
+                ui.item(self._create_main_heading(parent)),
+                ui.item(message, expand=True),
+                ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
+                                  self._create_menu_button(parent),
+                                  spacing=20),
+                        expand=True, center=True),
+                ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
+                padding=(0, 8), spacing=8,
+            ),
             ui.item(gauge, expand=True),
-            padding=(0, 8), spacing=8,
+            spacing=8,
         )
 
     def _show_dialog(self, title, create, *args, **kwargs):
