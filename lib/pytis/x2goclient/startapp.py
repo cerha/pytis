@@ -347,6 +347,7 @@ class X2GoStartApp(wx.App):
             import getpass
             def start(event):
                 button.Enable(False)
+                field.Enable(False)
                 self._start()
             button = ui.button(parent, _("Continue"), start)
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
