@@ -805,10 +805,10 @@ class X2GoStartApp(wx.App):
                     ui.hgroup(
                         ui.button(dialog, _("Ok"), submit),
                         ui.button(dialog, _("Cancel"), lambda e: dialog.close(None)),
-                        spacing=20, padding=12,
+                        spacing=20, padding=6,
                     ),
                     center=True),
-                padding=(0, 10), spacing=4,
+                padding=(0, 6), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
 
