@@ -30,7 +30,7 @@ pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
 
-# Windows setup for locales
+# Windows setup for locales (must precede imports of our libraries containing translations).
 if platform.system() == 'Windows':
     reload(sys)
     sys.setdefaultencoding('cp1250')
