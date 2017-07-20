@@ -349,12 +349,15 @@ class X2GoStartApp(wx.App):
             return ui.hgroup(label, ui.label(parent, username), spacing=2)
         else:
             import getpass
+            def start(event):
+                button.Enable(False)
+                self._start()
+            button = ui.button(parent, _("Continue"), start)
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
-            field = ui.field(parent, username, on_enter=lambda e: self._start())
+            field = ui.field(parent, username, on_enter=start)
             self._username_value = None
             self._username_field = field
-            return ui.hgroup(ui.hgroup(label, padding=(3, 0)), field,
-                             ui.button(parent, _("Continue"), lambda e: self._start()))
+            return ui.hgroup(ui.hgroup(label, padding=(3, 0)), field, button)
 
     def _username(self):
         return self._username_value or self._username_field.GetValue()
