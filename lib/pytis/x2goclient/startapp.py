@@ -385,23 +385,18 @@ class X2GoStartApp(wx.App):
                 )
             )
 
-    def _create_status(self, parent):
-        self._status = status = ui.label(parent, '')
-        self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
-        gauge.SetMinSize((450, 10))
-        return ui.vgroup(
-            ui.item(gauge, expand=True),
-            ui.item(status, expand=True),
-        )
-
     def _create_main_content(self, parent):
+        self._message = message = ui.label(parent, '')
+        self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
+        gauge.SetMinSize((450, 14))
         return ui.vgroup(
             ui.item(self._create_main_heading(parent)),
+            ui.item(message, expand=True),
             ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
                               self._create_menu_button(parent)),
                     expand=True, center=True),
             ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
-            ui.item(self._create_status(parent), expand=True),
+            ui.item(gauge, expand=True),
             padding=(0, 8), spacing=8,
         )
 
@@ -602,13 +597,13 @@ class X2GoStartApp(wx.App):
         """
         self._gauge.SetValue(self._gauge.GetValue() + progress)
         if message:
-            self._status.SetLabel(message)
+            self._message.SetLabel(message)
         self.Yield()
 
     def message(self, message):
-        """Display a status message.
+        """Display a message.
 
-        Status message replaces any previous progress message, but doesn't
+        The message replaces any previous message, but doesn't
         change the progress bar state.
 
         """
