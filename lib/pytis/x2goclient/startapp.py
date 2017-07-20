@@ -808,7 +808,7 @@ class X2GoStartApp(wx.App):
                         spacing=20, padding=6,
                     ),
                     center=True),
-                padding=(0, 6), spacing=4,
+                padding=(0, 20), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
 
