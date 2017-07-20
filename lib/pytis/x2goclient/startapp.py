@@ -414,8 +414,7 @@ class X2GoStartApp(wx.App):
         dialog = Dialog(self._frame, -1, title=title)
         content = create(dialog, *args, **kwargs)
         dialog.SetSizer(content)
-        dialog.Fit()
-        dialog.SetSize(dialog.GetBestSize())
+        content.Fit(dialog)
         pos, fsize, dsize = self._frame.GetPosition(), self._frame.GetSize(), dialog.GetSize()
         dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
         if dialog.callback:
