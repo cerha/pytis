@@ -316,6 +316,8 @@ class X2GoStartApp(wx.App):
         return ui.label(parent, heading, size=18, bold=True)
 
     def _create_menu_button(self, parent):
+        if self._args.session_profile is not None:
+            return None
         items = [
             (_("Generate new SSH key pair"), self._controller.generate_key),
             (_("Change key passphrase"), self._controller.change_key_passphrase),
