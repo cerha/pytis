@@ -2092,7 +2092,7 @@ def translations(domain, origin='en'):
                     n = args[0]
                 else:
                     n = kwargs['n']
-                return self._interpolate(self._gettext.ngettext(singular, plural, n), *args, **kwargs)
+                return self._interpolate(self._gettext.ungettext(singular, plural, n), *args, **kwargs)
 
             def pgettext(self, context, text, *args, **kwargs):
                 return self.__call__(context + '\x04' + text, *args, **kwargs).split('\x04', 1)[-1]
