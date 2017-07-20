@@ -43,9 +43,13 @@ class ui(object):
                 if item.center:
                     flag |= wx.ALIGN_CENTER
                 border = space = 0
+                content = item.content
                 if item.padding is not None:
                     if isinstance(item.padding, tuple):
-                        if sizer.GetOrientation() == wx.VERTICAL:
+                        if isinstance(sizer, wx.FlexGridSizer):
+                            content = ui.hgroup(ui.item(content, padding=item.padding,
+                                                        proportion=1, expand=True))
+                        elif sizer.GetOrientation() == wx.VERTICAL:
                             flag |= wx.LEFT | wx.RIGHT
                             space, border = item.padding
                         else:
@@ -58,7 +62,7 @@ class ui(object):
                     sizer.AddSpacer(spacing + space)
                 elif space:
                     sizer.AddSpacer(space)
-                sizer.Add(item.content, item.proportion, flag, border)
+                sizer.Add(content, item.proportion, flag, border)
                 if space:
                     sizer.AddSpacer(space)
         if padding:
@@ -135,6 +139,30 @@ class ui(object):
 
         """
         return ui._add_to_sizer(wx.BoxSizer(wx.HORIZONTAL), items, **kwargs)
+
+    @staticmethod
+    def grid(*items, **kwargs):
+        """Arrange UI items into a horizontal group returning 'wx.BoxSizer'.
+
+        Arguments:
+          items -- same as in 'ui.vgroup'.
+          rows -- number of rows in the grid (int).
+          cols -- number of columns in the grid (int).
+          spacing -- space between individual items of the grid in pixels
+            as int or a tuple of two ints to specify vertical and horizontral
+            spacing separately (in this order).
+          padding -- same as in 'ui.vgroup'.
+
+        """
+        spacing = kwargs.pop('spacing', None)
+        if isinstance(spacing, tuple):
+            vgap, hgap = spacing
+        else:
+            vgap, hgap = spacing or 0, spacing or 0
+        return ui._add_to_sizer(wx.FlexGridSizer(rows=kwargs.pop('rows', 1),
+                                                 cols=kwargs.pop('cols', 1),
+                                                 hgap=hgap, vgap=vgap),
+                                items, **kwargs)
 
     @staticmethod
     def vbox(parent, label, items):
@@ -764,13 +792,14 @@ class X2GoStartApp(wx.App):
                 else:
                     dialog.close(password)
             message = ui.label(dialog, "")
-            field1 = ui.field(dialog, style=wx.PASSWORD, on_enter=submit)
-            field2 = ui.field(dialog, style=wx.PASSWORD, on_enter=submit)
+            field1 = ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
+            field2 = ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
             return ui.vgroup(
-                ui.item(ui.label(dialog, _("Enter the same passphrase into both fields.")),
+                ui.item(ui.label(dialog, _("Enter the same passphrase into both fields:")),
                         padding=4),
-                ui.hgroup(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), field1),
-                ui.hgroup(ui.item(ui.label(dialog, _("Repeat:")), padding=3), field2),
+                ui.grid(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), field1,
+                        ui.item(ui.label(dialog, _("Repeat:")), padding=3), field2,
+                        rows=2, cols=2, spacing=(0, 4)),
                 ui.item(message, padding=4),
                 ui.item(
                     ui.hgroup(
