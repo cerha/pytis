@@ -2096,7 +2096,7 @@ class BrowseForm(LayoutForm):
             )
             content.append(g.div(controls,
                                  cls='paging-controls' + (' one-page' if pages == 1 else '')))
-        if self._allow_search_field and not empty and not bottom:
+        if self._allow_search_field and not bottom:
             style = 'display:none' if not show_search_field else None
             content.insert(0, g.div(cls='query', style=style, content=(
                 g.label(_("Search expression") + ':', ids.search),
