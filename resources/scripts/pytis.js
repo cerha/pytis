@@ -545,6 +545,12 @@ pytis.BrowseForm = Class.create({
         //    which the action was invoked.
         parameters['_pytis_inline_form_request'] = '1';
         this.send_ajax_request(form, parameters, function (transport) {
+            var found = this.form.down('#found-record');
+            if (found) {
+                // Unhighlight the previously highlighted record to avoid confusion
+                // (the edited record is now the one worth to be noticed).
+                found.setAttribute('id', '');
+            }
             var content = this.process_inline_action_response(element, target, transport);
             content.down('button.cancel').on('click', function (event) {
                 this.on_cancel_inline_action(element, target, content);
