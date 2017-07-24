@@ -140,6 +140,15 @@ pytis.BrowseForm = Class.create({
         this.ajax_container = this.form.down('.ajax-container');
         this.on_load_callbacks = [];
         this.inline_editable = inline_editable;
+        if (inline_editable) {
+            this.form.select('button.action-insert').each(function (button) {
+                button.on('click', function (event) {
+                    button.disable();
+                    this.send_inline_action_request(button, button.up('form'), {}, 'global');
+                    event.stop();
+                }.bind(this));
+            }.bind(this));
+        }
         if (this.ajax_container && uri) {
             this.async_load = true;
             var parameters = {};
@@ -512,57 +521,92 @@ pytis.BrowseForm = Class.create({
     },
 
     on_popup_menu_inline_action: function (element, action, uri) {
-        if (action === 'update' || action === 'delete') {
+        if (action === 'update' || action === 'copy' || action === 'delete') {
             var parameters = uri.parseQuery();
             var uri = uri.slice(0, uri.indexOf('?'));
             var form = new Element('form', {action: uri, method: 'GET'});
-            this.send_inline_action_request(element, form, parameters);
+            var target = (action === 'copy' ? 'after' : 'replace');
+            this.send_inline_action_request(element, form, parameters, target);
             return true;
         }
         return false;
     },
 
-    send_inline_action_request: function (element, form, parameters) {
+    send_inline_action_request: function (element, form, parameters, target) {
+        // Action target can be:
+        // 'global' ... the content is inserted below the '.actions' element
+        //    (containing the global actions, such as insert) above or below
+        //    the form data area.
+        // 'replace' ... the content replaces the current record on which
+        //    the action was invoked.
+        // 'before' ... the content is inserted above the curent record on
+        //    which the action was invoked.
+        // 'after' ... the content is inserted below the curent record on
+        //    which the action was invoked.
         parameters['_pytis_inline_form_request'] = '1';
         this.send_ajax_request(form, parameters, function (transport) {
-            var content = this.process_inline_action_response(element, transport);
-            this.bind_cancel_inline_action(content);
+            var content = this.process_inline_action_response(element, target, transport);
+            content.down('button.cancel').on('click', function (event) {
+                this.on_cancel_inline_action(element, target, content);
+                event.stop();
+            }.bind(this));
         }.bind(this));
     },
 
-    bind_cancel_inline_action: function (element) {
-        element.down('button.cancel').on('click', function (event) {
-            this.on_cancel_inline_action(element);
-            event.stop();
-        }.bind(this));
-    },
-
-    process_inline_action_response: function (element, transport) {
-        var tr = element.up('tr');
-        var tds = tr.childElements();
-        var i, colspan = 0;
-        for (i=0; i < tds.length; i++) {
-            colspan += tds[i].colSpan;
-            tds[i].hide();
-        }
-        var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
+    process_inline_action_response: function (element, target, transport) {
+        // Returns the element to be hidden by 'on_cancel_inline_action()'.
+        // This extra div is necessary for the slide effects to work properly.
         var div = new Element('div').update(transport.responseText).hide();
-        td.insert(div);
-        tr.insert(td);
+        if (target === 'global') {
+            element.up('.actions').insert({after: div});
+        } else {
+            var tr = element.up('tr');
+            var tds = tr.childElements();
+            var i, colspan = 0;
+            for (i=0; i < tds.length; i++) {
+                colspan += tds[i].colSpan;
+                if (target === 'replace') {
+                    tds[i].hide();
+                }
+            }
+            var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
+            td.insert(div);
+            if (target === 'after' || target === 'before') {
+                var new_tr = new Element('tr', {class: 'data-row'});
+                new_tr.insert(td);
+                if (target === 'after') {
+                    tr.insert({'after': new_tr});
+                } else {
+                    tr.insert({'before': new_tr});
+                }
+            } else {
+                tr.insert(td);
+            }
+        }
         div.slideDown({duration: 0.25});
         return div;
     },
 
-    on_cancel_inline_action: function (element) {
-        // Here 'element' is the result returned by 'process_inline_action_response()'.
-        element.slideUp({
+    on_cancel_inline_action: function (element, target, content) {
+        // Here 'content' is the result returned by 'process_inline_action_response()'.
+        content.slideUp({
             duration: 0.25,
             afterFinish: function () {
-                var tr = element.up('tr');
-                element.up('td').remove();
-                tr.childElements().each(function (x) { x.show(); });
-            }
+                if (target === 'global') {
+                    content.remove();
+                    element.enable(); // 'element' is the action button.
+                } else {
+                    // This is form specific, so it has a separate method...
+                    this.remove_canceled_inline_action_content(element, content);
+                }
+            }.bind(this)
         });
+    },
+
+    remove_canceled_inline_action_content: function (element, content) {
+        var tr = content.up('tr');
+        content.up('td').remove();
+        tr.childElements().each(function (x) { x.show(); });
     }
 
 });
@@ -584,36 +628,37 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
     initialize: function ($super, form_id, form_name, uri, inline_editable) {
         $super(form_id, form_name, uri, inline_editable);
         if (inline_editable) {
-            this.form.select('.actions button.action-update').each(function (button) {
+            this.form.down('.actions').select(
+                'button.action-update, button.action-delete, button.action-copy'
+            ).each(function (button) {
+                var target = (button.hasClassName('action-copy') ? 'after' : 'replace');
                 button.on('click', function (event) {
-                    this.send_inline_action_request(button, button.up('form'), {})
+                    this.send_inline_action_request(button, button.up('form'), {}, target);
                     event.stop();
                 }.bind(this));
             }.bind(this));
         }
     },
 
-    process_inline_action_response: function (element, transport) {
-        // Note that element may be a button or a popup menu item here.
-        var container = new Element('div', {'class': 'inline-form-container'});
-        container.update(transport.responseText).hide();
-        var parent = element.up('.list-item').down('.list-item-content');
-        parent.childElements().each(function (x) { x.slideUp({duration: 0.25}); });
-        parent.insert(container);
-        container.slideDown({delay: 0.2, duration: 0.25});
-        return container;
+    process_inline_action_response: function ($super, element, target, transport) {
+        if (target === 'global') {
+            return $super(element, target, transport);
+        } else {
+            // Note that element may be a button or a popup menu item here.
+            var container = new Element('div', {'class': 'inline-form-container'});
+            container.update(transport.responseText).hide();
+            var parent = element.up('.list-item').down('.list-item-content');
+            parent.childElements().each(function (x) { x.slideUp({duration: 0.25}); });
+            parent.insert(container);
+            container.slideDown({delay: 0.2, duration: 0.25});
+            return container;
+        }
     },
 
-    on_cancel_inline_action: function (element) {
-        // Here 'element' is the result returned by 'process_inline_action_response()'. 
-        element.slideUp({
-            duration: 0.25,
-            afterFinish: function () {
-                var parent = element.parentNode;
-                element.remove();
-                parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
-            }
-        });
+    remove_canceled_inline_action_content: function (element, content) {
+        var parent = content.parentNode;
+        content.remove();
+        parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
     }
     
 });
