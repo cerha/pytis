@@ -345,6 +345,7 @@ class X2GoStartApp(wx.App):
             return ui.hgroup(label, ui.label(parent, username), spacing=2)
         else:
             import getpass
+
             def start(event):
                 button.Enable(False)
                 field.Enable(False)
@@ -365,6 +366,7 @@ class X2GoStartApp(wx.App):
             return None
         else:
             connecting = []
+
             def start_session(event):
                 connecting.append(True)
                 listbox.Enable(False)
@@ -401,15 +403,17 @@ class X2GoStartApp(wx.App):
         return ui.vgroup(
             ui.vgroup(
                 ui.item(self._create_main_heading(parent)),
-                ui.item(message, expand=True),
                 ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
                                   self._create_menu_button(parent),
                                   spacing=20),
                         expand=True, center=True),
                 ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
-                padding=(0, 8), spacing=8,
+                ui.vgroup(
+                    ui.item(message, expand=True),
+                    ui.item(gauge, expand=True),
+                    padding=(10, 0), spacing=10),
+                padding=(10, 10), spacing=10,
             ),
-            ui.item(gauge, expand=True),
             spacing=8,
         )
 
