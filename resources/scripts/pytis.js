@@ -17,16 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This script implements pytis form updates through AJAX.
- *
- * The form is periodically checked for changes and the values are sent to the
- * server as asynchronous requests.  Based on the server response, the user
- * interface is then capable of:
- *   - displaying field validation info,
- *   - updating values of computed fields,
- *   - updating field editability dynamically,
- *   - updating enumerations based on pytis runtime filters and arguments.
- */
 /*jshint browser: true */
 /*jshint es3: true */
 /*jshint -W097 */ // allow direct "use strict"
@@ -105,7 +95,20 @@ var pytis = {
     
 };
 
-pytis.BrowseForm = Class.create({
+pytis.Form = Class.create({
+    /* Common base class of all Pytis HTML forms. */
+
+    initialize: function (form_id) {
+        /* form_id ... HTML id of the Pytis form top level element (string)
+              Note that this is usually not an HTML <form> element, but the
+              container of the Pytis form widget (typically a <div>).
+         */
+        this.form = $(form_id);
+        this.form.instance = this;
+    }
+});
+
+pytis.BrowseForm = Class.create(pytis.Form, {
     /* Handles asynchronous load of a Pytis browse form.
 
     The form content is loaded through an AJAX request after the page is
@@ -119,8 +122,8 @@ pytis.BrowseForm = Class.create({
     access it as '$(form_id).instance'.
 
      */
-    initialize: function (form_id, form_name, uri, inline_editable) {
-        /* form_id ... HTML id of the pytis form top level element (string)
+    initialize: function ($super, form_id, form_name, uri, inline_editable) {
+        /* form_id ... HTML id of the top level element (see parent class)
            form_name ... Form name used for distinguishing request parameters
              (see form_name in the python class).
            uri ... URI for AJAX requests
@@ -134,8 +137,7 @@ pytis.BrowseForm = Class.create({
              row replacing the original row content.
 
          */
-        this.form = $(form_id);
-        this.form.instance = this;
+        $super(form_id);
         this.form_name = form_name;
         this.uri = uri;
         this.ajax_container = this.form.down('.ajax-container');
@@ -730,13 +732,25 @@ pytis.EditableBrowseForm = Class.create(pytis.BrowseForm, {
 });
 
 
-pytis.Form = Class.create({
-    initialize: function (form_id, fields) {
-        /* form_id ... HTML id of the pytis form top level element (string)
+pytis.EditForm = Class.create(pytis.Form, {
+    /* This class implements AJAX updates during EditForm editation.
+     *
+     * The form is periodically checked for changes and the values are sent to the
+     * server as asynchronous requests.  Based on the server response, the user
+     * interface is then capable of:
+     *   - displaying field validation info,
+     *   - updating values of computed fields,
+     *   - updating field editability dynamically,
+     *   - updating enumerations based on pytis runtime filters and arguments.
+     */
+
+    initialize: function ($super, form_id, fields) {
+        /* form_id ... HTML id of the top level element (see parent class)
          * fields ... array of form fields as pytis.Field instances
          */
-        var form = $(form_id).down('form') || $(form_id).up('form');
-        this._form = form;
+        $super(form_id);
+        // Note: this.form.up() applies in a QueryFieldsForm (list form controls).
+        this._html_form = this.form.down('form') || this.form.up('form');
         this._fields = new Hash();
         var observe = false;
         var i, field;
@@ -749,7 +763,7 @@ pytis.Form = Class.create({
         }
         this._last_request_number = 0;
         if (observe) {
-            this._observer = new Form.Observer(form, 1, this.on_change.bind(this));
+            this._observer = new Form.Observer(this._html_form, 1, this.on_change.bind(this));
         }
     },
 
@@ -777,7 +791,7 @@ pytis.Form = Class.create({
                         states.set(x.key, x.value.state());
                     }
                 });
-                this._form.request({
+                this._html_form.request({
                     parameters: {_pytis_form_update_request: ++this._last_request_number,
                                  _pytis_form_changed_field: id,
                                  _pytis_form_state: states ? states.toQueryString() : null},

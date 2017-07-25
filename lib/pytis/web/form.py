@@ -825,7 +825,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         form_id = self._form_id
         fields = [self._fields[fid].javascript(context, form_id, layout_fields)
                   for fid in layout_fields if self._row.visible(fid)]
-        return g.js_call('new pytis.Form', form_id, fields) + ';'
+        return g.js_call('new pytis.EditForm', form_id, fields) + ';'
 
     def _export_footer(self, context):
         if self._show_footer:
