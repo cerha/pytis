@@ -103,8 +103,8 @@ pytis.Form = Class.create({
               Note that this is usually not an HTML <form> element, but the
               container of the Pytis form widget (typically a <div>).
          */
-        this.form = $(form_id);
-        this.form.instance = this;
+        this._form = $(form_id);
+        this._form.instance = this;
     }
 });
 
@@ -138,51 +138,51 @@ pytis.BrowseForm = Class.create(pytis.Form, {
 
          */
         $super(form_id);
-        this.form_name = form_name;
-        this.uri = uri;
-        this.ajax_container = this.form.down('.ajax-container');
-        this.on_load_callbacks = [];
-        this.inline_editable = inline_editable;
+        this._form_name = form_name;
+        this._uri = uri;
+        this._inline_editable = inline_editable;
+        this._ajax_container = this._form.down('.ajax-container');
+        this._on_load_callbacks = [];
         if (inline_editable) {
-            this.form.select('button.action-insert').each(function (button) {
+            this._form.select('button.action-insert').each(function (button) {
                 button.on('click', function (event) {
                     button.disable();
-                    this.send_inline_action_request(button, button.up('form'), {}, 'global');
+                    this._send_inline_action_request(button, button.up('form'), {}, 'global');
                     event.stop();
                 }.bind(this));
             }.bind(this));
         }
-        if (this.ajax_container && uri) {
-            this.async_load = true;
+        if (this._ajax_container && uri) {
+            this._async_load = true;
             var parameters = {};
             var query = window.location.search.replace(/;/g, '&').parseQuery();
             if (query.form_name === form_name) {
                 parameters = query;
             }
-            var page = this.form.up('.notebook-widget > div');
+            var page = this._form.up('.notebook-widget > div');
             if (page) {
                 lcg.Notebook.on_activation(page, function () {
-                    this.load_form_data(parameters);
+                    this._load_form_data(parameters);
                 }.bind(this));
             } else {
-                this.load_form_data(parameters);
+                this._load_form_data(parameters);
             }
         } else {
-            this.async_load = false;
-            this.apply(this.bind_search_controls, this.form.down('.list-form-controls', 0));
-            this.apply(this.bind_search_controls, this.form.down('.list-form-controls', 1));
-            this.apply(this.bind_table_headings, this.form.down('table.data-table thead'));
-            this.apply(this.bind_table_body, this.form.down('table.data-table tbody'));
+            this._async_load = false;
+            this._apply(this._bind_search_controls, this._form.down('.list-form-controls', 0));
+            this._apply(this._bind_search_controls, this._form.down('.list-form-controls', 1));
+            this._apply(this._bind_table_headings, this._form.down('table.data-table thead'));
+            this._apply(this._bind_table_body, this._form.down('table.data-table tbody'));
         }
     },
 
-    apply: function(method, element) {
+    _apply: function(method, element) {
         if (element) {
             return method.bind(this)(element);
         }
     },
 
-    send_ajax_request: function (form, parameters, on_success) {
+    _send_ajax_request: function (form, parameters, on_success) {
         document.body.style.cursor = "wait";
         form.request({
             parameters: parameters,
@@ -193,33 +193,33 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         });
     },
 
-    on_edit_cell: function (event) {
+    _on_edit_cell: function (event) {
         var td = (event.element().nodeName === 'TD' ? event.element() : event.element().up('td'));
-        this.send_edit_cell_request(td);
+        this._send_edit_cell_request(td);
         event.stop();
     },
 
-    send_edit_cell_request: function (element) {
+    _send_edit_cell_request: function (element) {
         var parameters = {_pytis_form_update_request: 1,
                           _pytis_edit_cell: 1,
-                          _pytis_row_key: this.pytis_row_key(element),
-                          _pytis_column_id: this.pytis_column_id(element)};
+                          _pytis_row_key: this._pytis_row_key(element),
+                          _pytis_column_id: this._pytis_column_id(element)};
         // element.down('form') will not exist on first invocation.
-        var form = element.down('form') || new Element('form', {action: this.uri, method: 'GET'});
-        this.send_ajax_request(form, parameters, function (transport) {
+        var form = element.down('form') || new Element('form', {action: this._uri, method: 'GET'});
+        this._send_ajax_request(form, parameters, function (transport) {
             element.update(transport.responseText);
             var edit_form = element.down('form');
             if (edit_form) {
                 edit_form.down('button.save-edited-cell').on('click',  function (event) {
-                    this.send_edit_cell_request(element);
+                    this._send_edit_cell_request(element);
                     event.stop();
                 }.bind(this));
-                edit_form[this.pytis_column_id(element)].focus();
+                edit_form[this._pytis_column_id(element)].focus();
             }
         }.bind(this));
     },
 
-    on_toggle_row_expansion: function (event) {
+    _on_toggle_row_expansion: function (event) {
         var tr = event.element().up('tr');
         var expansion;
         if (tr.hasClassName('row-expansion')) {
@@ -247,7 +247,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                 expansion.show();
                 content.slideDown({duration: 0.25});
             } else {
-                this.send_expand_row_request(tr);
+                this._send_expand_row_request(tr);
             }
             setTimeout(function () {
                 link.setAttribute('aria-expanded', 'true');
@@ -257,17 +257,17 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         }
     },
 
-    send_expand_row_request: function (tr) {
-        var form = this.form.down('form.list-form-controls');
+    _send_expand_row_request: function (tr) {
+        var form = this._form.down('form.list-form-controls');
         var parameters = {_pytis_form_update_request: 1,
                           _pytis_expand_row: 1,
-                          _pytis_row_key: this.pytis_row_key(tr)};
-        this.send_ajax_request(form, parameters, function (transport) {
+                          _pytis_row_key: this._pytis_row_key(tr)};
+        this._send_ajax_request(form, parameters, function (transport) {
             var content = new Element('div', {'class': 'row-expansion-content'});
             content.insert(transport.responseText);
             var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
             collapse_ctrl.update(pytis._("Collapse Row"));
-            collapse_ctrl.on('click', this.on_toggle_row_expansion.bind(this));
+            collapse_ctrl.on('click', this._on_toggle_row_expansion.bind(this));
             content.insert(collapse_ctrl);
             content.hide();
             tr.insert({after: new Element('tr', {'class': 'row-expansion'}).insert(
@@ -276,7 +276,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         }.bind(this));
     },
 
-    pytis_row_key: function (element) {
+    _pytis_row_key: function (element) {
         // Return pytis row key value for given HTML element inside the pytis table form.
         // Returns null if the element is not inside a pytis table or
         // if the table doesn't contain necessary information.
@@ -287,7 +287,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         return null;
     },
 
-    pytis_column_id: function (element) {
+    _pytis_column_id: function (element) {
         // Return pytis column id for given HTML element inside the pytis table form.
         /* The method works with with class names of table th elements, but this
            may be unreliable in some cases, so better we might pass column names
@@ -317,25 +317,25 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         return null;
     },
 
-    load_form_data: function (parameters, busy_cursor) {
+    _load_form_data: function (parameters, busy_cursor) {
         if (busy_cursor) {
             document.body.style.cursor = "wait";
         }
         parameters._pytis_async_load_request = 1;
-        new Ajax.Request(this.uri, {
+        new Ajax.Request(this._uri, {
             method: 'get',
             parameters: parameters,
             onSuccess: pytis.on_success(function (transport) {
-                var container = this.ajax_container;
+                var container = this._ajax_container;
                 var i, callback;
                 container.update(transport.responseText);
-                this.apply(this.bind_controls, container.down('.list-form-controls', 0));
-                this.apply(this.bind_controls, container.down('.list-form-controls', 1));
-                this.apply(this.bind_table_headings, container.down('table.data-table thead'));
-                this.apply(this.bind_table_body, container.down('table.data-table tbody'));
-                for (i=0; i<this.on_load_callbacks.length; i++) {
-                    callback = this.on_load_callbacks[i];
-                    callback(this.form);
+                this._apply(this._bind_controls, container.down('.list-form-controls', 0));
+                this._apply(this._bind_controls, container.down('.list-form-controls', 1));
+                this._apply(this._bind_table_headings, container.down('table.data-table thead'));
+                this._apply(this._bind_table_body, container.down('table.data-table tbody'));
+                for (i=0; i < this._on_load_callbacks.length; i++) {
+                    callback = this._on_load_callbacks[i];
+                    callback(this._form);
                 }
                 if (container.down('#found-record')) {
                     window.location.hash = '#found-record';
@@ -358,29 +358,29 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                             'this.parentNode.parentNode.down(\'.form-load-traceback\').toggle();' +
                             '">' + pytis._("show details") + '</a>)');
                 }
-                this.ajax_container.update('<div class="form-load-error">' + msg + '</div>' +
+                this._ajax_container.update('<div class="form-load-error">' + msg + '</div>' +
                                            traceback);
             }.bind(this)
         });
     },
 
-    bind_controls: function (panel) {
+    _bind_controls: function (panel) {
         panel.select('button.prev-page, button.next-page').each(function (ctrl) {
             ctrl.observe('click', function (event) {
-                this.reload_form_data(ctrl);
+                this._reload_form_data(ctrl);
                 event.stop();
             }.bind(this));
         }.bind(this));
         var apply_button = panel.down('button.apply-filters');
         if (apply_button) {
             apply_button.observe('click', function (event) {
-                this.reload_form_data(apply_button);
+                this._reload_form_data(apply_button);
                 event.stop();
             }.bind(this));
         } else {
             panel.select('select, checkbox, radio').each(function (ctrl) {
                 ctrl.observe('change', function (event) {
-                    this.reload_form_data(ctrl);
+                    this._reload_form_data(ctrl);
                     event.stop();
                 }.bind(this));
             }.bind(this));
@@ -388,19 +388,19 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         panel.select('.index-search-controls a').each(function (ctrl) {
             var params = ctrl.href.replace(/;/g, '&').parseQuery();
             ctrl.observe('click', function (event) {
-                this.reload_form_data(ctrl, {index_search: params.index_search,
-                                             sort: params.sort,
-                                             dir: params.dir});
+                this._reload_form_data(ctrl, {index_search: params.index_search,
+                                              sort: params.sort,
+                                              dir: params.dir});
                 event.stop();
             }.bind(this));
         }.bind(this));
-        this.bind_search_controls(panel);
+        this._bind_search_controls(panel);
     },
 
-    bind_table_headings: function (thead) {
+    _bind_table_headings: function (thead) {
         thead.select('th.column-heading').each(function (th) {
             if (th.hasClassName('sortable-column')) {
-                th.observe('click', this.on_table_heading_clicked.bind(this));
+                th.observe('click', this._on_table_heading_clicked.bind(this));
             }
         }.bind(this));
         if (thead.up('table').hasClassName('expansible-rows')) {
@@ -409,23 +409,23 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         }
     },
 
-    bind_table_body: function (tbody) {
+    _bind_table_body: function (tbody) {
         tbody.select('td.editable-cell').each(function (element) {
             element.setAttribute('title', pytis._("Double click the cell to edit the value."));
-            element.on('dblclick', this.on_edit_cell.bind(this));
+            element.on('dblclick', this._on_edit_cell.bind(this));
         }.bind(this));
         if (tbody.up('table').hasClassName('expansible-rows')) {
             tbody.select('tr').each(function (tr) {
                 var ctrl = new Element('a', {'class': 'expand-row'});
                 ctrl.update(pytis._("Expand Row"));
-                ctrl.on('click', this.on_toggle_row_expansion.bind(this));
+                ctrl.on('click', this._on_toggle_row_expansion.bind(this));
                 ctrl.update(pytis._("Expand Row"));
                 tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
             }.bind(this));
         }
     },
 
-    reload_form_data: function (ctrl, params) {
+    _reload_form_data: function (ctrl, params) {
         var parameters = (params !== undefined ? params : {});
         ctrl.up('form').getElements().each(function (x) {
             if (x.tagName !== 'BUTTON') {
@@ -436,22 +436,22 @@ pytis.BrowseForm = Class.create(pytis.Form, {
             // Some buttons (apply-filters) have no value, others (prev-page/next-page) do...
             parameters[ctrl.name] = ctrl.value;
         }
-        this.ajax_container.select('form.list-form-controls').each(function (f) { f.disable(); });
-        this.load_form_data(parameters, true);
+        this._ajax_container.select('form.list-form-controls').each(function (f) { f.disable(); });
+        this._load_form_data(parameters, true);
     },
 
-    bind_search_controls: function (panel) {
+    _bind_search_controls: function (panel) {
         var search_button = panel.down('.paging-controls button.search');
         if (search_button) {
-            search_button.observe('click', this.on_show_search_controls.bind(this));
+            search_button.observe('click', this._on_show_search_controls.bind(this));
         }
         var cancel_button = panel.down('div.query button.cancel-search');
         if (cancel_button) {
-            cancel_button.observe('click', this.on_hide_search_controls.bind(this));
+            cancel_button.observe('click', this._on_hide_search_controls.bind(this));
         }
     },
 
-    on_table_heading_clicked: function (event) {
+    _on_table_heading_clicked: function (event) {
         var th = event.element();
         if (th.nodeName !== 'TH') {
             th = th.up('th');
@@ -468,10 +468,10 @@ pytis.BrowseForm = Class.create(pytis.Form, {
             if (th.down('.sort-direction-desc')) {
                 dir='';
             }
-            var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
-            if (this.async_load) {
-                this.form.select('form.list-form-controls').each(function (f) { f.disable(); });
-                this.load_form_data(parameters, true);
+            var parameters = {form_name: this._form_name, sort: column_id, dir: dir};
+            if (this._async_load) {
+                this._form.select('form.list-form-controls').each(function (f) { f.disable(); });
+                this._load_form_data(parameters, true);
             } else {
                 window.location.search = new Hash(parameters).toQueryString();
             }
@@ -479,14 +479,14 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         }
     },
 
-    on_show_search_controls: function (event) {
-        var search_controls = $(this.form).down('div.query');
+    _on_show_search_controls: function (event) {
+        var search_controls = $(this._form).down('div.query');
         var i, panel, button;
         search_controls.show();
         search_controls.down('input.text-search-field').focus();
         search_controls.down('input[type=hidden]').value = '1';
         for (i=0; i<2; i++) {
-            panel = this.form.down('.list-form-controls', i);
+            panel = this._form.down('.list-form-controls', i);
             if (panel) {
                 button = panel.down('.paging-controls button.search');
                 if (button) {
@@ -497,8 +497,8 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         event.stop();
     },
 
-    on_hide_search_controls: function (event) {
-        var search_controls = $(this.form).down('div.query');
+    _on_hide_search_controls: function (event) {
+        var search_controls = $(this._form).down('div.query');
         var form = search_controls.up('form');
         form['show-search-field'].value = '';
         form.query.value = '';
@@ -506,36 +506,19 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         event.stop();
     },
 
-    on_load: function (callback) {
-        /* Call given callback function when the form is fully loaded.
-
-           The callback will be called immediately if the form is loaded
-           synchronously or after the asynchronous load in the other case.
-
-           The callback function will receive the form's top level DOM element
-           as an argument.
-
-         */
-        if (this.async_load) {
-            this.on_load_callbacks[this.on_load_callbacks.length] = callback;
-        } else {
-            callback(this.form);
-        }
-    },
-
-    on_popup_menu_inline_action: function (element, action, uri) {
+    _on_popup_menu_inline_action: function (element, action, uri) {
         if (action === 'update' || action === 'copy' || action === 'delete') {
             var parameters = uri.parseQuery();
-            var uri = uri.slice(0, uri.indexOf('?'));
+            uri = uri.slice(0, uri.indexOf('?'));
             var form = new Element('form', {action: uri, method: 'GET'});
             var target = (action === 'copy' ? 'after' : 'replace');
-            this.send_inline_action_request(element, form, parameters, target);
+            this._send_inline_action_request(element, form, parameters, target);
             return true;
         }
         return false;
     },
 
-    send_inline_action_request: function (element, form, parameters, target) {
+    _send_inline_action_request: function (element, form, parameters, target) {
         // Action target can be:
         // 'global' ... the content is inserted below the '.actions' element
         //    (containing the global actions, such as insert) above or below
@@ -547,23 +530,23 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         // 'after' ... the content is inserted below the curent record on
         //    which the action was invoked.
         parameters['_pytis_inline_form_request'] = '1';
-        this.send_ajax_request(form, parameters, function (transport) {
-            var found = this.form.down('#found-record');
+        this._send_ajax_request(form, parameters, function (transport) {
+            var found = this._form.down('#found-record');
             if (found) {
                 // Unhighlight the previously highlighted record to avoid confusion
                 // (the edited record is now the one worth to be noticed).
                 found.setAttribute('id', '');
             }
-            var content = this.process_inline_action_response(element, target, transport);
+            var content = this._process_inline_action_response(element, target, transport);
             content.down('button.cancel').on('click', function (event) {
-                this.on_cancel_inline_action(element, target, content);
+                this._on_cancel_inline_action(element, target, content);
                 event.stop();
             }.bind(this));
         }.bind(this));
     },
 
-    process_inline_action_response: function (element, target, transport) {
-        // Returns the element to be hidden by 'on_cancel_inline_action()'.
+    _process_inline_action_response: function (element, target, transport) {
+        // Returns the element to be hidden by '_on_cancel_inline_action()'.
         // This extra div is necessary for the slide effects to work properly.
         var div = new Element('div').update(transport.responseText).hide();
         if (target === 'global') {
@@ -596,8 +579,8 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         return div;
     },
 
-    on_cancel_inline_action: function (element, target, content) {
-        // Here 'content' is the result returned by 'process_inline_action_response()'.
+    _on_cancel_inline_action: function (element, target, content) {
+        // Here 'content' is the result returned by '_process_inline_action_response()'.
         content.slideUp({
             duration: 0.25,
             afterFinish: function () {
@@ -606,16 +589,33 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                     element.enable(); // 'element' is the action button.
                 } else {
                     // This is form specific, so it has a separate method...
-                    this.remove_canceled_inline_action_content(element, content);
+                    this._remove_canceled_inline_action_content(element, content);
                 }
             }.bind(this)
         });
     },
 
-    remove_canceled_inline_action_content: function (element, content) {
+    _remove_canceled_inline_action_content: function (element, content) {
         var tr = content.up('tr');
         content.up('td').remove();
         tr.childElements().each(function (x) { x.show(); });
+    },
+
+    on_load: function (callback) {
+        /* Call given callback function when the form is fully loaded.
+
+           The callback will be called immediately if the form is loaded
+           synchronously or after the asynchronous load in the other case.
+
+           The callback function will receive the form's top level DOM element
+           as an argument.
+
+        */
+        if (this._async_load) {
+            this._on_load_callbacks[this._on_load_callbacks.length] = callback;
+        } else {
+            callback(this._form);
+        }
     }
 
 });
@@ -626,7 +626,7 @@ pytis.BrowseForm.on_action = function (event, element, action, uri) {
     // the events to itself.  This method is assigned as popup menu
     // item callback and we may handle item invocation here.
     var form = element.up('.pytis-form').instance;
-    if (form && form.inline_editable && form.on_popup_menu_inline_action(element, action, uri)) {
+    if (form && form._inline_editable && form._on_popup_menu_inline_action(element, action, uri)) {
         event.stop();
     }
 };
@@ -637,19 +637,19 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
     initialize: function ($super, form_id, form_name, uri, inline_editable) {
         $super(form_id, form_name, uri, inline_editable);
         if (inline_editable) {
-            this.form.down('.actions').select(
+            this._form.down('.actions').select(
                 'button.action-update, button.action-delete, button.action-copy'
             ).each(function (button) {
                 var target = (button.hasClassName('action-copy') ? 'after' : 'replace');
                 button.on('click', function (event) {
-                    this.send_inline_action_request(button, button.up('form'), {}, target);
+                    this._send_inline_action_request(button, button.up('form'), {}, target);
                     event.stop();
                 }.bind(this));
             }.bind(this));
         }
     },
 
-    process_inline_action_response: function ($super, element, target, transport) {
+    _process_inline_action_response: function ($super, element, target, transport) {
         if (target === 'global') {
             return $super(element, target, transport);
         } else {
@@ -664,7 +664,7 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
         }
     },
 
-    remove_canceled_inline_action_content: function (element, content) {
+    _remove_canceled_inline_action_content: function (element, content) {
         var parent = content.parentNode;
         content.remove();
         parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
@@ -689,40 +689,40 @@ pytis.EditableBrowseForm = Class.create(pytis.BrowseForm, {
         if (allow_insertion) {
             var button = new Element('button', {'class': 'new-row-button'});
             button.update(new Element('span').update(pytis._("New row")));
-            button.on('click', this.on_insert_new_row.bind(this));
-            this.form.insert(button);
+            button.on('click', this._on_insert_new_row.bind(this));
+            this._form.insert(button);
         }
     },
 
-    bind_table_body: function (tbody) {
+    _bind_table_body: function (tbody) {
         // We don't call $super here as we don't want editable cells or
         // expansible rows in EditableBrowseForm, but we may need it in
         // future if the parent class adds something we want...
         tbody.select('tr a.remove-row').each(function (link) {
-            link.on('click', this.on_remove_row.bind(this));
+            link.on('click', this._on_remove_row.bind(this));
         }.bind(this));
     },
 
-    on_insert_new_row: function (event) {
-        var form = this.form.down('form') || this.form.up('form');
+    _on_insert_new_row: function (event) {
+        var form = this._form.down('form') || this._form.up('form');
         if (form) {
             var parameters = {'_pytis_form_update_request': 1,
                               '_pytis_insert_new_row': 1};
-            this.send_ajax_request(form, parameters, function (transport) {
-                var tbody = this.form.down('table.data-table tbody');
+            this._send_ajax_request(form, parameters, function (transport) {
+                var tbody = this._form.down('table.data-table tbody');
                 tbody.insert(transport.responseText);
-                form['_pytis_inserted_rows_' + this.form_name].value++;
-                this.bind_table_body(tbody);
+                form['_pytis_inserted_rows_' + this._form_name].value++;
+                this._bind_table_body(tbody);
             });
         }
         event.stop();
     },
 
-    on_remove_row: function (event) {
+    _on_remove_row: function (event) {
         var tr = event.element().up('tr');
         tr.up('form').insert(new Element('input', {
             type: 'hidden',
-            name: '_pytis_removed_row_key_' + this.form_name,
+            name: '_pytis_removed_row_key_' + this._form_name,
             value: tr.getAttribute('data-pytis-row-key')
         }));
         tr.remove();
@@ -749,8 +749,8 @@ pytis.EditForm = Class.create(pytis.Form, {
          * fields ... array of form fields as pytis.Field instances
          */
         $super(form_id);
-        // Note: this.form.up() applies in a QueryFieldsForm (list form controls).
-        this._html_form = this.form.down('form') || this.form.up('form');
+        // Note: this._form.up() applies in a QueryFieldsForm (list form controls).
+        this._html_form = this._form.down('form') || this._form.up('form');
         this._fields = new Hash();
         var observe = false;
         var i, field;
@@ -763,11 +763,11 @@ pytis.EditForm = Class.create(pytis.Form, {
         }
         this._last_request_number = 0;
         if (observe) {
-            this._observer = new Form.Observer(this._html_form, 1, this.on_change.bind(this));
+            this._observer = new Form.Observer(this._html_form, 1, this._on_change.bind(this));
         }
     },
 
-    on_change: function (form, value) {
+    _on_change: function (form, value) {
         // Send AJAX request in reaction to user changes of form values.
         // TODO: Avoid AJAX request flooding during typing or other continuous
         // changes.  The problem is that we must always send a request as we
@@ -795,14 +795,14 @@ pytis.EditForm = Class.create(pytis.Form, {
                     parameters: {_pytis_form_update_request: ++this._last_request_number,
                                  _pytis_form_changed_field: id,
                                  _pytis_form_state: states ? states.toQueryString() : null},
-                    onSuccess: this.update.bind(this)
+                    onSuccess: this._update.bind(this)
                 });
                 throw $break;
             }
         }.bind(this));
     },
 
-    update: function (response) {
+    _update: function (response) {
         // Update the form state in reaction to previously sent AJAX request.
         var data = response.responseJSON;
         if (data) {
@@ -1151,10 +1151,10 @@ pytis.FileUploadField = Class.create(pytis.Field, {
         // when computers depend on it).  When we ever decide to send ajax
         // updates for all fields (to support continuous validation) we can
         // solve file size validation within the main form updates.
-        this._observer = new Form.Element.Observer(this._ctrl, 1, this.on_change.bind(this));
+        this._observer = new Form.Element.Observer(this._ctrl, 1, this._on_change.bind(this));
     },
 
-    on_change: function (form, value) {
+    _on_change: function (form, value) {
         if (this._ctrl.files && this._ctrl.files.length) {
             var file = this._ctrl.files[0];
             document.body.style.cursor = "wait";
@@ -1162,12 +1162,11 @@ pytis.FileUploadField = Class.create(pytis.Field, {
                               _pytis_form_changed_field: this._id};
             parameters['_pytis_file_size_'+this._id] = file.size;
             parameters[this._id] = null; // Avoid sending the whole file through ajax.
-            this._form.request({parameters: parameters, onSuccess: this.update.bind(this)});
+            this._form.request({parameters: parameters, onSuccess: this._update.bind(this)});
         }
     },
 
-    update: function (response) {
-        // Update the form state in reaction to previously sent AJAX request.
+    _update: function (response) {
         var data = response.responseJSON;
         if (data) {
             var error = data.fields[this._id].error;
