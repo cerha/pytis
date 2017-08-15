@@ -79,6 +79,10 @@ class PresentedRow(unittest.TestCase):
         return pp.PresentedRow(self._fields, self._data, row=row, new=new,
                                singleline=singleline, prefill=prefill)
 
+    def _set(self, row, **kwargs):
+        for key, value in kwargs.items():
+            row[key] = pd.Value(row[key].type(), value)
+
     def _check_values(self, row, **kwargs):
         for key, value in kwargs.items():
             rvalue = row[key].value()
@@ -96,8 +100,8 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, e=88, total=177, r=(1, 8))
         row = self._row(row=data_row)
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
-        row['c'] = pd.ival(88)
-        row['r'] = pd.Value(pd.IntegerRange(), (8, 9))
+        self._set(row, c=88)
+        self._set(row, r=(8, 9))
         self._check_values(row, a=4, b=100, c=88, d=176, total=188)
         # TODO: dodělat
 
@@ -115,7 +119,7 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row['total'].value(), 8)
         self.assertEqual(row.get('total', lazy=True).value(), 8)
         self._check_values(row, d=10, total=8, inc=9)
-        row['c'] = pd.ival(100)
+        self._set(row, c=100)
         self._check_values(row, d=200, total=103, inc=104)
 
     def test_prefill_computer(self):
@@ -157,7 +161,7 @@ class PresentedRow(unittest.TestCase):
         row = self._row(b=2, c=1)
         self.assertTrue(row.editable('a'))
         self.assertFalse(row.editable('d'))
-        row['b'] = pd.ival(5)
+        self._set(row, b=5)
         self.assertTrue(row.editable('d'))
 
     def test_callback(self):
@@ -173,7 +177,7 @@ class PresentedRow(unittest.TestCase):
         # self._check_values(row, d=10, total=8, inc=9)
         # assert 'd' in changed and 'total' in changed and 'inc' in changed, changed
         # del changed[0:len(changed)]
-        row['c'] = pd.ival(100)
+        self._set(row, c=100)
         # self._check_values(row, d=200, total=103, inc=104)
         self.assertIn('d', changed)
         self.assertIn('total', changed)
@@ -194,15 +198,15 @@ class PresentedRow(unittest.TestCase):
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
         self.assertIsNone(enabled[0])
-        row['a'] = pd.ival(8)
+        self._set(row, a=8)
         self.assertIsNone(enabled[0])
-        row['c'] = pd.ival(3)
+        self._set(row, c=3)
         self.assertFalse(enabled[0])
-        row['b'] = pd.ival(2)
+        self._set(row, b=2)
         self.assertFalse(enabled[0])
-        row['b'] = pd.ival(3)
+        self._set(row, b=3)
         self.assertTrue(enabled[0])
-        row['c'] = pd.ival(2)
+        self._set(row, c=2)
         self.assertFalse(enabled[0])
     def test_has_key(self):
         row = self._row()
@@ -212,14 +216,14 @@ class PresentedRow(unittest.TestCase):
     def test_changed(self):
         row = self._row()
         self.assertFalse(row.changed())
-        row['b'] = pd.ival(333)
+        self._set(row, b=333)
         self.assertTrue(row.changed())
     def test_field_changed(self):
         row = self._row(b=3, c=8)
         self.assertFalse(row.field_changed('a'))
         self.assertFalse(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
-        row['b'] = pd.ival(333)
+        self._set(row, b=333)
         self.assertFalse(row.field_changed('a'))
         self.assertTrue(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
