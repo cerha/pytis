@@ -42,7 +42,7 @@ import BaseHTTPServer
 import pytis.data
 from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval, \
-    log, OPERATIONAL, ProgramError
+    log, OPERATIONAL, ProgramError, UNDEFINED
 import pytis.presentation
 
 
@@ -1366,8 +1366,8 @@ class ViewSpec(object):
             formatting syntax).
 
           check -- function to verify the integrity of the whole record.  May
-            be specified as a single row function (automatically wrapped by
-            'computer()') or a sequence of such functions/computers.  In the
+            be specified as a single computer function (automatically wrapped
+            by 'computer()') or a sequence of such functions/computers.  In the
             later case all functions will be called in the order in which they
             appear in the sequence.  As opposed to "validation" which only
             verifies whether a single value matches its data type and
@@ -2351,12 +2351,12 @@ class Computer(object):
 
     """
 
-    def __init__(self, function, depends=None):
+    def __init__(self, function, depends=None, fallback=UNDEFINED):
         """Arguments:
 
           function -- callable object taking one argument - the 'PresentedRow'
             instance and returning the computed value.  The meaning of the
-            returned value is depends on the purpose for which the computer is
+            returned value depends on the purpose for which the computer is
             used.
 
           depends -- sequence of field identifiers (strings), on which the
@@ -2366,6 +2366,13 @@ class Computer(object):
             Empty sequence leads to no recomputations (the value is computed
             only once on initialization).
 
+          fallback -- value used instead of function result in case, that at
+            least one of the input fields (present in 'depends') contains an
+            invalid value.  The computer function is not called at all in this
+            case and the fallback value is returned instead.  If 'fallback' is
+            undefined, the computer function is always called and it is
+            responsible for taking care of invalid input explicitly.
+
         """
         assert isinstance(function, collections.Callable)
         assert is_sequence(depends)
@@ -2373,9 +2380,19 @@ class Computer(object):
             raise ProgramError("Computer has no dependency specification!")
         self._function = function
         self._depends = tuple(depends)
+        self._fallback = fallback
 
-    def __call__(self, *args, **kwargs):
-        return self._function(*args, **kwargs)
+    def __call__(self, row):
+        if self._fallback is not UNDEFINED:
+            for f in self._depends:
+                v = row[f]
+                if row.validated(f):
+                    error = row.validation_error(f)
+                else:
+                    error = row.validate(f, v.export())
+                if error:
+                    return self._fallback
+        return self._function(row)
 
     def __str__(self):
         return '<%s %s depends=%r>' % (self.__class__.__name__, self._function.__name__,
@@ -2389,7 +2406,12 @@ class Computer(object):
         """Return the value of 'depends' as passed to the constructor converted to a tuple."""
         return self._depends
 
-def computer(function=None):
+    def fallback(self):
+        """Return the value of 'fallback' as passed to the constructor."""
+        return self._fallback
+
+
+def computer(function=None, fallback=UNDEFINED):
     """Return a 'Computer' instance for given function.
 
     If necessary, wrap 'function' converting row values to named arguments.
@@ -2397,45 +2419,63 @@ def computer(function=None):
     Computer functions are functions of one argument which is a 'PresentedRow'
     instance and return a result based on a computation which typically uses
     current row values and/or other row properties.  This wrapper makes it
-    simple to define row functions working with field values by passing these
-    values as function arguments.
+    simple to define computer functions working with field values by passing
+    these values as function arguments.
 
-    If 'function' is None, None is returned.  Otherwise it must be a function
-    of one positional argument and zero or more additional arguments
-    (positional or keyword).  The first positional argument is a 'PresentedRow'
-    instance.  If the function defines any additional arguments, it will be
-    wrapped by a function which passes row values of fields matching the
-    argument names as those arguments.  If no such additional arguemnts are
-    defined, the 'function' is returned as is.
+    If 'function' is None or if it already is a Computer instance, it is
+    returned unchanged.  Otherwise it must be a function of one positional
+    argument and zero or more additional arguments (positional or keyword).
+    The first positional argument is a 'PresentedRow' instance.  If the
+    function defines any additional arguments, it will be wrapped by a function
+    which passes row values of fields matching the argument names as those
+    arguments.  If no such additional arguemnts are defined, the 'function' is
+    used as is.
+
+    The argument 'fallback' corresponds to the same argument of 'Computer'
+    constructor.  If used, it is simply passed on to the instance.
 
     For example:
 
         @computer
-        def func(row, a, b):
+        def x(row, a, b):
             return a + b
 
     or:
 
-        func = computer(lambda r, a, b: a + b)
+        x = computer(lambda r, a, b: a + b)
 
     is equivalent to:
 
-        def func(row):
+        def x(row):
              return row['a'].value() + row['b'].value()
 
-    This wrapper makes row functions much more readable.  Many properties of
-    Pytis specifications accept row functions (functions which accept
-    'PresentedRow' as the only argument).  If documentation of such properties
-    refer to 'computer()', it means that 'computer' is automatically
-    applied so the user may define the function in the readable form and it is
-    automatically wrapped by 'computer()' behind the scenes if needed.
+    In the special case that 'fallback' is passed and 'function' is None, the
+    function returns a decorator which passes 'fallback' along, so you can also
+    simply write decorators as below:
 
-    Note: The goal is to wrap by 'computer()' in all cases but it is added
-    gradually so you can rely on it only where documented.  In other cases
-    'computer()' may be used explicitly.
+        @computer(fallback=None):
+        def x(row, a, b):
+            return a + b
+
+    which is equivalent to:
+
+        x = Computer(lambda r: row['a'].value() + row['b'].value(), fallback=None)
+
+    Note: Pytis specifications accept 'Computer' instances for many of its
+    properties.  Some of them explicitly state in documentation, that they are
+    automatically wrapped by 'computer()'.  In this case you may define the
+    computer functions in the readable form and pass them directly to those
+    properties.  They will be automatically wrapped by 'computer()' behind the
+    scenes and converted to 'Computer' instances if needed.  It is actually
+    planned to wrap by 'computer()' in all cases but it is added gradually so
+    you can rely on it only where documented.  In other cases use 'computer()'
+    explicitly or pass 'Computer' instances directly.
 
     """
-    if function is None or isinstance(function, Computer):
+    if function is None and fallback is not UNDEFINED:
+        def result(function):
+            return computer(function, fallback=fallback)
+    elif function is None or isinstance(function, Computer):
         result = function
     else:
         assert isinstance(function, collections.Callable), function
@@ -2445,7 +2485,7 @@ def computer(function=None):
             def function(row):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
-        result = Computer(function, depends=depends)
+        result = Computer(function, depends=depends, fallback=fallback)
     return result
 
 

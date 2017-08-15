@@ -882,7 +882,13 @@ class PresentedRow(object):
             value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
         if value and string != self.format(key):
             self.__setitem__(key, value, run_callback=False)
-        if error and string != self.format(key):
+        if error: # and string != self.format(key):
+            # TODO: The line above contained also the commented out part of the condition.
+            # It doesn't seem to make sense and it definitely doesn't allow conditional
+            # execution of computer functions in Computer.__call__ to work properly.
+            # I suppose this behavior was not intentional and comment it out for now.
+            # If it breaks something, we need to rethink it!  Proper function of
+            # Computer.__call__ is covered by tests so further experiments can rely on them.
             self._invalid[key] = (string, error)
         elif key in self._invalid:
             del self._invalid[key]
@@ -922,7 +928,6 @@ class PresentedRow(object):
         present in form layout before submit.
 
         """
-
         return key in self._validated_fields
 
     def register_callback(self, kind, key, function):

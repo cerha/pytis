@@ -32,42 +32,36 @@ tests = pytis.util.test.TestSuite()
 class PresentedRow(unittest.TestCase):
     def setUp(self):
         self.longMessage = True
-        key = pd.ColumnSpec('a', pd.Integer())
+        key = pd.ColumnSpec('a', pd.Integer(not_null=True))
         self._columns = (
             key,
-            pd.ColumnSpec('b', pd.Integer()),
-            pd.ColumnSpec('c', pd.Integer()),
+            pd.ColumnSpec('b', pd.Integer(not_null=True)),
+            pd.ColumnSpec('c', pd.Integer(not_null=True)),
             pd.ColumnSpec('d', pd.Integer()),
             pd.ColumnSpec('r', pd.IntegerRange()))
         self._data = pd.Data(self._columns, key)
-        @pp.row_function
+        @pp.computer(fallback=None)
         def twice(row, c):
-            # Just try if it is possible to access the original row.
-            row.original_row()['c'].value()
-            return c is not None and c * 2 or None
-        @pp.row_function
+            return c * 2
+        @pp.computer(fallback=0)
         def total(row, b, c):
-            if b is None or c is None:
-                return 0
             return b + c
-        @pp.row_function
+        @pp.computer
         def inc(row, total):
             return total is not None and total + 1 or None
-        @pp.row_function
+        @pp.computer
         def gt5(row, total):
             return total > 5
         self._fields = (
             pp.Field('a'),
             pp.Field('b'),
             pp.Field('c', default=lambda: 5),
-            pp.Field('d', editable=pp.Computer(gt5, depends=('total',)),
-                     computer=pp.Computer(twice, depends=('c',))),
-            pp.Field('e', type=pd.Integer(), virtual=True,
-                     default=88),
+            pp.Field('d', editable=gt5, computer=twice),
+            pp.Field('e', type=pd.Integer(), virtual=True, default=88),
             pp.Field('total', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
-                     computer=pp.Computer(total, depends=('b', 'c'))),
+                     computer=total),
             pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
-                     computer=pp.Computer(inc, depends=('total',))),
+                     computer=inc),
             pp.Field('r'),
         )
 
@@ -102,7 +96,11 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
         self._set(row, c=88)
         self._set(row, r=(8, 9))
-        self._check_values(row, a=4, b=100, c=88, d=176, total=188)
+        self._check_values(row, a=4, b=100, c=88, total=188)
+        self._set(row, b=None)
+        self._check_values(row, total=0, d=176)
+        self._set(row, c=None)
+        self._check_values(row, total=0, d=None)
         # TODO: dodělat
 
     def test_prefill(self):
@@ -116,7 +114,7 @@ class PresentedRow(unittest.TestCase):
     def test_computer(self):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
-        self.assertEqual(row['total'].value(), 8)
+        self._check_values(row, total=8)
         self.assertEqual(row.get('total', lazy=True).value(), 8)
         self._check_values(row, d=10, total=8, inc=9)
         self._set(row, c=100)
