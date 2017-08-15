@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Transformace a prezentace dat
-# 
-# Copyright (C) 2002, 2005, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Transformace a prezentace dat.
+"""Data transformations and presentation.
 
-Tento modul má za úkol řešit zpracování dat, které nepřísluší ani modulu
-'pytis.data' ani konkrétní podobě uživatelského rozhraní.  Typickými funkcemi
-tohoto modulu jsou počítání hodnot \"virtuálních\" políček, převod hodnot
-různého druhu do stringové podoby nebo formátování stringového textu.
+This module is intended to solve processing of data which does not belong to
+the module 'pytis.data', is generally needed by user interfaces, but is not
+specific for any particular user interface.  The typical functionality solved
+by this module is computing the values of virtual fields, handling dynamic
+changes of editability of input fields, their validation and integrity
+checking, dynamic codebook filtering etc.
 
 """
 
