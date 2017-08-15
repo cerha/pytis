@@ -2485,6 +2485,7 @@ def computer(function=None, fallback=UNDEFINED):
             def function(row):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
+            function.__name__ = original_function.__name__
         result = Computer(function, depends=depends, fallback=fallback)
     return result
 
