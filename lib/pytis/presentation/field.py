@@ -383,8 +383,7 @@ class PresentedRow(object):
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
             self._dirty[key] = False
-            func = column.computer.function()
-            new_value = pytis.data.Value(column.type, func(self))
+            new_value = pytis.data.Value(column.type, column.computer(self))
             if new_value.value() != value.value():
                 value = new_value
                 if key in self._row:
@@ -496,8 +495,8 @@ class PresentedRow(object):
 
     def _compute_editability(self, key):
         # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
-        func = self._coldict[key].editable.function()
-        self._editable[key] = result = bool(func(self))
+        column = self._coldict[key]
+        self._editable[key] = result = bool(column.editable(self))
         self._editability_dirty[key] = False
         return result
 
@@ -520,8 +519,8 @@ class PresentedRow(object):
 
     def _compute_visibility(self, key):
         # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
-        func = self._coldict[key].visible.function()
-        self._visible[key] = result = func(self)
+        column = self._coldict[key]
+        self._visible[key] = result = column.visible(self)
         self._visibility_dirty[key] = False
         return result
 
@@ -537,8 +536,8 @@ class PresentedRow(object):
             self._run_callback(self.CALL_CHECK, k)
 
     def _compute_check(self, key):
-        func = self._coldict[key].check.function()
-        self._check_result[key] = result = func(self)
+        column = self._coldict[key]
+        self._check_result[key] = result = column.check(self)
         self._check_dirty[key] = False
         return result
 
@@ -1183,8 +1182,7 @@ class PresentedRow(object):
             if computer is None:
                 result = value_dict[key] = None
             else:
-                function = computer.function()
-                result = value_dict[key] = function(self)
+                result = value_dict[key] = computer(self)
             dirty_dict[key] = False
         else:
             result = value_dict[key]

@@ -70,59 +70,6 @@ def specification_path(specification_name):
             path = specification_name[:n - 1]
     return path, specification_name
 
-def row_function(function):
-    """If necessary, wrap 'function' converting row values to named arguments.
-
-    Row functions are functions of one argument which is a 'PresentedRow'
-    instance and return a result based on a computation which typically uses
-    current row values and/or other row properties.  This wrapper makes it
-    simple to define row functions working with field values by passing these
-    values as function arguments.
-
-    If 'function' is None, None is returned.  Otherwise it must be a function
-    of one positional argument and zero or more additional arguments
-    (positional or keyword).  The first positional argument is a 'PresentedRow'
-    instance.  If the function defines any additional arguments, it will be
-    wrapped by a function which passes row values of fields matching the
-    argument names as those arguments.  If no such additional arguemnts are
-    defined, the 'function' is returned as is.
-
-    For example:
-
-        @row_function
-        def func(row, a, b):
-            return a + b
-
-    or:
-
-        func = row_function(lambda r, a, b: a + b)
-
-    is equivalent to:
-
-        def func(row):
-             return row['a'].value() + row['b'].value()
-
-    This wrapper makes row functions much more readable.  Many properties of
-    Pytis specifications accept row functions (functions which accept
-    'PresentedRow' as the only argument).  If documentation of such properties
-    refer to 'row_function()', it means that 'row_function' is automatically
-    applied so the user may define the function in the readable form and it is
-    automatically wrapped by 'row_function()' behind the scenes if needed.
-
-    Note: The goal is to wrap by 'row_function()' in all cases but it is added
-    gradually so you can rely on it only where documented.  In other cases
-    'row_function()' may be used explicitly.
-
-    """
-    if function is not None:
-        assert isinstance(function, collections.Callable), function
-        arguments = argument_names(function)[1:]
-        if arguments:
-            original_function = function
-            def function(row):
-                kwargs = {name: row[name].value() for name in arguments}
-                return original_function(row, **kwargs)
-    return function
 
 class TextFormat(object):
     """Constants for definition of text format.
@@ -1420,19 +1367,20 @@ class ViewSpec(object):
 
           check -- function to verify the integrity of the whole record.  May
             be specified as a single row function (automatically wrapped by
-            'row_function()') or a sequence of such functions -- in this case
-            all functions will be called in the order in which they appear in
-            the sequence.  As opposed to "validation" which only verifies
-            whether a single value matches its data type and constraints
-            (values of other fields are not available during validation), the
-            check function verifies mutual compatibility of all form values.
-            The check function is called only after successful validation of
-            all fields.  The check function returns None in case of success or
-            an error message as a string in case of failure.  It is also
-            possible to return a pair (field_id, message) where field_id is the
-            id of the field which causes the problem.  Given field will receive
-            focus in this case, but it is recommended to use separate check
-            functions in 'Field' specification for this purpose.
+            'computer()') or a sequence of such functions/computers.  In the
+            later case all functions will be called in the order in which they
+            appear in the sequence.  As opposed to "validation" which only
+            verifies whether a single value matches its data type and
+            constraints (values of other fields are not available during
+            validation), the check function verifies mutual compatibility of
+            all form values.  The check function is called only after
+            successful validation of all fields.  The check function returns
+            None in case of success or an error message as a string in case of
+            failure.  It is also possible to return a pair (field_id, message)
+            where field_id is the id of the field which causes the problem.
+            Given field will receive focus in this case, but it is recommended
+            to use separate check functions in 'Field' specification for this
+            purpose.
 
           cleanup -- a function for final actions after inserting/updating a
             record.  The function must accept two arguments -- the first one is
@@ -1832,7 +1780,7 @@ class ViewSpec(object):
         self._sorting = sorting
         self._grouping = grouping
         self._group_heading = group_heading
-        self._check = tuple(map(row_function, xtuple(check)))
+        self._check = tuple(map(computer, xtuple(check)))
         self._cleanup = cleanup
         self._on_new_record = on_new_record
         self._on_copy_record = on_copy_record
@@ -2384,32 +2332,47 @@ class TextFilter(object):
 
 
 class Computer(object):
-    """Specifikace funkce pro dopočítání hodnoty sloupce."""
+    """Specification of a function computing a value based on row values.
+
+    Computer functions compute a value which depends on values of fields within
+    a 'PresentedRow' instance and possibly also other properties of the row.
+    This class simply wraps the function (any callable object) and keeps track
+    of the fields (their identifiers) on which the result depends.  This makes
+    Pytis able to decide when it is necessary to recompute the value (by
+    calling the function again).
+
+    Computer functions are used at many places throughout Pytis specifications.
+    They can compute for example:
+
+      - values of virtual fields,
+      - dynamic editability and visibility of form fields,
+      - dynamic filters and runtime arguments for codebook field enumerators,
+      - check the integrity of the row.
+
+    """
 
     def __init__(self, function, depends=None):
-        """Inicializuj specifikaci.
+        """Arguments:
 
-        Argumenty:
+          function -- callable object taking one argument - the 'PresentedRow'
+            instance and returning the computed value.  The meaning of the
+            returned value is depends on the purpose for which the computer is
+            used.
 
-          function -- libovolná funkce vracející hodnotu kompatibilní s vnitřní
-            hodnotou datového typu odpovídajícího sloupci, pro který je
-            použita.
-
-          depends -- seznam sloupců, na kterých dané počítané políčko závisí.
-            Měl by obsahovat všechny sloupce, které počítací funkce používá pro
-            určení výsledné hodnoty.  Hodnota potom bude přepočítána pouze
-            při změně v uvedených políčkách. Pokud je uveden prázdný seznam,
-            nebude hodnota přepočítána nikdy (stále však bude vypočítána při
-            inicializaci formuláře). Jedná se o seznam identifikátorů sloupců
-            jako řetězců.
+          depends -- sequence of field identifiers (strings), on which the
+            function result depends.  It should contain all fields which are
+            used in the computation.  The computed value will only be
+            recomputed when the value of one of the listed fields changes.
+            Empty sequence leads to no recomputations (the value is computed
+            only once on initialization).
 
         """
         assert isinstance(function, collections.Callable)
-        self._function = function
+        assert is_sequence(depends)
         if depends is None:
             raise ProgramError("Computer has no dependency specification!")
-        assert is_sequence(depends)
-        self._depends = depends
+        self._function = function
+        self._depends = tuple(depends)
 
     def __call__(self, *args, **kwargs):
         return self._function(*args, **kwargs)
@@ -2419,58 +2382,70 @@ class Computer(object):
                                        self._depends)
 
     def function(self):
-        """Vrať funkci zadanou v konstruktoru."""
+        """Return the value of 'function' as passed to the constructor."""
         return self._function
 
     def depends(self):
-        """Vrať seznam id sloupců, ne kterých počítaná hodnota závisí."""
+        """Return the value of 'depends' as passed to the constructor converted to a tuple."""
         return self._depends
 
+def computer(function=None):
+    """Return a 'Computer' instance for given function.
 
-def computer(function):
-    """Return a Computer instance for given function.
+    If necessary, wrap 'function' converting row values to named arguments.
 
-    This convenience wrapper creates a Computer instance and wraps the computer
-    function by a code, that automatically converts row values into function
-    arguments.
+    Computer functions are functions of one argument which is a 'PresentedRow'
+    instance and return a result based on a computation which typically uses
+    current row values and/or other row properties.  This wrapper makes it
+    simple to define row functions working with field values by passing these
+    values as function arguments.
 
-    Any named (positional) arguments of given 'function' which follow the first
-    argument (which is the current row as usual) are used for automatic
-    construction of the 'depends' list and the function will receive the Python
-    values of the corresponding fields in place of these arguments.
+    If 'function' is None, None is returned.  Otherwise it must be a function
+    of one positional argument and zero or more additional arguments
+    (positional or keyword).  The first positional argument is a 'PresentedRow'
+    instance.  If the function defines any additional arguments, it will be
+    wrapped by a function which passes row values of fields matching the
+    argument names as those arguments.  If no such additional arguemnts are
+    defined, the 'function' is returned as is.
 
-    Example:
+    For example:
 
         @computer
-        def c(row, a, b):
+        def func(row, a, b):
             return a + b
 
     or:
 
-        c = computer(lambda r, a, b: a + b)
+        func = computer(lambda r, a, b: a + b)
 
     is equivalent to:
 
-        def function(row):
+        def func(row):
              return row['a'].value() + row['b'].value()
-        c = Computer(function, depends=('a', 'b'))
 
+    This wrapper makes row functions much more readable.  Many properties of
+    Pytis specifications accept row functions (functions which accept
+    'PresentedRow' as the only argument).  If documentation of such properties
+    refer to 'computer()', it means that 'computer' is automatically
+    applied so the user may define the function in the readable form and it is
+    automatically wrapped by 'computer()' behind the scenes if needed.
 
-    The first argument (row) is always passed, but should not be used to access
-    field values (fields accessed this way would not be visible in computer's
-    dependencies).  It may still be useful, however, to access other
-    information needed by the computer function.
+    Note: The goal is to wrap by 'computer()' in all cases but it is added
+    gradually so you can rely on it only where documented.  In other cases
+    'computer()' may be used explicitly.
 
     """
     if function is None or isinstance(function, Computer):
         result = function
     else:
         assert isinstance(function, collections.Callable), function
-        columns = argument_names(function)[1:]
-        def compute(row):
-            kwargs = dict([(column, row[column].value()) for column in columns])
-            return function(row, **kwargs)
-        result = Computer(compute, depends=columns)
+        depends = argument_names(function)[1:]
+        if depends:
+            original_function = function
+            def function(row):
+                kwargs = {name: row[name].value() for name in depends}
+                return original_function(row, **kwargs)
+        result = Computer(function, depends=depends)
     return result
 
 

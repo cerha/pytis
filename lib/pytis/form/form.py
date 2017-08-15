@@ -1967,8 +1967,8 @@ class RecordForm(LookupForm):
             codebook = field.codebook()
             if codebook and not has_access(codebook) and field.computer() is None:
                 editable = field.editable()
-                if isinstance(editable, Computer):
-                    read_only = not editable.function()(self._row)
+                if isinstance(editable, collections.Callable):
+                    read_only = not editable(self._row)
                 else:
                     read_only = (editable == Editable.NEVER)
                 if read_only:
