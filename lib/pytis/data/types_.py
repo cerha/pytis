@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -3397,7 +3397,7 @@ def sval(value, maxlen=None):
     return Value(String(maxlen=maxlen), value)
 
 def ival(value):
-    """Return 'Value' instance of type 'Integer' with given value.
+    """Return 'Value' instance of type 'Value' with given value.
 
     Arguments:
 
@@ -3412,7 +3412,7 @@ def fval(value, digits=None, precision=None):
 
     Arguments:
 
-      value -- internal value of the 'Float' instance, float
+      value -- internal value of the 'Value' instance, float
       digits -- maximum number of digits to pass to 'Float' constructor
       precision -- number of digits after decimal point to pass to 'Float'
         constructor
@@ -3439,7 +3439,7 @@ def dval(value):
 
     Arguments:
 
-      value -- internal value of the 'Date' instance, datetime.date
+      value -- internal value of the 'Value' instance, datetime.date
 
     """
     assert value is None or isinstance(value, datetime.date), value
@@ -3450,7 +3450,7 @@ def dtval(value, without_timezone=False):
 
     Arguments:
 
-      value -- internal value of the 'DateTime' instance, datetime.datetime
+      value -- internal value of the 'Value' instance, datetime.datetime
       without_timezone -- corresponding constructor argument of 'DateTime'
 
     """
