@@ -3166,8 +3166,8 @@ class QueryFieldsForm(_VirtualEditForm):
     def _full_init(self, parent, resolver, name, query_fields, callback, **kwargs):
         self._query_fields_apply_callback = callback
         self._autoapply = autoapply = query_fields.autoapply()
-        self._query_fields_applied = False
-        self._unapplied_query_field_changes = False
+        self._unapplied_query_field_changes = True
+        self._unapplied_query_field_changes_after_restore = False
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
         layout = kwargs.pop('layout')
@@ -3209,10 +3209,10 @@ class QueryFieldsForm(_VirtualEditForm):
         if super(QueryFieldsForm, self)._on_idle(event):
             return True
         if not self._autoapply:
-            enabled = not self._query_fields_applied and all(f.valid() for f in self._fields)
+            enabled = self._unapplied_query_field_changes and all(f.valid() for f in self._fields)
             self._query_fields_apply_button.Enable(enabled)
-        if self._unapplied_query_field_changes:
-            self._unapplied_query_field_changes = False
+        if self._unapplied_query_field_changes_after_restore:
+            self._unapplied_query_field_changes_after_restore = False
             if run_dialog(pytis.form.Question,
                           _("Query fields contain unapplied changes. Apply now?"), True):
                 self._apply_query_fields(self._row)
@@ -3220,22 +3220,26 @@ class QueryFieldsForm(_VirtualEditForm):
 
     def _on_query_fields_changed(self):
         # Due to the CALL_CHANGE definition, this callback is called only after
-        # all fields become valid (not during editation as long as there are
-        # invalid fields).  Thus we additionaly need to check field validity in
-        # _on_idle() to disable the Apply button before fields become valid.
+        # all fields become at least non-strictly valid (they can be converted
+        # to an internal value of their type).  They may, however still not be
+        # strictly valid, so further constraints (such as not_null or codebook)
+        # may not be fulfiled.
+        # Thus we can not immediately enable the Apply button here.  We do it
+        # in _on_idle if the flag is set here and all fields are valid.
         if self._autoapply:
-            self._apply_query_fields(self._row)
+            self._apply_query_fields(self._row, interactive=False)
         else:
-            self._query_fields_applied = False
+            self._unapplied_query_field_changes = True
 
-    def _apply_query_fields(self, row):
-        if self._do_check_record(row):
+    def _apply_query_fields(self, row, interactive=True):
+        if ((all(f.validate(interactive=interactive) for f in self._fields) and
+             self._do_check_record(row))):
             self._query_fields_apply_callback(row)
-            self._query_fields_applied = True
+            self._unapplied_query_field_changes = False
 
     def restore(self):
-        if not self._autoapply and not self._query_fields_applied:
-            self._unapplied_query_field_changes = True
+        if not self._autoapply and self._unapplied_query_field_changes:
+            self._unapplied_query_field_changes_after_restore = True
         return super(QueryFieldsForm, self).restore()
 
     def run(self):
