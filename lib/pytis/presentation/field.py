@@ -84,16 +84,39 @@ class PresentedRow(object):
         """Exception raised on column protection violations."""
 
     class _Column:
-        def __init__(self, f, type, data, resolver):
-            self.id = f.id()
-            self.type = type
-            self.computer = f.computer()
-            self.line_separator = f.line_separator()
-            self.formatter = f.formatter()
-            self.default = f.default()
-            self.editable = f.editable()
-            self.visible = f.visible()
-            self.codebook = codebook = f.codebook()
+        def __init__(self, fspec, data, resolver):
+            self.id = fspec.id()
+            self.data_column = data.find_column(self.id)
+            computer = fspec.computer()
+            if computer and isinstance(computer, CbComputer):
+                self.cb_computer_field = computer.field()
+            else:
+                self.cb_computer_field = None
+            if self.data_column:
+                # Actually, the type taken from the data object always takes precedence, since it
+                # should already respect type and its arguments from field specification -- they are
+                # passed to column binding constructors when the data object is created.
+                ctype = self.data_column.type()
+            else:
+                ctype = fspec.type()
+                if not ctype and self.cb_computer_field:
+                    # If a virtual field is a CbComputer, we can take the data type from
+                    # the related column enumerator's data object.
+                    cb_column = data.find_column(self.cb_computer_field)
+                    ctype = cb_column.type().enumerator().type(computer.column())
+                    assert ctype is not None, \
+                        "Invalid enumerator column '%s' in CbComputer for '%s'." % \
+                        (computer.column(), self.id)
+                elif not ctype:
+                    # String is the default type of virtual columns.
+                    ctype = pytis.data.String(**fspec.type_kwargs())
+                elif type(ctype) == type(pytis.data.Type):
+                    ctype = ctype(**fspec.type_kwargs())
+            self.type = ctype
+            self.line_separator = fspec.line_separator()
+            self.formatter = fspec.formatter()
+            self.default = fspec.default()
+            self.codebook = codebook = fspec.codebook()
             if codebook:
                 try:
                     cbspec = resolver.get(codebook, 'cb_spec')
@@ -102,28 +125,52 @@ class PresentedRow(object):
             else:
                 cbspec = None
             self.cbspec = cbspec
-            self.display = f.display() or cbspec and cbspec.display()
-            self.null_display = f.null_display()
-            self.inline_display = f.inline_display()
-            prefer_display = f.prefer_display()
+            self.display = fspec.display() or cbspec and cbspec.display()
+            self.null_display = fspec.null_display()
+            self.inline_display = fspec.inline_display()
+            prefer_display = fspec.prefer_display()
             if prefer_display is None:
                 if cbspec is not None:
                     prefer_display = cbspec.prefer_display()
                 else:
                     prefer_display = False
             self.prefer_display = prefer_display
-            self.completer = f.completer
-            self.runtime_filter = f.runtime_filter()
-            self.runtime_arguments = f.runtime_arguments()
-            self.check = f.check()
-            self.data_column = data.find_column(self.id)
-            self.virtual = f.virtual()
+            self.completer = fspec.completer
+            self.virtual = fspec.virtual()
             self.secret_computer = False  # Set dynamically during initialization.
-            self.attachment_storage = f.attachment_storage()
-            self.filename = f.filename()
-            self.is_range = isinstance(type, pytis.data.Range)
+            self.attachment_storage = fspec.attachment_storage()
+            self.filename = fspec.filename()
+            self.is_range = isinstance(ctype, pytis.data.Range)
+
+            def cval(computer, callback):
+                if computer is None:
+                    return None
+                else:
+                    if not isinstance(computer, Computer):
+                        value = computer
+                        computer = Computer(lambda r: value, depends=())
+                return PresentedRow._ComputedValue(self, computer, callback)
+
+            self.computer = cval(computer, PresentedRow.CALL_CHANGE)
+            self.editable = cval(fspec.editable(), PresentedRow.CALL_EDITABILITY_CHANGE)
+            self.visible = cval(fspec.visible(), PresentedRow.CALL_VISIBILITY_CHANGE)
+            self.check = cval(fspec.check(), PresentedRow.CALL_CHECK)
+            self.runtime_filter = cval(fspec.runtime_filter(), PresentedRow.CALL_ENUMERATION_CHANGE)
+            self.runtime_arguments = cval(fspec.runtime_arguments(), PresentedRow.CALL_ENUMERATION_CHANGE)
+            self.dependent = [] # Will be initialized later by PresentedRow.__init__().
+
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
+
+    class _ComputedValue():
+
+        def __init__(self, column, computer, callback):
+            self.column = column
+            self.callback = callback
+            self.compute = computer
+            self.depends = computer.depends()
+            self.dirty = True
+            self.value = None
 
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
@@ -165,6 +212,21 @@ class PresentedRow(object):
         created instance.
 
         """
+        def all_deps(cval):
+            if cval:
+                deps = list(cval.depends)
+                for key in cval.depends:
+                    deps.extend(all_deps(self._coldict[key].computer))
+                return remove_duplicates(deps)
+            else:
+                return []
+
+        def add_secret(column):
+            for cval in column.dependent:
+                if not cval.column.secret_computer:
+                    column.secret_computer = True
+                    add_secret(cval.column)
+
         assert isinstance(fields, (tuple, list))
         assert row is None or isinstance(row, (PresentedRow, pytis.data.Row))
         assert prefill is None or isinstance(prefill, dict)
@@ -182,12 +244,22 @@ class PresentedRow(object):
         self._validated_fields = []
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = tuple([self._Column(f, self._type(f), data, self._resolver)
-                                         for f in fields])
-        self._coldict = dict([(c.id, c) for c in columns])
         self._completer_cache = {}
         self._protected = False
-        self._init_dependencies()
+        self._columns = columns = tuple([self._Column(f, data, self._resolver) for f in fields])
+        self._coldict = coldict = dict([(c.id, c) for c in columns])
+        for column in columns:
+            # Remember which computed values depend on each field (this the opposite
+            # direction than what is defined in specifications).  column.dependent
+            # will include a list of all _ComputedValue instances which depend on
+            # given column's value.
+            for cval in (column.computer, column.editable, column.visible, column.check,
+                         column.runtime_filter, column.runtime_arguments):
+                for cid in all_deps(cval):
+                    coldict[cid].dependent.append(cval)
+        for column in columns:
+            if not self.permitted(column.id, pytis.data.Permission.VIEW):
+                add_secret(column)
         self._set_row(row, reset=True, prefill=prefill)
 
     def _secret_column(self, column):
@@ -196,89 +268,52 @@ class PresentedRow(object):
         else:
             return not self.permitted(column.id, pytis.data.Permission.VIEW)
 
-    def _type(self, fspec):
-        """Return the final 'pytis.data.Type' instance for given field specification."""
-        column = self._data.find_column(fspec.id())
-        if column:
-            # Actually, the type taken from the data object always takes precedence, since it
-            # should already respect type and its arguments from field specification -- they are
-            # passed to column binding constructors when the data object is created.
-            type_ = column.type()
-        else:
-            type_ = fspec.type()
-            computer = fspec.computer()
-            if not type_ and isinstance(computer, CbComputer):
-                # If a virtual field as a CbComputer, we can take the data type from the related
-                # columnin the enumerator's data object.
-                cb_column = self._data.find_column(computer.field())
-                type_ = cb_column.type().enumerator().type(computer.column())
-                assert type_ is not None, \
-                    "Invalid enumerator column '%s' in CbComputer for '%s'." % \
-                    (computer.column(), fspec.id())
-            else:
-                kwargs = fspec.type_kwargs()
-                if not type_:
-                    # String is the default type of virtual columns.
-                    type_ = pytis.data.String(**kwargs)
-                elif type(type_) == type(pytis.data.Type):
-                    type_ = type_(**kwargs)
-        return type_
-
     def _set_row(self, row, reset=False, prefill=None):
-        if prefill:
-            def value(v):
-                if isinstance(v, pytis.data.Value):
-                    return v
+        self._virtual = {}
+        row_data = []
+        computed_values = []
+        for column in self._columns:
+            key = column.id
+            dirty = False
+            if prefill and key in prefill:
+                val = prefill.pop(key)
+                if isinstance(val, pytis.data.Value):
+                    value = val.retype(column.type)
                 else:
-                    return pytis.data.Value(pytis.data.Type(), v)
-            prefill = dict([(k, value(v).retype(self._coldict[k].type))
-                            for k, v in prefill.items()])
-        self._cache = {}
-
-        def genval(key, virtual):
-            if row is None or key not in row:
-                if prefill and key in prefill:
-                    value = prefill[key]
-                elif key in self._coldict:
-                    col = self._coldict[key]
-                    default = col.default
-                    if self._new and default is not None:
-                        if isinstance(default, collections.Callable):
-                            try:
-                                default = default(transaction=self._transaction)
-                            except TypeError:
-                                default = default()
-                        value = pytis.data.Value(col.type, default)
-                    else:
-                        value = col.type.default_value()
-                else:
-                    value = self._data.find_column(key).type().default_value()
-            elif prefill and key in prefill:
-                value = prefill[key]
+                    value = pytis.data.Value(column.type, val)
+            elif row and key in row:
+                value = row[key].retype(column.type)
+            elif self._new and column.default is not None:
+                default = column.default
+                if isinstance(default, collections.Callable):
+                    try:
+                        default = default(transaction=self._transaction)
+                    except TypeError:
+                        default = default()
+                value = pytis.data.Value(column.type, default)
             else:
-                if key in self._coldict:
-                    value = row[key].retype(self._coldict[key].type)
-                else:
-                    value = row[key]
-            return value
-        row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
+                value = column.type.default_value()
+                # It would seem logical to set dirty = True here, but historically,
+                # the bahavior was this.  The computer is not trigered when new is
+                # False and row is None.  But this is quite an uncommon combination
+                # so we may not need to keep this behavior?
+                dirty = self._new or row is not None
+            if column.virtual:
+                self._virtual[key] = value
+            else:
+                row_data.append((key, value))
+            if column.computer:
+                column.computer.dirty = dirty
+            computed_values += filter(bool, (column.editable, column.visible, column.check,
+                                             column.runtime_filter, column.runtime_arguments))
+        if prefill:
+            raise KeyError(prefill.keys()[0])
         if row:
-            # Add any extra row columns - they may include inline_display values.
+            # Preserve any extra row columns - they may include inline_display values.
             keys = [x[0] for x in row_data]
             row_data.extend([(key, row[key]) for key in row.keys() if key not in keys])
-        virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
-        for key in self._dirty.keys():
-            self._dirty[key] = not (not self._new and row is None or
-                                    # If the value is contained in the data row, don't compute it.
-                                    row is not None and key in row or
-                                    # If the value is contained in the prefill, don't compute it.
-                                    prefill is not None and key in prefill or
-                                    # If the row is new and the field has a
-                                    # default value, use the default value
-                                    # rather than the computer.
-                                    self._new and self._coldict[key].default is not None)
         self._row = pytis.data.Row(row_data)
-        self._virtual = dict(virtual)
+        self._cache = {}
         self._invalid = {}
         self._validated_fields = []
         if reset:
@@ -288,113 +323,40 @@ class PresentedRow(object):
                 # original row as well, so we must create one before.
                 self._initialized_original_row = copy.copy(self._row)
             self._initialized_original_row = self.row()
-        self._resolve_dependencies()
+        self._resolve_dependencies(computed_values)
         self._run_callback(self.CALL_CHANGE, None)
 
-    def _all_deps(self, computer):
-        all = []
-        for key in computer.depends():
-            all.append(key)
-            computer = self._coldict[key].computer
-            if computer:
-                all.extend(self._all_deps(computer))
-        return all
-
-    def _init_dependencies(self):
-        # Pro každé políčko si zapamatuji seznam počítaných políček, která na
-        # něm závisí (obrácené mapování než ve specifikacích).
-        self._dependent = {}
-        self._editability_dependent = {}
-        self._visibility_dependent = {}
-        self._check_dependent = {}
-        self._runtime_filter_dependent = {}
-        self._runtime_arguments_dependent = {}
-        # Pro všechna počítaná políčka si pamatuji, zda potřebují přepočítat,
-        # či nikoliv (po přepočítání je políčko čisté, po změně políčka na
-        # kterém závisí jiná políčka nastavím závislým políčkům příznak
-        # dirty).  Přepočítávání potom mohu provádět až při skutečném požadavku
-        # na získání hodnoty políčka.
-        self._dirty = {}
-        self._editability_dirty = {}
-        self._editable = {}
-        self._visibility_dirty = {}
-        self._visible = {}
-        self._check_dirty = {}
-        self._check_result = {}
-        self._runtime_filter_dirty = {}
-        self._runtime_filter = {}
-        self._runtime_arguments_dirty = {}
-        self._runtime_arguments = {}
-
-        def make_deps(column, value_dict, dirty_dict, dependency_dict, computer):
-            key = column.id
-            if value_dict is not None:
-                value_dict[key] = None
-            dirty_dict[key] = True
-            for dep in self._all_deps(computer):
-                if dep in dependency_dict:
-                    dependency_dict[dep].append(key)
-                else:
-                    dependency_dict[dep] = [key]
-        for c in self._columns:
-            if c.computer is not None:
-                make_deps(c, None, self._dirty, self._dependent, c.computer)
-            if isinstance(c.editable, Computer):
-                make_deps(c, self._editable, self._editability_dirty, self._editability_dependent,
-                          c.editable)
-            if isinstance(c.visible, Computer):
-                make_deps(c, self._visible, self._visibility_dirty, self._visibility_dependent,
-                          c.visible)
-            if c.check is not None:
-                make_deps(c, self._check_result, self._check_dirty,
-                          self._check_dependent, c.check)
-            if c.runtime_filter is not None:
-                make_deps(c, self._runtime_filter, self._runtime_filter_dirty,
-                          self._runtime_filter_dependent, c.runtime_filter)
-            if c.runtime_arguments is not None:
-                make_deps(c, self._runtime_arguments, self._runtime_arguments_dirty,
-                          self._runtime_arguments_dependent, c.runtime_arguments)
-
-        def add_secret(column):
-            for key in self._dependent.get(column.id, []):
-                column = self._coldict[key]
-                if not column.secret_computer:
-                    column.secret_computer = True
-                    add_secret(column)
-        for column in self._columns:
-            if not self.permitted(column.id, pytis.data.Permission.VIEW):
-                add_secret(column)
-
     def __getitem__(self, key, lazy=False):
-        """Vrať hodnotu políčka 'key' jako instanci třídy 'pytis.data.Value'.
+        """Return the value of given field  as a 'pytis.data.Value' instance.
 
-        'key' je id políčka (řetězec) identifikující existující políčko, jinak
-        je chování metody nedefinováno.
+        'key' key is a string identifier of a one of the fields present in the
+        row.  If not present, 'KeyError' is raised.
 
         """
         column = self._coldict[key]
         if self._protected and self._secret_column(column):
             raise self.ProtectionError(key)
         if key in self._row:
-            value = self._row[key]
+            row = self._row
         else:
-            value = self._virtual[key]
-        if not lazy and self._dirty.get(key):
-            # Reset the dirty flag before calling the computer to allow the computer to retrieve
-            # the original value without recursion.
-            self._dirty[key] = False
-            new_value = pytis.data.Value(column.type, column.computer(self))
-            if new_value.value() != value.value():
-                value = new_value
-                if key in self._row:
-                    self._row[key] = value
-                else:
-                    self._virtual[key] = value
+            row = self._virtual
+        value = row[key]
+        computer = column.computer
+        if not lazy and computer and computer.dirty:
+            new_value = self._computed_value(computer)
+            if new_value != value.value():
+                value = row[key] = pytis.data.Value(column.type, new_value)
                 # TODO: This invokes the callback again when called within a callback handler.
                 self._run_callback(self.CALL_CHANGE, key)
         return value
 
     def __setitem__(self, key, value, run_callback=True):
+        """Set given field's value to given 'pytis.data.Value' instance.
+
+        'key' key is a string identifier of a one of the fields present in the
+        row.  If not present, 'KeyError' is raised.
+
+        """
         assert isinstance(value, pytis.data.Value)
         column = self._coldict[key]
         assert value.type() == column.type, \
@@ -410,9 +372,9 @@ class PresentedRow(object):
         if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
-            if self._dirty.get(key):
-                self._dirty[key] = False
-            self._resolve_dependencies(key)
+            if column.computer:
+                column.computer.dirty = False
+            self._resolve_dependencies(column.dependent)
             if run_callback:
                 self._run_callback(self.CALL_CHANGE, key)
 
@@ -441,105 +403,49 @@ class PresentedRow(object):
             if callback:
                 callback()
 
-    def _resolve_dependencies(self, key=None):
-        changed_enumerations = []
-        if key is None:
-            # Recompute all computed fields when key is None.
-            for k in self._runtime_filter_dirty:
-                self._runtime_filter_dirty[k] = True
-                changed_enumerations.append(k)
-            for k in self._runtime_arguments_dirty:
-                self._runtime_arguments_dirty[k] = True
-                changed_enumerations.append(k)
+    def _computed_value(self, cval):
+        if cval:
+            if cval.dirty:
+                # Reset the dirty flag before calling the computer function to allow
+                # the computer function to retrieve the original value without recursion.
+                cval.dirty = False
+                cval.value = cval.compute(self)
+            return cval.value
         else:
-            # Recompute just fields depending on given field (after its change).
-            for k in self._dependent.get(key, ()):
-                self._dirty[k] = True
-            for k in self._runtime_filter_dependent.get(key, ()):
-                self._runtime_filter_dirty[k] = True
-                changed_enumerations.append(k)
-            for k in self._runtime_arguments_dependent.get(key, ()):
-                self._runtime_arguments_dirty[k] = True
-                changed_enumerations.append(k)
-        # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
-        self._recompute_editability(key)
-        self._recompute_visibility(key)
-        self._recompute_check(key)
-        for k in remove_duplicates(changed_enumerations):
-            self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
-        if self._callbacks and key is not None and key in self._dependent:
-            # Call 'chage_callback' for all remaining dirty fields.  Some fields may already have
-            # been recomputed during the editability and runtime filter recomputations.  The
-            # callbacks for those fields have already been generated, but here we neen to handle
-            # the rest.
-            for k, dirty in self._dirty.items():
-                if dirty:
-                    self._run_callback(self.CALL_CHANGE, k)
+            return None
 
-    def _recompute_editability(self, key=None):
-        if key is None:
-            keys = self._editable.keys()
-        elif key in self._editability_dependent:
-            keys = self._editability_dependent[key]
-        else:
-            return
-        if self._callbacks:
-            for k in keys:
-                old = self._editable[k]
-                new = self._compute_editability(k)
-                if old != new:
-                    self._run_callback(self.CALL_EDITABILITY_CHANGE, k)
-        else:
-            for k in keys:
-                self._editability_dirty[k] = True
-
-    def _compute_editability(self, key):
-        # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
-        column = self._coldict[key]
-        self._editable[key] = result = bool(column.editable(self))
-        self._editability_dirty[key] = False
-        return result
-
-    def _recompute_visibility(self, key=None):
-        if key is None:
-            keys = self._visible.keys()
-        elif key in self._visibility_dependent:
-            keys = self._visibility_dependent[key]
-        else:
-            return
-        if self._callbacks:
-            for k in keys:
-                old = self._visible[k]
-                new = self._compute_visibility(k)
-                if old != new:
-                    self._run_callback(self.CALL_VISIBILITY_CHANGE, k)
-        else:
-            for k in keys:
-                self._visibility_dirty[k] = True
-
-    def _compute_visibility(self, key):
-        # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
-        column = self._coldict[key]
-        self._visible[key] = result = column.visible(self)
-        self._visibility_dirty[key] = False
-        return result
-
-    def _recompute_check(self, key=None):
-        if key is None:
-            keys = self._check_result.keys()
-        elif key in self._check_dependent:
-            keys = self._check_dependent[key]
-        else:
-            return
-        for k in keys:
-            self._check_dirty[k] = True
-            self._run_callback(self.CALL_CHECK, k)
-
-    def _compute_check(self, key):
-        column = self._coldict[key]
-        self._check_result[key] = result = column.check(self)
-        self._check_dirty[key] = False
-        return result
+    def _resolve_dependencies(self, computed_values):
+        # Handle recomputations for given list of _ComputedValue instances.
+        for cval in computed_values:
+            # First mark all depending values as dirty and only then start invoking callbacks.
+            cval.dirty = True
+        changed_values = []
+        already_called = []
+        for cval in computed_values:
+            callback = cval.callback
+            if callback in self._callbacks:
+                key = cval.column.id
+                if callback == self.CALL_CHANGE:
+                    # Defer value change callbacks till the end (see below).
+                    changed_values.append(cval)
+                elif callback in (self.CALL_EDITABILITY_CHANGE, self.CALL_VISIBILITY_CHANGE):
+                    # Recompute these immediately and only call callbacks if the value has changed.
+                    old = cval.value
+                    new = self._computed_value(cval)
+                    if old != new:
+                        self._run_callback(callback, key)
+                else:
+                    # Check duplicates: runtime_filter and runtime_arguments share the same callback.
+                    if (callback, key) not in already_called:
+                        already_called.append((callback, key))
+                        self._run_callback(callback, key)
+        # Finally call value chage callback for all remaining dirty fields.  Some fields
+        # may already have been recomputed during the editability and runtime filter
+        # recomputations triggered above.  The callbacks for those fields have already
+        # been called.  Here we need to handle the remaining fields.
+        for cval in changed_values:
+            if cval.dirty:
+                self._run_callback(self.CALL_CHANGE, cval.column.id)
 
     def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
@@ -794,50 +700,20 @@ class PresentedRow(object):
                 key in self._invalid and self._invalid[key][0] != orig_row[key].export())
 
     def editable(self, key):
-        """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
-
-        Význam argumentu 'key' je stejný jako v metodě '__getitem__'.
-
-        """
+        """Return True if given field is currently editable."""
         if not self.permitted(key, permission=True):
             return False
         if self.hidden_codebook(key):
             return False
-        if key in self._editable:
-            if self._editability_dirty[key]:
-                result = self._compute_editability(key)
-            else:
-                result = self._editable[key]
-        else:
-            editable = self._coldict[key].editable
-            result = (editable == Editable.ALWAYS or editable == Editable.ONCE and self._new)
-        return result
+        return self._computed_value(self._coldict[key].editable)
 
     def visible(self, key):
-        """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
-
-        Význam argumentu 'key' je stejný jako v metodě '__getitem__'.
-
-        """
-        if key in self._visible:
-            if self._visibility_dirty[key]:
-                result = self._compute_visibility(key)
-            else:
-                result = self._visible[key]
-        else:
-            result = self._coldict[key].visible
-        return result
+        """Return True if given field is currently visible."""
+        return self._computed_value(self._coldict[key].visible)
 
     def check(self, key):
         """Return the result of 'check' for field identified by 'key'."""
-        if key in self._check_result:
-            if self._check_dirty[key]:
-                result = self._compute_check(key)
-            else:
-                result = self._check_result[key]
-        else:
-            result = None
-        return result
+        return self._computed_value(self._coldict[key].check)
 
     def type(self, key):
         """Return the data type of field identified by 'key'."""
@@ -932,9 +808,8 @@ class PresentedRow(object):
         return key in self._validated_fields
 
     def register_callback(self, kind, key, function):
-        assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or isinstance(function, collections.Callable), \
-            ('Invalid callback function', function)
+        assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
+        assert function is None or isinstance(function, collections.Callable), function
         try:
             callbacks = self._callbacks[kind]
         except KeyError:
@@ -1102,11 +977,8 @@ class PresentedRow(object):
             else:
                 return export(value)
         display = self._display(column)
-        if not display:
-            computer = column.computer
-            if computer and isinstance(computer, CbComputer):
-                column = self._coldict[computer.field()]
-                display = self._display(column)
+        if not display and column.cb_computer_field:
+            display = self._display(self._coldict[column.cb_computer_field])
         value = self[column.id].value()
         if value is None:
             return column.null_display or ''
@@ -1177,23 +1049,6 @@ class PresentedRow(object):
             return [(v, display(v)) for v in enumerator.values(**kwargs)
                     if runtime_filter is None or runtime_filter(v)]
 
-    def _runtime_limit(self, key, dirty_dict, value_dict, column_attribute):
-        try:
-            dirty = dirty_dict[key]
-        except KeyError:
-            return None
-        if dirty:
-            column = self._coldict[key]
-            computer = getattr(column, column_attribute)
-            if computer is None:
-                result = value_dict[key] = None
-            else:
-                result = value_dict[key] = computer(self)
-            dirty_dict[key] = False
-        else:
-            result = value_dict[key]
-        return result
-
     def runtime_filter(self, key):
         """Return the current run-time filter for an enumerator of field KEY.
 
@@ -1202,8 +1057,7 @@ class PresentedRow(object):
         filtered.
 
         """
-        return self._runtime_limit(key, self._runtime_filter_dirty, self._runtime_filter,
-                                   'runtime_filter')
+        return self._computed_value(self._coldict[key].runtime_filter)
 
     def runtime_arguments(self, key):
         """Return the current run-time arguments for a table function based codebook of field KEY.
@@ -1212,8 +1066,7 @@ class PresentedRow(object):
         field has no table function based codebook.
 
         """
-        return self._runtime_limit(key, self._runtime_arguments_dirty, self._runtime_arguments,
-                                   'runtime_arguments')
+        return self._computed_value(self._coldict[key].runtime_arguments)
 
     def has_completer(self, key, static=False):
         """Return true if given field has a completer.
@@ -1289,19 +1142,13 @@ class PresentedRow(object):
           key -- field identifier as a string
           keys -- sequence of field identifiers as strings
 
-        Dependencies are established through 'computer', 'editability',
+        Dependencies are established through 'computer', 'visible', 'editabile', 'check',
         'runtime_filter' and 'runtime_arguments' specifications of 'Field'.
 
         """
-        for deps in (self._dependent,
-                     self._editability_dependent,
-                     self._visibility_dependent,
-                     self._runtime_filter_dependent,
-                     self._runtime_arguments_dependent):
-            if key in deps:
-                for k in deps[key]:
-                    if k in keys:
-                        return True
+        for cval in self._coldict[key].dependent:
+            if cval.column.id in keys:
+                return True
         return False
 
     def protected(self):

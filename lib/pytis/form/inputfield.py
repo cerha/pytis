@@ -2049,7 +2049,7 @@ class ImageField(FileField):
         return (x + 4, x + 2)
 
     def _create_invocation_button(self, parent):
-        if self._spec.editable() == Editable.NEVER:
+        if self._spec.editable() is False:
             # Hide the button only when the field is statically
             # ineditable (may not become dynamically editable).
             # The button looks odd when image field is used as

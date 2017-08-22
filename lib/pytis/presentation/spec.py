@@ -3037,17 +3037,17 @@ class Field(object):
             will be left out during these recomputations and will keep their
             prevoius widths.
           editable -- one of 'Editable' constants or a 'Computer' instance.
-           The constants determine field editability statically, the computer
-            may be used to compute editability dynamically based on the values
-            of other fields of a record and return true iff the field is
-            editable (see also notes about computer specifications below).  The
-            default value is 'Editable.ALWAYS'.
+            The constants determine field editability statically, the computer
+            may be used to compute editability dynamically (returning a boolean
+            result) based on the values of other fields of a record and return
+            true iff the field is editable (see also notes about computer
+            specifications below).  The default value is 'Editable.ALWAYS'.
           visible -- boolean value or a 'Computer' instance returning the
-            visibility (boolean result) dynamically.  Returning false will
-            exclude the field from all kinds of forms (table columns or or form
-            layout).  Note that for table columns the visibility is not
-            computed separately for each row.  The computer function is called
-            just once with an initialized PresentedRow instance without
+            visibility dynamically (returning a boolean result).  Returning
+            false will exclude the field from all kinds of forms (table columns
+            or or form layout).  Note that for table columns the visibility is
+            not computed separately for each row.  The computer function is
+            called just once with an initialized PresentedRow instance without
             particular row values.  Currently only implemented in web forms.
           compact -- true value results in the field label being displayed
             above the field, not on the left which is the default.  This way
@@ -3373,10 +3373,8 @@ class Field(object):
         assert isinstance(virtual, bool), virtual
         assert isinstance(disable_column, bool), disable_column
         assert isinstance(fixed, bool), fixed
-        if editable is None:
-            # For backwards compatibility - some specifications use it...
-            editable = Editable.ALWAYS
-        assert isinstance(editable, Computer) or editable in public_attributes(Editable), editable
+        assert editable is None or isinstance(editable, Computer) \
+            or editable in public_attributes(Editable), editable
         assert isinstance(compact, bool), compact
         assert isinstance(nocopy, bool), nocopy
         assert computer is None or isinstance(computer, Computer), computer
@@ -3510,10 +3508,17 @@ class Field(object):
         self._default = default
         self._computer = computer
         self._height = height
-        if isinstance(editable, Computer):
-            # For backwards compatibility
+        if editable == Editable.ALWAYS or editable is None:
+            # None is for backwards compatibility - some specifications still use it...
+            editable = True
+        elif editable == Editable.NEVER:
+            editable = False
+        elif editable == Editable.ONCE:
+            editable = Computer(lambda r: r.new(), depends=())
+        else:
             e_func = editable.function()
             if len(argument_names(e_func)) == 2:
+                # Backwards compatibility: the editable function used to accept two arguments.
                 editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
         self._editable = editable
         assert isinstance(visible, (bool, Computer))

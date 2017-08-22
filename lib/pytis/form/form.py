@@ -1968,10 +1968,8 @@ class RecordForm(LookupForm):
             if codebook and not has_access(codebook) and field.computer() is None:
                 editable = field.editable()
                 if isinstance(editable, collections.Callable):
-                    read_only = not editable(self._row)
-                else:
-                    read_only = (editable == Editable.NEVER)
-                if read_only:
+                    editable = editable(self._row)
+                if not editable:
                     continue
                 if self._row[fid].type().not_null():
                     msg = (_(u"This form contains the mandatory field %s,\n"

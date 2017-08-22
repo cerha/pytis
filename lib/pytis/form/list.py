@@ -406,8 +406,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 alignment = wx.ALIGN_LEFT
             attr.SetAlignment(alignment, wx.CENTER)
             # editor
-            if ((c.editable() in (Editable.ALWAYS, Editable.ONCE) or
-                 isinstance(c.editable(), Computer))):
+            if c.editable() is not False:
                 editing = self._table.editing()
                 if editing:
                     e = _grid.InputFieldCellEditor(self._parent, editing.the_row, c.id(),
