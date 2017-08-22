@@ -420,7 +420,7 @@ class PresentedRow(object):
             # First mark all depending values as dirty and only then start invoking callbacks.
             cval.dirty = True
         changed_values = []
-        already_called = []
+        changed_enumerations = []
         for cval in computed_values:
             callback = cval.callback
             if callback in self._callbacks:
@@ -428,21 +428,17 @@ class PresentedRow(object):
                 if callback == self.CALL_CHANGE:
                     # Defer value change callbacks till the end (see below).
                     changed_values.append(cval)
-                elif callback in (self.CALL_EDITABILITY_CHANGE, self.CALL_VISIBILITY_CHANGE):
-                    # Recompute these immediately and only call callbacks if the value has changed.
-                    old = cval.value
-                    new = self._computed_value(cval)
-                    if old != new:
-                        self._run_callback(callback, key)
                 else:
-                    # Check duplicates: runtime_filter and runtime_arguments share the same callback.
-                    if (callback, key) not in already_called:
-                        already_called.append((callback, key))
-                        self._run_callback(callback, key)
-        # Finally call value chage callback for all remaining dirty fields.  Some fields
-        # may already have been recomputed during the editability and runtime filter
-        # recomputations triggered above.  The callbacks for those fields have already
-        # been called.  Here we need to handle the remaining fields.
+                    if callback == self.CALL_ENUMERATION_CHANGE:
+                        # Avoid calling twice (shared by runtime_filter and runtime_arguments).
+                        if key in changed_enumerations:
+                            continue
+                        changed_enumerations.append(key)
+                    self._run_callback(callback, key)
+        # Finally call value change callback for all remaining dirty fields.
+        # Some fields may already have been recomputed during the recomputations
+        # triggered by the callbacks above.  Here we need to handle only the
+        # remaining fields.
         for cval in changed_values:
             if cval.dirty:
                 self._run_callback(self.CALL_CHANGE, cval.column.id)

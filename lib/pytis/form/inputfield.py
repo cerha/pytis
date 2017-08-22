@@ -603,10 +603,12 @@ class InputField(object, KeyHandler, CommandHandler):
     def _editability_change_callback(self):
         # Field editability change signalization from PresentedRow.
         if not self._denied and not self._readonly:
-            self._enabled = enabled = self._row.editable(self.id())
-            self._set_editable(enabled)
-            # The change won't take effect for certain fields if we do it directly!
-            self._call_on_idle.append(self._update_background_color)
+            enabled = self._row.editable(self.id())
+            if enabled != self._enabled:
+                self._enabled = enabled
+                self._set_editable(enabled)
+                # The change won't take effect for certain fields if we do it directly!
+                self._call_on_idle.append(self._update_background_color)
 
     def _check_callback(self):
         self._needs_check = True
