@@ -39,10 +39,10 @@ class PresentedRow(unittest.TestCase):
             pd.ColumnSpec('d', pd.Integer()),
             pd.ColumnSpec('r', pd.IntegerRange()))
         self._data = pd.Data(self._columns, self._columns[0])
-        @pp.computer(fallback=None)
+        @pp.computer
         def twice(row, c):
             return c * 2
-        @pp.computer(fallback=0)
+        @pp.computer
         def total(row, b, c):
             return b + c
         @pp.computer
@@ -85,7 +85,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_init(self):
         row = self._row(new=True)
-        self._check_values(row, a=None, b=None, c=5, d=10, e=88, total=0, r=None)
+        self._check_values(row, a=None, b=None, c=5, d=10, e=88, total=None, r=None)
         row = self._row()
         self._check_values(row, a=None, b=None, c=None, d=None, total=None)
         data_row = self._data_row(a=4, b=100, c=77, d=18, r=(1, 8))
@@ -93,14 +93,6 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, e=88, total=177, r=(1, 8))
         row = self._row(row=data_row)
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
-        self._set(row, c=88)
-        self._set(row, r=(8, 9))
-        self._check_values(row, a=4, b=100, c=88, total=188)
-        self._set(row, b=None)
-        self._check_values(row, total=0, d=176)
-        self._set(row, c=None)
-        self._check_values(row, total=0, d=None)
-        # TODO: dodělat
 
     def test_prefill(self):
         row = self._row(new=True, a=1, b=3, d=77)
@@ -113,11 +105,20 @@ class PresentedRow(unittest.TestCase):
     def test_computer(self):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
-        self._check_values(row, total=8)
-        self.assertEqual(row.get('total', lazy=True).value(), 8)
         self._check_values(row, d=10, total=8, inc=9)
         self._set(row, c=100)
         self._check_values(row, d=200, total=103, inc=104)
+        self._set(row, a=4, b=100, c=88, r=(8, 9))
+        self.assertEqual(row.get('total', lazy=True).value(), 103)
+        self._check_values(row, a=4, b=100, c=88, total=188)
+        self._set(row, b=None)
+        self._check_values(row, total=188, d=176)
+        self._set(row, c=None)
+        self._check_values(row, total=188, d=176)
+        self._set(row, c=2)
+        self._check_values(row, total=188, d=4)
+        self._set(row, b=1)
+        self._check_values(row, total=3, d=4)
 
     def test_prefill_computer(self):
         row = self._row(new=True, b=2, c=2, total=88)
@@ -129,7 +130,7 @@ class PresentedRow(unittest.TestCase):
         self.assertIsNotNone(row.validate('b', '2.3'))
         self.assertIsNone(row.validate('c', '8'))
         self.assertIsNone(row.validate('d', '12'))
-        self._check_values(row, a=2, b=None, c=8, d=12, total=0)
+        self._check_values(row, a=2, b=None, c=8, d=12, total=None)
         self.assertIsNone(row.invalid_string('a'))
         self.assertEqual(row.invalid_string('b'), '2.3')
         self.assertIsNone(row.validate('b', '12'))
@@ -142,11 +143,11 @@ class PresentedRow(unittest.TestCase):
 
     def test_set_row(self):
         row = self._row(new=True)
-        self._check_values(row, a=None, b=None, c=5, total=0, inc=1)
+        self._check_values(row, a=None, b=None, c=5, total=None, inc=None)
         row.set_row(self._data_row(b=10, c=20))
         self._check_values(row, a=None, b=10, c=20, total=30, inc=31)
         row.set_row(None)
-        self._check_values(row, a=None, b=None, c=5, total=0, inc=1)
+        self._check_values(row, a=None, b=None, c=5, total=None, inc=None)
         row = self._row()
         self._check_values(row, a=None, b=None, c=None, total=None, inc=None)
         row.set_row(self._data_row(b=10, c=20))

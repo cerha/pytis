@@ -27,9 +27,9 @@ import collections
 import copy
 
 import pytis.data
-from pytis.util import ProgramError, Resolver, \
+from pytis.util import UNDEFINED, ProgramError, Resolver, \
     argument_names, positive_id, remove_duplicates, translations, format_byte_size
-from spec import CbComputer, CodebookSpec, Computer, Editable
+from spec import CbComputer, CodebookSpec, Computer
 from types_ import PrettyType
 
 _ = translations('pytis-data')
@@ -169,7 +169,7 @@ class PresentedRow(object):
         def __init__(self, column, computer, callback):
             self.column = column
             self.callback = callback
-            self.compute = computer
+            self.function = computer.function()
             self.depends = computer.depends()
             self.dirty = True
             self.value = None
@@ -294,8 +294,9 @@ class PresentedRow(object):
         value = row[key]
         computer = column.computer
         if not lazy and computer and computer.dirty:
-            new_value = self._computed_value(computer)
-            if new_value != value.value():
+            old_value = value.value()
+            new_value = self._computed_value(computer, default=old_value)
+            if new_value != old_value:
                 value = row[key] = pytis.data.Value(column.type, new_value)
         return value
 
@@ -406,16 +407,27 @@ class PresentedRow(object):
                     changed_enumerations.append(key)
                 self._run_callback(callback, key)
 
-    def _computed_value(self, cval):
-        if cval:
-            if cval.dirty:
-                # Reset the dirty flag before calling the computer function to allow
-                # the computer function to retrieve the original value without recursion.
-                cval.dirty = False
-                cval.value = cval.compute(self)
-            return cval.value
+    def _computed_value(self, cval, default=UNDEFINED):
+        def valid(key):
+            if self.validated(key):
+                error = self.validation_error(key)
+            else:
+                error = self.validate(key, self.format(key))
+            return error is None
+        if not cval:
+            result = None
+        elif cval.dirty and all(valid(key) for key in cval.depends):
+            # Only invoke the computer if all input fields are valid.
+            # Otherwise return the previous value.
+            cval.dirty = False
+            # Reset the dirty flag before calling the computer function to allow
+            # the computer function to retrieve the original value without recursion.
+            result = cval.value = cval.function(self)
+        elif default is not UNDEFINED:
+            result = default
         else:
-            return None
+            result = cval.value
+        return result
 
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
