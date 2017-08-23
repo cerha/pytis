@@ -159,7 +159,8 @@ class PresentedRow(object):
             self.visible = cval(fspec.visible(), PresentedRow.CALL_VISIBILITY_CHANGE)
             self.check = cval(fspec.check(), PresentedRow.CALL_CHECK)
             self.runtime_filter = cval(fspec.runtime_filter(), PresentedRow.CALL_ENUMERATION_CHANGE)
-            self.runtime_arguments = cval(fspec.runtime_arguments(), PresentedRow.CALL_ENUMERATION_CHANGE)
+            self.runtime_arguments = cval(fspec.runtime_arguments(),
+                                          PresentedRow.CALL_ENUMERATION_CHANGE)
 
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
@@ -262,11 +263,74 @@ class PresentedRow(object):
                 add_secret(column)
         self._set_row(row, reset=True, prefill=prefill)
 
-    def _secret_column(self, column):
-        if column.virtual:
-            return column.secret_computer
+    def __unicode__(self):
+        if hasattr(self, '_row'):
+            def strval(column):
+                if isinstance(column.type, pytis.data.Password):
+                    return "***"
+                elif isinstance(column.type, pytis.data.Big):
+                    return '<%s %s>' % (column.type.__class__.__name__,
+                                        format_byte_size(len(self[column.id].value())))
+                else:
+                    return unicode(self[column.id].value())
+            info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
         else:
-            return not self.permitted(column.id, pytis.data.Permission.VIEW)
+            info = '%x' % positive_id(self)
+        return "<%s: %s>" % (self.__class__.__name__, info)
+
+    def __getitem__(self, key, lazy=False):
+        """Return the value of given field  as a 'pytis.data.Value' instance.
+
+        'key' key is a string identifier of a one of the fields present in the
+        row.  If not present, 'KeyError' is raised.
+
+        """
+        column = self._coldict[key]
+        if self._protected and self._secret_column(column):
+            raise self.ProtectionError(key)
+        if key in self._row:
+            row = self._row
+        else:
+            row = self._virtual
+        value = row[key]
+        computer = column.computer
+        if not lazy and computer and computer.dirty:
+            new_value = self._computed_value(computer)
+            if new_value != value.value():
+                value = row[key] = pytis.data.Value(column.type, new_value)
+                # TODO: This invokes the callback again when called within a callback handler.
+                self._run_callback(self.CALL_CHANGE, key)
+        return value
+
+    def __setitem__(self, key, value, run_callback=True):
+        """Set given field's value to given 'pytis.data.Value' instance.
+
+        'key' key is a string identifier of a one of the fields present in the
+        row.  If not present, 'KeyError' is raised.
+
+        """
+        assert isinstance(value, pytis.data.Value)
+        column = self._coldict[key]
+        assert value.type() == column.type, \
+            "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
+        if key in self._row:
+            row = self._row
+        else:
+            row = self._virtual
+        column.last_validation_error = None
+        column.last_validated_string = None
+        if row[key].value() != value.value():
+            row[key] = value
+            self._formatted_value_cache = {}
+            if column.computer:
+                column.computer.dirty = False
+            self._resolve_dependencies(column.dependent)
+            if run_callback:
+                self._run_callback(self.CALL_CHANGE, key)
+
+    def __contains__(self, key):
+        """Return true if a field of given key is contained within the row."""
+        return key in self._coldict
 
     def _set_row(self, row, reset=False, prefill=None):
         self._virtual = {}
@@ -326,92 +390,6 @@ class PresentedRow(object):
         self._resolve_dependencies(computed_values)
         self._run_callback(self.CALL_CHANGE, None)
 
-    def __getitem__(self, key, lazy=False):
-        """Return the value of given field  as a 'pytis.data.Value' instance.
-
-        'key' key is a string identifier of a one of the fields present in the
-        row.  If not present, 'KeyError' is raised.
-
-        """
-        column = self._coldict[key]
-        if self._protected and self._secret_column(column):
-            raise self.ProtectionError(key)
-        if key in self._row:
-            row = self._row
-        else:
-            row = self._virtual
-        value = row[key]
-        computer = column.computer
-        if not lazy and computer and computer.dirty:
-            new_value = self._computed_value(computer)
-            if new_value != value.value():
-                value = row[key] = pytis.data.Value(column.type, new_value)
-                # TODO: This invokes the callback again when called within a callback handler.
-                self._run_callback(self.CALL_CHANGE, key)
-        return value
-
-    def __setitem__(self, key, value, run_callback=True):
-        """Set given field's value to given 'pytis.data.Value' instance.
-
-        'key' key is a string identifier of a one of the fields present in the
-        row.  If not present, 'KeyError' is raised.
-
-        """
-        assert isinstance(value, pytis.data.Value)
-        column = self._coldict[key]
-        assert value.type() == column.type, \
-            "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
-        if key in self._row:
-            row = self._row
-        else:
-            row = self._virtual
-        column.last_validation_error = None
-        column.last_validated_string = None
-        if row[key].value() != value.value():
-            row[key] = value
-            self._formatted_value_cache = {}
-            if column.computer:
-                column.computer.dirty = False
-            self._resolve_dependencies(column.dependent)
-            if run_callback:
-                self._run_callback(self.CALL_CHANGE, key)
-
-    def __unicode__(self):
-        if hasattr(self, '_row'):
-            def strval(column):
-                if isinstance(column.type, pytis.data.Password):
-                    return "***"
-                elif isinstance(column.type, pytis.data.Big):
-                    return '<%s %s>' % (column.type.__class__.__name__,
-                                        format_byte_size(len(self[column.id].value())))
-                else:
-                    return unicode(self[column.id].value())
-            info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
-        else:
-            info = '%x' % positive_id(self)
-        return "<%s: %s>" % (self.__class__.__name__, info)
-
-    def _run_callback(self, kind, key=None):
-        callbacks = self._callbacks.get(kind, {})
-        if key is None:
-            for callback in callbacks.values():
-                callback()
-        else:
-            callback = callbacks.get(key)
-            if callback:
-                callback()
-
-    def _computed_value(self, cval):
-        if cval:
-            if cval.dirty:
-                # Reset the dirty flag before calling the computer function to allow
-                # the computer function to retrieve the original value without recursion.
-                cval.dirty = False
-                cval.value = cval.compute(self)
-            return cval.value
-        else:
-            return None
-
     def _resolve_dependencies(self, computed_values):
         # Handle recomputations for given list of _ComputedValue instances.
         for cval in computed_values:
@@ -440,6 +418,108 @@ class PresentedRow(object):
         for cval in changed_values:
             if cval.dirty:
                 self._run_callback(self.CALL_CHANGE, cval.column.id)
+
+    def _computed_value(self, cval):
+        if cval:
+            if cval.dirty:
+                # Reset the dirty flag before calling the computer function to allow
+                # the computer function to retrieve the original value without recursion.
+                cval.dirty = False
+                cval.value = cval.compute(self)
+            return cval.value
+        else:
+            return None
+
+    def _run_callback(self, kind, key=None):
+        callbacks = self._callbacks.get(kind, {})
+        if key is None:
+            for callback in callbacks.values():
+                callback()
+        else:
+            callback = callbacks.get(key)
+            if callback:
+                callback()
+
+    def _secret_column(self, column):
+        if column.virtual:
+            return column.secret_computer
+        else:
+            return not self.permitted(column.id, pytis.data.Permission.VIEW)
+
+    def _completer(self, column):
+        try:
+            completer = self._completer_cache[column.id]
+        except KeyError:
+            completer = column.completer()
+            if not completer and column.type.enumerator() \
+                    and isinstance(column.type, pytis.data.String):
+                if column.cbspec is None or column.cbspec.enable_autocompletion():
+                    completer = column.type.enumerator()
+            self._completer_cache[column.id] = completer
+        return completer
+
+    def _display(self, column):
+        # Returns a display function to apply to an enumeration value."
+        if self._secret_column(column):
+            hidden_value = column.type.secret_export()
+            display = lambda v: hidden_value
+        else:
+            display = column.display
+            if display:
+                if isinstance(display, basestring):
+                    display_column = display
+                    # Note, we can't use format() to handle multiline values
+                    # (we don't have PresentedRow, just the data Row) so we
+                    # simply join the lines using semicolons.  It would be
+                    # better to respect the line_separator of the display
+                    # field, but we don't have simple access to it from here
+                    # and the semicolons are fine in most cases.
+                    row_function = lambda row: '; '.join(row[display_column].export().splitlines())
+                elif argument_names(display) == ('row',):
+                    row_function = display
+                else:
+                    row_function = None
+                if row_function:
+                    if isinstance(column.type, pytis.data.Array):
+                        enumerator = column.type.inner_type().enumerator()
+                    else:
+                        enumerator = column.type.enumerator()
+                    if isinstance(enumerator, pytis.data.DataEnumerator):
+                        def display(value):
+                            if value is None or self._transaction and not self._transaction.open():
+                                return ''
+                            try:
+                                row = enumerator.row(value, transaction=self._transaction,
+                                                     condition=self.runtime_filter(column.id),
+                                                     arguments=self.runtime_arguments(column.id))
+                            except pytis.data.DataAccessException:
+                                return ''
+                            if row:
+                                return row_function(row)
+                            else:
+                                return ''
+        return display
+
+    def _display_as_row_function(self, column):
+        # Same as '_display()', but returns a function of a data row.  It would be possible to use
+        # '_display()' everywhere, but that causes major inefficiency in 'enumerate()' (separate
+        # select for each row of the select).
+        if self._secret_column(column):
+            hidden_value = column.type.secret_export()
+            display = lambda row: hidden_value
+        else:
+            display = column.display
+            if display is None:
+                value_column = column.type.enumerator().value_column()
+                display = lambda row: row[value_column].export()
+            elif isinstance(display, basestring):
+                display_column = display
+                display = lambda row: row[display_column].export()
+            elif argument_names(display) != ('row',):
+                value_column = column.type.enumerator().value_column()
+                display_function = display
+                display = lambda row: display_function(row[value_column].value())
+        return display
 
     def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
@@ -604,10 +684,6 @@ class PresentedRow(object):
     def fields(self):
         """Return the list of all field specifications as 'Field' instances."""
         return self._fields
-
-    def __contains__(self, key):
-        """Return true if a field of given key is contained within the row."""
-        return key in self._coldict
 
     def has_key(self, key):
         return self.__contains__(key)
@@ -848,81 +924,6 @@ class PresentedRow(object):
         else:
             permitted = True
         return permitted
-
-    def _completer(self, column):
-        try:
-            completer = self._completer_cache[column.id]
-        except KeyError:
-            completer = column.completer()
-            if not completer and column.type.enumerator() \
-                    and isinstance(column.type, pytis.data.String):
-                if column.cbspec is None or column.cbspec.enable_autocompletion():
-                    completer = column.type.enumerator()
-            self._completer_cache[column.id] = completer
-        return completer
-
-    def _display(self, column):
-        # Returns a display function to apply to an enumeration value."
-        if self._secret_column(column):
-            hidden_value = column.type.secret_export()
-            display = lambda v: hidden_value
-        else:
-            display = column.display
-            if display:
-                if isinstance(display, basestring):
-                    display_column = display
-                    # Note, we can't use format() to handle multiline values
-                    # (we don't have PresentedRow, just the data Row) so we
-                    # simply join the lines using semicolons.  It would be
-                    # better to respect the line_separator of the display
-                    # field, but we don't have simple access to it from here
-                    # and the semicolons are fine in most cases.
-                    row_function = lambda row: '; '.join(row[display_column].export().splitlines())
-                elif argument_names(display) == ('row',):
-                    row_function = display
-                else:
-                    row_function = None
-                if row_function:
-                    if isinstance(column.type, pytis.data.Array):
-                        enumerator = column.type.inner_type().enumerator()
-                    else:
-                        enumerator = column.type.enumerator()
-                    if isinstance(enumerator, pytis.data.DataEnumerator):
-                        def display(value):
-                            if value is None or self._transaction and not self._transaction.open():
-                                return ''
-                            try:
-                                row = enumerator.row(value, transaction=self._transaction,
-                                                     condition=self.runtime_filter(column.id),
-                                                     arguments=self.runtime_arguments(column.id))
-                            except pytis.data.DataAccessException:
-                                return ''
-                            if row:
-                                return row_function(row)
-                            else:
-                                return ''
-        return display
-
-    def _display_as_row_function(self, column):
-        # Same as '_display()', but returns a function of a data row.  It would be possible to use
-        # '_display()' everywhere, but that causes major inefficiency in 'enumerate()' (separate
-        # select for each row of the select).
-        if self._secret_column(column):
-            hidden_value = column.type.secret_export()
-            display = lambda row: hidden_value
-        else:
-            display = column.display
-            if display is None:
-                value_column = column.type.enumerator().value_column()
-                display = lambda row: row[value_column].export()
-            elif isinstance(display, basestring):
-                display_column = display
-                display = lambda row: row[display_column].export()
-            elif argument_names(display) != ('row',):
-                value_column = column.type.enumerator().value_column()
-                display_function = display
-                display = lambda row: display_function(row[value_column].value())
-        return display
 
     def codebook(self, key):
         """Return the name of given field's codebook specification for resolver."""
