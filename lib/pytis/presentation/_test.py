@@ -202,8 +202,10 @@ class PresentedRow(unittest.TestCase):
         self._set(row, b=2)
         self.assertFalse(enabled[0])
         self._set(row, b=3)
+        self.assertEqual(row['total'].value(), 6)
         self.assertTrue(enabled[0])
         self._set(row, c=2)
+        self.assertEqual(row['total'].value(), 5)
         self.assertFalse(enabled[0])
     def test_has_key(self):
         row = self._row()
