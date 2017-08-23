@@ -141,6 +141,9 @@ class PresentedRow(object):
             self.attachment_storage = fspec.attachment_storage()
             self.filename = fspec.filename()
             self.is_range = isinstance(ctype, pytis.data.Range)
+            self.last_validation_error = None
+            self.last_validated_string = None
+            self.dependent = [] # Will be initialized later by PresentedRow.__init__().
 
             def cval(computer, callback):
                 if computer is None:
@@ -157,7 +160,6 @@ class PresentedRow(object):
             self.check = cval(fspec.check(), PresentedRow.CALL_CHECK)
             self.runtime_filter = cval(fspec.runtime_filter(), PresentedRow.CALL_ENUMERATION_CHANGE)
             self.runtime_arguments = cval(fspec.runtime_arguments(), PresentedRow.CALL_ENUMERATION_CHANGE)
-            self.dependent = [] # Will be initialized later by PresentedRow.__init__().
 
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
@@ -240,8 +242,6 @@ class PresentedRow(object):
         self._callbacks = {}
         self._new = new
         self._cache = {}
-        self._invalid = {}
-        self._validated_fields = []
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
         self._completer_cache = {}
@@ -304,6 +304,8 @@ class PresentedRow(object):
                 row_data.append((key, value))
             if column.computer:
                 column.computer.dirty = dirty
+            column.last_validation_error = None
+            column.last_validated_string = None
             computed_values += filter(bool, (column.editable, column.visible, column.check,
                                              column.runtime_filter, column.runtime_arguments))
         if prefill:
@@ -314,8 +316,6 @@ class PresentedRow(object):
             row_data.extend([(key, row[key]) for key in row.keys() if key not in keys])
         self._row = pytis.data.Row(row_data)
         self._cache = {}
-        self._invalid = {}
-        self._validated_fields = []
         if reset:
             self._original_row = copy.copy(row)
             if not hasattr(self, '_initialized_original_row'):
@@ -365,10 +365,8 @@ class PresentedRow(object):
             row = self._row
         else:
             row = self._virtual
-        if key in self._invalid:
-            del self._invalid[key]
-        if key in self._validated_fields:
-            self._validated_fields.remove(key)
+        column.last_validation_error = None
+        column.last_validated_string = None
         if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
@@ -684,16 +682,20 @@ class PresentedRow(object):
         because the recomputation may not have happened yet.
 
         """
-        orig_row = self._initialized_original_row
-        return (key not in self._row or
-                self._row[key].value() != orig_row[key].value() or
-                # If the last validation attempt didn't succeed (the validated string
-                # didn't propagate to self._row), the field should also appear as changed
-                # unless the last validated string matches the string representation of the
-                # original value (which may have been invalid for some reason).  This
-                # is important for reasonable behavior when leaving a form (warning
-                # about unsaved changes).
-                key in self._invalid and self._invalid[key][0] != orig_row[key].export())
+        if key not in self._row:
+            return True
+        if self._row[key].value() != self._initialized_original_row[key].value():
+            return True
+        column = self._coldict[key]
+        if column.last_validation_error:
+            # If the last validation attempt didn't succeed (the validated string
+            # didn't propagate to self._row), the field should also appear as changed
+            # unless the last validated string matches the string representation of the
+            # original value (which may have been invalid for some reason).  This
+            # is important for reasonable behavior when leaving a form (warning
+            # about unsaved changes).
+            return column.last_validated_string != self.format(key)
+        return False
 
     def editable(self, key):
         """Return True if given field is currently editable."""
@@ -767,6 +769,8 @@ class PresentedRow(object):
             del self._invalid[key]
         if key not in self._validated_fields:
             self._validated_fields.append(key)
+        column.last_validation_error = error
+        column.last_validated_string = string
         return error
 
     def invalid_string(self, key):
@@ -778,7 +782,8 @@ class PresentedRow(object):
         the field has not been validated yet.
 
         """
-        return self._invalid.get(key, (None, None))[0]
+        column = self._coldict[key]
+        return column.last_validated_string if column.last_validation_error else None
 
     def validation_error(self, key):
         """Return the last validation error for given field.
@@ -789,7 +794,7 @@ class PresentedRow(object):
         field has not been validated yet.
 
         """
-        return self._invalid.get(key, (None, None))[1]
+        return self._coldict[key].last_validation_error
 
     def validated(self, key):
         """Return True if the given field has been validated or False otherwise.
@@ -801,7 +806,7 @@ class PresentedRow(object):
         present in form layout before submit.
 
         """
-        return key in self._validated_fields
+        return self._coldict[key].last_validated_string is not None
 
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
