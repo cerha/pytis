@@ -298,8 +298,6 @@ class PresentedRow(object):
             new_value = self._computed_value(computer)
             if new_value != value.value():
                 value = row[key] = pytis.data.Value(column.type, new_value)
-                # TODO: This invokes the callback again when called within a callback handler.
-                self._run_callback(self.CALL_CHANGE, key)
         return value
 
     def __setitem__(self, key, value, run_callback=True):
@@ -393,31 +391,21 @@ class PresentedRow(object):
     def _resolve_dependencies(self, computed_values):
         # Handle recomputations for given list of _ComputedValue instances.
         for cval in computed_values:
-            # First mark all depending values as dirty and only then start invoking callbacks.
+            # First mark all depending values as dirty and only then start
+            # invoking callbacks.  Otherwise the callbacks would se an
+            # inconsistent state.
             cval.dirty = True
-        changed_values = []
         changed_enumerations = []
         for cval in computed_values:
             callback = cval.callback
             if callback in self._callbacks:
                 key = cval.column.id
-                if callback == self.CALL_CHANGE:
-                    # Defer value change callbacks till the end (see below).
-                    changed_values.append(cval)
-                else:
-                    if callback == self.CALL_ENUMERATION_CHANGE:
-                        # Avoid calling twice (shared by runtime_filter and runtime_arguments).
-                        if key in changed_enumerations:
-                            continue
-                        changed_enumerations.append(key)
-                    self._run_callback(callback, key)
-        # Finally call value change callback for all remaining dirty fields.
-        # Some fields may already have been recomputed during the recomputations
-        # triggered by the callbacks above.  Here we need to handle only the
-        # remaining fields.
-        for cval in changed_values:
-            if cval.dirty:
-                self._run_callback(self.CALL_CHANGE, cval.column.id)
+                if callback == self.CALL_ENUMERATION_CHANGE:
+                    # Avoid calling twice (shared by runtime_filter and runtime_arguments).
+                    if key in changed_enumerations:
+                        continue
+                    changed_enumerations.append(key)
+                self._run_callback(callback, key)
 
     def _computed_value(self, cval):
         if cval:
