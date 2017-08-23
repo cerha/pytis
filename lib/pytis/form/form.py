@@ -2683,8 +2683,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             permission = pytis.data.Permission.UPDATE
         else:
             permission = None
-        rdata = self._record_data(self._row, permission=permission,
-                                  updated=(self._mode == self.MODE_EDIT))
+        try:
+            rdata = self._record_data(self._row, permission=permission,
+                                      updated=(self._mode == self.MODE_EDIT))
+        except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+            self._on_closed_connection()
+            return False
         if not rdata.keys():
             # We don't want to insert/update the form row when it was not
             # changed, but we still want to commit the transaction, because it
