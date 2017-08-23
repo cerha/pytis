@@ -1671,15 +1671,16 @@ class ViewSpec(object):
             recourse_group(layout.group())
             for f in fields:
                 assert isinstance(f, Field)
-                assert not isinstance(f.computer(), CbComputer) \
-                    or f.computer().field() in self._field_dict.keys()
-                for (s, c) in (('computer', f.computer()),
-                               ('editable', f.editable())):
-                    if isinstance(c, Computer):
-                        for dep in c.depends():
+                if isinstance(f.computer(), CbComputer):
+                    assert f.computer().field() in self._field_dict
+                for attr in ('computer', 'editable', 'visible', 'check',
+                             'runtime_filter', 'runtime_arguments'):
+                    computer = getattr(f, attr)()
+                    if isinstance(computer, Computer):
+                        for dep in computer.depends():
                             assert dep in self._field_dict, \
                                 err("Unknown field '%s' in dependencies for '%s' "
-                                    "specification of '%s'.", dep, s, f.id())
+                                    "specification of '%s': %s", dep, attr, f.id(), computer)
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
@@ -1714,6 +1715,13 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
+        check = tuple(map(computer, xtuple(check)))
+        if __debug__:
+            for c in check:
+                if isinstance(c, Computer):
+                    for arg in c.depends():
+                        assert arg in self._field_dict, \
+                            err("Unknown field '%s' in check function arguments: %s", arg, c)
         if filters:
             # `filters' are for backwards compatibility.
             # Filters are compatible with profiles (they only define the
@@ -1780,7 +1788,7 @@ class ViewSpec(object):
         self._sorting = sorting
         self._grouping = grouping
         self._group_heading = group_heading
-        self._check = tuple(map(computer, xtuple(check)))
+        self._check = check
         self._cleanup = cleanup
         self._on_new_record = on_new_record
         self._on_copy_record = on_copy_record
@@ -3402,8 +3410,7 @@ class Field(object):
             assert runtime_filter is None
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
-        assert (runtime_arguments is None or
-                isinstance(runtime_arguments, Computer)), runtime_arguments
+        assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
         assert (selection_type is None or
                 selection_type in public_attributes(SelectionType)), selection_type
         assert orientation is None or orientation in public_attributes(Orientation), orientation
