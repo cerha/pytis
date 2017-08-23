@@ -32,14 +32,13 @@ tests = pytis.util.test.TestSuite()
 class PresentedRow(unittest.TestCase):
     def setUp(self):
         self.longMessage = True
-        key = pd.ColumnSpec('a', pd.Integer(not_null=True))
         self._columns = (
-            key,
+            pd.ColumnSpec('a', pd.Integer(not_null=True)),
             pd.ColumnSpec('b', pd.Integer(not_null=True)),
             pd.ColumnSpec('c', pd.Integer(not_null=True)),
             pd.ColumnSpec('d', pd.Integer()),
             pd.ColumnSpec('r', pd.IntegerRange()))
-        self._data = pd.Data(self._columns, key)
+        self._data = pd.Data(self._columns, self._columns[0])
         @pp.computer(fallback=None)
         def twice(row, c):
             return c * 2
