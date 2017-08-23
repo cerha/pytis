@@ -140,8 +140,8 @@ class PresentedRow(object):
             self.attachment_storage = fspec.attachment_storage()
             self.filename = fspec.filename()
             self.is_range = isinstance(ctype, pytis.data.Range)
-            self.last_validation_error = None
             self.last_validated_string = None
+            self.last_validation_error = None
             self.dependent = [] # Will be initialized later by PresentedRow.__init__().
 
             def cval(computer, callback):
@@ -314,8 +314,8 @@ class PresentedRow(object):
             row = self._row
         else:
             row = self._virtual
-        column.last_validation_error = None
         column.last_validated_string = None
+        column.last_validation_error = None
         if row[key].value() != value.value():
             row[key] = value
             self._formatted_value_cache = {}
@@ -365,8 +365,8 @@ class PresentedRow(object):
                 row_data.append((key, value))
             if column.computer:
                 column.computer.dirty = dirty
-            column.last_validation_error = None
             column.last_validated_string = None
+            column.last_validation_error = None
             computed_values += filter(bool, (column.editable, column.visible, column.check,
                                              column.runtime_filter, column.runtime_arguments))
         if prefill:
@@ -826,14 +826,8 @@ class PresentedRow(object):
             value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
         if value and string != self.format(key):
             self.__setitem__(key, value, run_callback=False)
-        if error:
-            self._invalid[key] = (string, error)
-        elif key in self._invalid:
-            del self._invalid[key]
-        if key not in self._validated_fields:
-            self._validated_fields.append(key)
-        column.last_validation_error = error
         column.last_validated_string = string
+        column.last_validation_error = error
         return error
 
     def invalid_string(self, key):
