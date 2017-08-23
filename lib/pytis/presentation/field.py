@@ -25,7 +25,6 @@ not its concrete representation (input widget).
 
 import collections
 import copy
-import string
 
 import pytis.data
 from pytis.util import ProgramError, Resolver, \
@@ -638,9 +637,9 @@ class PresentedRow(object):
             if svalue is None:
                 svalue = ''
             elif column.is_range:
-                svalue = tuple(string.join(s.splitlines(), column.line_separator) for s in svalue)
+                svalue = tuple(column.line_separator.join(s.splitlines()) for s in svalue)
             else:
-                svalue = string.join(svalue.splitlines(), column.line_separator)
+                svalue = column.line_separator.join(svalue.splitlines())
         if single and column.is_range:
             if svalue == ('', ''):
                 svalue = ''
