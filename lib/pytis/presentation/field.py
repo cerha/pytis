@@ -239,11 +239,11 @@ class PresentedRow(object):
         self._fields = fields
         self._data = data
         self._singleline = singleline
-        self._callbacks = {}
         self._new = new
-        self._cache = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
+        self._callbacks = {}
+        self._formatted_value_cache = {}
         self._completer_cache = {}
         self._protected = False
         self._columns = columns = tuple([self._Column(f, data, self._resolver) for f in fields])
@@ -315,7 +315,7 @@ class PresentedRow(object):
             keys = [x[0] for x in row_data]
             row_data.extend([(key, row[key]) for key in row.keys() if key not in keys])
         self._row = pytis.data.Row(row_data)
-        self._cache = {}
+        self._formatted_value_cache = {}
         if reset:
             self._original_row = copy.copy(row)
             if not hasattr(self, '_initialized_original_row'):
@@ -369,7 +369,7 @@ class PresentedRow(object):
         column.last_validated_string = None
         if row[key].value() != value.value():
             row[key] = value
-            self._cache = {}
+            self._formatted_value_cache = {}
             if column.computer:
                 column.computer.dirty = False
             self._resolve_dependencies(column.dependent)
@@ -539,7 +539,7 @@ class PresentedRow(object):
         """
         cache_key = (key, single, secure, pretty, export)
         try:
-            return self._cache[cache_key]
+            return self._formatted_value_cache[cache_key]
         except KeyError:
             pass
         try:
@@ -578,7 +578,7 @@ class PresentedRow(object):
                 svalue = ''
             else:
                 svalue = u' — '.join(x or _("unlimited") for x in svalue)
-        self._cache[cache_key] = svalue
+        self._formatted_value_cache[cache_key] = svalue
         return svalue
 
     def set_row(self, row, reset=False, prefill=None):
