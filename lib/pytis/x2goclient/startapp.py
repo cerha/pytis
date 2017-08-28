@@ -298,7 +298,7 @@ class X2GoStartApp(wx.App):
         return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
 
     def _on_create_shortcut(self, event):
-        error = self._controller.create_shortcut(self._username(), self._selected_profile_id())
+        error = self._controller.create_shortcut(self.username(), self._selected_profile_id())
         if error:
             # TODO: Specific dialog for error messages (icons)?
             self.info_dialog(_("Failed creating desktop shortcut"), error)
@@ -306,7 +306,7 @@ class X2GoStartApp(wx.App):
             self.update_progress(_("Shortcut created successfully."))
 
     def _can_create_shortcut(self):
-        return not self._controller.shortcut_exists(self._username(), self._selected_profile_id())
+        return not self._controller.shortcut_exists(self.username(), self._selected_profile_id())
 
     def _on_exit(self, event):
         self.Exit()
@@ -357,7 +357,7 @@ class X2GoStartApp(wx.App):
             self._username_field = field
             return ui.hgroup(ui.hgroup(label, padding=(3, 0)), field, button)
 
-    def _username(self):
+    def username(self):
         return self._username_value or self._username_field.GetValue()
 
     def _create_profile_selection(self, parent):
@@ -490,6 +490,18 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
+    def question_dialog(self, title, question, default=wx.YES_DEFAULT):
+        style = wx.YES_NO | default | wx.ICON_QUESTION
+        dlg = wx.MessageDialog(self._frame, question, caption=title, style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
+        result = dlg.ShowModal() == wx.ID_YES
+        dlg.Destroy()
+        return result
+
     def info_dialog(self, title, text):
         def create_dialog(dialog):
             button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
@@ -508,7 +520,7 @@ class X2GoStartApp(wx.App):
             self._connect()
 
     def _connect(self):
-        client = self._controller.connect(self._username())
+        client = self._controller.connect(self.username())
         if client:
             self.update_progress(_("Starting Pytis client."))
             self._start_session(client)
@@ -516,7 +528,7 @@ class X2GoStartApp(wx.App):
             self.Exit()
 
     def _load_profiles(self):
-        profiles = self._controller.list_profiles(self._username())
+        profiles = self._controller.list_profiles(self.username())
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
@@ -533,7 +545,7 @@ class X2GoStartApp(wx.App):
                                                _("Current version: %s", current_version),
                                                _("New version: %s", available_version),
                                                _("Install?")))))):
-                    error = self._controller.upgrade(self._username())
+                    error = self._controller.upgrade(self.username())
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
                         self.info_dialog(_("Upgrade failed"), error)
@@ -625,7 +637,8 @@ class X2GoStartApp(wx.App):
         """
         self.update_progress(message, progress=0)
 
-    def _create_authentication_dialog(self, dialog, methods, key_files):
+    def _create_authentication_dialog(self, dialog, methods, key_files,
+                                      submit_button_label=_("Log in")):
         def close(method):
             if isinstance(method, collections.Callable):
                 method = method()
@@ -695,7 +708,7 @@ class X2GoStartApp(wx.App):
             content,
             ui.item(
                 ui.hgroup(
-                    ui.button(dialog, _("Log in"), lambda e: close(method)),
+                    ui.button(dialog, submit_button_label, lambda e: close(method)),
                     ui.button(dialog, _("Cancel"), lambda e: close(None)),
                     spacing=20, padding=12,
                 ),
@@ -722,6 +735,20 @@ class X2GoStartApp(wx.App):
         """
         return self._show_dialog(_("Authentication"), self._create_authentication_dialog,
                                  methods, key_files)
+
+    def keyfile_password_dialog(self, key_file=None):
+        """Interactively choose keyfile and its passphrase.
+
+        The return value is two-tuple (key_filename, password).
+        """
+        if key_file:
+            key_files = (key_file,)
+        else:
+            key_files = ()
+        return self._show_dialog(_("Private key verification"),
+                                 self._create_authentication_dialog,
+                                 ('publickey',), key_files,
+                                 submit_button_label=_("Verify"))
 
     def checklist_dialog(self, title, message, columns, items):
         """Display a dialog to select multiple items from a list.

@@ -1153,6 +1153,18 @@ class StartupController(object):
     def _scripts_directory(self):
         return os.path.normpath(os.path.join(sys.path[0], '..', '..', 'scripts'))
 
+    def _local_username(self):
+        if pytis.util.on_windows():
+            userp = os.environ.get('userprofile')
+            if not isinstance(userp, unicode):
+                userp = userp.decode(sys.getfilesystemencoding())
+                username = os.path.split(userp)[-1] or ''
+        else:
+            username = os.environ.get('USER', '')
+        if isinstance(username, unicode):
+            username = username.encode('utf-8')
+        return username
+
     def _desktop_shortcuts(self):
         import winshell
         directory = winshell.desktop()
@@ -1265,6 +1277,19 @@ class StartupController(object):
         else:
             return None
 
+    def _write_key(self, key, key_file, passwd):
+        """Write given key to private and public key files."""
+
+        # Write private part
+        key.write_private_key_file(key_file, password=passwd)
+        # Write public part
+        username = self._local_username()
+        with open(key_file + '.pub', 'w') as f:
+            f.write(key.get_name())
+            f.write(key.get_base64())
+            f.write(str(" "))
+            f.write(username)
+
     def generate_key(self):
         """Generate new SSH key pair."""
         sshdir = os.path.join(x2go.defaults.LOCAL_HOME,
@@ -1286,36 +1311,90 @@ class StartupController(object):
                                              check=self._check_password)
         if passwd:
             key = paramiko.RSAKey.generate(2048)
-            # Write private part
-            key.write_private_key_file(key_file, password=passwd)
-            # Write public part
-            if pytis.util.on_windows():
-                userp = os.environ.get('userprofile')
-                if not isinstance(userp, unicode):
-                    userp = userp.decode(sys.getfilesystemencoding())
-                username = os.path.split(userp)[-1] or ''
-            else:
-                username = os.environ.get('USER', '')
-            with open(key_file + '.pub', 'w') as f:
-                if isinstance(username, unicode):
-                    username = username.encode('utf-8')
-                f.write(str("ssh-rsa "))
-                f.write(key.get_base64())
-                f.write(str(" "))
-                f.write(username)
+            self._write_key(key, key_file, passwd)
             if os.access(key_file, os.R_OK):
-                pass
-            self._app.info_dialog(_("Generate key"),
-                                  _("Keys created in directory: %s", sshdir))
+                self._app.info_dialog(_("Generate key"),
+                                      _("Keys created in directory: %s", sshdir))
 
     def change_key_passphrase(self):
         """Change key passphrase."""
-        pass
+        key_filename = None
+        for name in ('id_rsa', 'id_dsa', 'id_ecdsa',):
+            f = os.path.join(os.path.expanduser('~'), '.ssh', name)
+            if os.access(f, os.R_OK):
+                key_filename = f
+                break
+        while True:
+            key_filename, password = self._app.keyfile_password_dialog(key_file=key_filename)
+            if key_filename is None:
+                return
+            else:
+                key = None
+                for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
+                    try:
+                        key = handler.from_private_key_file(key_filename, password)
+                    except:
+                        break
+                if key:
+                    break
+                else:
+                    if self._app.question_dialog(_("Question"),
+                                                 _("Wrong password! Try again?")):
+                        continue
+                    else:
+                        return
+        passwd = self._app.passphrase_dialog(_("Enter new key passphrase"),
+                                             check=self._check_password)
+        if passwd:
+            self._write_key(key, key_filename, passwd)
+            self._app.info_dialog(_("Change password"),
+                                  _("Password was changed for: %s", key_filename))
 
-    def upload_key(self):
+    def upload_key(self, pubkey_filename=None):
         """Upload public key to server."""
-        pass
+        if self._broker_parameters is None:
+            p2go_key = None
+            broker_host = None
+        else:
+            broker_host = self._broker_parameters.get('server')
+            broker_port = self._broker_parameters.get('port') or 22
+        try:
+            import pytis
+            import StringIO
+            p2go_key = paramiko.RSAKey.from_private_key(
+                StringIO.StringIO(pytis.config.upload_key))
+        except:
+            p2go_key = None
+        if p2go_key is None or broker_host is None:
+            return
+        else:
+            # Choose key to be sent if not given
+            key, key_file = self._choose_key()
+            if key and key_file:
+                import datetime
+                tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
+                key_username = self._app.username() or self._local_username()
+                pubkey = "{} {} {}".format(key.get_name(),
+                                           key.get_base64(),
+                                           key_username)
+                filename = "{}_{}.pub".format(tstamp,
+                                              key_username,
+                                              self._local_username().replace(' ', '_'))
+                try:
+                    t = paramiko.Transport((broker_host, broker_port))
+                    t.connect(username='p2gokeys', pkey=p2go_key)
+                    sftp = paramiko.SFTPClient.from_transport(t)
+                    with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
+                        f.write(pubkey)
+                    t.close()
+                except:
+                    return
 
     def send_key(self):
         """Send public key to admin."""
-        pass
+        ssh_dir = os.path.join(os.path.expanduser('~'), '.ssh')
+        msg = _("Use your usual email application (Thunderbird, Outlook)\n"
+                "to send the public key file as an attachment.\n\n"
+                "Your public key file should have an extension '.pub' (e.g. id_rsa.pub)\n"
+                "and it is located in the directory {}.")
+        self._app.info_dialog(_("Send key to admin"), msg.format(ssh_dir))
