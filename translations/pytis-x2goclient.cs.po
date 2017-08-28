@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-03-17 14:39+0100\n"
+"POT-Creation-Date: 2017-08-28 23:15+0200\n"
 "PO-Revision-Date: 2017-01-31 18:52+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -18,148 +18,43 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../bin/pokus.py:80
-msgid "Login name:"
-msgstr "Uživatelské jméno:"
-
-#: ../bin/pokus.py:96
-msgid "Existing sessions:"
-msgstr "Existující sezení:"
-
-#: ../bin/pokus.py:101
-msgid "Resume"
-msgstr "Obnovit"
-
-#: ../bin/pokus.py:102 ../bin/x2goclient.py:1462
-msgid "Terminate"
-msgstr "Ukončit"
-
-#: ../bin/pokus.py:105
-#, fuzzy
-msgid "Start New Session"
-msgstr "Nové sezení"
-
-#: ../bin/pokus.py:124 ../bin/x2goclient.py:1345
-msgid "Select ssh key file"
-msgstr "Vyberte ssh klíč"
-
-#: ../bin/pokus.py:126
-#, fuzzy
-msgid "Key File:"
-msgstr "Soubor s klíčem:"
-
-#: ../bin/pokus.py:128
-#, fuzzy
-msgid "Select"
-msgstr "Vyberte sezení"
-
-#: ../bin/pokus.py:129
-msgid "Passphrase:"
-msgstr "Heslo:"
-
-#: ../bin/pokus.py:138
-#, fuzzy
-msgid "Password:"
-msgstr "Zadání hesla"
-
-#: ../bin/pokus.py:143
-#, fuzzy
-msgid "Authentication"
-msgstr "Výchozí autentizace selhala"
-
-#: ../bin/pokus.py:155
-msgid "Trying password or public key authentication."
-msgstr "Zkouším autentizaci heslem nebo veřejným klíčem."
-
-#: ../bin/pokus.py:157
-msgid "Public Key"
-msgstr "Veřejný klíč"
-
-#: ../bin/pokus.py:158
-#, fuzzy
-msgid "Password"
-msgstr "Zadání hesla"
-
-#: ../bin/pokus.py:162
-msgid "Trying public key authentication."
-msgstr "Zkouším autentizaci veřejným klíčem."
-
-#: ../bin/pokus.py:166
-msgid "Trying password authentication."
-msgstr "Zkouším autentizaci heslem."
-
-#: ../bin/pokus.py:170 ../bin/x2goclient.py:1335
-msgid "No supported ssh connection method available"
-msgstr "Není dostupná žádná metoda spojení přes ssh"
-
-#: ../bin/pokus.py:174
-msgid "Log in"
-msgstr "Přihlášení"
-
-#: ../bin/pokus.py:175 ../bin/x2goclient.py:1462
-msgid "Cancel"
-msgstr "Zrušit"
-
-#: ../bin/pokus.py:197 ../bin/x2goclient.py:326
-msgid "Starting application"
-msgstr "Start aplikace"
-
-#: ../bin/pokus.py:207
-#, fuzzy
-msgid "Initializing libraries."
-msgstr "Inicializace knihoven. Vyčkejte prosím..."
-
-#: ../bin/pokus.py:209
-msgid "Trying Kerberos authentication."
-msgstr "Zkouším autentizaci přes Kerberos."
-
-#: ../bin/pokus.py:211
-msgid "Trying SSH Agent authentication."
-msgstr "Zkouším autentizaci pomocí SSH agenta."
-
-#: ../bin/x2goclient.py:187
+#: ../bin/x2goclient.py:186
 msgid "User name"
 msgstr "Uživatelské jméno"
 
-#: ../bin/x2goclient.py:326
+#: ../bin/x2goclient.py:325
+msgid "Starting application"
+msgstr "Start aplikace"
+
+#: ../bin/x2goclient.py:325
 msgid "Initializing libraries. Please wait..."
 msgstr "Inicializace knihoven. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:370
+#: ../bin/x2goclient.py:374
 msgid "Initializing application. Please wait..."
 msgstr "Inicializace aplikace. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:459
-#, python-format
-msgid "Can't read RPyC info file: %s"
-msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
-
-#: ../bin/x2goclient.py:469
-#, fuzzy
-msgid "Error when writing RPyC info file: {}"
-msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
-
-#: ../bin/x2goclient.py:491 ../bin/x2goclient.py:1367
+#: ../bin/x2goclient.py:659 ../bin/x2goclient.py:1538
 msgid "Invalid broker address"
 msgstr "Chybná adresa brokeru"
 
-#: ../bin/x2goclient.py:495 ../bin/x2goclient.py:1371
+#: ../bin/x2goclient.py:663 ../bin/x2goclient.py:1542
 msgid "Unsupported broker protocol"
 msgstr "Nepodporovaný protokol pro přístup na broker"
 
-#: ../bin/x2goclient.py:620
+#: ../bin/x2goclient.py:788
 msgid "Invalid session format"
 msgstr "Chybný formát sezení"
 
-#: ../bin/x2goclient.py:824
+#: ../bin/x2goclient.py:992
 msgid "Client setup. Please wait..."
 msgstr "Nastavení klienta. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:869
+#: ../bin/x2goclient.py:1037
 msgid "Checking for new client version. Please wait..."
 msgstr "Kontrola nové verze klienta. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:879
+#: ../bin/x2goclient.py:1047
 msgid ""
 "New pytis client version available.\n"
 "\n"
@@ -175,117 +70,201 @@ msgstr ""
 "\n"
 "Nainstalovat?"
 
-#: ../bin/x2goclient.py:890
+#: ../bin/x2goclient.py:1058
 msgid "Checking sessions and profiles. Please wait..."
 msgstr "Načítání sezení a profilů. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:953
+#: ../bin/x2goclient.py:1121
 msgid "Select session"
 msgstr "Vyberte sezení"
 
-#: ../bin/x2goclient.py:958
+#: ../bin/x2goclient.py:1126
 msgid "No session selected."
 msgstr "Nebylo vybráno žádné sezení."
 
-#: ../bin/x2goclient.py:960
+#: ../bin/x2goclient.py:1128
 msgid "Opening selected profile. Please wait..."
 msgstr "Otevírání zvoleného profilu. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:972
+#: ../bin/x2goclient.py:1140
 #, python-format
 msgid "Couldn't connect to application server %s."
 msgstr "Nelze se připojit na aplikační server %s."
 
-#: ../bin/x2goclient.py:988
+#: ../bin/x2goclient.py:1156
 msgid "Checking desktop shortcut. Please wait..."
 msgstr "Kontrola zástupců na ploše. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1138
+#: ../bin/x2goclient.py:1308
 #, python-format
 msgid "No free port found for RPyC in the range %s-%s"
 msgstr "Nenalezen volný port pro RPyC v rozsahu %s-%s"
 
-#: ../bin/x2goclient.py:1204 ../bin/x2goclient.py:1600
+#: ../bin/x2goclient.py:1375 ../bin/x2goclient.py:1771
 msgid "Starting server connections. Please wait..."
 msgstr "Start spojení na server. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1278
+#: ../bin/x2goclient.py:1449
 #, python-format
 msgid "Password key for %s"
 msgstr "Heslo ke klíči v souboru %s"
 
-#: ../bin/x2goclient.py:1325
+#: ../bin/x2goclient.py:1496
 msgid "Login using password"
 msgstr "Přihlášení heslem"
 
-#: ../bin/x2goclient.py:1326
+#: ../bin/x2goclient.py:1497
 msgid "Login using a key file"
 msgstr "Přihlášení klíčem"
 
-#: ../bin/x2goclient.py:1327
+#: ../bin/x2goclient.py:1498
 msgid "Default authentication failed"
 msgstr "Výchozí autentizace selhala"
 
-#: ../bin/x2goclient.py:1338
+#: ../bin/x2goclient.py:1506
+msgid "No supported ssh connection method available"
+msgstr "Není dostupná žádná metoda spojení přes ssh"
+
+#: ../bin/x2goclient.py:1509
 msgid "Login password"
 msgstr "Přihlášovací heslo"
 
-#: ../bin/x2goclient.py:1355
+#: ../bin/x2goclient.py:1516
+msgid "Select ssh key file"
+msgstr "Vyberte ssh klíč"
+
+#: ../bin/x2goclient.py:1526
 msgid "Program error"
 msgstr "Chyba programu"
 
-#: ../bin/x2goclient.py:1379
+#: ../bin/x2goclient.py:1550
 msgid "Couldn't connect to upgrade server"
 msgstr "Nelze se připojit na aktualizační server"
 
-#: ../bin/x2goclient.py:1391
+#: ../bin/x2goclient.py:1562
 msgid "Package unpacking failed"
 msgstr "Selhalo rozbalení balíku"
 
-#: ../bin/x2goclient.py:1425
+#: ../bin/x2goclient.py:1596
 msgid "Pytis successfully upgraded. Restart the application."
 msgstr "Pytis byl úspěšně aktualizován. Restartujte aplikaci."
 
-#: ../bin/x2goclient.py:1429
+#: ../bin/x2goclient.py:1600
 msgid "Creating new session. Please wait..."
 msgstr "Vytváření nového sezení. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1432
+#: ../bin/x2goclient.py:1603
 msgid "Setting up new session. Please wait..."
 msgstr "Nastavování nového sezení. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1460
+#: ../bin/x2goclient.py:1631
 msgid "New session"
 msgstr "Nové sezení"
 
-#: ../bin/x2goclient.py:1462
+#: ../bin/x2goclient.py:1633
 msgid "OK"
 msgstr "Budiž"
 
-#: ../bin/x2goclient.py:1463
+#: ../bin/x2goclient.py:1633
+msgid "Terminate"
+msgstr "Ukončit"
+
+#: ../bin/x2goclient.py:1633
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: ../bin/x2goclient.py:1634
 msgid "Resume session"
 msgstr "Obnova sezení"
 
-#: ../bin/x2goclient.py:1543
+#: ../bin/x2goclient.py:1714
 msgid "Create desktop shortcut for this session profile?"
 msgstr "Vytvořit pro tento profil ikonu na ploše?"
 
-#: ../bin/x2goclient.py:1552
+#: ../bin/x2goclient.py:1723
 #, python-format
 msgid "Shortcut %s allready exists. Please, rename it:"
 msgstr "Zástupce %s již existuje. Zvolte jiné jméno:"
 
-#: ../bin/x2goclient.py:1553
+#: ../bin/x2goclient.py:1724
 msgid "Edit shortcut name"
 msgstr "Upravit jméno zástupce"
 
-#: ../bin/x2goclient.py:1607
+#: ../bin/x2goclient.py:1778
 msgid "Authenticating. Please wait..."
 msgstr "Autentizace. Vyčkejte prosím..."
 
-#: ../bin/x2goclient.py:1971
+#: ../bin/x2goclient.py:2142
 msgid "Launching application. Please wait..."
 msgstr "Spouštění aplikace. Vyčkejte prosím..."
+
+#~ msgid "Login name:"
+#~ msgstr "Uživatelské jméno:"
+
+#~ msgid "Existing sessions:"
+#~ msgstr "Existující sezení:"
+
+#~ msgid "Resume"
+#~ msgstr "Obnovit"
+
+#, fuzzy
+#~ msgid "Start New Session"
+#~ msgstr "Nové sezení"
+
+#, fuzzy
+#~ msgid "Key File:"
+#~ msgstr "Soubor s klíčem:"
+
+#, fuzzy
+#~ msgid "Select"
+#~ msgstr "Vyberte sezení"
+
+#~ msgid "Passphrase:"
+#~ msgstr "Heslo:"
+
+#, fuzzy
+#~ msgid "Password:"
+#~ msgstr "Zadání hesla"
+
+#, fuzzy
+#~ msgid "Authentication"
+#~ msgstr "Výchozí autentizace selhala"
+
+#~ msgid "Trying password or public key authentication."
+#~ msgstr "Zkouším autentizaci heslem nebo veřejným klíčem."
+
+#~ msgid "Public Key"
+#~ msgstr "Veřejný klíč"
+
+#, fuzzy
+#~ msgid "Password"
+#~ msgstr "Zadání hesla"
+
+#~ msgid "Trying public key authentication."
+#~ msgstr "Zkouším autentizaci veřejným klíčem."
+
+#~ msgid "Trying password authentication."
+#~ msgstr "Zkouším autentizaci heslem."
+
+#~ msgid "Log in"
+#~ msgstr "Přihlášení"
+
+#, fuzzy
+#~ msgid "Initializing libraries."
+#~ msgstr "Inicializace knihoven. Vyčkejte prosím..."
+
+#~ msgid "Trying Kerberos authentication."
+#~ msgstr "Zkouším autentizaci přes Kerberos."
+
+#~ msgid "Trying SSH Agent authentication."
+#~ msgstr "Zkouším autentizaci pomocí SSH agenta."
+
+#~ msgid "Can't read RPyC info file: %s"
+#~ msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
+
+#, fuzzy
+#~ msgid "Error when writing RPyC info file: {}"
+#~ msgstr "Chyba při zápisu souboru s informacemi pro RPyC: %s"
 
 #~ msgid "New pytis client version available. Install?"
 #~ msgstr "Je dostupná nová verze klienta Pytis. Nainstalovat?"
