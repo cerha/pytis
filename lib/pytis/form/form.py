@@ -187,7 +187,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._resolver = resolver
         self._guardian = guardian or parent
         self._governing_transaction = transaction
-        self._transaction = transaction or self._default_transaction()
         self._spec_kwargs = copy.copy(spec_kwargs)
         self._data_kwargs = copy.copy(data_kwargs)
         self._leave_form_requested = False
@@ -200,6 +199,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         except (ResolverError, ProgramError):
             log(OPERATIONAL, 'Form initialization error', format_traceback())
             raise self.InitError()
+        self._transaction = transaction or self._default_transaction()
         self._init_attributes(**kwargs)
         self._result = None
         try:
@@ -2892,6 +2892,8 @@ class PopupEditForm(PopupForm, EditForm):
             return None
 
     def _default_transaction(self):
+        if isinstance(self._data, pytis.data.MemData):
+            return None
         try:
             connection_name = config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
