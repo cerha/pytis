@@ -74,13 +74,14 @@ _wx_key = None
 
 
 _in_top_level_exception = False
-def top_level_exception(message=None):
+def top_level_exception(message=None, einfo=None):
     """Zpracuj aktuálně vyvolanou výjimku aplikace."""
     global _in_top_level_exception
     if _in_top_level_exception:
         return
     _in_top_level_exception = True
-    einfo = sys.exc_info()
+    if not einfo:
+        einfo = sys.exc_info()
     if issubclass(einfo[0], SystemExit):
         sys.exit()
     tbstring = format_traceback()
@@ -170,7 +171,7 @@ def last_user_event():
     """Vrať poslední přijatou uživatelskou událost jako instanci 'wx.Event'.
 
     Před prvním voláním uživatelské události vrať 'None'.
-    
+
     """
     return _last_user_event
 
@@ -179,7 +180,7 @@ def last_event_age():
     """Return the age of the last user event in seconds.
 
     Return -1 before the first user event is invoked.
-    
+
     """
     if _last_user_event_time is None:
         return -1
@@ -450,7 +451,7 @@ def interrupt_watcher():
     # Čekání na dokončení inicializace watcheru
     lock.acquire()
     lock.release()
-    
+
 def interrupt_init(_main_thread_ident_=thread.get_ident(),
                    _watcher_thread_ident_=None):
     """Inicializuj zpracování přerušení události pro aktuální thread."""

@@ -2262,6 +2262,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_terminate_event = threading.Event()
                 self._pg_urgent = False
                 self._pg_correction = 0
+                self._pg_exception = None
             def run(self):
                 try:
                     data = self._pg_data
@@ -2291,7 +2292,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         test_count += step
                         args = dict(selection=selection, number=ival(step))
                         query = data._pdbb_command_move_forward.update(args)
-                        result = data._pg_query(query, transaction=transaction)
+                        try:
+                            result = data._pg_query(query, transaction=transaction)
+                        except DBUserException as e:
+                            log(OPERATIONAL, "Database exception in counting thread",
+                                pytis.util.format_traceback())
+                            import sys
+                            self._pg_exception = (sys.exc_info(), e)
+                            self._pg_finished = True
+                            self._pg_terminate_event.set()
+                            return
                         query_counter = data._pg_query_counter
                         self._pg_current_count = self._pg_current_count + result[0][0]
                         if self._pg_current_count < test_count:
@@ -2309,7 +2319,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 finally:
                     self._pg_terminate_event.set()
             def _pg_dead(self):
-                return (self._pg_terminate or
+                return (self._pg_terminate or self._pg_exception is not None or
                         (self._pg_transaction and not self._pg_transaction.open()))
             def pg_count(self, min_value=None, timeout=None, corrected=False):
                 self._pg_urgent = True
@@ -2362,6 +2372,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._thread.start()
         def count(self, min_value=None, timeout=None, corrected=False):
             result = self._thread.pg_count(min_value, timeout, corrected)
+            if self._thread._pg_exception:
+                import pytis.form
+                exception = self._thread._pg_exception
+                message = exception[1].message()
+                einfo = exception[0]
+                pytis.form.top_level_exception(message=message, einfo=einfo)
             return result
         def stop(self):
             self._thread.pg_stop()
