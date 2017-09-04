@@ -216,6 +216,7 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.changed())
         self._set(row, b=333)
         self.assertTrue(row.changed())
+
     def test_field_changed(self):
         row = self._row(b=3, c=8)
         self.assertFalse(row.field_changed('a'))
@@ -225,6 +226,11 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.field_changed('a'))
         self.assertTrue(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
+        self.assertIsNotNone(row.validate('a', '3.4'))
+        self.assertTrue(row.field_changed('a'))
+        self.assertIsNotNone(row.validate('a', ''))
+        self.assertFalse(row.field_changed('a'))
+
     def test_keys(self):
         row = self._row()
         self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))

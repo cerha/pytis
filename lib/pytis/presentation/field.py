@@ -782,9 +782,16 @@ class PresentedRow(object):
         because the recomputation may not have happened yet.
 
         """
+        orig_row = self._initialized_original_row
         return (key not in self._row or
-                self._row[key].value() != self._initialized_original_row[key].value() or
-                key in self._invalid)
+                self._row[key].value() != orig_row[key].value() or
+                # If the last validation attempt didn't succeed (the validated string
+                # didn't propagate to self._row), the field should also appear as changed
+                # unless the last validated string matches the string representation of the
+                # original value (which may have been invalid for some reason).  This
+                # is important for reasonable behavior when leaving a form (warning
+                # about unsaved changes).
+                key in self._invalid and self._invalid[key][0] != orig_row[key].export())
 
     def editable(self, key):
         """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
@@ -882,21 +889,7 @@ class PresentedRow(object):
             value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
         if value and string != self.format(key):
             self.__setitem__(key, value, run_callback=False)
-        if error and string != self.format(key):
-            # TODO: The line above contained also the commented out part of the condition.
-            # It doesn't seem to make sense and it definitely doesn't allow conditional
-            # execution of computer functions in Computer.__call__ to work properly.
-            # I suppose this behavior was not intentional and comment it out for now.
-            # If it breaks something, we need to rethink it!  Proper function of
-            # Computer.__call__ is covered by tests so further experiments can rely on them.
-            # TODO PH: The original line of condition was restored because of problems
-            # when leaving unchanged forms.
-            # The purpose of the condition seems to be, not to mark the field as invalid,
-            # when the value of the field was not changed. Otherwise the data of the form
-            # are considered as changed, although the remained unchanged.
-            # This will show the warning dialog of changed data when leaving opened form
-            # with Escape key, which is very confusing for the users.
-            # Probably we need to rethink the whole thing!
+        if error:
             self._invalid[key] = (string, error)
         elif key in self._invalid:
             del self._invalid[key]
