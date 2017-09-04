@@ -45,7 +45,7 @@ from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem
     MSeparator, Window, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
-    db_operation, delete_record, form_settings_manager, \
+    db_operation, decrypted_names, delete_record, form_settings_manager, \
     has_access, message, new_record, profile_manager, refresh, run_dialog, run_form, \
     top_window, wx_focused_window
 import config
@@ -1973,18 +1973,29 @@ class RecordForm(LookupForm):
                     read_only = (editable == Editable.NEVER)
                 if read_only:
                     continue
-                field_name = field.label()
                 if self._row[fid].type().not_null():
-                    msg = _(u"This form contains the mandatory field %s, "
-                            u"but you don't have access to its codebook values. "
-                            u"Please contact the access rights administrator.") % (field_name,)
+                    msg = (_(u"This form contains the mandatory field %s,\n"
+                             u"but you don't have access to its codebook values.",
+                             field.label()) + '\n' +
+                           _(u"Please contact the access rights administrator."))
                     run_dialog(pytis.form.Error, msg)
                     return False
                 else:
-                    msg = _(u"This form contains the field %s, "
-                            u"but you don't have access to its codebook values. "
-                            u"Please contact the access rights administrator.") % (field_name,)
+                    msg = (_(u"This form contains the field %s,\n"
+                             u"but you don't have access to its codebook values.",
+                             field.label()) + '\n' +
+                           _(u"Please contact the access rights administrator."))
                     run_dialog(Warning, msg)
+            crypto_name = field.crypto_name()
+            if ((crypto_name and self._row[fid].type().not_null() and
+                 crypto_name not in decrypted_names())):
+                msg = _(u"This form contains the mandatory field %s,\n"
+                        u"but this field is encrypted and the encryption "
+                        u"area '%s' has not been unlocked.",
+                        field.label(), crypto_name)
+                run_dialog(pytis.form.Error, msg)
+                return False
+
         import copy as copy_
         if prefill is None:
             prefill = self._prefill and copy_.copy(self._prefill) or {}
