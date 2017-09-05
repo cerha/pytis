@@ -2359,7 +2359,7 @@ class Computer(object):
 
     """
 
-    def __init__(self, function, depends=None):
+    def __init__(self, function, depends=None, fallback=UNDEFINED):
         """Arguments:
 
           function -- callable object taking one argument - the 'PresentedRow'
@@ -2374,6 +2374,14 @@ class Computer(object):
             Empty sequence leads to no recomputations (the value is computed
             only once on initialization).
 
+          fallback -- value used instead of function result in case, that at
+            least one of the input fields (present in 'depends') contains an
+            invalid value.  The computer function is not called at all in this
+            case and the fallback value is returned instead.  If 'fallback' is
+            undefined, the previously computed value remains the result until
+            all input values become valid again (if they were not valid before,
+            the result remains on the default/initial value).
+
         """
         assert isinstance(function, collections.Callable)
         assert is_sequence(depends)
@@ -2381,6 +2389,7 @@ class Computer(object):
             raise ProgramError("Computer has no dependency specification!")
         self._function = function
         self._depends = tuple(depends)
+        self._fallback = fallback
 
     def __call__(self, row):
         return self._function(row)
@@ -2397,8 +2406,12 @@ class Computer(object):
         """Return the value of 'depends' as passed to the constructor converted to a tuple."""
         return self._depends
 
+    def fallback(self):
+        """Return the value of 'fallback' as passed to the constructor."""
+        return self._fallback
 
-def computer(function):
+
+def computer(function=None, fallback=UNDEFINED):
     """Return a 'Computer' instance for given function.
 
     If necessary, wrap 'function' converting row values to named arguments.
@@ -2418,6 +2431,9 @@ def computer(function):
     arguments.  If no such additional arguemnts are defined, the 'function' is
     used as is.
 
+    The argument 'fallback' corresponds to the same argument of 'Computer'
+    constructor.  If used, it is simply passed on to the instance.
+
     For example:
 
         @computer
@@ -2433,6 +2449,18 @@ def computer(function):
         def x(row):
              return row['a'].value() + row['b'].value()
 
+    In the special case that 'fallback' is passed and 'function' is None, the
+    function returns a decorator which passes 'fallback' along, so you can also
+    simply write decorators as below:
+
+        @computer(fallback=None):
+        def x(row, a, b):
+            return a + b
+
+    which is equivalent to:
+
+        x = Computer(lambda r: row['a'].value() + row['b'].value(), fallback=None)
+
     Note: Pytis specifications accept 'Computer' instances for many of its
     properties.  Some of them explicitly state in documentation, that they are
     automatically wrapped by 'computer()'.  In this case you may define the
@@ -2444,7 +2472,10 @@ def computer(function):
     explicitly or pass 'Computer' instances directly.
 
     """
-    if function is None or isinstance(function, Computer):
+    if function is None and fallback is not UNDEFINED:
+        def result(function):
+            return computer(function, fallback=fallback)
+    elif function is None or isinstance(function, Computer):
         result = function
     else:
         assert isinstance(function, collections.Callable), function
@@ -2455,7 +2486,7 @@ def computer(function):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
             function.__name__ = original_function.__name__
-        result = Computer(function, depends=depends)
+        result = Computer(function, depends=depends, fallback=fallback)
     return result
 
 

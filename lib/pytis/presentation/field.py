@@ -171,6 +171,7 @@ class PresentedRow(object):
             self.callback = callback
             self.function = computer.function()
             self.depends = computer.depends()
+            self.fallback = computer.fallback()
             self.dirty = True
             self.value = None
 
@@ -295,7 +296,7 @@ class PresentedRow(object):
         computer = column.computer
         if not lazy and computer and computer.dirty:
             old_value = value.value()
-            new_value = self._computed_value(computer, default=old_value)
+            new_value = self._computed_value(computer, old_value=old_value)
             if new_value != old_value:
                 value = row[key] = pytis.data.Value(column.type, new_value)
         return value
@@ -407,7 +408,7 @@ class PresentedRow(object):
                     changed_enumerations.append(key)
                 self._run_callback(callback, key)
 
-    def _computed_value(self, cval, default=UNDEFINED):
+    def _computed_value(self, cval, old_value=UNDEFINED):
         def valid(key):
             if self.validated(key):
                 error = self.validation_error(key)
@@ -423,8 +424,10 @@ class PresentedRow(object):
             # Reset the dirty flag before calling the computer function to allow
             # the computer function to retrieve the original value without recursion.
             result = cval.value = cval.function(self)
-        elif default is not UNDEFINED:
-            result = default
+        elif cval.fallback is not UNDEFINED:
+            result = cval.fallback
+        elif old_value is not UNDEFINED:
+            result = old_value
         else:
             result = cval.value
         return result
