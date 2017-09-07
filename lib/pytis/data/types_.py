@@ -305,14 +305,19 @@ class Type(object):
 
         Arguments:
 
-          object -- an object to be converted to a value
-          strict -- passing 'False' leads to a ``tolerant'' validation.  No
-            constraints are checked and the method does its best to convert
-            anything reasonable to a value.  It may be useful when the
-            reason is not validation, but the conversion.
-          transaction -- transaction for data operations.
-          condition -- runtime filter condition for enumerator validation.
-          arguments -- runtime table function arguments for enumerator validation.
+          object -- an object to be converted to a value.  This is typically a
+            string representation of the value from user input.  See below for
+            more details.
+          strict -- when True (by default), the input object is first converted
+            to a Value instance (containing a proper internal Python
+            representation of the value) and then this value is checkend
+            against all constraints defined by the type instance.  Passing
+            False disables constraints checking so it reduces validation just
+            to conversion.  Note, that constraints may be checked individually
+            later using 'check_constraints()'.
+          transaction, condition, arguments -- used for constraints checking
+            (only when 'strict' is False) with the same meaning as defined by
+            'check_constraints()'.
           kwargs -- type specific keyword arguments
 
         Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
@@ -421,6 +426,31 @@ class Type(object):
                 kwargs['transaction'] = transaction
             if not self._enumerator.check(value, **kwargs):
                 raise self._validation_error(self.VM_INVALID_VALUE)
+
+    def check_constraints(self, value, transaction=None, condition=None, arguments=None):
+        """Check if 'value' matches all constraints defined by this type instance.
+
+        Arguments:
+
+          value -- internal Python representation of a value of given type as
+            returned by 'Value.value()'.
+          transaction -- transaction for data operations.  Only needed if the
+            type defines an enumerator, which is a 'TransactionalEnumerator'
+            instance.
+          condition -- runtime filter condition for enumerator validation.
+            Only needed if the type defines an enumerator.
+          arguments -- runtime table function arguments for enumerator
+            validation.  Only needed if the type defines an enumerator which
+            operates on a table function.
+
+        """
+        try:
+            self._check_constraints(value, transaction=transaction,
+                                    condition=condition, arguments=arguments)
+        except ValidationError as error:
+            return error
+        else:
+            return None
 
     def not_null(self):
         """Return true if values of this type may not be empty."""

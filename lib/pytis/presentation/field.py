@@ -413,7 +413,7 @@ class PresentedRow(object):
             if self.validated(key):
                 error = self.validation_error(key)
             else:
-                error = self.validate(key, self.format(key))
+                error = self._check_constraints(self._coldict[key], self[key])
             return error is None
         if not cval:
             result = None
@@ -431,6 +431,27 @@ class PresentedRow(object):
         else:
             result = cval.value
         return result
+
+    def _check_constraints(self, column, value):
+        kwargs = dict(transaction=self._transaction)
+        if column.runtime_filter is not None:
+            kwargs['condition'] = self.runtime_filter(column.id)
+        if column.runtime_arguments:
+            kwargs['arguments'] = self.runtime_arguments(column.id)
+        error = column.type.check_constraints(value.value(), **kwargs)
+        if ((not error and column.type.unique() and not column.virtual and
+             (self._new or value != self._initialized_original_row[column.id]) and
+             value.value() is not None)):
+            if isinstance(self._data, pytis.data.RestrictedData):
+                select_kwargs = dict(check_condition=False)
+            else:
+                select_kwargs = dict()
+            count = self._data.select(condition=pytis.data.EQ(column.id, value),
+                                      transaction=self._transaction, **select_kwargs)
+            self._data.close()
+            if count != 0:
+                error = pytis.data.ValidationError(_("Such value already exists."))
+        return error
 
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
@@ -819,26 +840,9 @@ class PresentedRow(object):
 
         """
         column = self._coldict[key]
-        ctype = column.type
-        if column.runtime_filter is not None:
-            kwargs = dict(kwargs, condition=self.runtime_filter(key))
-        if column.runtime_arguments:
-            kwargs = dict(kwargs, arguments=self.runtime_arguments(key))
-        value, error = ctype.validate(string, transaction=self._transaction, **kwargs)
-        if ((not error and ctype.unique() and not column.virtual and
-             (self._new or value != self._initialized_original_row[key]) and
-             value.value() is not None)):
-            if isinstance(self._data, pytis.data.RestrictedData):
-                select_kwargs = dict(check_condition=False)
-            else:
-                select_kwargs = dict()
-            count = self._data.select(condition=pytis.data.EQ(column.id, value),
-                                      transaction=self._transaction, **select_kwargs)
-            self._data.close()
-            if count != 0:
-                error = pytis.data.ValidationError(_("Such value already exists."))
-        if not value:
-            value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
+        value, error = column.type.validate(string, strict=False, **kwargs)
+        if not error:
+            error = self._check_constraints(column, value)
         if value and string != self.format(key):
             self.__setitem__(key, value, run_callback=False)
         column.last_validated_string = string
@@ -861,7 +865,7 @@ class PresentedRow(object):
         """Return the last validation error for given field.
 
         Returns the 'pytis.data.ValidationError' instance returned by the last
-        call to 'validate()' since the last 'set_row()' or '__setitem__(key)'
+        call to 'validate()' since the last 'set_row()' or '__setitem__()'
         call.  None is returned if the last validation was successful or if the
         field has not been validated yet.
 
