@@ -419,16 +419,22 @@ class PresentedRow(object):
             result = None
         elif cval.dirty and all(valid(key) for key in cval.depends):
             # Only invoke the computer if all input fields are valid.
-            # Otherwise return the previous value.
             cval.dirty = False
             # Reset the dirty flag before calling the computer function to allow
             # the computer function to retrieve the original value without recursion.
             result = cval.value = cval.function(self)
         elif cval.fallback is not UNDEFINED:
+            # If inputs are not valid return the fallback value (if defined).
             result = cval.fallback
         elif old_value is not UNDEFINED:
+            # And if no fallback is defined, return the previous value.  Previous
+            # value may be passed as argument when kept outside the ComputedValue
+            # instance (this is the case for the actual field value, which is in
+            # self._row or self._virtual).
             result = old_value
         else:
+            # In all other cases, the previous value is kept inside the
+            # ComputedValue instance.
             result = cval.value
         return result
 
