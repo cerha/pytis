@@ -82,7 +82,18 @@ class PresentedRow(object):
     class ProtectionError(Exception):
         """Exception raised on column protection violations."""
 
-    class _Column:
+    class _Column(object):
+
+        class ComputedValue(object):
+            def __init__(self, column, computer, callback):
+                self.column = column
+                self.callback = callback
+                self.function = computer.function()
+                self.depends = computer.depends()
+                self.fallback = computer.fallback()
+                self.dirty = True
+                self.value = None
+
         def __init__(self, fspec, data, resolver):
             self.id = fspec.id()
             self.data_column = data.find_column(self.id)
@@ -151,7 +162,7 @@ class PresentedRow(object):
                     if not isinstance(computer, Computer):
                         value = computer
                         computer = Computer(lambda r: value, depends=())
-                return PresentedRow._ComputedValue(self, computer, callback)
+                return self.ComputedValue(self, computer, callback)
 
             self.computer = cval(computer, PresentedRow.CALL_CHANGE)
             self.editable = cval(fspec.editable(), PresentedRow.CALL_EDITABILITY_CHANGE)
@@ -163,17 +174,6 @@ class PresentedRow(object):
 
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
-
-    class _ComputedValue():
-
-        def __init__(self, column, computer, callback):
-            self.column = column
-            self.callback = callback
-            self.function = computer.function()
-            self.depends = computer.depends()
-            self.fallback = computer.fallback()
-            self.dirty = True
-            self.value = None
 
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
@@ -252,7 +252,7 @@ class PresentedRow(object):
         for column in columns:
             # Remember which computed values depend on each field (this the opposite
             # direction than what is defined in specifications).  column.dependent
-            # will include a list of all _ComputedValue instances which depend on
+            # will include a list of all ComputedValue instances which depend on
             # given column's value.
             for cval in (column.computer, column.editable, column.visible, column.check,
                          column.runtime_filter, column.runtime_arguments):
@@ -390,7 +390,7 @@ class PresentedRow(object):
         self._run_callback(self.CALL_CHANGE, None)
 
     def _resolve_dependencies(self, computed_values):
-        # Handle recomputations for given list of _ComputedValue instances.
+        # Handle recomputations for given list of ComputedValue instances.
         for cval in computed_values:
             # First mark all depending values as dirty and only then start
             # invoking callbacks.  Otherwise the callbacks would se an
