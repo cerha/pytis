@@ -383,19 +383,16 @@ class Type(object):
         return Value(self, None), None
 
     def wm_validate(self, object):
-        """Zvaliduj objekt pro wildcard matching.
+        """Validate object for wildcard matching.
 
-        Argumenty:
+        Arguments:
 
-          object -- validovaný objekt, string
+          object -- validated object, string
 
-        Vrací: dvojici (VALUE, ERROR).  VALUE je instance třídy 'WMValue'
-        (je-li 'object' správný) nebo je 'None' (je-li 'object' nesprávný).
-        Je-li 'object' správný, je ERROR 'None', v opačném případě je instancí
-        třídy 'ValidationError', která obsahuje popis chyby.
-
-        Ne všechny typy musí tento druh validace podporovat.  Ty, které
-        nepodporují, vrací dvojici (None, ERROR).
+        Returns: pair (VALUE, ERROR).  When given 'object' is valid and can be
+        used for wildcard matching, VALUE is a 'WMValue' instance () and ERROR
+        is 'None'.  In the other case VALUE is None and ERROR is a
+        'ValidationError' instance containing error description.
 
         """
         msg = _(u"Wildcard matching not supported for values of type '%s'.")
@@ -473,18 +470,20 @@ class Type(object):
         return self._init_args
 
     def export(self, value, *args, **kwargs):
-        """Vrať stringovou reprezentaci 'value' schopnou validace.
+        """Return a valid string reprezentation of 'value'.
 
-        'value' je hodnota vrácená metodou 'Value.value' z objektu vytvořeného
-        v metodě 'validate' na základě *string* parametru.  Pro objekty vzniklé
-        z argumentu 'validate', který nebyl string, je chování této metody
-        nedefinováno.  Výjimkou je hodnota 'None', pro kterou všechny typy,
-        v jejichž dokumentaci není řečeno jinak, vrací prázdný string.
+        'value' is the internal Python representation of a value of given
+        type as returned by 'Value.value()'.
 
-        V této třídě metoda vrací výsledek operátoru '``', pouze pro 'value'
-        rovno 'None' vrací prázdný string.  Potomci třídy nechť tuto metodu
-        nepředefinovávají, neboť metoda může provádět i různé doplňující akce;
-        nechť potomci předefinovávají metodu `_export()'.
+        When 'value' is None, most types (whose documentation doesnt't say
+        otherwise) return an empty string.
+
+        In any case, the returned value should always be a valid representation
+        which can be converted back to an internal Python representation of the
+        value using 'validate()'
+
+        Derived classes should not override this method.  They should override
+        '_export()' instead.
 
         """
         special = assoc(value, self._SPECIAL_VALUES)
