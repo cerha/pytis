@@ -866,7 +866,10 @@ class PresentedRow(object):
 
         """
         column = self._coldict[key]
-        return column.last_validated_string if column.last_validation_error else None
+        if column.last_validation_error:
+            return column.last_validated_string
+        else:
+            return None
 
     def validation_error(self, key):
         """Return the last validation error for given field.
