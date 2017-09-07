@@ -1406,12 +1406,10 @@ class RegexString(String):
         else:
             self._regex = re.compile(regex)
 
-    def _validate(self, string, *args, **kwargs):
-        # TODO: Shall we rather do the regexp check in _check_constraints?
-        value, error = super(RegexString, self)._validate(string, *args, **kwargs)
-        if error is None and self._regex.match(string) is None:
-            value, error = None, self._validation_error(self.VM_FORMAT)
-        return value, error
+    def _check_constraints(self, value, **kwargs):
+        super(RegexString, self)._check_constraints(value, **kwargs)
+        if value is not None and not self._regex.match(value):
+            raise self._validation_error(self.VM_FORMAT)
 
 
 class Color(RegexString):
