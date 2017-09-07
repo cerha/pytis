@@ -410,10 +410,11 @@ class PresentedRow(object):
 
     def _computed_value(self, cval, old_value=UNDEFINED):
         def valid(key):
-            if self.validated(key):
-                error = self.validation_error(key)
+            column = self._coldict[key]
+            if column.last_validated_string is not None:
+                error = column.last_validation_error
             else:
-                error = self._check_constraints(self._coldict[key], self[key])
+                error = self._check_constraints(column, self[key])
             return error is None
         if not cval:
             result = None
