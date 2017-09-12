@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2017
 # Python Software Foundation.
 # All rights reserved.
 
@@ -91,7 +91,7 @@ class Unparser:
         interleave(lambda: self.write(", "), self.dispatch, t.names)
 
     def _ImportFrom(self, t):
-        # A from __future__ import may affect unparsing, so record it.
+        # Importing from __future__ may affect unparsing, so record it.
         if t.module and t.module == '__future__':
             self.future_imports.extend(n.name for n in t.names)
 
@@ -317,7 +317,7 @@ class Unparser:
 
     # expr
     def _Str(self, tree):
-        # if from __future__ import unicode_literals is in effect,
+        # If unicode literals are in effect (imported from __future__),
         # then we want to output string literals using a 'b' prefix
         # and unicode literals with no prefix.
         if "unicode_literals" not in self.future_imports:
