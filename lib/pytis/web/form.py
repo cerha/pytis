@@ -1348,7 +1348,6 @@ class BrowseForm(LayoutForm):
         else:
             self._query_fields_form = None
         self._current_profile = None
-        lcg.log('::', profiles)
         if profiles:
             profile_id = query_fields_row['profile'].value() or profiles.default()
             profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
