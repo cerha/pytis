@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-08-28 22:39+0200\n"
+"POT-Creation-Date: 2017-09-12 21:35+0200\n"
 "PO-Revision-Date: 2011-12-29 12:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: French <wiking@lists.freebsoft.org>\n"
@@ -74,7 +74,7 @@ msgstr ""
 msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3853
+#: ../lib/pytis/data/postgresql.py:3869
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Date ou heure non valide"
@@ -252,7 +252,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:880
+#: ../lib/pytis/presentation/field.py:887
 msgid "Such value already exists."
 msgstr ""
 

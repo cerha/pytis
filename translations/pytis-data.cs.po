@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2006-2015 Brailcom, o.p.s.
+# Copyright (C) 2006-2017 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-08-28 22:39+0200\n"
-"PO-Revision-Date: 2015-08-26 14:14+0200\n"
+"POT-Creation-Date: 2017-09-12 21:35+0200\n"
+"PO-Revision-Date: 2017-09-12 21:37+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -46,9 +46,8 @@ msgid "Database operational error"
 msgstr "Chyba databázové operace"
 
 #: ../lib/pytis/data/dbapi.py:256
-#, fuzzy
 msgid "Database internal error"
-msgstr "Chyba v databázovém rozhraní"
+msgstr "Interní databázová chyba"
 
 #: ../lib/pytis/data/dbapi.py:260
 msgid "Database integrity violation"
@@ -76,7 +75,7 @@ msgid "Application error. You can report it to get it fixed soon."
 msgstr ""
 "Chyba aplikace. Můžete ji nyní nahlásit, aby mohla být co nejdříve opravena."
 
-#: ../lib/pytis/data/postgresql.py:3853
+#: ../lib/pytis/data/postgresql.py:3869
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -245,7 +244,7 @@ msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 msgid "unlimited"
 msgstr "neomezeno"
 
-#: ../lib/pytis/presentation/field.py:880
+#: ../lib/pytis/presentation/field.py:887
 msgid "Such value already exists."
 msgstr "Taková hodnota již existuje"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-08-28 23:15+0200\n"
+"POT-Creation-Date: 2017-09-12 21:37+0200\n"
 "PO-Revision-Date: 2017-01-31 18:52+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -18,13 +18,110 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
+#: ../bin/pokus.py:80
+msgid "Login name:"
+msgstr "Uživatelské jméno:"
+
+#: ../bin/pokus.py:96
+msgid "Existing sessions:"
+msgstr "Existující sezení:"
+
+#: ../bin/pokus.py:101
+msgid "Resume"
+msgstr "Obnovit"
+
+#: ../bin/pokus.py:102 ../bin/x2goclient.py:1633
+msgid "Terminate"
+msgstr "Ukončit"
+
+#: ../bin/pokus.py:105
+#, fuzzy
+msgid "Start New Session"
+msgstr "Nové sezení"
+
+#: ../bin/pokus.py:124
+#, fuzzy
+msgid "Select SSH key file"
+msgstr "Vyberte ssh klíč"
+
+#: ../bin/pokus.py:126
+#, fuzzy
+msgid "Key File:"
+msgstr "Soubor s klíčem:"
+
+#: ../bin/pokus.py:128
+#, fuzzy
+msgid "Select"
+msgstr "Vyberte sezení"
+
+#: ../bin/pokus.py:129
+msgid "Passphrase:"
+msgstr "Heslo:"
+
+#: ../bin/pokus.py:138
+#, fuzzy
+msgid "Password:"
+msgstr "Zadání hesla"
+
+#: ../bin/pokus.py:143
+#, fuzzy
+msgid "Authentication"
+msgstr "Výchozí autentizace selhala"
+
+#: ../bin/pokus.py:155
+msgid "Trying password or public key authentication."
+msgstr "Zkouším autentizaci heslem nebo veřejným klíčem."
+
+#: ../bin/pokus.py:157
+msgid "Public Key"
+msgstr "Veřejný klíč"
+
+#: ../bin/pokus.py:158
+#, fuzzy
+msgid "Password"
+msgstr "Zadání hesla"
+
+#: ../bin/pokus.py:162
+msgid "Trying public key authentication."
+msgstr "Zkouším autentizaci veřejným klíčem."
+
+#: ../bin/pokus.py:166
+msgid "Trying password authentication."
+msgstr "Zkouším autentizaci heslem."
+
+#: ../bin/pokus.py:170
+#, fuzzy
+msgid "No supported SSH connection method available"
+msgstr "Není dostupná žádná metoda spojení přes ssh"
+
+#: ../bin/pokus.py:174
+msgid "Log in"
+msgstr "Přihlášení"
+
+#: ../bin/pokus.py:175 ../bin/x2goclient.py:1633
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: ../bin/pokus.py:197 ../bin/x2goclient.py:325
+msgid "Starting application"
+msgstr "Start aplikace"
+
+#: ../bin/pokus.py:207
+#, fuzzy
+msgid "Initializing libraries."
+msgstr "Inicializace knihoven. Vyčkejte prosím..."
+
+#: ../bin/pokus.py:209
+msgid "Trying Kerberos authentication."
+msgstr "Zkouším autentizaci přes Kerberos."
+
+#: ../bin/pokus.py:211
+msgid "Trying SSH Agent authentication."
+msgstr "Zkouším autentizaci pomocí SSH agenta."
+
 #: ../bin/x2goclient.py:186
 msgid "User name"
 msgstr "Uživatelské jméno"
-
-#: ../bin/x2goclient.py:325
-msgid "Starting application"
-msgstr "Start aplikace"
 
 #: ../bin/x2goclient.py:325
 msgid "Initializing libraries. Please wait..."
@@ -165,14 +262,6 @@ msgstr "Nové sezení"
 msgid "OK"
 msgstr "Budiž"
 
-#: ../bin/x2goclient.py:1633
-msgid "Terminate"
-msgstr "Ukončit"
-
-#: ../bin/x2goclient.py:1633
-msgid "Cancel"
-msgstr "Zrušit"
-
 #: ../bin/x2goclient.py:1634
 msgid "Resume session"
 msgstr "Obnova sezení"
@@ -197,67 +286,6 @@ msgstr "Autentizace. Vyčkejte prosím..."
 #: ../bin/x2goclient.py:2142
 msgid "Launching application. Please wait..."
 msgstr "Spouštění aplikace. Vyčkejte prosím..."
-
-#~ msgid "Login name:"
-#~ msgstr "Uživatelské jméno:"
-
-#~ msgid "Existing sessions:"
-#~ msgstr "Existující sezení:"
-
-#~ msgid "Resume"
-#~ msgstr "Obnovit"
-
-#, fuzzy
-#~ msgid "Start New Session"
-#~ msgstr "Nové sezení"
-
-#, fuzzy
-#~ msgid "Key File:"
-#~ msgstr "Soubor s klíčem:"
-
-#, fuzzy
-#~ msgid "Select"
-#~ msgstr "Vyberte sezení"
-
-#~ msgid "Passphrase:"
-#~ msgstr "Heslo:"
-
-#, fuzzy
-#~ msgid "Password:"
-#~ msgstr "Zadání hesla"
-
-#, fuzzy
-#~ msgid "Authentication"
-#~ msgstr "Výchozí autentizace selhala"
-
-#~ msgid "Trying password or public key authentication."
-#~ msgstr "Zkouším autentizaci heslem nebo veřejným klíčem."
-
-#~ msgid "Public Key"
-#~ msgstr "Veřejný klíč"
-
-#, fuzzy
-#~ msgid "Password"
-#~ msgstr "Zadání hesla"
-
-#~ msgid "Trying public key authentication."
-#~ msgstr "Zkouším autentizaci veřejným klíčem."
-
-#~ msgid "Trying password authentication."
-#~ msgstr "Zkouším autentizaci heslem."
-
-#~ msgid "Log in"
-#~ msgstr "Přihlášení"
-
-#, fuzzy
-#~ msgid "Initializing libraries."
-#~ msgstr "Inicializace knihoven. Vyčkejte prosím..."
-
-#~ msgid "Trying Kerberos authentication."
-#~ msgstr "Zkouším autentizaci přes Kerberos."
-
-#~ msgid "Trying SSH Agent authentication."
-#~ msgstr "Zkouším autentizaci pomocí SSH agenta."
 
 #~ msgid "Can't read RPyC info file: %s"
 #~ msgstr "Nelze načíst soubor s informacemi pro RPyC: %s"
