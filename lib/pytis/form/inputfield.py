@@ -43,8 +43,8 @@ from pytis.presentation import (
     SelectionType, TextFilter, TextFormat, computer
 )
 from pytis.util import (
-    EVENT, Popen, ProgramError, ResolverError,
-    dev_null_stream, find, format_byte_size, log, argument_names,
+    Popen, ProgramError, ResolverError,
+    dev_null_stream, find, format_byte_size, argument_names,
 )
 from command import CommandHandler, UICommand
 from dialog import Calendar, ColorSelector, Error
@@ -1106,10 +1106,12 @@ class NumericField(TextField, SpinnableField):
                                          100 or self._type.maximum()),
                                size=(200, 25))
             self._controls.append((slider, lambda c, e: c.Enable(e), lambda c, e: None))
+
             def on_slider(event):
                 ctrl.SetValue(str(slider.GetValue()))
                 self._on_change()
             wx_callback(wx.EVT_SCROLL, slider, on_slider)
+
             def on_idle(event):
                 try:
                     position = int(ctrl.GetValue())
@@ -2329,6 +2331,7 @@ class StructuredTextField(TextField):
 
     def _create_ctrl(self, parent):
         import wx.stc
+
         class TextCtrl(wx.stc.StyledTextCtrl):
             """StyledTextCtrl implementing the TextCtrl API used by parent classes.
 
@@ -2341,11 +2344,14 @@ class StructuredTextField(TextField):
                 self.ClearAll()
                 self.AppendText(text)
                 self.EmptyUndoBuffer()
+
             def GetValue(self):
                 return self.GetText()
+
             def CanCut(self):
                 start, end = self.GetSelection()
                 return start != end
+
             def CanCopy(self):
                 return self.CanCut()
         # TODO: We currently use a standard wx.TextCtrl instead of
