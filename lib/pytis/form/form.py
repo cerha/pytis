@@ -2389,6 +2389,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     value = pytis.data.Value(type, value)
                 self._row[key] = value
+        self._closed_connection_handled = False
 
     def _disable_buttons(self, w):
         for c in w.GetChildren():
@@ -2657,6 +2658,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _on_closed_connection(self):
         super(EditForm, self)._on_closed_connection()
         self._disable_buttons(self._parent)
+
+    def _on_idle(self, event):
+        if super(EditForm, self)._on_idle(event):
+            return True
+        if not self._closed_connection_handled and any(f.connection_closed() for f in self._fields):
+            self._closed_connection_handled = True
+            self._on_closed_connection()
+        return False
 
     def _commit_form(self, close=True):
         # Re-validate all fields.

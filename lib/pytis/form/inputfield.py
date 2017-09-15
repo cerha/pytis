@@ -381,6 +381,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self._inline = inline
         self._want_focus = None
         self._last_focused_ctrl = None
+        self._connection_closed = False
         if row.new():
             permission = pytis.data.Permission.INSERT
         else:
@@ -528,7 +529,11 @@ class InputField(object, KeyHandler, CommandHandler):
                 msg = None
                 if self._needs_validation:
                     self._needs_validation = False
-                    error = self._validate()
+                    try:
+                        error = self._validate()
+                    except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+                        error = None
+                        self._connection_closed = True
                     msg = error.message() if error else None
                     self._valid = error is None
                     self._on_change_hook()
@@ -790,6 +795,17 @@ class InputField(object, KeyHandler, CommandHandler):
     def insert_text(self, text):
         """Insert given text into the field in the current place of the cursor."""
         self._controls[0][0].WriteText(text)
+
+    def connection_closed(self):
+        """Return True if closed transaction was detected in background threads.
+
+        True is returned if a background database operation, such as
+        validation, caught 'pytis.data.DBRetryException' or
+        'pytis.data.DBSystemException'.  The parent form should watch for this
+        situation and react properly if necessary.
+
+        """
+        return self._connection_closed
 
 
 class Unlabeled:
