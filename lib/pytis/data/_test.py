@@ -47,6 +47,8 @@ class ValidationError(unittest.TestCase):
     def test_it(self):
         ValidationError.e = pytis.data.ValidationError(ValidationError.MESSAGE)
         self.assertEqual(ValidationError.e.message(), ValidationError.MESSAGE)
+
+
 tests.add(ValidationError)
 
 
@@ -65,6 +67,8 @@ class Value(unittest.TestCase):
         v3 = pytis.data.Value(t, 2)
         self.assertEqual(v1, v2)
         self.assertNotEqual(v1, v3)
+
+
 tests.add(Value)
 
 
@@ -124,6 +128,8 @@ class Type(_TypeCheck):
         s12 = s1.clone(s2)
         self.assertIsInstance(s12, pytis.data.RegexString)
         self.assertEqual(s12.maxlen(), 4)
+
+
 tests.add(Type)
 
 
@@ -140,6 +146,8 @@ class Integer(_TypeCheck):
         self._test_validity(limited, '3', None)
         self._test_validity(limited, '5', 5)
         self._test_validity(limited, '10', None)
+
+
 tests.add(Integer)
 
 
@@ -189,6 +197,8 @@ class Float(_TypeCheck):
         self.assertIsInstance(fval(decimal.Decimal('3.14')).value(), decimal.Decimal)
         self.assertIsInstance(fval(3.14, precision=2).value(), decimal.Decimal)
         self.assertIsInstance(fval(3.14).value(), float)
+
+
 tests.add(Float)
 
 
@@ -217,6 +227,8 @@ class String(_TypeCheck):
         self.assertEqual(t, pytis.data.String(maxlen=MAXLEN))
         self.assertNotEqual(t, self._test_instance)
         self.assertNotEqual(t, pytis.data.String(maxlen=(MAXLEN + 1)))
+
+
 tests.add(String)
 
 class Password(_TypeCheck):
@@ -258,12 +270,14 @@ class Password(_TypeCheck):
         self._test_validity(t6, '123456', None)
         self._test_validity(t6, 'abc123', 'abc123')
         self._test_validity(t6, 'abc abc', 'abc abc')
+
         def strength(password):
             if password and password[0] != 'X':
                 return "Not an eXtreme password!"
         t7 = pytis.data.Password(strength=strength)
         self._test_validity(t7, 'abc', None)
         self._test_validity(t7, 'Xabc', 'Xabc')
+
 
 tests.add(Password)
 
@@ -280,6 +294,8 @@ class Color(_TypeCheck):
         t = pytis.data.Color()
         self.assertNotEqual(t, pytis.data.String())
         self.assertEqual(t, self._test_instance)
+
+
 tests.add(Color)
 
 class DateTime(_TypeCheck):
@@ -323,6 +339,8 @@ class DateTime(_TypeCheck):
         val2 = datetime.datetime(1841, 7, 2, 1, 2, 3, tzinfo=tzinfo)
         result2 = exp(val2, format='%d.%m.%Y')
         self.assertEqual(result2, '02.07.1841')
+
+
 tests.add(DateTime)
 
 class ISODateTime(_TypeCheck):
@@ -357,6 +375,8 @@ class ISODateTime(_TypeCheck):
         self.assertEqual(result, '2012-01-23 10:14:39.023104+00:00',
                          ('Invalid date export', result))
         self.assertEqual(v.primitive_value(), '2012-01-23 10:14:39.023104+00:00')
+
+
 tests.add(ISODateTime)
 
 class Date(_TypeCheck):
@@ -382,6 +402,8 @@ class Date(_TypeCheck):
         value = pytis.data.date_and_time(date_value, time_value)
         self.assertEqual(value, datetime.datetime(2001, 2, 3, 2, 4, 6,
                                                   tzinfo=pytis.data.DateTime.LOCAL_TZINFO))
+
+
 tests.add(Date)
 
 class Time(_TypeCheck):
@@ -415,6 +437,8 @@ class Time(_TypeCheck):
         val = v.value()
         result = exp(val, **vkwargs)
         self.assertEqual(result, '01:02:03', ('Invalid time export', result))
+
+
 tests.add(Time)
 
 class TimeInterval(_TypeCheck):
@@ -434,6 +458,8 @@ class TimeInterval(_TypeCheck):
         self.assertEqual(exported, '00:00', (value, exported,))
         exported = value.export(format='%H')
         self.assertEqual(exported, '25', (value, exported,))
+
+
 tests.add(TimeInterval)
 
 class TimeInterval2(_TypeCheck):
@@ -449,6 +475,8 @@ class TimeInterval2(_TypeCheck):
         self.assertEqual(exported, '00:00', (value, exported,))
         exported = value.export(format='%H')
         self.assertEqual(exported, '25', (value, exported,))
+
+
 tests.add(TimeInterval2)
 
 
@@ -463,6 +491,8 @@ class Boolean(_TypeCheck):
         self._test_validity(None, '0', None)
     def test_noncmp(self):
         self.assertNotEqual(self._test_instance, pytis.data.String())
+
+
 tests.add(Boolean)
 
 
@@ -478,6 +508,8 @@ class Array(_TypeCheck):
         cls = self._test_instance.__class__
         inner_type = self._test_instance.inner_type()
         self.assertEqual(cls(inner_type=inner_type), cls(inner_type=inner_type))
+
+
 tests.add(Array)
 
 
@@ -534,6 +566,8 @@ class DataEnumerator(unittest.TestCase):
         e = self.cb1.enumerator()
         r = e.row('2')
         self.assertEqual(r['y'].value(), 'b', ('Unexpected value', r['y'].value()))
+
+
 tests.add(DataEnumerator)
 
 class FixedEnumerator(unittest.TestCase):
@@ -549,6 +583,8 @@ class FixedEnumerator(unittest.TestCase):
         self.assertFalse(e.check('1'))
     def test_values(self):
         self.assertEqual(self._enumerator.values(), self._values)
+
+
 tests.add(FixedEnumerator)
 
 
@@ -578,6 +614,8 @@ class ColumnSpec(unittest.TestCase):
         self.assertEqual(self._test_instance, x)
         self.assertNotEqual(self._test_instance, y)
         self.assertNotEqual(self._test_instance, z)
+
+
 tests.add(ColumnSpec)
 
 
@@ -629,6 +667,8 @@ class Row(unittest.TestCase):
         self.assertEqual(r['x'].value(), 1)
         self.assertEqual(r['y'].value(), 2)
         self.assertEqual(r['z'].value(), 3)
+
+
 tests.add(Row)
 
 
@@ -661,6 +701,8 @@ class Data(unittest.TestCase):
         v2 = sval('xxx')
         row = pytis.data.Row((('foo', v1), ('bar', v2)))
         self.assertEqual(self._data.row_key(row), (v1,))
+
+
 tests.add(Data)
 
 
@@ -704,6 +746,8 @@ class MemData(unittest.TestCase):
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]['b'].value(), 'Will')
         self.assertEqual(rows[1]['b'].value(), 'Bill')
+
+
 tests.add(MemData)
 
 
@@ -734,6 +778,8 @@ class DataFactory(unittest.TestCase):
         data = factory.create(key=key)
         self.assertEqual(data.columns(), columns)
         self.assertEqual(data.key(), key)
+
+
 tests.add(DataFactory)
 
 
@@ -790,6 +836,8 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(c, c2)
         c3 = c.select(None)
         self.assertEqual(c, c3)
+
+
 tests.add(DBConnection)
 
 
@@ -797,6 +845,8 @@ class DBBinding(unittest.TestCase):
     def test_it(self):
         b = pytis.data.DBBinding('foo')
         self.assertEqual(b.id(), 'foo')
+
+
 tests.add(DBBinding)
 
 
@@ -822,6 +872,8 @@ class DBColumnBinding(unittest.TestCase):
         self.assertEqual(b2.column(), 'sloupec')
         self.assertEqual(b2.related_to(), b1)
         self.assertFalse(b2.is_hidden(), 'secret column')
+
+
 tests.add(DBColumnBinding)
 
 
@@ -839,6 +891,8 @@ class DBExceptions(unittest.TestCase):
         de = pytis.data.DBLoginException()
         m = de.message()
         self.assertTrue(isinstance(m, basestring) and len(m) > 0, ('Invalid message', m))
+
+
 tests.add(DBExceptions)
 
 
@@ -851,6 +905,8 @@ class DBData(unittest.TestCase):
         self.assertEqual(map(lambda c: c.id(), d.columns()), ['foo', 'bar'])
         self.assertEqual(len(d.key()), 1, ('invalid number of keys', d.key()))
         self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
+
+
 tests.add(DBData)
 
 
@@ -1324,6 +1380,7 @@ class DBDataDefault(_DBTest):
             rows.append(row)
         self.data.close()
         self.assertEqual(len(rows), 2)
+
         def nrows_test(condition, nrows):
             self.dcosi.select(condition)
             n = 0
@@ -1455,6 +1512,7 @@ class DBDataDefault(_DBTest):
         d = self._dcosi_condition
         self.assertIsNone(d.row(ival(2)), 'Excluded row found in limited data object')
         self.assertIsNotNone(d.row(ival(3)), 'Row not found in limited data object')
+
         def test_select(condition, n):
             d.select(condition=condition)
             try:
@@ -1675,6 +1733,7 @@ class DBDataDefault(_DBTest):
                          "Wrong ts_config for full text search tests.\n"
                          "Use the following SQL command as a database owner to fix it:\n"
                          "ALTER DATABASE ... SET default_text_search_config to 'simple';")
+
         def check(query, result_set):
             condition = pytis.data.FT('index', query)
             self.fulltext.select(condition=condition, sort=('index',))
@@ -1686,6 +1745,7 @@ class DBDataDefault(_DBTest):
                 result_ids.append(row[0].value())
             self.fulltext.close()
             self.assertEqual(result_set, result_ids)
+
         def check1(query, result_set):
             condition = pytis.data.FT('index', query)
             self.fulltext1.select(condition=condition, sort=('index',))
@@ -1720,6 +1780,7 @@ class DBDataDefault(_DBTest):
         t_val = V(pytis.data.Time(without_timezone=True), moment.time())
         ttz_val = V(pytis.data.Time(), moment_tz.timetz())
         key_val = pytis.data.ival(1)
+
         def check_row():
             row = data.row(key_val)
             self.assertEqual(row['dt'], dt_val)
@@ -1795,16 +1856,20 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(row)
         value = row[1].value()
         self.assertIsNone(value)
+
         # Range operators
         def test_condition(n_rows, condition):
             try:
                 self.assertEqual(n_rows, data.select(condition))
             finally:
                 data.close()
+
         def irange(x, y):
             return pytis.data.Value(IR, IR.Range(x, y))
+
         def irange2(x, y):
             return pytis.data.Value(IR2, IR2.Range(x, y))
+
         def drange(x, y):
             return pytis.data.Value(DR, (datetime.datetime(*x), datetime.datetime(*y),))
         test_condition(1, pytis.data.RangeContains('r', irange(15, 18)))
@@ -1970,6 +2035,7 @@ class DBDataDefault(_DBTest):
     def _perform_transaction(self, transaction):
         d = self.dstat
         d1 = self.dstat1
+
         def v(s):
             return pytis.data.String().validate(s)[0]
         i_row0 = pytis.data.Row((('stat', v('cs'),), ('nazev', v('Cesko'),)))
@@ -2035,6 +2101,7 @@ class DBDataDefault(_DBTest):
                                  ('invalid value', k, result['nazev'].value(),))
     def test_partial_transaction(self):
         d = self.dstat
+
         def v(s):
             return pytis.data.String().validate(s)[0]
         row1 = pytis.data.Row((('stat', v('xx'),), ('nazev', v('Xaxa'),),))
@@ -2056,6 +2123,8 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(d.row(row1['stat']), 'missing row')
         self.assertIsNone(d.row(row2['stat']), 'extra row')
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
+
+
 tests.add(DBDataDefault)
 
 
@@ -2193,6 +2262,7 @@ class DBMultiData(DBDataDefault):
         self.assertEqual(d.update(row[0], row1)[0][:-1], row1, 'update failed')
     def test_delete(self):
         d = self.mdata
+
         def lines(keys, self=self):
             n = len(keys)
             result = self._sql_command('select id from denik order by id')
@@ -2209,6 +2279,8 @@ class DBMultiData(DBDataDefault):
         lines((2, 3, 4))
         self.assertEqual(d.delete(pytis.data.Integer().validate('4')[0]), 1, 'column not deleted')
         lines((2, 3))
+
+
 if False:
     tests.add(DBMultiData)
 
@@ -2289,6 +2361,8 @@ class DBDataFetchBuffer(_DBBaseTest):
         # problémů...  TODO: Co s tím??
         # self._check_skip_fetch(d2, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
         # self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
+
+
 tests.add(DBDataFetchBuffer)
 
 
@@ -2309,6 +2383,8 @@ class DBDataReuse(DBDataFetchBuffer):
         d.select(reuse=True)
         row = d.fetchone()
         self.assertEqual(row['x'].value(), 0, ('Invalid result', str(row), 0))
+
+
 tests.add(DBDataReuse)
 
 
@@ -2357,6 +2433,8 @@ class DBDataOrdering(_DBTest):
         self.assertEqual(result['popis'].value(), 'bla bla',
                          ('Unexpected value', result['popis'].value()))
         d.close()
+
+
 tests.add(DBDataOrdering)
 
 
@@ -2510,6 +2588,8 @@ class DBDataAggregated(DBDataDefault):
             self.assertEqual(count, 3, ('Unexpected number of aggregate rows', count))
         finally:
             data.close()
+
+
 tests.add(DBDataAggregated)
 
 
@@ -2552,6 +2632,8 @@ class DBDataNotification(DBDataDefault):
         self.assertEqual(d.change_number(), cnumber_1 + 1, (cnumber_1, d.change_number(),))
         self.assertEqual(self.data.change_number(), cnumber_2 + 1,
                          (cnumber_2, self.data.change_number(),))
+
+
 tests.add(DBDataNotification)
 
 
@@ -2575,6 +2657,8 @@ class DBCounter(_DBBaseTest):
     def test_next(self):
         self.assertEqual(self._counter.next(), 1)
         self.assertEqual(self._counter.next(), 2)
+
+
 tests.add(DBCounter)
 
 
@@ -2686,6 +2770,8 @@ class DBFunction(_DBBaseTest):
                              pytis.data.Integer().validate('10')[0]),))
         result = [col.value() for col in function.call(row)[0]]
         self.assertEqual(result, [10, 12], ('Invalid result', result))
+
+
 tests.add(DBFunction)
 
 
@@ -2733,6 +2819,8 @@ class DBSearchPath(_DBTest):
             self.assertTrue(len(keys) == 1 and keys[0] == 'sk', ('Invalid result', keys,))
         test(['special'])
         test(['special', 'public'])
+
+
 tests.add(DBSearchPath)
 
 class DBCrypto(_DBBaseTest):
@@ -2773,6 +2861,7 @@ class DBCrypto(_DBBaseTest):
         _DBBaseTest.tearDown(self)
     def test_basic(self):
         data = self._data
+
         def check(expected, **kwargs):
             n = data.select(**kwargs)
             try:
@@ -2814,6 +2903,8 @@ class DBCrypto(_DBBaseTest):
               sort=('y',))
         data.delete_many(pytis.data.GT('y', fval(-10.0)))
         check(())
+
+
 tests.add(DBCrypto)
 
 
@@ -2848,6 +2939,7 @@ class TutorialTest(_DBBaseTest):
     def test_it(self):
         # set up
         connection = pytis.data.DBConnection(**_connection_data)
+
         def get_connection(connection=connection):
             return connection
         C = pytis.data.DBColumnBinding
@@ -2896,6 +2988,8 @@ class TutorialTest(_DBBaseTest):
             # shut down
             cis_data.sleep()
             tab_data.sleep()
+
+
 tests.add(TutorialTest)
 
 
@@ -2965,6 +3059,8 @@ class AccessRightsTest(_DBBaseTest):
         self.assertTrue(a.permitted(P.UPDATE, ('group3',)), 'Invalid permission')
         self.assertTrue(a.permitted(P.VIEW, ('group3',)), 'Invalid permission')
         self.assertTrue(not a.permitted(P.VIEW, ('group4',)), 'Invalid permission')
+
+
 tests.add(AccessRightsTest)
 
 
@@ -3001,6 +3097,7 @@ class ThreadTest(_DBBaseTest):
         thr = []
         for i in xrange(10):
             thr.append(False)
+
         def go1(n, startx, thr=thr):
             for i in xrange(nrepeat):
                 key = I.validate('%d' % (i + startx,))[0]
@@ -3008,6 +3105,7 @@ class ThreadTest(_DBBaseTest):
                 d1.insert(row)
                 d1.delete(key)
             thr[n] = True
+
         def go2(n, startx, thr=thr):
             for i in xrange(nrepeat):
                 key = I.validate('%d' % (i + startx,))[0]
@@ -3027,6 +3125,8 @@ class ThreadTest(_DBBaseTest):
             else:
                 end = True
             time.sleep(1)
+
+
 if False:
     tests.add(ThreadTest)
 
@@ -3094,6 +3194,8 @@ class OperatorTest(_DBBaseTest):
         self.assertNotEqual(b, c)
         self.assertNotEqual(a, d)
         self.assertNotEqual(d, e)
+
+
 tests.add(OperatorTest)
 
 ################
@@ -3106,6 +3208,7 @@ def get_tests():
 def go():
     unittest.main(defaultTest='get_tests',
                   argv=pytis.util.test.transform_args())
+
 
 if __name__ == '__main__':
     go()
