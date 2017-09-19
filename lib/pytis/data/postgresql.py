@@ -3609,7 +3609,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if self._pg_select_transaction.open():
                 query = self._pdbb_command_close_select.update(args)
                 transaction = self._pg_select_transaction
-                self._pg_query(query, transaction=transaction)
+                try:
+                    self._pg_query(query, transaction=transaction)
+                except DBRetryException:
+                    # Do nothing when the connection is allready closed
+                    # (e.g. when db server closed connection because of long inactivity)
+                    pass
         self._pg_select_transaction = None
         # Flush cached data
         self._pg_buffer.reset()
