@@ -1076,14 +1076,16 @@ class StartupController(object):
         return parameters
 
     def select_profile(self, profile_id):
-        profile = self._profiles.broker_selectsession(profile_id)
-        rootless = profile.get('rootless', True)
-        if not rootless or int(rootless) == 0:
-            self._xserver_variant = 'VcXsrv_pytis_desktop'
         self._session_parameters.update(
             (k, v) for k, v in self._profile_session_parameters(profile_id).items()
             if k not in self._force_parameters
         )
+        profile = self._profiles.broker_selectsession(profile_id)
+        rootless = profile.get('rootless', True)
+        if not rootless or int(rootless) == 0:
+            self._xserver_variant = 'VcXsrv_pytis_desktop'
+            self._session_parameters['session_type'] = 'desktop'
+            self._session_parameters['geometry'] = 'maximize'
 
     def current_version(self):
         return X2GOCLIENT_VERSION

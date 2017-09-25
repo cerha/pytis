@@ -1146,6 +1146,7 @@ class PytisClient(pyhoca.cli.PyHocaCLI):
                     rootless = False
                 if not rootless:
                     variant = 'VcXsrv_pytis_desktop'
+                    params['session_type'] = 'desktop'
                 else:
                     variant = XSERVER_VARIANT_DEFAULT
                 self._X2GoClient__start_xserver_pytis(variant=variant)
