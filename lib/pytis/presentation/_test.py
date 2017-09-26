@@ -34,7 +34,8 @@ class PresentedRow(unittest.TestCase):
         self.longMessage = True
         self._columns = (
             pd.ColumnSpec('a', pd.Integer(not_null=True)),
-            pd.ColumnSpec('b', pd.Integer(not_null=True)),
+            pd.ColumnSpec('b', pd.Integer(not_null=True,
+                                          enumerator=pd.FixedEnumerator(range(101))),),
             pd.ColumnSpec('c', pd.Integer(not_null=True)),
             pd.ColumnSpec('d', pd.Integer()),
             pd.ColumnSpec('r', pd.IntegerRange()))
@@ -53,7 +54,7 @@ class PresentedRow(unittest.TestCase):
             return total > 5
         self._fields = (
             pp.Field('a'),
-            pp.Field('b'),
+            pp.Field('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0)),
             pp.Field('c', default=lambda: 5),
             pp.Field('d', editable=gt5, computer=twice),
             pp.Field('e', type=pd.Integer(), virtual=True, default=88),
@@ -208,11 +209,22 @@ class PresentedRow(unittest.TestCase):
         self._set(row, c=2)
         self.assertEqual(row['total'].value(), 5)
         self.assertFalse(enabled[0])
+
+    def test_runtime_filter(self):
+        def enum(row, key):
+            return tuple(x for x, display in row.enumerate('b'))
+        row = self._row(a=20, b=0, c=5)
+        self.assertEqual(enum(row, 'b'), (0, 20, 40, 60, 80, 100))
+
+    def test_enumeration_callbacks(self):
+        pass
+
     def test_has_key(self):
         row = self._row()
         self.assertIn('a', row)
         self.assertIn('inc', row)
         self.assertNotIn('blabla', row)
+
     def test_changed(self):
         row = self._row()
         self.assertFalse(row.changed())
@@ -224,7 +236,7 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.field_changed('a'))
         self.assertFalse(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
-        self._set(row, b=333)
+        self._set(row, b=7)
         self.assertFalse(row.field_changed('a'))
         self.assertTrue(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
@@ -236,12 +248,14 @@ class PresentedRow(unittest.TestCase):
     def test_keys(self):
         row = self._row()
         self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))
+
     def test_format(self):
         row = self._row(singleline=True, r=(8, 9))
         r1 = row.format('r')
         r2 = row.format('r', single=False)
         self.assertEqual(r1, u'8 — 9')
         self.assertEqual(r2, ('8', '9'))
+
     def test_display(self):
         C = pd.ColumnSpec
         S = pd.String
@@ -266,16 +280,18 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.display('b'), 'SECOND')
         self.assertEqual(row.display('c'), '-3-')
         self.assertEqual(row.display('d'), 'first')
+
     def test_depends(self):
         row = self._row()
-        any = ('a', 'b', 'c', 'd', 'e', 'total', 'inc')
-        self.assertFalse(row.depends('a', any))
+        self.assertFalse(row.depends('a', (x for x in row.keys() if x != 'b')))
         self.assertFalse(row.depends('b', ('a', 'b', 'c')))
+        self.assertFalse(row.depends('c', ('b',)))
+        self.assertFalse(row.depends('b', ('c',)))
         self.assertTrue(row.depends('b', ('d',)))
         self.assertTrue(row.depends('b', ('a', 'b', 'c', 'd')))
         self.assertTrue(row.depends('c', ('d',)))
-        self.assertFalse(row.depends('d', any))
-        self.assertFalse(row.depends('e', any))
+        self.assertFalse(row.depends('d', row.keys()))
+        self.assertFalse(row.depends('e', row.keys()))
         self.assertTrue(row.depends('total', ('inc', 'd')))
         self.assertFalse(row.depends('total', ('a', 'b', 'c', 'e', 'total')))
         self.assertFalse(row.depends('inc', any))
@@ -295,6 +311,7 @@ class PrettyTypes(unittest.TestCase):
         self.assertEqual(t.tree_column_id(), 'tree_order')
 
 tests.add(PrettyTypes)
+
 
 class DocTest(unittest.TestCase):
     def test_field_computations(self):
