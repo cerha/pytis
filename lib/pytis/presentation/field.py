@@ -408,7 +408,7 @@ class PresentedRow(object):
                     changed_enumerations.append(key)
                 self._run_callback(callback, key)
 
-    def _computed_value(self, cval, old_value=UNDEFINED):
+    def _computed_value(self, cval, skip_validation=None, old_value=UNDEFINED):
         def valid(key):
             column = self._coldict[key]
             if column.last_validated_string is not None:
@@ -418,7 +418,7 @@ class PresentedRow(object):
             return error is None
         if not cval:
             result = None
-        elif cval.dirty and all(valid(key) for key in cval.depends):
+        elif cval.dirty and all(valid(key) for key in cval.depends if key != skip_validation):
             # Only invoke the computer if all input fields are valid.
             cval.dirty = False
             # Reset the dirty flag before calling the computer function to allow
@@ -1069,7 +1069,8 @@ class PresentedRow(object):
         filtered.
 
         """
-        return self._computed_value(self._coldict[key].runtime_filter)
+        # Omit the field itself from validation to prevent infinite recursion.
+        return self._computed_value(self._coldict[key].runtime_filter, skip_validation=key)
 
     def runtime_arguments(self, key):
         """Return the current run-time arguments for a table function based codebook of field KEY.
@@ -1078,7 +1079,8 @@ class PresentedRow(object):
         field has no table function based codebook.
 
         """
-        return self._computed_value(self._coldict[key].runtime_arguments)
+        # Omit the field itself from validation to prevent infinite recursion.
+        return self._computed_value(self._coldict[key].runtime_arguments, skip_validation=key)
 
     def has_completer(self, key, static=False):
         """Return true if given field has a completer.
