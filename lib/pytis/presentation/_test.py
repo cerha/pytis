@@ -118,7 +118,11 @@ class PresentedRow(unittest.TestCase):
         row['b'] = 10
         self._check_values(row, a=5, b=10, c=None, d=None)
         row['c'] = 20
-        self._check_values(row, a=5, b=10, c=20, d=40)
+        self._check_values(row, a=5, b=10, c=20, d=40, total=30)
+        row['d'] = 30
+        self._check_values(row, a=5, b=10, c=20, d=30, total=30)
+        row['total'] = 3
+        self._check_values(row, a=5, b=10, c=20, d=30, total=3)
 
     def test_computer(self):
         row = self._row(new=True, b=3)
