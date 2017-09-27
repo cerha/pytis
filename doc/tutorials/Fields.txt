@@ -296,3 +296,27 @@ hodnotě přesto přistupovat může.
 >>> record['y'].value()
 40
 
+Pokud hodnota, na které dopočítávací funkce závisí, není validní, volání funkce
+je pozdrženo až do doby, kdy validní opět bude.  Dopočítávaná hodnota je v tom
+případě buďto ponechána na předchozí hodnotě (vypočtené z posledního validního
+vstupu), nebo pokud má daný computer argument 'fallback', bude použita hodnota
+určená tímto argumentem.  V obou případech se ovšem dopočítávací funkce nevolá.
+To má jeden velmi praktický důsledek.  Dopočítávací funkce nemusí ošetřovat
+všechny různé mezní situace.  Může se spolehnout na platnost vstupních hodnot
+danou integritními omezeními příslušných políček.
+
+>>> record = Record(Field('x', type=pd.Integer(not_null=True), default=5),
+...                 Field('y', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 2 * x)),
+...                 Field('z', type=pd.Integer(),
+...                       computer=computer(lambda r, x: 3 * x, fallback=None)),
+...                 new=True)
+>>> record.values()
+(5, 10, 15)
+>>> record['x'] = None
+>>> record.values()
+(None, 10, None)
+>>> record['x'] = 2
+>>> record.values()
+(2, 4, 6)
+
