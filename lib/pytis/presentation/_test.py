@@ -52,6 +52,8 @@ class PresentedRow(unittest.TestCase):
         @pp.computer
         def gt5(row, total):
             return total > 5
+        def visible(row, a):
+            return a != 0
         self._fields = (
             pp.Field('a'),
             pp.Field('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0)),
@@ -62,7 +64,7 @@ class PresentedRow(unittest.TestCase):
                      computer=total),
             pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
                      computer=inc),
-            pp.Field('r'),
+            pp.Field('r', visible=pp.computer(visible)),#lambda r, a: a != 0)),
         )
 
     def _data_row(self, **values):
@@ -177,6 +179,13 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.editable('d'))
         self._set(row, b=5)
         self.assertTrue(row.editable('d'))
+
+    def test_visible(self):
+        row = self._row(a=0, new=True)
+        self.assertTrue(row.visible('a'))
+        self.assertFalse(row.visible('r'))
+        row['a'] = 1
+        self.assertTrue(row.visible('r'))
 
     def test_callback(self):
         row = self._row(new=True, b=3)
