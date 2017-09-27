@@ -103,7 +103,7 @@ class PresentedRow(unittest.TestCase):
                          '<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, inc=9, r=None>')
 
     def test_prefill(self):
-        row = self._row(new=True, a=1, b=3, d=77)
+        row = self._row(new=True, a=1, b=pd.ival(3), d=77)
         self._check_values(row, a=1, b=3, c=5, d=77, e=88)
 
     def test_prefill_default(self):
