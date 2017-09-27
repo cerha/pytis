@@ -291,29 +291,32 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(r2, ('8', '9'))
 
     def test_display(self):
-        C = pd.ColumnSpec
-        S = pd.String
-        V = pd.Value
-        rows = [pd.Row((('x', V(S(), x)), ('y', V(S(), y))))
-                for x, y in (('1', 'FIRST'), ('2', 'SECOND'), ('3', 'THIRD'))]
-        edata = pd.DataFactory(pd.MemData, (C('x', S()), C('y', S())), data=rows)
-        enum = pd.DataEnumerator(edata)
-        key = C('a', pd.Integer())
-        columns = (key,
-                   C('b', S(enumerator=enum)),
-                   C('c', S(enumerator=enum)),
-                   C('d', S(enumerator=enum)))
-        data = pd.Data(columns, key)
-        fields = (Field('a'),
-                  Field('b', display='y'),
-                  Field('c', display=lambda x: '-' + x + '-'),
-                  Field('d', display=lambda row: row['y'].value().lower()),
-                  )
-        row = pp.PresentedRow(fields, data, None, prefill=dict(b='2', c='3', d='1'))
+        enumerator = pd.DataEnumerator(pd.DataFactory(
+            pd.MemData,
+            [pd.ColumnSpec(c, pd.String()) for c in ('x', 'y', 'z')],
+            data=[pd.Row(zip(('x', 'y', 'z'), [pd.sval(x) for x in values]))
+                  for values in (('1', 'FIRST', 'A'), ('2', 'SECOND', 'B'), ('3', 'THIRD', 'C'))],
+        ))
+        columns = (
+            pd.ColumnSpec('a', pd.Integer()),
+            pd.ColumnSpec('b', pd.String(enumerator=enumerator)),
+            pd.ColumnSpec('c', pd.String(enumerator=enumerator)),
+            pd.ColumnSpec('d', pd.String(enumerator=enumerator)),
+        )
+        fields = (
+            Field('a'),
+            Field('b', display='y'),
+            Field('c', display=lambda x: '-' + x + '-'),
+            Field('d', display=lambda row: row['y'].value().lower()),
+            Field('e', virtual=True, computer=pp.CbComputer('b', 'z')),
+        )
+        row = pp.PresentedRow(fields, pd.Data(columns, columns[0]), None, new=True,
+                              prefill=dict(b='2', c='3', d='1'))
         self.assertEqual(row.display('a'), '')
         self.assertEqual(row.display('b'), 'SECOND')
         self.assertEqual(row.display('c'), '-3-')
         self.assertEqual(row.display('d'), 'first')
+        self.assertEqual(row['e'].value(), 'B')
 
     def test_depends(self):
         row = self._row()
