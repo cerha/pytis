@@ -330,6 +330,19 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.depends('total', ('a', 'b', 'c', 'e', 'total')))
         self.assertFalse(row.depends('inc', any))
 
+    def test_filename(self):
+        row = pp.PresentedRow((
+            Field('a', default=1),
+            Field('x', virtual=True, default='aaa'),
+            Field('y', virtual=True, filename='x'),
+            Field('z', virtual=True, filename=lambda r: 'file%d.pdf' % r['a'].value()),
+        ), self._data, None, new=True)
+        self.assertEqual(row.filename('x'), None)
+        self.assertEqual(row.filename('y'), 'aaa')
+        self.assertEqual(row.filename('z'), 'file1.pdf')
+
+
+
 tests.add(PresentedRow)
 
 
