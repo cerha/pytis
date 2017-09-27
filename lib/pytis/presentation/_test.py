@@ -123,6 +123,12 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=5, b=10, c=20, d=30, total=30)
         row['total'] = 3
         self._check_values(row, a=5, b=10, c=20, d=30, total=3)
+        def assign_invalid():
+            row['c'] = 'x'
+        self.assertRaises(TypeError, assign_invalid)
+        def assign_invalid_value():
+            row['c'] = pd.sval('x')
+        self.assertRaises(TypeError, assign_invalid_value)
 
     def test_computer(self):
         row = self._row(new=True, b=3)
