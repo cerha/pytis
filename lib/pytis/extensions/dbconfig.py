@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,28 +74,27 @@ class DBConfig(object):
                 DBConfig._data_object_cache[key] = data
         self._data = data
         self._transaction = transaction
-        def lfunction():
-            data.select(transaction=transaction)
-            self._row = data.fetchone()
-            data.close()
-        with_lock(self._data_object_lock, lfunction)
+        self._select()
         self._key = [self._row[c.id()] for c in data.key()]
         if callback:
             self._callback = callback
             self._data.add_callback_on_change(self._on_change)
 
-    def _on_change(self):
+    def _select(self):
         def lfunction():
             self._data.select(transaction=self._transaction)
             self._row = self._data.fetchone()
             self._data.close()
         with_lock(self._data_object_lock, lfunction)
+
+    def _on_change(self):
+        self._select()
         self._callback(self)
 
     def value(self, key):
         """Vrať hodnotu 'key' jako instanci 'pytis.data.Value'."""
         return self._row[key]
-        
+
     def __getitem__(self, key):
         """Vrať hodnotu 'key' jako Pythonovou hodnotu."""
         return self._row[key].value()
@@ -111,7 +110,7 @@ class DBConfig(object):
 
     def has_key(self, key):
         return self.__contains__(key)
-    
+
     def keys(self):
         return self._row.keys()
 
