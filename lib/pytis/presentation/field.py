@@ -304,14 +304,26 @@ class PresentedRow(object):
     def __setitem__(self, key, value, run_callback=True):
         """Set given field's value to given 'pytis.data.Value' instance.
 
-        'key' key is a string identifier of a one of the fields present in the
-        row.  If not present, 'KeyError' is raised.
+        Arguments:
+          key -- key is a string identifier of a one of the fields present in
+            the row.  If no such field exists, 'KeyError' is raised.
+          value -- Field value either as a 'pytis.data.Value' instance of a
+            matching type or a Python representation of the field's inner value
+            as accepted by 'Type.adjust_value()' of the field's type.  In both
+            cases TypeError is raised if the types don't match (value is a
+            'pytis.data.Value' instance of a different type or an inner value
+            not acceptable by the type).
+
+        The argument 'run_callback' is not public as the method is only
+        supposed to be used as dictionary assignment (not called directly).
 
         """
-        assert isinstance(value, pytis.data.Value)
         column = self._coldict[key]
-        assert value.type() == column.type, \
-            "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
+        ctype = column.type
+        if not isinstance(value, pytis.data.Value):
+            value = pytis.data.Value(ctype, ctype.adjust_value(value))
+        elif value.type() != ctype:
+            raise TypeError("Invalid type for '%s': %s (expected %s)" % (key, value.type(), ctype))
         if key in self._row:
             row = self._row
         else:

@@ -75,7 +75,7 @@ class PresentedRow(unittest.TestCase):
 
     def _set(self, row, **kwargs):
         for key, value in kwargs.items():
-            row[key] = pd.Value(row[key].type(), value)
+            row[key] = value
 
     def _check_values(self, row, **kwargs):
         for key, value in kwargs.items():

@@ -234,7 +234,7 @@ Poněkud překvapivě se computer nevolá ani v případě, že vytvářený ř�
 
 Následná změna však již výpočty vyvolá.
 
->>> record['x'] = pd.ival(5)
+>>> record['x'] = 5
 >>> record.values()
 (5, 10, 15)
 
@@ -286,13 +286,13 @@ hodnotě přesto přistupovat může.
 >>> record = Record(Field('x', type=pd.Integer()),
 ...                 Field('y', type=pd.Integer(),
 ...                       computer=computer(lambda r, x: 2 * x if x < 100 else r['y'].value())))
->>> record['x'] = pd.ival(5)
+>>> record['x'] = 5
 >>> record['y'].value()
 10
->>> record['x'] = pd.ival(20)
+>>> record['x'] = 20
 >>> record['y'].value()
 40
->>> record['x'] = pd.ival(200)
+>>> record['x'] = 200
 >>> record['y'].value()
 40
 
