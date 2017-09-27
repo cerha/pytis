@@ -95,6 +95,11 @@ class PresentedRow(unittest.TestCase):
         row = self._row(row=data_row)
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
 
+    def test_unicode(self):
+        row = self._row(new=True, a=1, b=3, d=77)
+        self.assertEqual(unicode(row),
+                         '<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, inc=9, r=None>')
+
     def test_prefill(self):
         row = self._row(new=True, a=1, b=3, d=77)
         self._check_values(row, a=1, b=3, c=5, d=77, e=88)
