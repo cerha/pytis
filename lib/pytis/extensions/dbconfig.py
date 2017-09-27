@@ -64,14 +64,13 @@ class DBConfig(object):
             (aktualizovaná) instance 'DBConfig'.
 
         """
-        key = (name, transaction)
         try:
-            data = DBConfig._data_object_cache[key]
+            data = DBConfig._data_object_cache[name]
         except KeyError:
             from pytis.extensions import data_object
             data = data_object(name)
             if data is not None:
-                DBConfig._data_object_cache[key] = data
+                DBConfig._data_object_cache[name] = data
         self._data = data
         self._transaction = transaction
         self._select()
