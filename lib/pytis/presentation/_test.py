@@ -317,6 +317,11 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.display('c'), '-3-')
         self.assertEqual(row.display('d'), 'first')
         self.assertEqual(row['e'].value(), 'B')
+        self.assertEqual(row.cb_value('b', 'z').value(), 'B')
+        self.assertEqual(row.cb_value('c', 'z').value(), 'C')
+        self.assertEqual(row.cb_value('d', 'y').value(), 'FIRST')
+        row['d'] = '8'
+        self.assertEqual(row.cb_value('d', 'y'), None)
 
     def test_depends(self):
         row = self._row()
