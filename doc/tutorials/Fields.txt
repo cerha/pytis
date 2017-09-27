@@ -61,7 +61,7 @@ inicializaci nového prázdného řádku a její návratová hodnota je použita
 >>> record.values()
 (None, None)
 
-Při použití specifikace výčtu hodnot políčka paremetrem 'enumerator' pomocí
+Při použití specifikace výčtu hodnot políčka parametrem 'enumerator' pomocí
 třídy 'pytis.presentation.Enumeration' je výchozí hodnota políčka určena
 atributem 'default' této třídy, pokud nemá dané políčko explicitně nastavenu
 hodnotu parametru 'default' ve své specifikaci.
