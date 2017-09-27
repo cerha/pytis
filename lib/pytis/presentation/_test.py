@@ -108,6 +108,16 @@ class PresentedRow(unittest.TestCase):
         row = self._row(new=True, b=22, c=33, d=44, e=55)
         self._check_values(row, b=22, c=33, d=44, e=55)
 
+    def test_setitem(self):
+        row = self._row()
+        self._check_values(row, a=None, b=None, c=None, d=None)
+        row['a'] = 5
+        self._check_values(row, a=5, b=None, c=None, d=None)
+        row['b'] = 10
+        self._check_values(row, a=5, b=10, c=None, d=None)
+        row['c'] = 20
+        self._check_values(row, a=5, b=10, c=20, d=40)
+
     def test_computer(self):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
