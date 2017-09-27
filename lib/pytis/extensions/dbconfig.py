@@ -52,7 +52,7 @@ class DBConfig(object):
     _data_object_cache = {}
     _data_object_lock = thread.allocate_lock()
 
-    def __init__(self, name, callback=None, transaction=None):
+    def __init__(self, name, callback=None, condition=None, transaction=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -62,6 +62,14 @@ class DBConfig(object):
           callback -- pokud není None, bude daná funkce volána při každé změně
             v datovém objektu.  Jde o funkci jednoho argumentu, kterým je
             (aktualizovaná) instance 'DBConfig'.
+
+          condition -- Additional condition restricting the selection of the
+           configuration table row as a 'pytis.data.Operator' instance or None
+           if no additional condition is necessary.  In any case, the
+           configuration data object should be designed in such a way that it
+           returns exactly one row.
+
+          transaction -- transaction for DB operations.
 
         """
         try:
@@ -73,6 +81,7 @@ class DBConfig(object):
                 DBConfig._data_object_cache[name] = data
         self._data = data
         self._transaction = transaction
+        self._condition = condition
         self._select()
         self._key = [self._row[c.id()] for c in data.key()]
         if callback:
@@ -81,7 +90,7 @@ class DBConfig(object):
 
     def _select(self):
         def lfunction():
-            self._data.select(transaction=self._transaction)
+            self._data.select(condition=self._condition, transaction=self._transaction)
             self._row = self._data.fetchone()
             self._data.close()
         with_lock(self._data_object_lock, lfunction)
@@ -116,27 +125,27 @@ class DBConfig(object):
     def items(self):
         return tuple([(key, self[key]) for key in self._row.keys()])
 
+    def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, condition=None,
+                  transaction=None):
+        """Vrací instanci Value pro konfigurační parametr.
 
-def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, transaction=None):
-    """Vrací instanci Value pro konfigurační parametr.
+        Argumenty:
 
-    Argumenty:
+          column -- název sloupce v konfigurační tabulce uvedené ve specifikaci
+            udané druhým parametrem.
+          cfgspec -- volitelný název specifikace s vazbou na konfigurační tabulku.
+          value_column -- pokud je požadavaný sloupec Codebook, umožňuje získat
+            hodnotu uživatelského sloupce.
+          transaction -- transakce pro datové operace
 
-      column -- název sloupce v konfigurační tabulce uvedené ve specifikaci
-        udané druhým parametrem.
-      cfgspec -- volitelný název specifikace s vazbou na konfigurační tabulku.
-      value_column -- pokud je požadavaný sloupec Codebook, umožňuje získat
-        hodnotu uživatelského sloupce.
-      transaction -- transakce pro datové operace
-
-    """
-    dbconfig = DBConfig(cfgspec, transaction=transaction)
-    if column not in dbconfig:
-        return pytis.data.Value(None, None)
-    value = dbconfig.value(column)
-    if value.type().enumerator():
-        from pytis.extensions import cb2colvalue
-        return cb2colvalue(value, column=value_column, transaction=transaction)
-    else:
-        assert value_column is None, "Column '%s' has no enumerator!" % column
-        return value
+        """
+        dbconfig = DBConfig(cfgspec, condition=condition, transaction=transaction)
+        if column not in dbconfig:
+            return pytis.data.Value(None, None)
+        value = dbconfig.value(column)
+        if value.type().enumerator():
+            from pytis.extensions import cb2colvalue
+            return cb2colvalue(value, column=value_column, transaction=transaction)
+        else:
+            assert value_column is None, "Column '%s' has no enumerator!" % column
+            return value
