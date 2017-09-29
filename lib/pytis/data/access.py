@@ -266,9 +266,9 @@ class RestrictedData(Data):
             the object
 
         """
+        self._access_rights = access_rights
         super(RestrictedData, self).__init__(access_rights=access_rights,
                                              **kwargs)
-        self._access_rights = access_rights
 
     def access_groups(self):
         """Return tuple of the user's groups.
