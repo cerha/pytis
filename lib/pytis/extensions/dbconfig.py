@@ -125,27 +125,27 @@ class DBConfig(object):
     def items(self):
         return tuple([(key, self[key]) for key in self._row.keys()])
 
-    def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, condition=None,
-                  transaction=None):
-        """Vrací instanci Value pro konfigurační parametr.
+def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, condition=None,
+              transaction=None):
+    """Vrací instanci Value pro konfigurační parametr.
 
-        Argumenty:
+    Argumenty:
 
-          column -- název sloupce v konfigurační tabulce uvedené ve specifikaci
-            udané druhým parametrem.
-          cfgspec -- volitelný název specifikace s vazbou na konfigurační tabulku.
-          value_column -- pokud je požadavaný sloupec Codebook, umožňuje získat
-            hodnotu uživatelského sloupce.
-          transaction -- transakce pro datové operace
+      column -- název sloupce v konfigurační tabulce uvedené ve specifikaci
+        udané druhým parametrem.
+      cfgspec -- volitelný název specifikace s vazbou na konfigurační tabulku.
+      value_column -- pokud je požadavaný sloupec Codebook, umožňuje získat
+        hodnotu uživatelského sloupce.
+      transaction -- transakce pro datové operace
 
-        """
-        dbconfig = DBConfig(cfgspec, condition=condition, transaction=transaction)
-        if column not in dbconfig:
-            return pytis.data.Value(None, None)
-        value = dbconfig.value(column)
-        if value.type().enumerator():
-            from pytis.extensions import cb2colvalue
-            return cb2colvalue(value, column=value_column, transaction=transaction)
-        else:
-            assert value_column is None, "Column '%s' has no enumerator!" % column
-            return value
+    """
+    dbconfig = DBConfig(cfgspec, condition=condition, transaction=transaction)
+    if column not in dbconfig:
+        return pytis.data.Value(None, None)
+    value = dbconfig.value(column)
+    if value.type().enumerator():
+        from pytis.extensions import cb2colvalue
+        return cb2colvalue(value, column=value_column, transaction=transaction)
+    else:
+        assert value_column is None, "Column '%s' has no enumerator!" % column
+        return value
