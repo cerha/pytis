@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015 Brailcom, o.p.s.
+# Copyright (C) 2001-2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -707,6 +707,7 @@ tests.add(Data)
 
 
 class MemData(unittest.TestCase):
+
     def setUp(self):
         columns = (pytis.data.ColumnSpec('a', pytis.data.String()),
                    pytis.data.ColumnSpec('b', pytis.data.String()),
@@ -714,25 +715,44 @@ class MemData(unittest.TestCase):
                    pytis.data.ColumnSpec('y', pytis.data.Integer()))
         data = [pytis.data.Row([(c.id(), pytis.data.Value(c.type(), v))
                                 for c, v in zip(columns, values)])
-                for values in (('aa', 'Bob', 1, 10),
-                               ('bb', 'John', 5, 27),
-                               ('cc', 'Will', 3, 2),
-                               ('dd', 'Bill', 3, 42),
-                               ('ee', 'John', 5, 12),
-                               ('ff', 'Joe', 5, 31),
-                               ('gg', 'Eddie', 12, 10))]
+                for values in (('a', 'Bob', 1, 10),
+                               ('b', 'John', 5, 27),
+                               ('c', 'Will', 3, 2),
+                               ('d', 'Bill', 3, 42),
+                               ('e', 'John', 5, 12),
+                               ('f', 'Joe', 5, 31),
+                               ('g', 'Eddie', 12, 10))]
         d = pytis.data.DataFactory(pytis.data.MemData, columns, data=data)
         self._data = d.create()
-    def _check_condition(self, cond, count):
-        c = self._data.select(condition=cond)
-        self.assertEqual(c, count, "Expected %d, got %d" % (count, c))
+
+    def _check_condition(self, condition, keys):
+        rows = []
+        self._data.select(condition=condition)
+        while True:
+            row = self._data.fetchone()
+            if row is None:
+                break
+            rows.append(row)
+        self.assertEqual(tuple([r['a'].value() for r in rows]), keys)
+
     def test_conditions(self):
-        self._check_condition(pytis.data.EQ('a', sval('AA')), 0)
-        self._check_condition(pytis.data.EQ('a', sval('AA'), ignore_case=True), 1)
-        self._check_condition(pytis.data.NE('x', ival(5)), 4)
-        self._check_condition(pytis.data.GT('x', ival(3)), 4)
-        self._check_condition(pytis.data.LE('x', ival(3)), 3)
-        self._check_condition(pytis.data.GE('x', 'y'), 2)
+        self._check_condition(pytis.data.EQ('a', sval('A')), ())
+        self._check_condition(pytis.data.EQ('a', sval('A'), ignore_case=True), ('a',))
+        self._check_condition(pytis.data.NE('x', ival(5)), ('a', 'c', 'd', 'g'))
+        self._check_condition(pytis.data.GT('x', ival(3)), ('b', 'e', 'f', 'g'))
+        self._check_condition(pytis.data.LE('x', ival(3)), ('a', 'c', 'd'))
+        self._check_condition(pytis.data.GE('x', 'y'), ('c', 'g'))
+
+    def test_wildcards(self):
+        def wm(pattern):
+            return pytis.data.WMValue(pytis.data.String(), pattern)
+        self._check_condition(pytis.data.WM('b', wm('a*')), ())
+        self._check_condition(pytis.data.WM('b', wm('B*')), ('a', 'd'))
+        self._check_condition(pytis.data.WM('b', wm('*o*')), ('a', 'b', 'e', 'f'))
+        self._check_condition(pytis.data.WM('b', wm('?o?')), ('a', 'f'))
+        self._check_condition(pytis.data.WM('b', wm('^B*')), ())
+        self._check_condition(pytis.data.WM('b', wm('.+')), ())
+
     def test_fetch(self):
         v = ival(3)
         c = self._data.select(pytis.data.EQ('x', v))

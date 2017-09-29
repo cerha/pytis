@@ -1001,11 +1001,18 @@ class MemData(Data):
         self._mem_cursor = -1
 
     def _condition2pyfunc(self, condition):
+        def wildcard_match(string, pattern):
+            import re
+            regexp = re.escape(pattern).replace('\\*', '.*').replace('\\?', '.') + '$'
+            return re.match(regexp, string)
         if condition is None:
             return lambda row: True
         op_name = condition.name()
-        relational_operators = {'EQ': operator.eq,
-                                'LT': operator.lt}
+        relational_operators = {
+            'EQ': operator.eq,
+            'LT': operator.lt,
+            'WM': wildcard_match,
+        }
         if op_name in relational_operators.keys():
             def relop(row, op, args, kwargs):
                 def arg(a, ignore_case=False):
