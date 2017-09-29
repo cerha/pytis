@@ -2,7 +2,7 @@
 
 # Access rights
 #
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -258,9 +258,7 @@ class DBAccessRights(AccessRights):
 class RestrictedData(Data):
     """Data object with restricted access to its operations."""
 
-    def __init__(self,
-                 access_rights=AccessRights((None, (None, Permission.ALL))),
-                 **kwargs):
+    def __init__(self, access_rights=AccessRights((None, (None, Permission.ALL))), **kwargs):
         """
         Arguments:
 
