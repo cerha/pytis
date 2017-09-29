@@ -31,6 +31,8 @@ tests = pytis.util.test.TestSuite()
 
 class PresentedRow(unittest.TestCase):
     def setUp(self):
+        class BigString(pd.String, pd.Big):
+            pass
         self.longMessage = True
         self._columns = (
             pd.ColumnSpec('a', pd.Integer(not_null=True)),
@@ -65,6 +67,7 @@ class PresentedRow(unittest.TestCase):
             pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
                      computer=inc),
             pp.Field('r', visible=pp.computer(visible)),#lambda r, a: a != 0)),
+            pp.Field('big', type=BigString(), virtual=True),
         )
 
     def _data_row(self, **values):
@@ -98,9 +101,9 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
 
     def test_unicode(self):
-        row = self._row(new=True, a=1, b=3, d=77)
-        self.assertEqual(unicode(row),
-                         '<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, inc=9, r=None>')
+        row = self._row(new=True, a=1, b=3, d=77, big=1024 * 'x')
+        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, '
+                                        'inc=9, r=None, big=<BigString 1 kB>>'))
 
     def test_prefill(self):
         row = self._row(new=True, a=1, b=pd.ival(3), d=77)
