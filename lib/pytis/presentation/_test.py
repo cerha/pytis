@@ -65,6 +65,7 @@ class PresentedRow(unittest.TestCase):
             pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
                      computer=inc),
             pp.Field('r', visible=pp.computer(lambda r, a: a != 0)),
+            pp.Field('password', type=pd.Password(), virtual=True),
             pp.Field('big', type=BigString(), virtual=True),
         )
 
@@ -99,9 +100,9 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
 
     def test_unicode(self):
-        row = self._row(new=True, a=1, b=3, d=77, big=1024 * 'x')
+        row = self._row(new=True, a=1, b=3, d=77, password='secret', big=1024 * 'x')
         self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, '
-                                        'inc=9, r=None, big=<BigString 1 kB>>'))
+                                        'inc=9, r=None, password=***, big=<BigString 1 kB>>'))
 
     def test_prefill(self):
         row = self._row(new=True, a=1, b=pd.ival(3), d=77)
