@@ -461,10 +461,9 @@ class PresentedRow(object):
         if ((not error and column.type.unique() and not column.virtual and
              (self._new or value != self._initialized_original_row[column.id]) and
              value.value() is not None)):
+            select_kwargs = {}
             if isinstance(self._data, pytis.data.RestrictedData):
-                select_kwargs = dict(check_condition=False)
-            else:
-                select_kwargs = dict()
+                select_kwargs['check_condition'] = False
             count = self._data.select(condition=pytis.data.EQ(column.id, value),
                                       transaction=self._transaction, **select_kwargs)
             self._data.close()
