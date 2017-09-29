@@ -352,6 +352,28 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.filename('z'), 'file1.pdf')
 
 
+    def test_permissions(self):
+        data = pd.RestrictedMemData(
+            [pd.ColumnSpec(c, pd.String()) for c in ('x', 'y', 'z')],
+            access_rights=pd.AccessRights(
+                ('x', (None, pd.Permission.ALL)),
+                ('y', (None, pd.Permission.VIEW)),
+                ('z', ((), pd.Permission.ALL))),
+        )
+        row = pp.PresentedRow((
+            Field('x'),
+            Field('y'),
+            Field('z'),
+            Field('zz', virtual=True, computer=computer(lambda r, z: '-' + z + '-')),
+        ), data, None, new=True)
+        self.assertTrue(row.permitted('x', pd.Permission.VIEW))
+        self.assertTrue(row.permitted('x', True))
+        self.assertTrue(row.permitted('y', pd.Permission.VIEW))
+        self.assertFalse(row.permitted('y', pd.Permission.UPDATE))
+        self.assertFalse(row.permitted('z', pd.Permission.VIEW))
+        protected_row = row.protected()
+        self.assertRaises(protected_row.ProtectionError, lambda: protected_row['z'].value())
+        self.assertRaises(protected_row.ProtectionError, lambda: protected_row['zz'].value())
 
 tests.add(PresentedRow)
 
