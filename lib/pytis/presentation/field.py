@@ -1145,6 +1145,7 @@ class PresentedRow(object):
                     else:
                         condition = prefix_condition
                 arguments = self.runtime_arguments(key)
+                # TODO: completer.values() returns tuple, which is inconsistent with the rest.
                 choices = completer.values(condition=condition, arguments=arguments, max=40) or []
             else:
                 # TODO: runtime filter doesn't apply here.  We would need to use MemData object to
