@@ -103,6 +103,8 @@ class PresentedRow(unittest.TestCase):
         row = self._row(new=True, a=1, b=3, d=77, password='secret', big=1024 * 'x')
         self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, '
                                         'inc=9, r=None, password=***, big=<BigString 1 kB>>'))
+        delattr(row, '_row')
+        self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
 
     def test_prefill(self):
         row = self._row(new=True, a=1, b=pd.ival(3), d=77)
@@ -351,6 +353,19 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.filename('y'), 'aaa')
         self.assertEqual(row.filename('z'), 'file1.pdf')
 
+    def test_virtual_field_type_class(self):
+        row = pp.PresentedRow((
+            Field('a'),
+            Field('x', virtual=True, type=pytis.data.Integer),
+        ), self._data, None)
+        self.assertTrue(isinstance(row.type('x'), pytis.data.Integer))
+
+    def test_codebook(self):
+        row = pp.PresentedRow((
+            Field('a'),
+            Field('b', codebook='InvalidName'),
+        ), self._data, None)
+        self.assertTrue(isinstance(row.type('b'), pytis.data.Integer))
 
     def test_permissions(self):
         data = pd.RestrictedMemData(
