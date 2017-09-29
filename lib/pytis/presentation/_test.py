@@ -375,6 +375,33 @@ class PresentedRow(unittest.TestCase):
         self.assertRaises(protected_row.ProtectionError, lambda: protected_row['z'].value())
         self.assertRaises(protected_row.ProtectionError, lambda: protected_row['zz'].value())
 
+    def test_completer(self):
+        completer = pd.DataEnumerator(pd.DataFactory(
+            pd.MemData, (pd.ColumnSpec('x', pd.String()),),
+            data=[pd.Row((('x', pd.sval(str(x))),))
+                  for x in ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon')]
+        ))
+        row = pp.PresentedRow((
+            Field('a'),
+            Field('b'),
+            Field('x1', virtual=True, completer=('yes', 'no', 'maybe')),
+            Field('x2', virtual=True, completer=completer,
+                  runtime_filter=computer(lambda r, a:
+                                          pd.NE('x', pd.sval('Bacardi')) if a == 1 else None)),
+        ), self._data, None, new=True)
+        self.assertFalse(row.has_completer('a'))
+        self.assertFalse(row.has_completer('b'))
+        self.assertTrue(row.has_completer('x1', static=True))
+        self.assertTrue(row.has_completer('x2'))
+        self.assertFalse(row.has_completer('x2', static=True))
+        self.assertEqual(row.completions('b'), [])
+        self.assertEquals(row.completions('x1'), ['maybe', 'no', 'yes'])
+        self.assertEquals(row.completions('x1', prefix='y'), ['yes'])
+        self.assertEquals(row.completions('x2'), ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon'))
+        self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil', 'Bacardi'))
+        row['a'] = 1
+        self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil'))
+
 tests.add(PresentedRow)
 
 
