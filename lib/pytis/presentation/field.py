@@ -268,7 +268,7 @@ class PresentedRow(object):
             def strval(column):
                 if isinstance(column.type, pytis.data.Password):
                     return "***"
-                elif isinstance(column.type, pytis.data.Big):
+                elif isinstance(column.type, pytis.data.Big) and self[column.id].value() is not None:
                     return '<%s %s>' % (column.type.__class__.__name__,
                                         format_byte_size(len(self[column.id].value())))
                 else:
