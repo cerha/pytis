@@ -33,11 +33,18 @@ class PresentedRow(unittest.TestCase):
     def setUp(self):
         class BigString(pd.String, pd.Big):
             pass
+        class SpecialEnumerator(pd.FixedEnumerator):
+            # This class is overriden just to allow definition of runtime_filter
+            # and runtime_arguments for the same field (which is only important
+            # to improve test coverage)
+            def values(self, a=None):
+                # Accepts argument a as returned by runtime_arguments.
+                return super(SpecialEnumerator, self).values()
         self.longMessage = True
         self._columns = (
             pd.ColumnSpec('a', pd.Integer(not_null=True)),
             pd.ColumnSpec('b', pd.Integer(not_null=True,
-                                          enumerator=pd.FixedEnumerator(range(101))),),
+                                          enumerator=SpecialEnumerator(range(101))),),
             pd.ColumnSpec('c', pd.Integer(not_null=True)),
             pd.ColumnSpec('d', pd.Integer()),
             pd.ColumnSpec('r', pd.IntegerRange()))
@@ -56,7 +63,9 @@ class PresentedRow(unittest.TestCase):
             return total > 5
         self._fields = (
             pp.Field('a'),
-            pp.Field('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0)),
+            pp.Field('b',
+                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0),
+                     runtime_arguments=pp.computer(lambda r, a: dict(a=a))),
             pp.Field('c', default=lambda: 5),
             pp.Field('d', editable=gt5, computer=twice),
             pp.Field('e', type=pd.Integer(), virtual=True, default=88),
@@ -255,7 +264,13 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(enum(row, 'b'), (0, 20, 40, 60, 80, 100))
 
     def test_enumeration_callbacks(self):
-        pass
+        called = []
+        def callback():
+            called.append(True)
+        row = self._row(a=0)
+        row.register_callback(row.CALL_ENUMERATION_CHANGE, 'b', callback)
+        row['a'] = 5
+        self.assertEqual(len(called), 1)
 
     def test_has_key(self):
         row = self._row()
