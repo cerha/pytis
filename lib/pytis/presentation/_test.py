@@ -32,8 +32,10 @@ tests = pytis.util.test.TestSuite()
 
 class PresentedRow(unittest.TestCase):
     def setUp(self):
+
         class BigString(pd.String, pd.Big):
             pass
+
         class SpecialEnumerator(pd.FixedEnumerator):
             # This class is overriden just to allow definition of runtime_filter
             # and runtime_arguments for the same field (which is only important
@@ -41,47 +43,44 @@ class PresentedRow(unittest.TestCase):
             def values(self, a=None):
                 # Accepts argument a as returned by runtime_arguments.
                 return super(SpecialEnumerator, self).values()
+
+        class TestSpecification(pytis.presentation.Specification):
+            def _twice(self, row, c):
+                return c * 2
+            def _total(self, row, b, c):
+                return b + c
+            def _half_total(self, row, total):
+                return total / 2 if total is not None else None
+            def fields(self):
+                return (
+                    pp.Field('a', type=pd.Integer(not_null=True)),
+                    pp.Field('b', type=pd.Integer(not_null=True,
+                                                  enumerator=SpecialEnumerator(range(101))),
+                             runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0),
+                             runtime_arguments=pp.computer(lambda r, a: dict(a=a))),
+                    pp.Field('c', type=pd.Integer(not_null=True), default=lambda: 5),
+                    pp.Field('d', type=pd.Integer(),
+                             editable=pp.computer(lambda r, total: total > 5),
+                             computer=pp.computer(self._twice)),
+                    pp.Field('range', type=pd.IntegerRange(), visible=pp.computer(lambda r, a: a != 0)),
+                    pp.Field('total', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
+                             computer=pp.computer(self._total, fallback=0)),
+                    pp.Field('half_total', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
+                             computer=pp.computer(self._half_total)),
+                    pp.Field('x', type=pd.Integer(), virtual=True, default=88),
+                    pp.Field('password', type=pd.Password(), virtual=True),
+                    pp.Field('big', type=BigString(), virtual=True),
+                    #pp.Field('code', type=String(), virtual=True),
+                )
+
         self.longMessage = True
-        self._columns = (
-            pd.ColumnSpec('a', pd.Integer(not_null=True)),
-            pd.ColumnSpec('b', pd.Integer(not_null=True,
-                                          enumerator=SpecialEnumerator(range(101))),),
-            pd.ColumnSpec('c', pd.Integer(not_null=True)),
-            pd.ColumnSpec('d', pd.Integer()),
-            pd.ColumnSpec('r', pd.IntegerRange()))
-        self._data = pd.Data(self._columns, self._columns[0])
-        @pp.computer
-        def twice(row, c):
-            return c * 2
-        @pp.computer(fallback=0)
-        def total(row, b, c):
-            return b + c
-        @pp.computer
-        def inc(row, total):
-            return total is not None and total + 1 or None
-        @pp.computer
-        def gt5(row, total):
-            return total > 5
-        self._fields = (
-            pp.Field('a'),
-            pp.Field('b',
-                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0),
-                     runtime_arguments=pp.computer(lambda r, a: dict(a=a))),
-            pp.Field('c', default=lambda: 5),
-            pp.Field('d', editable=gt5, computer=twice),
-            pp.Field('e', type=pd.Integer(), virtual=True, default=88),
-            pp.Field('total', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
-                     computer=total),
-            pp.Field('inc', type=pd.Integer(), virtual=True, editable=pp.Editable.NEVER,
-                     computer=inc),
-            pp.Field('r', visible=pp.computer(lambda r, a: a != 0)),
-            pp.Field('password', type=pd.Password(), virtual=True),
-            pp.Field('big', type=BigString(), virtual=True),
-        )
+        self._fields = TestSpecification().view_spec().fields()
+        columns = [pd.ColumnSpec(f.id(), f.type()) for f in self._fields if not f.virtual()]
+        self._data = pd.Data(columns, columns[0])
 
     def _data_row(self, **values):
-        return pd.Row([(c.id(), pd.Value(c.type(), values.get(c.id())))
-                       for c in self._columns])
+        return pd.Row([(f.id(), pd.Value(f.type(), values.get(f.id())))
+                       for f in self._fields if not f.virtual()])
 
     def _row(self, new=False, row=None, singleline=False, **prefill):
         return pp.PresentedRow(self._fields, self._data, row=row, new=new,
@@ -100,29 +99,30 @@ class PresentedRow(unittest.TestCase):
 
     def test_init(self):
         row = self._row(new=True)
-        self._check_values(row, a=None, b=None, c=5, d=10, e=88, total=0, r=None)
+        self._check_values(row, a=None, b=None, c=5, d=10, total=0, x=88, range=None)
         row = self._row()
         self._check_values(row, a=None, b=None, c=None, d=None, total=None)
-        data_row = self._data_row(a=4, b=100, c=77, d=18, r=(1, 8))
+        data_row = self._data_row(a=4, b=100, c=77, d=18, range=(1, 8))
         row = self._row(row=data_row, new=True)
-        self._check_values(row, a=4, b=100, c=77, d=18, e=88, total=177, r=(1, 8))
+        self._check_values(row, a=4, b=100, c=77, d=18, x=88, total=177, range=(1, 8))
         row = self._row(row=data_row)
-        self._check_values(row, a=4, b=100, c=77, d=18, e=None, total=177)
+        self._check_values(row, a=4, b=100, c=77, d=18, x=None, total=177)
 
     def test_unicode(self):
         row = self._row(new=True, a=1, b=3, d=77, password='secret', big=1024 * 'x')
-        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, e=88, total=8, '
-                                        'inc=9, r=None, password=***, big=<BigString 1 kB>>'))
+        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, range=None, '
+                                        'total=8, half_total=4, x=88, password=***, '
+                                        'big=<BigString 1 kB>>'))
         delattr(row, '_row')
         self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
 
     def test_prefill(self):
         row = self._row(new=True, a=1, b=pd.ival(3), d=77)
-        self._check_values(row, a=1, b=3, c=5, d=77, e=88)
+        self._check_values(row, a=1, b=3, c=5, d=77, x=88)
 
     def test_prefill_default(self):
-        row = self._row(new=True, b=22, c=33, d=44, e=55)
-        self._check_values(row, b=22, c=33, d=44, e=55)
+        row = self._row(new=True, b=22, c=33, d=44, x=55)
+        self._check_values(row, b=22, c=33, d=44, x=55)
 
     def test_setitem(self):
         row = self._row()
@@ -147,10 +147,10 @@ class PresentedRow(unittest.TestCase):
     def test_computer(self):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
-        self._check_values(row, d=10, total=8, inc=9)
+        self._check_values(row, d=10, total=8, half_total=4)
         self._set(row, c=100)
-        self._check_values(row, d=200, total=103, inc=104)
-        self._set(row, a=4, b=100, c=88, r=(8, 9))
+        self._check_values(row, d=200, total=103, half_total=51)
+        self._set(row, a=4, b=100, c=88, range=(8, 9))
         self.assertEqual(row.get('total', lazy=True).value(), 103)
         self._check_values(row, a=4, b=100, c=88, total=188)
         self._set(row, b=None)
@@ -164,7 +164,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_prefill_computer(self):
         row = self._row(new=True, b=2, c=2, total=88)
-        self._check_values(row, b=2, c=2, total=88, inc=89)
+        self._check_values(row, b=2, c=2, total=88, half_total=44)
 
     def test_validation(self):
         row = self._row()
@@ -177,25 +177,25 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.invalid_string('b'), '2.3')
         self.assertIsNone(row.validate('b', '12'))
         self.assertIsNone(row.invalid_string('b'))
-        self.assertIsNone(row.validate('r', ('2', '12')))
-        self._check_values(row, b=12, c=8, total=20, r=(2, 12))
-        self.assertIsNotNone(row.validate('r', ('2', 'x12')))
-        self._check_values(row, r=(2, 12))
-        self.assertEqual(row.invalid_string('r'), ('2', 'x12'))
+        self.assertIsNone(row.validate('range', ('2', '12')))
+        self._check_values(row, b=12, c=8, total=20, range=(2, 12))
+        self.assertIsNotNone(row.validate('range', ('2', 'x12')))
+        self._check_values(row, range=(2, 12))
+        self.assertEqual(row.invalid_string('range'), ('2', 'x12'))
 
     def test_set_row(self):
         row = self._row(new=True)
-        self._check_values(row, a=None, b=None, c=5, total=0, inc=1)
+        self._check_values(row, a=None, b=None, c=5, total=0, half_total=0)
         row.set_row(self._data_row(b=10, c=20))
-        self._check_values(row, a=None, b=10, c=20, total=30, inc=31)
+        self._check_values(row, a=None, b=10, c=20, total=30, half_total=15)
         row.set_row(None)
-        self._check_values(row, a=None, b=None, c=5, total=0, inc=1)
+        self._check_values(row, a=None, b=None, c=5, total=0, half_total=0)
         row = self._row()
-        self._check_values(row, a=None, b=None, c=None, total=None, inc=None)
+        self._check_values(row, a=None, b=None, c=None, total=None, half_total=None)
         row.set_row(self._data_row(b=10, c=20))
-        self._check_values(row, a=None, b=10, c=20, total=30, inc=31)
+        self._check_values(row, a=None, b=10, c=20, total=30, half_total=15)
         row.set_row(None)
-        self._check_values(row, a=None, b=None, c=None, total=None, inc=None)
+        self._check_values(row, a=None, b=None, c=None, total=None, half_total=None)
 
     def test_editable(self):
         row = self._row(b=2, c=1)
@@ -207,9 +207,9 @@ class PresentedRow(unittest.TestCase):
     def test_visible(self):
         row = self._row(a=0, new=True)
         self.assertTrue(row.visible('a'))
-        self.assertFalse(row.visible('r'))
+        self.assertFalse(row.visible('range'))
         row['a'] = 1
-        self.assertTrue(row.visible('r'))
+        self.assertTrue(row.visible('range'))
 
     def test_callback(self):
         row = self._row(new=True, b=3)
@@ -219,16 +219,16 @@ class PresentedRow(unittest.TestCase):
                 row[id].value()
                 changed.append(id)
             return cb
-        for id in ('a', 'b', 'c', 'd', 'total', 'inc'):
+        for id in ('a', 'b', 'c', 'd', 'total', 'half_total'):
             row.register_callback(row.CALL_CHANGE, id, callback(id))
-        # self._check_values(row, d=10, total=8, inc=9)
-        # assert 'd' in changed and 'total' in changed and 'inc' in changed, changed
+        # self._check_values(row, d=10, total=8, half_total=4)
+        # assert 'd' in changed and 'total' in changed and 'half_total' in changed, changed
         # del changed[0:len(changed)]
         self._set(row, c=100)
-        # self._check_values(row, d=200, total=103, inc=104)
+        # self._check_values(row, d=200, total=103, half_total=51.5)
         self.assertIn('d', changed)
         self.assertIn('total', changed)
-        self.assertIn('inc', changed)
+        self.assertIn('half_total', changed)
         del changed[0:len(changed)]
         row.set_row(self._data_row(a=1, b=10, c=20, d=30))
         self.assertIn('a', changed)
@@ -236,7 +236,7 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('c', changed)
         self.assertIn('d', changed)
         self.assertIn('total', changed)
-        self.assertIn('inc', changed)
+        self.assertIn('half_total', changed)
 
     def test_editability_callbacks(self):
         enabled = [None] # we need a mutable object...
@@ -276,7 +276,7 @@ class PresentedRow(unittest.TestCase):
     def test_has_key(self):
         row = self._row()
         self.assertIn('a', row)
-        self.assertIn('inc', row)
+        self.assertIn('half_total', row)
         self.assertNotIn('blabla', row)
 
     def test_changed(self):
@@ -304,9 +304,9 @@ class PresentedRow(unittest.TestCase):
         self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))
 
     def test_format(self):
-        row = self._row(singleline=True, r=(8, 9))
-        r1 = row.format('r')
-        r2 = row.format('r', single=False)
+        row = self._row(singleline=True, range=(8, 9))
+        r1 = row.format('range')
+        r2 = row.format('range', single=False)
         self.assertEqual(r1, u'8 — 9')
         self.assertEqual(r2, ('8', '9'))
 
@@ -353,10 +353,10 @@ class PresentedRow(unittest.TestCase):
         self.assertTrue(row.depends('b', ('a', 'b', 'c', 'd')))
         self.assertTrue(row.depends('c', ('d',)))
         self.assertFalse(row.depends('d', row.keys()))
-        self.assertFalse(row.depends('e', row.keys()))
-        self.assertTrue(row.depends('total', ('inc', 'd')))
-        self.assertFalse(row.depends('total', ('a', 'b', 'c', 'e', 'total')))
-        self.assertFalse(row.depends('inc', any))
+        self.assertFalse(row.depends('x', row.keys()))
+        self.assertTrue(row.depends('total', ('half_total', 'd')))
+        self.assertFalse(row.depends('total', ('a', 'b', 'c', 'x', 'total')))
+        self.assertFalse(row.depends('half_total', any))
 
     def test_filename(self):
         row = pp.PresentedRow((
