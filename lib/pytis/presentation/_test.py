@@ -21,7 +21,8 @@ import unittest
 
 import pytis.data as pd
 import pytis.presentation as pp
-from pytis.form import *
+import pytis.util
+import config
 
 tests = pytis.util.test.TestSuite()
 
@@ -323,11 +324,11 @@ class PresentedRow(unittest.TestCase):
             pd.ColumnSpec('d', pd.String(enumerator=enumerator)),
         )
         fields = (
-            Field('a'),
-            Field('b', display='y'),
-            Field('c', display=lambda x: '-' + x + '-'),
-            Field('d', display=lambda row: row['y'].value().lower()),
-            Field('e', virtual=True, computer=pp.CbComputer('b', 'z')),
+            pp.Field('a'),
+            pp.Field('b', display='y'),
+            pp.Field('c', display=lambda x: '-' + x + '-'),
+            pp.Field('d', display=lambda row: row['y'].value().lower()),
+            pp.Field('e', virtual=True, computer=pp.CbComputer('b', 'z')),
         )
         row = pp.PresentedRow(fields, pd.Data(columns, columns[0]), None, new=True,
                               prefill=dict(b='2', c='3', d='1'))
@@ -359,10 +360,10 @@ class PresentedRow(unittest.TestCase):
 
     def test_filename(self):
         row = pp.PresentedRow((
-            Field('a', default=1),
-            Field('x', virtual=True, default='aaa'),
-            Field('y', virtual=True, filename='x'),
-            Field('z', virtual=True, filename=lambda r: 'file%d.pdf' % r['a'].value()),
+            pp.Field('a', default=1),
+            pp.Field('x', virtual=True, default='aaa'),
+            pp.Field('y', virtual=True, filename='x'),
+            pp.Field('z', virtual=True, filename=lambda r: 'file%d.pdf' % r['a'].value()),
         ), self._data, None, new=True)
         self.assertEqual(row.filename('x'), None)
         self.assertEqual(row.filename('y'), 'aaa')
@@ -370,15 +371,15 @@ class PresentedRow(unittest.TestCase):
 
     def test_virtual_field_type_class(self):
         row = pp.PresentedRow((
-            Field('a'),
-            Field('x', virtual=True, type=pytis.data.Integer),
+            pp.Field('a'),
+            pp.Field('x', virtual=True, type=pytis.data.Integer),
         ), self._data, None)
         self.assertTrue(isinstance(row.type('x'), pytis.data.Integer))
 
     def test_codebook(self):
         row = pp.PresentedRow((
-            Field('a'),
-            Field('b', codebook='InvalidName'),
+            pp.Field('a'),
+            pp.Field('b', codebook='InvalidName'),
         ), self._data, None)
         self.assertTrue(isinstance(row.type('b'), pytis.data.Integer))
 
@@ -391,10 +392,10 @@ class PresentedRow(unittest.TestCase):
                 ('z', ((), pd.Permission.ALL))),
         )
         row = pp.PresentedRow((
-            Field('x'),
-            Field('y'),
-            Field('z'),
-            Field('zz', virtual=True, computer=computer(lambda r, z: '-' + z + '-')),
+            pp.Field('x'),
+            pp.Field('y'),
+            pp.Field('z'),
+            pp.Field('zz', virtual=True, computer=pp.computer(lambda r, z: '-' + z + '-')),
         ), data, None, new=True)
         self.assertTrue(row.permitted('x', pd.Permission.VIEW))
         self.assertTrue(row.permitted('x', True))
@@ -412,11 +413,11 @@ class PresentedRow(unittest.TestCase):
                   for x in ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon')]
         ))
         row = pp.PresentedRow((
-            Field('a'),
-            Field('b'),
-            Field('x1', virtual=True, completer=('yes', 'no', 'maybe')),
-            Field('x2', virtual=True, completer=completer,
-                  runtime_filter=computer(lambda r, a:
+            pp.Field('a'),
+            pp.Field('b'),
+            pp.Field('x1', virtual=True, completer=('yes', 'no', 'maybe')),
+            pp.Field('x2', virtual=True, completer=completer,
+                  runtime_filter=pp.computer(lambda r, a:
                                           pd.NE('x', pd.sval('Bacardi')) if a == 1 else None)),
         ), self._data, None, new=True)
         self.assertFalse(row.has_completer('a'))
@@ -427,7 +428,8 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.completions('b'), [])
         self.assertEquals(row.completions('x1'), ['maybe', 'no', 'yes'])
         self.assertEquals(row.completions('x1', prefix='y'), ['yes'])
-        self.assertEquals(row.completions('x2'), ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon'))
+        self.assertEquals(row.completions('x2'), ('Apple', 'Bananas', 'Basil', 'Bacardi',
+                                                  'Cinamon'))
         self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil', 'Bacardi'))
         row['a'] = 1
         self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil'))
@@ -439,7 +441,7 @@ class PresentedRow(unittest.TestCase):
             access_rights=pd.AccessRights(('a', (None, pd.Permission.ALL))),
         )
         row = pp.PresentedRow((
-            Field('a'),
+            pp.Field('a'),
         ), data, None, new=True)
         self.assertTrue(row.validate('a', '1') is not None)
         self.assertTrue(row.validate('a', '4') is None)
