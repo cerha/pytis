@@ -990,7 +990,7 @@ class PresentedRow(object):
             # row changes, where the current inline display value doesn't match the
             # changed field value.  But beware!  We can not use .field_changed() for
             # this purpose, because it would prevent using inline display in browse
-            # form (which is tha mail purpose of inline display) because we cycle
+            # form (which is tha main purpose of inline display) because we cycle
             # through rows using set_row() without reset=True.  To make the story
             # even longer, we don't want to call set_row() with reset=True in
             # BrowseForm, because it would invoke unnecessary computers.
