@@ -765,18 +765,6 @@ class PresentedRow(object):
         else:
             return self._original_row
 
-    def original_presented_row(self):
-        """Return 'PresentedRow' instance containing the original row values.
-
-        The original values are values set in row initialization or after the
-        last call to 'set_row()' with 'reset' set to true.
-
-        """
-        original_row = self.original_row()
-        original_record = copy.copy(self)
-        original_record.set_row(original_row)
-        return original_record
-
     def changed(self):
         """Return true if the *data* row has been changed.
 
