@@ -280,9 +280,8 @@ class Data(object_2_5):
         """
         super(Data, self).__init__(columns=columns, key=key, ordering=ordering,
                                    **kwargs)
-        assert not filter(lambda c: not isinstance(c, ColumnSpec),
-                          columns), \
-            'Invalid column specification'
+        assert all(isinstance(c, ColumnSpec) for c in columns), \
+            ('Invalid column specification', columns)
         key = xtuple(key)
         if ordering:
             ordering = xtuple(ordering)
