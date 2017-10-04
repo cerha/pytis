@@ -5420,65 +5420,71 @@ class Specification(SpecificationBase):
         return pytis.presentation.specification_path(spec_name)[1]
 
     def _create_data_spec(self):
-        db_spec = None
+        kwargs = dict(condition=self.condition)
         if issubclass(self.data_cls, pytis.data.DBData):
-            B = pytis.data.DBColumnBinding
+            Column = pytis.data.DBColumnBinding
             table = self.table
             if table is None:
                 table_name = camel_case_to_lower(self.__class__.__name__, '_')
             elif isinstance(table, basestring):
                 table_name = table
             else:
-                db_spec = table
+                kwargs['db_spec'] = table
                 table_name = table.pytis_name(real=True)
-            bindings = [B(f.id(), table_name, f.dbcolumn(), type_=f.type(),
-                          crypto_name=f.crypto_name(), encrypt_empty=f.encrypt_empty(),
-                          **f.type_kwargs())
-                        for f in self._fields if not f.virtual()]
-            bindings.extend([B(f.inline_display(), table_name, f.inline_display())
-                             for f in self._fields
-                             if (f.inline_display() and
-                                 f.inline_display() not in [b.id() for b in bindings])])
-            if self.key:
-                keyid = self.key
-                if isinstance(keyid, (list, tuple)):
-                    assert len(keyid) == 1, ("Multicolumn keys no longer supported:", keyid)
-                    keyid = keyid[0]
-                key = find(keyid, bindings, key=lambda b: b.id())
-                assert key is not None, ("Invalid key column:", keyid)
-            else:
-                key = bindings[0]
-            args = (bindings, key,)
-            if self.arguments is None:
-                arguments = None
-            else:
-                arguments = [B(f.id(), table_name, f.dbcolumn(), type_=f.type(),
-                               **f.type_kwargs())
-                             for f in self.arguments]
+            columns = [Column(f.id(), table_name, f.dbcolumn(), type_=f.type(),
+                              crypto_name=f.crypto_name(), encrypt_empty=f.encrypt_empty(),
+                              **f.type_kwargs())
+                       for f in self._fields if not f.virtual()]
+            columns.extend(Column(f.inline_display(), table_name, f.inline_display())
+                           for f in self._fields
+                           if (f.inline_display() and
+                               f.inline_display() not in [c.id() for c in columns]))
+            if self.arguments is not None:
+                kwargs['arguments'] = [
+                    Column(f.id(), table_name, f.dbcolumn(), type_=f.type(), **f.type_kwargs())
+                    for f in self.arguments
+                ]
+            kwargs.update(
+                distinct_on=self.distinct_on,
+                crypto_names=self.crypto_names,
+                # These are actually specific to pytis.data.DBDataPostgreSQL
+                # but in practice it currently makes no real difference.
+                ro_select=self.ro_select,
+                connection_name=self.connection,
+            )
         else:
             def type_(f):
                 t = f.type() or pytis.data.String
                 if type(t) == type(pytis.data.Type):
                     t = t()
-                kwargs = f.type_kwargs()
-                if kwargs:
-                    t = t.clone(t.__class__(**kwargs))
+                type_kwargs = f.type_kwargs()
+                if type_kwargs:
+                    t = t.clone(t.__class__(**type_kwargs))
                 return t
             columns = [pytis.data.ColumnSpec(f.id(), type_(f))
                        for f in self._fields if not f.virtual()]
-            args = (columns,)
-            arguments = None
-        access_rights = self.data_access_rights('form/' + self._action_spec_name())
-        if access_rights is None:
-            access_rights = self.access_rights
+        if issubclass(self.data_cls, pytis.data.RestrictedData):
+            access_rights = self.data_access_rights('form/' + self._action_spec_name())
             if access_rights is None:
-                perm = pytis.data.Permission.ALL
-                access_rights = pytis.data.AccessRights((None, (None, perm)))
-        kwargs = dict(access_rights=access_rights, connection_name=self.connection,
-                      condition=self.condition, distinct_on=self.distinct_on,
-                      arguments=arguments, crypto_names=self.crypto_names,
-                      db_spec=db_spec, ro_select=self.ro_select)
-        return pytis.data.DataFactory(self.data_cls, *args, **kwargs)
+                access_rights = self.access_rights
+                if access_rights is None:
+                    perm = pytis.data.Permission.ALL
+                    access_rights = pytis.data.AccessRights((None, (None, perm)))
+            kwargs['access_rights'] = access_rights
+        if self.key:
+            keyid = self.key
+            if isinstance(keyid, (list, tuple)):
+                if len(keyid) == 1:
+                    keyid = keyid[0]
+                else:
+                    raise ProgramError("Multicolumn keys no longer supported: %s" % keyid)
+            key = find(keyid, columns, key=lambda c: c.id())
+
+            assert key is not None, ("Invalid key column:", keyid)
+        else:
+            key = columns[0]
+        kwargs['key'] = key
+        return pytis.data.DataFactory(self.data_cls, columns, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:
