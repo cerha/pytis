@@ -938,7 +938,7 @@ class MemData(Data):
 
     _CACHEABLE = False
 
-    def __init__(self, columns, data=(), **kwargs):
+    def __init__(self, columns, key=None, data=(), **kwargs):
         """Inicializuj datový zdroj dle specifikace 'columns'.
 
         'columns' jsou stejné jako v předkovi.  Klíčem je vždy první sloupec
@@ -948,7 +948,7 @@ class MemData(Data):
         inicializován datový objekt.
 
         """
-        super(MemData, self).__init__(columns, columns[0], **kwargs)
+        super(MemData, self).__init__(columns, key if key is not None else columns[0], **kwargs)
         self._mem_data = []
         self._mem_cursor = -1
         for row in data:
