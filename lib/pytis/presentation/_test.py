@@ -120,6 +120,52 @@ class PresentedRow(unittest.TestCase):
         row = self._row(new=True, a=1, b=pd.ival(3), d=77)
         self._check_values(row, a=1, b=3, c=5, d=77, x=88)
 
+    def test_new(self):
+        row = self._row()
+        self.assertFalse(row.new())
+        row = self._row(new=True)
+        self.assertTrue(row.new())
+
+    def test_key(self):
+        row = self._row()
+        self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), None),))
+        row = self._row(a=1)
+        self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), 1),))
+
+    def test_keys(self):
+        row = self._row()
+        self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))
+
+    def test_fields(self):
+        row = self._row()
+        self.assertEqual(row.fields(), self._fields)
+
+    def test_resolver(self):
+        row = self._row()
+        self.assertEqual(row.resolver(), config.resolver)
+
+    def test_data(self):
+        row = self._row()
+        self.assertEqual(row.data(), self._data)
+
+    def test_set_transaction(self):
+        row = self._row()
+        self.assertEqual(row.transaction(), None)
+        # TODO: This whole test file tries to avoid using a real database connection,
+        # so we can't create a real transaction here.  Using 'x' is invalid for
+        # real use but it stil verifies that set_transaction works as long as
+        # set_transaction doesn't validate its argument.
+        transaction = 'x' #pd.DBTransactionDefault(config.dbconnection)
+        row.set_transaction(transaction)
+        self.assertEqual(row.transaction(), transaction)
+
+    def test_original_row(self):
+        row = self._row(new=True, row=self._data_row(b=6, d=3), b=22, c=33, d=44)
+        r1 = row.original_row()
+        self._check_values(r1, a=None, b=22, c=33, d=44)
+        r2 = row.original_row(initialized=False)
+        self._check_values(r2, a=None, b=6, c=None, d=3)
+
     def test_prefill_default(self):
         row = self._row(new=True, b=22, c=33, d=44, x=55)
         self._check_values(row, b=22, c=33, d=44, x=55)
@@ -278,6 +324,8 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('a', row)
         self.assertIn('half_total', row)
         self.assertNotIn('blabla', row)
+        self.assertTrue(row.has_key('a'))
+        self.assertFalse(row.has_key('xxx'))
 
     def test_changed(self):
         row = self._row()
@@ -298,10 +346,6 @@ class PresentedRow(unittest.TestCase):
         self.assertTrue(row.field_changed('a'))
         self.assertIsNotNone(row.validate('a', ''))
         self.assertFalse(row.field_changed('a'))
-
-    def test_keys(self):
-        row = self._row()
-        self.assertItemsEqual(row.keys(), map(lambda f: f.id(), self._fields))
 
     def test_format(self):
         row = self._row(singleline=True, range=(8, 9))
@@ -445,7 +489,6 @@ class PresentedRow(unittest.TestCase):
         ), data, None, new=True)
         self.assertTrue(row.validate('a', '1') is not None)
         self.assertTrue(row.validate('a', '4') is None)
-
 
 
 tests.add(PresentedRow)
