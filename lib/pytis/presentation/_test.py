@@ -550,6 +550,7 @@ class PresentedRow(unittest.TestCase):
         self.assertIsNone(row.get('z', secure=True))
         self.assertEqual(row.display('z'), '')
         self.assertEqual(row.enumerate('z'), [])
+        self.assertFalse(row.editable('z'))
 
 
     def test_completer(self):
