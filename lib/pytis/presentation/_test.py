@@ -358,8 +358,7 @@ class PresentedRow(unittest.TestCase):
         enumerator = pd.DataEnumerator(pd.DataFactory(
             pd.MemData,
             [pd.ColumnSpec(c, pd.String()) for c in ('x', 'y', 'z')],
-            data=[pd.Row(zip(('x', 'y', 'z'), [pd.sval(x) for x in values]))
-                  for values in (('1', 'FIRST', 'A'), ('2', 'SECOND', 'B'), ('3', 'THIRD', 'C'))],
+            data=(('1', 'FIRST', 'A'), ('2', 'SECOND', 'B'), ('3', 'THIRD', 'C')),
         ))
         columns = (
             pd.ColumnSpec('a', pd.Integer()),
@@ -453,8 +452,7 @@ class PresentedRow(unittest.TestCase):
     def test_completer(self):
         completer = pd.DataEnumerator(pd.DataFactory(
             pd.MemData, (pd.ColumnSpec('x', pd.String()),),
-            data=[pd.Row((('x', pd.sval(str(x))),))
-                  for x in ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon')]
+            data=(('Apple',), ('Bananas',), ('Basil',), ('Bacardi',), ('Cinamon',)),
         ))
         row = pp.PresentedRow((
             pp.Field('a'),
@@ -481,7 +479,7 @@ class PresentedRow(unittest.TestCase):
     def test_unique(self):
         data = pd.RestrictedMemData(
             (pd.ColumnSpec('a', pd.String(not_null=True, unique=True)),),
-            data=[pd.Row((('a', pd.sval(str(x))),)) for x in ('1', '2', '3')],
+            data=(('1',), ('2',), ('3',)),
             access_rights=pd.AccessRights(('a', (None, pd.Permission.ALL))),
         )
         row = pp.PresentedRow((
