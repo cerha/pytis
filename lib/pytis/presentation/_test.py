@@ -77,6 +77,8 @@ class PresentedRow(unittest.TestCase):
                     pp.Field('x', type=pd.Integer(), virtual=True, default=88),
                     pp.Field('password', type=pd.Password(), virtual=True),
                     pp.Field('big', type=BigString(), virtual=True),
+                    pp.Field('array', type=pd.Array, inner_type=pd.String,
+                             codebook='Fruits', display='title', virtual=True),
                 )
 
         class Fruits(pytis.presentation.Specification):
@@ -141,7 +143,8 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, '
                                         'fruit=None, fruit_code=None, '
                                         'range=None, total=8, half_total=4, x=88, '
-                                        'password=***, big=<BigString 1 kB>>'))
+                                        'password=***, big=<BigString 1 kB>, '
+                                        'array=None>'))
         delattr(row, '_row')
         self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
 
@@ -212,13 +215,20 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=5, b=10, c=20, d=30, total=30)
         row['total'] = 3
         self._check_values(row, a=5, b=10, c=20, d=30, total=3)
+        row['array'] = ('apl', 'str')
+        self.assertEqual([v.value() for v in row['array'].value()], ['apl', 'str'])
         def assign_invalid():
             row['c'] = 'x'
         self.assertRaises(TypeError, assign_invalid)
         def assign_invalid_value():
             row['c'] = pd.sval('x')
         self.assertRaises(TypeError, assign_invalid_value)
+        def assign_invalid_array():
+            row['array'] = (1, 2)
+        self.assertRaises(TypeError, assign_invalid_array)
 
+
+        self.assertRaises(TypeError, assign_invalid_value)
     def test_get(self):
         row = self._row(new=True, a=4)
         self.assertEqual(row.get('a').value(), 4)
@@ -356,9 +366,10 @@ class PresentedRow(unittest.TestCase):
 
     def test_enumerate(self):
         row = self._row()
-        self.assertEqual(row.enumerate('fruit'), [('apl', u'Apple'), ('ban', u'Banana'),
-                                                  ('str', u'Strawberry'), ('org', u'Orange')])
+        enum = [('apl', u'Apple'), ('ban', u'Banana'), ('str', u'Strawberry'), ('org', u'Orange')]
+        self.assertEqual(row.enumerate('fruit'), enum)
         self.assertEqual(row.enumerate('c'), None)
+        self.assertEqual(row.enumerate('array'), enum)
 
     def test_enumeration_callbacks(self):
         called = []
@@ -425,6 +436,8 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.display('fruit'), 'Apple')
         row['fruit'] = None
         self.assertEqual(row.display('fruit'), 'none')
+        row['array'] = ('apl', 'str')
+        self.assertEqual(row.display('array'), 'Apple, Strawberry')
 
     def test_prefer_display(self):
         row = self._row()
