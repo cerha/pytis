@@ -45,6 +45,7 @@ class PresentedRow(unittest.TestCase):
                 return super(SpecialEnumerator, self).values()
 
         class TestSpecification(pytis.presentation.Specification):
+            data_cls = pd.Data
             def _twice(self, row, c):
                 return c * 2
             def _total(self, row, b, c):
@@ -74,9 +75,9 @@ class PresentedRow(unittest.TestCase):
                 )
 
         self.longMessage = True
-        self._fields = TestSpecification().view_spec().fields()
-        columns = [pd.ColumnSpec(f.id(), f.type()) for f in self._fields if not f.virtual()]
-        self._data = pd.Data(columns, columns[0])
+        specification = TestSpecification()
+        self._fields = specification.view_spec().fields()
+        self._data = specification.data_spec().create()
 
     def _data_row(self, **values):
         return pd.Row([(f.id(), pd.Value(f.type(), values.get(f.id())))
