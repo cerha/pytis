@@ -528,6 +528,11 @@ class PresentedRow(unittest.TestCase):
         protected_row = row.protected()
         self.assertRaises(protected_row.ProtectionError, lambda: protected_row['z'].value())
         self.assertRaises(protected_row.ProtectionError, lambda: protected_row['zz'].value())
+        # Cover special cases for a non-permitted field in various methods.
+        self.assertIsNone(row.get('z', secure=True))
+        self.assertEqual(row.display('z'), '')
+        self.assertEqual(row.enumerate('z'), [])
+
 
     def test_completer(self):
         completer = pd.DataEnumerator(pd.DataFactory(
