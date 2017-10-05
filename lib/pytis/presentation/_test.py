@@ -219,6 +219,12 @@ class PresentedRow(unittest.TestCase):
             row['c'] = pd.sval('x')
         self.assertRaises(TypeError, assign_invalid_value)
 
+    def test_get(self):
+        row = self._row(new=True, a=4)
+        self.assertEqual(row.get('a').value(), 4)
+        self.assertIsNone(row.get('aaa'))
+        self.assertEqual(row.get('aaa', default=10), 10)
+
     def test_computer(self):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
