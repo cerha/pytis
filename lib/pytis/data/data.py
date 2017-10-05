@@ -947,7 +947,7 @@ class MemData(Data):
           'columns' -- same as in parent class.
           'key' -- same as in parent class but may be also None, in which
              case the first columns is used as a key.
-          'data' -- may contain initial data as a sequence or 'pytis.data.Row'
+          'data' -- may contain initial data as a sequence of 'pytis.data.Row'
              instances or a sequence of tuples of internal python values.  In
              the later case the values appear in the order of 'columns' and
              must match their types ('TypeError' is raised if not).
