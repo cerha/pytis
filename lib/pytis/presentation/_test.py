@@ -427,6 +427,8 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.cb_value('fruit', 'code').value(), 123)
         row['fruit'] = 'ban'
         self.assertEqual(row.cb_value('fruit', 'title').value(), 'Banana')
+        row['fruit'] = None
+        self.assertEqual(row.cb_value('fruit', 'title'), None)
 
     def test_display(self):
         row = self._row(fruit='str')
