@@ -925,14 +925,16 @@ class Function(object):
 
 
 class MemData(Data):
-    """Data držená v paměti.
+    """Data kept in memory.
 
-    Třída slouží jako jednoduchý datový objekt, který řádky svých dat drží
-    v paměti.  Je určena především pro ladění a testování.
+    The class providing a data object which holds its data rows in memory.  The
+    data is not persistent, but otherwise the data object provides the same
+    interface as the database based data objects.  It is mainly useful for
+    testing and debugging and special purposes, such as virtual forms.
 
-    Třída není thread-safe.
+    The class is not thread-safe.
 
-    Modifikační metody nevolají žádné callbacky.
+    Data modification methods don't invoke any callbacks.
 
     """
 
