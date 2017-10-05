@@ -544,20 +544,24 @@ class PresentedRow(unittest.TestCase):
             pd.MemData, (pd.ColumnSpec('x', pd.String()),),
             data=(('Apple',), ('Bananas',), ('Basil',), ('Bacardi',), ('Cinamon',)),
         ))
-        row = pp.PresentedRow((
-            pp.Field('a'),
-            pp.Field('b'),
-            pp.Field('x1', virtual=True, completer=('yes', 'no', 'maybe')),
-            pp.Field('x2', virtual=True, completer=completer,
-                  runtime_filter=pp.computer(lambda r, a:
-                                          pd.NE('x', pd.sval('Bacardi')) if a == 1 else None)),
-        ), self._data, None, new=True)
+        fields = (
+            pp.Field('a', type=pd.Integer(not_null=True)),
+            pp.Field('x0', type=pd.String(enumerator=pd.FixedEnumerator(('a', 'b', 'c')))),
+            pp.Field('x1', type=pd.String(), completer=('yes', 'no', 'maybe')),
+            pp.Field('x2', type=pd.String(), completer=completer,
+                     runtime_filter=pp.computer(lambda r, a:
+                                                pd.NE('x', pd.sval('Bacardi'))
+                                                if a == 1 else None)),
+        )
+        data = pd.MemData([pd.ColumnSpec(f.id(), f.type()) for f in fields])
+        row = pp.PresentedRow(fields, data, None, new=True)
         self.assertFalse(row.has_completer('a'))
-        self.assertFalse(row.has_completer('b'))
+        self.assertTrue(row.has_completer('x0'))
         self.assertTrue(row.has_completer('x1', static=True))
         self.assertTrue(row.has_completer('x2'))
         self.assertFalse(row.has_completer('x2', static=True))
-        self.assertEqual(row.completions('b'), [])
+        self.assertEqual(row.completions('a'), [])
+        self.assertEqual(row.completions('x0'), ['a', 'b', 'c'])
         self.assertEquals(row.completions('x1'), ['maybe', 'no', 'yes'])
         self.assertEquals(row.completions('x1', prefix='y'), ['yes'])
         self.assertEquals(row.completions('x2'), ('Apple', 'Bananas', 'Basil', 'Bacardi',
