@@ -939,19 +939,25 @@ class MemData(Data):
     _CACHEABLE = False
 
     def __init__(self, columns, key=None, data=(), **kwargs):
-        """Inicializuj datový zdroj dle specifikace 'columns'.
+        """Initialize data source according to given 'columns' specification.
 
-        'columns' jsou stejné jako v předkovi.  Klíčem je vždy první sloupec
-        'columns', z čehož vyplývá, že 'columns' nesmí být prázdné.
-
-        Argument 'data' může obsahovat sekvenci instancí 'Row', kterými má být
-        inicializován datový objekt.
+        Arguments:
+          'columns' -- same as in parent class.
+          'key' -- same as in parent class but may be also None, in which
+             case the first columns is used as a key.
+          'data' -- may contain initial data as a sequence or 'pytis.data.Row'
+             instances or a sequence of tuples of internal python values.  In
+             the later case the values appear in the order of 'columns' and
+             must match their types ('TypeError' is raised if not).
 
         """
         super(MemData, self).__init__(columns, key if key is not None else columns[0], **kwargs)
         self._mem_data = []
         self._mem_cursor = -1
         for row in data:
+            if isinstance(row, (tuple, list)):
+                row = pytis.data.Row([(c.id(), pytis.data.Value(c.type(), v))
+                                      for c, v in zip(self._columns, row)])
             self.insert(row)
 
     def _mem_find_index(self, key):
