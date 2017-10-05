@@ -63,7 +63,8 @@ class PresentedRow(unittest.TestCase):
                     pp.Field('d', type=pd.Integer(),
                              editable=pp.computer(lambda r, total: total > 5),
                              computer=pp.computer(self._twice)),
-                    pp.Field('fruit', type=pd.String(), codebook='Fruits', display='title'),
+                    pp.Field('fruit', type=pd.String(), codebook='Fruits', display='title',
+                             null_display='none'),
                     pp.Field('fruit_code', virtual=True, computer=pp.CbComputer('fruit', 'code')),
                     pp.Field('range', type=pd.IntegerRange(),
                              visible=pp.computer(lambda r, a: a != 0)),
@@ -318,6 +319,10 @@ class PresentedRow(unittest.TestCase):
         def callback():
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
+        self.assertRaises(
+            pytis.util.ProgramError,
+            lambda: row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', lambda: None),
+        )
         self.assertIsNone(enabled[0])
         self._set(row, a=8)
         self.assertIsNone(enabled[0])
@@ -401,6 +406,8 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.display('fruit'), 'Strawberry')
         row['fruit'] = 'apl'
         self.assertEqual(row.display('fruit'), 'Apple')
+        row['fruit'] = None
+        self.assertEqual(row.display('fruit'), 'none')
 
     def test_prefer_display(self):
         row = self._row()
