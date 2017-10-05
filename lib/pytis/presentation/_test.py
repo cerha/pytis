@@ -565,6 +565,19 @@ class PresentedRow(unittest.TestCase):
         self.assertTrue(row.validate('a', '1') is not None)
         self.assertTrue(row.validate('a', '4') is None)
 
+    def test_attachment_storage(self):
+        storage = pytis.presentation.AttachmentStorage()
+        fields = (
+            pp.Field('a', type=pd.String()),
+            pp.Field('b', type=pd.String(), attachment_storage=storage),
+            pp.Field('c', type=pd.String(), attachment_storage=lambda row: storage),
+        )
+        data = pd.MemData([pd.ColumnSpec(f.id(), f.type()) for f in fields])
+        row = pp.PresentedRow(fields, data, None, new=True)
+        self.assertIsNone(row.attachment_storage('a'))
+        self.assertEquals(row.attachment_storage('b'), storage)
+        self.assertEquals(row.attachment_storage('c'), storage)
+
 
 tests.add(PresentedRow)
 
