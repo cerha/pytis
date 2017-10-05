@@ -968,8 +968,6 @@ class PresentedRow(object):
         column = self._coldict[key]
         if self._secret_column(column):
             return ''
-        if export is None:
-            export = lambda value: value.export()
         inline_display = column.inline_display
         if inline_display and inline_display in self._row and not self.validated(key):
             # The row doesn't contain inline_display when it was created in _set_row
@@ -986,7 +984,10 @@ class PresentedRow(object):
             if value.value() is None:
                 return column.null_display or ''
             else:
-                return export(value)
+                if export:
+                    return export(value)
+                else:
+                    return value.export()
         display = self._display(column)
         if not display and column.cb_computer_field:
             display = self._display(self._coldict[column.cb_computer_field])
