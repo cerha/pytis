@@ -243,6 +243,11 @@ class PresentedRow(unittest.TestCase):
         self._set(row, b=1)
         self._check_values(row, total=3, d=4)
 
+    def test_cb_computer(self):
+        row = self._row(new=True, fruit='str')
+        self.assertTrue(isinstance(row.type('fruit_code'), pytis.data.Integer))
+        self.assertEqual(row['fruit_code'].value(), 234)
+
     def test_prefill_computer(self):
         row = self._row(new=True, b=2, c=2, total=88)
         self._check_values(row, b=2, c=2, total=88, half_total=44)
