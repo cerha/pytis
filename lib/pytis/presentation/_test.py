@@ -557,14 +557,11 @@ class PresentedRow(unittest.TestCase):
         self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil'))
 
     def test_unique(self):
-        data = pd.RestrictedMemData(
+        data = pd.MemData(
             (pd.ColumnSpec('a', pd.String(not_null=True, unique=True)),),
             data=(('1',), ('2',), ('3',)),
-            access_rights=pd.AccessRights(('a', (None, pd.Permission.ALL))),
         )
-        row = pp.PresentedRow((
-            pp.Field('a'),
-        ), data, None, new=True)
+        row = pp.PresentedRow((pp.Field('a'),), data, None, new=True)
         self.assertTrue(row.validate('a', '1') is not None)
         self.assertTrue(row.validate('a', '4') is None)
 
