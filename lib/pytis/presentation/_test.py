@@ -63,6 +63,8 @@ class PresentedRow(unittest.TestCase):
                     pp.Field('d', type=pd.Integer(),
                              editable=pp.computer(lambda r, total: total > 5),
                              computer=pp.computer(self._twice)),
+                    pp.Field('fruit', type=pd.String(), codebook='Fruits', display='title'),
+                    pp.Field('fruit_code', virtual=True, computer=pp.CbComputer('fruit', 'code')),
                     pp.Field('range', type=pd.IntegerRange(),
                              visible=pp.computer(lambda r, a: a != 0)),
                     pp.Field('total', type=pd.Integer(), virtual=True,
@@ -74,13 +76,34 @@ class PresentedRow(unittest.TestCase):
                     pp.Field('x', type=pd.Integer(), virtual=True, default=88),
                     pp.Field('password', type=pd.Password(), virtual=True),
                     pp.Field('big', type=BigString(), virtual=True),
-                    #pp.Field('code', type=String(), virtual=True),
                 )
 
+        class Fruits(pytis.presentation.Specification):
+            fields = (
+                pp.Field('id'),
+                pp.Field('title'),
+                pp.Field('code', type=pd.Integer()),
+                pp.Field('tropical', type=pd.Boolean()),
+            )
+            data_cls = pd.MemData
+            data = (('apl', 'Apple', 123, False),
+                    ('ban', 'Banana', 234, True),
+                    ('str', 'Strawberry', 234, False),
+                    ('org', 'Orange', 456, True))
+
+        class TestResolver(pytis.util.Resolver):
+            _specifications = {'TestSpecification': TestSpecification,
+                               'Fruits': Fruits}
+            def _get_object_by_name(self, name):
+                try:
+                    return self._specifications[name]
+                except KeyError:
+                    return super(TestResolver, self)._get_object_by_name(name)
+
         self.longMessage = True
-        specification = TestSpecification()
-        self._fields = specification.view_spec().fields()
-        self._data = specification.data_spec().create()
+        config.resolver = resolver = TestResolver()
+        self._fields = resolver.get('TestSpecification', 'view_spec').fields()
+        self._data = resolver.get('TestSpecification', 'data_spec').create()
 
     def _data_row(self, **values):
         return pd.Row([(f.id(), pd.Value(f.type(), values.get(f.id())))
@@ -114,9 +137,10 @@ class PresentedRow(unittest.TestCase):
 
     def test_unicode(self):
         row = self._row(new=True, a=1, b=3, d=77, password='secret', big=1024 * 'x')
-        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, range=None, '
-                                        'total=8, half_total=4, x=88, password=***, '
-                                        'big=<BigString 1 kB>>'))
+        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, '
+                                        'fruit=None, fruit_code=None, '
+                                        'range=None, total=8, half_total=4, x=88, '
+                                        'password=***, big=<BigString 1 kB>>'))
         delattr(row, '_row')
         self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
 
@@ -358,37 +382,49 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(r1, u'8 — 9')
         self.assertEqual(r2, ('8', '9'))
 
+    def test_codebook(self):
+        row = self._row()
+        self.assertIsNone(row.codebook('a'))
+        self.assertIsNone(row.codebook('b'))
+        self.assertEqual(row.codebook('fruit'), 'Fruits')
+
+    def test_cb_value(self):
+        row = self._row(fruit='apl')
+        self.assertEqual(row.cb_value('fruit', 'title').value(), 'Apple')
+        self.assertEqual(row.cb_value('fruit', 'code').value(), 123)
+        row['fruit'] = 'ban'
+        self.assertEqual(row.cb_value('fruit', 'title').value(), 'Banana')
+
     def test_display(self):
+        row = self._row(fruit='str')
+        self.assertEqual(row.display('a'), '')
+        self.assertEqual(row.display('fruit'), 'Strawberry')
+        row['fruit'] = 'apl'
+        self.assertEqual(row.display('fruit'), 'Apple')
+
+    def test_prefer_display(self):
+        row = self._row()
+        self.assertFalse(row.prefer_display('a'))
+
+    def test_display_functions(self):
         enumerator = pd.DataEnumerator(pd.DataFactory(
             pd.MemData,
-            [pd.ColumnSpec(c, pd.String()) for c in ('x', 'y', 'z')],
-            data=(('1', 'FIRST', 'A'), ('2', 'SECOND', 'B'), ('3', 'THIRD', 'C')),
+            [pd.ColumnSpec(c, pd.String()) for c in ('id', 'title', 'letter')],
+            data=(('1', 'First', 'A'), ('2', 'Second', 'B')),
         ))
-        columns = (
-            pd.ColumnSpec('a', pd.Integer()),
-            pd.ColumnSpec('b', pd.String(enumerator=enumerator)),
-            pd.ColumnSpec('c', pd.String(enumerator=enumerator)),
-            pd.ColumnSpec('d', pd.String(enumerator=enumerator)),
-        )
-        fields = (
-            pp.Field('a'),
-            pp.Field('b', display='y'),
-            pp.Field('c', display=lambda x: '-' + x + '-'),
-            pp.Field('d', display=lambda row: row['y'].value().lower()),
-            pp.Field('e', virtual=True, computer=pp.CbComputer('b', 'z')),
-        )
-        row = pp.PresentedRow(fields, pd.Data(columns, columns[0]), None, new=True,
-                              prefill=dict(b='2', c='3', d='1'))
-        self.assertEqual(row.display('a'), '')
-        self.assertEqual(row.display('b'), 'SECOND')
-        self.assertEqual(row.display('c'), '-3-')
-        self.assertEqual(row.display('d'), 'first')
-        self.assertEqual(row['e'].value(), 'B')
-        self.assertEqual(row.cb_value('b', 'z').value(), 'B')
-        self.assertEqual(row.cb_value('c', 'z').value(), 'C')
-        self.assertEqual(row.cb_value('d', 'y').value(), 'FIRST')
-        row['d'] = '8'
-        self.assertEqual(row.cb_value('d', 'y'), None)
+        class Specification(pytis.presentation.Specification):
+            data_cls = pd.MemData
+            fields = (
+                pp.Field('a'),
+                pp.Field('b', type=pd.String(enumerator=enumerator),
+                         display=lambda x: '-' + x + '-'),
+                pp.Field('c', type=pd.String(enumerator=enumerator),
+                         display=lambda row: row['title'].value().lower()),
+            )
+        row = pp.PresentedRow(Specification.fields, Specification().data_spec().create(),
+                              None, new=True, prefill=dict(b='1', c='2'))
+        self.assertEqual(row.display('b'), '-1-')
+        self.assertEqual(row.display('c'), 'second')
 
     def test_depends(self):
         row = self._row()
@@ -404,6 +440,7 @@ class PresentedRow(unittest.TestCase):
         self.assertTrue(row.depends('total', ('half_total', 'd')))
         self.assertFalse(row.depends('total', ('a', 'b', 'c', 'x', 'total')))
         self.assertFalse(row.depends('half_total', any))
+        self.assertTrue(row.depends('fruit', ('fruit_code',)))
 
     def test_filename(self):
         row = pp.PresentedRow((
@@ -423,7 +460,7 @@ class PresentedRow(unittest.TestCase):
         ), self._data, None)
         self.assertTrue(isinstance(row.type('x'), pytis.data.Integer))
 
-    def test_codebook(self):
+    def test_invalid_codebook_field_type(self):
         row = pp.PresentedRow((
             pp.Field('a'),
             pp.Field('b', codebook='InvalidName'),
