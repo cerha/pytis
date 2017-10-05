@@ -445,6 +445,26 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.display('b'), '-1-')
         self.assertEqual(row.display('c'), 'second')
 
+    def test_inline_display(self):
+        enumerator = pd.DataEnumerator(pd.DataFactory(
+            pd.MemData,
+            [pd.ColumnSpec(c, pd.String()) for c in ('id', 'title', 'letter')],
+            data=(('1', 'First', 'A'), ('2', 'Second', 'B')),
+        ))
+        class Specification(pytis.presentation.Specification):
+            data_cls = pd.MemData
+            fields = (
+                pp.Field('a', type=pd.String(enumerator=enumerator), display='title',
+                         inline_display='b', null_display='-'),
+                pp.Field('b', type=pd.String()),
+            )
+        row = pp.PresentedRow(Specification.fields, Specification().data_spec().create(),
+                              None, new=True, prefill=dict(a='1', b='FIRST'))
+        self.assertEqual(row.display('a'), 'FIRST')
+        self.assertEqual(row.display('a', export=lambda x: x.value().lower()), 'first')
+        row['b'] = None
+        self.assertEqual(row.display('a'), '-')
+
     def test_depends(self):
         row = self._row()
         self.assertFalse(row.depends('a', (x for x in row.keys() if x != 'b')))
