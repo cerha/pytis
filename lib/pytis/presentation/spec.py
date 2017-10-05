@@ -5074,6 +5074,15 @@ class Specification(SpecificationBase):
     such a case this property must be set to false.
 
     """
+    data = None
+    """MemData object initial data rows.
+
+    May contain initial data for a MemData data object as a sequence of
+    'pytis.data.Row' instances or a sequence of tuples of internal python
+    values.  In the later case the values appear in the order of 'columns' and
+    must match their types ('TypeError' is raised if not).
+
+    """
 
     __metaclass__ = _SpecificationMetaclass
     _specifications_by_db_spec_name = {}
@@ -5295,7 +5304,7 @@ class Specification(SpecificationBase):
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
                               'add_specification_by_db_spec_name', 'create_from_kwargs',
-                              'ro_select', 'oid',  # for backwards compatibility
+                              'ro_select', 'oid', 'data', # for backwards compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
@@ -5463,6 +5472,8 @@ class Specification(SpecificationBase):
                 return t
             columns = [pytis.data.ColumnSpec(f.id(), type_(f))
                        for f in self._fields if not f.virtual()]
+        if issubclass(self.data_cls, pytis.data.MemData) and self.data:
+            kwargs['data'] = self.data
         if issubclass(self.data_cls, pytis.data.RestrictedData):
             access_rights = self.data_access_rights('form/' + self._action_spec_name())
             if access_rights is None:
