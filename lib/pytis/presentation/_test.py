@@ -343,6 +343,12 @@ class PresentedRow(unittest.TestCase):
         row = self._row(a=20, b=0, c=5)
         self.assertEqual(enum(row, 'b'), (0, 20, 40, 60, 80, 100))
 
+    def test_enumerate(self):
+        row = self._row()
+        self.assertEqual(row.enumerate('fruit'), [('apl', u'Apple'), ('ban', u'Banana'),
+                                                  ('str', u'Strawberry'), ('org', u'Orange')])
+        self.assertEqual(row.enumerate('c'), None)
+
     def test_enumeration_callbacks(self):
         called = []
         def callback():
