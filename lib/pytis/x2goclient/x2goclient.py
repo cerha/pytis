@@ -849,8 +849,8 @@ class StartupController(object):
     )
 
     def __init__(self, application, session_parameters, force_parameters=None,
-                 backends=None, add_to_known_hosts=False, broker_url=None, broker_password=None,
-                 wait_for_pytis=True):
+                 backends=None, add_to_known_hosts=False, broker_url=None,
+                 broker_password=None, wait_for_pytis=True):
         self._app = application
         # If broker_url is given, the session parameters will be updated
         # later from the selected profile in select_profile().
@@ -863,6 +863,7 @@ class StartupController(object):
             self._broker_password = broker_password
         else:
             self._broker_parameters = self._broker_path = self._broker_password = None
+        self._broker_username = None
         self._wait_for_pytis = wait_for_pytis
         self._keyring = []
 
@@ -935,6 +936,7 @@ class StartupController(object):
 
         Authentication related connection parameters:
 
+          username -- user's login name (mandatory)
           gss_auth -- True if GSS-API (Kerberos) authentication is to be used
             or False for other authentication schemes
           key_filename -- file name of the private SSH key to use for
@@ -956,9 +958,10 @@ class StartupController(object):
         def message(msg):
             self._app.update_progress(connection_parameters['server'] + ': ' + msg)
 
-        def connect(gss_auth=False, key_filename=None, password=None):
+        def connect(username, gss_auth=False, key_filename=None, password=None):
             return function(**dict(
                 connection_parameters,
+                username=username,
                 gss_auth=gss_auth,
                 key_filename=key_filename,
                 password=password,
@@ -971,21 +974,21 @@ class StartupController(object):
         success = False
         message(_("Retrieving supported authentication methods."))
         methods = self._authentication_methods(connection_parameters)
-        for key_filename, password in self._keyring:
+        for username, key_filename, password in self._keyring:
             if key_filename and password and 'publickey' in methods:
                 message(_("Trying public key authentication."))
-                success = connect(key_filename=key_filename, password=password)
+                success = connect(username, key_filename=key_filename, password=password)
             elif key_filename is None and password and 'password' in methods:
                 message(_("Trying password authentication."))
-                success = connect(password=password)
+                success = connect(username, password=password)
             if success:
                 break
         if not success:
             message(_("Trying SSH Agent authentication."))
-            success = connect()
+            success = connect(connection_parameters['username'])
         if not success:
             message(_("Trying Kerberos authentication."))
-            success = connect(gss_auth=True)
+            success = connect(connection_parameters['username'], gss_auth=True)
         if not success:
             message(_("Trying interactive authentication."))
             if 'publickey' in methods:
@@ -993,16 +996,28 @@ class StartupController(object):
             else:
                 key_files = ()
             while not success:
-                key_filename, password = self._app.authentication_dialog(methods, key_files)
-                if key_filename:
-                    message(_("Trying public key authentication."))
-                elif password:
-                    message(_("Trying password authentication."))
-                else:
+                username, key_filename, password = self._app.authentication_dialog(
+                    connection_parameters['server'],
+                    connection_parameters['username'],
+                    methods,
+                    key_files,
+                )
+                if username is None:
                     return None
-                success = connect(key_filename=key_filename, password=password)
-                if success:
-                    self._keyring.append((key_filename, password))
+                if key_filename or password:
+                    if key_filename:
+                        message(_("Trying public key authentication."))
+                    else:
+                        message(_("Trying password authentication."))
+                    success = connect(username, key_filename=key_filename, password=password)
+                    if success:
+                        self._keyring.append((username, key_filename, password))
+                elif username != connection_parameters['username']:
+                    message(_("Trying SSH Agent authentication."))
+                    success = connect(username)
+                    if not success:
+                        message(_("Trying Kerberos authentication."))
+                        success = connect(username, gss_auth=True)
         if success:
             message(_("Connected successfully."))
         return success
@@ -1026,12 +1041,10 @@ class StartupController(object):
         else:
             return None
 
-    def connect(self, username):
-        connection_parameters = dict(
-            [(k, self._session_parameters[k]) for k in
-             ('server', 'port', 'password', 'key_filename', 'allow_agent', 'gss_auth')],
-            username=self._session_parameters['username'] or username,
-        )
+    def connect(self):
+        connection_parameters = dict((k, self._session_parameters[k]) for k in
+                                     ('server', 'port', 'username', 'password',
+                                      'key_filename', 'allow_agent', 'gss_auth'))
         return self._authenticate(self._connect, connection_parameters)
 
     def check_key_password(self, key_filename, password):
@@ -1045,29 +1058,25 @@ class StartupController(object):
 
     def _list_profiles(self, broker_path=None, **connection_parameters):
         try:
-            return PytisSshProfiles(connection_parameters,
-                                    logger=x2go.X2GoLogger(tag='PytisClient'),
-                                    broker_path=broker_path,
-                                    broker_password=self._broker_password)
+            profiles = PytisSshProfiles(connection_parameters,
+                                        logger=x2go.X2GoLogger(tag='PytisClient'),
+                                        broker_path=broker_path,
+                                        broker_password=self._broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
-
-    def list_profiles(self, username):
-        connection_parameters = dict(self._broker_parameters,
-                                     username=self._broker_parameters['username'] or username)
-        self._profiles = self._authenticate(self._list_profiles, connection_parameters,
-                                            broker_path=self._broker_path)
-        if self._profiles:
+        else:
+            self._broker_username = connection_parameters['username']
             self._app.update_progress(self._broker_parameters['server'] + ': ' +
                                       _.ngettext("Returned %d profile.",
                                                  "Returned %d profiles.",
-                                                 len(self._profiles.profile_ids)))
-        return self._profiles
+                                                 len(profiles.profile_ids)))
+            return profiles
 
-    def broker_url_username(self):
-        # This is actually caled before list_profiles() and it provides the default value
-        # for its username argument (which may be altered by user in the UI).
-        return self._broker_parameters['username']
+    def list_profiles(self):
+        self._profiles = self._authenticate(self._list_profiles,
+                                            self._broker_parameters,
+                                            broker_path=self._broker_path)
+        return self._profiles
 
     def _profile_session_parameters(self, profile_id):
         parameters = self._profiles.to_session_params(profile_id)
@@ -1097,9 +1106,8 @@ class StartupController(object):
         else:
             return None
 
-    def upgrade(self, username):
-        url_params, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
-        connection_parameters = dict(url_params, username=url_params['username'] or username)
+    def upgrade(self):
+        connection_parameters, path = self._parse_url(self._profiles.pytis_upgrade_parameters()[1])
         client = self._authenticate(ssh_connect, connection_parameters)
         if client is None:
             return _(u"Couldn't connect to upgrade server.")
@@ -1144,9 +1152,9 @@ class StartupController(object):
                 updatescript.run(version=X2GOCLIENT_VERSION, path=path)
         shutil.rmtree(tmp_directory)
 
-    def _vbs_path(self, directory, username, profile_id):
+    def _vbs_path(self, directory, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
-            username,
+            self._broker_username,
             self._broker_parameters['server'],
             self._profile_session_parameters(profile_id)['server'],
             profile_id,
@@ -1180,8 +1188,8 @@ class StartupController(object):
                     except Exception:
                         pass
 
-    def shortcut_exists(self, username, profile_id):
-        vbs_path = self._vbs_path(self._scripts_directory(), username, profile_id)
+    def shortcut_exists(self, profile_id):
+        vbs_path = self._vbs_path(self._scripts_directory(), profile_id)
         if not os.path.exists(vbs_path):
             return False
         for shortcut in self._desktop_shortcuts():
@@ -1189,12 +1197,12 @@ class StartupController(object):
                 return True
         return False
 
-    def create_shortcut(self, username, profile_id):
+    def create_shortcut(self, profile_id):
         import winshell
         directory = self._scripts_directory()
         if not os.path.isdir(directory):
             return _("Unable to find the scripts directory: %s", directory)
-        vbs_path = self._vbs_path(directory, username, profile_id)
+        vbs_path = self._vbs_path(directory, profile_id)
         # Create the VBS script to which the shortcut will point to.
         profile_name = self._profile_session_parameters(profile_id)['profile_name']
         if not os.path.exists(vbs_path):
@@ -1327,70 +1335,60 @@ class StartupController(object):
                 key_filename = f
                 break
         while True:
-            key_filename, password = self._app.keyfile_password_dialog(key_file=key_filename)
+            key_filename, old_passphrase = self._app.keyfile_passphrase_dialog(key_filename)
             if key_filename is None:
                 return
             else:
                 key = None
                 for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
                     try:
-                        key = handler.from_private_key_file(key_filename, password)
+                        key = handler.from_private_key_file(key_filename, old_passphrase)
                     except:
                         break
                 if key:
                     break
                 else:
                     if self._app.question_dialog(_("Question"),
-                                                 _("Wrong password! Try again?")):
+                                                 _("Wrong passphrase! Try again?")):
                         continue
                     else:
                         return
-        passwd = self._app.passphrase_dialog(_("Enter new key passphrase"),
-                                             check=self._check_password)
-        if passwd:
-            self._write_key(key, key_filename, passwd)
-            self._app.info_dialog(_("Change password"),
-                                  _("Password was changed for: %s", key_filename))
+        new_passphrase = self._app.passphrase_dialog(_("Enter new key passphrase"),
+                                                     check=self._check_password)
+        if new_passphrase:
+            self._write_key(key, key_filename, new_passphrase)
+            self._app.info_dialog(_("Passphrase changed"),
+                                  _("Passphrase changed for: %s", key_filename))
 
     def upload_key(self, pubkey_filename=None):
         """Upload public key to server."""
-        if self._broker_parameters is None:
-            p2go_key = None
-            broker_host = None
-        else:
-            broker_host = self._broker_parameters.get('server')
-            broker_port = self._broker_parameters.get('port') or 22
+        if self._broker_parameters is None or self._broker_parameters.get('server') is None:
+            return
         try:
             import pytis
             import StringIO
             p2go_key = paramiko.RSAKey.from_private_key(
                 StringIO.StringIO(pytis.config.upload_key))
         except:
-            p2go_key = None
-        if p2go_key is None or broker_host is None:
             return
-        else:
-            # Choose key to be sent if not given
-            key, key_file = self._choose_key()
-            if key and key_file:
-                import datetime
-                tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
-                key_username = self._app.username() or self._local_username()
-                pubkey = "{} {} {}".format(key.get_name(),
-                                           key.get_base64(),
-                                           key_username)
-                filename = "{}_{}.pub".format(tstamp,
-                                              key_username,
-                                              self._local_username().replace(' ', '_'))
-                try:
-                    t = paramiko.Transport((broker_host, broker_port))
-                    t.connect(username='p2gokeys', pkey=p2go_key)
-                    sftp = paramiko.SFTPClient.from_transport(t)
-                    with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
-                        f.write(pubkey)
-                    t.close()
-                except:
-                    return
+        # Choose key to be sent if not given
+        key, key_file = self._choose_key()
+        if key and key_file:
+            import datetime
+            tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
+            username = self._local_username()
+            pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
+            filename = "{}_{}.pub".format(tstamp, username)
+            try:
+                port = self._broker_parameters.get('port') or 22
+                t = paramiko.Transport((self._broker_parameters['server'], port))
+                t.connect(username='p2gokeys', pkey=p2go_key)
+                sftp = paramiko.SFTPClient.from_transport(t)
+                with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
+                    f.write(pubkey)
+                t.close()
+            except:
+                return
 
     def send_key(self):
         """Send public key to admin."""

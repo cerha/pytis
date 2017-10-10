@@ -292,13 +292,18 @@ class X2GoStartApp(wx.App):
             broker_password=args.broker_password,
             wait_for_pytis=not args.nowait,
         )
+        username = args.username
+        if not username:
+            import getpass
+            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
+        self._default_username = username
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _selected_profile_id(self):
         return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
 
     def _on_create_shortcut(self, event):
-        error = self._controller.create_shortcut(self.username(), self._selected_profile_id())
+        error = self._controller.create_shortcut(self._selected_profile_id())
         if error:
             # TODO: Specific dialog for error messages (icons)?
             self.info_dialog(_("Failed creating desktop shortcut"), error)
@@ -306,10 +311,7 @@ class X2GoStartApp(wx.App):
             self.update_progress(_("Shortcut created successfully."))
 
     def _can_create_shortcut(self):
-        return not self._controller.shortcut_exists(self.username(), self._selected_profile_id())
-
-    def _on_exit(self, event):
-        self.Exit()
+        return not self._controller.shortcut_exists(self._selected_profile_id())
 
     def _create_main_heading(self, parent):
         heading = self._args.heading or _("Pytis2Go")
@@ -333,32 +335,6 @@ class X2GoStartApp(wx.App):
             menu.AppendItem(item)
         return ui.button(parent, _("More actions..."),  # icon=wx.ART_EXECUTABLE_FILE,
                          callback=lambda e: parent.PopupMenu(menu))  # style=wx.BU_EXACTFIT)
-
-    def _create_username_field(self, parent):
-        label = ui.label(parent, _("Login name:"))
-        username = self._args.username
-        if not username and self._args.broker_url:
-            username = self._controller.broker_url_username()
-        if username:
-            self._username_value = username
-            self._username_field = None
-            return ui.hgroup(label, ui.label(parent, username), spacing=2)
-        else:
-            import getpass
-
-            def start(event):
-                button.Enable(False)
-                field.Enable(False)
-                self._start()
-            button = ui.button(parent, _("Continue"), start)
-            username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
-            field = ui.field(parent, username, on_enter=start)
-            self._username_value = None
-            self._username_field = field
-            return ui.hgroup(ui.hgroup(label, padding=(3, 0)), field, button)
-
-    def username(self):
-        return self._username_value or self._username_field.GetValue()
 
     def _create_profile_selection(self, parent):
         if self._args.broker_url is None or self._args.session_profile is not None:
@@ -403,10 +379,7 @@ class X2GoStartApp(wx.App):
         return ui.vgroup(
             ui.vgroup(
                 ui.item(self._create_main_heading(parent)),
-                ui.item(ui.hgroup(ui.item(self._create_username_field(parent), proportion=1),
-                                  self._create_menu_button(parent),
-                                  spacing=20),
-                        expand=True, center=True),
+                self._create_menu_button(parent),
                 ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
                 ui.vgroup(
                     ui.item(message, expand=True),
@@ -513,14 +486,8 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def _start(self):
-        if self._args.broker_url:
-            self._load_profiles()
-        else:
-            self._connect()
-
     def _connect(self):
-        client = self._controller.connect(self.username())
+        client = self._controller.connect()
         if client:
             self.update_progress(_("Starting Pytis client."))
             self._start_session(client)
@@ -528,7 +495,7 @@ class X2GoStartApp(wx.App):
             self.Exit()
 
     def _load_profiles(self):
-        profiles = self._controller.list_profiles(self.username())
+        profiles = self._controller.list_profiles()
         if not profiles:
             # Happens when the user cancels the broker authentication dialog.
             return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
@@ -545,7 +512,7 @@ class X2GoStartApp(wx.App):
                                                _("Current version: %s", current_version),
                                                _("New version: %s", available_version),
                                                _("Install?")))))):
-                    error = self._controller.upgrade(self.username())
+                    error = self._controller.upgrade()
                     if error:
                         # TODO: Specific dialog for error messages (icons)?
                         self.info_dialog(_("Upgrade failed"), error)
@@ -637,89 +604,14 @@ class X2GoStartApp(wx.App):
         """
         self.update_progress(message, progress=0)
 
-    def _create_authentication_dialog(self, dialog, methods, key_files,
-                                      submit_button_label=_("Log in")):
-        def close(method):
-            if isinstance(method, collections.Callable):
-                method = method()
-            if method is None:
-                result = (None, None)
-            elif method == 'password':
-                result = (None, self._password_field.GetValue().rstrip('\r\n'))
-            else:
-                result = (self._keyfile_field.GetValue().rstrip('\r\n'),
-                          self._passphrase_field.GetValue().rstrip('\r\n'))
-                if not result[0]:
-                    self._keyfile_field.SetFocus()
-                    return
-            dialog.close(result)
-
-        def publickey_authentication(parent):
-            def on_select_key_file(event):
-                filename = wx.FileSelector(
-                    _(u"Select SSH key file"),
-                    default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
-                )
-                self._keyfile_field.SetValue(filename)
-            label1 = ui.label(parent, _("Key File:"))
-            self._keyfile_field = field1 = ui.field(parent, key_files[0] if key_files else None,
-                                                    length=40, style=wx.TE_READONLY)
-            button1 = ui.button(parent, _("Select"), on_select_key_file)
-            label2 = ui.label(parent, _("Passphrase:"))
-            self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
-                                                       on_enter=lambda e: close('publickey'))
-            return ui.vgroup(
-                ui.hgroup(ui.item(label1, padding=(3, 0)), field1, button1, spacing=2),
-                ui.hgroup(ui.item(label2, padding=(3, 0)), field2, spacing=2),
-                padding=10, spacing=8,
-            )
-
-        def password_authentication(parent):
-            label = ui.label(parent, _("Password:"))
-            self._password_field = field = ui.field(parent, style=wx.PASSWORD,
-                                                    on_enter=lambda e: close('password'))
-            return ui.hgroup(ui.item(label, padding=(3, 0)), field, padding=10, spacing=2)
-
-        def on_show_dialog():
-            for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
-                if f and f.IsShown():
-                    f.SetFocus()
-
-        dialog.set_callback(on_show_dialog)
-        if 'password' in methods and 'publickey' in methods:
-            nb = wx.Notebook(dialog, -1)
-            nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
-            nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
-            nb.SetSelection(0 if key_files else 1)
-            content = nb
-
-            def method():
-                return 'publickey' if nb.GetSelection() == 0 else 'password'
-
-        elif 'publickey' in methods:
-            content = publickey_authentication(dialog)
-            method = 'publickey'
-        elif 'password' in methods:
-            content = password_authentication(dialog)
-            method = 'password'
-        else:
-            raise Exception(_("No supported SSH authentication method available."))
-        return ui.vgroup(
-            content,
-            ui.item(
-                ui.hgroup(
-                    ui.button(dialog, submit_button_label, lambda e: close(method)),
-                    ui.button(dialog, _("Cancel"), lambda e: close(None)),
-                    spacing=20, padding=12,
-                ),
-                center=True),
-            padding=(0, 10),
-        )
-
-    def authentication_dialog(self, methods, key_files):
+    def authentication_dialog(self, server, username, methods, key_files):
         """Interactively ask the user for authentication credentials.
 
         Arguments:
+          server -- server hostname as a string (displayed for user's
+            information which credentials to enter).
+          username -- initial user name (string).  May be changed by the
+            user.
           methods -- sequence of authentication methods supported by the
             server (strings 'password', 'publickey').
           key_files -- sequence of SSH private key files present on local
@@ -733,22 +625,133 @@ class X2GoStartApp(wx.App):
         the user prefers password authentication with given password.
 
         """
-        return self._show_dialog(_("Authentication"), self._create_authentication_dialog,
-                                 methods, key_files)
+        def create_dialog(dialog):
+            def close(method):
+                if isinstance(method, collections.Callable):
+                    method = method()
+                if method is None:
+                    return dialog.close((None, None, None))
+                username = self._username_field.GetValue().rstrip('\r\n')
+                if not username:
+                    self._username_field.SetFocus()
+                    return
+                key_filename, password = (None, None)
+                if method == 'password':
+                    password = self._password_field.GetValue().rstrip('\r\n')
+                elif method == 'publickey':
+                    key_filename = self._keyfile_field.GetValue().rstrip('\r\n')
+                    if not key_filename:
+                        self._keyfile_field.SetFocus()
+                        return
+                    password = self._passphrase_field.GetValue().rstrip('\r\n')
+                dialog.close((username, key_filename, password))
 
-    def keyfile_password_dialog(self, key_file=None):
+            def publickey_authentication(parent):
+                def on_select_key_file(event):
+                    filename = wx.FileSelector(
+                        _(u"Select SSH key file"),
+                        default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
+                    )
+                    self._keyfile_field.SetValue(filename)
+                label1 = ui.label(parent, _("Key File:"))
+                self._keyfile_field = field1 = ui.field(parent, key_files[0] if key_files else None,
+                                                        length=40, style=wx.TE_READONLY)
+                button1 = ui.button(parent, _("Select"), on_select_key_file)
+                label2 = ui.label(parent, _("Passphrase:"))
+                self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
+                                                           on_enter=lambda e: close('publickey'))
+                return ui.vgroup(
+                    ui.hgroup(ui.item(label1, padding=(3, 0)), field1, button1, spacing=2),
+                    ui.hgroup(ui.item(label2, padding=(3, 0)), field2, spacing=2),
+                    padding=10, spacing=8,
+                )
+
+            def password_authentication(parent):
+                label = ui.label(parent, _("Password:"))
+                self._password_field = field = ui.field(parent, style=wx.PASSWORD,
+                                                        on_enter=lambda e: close('password'))
+                return ui.hgroup(ui.item(label, padding=(3, 0)), field, padding=10, spacing=2)
+
+            def on_show_dialog():
+                for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
+                    if f and f.IsShown():
+                        f.SetFocus()
+
+            dialog.set_callback(on_show_dialog)
+            if 'password' in methods and 'publickey' in methods:
+                nb = wx.Notebook(dialog, -1)
+                nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
+                nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
+                nb.SetSelection(0 if key_files else 1)
+                content = nb
+
+                def method():
+                    return 'publickey' if nb.GetSelection() == 0 else 'password'
+
+            elif 'publickey' in methods:
+                content = publickey_authentication(dialog)
+                method = 'publickey'
+            elif 'password' in methods:
+                content = password_authentication(dialog)
+                method = 'password'
+            else:
+                raise Exception(_("No supported SSH authentication method available."))
+            self._username_field = ui.field(dialog, username or self._default_username)
+            return ui.vgroup(
+                ui.hgroup(ui.hgroup(ui.label(dialog, _("Login name:")), padding=(3, 0)),
+                          self._username_field),
+                content,
+                ui.item(
+                    ui.hgroup(
+                        ui.button(dialog, _("Log in"), lambda e: close(method)),
+                        ui.button(dialog, _("Cancel"), lambda e: close(None)),
+                        spacing=20, padding=12,
+                    ),
+                    center=True),
+                padding=10,
+            )
+        return self._show_dialog(_("Log in to %s", server), create_dialog)
+
+    def keyfile_passphrase_dialog(self, key_filename):
         """Interactively choose keyfile and its passphrase.
 
         The return value is two-tuple (key_filename, password).
+
         """
-        if key_file:
-            key_files = (key_file,)
-        else:
-            key_files = ()
-        return self._show_dialog(_("Private key verification"),
-                                 self._create_authentication_dialog,
-                                 ('publickey',), key_files,
-                                 submit_button_label=_("Verify"))
+        def create_dialog(dialog):
+            def submit(event):
+                for f in fields:
+                    if not f.GetValue():
+                        f.SetFocus()
+                        return
+                dialog.close([f.GetValue() for f in fields])
+            default_path = os.path.join(os.path.expanduser('~'), '.ssh', '')
+            fields = (
+                ui.field(dialog, key_filename, length=40, style=wx.TE_READONLY),
+                ui.field(dialog, length=28, style=wx.PASSWORD),
+            )
+            return ui.vgroup(
+                ui.hgroup(ui.item(ui.label(dialog, _("Key File:")), padding=(3, 0)),
+                          fields[0],
+                          ui.button(dialog, _("Select"), lambda e:
+                                    fields[0].SetValue(wx.FileSelector(
+                                        _(u"Select SSH key file"),
+                                        default_path=default_path,
+                                    ))
+                          ),
+                          spacing=2),
+                ui.hgroup(ui.item(ui.label(dialog, _("Passphrase:")), padding=(3, 0)),
+                          fields[1], spacing=2),
+                ui.item(
+                    ui.hgroup(
+                        ui.button(dialog, _("Ok"), submit),
+                        ui.button(dialog, _("Cancel"), lambda e: dialog.close((None, None, None))),
+                        spacing=20, padding=6,
+                    ),
+                    center=True),
+                padding=(10, 20), spacing=4,
+            )
+        return self._show_dialog(_("Select the key file"), create_dialog)
 
     def checklist_dialog(self, title, message, columns, items):
         """Display a dialog to select multiple items from a list.
@@ -805,17 +808,18 @@ class X2GoStartApp(wx.App):
         """
         def create_dialog(dialog):
             def submit(event):
-                password = field1.GetValue()
-                password2 = field2.GetValue()
-                for value, f in ((password, field1), (password2, field2)):
-                    if not value:
+                for f in fields:
+                    if not f.GetValue():
                         f.SetFocus()
                         return
+                passphrase, passphrase2 = [
+                    f.GetValue() for f in fields
+                ]
                 error = None
-                if password != password2:
+                if passphrase != passphrase2:
                     error = _("Passphrases don't match.")
                 elif check:
-                    check_result = check(password)
+                    check_result = check(passphrase)
                     if check_result == 'unallowed':
                         error = _("Unallowed characters.")
                     elif check_result == 'short':
@@ -826,17 +830,19 @@ class X2GoStartApp(wx.App):
                         raise Exception('Unsupported check result: %s' % check_result)
                 if error:
                     message.SetLabel(error)
-                    field1.SetFocus()
+                    fields[0].SetFocus()
                 else:
-                    dialog.close(password)
+                    dialog.close(passphrase)
+            fields = (
+                ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit),
+                ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
+            )
             message = ui.label(dialog, "")
-            field1 = ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
-            field2 = ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
             return ui.vgroup(
                 ui.item(ui.label(dialog, _("Enter the same passphrase into both fields:")),
                         padding=4),
-                ui.grid(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), field1,
-                        ui.item(ui.label(dialog, _("Repeat:")), padding=3), field2,
+                ui.grid(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), fields[0],
+                        ui.item(ui.label(dialog, _("Repeat:")), padding=3), fields[1],
                         rows=2, cols=2, spacing=(0, 4)),
                 ui.item(message, padding=4),
                 ui.item(
@@ -846,7 +852,7 @@ class X2GoStartApp(wx.App):
                         spacing=20, padding=6,
                     ),
                     center=True),
-                padding=(0, 20), spacing=4,
+                padding=(10, 20), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
 
@@ -871,9 +877,8 @@ class X2GoStartApp(wx.App):
         frame.SetClientSize(panel.GetBestSize())
         frame.Show()
         self.Yield()
-        if self._username_field:
-            self.update_progress(_("Enter your user name and press Continue to start."))
+        if self._args.broker_url:
+            self._load_profiles()
         else:
-            # Start automatically when username was passed explicitly.
-            self._start()
+            self._connect()
         return True
