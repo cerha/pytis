@@ -171,6 +171,8 @@ pytis2go_options = [
      'help': 'Override startup application main window title (default: Starting application)', },
     {'args': ['--heading'], 'default': None,
      'help': 'Override startup application main window heading (default: Pytis2Go)', },
+    {'args': ['--tray'], 'default': False, 'action': 'store_true',
+     'help': 'Start as tray icon instead of a startup window.', },
     {'args': ['--nowait', '-n'], 'default': False, 'action': 'store_true',
      'help': ("Do not wait for Pytis application window to come up. "
               "Close the startup application window immediately after "

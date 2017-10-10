@@ -19,6 +19,7 @@
 
 import os
 import wx
+import sys
 import collections
 import pytis.util
 import pytis.x2goclient
@@ -280,6 +281,31 @@ class X2GoStartApp(wx.App):
 
     _MAX_PROGRESS = 40
 
+    class _TaskBarIcon(wx.TaskBarIcon):
+
+        def __init__(self, menu, on_click):
+            super(X2GoStartApp._TaskBarIcon, self).__init__()
+            self._menu = menu
+            self.set_icon('disconnected')
+            self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
+
+        def set_icon(self, name):
+            path = os.path.normpath(os.path.join(sys.path[0], '..', 'icons', name + '.png'))
+            icon = wx.IconFromBitmap(wx.Bitmap(path))
+            self.SetIcon(icon, _("Pytis2Go Service"))
+
+        def CreatePopupMenu(self):
+            menu = wx.Menu()
+            for label, callback in self._menu:
+                if callback:
+                    item = wx.MenuItem(menu, -1, label)
+                    menu.Bind(wx.EVT_MENU, lambda event, callback=callback: callback(),
+                              id=item.GetId())
+                    menu.AppendItem(item)
+                else:
+                    menu.AppendSeparator()
+            return menu
+
     def __init__(self, args, session_parameters, force_parameters):
         self._progress = 1
         self._args = args
@@ -317,9 +343,7 @@ class X2GoStartApp(wx.App):
         heading = self._args.heading or _("Pytis2Go")
         return ui.label(parent, heading, size=18, bold=True)
 
-    def _create_menu_button(self, parent):
-        if self._args.session_profile is not None:
-            return None
+    def _menu_items(self):
         items = [
             (_("Generate new SSH key pair"), self._controller.generate_key),
             (_("Change key passphrase"), self._controller.change_key_passphrase),
@@ -328,8 +352,13 @@ class X2GoStartApp(wx.App):
         ]
         if pytis.util.on_windows():
             items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
+        return items
+
+    def _create_menu_button(self, parent):
+        if self._args.session_profile is not None or self._args.tray:
+            return None
         menu = wx.Menu()
-        for label, callback in items:
+        for label, callback in self._menu_items():
             item = wx.MenuItem(menu, -1, label)
             menu.Bind(wx.EVT_MENU, lambda e, callback=callback: callback(), item)
             menu.AppendItem(item)
@@ -579,6 +608,13 @@ class X2GoStartApp(wx.App):
             self.update_progress(_("Waiting for the application to come up..."), 10)
         client.main_loop()
         self.Exit()
+
+    def _on_taskbar_click(self):
+        pass
+
+    def _on_exit(self):
+        wx.CallAfter(self._icon.Destroy)
+        self._frame.Close()
 
     def update_progress(self, message=None, progress=1):
         """Update progress bar and display a progress message.
@@ -872,8 +908,14 @@ class X2GoStartApp(wx.App):
     def OnInit(self):
         title = self._args.window_title or _("Starting application")
         self._frame = frame = wx.Frame(None, -1, title)
-        panel = ui.panel(frame, self._create_main_content)
         self.SetTopWindow(frame)
+        if self._args.tray:
+            items = self._menu_items() + [
+                ('---', None),
+                (_("Exit"), self._on_exit),
+            ]
+            self._icon = self._TaskBarIcon(items, self._on_taskbar_click)
+        panel = ui.panel(frame, self._create_main_content)
         frame.SetClientSize(panel.GetBestSize())
         frame.Show()
         self.Yield()
