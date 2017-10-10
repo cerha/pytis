@@ -1254,22 +1254,26 @@ class StartupController(object):
     def cleanup_shortcuts(self):
         """Cleanup desktop shortcuts."""
         shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
-        confirmed = self._app.checklist_dialog(
-            title=_("Confirm shortcuts removal"),
-            message=(_("The following desktop shortcuts are invalid.") + "\n" +
-                     _("Press Ok to remove the checked items.")),
-            columns=(_("Name"),),
-            items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
-                   for shortcut in shortcuts],
-        )
-        n = 0
-        for shortcut, checked in zip(shortcuts, confirmed):
-            if checked:
-                os.remove(shortcut.lnk_filepath)
-                n += 1
-        self._app.message(_.ngettext("%d shortcut removed succesfully.",
-                                     "%d shortcuts removed succesfully.",
-                                     n))
+        if shortcuts:
+            confirmed = self._app.checklist_dialog(
+                title=_("Confirm shortcuts removal"),
+                message=(_("The following desktop shortcuts are invalid.") + "\n" +
+                         _("Press Ok to remove the checked items.")),
+                columns=(_("Name"),),
+                items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
+                       for shortcut in shortcuts],
+            )
+            n = 0
+            for shortcut, checked in zip(shortcuts, confirmed):
+                if checked:
+                    os.remove(shortcut.lnk_filepath)
+                    n += 1
+            self._app.message(_.ngettext("%d shortcut removed succesfully.",
+                                         "%d shortcuts removed succesfully.",
+                                         n))
+        else:
+            self._app.info_dialog(_("All shortcuts ok"),
+                                  _("No invalid shortcut found."))
 
     def _check_password(self, passwd):
         """Simple password validator."""
