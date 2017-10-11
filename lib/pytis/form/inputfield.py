@@ -289,6 +289,8 @@ class InputField(object, KeyHandler, CommandHandler):
                 field = mapping[selection_type]
         elif isinstance(type, pytis.data.IntegerRange):
             field = NumericRangeField
+        elif isinstance(type, pytis.data.LargeIntegerRange):
+            field = NumericRangeField
         elif isinstance(type, pytis.data.DateRange):
             field = DateRangeField
         elif isinstance(type, pytis.data.DateTimeRange):
