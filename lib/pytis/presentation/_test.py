@@ -264,6 +264,8 @@ class PresentedRow(unittest.TestCase):
         # because it requires validation of 'b' which needs the value of 'a'...
         self.assertRaises(RuntimeError, lambda:
                           pp.PresentedRow(Specification.fields, self._data, None, new=True))
+        # ViewSpec initialization should detect the cyclic dependency.
+        self.assertRaises(AssertionError, lambda: Specification().view_spec())
         class Specification2(Specification):
             def _customize_fields(self, fields):
                 fields.modify('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0,

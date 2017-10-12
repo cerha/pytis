@@ -1668,6 +1668,15 @@ class ViewSpec(object):
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
                                 "Zero width field in layout:", item)
+
+            def all_deps(fid):
+                result = set((fid,))
+                computer = self._field_dict[fid].computer()
+                if computer:
+                    for k in computer.depends():
+                        result.update(all_deps(k))
+                return result
+
             recourse_group(layout.group())
             for f in fields:
                 assert isinstance(f, Field)
@@ -1681,6 +1690,12 @@ class ViewSpec(object):
                             assert dep in self._field_dict, \
                                 err("Unknown field '%s' in dependencies for '%s' "
                                     "specification of '%s': %s", dep, attr, f.id(), computer)
+                            if attr in ('runtime_filter', 'runtime_arguments'):
+                                if f.id() in all_deps(dep):
+                                    assert dep in computer.novalidate(), \
+                                        err("Cyclic dependency in '%s' specification of '%s'. "
+                                            "Add '%s' to 'novalidate' to avoid recursion.",
+                                            attr, f.id(), dep)
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
