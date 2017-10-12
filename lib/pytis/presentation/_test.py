@@ -253,6 +253,25 @@ class PresentedRow(unittest.TestCase):
         self._set(row, b=1)
         self._check_values(row, total=3, d=4)
 
+    def test_recursive_computer_validation(self):
+        class Specification(pp.Specification):
+            fields = (
+                pp.Field('a', computer=pp.computer(lambda r, b: 2 * b)),
+                pp.Field('b', enumerator=pd.FixedEnumerator(range(101)),
+                         runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0)),
+            )
+        # The computer for 'a' is called to compute the initial value and will lead to recursion
+        # because it requires validation of 'b' which needs the value of 'a'...
+        self.assertRaises(RuntimeError, lambda:
+                          pp.PresentedRow(Specification.fields, self._data, None, new=True))
+        class Specification2(Specification):
+            def _customize_fields(self, fields):
+                fields.modify('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0,
+                                                              novalidate=('a',)))
+        row = pp.PresentedRow(Specification2().view_spec().fields(), self._data, None, new=True)
+        # 'a' is None so runtime_filter will try to compute x % None (because 'a' is not validated).
+        self.assertRaises(TypeError, lambda: row.enumerate('b'))
+
     def test_cb_computer(self):
         row = self._row(new=True, fruit='str')
         self.assertTrue(isinstance(row.type('fruit_code'), pytis.data.Integer))

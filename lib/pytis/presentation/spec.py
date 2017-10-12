@@ -2359,7 +2359,7 @@ class Computer(object):
 
     """
 
-    def __init__(self, function, depends=None, fallback=UNDEFINED):
+    def __init__(self, function, depends=None, fallback=UNDEFINED, novalidate=()):
         """Arguments:
 
           function -- callable object taking one argument - the 'PresentedRow'
@@ -2374,22 +2374,37 @@ class Computer(object):
             Empty sequence leads to no recomputations (the value is computed
             only once on initialization).
 
-          fallback -- value used instead of function result in case, that at
-            least one of the input fields (present in 'depends') contains an
-            invalid value.  The computer function is not called at all in this
-            case and the fallback value is returned instead.  If 'fallback' is
-            undefined, the previously computed value remains the result until
-            all input values become valid again (if they were not valid before,
-            the result remains on the default/initial value).
+          fallback -- value used instead of function result in case that at
+            least one of the input fields (present in 'depends' and not present
+            in 'novalidate') contains an invalid value.  The computer function
+            is not called at all in this case and the fallback value is
+            returned instead.  If 'fallback' is undefined, the previously
+            computed value remains the result until all input values become
+            valid again (if they were not valid before, the result remains on
+            the default/initial value).
+
+          novalidate -- sequence of fields excluded from computer input
+            validation.  The listed fields will not be validated before calling
+            the computer function (as described for the 'fallback' argument).
+            This means that the function implementation may not rely on the
+            inputs to be valid (match the constraints defined by the types of
+            the relevant fields).  It may be, however, necessary in cases,
+            where validation would cause an infinite recursion because of
+            circular dependencies.  Pytis will automatically detect computers
+            with such circular dependencies and force the developer to set
+            'novalidate' when necessary.
 
         """
-        assert isinstance(function, collections.Callable)
-        assert is_sequence(depends)
+        assert isinstance(function, collections.Callable), function
+        assert is_sequence(depends), depends
+        assert is_sequence(novalidate), novalidate
+        assert set(novalidate).issubset(depends), (novalidate, depends)
         if depends is None:
             raise ProgramError("Computer has no dependency specification!")
         self._function = function
         self._depends = tuple(depends)
         self._fallback = fallback
+        self._novalidate = novalidate
 
     def __call__(self, row):
         return self._function(row)
@@ -2410,8 +2425,12 @@ class Computer(object):
         """Return the value of 'fallback' as passed to the constructor."""
         return self._fallback
 
+    def novalidate(self):
+        """Return the value of 'novalidate' as passed to the constructor."""
+        return self._novalidate
 
-def computer(function=None, fallback=UNDEFINED):
+
+def computer(function=None, fallback=UNDEFINED, novalidate=()):
     """Return a 'Computer' instance for given function.
 
     If necessary, wrap 'function' converting row values to named arguments.
@@ -2431,8 +2450,9 @@ def computer(function=None, fallback=UNDEFINED):
     arguments.  If no such additional arguemnts are defined, the 'function' is
     used as is.
 
-    The argument 'fallback' corresponds to the same argument of 'Computer'
-    constructor.  If used, it is simply passed on to the instance.
+    The arguments 'fallback' and 'novalidate' correspond to the same arguments
+    of 'Computer' constructor.  If used, they are simply passed on to the
+    instance.
 
     For example:
 
@@ -2449,9 +2469,9 @@ def computer(function=None, fallback=UNDEFINED):
         def x(row):
              return row['a'].value() + row['b'].value()
 
-    In the special case that 'fallback' is passed and 'function' is None, the
-    function returns a decorator which passes 'fallback' along, so you can also
-    simply write decorators as below:
+    In the special case that 'fallback' or 'novalidate' is passed and
+    'function' is None, the function returns a decorator which passes these
+    arguments along, so you can also simply write decorators as below:
 
         @computer(fallback=None):
         def x(row, a, b):
@@ -2472,9 +2492,9 @@ def computer(function=None, fallback=UNDEFINED):
     explicitly or pass 'Computer' instances directly.
 
     """
-    if function is None and fallback is not UNDEFINED:
+    if function is None and (fallback is not UNDEFINED or novalidate != ()):
         def result(function):
-            return computer(function, fallback=fallback)
+            return computer(function, fallback=fallback, novalidate=novalidate)
     elif function is None or isinstance(function, Computer):
         result = function
     else:
@@ -2486,7 +2506,7 @@ def computer(function=None, fallback=UNDEFINED):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
             function.__name__ = original_function.__name__
-        result = Computer(function, depends=depends, fallback=fallback)
+        result = Computer(function, depends=depends, fallback=fallback, novalidate=novalidate)
     return result
 
 
