@@ -2351,7 +2351,7 @@ class Computer(object):
 
     """
 
-    def __init__(self, function, depends=None, fallback=UNDEFINED):
+    def __init__(self, function, depends=None, fallback=UNDEFINED, novalidate=()):
         """Arguments:
 
           function -- callable object taking one argument - the 'PresentedRow'
@@ -2373,6 +2373,8 @@ class Computer(object):
             undefined, the computer function is always called and it is
             responsible for taking care of invalid input explicitly.
 
+          novalidate -- for forward compatibility with the 'recompute' branch.
+
         """
         assert isinstance(function, collections.Callable)
         assert is_sequence(depends)
@@ -2381,6 +2383,7 @@ class Computer(object):
         self._function = function
         self._depends = tuple(depends)
         self._fallback = fallback
+        self._novalidate = novalidate
 
     def __call__(self, row):
         if self._fallback is not UNDEFINED:
@@ -2410,8 +2413,12 @@ class Computer(object):
         """Return the value of 'fallback' as passed to the constructor."""
         return self._fallback
 
+    def novalidate(self):
+        """Return the value of 'fallback' as passed to the constructor."""
+        return self._novalidate
 
-def computer(function=None, fallback=UNDEFINED):
+
+def computer(function=None, fallback=UNDEFINED, novalidate=()):
     """Return a 'Computer' instance for given function.
 
     If necessary, wrap 'function' converting row values to named arguments.
@@ -2472,9 +2479,9 @@ def computer(function=None, fallback=UNDEFINED):
     explicitly or pass 'Computer' instances directly.
 
     """
-    if function is None and fallback is not UNDEFINED:
+    if function is None and (fallback is not UNDEFINED or novalidate):
         def result(function):
-            return computer(function, fallback=fallback)
+            return computer(function, fallback=fallback, novalidate=novalidate)
     elif function is None or isinstance(function, Computer):
         result = function
     else:
@@ -2486,7 +2493,7 @@ def computer(function=None, fallback=UNDEFINED):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
             function.__name__ = original_function.__name__
-        result = Computer(function, depends=depends, fallback=fallback)
+        result = Computer(function, depends=depends, fallback=fallback, novalidate=novalidate)
     return result
 
 

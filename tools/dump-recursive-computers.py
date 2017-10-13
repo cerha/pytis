@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Dump fields with recursive runtime_filter or runtime_arguments.
- 
+
 All specifications are walked through and fields which define a runtime_filter
 or runtime_arguments computer which depend on the field itself are reported to
 STDOUT.
@@ -92,22 +92,29 @@ def run():
                         continue
                     module = resolver.wiking_module(name)
                     spec = module.Spec(cls)
-                    data = module._data
                 else:
                     spec = resolver.specification(name)
                     if not spec.public:
                         continue
-                    data_spec = spec.data_spec()
-                    data = data_spec.create(dbconnection_spec=config.dbconnection)            
                 view_spec = spec.view_spec()
-                record = pytis.presentation.PresentedRow(view_spec.fields(), data, None)
-                for fid in sorted(record.keys()):
-                    t = record.type(fid)
-                    f = view_spec.field(fid)
+
+                def all_deps(fid):
+                    result = set((fid,))
+                    computer = view_spec.field(fid).computer()
+                    if computer:
+                        for k in computer.depends():
+                            result.update(all_deps(k))
+                    return result
+
+                for f in view_spec.fields():
                     for attr in ('runtime_filter', 'runtime_arguments'):
                         computer = getattr(f, attr)()
-                        if computer and fid in computer.depends():
-                            print ('%s.%s: %s' % (name, fid, attr)).encode('utf-8')
+                        if computer:
+                            for dep in computer.depends():
+                                if f.id() in all_deps(dep) and dep not in computer.novalidate():
+                                    print ("%s.%s: Cyclic dependency in '%s' specification. "
+                                           "Add '%s' to 'novalidate' to avoid recursion." %
+                                           (name, f.id(), attr, dep)).encode('utf-8')
             except Exception as e:
                 if args.exit_on_error:
                     try:
