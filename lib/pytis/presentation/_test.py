@@ -141,12 +141,19 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=4, b=100, c=77, d=18, x=None, total=177)
 
     def test_unicode(self):
-        row = self._mega_row(new=True, a=1, b=3, d=77, password='secret', big=1024 * 'x')
-        self.assertEqual(unicode(row), ('<PresentedRow: a=1, b=3, c=5, d=77, '
-                                        'fruit=None, fruit_code=None, '
-                                        'range=None, total=8, half_total=4, x=88, '
-                                        'password=***, big=<BigString 1 kB>, '
-                                        'array=None>'))
+        class BigString(pd.String, pd.Big):
+            pass
+        row = self._row((
+            pp.Field('x', type=pd.Integer(not_null=True)),
+            pp.Field('y', type=pd.Integer(), default=88),
+            pp.Field('passwd', type=pd.Password()),
+            pp.Field('data', type=BigString()),
+        ), new=True, prefill=dict(x=1, y=3, passwd='secret', data=1024 * 'x'))
+        self.assertEqual(unicode(row), ('<PresentedRow: x=1, y=3, '
+                                        'passwd=***, data=<BigString 1 kB>>'))
+
+    def test_unicode_uninitialized(self):
+        row = self._row((pp.Field('x'), pp.Field('y')))
         delattr(row, '_row')
         self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
 
@@ -155,35 +162,36 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=1, b=3, c=5, d=77, x=88)
 
     def test_new(self):
-        row = self._mega_row()
+        row = self._row((pp.Field('x'), pp.Field('y')))
         self.assertFalse(row.new())
-        row = self._mega_row(new=True)
+        row = self._row((pp.Field('x'), pp.Field('y')), new=True)
         self.assertTrue(row.new())
 
     def test_key(self):
-        row = self._mega_row()
+        row = self._row((pp.Field('x', type=pd.Integer(not_null=True)), pp.Field('y')))
         self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), None),))
-        row = self._mega_row(a=1)
+        row['x'] = 1
         self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), 1),))
 
     def test_fields(self):
-        row = self._mega_row()
-        self.assertTrue(all(isinstance(f, pp.Field) for f in row.fields()))
+        fields = (pp.Field('x'), pp.Field('y'))
+        row = self._row(fields)
+        self.assertEqual(row.fields(), fields)
 
     def test_keys(self):
-        row = self._mega_row()
-        self.assertItemsEqual(row.keys(), map(lambda f: f.id(), row.fields()))
+        row = self._row((pp.Field('x'), pp.Field('y')))
+        self.assertItemsEqual(row.keys(), ['x', 'y'])
 
     def test_resolver(self):
-        row = self._mega_row()
+        row = self._row((pp.Field('x'), pp.Field('y')))
         self.assertEqual(row.resolver(), config.resolver)
 
     def test_data(self):
-        row = self._mega_row()
+        row = self._row((pp.Field('x'), pp.Field('y')))
         self.assertTrue(isinstance(row.data(), pd.MemData))
 
     def test_set_transaction(self):
-        row = self._mega_row()
+        row = self._row((pp.Field('x'), pp.Field('y')))
         self.assertEqual(row.transaction(), None)
         # TODO: This whole test file tries to avoid using a real database connection,
         # so we can't create a real transaction here.  Using 'x' is invalid for
@@ -231,8 +239,6 @@ class PresentedRow(unittest.TestCase):
             row['array'] = (1, 2)
         self.assertRaises(TypeError, assign_invalid_array)
 
-
-        self.assertRaises(TypeError, assign_invalid_value)
     def test_get(self):
         row = self._mega_row(new=True, a=4)
         self.assertEqual(row.get('a').value(), 4)
