@@ -129,6 +129,31 @@ class PresentedRow(unittest.TestCase):
                 rvalue = tuple(rvalue)
             self.assertEqual(rvalue, value, key)
 
+    def test_validation_order(self):
+        # This test reproduces a previously existing bug in computer input
+        # validation dependencies.
+        fields = (
+            pp.Field('a', type=pd.String(not_null=True)),
+            pp.Field('b', type=pd.String(not_null=True, maxlen=1),
+                     computer=pp.computer(lambda r, a: a[0].upper())),
+            pp.Field('c', type=pd.String(enumerator=pd.FixedEnumerator(range(10)),
+                                         not_null=True),
+                     computer=pp.computer(lambda r, b: str(ord(b) % 10))),
+        )
+        row = self._row(fields, new=True)
+        row.validate('a', 'foo')
+        self.assertEqual(row['b'].value(), 'F')
+        self.assertEqual(row['c'].value(), '0')
+        # Set 'b' to an invalid value (violates maxlen=1).
+        row.validate('b', 'xxx')
+        def cb():
+            # This used to fail when the computer for 'c' was not called
+            # due to invalid value of 'b' (when 'b' validity was not refreshed
+            # correctly).
+            self.assertEqual(row['c'].value(), '6')
+        row.register_callback(row.CALL_CHANGE, 'c', cb)
+        row.validate('a', 'bar')
+
     def test_init(self):
         row = self._mega_row(new=True)
         self._check_values(row, a=None, b=None, c=5, d=10, total=0, x=88, range=None)

@@ -427,16 +427,10 @@ class PresentedRow(object):
                 self._run_callback(callback, key)
 
     def _computed_value(self, cval, old_value=UNDEFINED):
-        def valid(key):
-            column = self._coldict[key]
-            if column.last_validated_string is not None:
-                error = column.last_validation_error
-            else:
-                error = self._check_constraints(column, self[key])
-            return error is None
         if not cval:
             result = None
-        elif cval.dirty and all(valid(key) for key in cval.depends if key not in cval.novalidate):
+        elif cval.dirty and all(self._check_constraints(self._coldict[key], self[key]) is None
+                                for key in cval.depends if key not in cval.novalidate):
             # Only invoke the computer if all input fields are valid.
             cval.dirty = False
             # Reset the dirty flag before calling the computer function to allow
