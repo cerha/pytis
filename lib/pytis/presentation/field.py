@@ -451,10 +451,11 @@ class PresentedRow(object):
             result = cval.value
         return result
 
-    def _check_constraints(self, column, value):
-        cached_value, cached_result = column.check_constraints_cache
-        if cached_value and cached_value.value() == value.value():
-            return cached_result
+    def _check_constraints(self, column, value, bypass_cache=False):
+        if not bypass_cache:
+            cached_value, cached_result = column.check_constraints_cache
+            if cached_value and cached_value.value() == value.value():
+                return cached_result
         kwargs = dict(transaction=self._transaction)
         if column.runtime_filter is not None:
             kwargs['condition'] = self.runtime_filter(column.id)
@@ -852,7 +853,7 @@ class PresentedRow(object):
         column = self._coldict[key]
         value, error = column.type.validate(string, strict=False, **kwargs)
         if not error:
-            error = self._check_constraints(column, value)
+            error = self._check_constraints(column, value, bypass_cache=True)
         if value and string != self.format(key):
             self.__setitem__(key, value, run_callback=False)
         column.last_validated_string = string
