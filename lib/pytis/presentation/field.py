@@ -154,6 +154,7 @@ class PresentedRow(object):
             self.is_range = isinstance(ctype, pytis.data.Range)
             self.last_validated_string = None
             self.last_validation_error = None
+            self.check_constraints_cache = (None, None)
             self.dependent = [] # Will be initialized later by PresentedRow.__init__().
 
             def cval(computer, callback):
@@ -385,6 +386,7 @@ class PresentedRow(object):
                 column.computer.dirty = dirty
             column.last_validated_string = None
             column.last_validation_error = None
+            column.check_constraints_cache = (None, None)
             computed_values += filter(bool, (column.editable, column.visible, column.check,
                                              column.runtime_filter, column.runtime_arguments))
         if prefill:
@@ -456,6 +458,9 @@ class PresentedRow(object):
         return result
 
     def _check_constraints(self, column, value):
+        cached_value, cached_result = column.check_constraints_cache
+        if cached_value and cached_value.value() == value.value():
+            return cached_result
         kwargs = dict(transaction=self._transaction)
         if column.runtime_filter is not None:
             kwargs['condition'] = self.runtime_filter(column.id)
@@ -473,6 +478,7 @@ class PresentedRow(object):
             self._data.close()
             if count != 0:
                 error = pytis.data.ValidationError(_("Such value already exists."))
+        column.check_constraints_cache = (value, error)
         return error
 
     def _run_callback(self, kind, key=None):
