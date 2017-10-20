@@ -24,8 +24,6 @@ import pytis.presentation as pp
 import pytis.util
 import config
 
-tests = pytis.util.test.TestSuite()
-
 ############
 # field.py #
 ############
@@ -628,9 +626,6 @@ class PresentedRow(unittest.TestCase):
         self.assertEquals(row.attachment_storage('c'), storage)
 
 
-tests.add(PresentedRow)
-
-
 class PrettyTypes(unittest.TestCase):
     class CustomFoldable(pp.PrettyFoldable, pd.String):
         def _init(self, **kwargs):
@@ -642,8 +637,6 @@ class PrettyTypes(unittest.TestCase):
         self.assertEqual(t.maxlen(), 5)
         self.assertEqual(t.tree_column_id(), 'tree_order')
 
-tests.add(PrettyTypes)
-
 
 class DocTest(unittest.TestCase):
     def test_field_computations(self):
@@ -651,8 +644,5 @@ class DocTest(unittest.TestCase):
         doctest.testfile('../../../doc/tutorials/Fields.txt')
 
 
-def get_tests():
-    return tests
-
-if __name__ == '__main__': # pragma: no cover
-    unittest.main() #defaultTest='get_tests')
+if __name__ == '__main__':
+    unittest.main()
