@@ -891,18 +891,6 @@ class PresentedRow(object):
         """
         return self._coldict[key].last_validation_error
 
-    def validated(self, key):
-        """Return True if the given field has been validated or False otherwise.
-
-        Returns True if 'validate()' was called on this record instance for the
-        given 'key' since the last 'set_row()' or '__setitem__(key)' call.
-
-        This method may be usefull if you need to know whether some field was
-        present in form layout before submit.
-
-        """
-        return self._coldict[key].last_validated_string is not None
-
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
         assert function is None or isinstance(function, collections.Callable), function
@@ -979,17 +967,19 @@ class PresentedRow(object):
         if self._secret_column(column):
             return ''
         inline_display = column.inline_display
-        if inline_display and inline_display in self._row and not self.validated(key):
-            # The row doesn't contain inline_display when it was created in _set_row
-            # (not passed from the data interface) and inline_display field is not
-            # explicitly present in fields.  The test of .validated() important during
-            # row changes, where the current inline display value doesn't match the
-            # changed field value.  But beware!  We can not use .field_changed() for
-            # this purpose, because it would prevent using inline display in browse
-            # form (which is tha main purpose of inline display) because we cycle
-            # through rows using set_row() without reset=True.  To make the story
-            # even longer, we don't want to call set_row() with reset=True in
-            # BrowseForm, because it would invoke unnecessary computers.
+        if inline_display and inline_display in self._row and column.last_validated_string is None:
+            # The row doesn't contain inline_display when it was created in
+            # _set_row (not passed from the data interface) and inline_display
+            # field is not explicitly present in fields.  The test of
+            # column.last_validated_string is important during row changes,
+            # where the current inline display value doesn't match the changed
+            # field value.  But beware!  We can not use .field_changed() for
+            # this purpose, because it would prevent using inline display in
+            # browse form (which is tha main purpose of inline display) because
+            # we cycle through rows using set_row() without reset=True.  To
+            # make the story even longer, we don't want to call set_row() with
+            # reset=True in BrowseForm, because it would invoke unnecessary
+            # computers.
             value = self._row[inline_display]
             if value.value() is None:
                 return column.null_display or ''
