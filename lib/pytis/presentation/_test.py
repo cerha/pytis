@@ -114,10 +114,6 @@ class PresentedRow(unittest.TestCase):
         return pp.PresentedRow(self._fields, self._data, row=row, new=new,
                                singleline=singleline, prefill=prefill)
 
-    def _set(self, row, **kwargs):
-        for key, value in kwargs.items():
-            row[key] = value
-
     def _check_values(self, row, **kwargs):
         for key, value in kwargs.items():
             rvalue = row[key].value()
@@ -237,18 +233,21 @@ class PresentedRow(unittest.TestCase):
         row = self._row(new=True, b=3)
         self.assertIsNone(row.get('total', lazy=True).value())
         self._check_values(row, d=10, total=8, half_total=4)
-        self._set(row, c=100)
+        row['c'] = 100
         self._check_values(row, d=200, total=103, half_total=51)
-        self._set(row, a=4, b=100, c=88, range=(8, 9))
+        row['a'] = 4
+        row['b'] = 100
+        row['c'] = 88
+        row['range'] = (8, 9)
         self.assertEqual(row.get('total', lazy=True).value(), 103)
         self._check_values(row, a=4, b=100, c=88, total=188)
-        self._set(row, b=None)
+        row['b'] = None
         self._check_values(row, total=0, d=176)
-        self._set(row, c=None)
+        row['c'] = None
         self._check_values(row, total=0, d=176)
-        self._set(row, c=2)
+        row['c'] = 2
         self._check_values(row, total=0, d=4)
-        self._set(row, b=1)
+        row['b'] = 1
         self._check_values(row, total=3, d=4)
 
     def test_recursive_computer_validation(self):
@@ -316,7 +315,7 @@ class PresentedRow(unittest.TestCase):
         row = self._row(b=2, c=1)
         self.assertTrue(row.editable('a'))
         self.assertFalse(row.editable('d'))
-        self._set(row, b=5)
+        row['b'] = 5
         self.assertTrue(row.editable('d'))
 
     def test_visible(self):
@@ -339,7 +338,7 @@ class PresentedRow(unittest.TestCase):
         # self._check_values(row, d=10, total=8, half_total=4)
         # assert 'd' in changed and 'total' in changed and 'half_total' in changed, changed
         # del changed[0:len(changed)]
-        self._set(row, c=100)
+        row['c'] = 100
         # self._check_values(row, d=200, total=103, half_total=51.5)
         self.assertIn('d', changed)
         self.assertIn('total', changed)
@@ -364,16 +363,16 @@ class PresentedRow(unittest.TestCase):
             lambda: row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', lambda: None),
         )
         self.assertIsNone(enabled[0])
-        self._set(row, a=8)
+        row['a'] = 8
         self.assertIsNone(enabled[0])
-        self._set(row, c=3)
+        row['c'] = 3
         self.assertFalse(enabled[0])
-        self._set(row, b=2)
+        row['b'] = 2
         self.assertFalse(enabled[0])
-        self._set(row, b=3)
+        row['b'] = 3
         self.assertEqual(row['total'].value(), 6)
         self.assertTrue(enabled[0])
-        self._set(row, c=2)
+        row['c'] = 2
         self.assertEqual(row['total'].value(), 5)
         self.assertFalse(enabled[0])
 
@@ -410,7 +409,7 @@ class PresentedRow(unittest.TestCase):
     def test_changed(self):
         row = self._row()
         self.assertFalse(row.changed())
-        self._set(row, b=333)
+        row['b'] = 333
         self.assertTrue(row.changed())
 
     def test_field_changed(self):
@@ -418,7 +417,7 @@ class PresentedRow(unittest.TestCase):
         self.assertFalse(row.field_changed('a'))
         self.assertFalse(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
-        self._set(row, b=7)
+        row['b'] = 7
         self.assertFalse(row.field_changed('a'))
         self.assertTrue(row.field_changed('b'))
         self.assertFalse(row.field_changed('c'))
