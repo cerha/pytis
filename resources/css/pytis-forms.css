@@ -263,7 +263,7 @@
     display: block;
     position: absolute;
     right: 0;
-    top: 4px;
+    top: 1px;
 }
 @media print {
     .pytis-form.browse-form table.data-table .popup-menu-ctrl-widget {
