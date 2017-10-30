@@ -529,6 +529,10 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         //    which the action was invoked.
         // 'after' ... the content is inserted below the curent record on
         //    which the action was invoked.
+        var content = this._form.down('.inline-form-container');
+        if (content && !this._cancel_inline_action(content)) {
+            return;
+        }
         parameters['_pytis_inline_form_request'] = '1';
         this._send_ajax_request(form, parameters, function (transport) {
             var found = this._form.down('#found-record');
@@ -537,20 +541,24 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                 // (the edited record is now the one worth to be noticed).
                 found.setAttribute('id', '');
             }
-            var content = this._process_inline_action_response(element, target, transport);
+            // This extra div is necessary for the slide effects to work properly.
+            var content = new Element('div', {'class': 'inline-form-container target-' + target});
+            content._pytis_inline_action_invoked_by = element;
+            content.update(transport.responseText).hide();
+            this._insert_inline_action_content(element, target, content);
             content.down('button.cancel').on('click', function (event) {
-                this._on_cancel_inline_action(element, target, content);
+                this._cancel_inline_action(content);
                 event.stop();
             }.bind(this));
         }.bind(this));
     },
-
-    _process_inline_action_response: function (element, target, transport) {
-        // Returns the element to be hidden by '_on_cancel_inline_action()'.
-        // This extra div is necessary for the slide effects to work properly.
-        var div = new Element('div').update(transport.responseText).hide();
+    
+    _insert_inline_action_content: function (element, target, content) {
+        // Insert the content returned by an inline action into a proper place
+        // in the DOM.  The "proper place" depends on the form type and the
+        // requested 'target' (see _send_inline_action_request).
         if (target === 'global') {
-            element.up('.actions').insert({after: div});
+            element.up('.actions').insert({after: content});
         } else {
             var tr = element.up('tr');
             var tds = tr.childElements();
@@ -562,7 +570,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                 }
             }
             var td = new Element('td', {colspan: colspan, class: 'inline-edit'});
-            td.insert(div);
+            td.insert(content);
             if (target === 'after' || target === 'before') {
                 var new_tr = new Element('tr', {class: 'data-row'});
                 new_tr.insert(td);
@@ -575,27 +583,31 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                 tr.insert(td);
             }
         }
-        div.slideDown({duration: 0.25});
-        return div;
+        content.slideDown({duration: 0.25});
     },
 
-    _on_cancel_inline_action: function (element, target, content) {
-        // Here 'content' is the result returned by '_process_inline_action_response()'.
+    _cancel_inline_action: function (content) {
+        // Here 'content' is the same container as passed to '_insert_inline_action_content()'.
+        var form = content.down('.pytis-form.edit-form');
+        if (form && !form.instance.cancel()) {
+            return false;
+        }
         content.slideUp({
             duration: 0.25,
             afterFinish: function () {
-                if (target === 'global') {
+                if (content.hasClassName('target-global')) {
+                    content._pytis_inline_action_invoked_by.enable();
                     content.remove();
-                    element.enable(); // 'element' is the action button.
                 } else {
                     // This is form specific, so it has a separate method...
-                    this._remove_canceled_inline_action_content(element, content);
+                    this._remove_canceled_inline_action_content(content);
                 }
             }.bind(this)
         });
+        return true;
     },
 
-    _remove_canceled_inline_action_content: function (element, content) {
+    _remove_canceled_inline_action_content: function (content) {
         var tr = content.up('tr');
         content.up('td').remove();
         tr.childElements().each(function (x) { x.show(); });
@@ -649,22 +661,19 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
         }
     },
 
-    _process_inline_action_response: function ($super, element, target, transport) {
+    _insert_inline_action_content: function ($super, element, target, content) {
         if (target === 'global') {
-            return $super(element, target, transport);
+            $super(element, target, content);
         } else {
             // Note that element may be a button or a popup menu item here.
-            var container = new Element('div', {'class': 'inline-form-container'});
-            container.update(transport.responseText).hide();
             var parent = element.up('.list-item').down('.list-item-content');
             parent.childElements().each(function (x) { x.slideUp({duration: 0.25}); });
-            parent.insert(container);
-            container.slideDown({delay: 0.2, duration: 0.25});
-            return container;
+            parent.insert(content);
+            content.slideDown({delay: 0.2, duration: 0.25});
         }
     },
 
-    _remove_canceled_inline_action_content: function (element, content) {
+    _remove_canceled_inline_action_content: function (content) {
         var parent = content.parentNode;
         content.remove();
         parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
@@ -751,7 +760,9 @@ pytis.EditForm = Class.create(pytis.Form, {
         $super(form_id);
         // Note: this._form.up() applies in a QueryFieldsForm (list form controls).
         this._html_form = this._form.down('form') || this._form.up('form');
+        this._serialized_initial_state = this._html_form.serialize();
         this._fields = new Hash();
+        this._last_request_number = 0;
         var observe = false;
         var i, field;
         for (i=0; i<fields.length; i++) {
@@ -761,7 +772,6 @@ pytis.EditForm = Class.create(pytis.Form, {
                 observe = true;
             }
         }
-        this._last_request_number = 0;
         if (observe) {
             this._observer = new Form.Observer(this._html_form, 1, this._on_change.bind(this));
         }
@@ -848,6 +858,21 @@ pytis.EditForm = Class.create(pytis.Form, {
         } else {
             console.log("Empty AJAX response");
         }
+    },
+
+    _changed: function () {
+        return this._html_form.serialize() != this._serialized_initial_state;
+    },
+
+    cancel: function () {
+        if (this._changed()) {
+            var msg = (pytis._("The form data have changed!") + '\n' +
+                       pytis._("Do you really want to close the form?"));
+            if (!window.confirm(msg)) {
+                return false;
+            }
+        }
+        return true;       
     }
 
 });
