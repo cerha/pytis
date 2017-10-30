@@ -113,6 +113,7 @@
 .pytis-form table.horizontal-group > tbody > tr > td,
 .pytis-form table.vertical-group > tbody > tr > td {
     vertical-align: top;
+    padding: 2px 0;
 }
 .pytis-form table.vertical-group > tbody > tr > td.spacer {
     width: 100%;
@@ -373,11 +374,11 @@
 .pytis-form.list-view table.grid td {
     vertical-align: top;
 }
-.pytis-form.list-view table.grid h3 {
-    margin-top: 0;
-}
 .pytis-form label {
     margin-right: 0.25em;
+}
+.pytis-form.list-view table.grid h3 {
+    margin-top: 0;
 }
 .pytis-form .field-label { 
     white-space: nowrap;
@@ -426,7 +427,8 @@
 }
 .pytis-form.edit-form td.label {
     /* To display labels vertically centered with form controls. */
-    line-height: 1.5em;
+    line-height: 1.8em;
+    padding: 3px 0;
 }
 .pytis-form.show-form td.label {
     /* Force normal line height in a show form embedded in an edit form. */
@@ -466,10 +468,6 @@
 .pytis-form.edit-form textarea:disabled,
 .pytis-form.edit-form select:disabled { 
     background-color: #e8e8e8;
-}
-.pytis-form.edit-form input.text-field,
-.pytis-form.edit-form textarea {
-    padding: 1px;
 }
 .pytis-form textarea.fullsize {
     width: 100%;
