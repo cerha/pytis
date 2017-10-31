@@ -1064,7 +1064,6 @@ class PresentedRow(object):
         filtered.
 
         """
-        # Omit the field itself from validation to prevent infinite recursion.
         return self._computed_value(self._coldict[key].runtime_filter)
 
     def runtime_arguments(self, key):
@@ -1074,7 +1073,6 @@ class PresentedRow(object):
         field has no table function based codebook.
 
         """
-        # Omit the field itself from validation to prevent infinite recursion.
         return self._computed_value(self._coldict[key].runtime_arguments)
 
     def has_completer(self, key, static=False):
