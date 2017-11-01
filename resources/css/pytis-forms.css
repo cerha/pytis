@@ -297,11 +297,10 @@
 }
 .pytis-form .paging-controls > div,
 .pytis-form .paging-controls > span {
-    margin-top: 0.4em;
+    margin-top: 0.2em;
 }
 .pytis-form .paging-controls {
-    padding: 0.4em;
-    padding-top: 0;
+    padding: 0 0.2em 0.2em 0.2em;
 }
 .list-form-controls .offset,
 .list-form-controls .buttons,
