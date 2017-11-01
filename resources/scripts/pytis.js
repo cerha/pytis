@@ -649,8 +649,8 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
     initialize: function ($super, form_id, form_name, uri, inline_editable) {
         $super(form_id, form_name, uri, inline_editable);
         if (inline_editable) {
-            this._form.down('.actions').select(
-                'button.action-update, button.action-delete, button.action-copy'
+            this._form.select(
+                '.actions button.action-update, button.action-delete, button.action-copy'
             ).each(function (button) {
                 var target = (button.hasClassName('action-copy') ? 'after' : 'replace');
                 button.on('click', function (event) {
