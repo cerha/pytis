@@ -1571,6 +1571,7 @@ class BrowseForm(LayoutForm):
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
+        self._last_exported_row_actions = ()
 
     def _tree_level(self):
         if self._tree_order_column:
@@ -1582,6 +1583,7 @@ class BrowseForm(LayoutForm):
 
     def _export_popup_ctrl(self, context, row, selector):
         actions = self._visible_actions(context, row)
+        self._last_exported_row_actions = actions
         # Suppress the popup menu when it consists of a single item for action='view'.
         if actions and not (len(actions) == 1 and actions[0][0].id() == 'view'):
             items = [lcg.PopupMenuItem(action.title(),
@@ -1666,6 +1668,12 @@ class BrowseForm(LayoutForm):
         attr = dict(cls=' '.join(cls))
         if style:
             attr['style'] = style
+        if self._inline_editable:
+            actions = [action for action, enabled in self._last_exported_row_actions
+                       if enabled and action.id() == 'update']
+            if actions:
+                uri = self._uri_provider(row, UriType.ACTION, actions[0])
+                attr['data-pytis-row-update-uri'] = uri
         attr['data-pytis-row-key'] = row[self._key].export()
         return attr
 

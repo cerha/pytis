@@ -415,13 +415,25 @@ pytis.BrowseForm = Class.create(pytis.Form, {
             element.setAttribute('title', pytis._("Double click the cell to edit the value."));
             element.on('dblclick', this._on_edit_cell.bind(this));
         }.bind(this));
-        if (tbody.up('table').hasClassName('expansible-rows')) {
-            tbody.select('tr').each(function (tr) {
-                var ctrl = new Element('a', {'class': 'expand-row'});
-                ctrl.update(pytis._("Expand Row"));
-                ctrl.on('click', this._on_toggle_row_expansion.bind(this));
-                ctrl.update(pytis._("Expand Row"));
-                tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
+        var expansible = tbody.up('table').hasClassName('expansible-rows');
+        if (expansible || this._inline_editable) {
+            tbody.select('tr.data-row').each(function (tr) {
+                if (expansible) {
+                    var ctrl = new Element('a', {'class': 'expand-row'});
+                    ctrl.update(pytis._("Expand Row"));
+                    ctrl.on('click', this._on_toggle_row_expansion.bind(this));
+                    ctrl.update(pytis._("Expand Row"));
+                    tr.insert({top: new Element('td', {'class': 'expansion-ctrl'}).update(ctrl)});
+                }
+                if (this._inline_editable) {
+                    var uri = tr.getAttribute('data-pytis-row-update-uri');
+                    if (uri) {
+                        tr.on('dblclick', function (event) {
+                            this._on_popup_menu_inline_action(tr, 'update', uri);
+                            event.stop();
+                        }.bind(this));
+                    }
+                }
             }.bind(this));
         }
     },
@@ -574,7 +586,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         if (target === 'global') {
             element.up('.actions').insert({after: content});
         } else {
-            var tr = element.up('tr');
+            var tr = element.nodeName === 'TR' ? element : element.up('tr');
             var tds = tr.childElements();
             var i, colspan = 0;
             for (i=0; i < tds.length; i++) {
