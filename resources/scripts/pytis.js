@@ -28,6 +28,7 @@
 /*global Gettext */
 /*global Form */
 /*global Position */
+/*global Effect */
 /*global lcg */
 /*global $ */
 /*global $$ */
@@ -550,6 +551,19 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                 this._cancel_inline_action(content);
                 event.stop();
             }.bind(this));
+            var form = content.down('form');
+            if (form) {
+                for (var i=0; i < form.length; ++i) {
+                    var field = form[i];
+                    if (field.type != 'hidden' && !field.disabled && field.visible()) {
+                        setTimeout(function () {
+                            field.focus();
+                            Effect.ScrollTo(field, {duration: 0.3, offset: -50});
+                        }, 330);
+                        break;
+                    }
+                }
+            }
         }.bind(this));
     },
     
