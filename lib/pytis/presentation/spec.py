@@ -2370,7 +2370,7 @@ class Computer(object):
       - values of virtual fields,
       - dynamic editability and visibility of form fields,
       - dynamic filters and runtime arguments for codebook field enumerators,
-      - check the integrity of the row.
+      - checking the integrity of the row.
 
     """
 
