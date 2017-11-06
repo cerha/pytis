@@ -69,12 +69,12 @@ class PresentedRow(unittest.TestCase):
             pp.Field('a', type=pd.Integer(not_null=True)),
             pp.Field('b', type=pd.Integer(not_null=True,
                                           enumerator=SpecialEnumerator(range(101))),
-                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0),
+                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0, validate=True),
                      runtime_arguments=pp.computer(lambda r, a: dict(a=a))),
             pp.Field('c', type=pd.Integer(not_null=True), default=lambda: 5),
             pp.Field('d', type=pd.Integer(),
                      editable=pp.computer(lambda r, total: total > 5),
-                             computer=pp.computer(lambda r, c: c * 2)),
+                     computer=pp.computer(lambda r, c: c * 2, validate=True)),
             pp.Field('fruit', type=pd.String(), codebook='Fruits', display='title',
                      null_display='none'),
             pp.Field('fruit_code', virtual=True, computer=pp.CbComputer('fruit', 'code')),
@@ -82,7 +82,7 @@ class PresentedRow(unittest.TestCase):
                      visible=pp.computer(lambda r, a: a != 0)),
             pp.Field('total', type=pd.Integer(), virtual=True,
                      editable=pp.Editable.NEVER,
-                     computer=pp.computer(lambda r, b, c: b + c, fallback=0)),
+                     computer=pp.computer(lambda r, b, c: b + c, validate=True, fallback=0)),
             pp.Field('half_total', type=pd.Integer(), virtual=True,
                      editable=pp.Editable.NEVER,
                      computer=pp.computer(lambda r, total:
@@ -268,9 +268,11 @@ class PresentedRow(unittest.TestCase):
 
     def test_recursive_computer_validation(self):
         fields = (
-            pp.Field('a', type=pd.Integer(not_null=True), computer=pp.computer(lambda r, b: 2 * b)),
-            pp.Field('b', type=pd.Integer(not_null=True, enumerator=pd.FixedEnumerator(range(101))),
-                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0)),
+            pp.Field('a', type=pd.Integer(not_null=True),
+                     computer=pp.computer(lambda r, b: 2 * b, validate=True)),
+            pp.Field('b', type=pd.Integer(not_null=True,
+                                          enumerator=pd.FixedEnumerator(range(101))),
+                     runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0, validate=True)),
         )
         # The computer for 'a' is called to compute the initial value and will lead to recursion
         # because it requires validation of 'b' which needs the value of 'a'...
@@ -283,7 +285,7 @@ class PresentedRow(unittest.TestCase):
         class Specification2(Specification):
             def _customize_fields(self, fields):
                 fields.modify('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0,
-                                                              novalidate=('a',)))
+                                                              validate=True, novalidate=('a',)))
         row = self._row(Specification2().view_spec().fields(), new=True)
         # 'a' is None so runtime_filter will try to compute x % None (because 'a' is not validated).
         self.assertRaises(TypeError, lambda: row.enumerate('b'))
@@ -572,7 +574,6 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row.enumerate('z'), [])
         self.assertFalse(row.editable('z'))
 
-
     def test_completer(self):
         completer = self._enumerator(
             ('x',),
@@ -632,10 +633,9 @@ class PresentedRow(unittest.TestCase):
         fields = (
             pp.Field('a', type=pd.String(not_null=True)),
             pp.Field('b', type=pd.String(not_null=True, maxlen=1),
-                     computer=pp.computer(lambda r, a: a[0].upper())),
-            pp.Field('c', type=pd.String(enumerator=pd.FixedEnumerator(range(10)),
-                                         not_null=True),
-                     computer=pp.computer(lambda r, b: str(ord(b) % 10))),
+                     computer=pp.computer(lambda r, a: a[0].upper(), validate=True)),
+            pp.Field('c', type=pd.String(enumerator=pd.FixedEnumerator(range(10)), not_null=True),
+                     computer=pp.computer(lambda r, b: str(ord(b) % 10), validate=True)),
         )
         row = self._row(fields, new=True)
         row.validate('a', 'foo')
@@ -661,8 +661,6 @@ class PresentedRow(unittest.TestCase):
         data = enumerator._data # There is currently no need to make this public elsewhere.
         data.insert(pd.Row((('id', pd.sval('3')), ('title', pd.sval('Third')))))
         self.assertEqual(row.validate('a', '3'), None)
-
-
 
 
 class PrettyTypes(unittest.TestCase):

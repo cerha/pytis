@@ -1690,12 +1690,12 @@ class ViewSpec(object):
                             assert dep in self._field_dict, \
                                 err("Unknown field '%s' in dependencies for '%s' "
                                     "specification of '%s': %s", dep, attr, f.id(), computer)
-                            if attr in ('runtime_filter', 'runtime_arguments'):
-                                if f.id() in all_deps(dep):
-                                    assert dep in computer.novalidate(), \
-                                        err("Cyclic dependency in '%s' specification of '%s'. "
-                                            "Add '%s' to 'novalidate' to avoid recursion.",
-                                            attr, f.id(), dep)
+                            if dep in computer.validate() and attr in ('runtime_filter',
+                                                                       'runtime_arguments'):
+                                assert f.id() not in all_deps(dep), \
+                                    err("Cyclic dependency in '%s' specification of '%s'. "
+                                        "Add '%s' to 'novalidate' to avoid recursion.",
+                                        attr, f.id(), dep)
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
@@ -2372,9 +2372,28 @@ class Computer(object):
       - dynamic filters and runtime arguments for codebook field enumerators,
       - checking the integrity of the row.
 
+    The computer function is invoked on changes of the fields it depends on.
+    The Computer specification allows defining the computer function to wait
+    for its input values to become valid or running it on every change even if
+    the field is not valid according to the constraints defined by their data
+    type.  If some (or all) inputs are defined to be validated (using the
+    'validate' and 'novalidate' arguments), the computer function is not called
+    until all the validated fields become valid and the value defined by the
+    'fallback' argument is used instead of the result of the computation.  This
+    saves handling invalid values inside the computer function, because the
+    function implementation may rely on the inputs to be valid (match the
+    constraints defined by the types of the relevant fields).
+
+    Note: When using validated inputs, validation may cause infinite recursion
+    because of circular dependencies.  Pytis will automatically detect
+    computers with such circular dependencies and force the developer to avoid
+    the circular dependency by excluding certain fields from validation (adding
+    to 'novalidate') when necessary.
+
     """
 
-    def __init__(self, function, depends=None, fallback=UNDEFINED, novalidate=()):
+    def __init__(self, function, depends=None, fallback=UNDEFINED, validate=False,
+                 novalidate=()):
         """Arguments:
 
           function -- callable object taking one argument - the 'PresentedRow'
@@ -2389,37 +2408,49 @@ class Computer(object):
             Empty sequence leads to no recomputations (the value is computed
             only once on initialization).
 
+          validate -- specifies which input fields from 'depends' should be
+            validated before running the computer function.  Passing False (the
+            default) means no fields are validated.  Passing True means all
+            fields are validated except for the fields listed in 'novalidate'.
+            Passing a sequence means only the listed fields are validated.
+
+          novalidate -- sequence of fields excluded from computer input
+            validation.  Only relevant when 'validate' is set to True.  In this
+            case, all except for the here listed fields will be validated.
+
           fallback -- value used instead of function result in case that at
-            least one of the input fields (present in 'depends' and not present
-            in 'novalidate') contains an invalid value.  The computer function
-            is not called at all in this case and the fallback value is
-            returned instead.  If 'fallback' is undefined, the previously
+            least one of the validated input fields (as specified by
+            'validate'/'novalidate') contains an invalid value.  The computer
+            function is not called at all in this case and the fallback value
+            is returned instead.  If 'fallback' is undefined, the previously
             computed value remains the result until all input values become
             valid again (if they were not valid before, the result remains on
             the default/initial value).
 
-          novalidate -- sequence of fields excluded from computer input
-            validation.  The listed fields will not be validated before calling
-            the computer function (as described for the 'fallback' argument).
-            This means that the function implementation may not rely on the
-            inputs to be valid (match the constraints defined by the types of
-            the relevant fields).  It may be, however, necessary in cases,
-            where validation would cause an infinite recursion because of
-            circular dependencies.  Pytis will automatically detect computers
-            with such circular dependencies and force the developer to set
-            'novalidate' when necessary.
-
         """
         assert isinstance(function, collections.Callable), function
-        assert is_sequence(depends), depends
-        assert is_sequence(novalidate), novalidate
+        assert isinstance(depends, (tuple, list)), depends
+        assert isinstance(validate, (bool, tuple, list)), validate
+        assert isinstance(novalidate, (tuple, list)), novalidate
+        assert not novalidate or validate is not False, \
+            "Passing 'novalidate' makes no sense when 'validate' is False."
+        assert not novalidate or validate is True, \
+            "Passing 'novalidate' is forbidden when 'validate' is a sequence."
+        assert not isinstance(validate, (tuple, list)) or set(validate).issubset(depends), \
+            (validate, depends)
         assert set(novalidate).issubset(depends), (novalidate, depends)
+        if validate is False:
+            validate = ()
+        else:
+            if validate is True:
+                validate = depends
+            validate = tuple(set(validate) - set(novalidate))
         if depends is None:
             raise ProgramError("Computer has no dependency specification!")
         self._function = function
         self._depends = tuple(depends)
+        self._validate = validate
         self._fallback = fallback
-        self._novalidate = novalidate
 
     def __call__(self, row):
         return self._function(row)
@@ -2436,16 +2467,16 @@ class Computer(object):
         """Return the value of 'depends' as passed to the constructor converted to a tuple."""
         return self._depends
 
+    def validate(self):
+        """Return the tuple of columns which should be validated."""
+        return self._validate
+
     def fallback(self):
         """Return the value of 'fallback' as passed to the constructor."""
         return self._fallback
 
-    def novalidate(self):
-        """Return the value of 'novalidate' as passed to the constructor."""
-        return self._novalidate
 
-
-def computer(function=None, fallback=UNDEFINED, novalidate=()):
+def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
     """Return a 'Computer' instance for given function.
 
     If necessary, wrap 'function' converting row values to named arguments.
@@ -2465,9 +2496,9 @@ def computer(function=None, fallback=UNDEFINED, novalidate=()):
     arguments.  If no such additional arguemnts are defined, the 'function' is
     used as is.
 
-    The arguments 'fallback' and 'novalidate' correspond to the same arguments
-    of 'Computer' constructor.  If used, they are simply passed on to the
-    instance.
+    The arguments 'validate', 'novalidate' and 'fallback' correspond to the
+    same arguments of 'Computer' constructor.  If used, they are simply passed
+    on to the instance.
 
     For example:
 
@@ -2484,11 +2515,11 @@ def computer(function=None, fallback=UNDEFINED, novalidate=()):
         def x(row):
              return row['a'].value() + row['b'].value()
 
-    In the special case that 'fallback' or 'novalidate' is passed and
-    'function' is None, the function returns a decorator which passes these
-    arguments along, so you can also simply write decorators as below:
+    In the special case that 'validate' is not False and 'function' is None,
+    the function returns a decorator which passes these arguments along, so you
+    can also simply write decorators as below:
 
-        @computer(fallback=None):
+        @computer(validate=True, fallback=None):
         def x(row, a, b):
             return a + b
 
@@ -2507,9 +2538,9 @@ def computer(function=None, fallback=UNDEFINED, novalidate=()):
     explicitly or pass 'Computer' instances directly.
 
     """
-    if function is None and (fallback is not UNDEFINED or novalidate != ()):
+    if function is None and validate is not False:
         def result(function):
-            return computer(function, fallback=fallback, novalidate=novalidate)
+            return computer(function, validate=validate, novalidate=novalidate, fallback=fallback)
     elif function is None or isinstance(function, Computer):
         result = function
     else:
@@ -2521,7 +2552,8 @@ def computer(function=None, fallback=UNDEFINED, novalidate=()):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
             function.__name__ = original_function.__name__
-        result = Computer(function, depends=depends, fallback=fallback, novalidate=novalidate)
+        result = Computer(function, depends=depends, validate=validate,
+                          novalidate=novalidate, fallback=fallback)
     return result
 
 

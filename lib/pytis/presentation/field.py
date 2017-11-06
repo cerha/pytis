@@ -91,7 +91,7 @@ class PresentedRow(object):
                 self.function = computer.function()
                 self.depends = computer.depends()
                 self.fallback = computer.fallback()
-                self.novalidate = computer.novalidate()
+                self.validate = computer.validate()
                 self.dirty = True
                 self.value = None
 
@@ -430,8 +430,8 @@ class PresentedRow(object):
         if not cval:
             result = None
         elif cval.dirty and all(self._check_constraints(self._coldict[key], self[key]) is None
-                                for key in cval.depends if key not in cval.novalidate):
-            # Only invoke the computer if all input fields are valid.
+                                for key in cval.validate):
+            # Only invoke the computer if all validated input fields are valid.
             cval.dirty = False
             # Reset the dirty flag before calling the computer function to allow
             # the computer function to retrieve the original value without recursion.
