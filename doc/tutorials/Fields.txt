@@ -182,7 +182,7 @@ Příklad:
 >>> record = Record(
 ...     Field('x', type=pd.Integer()),
 ...     Field('y', type=pd.Integer(),
-...           computer=computer(lambda r, x: 2 * x)),
+...           computer=computer(lambda r, x: 2 * x, validate=True)),
 ...     Field('firstname', type=pd.String()),
 ...     Field('surname', type=pd.String()),
 ...     Field('fullname', type=pd.String(),
