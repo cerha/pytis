@@ -985,7 +985,8 @@ class PresentedRow(object):
                     return value.export()
         display = self._display(column)
         if not display and column.cb_computer_field:
-            display = self._display(self._coldict[column.cb_computer_field])
+            column = self._coldict[column.cb_computer_field]
+            display = self._display(column)
         value = self[column.id].value()
         if value is None:
             return column.null_display or ''

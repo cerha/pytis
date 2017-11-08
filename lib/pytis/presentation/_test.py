@@ -662,6 +662,19 @@ class PresentedRow(unittest.TestCase):
         data.insert(pd.Row((('id', pd.sval('3')), ('title', pd.sval('Third')))))
         self.assertEqual(row.validate('a', '3'), None)
 
+    def test_cbcomputer_display(self):
+        enumerator = self._enumerator(('id', 'title'), data=(('1', 'First'), ('2', 'Second')))
+        fields = (
+            pp.Field('a', type=pd.String(enumerator=enumerator), display='title'),
+            pp.Field('b', computer=pp.CbComputer('a', 'title')),
+        )
+        row = self._row(fields, None)
+        row['a'] = '1'
+        self.assertEqual(row.display('a'), 'First')
+        # It seems quite strange that display for a CbComputer column actually
+        # returns its value, but it is the current status quo.
+        self.assertEqual(row.display('b'), 'First')
+
 
 class PrettyTypes(unittest.TestCase):
 
