@@ -668,12 +668,32 @@ class PresentedRow(unittest.TestCase):
             pp.Field('a', type=pd.String(enumerator=enumerator), display='title'),
             pp.Field('b', computer=pp.CbComputer('a', 'title')),
         )
-        row = self._row(fields, None)
+        row = self._row(fields)
         row['a'] = '1'
         self.assertEqual(row.display('a'), 'First')
         # It seems quite strange that display for a CbComputer column actually
         # returns its value, but it is the current status quo.
         self.assertEqual(row.display('b'), 'First')
+
+    def test_editable_always_bool(self):
+        row = self._row((
+            pp.Field('a', type=pd.String()),
+            pp.Field('b', type=pd.Integer()),
+            pp.Field('c', editable=pp.computer(lambda r, a, b: a or b)),
+        ))
+        for a, b, editable in (
+                (None, None, False),
+                ('', None, False),
+                (None, 0, False),
+                ('', 0, False),
+                (None, 1, True),
+                ('', 5, True),
+                ('x', None, True),
+                ('y', 8, True),
+        ):
+            row['a'] = a
+            row['b'] = b
+            self.assertIs(row.editable('c'), editable, (a, b))
 
 
 class PrettyTypes(unittest.TestCase):

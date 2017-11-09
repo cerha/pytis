@@ -813,11 +813,11 @@ class PresentedRow(object):
             return False
         if self.hidden_codebook(key):
             return False
-        return self._computed_value(self._coldict[key].editable)
+        return bool(self._computed_value(self._coldict[key].editable))
 
     def visible(self, key):
         """Return True if given field is currently visible."""
-        return self._computed_value(self._coldict[key].visible)
+        return bool(self._computed_value(self._coldict[key].visible))
 
     def check(self, key):
         """Return the result of 'check' for field identified by 'key'."""
