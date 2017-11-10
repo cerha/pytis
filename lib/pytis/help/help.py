@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014, 2015 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,14 @@ defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 
 """
 
-import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
-from pytis.util import current_language, log, OPERATIONAL, translations
+import sys
+import os
+import lcg
+import pytis.data as pd
+import pytis.form
+import pytis.util
+import config
+from pytis.util import current_language, log, OPERATIONAL, translations, ProgramError
 
 _ = translations('pytis-wx')
 
@@ -53,13 +59,21 @@ class HelpUpdater(object):
 
     """
     def __init__(self):
-        self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content', 'changed', 'removed'),
-                                          config.dbconnection)
-        self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help', 'changed', 'removed'),
-                                          config.dbconnection)
-        self._spec_help_items_data = pd.dbtable('e_pytis_help_spec_items',
-                                                ('item_id', 'spec_name', 'kind', 'identifier',
-                                                 'content', 'changed', 'removed'), config.dbconnection)
+        self._menu_help_data = pd.dbtable(
+            'e_pytis_help_menu',
+            ('fullname', 'content', 'changed', 'removed'),
+            config.dbconnection,
+        )
+        self._spec_help_data = pd.dbtable(
+            'e_pytis_help_spec',
+            ('spec_name', 'description', 'help', 'changed', 'removed'),
+            config.dbconnection,
+        )
+        self._spec_help_items_data = pd.dbtable(
+            'e_pytis_help_spec_items',
+            ('item_id', 'spec_name', 'kind', 'identifier', 'content', 'changed', 'removed'),
+            config.dbconnection,
+        )
         self._done = {}
 
     def _row(self, data, **kwargs):
@@ -224,9 +238,9 @@ class HelpUpdater(object):
         else:
             # Maybe retrieve custom application command here?
             # command, args = pytis.form.custom_command(command_name)
-            #if command and command.__doc__:
-            #    return command.__doc__
-            #else:
+            # if command and command.__doc__:
+            #     return command.__doc__
+            # else:
             return _("Invokes command %s.") % command_name
 
     def _generate_proc_help(self, procname, spec_name):
@@ -298,8 +312,9 @@ class HelpGenerator(object):
             if not label:
                 label = f.label() or f.id()
             elif f.label() and f.label() != label:
-                label += ' ('+ f.label()+')'
+                label += ' (' + f.label() + ')'
             return label
+
         def field_description(f):
             result = description('field', f.id(), f.descr())
             related_specnames = [name for name in
