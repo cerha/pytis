@@ -2136,10 +2136,8 @@ def remote_connection_initially_available():
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""
-    print '===', key, _application._recent_directories.get(key)
     return _application._recent_directories.get(key)
 
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
-    print '==>', key, directory
     _application._recent_directories[key] = directory
