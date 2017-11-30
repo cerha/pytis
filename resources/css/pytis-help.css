@@ -1,19 +1,24 @@
 /*csslint box-model:false */
 /*csslint ids:false */
+#body {
+    font-size: 16px;
+    font-family: helvetica, arial, sans-serif;
+}
 
 #menu { 
     box-sizing: border-box;
     float: left;
     width: 230px;
-    font-size: 11px;
     padding-right: 8px;
 }
 #menu .menu-panel  {
     position: relative;
     border: 1px solid #888;
+    border-radius: 3px;
 }
 #menu .menu-heading {
     margin: 0;
+    font-weight: bold;
     font-size: 1.1em;
     padding: 0.1em 0.2em;
     background-color: #ccc;
@@ -21,7 +26,7 @@
 }
 #menu .toggle-menu-expansion {
     position: absolute;
-    top: 4px;
+    top: 7px;
     right: 5px;
 }
 
@@ -32,9 +37,9 @@
     padding: 0 8px;
 }
 
-h1 { font-size: 1.6em; }
-h2 { font-size: 1.5em; }
-h3 { font-size: 1.3em; }
+h1 { font-size: 2em; }
+h2 { font-size: 1.7em; }
+h3 { font-size: 1.4em; }
 h4 { font-size: 1.2em; }
 h5,h6,h7,h8,h9 { font-size: 1.1em; }
 
@@ -47,4 +52,13 @@ h5,h6,h7,h8,h9 { font-size: 1.1em; }
 .popup-menu-widget a.close-menu,
 .collapsible-pane-widget .collapsible-pane-heading .icon {
     background-image: url(http://localhost/pytis-resources/lcg-icons.png);
+}
+.foldable-tree-widget li .icon {
+    position: relative;
+    top: 2px;
+}
+
+code {
+    background-color: #ddd;
+    padding: 3px;
 }
