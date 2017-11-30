@@ -2399,7 +2399,7 @@ class Browser(wx.Panel, CommandHandler):
                 return False
             self._last_help_uri = uri
             from pytis.help import HelpGenerator, HelpExporter
-            node = HelpGenerator().help_page(uri[5:])
+            node = HelpGenerator().help_page(uri)
             exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
                                     get_resource_uri=self._resource_uri)
             self.load_content(node, base_uri=uri, exporter=exporter)
