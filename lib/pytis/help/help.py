@@ -600,9 +600,11 @@ class DmpHelpGenerator(HelpGenerator):
 
 class HelpExporter(pytis.form.Browser.Exporter):
 
-    _BODY_PARTS = ('menu',
-                   'heading',
-                   'content')
+    _PAGE_STRUCTURE = (
+        pytis.form.Browser.Exporter.Part('menu'),
+        pytis.form.Browser.Exporter.Part('heading'),
+        pytis.form.Browser.Exporter.Part('content'),
+    )
 
     def _menu(self, context):
         g = self._generator
