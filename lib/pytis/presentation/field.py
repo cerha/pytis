@@ -352,6 +352,7 @@ class PresentedRow(object):
         self._virtual = {}
         row_data = []
         computed_values = []
+        prefill = copy.copy(prefill)
         for column in self._columns:
             key = column.id
             dirty = False

@@ -695,6 +695,15 @@ class PresentedRow(unittest.TestCase):
             row['b'] = b
             self.assertIs(row.editable('c'), editable, (a, b))
 
+    def test_prefill_untouched(self):
+        row = self._row((
+            pp.Field('a', type=pd.Integer()),
+            pp.Field('b', type=pd.Integer()),
+        ))
+        prefill = dict(a=5, b=8)
+        row.set_row(None, reset=True, prefill=prefill)
+        self.assertEqual(prefill, dict(a=5, b=8))
+
 
 class PrettyTypes(unittest.TestCase):
 
