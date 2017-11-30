@@ -1,18 +1,18 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006 Brailcom, o.p.s.
+# Copyright (c) 2006, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
 = Vyhledávání =
 
 Slouží k rychlému nalezení záznamu v rozsáhlém řádkovém formuláři.  Funkce
-`Vyhledávání'' se spouští pomocí klávesy *F3*.  Ta zobrazí dialog pro zadání
+`Vyhledávání'' se spouští pomocí klávesy =F3=.  Ta zobrazí dialog pro zadání
 podmínek hledání.  Ve vyhledávacím řetězci je možné použít hvězdičku, která
 slouží jako zástupní znak pro libovolný jeden nebo více znaků hledaného
 řetězce.
 
 Po zadání podmínky lze již procházet odpovídající záznamy dopředu a dozadu
-pomocí klávesových zkratek *Ctrl-s* (další) nebo *Ctrl-r* (předchozí) bez
+pomocí klávesových zkratek =Ctrl-s= (další) nebo =Ctrl-r= (předchozí) bez
 opětovného zobrazování vyhledávacího dialogu.  Posledně zadanou vyhledávací
 podmínku si formulář pamatuje až do svého uzavření.
 

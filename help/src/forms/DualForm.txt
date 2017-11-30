@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# Copyright (c) 2006, 2012, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -10,7 +10,7 @@ dva formuláře spojené v jeden celek.  Více o jednotlivých typech duálních
 formulářů viz níže.
 
 V každém okamžiku je jeden z formulářů aktivní.  Přepínání je možné pomocí
-klávesy *Ctrl-Tab*, nebo myší, kliknutím do jednoho z formulářů.  Aktivní
+klávesy =Ctrl-Tab=, nebo myší, kliknutím do jednoho z formulářů.  Aktivní
 formulář potom zpracovává všechny uživatelské příkazy, ať už jsou vyvolány z
 klávesnice, nebo z menu (akce myši samozřejmě pracují s formulářem, na který
 klikám).

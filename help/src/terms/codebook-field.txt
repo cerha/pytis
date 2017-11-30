@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# Copyright (c) 2006, 2012, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -7,8 +7,8 @@
 
 Pokud se jedná o políčko navázané na [help:pytis/codebook číselník] a toto je
 aktivní, lze pomocný [help:pytis/CodebookForm číselníkový formulář] vyvolat
-klávesovou zkratkou *F2*, nebo tlačítkem umístěným vedle políčka.  Pomocí
-klávesové zkratky *Ctrl F2* je možné vyvolat číselník s automaticky zapnutým
+klávesovou zkratkou =F2=, nebo tlačítkem umístěným vedle políčka.  Pomocí
+klávesové zkratky =Ctrl-F2= je možné vyvolat číselník s automaticky zapnutým
 inkrementálním vyhledáváním.
 
 V určitých případech může uživatel během editace zjistit, že potřebuje do

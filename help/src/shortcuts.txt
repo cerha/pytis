@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# Copyright (c) 2006, 2012, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -23,34 +23,34 @@ Obsah: @TOC@
 V zápisu zkratek je používána následující notace:
 
  * Jednotlivé klávesy jsou zapsány svými jmény.  Klávesy šipek jsou označovány
-   jako „Left“, „Right“, „Up“, „Down“ (vlevo, vpravo, nahoru, dolů).
+   jako =Left=, =Right=, =Up=, =Down= (vlevo, vpravo, nahoru, dolů).
 
- * Pokud se před názvem klávesy vyskutuje „Ctrl-“, „Alt-“, nebo „Shift-“, jde o
-   kombinaci kláves.  Například „Ctrl-w“ znamená, že nejprve stiskneme klávesu
-   „Ctrl“, a aniž bychom ji uvolnili stiskneme klávesu „w“.
+ * Pokud se před názvem klávesy vyskutuje =Ctrl-=, =Alt-=, nebo =Shift-=, jde o
+   kombinaci kláves.  Například =Ctrl-w= znamená, že nejprve stiskneme klávesu
+   =Ctrl=, a aniž bychom ji uvolnili stiskneme klávesu =w=.
  
 # * Pokud se zkratka skládá z více kláves, nebo jejich kombinací, oddělělených
-#   mezerou, jde o vícenásobnou klávesovou zkratku.  Např. „Ctrl-x p“ znamená,
-#   že nejprve stiskneme kombinaci „Ctrl-x“, tu uvolníme a následně stiskneme
-#   „p“.
+#   mezerou, jde o vícenásobnou klávesovou zkratku.  Např. =Ctrl-x p= znamená,
+#   že nejprve stiskneme kombinaci =Ctrl-x=, tu uvolníme a následně stiskneme
+#   =p=.
 
 == Globální příkazy ==
 
 Následující klávesové zkratky platí v rámci celé aplikace.
 
-| F1          | Nápověda |
-| Ctrl-g      | Přerušení (např. při déle trvající akci, jako je formátování tisku apod.) |
-| Ctrl-Down   | Přepnutí na následující formulář v pořadí (viz. [help:pytis/stack]) |
-| Ctrl-Up     | Přepnutí na předchozí formulář v pořadí (viz. [help:pytis/stack]) |
-| Ctrl-w      | Přepnutí na posledně aktivní formulář (viz. [help:pytis/stack]) |
-| Ctrl-l      | Aktualizace zobrazení (překreslení obrazovky) |
-| Alt-x       | Ukončení běhu aplikace |
+| =F1=        | Nápověda |
+| =Ctrl-g=    | Přerušení (např. při déle trvající akci, jako je formátování tisku apod.) |
+| =Ctrl-Down= | Přepnutí na následující formulář v pořadí (viz. [help:pytis/stack]) |
+| =Ctrl-Up=   | Přepnutí na předchozí formulář v pořadí (viz. [help:pytis/stack]) |
+| =Ctrl-w=    | Přepnutí na posledně aktivní formulář (viz. [help:pytis/stack]) |
+| =Ctrl-l=    | Aktualizace zobrazení (překreslení obrazovky) |
+| =Alt-x=     | Ukončení běhu aplikace |
 
 Pro přístup do menu jsou definovány tyto zkratky:
 
-| F10        | Otevření hlavní nabídky aplikace |
-| Alt-<znak> | Otevření menu z hlavní nabídky, kde <znak> je podtržený znak v jeho názvu |
-| Alt-Down   | Otevření [help:pytis/context-menu kontextového menu] | 
+| =F10=        | Otevření hlavní nabídky aplikace |
+| =Alt-<znak>= | Otevření menu z hlavní nabídky, kde <znak> je podtržený znak v jeho názvu |
+| =Alt-Down=   | Otevření [help:pytis/context-menu kontextového menu] | 
 
 V otevřeném menu se lze dále pokybovat šipkami.  Více také viz [help:pytis/menu].
 
@@ -58,48 +58,48 @@ V otevřeném menu se lze dále pokybovat šipkami.  Více také viz [help:pytis
 
 Následující příkazy fungují pouze v případě kdy se nacházíte ve stromově řazeném náhledu.
 
-| + 		| Otevřít/Zavřít strom | 
-| Ctrl-+ 	|  Otevřít/Zavřít podstrom | 
-| Shift-+ 	|  Otevřít celý strom | 
-| Shift-- 	|  Zavřít celý strom | 
-| Ctrl-Shift-+ |  Zvolit úroveň otevření stromu | 
+| =+= 		  | Otevřít/Zavřít strom | 
+| =Ctrl-+= 	  |  Otevřít/Zavřít podstrom | 
+| =Shift-+= 	  |  Otevřít celý strom | 
+| =Shift--= 	  |  Zavřít celý strom | 
+| =Ctrl-Shift-+=  |  Zvolit úroveň otevření stromu | 
 
 == Příkazy v rámci formuláře ==
 
 Následující klávesové zkratky jsou platné pouze pokud je aktivním prvkem
 aplikace formulář.
 
-| Ctrl-F1        | Nápověda k formuláři |
-| Escape         | Uzavření formuláře |
-| Alt-Down       | Rozbalení kontextového menu aktuálního řádku formuláře |
-| Ctrl-p         | Tisk formuláře |
-| Ctrl-Backspace | Zahodit uživatelská nastavení formuláře (návrat k předchozímu nastavení) |
-| F6          | Vložit nový záznam pomocí [help:pytis/PopupEditForm editačního formuláře] |
-| Ctrl-F6     | Vložit nový záznam jako kopii aktuálního řádku |
-| Alt-F6      | Import dat z CSV souboru (každý záznam bude možno potvrdit v editačním formuláři) |
-| F5          | Editace aktuálního záznamu v [help:pytis/PopupEditForm samostatném editačním formuláři] |
-| F8          | Smazání aktuálního záznamu |
-| F4          | Zvolit parametry [help:pytis/sorting řazení] |
-| Ctrl-F4     | [help:pytis/filtering Filtrovat] záznamy |
-| F3          | [help:pytis/searching Vyhledat] záznam podle parametrů |
-| Ctrl-s      | Přejít na následující záznam odpovídající zadaným vyhledávacím parametrům |
-| Ctrl-r      | Přejít na předchozí záznam odpovídající zadaným vyhledávacím parametrům |
-| Ctrl-j      | Přeskočit na záznam podle čísla řádku |
-| Ctrl-F3     | [help:pytis/searching-incremental]  |
-| Alt-F3      | [help:pytis/searching-incremental] části řetězce |
-| Enter       | Zobrazit detailní náhled záznamu ([help:pytis/ShowForm]) |
-| Mezerník    | Zobrazit duální náhled záznamu ([help:pytis/DescriptiveDualForm]) |
-| Ctrl-c      | Kopírovat buňku do schránky |
-| Ctrl-e      | Exportovat data tabulky do formátu CSV |
-| F2          | Editovat buňku v [help:pytis/inline in-line editaci] |
-| Insert      | Vložit řádku v [help:pytis/inline in-line editaci] pod aktuální řádek |
-| Ctrl-Insert | Vložit řádku v [help:pytis/inline in-line editaci] nad aktuální řádek |
-| F7          | Vložit řádku v [help:pytis/inline in-line editaci] zkopírováním aktuálního řádku |
-| Ctrl-F7     | Vložit řádku v [help:pytis/inline in-line editaci] kopií nad aktuální řádek |
-| Alt-Right   | Rozšířit aktuální sloupec |
-| Alt-Left    | Zúžit aktuální sloupec |
-| Shift-Right | Přesunout aktuální sloupec o jednu pozici doprava |
-| Shift-Left  | Přesunout aktuální sloupec o jednu pozici doleva |
+| =Ctrl-F1=     | Nápověda k formuláři |
+| =Escape=      | Uzavření formuláře |
+| =Alt-Down=    | Rozbalení kontextového menu aktuálního řádku formuláře |
+| =Ctrl-p=      | Tisk formuláře |
+| =Ctrl-Backspace= | Zahodit uživatelská nastavení formuláře (návrat k předchozímu nastavení) |
+| =F6=          | Vložit nový záznam pomocí [help:pytis/PopupEditForm editačního formuláře] |
+| =Ctrl-F6=     | Vložit nový záznam jako kopii aktuálního řádku |
+| =Alt-F6=      | Import dat z CSV souboru (každý záznam bude možno potvrdit v editačním formuláři) |
+| =F5=          | Editace aktuálního záznamu v [help:pytis/PopupEditForm samostatném editačním formuláři] |
+| =F8=          | Smazání aktuálního záznamu |
+| =F4=          | Zvolit parametry [help:pytis/sorting řazení] |
+| =Ctrl-F4=     | [help:pytis/filtering Filtrovat] záznamy |
+| =F3=          | [help:pytis/searching Vyhledat] záznam podle parametrů |
+| =Ctrl-s=      | Přejít na následující záznam odpovídající zadaným vyhledávacím parametrům |
+| =Ctrl-r=      | Přejít na předchozí záznam odpovídající zadaným vyhledávacím parametrům |
+| =Ctrl-j=      | Přeskočit na záznam podle čísla řádku |
+| =Ctrl-F3=     | [help:pytis/searching-incremental]  |
+| =Alt-F3=      | [help:pytis/searching-incremental] části řetězce |
+| =Enter=       | Zobrazit detailní náhled záznamu ([help:pytis/ShowForm]) |
+| =Mezerník=    | Zobrazit duální náhled záznamu ([help:pytis/DescriptiveDualForm]) |
+| =Ctrl-c=      | Kopírovat buňku do schránky |
+| =Ctrl-e=      | Exportovat data tabulky do formátu CSV |
+| =F2=          | Editovat buňku v [help:pytis/inline in-line editaci] |
+| =Insert=      | Vložit řádku v [help:pytis/inline in-line editaci] pod aktuální řádek |
+| =Ctrl-Insert= | Vložit řádku v [help:pytis/inline in-line editaci] nad aktuální řádek |
+| =F7=          | Vložit řádku v [help:pytis/inline in-line editaci] zkopírováním aktuálního řádku |
+| =Ctrl-F7=     | Vložit řádku v [help:pytis/inline in-line editaci] kopií nad aktuální řádek |
+| =Alt-Right=   | Rozšířit aktuální sloupec |
+| =Alt-Left=    | Zúžit aktuální sloupec |
+| =Shift-Right= | Přesunout aktuální sloupec o jednu pozici doprava |
+| =Shift-Left=  | Přesunout aktuální sloupec o jednu pozici doleva |
 
 Dále je možné v řádkových formulářích používat šipek a dalších navigačních
 kláves pro pohyb kurzoru.  Více viz [help:pytis/BrowseForm].  Pohyb po záznamech ve
@@ -107,44 +107,44 @@ formuláři typu [help:pytis/ShowForm] má také své specifické přiřazení k
 
 V duálním formuláři je navíc k dispozici příkaz:
 
-| Ctrl-Tab | Přepnutí na druhý formulář (všechny následující klávesové příkazy budou pracovat s tímto formulářem) |
+| =Ctrl-Tab= | Přepnutí na druhý formulář (všechny následující klávesové příkazy budou pracovat s tímto formulářem) |
 
 V režimu in-line editace lze navíc použít následující příkazy:
 
-| F12      | Uložení editovaného řádku do databáze |
-| Ctrl-F12 | Zrušení změn a obnovení původních hodnot všech políček |
-| Enter    | Potvrzení zeditované hodnoty buňky |
-| Escape   | Ukončení editace buňky se zahozením případných změn |
+| =F12=      | Uložení editovaného řádku do databáze |
+| =Ctrl-F12= | Zrušení změn a obnovení původních hodnot všech políček |
+| =Enter=    | Potvrzení zeditované hodnoty buňky |
+| =Escape=   | Ukončení editace buňky se zahozením případných změn |
 
 == Příkazy v rámci dialogových oken a vyskakovacích formulářů ==
 
 Dialogová okna a vyskakovací formuláře se zobrazují jako samostatná okna,
 nejsou tedy součástí hlavního aplikačního okna a [help:pytis/stack zásobníku oken].
 
-| Escape      | Opuštění formuláře nebo dialogu |
-| Ctrl-Enter  | Potvrzení formuláře nebo dialogu (odpovídá stisku výchozího tlačítka) |
+| =Escape=      | Opuštění formuláře nebo dialogu |
+| =Ctrl-Enter=  | Potvrzení formuláře nebo dialogu (odpovídá stisku výchozího tlačítka) |
 
-Pomocí klávesy „Ctrl-Enter“ lze rychle z klávesnice odeslat formulář (a uložit
-data), bez nutnosti projít všechna poíčka.  Podobně například v případě
-filtrovacího dialogu lze okamžitě uplatnit filtr bez nutnosti se tabelátorem
-„prokousat“ až k tlačítku „Filtrovat“.
+Pomocí klávesy =Ctrl-Enter= lze rychle z klávesnice odeslat formulář (a uložit
+data), bez nutnosti projít všechna políčka.  Podobně například v případě
+filtrovacího dialogu lze okamžitě uplatnit filtr bez nutnosti tabelátorem
+přeskákat až k tlačítku „Filtrovat“.
 
 
 == Příkazy v rámci vstupního políčka ==
 
-| Enter, Tab     | Potvrzení hodnoty políčka a přechod na následující políčko |
-| Shift-Tab      | Potvrzení hodnoty políčka a přechod na předchozí políčko |
-| Alt-Down       | Zobrazení kontextového menu políčka |
-| Ctrl-Backspace | Vrácení původní hodnoty políčka (před veškerými změnami) |
-| Ctrl-x',       | Vyjmutí označeného textu do schránky |
-| Ctrl-c',       | Zkopírování označeného textu do schránky |
-| Ctrl-v',       | Vložení textu ze schránky |
+| =Enter=, =Tab=   | Potvrzení hodnoty políčka a přechod na následující políčko |
+| =Shift-Tab=      | Potvrzení hodnoty políčka a přechod na předchozí políčko |
+| =Alt-Down=       | Zobrazení kontextového menu políčka |
+| =Ctrl-Backspace= | Vrácení původní hodnoty políčka (před veškerými změnami) |
+| =Ctrl-x=         | Vyjmutí označeného textu do schránky |
+| =Ctrl-c=         | Zkopírování označeného textu do schránky |
+| =Ctrl-v=         | Vložení textu ze schránky |
 
 Pro [help:pytis/codebook-field číselníková políčka] navíc platí následující příkazy:
 
-| F2         | Vyvolání číselníku |
-| Ctrl-F2    | Vyvolání číselníku s [help:pytis/searching-incremental inkrementálním hledáním] |
+| =F2=         | Vyvolání číselníku |
+| =Ctrl-F2=    | Vyvolání číselníku s [help:pytis/searching-incremental inkrementálním hledáním] |
 
-#   | Backspace |  ListField.COMMAND_SHOW_SELECTED |
+#   | =Backspace= |  ListField.COMMAND_SHOW_SELECTED |
 
 

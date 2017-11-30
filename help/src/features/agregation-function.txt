@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2011 Brailcom, o.p.s.
+# Copyright (c) 2011, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -11,21 +11,22 @@ Obsah: @TOC@
 
 == Popis agregačních funkcí ==
 
-=== Součet === 
+=== Součet ===
 
 Součet (nebo Suma) udává celkový součet hodnot daného sloupce v rámci seskupených záznamů.  Tato funkce nebere v úvahu záznamy, které neobsahují žádnou hodnotu a sčítat je možné pouze číselná data.
 
- === Průměr === 
+=== Průměr ===
 
 Tato funkce vypočítá aritmetický průměr z vybraných hodnot zadaného sloupce (nebo-li součet hodnot dělený jejich počtem). Hotnotu můžeme počítat pouze z číselných dat stejně jako u funkce Součet.
 
- === Minimum === 
+=== Minimum ===
 
 Touto funkcí lze určit nejmenší hodnotu ve sloupci ze seskupených záznamů.  Lze ji použít jak na číselné tak textové hodnoty. V případě textových hodnot se určuje dle prvního písmena abecedy, přičemž buňky, které neobsahují žádnou hodnotu, se ignorují.
 
- === Maximum === 
+=== Maximum ===
 
 Oproti Minimu touto funkcí určujeme nejvyšší hodnotu zadaného sloupce. U textových dat vypíše poslední hodnotu v abecedě.
 
- === Počet === 
+=== Počet ===
+
 Pokud potřebujeme získat počet jedinečných výskytů hodnoty v určitém sloupci, lze pro to využít funkci Počet. Je možné ji použít na všechny typy dat.

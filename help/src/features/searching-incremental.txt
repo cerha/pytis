@@ -1,11 +1,11 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# Copyright (c) 2006, 2012, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
 = Inkrementální vyhledávání =
 
-Funkce „Inkrementální hledání“ se spouští pomocí klávesové zkratky *Ctrl-F3*.
+Funkce „Inkrementální hledání“ se spouští pomocí klávesové zkratky =Ctrl-F3=.
 Před vyvoláním přesuneme kurzor na sloupec (buňku ve sloupci), v kterém chceme
 hodnotu vyhledávat.  Je vhodné záznamy nejprve [help:pytis/sorting setřídit]
 podle tohoto sloupce.  Po vyvolání funkce inkrementálního vyhledávání se objeví
@@ -16,17 +16,17 @@ kurzor na první záznam, který vyhovuje zadané podmínce.  Do vyhledávacího
 nebo více znaků hledaného řetězce.
 
  * /POZOR:/ Po přesunu kurzoru na hledaný záznam je /NUTNÉ/ potvrdit zadanou
-   podmínku klávesou *ENTER*!  V opačném případe se fokus vrátí na původní
+   podmínku klávesou =ENTER=!  V opačném případe se fokus vrátí na původní
    pozici před spuštěním inkrementálního vyhledávání.  Funkci je kdykoliv možné
-   ukončit klávesou *Escape*.
+   ukončit klávesou =Escape=.
  
-Opět je možné, tak jako u klasického hledání, pohybovat se na další (*Ctrl-r*)
-nebo předchozí (*Ctrl-s*) záznamy, které odpovídají zadané podmínce.
+Opět je možné, tak jako u klasického hledání, pohybovat se na další (=Ctrl-r=)
+nebo předchozí (=Ctrl-s=) záznamy, které odpovídají zadané podmínce.
 
 Po zadaní špatného znaku do podmínky není nutné ukončovat funkci -- stačí znak
-smazat (klávesou *Backspace*) a pokračovat.
+smazat (klávesou =Backspace=) a pokračovat.
 
 Někdy si uživatel pamatuje jenom část hledaného záznamu (např. druhé slovo z
 tříslovního názvu firmy).  V takovém případě je potřebné použít inkrementální
-hledání části řetězce.  Klávesová zkratka je *Ctrl-u Ctrl-F3*.
+hledání části řetězce.  Klávesová zkratka je =Ctrl-u Ctrl-F3=.
 

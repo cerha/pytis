@@ -1,12 +1,12 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# Copyright (c) 2006, 2012, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
 = Editační formulář =
 
 Formulář určený k uživatelsky pohodlnému vkládání a editaci dat záznamu.
-Nejčastěji je vyvolán pomocí klávesy F5 (Editace existujícího záznamu) nebo F6
+Nejčastěji je vyvolán pomocí klávesy =F5= (Editace existujícího záznamu) nebo F6
 (Vložení nového záznamu).  Formulář obsahuje především [help:pytis/field
 vstupní políčka] pro editaci hodnot záznamu.  Mohou se zde nacházet také
 některé další prvky jako políčka sloužící pouze k zobrazení nějakých

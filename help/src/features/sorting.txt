@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006 Brailcom, o.p.s.
+# Copyright (c) 2006, 2017 Brailcom, o.p.s.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -43,7 +43,7 @@ směr řazení.  Při třetím kliknutí se řazení podle daného sloupce vypne
 Řazení je možné ovládat také pomocí položek kontextového menu sloupce.  To
 vyvoláme pravým tlačítkem myši nad záhlavím sloupce.
 
-Dále je možné řazení ovládat pomocí dialogu.  Ten vyvoláme pomocí klávesy F4.
+Dále je možné řazení ovládat pomocí dialogu.  Ten vyvoláme pomocí klávesy =F4=.
 
 
 
