@@ -490,7 +490,48 @@ class SpecHelpGenerator(HelpGenerator):
     """Generate help page contents directly from the application specifications."""
 
     def _application_help_nodes(self):
-        pass
+        counter = pytis.util.Counter()
+        def node(item):
+            if isinstance(item, pytis.form.Menu):
+                content = lcg.NodeIndex()
+                children = [node(i) for i in item.items()
+                            if not isinstance(i, pytis.form.MSeparator)]
+                globs = {}
+            else:
+                content = self.EmptyContent()
+                children = ()
+                globs = dict(command=item.command(), args=item.args())
+            return self.ContentNode(
+                'help:application/%d' % counter.next(), title=item.title(),
+                content=content, children=children, foldable=True, globals=globs,
+                resource_provider=self._resource_provider,
+            )
+        menu = pytis.form.application.menu()
+        return [
+            self.ContentNode('help:application/menu', title=_("Application menu"),
+                             content=lcg.NodeIndex(), foldable=True,
+                             children=[node(item) for item in menu],
+                             resource_provider=self._resource_provider),
+            # TODO: Read the static part of application help from the filesystem?
+        ]
+
+    def _application_help_page_content(self, node, uri):
+        globs = node.globals()
+        command, args = globs['command'], globs['args']
+        if command in (pytis.form.Application.COMMAND_RUN_FORM,
+                       pytis.form.Application.COMMAND_NEW_RECORD):
+            content = self._spec_help_content(args['name'])[1]
+            if not content:
+                if command == pytis.form.Application.COMMAND_RUN_FORM:
+                    text = _("Opens the %s on specification", args['form_class'].descr())
+                else:
+                    text = _("Inserts a new record into")
+                content = lcg.p(text, ' ', self._spec_link(args['name']), '.')
+            return content
+        return lcg.Container((
+            lcg.p(_("Runs the command %s with the following arguments:", command.id())),
+            lcg.fieldset([(k, unicode(v)) for k, v in args.items()])
+        ))
 
 
 class DmpHelpGenerator(HelpGenerator):

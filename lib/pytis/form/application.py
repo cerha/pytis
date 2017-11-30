@@ -604,7 +604,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _create_menubar(self):
         self._recent_forms_menu = None
-        menu = self._build_menu(self._specification.menu(), config.dbconnection)
+        menu = self._menu = self._build_menu(self._specification.menu(), config.dbconnection)
         menu.append(Menu(self._WINDOW_MENU_TITLE,
                          (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
                                 help=_("Switch to the previous window in the window list order.")),
@@ -2141,3 +2141,7 @@ def get_recent_directory(key):
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
     _application._recent_directories[key] = directory
+
+def menu():
+    """Return the application menu structure as a sequence of 'Menu' instances."""
+    return _application._menu
