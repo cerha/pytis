@@ -2398,11 +2398,10 @@ class Browser(wx.Panel, CommandHandler):
                 self._last_help_uri = None
                 return False
             self._last_help_uri = uri
-            from pytis.help import HelpGenerator, HelpExporter
-            node = HelpGenerator().help_page(uri)
+            from pytis.help import help_page, HelpExporter
             exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
                                     get_resource_uri=self._resource_uri)
-            self.load_content(node, base_uri=uri, exporter=exporter)
+            self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
             if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
                                        webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
                                        webkit.WEB_NAVIGATION_REASON_OTHER,):

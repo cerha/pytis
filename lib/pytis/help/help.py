@@ -270,6 +270,21 @@ class HelpUpdater(object):
             if row['fullname'].value():
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
 
+generator = None
+def help_page(uri):
+    """Return a help page for given URI as a 'lcg.ContentNode' instance."""
+    global generator
+    if not generator:
+        for cls in (DmpHelpGenerator, SpecHelpGenerator):
+            try:
+                generator = cls()
+                break
+            except HelpGenerator.NotAvailable:
+                continue
+        else:
+            raise ProgramError("No usable help generator available.")
+    return generator.help_page(uri)
+
 
 class HelpGenerator(object):
     """Generate help page content and menu structure for the help browser.
