@@ -2400,7 +2400,8 @@ class Browser(wx.Panel, CommandHandler):
             self._last_help_uri = uri
             from pytis.help import help_page, HelpExporter
             exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
-                                    get_resource_uri=self._resource_uri)
+                                    get_resource_uri=self._resource_uri,
+                                    translations=pytis.util.translation_path())
             self.load_content(help_page(uri), base_uri=uri, exporter=exporter)
             if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
                                        webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
@@ -2550,8 +2551,9 @@ class Browser(wx.Panel, CommandHandler):
         """Load browser content from lcg.ContentNode instance."""
         if exporter is None:
             exporter = self.Exporter(styles=('default.css',),
-                                     get_resource_uri=self._resource_uri)
-        context = exporter.context(node, None)
+                                     get_resource_uri=self._resource_uri,
+                                     translations=pytis.util.translation_path())
+        context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,
                        resource_provider=node.resource_provider())
