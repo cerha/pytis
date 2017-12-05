@@ -2273,7 +2273,6 @@ class Browser(wx.Panel, CommandHandler):
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
         self._last_help_uri = None
-        self._toolbar = None
         # This can be actually anything what can be recognized later in
         # _on_resource_request() and what is recognized by webkit as a valid
         # URL.  We used the 'resource:' prefix before, but it doesn't work
@@ -2508,7 +2507,7 @@ class Browser(wx.Panel, CommandHandler):
         self._webview.reload_bypass_cache()
 
     def toolbar(self, parent):
-        self._toolbar = toolbar = wx.ToolBar(parent)
+        toolbar = wx.ToolBar(parent)
         for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
                                 _("Back"),
                                 _("Go back to the previous location in browser history.")),
@@ -2557,22 +2556,6 @@ class Browser(wx.Panel, CommandHandler):
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,
                        resource_provider=node.resource_provider())
-
-
-class HelpBrowserFrame(wx.Frame):
-
-    def __init__(self):
-        wx.Frame.__init__(self, None)
-        self._browser = browser = Browser(self)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(browser.toolbar(self), proportion=0, flag=wx.EXPAND)
-        sizer.Add(browser, proportion=1, flag=wx.EXPAND)
-        self.SetSizer(sizer)
-        self.SetSize((800, 600))
-        self.SendSizeEvent()
-
-    def load_uri(self, uri):
-        self._browser.load_uri(uri)
 
 
 class IN(pytis.data.Operator):

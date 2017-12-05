@@ -48,7 +48,7 @@ import config
 from .command import CommandHandler
 from .event import UserBreakException, interrupt_init, interrupt_watcher, \
     top_level_exception, unlock_callbacks, wx_callback, yield_
-from .screen import CheckItem, HelpBrowserFrame, KeyHandler, Keymap, \
+from .screen import CheckItem, KeyHandler, Keymap, \
     Menu, MenuBar, MItem, MSeparator, StatusBar, \
     acceskey_prefix, beep, busy_cursor, get_icon, gtk, init_colors, mitem, wx_focused_window
 
@@ -803,7 +803,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             safelog("Saving changed configuration failed:", str(e))
         try:
             if self._help_browser is not None:
-                self._help_browser.Close()
+                self._help_browser.GetParent().Close()
         except Exception as e:
             safelog(str(e))
         return True
@@ -1125,10 +1125,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_help(self, topic='pytis'):
         """Zobraz dané téma v prohlížeči nápovědy."""
         browser = self._help_browser
-        if browser:
-            browser.Raise()
-        else:
-            self._help_browser = browser = HelpBrowserFrame()
+        if not browser:
+            frame = wx.Frame(None)
+            self._help_browser = browser = Browser(frame)
+            sizer = wx.BoxSizer(wx.VERTICAL)
+            sizer.Add(browser.toolbar(frame), proportion=0, flag=wx.EXPAND)
+            sizer.Add(browser, proportion=1, flag=wx.EXPAND)
+            browser.add_to_sizer(sizer)
+            frame.SetSizer(sizer)
+            frame.SetSize((800, 600))
+            frame.SendSizeEvent()
+            frame.SetTitle(_("Help"))
+        browser.GetParent().Raise()
         browser.load_uri('help:' + topic)
 
     def _cmd_reload_rights(self):
