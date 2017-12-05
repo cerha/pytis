@@ -2438,6 +2438,7 @@ class Browser(wx.Panel, CommandHandler):
                  uri.startswith(restricted_navigation_uri))):
                 decision.ignore()
                 pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
+                log(OPERATIONAL, "Restricted to :", restricted_navigation_uri)
                 return True
             else:
                 return False
