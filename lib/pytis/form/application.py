@@ -1131,7 +1131,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             sizer = wx.BoxSizer(wx.VERTICAL)
             sizer.Add(browser.toolbar(frame), proportion=0, flag=wx.EXPAND)
             sizer.Add(browser, proportion=1, flag=wx.EXPAND)
-            browser.add_to_sizer(sizer)
             frame.SetSizer(sizer)
             frame.SetSize((800, 600))
             frame.SendSizeEvent()

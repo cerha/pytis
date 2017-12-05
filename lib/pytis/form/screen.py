@@ -2317,14 +2317,13 @@ class Browser(wx.Panel, CommandHandler):
                 settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
                 # settings.props.enable_developer_extras = True # Doesn't work...
                 webview.set_settings(settings)
-                if self._toolbar:
-                    # Setting focus to the location bar TextCtrl is here mainly to allow
-                    # leaving the form using the Escape key (implemented by hack in LocationBar)
-                    # because wx keypresses are not correctly processed within the gtk embedded
-                    # webkit widget.
-                    location_bar = self._toolbar.FindWindowByName('location-bar')
-                    if location_bar:
-                        location_bar.set_focus()
+                # Setting focus to the location bar TextCtrl is here mainly to allow
+                # leaving the form using the Escape key (implemented by hack in LocationBar)
+                # because wx keypresses are not correctly processed within the gtk embedded
+                # webkit widget.
+                location_bar = self.GetParent().FindWindowByName('location-bar')
+                if location_bar:
+                    location_bar.set_focus()
 
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
