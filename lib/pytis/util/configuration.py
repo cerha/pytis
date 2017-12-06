@@ -634,6 +634,16 @@ class Configuration(object):
                                            schemas=schemas,
                                            **options)
 
+    class _Option_session_variables(HiddenOption):
+        """Custom session variables.
+
+        Dictionary of custom session variables which will be set for
+        each connection.
+        The dictionary keys have the form 'class.variable' and values
+        have to be strings, e.g. {'myvars.myid': '10'}.
+        """
+        _DEFAULT = {}
+
     class _Option_dblogtable(StringOption):
         u"""Jméno tabulky, do které mají být logovány DML SQL příkazy."""
         _DEFAULT = ''

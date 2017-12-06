@@ -1085,6 +1085,7 @@ class _DBTest(_DBBaseTest):
                 pass
         _DBBaseTest.tearDown(self)
 
+
 class DBDataPostgreSQL(_DBTest):
     # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
@@ -2303,6 +2304,35 @@ class DBMultiData(DBDataDefault):
 
 if False:
     tests.add(DBMultiData)
+
+class DBSessionVariables(_DBBaseTest):
+    def setUp(self):
+        try:
+            self._sql_command("create function foo() "
+                              "  returns text as "
+                              "  $$select current_setting('myvars.test') as result$$ "
+                              "  language sql")
+        except:
+            self.tearDown()
+            raise
+        import config
+        config.session_variables = {'myvars.test': 'value'}
+        _DBBaseTest.setUp(self)
+    def test_it(self):
+        function = pytis.data.DBFunctionDefault('foo', self._dconnection)
+        row = pytis.data.Row()
+        result = function.call(row)[0][0].value()
+        self.assertEqual(result, 'value', 'session variable not set properly')
+        self.tearDown()
+    def tearDown(self):
+        try:
+            self._sql_command("drop function foo")
+        except:
+            pass
+        _DBBaseTest.tearDown(self)
+
+
+tests.add(DBSessionVariables)
 
 
 class DBDataFetchBuffer(_DBBaseTest):

@@ -480,6 +480,7 @@ class PostgreSQLAccessor(object_2_5):
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
         self._postgresql_initialize_crypto(connection)
+        self._postgresql_initialize_session_variables(connection)
 
     def _postgresql_initialize_transactions(self, connection):
         """Nastav způsob provádění transakcí pro konkrétní backend."""
@@ -520,6 +521,15 @@ class PostgreSQLAccessor(object_2_5):
                 query = _Query("set search_path to " + search_path)
                 self._postgresql_query(connection, query, False)
                 connection.set_connection_info('search_path', search_path)
+
+    def _postgresql_initialize_session_variables(self, connection):
+        import config
+        for k in config.session_variables:
+            if len(k.split('.')) == 2:
+                v = config.session_variables[k]
+                if isinstance(v, basestring):
+                    query = _Query("select set_config('{}', '{}', False)".format(k, v))
+                    self._postgresql_query(connection, query, False)
 
     def _postgresql_query(self, connection, query, restartable):
         """Perform SQL 'query' and return the result.
