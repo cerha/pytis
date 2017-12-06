@@ -2323,6 +2323,11 @@ class DBSessionVariables(_DBBaseTest):
         row = pytis.data.Row()
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'value', 'session variable not set properly')
+        try:
+            pytis.data.reload_session_variables(config.dbconnection)
+        except:
+            self.tearDown()
+            raise
         self.tearDown()
     def tearDown(self):
         try:

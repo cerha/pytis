@@ -38,11 +38,13 @@ import psycopg2.extras
 
 from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, Range, RestrictedData
-from dbdata import DBConnection, DBException, DBInsertException, DBLockException, \
-    DBLoginException, DBRetryException, DBSystemException, DBUserException
-from postgresql import DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction, \
-    DBPostgreSQLTransaction, \
-    PostgreSQLAccessor, PostgreSQLResult, PostgreSQLNotifier, PostgreSQLUserGroups
+from dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
+                    DBLoginException, DBRetryException, DBSystemException, DBUserException)
+from postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction,
+                        DBPostgreSQLTransaction, PostgreSQLAccessor, PostgreSQLResult,
+                        PostgreSQLNotifier, PostgreSQLUserGroups, PostgreSQLConnector)
+
+
 
 _ = translations('pytis-data')
 
@@ -533,3 +535,13 @@ def _postgresql_access_groups(connection_data):
 
 default_access_groups = _postgresql_access_groups
 """Funkce vracející seznam skupin uživatele specifikovaného spojení."""
+
+def _reload_session_variables(connection_data):
+    PostgreSQLConnector(connection_data)._pg_flush_connections()
+
+reload_session_variables = _reload_session_variables
+"""Reload all session variables
+
+This can be done only by closing all existing connections
+in the connection pool. So use with caution.
+"""

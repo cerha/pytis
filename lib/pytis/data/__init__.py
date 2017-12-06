@@ -37,7 +37,7 @@ from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException
     DBSystemException, DBUserException, DBLoginException, DBInsertException, \
     DBLockException, DBRetryException, DBConnectionPool
 from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, \
-    DBTransactionDefault, default_access_groups
+    DBTransactionDefault, default_access_groups, reload_session_variables
 from deprecated import Oid
 import dbdefs
 
