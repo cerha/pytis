@@ -360,14 +360,17 @@ class InputField(object, KeyHandler, CommandHandler):
           parent -- wx parent for the created widgets.
           row -- 'PresentedRow' instance.
           id -- field specification as a 'Field' instance.
-          inline -- if true, only the basic input widget is created.  The label and all surrounding
-            widgets are omitted, so that the widget can be used in the inline editation mode in of
-            a table cell.
+
+          inline -- if true, only the basic input widget is created.  The label
+            and all surrounding widgets are omitted, so that the widget can be
+            used in the inline editation mode in of a table cell.
+
           guardian -- parent 'KeyHandler'.
           readonly --
 
-        This method should not be overriden by derived classes.  All field specific initialization
-        should be done in the methods '_create_widget()' and '_create_label'.
+        This method should not be overriden by derived classes.  All field
+        specific initialization should be done in the methods
+        '_create_widget()' and '_create_label'.
 
         """
         assert isinstance(row, PresentedRow)
@@ -474,7 +477,7 @@ class InputField(object, KeyHandler, CommandHandler):
         # Create additional UI elements for the field control.  Return a wx
         # widget containing all UI elements for given field.  This class simply
         # returns the actual control, but derived classes may add extra buttons
-        # etc. to create more sophisticated user interface.  This class is not
+        # etc. to create more sophisticated user interface.  This method is not
         # called in "inline" mode where additional controls are not allowed.
         return ctrl
 
