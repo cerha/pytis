@@ -353,7 +353,7 @@ class SFDialog(SFSDialog):
                        tooltip=_("Choose the second operand.")),
                 field(value, length=self._TEXT_CTRL_SIZE,
                       tooltip=_("Enter the operand value.")),
-                button(_("Suck"), lambda e: self._on_suck(i),
+                button(_("Gather"), lambda e: self._on_suck(i),
                        _("Use the value of the current cell."),
                        enabled=self._row is not None),
                 button(_("Clear"), lambda e: self._on_clear(i),
