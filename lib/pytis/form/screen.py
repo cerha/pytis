@@ -1119,15 +1119,6 @@ class Menu(_TitledMenuObject):
                     wxitem = item.create(parent, menu)
                     wxitem.SetText(wx_title)
                     menu.AppendItem(wxitem)
-                    # Toto je zde zejména kvůli nakešování datových specifikací
-                    # pro výpočet 'Command.enabled()' při startu aplikace.  Položky
-                    # jsou správně aktivovány i bez toho, ale první zobrazení menu
-                    # je pomalejší.
-                    menu.Enable(wxitem.GetId(), item.command().enabled(**item.args()))
-                    if __debug__:
-                        if config.debug:
-                            log(DEBUG, 'Menu item:', (item.title(),
-                                                      item.command().enabled(**item.args()),))
                     if isinstance(item, (RadioItem, CheckItem)):
                         wxitem.Check(item.state())
                     if item in hotkey_str:
