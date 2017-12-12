@@ -2,7 +2,7 @@
 
 # Prvky uživatelského rozhraní související s vyhledáváním
 #
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2013, 2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ class SFSColumn(object):
         """Vrať label zadaný v konstruktoru."""
         return self._label
 
-    
+
 class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
@@ -100,11 +100,11 @@ class SFSDialog(GenericDialog):
         ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
         return ctrl
-    
+
     def _create_button(self, label, callback, tooltip=None, **kwargs):
         return self._create_ctrl(wx_button, label=label, callback=callback,
                                  tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
-        
+
     def _create_choice(self, choices, tooltip=None, **kwargs):
         return self._create_ctrl(wx_choice, choices, height=self._FIELD_HEIGHT, **kwargs)
 
@@ -113,7 +113,7 @@ class SFSDialog(GenericDialog):
 
     def _create_spin_ctrl(self, value, **kwargs):
         return self._create_ctrl(wx_spin_ctrl, value, height=self._FIELD_HEIGHT, **kwargs)
-        
+
     def _create_label(self, label, **kwargs):
         panel = wx.Panel(self._dialog, -1)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -138,8 +138,8 @@ class SFSDialog(GenericDialog):
 
     def _create_controls(self):
         pass
-    
-    
+
+
 class SortingDialog(SFSDialog):
     """Dialog pro volbu parametrů řazení.
 
@@ -154,14 +154,14 @@ class SortingDialog(SFSDialog):
     _RESET_BUTTON = _("Reset to default sorting")
     _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _SORT_BUTTON
-    
+
     _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
     _LABELS = {pytis.data.ASCENDENT: _("Ascending"),
                pytis.data.DESCENDANT: _("Descending"),
                None: _("No sorting")}
-    
+
     _HELP_TOPIC = 'sorting'
-    
+
     def __init__(self, parent, columns, sorting, direction=None, **kwargs):
         """Initialize the dialog.
 
@@ -217,7 +217,7 @@ class SortingDialog(SFSDialog):
         self._sorting = self._selected_sorting() + (new,)
         self.rebuild()
 
-    
+
 class SFDialog(SFSDialog):
     """Společný základ všech vyhledávacích a filtrovacích dialogů."""
 
@@ -252,7 +252,7 @@ class SFDialog(SFSDialog):
     _TEXT_CTRL_SIZE = 18
     _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
                            '* ' + _("value") + ' *')
-    
+
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):
             msg = _("Error in condition no. %d: %s",i + 1, msg)
@@ -260,7 +260,7 @@ class SFDialog(SFSDialog):
             #ctrl.SetFocus()
             #self.focus()
             super(SFDialog.SFConditionError, self).__init__(msg)
-            
+
     def __init__(self, parent, columns, row, condition=None, **kwargs):
         """Initialize the dialog.
 
@@ -431,7 +431,7 @@ class SFDialog(SFSDialog):
                 for basetype in (pytis.data.String, pytis.data.Number, pytis.data.DateTime,
                                  pytis.data.Boolean, pytis.data.Binary):
                     if isinstance(col1.type(), basetype) and not isinstance(col2.type(), basetype):
-                        raise self.SFConditionError(i, wcol2, 
+                        raise self.SFConditionError(i, wcol2,
                                                     _("Incompatible types %s and %s",
                                                       col1.type().__class__.__name__,
                                                       col2.type().__class__.__name__))
@@ -539,7 +539,7 @@ class SFDialog(SFSDialog):
         else:
             self._condition = condition
             self.rebuild()
-    
+
     def _on_add(self, or_=False):
         try:
             condition = self._selected_condition()
@@ -556,17 +556,17 @@ class SFDialog(SFSDialog):
         self._condition = None
         self.rebuild()
 
-            
+
 class SearchDialog(SFDialog):
     """Dialog for manipulation of the current searching condition.
 
     The 'run()' method of this dialog returns a pair (DIRECTION, CONDITION).
-    
+
     DIRECTION is the selected search direction.  The value can be either
     'pytis.data.FORWARD', 'pytis.data.BACKWARD' or 'None'.  'None' means that
     the search should not be performed (the dialog was escaped), the other two
     values indicate, that next record should be located in given direction.
-    
+
     CONDITION is the selected search condition as a 'pytis.data.Operator'
     instance.
 
@@ -581,7 +581,7 @@ class SearchDialog(SFDialog):
     def __init__(self, *args, **kwargs):
         self._direction = None
         return super(SearchDialog, self).__init__(*args, **kwargs)
-    
+
     def _on_button(self, event):
         mapping = {self._NEXT_BUTTON: pytis.data.FORWARD,
                    self._PREVIOUS_BUTTON: pytis.data.BACKWARD}
@@ -594,7 +594,7 @@ class SearchDialog(SFDialog):
         if direction is not None:
             self._direction = direction
         return super(SearchDialog, self)._on_button(event)
-        
+
     def _customize_result(self, button_wid):
         return self._direction, self._condition
 
@@ -609,16 +609,16 @@ class FilterDialog(SFDialog):
     perform the filter to the underlying form.
 
     The 'run()' method of this dialog returns a pair (PERFORM, CONDITION).
-    
+
     PERFORM is a boolean flag indicating whether the CONDITION should be
     applied to the underlying form or not.  It is True when the user presses
     the ``Filter'' or ``Unfilter'' button and False if the user cancels the
     dialog.
-    
+
     CONDITION is the current selected search condition as a
     'pytis.data.Operator' instance or None.  'None' is used when the user
     wishes to unfilter the underlying form.
-    
+
     """
     _FILTER_BUTTON = _("Filter")
     _UNFILTER_BUTTON = _("Unfilter")
@@ -712,7 +712,7 @@ class FilterDialog(SFDialog):
             self._perform = True
             self._condition = None
         return super(FilterDialog, self)._on_button(event)
-        
+
     def _customize_result(self, button_wid):
         return self._perform, self._condition
 
