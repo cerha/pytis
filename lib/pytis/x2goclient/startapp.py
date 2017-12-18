@@ -20,6 +20,7 @@
 import os
 import wx
 import sys
+import time
 import collections
 import pytis.util
 import pytis.x2goclient
@@ -283,9 +284,9 @@ class X2GoStartApp(wx.App):
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
-        def __init__(self, menu, on_click):
+        def __init__(self, on_click):
             super(X2GoStartApp._TaskBarIcon, self).__init__()
-            self._menu = menu
+            self._menu = []
             self.set_icon('disconnected')
             self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
 
@@ -294,14 +295,18 @@ class X2GoStartApp(wx.App):
             icon = wx.IconFromBitmap(wx.Bitmap(path))
             self.SetIcon(icon, _("Pytis2Go Service"))
 
+        def update_menu(self, menu):
+            self._menu = [item + (None, True)[len(item) - 1:] for item in menu if item]
+
         def CreatePopupMenu(self):
             menu = wx.Menu()
-            for label, callback in self._menu:
+            for label, callback, enabled in self._menu:
                 if callback:
                     item = wx.MenuItem(menu, -1, label)
                     menu.Bind(wx.EVT_MENU, lambda event, callback=callback: callback(),
                               id=item.GetId())
                     menu.AppendItem(item)
+                    menu.Enable(item.GetId(), bool(enabled))
                 else:
                     menu.AppendSeparator()
             return menu
@@ -318,6 +323,7 @@ class X2GoStartApp(wx.App):
             broker_password=args.broker_password,
             wait_for_pytis=not args.nowait,
         )
+        self._profiles = []
         username = args.username
         if not username:
             import getpass
@@ -325,98 +331,37 @@ class X2GoStartApp(wx.App):
         self._default_username = username
         super(X2GoStartApp, self).__init__(redirect=False)
 
-    def _selected_profile_id(self):
-        return self._profiles_field.GetClientData(self._profiles_field.GetSelection())
-
-    def _on_create_shortcut(self, event):
-        error = self._controller.create_shortcut(self._selected_profile_id())
-        if error:
-            # TODO: Specific dialog for error messages (icons)?
-            self.info_dialog(_("Failed creating desktop shortcut"), error)
-        else:
-            self.update_progress(_("Shortcut created successfully."))
-
-    def _can_create_shortcut(self):
-        return not self._controller.shortcut_exists(self._selected_profile_id())
-
-    def _create_main_heading(self, parent):
-        heading = self._args.heading or _("Pytis2Go")
-        return ui.label(parent, heading, size=18, bold=True)
-
     def _menu_items(self):
         items = [
+            (name, lambda: self._connect(profile_id))
+            for profile_id, name in self._profiles
+        ]
+        items.extend((
+            ('---',) if items else None,
+            (_("Reload profiles") if items else _("Load profiles"), self._load_profiles),
+            ('---',),
             (_("Generate new SSH key pair"), self._controller.generate_key),
             (_("Change key passphrase"), self._controller.change_key_passphrase),
             (_("Upload public key to server"), self._controller.upload_key),
             (_("Send public key to admin"), self._controller.send_key),
-        ]
-        if pytis.util.on_windows():
-            items.append((_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts))
+            (_("Create desktop shortcut"), self._create_shortcut, bool(items))
+            if pytis.util.on_windows() else None,
+            (_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts)
+            if pytis.util.on_windows() else None,
+            ('---',),
+            (_("Exit"), self._on_exit),
+        ))
         return items
-
-    def _create_menu_button(self, parent):
-        if self._args.session_profile is not None or self._args.tray:
-            return None
-        menu = wx.Menu()
-        for label, callback in self._menu_items():
-            item = wx.MenuItem(menu, -1, label)
-            menu.Bind(wx.EVT_MENU, lambda e, callback=callback: callback(), item)
-            menu.AppendItem(item)
-        return ui.button(parent, _("More actions..."),  # icon=wx.ART_EXECUTABLE_FILE,
-                         callback=lambda e: parent.PopupMenu(menu))  # style=wx.BU_EXACTFIT)
-
-    def _create_profile_selection(self, parent):
-        if self._args.broker_url is None or self._args.session_profile is not None:
-            self._profiles_field = None
-            return None
-        else:
-            connecting = []
-
-            def start_session(event):
-                connecting.append(True)
-                listbox.Enable(False)
-                profile_id = self._selected_profile_id()
-                self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
-                self._controller.select_profile(profile_id)
-                self._connect()
-            self._profiles_field = listbox = ui.listbox(parent, on_select=start_session)
-            listbox.Enable(False)
-            listbox.SetMinSize((360, 180))
-            buttons = [ui.button(parent, _("Start session"), start_session,
-                                 lambda e: e.Enable(not connecting and
-                                                    listbox.GetSelection() != -1))]
-            if pytis.util.on_windows():
-                buttons.append(ui.button(parent, _("Create shortcut"), self._on_create_shortcut,
-                                         lambda e: e.Enable(listbox.GetSelection() != -1 and
-                                                            self._can_create_shortcut())))
-            return ui.vgroup(
-                ui.label(parent, _("Available profiles:")),
-                ui.item(
-                    ui.hgroup(
-                        ui.item(listbox, proportion=1, expand=True),
-                        ui.vgroup(*[ui.item(b, expand=True) for b in buttons], spacing=10),
-                        spacing=8,
-                    ),
-                    proportion=1, expand=True,
-                )
-            )
 
     def _create_main_content(self, parent):
         self._message = message = ui.label(parent, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
         gauge.SetMinSize((450, 14))
         return ui.vgroup(
-            ui.vgroup(
-                ui.item(self._create_main_heading(parent)),
-                self._create_menu_button(parent),
-                ui.item(self._create_profile_selection(parent), proportion=1, expand=True),
-                ui.vgroup(
-                    ui.item(message, expand=True),
-                    ui.item(gauge, expand=True),
-                    padding=(10, 0), spacing=10),
-                padding=(10, 10), spacing=10,
-            ),
-            spacing=8,
+            ui.item(message, expand=True),
+            ui.item(gauge, expand=True),
+            padding=(10, 16),
+            spacing=10,
         )
 
     def _show_dialog(self, title, create, *args, **kwargs):
@@ -515,7 +460,10 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def _connect(self):
+    def _connect(self, profile_id):
+        self._frame.Show()
+        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
+        self._controller.select_profile(profile_id)
         client = self._controller.connect()
         if client:
             self.update_progress(_("Starting Pytis client."))
@@ -524,45 +472,34 @@ class X2GoStartApp(wx.App):
             self.Exit()
 
     def _load_profiles(self):
+        self._frame.Show()
         profiles = self._controller.list_profiles()
-        if not profiles:
-            # Happens when the user cancels the broker authentication dialog.
-            return self.Exit()  # Return is necessary because Exit() doesn't quit immediately.
-        if self._args.list_profiles:
-            self._list_profiles(profiles)
-            return self.Exit()
-        else:
-            if pytis.util.on_windows():
-                current_version = self._controller.current_version()
-                available_version = self._controller.available_upgrade_version()
-                if ((available_version and available_version > current_version and
-                     self._question(_("Upgrade available"),
-                                    '\n'.join((_("New Pytis client version available."),
-                                               _("Current version: %s", current_version),
-                                               _("New version: %s", available_version),
-                                               _("Install?")))))):
-                    error = self._controller.upgrade()
-                    if error:
-                        # TODO: Specific dialog for error messages (icons)?
-                        self.info_dialog(_("Upgrade failed"), error)
-                    else:
-                        self.info_dialog(
-                            _(u"Upgrade finished"),
-                            _(u"Pytis successfully upgraded. Restart the application."))
-                        return self.Exit()
-            profile_id = self._args.session_profile
-            if profile_id:
-                if profile_id not in profiles.profile_ids:
-                    raise Exception("Unknown profile %s!" % profile_id)
-                self._controller.select_profile(profile_id)
-                self._connect()
-            else:
-                items = [(pid, profiles.to_session_params(pid)['profile_name'])
-                         for pid in profiles.profile_ids]
-                for profile_id, name in sorted(items, key=lambda x: x[1]):
-                    self._profiles_field.Append(name, profile_id)
-                self._profiles_field.Enable(True)
-                self._profiles_field.SetFocus()
+        self._profiles = sorted([(pid, profiles.to_session_params(pid)['profile_name'])
+                                 for pid in profiles.profile_ids],
+                                key=lambda x: x[1])
+        self._icon.update_menu(self._menu_items())
+        self.update_progress(_("Successfully loaded %d profiles.", len(self._profiles)))
+        time.sleep(2)
+        # Profiles are empty when the user cancels the broker authentication dialog.
+        if self._profiles and pytis.util.on_windows():
+            current_version = self._controller.current_version()
+            available_version = self._controller.available_upgrade_version()
+            if ((available_version and available_version > current_version and
+                self._question(_("Upgrade available"),
+                               '\n'.join((_("New Pytis client version available."),
+                                          _("Current version: %s", current_version),
+                                          _("New version: %s", available_version),
+                                          _("Install?")))))):
+                error = self._controller.upgrade()
+                if error:
+                    # TODO: Specific dialog for error messages (icons)?
+                    self.info_dialog(_("Upgrade failed"), error)
+                else:
+                    self.info_dialog(
+                        _(u"Upgrade finished"),
+                        _(u"Pytis successfully upgraded. Restart the application."))
+                    return self.Exit()
+        self._frame.Hide()
 
     def _list_profiles(self, profiles):
         import pprint
@@ -615,6 +552,25 @@ class X2GoStartApp(wx.App):
     def _on_exit(self):
         wx.CallAfter(self._icon.Destroy)
         self._frame.Close()
+
+    def _create_shortcut(self):
+        def create_shortcut(profile_id):
+            error = self._controller.create_shortcut(profile_id)
+            if error:
+                # TODO: Specific dialog for error messages (icons)?
+                self.info_dialog(_("Failed creating desktop shortcut"), error)
+            else:
+                self.info_dialog(_("Shortcut created"), _("Shortcut created successfully."))
+        menu = wx.Menu()
+        for profile_id, name in self._profiles:
+            item = wx.MenuItem(menu, -1, name)
+            menu.Bind(wx.EVT_MENU,
+                      lambda event, profile_id=profile_id: create_shortcut(profile_id),
+                      id=item.GetId())
+            menu.Enable(item.GetId(), not self._controller.shortcut_exists(profile_id))
+            menu.AppendItem(item)
+        self._icon.PopupMenu(menu)
+        menu.Destroy()
 
     def update_progress(self, message=None, progress=1):
         """Update progress bar and display a progress message.
@@ -906,21 +862,18 @@ class X2GoStartApp(wx.App):
         wx.Yield()
 
     def OnInit(self):
-        title = self._args.window_title or _("Starting application")
+        title = self._args.window_title or _("Pytis2Go")
         self._frame = frame = wx.Frame(None, -1, title)
+        frame.Hide()
         self.SetTopWindow(frame)
-        if self._args.tray:
-            items = self._menu_items() + [
-                ('---', None),
-                (_("Exit"), self._on_exit),
-            ]
-            self._icon = self._TaskBarIcon(items, self._on_taskbar_click)
+        self._icon = self._TaskBarIcon(self._on_taskbar_click)
+        self._icon.update_menu(self._menu_items())
         panel = ui.panel(frame, self._create_main_content)
         frame.SetClientSize(panel.GetBestSize())
-        frame.Show()
         self.Yield()
-        if self._args.broker_url:
+        profile_id = self._args.session_profile
+        if profile_id or self._args.autoload:
             self._load_profiles()
-        else:
-            self._connect()
+        if profile_id:
+            self._controller.select_profile(profile_id)
         return True

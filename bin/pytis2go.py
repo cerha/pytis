@@ -168,11 +168,9 @@ nx_options = [
 ]
 pytis2go_options = [
     {'args': ['--window-title'], 'default': None,
-     'help': 'Override startup application main window title (default: Starting application)', },
-    {'args': ['--heading'], 'default': None,
-     'help': 'Override startup application main window heading (default: Pytis2Go)', },
-    {'args': ['--tray'], 'default': False, 'action': 'store_true',
-     'help': 'Start as tray icon instead of a startup window.', },
+     'help': 'Override startup application progress window title (default: Pytis2Go)', },
+    {'args': ['--autoload'], 'default': False, 'action': 'store_true',
+     'help': 'Automatically load profiles (connect to broker) on astartup.', },
     {'args': ['--nowait', '-n'], 'default': False, 'action': 'store_true',
      'help': ("Do not wait for Pytis application window to come up. "
               "Close the startup application window immediately after "
