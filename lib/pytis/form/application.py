@@ -379,6 +379,19 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         title += ":%s" % (conn.port(),)
         self._frame.SetTitle(title)
 
+    def _cache_menu_enabled(self, menu):
+        # Cache the specification instances needed to compute the availability
+        # of menu items.  This reduces the lag during the first user's attempt
+        # to open a menu.
+        for item in menu:
+            if isinstance(item, Menu):
+                self._cache_menu_enabled(item.items())
+            elif not isinstance(item, pytis.form.MSeparator):
+                enabled = item.command().enabled(**item.args())
+                if __debug__:
+                    if config.debug:
+                        log(DEBUG, 'Menu item:', (item.title(), enabled))
+
     def _init(self):
         # Check RPC client version
         self._check_x2goclient()
@@ -458,6 +471,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         self._frame_title()
+        self._cache_menu_enabled(self._menu)
         self._specification.post_init()
 
     def _is_valid_spec(self, name):
