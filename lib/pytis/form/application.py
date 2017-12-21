@@ -48,7 +48,7 @@ import config
 from .command import CommandHandler
 from .event import UserBreakException, interrupt_init, interrupt_watcher, \
     top_level_exception, unlock_callbacks, wx_callback, yield_
-from .screen import CheckItem, KeyHandler, Keymap, \
+from .screen import Browser, CheckItem, KeyHandler, Keymap, \
     Menu, MenuBar, MItem, MSeparator, StatusBar, \
     acceskey_prefix, beep, busy_cursor, get_icon, gtk, init_colors, mitem, wx_focused_window
 
