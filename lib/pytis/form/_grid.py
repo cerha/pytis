@@ -54,22 +54,22 @@ class DataTable(object):
     #   (z databáze), platná hodnota zeditovaná, odeslaná nezvalidovaná
     #   hodnota určená k opravné editaci uživatelem
     # - schopnost práce s počítanými sloupci
-    
+
     # Uvnitř třídy pracujeme zásadně s vnitřními hodnotami, nikoliv
     # hodnotami uživatelskými.  *Jediné* metody, které pracují
     # s uživatelskou reprezentací, jsou `GetValue' a `SetValue'.
-    
+
     # Necachujeme žádná data, udržujeme pouze poslední řádek a data
     # o editaci jednoho řádku; cachování většího množství dat vzhledem ke
     # způsobu použití tabulky nedává příliš velký smysl.
-    
+
     class _CurrentRow:
         def __init__(self, row, the_row):
             assert isinstance(row, int)
             assert isinstance(the_row, PresentedRow)
             self.row = row
             self.the_row = the_row
-            
+
     class _EditedRow(_CurrentRow):
         def __init__(self, row, data_row, record):
             assert data_row is None or isinstance(data_row, pytis.data.Row)
@@ -127,7 +127,7 @@ class DataTable(object):
                 self._start_row = new_start
                 cache[row - new_start] = the_row
                 self._cache = cache
-            
+
     class _Column(object):
         def __init__(self, id_, type_, label, style):
             self.id = id_
@@ -137,7 +137,7 @@ class DataTable(object):
 
     _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
     _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
-        
+
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(form, Form)
@@ -180,16 +180,16 @@ class DataTable(object):
         self._column_count = len(self._columns)
         self._secret_columns = [c.id() for c in columns
                                 if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
-        
+
     def _panic(self):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
     def _get_row(self, row, autoadjust=False, require=True):
         """Return the row number 'row' from the database as a 'PresentedRow' instance.
-        
+
         Arguments:
-        
+
           row -- row number within the *database select*, starting from 0
           autoadjust -- when true, 'row' is decreased by one if it is located
             behind an edited *new* row.  Also when the 'row', equals to the
@@ -309,17 +309,17 @@ class DataTable(object):
 
     def row(self, row):
         """Vrať řádek číslo 'row' jako instanci třídy 'PresentedRow'.
-        
+
         Vrácený řádek zahrnuje změny provedené případnou editací a
         obsahuje pouze sloupce datového objektu (nepočítané i počítané),
         takže je možné jej přímo použít v databázových operacích.
-        
+
         Jestliže řádek daného čísla neexistuje, vrať 'None'.
-        
+
         Argumenty:
-        
+
         row -- nezáporný integer, první řádek má číslo 0
-        
+
         """
         if row < 0 or row >= self.number_of_rows(min_value=(row + 1)):
             return None
@@ -327,9 +327,9 @@ class DataTable(object):
 
     def rewind(self, position=None):
         """Přesuň datové ukazovátko na začátek dat.
-        
+
         Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
-        
+
         """
         if self._current_row is None:
             return
@@ -349,7 +349,7 @@ class DataTable(object):
 
     def form(self):
         return self._form
-    
+
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
         assert isinstance(grouping, tuple)
@@ -368,7 +368,7 @@ class DataTable(object):
         else:
             self._edited_row = self._init_edited_row(inserted_row_number,
                                                      prefill=inserted_row_prefill, new=True)
-        
+
     def close(self):
         # Tato metoda je nutná kvůli jistému podivnému chování wxWindows,
         # kdy wxWindows s tabulkou pracuje i po jejím zrušení.
@@ -433,13 +433,13 @@ class DataTable(object):
 
     def edit_row(self, row):
         """Zahaj editaci řádku číslo 'row'.
-        
+
         Pokud již nějaký řádek editován je, jeho editace je zrušena a obsah
         vrácen do původního stavu (ovšem bez překreslení, to musí být
         zajištěno jinak!).
-        
+
         Argumenty:
-        
+
           row -- nezáporný integer určující číslo editovaného řádku
             počínaje od 0, nebo 'None' značící že nemá být editován žádný
             řádek
@@ -454,7 +454,7 @@ class DataTable(object):
 
     def editing(self):
         """Vrať informaci o editovaném řádku nebo 'None'.
-        
+
         Pokud není editován žádný řádek, vrať 'None'.  Jinak vrať instanci
         třídy 'EditInfo' s informacemi o čísle editovaného řádku, zda je
         tento řádek nový, zda je jeho aktuální obsah různý od jeho
@@ -476,20 +476,20 @@ class DataTable(object):
 
     def column_id(self, col):
         return self._columns[col].id
-        
+
     def column_label(self, col):
         return self._columns[col].label
 
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
-        
+
         Řádky jsou číslovány od 0.  Pokud číslo aktuálního řádku není
         známo, vrať 'None'.
 
         """
         current = self._current_row
         return current and current.row
-    
+
     def number_of_rows(self, min_value=None, timeout=None, full_result=False):
         if isinstance(self._row_count, int):
             count, finished = self._row_count, True
@@ -503,13 +503,13 @@ class DataTable(object):
             return count, finished
         else:
             return count
-    
+
     def number_of_columns(self):
         return self._column_count
-            
+
 
 class ListTable(wx.grid.PyGridTableBase, DataTable):
-            
+
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(form, Form)
@@ -518,13 +518,13 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         DataTable.__init__(self, form, data, presented_row, columns, row_count,
                            sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
         self._init_group_bg_downgrade()
-        
+
     # Pomocné metody
-        
+
     def _panic(self):
         DataTable._panic(self)
         Form.COMMAND_LEAVE_FORM.invoke()
-        
+
     def _make_attr(self, style):
         flags = wx.FONTFLAG_DEFAULT
         fg, bg = (self._DEFAULT_FOREGROUND_COLOR, self._DEFAULT_BACKGROUND_COLOR)
@@ -552,26 +552,26 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     def _init_group_bg_downgrade(self):
         c = wx.NamedColour(config.grouping_background_downgrade)
         self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
-        
+
     def update(self, *args, **kwargs):
         super(ListTable, self).update(*args, **kwargs)
         self._init_group_bg_downgrade()
 
     # Povinné wx gridové metody
-    
+
     def GetNumberRows(self):
         # We have to get only approximate number of rows here.  The reason is
         # that wx functions call this method on form creation.  Hopefully this
         # doesn't break anything.  Our code should use `number_of_rows'
         # directly anyway.
         return self.number_of_rows(timeout=0)
-    
+
     def GetNumberCols(self):
         return self.number_of_columns()
-    
+
     def IsEmptyCell(self, row, col):
         return False
-    
+
     def GetValue(self, row, col):
         # `row' a `col' jsou číslovány od 0.
         # Je tabulka již uzavřena?
@@ -616,7 +616,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         # we rather blaim the grid that everyting is a string.  Bool values are
         # rendered using a custom renderer...
         return wx.grid.GRID_VALUE_STRING
-    
+
     def GetAttr(self, row, col, kind):
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.number_of_columns():
             # it may happen
@@ -661,13 +661,13 @@ class TableRowIterator(object):
     Argumenty konstruktoru:
       table -- instance ListTable
       rows -- sekvence celých čísel určujících jednotlivé řádky
-    
+
     """
     def __init__(self, table, rows):
         self._pointer = -1
         self._table = table
         self._rows = rows
-        
+
     def __iter__(self):
         return self
 
@@ -680,10 +680,10 @@ class TableRowIterator(object):
             raise StopIteration
         else:
             return self._table.row(self._rows[self._pointer])
-        
+
     def form(self):
         """Return the current form instance.
-        
+
         This method is designed to be used in application code to get to the
         current form methods from the action handler function (which receives
         this iterator as an argument when action context is
@@ -691,7 +691,7 @@ class TableRowIterator(object):
 
         """
         return self._table.form()
-    
+
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
 
@@ -722,7 +722,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
             field.widget().SetInsertionPointEnd()
         except AttributeError:
             pass
-        
+
     def EndEdit(self, row, col, grid, *args):
         field = self._field
         field.validate(interactive=False)
@@ -733,22 +733,22 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
 
     def Reset(self):
         self._field.reset()
-        
+
     def Clone(self):
         return InputFieldCellEditor()
 
     # Ostatní metody
-    
+
     def field(self):
         """Vrať svůj 'InputField'."""
         return self._field
-        
+
     def IsAcceptedKey(self, event):
         # TODO/wx: Z neznámých důvodů není voláno.
         if __debug__:
             log(DEBUG, 'Neuvěřitelné -- voláno IsAcceptedKey')
         return False
-    
+
     def close(self):
         """Proveď ukončovací akce.
 
@@ -768,7 +768,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
     row (where the grid cursor is located).
 
     """
-    
+
     def __init__(self, table):
         self._table = table
         super(CustomCellRenderer, self).__init__()
@@ -776,7 +776,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
     def _draw_value(self, value, dc, rect, align):
         label_rect = wx.Rect(rect.x + 1, rect.y, rect.width - 2, rect.height)
         dc.DrawLabel(value, label_rect, wx.ALIGN_CENTER_VERTICAL | align)
-        
+
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
         "Customisation: Draw the data from grid in the rectangle with attributes using the dc."
         dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
@@ -811,7 +811,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
                             dc.DrawLine(left + r + mod, top, left + r + mod, bottom)
                         if col + 1 == grid.GetNumberCols():
                             dc.DrawLine(right - r - mod, top, right - r - mod, bottom)
-                        
+
                 finally:
                     dc.SetPen(original_pen)
             dc.SetBackgroundMode(wx.TRANSPARENT)
