@@ -1651,8 +1651,7 @@ class RecordForm(LookupForm):
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
-        self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new,
-                                singleline=self._SINGLE_LINE)
+        self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new)
 
     def _signal_update(self):
         pass
@@ -2173,7 +2172,8 @@ class RecordForm(LookupForm):
         """Create a new `RecordForm.Record' instance bound to this form."""
         fields = self._view.fields()
         data = self._create_data_object()
-        return self.Record(self, fields, data, row, transaction=self._open_transaction(), **kwargs)
+        return self.Record(self, fields, data, row, transaction=self._open_transaction(),
+                           singleline=self._SINGLE_LINE, **kwargs)
 
     def select_row(self, position, quiet=False):
         """Vyber řádek dle 'position'.

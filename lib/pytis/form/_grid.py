@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2014, 2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ class DataTable(object):
         assert data_row is None or isinstance(data_row, pytis.data.Row)
         if prefill is None:
             prefill = self._prefill
-        record = self._form.record(data_row, new=new, singleline=True, prefill=prefill)
+        record = self._form.record(data_row, new=new, prefill=prefill)
         return self._EditedRow(row_number, data_row, record)
 
     def _update_columns(self, columns):
