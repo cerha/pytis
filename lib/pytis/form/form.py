@@ -1610,6 +1610,8 @@ class LookupForm(InnerForm):
 class RecordForm(LookupForm):
     """Formulář schopný nějakým způsobem zobrazit aktuální záznam."""
 
+    _SINGLE_LINE = False
+
     CALL_SELECTION = 'CALL_SELECTION'
     """Konstanta callbacku výběru (změny aktuálního) záznamu.
 
@@ -1633,8 +1635,7 @@ class RecordForm(LookupForm):
             # Moreover this instance will have the select initialized in LookupForm.
             return self._form.data()
 
-    def _init_attributes(self, prefill=None, select_row=None, _new=False, _singleline=False,
-                         **kwargs):
+    def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -1651,7 +1652,7 @@ class RecordForm(LookupForm):
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
         self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new,
-                                singleline=_singleline)
+                                singleline=self._SINGLE_LINE)
 
     def _signal_update(self):
         pass

@@ -101,6 +101,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TITLE_BAR = True
     _ALLOW_TOOLBAR = False
+    _SINGLE_LINE = True
 
     _AGGREGATIONS = ((pytis.data.Data.AGG_SUM, _("Sum"), 'agg-sum', _("Sum:")),
                      (pytis.data.Data.AGG_AVG, _("Average"), 'agg-avg', _("Avg:")),
@@ -129,7 +130,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _init_attributes(self, select_row=0, **kwargs):
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
-        super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
+        super(ListForm, self)._init_attributes(select_row=select_row, **kwargs)
         self._fields = self._view.fields()
         self._selection_candidate = None
         self._selection_callback_candidate = None
