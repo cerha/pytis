@@ -83,7 +83,7 @@ def _signal_error(message):
 
 class GensqlError(Exception):
     """Výjimka signalizovaná tímto programem při chybách specifikace."""
-    
+
 
 def _gsql_escape(s):
     return s.replace("'", "\\'")
@@ -136,7 +136,7 @@ def _gsql_format_type(type_):
         except KeyError:
             raise ProgramError('Unknown type', type_)
     return result
-        
+
 def _gsql_warning(message):
     if _GsqlConfig.warnings:
         return '-- WARNING: %s\n' % message
@@ -150,12 +150,12 @@ class _GsqlSpec(object):
 
     _SQL_NAME = ''
     _PGSQL_TYPE = ''
-    
+
     _counter = Counter()
     _groups = None
     _group_list = []
     _seen_names = []
-    
+
     def __init__(self, name, depends=(), doc=None, grant=(), convert=True, schemas=None):
         """Inicializuj instanci.
 
@@ -199,7 +199,7 @@ class _GsqlSpec(object):
             raise ProgramError("Duplicate object name", name)
         self._name = name
         self._seen_names.append(name)
-        
+
     def _set_schemas(self, schemas):
         if schemas is not None:
             assert isinstance(schemas, (tuple, list,)), ('invalid schema list', schemas,)
@@ -227,7 +227,7 @@ class _GsqlSpec(object):
 
     def extra_names(self):
         """Return sequence of additional associated object names.
-        
+
         For instance, index names or names of sequences corresponding to serial
         columns may be returned.
         """
@@ -297,7 +297,7 @@ class _GsqlSpec(object):
         Argumenty:
 
           connection -- PgConnection objekt zpřístupňující příslušnou databázi
-          
+
         """
         data = connection.query(("select relname from pg_class, pg_namespace "+
                                  "where relkind='%s' and "+
@@ -316,7 +316,7 @@ class _GsqlSpec(object):
         existuje.
 
         Argumenty:
-        
+
           connection -- PgConnection objekt zpřístupňující příslušnou databázi
 
         """
@@ -329,7 +329,7 @@ class _GsqlSpec(object):
         Argumenty:
 
           name -- jméno objektu, který má být odstraněn; string
-          
+
         """
         class_sql_name = class_._SQL_NAME
         if class_sql_name:
@@ -464,7 +464,7 @@ class _GsqlSpec(object):
         else:
             arguments.append('not_null=False')
         return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)
-        
+
     def _convert_column(self, column):
         name = column.name
         if name[0] == '"':
@@ -577,7 +577,7 @@ class _GsqlSpec(object):
                   self._sql.startswith('CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order')))):
                 schemas = 'db.cms_schemas.value(globals())'
             elif self._schemas == ('xxx',):
-                schemas = 'db.pytis_schemas.value(globals())'                
+                schemas = 'db.pytis_schemas.value(globals())'
         elif self._schemas:
             for name, s_tuple in _GsqlConfig.convert_schemas:
                 if s_tuple == self._schemas:
@@ -625,7 +625,7 @@ class _GsqlSpec(object):
                 identifier.find('sogo') >= 0):
                 continue
             self._add_conversion_dependency(identifier, None)
-        
+
     def _convert_grant(self):
         if self._grant == (('all', _GsqlConfig.application,),):
             if self._name in _CONV_PREPROCESSED_NAMES:
@@ -641,12 +641,12 @@ class _GsqlSpec(object):
         else:
             grant = repr(self._grant).replace('"', '')
         return '    access_rights = %s' % (grant,)
-    
+
     def _convert_local_name(self, name):
         if name in ('a', 'c', 'r', 't',):
             name = name + '_'
         return name
-               
+
     def convert(self):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
         return '#XXX:%s' % (self,)
@@ -664,12 +664,12 @@ class _GsqlSpec(object):
             self._conversion_depends = tuple([d for d in self._conversion_depends if d != o])
             o = '%s.%s' % (schema, o,)
         if o not in self._conversion_depends and o is not self and o != self._name:
-            self._conversion_depends = self._conversion_depends + (o,)            
+            self._conversion_depends = self._conversion_depends + (o,)
 
 
 class Column(object):
     """Úložná třída specifikace sloupce."""
-    
+
     def __init__(self, name, type, constraints=(), references=None,
                  default=None, index=None, doc=None):
         """Nastav atributy.
@@ -727,7 +727,7 @@ class ViewColumn(object):
             výrazu; je-li specifikován, musí být také specifikován alias a name
             musí být None.
           type -- explicitně určený typ -- hlavní využití je pro UNIONY, kde se
-            vyskytují NULL hodnoty.  
+            vyskytují NULL hodnoty.
           insert -- řetězec, který se použije pro vložení hodnoty do sloupce
             tabulky pro defaultně generovaný insert rule. Je-li '', použije se
             standardní new hodnota, je-li None, nebude se sloupec v insert rulu
@@ -746,7 +746,7 @@ class ViewColumn(object):
             self.name = alias
             self.insert = None
             self.update = None
-        else:    
+        else:
             self.name = name
             self.insert = insert
             self.update = update
@@ -770,13 +770,13 @@ class JoinType(object):
     FULL_OUTER = 'FULL_OUTER'
     CROSS = 'CROSS'
     TEMPLATES = {FROM: 'FROM %s %s%s',
-                 INNER: 'INNER JOIN %s %s\n ON (%s)',                       
+                 INNER: 'INNER JOIN %s %s\n ON (%s)',
                  LEFT_OUTER: 'LEFT OUTER JOIN %s %s\n ON (%s)',
                  RIGHT_OUTER: 'RIGHT OUTER JOIN %s %s\n ON (%s)',
                  FULL_OUTER: 'FULL OUTER JOIN %s %s\n ON (%s)',
                  CROSS: 'CROSS JOIN %s %s%s',
                  }
-    
+
 class SelectRelation(object):
     """Úložná třída specifikace relace pro select."""
     def __init__(self, relation, alias=None,
@@ -840,7 +840,7 @@ class SelectSet(object):
         SelectSetType.INTERSECT_ALL: 'INTERSECT ALL',
         SelectSetType.EXCEPT_ALL: 'EXCEPT ALL',
         }
-    def __init__(self, select, 
+    def __init__(self, select,
                  settype=None
                  ):
         """Úložná třída specifikace kombinace selectů.
@@ -848,13 +848,13 @@ class SelectSet(object):
 
           select -- název pojmenovaného selectu nebo instance
             Select.
-          settype -- typ spojení selectů - konstanta třídy SelectSetType. 
+          settype -- typ spojení selectů - konstanta třídy SelectSetType.
         """
         self.select = select
-        self.settype = settype    
+        self.settype = settype
 
     def format_select(self, indent=0):
-        output = self.select.format_select(indent=indent)        
+        output = self.select.format_select(indent=indent)
         if self.settype:
             outputset = ' ' * (indent+1) + self._FORMAT_SET[self.settype]
             output = '%s\n%s' % (outputset, output)
@@ -874,7 +874,7 @@ class TableView(object):
         """Nastav atributy.
 
         Argumenty:
-        
+
           columns -- stejné jako v '_GsqlView.__init__()', vždy jsou
             automaticky přidány všechny definované sloupce tabulky neuvedené
             v argumentu 'exclude'
@@ -901,7 +901,7 @@ class _GsqlType(_GsqlSpec):
 
     _SQL_NAME = 'TYPE'
     _PGSQL_TYPE = 'c'
-    
+
     def __init__(self, name, columns, **kwargs):
         """Inicializuj instanci.
 
@@ -910,11 +910,11 @@ class _GsqlType(_GsqlSpec):
           name -- název typu
           columns -- specifikace sloupců a jejich typů, sekvence instancí
             třídy Column
-        """    
+        """
         super(_GsqlType, self).__init__(name, **kwargs)
         self._columns = columns
-        
-    def _column_column(self, column):        
+
+    def _column_column(self, column):
         return _gsql_column_table_column(column.name)[1]
 
     def _format_column(self, column):
@@ -954,7 +954,7 @@ class _GsqlType(_GsqlSpec):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
-        return result        
+        return result
 
 
 class ArgumentType(object):
@@ -966,7 +966,7 @@ class ArgumentType(object):
         """Nastav atributy.
 
         Argumenty:
-        
+
           typ -- název typu, instance pytis.data.Type nebo _GsqlType.
           name -- volitelné jméno argumentu
           out -- je-li True, jde o výstupní argument
@@ -985,7 +985,7 @@ class ReturnType(object):
         """Nastav atributy.
 
         Argumenty:
-        
+
           name -- název typu, instance pytis.data.Type nebo _GsqlType.
           setof -- je-li True, jde o návratový typ SETOF
         """
@@ -994,9 +994,9 @@ class ReturnType(object):
 
 class _GsqlSchema(_GsqlSpec):
     """Specifikace SQL schématu."""
-    
+
     _SQL_NAME = 'SCHEMA'
-    
+
     def __init__(self, name, owner=None, **kwargs):
         """Inicializuj instanci.
 
@@ -1008,7 +1008,7 @@ class _GsqlSchema(_GsqlSpec):
         """
         super(_GsqlSchema, self).__init__(name, **kwargs)
         self._owner = owner
-        
+
     def _output(self):
         if self._owner is not None:
             owner = " AUTHORIZATION %s" % self._owner
@@ -1028,14 +1028,14 @@ class _GsqlSchema(_GsqlSpec):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
-        return result        
-        
+        return result
+
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
-    
+
     _SQL_NAME = 'TABLE'
     _PGSQL_TYPE = 'r'
-    
+
     def __init__(self, name, columns, inherits=None, view=None,
                  with_oids=True, sql=None, schemas=None,
                  on_insert=None, on_update=None, on_delete=None,
@@ -1084,8 +1084,8 @@ class _GsqlTable(_GsqlSpec):
             which builds the primary key for the table; it is expected to define
             this argument only if there are no instances of PrimaryColumn in the
             argument columns, which is mostly the case when primary key is defined
-            in inherited tables; 
-          tablespace -- název tablespace, ve kterém bude tabulka vytvořena  
+            in inherited tables;
+          tablespace -- název tablespace, ve kterém bude tabulka vytvořena
           upd_log_trigger -- název trigger funkce, která bude logovat změny v
             záznamech, nebo None, pokud se nemá logovat.
           indexes -- sequence of multicolumn index definitions; each element of
@@ -1120,9 +1120,9 @@ class _GsqlTable(_GsqlSpec):
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
             column.name = "%s.%s" % (self._name, column.name)
-        return column    
+        return column
 
-    def _column_column(self, column):        
+    def _column_column(self, column):
         return _gsql_column_table_column(column.name)[1]
 
     def _grant_command(self, gspec, name=None):
@@ -1134,7 +1134,7 @@ class _GsqlTable(_GsqlSpec):
     def _make_view(self, view):
         if view is not None:
             vcolumns = list(view.columns)
-            for c in self._columns:                
+            for c in self._columns:
                 if _gsql_column_table_column(c.name)[0] is None:
                     c.name = "%s.%s" % (self._name, c.name)
                 if find(c.name, vcolumns, key=lambda c: c.name) is None:
@@ -1148,13 +1148,13 @@ class _GsqlTable(_GsqlSpec):
             # Remove also columns specified like table.name
             vcolumns = filter(lambda x: x.name not in view.exclude, vcolumns)
             args = (view.name or self, vcolumns)
-            
+
             if 'doc' not in kwargs:
                 kwargs['doc'] = self._doc
             if 'grant' not in kwargs:
                 kwargs['grant'] = self._grant
             if 'depends' not in kwargs:
-                kwargs['depends'] = (self._name,)                
+                kwargs['depends'] = (self._name,)
             else:
                 if self._name not in kwargs['depends']:
                     kwargs['depends'] = kwargs['depends'] + (self._name,)
@@ -1162,7 +1162,7 @@ class _GsqlTable(_GsqlSpec):
             if self._schemas:
                 view._set_schemas(self._schemas)
         return view
-        
+
     def _format_column(self, column):
         cconstraints = column.constraints
         if isinstance(column, PrimaryColumn):
@@ -1220,7 +1220,7 @@ class _GsqlTable(_GsqlSpec):
     def name(self):
         """Vrať jméno tabulky zadané v konstruktoru."""
         return self._name
-    
+
     def extra_names(self):
         names = []
         for c in self._columns:
@@ -1246,8 +1246,8 @@ class _GsqlTable(_GsqlSpec):
             for c in self._columns:
                 if isinstance(c, PrimaryColumn):
                     kcols.append(self._full_column_name(c).name)
-        return kcols        
-    
+        return kcols
+
     def _output(self, _re=False, _all=False):
         if not _re:
             columns = map(self._format_column, self._columns)
@@ -1286,7 +1286,7 @@ class _GsqlTable(_GsqlSpec):
                or ct.__class__ == pytis.data.Serial:
                 seqname = "%s_%s_seq" % (self._name, cn)
                 for g in self._grant:
-                    if g[0].lower() in ('insert', 'all'):                    
+                    if g[0].lower() in ('insert', 'all'):
                         result = result + self._grant_command(('usage', g[1],), seqname)
             if c.doc is not None:
                 result = result + self._format_column_doc(c)
@@ -1311,7 +1311,7 @@ class _GsqlTable(_GsqlSpec):
                                '%s("%s");\n'
                                'CREATE TRIGGER %s_upd_log AFTER UPDATE ON '
                                '%s FOR EACH ROW EXECUTE PROCEDURE '
-                               '%s("%s");\n'                               
+                               '%s("%s");\n'
                                'CREATE TRIGGER %s_del_log AFTER DELETE ON '
                                '%s FOR EACH ROW EXECUTE PROCEDURE '
                                '%s("%s");\n'
@@ -1649,9 +1649,9 @@ class _GsqlTable(_GsqlSpec):
         if unique:
             items.append('    unique = (%s)' % (unique,))
         if check:
-            check_string = string.join([repr(c) for c in check], ', ') + ','                
+            check_string = string.join([repr(c) for c in check], ', ') + ','
             items.append('    check = (%s)' % (check_string,))
-        if sql:            
+        if sql:
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
         items.append(self._convert_depends())
         items.append(self._convert_grant())
@@ -1664,7 +1664,7 @@ class _GsqlTable(_GsqlSpec):
         add_rule('delete', self._on_delete)
         result = string.join(items, '\n') + '\n'
         return result
-    
+
 class Select(_GsqlSpec):
     """Specifikace SQL selectu."""
 
@@ -1677,10 +1677,10 @@ class Select(_GsqlSpec):
           relations -- sekvence instancí třídy SelectRelation nebo SelectSet.
           include_columns -- seznam instancí třídy ViewColumn, které budou
             přidány ke sloupcům z relations (typicky výrazové sloupce).
-          group_by -- string pro klauzuli GROUP BY.  
-          having -- string pro klauzuli HAVING.  
-          order_by -- string pro klauzuli GROUP BY.  
-          limit -- hodnota limit pro select.  
+          group_by -- string pro klauzuli GROUP BY.
+          having -- string pro klauzuli HAVING.
+          order_by -- string pro klauzuli GROUP BY.
+          limit -- hodnota limit pro select.
         """
         super(Select, self).__init__(None, **kwargs)
         self._relations = relations
@@ -1692,7 +1692,7 @@ class Select(_GsqlSpec):
         self._columns = []
         self._set = self._is_set()
 
-    def _is_set(self):        
+    def _is_set(self):
         first = self._relations[0]
         for r in self._relations:
             if not sameclass(r, first):
@@ -1703,13 +1703,13 @@ class Select(_GsqlSpec):
             if self._having:
                 raise ProgramError('Bad Syntax: having')
             if self._include_columns:
-                raise ProgramError('Bad Syntax: include_columns')               
+                raise ProgramError('Bad Syntax: include_columns')
             return True
         else:
             if self._relations[0].jointype != JoinType.FROM:
                 raise ProgramError('Bad Syntax: First join must be FROM')
             return False
-        
+
     def _column_column(self, column):
         return _gsql_column_table_column(column.name)[1]
 
@@ -1719,7 +1719,7 @@ class Select(_GsqlSpec):
         else:
             if column.sql:
                 cname = column.sql
-            else:    
+            else:
                 cname = column.name
             alias = column.alias
         if type is None:
@@ -1751,7 +1751,7 @@ class Select(_GsqlSpec):
             alias = rel.alias or ''
             if i == 0 or rel.condition is None:
                 condition = ''
-            else:    
+            else:
                 condition = rel.condition
             return JoinType.TEMPLATES[jtype] % (relation, alias, condition)
         # První relace je FROM a podmínka nebude použita
@@ -1774,7 +1774,7 @@ class Select(_GsqlSpec):
                         cname = c.alias
                     else:
                         cname = c.name
-                else:                    
+                else:
                     cname = self._column_column(c)
                 if '*' in r.exclude_columns or cname in r.exclude_columns:
                     continue
@@ -1785,7 +1785,7 @@ class Select(_GsqlSpec):
                     calias = calias[1]
                 if calias not in aliases:
                     aliases.append(calias)
-                    vname = '%s.%s' % (rel_alias, cname)                    
+                    vname = '%s.%s' % (rel_alias, cname)
                     vcolumns.append(ViewColumn(vname, alias=calias))
                 else:
                     raise ProgramError('Duplicate column name', calias)
@@ -1799,12 +1799,12 @@ class Select(_GsqlSpec):
                 column_aliases = r.column_aliases
                 if isinstance(r.relation, Select):
                     r.relation.set_columns(self._relation_columns)
-                    columnlist = r.relation.columns()                    
-                else:    
+                    columnlist = r.relation.columns()
+                else:
                     if '*' in r.exclude_columns:
                         continue
                     columnlist = self._relation_columns[r.relation]
-                make_columns(columnlist, column_aliases, rel_alias)            
+                make_columns(columnlist, column_aliases, rel_alias)
             for c in self._include_columns:
                 if c.alias not in aliases:
                     aliases.append(c.alias)
@@ -1819,7 +1819,7 @@ class Select(_GsqlSpec):
             columns = self._columns[0]
         else:
             columns = self._columns
-        return [ViewColumn(c.alias) for c in columns]           
+        return [ViewColumn(c.alias) for c in columns]
 
     def sort_columns(self, aliases):
         # Check length and column aliases
@@ -1827,7 +1827,7 @@ class Select(_GsqlSpec):
         missed = set(aliases) ^ set(colaliases)
         if len(missed) != 0:
             names = ' | '.join(missed)
-            raise ProgramError('Different columns in SelectSet', names)            
+            raise ProgramError('Different columns in SelectSet', names)
         # Reorder
         columns = []
         for a in aliases:
@@ -1836,7 +1836,7 @@ class Select(_GsqlSpec):
                 raise ProgramError("Can't find columns alias in SelectSet", a)
             else:
                 columns.append(col)
-        self._columns = columns        
+        self._columns = columns
 
     def format_select(self, indent=0):
         if not self._set:
@@ -1886,7 +1886,7 @@ class Select(_GsqlSpec):
                 alias = relation.name
         name = self._convert_id_name(alias.lower())
         return self._convert_local_name(name)
- 
+
     def _convert_select_columns(self, column_ordering=None):
         column_spec = []
         for r in self._relations:
@@ -1958,7 +1958,7 @@ class Select(_GsqlSpec):
         else:
             if column.sql:
                 cname = column.sql
-            else:    
+            else:
                 cname = column.name
         self._convert_add_raw_dependencies(cname)
         plain_name = cname
@@ -1993,7 +1993,7 @@ class Select(_GsqlSpec):
         else:
             indented = indentation + d
         definitions.append(indented)
-        
+
     def _convert_relations(self, definitions, level):
         for r in self._relations:
             if isinstance(r.relation, Select):
@@ -2060,7 +2060,7 @@ class Select(_GsqlSpec):
                 self._convert_add_definition(definitions, d, level)
             if i == 0 or rel.condition is None:
                 condition = ''
-            else:    
+            else:
                 condition = rel.condition
             relation = self._convert_local_name(relation)
             if jtype == JoinType.FROM:
@@ -2144,12 +2144,12 @@ class Select(_GsqlSpec):
                 self._convert_add_definition(definitions, d, level)
             if last_relation is None or rel.condition is None:
                 condition = ''
-            else:    
+            else:
                 condition = rel.condition
             if last_relation is None and jtype != JoinType.FROM:
                 raise Exception("Error", (self, jtype,))
             last_relation = self._convert_local_name(last_relation)
-            relation = self._convert_local_name(relation)            
+            relation = self._convert_local_name(relation)
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
@@ -2179,7 +2179,7 @@ class Select(_GsqlSpec):
             last_relation = convert_relation(r, last_relation)
         condition = self._convert_raw_condition(self._relations[0].condition)
         return last_relation, condition
-        
+
     def _convert_select(self, definitions, level, column_ordering=None):
         def select_n(prefix):
             n = 1
@@ -2247,18 +2247,18 @@ class Select(_GsqlSpec):
         if self._order_by:
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
         return condition
-     
+
 
 class _GsqlViewNG(Select):
     """Specifikace view (nová)."""
-    
+
     _SQL_NAME = 'VIEW'
     _PGSQL_TYPE = 'v'
 
     _INSERT = 'INSERT'
     _UPDATE = 'UPDATE'
     _DELETE = 'DELETE'
-   
+
     def __init__(self, name, relations, schemas=None,
                  insert=(), update=(), delete=(),
                  insert_order=None, update_order=None, delete_order=None,
@@ -2366,7 +2366,7 @@ class _GsqlViewNG(Select):
                             column_names.append(col)
                             if c.insert == '':
                                 val = 'new.%s' % (c.alias)
-                            else:    
+                            else:
                                 val = c.insert
                                 column_values.append(val)
                     bodycolumns = ',\n      '.join(column_names)
@@ -2383,7 +2383,7 @@ class _GsqlViewNG(Select):
                         continue
                     table_alias = r.alias or table_name
                     column_names = []
-                    values = []                
+                    values = []
                     for c in columns:
                         if c.name is None:
                             continue
@@ -2392,8 +2392,8 @@ class _GsqlViewNG(Select):
                             column_names.append(col)
                             if c.update == '':
                                 val = 'new.%s' % (c.alias)
-                            else:    
-                                val = c.update                            
+                            else:
+                                val = c.update
                                 values.append(val)
                     settings = ',\n      '.join(['%s = %s' % (c, v)
                                                  for c, v in zip(column_names,
@@ -2403,8 +2403,8 @@ class _GsqlViewNG(Select):
                         if not key_column:
                             raise ProgramError("Update rule: no key column "
                                            "specified", table_name)
-                        condition = '%s = old.%s' % (key_column, key_column)                        
-                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
+                        condition = '%s = old.%s' % (key_column, key_column)
+                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' %
                                     (table_name, settings, condition))
             elif kind == self._DELETE:
                 for r in relations(self._delete_order):
@@ -2434,7 +2434,7 @@ class _GsqlViewNG(Select):
                 command = 'DELETE'
                 suffix = 'del'
                 action = self._delete
-            else:    
+            else:
                 raise ProgramError('Invalid rule specifier', kind)
             return action, command, suffix
         action, command, suffix = get_params(kind)
@@ -2443,7 +2443,7 @@ class _GsqlViewNG(Select):
         elif is_sequence(action):
             if self._set:
                 body = []
-            else:    
+            else:
                 body = get_default_body(kind)
             body = list(body) + list(action)
             if len(body) == 0:
@@ -2455,11 +2455,11 @@ class _GsqlViewNG(Select):
         return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
                 '    %s;\n\n') % \
                (self._name, suffix, command, self._name, body)
-        
+
     def _output(self, table_keys):
         select = self.format_select()
         result = 'CREATE OR REPLACE VIEW %s AS\n%s;\n\n' % \
-                 (self._name, select)        
+                 (self._name, select)
         for kind in (self._INSERT, self._UPDATE, self._DELETE):
             result = result + self._format_rule(kind, table_keys)
         if self._doc is not None:
@@ -2473,7 +2473,7 @@ class _GsqlViewNG(Select):
 
     def outputall(self, table_keys):
         return self.output(table_keys)
-    
+
     def reoutput(self, table_keys):
         return self.output(table_keys)
 
@@ -2594,18 +2594,18 @@ class _GsqlViewNG(Select):
         result = string.join(items, '\n') + '\n'
         return result
 
-ViewNG = _GsqlViewNG    
+ViewNG = _GsqlViewNG
 
 class _GsqlView(_GsqlSpec):
     """Specifikace view."""
-    
+
     _SQL_NAME = 'VIEW'
     _PGSQL_TYPE = 'v'
 
     _INSERT = 'INSERT'
     _UPDATE = 'UPDATE'
     _DELETE = 'DELETE'
-    
+
     def __init__(self, name, columns, key_columns=None,
                  table_alias=None, join=None,
                  insert=(), update=(), delete=(), **kwargs):
@@ -2685,7 +2685,7 @@ class _GsqlView(_GsqlSpec):
         return _gsql_column_table_column(column.name)[1]
 
     def _split_columns(self):
-        """Rozdělí sloupce na jednoduché a složené (UNION)."""       
+        """Rozdělí sloupce na jednoduché a složené (UNION)."""
         if not self._complexp:
             return self._columns, None
         simple_columns = []
@@ -2695,7 +2695,7 @@ class _GsqlView(_GsqlSpec):
                 complex_columns.append(c)
             else:
                 simple_columns.append(c)
-        return simple_columns, complex_columns        
+        return simple_columns, complex_columns
 
 
     def _complex_columns_length(self):
@@ -2703,27 +2703,27 @@ class _GsqlView(_GsqlSpec):
             return None
         complex_len = is_sequence(self._complex_columns[0].name) and \
                       len(self._complex_columns[0].name) or \
-                      len(self._complex_columns[0].sql) 
+                      len(self._complex_columns[0].sql)
         for c in self._complex_columns[1:]:
             clen = is_sequence(c.name) and len(c.name) or len(c.sql)
             if clen != complex_len:
                 raise GensqlError("Non-matching column length", c)
         return complex_len
 
-      
+
     def _make_tables(self):
         """Vytvoří seznam tabulek pro klauzuli from
-           a seznam jmen použitých tabulek."""       
+           a seznam jmen použitých tabulek."""
         column_tables = []
         if self._complexp:
             for i in range(self._complex_len):
                 icomplex_tables = []
                 for c in self._complex_columns:
-                    if is_sequence(c.name) and c.name[i]:                    
+                    if is_sequence(c.name) and c.name[i]:
                         tname = _gsql_column_table_column(c.name[i])[0]
                         if tname and tname not in icomplex_tables:
                             icomplex_tables.append(tname)
-                column_tables.append(icomplex_tables)            
+                column_tables.append(icomplex_tables)
         else:
             simple_tables = [self._column_table(t)
                              for t in self._columns
@@ -2732,7 +2732,7 @@ class _GsqlView(_GsqlSpec):
                 if not t in column_tables:
                     column_tables.append(t)
         # Now we have the list of used tables
-        # and we can check the appropriate use of table aliases            
+        # and we can check the appropriate use of table aliases
         if self._table_alias:
             table_alias_tables = [x[0] for x in self._table_alias]
             table_alias_aliases = [x[1] for x in self._table_alias]
@@ -2778,7 +2778,7 @@ class _GsqlView(_GsqlSpec):
             tables_from = tables = column_tables
         return tables_from, tables
 
-               
+
     def _format_column(self, column, i=None, type=UNDEFINED):
         if isinstance(column, basestring):
             cname = alias = column
@@ -2786,12 +2786,12 @@ class _GsqlView(_GsqlSpec):
             if i is None:
                 if column.sql:
                     cname = column.sql
-                else:    
+                else:
                     cname = column.name
             else:
-                if column.sql:               
+                if column.sql:
                     cname = column.sql[i]
-                else:    
+                else:
                     cname = column.name[i]
             alias = column.alias
         if type is None:
@@ -2862,9 +2862,9 @@ class _GsqlView(_GsqlSpec):
                                     if c.insert]
                     column_values = [c.insert == '' and
                               'new.%s' % (c.alias) or
-                              c.insert                                
+                              c.insert
                               for c in table_columns[t]
-                              if c.insert]                
+                              if c.insert]
                     columns = ',\n      '.join(column_names)
                     values = ',\n      '.join(column_values)
                     if column_names:
@@ -2880,12 +2880,12 @@ class _GsqlView(_GsqlSpec):
                 for t in self._tables:
                     column_names = [self._column_column(c)
                                     for c in table_columns[t]
-                                    if c.update]                
+                                    if c.update]
                     values = [c.update == '' and
                               'new.%s' % (c.alias) or
-                              c.update                                
+                              c.update
                               for c in table_columns[t]
-                              if c.update]                
+                              if c.update]
                     settings = ',\n      '.join(['%s = %s' % (c, v)
                                                  for c, v in zip(column_names,
                                                                  values)])
@@ -2910,7 +2910,7 @@ class _GsqlView(_GsqlSpec):
                     condition = string.join(rels, ' AND ')
                     body.append('DELETE FROM %s \n    WHERE %s' % (t, condition))
             action = self._delete
-            body = string.join(body, ';\n    ')            
+            body = string.join(body, ';\n    ')
         else:
             raise ProgramError('Invalid rule specifier', kind)
         if action is None:
@@ -2925,10 +2925,10 @@ class _GsqlView(_GsqlSpec):
 
     def columns(self):
         return self._columns
-        
+
     def _output(self, table_keys):
         columns = self._format_complex_columns()
-        is_union = is_sequence(columns)        
+        is_union = is_sequence(columns)
         if self._key_columns is None:
             if is_union:
                 tables = functools.reduce(operator.add, self._tables)
@@ -2981,7 +2981,7 @@ class _GsqlView(_GsqlSpec):
 
     def outputall(self, table_keys):
         return self.output(table_keys)
-    
+
     def reoutput(self, table_keys):
         return self.output(table_keys)
 
@@ -2992,12 +2992,12 @@ class _GsqlView(_GsqlSpec):
             if i is None:
                 if column.sql:
                     cname = column.sql
-                else:    
+                else:
                     cname = column.name
             else:
-                if column.sql:               
+                if column.sql:
                     cname = column.sql[i]
-                else:    
+                else:
                     cname = column.name[i]
             alias = column.alias
         if type is None:
@@ -3038,7 +3038,7 @@ class _GsqlView(_GsqlSpec):
         else:
             result = format_simple_columns(self._columns)
         return result
-    
+
     def convert(self):
         items = ['class %s(sql.SQLView):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
@@ -3204,7 +3204,7 @@ class _GsqlFunction(_GsqlSpec):
     """Specifikace SQL funkce."""
 
     _SQL_NAME = 'FUNCTION'
-    
+
     def __init__(self, name, arguments, output_type, body=None, security_definer=False,
                  optimizer_attributes='VOLATILE',
                  use_functions=(), schemas=None, language=None, **kwargs):
@@ -3263,7 +3263,7 @@ class _GsqlFunction(_GsqlSpec):
                     ins.append(a)
             else:
                 ins.append(ArgumentType(a))
-        return ins, outs        
+        return ins, outs
 
     def _format_body(self, body):
         if isinstance(body, basestring):
@@ -3304,13 +3304,13 @@ class _GsqlFunction(_GsqlSpec):
         return ', '.join(args)
 
     def _format_output_type(self):
-        if isinstance(self._output_type, ReturnType):            
+        if isinstance(self._output_type, ReturnType):
             output_type = self._output_type.name
             if self._output_type.setof:
                 output_type = 'SETOF ' + output_type
         else:
             output_type = _gsql_format_type(self._output_type)
-        return output_type    
+        return output_type
 
     def _format_returns(self):
         if self._output_type is None:
@@ -3324,7 +3324,7 @@ class _GsqlFunction(_GsqlSpec):
         elif isinstance(self._output_type, ReturnType):
             if len(self._outs) > 0:
                 # We can have both output_type and out arguments,
-                # only to specify "SETOF RECORD" type                
+                # only to specify "SETOF RECORD" type
                 if not (self._output_type.setof and
                         self._output_type.name.upper() == 'RECORD'):
                     raise GensqlError(
@@ -3332,7 +3332,7 @@ class _GsqlFunction(_GsqlSpec):
                         "can be specified in `%s'" % self._name)
                 else:
                     returns = 'RETURNS SETOF RECORD'
-            else:    
+            else:
                 output_type = self._output_type.name
                 if self._output_type.setof:
                     output_type = 'SETOF ' + output_type
@@ -3351,13 +3351,13 @@ class _GsqlFunction(_GsqlSpec):
             return " SECURITY DEFINER"
         else:
             return ""
-        
-    def _format_optimizer(self):        
+
+    def _format_optimizer(self):
         if self._optimizer_attributes in ('VOLATILE', 'IMMUTABLE', 'STABLE'):
             return " %s" % self._optimizer_attributes
         else:
             return ""
-    
+
     def _output(self):
         # input_types = string.join(map(_gsql_format_type, self._input_types),
         #                          ',')
@@ -3392,7 +3392,7 @@ class _GsqlFunction(_GsqlSpec):
             if n not in ('plpythonu_call_handler', 'plpgsql_call_handler'):
                 names.append(n)
         return names
-    
+
     def _convert_column(self, column, out=False):
         name = column.name
         ctype = column.typ
@@ -3548,7 +3548,7 @@ class _GsqlFunction(_GsqlSpec):
             self._convert_add_raw_dependencies(self._body)
             result += '    def body(self):\n'
             result += '        return """%s"""\n' % (self._body.replace("''", "'"),)
-        return result        
+        return result
 
 
 class _GsqlSequence(_GsqlSpec):
@@ -3556,7 +3556,7 @@ class _GsqlSequence(_GsqlSpec):
 
     _SQL_NAME = 'SEQUENCE'
     _PGSQL_TYPE = 'S'
-    
+
     def __init__(self, name, increment=None, minvalue=None,
                  maxvalue=None, start=None, cycle=None, schemas=None, **kwargs):
         """Inicializuj instanci.
@@ -3580,7 +3580,7 @@ class _GsqlSequence(_GsqlSpec):
         self._start = start
         self._cycle = cycle
         self._set_schemas(schemas)
-        
+
     def _output(self):
         result = 'CREATE SEQUENCE %s' % self._name
         if self._increment:
@@ -3623,12 +3623,12 @@ class _GsqlSequence(_GsqlSpec):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
-        return result        
+        return result
 
 
 class _GsqlRaw(_GsqlSpec):
     """Prosté SQL příkazy."""
-    
+
     def __init__(self, sql, file_name=None, schemas=None, **kwargs):
         """Inicializuj instanci.
 
@@ -3658,7 +3658,7 @@ class _GsqlRaw(_GsqlSpec):
         result = self._sql + '\n'
         if self._file_name:
             result = '''
-            
+
 ---------------------------
 -- Included file: %s --
 ---------------------------
@@ -3691,13 +3691,13 @@ class _GsqlRaw(_GsqlSpec):
         items.append(self._convert_depends())
         result = string.join(items, '\n') + '\n'
         self._convert_add_raw_dependencies(self._sql)
-        return result        
+        return result
 
 
 class _GviewsqlRaw(_GsqlSpec):
     """View definované prostými SQL příkazy."""
-   
-    def __init__(self, name, columns, fromitems, where=None, 
+
+    def __init__(self, name, columns, fromitems, where=None,
                  groupby=None, having=None,
                  insert=None, update=None, delete=None,
                  **kwargs):
@@ -3798,7 +3798,7 @@ class _GsqlDefs(UserDict.UserDict):
         self._table_keys = {}
         self._relation_columns = {}
         self._specifications = []
-        
+
     def _resolvedp(self, spec):
         missing = some(lambda d: d not in self._resolved, spec.depends())
         return not missing
@@ -3839,7 +3839,7 @@ class _GsqlDefs(UserDict.UserDict):
         elif isinstance(spec, Select):
             spec.set_columns(self._relation_columns)
             self._relation_columns[name] = spec.columns()
-        
+
     def add(self, spec):
         self._specifications.append(spec)
         name = spec.name()
@@ -4042,7 +4042,7 @@ database dumps if you want to be sure about your schema.
                v)
             for i in range(data.ntuples):
                 todo.append(data.getvalue(i, 0))
-        # sys.stdout.write('drop view %s cascade;\n' % obj)        
+        # sys.stdout.write('drop view %s cascade;\n' % obj)
         def process(o):
             name = self[o].name()
             if name not in depends:
@@ -4183,7 +4183,7 @@ class Base_PyFunction(sql.SQLPyFunction):
             return None
         html_rows.append(\'<table>\\n<tr>\')
         [html_rows.append(\'<td><b>\'+st(x[1])+\'</b></td>\') for x in columns_labels]
-        html_rows.append(\'</tr>\')                         
+        html_rows.append(\'</tr>\')
         for row in rows:
             html_rows.append(\'<tr>\')
             [html_rows.append(\'<td>\'+st(row[x[0]])+\'</td>\') \
@@ -4202,20 +4202,20 @@ class Base_PyTriggerFunction(Base_PyFunction):
             self._TD = TD
             self._event = TD["event"].lower()
             self._when = TD["when"].lower()
-            self._level = TD["level"].lower() 
+            self._level = TD["level"].lower()
             self._name = TD["name"].lower()
             self._table_name = TD["table_name"].lower()
             self._table_schema = TD["table_schema"].lower()
             self._table_oid = TD["relid"]
             self._args = TD["args"]
-            # 
+            #
             self._new = self._old = None
             if self._event in (\'insert\', \'update\'):
                 self._new = TD["new"]
             if self._event in (\'delete\', \'update\'):
                 self._old = TD["old"]
             #
-            self._return_code = self._RETURN_CODE_OK    
+            self._return_code = self._RETURN_CODE_OK
         def _do_after_insert(self):
             pass
         def _do_after_update(self):
@@ -4227,20 +4227,20 @@ class Base_PyTriggerFunction(Base_PyFunction):
         def _do_before_update(self):
             pass
         def _do_before_delete(self):
-            pass        
+            pass
         def do_trigger(self):
             if self._when == \'before\':
                 if self._event == \'insert\':
                     self._do_before_insert()
                 elif self._event == \'update\':
-                    self._do_before_update()                    
+                    self._do_before_update()
                 elif self._event == \'delete\':
                     self._do_before_delete()
             elif self._when == \'after\':
                 if self._event == \'insert\':
                     self._do_after_insert()
                 elif self._event == \'update\':
-                    self._do_after_update()                    
+                    self._do_after_update()
                 elif self._event == \'delete\':
                     self._do_after_delete()
             return self._return_code
@@ -4311,7 +4311,7 @@ class Base_LogSQLTable(sql.SQLTable):
                     new_file = file_name not in visited_files
                     if file_name == last_visited_file[0]:
                         suffix = last_visited_suffix[0]
-                    else:                        
+                    else:
                         index = visited_files.get(file_name, 0)
                         visited_files[file_name] = index + 1
                         last_visited_file[0] = file_name
@@ -4410,7 +4410,7 @@ def sql_raw(text, name=None, depends=(), **kwargs):
 
     Tato funkce by měla být používána jen ve výjimečných případech, neboť v ní
     obsažený kód je mimo dosah všech kontrol.
-      
+
     """
     kwargs = copy.copy(kwargs)
     kwargs.update({'name': name, 'depends': depends})
@@ -4446,7 +4446,7 @@ def include(file_name, globals_=None):
     """Zpracuj pythonový soubor 'file_name'.
 
     Soubor je zpracován prostřednictvím volání 'execfile()'.
-    
+
     Argumenty:
 
       file_name -- jméno kýženého pythonového souboru; absolutní nebo relativní
@@ -4466,7 +4466,7 @@ def include(file_name, globals_=None):
 
 
 class _GsqlConfig:
-    
+
     GENDB = _gsql_defs.gensql
     GEALL = _gsql_defs.gensqlall
     RGNDB = _gsql_defs.regensql
@@ -4489,7 +4489,7 @@ class _GsqlConfig:
     convert_pytis_schemas = (('public',),)
     convert_cms_schemas = (('public',),)
     convert_cms_users_table = 'e_system_user'
-    
+
 
 _GSQL_OPTIONS = (
     ('help             ', 'print this help message and exit'),
@@ -4584,7 +4584,7 @@ def _go(argv=None):
     gensql_file = args[0]
     execfile(gensql_file, copy.copy(globals()))
     _GsqlConfig.request()
-    
+
 
 if __name__ == '__main__':
     _go()
