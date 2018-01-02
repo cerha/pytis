@@ -93,17 +93,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     class InitError(Exception):
         """Exception signaling errors on form initializations."""
 
+    @classmethod
     def _get_command_handler_instance(cls):
         return current_form(inner=False)
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
+    @classmethod
     def descr(cls):
         """Vrať textový popis typu formuláře jako řetězec."""
         if cls.DESCR is not None:
             return cls.DESCR
         else:
             return cls.__name__
-    descr = classmethod(descr)
 
     def __init__(self, parent, resolver, name, full_init=True, **kwargs):
         """Inicializuj instanci.
@@ -495,9 +495,9 @@ class InnerForm(Form):
     předávány aktivnímu vnitřnímu formuláři.
 
     """
+    @classmethod
     def _get_command_handler_instance(cls):
         return current_form()
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def _init_attributes(self, **kwargs):
         super(InnerForm, self)._init_attributes(**kwargs)
@@ -647,6 +647,7 @@ class Refreshable:
     """
     _block_refresh = 0
 
+    @classmethod
     def block_refresh(cls, function, *args, **kwargs):
         """Zablokuj veškerý refresh po dobu provádění funkce 'function'.
 
@@ -663,7 +664,6 @@ class Refreshable:
         finally:
             Refreshable._block_refresh -= 1
         return result
-    block_refresh = classmethod(block_refresh)
 
     def refresh(self, when=None, interactive=False):
         """Aktualizuj data formuláře z datového zdroje.

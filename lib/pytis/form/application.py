@@ -86,10 +86,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
 
+    @classmethod
     def _get_command_handler_instance(cls):
         global _application
         return _application
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def OnInit(self):
         import pytis.extensions

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # Nástroj pro zpracování specifikací databází
-# 
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+#
+# Copyright (C) 2002-2013, 2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -290,6 +290,7 @@ class _GsqlSpec(object):
         """
         return ''
 
+    @classmethod
     def db_all_names(class_, connection):
         """Vrať sekvenci jmen všech objektů v databázi daného typu.
 
@@ -307,7 +308,6 @@ class _GsqlSpec(object):
         for i in range(data.ntuples):
             names.append(data.getvalue(i, 0))
         return names
-    db_all_names = classmethod(db_all_names)
 
     def db_update(self, connection):
         """Vrať SQL příkazy potřebné k updatu databáze dle aktuální definice.
@@ -322,6 +322,7 @@ class _GsqlSpec(object):
         """
         return '-- %s up to date\n' % self.name()
 
+    @classmethod
     def db_remove(class_, name):
         """Vrať SQL příkazy (string) potřebné k odstranění objektu z databáze.
 
@@ -336,7 +337,6 @@ class _GsqlSpec(object):
         else:
             result = "-- DROP ??? %s;\n" % (name,)
         return result
-    db_remove = classmethod(db_remove)
 
     def _convert_indent(self, text, level):
         if text is None:
@@ -3381,6 +3381,7 @@ class _GsqlFunction(_GsqlSpec):
     def reoutput(self):
         return self.output()
 
+    @classmethod
     def db_all_names(self, connection):
         data = connection.query("select proname from pg_proc, pg_namespace where "
                                 "pg_proc.pronamespace=pg_namespace.oid and "
@@ -3391,7 +3392,6 @@ class _GsqlFunction(_GsqlSpec):
             if n not in ('plpythonu_call_handler', 'plpgsql_call_handler'):
                 names.append(n)
         return names
-    db_all_names = classmethod(db_all_names)
     
     def _convert_column(self, column, out=False):
         name = column.name

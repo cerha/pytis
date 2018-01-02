@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014, 2016, 2017 Brailcom, o.p.s.
+# Copyright (C) 2001-2014, 2016, 2017, 2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,9 +63,9 @@ class Dialog(KeyHandler, CommandHandler, object):
     Tato třída pouze definuje abstraktní metodu 'run()'.
 
     """
+    @classmethod
     def _get_command_handler_instance(cls):
         return pytis.form.top_window()
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def __init__(self, parent):
         self._parent = parent

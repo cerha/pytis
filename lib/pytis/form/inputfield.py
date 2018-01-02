@@ -248,10 +248,11 @@ class InputField(object, KeyHandler, CommandHandler):
     _focused_field = None
     _last_focused_field = None
 
+    @classmethod
     def _get_command_handler_instance(cls):
         return InputField.focused()
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
+    @classmethod
     def create(cls, parent, row, id, inline=False, **kwargs):
         """Create an instance of the class corresponding to the field specification.
 
@@ -320,36 +321,35 @@ class InputField(object, KeyHandler, CommandHandler):
         else:
             field = TextField
         return field(parent, row, id, inline=inline, **kwargs)
-    create = classmethod(create)
 
+    @classmethod
     def _defocus(cls, field):
         if cls._focused_field is field:
             cls._last_focused_field = cls._focused_field
             cls._focused_field = None
-    _defocus = classmethod(_defocus)
 
+    @classmethod
     def _focus(cls, field):
         # import weakref
         current = cls.focused()
         cls._focused_field = field  # weakref.ref(field)
         if current is not None:
             cls._last_focused_field = current
-    _focus = classmethod(_focus)
 
+    @classmethod
     def _last_focused(cls):
         field = cls._last_focused_field
         cls._last_focused_field = None
         if field is not None and field._alive():
             return field
         return None
-    _last_focused = classmethod(_last_focused)
 
+    @classmethod
     def focused(cls):
         field = cls._focused_field
         if field is not None and field._alive():
             return field
         return None
-    focused = classmethod(focused)
 
     # Instance methods
 
@@ -1357,9 +1357,9 @@ class Invocable(object, CommandHandler):
     _INVOKE_HELP = None
     _INVOKE_ICON = 'invoke-selection'
 
+    @classmethod
     def _get_command_handler_instance(cls):
         return InputField._get_command_handler_instance()
-    _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def _create_widget(self, parent, ctrl):
         widget = super(Invocable, self)._create_widget(parent, ctrl)
