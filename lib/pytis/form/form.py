@@ -1662,7 +1662,7 @@ class RecordForm(LookupForm):
     def _on_idle(self, event):
         if super(RecordForm, self)._on_idle(event):
             return True
-        if self._initial_select_row:
+        if self._initial_select_row is not None:
             # Repeat row selection even though the row should have been already
             # selected thanks to the constructor argument.  The problem with
             # the constructor argument, however, is that when the record is not
