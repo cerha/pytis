@@ -887,46 +887,51 @@ class LookupForm(InnerForm):
         # initially selected profile.
         self._default_profile = Profile('__default_profile__', _(u"Default profile"))
         self._profiles = self._load_profiles()
+        self._invalid_initial_profile = None
         if filter or sorting or columns or grouping:
             assert profile_id is None
             # When profile parameters were passed to the constructor, create an
             # additional profile according to these paramaters.
-            self._initial_profile = Profile('__constructor_profile__', _(u"Initial profile"),
-                                            filter=filter, sorting=sorting, columns=columns,
-                                            grouping=grouping)
-            self._profiles.insert(0, self._initial_profile)
+            initial_profile = Profile('__constructor_profile__', _(u"Initial profile"),
+                                      filter=filter, sorting=sorting, columns=columns,
+                                      grouping=grouping)
+            self._profiles.insert(0, initial_profile)
         else:
             # Note, that the profile 0 may not be the same as
             # self._default_profile, but a saved user customized version.
             default_profile = self._profiles[0]
-            if profile_id is not None:
-                check_profile_id = True
+            if profile_id:
+                assert profile_id in [p.id() for p in self._profiles], profile_id
             else:
                 profile_id = (self._get_saved_setting('initial_profile') or
                               self._view.profiles().default())
-                check_profile_id = False
             if profile_id:
-                profile = find(profile_id, self._profiles, key=lambda p: p.id())
-                if not profile:
-                    if check_profile_id:
-                        raise ProgramError("Unknown profile '%s'" % profile_id)
-                    else:
-                        profile = default_profile
-                self._initial_profile = profile
+                initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id())
+                                   or default_profile)
             else:
-                self._initial_profile = default_profile
-        self._initial_profile_applied = False
-        # The profile instances may contain None values to denote default
-        # values.  We need to remember the corresponding real values to be able
-        # to compare profiles with the current form state in
-        # '_current_profile_changed()'.  We rely on the fact that
-        # '_apply_profile_parameters()' substitutes None values by their
-        # corresponding default values and we don't want to repeat this logic
-        # anywhere else.  Thus we here apply the default profile and store the
-        # resulting profile parameters.  The user visible initial profile is
-        # applied later in _on_idle().
+                initial_profile = default_profile
+            if initial_profile.errors():
+                # This may actually happen only for user defined profiles,
+                # because invalid user customized system profiles are replaced
+                # by the original system profiles automatically by profile
+                # manager when loaded.
+                self._invalid_initial_profile = initial_profile
+                initial_profile = self._default_profile
+        self._initial_profile = initial_profile
+        # Profile instances may contain None values to denote default
+        # values.  We need to remember the corresponding real values
+        # to be able to compare profiles with the current form state
+        # in '_current_profile_changed()'.  We rely on the fact that
+        # '_apply_profile_parameters()' substitutes None values by
+        # their corresponding default values and we don't want to
+        # repeat this logic anywhere else.  Thus we apply the default
+        # profile first and store the resulting profile parameters.
+        # The user visible initial profile is applied in the later
+        # call if necessary.
         self._apply_profile_parameters(self._default_profile)
         self._default_profile_parameters = self._profile_parameters_to_save()
+        if initial_profile is not self._default_profile:
+            self._apply_profile_parameters(initial_profile)
         self._lf_initial_sorting = self._lf_sorting
         # _lf_condition represents a static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition,
@@ -1047,25 +1052,13 @@ class LookupForm(InnerForm):
         return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
                                                self._view, self._data, self._default_profile)
 
-    def _apply_initial_profile(self):
-        # This must be called in _on_idle especially because the initial
-        # profile may not be valid and we want to make use of handling invalid
-        # profiles in _cmd_apply_profile().
-        if self._initial_profile is not self._current_profile:
-            self._cmd_apply_profile(self._profiles.index(self._initial_profile))
-            dual = self._dualform()
-            if dual and self is not dual.main_form():
-                # Force focus back to mainform, as _apply_profile() (for
-                # unknown reason) sometimes steals the focus when applied in a
-                # sideform.
-                dual.main_form().focus()
-
     def _on_idle(self, event):
         if super(LookupForm, self)._on_idle(event):
             return True
-        if not self._initial_profile_applied:
-            self._initial_profile_applied = True
-            self._apply_initial_profile()
+        if self._invalid_initial_profile:
+            invalid_profile = self._invalid_initial_profile
+            self._invalid_initial_profile = None
+            self._handle_invalid_profile(invalid_profile)
         if not self._transaction_close_scheduled:
             self._on_idle_close_transactions()
             self._transaction_close_scheduled = True
@@ -1293,31 +1286,33 @@ class LookupForm(InnerForm):
     def _is_user_defined_profile(self, profile):
         return profile.id().startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
 
+    def _handle_invalid_profile(self, profile):
+        msg = _("User profile \"%s\" is invalid.\n"
+                "The form specification has probably changed and the saved\n"
+                "profile is incompatible now. You can either remove the profile,\n"
+                "or keep it and ask the administrator to update it.", profile.title())
+        errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
+        keep, remove = (_(u"Keep"), _(u"Remove"))
+        answer = run_dialog(pytis.form.MultiQuestion, title=_("Invalid profile"), message=msg,
+                            icon=pytis.form.Question.ICON_ERROR, buttons=(keep, remove),
+                            report=errors, default=keep)
+        if answer == remove:
+            if self._is_user_defined_profile(profile):
+                self._profiles.remove(profile)
+            else:
+                if profile.id() == self._default_profile.id():
+                    profile = self._default_profile
+                else:
+                    profile = find(profile.id(), self._view.profiles().unnest(),
+                                   key=lambda p: p.id())
+                self._profiles[index] = profile
+            profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
+                                           profile.id())
+
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
         if profile.errors():
-            keep, remove = (_(u"Keep"), _(u"Remove"))
-            msg = _(u"User profile \"%s\" is invalid.\n"
-                    u"The form specification has probably changed and the saved\n"
-                    u"profile is incompatible now. You can either remove the profile,\n"
-                    u"or keep it and ask the administrator to update it."
-                    ) % profile.title()
-            errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
-            answer = run_dialog(pytis.form.MultiQuestion, title=_("Invalid profile"), message=msg,
-                                icon=pytis.form.Question.ICON_ERROR, buttons=(keep, remove),
-                                report=errors, default=keep)
-            if answer == remove:
-                if self._is_user_defined_profile(profile):
-                    self._profiles.remove(profile)
-                else:
-                    if profile.id() == self._default_profile.id():
-                        profile = self._default_profile
-                    else:
-                        profile = find(profile.id(), self._view.profiles().unnest(),
-                                       key=lambda p: p.id())
-                    self._profiles[index] = profile
-                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
-                                               profile.id())
+            self._handle_invalid_profile(profile)
         else:
             orig_profile = self._current_profile
             try:
@@ -3051,10 +3046,6 @@ class PopupEditForm(PopupForm, EditForm):
         # were not designed for something like that.  It would be more lgical
         # to change the inheritance hierarchy so that single record forms don't
         # inherit profiles at all but that's a little too complicated for now.
-        pass
-
-    def _apply_initial_profile(self):
-        # See the comment for _apply_profile() above.
         pass
 
     def _can_commit_record(self, close=True, next=False):
