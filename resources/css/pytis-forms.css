@@ -461,7 +461,6 @@
 .pytis-form.edit-form select {
     border: 1px solid #bbb;
     background-color: #fff;
-    margin: 1px 0;
 }
 .pytis-form.edit-form input.text-field:disabled,
 .pytis-form.edit-form textarea:disabled,
