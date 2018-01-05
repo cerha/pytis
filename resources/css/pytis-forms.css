@@ -295,18 +295,18 @@
 .list-form-controls .paging-controls.one-page {
     text-align: right;
 }
-.pytis-form .paging-controls > div,
-.pytis-form .paging-controls > span {
-    margin-top: 0.2em;
-}
 .pytis-form .paging-controls {
-    padding: 0 0.2em 0.2em 0.2em;
+    padding: 0.2em;
+}
+.list-form-controls .index-search-controls {
+    margin-bottom: 0.2em;
 }
 .list-form-controls .offset,
 .list-form-controls .buttons,
 .list-form-controls .limit {
     white-space: nowrap;
     display: inline-block;
+    vertical-align: middle;
 }
 .list-form-controls .offset,
 .list-form-controls .buttons {
