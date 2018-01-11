@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2017 Brailcom, o.p.s.
+# Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1300,6 +1300,7 @@ class LookupForm(InnerForm):
             if self._is_user_defined_profile(profile):
                 self._profiles.remove(profile)
             else:
+                index = self._profiles.index(profile)
                 if profile.id() == self._default_profile.id():
                     profile = self._default_profile
                 else:
