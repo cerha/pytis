@@ -1170,7 +1170,7 @@ class BrowseForm(LayoutForm):
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  cell_editable=None, expand_row=None, async_row_expansion=False,
-                 on_update_row=None, inline_editable=False, **kwargs):
+                 on_update_row=None, inline_editable=False, embed=False, **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -1340,6 +1340,12 @@ class BrowseForm(LayoutForm):
             but will submit this URI in an asynchronous request and display the
             result returned from this URI inside the table row replacing the
             original row content.
+          embed -- if True, the form will not include any controls, such as
+            paging, query fields etc. and thus its HTML export will not include
+            any <form> elements.  This alows embedding the form in another
+            submittable form with its own <form> element (<form> elements are
+            not allowed to nest in HTML).  Support is experimantal and may not
+            work in all cases, so please test before relying on it...
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1572,6 +1578,7 @@ class BrowseForm(LayoutForm):
                                 if not isinstance(c.type(), pytis.data.Big)]
         self._row_count = None
         self._last_exported_row_actions = ()
+        self._embed = embed
 
     def _tree_level(self):
         if self._tree_order_column:
@@ -2028,6 +2035,8 @@ class BrowseForm(LayoutForm):
             return None
 
     def _export_controls(self, context, page, pages, bottom=False):
+        if self._embed:
+            return None
         g = context.generator()
         ids = context.id_generator()
         show_search_field = self._show_search_field
