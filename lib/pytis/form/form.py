@@ -1675,16 +1675,17 @@ class RecordForm(LookupForm):
         data = self._data
         current_row_number = data.last_row_number()
 
-        def dbop():
+        def find():
             data.rewind()
             data.skip(row_number)
             return data.fetchone()
-        success, row = db_operation(dbop)
 
-        def dbop():
+        def cleanup():
             data.rewind()
             data.skip(current_row_number + 1)
-        db_operation(dbop)
+
+        success, row = db_operation(find)
+        db_operation(cleanup)
         if not success or not row:
             return None
         else:
