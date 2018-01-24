@@ -3070,6 +3070,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             height = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height() + 50)
         if self._search_panel:
             height += 30
+        if self._query_fields_form and self._query_fields_form.IsShown():
+            height += self._query_fields_form.GetSize().y
         size = (self._total_width() + 30, height)
         self.SetSize(size)
 
