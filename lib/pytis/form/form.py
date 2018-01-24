@@ -1085,7 +1085,8 @@ class LookupForm(InnerForm):
             timeout_callback = None
         self._transaction_timeout_callback = timeout_callback
 
-    def _open_data_select(self, data, async_count):
+    def _init_data_select(self, data, async_count=False):
+        self._init_transaction_timeouts(data)
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._lf_sorting,
@@ -1093,10 +1094,6 @@ class LookupForm(InnerForm):
                            transaction=self._open_transaction(), reuse=False,
                            async_count=async_count,
                            timeout_callback=self._transaction_timeout_callback)
-
-    def _init_data_select(self, data, async_count=False):
-        self._init_transaction_timeouts(data)
-        return self._open_data_select(data, async_count)
 
     def _init_select(self, async_count=False):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
