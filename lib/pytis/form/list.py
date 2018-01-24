@@ -1617,7 +1617,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._on_line_rollback()
         return True
 
-    def select_row(self, position, quiet=False):
+    def select_row(self, position, **kwargs):
         # Během editace může `position' obsahovat nevyhledatelná data.
         if position is not None and self._table.editing():
             position = self._table.editing().row
@@ -1628,21 +1628,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._select_cell(row=position)
             return True
         else:
-            return super(ListForm, self).select_row(position, quiet=quiet)
+            return super(ListForm, self).select_row(position, **kwargs)
 
-    def _select_row(self, row, quiet=False):
+    def _select_row(self, row):
         if row:
             row_number = self._get_row_number(row)
-            if row_number is None:
-                if not quiet:
-                    if self._search_again_unfiltered():
-                        self._apply_profile(self._profiles[0])
-                        return self._select_row(row)
-                return False
         else:
             row_number = -1
-        self._select_cell(row=row_number)
-        return True
+        if row_number is not None:
+            self._select_cell(row=row_number)
+            return True
+        else:
+            return False
+
 
     def _refresh(self, when=None, reset=None, key_update=True, interactive=False):
         """Aktualizuj data seznamu z datového zdroje.

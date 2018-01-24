@@ -906,8 +906,8 @@ class LookupForm(InnerForm):
                 profile_id = (self._get_saved_setting('initial_profile') or
                               self._view.profiles().default())
             if profile_id:
-                initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id())
-                                   or default_profile)
+                initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id()) or
+                                   default_profile)
             else:
                 initial_profile = default_profile
             if initial_profile.errors():
@@ -1636,39 +1636,40 @@ class RecordForm(LookupForm):
 
         Arguments:
 
-          prefill -- a dictionary of values used to prefill the current form row.  The meaning is
-            the same as for the same 'PresentedRow' constructor argument.
-          select_row -- The initially selected row -- the value is the same as the argument of the
-            'select_row()' method.
+          prefill -- a dictionary of values used to prefill the current form
+            row.  The meaning is the same as for the same 'PresentedRow'
+            constructor argument.
+          select_row -- The initially selected row.  Same as the argument
+            'position' of 'select_row()'.
           kwargs -- arguments passed to the parent class
 
         """
-        self._initial_select_row = select_row
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
-        self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new)
+        self._select_row_argument = select_row
+        self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
+
+    def _full_init(self, *args, **kwargs):
+        super_(RecordForm)._full_init(self, *args, **kwargs)
+        if self._select_row_argument is not None:
+            # Initial select_row() call is important mainly for the case
+            # that the row corresponding to the 'select_row' argument does
+            # not exist (which is ignored by self._find_row() called form
+            # _init_attributes()).  The select_row() call must be at the end
+            # of _full_init() because it may call _apply_profile() which
+            # requires the grid to be fully initialized in BrowseForm.
+            self._initial_select_row(self._select_row_argument)
+
+    def _initial_select_row(self, position):
+        # Separate method to allow overriding it in derived classes (see PopupEditForm).
+        self.select_row(position)
 
     def _signal_update(self):
         pass
 
     def _select_columns(self):
         return None
-
-    def _on_idle(self, event):
-        if super(RecordForm, self)._on_idle(event):
-            return True
-        if self._initial_select_row is not None:
-            # Repeat row selection even though the row should have been already
-            # selected thanks to the constructor argument.  The problem with
-            # the constructor argument, however, is that when the record is not
-            # found, it is not announced.  It must be done in _on_idle, because
-            # we need the initial profile to be applied before.
-            select_row = self._initial_select_row
-            self._initial_select_row = None
-            self.select_row(select_row)
-            self.focus()
-        return False
 
     def _find_row_by_number(self, row_number):
         # row_number starts with 0
@@ -1691,46 +1692,31 @@ class RecordForm(LookupForm):
         else:
             return row
 
-    def _find_row_by_values(self, cols, values):
-        """Vrať datový řádek odpovídající daným hodnotám.
-
-        Argumenty:
-
-          cols -- sekvence názvů sloupců, které mají být prohledávány.
-          values -- sekvence hodnot sloupců jako instancí 'pytis.data.Value' v
-            pořadí odpovídajícím 'cols'.
-
-        Pro obě sekvence platí, že pokud jsou jednoprvkové, mohou být hodnoty
-        předány i přímo, bez obalení do sekvenčního typu.
-
-        """
-        cols = xtuple(cols)
-        values = xtuple(values)
-        assert len(cols) == len(values)
+    def _find_row_by_values(self, values):
         data = self._data
-        if cols == tuple([c.id() for c in data.key()]):
-            # This saves the final _init_select call
-            return self._find_row_by_key(values)
-        cond = pytis.data.AND(*[pytis.data.EQ(c, v) for c, v in zip(cols, values)])
-        condition = pytis.data.AND(cond, self._current_condition())
+        current_row_number = data.last_row_number()
 
-        def dbop(condition):
-            data.select(condition, columns=self._select_columns(),
-                        transaction=self._open_transaction())
-            return data.fetchone()
-        success, row = db_operation(dbop, condition)
-        self._init_select(async_count=True)
-        return row
+        def find():
+            try:
+                data.rewind()
+                position = data.search(pytis.data.AND(*[pytis.data.EQ(key, value)
+                                                        for key, value in values]),
+                                       transaction=self._open_transaction(),
+                                       arguments=self._current_arguments())
+                if position == 0:
+                    return None
+                else:
+                    data.skip(position - 1)
+                    return data.fetchone()
+            finally:
+                data.rewind()
+                data.skip(current_row_number + 1)
 
-    def _find_row_by_key(self, key):
-        cols = self._select_columns()
-        success, row = db_operation(self._data.row, key, columns=cols,
-                                    transaction=self._open_transaction(),
-                                    arguments=self._current_arguments())
-        if success and row:
-            return row
-        else:
+        success, row = db_operation(find)
+        if not success or not row:
             return None
+        else:
+            return row
 
     def _get_row_number(self, row):
         """Vrať číslo řádku odpovídající dané instanci 'pytis.data.Row'.
@@ -1743,7 +1729,8 @@ class RecordForm(LookupForm):
 
         def dbop():
             data.rewind()
-            return data.search(pytis.data.EQ(key, row[key]), transaction=self._open_transaction(),
+            return data.search(pytis.data.EQ(key, row[key]),
+                               transaction=self._open_transaction(),
                                arguments=self._current_arguments())
         try:
             success, result = db_operation(dbop)
@@ -1765,21 +1752,22 @@ class RecordForm(LookupForm):
         else:
             return result - 1
 
-    def _data_row(self, position):
-        # Return the *data* row instance corresponding to given 'select_row()' argument.
+    def _find_row(self, position):
+        # Return the data row instance corresponding to given 'select_row()' argument.
         if position is None or isinstance(position, pytis.data.Row):
             row = position
         elif isinstance(position, int):
             row = self._find_row_by_number(position)
         elif isinstance(position, (tuple, pytis.data.Value)):
-            row = self._find_row_by_key(xtuple(position))
+            row = self._find_row_by_values(zip([c.id() for c in self._data.key()],
+                                               xtuple(position)))
         elif isinstance(position, dict):
-            row = self._find_row_by_values(position.keys(), position.values())
+            row = self._find_row_by_values(position.items())
         else:
             raise ProgramError("Invalid 'position':", position)
         return row
 
-    def _select_row(self, row, quiet=False):
+    def _select_row(self, row):
         # Set the form data according to given *data* row.
         self._row.set_row(row)
         self._run_callback(self.CALL_SELECTION, self._row)
@@ -2172,7 +2160,7 @@ class RecordForm(LookupForm):
         return self.Record(self, fields, data, row, transaction=self._open_transaction(),
                            singleline=self._SINGLE_LINE, **kwargs)
 
-    def select_row(self, position, quiet=False):
+    def select_row(self, position, quiet=False, retry=True):
         """Vyber řádek dle 'position'.
 
         Argument 'position' může mít některou z následujících hodnot:
@@ -2202,30 +2190,26 @@ class RecordForm(LookupForm):
         opačném případě.
 
         """
-        row = self._data_row(position)
-        if ((not quiet and
-             position is not None and
-             (not isinstance(position, (tuple, list,)) or
-              len(position) != 1 or
-              position[0].value() is not None) and
-             row is None)):
-            if self._search_again_unfiltered():
-                self._apply_profile(self._profiles[0])
-                return self.select_row(position)
-            return False
-        return self._select_row(row, quiet=quiet)
-
-    def _search_again_unfiltered(self):
-        if self._lf_filter:
-            if run_dialog(pytis.form.Question, title=_("Record not found"),
-                          message=_("The searched record was not found. "
-                                    "It may be caused by the active filter.\n"
-                                    "Do you want to activate the default profile and "
-                                    "try searching again?")):
-                return True
-        else:
+        row = self._find_row(position)
+        if row is None and not quiet and not (position is None or
+                                              (isinstance(position, tuple) and
+                                               len(position) == 1 and
+                                               position[0].value() is None)):
+            if self._lf_filter and retry:
+                profile = find(True, self._profiles, lambda p: p.filter() is None)
+                if profile:
+                    if run_dialog(pytis.form.Question, title=_("Record not found"),
+                                  message=_("The searched record was not found. "
+                                            "It may be caused by the active filter.\n"
+                                            "Do you want to activate the unfiltered "
+                                            "profile %s and try searching again?",
+                                            profile.title())):
+                        self._apply_profile(profile)
+                        return self.select_row(position, retry=False)
+                    else:
+                        return False
             run_dialog(Warning, _("Record not found"))
-        return False
+        return self._select_row(row)
 
     def current_row(self):
         """Vrať instanci PresentedRow právě aktivního řádku.
@@ -2888,20 +2872,13 @@ class PopupEditForm(PopupForm, EditForm):
         size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
-        # HACK: Avoid initial select_row call in popup forms.  Its purpose is
-        # irrelevant here and it causes problems with set_values - the
-        # additional select_row() call resets them.
-        self._initial_select_row = None
 
-    def _open_data_select(self, data, async_count=False):
-        if self._initial_select_row == 0:
-            # Some special forms (such as virtual forms) may require opening
-            # the data select to initialize their data.
-            return super(PopupEditForm, self)._open_data_select(data, async_count=async_count)
-        else:
-            # Apparently we needn't open data select here; it just delays opening
-            # the form in some situations.
-            return None
+    def _initial_select_row(self, position):
+        # Avoid the initial select_row call in popup forms.  We don't really
+        # need it here as we rely on self._row being initialized according to
+        # select_row already.  The additional select_row() would also reset
+        # the values initialized according to the 'set_values' argument.
+        pass
 
     def _default_transaction(self):
         if isinstance(self._data, pytis.data.MemData):
@@ -3443,8 +3420,8 @@ class BrowsableShowForm(ShowForm):
             row_number -= 1
         self._select_row(self._find_row_by_number(row_number))
 
-    def _select_row(self, row, quiet=False):
-        result = super(BrowsableShowForm, self)._select_row(row, quiet=quiet)
+    def _select_row(self, row):
+        result = super(BrowsableShowForm, self)._select_row(row)
         current_row = self.current_row()
         total = self._lf_count(timeout=0)
         if not isinstance(self._lf_select_count_, int):
