@@ -1622,7 +1622,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self.select_row(self._select_row_argument)
         else:
             self.select_row(0, quiet=True)
-        self.focus()
 
     def select_row(self, position, **kwargs):
         # Během editace může `position' obsahovat nevyhledatelná data.
