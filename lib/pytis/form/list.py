@@ -128,9 +128,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # (the arrow buttons touch each other...).
         self.SetMinSize((80, 80))
 
-    def _init_attributes(self, select_row=0, **kwargs):
+    def _init_attributes(self, **kwargs):
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
-        super(ListForm, self)._init_attributes(select_row=select_row, **kwargs)
+        super(ListForm, self)._init_attributes(**kwargs)
         self._fields = self._view.fields()
         self._selection_candidate = None
         self._selection_callback_candidate = None
@@ -1616,6 +1616,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 log(EVENT, 'Saving denied')
                 self._on_line_rollback()
         return True
+
+    def _initial_select_row(self):
+        if self._select_row_argument is not None:
+            self.select_row(self._select_row_argument)
+        else:
+            self.select_row(0, quiet=True)
+        self.focus()
 
     def select_row(self, position, **kwargs):
         # Během editace může `position' obsahovat nevyhledatelná data.

@@ -1645,22 +1645,26 @@ class RecordForm(LookupForm):
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
         self._select_row_argument = select_row
+        self._initial_select_row_called = False
         self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
 
-    def _full_init(self, *args, **kwargs):
-        super_(RecordForm)._full_init(self, *args, **kwargs)
-        if self._select_row_argument is not None:
-            # Initial select_row() call is important mainly for the case
-            # that the row corresponding to the 'select_row' argument does
-            # not exist (which is ignored by self._find_row() called form
-            # _init_attributes()).  The select_row() call must be at the end
-            # of _full_init() because it may call _apply_profile() which
-            # requires the grid to be fully initialized in BrowseForm.
-            self._initial_select_row(self._select_row_argument)
+    def _on_idle(self, event):
+        if super(RecordForm, self)._on_idle(event):
+            return True
+        if not self._initial_select_row_called:
+            self._initial_select_row_called = True
+            self._initial_select_row()
+        return False
 
-    def _initial_select_row(self, position):
-        # Separate method to allow overriding it in derived classes (see PopupEditForm).
-        self.select_row(position)
+    def _initial_select_row(self):
+        # The initial select_row() call is important mainly for the case
+        # that the row corresponding to the 'select_row' argument does
+        # not exist (which is ignored by self._find_row() called form
+        # _init_attributes()).  This method must be called from _on_idle()
+        # because it may call _apply_profile() which requires the grid
+        # to be fully initialized in BrowseForm.
+        if self._select_row_argument is not None:
+            self.select_row(self._select_row_argument)
 
     def _signal_update(self):
         pass
@@ -2870,11 +2874,11 @@ class PopupEditForm(PopupForm, EditForm):
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
 
-    def _initial_select_row(self, position):
-        # Avoid the initial select_row call in popup forms.  We don't really
+    def _initial_select_row(self):
+        # Supress the initial select_row() call in popup forms.  We don't really
         # need it here as we rely on self._row being initialized according to
-        # select_row already.  The additional select_row() would also reset
-        # the values initialized according to the 'set_values' argument.
+        # the select_row argument already.  The additional select_row() would
+        # reset the values initialized by the 'set_values' argument.
         pass
 
     def _default_transaction(self):
