@@ -3157,6 +3157,7 @@ class QueryFieldsForm(_VirtualEditForm):
     def _full_init(self, parent, resolver, name, query_fields, callback, **kwargs):
         self._query_fields_apply_callback = callback
         self._autoapply = autoapply = query_fields.autoapply()
+        self._autoinit = autoinit = query_fields.autoinit()
         self._unapplied_query_field_changes = True
         self._unapplied_query_field_changes_after_restore = False
         kwargs.update(query_fields.view_spec_kwargs())
@@ -3178,7 +3179,7 @@ class QueryFieldsForm(_VirtualEditForm):
                                     **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',
                                     self._on_query_fields_changed)
-        if not autoapply and query_fields.autoinit():
+        if not autoapply and autoinit:
             self._query_fields_apply_button.Enable(False)
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
@@ -3195,6 +3196,10 @@ class QueryFieldsForm(_VirtualEditForm):
         if button.handler() == self._apply_query_fields:
             self._query_fields_apply_button = result
         return result
+
+    def _set_focus_field(self, event=None):
+        if not self._autoinit:
+            super(QueryFieldsForm, self)._set_focus_field(event=event)
 
     def _on_idle(self, event):
         if super(QueryFieldsForm, self)._on_idle(event):
