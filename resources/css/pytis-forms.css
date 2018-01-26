@@ -392,8 +392,8 @@
 }
 .pytis-form .field-label .not-null-indicator {
     position: absolute;
-    top: -5px;
-    right: -3px;
+    top: -.3em;
+    right: -.2em;
 }
 .pytis-form .field-label.disabled { color: #444; }
 .pytis-form .field-label.disabled .not-null-indicator { display: none; }
@@ -417,22 +417,19 @@
 .pytis-form .group table {
     border-collapse: collapse;
 }
-.pytis-form.show-form td.ctrl, .pytis-form.list-view td.ctrl { 
+.pytis-form.show-form td.ctrl,
+.pytis-form.list-view td.ctrl,
+.pytis-form td.label,
+.pytis-form.show-form td.label { /* The last rule = show form embedded in an edit form. */
     line-height: 1.4em;
 }
 .pytis-form td.label {
-    line-height: 1.4em;
     white-space: nowrap;
 }
 .pytis-form.edit-form td.label {
     /* To display labels vertically centered with form controls. */
-    line-height: 1.8em;
-    padding: 3px 0;
+    line-height: 2.1em;
 }
-.pytis-form.show-form td.label {
-    /* Force normal line height in a show form embedded in an edit form. */
-    line-height: 1.4em; 
-} 
 
 .pytis-form.show-form a.print-field-link { 
     float: right;
