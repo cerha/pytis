@@ -3160,6 +3160,7 @@ class QueryFieldsForm(_VirtualEditForm):
         self._autoinit = autoinit = query_fields.autoinit()
         self._unapplied_query_field_changes = True
         self._unapplied_query_field_changes_after_restore = False
+        self._initialized = autoinit
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
         layout = kwargs.pop('layout')
@@ -3226,10 +3227,12 @@ class QueryFieldsForm(_VirtualEditForm):
             self._apply_query_fields(self._row, interactive=False)
         else:
             self._unapplied_query_field_changes = True
+            self._initialized = True
 
     def _apply_query_fields(self, row, interactive=True):
         if ((all(f.validate(interactive=interactive) for f in self._fields) and
              self._do_check_record(row))):
+            self._initialized = True
             self._query_fields_apply_callback(row)
             self._unapplied_query_field_changes = False
 
@@ -3242,7 +3245,10 @@ class QueryFieldsForm(_VirtualEditForm):
         raise Exception("This form can not be run.")
 
     def row(self):
-        return self._row
+        if self._initialized:
+            return self._row
+        else:
+            return None
 
 
 class ResizableEditForm(object):
