@@ -3199,7 +3199,11 @@ class QueryFieldsForm(_VirtualEditForm):
         return result
 
     def _set_focus_field(self, event=None):
-        if not self._autoinit:
+        # Avoid moving focus to the fields when autoinit is true
+        # as we prefer having focus in the grid.  Also when the
+        # query fields belong to a side form, don't focus the
+        # fields to leave focus in the main form.
+        if not self._autoinit and not isinstance(self.GetParent().GetParent(), SideBrowseForm):
             super(QueryFieldsForm, self)._set_focus_field(event=event)
 
     def _on_idle(self, event):
