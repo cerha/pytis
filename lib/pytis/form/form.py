@@ -2401,7 +2401,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         super(EditForm, self)._on_idle_close_transactions()
 
     def _set_focus_field(self, event=None):
-        """Inicalizuj dialog nastavením hodnot políček."""
         field = None
         if self._focus_field:
             if isinstance(self._focus_field, collections.Callable):
