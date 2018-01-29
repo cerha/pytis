@@ -399,7 +399,7 @@
 .pytis-form .field-label.disabled .not-null-indicator { display: none; }
 
 .pytis-form .radio-group {
-    margin-bottom: 0.3em;
+    margin: .15em 0 0.25em 0;
 }
 .pytis-form .radio-group div, .pytis-form .radio-group span {
     white-space: nowrap;
