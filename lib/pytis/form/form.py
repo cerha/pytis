@@ -3374,6 +3374,15 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
 
+    def _init_data_select(self, data, async_count=False):
+        if isinstance(data, pytis.data.MemData):
+            # Virtual forms need opening the data select to initialize their data, but:
+            # TODO: We shouldn't really care here.  Such MemData initialization should
+            # be done in its constructor.
+            return super(PopupEditForm, self)._init_data_select(data, async_count=async_count)
+        else:
+            # Otherwise opening the select just delays opening the form.
+            self._init_transaction_timeouts(data)
 
 class ShowForm(EditForm):
     """Formulář pro zobrazení náhledu.
