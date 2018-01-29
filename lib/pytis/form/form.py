@@ -3161,6 +3161,8 @@ class QueryFieldsForm(_VirtualEditForm):
         self._unapplied_query_field_changes = True
         self._unapplied_query_field_changes_after_restore = False
         self._initialized = autoinit
+        self._save = query_fields.save()
+        load = query_fields.load()
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
         layout = kwargs.pop('layout')
@@ -3188,6 +3190,8 @@ class QueryFieldsForm(_VirtualEditForm):
         size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
+        if load:
+            load(self._row)
 
     def _create_form_parts(self, sizer):
         sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
@@ -3237,6 +3241,8 @@ class QueryFieldsForm(_VirtualEditForm):
         if ((all(f.validate(interactive=interactive) for f in self._fields) and
              self._do_check_record(row))):
             self._initialized = True
+            if self._save:
+                self._save(row)
             self._query_fields_apply_callback(row)
             self._unapplied_query_field_changes = False
 
