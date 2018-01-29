@@ -3207,7 +3207,8 @@ class QueryFieldsForm(_VirtualEditForm):
         # as we prefer having focus in the grid.  Also when the
         # query fields belong to a side form, don't focus the
         # fields to leave focus in the main form.
-        if not self._autoinit and not isinstance(self.GetParent().GetParent(), SideBrowseForm):
+        if not self._autoinit and not isinstance(self.GetParent().GetParent(),
+                                                 pytis.form.SideBrowseForm):
             super(QueryFieldsForm, self)._set_focus_field(event=event)
 
     def _on_idle(self, event):
