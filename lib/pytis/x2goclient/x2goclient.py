@@ -600,6 +600,14 @@ class X2GoClient(x2go.X2GoClient):
                 except ClientException:
                     pass
         app.update_progress(_("Preparing X2Go session."))
+        # Clean tempdir.
+        tempdir = tempfile.gettempdir()
+        for f in os.listdir(tempdir):
+            if f.startswith('pytistmp'):
+                try:
+                    os.remove(os.path.join(tempdir, f))
+                except:
+                    pass
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
@@ -1019,14 +1027,6 @@ class StartupController(object):
 
     def _connect(self, **connection_parameters):
         if ssh_connect(**connection_parameters):
-            # Clean tempdir.
-            tempdir = tempfile.gettempdir()
-            for f in os.listdir(tempdir):
-                if f.startswith('pytistmp'):
-                    try:
-                        os.remove(os.path.join(tempdir, f))
-                    except:
-                        pass
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
             return X2GoClient(session_parameters, self._app,
