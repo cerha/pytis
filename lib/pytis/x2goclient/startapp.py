@@ -333,7 +333,7 @@ class X2GoStartApp(wx.App):
 
     def _menu_items(self):
         items = [
-            (name, lambda: self._connect(profile_id))
+            (name, lambda profile_id=profile_id: self._connect(profile_id))
             for profile_id, name in self._profiles
         ]
         items.extend((
