@@ -52,9 +52,6 @@ from pytis.x2goclient import ssh_connect, public_key_acceptable, X2GOCLIENT_VERS
 _ = pytis.util.translations('pytis-x2go')
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
-# TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
-# we use older variant of VcXsrv. Later we will switch back to the current version.
-XSERVER_VARIANT_DEFAULT = 'VcXsrv_pytis_old'
 
 XCONFIG_DEFAULTS = {
     'XServers': {
@@ -590,8 +587,7 @@ class X2GoClient(x2go.X2GoClient):
                 self._control_session._x2go_sftp_write(self._server_file_name, data)
                 self._changed = False
 
-    def __init__(self, session_parameters, app, xserver_variant=XSERVER_VARIANT_DEFAULT,
-                 wait_for_pytis=True, **kwargs):
+    def __init__(self, session_parameters, app, wait_for_pytis=True, **kwargs):
         self._session_parameters = session_parameters
         self._settings = settings = X2GoClientSettings()
         for param, option, t in (('server', 'hostname', None),
@@ -608,8 +604,15 @@ class X2GoClient(x2go.X2GoClient):
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
         self.terminal_backend = TerminalSession
-        if pytis.util.on_windows() and xserver_variant:
+        if pytis.util.on_windows():
             app.update_progress(_("Starting up X11 server."))
+            if ((session_parameters['session_type'] == 'desktop' and
+                 session_parameters['geometry'] == 'maximize')):
+                xserver_variant = 'VcXsrv_pytis_desktop'
+            else:
+                # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
+                # we use older variant of VcXsrv. Later we will switch back to the current version.
+                xserver_variant = 'VcXsrv_pytis_old'
             self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         session = self.session_registry(self._x2go_session_hash)
@@ -686,7 +689,7 @@ class X2GoClient(x2go.X2GoClient):
             if info.changed():
                 info.write()
 
-    def _start_xserver(self, variant=None):
+    def _start_xserver(self, variant):
         if self.client_rootdir:
             kwargs = dict(config_files=os.path.join(self.client_rootdir,
                                                     x2go.defaults.X2GO_XCONFIG_FILENAME))
@@ -696,16 +699,9 @@ class X2GoClient(x2go.X2GoClient):
         if not self.client_xconfig.installed_xservers:
             self.HOOK_no_installed_xservers_found()
         else:
-            last_display = None
-            if isinstance(variant, types.BooleanType):
-                p_xs_name = self.client_xconfig.preferred_xserver_names[0]
-                last_display = self.client_xconfig.get_xserver_config(p_xs_name)['last_display']
-                new_display = self.client_xconfig.detect_unused_xdisplay_port(p_xs_name)
-                p_xs = (p_xs_name, self.client_xconfig.get_xserver_config(p_xs_name))
-            elif isinstance(variant, types.StringType):
-                last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
-                new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
-                p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
+            last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
+            new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
+            p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
             if not self.client_xconfig.running_xservers:
                 if p_xs is not None:
                     self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1], logger=self.logger)
@@ -857,7 +853,6 @@ class StartupController(object):
         self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
         self._force_parameters = force_parameters
         self._add_to_known_hosts = add_to_known_hosts
-        self._xserver_variant = XSERVER_VARIANT_DEFAULT
         if broker_url:
             self._broker_parameters, self._broker_path = self._parse_url(broker_url)
             self._broker_password = broker_password
@@ -1035,7 +1030,6 @@ class StartupController(object):
             # Create and set up the client instance.
             session_parameters = dict(self._session_parameters, **connection_parameters)
             return X2GoClient(session_parameters, self._app,
-                              xserver_variant=self._xserver_variant,
                               wait_for_pytis=self._wait_for_pytis,
                               loglevel=x2go.log.loglevel_DEBUG)
         else:
@@ -1092,7 +1086,6 @@ class StartupController(object):
         profile = self._profiles.broker_selectsession(profile_id)
         rootless = profile.get('rootless', True)
         if not rootless or int(rootless) == 0:
-            self._xserver_variant = 'VcXsrv_pytis_desktop'
             self._session_parameters['session_type'] = 'desktop'
             self._session_parameters['geometry'] = 'maximize'
 
