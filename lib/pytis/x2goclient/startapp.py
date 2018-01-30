@@ -281,6 +281,14 @@ class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
     _MAX_PROGRESS = 40
+    _DEFAULT_SESSION_PARAMETERS = dict(
+        gss_auth=False,
+        look_for_keys=True,
+        allow_agent=True,
+        profile_name='Pytis-Client-Session',
+        cache_type='unix-kde',
+        allow_share_local_folders=True
+    )
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
@@ -314,10 +322,10 @@ class X2GoStartApp(wx.App):
     def __init__(self, args, session_parameters, force_parameters):
         self._progress = 1
         self._args = args
+        self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
+        self._force_parameters = force_parameters
         self._controller = pytis.x2goclient.StartupController(
             self,
-            session_parameters,
-            force_parameters=force_parameters,
             add_to_known_hosts=args.add_to_known_hosts,
             broker_url=args.broker_url,
             broker_password=args.broker_password,
@@ -333,8 +341,8 @@ class X2GoStartApp(wx.App):
 
     def _menu_items(self):
         items = [
-            (name, lambda profile_id=profile_id: self._connect(profile_id))
-            for profile_id, name in self._profiles
+            (parameters['profile_name'], lambda p=profile_id: self._connect(p))
+            for profile_id, parameters in self._profiles
         ]
         items.extend((
             ('---',) if items else None,
@@ -463,8 +471,12 @@ class X2GoStartApp(wx.App):
     def _connect(self, profile_id):
         self._frame.Show()
         self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
-        self._controller.select_profile(profile_id)
-        client = self._controller.connect()
+        session_parameters = dict(
+            self._session_parameters,
+            **dict((k, v) for k, v in dict(self._profiles)[profile_id].items()
+                   if k not in self._force_parameters)
+        )
+        client = self._controller.connect(session_parameters)
         if client:
             self.update_progress(_("Starting Pytis client."))
             self._start_session(client)
@@ -473,10 +485,7 @@ class X2GoStartApp(wx.App):
 
     def _load_profiles(self):
         self._frame.Show()
-        profiles = self._controller.list_profiles()
-        self._profiles = sorted([(pid, profiles.to_session_params(pid)['profile_name'])
-                                 for pid in profiles.profile_ids],
-                                key=lambda x: x[1])
+        self._profiles = self._controller.list_profiles()
         self._icon.update_menu(self._menu_items())
         self.update_progress(_("Successfully loaded %d profiles.", len(self._profiles)))
         time.sleep(2)
@@ -562,8 +571,8 @@ class X2GoStartApp(wx.App):
             else:
                 self.info_dialog(_("Shortcut created"), _("Shortcut created successfully."))
         menu = wx.Menu()
-        for profile_id, name in self._profiles:
-            item = wx.MenuItem(menu, -1, name)
+        for profile_id, parameters in self._profiles:
+            item = wx.MenuItem(menu, -1, parameters['profile_name'])
             menu.Bind(wx.EVT_MENU,
                       lambda event, profile_id=profile_id: create_shortcut(profile_id),
                       id=item.GetId())
@@ -875,5 +884,5 @@ class X2GoStartApp(wx.App):
         if profile_id or self._args.autoload:
             self._load_profiles()
         if profile_id:
-            self._controller.select_profile(profile_id)
+            self._connect(profile_id)
         return True
