@@ -2372,6 +2372,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._row[key] = value
         self._closed_connection_handled = False
 
+    def _apply_profile_parameters(self, profile):
+        # Completely ignore profiles in edit forms.  This and the
+        # derived forms (except for BrowsableShowForm) operate on
+        # a single record and we don't want the underlying select
+        # to be filtered by the current profile condition.  This
+        # makes select_row to work for all records, not only
+        # those present in the default profile.
+        if profile is self._default_profile:
+            super(EditForm, self)._apply_profile_parameters(profile)
+
     def _disable_buttons(self, w):
         for c in w.GetChildren():
             if isinstance(c, wx.Button):
@@ -3432,6 +3442,10 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editačního formuláře.
 
     """
+    def _apply_profile_parameters(self, profile):
+        # Ignore EditForm._apply_profile_parameters() and use the
+        # original implementation of this method in this class.
+        LookupForm._apply_profile_parameters(self, profile)
 
     def _cmd_next_record(self, back=False):
         current_row = self.current_row()
