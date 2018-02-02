@@ -3201,6 +3201,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_number = self._pg_buffer.current()[1]
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
+                    columns=self._pg_last_select_columns,
                     transaction=self._pg_last_select_transaction,
                     arguments=self._pg_last_select_arguments,
                     async_count=self._pg_async_count,
@@ -3269,6 +3270,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if ((reuse and not self._pg_changed and self._pg_number_of_rows and
              condition == self._pg_last_select_condition and
              sort == self._pg_last_select_sorting and
+             columns == self._pg_last_select_columns and
              transaction is self._pg_last_select_transaction and
              limit == self._pg_last_select_limit and
              not async_count)):
@@ -3292,6 +3294,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_set_read_only = False
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
+        self._pg_last_select_columns = columns
         self._pg_last_select_transaction = transaction
         self._pg_last_select_arguments = arguments
         self._pg_last_select_limit = limit
