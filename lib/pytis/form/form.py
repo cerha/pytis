@@ -984,7 +984,9 @@ class LookupForm(InnerForm):
         return sorting
 
     def _current_condition(self, filter=None, display=False):
-        conditions = (self._lf_condition, filter or self._lf_filter, self._lf_provider_condition)
+        conditions = (self._lf_condition,
+                      filter or self._lf_filter,
+                      self._lf_provider_condition)
         conditions = [c for c in conditions if c is not None]
         if len(conditions) == 0:
             return None
@@ -1641,11 +1643,11 @@ class RecordForm(LookupForm):
           kwargs -- arguments passed to the parent class
 
         """
-        super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
         self._select_row_argument = select_row
         self._initial_select_row_called = False
+        super_(RecordForm)._init_attributes(self, **kwargs)
         self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
 
     def _on_idle(self, event):
@@ -2372,16 +2374,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._row[key] = value
         self._closed_connection_handled = False
 
-    def _apply_profile_parameters(self, profile):
-        # Completely ignore profiles in edit forms.  This and the
-        # derived forms (except for BrowsableShowForm) operate on
-        # a single record and we don't want the underlying select
-        # to be filtered by the current profile condition.  This
-        # makes select_row to work for all records, not only
-        # those present in the default profile.
-        if profile is self._default_profile:
-            super(EditForm, self)._apply_profile_parameters(profile)
-
     def _disable_buttons(self, w):
         for c in w.GetChildren():
             if isinstance(c, wx.Button):
@@ -2882,6 +2874,35 @@ class PopupEditForm(PopupForm, EditForm):
         size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
+
+    def _init_data_select(self, data, async_count=False):
+        if ((isinstance(data, pytis.data.MemData) or
+             isinstance(self._select_row_argument, (int, dict)))):
+            # Virtual forms need opening the data select to initialize their data, but:
+            # TODO: We shouldn't really care here.  Such MemData initialization should
+            # be done in its constructor.
+            # Also for the theoretical case that the constructor argument 'select_row'
+            # contains a row number (int) or a dictionary of values, we need to
+            # initialize the select in order to be able to perform _find_row() for
+            # that position.  This would be, however, better to avoid this because
+            # of the risk of slow selects when big binary data are present.  Pytis
+            # never passes int or dict here, but we are not sure about the apps so we
+            # keep this option, but:
+            # TODO: Consider disabling int/dict position for PopupEditForm select_row.
+            return super(PopupEditForm, self)._init_data_select(data, async_count=async_count)
+        else:
+            # Otherwise opening the select just delays opening the form (particularly
+            # when it contains big (binary) data).
+            self._init_transaction_timeouts(data)
+
+    def _find_row(self, position):
+        if isinstance(position, (tuple, pytis.data.Value)):
+            # Using data.row() is faster and doesn't require the (potentially slow)
+            # data select to be opened at form startup.  It also ignores any
+            # conditions given by the current profile etc, which is desirable here.
+            return self._data.row(position)
+        else:
+            return super(PopupEditForm, self)._find_row(position)
 
     def _initial_select_row(self):
         # Supress the initial select_row() call in popup forms.  We don't really
@@ -3391,16 +3412,6 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
 
-    def _init_data_select(self, data, async_count=False):
-        if isinstance(data, pytis.data.MemData):
-            # Virtual forms need opening the data select to initialize their data, but:
-            # TODO: We shouldn't really care here.  Such MemData initialization should
-            # be done in its constructor.
-            return super(PopupEditForm, self)._init_data_select(data, async_count=async_count)
-        else:
-            # Otherwise opening the select just delays opening the form.
-            self._init_transaction_timeouts(data)
-
 class ShowForm(EditForm):
     """Formulář pro zobrazení náhledu.
 
@@ -3442,10 +3453,6 @@ class BrowsableShowForm(ShowForm):
     jeden záznam zobrazený v Layoutu editačního formuláře.
 
     """
-    def _apply_profile_parameters(self, profile):
-        # Ignore EditForm._apply_profile_parameters() and use the
-        # original implementation of this method in this class.
-        LookupForm._apply_profile_parameters(self, profile)
 
     def _cmd_next_record(self, back=False):
         current_row = self.current_row()
