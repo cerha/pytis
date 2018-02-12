@@ -392,6 +392,7 @@
 }
 .pytis-form .field-label .not-null-indicator {
     position: absolute;
+    line-height: 1em;
     top: -.3em;
     right: -.2em;
 }
