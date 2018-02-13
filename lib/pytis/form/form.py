@@ -2900,7 +2900,11 @@ class PopupEditForm(PopupForm, EditForm):
             # Using data.row() is faster and doesn't require the (potentially slow)
             # data select to be opened at form startup.  It also ignores any
             # conditions given by the current profile etc, which is desirable here.
-            return self._data.row(position)
+            success, row = db_operation(self._data.row, position,
+                                        columns=self._select_columns(),
+                                        transaction=self._open_transaction(),
+                                        arguments=self._current_arguments())
+            return row if success and row else None
         else:
             return super(PopupEditForm, self)._find_row(position)
 
