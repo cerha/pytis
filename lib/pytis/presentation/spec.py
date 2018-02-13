@@ -3634,7 +3634,7 @@ class Field(object):
                 # Backwards compatibility: the editable function used to accept two arguments.
                 editable = Computer(lambda r: e_func(r, id), depends=editable.depends())
         self._editable = editable
-        assert isinstance(visible, (bool, Computer))
+        assert isinstance(visible, (bool, Computer)), visible
         self._visible = visible
         self._formatter = formatter
         self._line_separator = line_separator
