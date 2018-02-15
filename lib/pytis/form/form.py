@@ -2064,10 +2064,16 @@ class RecordForm(LookupForm):
         kwargs = action.kwargs()
         log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
         action.handler()(*args, **kwargs)
-        # Hack: Pokud jsme součástí duálního formuláře, chceme refreshnout celý
-        # dualform.  Jinak refreshujeme jen sebe sama.
+        if action.context() == ActionContext.SELECTION:
+            # Clear rows selection to avoid problems when the context action modifies
+            # the selected rows and some of these rows dismiss from the form because
+            # they no longer match the current filter.  In this case the grid behaves
+            # inconsistently - the selection sometimes moves to other rows and
+            # sometimes it contains invalid row numbers.
+            self.unselect_selected_rows()
         dual = self._dualform()
         if dual:
+            # If we are a part of a dual form, refresh the whole form (feels little hacky).
             dual.refresh()
         else:
             self.refresh()
