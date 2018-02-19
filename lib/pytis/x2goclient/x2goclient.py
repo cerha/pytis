@@ -1188,7 +1188,7 @@ class StartupController(object):
         if not os.path.exists(vbs_path):
             params = self._broker_parameters
             broker_url = "ssh://%s%s@%s%s/%s" % (
-                username,
+                params['username'],
                 ':' + params['password'] if params['password'] else '',
                 params['server'],
                 ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
