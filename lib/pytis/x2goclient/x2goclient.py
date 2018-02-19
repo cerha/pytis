@@ -1023,12 +1023,6 @@ class StartupController(object):
 
     def connect(self, session_parameters):
         """Create and set up the X2GoClient instance."""
-        rootless = self._ssh_profiles.broker_selectsession(profile_id).get('rootless', True)
-        if not rootless or int(rootless) == 0:
-            session_parameters['session_type'] = 'desktop'
-            session_parameters['geometry'] = 'maximize'
-        session_parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
-                                                         'known_hosts')
         return self._authenticate(self._connect, session_parameters)
 
     def check_key_password(self, key_filename, password):
@@ -1042,23 +1036,29 @@ class StartupController(object):
 
     def _list_profiles(self, broker_path=None, **connection_parameters):
         def session_parameters(profile_id):
-            parameters = self._ssh_profiles.to_session_params(profile_id)
+            parameters = ssh_profiles.to_session_params(profile_id)
             if isinstance(parameters['server'], list):
                 parameters['server'] = parameters['server'][0]
+            rootless = ssh_profiles.session_profiles[profile_id].get('rootless', True)
+            if not rootless or int(rootless) == 0:
+                parameters['session_type'] = 'desktop'
+                parameters['geometry'] = 'maximize'
+                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
+                                                         'known_hosts')
             return parameters
         try:
-            self._ssh_profiles = PytisSshProfiles(connection_parameters,
-                                                  logger=x2go.X2GoLogger(tag='PytisClient'),
-                                                  broker_path=broker_path,
-                                                  broker_password=self._broker_password)
+            ssh_profiles = PytisSshProfiles(connection_parameters,
+                                            logger=x2go.X2GoLogger(tag='PytisClient'),
+                                            broker_path=broker_path,
+                                            broker_password=self._broker_password)
         except PytisSshProfiles.ConnectionFailed:
             return None
         else:
             profiles = sorted([(profile_id, session_parameters(profile_id))
-                               for profile_id in self._ssh_profiles.profile_ids],
+                               for profile_id in ssh_profiles.profile_ids],
                               key=lambda x: x[1]['profile_name'])
             self._broker_username = connection_parameters['username']
-            self._upgrade_version, self._upgrade_url = self._ssh_profiles.pytis_upgrade_parameters()
+            self._upgrade_version, self._upgrade_url = ssh_profiles.pytis_upgrade_parameters()
             self._profiles = dict(profiles)
             self._app.update_progress(self._broker_parameters['server'] + ': ' +
                                       _.ngettext("Returned %d profile.",
@@ -1069,7 +1069,8 @@ class StartupController(object):
     def list_profiles(self):
         """Return a list of two-tuples (profile_id, session_parameters).
 
-        The list is sorted by profile name.
+        The list is sorted by profile name.  'session_parameters' is a
+        dictionary of X2Go session parameters to pass to 'connect()'.
 
         """
         return self._authenticate(self._list_profiles,
