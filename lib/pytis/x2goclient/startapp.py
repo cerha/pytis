@@ -879,6 +879,9 @@ class X2GoStartApp(wx.App):
         self._icon.update_menu(self._menu_items())
         panel = ui.panel(frame, self._create_main_content)
         frame.SetClientSize(panel.GetBestSize())
+        if pytis.util.on_windows():
+            self.update_progress(_("Starting up X-server."))
+            self._xserver = pytis.x2goclient.XServer()
         self.Yield()
         profile_id = self._args.session_profile
         if profile_id or self._args.autoload:

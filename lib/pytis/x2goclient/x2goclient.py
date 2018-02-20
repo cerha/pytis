@@ -51,12 +51,12 @@ from pytis.x2goclient import ssh_connect, public_key_acceptable, X2GOCLIENT_VERS
 
 _ = pytis.util.translations('pytis-x2go')
 
-XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old', 'VcXsrv_pytis_desktop')
+XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
 
 XCONFIG_DEFAULTS = {
     'XServers': {
         'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
-                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_desktop', 'VcXsrv_pytis_old'],
+                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_old'],
     },
     'VcXsrv_pytis': {
         'display': 'localhost:20',
@@ -75,15 +75,6 @@ XCONFIG_DEFAULTS = {
         'run_command': os.path.join(os.getcwd(), 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
         'parameters': [':30', '-clipboard', '-noclipboardprimary', '-multiwindow',
                        '-nowinkill', '-nounixkill', '-swcursor'],
-    },
-    'VcXsrv_pytis_desktop': {
-        'display': 'localhost:50',
-        'last_display': 'localhost:50',
-        'process_name': 'vcxsrv_pytis_desktop.exe',
-        'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-        'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis_desktop.exe'),
-        'parameters': [':50', '-clipboard', 'noprimary', '-nowinkill',
-                       '-nounixkill', '-swcursor', ],
     },
 }
 
@@ -354,6 +345,29 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             self.write()
         return _xserver_config
 
+
+class XServer(object):
+
+    def __init__(self, variant='VcXsrv_pytis_old', loglevel=x2go.log.loglevel_DEFAULT):
+        self.logger = x2go.log.X2GoLogger(loglevel=loglevel)
+        xconfig = X2GoClientXConfig(config_files=os.path.normpath(os.path.join(
+            x2go.LOCAL_HOME,
+            x2go.X2GO_CLIENT_ROOTDIR,
+            x2go.defaults.X2GO_XCONFIG_FILENAME,
+        )))
+        xserver = None
+        if xconfig.running_xservers:
+            self.logger('X-server is already running!', loglevel=x2go.log.loglevel_WARN)
+        elif not xconfig.installed_xservers:
+            self.logger("No installed X-servers found!", loglevel=x2go.log.loglevel_WARN)
+        else:
+            server_config = xconfig.get_xserver_config(variant)
+            self.logger("Starting X-server %s: %s" % (variant, server_config),
+                        loglevel=x2go.log.loglevel_DEFAULT)
+            xserver = x2go.xserver.X2GoXServer(variant, server_config)
+        self._xserver = xserver
+
+
 def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port)):
     """This function redefines 'x2go.rforward.x2go_transport_tcp_handler'.
 
@@ -415,7 +429,7 @@ class RPyCServerLauncher(threading.Thread):
 
     def __init__(self, on_server_started, on_echo, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
         if logger is None:
-            self.logger = log.X2GoLogger(loglevel=loglevel)
+            self.logger = x2go.log.X2GoLogger(loglevel=loglevel)
         else:
             self.logger = copy.deepcopy(logger)
         self.logger.tag = self.__class__.__name__
@@ -612,16 +626,6 @@ class X2GoClient(x2go.X2GoClient):
                                  # logger = x2go.X2GoLogger(tag='PytisClient'
                                  )
         self.terminal_backend = TerminalSession
-        if pytis.util.on_windows():
-            app.update_progress(_("Starting up X11 server."))
-            if ((session_parameters['session_type'] == 'desktop' and
-                 session_parameters['geometry'] == 'maximize')):
-                xserver_variant = 'VcXsrv_pytis_desktop'
-            else:
-                # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
-                # we use older variant of VcXsrv. Later we will switch back to the current version.
-                xserver_variant = 'VcXsrv_pytis_old'
-            self._start_xserver(xserver_variant)
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         session = self.session_registry(self._x2go_session_hash)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
@@ -696,41 +700,6 @@ class X2GoClient(x2go.X2GoClient):
             info.set_port(port)
             if info.changed():
                 info.write()
-
-    def _start_xserver(self, variant):
-        if self.client_rootdir:
-            kwargs = dict(config_files=os.path.join(self.client_rootdir,
-                                                    x2go.defaults.X2GO_XCONFIG_FILENAME))
-        else:
-            kwargs = dict()
-        self.client_xconfig = X2GoClientXConfig(logger=self.logger, **kwargs)
-        if not self.client_xconfig.installed_xservers:
-            self.HOOK_no_installed_xservers_found()
-        else:
-            last_display = self.client_xconfig.get_xserver_config(variant)['last_display']
-            new_display = self.client_xconfig.detect_unused_xdisplay_port(variant)
-            p_xs = (variant, self.client_xconfig.get_xserver_config(variant))
-            if not self.client_xconfig.running_xservers:
-                if p_xs is not None:
-                    self.xserver = x2go.xserver.X2GoXServer(p_xs[0], p_xs[1], logger=self.logger)
-            else:
-                if p_xs is not None and last_display is not None:
-                    if last_display == new_display:
-                        #
-                        # FIXME: this trick is nasty, client implementation should rather
-                        # cleanly shutdown launch X-server processes
-                        #
-                        # re-use a left behind X-server instance of a previous/crashed
-                        # run of Python X2Go Client
-                        self.logger('found a running (and maybe stray) X-server, trying to '
-                                    're-use it on X DISPLAY port: %s' % last_display,
-                                    loglevel=x2go.log.loglevel_WARN)
-                        os.environ.update({'DISPLAY': last_display})
-                else:
-                    # presume the running XServer listens on :0
-                    self.logger('using fallback display for X-server: localhost:0',
-                                loglevel=x2go.log.loglevel_WARN)
-                    os.environ.update({'DISPLAY': 'localhost:0'})
 
     def _cleanup(self):
         terminal_session = self.get_session(self._x2go_session_hash).terminal_session
