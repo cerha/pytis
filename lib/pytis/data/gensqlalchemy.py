@@ -2089,6 +2089,8 @@ class _SQLIndexable(SQLObject):
                     ikwargs['postgresql_using'] = method
                 if index_kwargs.get('unique'):
                     ikwargs['unique'] = True
+                if index_kwargs.get('where') is not None:
+                    ikwargs['postgresql_where'] = index_kwargs['where']
             else:
                 index_content = index
                 method = None
@@ -2528,11 +2530,19 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         for f in self.fields:
             index = f.index()
             if isinstance(index, dict):
-                assert index.keys() == ['method'], index
-                method = index['method']
+                ikwargs = {}
+                assert set(index.keys()).issubset(set(['method', 'where'])), index
+                if index.get('method'):
+                    method = index['method']
+                    ikwargs['postgresql_using'] = method
+                else:
+                    method = 'btree'
+                if index.get('where') is not None:
+                    ikwargs['postgresql_where'] = index['where']
                 column_name = f.id()
                 index = sqlalchemy.Index('%s_%s_%s_idx' % (self.name, column_name, method,),
-                                         getattr(self.c, column_name), postgresql_using=method)
+                                         getattr(self.c, column_name),
+                                         **ikwargs)
                 sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         super(SQLTable, self)._create_special_indexes()
         return args
