@@ -351,6 +351,13 @@ class X2GoStartApp(wx.App):
         ))
         return items
 
+    def _on_exit(self):
+        wx.CallAfter(self._icon.Destroy)
+        self._frame.Close()
+
+    def _on_taskbar_click(self):
+        pass
+
     def _create_main_content(self, parent):
         self._message = message = ui.label(parent, '')
         self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
@@ -435,29 +442,6 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def question_dialog(self, title, question, default=wx.YES_DEFAULT):
-        style = wx.YES_NO | default | wx.ICON_QUESTION
-        dlg = wx.MessageDialog(self._frame, question, caption=title, style=style)
-        if not dlg.HasFlag(wx.STAY_ON_TOP):
-            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
-        # Raise should not be necessary, but there was a problem with focus
-        # when used on windows
-        dlg.Raise()
-        result = dlg.ShowModal() == wx.ID_YES
-        dlg.Destroy()
-        return result
-
-    def info_dialog(self, title, text):
-        def create_dialog(dialog):
-            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
-            dialog.set_callback(lambda: button.SetFocus())
-            return ui.vgroup(
-                ui.label(dialog, text),
-                ui.item(button, center=True),
-                padding=10, spacing=10,
-            )
-        return self._show_dialog(title, create_dialog)
-
     def _load_profiles(self):
         self._frame.Show()
         self._profiles = self._controller.list_profiles()
@@ -515,13 +499,6 @@ class X2GoStartApp(wx.App):
         client.main_loop()
         self.Exit()
 
-    def _on_taskbar_click(self):
-        pass
-
-    def _on_exit(self):
-        wx.CallAfter(self._icon.Destroy)
-        self._frame.Close()
-
     def _create_shortcut(self):
         def create_shortcut(profile_id):
             error = self._controller.create_shortcut(profile_id)
@@ -540,6 +517,30 @@ class X2GoStartApp(wx.App):
             menu.AppendItem(item)
         self._icon.PopupMenu(menu)
         menu.Destroy()
+
+    def question_dialog(self, title, question, default=wx.YES_DEFAULT):
+        style = wx.YES_NO | default | wx.ICON_QUESTION
+        dlg = wx.MessageDialog(self._frame, question, caption=title, style=style)
+        if not dlg.HasFlag(wx.STAY_ON_TOP):
+            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        # Raise should not be necessary, but there was a problem with focus
+        # when used on windows
+        dlg.Raise()
+        result = dlg.ShowModal() == wx.ID_YES
+        dlg.Destroy()
+        return result
+
+    def info_dialog(self, title, text):
+        def create_dialog(dialog):
+            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
+            dialog.set_callback(lambda: button.SetFocus())
+            return ui.vgroup(
+                ui.label(dialog, text),
+                ui.item(button, center=True),
+                padding=10, spacing=10,
+            )
+        return self._show_dialog(title, create_dialog)
+
 
     def update_progress(self, message=None, progress=1):
         """Update progress bar and display a progress message.
