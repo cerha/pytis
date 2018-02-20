@@ -557,6 +557,15 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
 
 class X2GoClient(x2go.X2GoClient):
 
+    _DEFAULT_SESSION_PARAMETERS = dict(
+        gss_auth=False,
+        look_for_keys=True,
+        allow_agent=True,
+        profile_name='Pytis-Client-Session',
+        cache_type='unix-kde',
+        allow_share_local_folders=True
+    )
+
     class ServerInfo(object):
         # It would be better to use self.info_backend or
         # self.get_session_info(s_uuid) as the source of remote_container
@@ -603,6 +612,7 @@ class X2GoClient(x2go.X2GoClient):
 
     def __init__(self, session_parameters, app, wait_for_pytis=True, **kwargs):
         self._session_parameters = session_parameters
+        session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
         self._settings = settings = X2GoClientSettings()
         for param, option, t in (('server', 'hostname', None),
                                  ('port', 'port', int),

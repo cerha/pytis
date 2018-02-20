@@ -281,14 +281,6 @@ class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
     _MAX_PROGRESS = 40
-    _DEFAULT_SESSION_PARAMETERS = dict(
-        gss_auth=False,
-        look_for_keys=True,
-        allow_agent=True,
-        profile_name='Pytis-Client-Session',
-        cache_type='unix-kde',
-        allow_share_local_folders=True
-    )
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
@@ -319,11 +311,9 @@ class X2GoStartApp(wx.App):
                     menu.AppendSeparator()
             return menu
 
-    def __init__(self, args, session_parameters, force_parameters):
+    def __init__(self, args):
         self._progress = 1
         self._args = args
-        self._session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
-        self._force_parameters = force_parameters
         self._controller = pytis.x2goclient.StartupController(
             self,
             add_to_known_hosts=args.add_to_known_hosts,
@@ -468,21 +458,6 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def _connect(self, profile_id):
-        self._frame.Show()
-        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
-        session_parameters = dict(
-            self._session_parameters,
-            **dict((k, v) for k, v in dict(self._profiles)[profile_id].items()
-                   if k not in self._force_parameters)
-        )
-        client = self._controller.connect(session_parameters)
-        if client:
-            self.update_progress(_("Starting Pytis client."))
-            self._start_session(client)
-        else:
-            self.Exit()
-
     def _load_profiles(self):
         self._frame.Show()
         self._profiles = self._controller.list_profiles()
@@ -510,29 +485,14 @@ class X2GoStartApp(wx.App):
                     return self.Exit()
         self._frame.Hide()
 
-    def _list_profiles(self, profiles):
-        import pprint
-        print
-        print "Available X2Go session profiles"
-        print "==============================="
-        if hasattr(profiles, 'config_files') and profiles.config_files is not None:
-            print "configuration files: %s" % profiles.config_files
-        if hasattr(profiles, 'user_config_file') and profiles.user_config_file is not None:
-            print "user configuration file: %s" % profiles.user_config_file
-        if hasattr(profiles, 'broker_url') and profiles.broker_url is not None:
-            print "X2Go Session Broker URL: %s" % profiles.broker_url
-        for profile_id in profiles.profile_ids:
-            profile_config = profiles.get_profile_config(profile_id)
-            session_params = profiles.to_session_params(profile_id)
-            print 'Profile ID: %s' % profile_id
-            print 'Profile Name: %s' % session_params['profile_name']
-            print 'Profile Configuration:'
-            pprint.pprint(profile_config)
-            print 'Derived session parameters:'
-            pprint.pprint(session_params)
-            print
-
-    def _start_session(self, client):
+    def _connect(self, profile_id):
+        self._frame.Show()
+        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
+        session_parameters = dict(self._profiles)[profile_id]
+        self.update_progress(_("Starting Pytis client."))
+        client = self._controller.connect(session_parameters)
+        if not client:
+            return self.Exit()
         self.update_progress(_("Retrieving available sessions."))
         sessions = client.list_sessions()
         if len(sessions) == 0:
