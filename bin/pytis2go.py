@@ -16,18 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gevent.monkey
-gevent.monkey.patch_all()
-
 import os
 import sys
 import argparse
-import paramiko
 import platform
-
-pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
-if os.path.isdir(pytislib) and pytislib not in sys.path:
-    sys.path.append(pytislib)
 
 if platform.system() == 'Windows':
     # Windows setup for locales (must precede imports of our libraries containing translations).
@@ -41,17 +33,12 @@ if platform.system() == 'Windows':
     import locale
     os.environ['LANGUAGE'] = locale.windows_locale.get(lcid)
 
-    # Windows specific X2Go setup
-    import x2go
-    import x2go.defaults
-    X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
-    X2GO_CLIENTXCONFIG_DEFAULTS.update(pytis.x2goclient.XCONFIG_DEFAULTS)
-    x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
-    os.environ['NXPROXY_BINARY'] = os.path.normpath(os.path.join(
-        sys.path[0], '..', '..', 'win_apps', 'nxproxy', 'nxproxy.exe',
-    ))
+pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
+if os.path.isdir(pytislib) and pytislib not in sys.path:
+    sys.path.append(pytislib)
 
-import pytis.x2goclient
+import pytis.x2goclient  # noqa: E402
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -83,10 +70,6 @@ def main():
         (('--add-to-known-hosts', '-A'), {'default': False, 'action': 'store_true'},
          ("Add RSA host key fingerprint to ~/.ssh/known_hosts "
           "if authenticity of server can\'t be established (default: not set)")),
-        (('--nowait', '-n'), {'default': False, 'action': 'store_true'},
-         ("Do not wait for Pytis application window to come up. "
-          "Close the startup application window immediately after "
-          "starting the X2Go client.")),
         (('--window-title', '-t'), {'default': None},
          "Override startup application progress window title (default: Pytis2Go)"),
         (('--version', '-v'), {'default': False, 'action': 'store_true'},

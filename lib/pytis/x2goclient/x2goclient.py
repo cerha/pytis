@@ -17,22 +17,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gevent.monkey
+gevent.monkey.patch_all() # noqa: E402
+
 import os
 import sys
 
-import copy
 import re
-import shutil
-import tarfile
-import tempfile
-import types
+import copy
 import time
+import types
+import socket
+import hashlib
+import tempfile
 import threading
+import subprocess
 
 import gevent
 import gevent.event
 import gevent.queue
-import paramiko
 
 import rpyc
 import x2go
@@ -43,13 +46,11 @@ import x2go.defaults
 import x2go.log
 import x2go.xserver
 
-import pytis.util
+import pytis.x2goclient
 import pytis.remote.pytisproc as pytisproc
 
-from pytis.util import log, EVENT
-from pytis.x2goclient import ssh_connect, public_key_acceptable, X2GOCLIENT_VERSION
-
-_ = pytis.util.translations('pytis-x2go')
+from pytis.util import log, EVENT, on_windows
+from .ssh import ssh_connect
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
 
@@ -77,6 +78,15 @@ XCONFIG_DEFAULTS = {
                        '-nowinkill', '-nounixkill', '-swcursor'],
     },
 }
+
+if on_windows():
+    # Windows specific X2Go setup
+    X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
+    X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
+    x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
+    os.environ['NXPROXY_BINARY'] = os.path.normpath(os.path.join(
+        sys.path[0], '..', '..', 'win_apps', 'nxproxy', 'nxproxy.exe',
+    ))
 
 def runtime_error(message, exitcode=-1):
     # TODO: Raise an exception instead and catch it in the
@@ -215,7 +225,7 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
                 try:
                     port = int(port)
                 except ValueError:
-                    raise Exception(_("Invalid session format"), text)
+                    raise Exception("Invalid session format", text)
                 session_data['host'] = host
                 session_data['sshport'] = port
         return session_data
@@ -275,7 +285,7 @@ class PytisSshProfiles(SshProfiles):
     def broker_listprofiles(self):
         profiles = SshProfiles.broker_listprofiles(self)
         filtered_profiles = {}
-        last_version = X2GOCLIENT_VERSION
+        last_version = pytis.x2goclient.X2GOCLIENT_VERSION
         for section, data in profiles.items():
             if section.startswith('pytis-client-upgrade'):
                 if data['name'] > last_version:
@@ -496,7 +506,7 @@ class RPyCServerLauncher(threading.Thread):
             self._password = password = authenticator.password()
             self._on_server_started(port, password)
             return
-        raise ClientException(_(u"No free port found for RPyC in the range %s-%s") %
+        raise ClientException("No free port found for RPyC in the range %s-%s" %
                               (default_port, max_port - 1,))
 
     def _shutdown_server(self):
@@ -610,7 +620,8 @@ class X2GoClient(x2go.X2GoClient):
                 self._control_session._x2go_sftp_write(self._server_file_name, data)
                 self._changed = False
 
-    def __init__(self, session_parameters, app, wait_for_pytis=True, **kwargs):
+    def __init__(self, session_parameters, on_rpyc_echo,
+                 loglevel=x2go.log.loglevel_DEBUG, **kwargs):
         self._session_parameters = session_parameters
         session_parameters = dict(self._DEFAULT_SESSION_PARAMETERS, **session_parameters)
         self._settings = settings = X2GoClientSettings()
@@ -623,7 +634,6 @@ class X2GoClient(x2go.X2GoClient):
                     session_parameters[param] = settings.get_value('pytis', option, t)
                 except ClientException:
                     pass
-        app.update_progress(_("Preparing X2Go session."))
         # Clean tempdir.
         tempdir = tempfile.gettempdir()
         for f in os.listdir(tempdir):
@@ -632,32 +642,26 @@ class X2GoClient(x2go.X2GoClient):
                     os.remove(os.path.join(tempdir, f))
                 except:
                     pass
-        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False, **kwargs
-                                 # logger = x2go.X2GoLogger(tag='PytisClient'
-                                 )
+        x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False,
+                                 loglevel=loglevel, **kwargs)
         self.terminal_backend = TerminalSession
         self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
         session = self.session_registry(self._x2go_session_hash)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
-        app.update_progress(_("Starting up server connections."))
-        self._app = app
-        self._wait_for_pytis = wait_for_pytis
+        # Start up server connections.
         self._rpyc_tunnel_port = gevent.event.AsyncResult()
         self._rpyc_server_port = None
         self._rpyc_server_password = gevent.event.AsyncResult()
         self._rpyc_launcher = RPyCServerLauncher(on_server_started=self._on_rpyc_server_started,
-                                                 on_echo=self._on_rpyc_echo, logger=self.logger)
-        app.update_progress(_("Connecting to X2Go session."))
-        # try:
-        self._X2GoClient__connect_session(self._x2go_session_hash,
+                                                 on_echo=on_rpyc_echo, logger=self.logger)
+        try:
+            self._X2GoClient__connect_session(self._x2go_session_hash,
                                           username=session_parameters['username'],
                                           password=session_parameters['password'])
         # TODO: We don't handle these exceptions because we should already have
         # valid authentication credentials thanks to calling 'ssh_connect()' prior
-        # to X2GoClient instance creation.  But maybe at least some (socket error,
-        # key error, ...) of them would still be worth catching.
-        #
+        # to X2GoClient instance creation.
         # except x2go.PasswordRequiredException, e:
         # except x2go.AuthenticationException, e:
         # except x2go.BadHostKeyException:
@@ -673,18 +677,13 @@ class X2GoClient(x2go.X2GoClient):
         #                 loglevel=x2go.loglevel_WARN)
         #     self.logger('proceeding to interactive login for user ,,%s\'\'' % _username,
         #                 loglevel=x2go.loglevel_NOTICE)
-        # except socket.error, e:
-        #     runtime_error('a socket error occured while establishing the connection: %s' %
-        #                   str(e), exitcode=-245)
+        except socket.error, e:
+            runtime_error('a socket error occured while establishing the connection: %s' %
+                          str(e), exitcode=-245)
 
     def _on_rpyc_server_started(self, port, password):
         self._rpyc_server_port = port
         self._rpyc_server_password.set(password)
-
-    def _on_rpyc_echo(self):
-        if self._wait_for_pytis:
-            self._wait_for_pytis = False
-            self._app.close()
 
     def _on_rpyc_tunnel_started(self, port):
         self._rpyc_tunnel_port.set(port)
@@ -802,562 +801,151 @@ class X2GoClient(x2go.X2GoClient):
             self._cleanup()
 
 
-class StartupController(object):
-    """Interface between the start-up application and X2Go.
+class ClientService(rpyc.Service):
+    """RPyC Service exposing the public API of X2GoClient to the parent process.
 
-    The public methods of this class implement various X2Go related
-    functionality needed by the startup application
-    ('X2GoStartApp' instance).  Whenever the methods of this class
-    need a UI interaction, they call the public methods of the startup
-    application.  Thus the two classes call each other.  This class implements
-    the X2Go related functionality, the application implements the UI.
+    This class is not meant to be used directly.  Use 'ClientProcess' instead.
 
-    The method 'list_profiles()' will handle interaction with X2Go broker, the
-    method 'connect()' will create the actual 'X2GoClient' instance, which may
-    be used to start/resume sessions.  Other methods provide auxilary functions
-    such as upgrade or shortcut icon creation etc.
+    """
+    class Authenticator(object):
+        def __init__(self, key):
+            self._key = key
+
+        def __call__(self, sock):
+            if sock.recv(len(key)) != key:
+                raise rpyc.utils.authenticators.AuthenticationError("wrong magic word")
+            return sock, None
+
+        def connect(self, host, port):
+            conn = rpyc.connect(host, port, config=dict(allow_pickle=True,
+                                                        allow_public_attrs=True))
+            if hasattr(socket, 'fromfd'):
+                fd = conn.fileno()
+                sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+            else:
+                # There is no socket.fromfd in Python 2.x on Windows, so let's use
+                # the original hidden socket.
+                sock = conn._channel.stream.sock
+            sock.send(self._key)
+            return conn
+
+    def exposed_connect(self, connection_parameters, on_echo=None):
+        self._client = X2GoClient(connection_parameters,
+                                  on_rpyc_echo=rpyc.async(on_echo) if on_echo else None)
+
+    def exposed_list_sessions(self):
+        return self._client.list_sessions()
+
+    def exposed_terminate_session(self, session):
+        self._client.terminate_session(session)
+
+    def exposed_resume_session(self, session):
+        self._client.resume_session(session)
+
+    def exposed_start_new_session(self):
+        self._client.start_new_session()
+
+    def exposed_main_loop(self):
+        self._client.main_loop()
+
+
+class ClientProcess(object):
+    """Run Pytis X2Go client in a separate process and control it from another Python process.
+
+    This class invokes a new process and runs a Pytis X2Go client inside it.
+    The running 'X2GoClient' instance inside this process may be controlled
+    through the public methods of this class's instance.
+
+    This class hides the details of spawning a new Python process, connecting
+    and authenticating to its RPyC service and working with its RPyC interface
+    behind a simple API.  The 'X2GoClient' run's in another process, but its
+    public methods may be called as if the client was running locally.
 
     """
 
-    _DEFAULT_SSH_PORT = 22
-
-    def __init__(self, application, backends=None, add_to_known_hosts=False, broker_url=None,
-                 broker_password=None, wait_for_pytis=True):
-        self._app = application
-        self._add_to_known_hosts = add_to_known_hosts
-        if broker_url:
-            self._broker_parameters, self._broker_path = self._parse_url(broker_url)
-            self._broker_password = broker_password
-        else:
-            self._broker_parameters = self._broker_path = self._broker_password = None
-        self._broker_username = None
-        self._wait_for_pytis = wait_for_pytis
-        self._keyring = []
-
-    def _parse_url(self, url):
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<server>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|(?P<path>/.*)$)'), url)
-        if match:
-            parameters = match.groupdict()
-            parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
-            if parameters.pop('protocol', None) not in (None, 'ssh'):
-                raise Exception(_(u"Unsupported broker protocol: %s") % url)
-            path = parameters.pop('path')
-            return parameters, path
-        else:
-            raise Exception(_("Invalid URL: %s", url))
-
-    def _authentication_methods(self, connection_parameters):
-        import socket
-        sock = socket.socket()
-        sock.connect((connection_parameters['server'], connection_parameters['port']))
-        transport = paramiko.Transport(sock)
-        transport.connect()
-        try:
-            transport.auth_none('')
-        except paramiko.ssh_exception.BadAuthenticationType as e:
-            methods = e.allowed_types
-        transport.close()
-        sock.close()
-        return methods
-
-    def _acceptable_key_files(self, connection_parameters):
-        def key_acceptable(path):
-            if os.access(path, os.R_OK):
-                try:
-                    return public_key_acceptable(
-                        connection_parameters['server'],
-                        connection_parameters['username'],
-                        path,
-                        port=connection_parameters['port'])
-                except:
-                    return True
-            else:
-                return True
-        return [path for path in [os.path.join(os.path.expanduser('~'), '.ssh', name)
-                                  for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
-                if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
-
-    def _authenticate(self, function, connection_parameters, **kwargs):
-        """Try calling 'method' with different authentication parameters.
+    def __init__(self, session_parameters, port=18861, on_echo=None):
+        """Start a Python subprocess running 'X2GoClient' and 'ClientService' server.
 
         Arguments:
-          function -- connection function to be called with different
-            connection parameters to try different authentication methods.  The
-            function must accept the dictionary of connection parameters as its
-            first positional argument plus optionally any keyword arguemnts
-            passed in '**kwargs'.  The function must return a result which (in
-            boolean context) evaluates to True to indicate success or False for
-            failure.  If failure is returned for one authentication method,
-            another method may be tried (with different connection parameters).
-          connection_parameters -- initial connection parameters as a
-            dictionary with keys such as 'server', 'port', 'username', etc.
-            Authentication related keys in this dictionary will be overriden
-            before passing the parameters to 'function' as described below.
-          **kwargs -- all remaining keyword arguments will be passed on to
-            'function'.
-
-        Authentication related connection parameters:
-
-          username -- user's login name (mandatory)
-          gss_auth -- True if GSS-API (Kerberos) authentication is to be used
-            or False for other authentication schemes
-          key_filename -- file name of the private SSH key to use for
-            authentication or None
-          password -- SSH key passphrase if 'key_filename' is given or user's
-            password for password authentication
-
-        Supported authentication methods:
-          - GSS-API (Kerberos) -- 'gss_auth' is True and 'key_filename' and
-            'password' are empty
-          - SSH Agent -- 'gss_auth' is False and 'key_filename' and 'password'
-            are empty
-          - Public Key -- 'gss_auth' is False and 'key_filename' and 'password'
-            are given
-          - Password -- 'gss_auth' is False, 'key_filename' is empty and
-            'password' is given
+          session_parameters -- X2Go session parameters as a dictionary
+          port -- port number for the 'ClientService' RPyC server
+          on_echo -- callback to run on each 'PytisService' echo call.  A Pytis
+            application running on the X2Go server calls echo on startup and
+            then every few minutes, so the callback may be used to detect
+            a running Pytis application.
 
         """
-        def message(msg):
-            self._app.update_progress(connection_parameters['server'] + ': ' + msg)
+        self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.x2goclient',
+                                          '--port', str(port)),
+                                         env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
+                                         stdin=subprocess.PIPE)
+        # Generate a secret token and pass it to the subprocess through its STDIN.
+        key = hashlib.sha256(os.urandom(16)).hexdigest()
+        self._process.stdin.write(key + '\n')
+        # Wait for the RPyC server inside the subprocess to come up.
+        time.sleep(3)
+        authenticator = ClientService.Authenticator(key)
+        self._conn = authenticator.connect('localhost', port=port)
+        # Start a new X2GoClient instance inside the subprocess.
+        self._conn.root.connect(session_parameters, on_echo=on_echo)
 
-        def connect(username, gss_auth=False, key_filename=None, password=None):
-            return function(**dict(
-                connection_parameters,
-                username=username,
-                gss_auth=gss_auth,
-                key_filename=key_filename,
-                password=password,
-                look_for_keys=key_filename is not None,
-                allow_agent=True,
-                add_to_known_hosts=self._add_to_known_hosts,
-                **kwargs
-            ))
+    def list_sessions(self):
+        """Return the result of 'X2GoClient.list_sessions()' on the subprocess instance."""
+        return self._conn.root.list_sessions()
 
-        success = False
-        message(_("Retrieving supported authentication methods."))
-        methods = self._authentication_methods(connection_parameters)
-        for username, key_filename, password in self._keyring:
-            if key_filename and password and 'publickey' in methods:
-                message(_("Trying public key authentication."))
-                success = connect(username, key_filename=key_filename, password=password)
-            elif key_filename is None and password and 'password' in methods:
-                message(_("Trying password authentication."))
-                success = connect(username, password=password)
-            if success:
-                break
-        if not success:
-            message(_("Trying SSH Agent authentication."))
-            success = connect(connection_parameters['username'])
-        if not success:
-            message(_("Trying Kerberos authentication."))
-            success = connect(connection_parameters['username'], gss_auth=True)
-        if not success:
-            message(_("Trying interactive authentication."))
-            if 'publickey' in methods:
-                key_files = self._acceptable_key_files(connection_parameters)
-            else:
-                key_files = ()
-            while not success:
-                username, key_filename, password = self._app.authentication_dialog(
-                    connection_parameters['server'],
-                    connection_parameters['username'],
-                    methods,
-                    key_files,
-                )
-                if username is None:
-                    return None
-                if key_filename or password:
-                    if key_filename:
-                        message(_("Trying public key authentication."))
-                    else:
-                        message(_("Trying password authentication."))
-                    success = connect(username, key_filename=key_filename, password=password)
-                    if success:
-                        self._keyring.append((username, key_filename, password))
-                elif username != connection_parameters['username']:
-                    message(_("Trying SSH Agent authentication."))
-                    success = connect(username)
-                    if not success:
-                        message(_("Trying Kerberos authentication."))
-                        success = connect(username, gss_auth=True)
-        if success:
-            message(_("Connected successfully."))
-        return success
+    def terminate_session(self, session):
+        """Call 'X2GoClient.terminate_session()' on the subprocess instance."""
+        self._conn.root.terminate_session(session)
 
-    def _connect(self, **session_parameters):
-        connection_parameters = dict((k, session_parameters[k]) for k in
-                                     ('server', 'port', 'username', 'password',
-                                      'key_filename', 'allow_agent', 'gss_auth'))
-        if ssh_connect(**connection_parameters):
-            return X2GoClient(session_parameters, self._app,
-                              wait_for_pytis=self._wait_for_pytis,
-                              loglevel=x2go.log.loglevel_DEBUG)
-        else:
-            return None
+    def resume_session(self, session):
+        """Call 'X2GoClient.resume_session()' on the subprocess instance."""
+        self._conn.root.resume_session(session)
 
-    def connect(self, session_parameters):
-        """Create and set up the X2GoClient instance."""
-        return self._authenticate(self._connect, session_parameters)
+    def start_new_session(self):
+        """Call 'X2GoClient.start_new_session()' on the subprocess instance."""
+        self._conn.root.start_new_session()
 
-    def check_key_password(self, key_filename, password):
-        for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
-            try:
-                handler.from_private_key_file(key_filename, password)
-                return True
-            except:
-                continue
-        return False
+    def main_loop(self):
+        """Call 'X2GoClient.main_loop()' on the subprocess instance."""
+        self._conn.root.main_loop()
 
-    def _list_profiles(self, broker_path=None, **connection_parameters):
-        def session_parameters(profile_id):
-            parameters = ssh_profiles.to_session_params(profile_id)
-            if isinstance(parameters['server'], list):
-                parameters['server'] = parameters['server'][0]
-            rootless = ssh_profiles.session_profiles[profile_id].get('rootless', True)
-            if not rootless or int(rootless) == 0:
-                parameters['session_type'] = 'desktop'
-                parameters['geometry'] = 'maximize'
-                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
-                                                         'known_hosts')
-            return parameters
-        try:
-            ssh_profiles = PytisSshProfiles(connection_parameters,
-                                            logger=x2go.X2GoLogger(tag='PytisClient'),
-                                            broker_path=broker_path,
-                                            broker_password=self._broker_password)
-        except PytisSshProfiles.ConnectionFailed:
-            return None
-        else:
-            profiles = sorted([(profile_id, session_parameters(profile_id))
-                               for profile_id in ssh_profiles.profile_ids],
-                              key=lambda x: x[1]['profile_name'])
-            self._broker_username = connection_parameters['username']
-            self._upgrade_version, self._upgrade_url = ssh_profiles.pytis_upgrade_parameters()
-            self._profiles = dict(profiles)
-            self._app.update_progress(self._broker_parameters['server'] + ': ' +
-                                      _.ngettext("Returned %d profile.",
-                                                 "Returned %d profiles.",
-                                                 len(profiles)))
-            return profiles
+    def terminate(self):
+        """Terminate the subprocess and the 'X2GoClient' instance running inside it."""
+        self._process.terminate()
 
-    def list_profiles(self):
-        """Return a list of two-tuples (profile_id, session_parameters).
 
-        The list is sorted by profile name.  'session_parameters' is a
-        dictionary of X2Go session parameters to pass to 'connect()'.
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description=(
+            """Run a Pytis X2Go client in a separate process controlled through an RPyC API.
 
-        """
-        return self._authenticate(self._list_profiles,
-                                  self._broker_parameters,
-                                  broker_path=self._broker_path)
+            When this module is run as 'python -m pytis.x2goclient.x2goclient ...' it
+            starts an RPyC service with the interface defined by 'ClientService'.  A
+            new Pytis X2Go client may be invoked and controlled through this service
+            passing it X2Go session parameters from another Python process.
 
-    def current_version(self):
-        return X2GOCLIENT_VERSION
+            However you don't normally want to run this module and connect its RPyC
+            service directly.  Use the Python class 'ClientProcess' to do so through
+            its API.
 
-    def available_upgrade_version(self):
-        if self._upgrade_version and self._upgrade_url:
-            return self._upgrade_version
-        else:
-            return None
+            """),
+        # formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=True, argument_default=None
+    )
+    parser.add_argument(
+        '--port',
+        default=18861, type=int,
+        help="Port number where to start the RPyC server.",
+    )
+    args = parser.parse_args()
 
-    def upgrade(self):
-        connection_parameters, path = self._parse_url(self._upgrade_url)
-        client = self._authenticate(ssh_connect, connection_parameters)
-        if client is None:
-            return _(u"Couldn't connect to upgrade server.")
-        sftp = client.open_sftp()
-        upgrade_file = sftp.open(path)
-        # Unpack the upgrade file and replace the current installation.
-        install_directory = os.path.normpath(os.path.join(sys.path[0], '..'))
-        old_install_directory = install_directory + '.old'
-        tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
-        pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
-        scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
-        scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
-        tarfile.open(fileobj=upgrade_file).extractall(path=tmp_directory)
-        if not os.path.isdir(pytis_directory):
-            return _(u"Package unpacking failed.")
-        if os.path.exists(old_install_directory):
-            shutil.rmtree(old_install_directory)
-        shutil.move(install_directory, old_install_directory)
-        shutil.move(pytis_directory, install_directory)
-        shutil.rmtree(old_install_directory)
-        xconfig = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
-        if os.access(xconfig, os.W_OK):
-            os.remove(xconfig)
-        if os.access(scripts_directory, os.R_OK):
-            for fname in os.listdir(scripts_directory):
-                fpath = os.path.join(scripts_directory, fname)
-                dpath = os.path.normpath(os.path.join(scripts_install_dir, fname))
-                if os.access(dpath, os.W_OK):
-                    os.remove(dpath)
-                try:
-                    shutil.move(fpath, scripts_install_dir)
-                except Exception:
-                    pass
-        # Execute supplied update procedure if it exists.
-        if os.access(os.path.join(tmp_directory, 'updatescript.py'), os.R_OK):
-            sys.path.append(tmp_directory)
-            try:
-                import updatescript
-            except:
-                pass
-            else:
-                updatescript.run(version=X2GOCLIENT_VERSION, path=path)
-        shutil.rmtree(tmp_directory)
+    # Read the service authentication key from STDIN
+    key = sys.stdin.readline().strip()
 
-    def _vbs_path(self, directory, profile_id):
-        return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
-            self._broker_username,
-            self._broker_parameters['server'],
-            self._profiles[profile_id]['server'],
-            profile_id,
-        ))
-
-    def _scripts_directory(self):
-        return os.path.normpath(os.path.join(sys.path[0], '..', '..', 'scripts'))
-
-    def _local_username(self):
-        if pytis.util.on_windows():
-            userp = os.environ.get('userprofile')
-            if not isinstance(userp, unicode):
-                userp = userp.decode(sys.getfilesystemencoding())
-                username = os.path.split(userp)[-1] or ''
-        else:
-            username = os.environ.get('USER', '')
-        if isinstance(username, unicode):
-            username = username.encode('utf-8')
-        return username
-
-    def _desktop_shortcuts(self):
-        import winshell
-        directory = winshell.desktop()
-        for name in os.listdir(directory):
-            if os.path.splitext(name)[1].lower() == '.lnk':
-                filename = os.path.join(directory, name)
-                if os.path.isfile(filename):
-                    try:
-                        with winshell.shortcut(filename) as shortcut:
-                            yield shortcut
-                    except Exception:
-                        pass
-
-    def shortcut_exists(self, profile_id):
-        vbs_path = self._vbs_path(self._scripts_directory(), profile_id)
-        if not os.path.exists(vbs_path):
-            return False
-        for shortcut in self._desktop_shortcuts():
-            if shortcut.path.lower() == vbs_path.lower():
-                return True
-        return False
-
-    def create_shortcut(self, profile_id):
-        import winshell
-        directory = self._scripts_directory()
-        if not os.path.isdir(directory):
-            return _("Unable to find the scripts directory: %s", directory)
-        vbs_path = self._vbs_path(directory, profile_id)
-        # Create the VBS script to which the shortcut will point to.
-        profile_name = self._profiles[profile_id]['profile_name']
-        if not os.path.exists(vbs_path):
-            params = self._broker_parameters
-            broker_url = "ssh://%s%s@%s%s/%s" % (
-                params['username'],
-                ':' + params['password'] if params['password'] else '',
-                params['server'],
-                ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
-                self._broker_path,
-            )
-            vbs_script = '\n'.join((
-                "'{}".format(profile_name),
-                'dim scriptdir, appshell',
-                'Set appshell = CreateObject("Shell.Application")',
-                'appshell.MinimizeAll',
-                'Set fso = CreateObject("Scripting.FileSystemObject")',
-                'scriptdir = fso.GetParentFolderName(Wscript.ScriptFullName)',
-                'Set WshShell = CreateObject("WScript.Shell")',
-                'WshShell.CurrentDirectory = scriptdir',
-                ('WshShell.RUN "cmd /c {} {} '
-                 '--add-to-known-hosts '
-                 '--heading=""{}"" '
-                 '--broker-url={} -P {}" , 0'.format(
-                     sys.executable,
-                     os.path.abspath(sys.argv[0]),
-                     profile_name,
-                     broker_url,
-                     profile_id)),
-            ))
-            with open(vbs_path, 'w') as f:
-                f.write(vbs_script)
-        # Create the shortcut on the desktop.
-        shortcut_path, n = os.path.join(winshell.desktop(), '%s.lnk' % profile_name), 0
-        while os.path.exists(shortcut_path):
-            # If the shortcut of given name already exists, it is probably something else as
-            # it was not found by shortcut_exists(), so try to find the first unused name.
-            n += 1
-            shortcut_path = os.path.join(winshell.desktop(), '%s(%d).lnk' % (profile_name, n))
-        with winshell.shortcut(shortcut_path) as link:
-            link.path = vbs_path
-            link.description = profile_id
-            link.working_directory = directory
-            icon_location = os.path.normpath(os.path.join(directory, '..', 'icons', 'p2go.ico'))
-            if os.path.exists(icon_location):
-                link.icon_location = (icon_location, 0)
-        return None
-
-    def cleanup_shortcuts(self):
-        """Cleanup desktop shortcuts."""
-        shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
-        if shortcuts:
-            confirmed = self._app.checklist_dialog(
-                title=_("Confirm shortcuts removal"),
-                message=(_("The following desktop shortcuts are invalid.") + "\n" +
-                         _("Press Ok to remove the checked items.")),
-                columns=(_("Name"),),
-                items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
-                       for shortcut in shortcuts],
-            )
-            n = 0
-            for shortcut, checked in zip(shortcuts, confirmed):
-                if checked:
-                    os.remove(shortcut.lnk_filepath)
-                    n += 1
-            self._app.message(_.ngettext("%d shortcut removed succesfully.",
-                                         "%d shortcuts removed succesfully.",
-                                         n))
-        else:
-            self._app.info_dialog(_("All shortcuts ok"),
-                                  _("No invalid shortcut found."))
-
-    def _check_password(self, passwd):
-        """Simple password validator."""
-        import string
-        set_digits = set(string.digits)
-        set_lower = set(string.ascii_lowercase)
-        set_upper = set(string.ascii_uppercase)
-        allowed_chars = string.digits + string.ascii_letters + string.punctuation
-        if any(c not in allowed_chars for c in passwd):
-            return 'unallowed'
-        if len(passwd) < 10:
-            return 'short'
-        if not all(set(passwd) & s for s in (set_digits, set_lower, set_upper)):
-            return 'weak'
-        else:
-            return None
-
-    def _write_key(self, key, key_file, passwd):
-        """Write given key to private and public key files."""
-
-        # Write private part
-        key.write_private_key_file(key_file, password=passwd)
-        # Write public part
-        username = self._local_username()
-        with open(key_file + '.pub', 'w') as f:
-            f.write(key.get_name())
-            f.write(key.get_base64())
-            f.write(str(" "))
-            f.write(username)
-
-    def generate_key(self):
-        """Generate new SSH key pair."""
-        sshdir = os.path.join(x2go.defaults.LOCAL_HOME,
-                              x2go.defaults.X2GO_SSH_ROOTDIR)
-        if not os.path.exists(sshdir):
-            os.mkdir(sshdir)
-        # Check if key exists
-        key_file = None
-        for name in ('id_rsa', 'id_dsa'):
-            fname = os.path.join(sshdir, name)
-            if os.access(fname, os.R_OK):
-                key_file = fname
-                break
-        if key_file:
-            self._app.info_dialog(_("Generate key"), _("An existing key found: %s", key_file))
-            return
-        key_file = os.path.join(sshdir, 'id_rsa')
-        passwd = self._app.passphrase_dialog(_("Enter new key passphrase"),
-                                             check=self._check_password)
-        if passwd:
-            key = paramiko.RSAKey.generate(2048)
-            self._write_key(key, key_file, passwd)
-            if os.access(key_file, os.R_OK):
-                self._app.info_dialog(_("Generate key"),
-                                      _("Keys created in directory: %s", sshdir))
-
-    def change_key_passphrase(self):
-        """Change key passphrase."""
-        key_filename = None
-        for name in ('id_rsa', 'id_dsa', 'id_ecdsa',):
-            f = os.path.join(os.path.expanduser('~'), '.ssh', name)
-            if os.access(f, os.R_OK):
-                key_filename = f
-                break
-        while True:
-            key_filename, old_passphrase = self._app.keyfile_passphrase_dialog(key_filename)
-            if key_filename is None:
-                return
-            else:
-                key = None
-                for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
-                    try:
-                        key = handler.from_private_key_file(key_filename, old_passphrase)
-                    except:
-                        break
-                if key:
-                    break
-                else:
-                    if self._app.question_dialog(_("Question"),
-                                                 _("Wrong passphrase! Try again?")):
-                        continue
-                    else:
-                        return
-        new_passphrase = self._app.passphrase_dialog(_("Enter new key passphrase"),
-                                                     check=self._check_password)
-        if new_passphrase:
-            self._write_key(key, key_filename, new_passphrase)
-            self._app.info_dialog(_("Passphrase changed"),
-                                  _("Passphrase changed for: %s", key_filename))
-
-    def upload_key(self, pubkey_filename=None):
-        """Upload public key to server."""
-        if self._broker_parameters is None or self._broker_parameters.get('server') is None:
-            return
-        try:
-            import pytis
-            import StringIO
-            p2go_key = paramiko.RSAKey.from_private_key(
-                StringIO.StringIO(pytis.config.upload_key))
-        except:
-            return
-        # Choose key to be sent if not given
-        key, key_file = self._choose_key()
-        if key and key_file:
-            import datetime
-            tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
-            username = self._local_username()
-            pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
-            filename = "{}_{}.pub".format(tstamp, username)
-            try:
-                port = self._broker_parameters.get('port') or 22
-                t = paramiko.Transport((self._broker_parameters['server'], port))
-                t.connect(username='p2gokeys', pkey=p2go_key)
-                sftp = paramiko.SFTPClient.from_transport(t)
-                with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
-                    f.write(pubkey)
-                t.close()
-            except:
-                return
-
-    def send_key(self):
-        """Send public key to admin."""
-        ssh_dir = os.path.join(os.path.expanduser('~'), '.ssh')
-        msg = _("Use your usual email application (Thunderbird, Outlook)\n"
-                "to send the public key file as an attachment.\n\n"
-                "Your public key file should have an extension '.pub' (e.g. id_rsa.pub)\n"
-                "and it is located in the directory {}.")
-        self._app.info_dialog(_("Send key to admin"), msg.format(ssh_dir))
+    server = rpyc.utils.server.OneShotServer(
+        ClientService, port=args.port,
+        protocol_config=dict(allow_public_attrs=True),
+        authenticator=ClientService.Authenticator(key),
+    )
+    server.start()

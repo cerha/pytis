@@ -18,12 +18,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import wx
 import sys
 import time
+import x2go
+import shutil
+import tarfile
+import tempfile
+import paramiko
 import collections
 import pytis.util
+
 import pytis.x2goclient
+from .ssh import public_key_acceptable, ssh_connect
+from .x2goclient import XServer, PytisSshProfiles
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -281,6 +290,7 @@ class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
     _MAX_PROGRESS = 40
+    _DEFAULT_SSH_PORT = 22
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
@@ -312,39 +322,54 @@ class X2GoStartApp(wx.App):
             return menu
 
     def __init__(self, args):
-        self._progress = 1
         self._args = args
-        self._controller = pytis.x2goclient.StartupController(
-            self,
-            add_to_known_hosts=args.add_to_known_hosts,
-            broker_url=args.broker_url,
-            broker_password=args.broker_password,
-            wait_for_pytis=not args.nowait,
-        )
         self._profiles = []
         username = args.username
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
         self._default_username = username
+        if args.broker_url:
+            self._broker_parameters, self._broker_path = self._parse_url(args.broker_url)
+        else:
+            self._broker_parameters = self._broker_path = None
+        self._broker_username = None
+        self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
+
+    def _parse_url(self, url):
+        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
+                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                          '(|:(?P<password>.*))@)'
+                          '(?P<server>[a-zA-Z0-9\.-]+)'
+                          '(|:(?P<port>[0-9]+))'
+                          '($|(?P<path>/.*)$)'), url)
+        if match:
+            parameters = match.groupdict()
+            parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
+            if parameters.pop('protocol', None) not in (None, 'ssh'):
+                raise Exception(_(u"Unsupported broker protocol: %s") % url)
+            path = parameters.pop('path')
+            return parameters, path
+        else:
+            raise Exception(_("Invalid URL: %s", url))
 
     def _menu_items(self):
         items = [
-            (parameters['profile_name'], lambda p=profile_id: self._connect(p))
+            (parameters['profile_name'], lambda p=profile_id: self._start_session(p))
             for profile_id, parameters in self._profiles
         ]
         items.extend((
             ('---',) if items else None,
             (_("Reload profiles") if items else _("Load profiles"), self._load_profiles),
             ('---',),
-            (_("Generate new SSH key pair"), self._controller.generate_key),
-            (_("Change key passphrase"), self._controller.change_key_passphrase),
-            (_("Upload public key to server"), self._controller.upload_key),
-            (_("Send public key to admin"), self._controller.send_key),
-            (_("Create desktop shortcut"), self._create_shortcut, bool(items))
+            (_("Generate new SSH key pair"), self._generate_key),
+            (_("Change key passphrase"), self._change_key_passphrase),
+            (_("Upload public key to server"), self._upload_key),
+            (_("Send public key to admin"), self._send_key),
+            (_("Create desktop shortcut"), self._create_shortcut_menu, bool(items))
             if pytis.util.on_windows() else None,
-            (_("Cleanup desktop shortcuts"), self._controller.cleanup_shortcuts)
+            (_("Cleanup desktop shortcuts"), self._cleanup_shortcuts)
             if pytis.util.on_windows() else None,
             ('---',),
             (_("Exit"), self._on_exit),
@@ -359,8 +384,8 @@ class X2GoStartApp(wx.App):
         pass
 
     def _create_main_content(self, parent):
-        self._message = message = ui.label(parent, '')
-        self._gauge = gauge = wx.Gauge(parent, -1, self._MAX_PROGRESS)
+        self._progress_message = message = ui.label(parent, '')
+        self._gauge = gauge = wx.Gauge(parent, -1)
         gauge.SetMinSize((450, 14))
         return ui.vgroup(
             ui.item(message, expand=True),
@@ -397,10 +422,10 @@ class X2GoStartApp(wx.App):
         def on_terminate_session(event):
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
-            self.update_progress(_("Terminating session: %s", session.name), 0)
+            self._message(_("Terminating session: %s", session.name))
             client.terminate_session(session)
             listbox.Delete(selection)
-            self.update_progress(_("Session terminated: %s", session.name), 0)
+            self._message(_("Session terminated: %s", session.name))
 
         def on_resume_session(event):
             dialog.close(listbox.GetClientData(listbox.GetSelection()))
@@ -444,40 +469,41 @@ class X2GoStartApp(wx.App):
 
     def _load_profiles(self):
         self._frame.Show()
-        self._profiles = self._controller.list_profiles()
+        self._profiles = self._authenticate(self._list_profiles, self._broker_parameters)
         self._icon.update_menu(self._menu_items())
-        self.update_progress(_("Successfully loaded %d profiles.", len(self._profiles)))
+        self._message(_("Successfully loaded %d profiles.", len(self._profiles)))
         time.sleep(2)
         # Profiles are empty when the user cancels the broker authentication dialog.
         if self._profiles and pytis.util.on_windows():
-            current_version = self._controller.current_version()
-            available_version = self._controller.available_upgrade_version()
+            current_version = self._current_version()
+            available_version = self._available_upgrade_version()
             if ((available_version and available_version > current_version and
                 self._question(_("Upgrade available"),
                                '\n'.join((_("New Pytis client version available."),
                                           _("Current version: %s", current_version),
                                           _("New version: %s", available_version),
                                           _("Install?")))))):
-                error = self._controller.upgrade()
+                error = self._upgrade()
                 if error:
                     # TODO: Specific dialog for error messages (icons)?
-                    self.info_dialog(_("Upgrade failed"), error)
+                    self._info_dialog(_("Upgrade failed"), error)
                 else:
-                    self.info_dialog(
+                    self._info_dialog(
                         _(u"Upgrade finished"),
                         _(u"Pytis successfully upgraded. Restart the application."))
                     return self.Exit()
         self._frame.Hide()
 
-    def _connect(self, profile_id):
+    def _start_session(self, profile_id):
         self._frame.Show()
-        self.update_progress(_("Selected profile %s: Contacting server...", profile_id))
-        session_parameters = dict(self._profiles)[profile_id]
-        self.update_progress(_("Starting Pytis client."))
-        client = self._controller.connect(session_parameters)
-        if not client:
-            return self.Exit()
-        self.update_progress(_("Retrieving available sessions."))
+
+        self._message(_("Selected profile %s: Contacting server...", profile_id))
+        session_parameters = self._authenticate(self._connect, dict(self._profiles)[profile_id])
+        if not session_parameters:
+            return
+        self._message(_("Starting X2Go client"))
+        client = pytis.x2goclient.ClientProcess(session_parameters)
+        self._message(_("Retrieving available sessions."))
         sessions = client.list_sessions()
         if len(sessions) == 0:
             session = None
@@ -485,40 +511,19 @@ class X2GoStartApp(wx.App):
             session = self._show_dialog(_("Select session"),
                                         self._session_selection_dialog, client, sessions)
         if session:
-            self.update_progress(_("Resuming session: %s", session.name), 10)
+            self._message(_("Resuming session: %s", session.name))
             client.resume_session(session)
         else:
-            self.update_progress(_("Starting new session."), 10)
+            self._message(_("Starting new session."))
             client.start_new_session()
-        if self._args.nowait:
-            # Close automatically right now.
-            self.close()
-        else:
-            # Rely on the client to call 'close()' explicitly from a callback.
-            self.update_progress(_("Waiting for the application to come up..."), 10)
+        def close():
+            self._frame.Close(False)
+            wx.Yield()
+        wx.CallLater(4000, close)
+        self._message(_("Waiting for the application to come up..."))
         client.main_loop()
-        self.Exit()
 
-    def _create_shortcut(self):
-        def create_shortcut(profile_id):
-            error = self._controller.create_shortcut(profile_id)
-            if error:
-                # TODO: Specific dialog for error messages (icons)?
-                self.info_dialog(_("Failed creating desktop shortcut"), error)
-            else:
-                self.info_dialog(_("Shortcut created"), _("Shortcut created successfully."))
-        menu = wx.Menu()
-        for profile_id, parameters in self._profiles:
-            item = wx.MenuItem(menu, -1, parameters['profile_name'])
-            menu.Bind(wx.EVT_MENU,
-                      lambda event, profile_id=profile_id: create_shortcut(profile_id),
-                      id=item.GetId())
-            menu.Enable(item.GetId(), not self._controller.shortcut_exists(profile_id))
-            menu.AppendItem(item)
-        self._icon.PopupMenu(menu)
-        menu.Destroy()
-
-    def question_dialog(self, title, question, default=wx.YES_DEFAULT):
+    def _question_dialog(self, title, question, default=wx.YES_DEFAULT):
         style = wx.YES_NO | default | wx.ICON_QUESTION
         dlg = wx.MessageDialog(self._frame, question, caption=title, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
@@ -530,7 +535,7 @@ class X2GoStartApp(wx.App):
         dlg.Destroy()
         return result
 
-    def info_dialog(self, title, text):
+    def _info_dialog(self, title, text):
         def create_dialog(dialog):
             button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
             dialog.set_callback(lambda: button.SetFocus())
@@ -541,32 +546,20 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-
-    def update_progress(self, message=None, progress=1):
-        """Update progress bar and display a progress message.
+    def _message(self, message):
+        """Display a progress progress message.
 
         Arguments:
           message -- Message roughly describing the current progress of
             application startup to the user.  Messages can also help to diagnose
             problems.  If None, the previous progress message is kept.
-          progress -- progress bar increment in percents (int).
 
         """
-        self._gauge.SetValue(self._gauge.GetValue() + progress)
-        if message:
-            self._message.SetLabel(message)
+        self._gauge.Pulse()
+        self._progress_message.SetLabel(message)
         self.Yield()
 
-    def message(self, message):
-        """Display a message.
-
-        The message replaces any previous message, but doesn't
-        change the progress bar state.
-
-        """
-        self.update_progress(message, progress=0)
-
-    def authentication_dialog(self, server, username, methods, key_files):
+    def _authentication_dialog(self, server, username, methods, key_files):
         """Interactively ask the user for authentication credentials.
 
         Arguments:
@@ -674,7 +667,7 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(_("Log in to %s", server), create_dialog)
 
-    def keyfile_passphrase_dialog(self, key_filename):
+    def _keyfile_passphrase_dialog(self, key_filename):
         """Interactively choose keyfile and its passphrase.
 
         The return value is two-tuple (key_filename, password).
@@ -695,12 +688,11 @@ class X2GoStartApp(wx.App):
             return ui.vgroup(
                 ui.hgroup(ui.item(ui.label(dialog, _("Key File:")), padding=(3, 0)),
                           fields[0],
-                          ui.button(dialog, _("Select"), lambda e:
-                                    fields[0].SetValue(wx.FileSelector(
+                          ui.button(dialog, _("Select"),
+                                    lambda e: fields[0].SetValue(wx.FileSelector(
                                         _(u"Select SSH key file"),
                                         default_path=default_path,
-                                    ))
-                          ),
+                                    ))),
                           spacing=2),
                 ui.hgroup(ui.item(ui.label(dialog, _("Passphrase:")), padding=(3, 0)),
                           fields[1], spacing=2),
@@ -715,7 +707,7 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(_("Select the key file"), create_dialog)
 
-    def checklist_dialog(self, title, message, columns, items):
+    def _checklist_dialog(self, title, message, columns, items):
         """Display a dialog to select multiple items from a list.
 
         Arguments:
@@ -755,7 +747,7 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def passphrase_dialog(self, title, check=None):
+    def _passphrase_dialog(self, title, check=None):
         """Display a dialog to enter a key passphrase with strength checking.
 
         Arguments:
@@ -818,18 +810,519 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def close(self):
-        """Close the startup application window.
+    def _authentication_methods(self, connection_parameters):
+        import socket
+        sock = socket.socket()
+        sock.connect((connection_parameters['server'], connection_parameters['port']))
+        transport = paramiko.Transport(sock)
+        transport.connect()
+        try:
+            transport.auth_none('')
+        except paramiko.ssh_exception.BadAuthenticationType as e:
+            methods = e.allowed_types
+        transport.close()
+        sock.close()
+        return methods
 
-        The window is closed automatically after starting the X2Go client when
-        --nowait is passed.  If --nowait is not passed, this public method must
-        be called from an X2Go client callback when an application window comes
-        up.
+    def _acceptable_key_files(self, connection_parameters):
+        def key_acceptable(path):
+            if os.access(path, os.R_OK):
+                try:
+                    return public_key_acceptable(
+                        connection_parameters['server'],
+                        connection_parameters['username'],
+                        path,
+                        port=connection_parameters['port'])
+                except:
+                    return True
+            else:
+                return True
+        return [path for path in [os.path.join(os.path.expanduser('~'), '.ssh', name)
+                                  for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
+                if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
+
+    def _authenticate(self, function, connection_parameters, **kwargs):
+        """Try calling 'method' with different authentication parameters.
+
+        Arguments:
+          function -- connection function to be called with different
+            connection parameters to try different authentication methods.  The
+            function must accept the dictionary of connection parameters as its
+            first positional argument plus optionally any keyword arguemnts
+            passed in '**kwargs'.  The function must return a result which (in
+            boolean context) evaluates to True to indicate success or False for
+            failure.  If failure is returned for one authentication method,
+            another method may be tried (with different connection parameters).
+          connection_parameters -- initial connection parameters as a
+            dictionary with keys such as 'server', 'port', 'username', etc.
+            Authentication related keys in this dictionary will be overriden
+            before passing the parameters to 'function' as described below.
+          **kwargs -- all remaining keyword arguments will be passed on to
+            'function'.
+
+        Authentication related connection parameters:
+
+          username -- user's login name (mandatory)
+          gss_auth -- True if GSS-API (Kerberos) authentication is to be used
+            or False for other authentication schemes
+          key_filename -- file name of the private SSH key to use for
+            authentication or None
+          password -- SSH key passphrase if 'key_filename' is given or user's
+            password for password authentication
+
+        Supported authentication methods:
+          - GSS-API (Kerberos) -- 'gss_auth' is True and 'key_filename' and
+            'password' are empty
+          - SSH Agent -- 'gss_auth' is False and 'key_filename' and 'password'
+            are empty
+          - Public Key -- 'gss_auth' is False and 'key_filename' and 'password'
+            are given
+          - Password -- 'gss_auth' is False, 'key_filename' is empty and
+            'password' is given
 
         """
-        self.ExitMainLoop()
-        self._frame.Show(False)
-        wx.Yield()
+        def message(msg):
+            self._message(connection_parameters['server'] + ': ' + msg)
+
+        def connect(username, gss_auth=False, key_filename=None, password=None):
+            return function(**dict(
+                connection_parameters,
+                username=username,
+                gss_auth=gss_auth,
+                key_filename=key_filename,
+                password=password,
+                look_for_keys=key_filename is not None,
+                allow_agent=True,
+                add_to_known_hosts=self._args.add_to_known_hosts,
+                **kwargs
+            ))
+
+        success = False
+        message(_("Retrieving supported authentication methods."))
+        methods = self._authentication_methods(connection_parameters)
+        for username, key_filename, password in self._keyring:
+            if key_filename and password and 'publickey' in methods:
+                message(_("Trying public key authentication."))
+                success = connect(username, key_filename=key_filename, password=password)
+            elif key_filename is None and password and 'password' in methods:
+                message(_("Trying password authentication."))
+                success = connect(username, password=password)
+            if success:
+                break
+        if not success:
+            message(_("Trying SSH Agent authentication."))
+            success = connect(connection_parameters['username'])
+        if not success:
+            message(_("Trying Kerberos authentication."))
+            success = connect(connection_parameters['username'], gss_auth=True)
+        if not success:
+            message(_("Trying interactive authentication."))
+            if 'publickey' in methods:
+                key_files = self._acceptable_key_files(connection_parameters)
+            else:
+                key_files = ()
+            while not success:
+                username, key_filename, password = self._authentication_dialog(
+                    connection_parameters['server'],
+                    connection_parameters['username'],
+                    methods,
+                    key_files,
+                )
+                if username is None:
+                    return None
+                if key_filename or password:
+                    if key_filename:
+                        message(_("Trying public key authentication."))
+                    else:
+                        message(_("Trying password authentication."))
+                    success = connect(username, key_filename=key_filename, password=password)
+                    if success:
+                        self._keyring.append((username, key_filename, password))
+                elif username != connection_parameters['username']:
+                    message(_("Trying SSH Agent authentication."))
+                    success = connect(username)
+                    if not success:
+                        message(_("Trying Kerberos authentication."))
+                        success = connect(username, gss_auth=True)
+        if success:
+            message(_("Connected successfully."))
+        return success
+
+    def _connect(self, **session_parameters):
+        """Create and set up the X2GoClient instance."""
+        connection_parameters = dict((k, session_parameters[k]) for k in
+                                     ('server', 'port', 'username', 'password',
+                                      'key_filename', 'allow_agent', 'gss_auth'))
+        if ssh_connect(**connection_parameters):
+            return session_parameters
+        else:
+            return None
+
+    def _check_key_password(self, key_filename, password):
+        for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
+            try:
+                handler.from_private_key_file(key_filename, password)
+                return True
+            except:
+                continue
+        return False
+
+    def _list_profiles(self, **connection_parameters):
+        """Return a list of two-tuples (profile_id, session_parameters).
+
+        The list is sorted by profile name.  'session_parameters' is a
+        dictionary of X2Go session parameters to pass to 'connect()'.
+
+        """
+        def session_parameters(profile_id):
+            parameters = ssh_profiles.to_session_params(profile_id)
+            if isinstance(parameters['server'], list):
+                parameters['server'] = parameters['server'][0]
+            rootless = ssh_profiles.session_profiles[profile_id].get('rootless', True)
+            if not rootless or int(rootless) == 0:
+                parameters['session_type'] = 'desktop'
+                parameters['geometry'] = 'maximize'
+                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
+                                                         'known_hosts')
+            return parameters
+        try:
+            ssh_profiles = PytisSshProfiles(
+                connection_parameters,
+                logger=x2go.X2GoLogger(tag='PytisClient'),
+                broker_path=self._broker_path,
+                broker_password=self._args.broker_password
+            )
+        except PytisSshProfiles.ConnectionFailed:
+            return None
+        else:
+            profiles = sorted([(profile_id, session_parameters(profile_id))
+                               for profile_id in ssh_profiles.profile_ids],
+                              key=lambda x: x[1]['profile_name'])
+            self._broker_username = connection_parameters['username']
+            self._upgrade_version, self._upgrade_url = ssh_profiles.pytis_upgrade_parameters()
+            self._profiles = dict(profiles)
+            self._message(self._broker_parameters['server'] + ': ' +
+                          _.ngettext("Returned %d profile.",
+                                     "Returned %d profiles.",
+                                     len(profiles)))
+            return profiles
+
+    def _current_version(self):
+        return pytis.x2goclient.X2GOCLIENT_VERSION
+
+    def _available_upgrade_version(self):
+        if self._upgrade_version and self._upgrade_url:
+            return self._upgrade_version
+        else:
+            return None
+
+    def _upgrade(self):
+        connection_parameters, path = self._parse_url(self._upgrade_url)
+        client = self._authenticate(ssh_connect, connection_parameters)
+        if client is None:
+            return _(u"Couldn't connect to upgrade server.")
+        sftp = client.open_sftp()
+        upgrade_file = sftp.open(path)
+        # Unpack the upgrade file and replace the current installation.
+        install_directory = os.path.normpath(os.path.join(sys.path[0], '..'))
+        old_install_directory = install_directory + '.old'
+        tmp_directory = tempfile.mkdtemp(prefix='pytisupgrade')
+        pytis_directory = os.path.join(tmp_directory, 'pytis2go', 'pytis')
+        scripts_directory = os.path.join(tmp_directory, 'pytis2go', 'scripts')
+        scripts_install_dir = os.path.normpath(os.path.join(install_directory, '..', 'scripts'))
+        tarfile.open(fileobj=upgrade_file).extractall(path=tmp_directory)
+        if not os.path.isdir(pytis_directory):
+            return _(u"Package unpacking failed.")
+        if os.path.exists(old_install_directory):
+            shutil.rmtree(old_install_directory)
+        shutil.move(install_directory, old_install_directory)
+        shutil.move(pytis_directory, install_directory)
+        shutil.rmtree(old_install_directory)
+        xconfig = os.path.join(os.path.expanduser('~'), '.x2goclient', 'xconfig')
+        if os.access(xconfig, os.W_OK):
+            os.remove(xconfig)
+        if os.access(scripts_directory, os.R_OK):
+            for fname in os.listdir(scripts_directory):
+                fpath = os.path.join(scripts_directory, fname)
+                dpath = os.path.normpath(os.path.join(scripts_install_dir, fname))
+                if os.access(dpath, os.W_OK):
+                    os.remove(dpath)
+                try:
+                    shutil.move(fpath, scripts_install_dir)
+                except Exception:
+                    pass
+        # Execute supplied update procedure if it exists.
+        if os.access(os.path.join(tmp_directory, 'updatescript.py'), os.R_OK):
+            sys.path.append(tmp_directory)
+            try:
+                import updatescript
+            except:
+                pass
+            else:
+                updatescript.run(version=pytis.x2goclient.X2GOCLIENT_VERSION, path=path)
+        shutil.rmtree(tmp_directory)
+
+    def _vbs_path(self, directory, profile_id):
+        return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
+            self._broker_username,
+            self._broker_parameters['server'],
+            self._profiles[profile_id]['server'],
+            profile_id,
+        ))
+
+    def _scripts_directory(self):
+        return os.path.normpath(os.path.join(sys.path[0], '..', '..', 'scripts'))
+
+    def _local_username(self):
+        if pytis.util.on_windows():
+            userp = os.environ.get('userprofile')
+            if not isinstance(userp, unicode):
+                userp = userp.decode(sys.getfilesystemencoding())
+                username = os.path.split(userp)[-1] or ''
+        else:
+            username = os.environ.get('USER', '')
+        if isinstance(username, unicode):
+            username = username.encode('utf-8')
+        return username
+
+    def _desktop_shortcuts(self):
+        import winshell
+        directory = winshell.desktop()
+        for name in os.listdir(directory):
+            if os.path.splitext(name)[1].lower() == '.lnk':
+                filename = os.path.join(directory, name)
+                if os.path.isfile(filename):
+                    try:
+                        with winshell.shortcut(filename) as shortcut:
+                            yield shortcut
+                    except Exception:
+                        pass
+
+    def _shortcut_exists(self, profile_id):
+        vbs_path = self._vbs_path(self._scripts_directory(), profile_id)
+        if not os.path.exists(vbs_path):
+            return False
+        for shortcut in self._desktop_shortcuts():
+            if shortcut.path.lower() == vbs_path.lower():
+                return True
+        return False
+
+    def _create_shortcut_menu(self):
+        menu = wx.Menu()
+        for profile_id, parameters in self._profiles:
+            item = wx.MenuItem(menu, -1, parameters['profile_name'])
+            menu.Bind(wx.EVT_MENU,
+                      lambda event, profile_id=profile_id: self._create_shortcut(profile_id),
+                      id=item.GetId())
+            menu.Enable(item.GetId(), not self._shortcut_exists(profile_id))
+            menu.AppendItem(item)
+        self._icon.PopupMenu(menu)
+        menu.Destroy()
+
+    def _create_shortcut(self, profile_id):
+        import winshell
+        directory = self._scripts_directory()
+        if not os.path.isdir(directory):
+            # TODO: Specific dialog for error messages (icons)?
+            self._info_dialog(_("Failed creating desktop shortcut"),
+                              _("Unable to find the scripts directory: %s", directory))
+            return
+        vbs_path = self._vbs_path(directory, profile_id)
+        # Create the VBS script to which the shortcut will point to.
+        profile_name = self._profiles[profile_id]['profile_name']
+        if not os.path.exists(vbs_path):
+            params = self._broker_parameters
+            broker_url = "ssh://%s%s@%s%s/%s" % (
+                params['username'],
+                ':' + params['password'] if params['password'] else '',
+                params['server'],
+                ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
+                self._broker_path,
+            )
+            vbs_script = '\n'.join((
+                "'{}".format(profile_name),
+                'dim scriptdir, appshell',
+                'Set appshell = CreateObject("Shell.Application")',
+                'appshell.MinimizeAll',
+                'Set fso = CreateObject("Scripting.FileSystemObject")',
+                'scriptdir = fso.GetParentFolderName(Wscript.ScriptFullName)',
+                'Set WshShell = CreateObject("WScript.Shell")',
+                'WshShell.CurrentDirectory = scriptdir',
+                ('WshShell.RUN "cmd /c {} {} '
+                 '--add-to-known-hosts '
+                 '--heading=""{}"" '
+                 '--broker-url={} -P {}" , 0'.format(
+                     sys.executable,
+                     os.path.abspath(sys.argv[0]),
+                     profile_name,
+                     broker_url,
+                     profile_id)),
+            ))
+            with open(vbs_path, 'w') as f:
+                f.write(vbs_script)
+        # Create the shortcut on the desktop.
+        shortcut_path, n = os.path.join(winshell.desktop(), '%s.lnk' % profile_name), 0
+        while os.path.exists(shortcut_path):
+            # If the shortcut of given name already exists, it is probably something else as
+            # it was not found by _shortcut_exists(), so try to find the first unused name.
+            n += 1
+            shortcut_path = os.path.join(winshell.desktop(), '%s(%d).lnk' % (profile_name, n))
+        with winshell.shortcut(shortcut_path) as link:
+            link.path = vbs_path
+            link.description = profile_id
+            link.working_directory = directory
+            icon_location = os.path.normpath(os.path.join(directory, '..', 'icons', 'p2go.ico'))
+            if os.path.exists(icon_location):
+                link.icon_location = (icon_location, 0)
+        self._info_dialog(_("Shortcut created"), _("Shortcut created successfully."))
+
+    def _cleanup_shortcuts(self):
+        """Cleanup desktop shortcuts."""
+        shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
+        if shortcuts:
+            confirmed = self._checklist_dialog(
+                title=_("Confirm shortcuts removal"),
+                message=(_("The following desktop shortcuts are invalid.") + "\n" +
+                         _("Press Ok to remove the checked items.")),
+                columns=(_("Name"),),
+                items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
+                       for shortcut in shortcuts],
+            )
+            n = 0
+            for shortcut, checked in zip(shortcuts, confirmed):
+                if checked:
+                    os.remove(shortcut.lnk_filepath)
+                    n += 1
+            self._message(_.ngettext("%d shortcut removed succesfully.",
+                                     "%d shortcuts removed succesfully.", n))
+        else:
+            self._info_dialog(_("All shortcuts ok"), _("No invalid shortcut found."))
+
+    def _check_password(self, passwd):
+        """Simple password validator."""
+        import string
+        set_digits = set(string.digits)
+        set_lower = set(string.ascii_lowercase)
+        set_upper = set(string.ascii_uppercase)
+        allowed_chars = string.digits + string.ascii_letters + string.punctuation
+        if any(c not in allowed_chars for c in passwd):
+            return 'unallowed'
+        if len(passwd) < 10:
+            return 'short'
+        if not all(set(passwd) & s for s in (set_digits, set_lower, set_upper)):
+            return 'weak'
+        else:
+            return None
+
+    def _write_key(self, key, key_file, passwd):
+        """Write given key to private and public key files."""
+
+        # Write private part
+        key.write_private_key_file(key_file, password=passwd)
+        # Write public part
+        username = self._local_username()
+        with open(key_file + '.pub', 'w') as f:
+            f.write(key.get_name())
+            f.write(key.get_base64())
+            f.write(str(" "))
+            f.write(username)
+
+    def _generate_key(self):
+        """Generate new SSH key pair."""
+        sshdir = os.path.join(x2go.defaults.LOCAL_HOME,
+                              x2go.defaults.X2GO_SSH_ROOTDIR)
+        if not os.path.exists(sshdir):
+            os.mkdir(sshdir)
+        # Check if key exists
+        key_file = None
+        for name in ('id_rsa', 'id_dsa'):
+            fname = os.path.join(sshdir, name)
+            if os.access(fname, os.R_OK):
+                key_file = fname
+                break
+        if key_file:
+            self._info_dialog(_("Generate key"), _("An existing key found: %s", key_file))
+            return
+        key_file = os.path.join(sshdir, 'id_rsa')
+        passwd = self._passphrase_dialog(_("Enter new key passphrase"), check=self._check_password)
+        if passwd:
+            key = paramiko.RSAKey.generate(2048)
+            self._write_key(key, key_file, passwd)
+            if os.access(key_file, os.R_OK):
+                self._info_dialog(_("Generate key"), _("Keys created in directory: %s", sshdir))
+
+    def _change_key_passphrase(self):
+        """Change key passphrase."""
+        key_filename = None
+        for name in ('id_rsa', 'id_dsa', 'id_ecdsa',):
+            f = os.path.join(os.path.expanduser('~'), '.ssh', name)
+            if os.access(f, os.R_OK):
+                key_filename = f
+                break
+        while True:
+            key_filename, old_passphrase = self._keyfile_passphrase_dialog(key_filename)
+            if key_filename is None:
+                return
+            else:
+                key = None
+                for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
+                    try:
+                        key = handler.from_private_key_file(key_filename, old_passphrase)
+                    except:
+                        break
+                if key:
+                    break
+                else:
+                    if self._question_dialog(_("Question"),
+                                             _("Wrong passphrase! Try again?")):
+                        continue
+                    else:
+                        return
+        new_passphrase = self._passphrase_dialog(_("Enter new key passphrase"),
+                                                 check=self._check_password)
+        if new_passphrase:
+            self._write_key(key, key_filename, new_passphrase)
+            self._info_dialog(_("Passphrase changed"),
+                              _("Passphrase changed for: %s", key_filename))
+
+    def _upload_key(self, pubkey_filename=None):
+        """Upload public key to server."""
+        if self._broker_parameters is None or self._broker_parameters.get('server') is None:
+            return
+        try:
+            import pytis
+            import StringIO
+            p2go_key = paramiko.RSAKey.from_private_key(
+                StringIO.StringIO(pytis.config.upload_key))
+        except:
+            return
+        # Choose key to be sent if not given
+        key, key_file = self._choose_key()
+        if key and key_file:
+            import datetime
+            tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
+            username = self._local_username()
+            pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
+            filename = "{}_{}.pub".format(tstamp, username)
+            try:
+                port = self._broker_parameters.get('port') or 22
+                t = paramiko.Transport((self._broker_parameters['server'], port))
+                t.connect(username='p2gokeys', pkey=p2go_key)
+                sftp = paramiko.SFTPClient.from_transport(t)
+                with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
+                    f.write(pubkey)
+                t.close()
+            except:
+                return
+
+    def _send_key(self):
+        """Send public key to admin."""
+        ssh_dir = os.path.join(os.path.expanduser('~'), '.ssh')
+        msg = _("Use your usual email application (Thunderbird, Outlook)\n"
+                "to send the public key file as an attachment.\n\n"
+                "Your public key file should have an extension '.pub' (e.g. id_rsa.pub)\n"
+                "and it is located in the directory {}.")
+        self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
     def OnInit(self):
         title = self._args.window_title or _("Pytis2Go")
@@ -841,12 +1334,12 @@ class X2GoStartApp(wx.App):
         panel = ui.panel(frame, self._create_main_content)
         frame.SetClientSize(panel.GetBestSize())
         if pytis.util.on_windows():
-            self.update_progress(_("Starting up X-server."))
-            self._xserver = pytis.x2goclient.XServer()
+            self._message(_("Starting up X-server."))
+            self._xserver = XServer()
         self.Yield()
         profile_id = self._args.session_profile
         if profile_id or self._args.autoload:
             self._load_profiles()
         if profile_id:
-            self._connect(profile_id)
+            self._start_session(profile_id)
         return True
