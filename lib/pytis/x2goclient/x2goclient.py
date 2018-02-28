@@ -29,6 +29,8 @@ import time
 import types
 import socket
 import hashlib
+import datetime
+import paramiko
 import tempfile
 import threading
 import subprocess
@@ -299,6 +301,125 @@ class PytisSshProfiles(SshProfiles):
 
     def pytis_upgrade_parameters(self):
         return self._pytis_upgrade_parameters
+
+
+class Broker(object):
+    """Higher level X2Go broker interface.
+
+    This class hides the details of working with 'PytisSshProfiles' API behind
+    a few simple public methods.
+
+    """
+    _DEFAULT_SSH_PORT = 22
+    _URL_MATCHER = re.compile('^(?P<protocol>(ssh|http(|s)))://'
+                              '(|(?P<username>[a-zA-Z0-9_\.-]+)'
+                              '(|:(?P<password>.*))@)'
+                              '(?P<server>[a-zA-Z0-9\.-]+)'
+                              '(|:(?P<port>[0-9]+))'
+                              '($|(?P<path>/.*)$)')
+
+    def __init__(self, url, password=None):
+        parameters, path = self._split_url(url)
+        self._connection_parameters = parameters
+        self._path = path
+        self._password = password
+        self._upgrade_parameters = None
+
+    def _split_url(self, url):
+        match = self._URL_MATCHER.match(url)
+        if not match:
+            raise Exception("Invalid URL: %s", url)
+        parameters = match.groupdict()
+        parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
+        if parameters.pop('protocol', None) not in (None, 'ssh'):
+            raise Exception("Unsupported broker protocol: %s" % url)
+        path = parameters.pop('path')
+        return parameters, path
+
+    def _list_profiles(self, **connection_parameters):
+        def session_parameters(profile_id):
+            parameters = profiles.to_session_params(profile_id)
+            if isinstance(parameters['server'], list):
+                parameters['server'] = parameters['server'][0]
+            rootless = profiles.session_profiles[profile_id].get('rootless', True)
+            if not rootless or int(rootless) == 0:
+                parameters['session_type'] = 'desktop'
+                parameters['geometry'] = 'maximize'
+                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
+                                                         'known_hosts')
+            return parameters
+        try:
+            profiles = PytisSshProfiles(connection_parameters,
+                                        broker_path=self._path,
+                                        broker_password=self._password,
+                                        logger=x2go.X2GoLogger(tag='PytisClient'))
+        except PytisSshProfiles.ConnectionFailed:
+            return None
+        else:
+            self._connection_parameters.update(connection_parameters)
+            self._upgrade_parameters = profiles.pytis_upgrade_parameters()
+            return sorted([(profile_id, session_parameters(profile_id))
+                           for profile_id in profiles.profile_ids],
+                          key=lambda x: x[1]['profile_name'])
+
+    def list_profiles(self, authenticate):
+        """Return a list of two-tuples (profile_id, session_parameters).
+
+        The list is sorted by profile name.  'session_parameters' is a
+        dictionary of X2Go session parameters.
+
+        """
+        return authenticate(self._list_profiles, self._connection_parameters)
+
+    def server(self):
+        """Return broker's server hostname as a string."""
+        return self._connection_parameters['server']
+
+    def username(self):
+        """Return broker authentication username as a string."""
+        return self._connection_parameters['username']
+
+    def url(self):
+        """Return broker URL as a string."""
+        params = self._connection_parameters
+        return "ssh://%s%s@%s%s/%s" % (
+            params['username'],
+            ':' + params['password'] if params['password'] else '',
+            params['server'],
+            ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
+            self._path,
+        )
+
+    def upgrade_parameters(self):
+        """Return Pytis upgrade parameters as (version, connection_parameters, path).
+
+        'version' is the available upgrade version as a string,
+        'connection_parameters' is a dictionary of upgrade server connection parameters,
+        'path' is the upgrade server path.
+
+        Must be called after 'list_profiles()' and only if 'list_profiles()'
+        doesn't return None.  Otherwise the behavior is undefined.
+
+        """
+        version, url = self._upgrade_parameters()
+        connection_parameters, path = self._split_url(url)
+        return version, connection_parameters, path
+
+    def upload_key(self, username, key, key_file):
+        """Upload user's public key to the broker server."""
+        import StringIO
+        upload_key = paramiko.RSAKey.from_private_key(StringIO.StringIO(pytis.config.upload_key))
+        pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
+        filename = "{}_{}.pub".format(datetime.datetime.now().strftime("%Y%m%d%H%M"), username)
+        transport = paramiko.Transport((self._connection_parameters['server'],
+                                        self._connection_parameters['port']))
+        try:
+            transport.connect(username='p2gokeys', pkey=upload_key)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
+                f.write(pubkey)
+        finally:
+            transport.close()
 
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):

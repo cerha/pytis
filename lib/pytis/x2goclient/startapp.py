@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 import wx
 import sys
 import time
@@ -32,7 +31,6 @@ import pytis.util
 
 import pytis.x2goclient
 from .ssh import public_key_acceptable, ssh_connect
-from .x2goclient import XServer, PytisSshProfiles
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -290,7 +288,6 @@ class X2GoStartApp(wx.App):
     """X2Go startup application."""
 
     _MAX_PROGRESS = 40
-    _DEFAULT_SSH_PORT = 22
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
@@ -330,29 +327,11 @@ class X2GoStartApp(wx.App):
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
         self._default_username = username
         if args.broker_url:
-            self._broker_parameters, self._broker_path = self._parse_url(args.broker_url)
+            self._broker = pytis.x2goclient.Broker(args.broker_url, password=args.broker_password)
         else:
-            self._broker_parameters = self._broker_path = None
-        self._broker_username = None
+            self._broker = None
         self._keyring = []
         super(X2GoStartApp, self).__init__(redirect=False)
-
-    def _parse_url(self, url):
-        match = re.match(('^(?P<protocol>(ssh|http(|s)))://'
-                          '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                          '(|:(?P<password>.*))@)'
-                          '(?P<server>[a-zA-Z0-9\.-]+)'
-                          '(|:(?P<port>[0-9]+))'
-                          '($|(?P<path>/.*)$)'), url)
-        if match:
-            parameters = match.groupdict()
-            parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
-            if parameters.pop('protocol', None) not in (None, 'ssh'):
-                raise Exception(_(u"Unsupported broker protocol: %s") % url)
-            path = parameters.pop('path')
-            return parameters, path
-        else:
-            raise Exception(_("Invalid URL: %s", url))
 
     def _menu_items(self):
         items = [
@@ -469,21 +448,26 @@ class X2GoStartApp(wx.App):
 
     def _load_profiles(self):
         self._frame.Show()
-        self._profiles = self._authenticate(self._list_profiles, self._broker_parameters)
+        self._profiles = self._broker.list_profiles(self._authenticate)
+        if self._profiles:
+            self._message(self._broker.server() + ': ' +
+                          _.ngettext("Returned %d profile.",
+                                    "Returned %d profiles.",
+                                     len(self._profiles)))
         self._icon.update_menu(self._menu_items())
         self._message(_("Successfully loaded %d profiles.", len(self._profiles)))
         time.sleep(2)
         # Profiles are empty when the user cancels the broker authentication dialog.
         if self._profiles and pytis.util.on_windows():
-            current_version = self._current_version()
-            available_version = self._available_upgrade_version()
+            current_version = pytis.x2goclient.X2GOCLIENT_VERSION
+            available_version, connection_parameters, path = self._broker.upgrade_parameters()
             if ((available_version and available_version > current_version and
                 self._question(_("Upgrade available"),
                                '\n'.join((_("New Pytis client version available."),
                                           _("Current version: %s", current_version),
                                           _("New version: %s", available_version),
                                           _("Install?")))))):
-                error = self._upgrade()
+                error = self._upgrade(connection_parameters, path)
                 if error:
                     # TODO: Specific dialog for error messages (icons)?
                     self._info_dialog(_("Upgrade failed"), error)
@@ -909,12 +893,13 @@ class X2GoStartApp(wx.App):
                 success = connect(username, password=password)
             if success:
                 break
+        username = connection_parameters['username']
         if not success:
             message(_("Trying SSH Agent authentication."))
-            success = connect(connection_parameters['username'])
+            success = connect(username)
         if not success:
             message(_("Trying Kerberos authentication."))
-            success = connect(connection_parameters['username'], gss_auth=True)
+            success = connect(username, gss_auth=True)
         if not success:
             message(_("Trying interactive authentication."))
             if 'publickey' in methods:
@@ -924,9 +909,7 @@ class X2GoStartApp(wx.App):
             while not success:
                 username, key_filename, password = self._authentication_dialog(
                     connection_parameters['server'],
-                    connection_parameters['username'],
-                    methods,
-                    key_files,
+                    username, methods, key_files,
                 )
                 if username is None:
                     return None
@@ -967,59 +950,9 @@ class X2GoStartApp(wx.App):
                 continue
         return False
 
-    def _list_profiles(self, **connection_parameters):
-        """Return a list of two-tuples (profile_id, session_parameters).
-
-        The list is sorted by profile name.  'session_parameters' is a
-        dictionary of X2Go session parameters to pass to 'connect()'.
-
-        """
-        def session_parameters(profile_id):
-            parameters = ssh_profiles.to_session_params(profile_id)
-            if isinstance(parameters['server'], list):
-                parameters['server'] = parameters['server'][0]
-            rootless = ssh_profiles.session_profiles[profile_id].get('rootless', True)
-            if not rootless or int(rootless) == 0:
-                parameters['session_type'] = 'desktop'
-                parameters['geometry'] = 'maximize'
-                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
-                                                         'known_hosts')
-            return parameters
-        try:
-            ssh_profiles = PytisSshProfiles(
-                connection_parameters,
-                logger=x2go.X2GoLogger(tag='PytisClient'),
-                broker_path=self._broker_path,
-                broker_password=self._args.broker_password
-            )
-        except PytisSshProfiles.ConnectionFailed:
-            return None
-        else:
-            profiles = sorted([(profile_id, session_parameters(profile_id))
-                               for profile_id in ssh_profiles.profile_ids],
-                              key=lambda x: x[1]['profile_name'])
-            self._broker_username = connection_parameters['username']
-            self._upgrade_version, self._upgrade_url = ssh_profiles.pytis_upgrade_parameters()
-            self._profiles = dict(profiles)
-            self._message(self._broker_parameters['server'] + ': ' +
-                          _.ngettext("Returned %d profile.",
-                                     "Returned %d profiles.",
-                                     len(profiles)))
-            return profiles
-
-    def _current_version(self):
-        return pytis.x2goclient.X2GOCLIENT_VERSION
-
-    def _available_upgrade_version(self):
-        if self._upgrade_version and self._upgrade_url:
-            return self._upgrade_version
-        else:
-            return None
-
-    def _upgrade(self):
-        connection_parameters, path = self._parse_url(self._upgrade_url)
+    def _upgrade(self, connection_parameters, path):
         client = self._authenticate(ssh_connect, connection_parameters)
-        if client is None:
+        if not client:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()
         upgrade_file = sftp.open(path)
@@ -1064,9 +997,9 @@ class X2GoStartApp(wx.App):
 
     def _vbs_path(self, directory, profile_id):
         return os.path.join(directory, '%s__%s__%s__%s.vbs' % (
-            self._broker_username,
-            self._broker_parameters['server'],
-            self._profiles[profile_id]['server'],
+            self._broker.username(),
+            self._broker.server(),
+            dict(self._profiles)[profile_id]['server'],
             profile_id,
         ))
 
@@ -1129,16 +1062,8 @@ class X2GoStartApp(wx.App):
             return
         vbs_path = self._vbs_path(directory, profile_id)
         # Create the VBS script to which the shortcut will point to.
-        profile_name = self._profiles[profile_id]['profile_name']
+        profile_name = dict(self._profiles)[profile_id]['profile_name']
         if not os.path.exists(vbs_path):
-            params = self._broker_parameters
-            broker_url = "ssh://%s%s@%s%s/%s" % (
-                params['username'],
-                ':' + params['password'] if params['password'] else '',
-                params['server'],
-                ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
-                self._broker_path,
-            )
             vbs_script = '\n'.join((
                 "'{}".format(profile_name),
                 'dim scriptdir, appshell',
@@ -1155,7 +1080,7 @@ class X2GoStartApp(wx.App):
                      sys.executable,
                      os.path.abspath(sys.argv[0]),
                      profile_name,
-                     broker_url,
+                     self._broker.url(),
                      profile_id)),
             ))
             with open(vbs_path, 'w') as f:
@@ -1216,7 +1141,6 @@ class X2GoStartApp(wx.App):
 
     def _write_key(self, key, key_file, passwd):
         """Write given key to private and public key files."""
-
         # Write private part
         key.write_private_key_file(key_file, password=passwd)
         # Write public part
@@ -1285,35 +1209,12 @@ class X2GoStartApp(wx.App):
             self._info_dialog(_("Passphrase changed"),
                               _("Passphrase changed for: %s", key_filename))
 
-    def _upload_key(self, pubkey_filename=None):
+    def _upload_key(self):
         """Upload public key to server."""
-        if self._broker_parameters is None or self._broker_parameters.get('server') is None:
-            return
-        try:
-            import pytis
-            import StringIO
-            p2go_key = paramiko.RSAKey.from_private_key(
-                StringIO.StringIO(pytis.config.upload_key))
-        except:
-            return
-        # Choose key to be sent if not given
         key, key_file = self._choose_key()
         if key and key_file:
-            import datetime
-            tstamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
             username = self._local_username()
-            pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
-            filename = "{}_{}.pub".format(tstamp, username)
-            try:
-                port = self._broker_parameters.get('port') or 22
-                t = paramiko.Transport((self._broker_parameters['server'], port))
-                t.connect(username='p2gokeys', pkey=p2go_key)
-                sftp = paramiko.SFTPClient.from_transport(t)
-                with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
-                    f.write(pubkey)
-                t.close()
-            except:
-                return
+            self._broker.upload_key(username, key, key_file)
 
     def _send_key(self):
         """Send public key to admin."""
@@ -1335,7 +1236,7 @@ class X2GoStartApp(wx.App):
         frame.SetClientSize(panel.GetBestSize())
         if pytis.util.on_windows():
             self._message(_("Starting up X-server."))
-            self._xserver = XServer()
+            self._xserver = pytis.x2goclient.XServer()
         self.Yield()
         profile_id = self._args.session_profile
         if profile_id or self._args.autoload:

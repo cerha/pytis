@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2017 Brailcom, o.p.s.
+# Copyright (C) 2017, 2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -22,7 +22,7 @@ X2GOCLIENT_VERSION = '2017-07-13 10:26'
 X2GOCLIENT_REQUIRED_VERSION = '2017-07-13 10:26'
 
 from .startapp import X2GoStartApp
-from .x2goclient import X2GoClient, ClientProcess
+from .x2goclient import Broker, ClientProcess, X2GoClient, XServer
 
 # Local Variables:
 # time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
