@@ -471,6 +471,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         self._frame_title()
+        # Caching menu availibility must come after calling Application.init()
+        # (here self._specification.init()) to allow the application defined
+        # enabled() methods to refer things created Application.init().
         self._cache_menu_enabled(self._menu)
         self._specification.post_init()
 
