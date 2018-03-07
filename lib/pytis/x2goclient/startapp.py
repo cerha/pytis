@@ -283,6 +283,38 @@ class ui(object):
                 self.SetMinSize((width, height + 40))
         return CheckListCtrl(parent, columns, items)
 
+class ProgressDialog(object):
+
+    def __init__(self, title):
+        self._frame = frame = wx.Frame(None, -1, title)
+        self._gauge = gauge = wx.Gauge(frame, -1)
+        self._label = label = ui.label(frame, '')
+        gauge.SetMinSize((450, 14))
+        content = ui.vgroup(
+            ui.item(label, expand=True),
+            ui.item(gauge, expand=True),
+            padding=(10, 16),
+            spacing=10,
+        )
+        frame.SetSizer(content)
+        content.Fit(frame)
+        frame.Show()
+
+    def message(self, message):
+        """Display a progress message.
+
+        Arguments:
+          message -- Message roughly describing the current progress state to the user.
+
+        """
+        self._gauge.Pulse()
+        self._label.SetLabel(message)
+        wx.Yield()
+
+    def close(self):
+        self._frame.Close()
+        self._frame.Destroy()
+
 
 class X2GoStartApp(wx.App):
     """X2Go startup application."""
@@ -357,21 +389,10 @@ class X2GoStartApp(wx.App):
 
     def _on_exit(self):
         wx.CallAfter(self._icon.Destroy)
-        self._frame.Close()
+        self.Exit()
 
     def _on_taskbar_click(self):
         pass
-
-    def _create_main_content(self, parent):
-        self._progress_message = message = ui.label(parent, '')
-        self._gauge = gauge = wx.Gauge(parent, -1)
-        gauge.SetMinSize((450, 14))
-        return ui.vgroup(
-            ui.item(message, expand=True),
-            ui.item(gauge, expand=True),
-            padding=(10, 16),
-            spacing=10,
-        )
 
     def _show_dialog(self, title, create, *args, **kwargs):
         class Dialog(wx.Dialog):
@@ -384,27 +405,24 @@ class X2GoStartApp(wx.App):
 
             def set_callback(self, callback):
                 self.callback = callback
-        dialog = Dialog(self._frame, -1, title=title)
+        dialog = Dialog(None, -1, title=title)
         content = create(dialog, *args, **kwargs)
         dialog.SetSizer(content)
         content.Fit(dialog)
-        pos, fsize, dsize = self._frame.GetPosition(), self._frame.GetSize(), dialog.GetSize()
-        dialog.SetPosition((pos.x + (fsize.width - dsize.width) / 2, pos.y + 40))
         if dialog.callback:
             dialog.callback()
         dialog.ShowModal()
         dialog.Destroy()
-        self._frame.Raise()
         return dialog.result
 
-    def _session_selection_dialog(self, dialog, client, sessions):
+    def _session_selection_dialog(self, dialog, progress, client, sessions):
         def on_terminate_session(event):
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
-            self._message(_("Terminating session: %s", session.name))
+            progress.message(_("Terminating session: %s", session.name))
             client.terminate_session(session)
             listbox.Delete(selection)
-            self._message(_("Session terminated: %s", session.name))
+            progress.message(_("Session terminated: %s", session.name))
 
         def on_resume_session(event):
             dialog.close(listbox.GetClientData(listbox.GetSelection()))
@@ -447,15 +465,17 @@ class X2GoStartApp(wx.App):
         return self._show_dialog(title, create_dialog)
 
     def _load_profiles(self):
-        self._frame.Show()
-        self._profiles = self._broker.list_profiles(self._authenticate)
+        title = self._args.window_title or _("Pytis2Go")
+        progress = ProgressDialog(_("%s: Loading profiles...", title))
+        self._profiles = self._broker.list_profiles(lambda f, params:
+                                                    self._authenticate(progress, f, params))
         if self._profiles:
-            self._message(self._broker.server() + ': ' +
+            progress.message(self._broker.server() + ': ' +
                           _.ngettext("Returned %d profile.",
-                                    "Returned %d profiles.",
+                                     "Returned %d profiles.",
                                      len(self._profiles)))
         self._icon.update_menu(self._menu_items())
-        self._message(_("Successfully loaded %d profiles.", len(self._profiles)))
+        progress.message(_("Successfully loaded %d profiles.", len(self._profiles)))
         time.sleep(2)
         # Profiles are empty when the user cancels the broker authentication dialog.
         if self._profiles and pytis.util.on_windows():
@@ -476,7 +496,7 @@ class X2GoStartApp(wx.App):
                         _(u"Upgrade finished"),
                         _(u"Pytis successfully upgraded. Restart the application."))
                     return self.Exit()
-        self._frame.Hide()
+        progress.close()
 
     def _connect(self, session_parameters):
         # Authenticate to server and return session_parameters including
@@ -490,36 +510,34 @@ class X2GoStartApp(wx.App):
             return None
 
     def _start_session(self, profile_id):
-        self._frame.Show()
-        self._message(_("Selected profile %s: Contacting server...", profile_id))
-        session_parameters = self._authenticate(self._connect, dict(self._profiles)[profile_id])
+        session_parameters = dict(self._profiles)[profile_id]
+        progress = ProgressDialog(_("Starting session: %s", session_parameters['profile_name']))
+        progress.message(_("Selected profile %s: Contacting server...", profile_id))
+        session_parameters = self._authenticate(progress, self._connect, session_parameters)
         if not session_parameters:
             return
-        self._message(_("Starting X2Go client"))
+        progress.message(_("Starting X2Go client"))
         client = pytis.x2goclient.ClientProcess(session_parameters)
-        self._message(_("Retrieving available sessions."))
+        progress.message(_("Retrieving available sessions."))
         sessions = client.list_sessions()
         if len(sessions) == 0:
             session = None
         else:
-            session = self._show_dialog(_("Select session"),
-                                        self._session_selection_dialog, client, sessions)
+            session = self._show_dialog(_("Select session"), self._session_selection_dialog,
+                                        progress, client, sessions)
         if session:
-            self._message(_("Resuming session: %s", session.name))
+            progress.message(_("Resuming session: %s", session.name))
             client.resume_session(session)
         else:
-            self._message(_("Starting new session."))
+            progress.message(_("Starting new session."))
             client.start_new_session()
-        def close():
-            self._frame.Close(False)
-            wx.Yield()
-        wx.CallLater(4000, close)
-        self._message(_("Waiting for the application to come up..."))
+        progress.message(_("Waiting for the application to come up..."))
+        wx.CallLater(4000, progress.close)
         client.main_loop()
 
     def _question_dialog(self, title, question, default=wx.YES_DEFAULT):
         style = wx.YES_NO | default | wx.ICON_QUESTION
-        dlg = wx.MessageDialog(self._frame, question, caption=title, style=style)
+        dlg = wx.MessageDialog(None, question, caption=title, style=style)
         if not dlg.HasFlag(wx.STAY_ON_TOP):
             dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
         # Raise should not be necessary, but there was a problem with focus
@@ -539,19 +557,6 @@ class X2GoStartApp(wx.App):
                 padding=10, spacing=10,
             )
         return self._show_dialog(title, create_dialog)
-
-    def _message(self, message):
-        """Display a progress progress message.
-
-        Arguments:
-          message -- Message roughly describing the current progress of
-            application startup to the user.  Messages can also help to diagnose
-            problems.  If None, the previous progress message is kept.
-
-        """
-        self._gauge.Pulse()
-        self._progress_message.SetLabel(message)
-        self.Yield()
 
     def _authentication_dialog(self, server, username, methods, key_files):
         """Interactively ask the user for authentication credentials.
@@ -835,7 +840,7 @@ class X2GoStartApp(wx.App):
                                   for name in ('id_ecdsa', 'id_rsa', 'id_dsa')]
                 if os.access(path, os.R_OK) and key_acceptable(path + '.pub')]
 
-    def _authenticate(self, function, connection_parameters, **kwargs):
+    def _authenticate(self, progress, function, connection_parameters, **kwargs):
         """Try calling 'method' with different authentication parameters.
 
         Arguments:
@@ -876,7 +881,7 @@ class X2GoStartApp(wx.App):
 
         """
         def message(msg):
-            self._message(connection_parameters['server'] + ': ' + msg)
+            progress.message(connection_parameters['server'] + ': ' + msg)
 
         def connect(username, gss_auth=False, key_filename=None, password=None):
             return function(dict(
@@ -950,7 +955,9 @@ class X2GoStartApp(wx.App):
         return False
 
     def _upgrade(self, connection_parameters, path):
-        client = self._authenticate(lambda params: ssh_connect(**params), connection_parameters)
+        progress = ProgressDialog(_("Upgrade"))
+        client = self._authenticate(progress, lambda params: ssh_connect(**params),
+                                    connection_parameters)
         if not client:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()
@@ -1117,8 +1124,9 @@ class X2GoStartApp(wx.App):
                 if checked:
                     os.remove(shortcut.lnk_filepath)
                     n += 1
-            self._message(_.ngettext("%d shortcut removed succesfully.",
-                                     "%d shortcuts removed succesfully.", n))
+            self._info_dialog(_("Invalid shortcuts removed"),
+                              _.ngettext("%d shortcut removed succesfully.",
+                                         "%d shortcuts removed succesfully.", n))
         else:
             self._info_dialog(_("All shortcuts ok"), _("No invalid shortcut found."))
 
@@ -1225,17 +1233,15 @@ class X2GoStartApp(wx.App):
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
     def OnInit(self):
-        title = self._args.window_title or _("Pytis2Go")
-        self._frame = frame = wx.Frame(None, -1, title)
-        frame.Hide()
-        self.SetTopWindow(frame)
         self._icon = self._TaskBarIcon(self._on_taskbar_click)
         self._icon.update_menu(self._menu_items())
-        panel = ui.panel(frame, self._create_main_content)
-        frame.SetClientSize(panel.GetBestSize())
+        # Work around: The wx main loop exits if there is not at least one frame.
+        wx.Frame(None, -1, '').Hide()
         if pytis.util.on_windows():
-            self._message(_("Starting up X-server."))
+            progress = ProgressDialog(_("X-server startup"))
+            progress.message(_("Starting up X-server."))
             self._xserver = pytis.x2goclient.XServer()
+            progress.close()
         self.Yield()
         profile_id = self._args.session_profile
         if profile_id or self._args.autoload:
