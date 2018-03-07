@@ -1158,6 +1158,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         init_access_rights(config.dbconnection)
         self._create_menubar()
         self._update_window_menu()
+        self._cache_menu_enabled(self._menu)
 
     def _cmd_custom_debug(self):
         if __debug__:
