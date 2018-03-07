@@ -721,6 +721,22 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._windows.activate(form)
                 self.restore()
 
+    def _close_forms(self):
+        success = True
+        for form in self._windows.items():
+            try:
+                self._raise_form(form)
+                if not form.close():
+                    success = False
+            except Exception:
+                success = False
+            if not success:
+                break
+        if not success or self._windows.items():
+            return False
+        else:
+            return True
+
     def _config_filename(self):
         # Return a name for saving/restoring the configuration.
         # This name must be usable as a filename and should be
@@ -1725,6 +1741,10 @@ def log_user_action(spec_name, form_name, action, info=None):
 def frame_title(title):
     """Set title of the main application frame"""
     _application._frame_title(title)
+
+def close_forms():
+    """Close all currently opened forms."""
+    return _application._close_forms()
 
 # Ostatní funkce.
 
