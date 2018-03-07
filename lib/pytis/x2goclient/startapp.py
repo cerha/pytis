@@ -478,9 +478,19 @@ class X2GoStartApp(wx.App):
                     return self.Exit()
         self._frame.Hide()
 
+    def _connect(self, session_parameters):
+        # Authenticate to server and return session_parameters including
+        # also all necessary authentication parameters.
+        connection_parameters = dict((k, session_parameters[k]) for k in
+                                     ('server', 'port', 'username', 'password',
+                                      'key_filename', 'allow_agent', 'gss_auth'))
+        if ssh_connect(**connection_parameters):
+            return session_parameters
+        else:
+            return None
+
     def _start_session(self, profile_id):
         self._frame.Show()
-
         self._message(_("Selected profile %s: Contacting server...", profile_id))
         session_parameters = self._authenticate(self._connect, dict(self._profiles)[profile_id])
         if not session_parameters:
@@ -869,7 +879,7 @@ class X2GoStartApp(wx.App):
             self._message(connection_parameters['server'] + ': ' + msg)
 
         def connect(username, gss_auth=False, key_filename=None, password=None):
-            return function(**dict(
+            return function(dict(
                 connection_parameters,
                 username=username,
                 gss_auth=gss_auth,
@@ -878,8 +888,7 @@ class X2GoStartApp(wx.App):
                 look_for_keys=key_filename is not None,
                 allow_agent=True,
                 add_to_known_hosts=self._args.add_to_known_hosts,
-                **kwargs
-            ))
+            ), **kwargs)
 
         success = False
         message(_("Retrieving supported authentication methods."))
@@ -931,16 +940,6 @@ class X2GoStartApp(wx.App):
             message(_("Connected successfully."))
         return success
 
-    def _connect(self, **session_parameters):
-        """Create and set up the X2GoClient instance."""
-        connection_parameters = dict((k, session_parameters[k]) for k in
-                                     ('server', 'port', 'username', 'password',
-                                      'key_filename', 'allow_agent', 'gss_auth'))
-        if ssh_connect(**connection_parameters):
-            return session_parameters
-        else:
-            return None
-
     def _check_key_password(self, key_filename, password):
         for handler in (paramiko.RSAKey, paramiko.DSSKey, paramiko.ECDSAKey):
             try:
@@ -951,7 +950,7 @@ class X2GoStartApp(wx.App):
         return False
 
     def _upgrade(self, connection_parameters, path):
-        client = self._authenticate(ssh_connect, connection_parameters)
+        client = self._authenticate(lambda params: ssh_connect(**params), connection_parameters)
         if not client:
             return _(u"Couldn't connect to upgrade server.")
         sftp = client.open_sftp()

@@ -336,7 +336,7 @@ class Broker(object):
         path = parameters.pop('path')
         return parameters, path
 
-    def _list_profiles(self, **connection_parameters):
+    def _list_profiles(self, connection_parameters):
         def session_parameters(profile_id):
             parameters = profiles.to_session_params(profile_id)
             if isinstance(parameters['server'], list):
