@@ -527,13 +527,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _dynamic_menu(self, connection_data):
         # Check for menu presence, if not available, return None
-        I = pytis.data.Integer()
+        I_ = pytis.data.Integer()
         S = pytis.data.String()
         language = pytis.util.current_language()
         try:
             menu_data = pytis.data.dbtable('pytis_view_user_menu',
-                                           (('menuid', I,),
-                                            ('name', S,), ('title', S,), ('fullname', S,),
+                                           (('menuid', I_,),
+                                            ('name', S,),
+                                            ('title', S,),
+                                            ('fullname', S,),
                                             ('position', pytis.data.LTree(),),
                                             ('help', S,), ('hotkey', S,), ('language', S,),),
                                            connection_data, arguments=())
@@ -762,7 +764,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         def safelog(msg, *args):
             try:
                 log(ACTION, msg, *args)
-            except:
+            except Exception:
                 print msg, args
         safelog('Application exit called', (config.dbschemas,))
         try:
@@ -1050,7 +1052,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pass
         except SystemExit:
             raise
-        except:
+        except Exception:
             top_level_exception()
         return result
 
@@ -1132,7 +1134,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             pass
         except SystemExit:
             raise
-        except:
+        except Exception:
             top_level_exception()
         return result
 
@@ -1674,7 +1676,6 @@ def top_window(**kwargs):
     """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
     if _application is not None:
         return _application.top_window(**kwargs)
-
 
 def recent_forms_menu():
     """Vrať menu posledně otevřených formulářů jako instanci 'pytis.form.Menu'.
