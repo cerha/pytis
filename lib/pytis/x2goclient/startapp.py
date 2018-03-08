@@ -467,18 +467,21 @@ class X2GoStartApp(wx.App):
     def _load_profiles(self):
         title = self._args.window_title or _("Pytis2Go")
         progress = ProgressDialog(_("%s: Loading profiles...", title))
-        self._profiles = self._broker.list_profiles(lambda f, params:
+        profiles = self._broker.list_profiles(lambda f, params:
                                                     self._authenticate(progress, f, params))
-        if self._profiles:
+        if profiles is not None:
             progress.message(self._broker.server() + ': ' +
-                          _.ngettext("Returned %d profile.",
-                                     "Returned %d profiles.",
-                                     len(self._profiles)))
+                             _.ngettext("Returned %d profile.",
+                                        "Returned %d profiles.",
+                                        len(profiles)))
+            self._profiles = profiles
+        else:
+            progress.message(_("Failed loading broker profiles."))
+            self._profiles = ()
         self._icon.update_menu(self._menu_items())
-        progress.message(_("Successfully loaded %d profiles.", len(self._profiles)))
         time.sleep(2)
         # Profiles are empty when the user cancels the broker authentication dialog.
-        if self._profiles and pytis.util.on_windows():
+        if profiles and pytis.util.on_windows():
             current_version = pytis.x2goclient.X2GOCLIENT_VERSION
             available_version, connection_parameters, path = self._broker.upgrade_parameters()
             if ((available_version and available_version > current_version and
