@@ -1546,7 +1546,7 @@ class SQLObject(object):
                             try:
                                 o = object_by_name('%s.%s' % (_enforced_schema, name,),
                                                    allow_external=False)
-                            except:
+                            except Exception:
                                 o = object_by_name('%s.%s' % (schema, name,))
                         else:
                             o = object_by_name('%s.%s' % (schema, name,))
@@ -2392,7 +2392,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                 name = '%s.%s' % (s, pytis_name,)
                 try:
                     o = object_by_name(name, allow_external=False)
-                except:
+                except Exception:
                     continue
                 self.add_is_dependent_on(o)
                 break
@@ -2762,7 +2762,7 @@ class _SQLReplaceable(SQLObject):
             try:
                 connection._run_visitor(_PytisSchemaGenerator, self, checkfirst=False)
                 new_definition = self._pytis_definition(connection)
-            except:
+            except Exception:
                 new_definition = None
             finally:
                 transaction.rollback()
@@ -2787,7 +2787,7 @@ class _SQLQuery(SQLObject):
                 # can't get children, so prevent crashing on that.
                 try:
                     objects += o.get_children()
-                except:
+                except Exception:
                     pass
             elif isinstance(o, sqlalchemy.Table):
                 self.add_is_dependent_on(o)
@@ -3504,10 +3504,10 @@ class SQLPyFunction(SQLFunctional):
         arglist = string.join(arguments, ', ')
         lines = ['#def %s(%s):' % (self.name, arglist,)]
         if arglist:
-            l = '    %s = args' % (arglist,) # hard-wired indentation
+            line = '    %s = args' % (arglist,)  # hard-wired indentation
             if len(self.arguments) == 1:
-                l += '[0]'
-            lines.append(l)
+                line += '[0]'
+            lines.append(line)
 
         def strip_header(lines):
             while lines and not lines[0].rstrip().endswith('):'):
