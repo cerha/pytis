@@ -944,6 +944,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _cmd_reload_specifications(self):
         config.resolver.reload()
+        self._cache_menu_enabled(self._menu)
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
         if form_class in (pytis.form.InputForm, pytis.form.WebForm) and name is None:
