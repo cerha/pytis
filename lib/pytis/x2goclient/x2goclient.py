@@ -21,10 +21,10 @@ import gevent.monkey
 gevent.monkey.patch_all() # noqa: E402
 
 import os
-import sys
-
 import re
+import sys
 import copy
+import rpyc
 import time
 import types
 import socket
@@ -39,7 +39,6 @@ import gevent
 import gevent.event
 import gevent.queue
 
-import rpyc
 import x2go
 import x2go.backends.profiles.base
 import x2go.backends.terminal.plain
