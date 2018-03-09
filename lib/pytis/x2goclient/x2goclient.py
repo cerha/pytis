@@ -281,6 +281,7 @@ class PytisSshProfiles(SshProfiles):
 
     def __init__(self, *args, **kwargs):
         self._pytis_upgrade_parameters = (None, None)
+        kwargs['logger'] = x2go.X2GoLogger(tag='PytisClient')
         SshProfiles.__init__(self, *args, **kwargs)
 
     def broker_listprofiles(self):
@@ -348,8 +349,7 @@ class Broker(object):
         try:
             profiles = PytisSshProfiles(connection_parameters,
                                         broker_path=self._path,
-                                        broker_password=self._password,
-                                        logger=x2go.X2GoLogger(tag='PytisClient'))
+                                        broker_password=self._password)
         except PytisSshProfiles.ConnectionFailed:
             return None
         else:
