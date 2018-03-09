@@ -345,8 +345,6 @@ class Broker(object):
             if not rootless or int(rootless) == 0:
                 parameters['session_type'] = 'desktop'
                 parameters['geometry'] = 'maximize'
-                parameters['known_hosts'] = os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR,
-                                                         'known_hosts')
             return parameters
         try:
             profiles = PytisSshProfiles(connection_parameters,
@@ -694,7 +692,8 @@ class X2GoClient(x2go.X2GoClient):
         allow_agent=True,
         profile_name='Pytis-Client-Session',
         cache_type='unix-kde',
-        allow_share_local_folders=True
+        allow_share_local_folders=True,
+        known_hosts=os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'known_hosts'),
     )
 
     class ServerInfo(object):
