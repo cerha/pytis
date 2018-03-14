@@ -37,8 +37,6 @@ pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
 
-import pytis.x2goclient  # noqa: E402
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -81,10 +79,12 @@ def main():
     args = parser.parse_args()
 
     if args.version:
+        import pytis.x2goclient
         sys.stderr.write("%s\n" % (pytis.x2goclient.X2GOCLIENT_VERSION,))
         sys.exit(0)
 
-    app = pytis.x2goclient.X2GoStartApp(args)
+    from pytis.x2goclient.startapp import X2GoStartApp
+    app = X2GoStartApp(args)
     app.MainLoop()
 
 

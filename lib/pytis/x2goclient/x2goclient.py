@@ -119,15 +119,18 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
     class ConnectionFailed(Exception):
         pass
 
-    def __init__(self, connection_parameters, broker_path=None,
-                 logger=None, loglevel=x2go.log.loglevel_DEFAULT, **kwargs):
+    def __init__(self, connection_parameters, broker_path=None, **kwargs):
         self._connection_parameters = connection_parameters
         self._broker_path = broker_path or self._DEFAULT_BROKER_PATH
         self._broker_profiles = None
         self._broker_profile_cache = {}
         self._ssh_client_instance = None
-        x2go.backends.profiles.base.X2GoSessionProfiles.__init__(self, logger=logger,
-                                                                 loglevel=loglevel, **kwargs)
+        x2go.backends.profiles.base.X2GoSessionProfiles.__init__(
+            self,
+            logger=x2go.X2GoLogger(tag='PytisClient'),
+            loglevel=x2go.log.loglevel_DEFAULT,
+            **kwargs
+        )
 
     def __call__(self, profile_id_or_name):
         # Broken in upstream source
@@ -281,7 +284,6 @@ class PytisSshProfiles(SshProfiles):
 
     def __init__(self, *args, **kwargs):
         self._pytis_upgrade_parameters = (None, None)
-        kwargs['logger'] = x2go.X2GoLogger(tag='PytisClient')
         SshProfiles.__init__(self, *args, **kwargs)
 
     def broker_listprofiles(self):
@@ -299,124 +301,20 @@ class PytisSshProfiles(SshProfiles):
                 filtered_profiles[section] = data
         return filtered_profiles
 
-    def pytis_upgrade_parameters(self):
-        return self._pytis_upgrade_parameters
-
-
-class Broker(object):
-    """Higher level X2Go broker interface.
-
-    This class hides the details of working with 'PytisSshProfiles' API behind
-    a few simple public methods.
-
-    """
-    _DEFAULT_SSH_PORT = 22
-    _URL_MATCHER = re.compile('^(?P<protocol>(ssh|http(|s)))://'
-                              '(|(?P<username>[a-zA-Z0-9_\.-]+)'
-                              '(|:(?P<password>.*))@)'
-                              '(?P<server>[a-zA-Z0-9\.-]+)'
-                              '(|:(?P<port>[0-9]+))'
-                              '($|(?P<path>/.*)$)')
-
-    def __init__(self, url, password=None):
-        parameters, path = self._split_url(url)
-        self._connection_parameters = parameters
-        self._path = path
-        self._password = password
-        self._upgrade_parameters = None
-
-    def _split_url(self, url):
-        match = self._URL_MATCHER.match(url)
-        if not match:
-            raise Exception("Invalid URL: %s", url)
-        parameters = match.groupdict()
-        parameters['port'] = int(parameters['port'] or self._DEFAULT_SSH_PORT)
-        if parameters.pop('protocol', None) not in (None, 'ssh'):
-            raise Exception("Unsupported broker protocol: %s" % url)
-        path = parameters.pop('path')
-        return parameters, path
-
-    def _list_profiles(self, connection_parameters):
+    def load_profiles(self):
         def session_parameters(profile_id):
-            parameters = profiles.to_session_params(profile_id)
+            parameters = self.to_session_params(profile_id)
             if isinstance(parameters['server'], list):
                 parameters['server'] = parameters['server'][0]
-            rootless = profiles.session_profiles[profile_id].get('rootless', True)
+            rootless = self.session_profiles[profile_id].get('rootless', True)
             if not rootless or int(rootless) == 0:
                 parameters['session_type'] = 'desktop'
                 parameters['geometry'] = 'maximize'
             return parameters
-        try:
-            profiles = PytisSshProfiles(connection_parameters,
-                                        broker_path=self._path,
-                                        broker_password=self._password)
-        except PytisSshProfiles.ConnectionFailed:
-            return None
-        else:
-            self._connection_parameters.update(connection_parameters)
-            self._upgrade_parameters = profiles.pytis_upgrade_parameters()
-            return sorted([(profile_id, session_parameters(profile_id))
-                           for profile_id in profiles.profile_ids],
+        profiles = sorted([(profile_id, session_parameters(profile_id))
+                           for profile_id in self.profile_ids],
                           key=lambda x: x[1]['profile_name'])
-
-    def list_profiles(self, authenticate):
-        """Return a list of two-tuples (profile_id, session_parameters).
-
-        The list is sorted by profile name.  'session_parameters' is a
-        dictionary of X2Go session parameters.
-
-        """
-        return authenticate(self._list_profiles, self._connection_parameters)
-
-    def server(self):
-        """Return broker's server hostname as a string."""
-        return self._connection_parameters['server']
-
-    def username(self):
-        """Return broker authentication username as a string."""
-        return self._connection_parameters['username']
-
-    def url(self):
-        """Return broker URL as a string."""
-        params = self._connection_parameters
-        return "ssh://%s%s@%s%s/%s" % (
-            params['username'],
-            ':' + params['password'] if params['password'] else '',
-            params['server'],
-            ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
-            self._path,
-        )
-
-    def upgrade_parameters(self):
-        """Return Pytis upgrade parameters as (version, connection_parameters, path).
-
-        'version' is the available upgrade version as a string,
-        'connection_parameters' is a dictionary of upgrade server connection parameters,
-        'path' is the upgrade server path.
-
-        Must be called after 'list_profiles()' and only if 'list_profiles()'
-        doesn't return None.  Otherwise the behavior is undefined.
-
-        """
-        version, url = self._upgrade_parameters()
-        connection_parameters, path = self._split_url(url)
-        return version, connection_parameters, path
-
-    def upload_key(self, username, key, key_file):
-        """Upload user's public key to the broker server."""
-        import StringIO
-        upload_key = paramiko.RSAKey.from_private_key(StringIO.StringIO(pytis.config.upload_key))
-        pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
-        filename = "{}_{}.pub".format(datetime.datetime.now().strftime("%Y%m%d%H%M"), username)
-        transport = paramiko.Transport((self._connection_parameters['server'],
-                                        self._connection_parameters['port']))
-        try:
-            transport.connect(username='p2gokeys', pkey=upload_key)
-            sftp = paramiko.SFTPClient.from_transport(transport)
-            with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
-                f.write(pubkey)
-        finally:
-            transport.close()
+        return profiles, self._pytis_upgrade_parameters
 
 
 class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
@@ -918,153 +816,3 @@ class X2GoClient(x2go.X2GoClient):
             self.logger("-> %s" % str(e), loglevel=x2go.loglevel_ERROR)
         finally:
             self._cleanup()
-
-
-class ClientService(rpyc.Service):
-    """RPyC Service exposing the public API of X2GoClient to the parent process.
-
-    This class is not meant to be used directly.  Use 'ClientProcess' instead.
-
-    """
-    class Authenticator(object):
-        def __init__(self, key):
-            self._key = key
-
-        def __call__(self, sock):
-            if sock.recv(len(key)) != key:
-                raise rpyc.utils.authenticators.AuthenticationError("wrong magic word")
-            return sock, None
-
-        def connect(self, host, port):
-            conn = rpyc.connect(host, port, config=dict(allow_pickle=True,
-                                                        allow_public_attrs=True))
-            if hasattr(socket, 'fromfd'):
-                fd = conn.fileno()
-                sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-            else:
-                # There is no socket.fromfd in Python 2.x on Windows, so let's use
-                # the original hidden socket.
-                sock = conn._channel.stream.sock
-            sock.send(self._key)
-            return conn
-
-    def exposed_connect(self, connection_parameters, on_echo=None):
-        self._client = X2GoClient(connection_parameters,
-                                  on_rpyc_echo=rpyc.async(on_echo) if on_echo else None)
-
-    def exposed_list_sessions(self):
-        return self._client.list_sessions()
-
-    def exposed_terminate_session(self, session):
-        self._client.terminate_session(session)
-
-    def exposed_resume_session(self, session):
-        self._client.resume_session(session)
-
-    def exposed_start_new_session(self):
-        self._client.start_new_session()
-
-    def exposed_main_loop(self):
-        self._client.main_loop()
-
-
-class ClientProcess(object):
-    """Run Pytis X2Go client in a separate process and control it from another Python process.
-
-    This class invokes a new process and runs a Pytis X2Go client inside it.
-    The running 'X2GoClient' instance inside this process may be controlled
-    through the public methods of this class's instance.
-
-    This class hides the details of spawning a new Python process, connecting
-    and authenticating to its RPyC service and working with its RPyC interface
-    behind a simple API.  The 'X2GoClient' run's in another process, but its
-    public methods may be called as if the client was running locally.
-
-    """
-
-    def __init__(self, session_parameters, port=18861, on_echo=None):
-        """Start a Python subprocess running 'X2GoClient' and 'ClientService' server.
-
-        Arguments:
-          session_parameters -- X2Go session parameters as a dictionary
-          port -- port number for the 'ClientService' RPyC server
-          on_echo -- callback to run on each 'PytisService' echo call.  A Pytis
-            application running on the X2Go server calls echo on startup and
-            then every few minutes, so the callback may be used to detect
-            a running Pytis application.
-
-        """
-        self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.x2goclient',
-                                          '--port', str(port)),
-                                         env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
-                                         stdin=subprocess.PIPE)
-        # Generate a secret token and pass it to the subprocess through its STDIN.
-        key = hashlib.sha256(os.urandom(16)).hexdigest()
-        self._process.stdin.write(key + '\n')
-        # Wait for the RPyC server inside the subprocess to come up.
-        time.sleep(3)
-        authenticator = ClientService.Authenticator(key)
-        self._conn = authenticator.connect('localhost', port=port)
-        # Start a new X2GoClient instance inside the subprocess.
-        self._conn.root.connect(session_parameters, on_echo=on_echo)
-
-    def list_sessions(self):
-        """Return the result of 'X2GoClient.list_sessions()' on the subprocess instance."""
-        return self._conn.root.list_sessions()
-
-    def terminate_session(self, session):
-        """Call 'X2GoClient.terminate_session()' on the subprocess instance."""
-        self._conn.root.terminate_session(session)
-
-    def resume_session(self, session):
-        """Call 'X2GoClient.resume_session()' on the subprocess instance."""
-        self._conn.root.resume_session(session)
-
-    def start_new_session(self):
-        """Call 'X2GoClient.start_new_session()' on the subprocess instance."""
-        self._conn.root.start_new_session()
-
-    def main_loop(self):
-        """Call 'X2GoClient.main_loop()' on the subprocess instance."""
-        self._conn.root.main_loop()
-
-    def terminate(self):
-        """Terminate the subprocess and the 'X2GoClient' instance running inside it."""
-        self._process.terminate()
-
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(
-        description=(
-            """Run a Pytis X2Go client in a separate process controlled through an RPyC API.
-
-            When this module is run as 'python -m pytis.x2goclient.x2goclient ...' it
-            starts an RPyC service with the interface defined by 'ClientService'.  A
-            new Pytis X2Go client may be invoked and controlled through this service
-            passing it X2Go session parameters from another Python process.
-
-            However you don't normally want to run this module and connect its RPyC
-            service directly.  Use the Python class 'ClientProcess' to do so through
-            its API.
-
-            """),
-        # formatter_class=argparse.RawDescriptionHelpFormatter,
-        add_help=True, argument_default=None
-    )
-    parser.add_argument(
-        '--port',
-        default=18861, type=int,
-        help="Port number where to start the RPyC server.",
-    )
-    args = parser.parse_args()
-
-    # Read the service authentication key from STDIN
-    key = sys.stdin.readline().strip()
-
-    server = rpyc.utils.server.OneShotServer(
-        ClientService, port=args.port,
-        protocol_config=dict(allow_public_attrs=True),
-        authenticator=ClientService.Authenticator(key),
-    )
-    server.start()

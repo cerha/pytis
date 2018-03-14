@@ -21,16 +21,20 @@ import os
 import wx
 import sys
 import time
-import x2go
 import shutil
+import socket
 import tarfile
+import datetime
 import tempfile
 import paramiko
+import StringIO
+import threading
 import collections
 import pytis.util
 
 import pytis.x2goclient
 from .ssh import public_key_acceptable, ssh_connect
+from .clientprocess import Broker, ClientProcess
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -316,10 +320,21 @@ class ProgressDialog(object):
         self._frame.Destroy()
 
 
+class Session(threading.Thread):
+
+    def __init__(self, client):
+        self._client = client
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self._client.main_loop()
+
+    def terminate(self):
+        self._client.terminate()
+
+
 class X2GoStartApp(wx.App):
     """X2Go startup application."""
-
-    _MAX_PROGRESS = 40
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
@@ -353,13 +368,14 @@ class X2GoStartApp(wx.App):
     def __init__(self, args):
         self._args = args
         self._profiles = []
+        self._sessions = []
         username = args.username
         if not username:
             import getpass
             username = getpass.getuser()  # x2go.defaults.CURRENT_LOCAL_USER
         self._default_username = username
         if args.broker_url:
-            self._broker = pytis.x2goclient.Broker(args.broker_url, password=args.broker_password)
+            self._broker = Broker(args.broker_url, password=args.broker_password)
         else:
             self._broker = None
         self._keyring = []
@@ -367,8 +383,8 @@ class X2GoStartApp(wx.App):
 
     def _menu_items(self):
         items = [
-            (parameters['profile_name'], lambda p=profile_id: self._start_session(p))
-            for profile_id, parameters in self._profiles
+            (params['profile_name'], lambda params=params: self._start_session(params))
+            for profile_id, params in self._profiles
         ]
         items.extend((
             ('---',) if items else None,
@@ -388,6 +404,8 @@ class X2GoStartApp(wx.App):
         return items
 
     def _on_exit(self):
+        for session in self._sessions:
+            session.terminate()
         wx.CallAfter(self._icon.Destroy)
         self.Exit()
 
@@ -468,7 +486,7 @@ class X2GoStartApp(wx.App):
         title = self._args.window_title or _("Pytis2Go")
         progress = ProgressDialog(_("%s: Loading profiles...", title))
         profiles = self._broker.list_profiles(lambda f, params:
-                                                    self._authenticate(progress, f, params))
+                                              self._authenticate(progress, f, params))
         if profiles is not None:
             progress.message(self._broker.server() + ': ' +
                              _.ngettext("Returned %d profile.",
@@ -512,15 +530,16 @@ class X2GoStartApp(wx.App):
         else:
             return None
 
-    def _start_session(self, profile_id):
-        session_parameters = dict(self._profiles)[profile_id]
-        progress = ProgressDialog(_("Starting session: %s", session_parameters['profile_name']))
-        progress.message(_("Selected profile %s: Contacting server...", profile_id))
+    def _start_session(self, session_parameters):
+        progress = ProgressDialog(
+            _("Starting session: %s", session_parameters['profile_name'])
+        )
+        progress.message(_("Contacting server %s...", session_parameters['server']))
         session_parameters = self._authenticate(progress, self._connect, session_parameters)
         if not session_parameters:
             return
         progress.message(_("Starting X2Go client"))
-        client = pytis.x2goclient.ClientProcess(session_parameters)
+        client = ClientProcess(session_parameters)
         progress.message(_("Retrieving available sessions."))
         sessions = client.list_sessions()
         if len(sessions) == 0:
@@ -536,7 +555,9 @@ class X2GoStartApp(wx.App):
             client.start_new_session()
         progress.message(_("Waiting for the application to come up..."))
         wx.CallLater(4000, progress.close)
-        client.main_loop()
+        session = Session(client)
+        self._sessions.append(session)
+        session.start()
 
     def _question_dialog(self, title, question, default=wx.YES_DEFAULT):
         style = wx.YES_NO | default | wx.ICON_QUESTION
@@ -813,7 +834,6 @@ class X2GoStartApp(wx.App):
         return self._show_dialog(title, create_dialog)
 
     def _authentication_methods(self, connection_parameters):
-        import socket
         sock = socket.socket()
         sock.connect((connection_parameters['server'], connection_parameters['port']))
         transport = paramiko.Transport(sock)
@@ -1163,8 +1183,7 @@ class X2GoStartApp(wx.App):
 
     def _generate_key(self):
         """Generate new SSH key pair."""
-        sshdir = os.path.join(x2go.defaults.LOCAL_HOME,
-                              x2go.defaults.X2GO_SSH_ROOTDIR)
+        sshdir = os.path.join(os.path.expanduser('~'), '.ssh')
         if not os.path.exists(sshdir):
             os.mkdir(sshdir)
         # Check if key exists
@@ -1220,11 +1239,21 @@ class X2GoStartApp(wx.App):
                               _("Passphrase changed for: %s", key_filename))
 
     def _upload_key(self):
-        """Upload public key to server."""
+        """Upload user's public key to the broker server."""
         key, key_file = self._choose_key()
         if key and key_file:
             username = self._local_username()
-            self._broker.upload_key(username, key, key_file)
+            upload_key = paramiko.RSAKey.from_private_key(StringIO.StringIO(pytis.config.upload_key))
+            pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
+            filename = "{}_{}.pub".format(datetime.datetime.now().strftime("%Y%m%d%H%M"), username)
+            transport = paramiko.Transport((self._broker.server(), self._broker.port()))
+            try:
+                transport.connect(username='p2gokeys', pkey=upload_key)
+                sftp = paramiko.SFTPClient.from_transport(transport)
+                with sftp.open('p2gokeys/{}'.format(filename), 'w') as f:
+                    f.write(pubkey)
+            finally:
+                transport.close()
 
     def _send_key(self):
         """Send public key to admin."""
@@ -1250,5 +1279,5 @@ class X2GoStartApp(wx.App):
         if profile_id or self._args.autoload:
             self._load_profiles()
         if profile_id:
-            self._start_session(profile_id)
+            self._start_session(dict(self._profiles)[profile_id])
         return True
