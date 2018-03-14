@@ -188,16 +188,11 @@ class Broker(object):
                                    stderr=subprocess.PIPE)
         # Serialize connection_parameters and pass them to the subprocess through its STDIN.
         stdout, stderr = process.communicate(base64.b64encode(pickle.dumps(kwargs)))
-        sys.stderr.write(stderr)
+        #sys.stderr.write(stderr)
         if not stdout.strip():
             return None
-        print '>>>>>', repr(stdout)
-        try:
-            profiles, upgrade_parameters = pickle.loads(base64.b64decode(stdout.strip()))
-        except Exception as e:
-            print '===', e
-            return None
         else:
+            profiles, upgrade_parameters = pickle.loads(base64.b64decode(stdout.strip()))
             self._connection_parameters.update(connection_parameters)
             self._upgrade_parameters = upgrade_parameters
             return profiles
