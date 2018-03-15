@@ -43,6 +43,13 @@ import hashlib
 import subprocess
 import cPickle as pickle
 
+_pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
+_pythonpath = os.environ.get('PYTHONPATH', '')
+if not _pythonpath:
+    _pythonpath = _pytislib
+elif _pytislib not in _pythonpath.split(os.pathsep):
+    _pythonpath += os.pathsep + _pytislib
+
 class ClientService(rpyc.Service):
     """RPyC Service exposing the public API of X2GoClient to the parent process.
 
@@ -118,6 +125,7 @@ class ClientProcess(object):
 
         """
         self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient'),
+                                         env=dict(os.environ.copy(), PYTHONPATH=_pythonpath),
                                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         # Generate a secret token and pass it to the subprocess through
         # its STDIN and read the port number from its STDOUT (it will
@@ -198,6 +206,7 @@ class Broker(object):
             broker_password=self._password,
         )
         process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runbroker'),
+                                   env=dict(os.environ.copy(), PYTHONPATH=_pythonpath),
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         # Serialize connection_parameters and pass them to the subprocess through its STDIN.
@@ -271,4 +280,5 @@ class XServer(object):
     """
 
     def __init__(self):
-        subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver'))
+        subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver'),
+                         env=dict(os.environ.copy(), PYTHONPATH=_pythonpath))
