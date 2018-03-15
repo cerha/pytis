@@ -256,9 +256,12 @@ class Broker(object):
         doesn't return None.  Otherwise the behavior is undefined.
 
         """
-        version, url = self._upgrade_parameters()
-        connection_parameters, path = self._split_url(url)
-        return version, connection_parameters, path
+        version, url = self._upgrade_parameters
+        if url:
+            connection_parameters, path = self._split_url(url)
+            return version, connection_parameters, path
+        else:
+            return version, None, None
 
 
 class XServer(object):
