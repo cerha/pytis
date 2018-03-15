@@ -485,11 +485,13 @@ class RPyCServerLauncher(threading.Thread):
 
     def _start_server(self):
         callback = self._on_echo
-
-        class Service(pytisproc.PytisUserService):
-            def exposed_echo(self, text):
-                callback()
-                return super(Service, self).exposed_echo(text)
+        if callback:
+            class Service(pytisproc.PytisUserService):
+                def exposed_echo(self, text):
+                    callback()
+                    return super(Service, self).exposed_echo(text)
+        else:
+            Service = pytisproc.PytisUserService
         default_port = self._DEFAULT_PORT
         max_port = default_port + self._MAX_PORT_ATTEMPTS
         authenticator = pytisproc.PasswordAuthenticator()
