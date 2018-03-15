@@ -106,24 +106,25 @@ class ClientProcess(object):
 
     """
 
-    def __init__(self, session_parameters, port=18861, on_echo=None):
+    def __init__(self, session_parameters, on_echo=None):
         """Start a Python subprocess running 'X2GoClient' and 'ClientService' server.
 
         Arguments:
           session_parameters -- X2Go session parameters as a dictionary
-          port -- port number for the 'ClientService' RPyC server
           on_echo -- callback to run on each 'PytisService' echo call.  A Pytis
             application running on the X2Go server calls echo on startup and
             then every few minutes, so the callback may be used to detect
             a running Pytis application.
 
         """
-        self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient',
-                                          '--port', str(port)),
-                                         stdin=subprocess.PIPE)
-        # Generate a secret token and pass it to the subprocess through its STDIN.
+        self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient'),
+                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # Generate a secret token and pass it to the subprocess through
+        # its STDIN and read the port number from its STDOUT (it will
+        # allocate the first available port number and print it.
         key = hashlib.sha256(os.urandom(16)).hexdigest()
         self._process.stdin.write(key + '\n')
+        port = int(self._process.stdout.readline())
         # Wait for the RPyC server inside the subprocess to come up.
         time.sleep(3)
         authenticator = ClientService.Authenticator(key)

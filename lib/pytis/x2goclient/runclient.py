@@ -16,45 +16,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Run a Pytis X2Go client in a separate process controlled through an RPyC API.
+
+This module is run as 'python -m pytis.x2goclient.runclient' to start an
+RPyC service server with the interface defined by 'ClientService'.  A new Pytis
+X2Go client may be invoked and controlled through this service passing it X2Go
+session parameters from another Python process.
+
+However you don't normally want to run this module and connect its RPyC service
+directly.  Use the Python class 'ClientProcess' to do so through its API.
+
+"""
+
 import gevent.monkey
 gevent.monkey.patch_all() # noqa: E402
 
 import sys
-import argparse
 import rpyc.utils.server
 from .clientprocess import ClientService
 
+DEFAULT_PORT = 18861
+MAX_PORT_ATTEMPTS = 1000
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description=(
-            """Run a Pytis X2Go client in a separate process controlled through an RPyC API.
-
-            This module is run as 'python -m pytis.x2goclient.runclient ...' to
-            start an RPyC service server with the interface defined by
-            'ClientService'.  A new Pytis X2Go client may be invoked and
-            controlled through this service passing it X2Go session parameters
-            from another Python process.
-
-            However you don't normally want to run this module and connect its RPyC
-            service directly.  Use the Python class 'ClientProcess' to do so through
-            its API.
-
-            """),
-        add_help=True, argument_default=None
-    )
-    parser.add_argument(
-        '--port',
-        default=18861, type=int,
-        help="Port number where to start the RPyC server.",
-    )
-    args = parser.parse_args()
-
     # Read the service authentication key from STDIN
     key = sys.stdin.readline().strip()
-
-    server = rpyc.utils.server.OneShotServer(
-        ClientService, port=args.port,
-        protocol_config=dict(allow_public_attrs=True),
-        authenticator=ClientService.Authenticator(key),
-    )
-    server.start()
+    authenticator = ClientService.Authenticator(key)
+    min_port, max_port = DEFAULT_PORT, DEFAULT_PORT + MAX_PORT_ATTEMPTS
+    for port in xrange(min_port, max_port):
+        try:
+            server = rpyc.utils.server.OneShotServer(
+                ClientService,
+                port=port,
+                hostname='localhost',
+                authenticator=authenticator,
+                protocol_config=dict(allow_public_attrs=True),
+            )
+        except:
+            continue
+        # Write the service port number to STDOUT
+        sys.stdout.write(str(port) + '\n')
+        sys.stdout.flush()
+        sys.stderr.write("Starting ClientService RPyC server on port %d.\n" % port)
+        server.start()
+        break
+    else:
+        raise Exception("No free ClientService RPyC server port found in range %s-%s." %
+                        (min_port, max_port))
