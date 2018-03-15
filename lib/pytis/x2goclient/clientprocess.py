@@ -120,7 +120,6 @@ class ClientProcess(object):
         """
         self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient',
                                           '--port', str(port)),
-                                         env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
                                          stdin=subprocess.PIPE)
         # Generate a secret token and pass it to the subprocess through its STDIN.
         key = hashlib.sha256(os.urandom(16)).hexdigest()
@@ -197,9 +196,7 @@ class Broker(object):
             broker_path=self._path,
             broker_password=self._password,
         )
-
         process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runbroker'),
-                                   env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         # Serialize connection_parameters and pass them to the subprocess through its STDIN.
@@ -273,7 +270,4 @@ class XServer(object):
     """
 
     def __init__(self):
-        subprocess.Popen(
-            (sys.executable, '-m', 'pytis.x2goclient.xserver'),
-            env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
-        )
+        subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver'))
