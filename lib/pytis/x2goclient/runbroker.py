@@ -27,12 +27,12 @@ def die(error):
 
 if __name__ == '__main__':
     """Run a Pytis X2Go Broker in a separate process.
-    
+
     This module is run as 'python -m pytis.x2goclient.runbroker ...' to load
     information from a remote X2Go broker server.  The connection parameters
     are passed in through STDIN and the result is dumped to STDOUT both as
     pickled (serialized) Python objects.
-    
+
     You don't normally want to run this module yourself and pickle/unpickle its
     input/output, but you rather use the Python class 'BrokerProcess' to do so
     through its API.

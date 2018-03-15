@@ -16,6 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Running X2Go services in a subprocess.
+
+This module hides the details of running X2Go client, X2Go broker and XServer
+in a subprocess behid simple APIs which are similar to the APIs of the original
+classes and feel like they are run in-process.
+
+All these classes are designed to be used from
+'pytis.x2goclient.startapp.X2GoStartApp'.
+
+Running in a subprocess is necessary because x2go (and thus
+'pytis.x2goclient.x2goclient') can not be imported in the process where the
+startup wx application runs.  It causes conflicts between the ws and glib main
+loop and gevent monkey patching.
+
+"""
+
 import os
 import re
 import sys
@@ -26,7 +42,6 @@ import socket
 import hashlib
 import subprocess
 import cPickle as pickle
-
 
 class ClientService(rpyc.Service):
     """RPyC Service exposing the public API of X2GoClient to the parent process.
@@ -145,8 +160,9 @@ class ClientProcess(object):
 class Broker(object):
     """Higher level X2Go broker interface.
 
-    This class hides the details of working with 'PytisSshProfiles' API behind
-    a few simple public methods.
+    This class queries 'PytisSshProfiles' in a subprocess and provides a few
+    additional public methods to simplify working with broker from the startup
+    application.
 
     """
     _DEFAULT_SSH_PORT = 22
@@ -243,3 +259,18 @@ class Broker(object):
         version, url = self._upgrade_parameters()
         connection_parameters, path = self._split_url(url)
         return version, connection_parameters, path
+
+
+class XServer(object):
+    """Run X-server in a separate process.
+
+    The constructor simply runs 'python -m pytis.x2goclient.xserver' to start a
+    local X11 server in a subprocess.
+
+    """
+
+    def __init__(self):
+        subprocess.Popen(
+            (sys.executable, '-m', 'pytis.x2goclient.xserver'),
+            env=dict(os.environ.copy(), PYTHONPATH=":".join(sys.path)),
+        )

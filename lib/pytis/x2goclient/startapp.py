@@ -30,11 +30,11 @@ import paramiko
 import StringIO
 import threading
 import collections
-import pytis.util
 
+import pytis.util
 import pytis.x2goclient
 from .ssh import public_key_acceptable, ssh_connect
-from .clientprocess import Broker, ClientProcess
+from .clientprocess import Broker, ClientProcess, XServer
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -1272,7 +1272,7 @@ class X2GoStartApp(wx.App):
         if pytis.util.on_windows():
             progress = ProgressDialog(_("X-server startup"))
             progress.message(_("Starting up X-server."))
-            self._xserver = pytis.x2goclient.XServer()
+            self._xserver = XServer()
             progress.close()
         self.Yield()
         profile_id = self._args.session_profile
