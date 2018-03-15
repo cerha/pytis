@@ -21,10 +21,6 @@ import sys
 import base64
 import cPickle as pickle
 
-def die(error):
-    sys.stderr.write(error + "\n")
-    sys.exit(1)
-
 if __name__ == '__main__':
     """Run a Pytis X2Go Broker in a separate process.
 
@@ -42,12 +38,16 @@ if __name__ == '__main__':
     sys.stdout = io.BytesIO()
     from .x2goclient import PytisSshProfiles
     try:
-        kwargs = pickle.loads(base64.b64decode(sys.stdin.read()))
+        kwargs = pickle.loads(base64.b64decode(sys.stdin.readline().strip()))
     except (TypeError, EOFError):
-        die("Expected base64 encoded pickled dictionary of PytisSshProfiles arguments on STDIN.")
+        sys.stderr.write("Expected base64 encoded pickled dictionary "
+                         "of PytisSshProfiles arguments on STDIN.\n")
+        sys.exit(1)
     try:
         broker = PytisSshProfiles(**kwargs)
     except PytisSshProfiles.ConnectionFailed:
-        die("Broker connection failed.")
-    stdout.write(base64.b64encode(pickle.dumps((broker.load_profiles()))))
+        response = 'Connection failed'
+    else:
+        response = base64.b64encode(pickle.dumps((broker.load_profiles())))
+    stdout.write(response + "\n")
     sys.stdout = stdout

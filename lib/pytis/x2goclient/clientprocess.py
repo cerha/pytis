@@ -207,15 +207,14 @@ class Broker(object):
         )
         process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runbroker'),
                                    env=dict(os.environ.copy(), PYTHONPATH=_pythonpath),
-                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        # Serialize connection_parameters and pass them to the subprocess through its STDIN.
-        stdout, stderr = process.communicate(base64.b64encode(pickle.dumps(kwargs)))
-        #sys.stderr.write(stderr)
-        if not stdout.strip():
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # Serialize kwargs and pass them to the subprocess through its STDIN.
+        process.stdin.write(base64.b64encode(pickle.dumps(kwargs)) + '\n')
+        response = process.stdout.readline().strip()
+        if response == 'Connection failed':
             return None
         else:
-            profiles, upgrade_parameters = pickle.loads(base64.b64decode(stdout.strip()))
+            profiles, upgrade_parameters = pickle.loads(base64.b64decode(response))
             self._connection_parameters.update(connection_parameters)
             self._upgrade_parameters = upgrade_parameters
             return profiles
