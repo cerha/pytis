@@ -290,9 +290,9 @@ class ui(object):
 class ProgressDialog(object):
 
     def __init__(self, title):
-        self._frame = frame = wx.Frame(None, -1, title)
-        self._gauge = gauge = wx.Gauge(frame, -1)
-        self._label = label = ui.label(frame, '')
+        self._dialog = dialog = wx.Dialog(None, -1, title)
+        self._gauge = gauge = wx.Gauge(dialog, -1)
+        self._label = label = ui.label(dialog, '')
         gauge.SetMinSize((450, 14))
         content = ui.vgroup(
             ui.item(label, expand=True),
@@ -300,9 +300,9 @@ class ProgressDialog(object):
             padding=(10, 16),
             spacing=10,
         )
-        frame.SetSizer(content)
-        content.Fit(frame)
-        frame.Show()
+        dialog.SetSizer(content)
+        content.Fit(dialog)
+        dialog.Show()
 
     def message(self, message):
         """Display a progress message.
@@ -316,8 +316,8 @@ class ProgressDialog(object):
         wx.Yield()
 
     def close(self):
-        self._frame.Close()
-        self._frame.Destroy()
+        self._dialog.Close()
+        self._dialog.Destroy()
 
 
 class Session(threading.Thread):
