@@ -51,39 +51,34 @@ from .ssh import ssh_connect
 
 XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
 
-XCONFIG_DEFAULTS = {
-    'XServers': {
-        'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
-                           'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_old'],
-    },
-    'VcXsrv_pytis': {
-        'display': 'localhost:20',
-        'last_display': 'localhost:20',
-        'process_name': 'vcxsrv_pytis.exe',
-        'test_installed': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-        'run_command': os.path.join(os.getcwd(), 'VcXsrv', 'vcxsrv_pytis.exe'),
-        'parameters': [':20', '-clipboard', '-noprimary', '-multiwindow',
-                       '-nowinkill', '-nounixkill', '-swcursor'],
-    },
-    'VcXsrv_pytis_old': {
-        'display': 'localhost:30',
-        'last_display': 'localhost:30',
-        'process_name': 'vcxsrv_pytis_old.exe',
-        'test_installed': os.path.join(os.getcwd(), 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
-        'run_command': os.path.join(os.getcwd(), 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
-        'parameters': [':30', '-clipboard', '-noclipboardprimary', '-multiwindow',
-                       '-nowinkill', '-nounixkill', '-swcursor'],
-    },
-}
-
 if on_windows():
     # Windows specific X2Go setup
-    X2GO_CLIENTXCONFIG_DEFAULTS = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS
-    X2GO_CLIENTXCONFIG_DEFAULTS.update(XCONFIG_DEFAULTS)
-    x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS = X2GO_CLIENTXCONFIG_DEFAULTS
-    os.environ['NXPROXY_BINARY'] = os.path.normpath(os.path.join(
-        sys.path[0], '..', '..', 'win_apps', 'nxproxy', 'nxproxy.exe',
-    ))
+    win_apps_dir = os.path.normpath(os.path.join(sys.executable, '..', '..', '..', 'win_apps'))
+    x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS.update({
+        'XServers': {
+            'known_xservers': ['VcXsrv_development', 'VcXsrv_shipped', 'VcXsrv', 'Xming',
+                               'Cygwin-X', 'VcXsrv_pytis', 'VcXsrv_pytis_old'],
+        },
+        'VcXsrv_pytis': {
+            'display': 'localhost:20',
+            'last_display': 'localhost:20',
+            'process_name': 'vcxsrv_pytis.exe',
+            'test_installed': os.path.join(win_apps_dir, 'VcXsrv', 'vcxsrv_pytis.exe'),
+            'run_command': os.path.join(win_apps_dir, 'VcXsrv', 'vcxsrv_pytis.exe'),
+            'parameters': [':20', '-clipboard', '-noprimary', '-multiwindow',
+                           '-nowinkill', '-nounixkill', '-swcursor'],
+        },
+        'VcXsrv_pytis_old': {
+            'display': 'localhost:30',
+            'last_display': 'localhost:30',
+            'process_name': 'vcxsrv_pytis_old.exe',
+            'test_installed': os.path.join(win_apps_dir, 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
+            'run_command': os.path.join(win_apps_dir, 'VcXsrv_old', 'vcxsrv_pytis_old.exe'),
+            'parameters': [':30', '-clipboard', '-noclipboardprimary', '-multiwindow',
+                           '-nowinkill', '-nounixkill', '-swcursor'],
+        },
+    })
+    os.environ['NXPROXY_BINARY'] = os.path.join(win_apps_dir, 'nxproxy', 'nxproxy.exe')
 
 def runtime_error(message, exitcode=-1):
     # TODO: Raise an exception instead and catch it in the
@@ -343,14 +338,13 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         _changed = False
-        _defaults = XCONFIG_DEFAULTS[xserver_name]
-        win_apps_path = os.path.normpath(os.path.join(sys.path[0], '..', '..', 'win_apps'))
+        _defaults = x2go.defaults.X2GO_CLIENTXCONFIG_DEFAULTS[xserver_name]
         for option in self.iniConfig.options(xserver_name):
             if option in ('test_installed', 'run_command'):
                 defaults_path = _defaults[option]
                 d, f = os.path.split(defaults_path)
                 _xserver_config[option] = self._fix_win_path(
-                    os.path.join(win_apps_path, os.path.split(d)[-1], f))
+                    os.path.join(win_apps_dir, os.path.split(d)[-1], f))
             elif option in ('display', 'last_display', 'process_name', 'parameters'):
                 _xserver_config[option] = _defaults[option]
             else:
@@ -385,7 +379,7 @@ class XServer(object):
         else:
             server_config = xconfig.get_xserver_config(variant)
             self.logger("Starting X-server %s: %s" % (variant, server_config),
-                        loglevel=x2go.log.loglevel_DEFAULT)
+                        loglevel=x2go.log.loglevel_NOTICE)
             xserver = x2go.xserver.X2GoXServer(variant, server_config)
         self._xserver = xserver
 
