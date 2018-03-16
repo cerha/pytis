@@ -931,10 +931,10 @@ class X2GoStartApp(wx.App):
             if success:
                 break
         username = connection_parameters['username']
-        if not success:
+        if not success and not self._args.no_agent_authentication:
             message(_("Trying SSH Agent authentication."))
             success = connect(username)
-        if not success:
+        if not success and not self._args.no_kerberos_authentication:
             message(_("Trying Kerberos authentication."))
             success = connect(username, gss_auth=True)
         if not success:

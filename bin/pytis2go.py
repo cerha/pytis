@@ -65,13 +65,17 @@ def main():
         # (('-k', '--ssh-privkey'), {},
         #  ("Use file \'SSH_PRIVKEY\' as private key for the "
         #   "SSH connection (e.g. ~/.ssh/id_rsa)")),
-        (('--add-to-known-hosts', '-A'), {'default': False, 'action': 'store_true'},
+        (('--add-to-known-hosts', '-s'), {'default': False, 'action': 'store_true'},
          ("Add RSA host key fingerprint to ~/.ssh/known_hosts "
           "if authenticity of server can\'t be established (default: not set)")),
         (('--window-title', '-t'), {'default': None},
          "Override startup application progress window title (default: Pytis2Go)"),
         (('--version', '-v'), {'default': False, 'action': 'store_true'},
          "Print version number and exit."),
+        (('--no-agent-authentication', '-A'), {'action': 'store_true'},
+         "Disable trying SSH Agent authentication."),
+        (('--no-kerberos-authentication', '-K'), {'action': 'store_true'},
+         "Disable trying Kerberos authentication."),
     )
     for args, kwargs, doc in options:
         parser.add_argument(*args, **dict(kwargs, help=doc))
