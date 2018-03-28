@@ -833,7 +833,7 @@ class X2GoStartApp(wx.App):
                         raise Exception('Unsupported check result: %s' % check_result)
                 if error:
                     dialog.widget('message').SetLabel(error)
-                    fields[0].SetFocus()
+                    dialog.widget('f1').SetFocus()
                 else:
                     dialog.close(values[0])
             return ui.vgroup(
