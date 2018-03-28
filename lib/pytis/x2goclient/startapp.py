@@ -41,6 +41,9 @@ _ = pytis.util.translations('pytis-x2go')
 class ui(object):
     """Private helper methods for simple UI construction (not to be used outside this module)."""
 
+    CENTER = 'CENTER'
+    RIGHT = 'RIGHT'
+
     @staticmethod
     def _add_to_sizer(sizer, items, padding=None, spacing=0):
         for item in items:
@@ -53,8 +56,10 @@ class ui(object):
                 flag = 0
                 if item.expand:
                     flag |= wx.EXPAND
-                if item.center:
+                if item.align == ui.CENTER:
                     flag |= wx.ALIGN_CENTER
+                elif item.align == ui.RIGHT:
+                    flag |= wx.ALIGN_RIGHT
                 border = space = 0
                 content = item.content
                 if item.padding is not None:
@@ -104,11 +109,11 @@ class ui(object):
             bottom and the second value determines the padding on right and
             left side.  Tho order of these velue is the same in a vertical as
             well as in a horizontal group.
-          center -- iff True, center the item content inside the space
-            available for it.
+          align -- alignment of the item content inside the space available for
+            it.  One of 'ui.LEFT', 'ui.RIGHT', 'ui.CENTER'.  Default is left.
 
         """
-        def __init__(self, content, proportion=0, expand=False, padding=None, center=False):
+        def __init__(self, content, proportion=0, expand=False, padding=None, align=wx.LEFT):
             assert (isinstance(content, (wx.Window, wx.Sizer, wx.Size)) or
                     isinstance(content, (tuple, list)) and len(content) == 2 and
                     all(isinstance(x, int) for x in content) or content is None), content
@@ -116,7 +121,7 @@ class ui(object):
             self.proportion = proportion
             self.expand = expand
             self.padding = padding
-            self.center = center
+            self.align = align
 
     class spacer(object):
         def __init__(self, size):
@@ -477,7 +482,7 @@ class X2GoStartApp(wx.App):
             dialog.set_callback(lambda: buttons[0].SetFocus())
             return ui.vgroup(
                 ui.label(dialog, question),
-                ui.item(ui.hgroup(*buttons, spacing=10), center=True),
+                ui.item(ui.hgroup(*buttons, spacing=10), align=ui.CENTER),
                 padding=10, spacing=10,
             )
         return self._show_dialog(title, create_dialog)
@@ -577,7 +582,7 @@ class X2GoStartApp(wx.App):
             dialog.set_callback(lambda: button.SetFocus())
             return ui.vgroup(
                 ui.label(dialog, text),
-                ui.item(button, center=True),
+                ui.item(button, align=ui.CENTER),
                 padding=10, spacing=10,
             )
         return self._show_dialog(title, create_dialog)
@@ -687,7 +692,7 @@ class X2GoStartApp(wx.App):
                         ui.button(dialog, _("Cancel"), lambda e: close(None)),
                         spacing=20, padding=12,
                     ),
-                    center=True),
+                    align=ui.CENTER),
                 padding=10,
             )
         return self._show_dialog(_("Log in to %s", server), create_dialog)
@@ -727,7 +732,7 @@ class X2GoStartApp(wx.App):
                         ui.button(dialog, _("Cancel"), lambda e: dialog.close((None, None, None))),
                         spacing=20, padding=6,
                     ),
-                    center=True),
+                    align=ui.CENTER),
                 padding=(10, 20), spacing=4,
             )
         return self._show_dialog(_("Select the key file"), create_dialog)
@@ -766,7 +771,7 @@ class X2GoStartApp(wx.App):
                                   lambda e: dialog.close(None)),
                         spacing=20,
                     ),
-                    center=True, padding=12,
+                    align=ui.CENTER, padding=12,
                 ),
                 padding=(0, 12),
             )
@@ -830,7 +835,7 @@ class X2GoStartApp(wx.App):
                         ui.button(dialog, _("Cancel"), lambda e: dialog.close(None)),
                         spacing=20, padding=6,
                     ),
-                    center=True),
+                    align=ui.CENTER),
                 padding=(10, 20), spacing=4,
             )
         return self._show_dialog(title, create_dialog)
