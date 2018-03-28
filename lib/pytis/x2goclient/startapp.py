@@ -596,11 +596,13 @@ class X2GoStartApp(wx.App):
             machine for which the server has a public key (if public key
             authentication is supported).
 
-        The return value is a two-tuple (key_filename, password). If
-        'key_filename' is not None, the user prefers public key authentication.
-        In this case 'key_filename' is the file name of the SSH private key
-        (string) and 'password' is its passphrase.  If 'key_filename' is None,
-        the user prefers password authentication with given password.
+        The return value is a three-tuple (username, key_filename,
+        password). If 'key_filename' is not None, the user prefers public key
+        authentication.  In this case 'key_filename' is the file name of the
+        SSH private key (string) and 'password' is its passphrase.  If
+        'key_filename' is None, the user prefers password authentication with
+        given password.  If the dialog was canceled, (None, None, None) is
+        returned.
 
         """
         def create_dialog(dialog):
