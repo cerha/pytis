@@ -176,9 +176,9 @@ class ui(object):
         if isinstance(spacing, tuple):
             vgap, hgap = spacing
         else:
-            vgap, hgap = spacing or 0, spacing or 0
-        return ui._add_to_sizer(wx.FlexGridSizer(rows=kwargs.pop('rows', 1),
-                                                 cols=kwargs.pop('cols', 1),
+            vgap = hgap = spacing or 0
+        return ui._add_to_sizer(wx.FlexGridSizer(rows=kwargs.pop('rows', 0),
+                                                 cols=kwargs.pop('cols', 0),
                                                  hgap=hgap, vgap=vgap),
                                 items, **kwargs)
 
@@ -195,21 +195,27 @@ class ui(object):
         return panel
 
     @staticmethod
-    def field(parent, value=None, length=20, style=wx.DEFAULT, disabled=False, on_enter=None):
+    def field(parent, name=None, value=None, length=20, style=wx.DEFAULT, readonly=False,
+              disabled=False, on_enter=None, updateui=None):
         if on_enter:
             style |= wx.TE_PROCESS_ENTER
-        ctrl = wx.TextCtrl(parent, -1, value or '', style=style)
+        if readonly:
+            style |= wx.TE_READONLY
+        ctrl = wx.TextCtrl(parent, -1, value or '', name=name, style=style)
         width, height = parent.GetTextExtent('x' * length)
         ctrl.SetMinSize((width, ctrl.GetSize().height))
         if disabled:
             ctrl.Enable(False)
         if on_enter:
             ctrl.Bind(wx.EVT_TEXT_ENTER, on_enter)
+        if updateui:
+            ctrl.Bind(wx.EVT_UPDATE_UI, updateui)
         return ctrl
 
     @staticmethod
-    def button(parent, label, callback, updateui=None, icon=None, disabled=False):
-        button = wx.Button(parent, -1, label=label)
+    def button(parent, label, callback, updateui=None, name=None, icon=None, disabled=False,
+               size=None):
+        button = wx.Button(parent, -1, label=label, size=size)
         if icon:
             # This doesn't seem to work...
             bitmap = wx.ArtProvider_GetBitmap(icon, wx.ART_TOOLBAR, (16, 16))
@@ -229,6 +235,19 @@ class ui(object):
                                   style=wx.ITALIC if italic else wx.NORMAL,  # wx.SLANT
                                   weight=wx.BOLD if bold else wx.NORMAL))  # wx.LIGHT
         return label
+
+    @staticmethod
+    def radio(parent, label, choices, name=None, horizontal=False, selected=None, on_change=None):
+        if horizontal:
+            style = wx.RA_SPECIFY_COLS
+        else:
+            style = wx.RA_SPECIFY_ROWS
+        control = wx.RadioBox(parent, -1, label, name=name, style=style, choices=choices)
+        if on_change:
+            control.Bind(wx.EVT_RADIOBOX, on_change)
+        if selected is not None:
+            control.SetSelection(selected)
+        return control
 
     @staticmethod
     def listbox(parent, choices=(), on_select=None):
@@ -428,6 +447,10 @@ class X2GoStartApp(wx.App):
 
             def set_callback(self, callback):
                 self.callback = callback
+
+            def widget(self, name):
+                return self.FindWindowByName(name)
+
         dialog = Dialog(None, -1, title=title)
         content = create(dialog, *args, **kwargs)
         dialog.SetSizer(content)
@@ -587,7 +610,7 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(title, create_dialog)
 
-    def _authentication_dialog(self, server, username, methods, key_files):
+    def _authentication_dialog(self, server, username, key_files, methods, default_method):
         """Interactively ask the user for authentication credentials.
 
         Arguments:
@@ -595,11 +618,14 @@ class X2GoStartApp(wx.App):
             information which credentials to enter).
           username -- initial user name (string).  May be changed by the
             user.
-          methods -- sequence of authentication methods supported by the
-            server (strings 'password', 'publickey').
           key_files -- sequence of SSH private key files present on local
             machine for which the server has a public key (if public key
             authentication is supported).
+          methods -- authentication methods supported by the server as a tuple
+            of strings ('publickey', 'password') where one of those may be
+            missing if not supported.
+          default_method -- default authentication method as a string from
+            ('publickey', 'password').
 
         The return value is a three-tuple (username, key_filename,
         password). If 'key_filename' is not None, the user prefers public key
@@ -611,89 +637,81 @@ class X2GoStartApp(wx.App):
 
         """
         def create_dialog(dialog):
-            def close(method):
-                if isinstance(method, collections.Callable):
-                    method = method()
-                if method is None:
-                    return dialog.close((None, None, None))
-                username = self._username_field.GetValue().rstrip('\r\n')
-                if not username:
-                    self._username_field.SetFocus()
-                    return
-                key_filename, password = (None, None)
-                if method == 'password':
-                    password = self._password_field.GetValue().rstrip('\r\n')
-                elif method == 'publickey':
-                    key_filename = self._keyfile_field.GetValue().rstrip('\r\n')
-                    if not key_filename:
-                        self._keyfile_field.SetFocus()
-                        return
-                    password = self._passphrase_field.GetValue().rstrip('\r\n')
-                dialog.close((username, key_filename, password))
+            def submit(event):
+                if 'publickey' in methods and 'password' in methods:
+                    method = dialog.widget('method').GetSelection()
+                elif 'publickey' in methods:
+                    method = 0
+                else:
+                    method = 1
+                result = []
+                for f in ('username', 'filename', 'password'):
+                    if f == 'filename' and method != 0:
+                        value = None
+                    else:
+                        widget = dialog.widget(f)
+                        value = widget.GetValue().rstrip('\r\n')
+                        if not value:
+                            widget.SetFocus()
+                            return
+                    result.append(value)
+                dialog.close(result)
 
-            def publickey_authentication(parent):
-                def on_select_key_file(event):
-                    filename = wx.FileSelector(
-                        _(u"Select SSH key file"),
-                        default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
-                    )
-                    self._keyfile_field.SetValue(filename)
-                label1 = ui.label(parent, _("Key File:"))
-                self._keyfile_field = field1 = ui.field(parent, key_files[0] if key_files else None,
-                                                        length=40, style=wx.TE_READONLY)
-                button1 = ui.button(parent, _("Select"), on_select_key_file)
-                label2 = ui.label(parent, _("Passphrase:"))
-                self._passphrase_field = field2 = ui.field(parent, length=28, style=wx.PASSWORD,
-                                                           on_enter=lambda e: close('publickey'))
-                return ui.vgroup(
-                    ui.hgroup(ui.item(label1, padding=(3, 0)), field1, button1, spacing=2),
-                    ui.hgroup(ui.item(label2, padding=(3, 0)), field2, spacing=2),
-                    padding=10, spacing=8,
+            def on_button(event):
+                filename = wx.FileSelector(
+                    _(u"Select SSH key file"),
+                    default_path=os.path.join(os.path.expanduser('~'), '.ssh', '')
                 )
-
-            def password_authentication(parent):
-                label = ui.label(parent, _("Password:"))
-                self._password_field = field = ui.field(parent, style=wx.PASSWORD,
-                                                        on_enter=lambda e: close('password'))
-                return ui.hgroup(ui.item(label, padding=(3, 0)), field, padding=10, spacing=2)
+                dialog.widget('filename').SetValue(filename)
 
             def on_show_dialog():
-                for f in [getattr(self, a, None) for a in ('_password_field', '_passphrase_field')]:
-                    if f and f.IsShown():
-                        f.SetFocus()
+                dialog.widget('password').SetFocus()
 
+            def updateui(event):
+                radio = dialog.widget('method')
+                if radio:
+                    event.Enable(radio.GetSelection() == 0)
+
+            content = (
+                ui.item(ui.label(dialog, _("Login name:")), padding=(5, 0)),
+                ui.field(dialog, name='username', length=40,
+                         value=username or self._default_username),
+            )
+            if 'publickey' in methods and 'password' in methods:
+                content += (
+                    ui.hgroup(),
+                    ui.radio(dialog, _("Authentication method:"), name='method',
+                             choices=(_("Public Key"), _("Password")),
+                             selected=1 if default_method == 'password' else 0),
+                )
+            if 'publickey' in methods:
+                content += (
+                    ui.item(ui.label(dialog, _("Key File:")), padding=(5, 0)),
+                    ui.hgroup(
+                        ui.field(dialog, name='filename', length=40, readonly=True,
+                                 value=key_files[0] if key_files else None, updateui=updateui),
+                        ui.button(dialog, _("Select"), on_button, name='button', size=(80, 25),
+                                  updateui=updateui),
+                        spacing=3,
+                    ),
+                )
+            content += (
+                ui.item(ui.label(dialog, _("Password:")), padding=(5, 0)),
+                ui.field(dialog, name='password', length=40, style=wx.PASSWORD,
+                         on_enter=submit),
+            )
             dialog.set_callback(on_show_dialog)
-            if 'password' in methods and 'publickey' in methods:
-                nb = wx.Notebook(dialog, -1)
-                nb.AddPage(ui.panel(nb, publickey_authentication), _(u"Public Key"))
-                nb.AddPage(ui.panel(nb, password_authentication), _(u"Password"))
-                nb.SetSelection(0 if key_files else 1)
-                content = nb
-
-                def method():
-                    return 'publickey' if nb.GetSelection() == 0 else 'password'
-
-            elif 'publickey' in methods:
-                content = publickey_authentication(dialog)
-                method = 'publickey'
-            elif 'password' in methods:
-                content = password_authentication(dialog)
-                method = 'password'
-            else:
-                raise Exception(_("No supported SSH authentication method available."))
-            self._username_field = ui.field(dialog, username or self._default_username)
             return ui.vgroup(
-                ui.hgroup(ui.hgroup(ui.label(dialog, _("Login name:")), padding=(3, 0)),
-                          self._username_field),
-                content,
+                ui.grid(*content, spacing=(8, 3), cols=2),
                 ui.item(
                     ui.hgroup(
-                        ui.button(dialog, _("Log in"), lambda e: close(method)),
-                        ui.button(dialog, _("Cancel"), lambda e: close(None)),
+                        ui.button(dialog, _("Log in"), submit),
+                        ui.button(dialog, _("Cancel"), lambda e: dialog.close((None, None, None))),
                         spacing=20, padding=12,
                     ),
-                    align=ui.CENTER),
-                padding=10,
+                    align=ui.CENTER,
+                ),
+                padding=10, spacing=8,
             )
         return self._show_dialog(_("Log in to %s", server), create_dialog)
 
@@ -712,7 +730,7 @@ class X2GoStartApp(wx.App):
                 dialog.close([f.GetValue() for f in fields])
             default_path = os.path.join(os.path.expanduser('~'), '.ssh', '')
             fields = (
-                ui.field(dialog, key_filename, length=40, style=wx.TE_READONLY),
+                ui.field(dialog, value=key_filename, length=40, readonly=True),
                 ui.field(dialog, length=28, style=wx.PASSWORD),
             )
             return ui.vgroup(
@@ -945,23 +963,29 @@ class X2GoStartApp(wx.App):
             message(_("Trying Kerberos authentication."))
             success = connect(username, gss_auth=True)
         if not success:
-            message(_("Trying interactive authentication."))
             if 'publickey' in methods:
                 key_files = self._acceptable_key_files(connection_parameters)
-            else:
+                default_method = 'publickey'
+            elif 'password' in methods:
                 key_files = ()
+                default_method = 'password'
+            else:
+                raise Exception(_("No supported SSH authentication method available."))
+            message(_("Trying interactive authentication."))
             while not success:
                 username, key_filename, password = self._authentication_dialog(
                     connection_parameters['server'],
-                    username, methods, key_files,
+                    username, key_files, methods, default_method,
                 )
                 if username is None:
                     return None
                 if key_filename or password:
                     if key_filename:
                         message(_("Trying public key authentication."))
+                        default_method = 'publickey'
                     else:
                         message(_("Trying password authentication."))
+                        default_method = 'password'
                     success = connect(username, key_filename=key_filename, password=password)
                     if success:
                         self._keyring.append((username, key_filename, password))
