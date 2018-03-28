@@ -228,8 +228,9 @@ class ui(object):
         return button
 
     @staticmethod
-    def label(parent, text, size=None, face=None, bold=False, italic=False, underline=False):
-        label = wx.StaticText(parent, -1, text)
+    def label(parent, text, name=None, size=None, face=None, bold=False, italic=False,
+              underline=False):
+        label = wx.StaticText(parent, -1, text, name=name or '')
         if size or face or bold or italic or underline:
             label.SetFont(wx.Font(size, wx.DEFAULT, faceName=(face or ''), underline=underline,
                                   style=wx.ITALIC if italic else wx.NORMAL,  # wx.SLANT
@@ -250,7 +251,7 @@ class ui(object):
         return control
 
     @staticmethod
-    def listbox(parent, choices=(), on_select=None):
+    def listbox(parent, choices=(), name=None, on_select=None):
         def on_key_up(event):
             if ((listbox.GetSelection() != -1 and
                  event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER))):
@@ -262,7 +263,12 @@ class ui(object):
                 on_select(event)
             event.Skip()
 
-        listbox = wx.ListBox(parent, -1, choices=choices, style=wx.LB_SINGLE)
+        listbox = wx.ListBox(parent, -1, style=wx.LB_SINGLE, name=name)
+        for item in choices:
+            if isinstance(item, (list, tuple)):
+                listbox.Append(*item)
+            else:
+                listbox.Append(item)
         # Bind to EVT_UPDATE_UP as EVT_KEY_DOWN doesn't process the Enter key...
         if on_select:
             listbox.Bind(wx.EVT_KEY_UP, on_key_up)
@@ -463,6 +469,7 @@ class X2GoStartApp(wx.App):
 
     def _session_selection_dialog(self, dialog, progress, client, sessions):
         def on_terminate_session(event):
+            listbox = dialog.widget('session')
             selection = listbox.GetSelection()
             session = listbox.GetClientData(selection)
             progress.message(_("Terminating session: %s", session.name))
@@ -471,25 +478,27 @@ class X2GoStartApp(wx.App):
             progress.message(_("Session terminated: %s", session.name))
 
         def on_resume_session(event):
+            listbox = dialog.widget('session')
             dialog.close(listbox.GetClientData(listbox.GetSelection()))
 
-        listbox = ui.listbox(dialog, on_select=on_resume_session)
-        for session in sessions:
-            session_label = '%s@%s %s' % (session.username or '', session.hostname or '',
-                                          (session.date_created or '').replace('T', ' '),)
-            listbox.Append(session_label, session)
-        dialog.set_callback(lambda: listbox.SetFocus())
+        def session_label(session):
+            return '%s@%s %s' % (session.username or '', session.hostname or '',
+                                 (session.date_created or '').replace('T', ' '))
+
+        dialog.set_callback(lambda: dialog.widget('session').SetFocus())
         return ui.vgroup(
             ui.label(dialog, _("Existing sessions:")),
             ui.item(ui.hgroup(
-                ui.item(listbox, proportion=1, expand=True),
+                ui.item(ui.listbox(dialog, name='session', on_select=on_resume_session,
+                                   choices=[(session_label(s), s) for s in sessions]),
+                        proportion=1, expand=True),
                 ui.item(ui.vgroup(*[
                     ui.button(dialog, label, callback, updateui, disabled=True)
                     for label, callback, updateui in (
                         (_(u"Resume"), on_resume_session,
-                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                         lambda e: e.Enable(dialog.widget('session').GetSelection() != -1)),
                         (_(u"Terminate"), on_terminate_session,
-                         lambda e: e.Enable(listbox.GetSelection() != -1)),
+                         lambda e: e.Enable(dialog.widget('session').GetSelection() != -1)),
                     )], spacing=6)),
                 spacing=8,
             ), proportion=1, expand=True),
@@ -664,9 +673,6 @@ class X2GoStartApp(wx.App):
                 )
                 dialog.widget('filename').SetValue(filename)
 
-            def on_show_dialog():
-                dialog.widget('password').SetFocus()
-
             def updateui(event):
                 radio = dialog.widget('method')
                 if radio:
@@ -700,7 +706,7 @@ class X2GoStartApp(wx.App):
                 ui.field(dialog, name='password', length=40, style=wx.PASSWORD,
                          on_enter=submit),
             )
-            dialog.set_callback(on_show_dialog)
+            dialog.set_callback(lambda: dialog.widget('password').SetFocus())
             return ui.vgroup(
                 ui.grid(*content, spacing=(8, 3), cols=2),
                 ui.item(
@@ -723,27 +729,25 @@ class X2GoStartApp(wx.App):
         """
         def create_dialog(dialog):
             def submit(event):
-                for f in fields:
-                    if not f.GetValue():
-                        f.SetFocus()
-                        return
-                dialog.close([f.GetValue() for f in fields])
-            default_path = os.path.join(os.path.expanduser('~'), '.ssh', '')
-            fields = (
-                ui.field(dialog, value=key_filename, length=40, readonly=True),
-                ui.field(dialog, length=28, style=wx.PASSWORD),
-            )
+                values = [dialog.widget(f).GetValue() for f in ('filename', 'passphrase')]
+                if '' in values:
+                    dialog.widget(('filename', 'passphrase')[values.index('')]).SetFocus()
+                    return
+                dialog.close(values)
             return ui.vgroup(
                 ui.hgroup(ui.item(ui.label(dialog, _("Key File:")), padding=(3, 0)),
-                          fields[0],
+                          ui.field(dialog, name='filename', value=key_filename, length=40,
+                                   readonly=True),
                           ui.button(dialog, _("Select"),
-                                    lambda e: fields[0].SetValue(wx.FileSelector(
+                                    lambda e: dialog.widget('f1').SetValue(wx.FileSelector(
                                         _(u"Select SSH key file"),
-                                        default_path=default_path,
+                                        default_path=os.path.join(os.path.expanduser('~'),
+                                                                  '.ssh', ''),
                                     ))),
                           spacing=2),
                 ui.hgroup(ui.item(ui.label(dialog, _("Passphrase:")), padding=(3, 0)),
-                          fields[1], spacing=2),
+                          ui.field(dialog, name='passphrase', length=28, style=wx.PASSWORD),
+                          spacing=2),
                 ui.item(
                     ui.hgroup(
                         ui.button(dialog, _("Ok"), submit),
@@ -810,18 +814,15 @@ class X2GoStartApp(wx.App):
         """
         def create_dialog(dialog):
             def submit(event):
-                for f in fields:
-                    if not f.GetValue():
-                        f.SetFocus()
-                        return
-                passphrase, passphrase2 = [
-                    f.GetValue() for f in fields
-                ]
+                values = [dialog.widget(f).GetValue() for f in ('f1', 'f2')]
+                if '' in values:
+                    dialog.widget(('f1', 'f2')[values.index('')]).SetFocus()
+                    return
                 error = None
-                if passphrase != passphrase2:
+                if values[0] != values[1]:
                     error = _("Passphrases don't match.")
                 elif check:
-                    check_result = check(passphrase)
+                    check_result = check(values[0])
                     if check_result == 'unallowed':
                         error = _("Unallowed characters.")
                     elif check_result == 'short':
@@ -831,22 +832,19 @@ class X2GoStartApp(wx.App):
                     elif check_result is not None:
                         raise Exception('Unsupported check result: %s' % check_result)
                 if error:
-                    message.SetLabel(error)
+                    dialog.widget('message').SetLabel(error)
                     fields[0].SetFocus()
                 else:
-                    dialog.close(passphrase)
-            fields = (
-                ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit),
-                ui.field(dialog, style=wx.PASSWORD, length=30, on_enter=submit)
-            )
-            message = ui.label(dialog, "")
+                    dialog.close(values[0])
             return ui.vgroup(
                 ui.item(ui.label(dialog, _("Enter the same passphrase into both fields:")),
                         padding=4),
-                ui.grid(ui.item(ui.label(dialog, _("Passphrase:")), padding=3), fields[0],
-                        ui.item(ui.label(dialog, _("Repeat:")), padding=3), fields[1],
+                ui.grid(ui.item(ui.label(dialog, _("Passphrase:")), padding=3),
+                        ui.field(dialog, name='f1', style=wx.PASSWORD, length=30, on_enter=submit),
+                        ui.item(ui.label(dialog, _("Repeat:")), padding=3),
+                        ui.field(dialog, name='f2', style=wx.PASSWORD, length=30, on_enter=submit),
                         rows=2, cols=2, spacing=(0, 4)),
-                ui.item(message, padding=4),
+                ui.item(ui.label(dialog, "", name='message'), padding=4),
                 ui.item(
                     ui.hgroup(
                         ui.button(dialog, _("Ok"), submit),
