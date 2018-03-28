@@ -219,7 +219,7 @@ class Logger(object):
         """
         assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
             ('invalid logging kind', kind)
-        assert isinstance(message, basestring)
+        assert isinstance(message, basestring), message
         self._retrieve_info()
         if not self._is_accepted(kind, message, data):
             return
