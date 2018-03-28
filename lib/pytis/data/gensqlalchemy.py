@@ -1714,6 +1714,8 @@ def _alchemy2pytis_type(atype):
         return pytis.data.Date()
     elif isinstance(atype, sqlalchemy.DateTime):
         return pytis.data.DateTime(without_timezone=not atype.timezone)
+    elif isinstance(atype, sqlalchemy.Interval):
+        return pytis.data.TimeInterval()
     elif isinstance(atype, sqlalchemy.Numeric):
         return pytis.data.Float(digits=atype.precision, precision=atype.scale)
     elif isinstance(atype, sqlalchemy.dialects.postgresql.ARRAY):
