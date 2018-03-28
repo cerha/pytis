@@ -472,11 +472,9 @@ class Application(wiking.Application):
                'SiteIcon': (wiking.Roles.ANYONE,),
                'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
 
-    def user(self, req, login):
-        return wiking.module.Users.user(req, login)
 
     def authenticate(self, req, login, password, auth_type):
-        user = self.user(req, login)
+        user = wiking.module.Users.user(req, login)
         if user:
             stored_password = user.password()
             if stored_password:
