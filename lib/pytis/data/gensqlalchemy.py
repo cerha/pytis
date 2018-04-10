@@ -2576,6 +2576,18 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                 T._pytis_direct_dependencies = []
             T._pytis_direct_dependencies.append(self.__class__)
 
+    def _register_access_rights(self):
+        super(SQLTable, self)._register_access_rights()
+        groups = set([group for right, group in self.access_rights
+                      if right.lower() in ('insert', 'all')])
+        for c in self.c:
+            if isinstance(c.type, (SERIAL, BIGSERIAL,)) and not c.info.get('inherited'):
+                for g in groups:
+                    cname = c.name
+                    command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP %s' %
+                               (self.schema, self.name, cname, _role_string(g),))
+                    sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
+
     def create(self, bind=None, checkfirst=False):
         self._pytis_create_p = True
         with local_search_path(self._set_search_path(bind)):
