@@ -44,7 +44,7 @@ class SimpleEmail(object):
     ERR_DISCONNECTED = _("SMTP server disconnected")
     ERR_DATA = _("Error by sending data")
     ERR_HELO = _("Error by sending helo")
-    
+
     def __init__(self, to, from_, subject, content, html=False,
                  bcc=None, replyto=None, smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
@@ -59,7 +59,7 @@ class SimpleEmail(object):
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
-        
+
         """
         assert isinstance(to, (basestring, tuple, list))
         assert bcc is None or isinstance(bcc, (basestring, tuple, list))
@@ -96,7 +96,7 @@ class SimpleEmail(object):
 
     def get_error_msg(self):
         return self._error_msg
-        
+
     def smtp_to(self):
         if self.bcc is None:
             return self.to
@@ -108,16 +108,16 @@ class SimpleEmail(object):
             if isinstance(bcc, basestring):
                 bcc = [bcc]
             return to + bcc
-        
+
     def create_headers(self):
         def get_header(header):
             if isinstance(header, basestring):
                 # Not unicode
                 try:
                     test = unicode(header, 'us-ascii')
-                    test # to make flake8 happy
+                    test  # to make flake8 happy
                     make_header = False
-                except:
+                except Exception:
                     make_header = True
                 charset = self.charset
             else:
@@ -150,7 +150,7 @@ class SimpleEmail(object):
         else:
             subtype = 'plain'
         return MIMEText(data, subtype, _charset=charset)
-            
+
     def create_content(self):
         pass
         # mime_text = self.get_content_text(self.content, html=self.html, charset=self.charset)
@@ -172,7 +172,7 @@ class SimpleEmail(object):
         self.reset_error_msg()
         try:
             server = smtplib.SMTP(self.smtp)
-        except:
+        except Exception:
             self._error_msg = "%s: %s" % (self.ERR_CONNECTION, self.smtp)
             return False
         try:
@@ -194,7 +194,7 @@ class SimpleEmail(object):
             success = False
         try:
             server.quit()
-        except:
+        except Exception:
             pass
         return success
 
@@ -205,11 +205,11 @@ class GPGEmail(SimpleEmail):
     ERR_GPG_INSTANCE = _(u"Could not create GPG instance")
     ERR_GPG_KEYRING = _(u"Could not create a temporary GPG keyring")
     ERR_GPG_OUTPUT = _(u"GPG process did not return string.")
-    
+
     def __init__(self, to, from_, subject, content, key, html=False,
                  smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
-        
+
           to -- adresa příjemce (zatím podporujeme jen jednoho příjemce)
           from_ -- adresa odesílatele
           subject -- předmět zprávy (může obsahovat buď řetězec nebo unicode
@@ -226,29 +226,29 @@ class GPGEmail(SimpleEmail):
     def _create_message(self):
         """Return basic instance of Message."""
         self.msg = Message()
-        
+
     def _setup_gpg(self):
         "Setup GPG process. Returns initialized gpg instance."
         try:
             import tempfile
             import GnuPGInterface
-        except:
+        except Exception:
             self._error_msg = self.ERR_GPG_MODULE
             return None
         try:
             gpg = GnuPGInterface.GnuPG()
-        except:
+        except Exception:
             self._error_msg = self.ERR_GPG_INSTANCE
             return None
         try:
-            keyring = tempfile.mkstemp()[1]
-        except:
+            self._keyring = tempfile.mkstemp()[1]
+        except Exception:
             self._error_msg = self.ERR_GPG_KEYRING
             return None
         gpg.options.armor = 1
         gpg.options.meta_interactive = 0
         gpg.options.extra_args.append('--no-secmem-warning')
-        for o in ('--always-trust', '--no-default-keyring', '--keyring=%s' % keyring):
+        for o in ('--always-trust', '--no-default-keyring', '--keyring=%s' % self._keyring):
             gpg.options.extra_args.append(o)
         proc = gpg.run(['--import'], create_fhs=['stdin', 'stderr'])
         proc.handles['stdin'].write(self.key)
@@ -257,7 +257,7 @@ class GPGEmail(SimpleEmail):
         proc.handles['stderr'].close()
         proc.wait()
         return gpg
-    
+
     def _gpg_encrypt_content(self):
         "Encrypt the content."
         gpg = self._setup_gpg()
@@ -286,8 +286,8 @@ class GPGEmail(SimpleEmail):
         # BUG: There is no `keyring' defined here so the following
         # statement is effectively void:
         try:
-            os.remove(keyring)
-        except:
+            os.remove(self._keyring)
+        except Exception:
             pass
         if not success:
             raise pytis.util.ProgramError(self.ERR_GPG_OUTPUT)
@@ -300,7 +300,7 @@ class GPGEmail(SimpleEmail):
         self.msg["Content-type"] = "Multipart/encrypted"
         self.msg["Content-transfer-encoding"] = "8bit"
         self.msg.preamble = "This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)"
-       
+
     def create_content(self):
         # Part 1
         firstSubMsg = email.Message.Message()
@@ -318,13 +318,13 @@ class GPGEmail(SimpleEmail):
                                 name=filename)
         secondSubMsg.add_header("Content-Description",
                                 "OpenPGP encrypted message")
-        secondSubMsg.add_header("Content-Disposition", "inline",
+        secondSubMsg.add_header("Content-Disposition", "attachment",
                                 filename=filename)
         secondSubMsg.set_payload(encrypted)
         # Přidání částí do main
         self.msg.attach(firstSubMsg)
         self.msg.attach(secondSubMsg)
-        
+
 class ComplexEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní mailu s přílohami."""
 
@@ -342,7 +342,7 @@ class ComplexEmail(SimpleEmail):
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
-        
+
         """
         super(ComplexEmail, self).__init__(to, from_, subject, content, html=html,
                                            bcc=bcc, replyto=replyto, smtp=smtp, charset=charset)
@@ -350,7 +350,7 @@ class ComplexEmail(SimpleEmail):
 
     def _create_message(self):
         self.msg = MIMEMultipart()
-        
+
     def create_headers(self):
         super(ComplexEmail, self).create_headers()
         self.msg.preamble = ('You will not see this '
@@ -364,7 +364,7 @@ class ComplexEmail(SimpleEmail):
         else:
             subtype = 'plain'
         return MIMEText(data, subtype, _charset=charset)
-        
+
     def get_content_data(self, data, filename, charset=None):
         "Vrátí data jako instanci třídy odvozené od MIMEBase."
         # Guess the content type based on the file's extension.  Encoding
@@ -395,7 +395,7 @@ class ComplexEmail(SimpleEmail):
         """Přidá text nebo html jako MIME část."""
         content = self.get_content_text(data, html=html, charset=charset)
         self.parts.append(content)
-    
+
     def add_content_data(self, data, filename, charset=None):
         """Přidá data jako přílohu emailu."""
         content = self.get_content_data(data, filename, charset=charset)
@@ -426,12 +426,12 @@ class ComplexEmail(SimpleEmail):
             fp = open(path, mode)
             data = fp.read()
             fp.close()
-        except:
+        except Exception:
             data = None
         if data:
             self.add_content_data(data, filename, charset)
         return
-    
+
     def create_content(self):
         if self.content:
             self.msg.attach(self.get_content_text(self.content, html=self.html,
