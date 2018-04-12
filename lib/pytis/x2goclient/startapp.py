@@ -561,7 +561,8 @@ class X2GoStartApp(wx.App):
         # also all necessary authentication parameters.
         connection_parameters = dict((k, session_parameters[k]) for k in
                                      ('server', 'port', 'username', 'password',
-                                      'key_filename', 'allow_agent', 'gss_auth'))
+                                      'key_filename', 'allow_agent', 'gss_auth',
+                                      'add_to_known_hosts'))
         if ssh_connect(**connection_parameters):
             return session_parameters
         else:
