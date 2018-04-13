@@ -668,24 +668,11 @@ class X2GoClient(x2go.X2GoClient):
             self._X2GoClient__connect_session(self._x2go_session_hash,
                                               username=session_parameters['username'],
                                               password=session_parameters['password'])
-        # TODO: We don't handle these exceptions because we should already have
-        # valid authentication credentials thanks to calling 'ssh_connect()' prior
-        # to X2GoClient instance creation.
-        # except x2go.PasswordRequiredException, e:
-        # except x2go.AuthenticationException, e:
-        # except x2go.BadHostKeyException:
-        #     runtime_error('SSH host key verification for remote host [%s]:%s failed' %
-        #                   (session_parameters['server'], session_parameters['port']),
-        #                   exitcode=-254)
-        # except x2go.SSHException, e:
-        #     if str(e) not in ('not a valid DSA private key file',
-        #                       'Incompatible ssh peer (no acceptable kex algorithm)',
-        #                       'No authentication methods available'):
-        #         runtime_error(str(e), exitcode=253)
-        #     self.logger('passwordless login for ,,%s\'\' failed' % _username,
-        #                 loglevel=x2go.loglevel_WARN)
-        #     self.logger('proceeding to interactive login for user ,,%s\'\'' % _username,
-        #                 loglevel=x2go.loglevel_NOTICE)
+            # Note: We don't handle the authentication related exceptions such
+            # as x2go.PasswordRequiredException, x2go.AuthenticationException,
+            # x2go.BadHostKeyException or x2go.SSHException because we should
+            # already have valid authentication credentials at this point thanks
+            # to calling 'ssh_connect()' prior to X2GoClient instance creation.
         except socket.error, e:
             runtime_error('a socket error occured while establishing the connection: %s' %
                           str(e), exitcode=-245)
