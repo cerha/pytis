@@ -49,7 +49,7 @@ import pytis.remote.pytisproc as pytisproc
 from pytis.util import log, EVENT, on_windows
 from .ssh import ssh_connect
 
-XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
+PYTIS_XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
 
 if on_windows():
     # Windows specific X2Go setup
@@ -334,7 +334,7 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return path
 
     def get_xserver_config(self, xserver_name):
-        if xserver_name not in XSERVER_VARIANTS:
+        if xserver_name not in PYTIS_XSERVER_VARIANTS:
             return super(X2GoClientXConfig, self).get_xserver_config(xserver_name)
         _xserver_config = {}
         _changed = False
@@ -362,27 +362,32 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return _xserver_config
 
 
-class XServer(object):
+class XServerNotInstalled(Exception):
+    pass
 
-    def __init__(self, variant='VcXsrv_pytis_old', loglevel=x2go.log.loglevel_DEFAULT):
-        self.logger = x2go.log.X2GoLogger(loglevel=loglevel)
-        xconfig = X2GoClientXConfig(config_files=os.path.normpath(os.path.join(
-            x2go.LOCAL_HOME,
-            x2go.X2GO_CLIENT_ROOTDIR,
-            x2go.defaults.X2GO_XCONFIG_FILENAME,
-        )))
-        xserver = None
-        if xconfig.running_xservers:
-            self.logger('X-server is already running!', loglevel=x2go.log.loglevel_WARN)
-        elif not xconfig.installed_xservers:
-            self.logger("No installed X-servers found!", loglevel=x2go.log.loglevel_WARN)
-        else:
-            server_config = xconfig.get_xserver_config(variant)
-            self.logger("Starting X-server %s: %s" % (variant, server_config),
-                        loglevel=x2go.log.loglevel_NOTICE)
-            xserver = x2go.xserver.X2GoXServer(variant, server_config)
-        self._xserver = xserver
 
+class XServerAlreadyRunning(Exception):
+    pass
+
+
+def start_xserver(variant, loglevel=x2go.log.loglevel_DEFAULT):
+    """Start X-server for given server variant and return the corresponding display."""
+    xconfig = X2GoClientXConfig(config_files=os.path.normpath(os.path.join(
+        x2go.LOCAL_HOME,
+        x2go.X2GO_CLIENT_ROOTDIR,
+        x2go.defaults.X2GO_XCONFIG_FILENAME,
+    )))
+    xserverconfig = xconfig.get_xserver_config(variant)
+    display = xserverconfig['last_display']
+    if not xconfig.installed_xservers:
+        raise XServerNotInstalled("No installed X-servers found!")
+    if xconfig.running_xservers:
+        raise XServerAlreadyRunning('X-server is already running.', display)
+    logger = x2go.log.X2GoLogger(loglevel=loglevel)
+    logger("Starting X-server %s: %s" % (variant, xserverconfig),
+           loglevel=x2go.log.loglevel_NOTICE)
+    x2go.xserver.X2GoXServer(variant, xserverconfig)
+    return display
 
 def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port)):
     """This function redefines 'x2go.rforward.x2go_transport_tcp_handler'.
@@ -425,8 +430,7 @@ class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
         self._on_tunnel_started = on_tunnel_started
 
     def _request_port_forwarding(self):
-        port = self.ssh_transport.request_port_forward('127.0.0.1', 0,
-                                                       handler=tunnel_tcp_handler)
+        port = self.ssh_transport.request_port_forward('127.0.0.1', 0, handler=tunnel_tcp_handler)
         self.server_port = port
         self._on_tunnel_started(port)
 

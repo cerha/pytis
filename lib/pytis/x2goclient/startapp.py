@@ -29,12 +29,11 @@ import tempfile
 import paramiko
 import StringIO
 import threading
-import collections
 
 import pytis.util
 import pytis.x2goclient
 from .ssh import public_key_acceptable, ssh_connect
-from .clientprocess import Broker, ClientProcess, XServer
+from .clientprocess import Broker, ClientProcess, start_xserver
 
 _ = pytis.util.translations('pytis-x2go')
 
@@ -409,6 +408,7 @@ class X2GoStartApp(wx.App):
         else:
             self._broker = None
         self._keyring = []
+        self._window_title = args.window_title or _("Pytis2Go")
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _menu_items(self):
@@ -520,8 +520,7 @@ class X2GoStartApp(wx.App):
         return self._show_dialog(title, create_dialog)
 
     def _load_profiles(self):
-        title = self._args.window_title or _("Pytis2Go")
-        progress = ProgressDialog(_("%s: Loading profiles...", title))
+        progress = ProgressDialog(_("%s: Loading profiles...", self._window_title))
         profiles = self._broker.list_profiles(lambda f, params:
                                               self._authenticate(progress, f, params))
         if profiles is not None:
@@ -556,6 +555,14 @@ class X2GoStartApp(wx.App):
                     return self.Exit()
         progress.close()
 
+    def _get_display(self, session_parameters):
+        # TODO: We would like to start X-servers here according to session
+        # parameters (different parameters may require different server setup).
+        if pytis.util.on_windows():
+            return self._display
+        else:
+            return None
+
     def _connect(self, session_parameters):
         # Authenticate to server and return session_parameters including
         # also all necessary authentication parameters.
@@ -577,7 +584,7 @@ class X2GoStartApp(wx.App):
         if not session_parameters:
             return
         progress.message(_("Starting X2Go client"))
-        client = ClientProcess(session_parameters)
+        client = ClientProcess(session_parameters, display=self._get_display(session_parameters))
         progress.message(_("Retrieving available sessions."))
         sessions = client.list_sessions()
         if len(sessions) == 0:
@@ -1273,7 +1280,9 @@ class X2GoStartApp(wx.App):
         key, key_file = self._choose_key()
         if key and key_file:
             username = self._local_username()
-            upload_key = paramiko.RSAKey.from_private_key(StringIO.StringIO(pytis.config.upload_key))
+            upload_key = paramiko.RSAKey.from_private_key(
+                StringIO.StringIO(pytis.config.upload_key)
+            )
             pubkey = "{} {} {}".format(key.get_name(), key.get_base64(), username)
             filename = "{}_{}.pub".format(datetime.datetime.now().strftime("%Y%m%d%H%M"), username)
             transport = paramiko.Transport((self._broker.server(), self._broker.port()))
@@ -1302,8 +1311,14 @@ class X2GoStartApp(wx.App):
         if pytis.util.on_windows():
             progress = ProgressDialog(_("X-server startup"))
             progress.message(_("Starting up X-server."))
-            self._xserver = XServer()
+            # TODO - because of http://bugs.x2go.org/cgi-bin/bugreport.cgi?bug=1044
+            # we use older variant of VcXsrv by default. Later we will switch back
+            # to the current version.
+            self._display = start_xserver('VcXsrv_pytis_old')
             progress.close()
+            if not self._display:
+                self._info_dialog(self._window_title, _("Failed starting X-server."))
+                self.Exit()
         self.Yield()
         profile_id = self._args.session_profile
         if profile_id or self._args.autoload:

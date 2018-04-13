@@ -19,12 +19,28 @@
 """Run a X-server in a separate process.
 
 This module is run as 'python -m pytis.x2goclient.xserver' to start a local X11
-server.  Use the class 'pytis.x2goclient.clientprocess.XServer' to start the
-server in a subprocess from Python.
+server.  The class 'pytis.x2goclient.clientprocess.XServer' does this for you
+so you should not need to run this module directly.
 
 """
 
-from pytis.x2goclient.x2goclient import XServer
+import argparse
+from pytis.x2goclient.x2goclient import start_xserver, XServerAlreadyRunning, XServerNotInstalled
 
 if __name__ == '__main__':
-    XServer()
+    parser = argparse.ArgumentParser(
+        description='Start X2Go X-server in a separate process',
+        add_help=True
+    )
+    parser.add_argument(
+        '--variant', required=True,
+        help="Retrieve session profiles via an X2Go Session Broker under the given URL.",
+    )
+    args = parser.parse_args()
+
+    try:
+        print start_xserver(variant=args.variant)
+    except XServerAlreadyRunning as e:
+        print e.args[1]
+    except XServerNotInstalled:
+        pass

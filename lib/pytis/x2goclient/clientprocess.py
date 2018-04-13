@@ -18,7 +18,7 @@
 
 """Running X2Go services in a subprocess.
 
-This module hides the details of running X2Go client, X2Go broker and XServer
+This module hides the details of running X2Go client, X2Go broker and X-server
 in a subprocess behid simple APIs which are similar to the APIs of the original
 classes and feel like they are run in-process.
 
@@ -27,7 +27,7 @@ All these classes are designed to be used from
 
 Running in a subprocess is necessary because x2go (and thus
 'pytis.x2goclient.x2goclient') can not be imported in the process where the
-startup wx application runs.  It causes conflicts between the ws and glib main
+startup wx application runs.  It causes conflicts between the wx and glib main
 loop and gevent monkey patching.
 
 """
@@ -113,7 +113,7 @@ class ClientProcess(object):
 
     """
 
-    def __init__(self, session_parameters, on_echo=None):
+    def __init__(self, session_parameters, display=None, on_echo=None):
         """Start a Python subprocess running 'X2GoClient' and 'ClientService' server.
 
         Arguments:
@@ -124,9 +124,11 @@ class ClientProcess(object):
             a running Pytis application.
 
         """
+        env = dict(os.environ.copy(), PYTHONPATH=_pythonpath)
+        if display:
+            env['DISPLAY'] = str(display)
         self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient'),
-                                         env=dict(os.environ.copy(), PYTHONPATH=_pythonpath),
-                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                                         env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         # Generate a secret token and pass it to the subprocess through
         # its STDIN and read the port number from its STDOUT (it will
         # allocate the first available port number and print it.
@@ -269,15 +271,15 @@ class Broker(object):
         else:
             return version, None, None
 
-
-class XServer(object):
+def start_xserver(variant):
     """Run X-server in a separate process.
 
-    The constructor simply runs 'python -m pytis.x2goclient.xserver' to start a
-    local X11 server in a subprocess.
+    Simply runs 'python -m pytis.x2goclient.xserver' to start a local X11
+    server in a subprocess .
 
     """
-
-    def __init__(self):
-        subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver'),
-                         env=dict(os.environ.copy(), PYTHONPATH=_pythonpath))
+    process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver',
+                                '--variant', variant),
+                               env=dict(os.environ.copy(), PYTHONPATH=_pythonpath),
+                               stdout=subprocess.PIPE)
+    return process.stdout.readline().strip() or None
