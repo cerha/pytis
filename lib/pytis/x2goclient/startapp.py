@@ -595,11 +595,13 @@ class X2GoStartApp(wx.App):
         if session:
             progress.message(_("Resuming session: %s", session.name))
             client.resume_session(session)
+            delay = 2000
         else:
             progress.message(_("Starting new session."))
             client.start_new_session()
+            delay = 11000
         progress.message(_("Waiting for the application to come up..."))
-        wx.CallLater(4000, progress.close)
+        wx.CallLater(delay, progress.close)
         session = Session(client)
         self._sessions.append(session)
         session.start()
