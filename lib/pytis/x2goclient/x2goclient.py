@@ -666,8 +666,8 @@ class X2GoClient(x2go.X2GoClient):
                                                  on_echo=on_rpyc_echo, logger=self.logger)
         try:
             self._X2GoClient__connect_session(self._x2go_session_hash,
-                                          username=session_parameters['username'],
-                                          password=session_parameters['password'])
+                                              username=session_parameters['username'],
+                                              password=session_parameters['password'])
         # TODO: We don't handle these exceptions because we should already have
         # valid authentication credentials thanks to calling 'ssh_connect()' prior
         # to X2GoClient instance creation.
