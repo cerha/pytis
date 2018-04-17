@@ -360,9 +360,13 @@ class MenuItem(object):
 
 class Session(threading.Thread):
 
-    def __init__(self, client):
+    def __init__(self, client, session_parameters):
         self._client = client
+        self._session_parameters = session_parameters
         threading.Thread.__init__(self)
+
+    def session_parameters(self):
+        return self._session_parameters
 
     def run(self):
         self._client.main_loop()
@@ -426,8 +430,10 @@ class X2GoStartApp(wx.App):
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _menu(self):
+        running = [s.session_parameters()['profile_name'] for s in self._sessions]
         menu = [
-            MenuItem(params['profile_name'], lambda params=params: self._start_session(params))
+            MenuItem(params['profile_name'], lambda params=params: self._start_session(params),
+                     icon='connected' if params['profile_name'] in running else 'disconnected')
             for profile_id, params in self._profiles
         ]
         if menu:
@@ -615,7 +621,7 @@ class X2GoStartApp(wx.App):
             delay = 11000
         progress.message(_("Waiting for the application to come up..."))
         wx.CallLater(delay, progress.close)
-        session = Session(client)
+        session = Session(client, session_parameters)
         self._sessions.append(session)
         session.start()
 
