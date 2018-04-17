@@ -377,7 +377,6 @@ class X2GoStartApp(wx.App):
 
         def __init__(self, menu, on_click):
             super(X2GoStartApp._TaskBarIcon, self).__init__()
-            self.set_icon('disconnected')
             self._menu = menu
             self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
 
@@ -533,6 +532,7 @@ class X2GoStartApp(wx.App):
             # Profiles are empty when the user cancels the broker authentication dialog
             # or when connection or authentication fails.
             self._profiles = profiles
+            self._icon.set_icon('connected')
             progress.message(self._broker.server() + ': ' +
                              _.ngettext("Returned %d profile.",
                                         "Returned %d profiles.",
@@ -1321,6 +1321,7 @@ class X2GoStartApp(wx.App):
 
     def OnInit(self):
         self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
+        self._icon.set_icon('disconnected')
         # Work around: The wx main loop exits if there is not at least one frame.
         wx.Frame(None, -1, '').Hide()
         if pytis.util.on_windows():
