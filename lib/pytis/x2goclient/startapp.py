@@ -350,9 +350,10 @@ class ProgressDialog(object):
 
 
 class MenuItem(object):
-    def __init__(self, label, callback, enabled=True, visible=True):
+    def __init__(self, label, callback, icon=None, enabled=True, visible=True):
         self.label = label
         self.callback = callback
+        self.icon = icon
         self.enabled = bool(enabled)
         self.visible = bool(visible)
 
@@ -380,9 +381,16 @@ class X2GoStartApp(wx.App):
             self._menu = menu
             self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
 
+        def _get_bitmap(self, name):
+            if name.startswith('wx'):
+                bitmap = wx.ArtProvider_GetBitmap(name, wx.ART_MENU, (16, 16))
+            else:
+                path = os.path.normpath(os.path.join(sys.path[0], '..', 'icons', name + '.png'))
+                bitmap = wx.Bitmap(path)
+            return bitmap
+
         def set_icon(self, name):
-            path = os.path.normpath(os.path.join(sys.path[0], '..', 'icons', name + '.png'))
-            icon = wx.IconFromBitmap(wx.Bitmap(path))
+            icon = wx.IconFromBitmap(self._get_bitmap(name))
             self.SetIcon(icon, _("Pytis2Go Service"))
 
         def CreatePopupMenu(self):
@@ -394,6 +402,8 @@ class X2GoStartApp(wx.App):
                     wxitem = wx.MenuItem(menu, -1, item.label)
                     menu.Bind(wx.EVT_MENU, lambda event, item=item: item.callback(),
                               id=wxitem.GetId())
+                    if item.icon:
+                        wxitem.SetBitmap(self._get_bitmap(item.icon))
                     menu.AppendItem(wxitem)
                     menu.Enable(wxitem.GetId(), item.enabled)
             return menu
@@ -434,7 +444,7 @@ class X2GoStartApp(wx.App):
             MenuItem(_("Cleanup desktop shortcuts"), self._cleanup_shortcuts,
                      visible=pytis.util.on_windows()),
             '---',
-            MenuItem(_("Exit"), self._on_exit),
+            MenuItem(_("Exit"), self._on_exit, icon=wx.ART_QUIT),
         ))
         return menu
 
