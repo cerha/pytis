@@ -529,17 +529,16 @@ class X2GoStartApp(wx.App):
         progress = ProgressDialog(_("%s: Loading profiles...", self._window_title))
         profiles = self._broker.list_profiles(lambda f, params:
                                               self._authenticate(progress, f, params))
-        if profiles is not None:
+        if profiles:
+            # Profiles are empty when the user cancels the broker authentication dialog
+            # or when connection or authentication fails.
+            self._profiles = profiles
             progress.message(self._broker.server() + ': ' +
                              _.ngettext("Returned %d profile.",
                                         "Returned %d profiles.",
                                         len(profiles)))
-            self._profiles = profiles
-        else:
-            progress.message(_("Failed loading broker profiles."))
-            self._profiles = ()
-        time.sleep(2)
-        # Profiles are empty when the user cancels the broker authentication dialog.
+            time.sleep(2)
+        progress.close()
         if profiles and pytis.util.on_windows():
             current_version = pytis.x2goclient.X2GOCLIENT_VERSION
             available_version, connection_parameters, path = self._broker.upgrade_parameters()
@@ -558,7 +557,6 @@ class X2GoStartApp(wx.App):
                         _(u"Upgrade finished"),
                         _(u"Pytis successfully upgraded. Restart the application."))
                     return self.Exit()
-        progress.close()
 
     def _get_display(self, session_parameters):
         # TODO: We would like to start X-servers here according to session
@@ -940,6 +938,12 @@ class X2GoStartApp(wx.App):
           - Password -- 'gss_auth' is False, 'key_filename' is empty and
             'password' is given
 
+        Returns the result of the first successful call of 'function' or None if
+          A) the user aborted the authentication dialog (authentication failed),
+          B) connection failed.
+        In case B) the error has been retorted to the user by displaying a dialog
+        which the user needs to confirm.
+
         """
         def message(msg):
             progress.message(connection_parameters['server'] + ': ' + msg)
@@ -956,9 +960,14 @@ class X2GoStartApp(wx.App):
                 add_to_known_hosts=self._args.add_to_known_hosts,
             ), **kwargs)
 
-        success = False
+        success = None
         message(_("Retrieving supported authentication methods."))
-        methods = self._authentication_methods(connection_parameters)
+        try:
+            methods = self._authentication_methods(connection_parameters)
+        except socket.error as e:
+            self._info_dialog(_("Connection Failed"),
+                              _("Failed connecting to %s:\n%s", connection_parameters['server'], e))
+            return None
         for username, key_filename, password in self._keyring:
             if key_filename and password and 'publickey' in methods:
                 message(_("Trying public key authentication."))
