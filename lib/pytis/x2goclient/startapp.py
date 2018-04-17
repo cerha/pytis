@@ -349,6 +349,14 @@ class ProgressDialog(object):
         self._dialog.Destroy()
 
 
+class MenuItem(object):
+    def __init__(self, label, callback, enabled=True, visible=True):
+        self.label = label
+        self.callback = callback
+        self.enabled = bool(enabled)
+        self.visible = bool(visible)
+
+
 class Session(threading.Thread):
 
     def __init__(self, client):
@@ -367,10 +375,10 @@ class X2GoStartApp(wx.App):
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
-        def __init__(self, on_click):
+        def __init__(self, menu, on_click):
             super(X2GoStartApp._TaskBarIcon, self).__init__()
-            self._menu = []
             self.set_icon('disconnected')
+            self._menu = menu
             self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
 
         def set_icon(self, name):
@@ -378,20 +386,17 @@ class X2GoStartApp(wx.App):
             icon = wx.IconFromBitmap(wx.Bitmap(path))
             self.SetIcon(icon, _("Pytis2Go Service"))
 
-        def update_menu(self, menu):
-            self._menu = [item + (None, True)[len(item) - 1:] for item in menu if item]
-
         def CreatePopupMenu(self):
             menu = wx.Menu()
-            for label, callback, enabled in self._menu:
-                if callback:
-                    item = wx.MenuItem(menu, -1, label)
-                    menu.Bind(wx.EVT_MENU, lambda event, callback=callback: callback(),
-                              id=item.GetId())
-                    menu.AppendItem(item)
-                    menu.Enable(item.GetId(), bool(enabled))
-                else:
+            for item in self._menu():
+                if item == '---':
                     menu.AppendSeparator()
+                elif item.visible:
+                    wxitem = wx.MenuItem(menu, -1, item.label)
+                    menu.Bind(wx.EVT_MENU, lambda event, item=item: item.callback(),
+                              id=wxitem.GetId())
+                    menu.AppendItem(wxitem)
+                    menu.Enable(wxitem.GetId(), item.enabled)
             return menu
 
     def __init__(self, args):
@@ -411,27 +416,28 @@ class X2GoStartApp(wx.App):
         self._window_title = args.window_title or _("Pytis2Go")
         super(X2GoStartApp, self).__init__(redirect=False)
 
-    def _menu_items(self):
-        items = [
-            (params['profile_name'], lambda params=params: self._start_session(params))
+    def _menu(self):
+        menu = [
+            MenuItem(params['profile_name'], lambda params=params: self._start_session(params))
             for profile_id, params in self._profiles
         ]
-        items.extend((
-            ('---',) if items else None,
-            (_("Reload profiles") if items else _("Load profiles"), self._load_profiles),
-            ('---',),
-            (_("Generate new SSH key pair"), self._generate_key),
-            (_("Change key passphrase"), self._change_key_passphrase),
-            (_("Upload public key to server"), self._upload_key),
-            (_("Send public key to admin"), self._send_key),
-            (_("Create desktop shortcut"), self._create_shortcut_menu, bool(items))
-            if pytis.util.on_windows() else None,
-            (_("Cleanup desktop shortcuts"), self._cleanup_shortcuts)
-            if pytis.util.on_windows() else None,
-            ('---',),
-            (_("Exit"), self._on_exit),
+        if menu:
+            menu.append('---')
+        menu.extend((
+            MenuItem(_("Reload profiles") if menu else _("Load profiles"), self._load_profiles),
+            '---',
+            MenuItem(_("Generate new SSH key pair"), self._generate_key),
+            MenuItem(_("Change key passphrase"), self._change_key_passphrase),
+            MenuItem(_("Upload public key to server"), self._upload_key),
+            MenuItem(_("Send public key to admin"), self._send_key),
+            MenuItem(_("Create desktop shortcut"), self._create_shortcut_menu,
+                     enabled=bool(menu), visible=pytis.util.on_windows()),
+            MenuItem(_("Cleanup desktop shortcuts"), self._cleanup_shortcuts,
+                     visible=pytis.util.on_windows()),
+            '---',
+            MenuItem(_("Exit"), self._on_exit),
         ))
-        return items
+        return menu
 
     def _on_exit(self):
         for session in self._sessions:
@@ -532,7 +538,6 @@ class X2GoStartApp(wx.App):
         else:
             progress.message(_("Failed loading broker profiles."))
             self._profiles = ()
-        self._icon.update_menu(self._menu_items())
         time.sleep(2)
         # Profiles are empty when the user cancels the broker authentication dialog.
         if profiles and pytis.util.on_windows():
@@ -1306,8 +1311,7 @@ class X2GoStartApp(wx.App):
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
     def OnInit(self):
-        self._icon = self._TaskBarIcon(self._on_taskbar_click)
-        self._icon.update_menu(self._menu_items())
+        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
         # Work around: The wx main loop exits if there is not at least one frame.
         wx.Frame(None, -1, '').Hide()
         if pytis.util.on_windows():
