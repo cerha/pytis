@@ -430,7 +430,7 @@ class X2GoStartApp(wx.App):
         super(X2GoStartApp, self).__init__(redirect=False)
 
     def _menu(self):
-        running = [s.session_parameters()['profile_name'] for s in self._sessions]
+        running = [s.session_parameters()['profile_name'] for s in self._sessions if s.isAlive()]
         menu = [
             MenuItem(params['profile_name'], lambda params=params: self._start_session(params),
                      icon='connected' if params['profile_name'] in running else 'disconnected')
@@ -456,7 +456,8 @@ class X2GoStartApp(wx.App):
 
     def _on_exit(self):
         for session in self._sessions:
-            session.terminate()
+            if session.isAlive():
+                session.terminate()
         wx.CallAfter(self._icon.Destroy)
         self.Exit()
 
