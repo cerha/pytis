@@ -160,7 +160,11 @@ class ClientProcess(object):
 
     def main_loop(self):
         """Call 'X2GoClient.main_loop()' on the subprocess instance."""
-        self._conn.root.main_loop()
+        try:
+            self._conn.root.main_loop()
+        except EOFError:
+            # Happens every time the session is terminated.
+            pass
 
     def terminate(self):
         """Terminate the subprocess and the 'X2GoClient' instance running inside it."""
