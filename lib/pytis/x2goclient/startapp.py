@@ -29,6 +29,7 @@ import tempfile
 import paramiko
 import StringIO
 import threading
+import wx.lib.mixins.listctrl
 
 import pytis.util
 import pytis.x2goclient
@@ -36,6 +37,13 @@ from .ssh import public_key_acceptable, ssh_connect
 from .clientprocess import Broker, ClientProcess, start_xserver
 
 _ = pytis.util.translations('pytis-x2go')
+
+
+class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+    def __init__(self, *args, **kwargs):
+        wx.ListCtrl.__init__(self, *args, **kwargs)
+        wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
+
 
 class ui(object):
     """Private helper methods for simple UI construction (not to be used outside this module)."""
@@ -250,11 +258,31 @@ class ui(object):
         return control
 
     class column(object):
-        def __init__(self, label, align='left', width=10):
+        def __init__(self, label, align='left', width=None):
             assert align in ('left', 'right')
             self.label = label
             self.align = align
             self.width = width
+
+    @staticmethod
+    def _init_listctrl(ctrl, columns, items, on_activation=None):
+        for i, column in enumerate(columns):
+            ctrl.InsertColumn(i, column.label,
+                              wx.LIST_FORMAT_LEFT if column.align == 'left' else
+                              wx.LIST_FORMAT_RIGHT)
+        for i, row in enumerate(items):
+            ctrl.InsertStringItem(i, '')
+            for j, value in enumerate(row):
+                ctrl.SetStringItem(i, j, value)
+        for i, column in enumerate(columns):
+            # Width must be set when values are present to autosize properly
+            if column.width is None:
+                width = wx.LIST_AUTOSIZE
+            else:
+                width = wx.DLG_SZE(ctrl, (4 * (column.width + 1)), 0).GetWidth()
+            ctrl.SetColumnWidth(i, width)
+        if on_activation:
+            ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
 
     @staticmethod
     def listctrl(parent, columns, items=(), name=None, on_activation=None):
@@ -269,27 +297,16 @@ class ui(object):
 
         """
         ctrl = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
-        for i, column in enumerate(columns):
-            ctrl.InsertColumn(i, column.label,
-                              wx.LIST_FORMAT_LEFT if column.align == 'left' else
-                              wx.LIST_FORMAT_RIGHT)
-            ctrl.SetColumnWidth(i, wx.DLG_SZE(ctrl, (4 * (column.width + 1)), 0).GetWidth())
-        for i, row in enumerate(items):
-            ctrl.InsertStringItem(i, '')
-            for j, value in enumerate(row):
-                ctrl.SetStringItem(i, j, value)
-        if on_activation:
-            ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
+        ui._init_listctrl(ctrl, columns, items, on_activation)
         return ctrl
 
     @staticmethod
-    def checklist(parent, columns, items):
+    def checklist(parent, columns, items, name=None):
         """Create a control to check/uncheck individual items in a tabular list.
 
         Arguments:
-          columns -- sequence of column labels -- selectable items may contain
-            multiple values to be displayed in a tabular layout in columns.
-            This sequence defines the column headers.
+          columns -- sequence of 'ui.column' instances defining table column
+            headers and their properties.
           items -- sequence of sequences, where the top level sequence
             determines the options which may be checked/unchecked individually
             (table rows) and the inner sequences determine the values displayed
@@ -300,29 +317,14 @@ class ui(object):
             n is the length of 'columns'.
 
         """
-        import wx.lib.mixins.listctrl
-
-        class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
-            def __init__(self, parent, columns, items):
-                wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
-                wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
-                self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda e: self.ToggleItem(e.m_itemIndex))
-                for i, label in enumerate(columns):
-                    self.InsertColumn(i, label)
-                for i, item in enumerate(items):
-                    self.InsertStringItem(i, item[1])
-                    self.CheckItem(i, item[0])
-                    for j, value in enumerate(item[1:]):
-                        self.SetStringItem(i, j, value)
-                width = 4
-                for i in range(len(columns)):
-                    self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
-                    width += self.GetColumnWidth(i)
-                height = min(320, len(items) * 27 + 31)
-                # The resulting height is (at least on Linux) actually 40px less than
-                # what we request, so request 40px more (yet another wx weirdness...).
-                self.SetMinSize((width, height + 40))
-        return CheckListCtrl(parent, columns, items)
+        ctrl = CheckListCtrl(parent, -1, style=wx.LC_REPORT)
+        ui._init_listctrl(ctrl, columns, [row[1:] for row in items],
+                          on_activation=lambda e: ctrl.ToggleItem(e.m_itemIndex))
+        for i, row in enumerate(items):
+            ctrl.CheckItem(i, row[0])
+        # The space for the checkbox does not seem to be added automatically - add 20px.
+        ctrl.SetColumnWidth(0, ctrl.GetColumnWidth(0) + 20)
+        return ctrl
 
 class ProgressDialog(object):
 
@@ -794,9 +796,7 @@ class X2GoStartApp(wx.App):
         Arguments:
           title -- Dialog window top title as a string
           message -- Short prompt displayed above the list of choices
-          columns -- sequence of column labels -- selectable items may contain
-            multiple values to be displayed in a tabular layout in columns.
-            This sequence defines the column headers.
+          columns -- sequence of checklist columns as ui.column instances.
           items -- sequence of sequences, where the top level sequence
             determines the options which may be checked/unchecked individually
             (table rows) and the inner sequences determine the values displayed
@@ -1207,7 +1207,7 @@ class X2GoStartApp(wx.App):
                 title=_("Confirm shortcuts removal"),
                 message=(_("The following desktop shortcuts are invalid.") + "\n" +
                          _("Press Ok to remove the checked items.")),
-                columns=(_("Name"),),
+                columns=(ui.column(_("Name")),),
                 items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
                        for shortcut in shortcuts],
             )
