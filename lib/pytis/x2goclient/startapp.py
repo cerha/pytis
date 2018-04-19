@@ -537,9 +537,8 @@ class X2GoStartApp(wx.App):
                         )], spacing=6)),
                     spacing=8,
                 ), proportion=1, expand=True),
-                ui.item(ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
-                        padding=(10, 0)),
-                padding=(0, 10),
+                ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
+                padding=14, spacing=3,
             )
         return self._show_dialog(_("Select session"), create_dialog)
 
