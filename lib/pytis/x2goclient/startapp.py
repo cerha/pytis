@@ -822,9 +822,9 @@ class X2GoStartApp(wx.App):
                                   lambda e: dialog.close(None)),
                         spacing=20,
                     ),
-                    align=ui.CENTER, padding=12,
+                    align=ui.CENTER, padding=(0, 12),
                 ),
-                padding=(0, 12),
+                padding=14, spacing=14,
             )
         return self._show_dialog(title, create_dialog)
 
