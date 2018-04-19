@@ -249,30 +249,38 @@ class ui(object):
             control.SetSelection(selected)
         return control
 
+    class column(object):
+        def __init__(self, label, align='left', width=10):
+            assert align in ('left', 'right')
+            self.label = label
+            self.align = align
+            self.width = width
+
     @staticmethod
-    def listbox(parent, choices=(), name=None, on_select=None):
-        def on_key_up(event):
-            if ((listbox.GetSelection() != -1 and
-                 event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER))):
-                on_select(event)
-            event.Skip()
+    def listctrl(parent, columns, items=(), name=None, on_activation=None):
+        """Create a list control with selectable items in tabular presentation.
 
-        def on_dclick(event):
-            if listbox.GetSelection() != -1:
-                on_select(event)
-            event.Skip()
+        Arguments:
+          columns -- sequence of 'ui.column' instances defining table column
+            headers and their properties.
+          items -- sequence of selectable items, where each item corresponds to
+            one table row and contains as many string values as the number of
+            'columns'.
 
-        listbox = wx.ListBox(parent, -1, style=wx.LB_SINGLE, name=name)
-        for item in choices:
-            if isinstance(item, (list, tuple)):
-                listbox.Append(*item)
-            else:
-                listbox.Append(item)
-        # Bind to EVT_UPDATE_UP as EVT_KEY_DOWN doesn't process the Enter key...
-        if on_select:
-            listbox.Bind(wx.EVT_KEY_UP, on_key_up)
-            listbox.Bind(wx.EVT_LEFT_DCLICK, on_dclick)
-        return listbox
+        """
+        ctrl = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
+        for i, column in enumerate(columns):
+            ctrl.InsertColumn(i, column.label,
+                              wx.LIST_FORMAT_LEFT if column.align == 'left' else
+                              wx.LIST_FORMAT_RIGHT)
+            ctrl.SetColumnWidth(i, wx.DLG_SZE(ctrl, (4 * (column.width + 1)), 0).GetWidth())
+        for i, row in enumerate(items):
+            ctrl.InsertStringItem(i, '')
+            for j, value in enumerate(row):
+                ctrl.SetStringItem(i, j, value)
+        if on_activation:
+            ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
+        return ctrl
 
     @staticmethod
     def checklist(parent, columns, items):
@@ -489,45 +497,49 @@ class X2GoStartApp(wx.App):
         dialog.Destroy()
         return dialog.result
 
-    def _session_selection_dialog(self, dialog, progress, client, sessions):
-        def on_terminate_session(event):
-            listbox = dialog.widget('session')
-            selection = listbox.GetSelection()
-            session = listbox.GetClientData(selection)
-            progress.message(_("Terminating session: %s", session.name))
-            client.terminate_session(session)
-            listbox.Delete(selection)
-            progress.message(_("Session terminated: %s", session.name))
+    def _session_selection_dialog(self, progress, client, sessions):
+        def create_dialog(dialog):
+            def on_terminate_session(event):
+                listctrl = dialog.widget('sessions')
+                selection = listctrl.GetFirstSelected()
+                session = sessions[selection]
+                progress.message(_("Terminating session: %s", session.name))
+                client.terminate_session(session)
+                listctrl.DeleteItem(selection)
+                del sessions[selection]
+                progress.message(_("Session terminated: %s", session.name))
 
-        def on_resume_session(event):
-            listbox = dialog.widget('session')
-            dialog.close(listbox.GetClientData(listbox.GetSelection()))
+            def on_resume_session(event):
+                listctrl = dialog.widget('sessions')
+                dialog.close(sessions[listctrl.GetFirstSelected()])
 
-        def session_label(session):
-            return '%s@%s %s' % (session.username or '', session.hostname or '',
-                                 (session.date_created or '').replace('T', ' '))
+            def update_ui(event):
+                event.Enable(dialog.widget('sessions').GetFirstSelected() != -1)
 
-        dialog.set_callback(lambda: dialog.widget('session').SetFocus())
-        return ui.vgroup(
-            ui.label(dialog, _("Existing sessions:")),
-            ui.item(ui.hgroup(
-                ui.item(ui.listbox(dialog, name='session', on_select=on_resume_session,
-                                   choices=[(session_label(s), s) for s in sessions]),
-                        proportion=1, expand=True),
-                ui.item(ui.vgroup(*[
-                    ui.button(dialog, label, callback, updateui, disabled=True)
-                    for label, callback, updateui in (
-                        (_(u"Resume"), on_resume_session,
-                         lambda e: e.Enable(dialog.widget('session').GetSelection() != -1)),
-                        (_(u"Terminate"), on_terminate_session,
-                         lambda e: e.Enable(dialog.widget('session').GetSelection() != -1)),
-                    )], spacing=6)),
-                spacing=8,
-            ), proportion=1, expand=True),
-            ui.item(ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
-                    padding=(10, 0)),
-            padding=(0, 10),
-        )
+            dialog.set_callback(lambda: dialog.widget('sessions').SetFocus())
+            return ui.vgroup(
+                ui.label(dialog, _("Suspended sessions:")),
+                ui.item(ui.hgroup(
+                    ui.item(ui.listctrl(dialog, name='sessions', on_activation=on_resume_session,
+                                        columns=(ui.column(_("Session"), width=24),
+                                                 ui.column(_("Date"), width=18)),
+                                        items=[('%s@%s' % (s.username, s.hostname),
+                                                  (s.date_created or '').replace('T', ' '))
+                                                 for s in sessions]),
+                            proportion=1, expand=True),
+                    ui.item(ui.vgroup(*[
+                        ui.button(dialog, label, callback, update_ui, disabled=True)
+                        for label, callback in (
+                                (_(u"Resume"), on_resume_session),
+                                (_(u"Terminate"), on_terminate_session),
+                        )], spacing=6)),
+                    spacing=8,
+                ), proportion=1, expand=True),
+                ui.item(ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
+                        padding=(10, 0)),
+                padding=(0, 10),
+            )
+        return self._show_dialog(_("Select session"), create_dialog)
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
@@ -610,8 +622,7 @@ class X2GoStartApp(wx.App):
         if len(sessions) == 0:
             session = None
         else:
-            session = self._show_dialog(_("Select session"), self._session_selection_dialog,
-                                        progress, client, sessions)
+            session = self._session_selection_dialog(progress, client, sessions)
         if session:
             progress.message(_("Resuming session: %s", session.name))
             client.resume_session(session)
