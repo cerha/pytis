@@ -459,6 +459,7 @@ class X2GoStartApp(wx.App):
                      enabled=bool(menu), visible=pytis.util.on_windows()),
             MenuItem(_("Cleanup desktop shortcuts"), self._cleanup_shortcuts,
                      visible=pytis.util.on_windows()),
+            MenuItem(_("Session Manager"), self._session_manager_dialog),
             '---',
             MenuItem(_("Exit"), self._on_exit, icon=wx.ART_QUIT),
         ))
@@ -541,6 +542,37 @@ class X2GoStartApp(wx.App):
                 padding=14, spacing=3,
             )
         return self._show_dialog(_("Select session"), create_dialog)
+
+    def _session_manager_dialog(self):
+        def create_dialog(dialog):
+            def on_terminate_session(event):
+                listctrl = dialog.widget('sessions')
+                selection = listctrl.GetFirstSelected()
+                sessions[selection][0].terminate()
+                listctrl.DeleteItem(selection)
+                del sessions[selection]
+
+            def update_ui(event):
+                event.Enable(dialog.widget('sessions').GetFirstSelected() != -1)
+
+            sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
+            dialog.set_callback(lambda: dialog.widget('sessions').SetFocus())
+            return ui.vgroup(
+                ui.label(dialog, _("Running sessions:")),
+                ui.item(ui.listctrl(dialog, name='sessions',
+                                    columns=(ui.column(_("Session"), width=24),
+                                             ui.column(_("Server"), width=18)),
+                                    items=[(p['profile_name'], p['server'])
+                                           for s, p in sessions]),
+                        proportion=1, expand=True),
+                ui.item(ui.hgroup(*[
+                    ui.button(dialog, label, callback, update_ui, disabled=True)
+                    for label, callback in (
+                            (_(u"Terminate"), on_terminate_session),
+                    )], spacing=6, padding=(3, 0))),
+                padding=14, spacing=3,
+            )
+        return self._show_dialog(_("Session Manager"), create_dialog)
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
