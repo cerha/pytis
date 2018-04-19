@@ -529,7 +529,7 @@ class X2GoStartApp(wx.App):
             padding=(0, 10),
         )
 
-    def _question(self, title, question):
+    def _question_dialog(self, title, question):
         def create_dialog(dialog):
             buttons = (ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True)),
                        ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
@@ -560,11 +560,11 @@ class X2GoStartApp(wx.App):
             current_version = pytis.x2goclient.X2GOCLIENT_VERSION
             available_version, connection_parameters, path = self._broker.upgrade_parameters()
             if ((available_version and available_version > current_version and
-                self._question(_("Upgrade available"),
-                               '\n'.join((_("New Pytis client version available."),
-                                          _("Current version: %s", current_version),
-                                          _("New version: %s", available_version),
-                                          _("Install?")))))):
+                self._question_dialog(_("Upgrade available"),
+                                      '\n'.join((_("New Pytis client version available."),
+                                                 _("Current version: %s", current_version),
+                                                 _("New version: %s", available_version),
+                                                 _("Install?")))))):
                 error = self._upgrade(connection_parameters, path)
                 if error:
                     # TODO: Specific dialog for error messages (icons)?
@@ -625,18 +625,6 @@ class X2GoStartApp(wx.App):
         session = Session(client, session_parameters)
         self._sessions.append(session)
         session.start()
-
-    def _question_dialog(self, title, question, default=wx.YES_DEFAULT):
-        style = wx.YES_NO | default | wx.ICON_QUESTION
-        dlg = wx.MessageDialog(None, question, caption=title, style=style)
-        if not dlg.HasFlag(wx.STAY_ON_TOP):
-            dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
-        # Raise should not be necessary, but there was a problem with focus
-        # when used on windows
-        dlg.Raise()
-        result = dlg.ShowModal() == wx.ID_YES
-        dlg.Destroy()
-        return result
 
     def _info_dialog(self, title, text):
         def create_dialog(dialog):
