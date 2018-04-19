@@ -475,27 +475,23 @@ class X2GoStartApp(wx.App):
     def _on_taskbar_click(self):
         pass
 
-    def _show_dialog(self, title, create, *args, **kwargs):
+    def _show_dialog(self, title, create, focus):
         class Dialog(wx.Dialog):
             result = None
-            callback = None
 
             def close(self, result):
                 self.result = result
                 self.Close()
 
-            def set_callback(self, callback):
-                self.callback = callback
-
             def widget(self, name):
                 return self.FindWindowByName(name)
 
         dialog = Dialog(None, -1, title=title)
-        content = create(dialog, *args, **kwargs)
+        content = create(dialog)
         dialog.SetSizer(content)
         content.Fit(dialog)
-        if dialog.callback:
-            dialog.callback()
+        if focus:
+            dialog.widget(focus).SetFocus()
         dialog.ShowModal()
         dialog.Destroy()
         return dialog.result
@@ -519,7 +515,6 @@ class X2GoStartApp(wx.App):
             def update_ui(event):
                 event.Enable(dialog.widget('sessions').GetFirstSelected() != -1)
 
-            dialog.set_callback(lambda: dialog.widget('sessions').SetFocus())
             return ui.vgroup(
                 ui.label(dialog, _("Suspended sessions:")),
                 ui.item(ui.hgroup(
@@ -541,7 +536,7 @@ class X2GoStartApp(wx.App):
                 ui.button(dialog, _("Start New Session"), lambda e: dialog.close(None)),
                 padding=14, spacing=3,
             )
-        return self._show_dialog(_("Select session"), create_dialog)
+        return self._show_dialog(_("Select session"), create_dialog, 'sessions')
 
     def _session_manager_dialog(self):
         def create_dialog(dialog):
@@ -556,7 +551,6 @@ class X2GoStartApp(wx.App):
                 event.Enable(dialog.widget('sessions').GetFirstSelected() != -1)
 
             sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
-            dialog.set_callback(lambda: dialog.widget('sessions').SetFocus())
             return ui.vgroup(
                 ui.label(dialog, _("Running sessions:")),
                 ui.item(ui.listctrl(dialog, name='sessions',
@@ -576,15 +570,16 @@ class X2GoStartApp(wx.App):
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
-            buttons = (ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True)),
-                       ui.button(dialog, _(u"No"), lambda e: dialog.close(False)))
-            dialog.set_callback(lambda: buttons[0].SetFocus())
             return ui.vgroup(
                 ui.label(dialog, question),
-                ui.item(ui.hgroup(*buttons, spacing=10), align=ui.CENTER),
+                ui.item(ui.hgroup(
+                    ui.button(dialog, _(u"Yes"), lambda e: dialog.close(True), name='yes'),
+                    ui.button(dialog, _(u"No"), lambda e: dialog.close(False)),
+                    spacing=10,
+                ), align=ui.CENTER),
                 padding=10, spacing=10,
             )
-        return self._show_dialog(title, create_dialog)
+        return self._show_dialog(title, create_dialog, 'yes')
 
     def _load_profiles(self):
         progress = ProgressDialog(_("%s: Loading profiles...", self._window_title))
@@ -672,14 +667,15 @@ class X2GoStartApp(wx.App):
 
     def _info_dialog(self, title, text):
         def create_dialog(dialog):
-            button = ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None))
-            dialog.set_callback(lambda: button.SetFocus())
             return ui.vgroup(
                 ui.label(dialog, text),
-                ui.item(button, align=ui.CENTER),
+                ui.item(
+                    ui.button(dialog, _(u"Ok"), lambda e: dialog.close(None), name='button'),
+                    align=ui.CENTER,
+                ),
                 padding=10, spacing=10,
             )
-        return self._show_dialog(title, create_dialog)
+        return self._show_dialog(title, create_dialog, 'button')
 
     def _authentication_dialog(self, server, username, key_files, methods, default_method):
         """Interactively ask the user for authentication credentials.
@@ -768,7 +764,6 @@ class X2GoStartApp(wx.App):
                 ui.field(dialog, name='password', length=40, style=wx.PASSWORD,
                          on_enter=submit),
             )
-            dialog.set_callback(lambda: dialog.widget('password').SetFocus())
             return ui.vgroup(
                 ui.grid(*content, spacing=(8, 3), cols=2),
                 ui.item(
@@ -781,7 +776,7 @@ class X2GoStartApp(wx.App):
                 ),
                 padding=10, spacing=8,
             )
-        return self._show_dialog(_("Log in to %s", server), create_dialog)
+        return self._show_dialog(_("Log in to %s", server), create_dialog, 'password')
 
     def _keyfile_passphrase_dialog(self, key_filename):
         """Interactively choose keyfile and its passphrase.
@@ -839,11 +834,12 @@ class X2GoStartApp(wx.App):
 
         """
         def create_dialog(dialog):
-            checklist = ui.checklist(dialog, columns, items)
-            dialog.set_callback(lambda: checklist.SetFocus())
             return ui.vgroup(
                 ui.label(dialog, message),
-                ui.item(checklist, proportion=1, expand=True),
+                ui.item(
+                    ui.checklist(dialog, columns, items, name='checklist'),
+                    proportion=1, expand=True,
+                ),
                 ui.item(
                     ui.hgroup(
                         ui.button(dialog, _(u"Ok"),
@@ -857,7 +853,7 @@ class X2GoStartApp(wx.App):
                 ),
                 padding=14, spacing=14,
             )
-        return self._show_dialog(title, create_dialog)
+        return self._show_dialog(title, create_dialog, 'checklist')
 
     def _passphrase_dialog(self, title, check=None):
         """Display a dialog to enter a key passphrase with strength checking.
