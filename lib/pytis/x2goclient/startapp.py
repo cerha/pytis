@@ -426,6 +426,7 @@ class X2GoStartApp(wx.App):
         self._args = args
         self._profiles = []
         self._sessions = []
+        self._session_manager_frame = None
         username = args.username
         if not username:
             import getpass
@@ -551,35 +552,38 @@ class X2GoStartApp(wx.App):
         return self._show_dialog(_("Select session"), create_dialog, 'sessions')
 
     def _session_manager(self):
-        def create(frame):
-            def on_terminate_session(event):
-                listctrl = frame.widget('sessions')
-                selection = listctrl.GetFirstSelected()
-                sessions[selection][0].terminate()
-                listctrl.DeleteItem(selection)
-                del sessions[selection]
+        if self._session_manager_frame:
+            self._session_manager_frame.Show()
+        else:
+            def create(frame):
+                def on_terminate_session(event):
+                    listctrl = frame.widget('sessions')
+                    selection = listctrl.GetFirstSelected()
+                    sessions[selection][0].terminate()
+                    listctrl.DeleteItem(selection)
+                    del sessions[selection]
 
-            def update_ui(event):
-                event.Enable(frame.widget('sessions').GetFirstSelected() != -1)
+                def update_ui(event):
+                    event.Enable(frame.widget('sessions').GetFirstSelected() != -1)
 
-            sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
-            return ui.vgroup(
-                ui.label(frame, _("Running sessions:")),
-                ui.item(ui.listctrl(frame, name='sessions',
-                                    columns=(ui.column(_("Session"), width=24),
-                                             ui.column(_("Server"), width=18)),
-                                    items=[(p['profile_name'], p['server'])
-                                           for s, p in sessions]),
-                        proportion=1, expand=True),
-                ui.item(ui.hgroup(*[
-                    ui.button(frame, label, callback, update_ui, disabled=True)
-                    for label, callback in (
-                            (_(u"Terminate"), on_terminate_session),
-                    )], spacing=6, padding=(3, 0))),
-                padding=14, spacing=3,
-            )
-        frame = self._show_frame(_("Session Manager"), create)
-        frame.widget('sessions').SetFocus()
+                sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
+                return ui.vgroup(
+                    ui.label(frame, _("Running sessions:")),
+                    ui.item(ui.listctrl(frame, name='sessions',
+                                        columns=(ui.column(_("Session"), width=24),
+                                                 ui.column(_("Server"), width=18)),
+                                        items=[(p['profile_name'], p['server'])
+                                               for s, p in sessions]),
+                            proportion=1, expand=True),
+                    ui.item(ui.hgroup(*[
+                        ui.button(frame, label, callback, update_ui, disabled=True)
+                        for label, callback in (
+                                (_(u"Terminate"), on_terminate_session),
+                        )], spacing=6, padding=(3, 0))),
+                    padding=14, spacing=3,
+                )
+            self._session_manager_frame = frame = self._show_frame(_("Session Manager"), create)
+            frame.widget('sessions').SetFocus()
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
