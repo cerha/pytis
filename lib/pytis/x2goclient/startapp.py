@@ -459,7 +459,7 @@ class X2GoStartApp(wx.App):
                      enabled=bool(menu), visible=pytis.util.on_windows()),
             MenuItem(_("Cleanup desktop shortcuts"), self._cleanup_shortcuts,
                      visible=pytis.util.on_windows()),
-            MenuItem(_("Session Manager"), self._session_manager_dialog),
+            MenuItem(_("Session Manager"), self._session_manager),
             '---',
             MenuItem(_("Exit"), self._on_exit, icon=wx.ART_QUIT),
         ))
@@ -495,6 +495,18 @@ class X2GoStartApp(wx.App):
         dialog.ShowModal()
         dialog.Destroy()
         return dialog.result
+
+    def _show_frame(self, title, create):
+        class Frame(wx.Frame):
+            def widget(self, name):
+                return self.FindWindowByName(name)
+
+        frame = Frame(None, -1, title=title)
+        content = create(frame)
+        frame.SetSizer(content)
+        content.Fit(frame)
+        frame.Show()
+        return frame
 
     def _session_selection_dialog(self, progress, client, sessions):
         def create_dialog(dialog):
@@ -538,35 +550,36 @@ class X2GoStartApp(wx.App):
             )
         return self._show_dialog(_("Select session"), create_dialog, 'sessions')
 
-    def _session_manager_dialog(self):
-        def create_dialog(dialog):
+    def _session_manager(self):
+        def create(frame):
             def on_terminate_session(event):
-                listctrl = dialog.widget('sessions')
+                listctrl = frame.widget('sessions')
                 selection = listctrl.GetFirstSelected()
                 sessions[selection][0].terminate()
                 listctrl.DeleteItem(selection)
                 del sessions[selection]
 
             def update_ui(event):
-                event.Enable(dialog.widget('sessions').GetFirstSelected() != -1)
+                event.Enable(frame.widget('sessions').GetFirstSelected() != -1)
 
             sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
             return ui.vgroup(
-                ui.label(dialog, _("Running sessions:")),
-                ui.item(ui.listctrl(dialog, name='sessions',
+                ui.label(frame, _("Running sessions:")),
+                ui.item(ui.listctrl(frame, name='sessions',
                                     columns=(ui.column(_("Session"), width=24),
                                              ui.column(_("Server"), width=18)),
                                     items=[(p['profile_name'], p['server'])
                                            for s, p in sessions]),
                         proportion=1, expand=True),
                 ui.item(ui.hgroup(*[
-                    ui.button(dialog, label, callback, update_ui, disabled=True)
+                    ui.button(frame, label, callback, update_ui, disabled=True)
                     for label, callback in (
                             (_(u"Terminate"), on_terminate_session),
                     )], spacing=6, padding=(3, 0))),
                 padding=14, spacing=3,
             )
-        return self._show_dialog(_("Session Manager"), create_dialog)
+        frame = self._show_frame(_("Session Manager"), create)
+        frame.widget('sessions').SetFocus()
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
