@@ -18,8 +18,12 @@
 
 import os
 import sys
+import rpyc
+import socket
 import argparse
 import platform
+import threading
+import rpyc.utils.server
 
 if platform.system() == 'Windows':
     # Windows setup for locales (must precede imports of our libraries containing translations).
@@ -45,13 +49,15 @@ def main():
         add_help=True, argument_default=None
     )
     options = (
+        (('--version', '-v'), {'default': False, 'action': 'store_true'},
+         "Print version number and exit."),
         (('--broker-url', '-b'), {},
          "Retrieve session profiles via an X2Go Session Broker under the given URL."),
         (('--autoload', '-a'), {'default': False, 'action': 'store_true'},
          "Automatically load profiles (connect to broker) on astartup."),
         # (('--list-profiles', '-l'), {'default': False, 'action': 'store_true'},
         #  'List available session profiles and exit.'),
-        (('--session-profile', '-p'), {},
+        (('--profile', '-p'), {},
          "Use given profile to start a session."),
         (('--username', '-u'), {},
          "Username for broker and session authentication (default: current user)."),
@@ -70,8 +76,8 @@ def main():
           "if authenticity of server can\'t be established (default: not set)")),
         (('--window-title', '-t'), {'default': None},
          "Override startup application progress window title (default: Pytis2Go)"),
-        (('--version', '-v'), {'default': False, 'action': 'store_true'},
-         "Print version number and exit."),
+        (('--port',), {'default': 56789},
+         "Port to check for a running instance/starting this instance's Pytis2Go service)"),
         (('--no-agent-authentication', '-A'), {'action': 'store_true'},
          "Disable trying SSH Agent authentication."),
         (('--no-kerberos-authentication', '-K'), {'action': 'store_true'},
@@ -87,9 +93,30 @@ def main():
         sys.stderr.write("%s\n" % (pytis.x2goclient.X2GOCLIENT_VERSION,))
         sys.exit(0)
 
-    from pytis.x2goclient.startapp import X2GoStartApp
-    app = X2GoStartApp(args)
-    app.MainLoop()
+    from pytis.x2goclient.startapp import Pytis2GoApp
+
+    class Service(rpyc.Service):
+        app = None
+        def exposed_start_session(self, profile_id):
+            Service.app.start_session(profile_id)
+
+    try:
+        server = rpyc.utils.server.ThreadedServer(Service, 'localhost', port=args.port)
+        threading.Thread(target=server.start).start()
+    except socket.error:
+        sys.stderr.write("Found a running Pytis2Go instance on port %s, switching to client mode\n"
+                         % args.port)
+        conn = rpyc.connect('localhost', args.port)
+        if args.profile:
+            sys.stderr.write("Passing on session startup: %s\n" % args.profile)
+            conn.root.start_session(args.profile)
+        else:
+            sys.stderr.write("Nothing to do.\n")
+    else:
+        # Run in server mode: Start the application.
+        app = Service.app = Pytis2GoApp(args)
+        app.init()
+        app.MainLoop()
 
 
 if __name__ == '__main__':

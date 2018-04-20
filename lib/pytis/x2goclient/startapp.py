@@ -385,13 +385,13 @@ class Session(threading.Thread):
         self._client.terminate()
 
 
-class X2GoStartApp(wx.App):
+class Pytis2GoApp(wx.App):
     """X2Go startup application."""
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
         def __init__(self, menu, on_click):
-            super(X2GoStartApp._TaskBarIcon, self).__init__()
+            super(Pytis2GoApp._TaskBarIcon, self).__init__()
             self._menu = menu
             self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
 
@@ -438,7 +438,7 @@ class X2GoStartApp(wx.App):
             self._broker = None
         self._keyring = []
         self._window_title = args.window_title or _("Pytis2Go")
-        super(X2GoStartApp, self).__init__(redirect=False)
+        super(Pytis2GoApp, self).__init__(redirect=False)
 
     def _menu(self):
         running = [s.session_parameters()['profile_name'] for s in self._sessions if s.isAlive()]
@@ -1379,11 +1379,11 @@ class X2GoStartApp(wx.App):
                 "and it is located in the directory {}.")
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
-    def OnInit(self):
-        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
-        self._icon.set_icon('disconnected')
-        # Work around: The wx main loop exits if there is not at least one frame.
-        wx.Frame(None, -1, '').Hide()
+    def init(self):
+        # This init is separated from OnInit in order to avoid running
+        # long running tasks in the constructor.  This makes instance
+        # creation fast and the instance is available for the RPyC server
+        # in pytis2go.py immediately.
         if pytis.util.on_windows():
             progress = ProgressDialog(_("X-server startup"))
             progress.message(_("Starting up X-server."))
@@ -1395,10 +1395,28 @@ class X2GoStartApp(wx.App):
             if not self._display:
                 self._info_dialog(self._window_title, _("Failed starting X-server."))
                 self.Exit()
-        self.Yield()
-        profile_id = self._args.session_profile
-        if profile_id or self._args.autoload:
+        if self._args.autoload or self._args.profile:
             self._load_profiles()
-        if profile_id:
-            self._start_session(dict(self._profiles)[profile_id])
+        if self._args.profile:
+            self._start_session(dict(self._profiles)[self._args.profile])
+
+    def start_session(self, profile_id):
+        # Used by the RPyC server in pytis2go.py.
+        def start_session():
+            if not self._profiles:
+                self._load_profiles()
+            try:
+                session_parameters = dict(self._profiles)[profile_id]
+            except KeyError:
+                return False
+            else:
+                self._start_session(session_parameters)
+        wx.CallAfter(start_session)
+
+    def OnInit(self):
+        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
+        self._icon.set_icon('disconnected')
+        # Work around: The wx main loop exits if there is not at least one frame.
+        wx.Frame(None, -1, '').Hide()
+        self.Yield()
         return True
