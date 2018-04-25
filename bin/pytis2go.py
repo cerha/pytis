@@ -57,7 +57,7 @@ def main():
          "Automatically load profiles (connect to broker) on astartup."),
         # (('--list-profiles', '-l'), {'default': False, 'action': 'store_true'},
         #  'List available session profiles and exit.'),
-        (('--profile', '-p'), {},
+        (('--profile', '-p', '-P'), {}, # -P is for backwards compatibility with x2goclient.py
          "Use given profile to start a session."),
         (('--username', '-u'), {},
          "Username for broker and session authentication (default: current user)."),
