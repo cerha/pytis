@@ -101,7 +101,7 @@ def main():
             Service.app.start_session(profile_id)
 
     try:
-        server = rpyc.utils.server.aThreadedServer(Service, 'localhost', port=args.port)
+        server = rpyc.utils.server.ThreadedServer(Service, 'localhost', port=args.port)
         threading.Thread(target=server.start).start()
     except socket.error:
         sys.stderr.write("Found a running Pytis2Go instance on port %s, switching to client mode\n"
