@@ -1379,6 +1379,14 @@ class Pytis2GoApp(wx.App):
                 "and it is located in the directory {}.")
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
+    def OnInit(self):
+        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
+        self._icon.set_icon('disconnected')
+        # Work around: The wx main loop exits if there is not at least one frame.
+        wx.Frame(None, -1, '').Hide()
+        self.Yield()
+        return True
+
     def run(self):
         # This init is separated from OnInit in order to avoid running
         # long running tasks in the constructor.  This makes instance
@@ -1413,11 +1421,3 @@ class Pytis2GoApp(wx.App):
             else:
                 self._start_session(session_parameters)
         wx.CallAfter(start_session)
-
-    def OnInit(self):
-        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
-        self._icon.set_icon('disconnected')
-        # Work around: The wx main loop exits if there is not at least one frame.
-        wx.Frame(None, -1, '').Hide()
-        self.Yield()
-        return True
