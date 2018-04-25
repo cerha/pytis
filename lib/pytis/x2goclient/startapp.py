@@ -1379,7 +1379,7 @@ class Pytis2GoApp(wx.App):
                 "and it is located in the directory {}.")
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
-    def init(self):
+    def run(self):
         # This init is separated from OnInit in order to avoid running
         # long running tasks in the constructor.  This makes instance
         # creation fast and the instance is available for the RPyC server
@@ -1399,6 +1399,7 @@ class Pytis2GoApp(wx.App):
             self._load_profiles()
         if self._args.profile:
             self._start_session(dict(self._profiles)[self._args.profile])
+        self.MainLoop()
 
     def start_session(self, profile_id):
         # Used by the RPyC server in pytis2go.py.

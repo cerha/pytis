@@ -115,8 +115,7 @@ def main():
     else:
         # Run in server mode: Start the application.
         app = Service.app = Pytis2GoApp(args)
-        app.init()
-        app.MainLoop()
+        app.run()
 
 
 if __name__ == '__main__':
