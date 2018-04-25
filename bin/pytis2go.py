@@ -77,7 +77,10 @@ def main():
         (('--window-title', '-t'), {'default': None},
          "Override startup application progress window title (default: Pytis2Go)"),
         (('--port',), {'default': 56789},
-         "Port to check for a running instance/starting this instance's Pytis2Go service)"),
+         "Port to check for a running instance/starting this instance's Pytis2Go "
+         "service.  If the port is available, Pytis2Go will start a server on this "
+         "port.  If the port is taken, it will run in client mode and pass the "
+         "command to the server running on this port."),
         (('--no-agent-authentication', '-A'), {'action': 'store_true'},
          "Disable trying SSH Agent authentication."),
         (('--no-kerberos-authentication', '-K'), {'action': 'store_true'},
