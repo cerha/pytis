@@ -1394,7 +1394,7 @@ class Pytis2GoApp(wx.App):
             progress.close()
             if not self._display:
                 self._info_dialog(self._window_title, _("Failed starting X-server."))
-                self.Exit()
+                return self.Exit()
         if self._args.autoload or self._args.profile:
             self._load_profiles()
         if self._args.profile:
