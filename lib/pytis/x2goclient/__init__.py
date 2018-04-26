@@ -33,9 +33,9 @@ runclient.py and clientprocess.py).
 """
 
 # ATTENTION: This should be updated on each code change.
-X2GOCLIENT_VERSION = '2017-07-13 10:26'
+X2GOCLIENT_VERSION = '2018-04-26 22:24'
 X2GOCLIENT_REQUIRED_VERSION = '2017-07-13 10:26'
 
 # Local Variables:
-# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
+# time-stamp-pattern: "40/^X2GOCLIENT_VERSION = '%Y-%02m-%02d %02H:%02M'"
 # End:
