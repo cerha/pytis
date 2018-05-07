@@ -596,7 +596,7 @@ class Pytis2GoApp(wx.App):
                     ui.button(dialog, _(u"No"), lambda e: dialog.close(False)),
                     spacing=10,
                 ), align=ui.CENTER),
-                padding=10, spacing=10,
+                padding=(16, 20), spacing=16,
             )
         return self._show_dialog(title, create_dialog, 'yes')
 
