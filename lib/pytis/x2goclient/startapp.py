@@ -375,8 +375,8 @@ class Session(threading.Thread):
         self._session_parameters = session_parameters
         threading.Thread.__init__(self)
 
-    def session_parameters(self):
-        return self._session_parameters
+    def param(self, name):
+        return self._session_parameters[name]
 
     def run(self):
         self._client.main_loop()
@@ -440,8 +440,11 @@ class Pytis2GoApp(wx.App):
         self._window_title = args.window_title or _("Pytis2Go")
         super(Pytis2GoApp, self).__init__(redirect=False)
 
+    def _active_sessions(self):
+        return [s for s in self._sessions if s.isAlive()]
+
     def _menu(self):
-        running = [s.session_parameters()['profile_name'] for s in self._sessions if s.isAlive()]
+        running = [s.param('profile_name') for s in self._active_sessions()]
         menu = [
             MenuItem(params['profile_name'], lambda params=params: self._start_session(params),
                      icon='connected' if params['profile_name'] in running else 'disconnected')
@@ -566,14 +569,13 @@ class Pytis2GoApp(wx.App):
                 def update_ui(event):
                     event.Enable(frame.widget('sessions').GetFirstSelected() != -1)
 
-                sessions = [(s, s.session_parameters()) for s in self._sessions if s.isAlive()]
                 return ui.vgroup(
                     ui.label(frame, _("Running sessions:")),
                     ui.item(ui.listctrl(frame, name='sessions',
                                         columns=(ui.column(_("Session"), width=24),
                                                  ui.column(_("Server"), width=18)),
-                                        items=[(p['profile_name'], p['server'])
-                                               for s, p in sessions]),
+                                        items=[(s.param('profile_name'), s.param('server'))
+                                               for s in self._active_sessions()]),
                             proportion=1, expand=True),
                     ui.item(ui.hgroup(*[
                         ui.button(frame, label, callback, update_ui, disabled=True)
