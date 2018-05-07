@@ -222,7 +222,7 @@ class ui(object):
     @staticmethod
     def button(parent, label, callback, updateui=None, name=None, icon=None, disabled=False,
                size=None):
-        button = wx.Button(parent, -1, label=label, size=size)
+        button = wx.Button(parent, -1, label=label, name=name or '', size=size)
         if icon:
             # This doesn't seem to work...
             bitmap = wx.ArtProvider_GetBitmap(icon, wx.ART_TOOLBAR, (16, 16))
