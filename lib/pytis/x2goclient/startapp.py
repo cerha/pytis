@@ -470,9 +470,18 @@ class Pytis2GoApp(wx.App):
         return menu
 
     def _on_exit(self):
-        for session in self._sessions:
-            if session.isAlive():
-                session.terminate()
+        sessions = self._active_sessions()
+        if sessions:
+            self._session_manager()
+            if not self._question_dialog(
+                    _("Active sessions exist"),
+                    '\n\n'.join((_.ngettext("There is %d running session.",
+                                            "There are %d running sessions.",
+                                            len(sessions)),
+                                 _("Do you want to kill all sessions and exit?")))):
+                return
+        for session in sessions:
+            session.terminate()
         wx.CallAfter(self._icon.Destroy)
         self.Exit()
 
