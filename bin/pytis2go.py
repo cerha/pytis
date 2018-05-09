@@ -104,24 +104,29 @@ def main():
             Service.app.start_session(profile_id)
 
     try:
+        conn = rpyc.connect('localhost', args.port)
+    except socket.error:
+        # Run in server mode: Start the application.
+        if not args.broker_url:
+            sys.stderr.write("Broker URL not given.\n")
+            sys.exit(1)
         server = rpyc.utils.server.ThreadedServer(Service, 'localhost', port=args.port)
         threading.Thread(target=server.start).start()
-    except socket.error:
-        sys.stderr.write("Found a running Pytis2Go instance on port %s, switching to client mode\n"
+        try:
+            app = Service.app = Pytis2GoApp(args)
+            app.run()
+        finally:
+            server.close()
+    else:
+        # Run in client mode: Pass the profile to start to the running application.
+        sys.stderr.write("Found a running Pytis2Go instance on port %s, running in client mode\n"
                          % args.port)
-        conn = rpyc.connect('localhost', args.port)
         if args.profile:
             sys.stderr.write("Passing on session startup: %s\n" % args.profile)
             conn.root.start_session(args.profile)
         else:
             sys.stderr.write("Nothing to do.\n")
-    else:
-        try:
-            # Run in server mode: Start the application.
-            app = Service.app = Pytis2GoApp(args)
-            app.run()
-        finally:
-            server.close()
+            sys.exit(1)
 
 
 if __name__ == '__main__':
