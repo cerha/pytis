@@ -446,7 +446,8 @@ class Pytis2GoApp(wx.App):
     def _menu(self):
         running = [s.param('profile_name') for s in self._active_sessions()]
         menu = [
-            MenuItem(params['profile_name'], lambda params=params: self._start_session(params),
+            MenuItem(params['profile_name'],
+                     lambda profile_id=profile_id: self._start_session(profile_id),
                      icon='connected' if params['profile_name'] in running else 'disconnected')
             for profile_id, params in self._profiles
         ]
@@ -663,7 +664,15 @@ class Pytis2GoApp(wx.App):
         else:
             return None
 
-    def _start_session(self, session_parameters):
+    def _start_session(self, profile_id):
+        try:
+            session_parameters = dict(self._profiles)[profile_id]
+        except KeyError:
+            self._info_dialog(_("Session startup failed"),
+                              _("Invalid profile ID:") + ' %s\n\n' % profile_id +
+                              self._broker.url() + '\n' +
+                              _("Broker does not define such profile."))
+            return
         progress = ProgressDialog(
             _("Starting session: %s", session_parameters['profile_name'])
         )
@@ -1417,7 +1426,7 @@ class Pytis2GoApp(wx.App):
         if self._args.autoload or self._args.profile:
             self._load_profiles()
         if self._args.profile and self._profiles:
-            self._start_session(dict(self._profiles)[self._args.profile])
+            self._start_session(self._args.profile)
         self.MainLoop()
 
     def start_session(self, profile_id):
@@ -1426,10 +1435,5 @@ class Pytis2GoApp(wx.App):
             if not self._profiles:
                 self._load_profiles()
             if self._profiles:
-                try:
-                    session_parameters = dict(self._profiles)[profile_id]
-                except KeyError:
-                    return False
-                else:
-                    self._start_session(session_parameters)
+                self._start_session(profile_id)
         wx.CallAfter(start_session)
