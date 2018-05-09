@@ -446,9 +446,11 @@ class Pytis2GoApp(wx.App):
     def _menu(self):
         running = [s.param('profile_name') for s in self._active_sessions()]
         menu = [
-            MenuItem(params['profile_name'],
-                     lambda profile_id=profile_id: self._start_session(profile_id),
-                     icon='connected' if params['profile_name'] in running else 'disconnected')
+            MenuItem(
+                params['profile_name'],
+                lambda profile_id=profile_id: self._start_session(profile_id),
+                icon='status-' + ('online' if params['profile_name'] in running else 'offline'),
+            )
             for profile_id, params in self._profiles
         ]
         if menu:
