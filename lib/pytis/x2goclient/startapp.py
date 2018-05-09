@@ -1416,7 +1416,7 @@ class Pytis2GoApp(wx.App):
                 return self.Exit()
         if self._args.autoload or self._args.profile:
             self._load_profiles()
-        if self._args.profile:
+        if self._args.profile and self._profiles:
             self._start_session(dict(self._profiles)[self._args.profile])
         self.MainLoop()
 
@@ -1425,10 +1425,11 @@ class Pytis2GoApp(wx.App):
         def start_session():
             if not self._profiles:
                 self._load_profiles()
-            try:
-                session_parameters = dict(self._profiles)[profile_id]
-            except KeyError:
-                return False
-            else:
-                self._start_session(session_parameters)
+            if self._profiles:
+                try:
+                    session_parameters = dict(self._profiles)[profile_id]
+                except KeyError:
+                    return False
+                else:
+                    self._start_session(session_parameters)
         wx.CallAfter(start_session)
