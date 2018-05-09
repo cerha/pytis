@@ -249,9 +249,9 @@ class Broker(object):
     def url(self):
         """Return broker URL as a string."""
         params = self._connection_parameters
-        return "ssh://%s%s@%s%s/%s" % (
+        return "ssh://%s@%s%s%s" % (
             params['username'],
-            ':' + params['password'] if params['password'] else '',
+            #':' + params['password'] if params['password'] else '',
             params['server'],
             ':' + params['port'] if params['port'] != self._DEFAULT_SSH_PORT else '',
             self._path,
