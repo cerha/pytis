@@ -362,6 +362,9 @@ class X2GoClientXConfig(x2go.xserver.X2GoClientXConfig):
         return _xserver_config
 
 
+x2go.client.X2GoClientXConfig = X2GoClientXConfig
+
+
 class XServerNotInstalled(Exception):
     pass
 
