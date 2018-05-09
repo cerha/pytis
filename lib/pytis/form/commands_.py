@@ -511,7 +511,7 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_SEARCH,                            'search'),
     (LookupForm.COMMAND_JUMP,                              'jump'),
     (LookupForm.COMMAND_RESET_PROFILE,                     'reset-profile'),
-    (LookupForm.COMMAND_RELOAD_PROFILE,                    'reload-profile'),
+    (LookupForm.COMMAND_RELOAD_PROFILE,                    'refresh'),
     (MultiSideForm.COMMAND_FILTER_BY_SIDEFORM,                         'filter'),
     (Browser.COMMAND_GO_BACK,                              wx.ART_GO_BACK),
     (Browser.COMMAND_GO_FORWARD,                           wx.ART_GO_FORWARD),

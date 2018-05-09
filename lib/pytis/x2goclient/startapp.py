@@ -456,7 +456,8 @@ class Pytis2GoApp(wx.App):
         if menu:
             menu.append('---')
         menu.extend((
-            MenuItem(_("Reload profiles") if menu else _("Load profiles"), self._load_profiles),
+            MenuItem(_("Reload profiles") if menu else _("Load profiles"), self._load_profiles,
+                     icon='refresh'),
             '---',
             MenuItem(_("Generate new SSH key pair"), self._generate_key),
             MenuItem(_("Change key passphrase"), self._change_key_passphrase),
