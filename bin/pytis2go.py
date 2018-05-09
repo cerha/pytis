@@ -119,7 +119,7 @@ def main():
             server.close()
     else:
         # Run in client mode: Pass the profile to start to the running application.
-        sys.stderr.write("Found a running Pytis2Go instance on port %s, running in client mode\n"
+        sys.stderr.write("Found a running Pytis2Go instance on port %s, running in client mode.\n"
                          % args.port)
         if args.profile:
             sys.stderr.write("Passing on session startup: %s\n" % args.profile)
