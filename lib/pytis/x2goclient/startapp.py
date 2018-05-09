@@ -620,7 +620,7 @@ class Pytis2GoApp(wx.App):
             # Profiles are empty when the user cancels the broker authentication dialog
             # or when connection or authentication fails.
             self._profiles = profiles
-            self._icon.set_icon('connected')
+            self._icon.set_icon('pytis2go')
             progress.message(self._broker.server() + ': ' +
                              _.ngettext("Returned %d profile.",
                                         "Returned %d profiles.",
@@ -1403,7 +1403,7 @@ class Pytis2GoApp(wx.App):
 
     def OnInit(self):
         self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
-        self._icon.set_icon('disconnected')
+        self._icon.set_icon('pytis2go-offline')
         # Work around: The wx main loop exits if there is not at least one frame.
         wx.Frame(None, -1, '').Hide()
         self.Yield()
