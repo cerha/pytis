@@ -100,8 +100,12 @@ def main():
 
     class Service(rpyc.Service):
         app = None
+
         def exposed_start_session(self, profile_id):
             Service.app.start_session(profile_id)
+
+        def exposed_broker_url(self):
+            return args.broker_url
 
     try:
         conn = rpyc.connect('localhost', args.port)
@@ -121,6 +125,12 @@ def main():
         # Run in client mode: Pass the profile to start to the running application.
         sys.stderr.write("Found a running Pytis2Go instance on port %s, running in client mode.\n"
                          % args.port)
+        if args.broker_url and args.broker_url != conn.root.broker_url():
+            sys.stderr.write("Server's broker URL does not match the URL "
+                             "given to this client instance:\n" +
+                             "Server: %s\n" % conn.root.broker_url() +
+                             "Client: %s\n" % args.broker_url)
+            sys.exit(1)
         if args.profile:
             sys.stderr.write("Passing on session startup: %s\n" % args.profile)
             conn.root.start_session(args.profile)
