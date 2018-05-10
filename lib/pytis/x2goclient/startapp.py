@@ -617,6 +617,7 @@ class Pytis2GoApp(wx.App):
         listctrl = frame.widget('sessions')
         listctrl.load([(s.param('profile_name'), s.param('server'), s)
                        for s in self._active_sessions()])
+        frame.GetSizer().Fit(frame)
         listctrl.SetFocus()
 
     def _question_dialog(self, title, question):
