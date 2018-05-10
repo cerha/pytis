@@ -2142,7 +2142,7 @@ def built_in_status_fields():
                 except Exception:
                     version = _("Not available")
             status = _("Ok")
-            icon = 'connected'
+            icon = 'status-online'
             tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
         else:
             if last_status:
@@ -2150,7 +2150,7 @@ def built_in_status_fields():
                 rpc_info.remote_status_info = (False, time.time())
             tooltip = _("Not available.")
             status = _("N/A")
-            icon = 'disconnected'
+            icon = 'status-error'
         changed = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_time))
         tooltip += '\n' + _("Status changed: %s", changed)
         return (status, icon, tooltip)
