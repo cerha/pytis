@@ -39,10 +39,94 @@ from .clientprocess import Broker, ClientProcess, start_xserver
 _ = pytis.util.translations('pytis-x2go')
 
 
-class CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
-    def __init__(self, *args, **kwargs):
-        wx.ListCtrl.__init__(self, *args, **kwargs)
+class ListCtrl(wx.ListCtrl):
+    """List control with selectable items in tabular presentation."""
+
+    class Column(object):
+        def __init__(self, label, align='left', width=None):
+            assert align in ('left', 'right')
+            self.label = label
+            self.align = align
+            self.width = width
+
+    def __init__(self, parent, columns, items=(), name=None, on_activation=None):
+        """Arguments:
+          parent -- parent 'wx.Window' instance.
+          columns -- sequence of 'ListCtrl.Column' instances defining table column
+            headers and their properties.
+          items -- sequence of selectable items, where each item corresponds to
+            one table row and contains as many string values as the number of
+            'columns'.
+
+        """
+        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
+        self._columns = columns
+        for i, column in enumerate(columns):
+            self.InsertColumn(i, column.label,
+                              wx.LIST_FORMAT_LEFT if column.align == 'left' else
+                              wx.LIST_FORMAT_RIGHT)
+        if on_activation:
+            self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
+        if items:
+            self.load(items)
+
+    def load(self, items):
+        self._data = []
+        ncols = len(self._columns)
+        for i, row in enumerate(items):
+            self.InsertStringItem(i, '')
+            for j in range(ncols):
+                self.SetStringItem(i, j, row[j])
+            nvalues = len(row)
+            if nvalues > ncols:
+                assert nvalues == ncols + 1
+                self._data.append(row[-1])
+                self.SetItemData(i, len(self._data) - 1)
+        for i, column in enumerate(self._columns):
+            # Width must be set when values are present to autosize properly
+            if column.width is None:
+                width = wx.LIST_AUTOSIZE
+            else:
+                width = wx.DLG_SZE(self, (4 * (column.width + 1)), 0).GetWidth()
+            self.SetColumnWidth(i, width)
+
+    def data(self, i):
+        # The 'index' may not match 'i' because not all rows must have
+        # data and rows may be deleted.
+        index = self.GetItemData(i)
+        if index is not None:
+            return self._data[index]
+        else:
+            return None
+
+
+class CheckList(ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
+    """UI control to check/uncheck individual items in a tabular list."""
+    def __init__(self, parent, columns, items=(), name=None):
+        """Arguments:
+
+          items -- sequence of sequences, where the top level sequence
+            determines the options which may be checked/unchecked individually
+            (table rows) and the inner sequences determine the values displayed
+            in table columns for given row plus the initial checbox state.  The
+            first value in each inner sequence is a bool (True for a checked
+            item, False for unchecked) and the following are the string values
+            for table columns.  Thus each inner sequence has n + 1 items where
+            n is the length of 'columns'.
+
+        The remaining arguments have the same meaning as in the parent class.
+
+        """
+        ListCtrl.__init__(self, parent, columns, items=items, name=name,
+                          on_activation=lambda e: self.ToggleItem(e.m_itemIndex))
         wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
+        # The space for the checkbox does not seem to be added automatically - add 20px.
+        self.SetColumnWidth(0, self.GetColumnWidth(0) + 20)
+
+    def load(self, items):
+        ListCtrl.load(self, [row[1:] for row in items])
+        for i, row in enumerate(items):
+            self.CheckItem(i, row[0])
 
 
 class ui(object):
@@ -257,74 +341,6 @@ class ui(object):
             control.SetSelection(selected)
         return control
 
-    class column(object):
-        def __init__(self, label, align='left', width=None):
-            assert align in ('left', 'right')
-            self.label = label
-            self.align = align
-            self.width = width
-
-    @staticmethod
-    def _init_listctrl(ctrl, columns, items, on_activation=None):
-        for i, column in enumerate(columns):
-            ctrl.InsertColumn(i, column.label,
-                              wx.LIST_FORMAT_LEFT if column.align == 'left' else
-                              wx.LIST_FORMAT_RIGHT)
-        for i, row in enumerate(items):
-            ctrl.InsertStringItem(i, '')
-            for j, value in enumerate(row):
-                ctrl.SetStringItem(i, j, value)
-        for i, column in enumerate(columns):
-            # Width must be set when values are present to autosize properly
-            if column.width is None:
-                width = wx.LIST_AUTOSIZE
-            else:
-                width = wx.DLG_SZE(ctrl, (4 * (column.width + 1)), 0).GetWidth()
-            ctrl.SetColumnWidth(i, width)
-        if on_activation:
-            ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
-
-    @staticmethod
-    def listctrl(parent, columns, items=(), name=None, on_activation=None):
-        """Create a list control with selectable items in tabular presentation.
-
-        Arguments:
-          columns -- sequence of 'ui.column' instances defining table column
-            headers and their properties.
-          items -- sequence of selectable items, where each item corresponds to
-            one table row and contains as many string values as the number of
-            'columns'.
-
-        """
-        ctrl = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
-        ui._init_listctrl(ctrl, columns, items, on_activation)
-        return ctrl
-
-    @staticmethod
-    def checklist(parent, columns, items, name=None):
-        """Create a control to check/uncheck individual items in a tabular list.
-
-        Arguments:
-          columns -- sequence of 'ui.column' instances defining table column
-            headers and their properties.
-          items -- sequence of sequences, where the top level sequence
-            determines the options which may be checked/unchecked individually
-            (table rows) and the inner sequences determine the values displayed
-            in table columns for given row plus the initial checbox state.  The
-            first value in each inner sequence is a bool (True for a checked
-            item, False for unchecked) and the following are the string values
-            for table columns.  Thus each inner sequence has n + 1 items where
-            n is the length of 'columns'.
-
-        """
-        ctrl = CheckListCtrl(parent, -1, style=wx.LC_REPORT)
-        ui._init_listctrl(ctrl, columns, [row[1:] for row in items],
-                          on_activation=lambda e: ctrl.ToggleItem(e.m_itemIndex))
-        for i, row in enumerate(items):
-            ctrl.CheckItem(i, row[0])
-        # The space for the checkbox does not seem to be added automatically - add 20px.
-        ctrl.SetColumnWidth(0, ctrl.GetColumnWidth(0) + 20)
-        return ctrl
 
 class ProgressDialog(object):
 
@@ -547,18 +563,18 @@ class Pytis2GoApp(wx.App):
             return ui.vgroup(
                 ui.label(dialog, _("Suspended sessions:")),
                 ui.item(ui.hgroup(
-                    ui.item(ui.listctrl(dialog, name='sessions', on_activation=on_resume_session,
-                                        columns=(ui.column(_("Session"), width=24),
-                                                 ui.column(_("Date"), width=18)),
-                                        items=[('%s@%s' % (s.username, s.hostname),
-                                                  (s.date_created or '').replace('T', ' '))
-                                                 for s in sessions]),
+                    ui.item(ListCtrl(dialog, name='sessions', on_activation=on_resume_session,
+                                     columns=(ListCtrl.Column(_("Session"), width=24),
+                                              ListCtrl.Column(_("Date"), width=18)),
+                                     items=[('%s@%s' % (s.username, s.hostname),
+                                             (s.date_created or '').replace('T', ' '))
+                                            for s in sessions]),
                             proportion=1, expand=True),
                     ui.item(ui.vgroup(*[
                         ui.button(dialog, label, callback, update_ui, disabled=True)
                         for label, callback in (
-                                (_(u"Resume"), on_resume_session),
-                                (_(u"Terminate"), on_terminate_session),
+                            (_(u"Resume"), on_resume_session),
+                            (_(u"Terminate"), on_terminate_session),
                         )], spacing=6)),
                     spacing=8,
                 ), proportion=1, expand=True),
@@ -568,37 +584,40 @@ class Pytis2GoApp(wx.App):
         return self._show_dialog(_("Select session"), create_dialog, 'sessions')
 
     def _session_manager(self):
-        if self._session_manager_frame:
-            self._session_manager_frame.Show()
+        frame = self._session_manager_frame
+        if frame:
+            frame.Show()
+            frame.widget('sessions').ClearAll()
         else:
             def create(frame):
                 def on_terminate_session(event):
                     listctrl = frame.widget('sessions')
                     selection = listctrl.GetFirstSelected()
-                    sessions[selection][0].terminate()
+                    session = listctrl.data(selection)
+                    session.terminate()
                     listctrl.DeleteItem(selection)
-                    del sessions[selection]
 
                 def update_ui(event):
                     event.Enable(frame.widget('sessions').GetFirstSelected() != -1)
 
                 return ui.vgroup(
                     ui.label(frame, _("Running sessions:")),
-                    ui.item(ui.listctrl(frame, name='sessions',
-                                        columns=(ui.column(_("Session"), width=24),
-                                                 ui.column(_("Server"), width=18)),
-                                        items=[(s.param('profile_name'), s.param('server'))
-                                               for s in self._active_sessions()]),
+                    ui.item(ListCtrl(frame, name='sessions',
+                                     columns=(ListCtrl.Column(_("Session"), width=24),
+                                              ListCtrl.Column(_("Server"), width=18))),
                             proportion=1, expand=True),
                     ui.item(ui.hgroup(*[
                         ui.button(frame, label, callback, update_ui, disabled=True)
                         for label, callback in (
-                                (_(u"Terminate"), on_terminate_session),
+                            (_(u"Terminate"), on_terminate_session),
                         )], spacing=6, padding=(3, 0))),
                     padding=14, spacing=3,
                 )
             self._session_manager_frame = frame = self._show_frame(_("Session Manager"), create)
-            frame.widget('sessions').SetFocus()
+        listctrl = frame.widget('sessions')
+        listctrl.load([(s.param('profile_name'), s.param('server'), s)
+                       for s in self._active_sessions()])
+        listctrl.SetFocus()
 
     def _question_dialog(self, title, question):
         def create_dialog(dialog):
@@ -862,7 +881,7 @@ class Pytis2GoApp(wx.App):
         Arguments:
           title -- Dialog window top title as a string
           message -- Short prompt displayed above the list of choices
-          columns -- sequence of checklist columns as ui.column instances.
+          columns -- sequence of 'CheckList.Column' instances.
           items -- sequence of sequences, where the top level sequence
             determines the options which may be checked/unchecked individually
             (table rows) and the inner sequences determine the values displayed
@@ -877,7 +896,7 @@ class Pytis2GoApp(wx.App):
             return ui.vgroup(
                 ui.label(dialog, message),
                 ui.item(
-                    ui.checklist(dialog, columns, items, name='checklist'),
+                    CheckList(dialog, columns, items, name='checklist'),
                     proportion=1, expand=True,
                 ),
                 ui.item(
@@ -1274,7 +1293,7 @@ class Pytis2GoApp(wx.App):
                 title=_("Confirm shortcuts removal"),
                 message=(_("The following desktop shortcuts are invalid.") + "\n" +
                          _("Press Ok to remove the checked items.")),
-                columns=(ui.column(_("Name")),),
+                columns=(CheckList.Column(_("Name")),),
                 items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
                        for shortcut in shortcuts],
             )
