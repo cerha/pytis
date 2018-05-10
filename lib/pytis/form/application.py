@@ -2157,8 +2157,8 @@ def built_in_status_fields():
 
     def _refresh_user_config():
         tooltip = "\n".join((_("Username: %s", config.dbuser),
-                             _("Database host: %s", config.dbhost),
-                             _("Database name: %s", config.dbname)))
+                             _("Database name: %s", config.dbname),
+                             _("Database host: %s", config.dbhost or 'localhost')))
         return (config.dbuser, 'user-icon', tooltip)
 
     return (
