@@ -59,7 +59,7 @@ class ListCtrl(wx.ListCtrl):
             'columns'.
 
         """
-        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
+        self._super_init(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name=name)
         self._columns = columns
         for i, column in enumerate(columns):
             self.InsertColumn(i, column.label,
@@ -69,6 +69,9 @@ class ListCtrl(wx.ListCtrl):
             self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, on_activation)
         if items:
             self.load(items)
+
+    def _super_init(self, *args, **kwargs):
+        wx.ListCtrl.__init__(self, *args, **kwargs)
 
     def load(self, items):
         self._data = []
@@ -102,6 +105,7 @@ class ListCtrl(wx.ListCtrl):
 
 class CheckList(ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
     """UI control to check/uncheck individual items in a tabular list."""
+
     def __init__(self, parent, columns, items=(), name=None):
         """Arguments:
 
@@ -119,9 +123,12 @@ class CheckList(ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
         """
         ListCtrl.__init__(self, parent, columns, items=items, name=name,
                           on_activation=lambda e: self.ToggleItem(e.m_itemIndex))
-        wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
         # The space for the checkbox does not seem to be added automatically - add 20px.
         self.SetColumnWidth(0, self.GetColumnWidth(0) + 20)
+
+    def _super_init(self, *args, **kwargs):
+        ListCtrl._super_init(self, *args, **kwargs)
+        wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
 
     def load(self, items):
         ListCtrl.load(self, [row[1:] for row in items])
@@ -1274,6 +1281,7 @@ class Pytis2GoApp(wx.App):
                 ),
                 padding=14, spacing=14,
             )
+
         shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
         if shortcuts:
             confirmed = self._show_dialog(_("Confirm shortcuts removal"), checklist_dialog,
