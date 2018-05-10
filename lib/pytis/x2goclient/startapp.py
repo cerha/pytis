@@ -508,7 +508,7 @@ class Pytis2GoApp(wx.App):
     def _on_taskbar_click(self):
         pass
 
-    def _show_dialog(self, title, create, focus):
+    def _show_dialog(self, title, create, focus, **kwargs):
         class Dialog(wx.Dialog):
             result = None
 
@@ -520,7 +520,7 @@ class Pytis2GoApp(wx.App):
                 return self.FindWindowByName(name)
 
         dialog = Dialog(None, -1, title=title)
-        content = create(dialog)
+        content = create(dialog, **kwargs)
         dialog.SetSizer(content)
         content.Fit(dialog)
         if focus:
@@ -875,45 +875,6 @@ class Pytis2GoApp(wx.App):
                 padding=(10, 20), spacing=4,
             )
         return self._show_dialog(_("Select the key file"), create_dialog)
-
-    def _checklist_dialog(self, title, message, columns, items):
-        """Display a dialog to select multiple items from a list.
-
-        Arguments:
-          title -- Dialog window top title as a string
-          message -- Short prompt displayed above the list of choices
-          columns -- sequence of 'CheckList.Column' instances.
-          items -- sequence of sequences, where the top level sequence
-            determines the options which may be checked/unchecked individually
-            (table rows) and the inner sequences determine the values displayed
-            in table columns for given row plus the initial checbox state.  The
-            first value in each inner sequence is a bool (True for a checked
-            item, False for unchecked) and the following are the string values
-            for table columns.  Thus each inner sequence has n + 1 items where
-            n is the length of 'columns'.
-
-        """
-        def create_dialog(dialog):
-            return ui.vgroup(
-                ui.label(dialog, message),
-                ui.item(
-                    CheckList(dialog, columns, items, name='checklist'),
-                    proportion=1, expand=True,
-                ),
-                ui.item(
-                    ui.hgroup(
-                        ui.button(dialog, _(u"Ok"),
-                                  lambda e: dialog.close([checklist.IsChecked(i)
-                                                          for i in range(len(items))])),
-                        ui.button(dialog, _(u"Cancel"),
-                                  lambda e: dialog.close(None)),
-                        spacing=20,
-                    ),
-                    align=ui.CENTER, padding=(0, 12),
-                ),
-                padding=14, spacing=14,
-            )
-        return self._show_dialog(title, create_dialog, 'checklist')
 
     def _passphrase_dialog(self, title, check=None):
         """Display a dialog to enter a key passphrase with strength checking.
@@ -1288,16 +1249,35 @@ class Pytis2GoApp(wx.App):
 
     def _cleanup_shortcuts(self):
         """Cleanup desktop shortcuts."""
-        shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
-        if shortcuts:
-            confirmed = self._checklist_dialog(
-                title=_("Confirm shortcuts removal"),
-                message=(_("The following desktop shortcuts are invalid.") + "\n" +
-                         _("Press Ok to remove the checked items.")),
+        def checklist_dialog(dialog, shortcuts):
+            checklist = CheckList(
+                dialog,
                 columns=(CheckList.Column(_("Name")),),
                 items=[(True, os.path.splitext(os.path.basename(shortcut.lnk_filepath))[0],)
                        for shortcut in shortcuts],
+                name='checklist',
             )
+            return ui.vgroup(
+                ui.label(dialog, (_("The following desktop shortcuts are invalid.") + "\n" +
+                                  _("Press Ok to remove the checked items."))),
+                ui.item(checklist, proportion=1, expand=True),
+                ui.item(
+                    ui.hgroup(
+                        ui.button(dialog, _(u"Ok"),
+                                  lambda e: dialog.close([checklist.IsChecked(i)
+                                                          for i in range(len(shortcuts))])),
+                        ui.button(dialog, _(u"Cancel"),
+                                  lambda e: dialog.close(None)),
+                        spacing=20,
+                    ),
+                    align=ui.CENTER, padding=(0, 12),
+                ),
+                padding=14, spacing=14,
+            )
+        shortcuts = [x for x in self._desktop_shortcuts() if not os.path.isfile(x.path)]
+        if shortcuts:
+            confirmed = self._show_dialog(_("Confirm shortcuts removal"), checklist_dialog,
+                                          focus='checklist', shortcuts=shortcuts)
             n = 0
             for shortcut, checked in zip(shortcuts, confirmed):
                 if checked:
