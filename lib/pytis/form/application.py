@@ -2170,7 +2170,7 @@ def built_in_status_fields():
                     refresh_interval=10000000, width=15),
         StatusField('remote-status', _("Remote communication status"),
                     refresh=_refresh_remote_status,
-                    refresh_interval=10000, width=5),
+                    refresh_interval=10000, width=8),
     )
 
 # Duplication of application methods here is a huge mess, so we
