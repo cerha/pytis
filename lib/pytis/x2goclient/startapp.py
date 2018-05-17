@@ -413,10 +413,11 @@ class Pytis2GoApp(wx.App):
 
     class _TaskBarIcon(wx.TaskBarIcon):
 
-        def __init__(self, menu, on_click):
+        def __init__(self, menu):
             super(Pytis2GoApp._TaskBarIcon, self).__init__()
             self._menu = menu
-            self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, lambda e: on_click())
+            # This has no effect on Linux, but it works on Windows at least...
+            self.Bind(wx.EVT_TASKBAR_LEFT_UP, lambda e: self.PopupMenu(self.CreatePopupMenu()))
 
         def _get_bitmap(self, name):
             if name.startswith('wx'):
@@ -511,9 +512,6 @@ class Pytis2GoApp(wx.App):
             session.terminate()
         wx.CallAfter(self._icon.Destroy)
         self.Exit()
-
-    def _on_taskbar_click(self):
-        pass
 
     def _show_dialog(self, title, create, focus, **kwargs):
         class Dialog(wx.Dialog):
@@ -1411,7 +1409,7 @@ class Pytis2GoApp(wx.App):
         self._info_dialog(_("Send key to admin"), msg.format(ssh_dir))
 
     def OnInit(self):
-        self._icon = self._TaskBarIcon(self._menu, self._on_taskbar_click)
+        self._icon = self._TaskBarIcon(self._menu)
         self._icon.set_icon('pytis2go-offline')
         # Work around: The wx main loop exits if there is not at least one frame.
         wx.Frame(None, -1, '').Hide()
