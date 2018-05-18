@@ -192,6 +192,9 @@ class SshProfiles(x2go.backends.profiles.base.X2GoSessionProfiles):
                 else:
                     val = self.defaultSessionProfile[param]
                 session_data[param] = val
+            if parser.has_option(session_name, 'group'):
+                group = parser.get(session_name, 'group').decode('UTF8')
+                session_data['name'] = group + ':::' + session_data['name']
             profiles[session_name] = session_data
         return profiles
 
