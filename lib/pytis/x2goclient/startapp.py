@@ -569,10 +569,12 @@ class Pytis2GoApp(wx.App):
                 ui.label(dialog, _("Suspended sessions:")),
                 ui.item(ui.hgroup(
                     ui.item(ListCtrl(dialog, name='sessions', on_activation=on_resume_session,
-                                     columns=(ListCtrl.Column(_("Session"), width=24),
-                                              ListCtrl.Column(_("Date"), width=18)),
-                                     items=[('%s@%s' % (s.username, s.hostname),
-                                             (s.date_created or '').replace('T', ' '))
+                                     columns=(ListCtrl.Column(_("Session"), width=8),
+                                              ListCtrl.Column(_("Started"), width=18),
+                                              ListCtrl.Column(_("Suspended"), width=18)),
+                                     items=[(':' + str(s.display),
+                                             (s.date_created or '').replace('T', ' '),
+                                             (s.date_suspended or '').replace('T', ' '))
                                             for s in sessions]),
                             proportion=1, expand=True),
                     ui.item(ui.vgroup(*[
