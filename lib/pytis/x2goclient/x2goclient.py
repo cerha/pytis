@@ -591,6 +591,7 @@ class X2GoClient(x2go.X2GoClient):
         allow_share_local_folders=True,
         known_hosts=os.path.join(x2go.LOCAL_HOME, x2go.X2GO_SSH_ROOTDIR, 'known_hosts'),
     )
+    _SESSION_COMMAND_MATCHER = re.compile(r'^[^-]+-\d+-\d+_stR(.+)_dp\d+$')
 
     class ServerInfo(object):
         # It would be better to use self.info_backend or
@@ -720,17 +721,24 @@ class X2GoClient(x2go.X2GoClient):
         x2go.x2go_cleanup()
 
     def list_sessions(self):
-        """Return a list of suspended sessions found on the server.
+        """Return a list of suspended sessions for the same profile found on the server.
 
         Returns a list of 'X2GoServerSessionInfo' instances.
 
         """
-        return sorted([info for info in
-                       self._X2GoClient__list_sessions(self._x2go_session_uuid).values()
-                       if info.status == 'S'],
-                      lambda a, b: (cmp(a.username, b.username) or
-                                    cmp(a.hostname, b.hostname) or
-                                    cmp(b.date_created, a.date_created)))
+        def cmd(session):
+            # A more sane method of obtaining the session command or profile name/id
+            # would be much appreciated...
+            match = self._SESSION_COMMAND_MATCHER.match(session.name)
+            if match:
+                return match.group(1)
+            else:
+                return None
+
+        return sorted([s for s
+                       in self._X2GoClient__list_sessions(self._x2go_session_uuid).values()
+                       if s.status == 'S' and cmd(s) == self._session_parameters['cmd']],
+                      lambda a, b: cmp(b.date_created, a.date_created))
 
     def terminate_session(self, session):
         """Terminate given X2Go Session."""
