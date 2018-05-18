@@ -390,6 +390,11 @@ class MenuItem(object):
         self.enabled = bool(enabled)
         self.visible = bool(visible)
 
+class Menu(object):
+    def __init__(self, label):
+        self.label = label
+        self.items = []
+
 
 class Session(threading.Thread):
 
@@ -427,15 +432,13 @@ class Pytis2GoApp(wx.App):
                 bitmap = wx.Bitmap(path)
             return bitmap
 
-        def set_icon(self, name):
-            icon = wx.IconFromBitmap(self._get_bitmap(name))
-            self.SetIcon(icon, _("Pytis2Go Service"))
-
-        def CreatePopupMenu(self):
+        def _create_menu(self, items):
             menu = wx.Menu()
-            for item in self._menu():
+            for item in items:
                 if item == '---':
                     menu.AppendSeparator()
+                elif isinstance(item, Menu):
+                    menu.AppendMenu(-1, item.label, self._create_menu(item.items))
                 elif item.visible:
                     wxitem = wx.MenuItem(menu, -1, item.label)
                     menu.Bind(wx.EVT_MENU, lambda event, item=item: item.callback(),
@@ -445,6 +448,13 @@ class Pytis2GoApp(wx.App):
                     menu.AppendItem(wxitem)
                     menu.Enable(wxitem.GetId(), item.enabled)
             return menu
+
+        def set_icon(self, name):
+            icon = wx.IconFromBitmap(self._get_bitmap(name))
+            self.SetIcon(icon, _("Pytis2Go Service"))
+
+        def CreatePopupMenu(self):
+            return self._create_menu(self._menu())
 
     def __init__(self, args):
         self._args = args
@@ -469,14 +479,25 @@ class Pytis2GoApp(wx.App):
 
     def _menu(self):
         running = [s.param('profile_name') for s in self._active_sessions()]
-        menu = [
-            MenuItem(
-                params['profile_name'],
+        submenus = {}
+        menu = []
+        for profile_id, params in self._profiles:
+            title = params['profile_name']
+            if ':::' in title:
+                menu_title, title = title.split(':::', 1)
+                try:
+                    submenu = submenus[menu_title]
+                except KeyError:
+                    submenu = submenus[menu_title] = Menu(menu_title)
+                    menu.append(submenu)
+                m = submenu.items
+            else:
+                m = menu
+            m.append(MenuItem(
+                title,
                 lambda profile_id=profile_id: self._start_session(profile_id),
                 icon='status-' + ('online' if params['profile_name'] in running else 'offline'),
-            )
-            for profile_id, params in self._profiles
-        ]
+            ))
         if menu:
             menu.append('---')
         menu.extend((
