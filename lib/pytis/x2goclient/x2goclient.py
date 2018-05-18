@@ -661,8 +661,8 @@ class X2GoClient(x2go.X2GoClient):
         x2go.X2GoClient.__init__(self, start_xserver=False, use_cache=False,
                                  loglevel=loglevel, **kwargs)
         self.terminal_backend = TerminalSession
-        self._x2go_session_hash = self._X2GoClient__register_session(**session_parameters)
-        session = self.session_registry(self._x2go_session_hash)
+        self._x2go_session_uuid = self._X2GoClient__register_session(**session_parameters)
+        session = self.session_registry(self._x2go_session_uuid)
         session.sshproxy_params['key_filename'] = session_parameters['key_filename']
         session.sshproxy_params['look_for_keys'] = False
         # Start up server connections.
@@ -672,7 +672,7 @@ class X2GoClient(x2go.X2GoClient):
         self._rpyc_launcher = RPyCServerLauncher(on_server_started=self._on_rpyc_server_started,
                                                  on_echo=on_rpyc_echo, logger=self.logger)
         try:
-            self._X2GoClient__connect_session(self._x2go_session_hash,
+            self._X2GoClient__connect_session(self._x2go_session_uuid,
                                               username=session_parameters['username'],
                                               password=session_parameters['password'])
             # Note: We don't handle the authentication related exceptions such
@@ -693,10 +693,10 @@ class X2GoClient(x2go.X2GoClient):
 
     def _init_session(self):
         def info_handler():
-            while self.session_ok(self._x2go_session_hash):
+            while self.session_ok(self._x2go_session_uuid):
                 self._handle_info()
                 gevent.sleep(0.1)
-        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
+        terminal_session = self.get_session(self._x2go_session_uuid).terminal_session
         self._pytis_server_info = self.ServerInfo(terminal_session)
         gevent.spawn(info_handler)
 
@@ -714,7 +714,7 @@ class X2GoClient(x2go.X2GoClient):
                 info.write()
 
     def _cleanup(self):
-        terminal_session = self.get_session(self._x2go_session_hash).terminal_session
+        terminal_session = self.get_session(self._x2go_session_uuid).terminal_session
         terminal_session.stop_rpyc_tunnel()
         self._rpyc_launcher.stop_thread()
         x2go.x2go_cleanup()
@@ -726,7 +726,7 @@ class X2GoClient(x2go.X2GoClient):
 
         """
         return sorted([info for info in
-                       self._X2GoClient__list_sessions(self._x2go_session_hash).values()
+                       self._X2GoClient__list_sessions(self._x2go_session_uuid).values()
                        if info.status == 'S'],
                       lambda a, b: (cmp(a.username, b.username) or
                                     cmp(a.hostname, b.hostname) or
@@ -737,9 +737,9 @@ class X2GoClient(x2go.X2GoClient):
         # send a terminate request to a session
         self.logger('Requesting termination od X2Go session: %s' % session.name,
                     loglevel=x2go.loglevel_INFO)
-        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
+        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_uuid)
         if session.name in available_sessions.keys():
-            self._X2GoClient__terminate_session(self._x2go_session_hash, session.name)
+            self._X2GoClient__terminate_session(self._x2go_session_uuid, session.name)
             self.logger("X2Go session %s has been terminated" % session.name,
                         loglevel=x2go.loglevel_NOTICE)
         else:
@@ -753,19 +753,19 @@ class X2GoClient(x2go.X2GoClient):
         self.logger('starting a new X2Go session', loglevel=x2go.loglevel_INFO)
         self.logger('command for new session is: %s' % self._session_parameters['cmd'],
                     loglevel=x2go.log.loglevel_DEBUG)
-        self._X2GoClient__start_session(self._x2go_session_hash)
+        self._X2GoClient__start_session(self._x2go_session_uuid)
         self._init_session()
 
     def resume_session(self, session):
         """Resume given server-side suspended X2Go session."""
         self.logger('resuming X2Go session: %s' % session.name, loglevel=x2go.loglevel_INFO)
-        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_hash)
+        available_sessions = self._X2GoClient__list_sessions(self._x2go_session_uuid)
         if session.name not in available_sessions.keys():
             runtime_error('Session %s not available on X2Go server [%s]:%s' %
                           (self._session_parameters['server'],
                            self._session_parameters['port']),
                           exitcode=20)
-        self._X2GoClient__resume_session(self._x2go_session_hash, session.name)
+        self._X2GoClient__resume_session(self._x2go_session_uuid, session.name)
         self._init_session()
 
     def main_loop(self):
@@ -777,7 +777,7 @@ class X2GoClient(x2go.X2GoClient):
 
         """
         try:
-            session_hash = self._x2go_session_hash
+            session_hash = self._x2go_session_uuid
             while 0 < self.get_session(session_hash).get_progress_status() < 100:
                 time.sleep(1)
             if self._X2GoClient__session_ok(session_hash):
