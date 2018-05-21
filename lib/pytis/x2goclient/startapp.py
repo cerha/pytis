@@ -1038,7 +1038,7 @@ class Pytis2GoApp(wx.App):
 
         """
         def message(msg):
-            progress.message(connection_parameters['server'] + ': ' + msg)
+            progress.message(server + ': ' + msg)
 
         def connect(username, gss_auth=False, key_filename=None, password=None):
             return function(dict(
@@ -1053,18 +1053,19 @@ class Pytis2GoApp(wx.App):
             ), **kwargs)
 
         success = None
+        server = connection_parameters['server']
         message(_("Retrieving supported authentication methods."))
         try:
             methods = self._authentication_methods(connection_parameters)
         except socket.error as e:
             self._info_dialog(_("Connection Failed"),
-                              _("Failed connecting to %s:\n%s", connection_parameters['server'], e))
+                              _("Failed connecting to %s:\n%s", server, e))
             return None
-        for username, key_filename, password in self._keyring:
+        for server_, username, key_filename, password in self._keyring:
             if key_filename and password and 'publickey' in methods:
                 message(_("Trying public key authentication."))
                 success = connect(username, key_filename=key_filename, password=password)
-            elif key_filename is None and password and 'password' in methods:
+            elif server_ == server and key_filename is None and password and 'password' in methods:
                 message(_("Trying password authentication."))
                 success = connect(username, password=password)
             if success:
@@ -1088,8 +1089,7 @@ class Pytis2GoApp(wx.App):
             message(_("Trying interactive authentication."))
             while not success:
                 username, key_filename, password = self._authentication_dialog(
-                    connection_parameters['server'],
-                    username, key_files, methods, default_method,
+                    server, username, key_files, methods, default_method,
                 )
                 if username is None:
                     return None
@@ -1102,7 +1102,7 @@ class Pytis2GoApp(wx.App):
                         default_method = 'password'
                     success = connect(username, key_filename=key_filename, password=password)
                     if success:
-                        self._keyring.append((username, key_filename, password))
+                        self._keyring.append((server, username, key_filename, password))
                 elif username != connection_parameters['username']:
                     message(_("Trying SSH Agent authentication."))
                     success = connect(username)
