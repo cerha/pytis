@@ -379,10 +379,12 @@ class Win32UIBackend(ClientUIBackend):
         IDC_LIST = 9000
         IDC_TEXT = 9001
         result = self._Object(selection=None)
+
         class SelectionDialog(Dialog):
             def OnSelect(self, ctrl, action):
                 if ctrl == IDC_LIST:
                     result.selection = self.GetDlgItem(IDC_LIST).GetCurSel()
+
             def OnInitDialog(self):
                 rc = Dialog.OnInitDialog(self)
                 self.SetDlgItemText(IDC_TEXT, label)
@@ -439,6 +441,7 @@ class Win32UIBackend(ClientUIBackend):
     def _select_directory(self, title, directory):
         import win32gui
         from win32com.shell import shell, shellcon
+
         def callback(hwnd, msg, lp, data):
             if msg == shellcon.BFFM_INITIALIZED:
                 win32gui.SendMessage(hwnd, shellcon.BFFM_SETSELECTION, 1, directory)
@@ -459,7 +462,7 @@ class Win32UIBackend(ClientUIBackend):
         win32clipboard.OpenClipboard()
         try:
             data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
-        except:  # may happen when there is no clipboard data
+        except Exception:  # may happen when there is no clipboard data
             data = None
         win32clipboard.CloseClipboard()
         return data
@@ -532,6 +535,7 @@ class TkUIBackend(ClipboardUIBackend):
         listbox = Tkinter.Listbox(dialog, listvariable=Tkinter.StringVar(value=tuple(rows)),
                                   height=len(rows), activestyle='dotbox')
         listbox.pack(expand=True, fill=Tkinter.BOTH, padx=5, pady=5)
+
         def submit():
             idxs = listbox.curselection()
             if len(idxs) == 1:
