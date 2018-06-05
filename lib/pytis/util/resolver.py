@@ -109,7 +109,7 @@ class Resolver(object):
             except AttributeError as e:
                 raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
         return module
-    
+
     def _get_object_by_name(self, name):
         # The returned object is normally a Specification class, but may be also a python
         # module (for modules defined by applications with proc_spec) or even
@@ -217,7 +217,7 @@ class Resolver(object):
         """Return the result of calling 'method_name' on specification instance 'name'.
 
         Arguments:
-        
+
           name -- string name of the specification
           method_name -- string name of the method to call
           kwargs -- optional keyword arguments to be passed to the
@@ -230,7 +230,7 @@ class Resolver(object):
         """Return given object from specification.
 
         Arguments:
-        
+
           spec_name -- name of the specification; string
           object_name -- name of the object in the specification; string
 
@@ -261,6 +261,7 @@ class Resolver(object):
         searched_modules = []
         classes = []
         names = {}
+
         def search(module):
             # Search cls subclasses in given module recursively.
             submodules = []
@@ -295,7 +296,7 @@ class Resolver(object):
         self.clear()
         for name in sys.modules:
             for prefix in self._search:
-                if ((not prefix.startswith('pytis.')
-                     and (name == prefix or name.startswith(prefix + '.'))
-                     and sys.modules[name] is not None)):
+                if ((not prefix.startswith('pytis.') and
+                     (name == prefix or name.startswith(prefix + '.')) and
+                     sys.modules[name] is not None)):
                     reload(sys.modules[name])

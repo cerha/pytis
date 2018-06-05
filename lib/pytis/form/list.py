@@ -46,9 +46,9 @@ import pytis.data
 import pytis.form
 import pytis.output
 import pytis.presentation
-from pytis.presentation import Action, ActionGroup, AggregatedView, \
-    CodebookSpec, Computer, Editable, Field, \
-    FormType, Link, TextFormat, ViewSpec
+from pytis.presentation import (
+    Action, ActionGroup, AggregatedView, CodebookSpec, Field,
+    FormType, Link, TextFormat, ViewSpec)
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     Attribute, ProgramError, ResolverError, SimpleCache, Structure, \
     UNDEFINED, compare_objects, find, form_view_data, log, sameclass
@@ -714,7 +714,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if row >= 0 and row < self._table.number_of_rows(min_value=(row + 1)):
             try:
                 result = self._table.row(row)
-            except:
+            except Exception:
                 # It sometimes happens, under unknown circumstances, that the
                 # data select gets changed without updating ListTable selection
                 # data.  Then `row' may actually be outside the reported number
@@ -1641,7 +1641,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return False
 
-
     def _refresh(self, when=None, reset=None, key_update=True, interactive=False):
         """Aktualizuj data seznamu z datového zdroje.
 
@@ -2216,7 +2215,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             log(EVENT, 'RPC communication on %s available' % client_ip)
             try:
                 export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
-            except:
+            except Exception:
                 pass
             if export_file is not None:
                 remote = True
@@ -2235,7 +2234,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             try:
                 export_file = open(filename, mode)
                 export_file.write('')
-            except:
+            except Exception:
                 msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return
@@ -2257,7 +2256,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         db_encoding = 'utf-8'
         try:
             u"test".encode(export_encoding)
-        except:
+        except Exception:
             msg = '\n'.join(_("Encoding %s not supported.", export_encoding),
                             _("Exported data will not be recoded."))
             export_encoding = None
@@ -2265,7 +2264,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if isinstance(file_, basestring):
             try:
                 export_file = open(file_, 'w')
-            except:
+            except Exception:
                 msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return False
@@ -3349,9 +3348,9 @@ class BrowseForm(FoldableForm):
                     self._automatic_in_operator_links.append(in_item)
         self._automatic_links = [
             (link_label(spec_title(name)),
-             [(f, Link(name, column, binding=binding, **kwargs))
-              for name, column, f, kwargs in links])
-            for name, (binding, links) in sorted(automatic_links.items())
+             [(f, Link(name, column, binding=binding_, **kwargs_))
+              for name, column, f, kwargs_ in links_])
+            for name, (binding_, links_) in sorted(automatic_links.items())
         ]
         self._explicit_in_operator_links.sort()
         self._automatic_in_operator_links.sort()
