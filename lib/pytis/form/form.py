@@ -3004,7 +3004,7 @@ class PopupEditForm(PopupForm, EditForm):
             self._row.set_row(None, reset=True, prefill=self._prefill)
         if data is not None:
             i = self._inserted_data_pointer
-            self._select_row(None)
+            self._row.set_row(None, reset=True, prefill=self._prefill)
             if i < len(data):
                 self.set_status('progress', "%d/%d" % (i + 1, len(data),))
                 self._inserted_data_pointer += 1
