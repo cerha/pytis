@@ -2111,19 +2111,21 @@ class RecordForm(LookupForm):
                 message(_(u"No separator given."), beep_=True)
             return False
         separator = separator.replace('\\t', '\t')
-        while 1:
-            filename = run_dialog(pytis.form.FileDialog)
-            if filename is None:
-                message(_(u"No file given. Process terminated."), beep_=True)
-                return False
-            try:
-                fh = open(filename)
-            except IOError as e:
-                msg = _(u"Unable to open file '%s': %s")
-                run_dialog(pytis.form.Error, msg % (filename, str(e)))
-                continue
-            break
+        fh, filename = pytis.form.open_selected_file(
+            patterns=(('CSV files', ('*.csv', '*.CSV', '*.txt', '*.TXT')),))
+        if filename is None:
+            message(_(u"No file given. Process terminated."), beep_=True)
+            return False
         try:
+            # In case of remote file, make local copy
+            if pytis.remote.client_available():
+                import tempfile
+                flocal = tempfile.NamedTemporaryFile()
+                filename = flocal.name
+                flocal.write(fh.read())
+                fh.close()
+                fh = flocal
+                fh.seek(0)
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
             for id in columns:
                 if id not in self._row:
