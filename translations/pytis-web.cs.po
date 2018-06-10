@@ -50,7 +50,7 @@ msgstr "Nedodržena minimální velikost %(minlen)s"
 #: ../lib/pytis/web/field.py:836
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
-msgstr "Překročana maximální velikost %(maxlen)s"
+msgstr "Překročena maximální velikost %(maxlen)s"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
