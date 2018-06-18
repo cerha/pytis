@@ -34,6 +34,7 @@ from types_ import PrettyType
 
 _ = translations('pytis-data')
 
+
 class PresentedRow(object):
     """A record of presented data.
 
@@ -155,7 +156,7 @@ class PresentedRow(object):
             self.last_validated_string = None
             self.last_validation_error = None
             self.check_constraints_cache = (None, None)
-            self.dependent = [] # Will be initialized later by PresentedRow.__init__().
+            self.dependent = []  # Will be initialized later by PresentedRow.__init__().
 
             def cval(computer, callback):
                 if computer is None:
@@ -270,7 +271,8 @@ class PresentedRow(object):
             def strval(column):
                 if isinstance(column.type, pytis.data.Password):
                     return "***"
-                elif isinstance(column.type, pytis.data.Big) and self[column.id].value() is not None:
+                elif (isinstance(column.type, pytis.data.Big) and
+                      self[column.id].value() is not None):
                     return '<%s %s>' % (column.type.__class__.__name__,
                                         format_byte_size(len(self[column.id].value())))
                 else:
