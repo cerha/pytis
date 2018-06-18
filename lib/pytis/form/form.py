@@ -2080,25 +2080,30 @@ class RecordForm(LookupForm):
         return True
 
     def _cmd_import_interactive(self):
+        def error_dialog(message, line_number=None):
+            if line_number is not None:
+                message = _("Error at line %d:", line_number) + '\n' + message
+            run_dialog(pytis.form.Error, message)
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             msg = _(u"Insufficient permissions to insert records to this table.")
             message(msg, beep_=True)
             return False
+        order = self._view.layout().order()
         msg = "\n\n".join((
             _("Choose the file containing the imported data first. "
               "You will be able to check and confirm each record separately "
               "in the next step."),
             "*" + _("Input file format:") + "*",
-            _(("Each row contains a sequence of values separated by given "
-               "separator character (select above). Write tabelator as %s."),
+            _("Each row contains a sequence of values separated by given "
+              "separator character (select above). Write tabelator as %s.",
               "='\\t'="),
             _("The first row contains column identifiers, so it determines "
               "the meaning and the order of the values in the following "
               "data rows."),
             _("Possible column identifiers for this form are:"),
-            "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
-                       [self._view.field(id)
-                        for id in self._view.layout().order()]])))
+            "\n".join(["|*%s*|=%s=|" % (f.column_label(), f.id())
+                       for f in [self._view.field(fid) for fid in order]
+                       if f.editable() is not False])))
         separator = run_dialog(pytis.form.InputDialog,
                                title=_(u"Batch import"),
                                report=msg, report_format=TextFormat.LCG,
@@ -2123,37 +2128,50 @@ class RecordForm(LookupForm):
                 fh.close()
                 fh = flocal
                 fh.seek(0)
-            columns = [str(id.strip()) for id in fh.readline().split(separator)]
-            for id in columns:
-                if id not in self._row:
-                    run_dialog(pytis.form.Error, _(u"Unknown column:") + ' ' + id)
+            record = self.Record(self, self._view.fields(), self._data, None,
+                                 transaction=self._open_transaction(),
+                                 singleline=self._SINGLE_LINE, new=True)
+            columns = [str(cid.strip()) for cid in fh.readline().split(separator)]
+            for cid in columns:
+                field = self._view.field(cid)
+                if not field:
+                    error_dialog(_("Unknown column:") + ' ' + cid)
                     return False
-            types = [self._row.type(id) for id in columns]
+                elif field.editable() is False:
+                    # This checks for statically ineditable columns (Editable.NEVER).
+                    error_dialog(_("Column '%s' (%s) not editable.", cid, field.column_label()))
+                    return False
+            validation_order = ([cid for cid in order if cid in columns] +
+                                [cid for cid in columns if cid not in order])
+            colindex = [columns.index(cid) for cid in validation_order]
             line_number = 1
-            data = []
+            inserted_data = []
             for line in fh:
                 line_number += 1
                 values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
-                    msg = (_("Error at line %d:", line_number) + '\n' +
-                           _("The number of values doesn't match the number of columns."))
-                    run_dialog(pytis.form.Error, msg)
+                    error_dialog(_("The number of values doesn't match the number of columns."),
+                                 line_number=line_number)
                     return False
-                row_data = []
-                for id, type, val in zip(columns, types, values):
-                    value, error = type.validate(val, transaction=self._open_transaction())
-                    if error:
-                        msg = (_("Error at line %d:", line_number) + '\n' +
-                               _("Invalid value of column '%s':", id) + '\n' +
-                               error.message())
-                        run_dialog(pytis.form.Error, msg)
+                record.set_row(None, reset=True)
+                # Validate the values in the layout order to get sensible results of
+                # dynamic column editablility checks.
+                for cid, i in zip(validation_order, colindex):
+                    if not record.editable(cid):
+                        # This checks for dynamically ineditable columns (editable=Computer(...)).
+                        field = self._view.field(cid)
+                        error_dialog(_("Column '%s' (%s) not editable.", cid, field.column_label()),
+                                     line_number=line_number)
                         return False
-                    assert value.type() == type, (value.type(), type)
-                    row_data.append((id, value))
-                data.append(pytis.data.Row(row_data))
+                    error = record.validate(cid, values[i], transaction=self._open_transaction())
+                    if error:
+                        error_dialog(_("Invalid value of column '%s':", cid) + '\n' +
+                                     error.message(), line_number=line_number)
+                        return False
+                inserted_data.append(pytis.data.Row([(cid, record[cid]) for cid in columns]))
         finally:
             fh.close()
-        new_record(self._name, prefill=self._prefill, inserted_data=data)
+        new_record(self._name, prefill=self._prefill, inserted_data=inserted_data)
 
     def _cmd_open_editor(self, field_id):
         run_form(StructuredTextEditor, self.name(),
