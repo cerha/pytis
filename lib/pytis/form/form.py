@@ -2099,9 +2099,6 @@ class RecordForm(LookupForm):
             "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
                        [self._view.field(id)
                         for id in self._view.layout().order()]])))
-        print "=============================================================="
-        print msg
-        print "=============================================================="
         separator = run_dialog(pytis.form.InputDialog,
                                title=_(u"Batch import"),
                                report=msg, report_format=TextFormat.LCG,
