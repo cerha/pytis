@@ -131,7 +131,7 @@ class Logger(object):
         self._class_ = class_
         self._class_name = class_name
         self._id = id_
-        
+
     def _is_accepted(self, kind, message, data):
         if not __debug__ and kind == DEBUG:
             return False
@@ -157,7 +157,7 @@ class Logger(object):
                  (datetime, user, host, self._database, pid, kind, self._module,
                   self._class_name, self._id)
         return prefix
-        
+
     def _formatted_message(self, message, data):
         return message
 
@@ -241,11 +241,11 @@ class StreamLogger(Logger):
         Argumenty:
 
           stream -- otevřený file object, do kterého lze logovat
-          
+
         """
         super(StreamLogger, self).__init__()
         self._stream = stream
-        
+
     def _send(self, kind, formatted):
         self._stream.write(formatted)
         self._stream.write('\n')
@@ -257,11 +257,11 @@ class SyslogLogger(Logger):
     """Logger posílající hlášení syslogu."""
 
     _MAX_MESSAGE_LENGTH = 1020
-    
+
     def __init__(self, facility=None):
         super(SyslogLogger, self).__init__()
         self._facility = facility
-        
+
     def _prefix(self, kind, message, data):
         pid = os.getpid()
         user = getpass.getuser()
@@ -298,7 +298,7 @@ class LoggingInterface:
     """Rozhraní ke standardnímu logovacímu objektu.
 
     Tato třída není určena k instanciaci mimo modul 'pytis.util.log'.
-    
+
     """
     def __init__(self):
         self._logger = None # nelze inicializovat teď, kvůli závislostem modulů
