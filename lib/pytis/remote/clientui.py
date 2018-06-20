@@ -267,13 +267,13 @@ class WxUIBackend(ClientUIBackend):
 
     def __init__(self):
         super(WxUIBackend, self).__init__()
-        if os.path.basename(sys.argv[0]) == '_test.py':
-            # TODO: This is now only run in tests because x2goclient.py creates a 'wx.App'
-            # already at startup and this application stays running during the whole
-            # Pytis run.  Starting another here would cause conflicts and might crash
-            # the whole Python process.  Thus we avoid starting a new wx.App here until
-            # pytis2go.py is ready to replace x2goclient.py.
-            import wx
+        import wx
+        # TODO: We need to avoid creating a new wx App when running through
+        # the old x2goclient.py which creates its own 'wx.App' at startup.
+        # Creating another instance here would cause conflicts and might crash
+        # the whole Python process.  Once the old x2goclient.py is ditched,
+        # the App may be created unconditionally.
+        if not wx.App.Get():
             self._app = wx.App(False)
 
     def _enter_text(self, title, label, password):
