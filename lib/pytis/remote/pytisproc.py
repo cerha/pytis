@@ -215,8 +215,20 @@ class PytisUserService(PytisService):
 
     def __init__(self, *args, **kwargs):
         self._gpg_instance = None
-        self._client = ClientUIBackend()
         super(PytisUserService, self).__init__(*args, **kwargs)
+
+    def __getattr__(self, name):
+        if name == '_client':
+            # Creation of the ClientUIBackend instance is postponed to the moment
+            # when it is first used.  This prevents unnecessary client UI
+            # initialization every time a PytisUserService instance is created.
+            # It is important, because a PytisUserService instance is actually
+            # created on every attempt to connect to the port of the RPyC service,
+            # which is done by X2GoClient repetitively to check whether the server
+            # is started and alive (See 'X2GoClient._server_running()').
+            self._client = client = ClientUIBackend()
+            return client
+        return super(PytisUserService, self).__getattr__(name)
 
     def exposed_restart(self):
         """Restart the user service."""
