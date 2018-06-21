@@ -356,16 +356,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             except AttributeError:
                 # *Some* wx 2.8 versions have the constant renemed!
                 release_version = wx.RELEASE_VERSION
-            conn = config.dbconnection
-            if conn:
-                # Pozor, pokud během inicializace aplikace nedojde k připojení k
-                # databázi (není vyvolána žádná databázová operace), nemusí být
-                # hodnoty správně.
-                title += " %s@%s" % (conn.user(), conn.database())
-                if conn.host():
-                    title += " " + conn.host()
-                    if conn.port():
-                        title += ":%s" % (conn.port(),)
             title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
         return title
 
