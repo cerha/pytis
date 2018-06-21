@@ -127,17 +127,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
             clipboard.connect("owner-change", self._on_clipboard_copy)
         init_colors()
-        # Create the main application window.
-        title = config.application_name
-        if __debug__:
-            try:
-                release_version = wx.RELEASE_NUMBER
-            except AttributeError:
-                # *Some* wx 2.8 versions have the constant renemed!
-                release_version = wx.RELEASE_VERSION
-            title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
-        frame = self._frame = wx.Frame(None, -1, title, pos=(0, 0), size=(800, 600),
-                                       style=wx.DEFAULT_FRAME_STYLE)
+        # Create the main application frame.
+        frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
+                                       pos=(0, 0), size=(800, 600), style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
@@ -357,16 +349,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, "RPC communication unavailable")
         return True
 
-    def _frame_title(self, title=None):
-        if not title:
-            title = config.application_name
+    def _frame_title(self, title):
         if __debug__:
             try:
                 release_version = wx.RELEASE_NUMBER
             except AttributeError:
                 # *Some* wx 2.8 versions have the constant renemed!
                 release_version = wx.RELEASE_VERSION
-                title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
             conn = config.dbconnection
             if conn:
                 # Pozor, pokud během inicializace aplikace nedojde k připojení k
@@ -377,7 +366,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     title += " " + conn.host()
                     if conn.port():
                         title += ":%s" % (conn.port(),)
-        self._frame.SetTitle(title)
+            title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
+        return title
 
     def _cache_menu_enabled(self, menu):
         # Cache the specification instances needed to compute the availability
@@ -470,7 +460,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(mru_windows[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
-        self._frame_title()
+        self._frame.SetTitle(self._frame_title(config.application_name))
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
@@ -1749,7 +1739,7 @@ def log_user_action(spec_name, form_name, action, info=None):
 
 def frame_title(title):
     """Set title of the main application frame"""
-    _application._frame_title(title)
+    _application._frame.SetTitle(_application._frame_title(title))
 
 def close_forms():
     """Close all currently opened forms."""
