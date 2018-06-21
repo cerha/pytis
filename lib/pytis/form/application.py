@@ -350,13 +350,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return True
 
     def _frame_title(self, title):
+        display = pytis.remote.x2go_display()
+        if display:
+            title += ' (:%s)' % display
         if __debug__:
             try:
                 release_version = wx.RELEASE_NUMBER
             except AttributeError:
                 # *Some* wx 2.8 versions have the constant renemed!
                 release_version = wx.RELEASE_VERSION
-            title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
+            title += ' - wx %d.%d.%d' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
         return title
 
     def _cache_menu_enabled(self, menu):
