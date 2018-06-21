@@ -453,7 +453,7 @@ class RPyCServerLauncher(threading.Thread):
     _DEFAULT_PORT = 10000
     _MAX_PORT_ATTEMPTS = 100
 
-    def __init__(self, on_server_started, on_echo, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
+    def __init__(self, on_server_started, on_echo, session_password, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
         if logger is None:
             self.logger = x2go.log.X2GoLogger(loglevel=loglevel)
         else:
@@ -464,6 +464,7 @@ class RPyCServerLauncher(threading.Thread):
         self._server_thread = None
         self._on_server_started = on_server_started
         self._on_echo = on_echo
+        self._session_password = session_password
         self._port = None
         self._password = None
         threading.Thread.__init__(self)
@@ -489,13 +490,17 @@ class RPyCServerLauncher(threading.Thread):
 
     def _start_server(self):
         callback = self._on_echo
-        if callback:
-            class Service(pytisproc.PytisUserService):
-                def exposed_echo(self, text):
+        session_password = self._session_password
+
+        class Service(pytisproc.PytisUserService):
+            def exposed_echo(self, text):
+                if callback:
                     callback()
-                    return super(Service, self).exposed_echo(text)
-        else:
-            Service = pytisproc.PytisUserService
+                return super(Service, self).exposed_echo(text)
+
+            def exposed_session_password(self):
+                return session_password
+
         default_port = self._DEFAULT_PORT
         max_port = default_port + self._MAX_PORT_ATTEMPTS
         authenticator = pytisproc.PasswordAuthenticator()
@@ -673,8 +678,20 @@ class X2GoClient(x2go.X2GoClient):
         self._rpyc_tunnel_port = gevent.event.AsyncResult()
         self._rpyc_server_port = None
         self._rpyc_server_password = gevent.event.AsyncResult()
+        # We pass the session login password to PytisUserService in order to be
+        # able to pass it to the Pytis application which will try to use it to
+        # log in to the database, assuming the passwords may be synchronized
+        # through LDAP or so.
+        if not session_parameters['key_filename']:
+            # Use 'password' only if password authentication was used (ignore the public key
+            # passphrase for this purpose).
+            session_password = session_parameters['password']
+        else:
+            session_password = None
         self._rpyc_launcher = RPyCServerLauncher(on_server_started=self._on_rpyc_server_started,
-                                                 on_echo=on_rpyc_echo, logger=self.logger)
+                                                 on_echo=on_rpyc_echo,
+                                                 session_password=session_password,
+                                                 logger=self.logger)
         try:
             self._X2GoClient__connect_session(self._x2go_session_uuid,
                                               username=session_parameters['username'],

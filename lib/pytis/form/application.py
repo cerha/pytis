@@ -1621,18 +1621,23 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 password_computer = computer(lambda r, login: passwords.get(login))
                 password_editable = computer(lambda r, login: login not in passwords)
                 default_login = config.dbuser if config.dbuser in logins else None
+                default_password = None
             else:
                 login_enumerator = None
                 password_computer = None
                 password_editable = None
                 default_login = config.dbuser
+                if pytis.remote.client_available():
+                    default_password = pytis.remote.session_password()
+                else:
+                    default_password = None
             login_result = run_form(
                 pytis.form.InputForm, title=_("Log in for database access"),
                 fields=(Field('login', _("Login"), width=24, not_null=True,
                               enumerator=login_enumerator, default=default_login),
                         Field('password', _("Password"), type=pytis.data.Password(verify=False),
                               editable=password_editable, computer=password_computer,
-                              width=24, not_null=True),),
+                              default=default_password, width=24, not_null=True),),
                 focus_field='password',
             )
             if not login_result:

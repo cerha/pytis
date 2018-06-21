@@ -159,6 +159,15 @@ class PytisService(rpyc.Service):
             version = 'service: %s; %s' % (self.registration.version, version,)
         return version
 
+    def exposed_session_password(self):
+        """Return the password used to log in to the application server.
+
+        The application may try to reuse the password to connect to the
+        database as the database password is often the same (e.g. LDAP).
+
+        """
+        return
+
     def exposed_x2goclient_version(self):
         """Return x2goclient version."""
         import pytis.x2goclient

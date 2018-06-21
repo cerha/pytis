@@ -260,6 +260,13 @@ def version():
             version = ''
     return version or ''
 
+def session_password():
+    try:
+        return _request('session_password')
+    except:
+        return None
+
+
 def x2goclient_version():
     try:
         version = _request('x2goclient_version')
