@@ -127,11 +127,11 @@ def x2go_session_id(fake=False):
 def x2go_display():
     # TODO: This duplicates _SESSION_COMMAND_MATCHER in x2goclient.py
     session_id = x2go_session_id()
-    match = re.match(r'^[^-]+-(\d+)-\d+_stR.+_dp\d+$', session_id)
-    if match:
-        return match.group(1)
-    else:
-        return None
+    if session_id:
+        match = re.match(r'^[^-]+-(\d+)-\d+_stR.+_dp\d+$', session_id)
+        if match:
+            return match.group(1)
+    return None
 
 def pytis_x2go_info_file(session_id=None):
     if session_id is None:
