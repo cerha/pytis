@@ -1189,7 +1189,8 @@ class BrowseForm(LayoutForm):
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  cell_editable=None, expand_row=None, async_row_expansion=False,
-                 on_update_row=None, inline_editable=False, embed=False, **kwargs):
+                 on_update_row=None, inline_editable=False, embed=False, show_summary=True,
+                 **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -1365,6 +1366,8 @@ class BrowseForm(LayoutForm):
             submittable form with its own <form> element (<form> elements are
             not allowed to nest in HTML).  Support is experimantal and may not
             work in all cases, so please test before relying on it...
+          show_summary -- if True, the summary line at the end of the table will
+            display the total number of records.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1600,6 +1603,7 @@ class BrowseForm(LayoutForm):
         self._row_count = None
         self._last_exported_row_actions = ()
         self._embed = embed
+        self._show_summary = show_summary
 
     def _tree_level(self):
         if self._tree_order_column:
@@ -1943,6 +1947,8 @@ class BrowseForm(LayoutForm):
                        border=1, cls=' '.join(cls))
 
     def _export_summary(self, context, limit, first_record_offset, count_on_page):
+        if not self._show_summary:
+            return ''
         g = context.generator()
         row_count = self._row_count
         if limit is None or row_count <= self._limits[0]:
