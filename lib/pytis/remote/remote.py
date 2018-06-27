@@ -296,8 +296,8 @@ def library_version():
             versions = dict([x.strip() for x in v.split(':', 1)]
                             for v in version_string.split(';'))
             return versions['library']
-        except Exception as e:
-            return str(e)
+        except:
+            return None
 
 
 def session_password():
