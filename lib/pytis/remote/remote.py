@@ -44,6 +44,7 @@ class RPCInfo(object):
     remote_status_info = (False, time.time())
     remote_connection_initially_available = False
 
+
 def nx_ip():
     """Return IP address of the nx client, as a string.
 
@@ -70,6 +71,7 @@ def nx_ip():
                     break
     return _nx_ip
 
+
 def x2go_ip():
     """Return IP address of the x2go client, as a string.
 
@@ -92,6 +94,7 @@ def x2go_ip():
                     break
     return _x2go_ip
 
+
 def client_ip():
     """Return IP address of the x2go client or nx client, as a string.
 
@@ -103,6 +106,7 @@ def client_ip():
     else:
         ip = x2go_ip() or nx_ip()
     return ip
+
 
 def client_available():
     """Return true, iff remote client is available."""
@@ -116,6 +120,7 @@ def client_available():
         log(OPERATIONAL, "RPC exception:", e)
         return False
 
+
 def x2go_session_id(fake=False):
     if config.session_id is not None:
         return config.session_id
@@ -123,6 +128,7 @@ def x2go_session_id(fake=False):
     if fake:
         session_id += 'ssh'
     return session_id
+
 
 def x2go_display():
     # TODO: This duplicates _SESSION_COMMAND_MATCHER in x2goclient.py
@@ -133,17 +139,24 @@ def x2go_display():
             return match.group(1)
     return None
 
+
 def pytis_x2go_info_file(session_id=None):
     if session_id is None:
         session_id = x2go_session_id()
     return os.path.expanduser(os.path.join('~', '.x2go/ssh/pytis.%s' % (session_id,)))
 
+
 class X2GoInfoException(Exception):
     pass
+
+
 class X2GoInfoSoftException(X2GoInfoException):
     pass
+
+
 class X2GoInfoHardException(X2GoInfoException):
     pass
+
 
 def parse_x2go_info_file(filename):
     try:
@@ -169,6 +182,7 @@ def parse_x2go_info_file(filename):
         raise X2GoInfoHardException("Invalid port number in X2Go file", items[1])
     access_data['password'] = items[2]
     return access_data
+
 
 def read_x2go_info_file(rename=False, use_defaults=True):
     pytis_x2go_file = pytis_x2go_info_file()
@@ -197,6 +211,7 @@ def read_x2go_info_file(rename=False, use_defaults=True):
         access_data = None
     return access_data
 
+
 def _connect():
     access_data = read_x2go_info_file()
     rpc_info = RPCInfo
@@ -218,6 +233,7 @@ def _connect():
         authenticator = pytisproc.PasswordAuthenticator(password)
         connection = authenticator.connect('localhost', port)
     return connection
+
 
 def _request(request, *args, **kwargs):
     def retype(arg):
@@ -255,6 +271,7 @@ def _request(request, *args, **kwargs):
             r = RPCInfo.connection.root.request
         args = (target_ip, user_name, request,) + args
     return r(*retype(args), **retype(kwargs))
+
 
 def version():
     try:
@@ -299,6 +316,7 @@ def get_clipboard_text():
         text = text.replace('\r\n', '\n')
     return text
 
+
 def set_clipboard_text(text):
     assert isinstance(text, unicode), text
     text = text.replace('\n', '\r\n')
@@ -306,6 +324,7 @@ def set_clipboard_text(text):
         _request('set_clipboard_text', text)
     except:
         pass
+
 
 def launch_file(path):
     assert isinstance(path, basestring), path
@@ -316,6 +335,7 @@ def launch_file(path):
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
                                                   filename=path, error=e))
 
+
 def launch_url(url):
     assert isinstance(url, basestring), url
     try:
@@ -323,6 +343,7 @@ def launch_url(url):
     except:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open URL %s", url))
+
 
 def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
     assert isinstance(filename, basestring), filename
@@ -336,6 +357,7 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
                                                   filename=filename, error=e))
+
 
 def open_selected_file(directory=None, patterns=(), pattern=None, template=None, encrypt=None):
     assert directory is None or isinstance(directory, basestring), directory
@@ -353,6 +375,7 @@ def open_selected_file(directory=None, patterns=(), pattern=None, template=None,
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
+
 
 def make_selected_file(directory=None, filename=None, patterns=(), pattern=None, template=None,
                        encoding=None, mode='wb', decrypt=False):
@@ -375,6 +398,7 @@ def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file to save: %s", e))
 
+
 def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     assert isinstance(suffix, basestring), suffix
     assert encoding is None or isinstance(encoding, basestring), encoding
@@ -386,6 +410,7 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     except:
         return None
 
+
 def select_directory(directory=None):
     assert directory is None or isinstance(directory, (str, unicode)), directory
     try:
@@ -393,6 +418,7 @@ def select_directory(directory=None):
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
+
 
 def select_file(filename=None, directory=None, patterns=(), pattern=None, template=None,
                 multi=False):
@@ -412,6 +438,7 @@ def select_file(filename=None, directory=None, patterns=(), pattern=None, templa
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))
+
 
 def run_python(script):
     try:
