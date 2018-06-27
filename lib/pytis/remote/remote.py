@@ -286,10 +286,32 @@ def version():
             version = ''
     return version or ''
 
+
+def library_version():
+    version_string = version()
+    if not version_string or version_string == '-old-':
+        return None
+    else:
+        try:
+            versions = dict([x.strip() for x in v.split(':', 1)]
+                            for v in version_string.split(';'))
+            return versions['library']
+        except Exception as e:
+            return str(e)
+
+
 def session_password():
-    try:
-        return _request('session_password')
-    except:
+    version = library_version()
+    if version and version >= '2018-06-27 16:00':
+        # We try to be safer by not even trying to call the method for older
+        # pytisproc versions.  The try/except block would handle it here
+        # anyway, but in some more complicated cases testing the version
+        # might be necessary.
+        try:
+            return _request('session_password')
+        except:
+            return None
+    else:
         return None
 
 

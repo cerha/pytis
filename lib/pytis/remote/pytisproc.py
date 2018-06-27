@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2015-06-10 11:00'
+_VERSION = '2018-06-27 16:00'
 
 import cStringIO
 import hashlib
