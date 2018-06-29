@@ -135,7 +135,7 @@ class ClientProcess(object):
                                          stdout=subprocess.PIPE, stderr=self._log)
         # Generate a secret token and pass it to the subprocess through
         # its STDIN and read the port number from its STDOUT (it will
-        # allocate the first available port number and print it.
+        # allocate the first available port number and print it).
         key = hashlib.sha256(os.urandom(16)).hexdigest()
         self._process.stdin.write(key + '\n')
         port = int(self._process.stdout.readline())
@@ -284,7 +284,7 @@ def start_xserver(variant):
     """Run X-server in a separate process.
 
     Simply runs 'python -m pytis.x2goclient.xserver' to start a local X11
-    server in a subprocess .
+    server in a subprocess.
 
     """
     process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.xserver',
