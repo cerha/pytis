@@ -46,7 +46,7 @@ import x2go.xserver
 import pytis.x2goclient
 import pytis.remote.pytisproc as pytisproc
 
-from pytis.util import log, EVENT, on_windows
+from pytis.util import on_windows
 from .ssh import ssh_connect
 
 PYTIS_XSERVER_VARIANTS = ('VcXsrv_pytis', 'VcXsrv_pytis_old')
@@ -572,8 +572,9 @@ class TerminalSession(x2go.backends.terminal.plain.X2GoTerminalSession):
             def callback(forwarded_port):
                 reverse_tunnels['rpyc'] = (forwarded_port, tunnel)
                 on_tunnel_started(forwarded_port)
-                log(EVENT, 'Port %d on X2Go server forwarded to RPyC server port %d '
-                    'on X2Go client.' % (forwarded_port, rpyc_server_port))
+                self.logger('Port %d on X2Go server forwarded to RPyC server port %d '
+                            'on X2Go client.' % (forwarded_port, rpyc_server_port),
+                            loglevel=x2go.log.loglevel_DEBUG)
             tunnel = RPyCTunnel(rpyc_server_port, self, on_tunnel_started=callback)
             self.active_threads.append(tunnel)
             tunnel.start()
