@@ -80,11 +80,13 @@ if on_windows():
     })
     os.environ['NXPROXY_BINARY'] = os.path.join(win_apps_dir, 'nxproxy', 'nxproxy.exe')
 
+
 def runtime_error(message, exitcode=-1):
     # TODO: Raise an exception instead and catch it in the
     # startup application to display errors in the UI.
     sys.stderr.write("%s: error: %s\n" % (os.path.basename(sys.argv[0]), message))
     sys.exit(exitcode)
+
 
 class ClientException(Exception):
     pass
@@ -395,6 +397,7 @@ def start_xserver(variant, loglevel=x2go.log.loglevel_DEFAULT):
     x2go.xserver.X2GoXServer(variant, xserverconfig)
     return display
 
+
 def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port)):
     """This function redefines 'x2go.rforward.x2go_transport_tcp_handler'.
 
@@ -411,6 +414,7 @@ def tunnel_tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_po
             if int(server_port) == int(tun_port):
                 tunnel.notify()
                 return
+
 
 class RPyCTunnel(x2go.rforward.X2GoRevFwTunnel):
     """Tunnel RPyC communication from X2Go server to the RPyC server on X2Go client.
@@ -453,7 +457,8 @@ class RPyCServerLauncher(threading.Thread):
     _DEFAULT_PORT = 10000
     _MAX_PORT_ATTEMPTS = 100
 
-    def __init__(self, on_server_started, on_echo, session_password, logger=None, loglevel=x2go.log.loglevel_DEFAULT):
+    def __init__(self, on_server_started, on_echo, session_password, logger=None,
+                 loglevel=x2go.log.loglevel_DEFAULT):
         if logger is None:
             self.logger = x2go.log.X2GoLogger(loglevel=loglevel)
         else:
