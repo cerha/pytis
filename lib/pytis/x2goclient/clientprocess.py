@@ -40,6 +40,7 @@ import time
 import base64
 import socket
 import hashlib
+import tempfile
 import subprocess
 import cPickle as pickle
 
@@ -127,8 +128,11 @@ class ClientProcess(object):
         env = dict(os.environ.copy(), PYTHONPATH=_pythonpath)
         if display:
             env['DISPLAY'] = str(display)
+        log_directory = os.path.join(os.path.expanduser('~'), '.x2go')
+        self._log = tempfile.NamedTemporaryFile(dir=log_directory, suffix='.log', delete=False)
         self._process = subprocess.Popen((sys.executable, '-m', 'pytis.x2goclient.runclient'),
-                                         env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                                         env=env, stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE, stderr=self._log)
         # Generate a secret token and pass it to the subprocess through
         # its STDIN and read the port number from its STDOUT (it will
         # allocate the first available port number and print it.
@@ -169,6 +173,7 @@ class ClientProcess(object):
     def terminate(self):
         """Terminate the subprocess and the 'X2GoClient' instance running inside it."""
         self._process.terminate()
+        self._log.close()
 
 
 class Broker(object):
