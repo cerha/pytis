@@ -3599,10 +3599,12 @@ class FileViewer(ViewerForm):
 
     def load_file(self, data):
         """Display preview of given file-like object in the form."""
-        try:
-            self._viewer.LoadFile(data)
-        except Exception as e:
-            message(_("Loading document failed: %s", e), beep_=True)
+        if not data:
             self._viewer.Show(False)
         else:
             self._viewer.Show(True)
+            try:
+                self._viewer.LoadFile(data)
+            except Exception as e:
+                message(_("Loading document failed: %s", e), beep_=True)
+                self._viewer.Show(False)
