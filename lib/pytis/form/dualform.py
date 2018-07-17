@@ -41,6 +41,7 @@ from application import current_form, has_access, message, run_dialog, run_form
 
 _ = translations('pytis-wx')
 
+
 class DualForm(Form, Refreshable):
     """Formulář složený ze dvou spolupracujících formulářů.
 
@@ -463,6 +464,7 @@ class BrowseDualForm(SideBrowseDualForm):
             form, name = (ShowDualForm, self._name)
         run_form(form, name, select_row=self._main_form.current_key())
 
+
 class AggregationDualForm(PostponedSelectionDualForm):
     """Dual form with 'AggregationForm' main form and 'BrowseForm' sideform.
 
@@ -472,13 +474,16 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
     """
     class _SideForm(SideBrowseForm):
+
         def _default_columns(self):
             return tuple([c for c in super(AggregationDualForm._SideForm, self)._default_columns()
                           if c not in self._main_form.group_by_columns()])
+
         def _create_query_fields_panel(self, sizer):
             self._query_fields_form = None
             self._query_fields_apply_button = None
             self._unapplied_query_field_changes = False
+
         def _current_arguments(self):
             return self._main_form.side_form_arguments()
 
@@ -595,11 +600,14 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
     """
     class _SideForm(ShowForm):
+
         def __init__(self, *args, **kwargs):
             self._main_form = kwargs.pop('main_form', None)
             super(DescriptiveDualForm._SideForm, self).__init__(*args, **kwargs)
+
         def _filter_menu(self):
             return None
+
         def _apply_profile(self, profile, **kwargs):
             # It makes little sense to apply profiles in this form.
             # What is more important: Disabling this method fixes the problem
@@ -608,6 +616,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
             # been selected in the main form but still before the other row
             # gets replaced in the side form.
             pass
+
         def _query_fields_row(self):
             return self._main_form._query_fields_row()
 
@@ -956,14 +965,18 @@ class MultiSideForm(MultiForm):
     CALL_BINDING_SELECTED = 'CALL_BINDING_SELECTED'
 
     class TabbedForm(object):
+
         def __init__(self, *args, **kwargs):
             self._binding = kwargs['binding']
             super(MultiSideForm.TabbedForm, self).__init__(*args, **kwargs)
+
         def _init_attributes(self, binding, **kwargs):
             self._binding = binding
             super(MultiSideForm.TabbedForm, self)._init_attributes(**kwargs)
+
         def binding(self):
             return self._binding
+
         def focus(self):
             nb = self._parent
             if nb.GetPageIndex(self) == nb.GetSelection():
@@ -972,6 +985,7 @@ class MultiSideForm(MultiForm):
 
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
         _ALLOW_TITLE_BAR = False
+
         def _init_attributes(self, binding, **kwargs):
             sbcol = binding.binding_column()
             if sbcol:
@@ -984,18 +998,22 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
 
     class TabbedShowForm(TabbedForm, ShowForm):
+
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
             self._sbcol = main_form.data(init_select=False).find_column(bcol).type().\
                 enumerator().value_column()
             super(MultiSideForm.TabbedShowForm, self)._init_attributes(binding=binding, **kwargs)
+
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
 
     class TabbedWebForm(TabbedForm, WebForm):
+
         def _init_attributes(self, binding, main_form, **kwargs):
             if binding.uri():
                 get_uri = binding.uri()
+
                 def load_content(row):
                     uri = get_uri(row)
                     restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
@@ -1003,10 +1021,12 @@ class MultiSideForm(MultiForm):
                     self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
             else:
                 get_content = binding.content()
+
                 def load_content(row):
                     self.load_content(get_content(row))
             self._load_content = load_content
             super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
+
         def on_selection(self, row):
             self._load_content(row)
 
@@ -1173,13 +1193,18 @@ class MultiBrowseDualForm(BrowseDualForm):
 
     """
     DESCR = _("tabbed dual form")
+
     class MainForm(BrowseForm):
+
         def bindings(self):
             return self._view.bindings()
+
         def orientation(self):
             return self._view.orientation()
+
         def _print_form_kwargs(self):
             return dict(form_bindings=self.bindings())
+
         def filter(self, *args, **kwargs):
             BrowseForm.filter(self, *args, **kwargs)
             row = self.current_row()
