@@ -35,6 +35,7 @@ import wx
 import pytis.data
 import pytis.form
 import pytis.output
+import wx.lib.pdfviewer
 from pytis.presentation import ActionContext, Button, Computer, Editable, Field, GroupSpec, \
     Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
     Text, TextFormat, ViewSpec
@@ -3449,6 +3450,7 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
 
+
 class ShowForm(EditForm):
     """Formulář pro zobrazení náhledu.
 
@@ -3524,13 +3526,8 @@ class BrowsableShowForm(ShowForm):
         return getattr(self, '_list_position', None)
 
 
-class WebForm(Form, Refreshable):
-    """Web browser embedded in a Pytis form.
-
-    The form shows a browser window as its main content.
-
-    """
-    DESCR = _(u"document view")
+class ViewerForm(Form, Refreshable):
+    """Generic base class for forms viewing content."""
 
     def _create_view_spec(self):
         # This is quite a hack.  The base Form class should be independent of
@@ -3542,11 +3539,26 @@ class WebForm(Form, Refreshable):
         return None
 
     def _init_attributes(self, title=None, content=None, **kwargs):
-        super_(WebForm)._init_attributes(self, **kwargs)
+        super_(ViewerForm)._init_attributes(self, **kwargs)
         assert (content is not None) == (title is not None), \
             "When 'content' specified, 'title' must be set too (and wice versa)."
         self._title = title
         self._content = content
+
+    def _can_help(self):
+        return False
+
+    def title(self):
+        return self._title or _("Document")
+
+
+class WebForm(ViewerForm):
+    """Web browser embedded in a Pytis form.
+
+    The form shows a browser window as its main content.
+
+    """
+    DESCR = _(u"document view")
 
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self, guardian=self)
@@ -3559,14 +3571,38 @@ class WebForm(Form, Refreshable):
     def _refresh(self, when=None, interactive=False):
         self._browser.reload()
 
-    def _can_help(self):
-        return False
-
     def load_content(self, content):
         if isinstance(content, basestring):
             self._browser.load_html(content, restrict_navigation='-')
         else:
             self._browser.load_content(content)
 
-    def title(self):
-        return self._title or _("Document")
+
+class FileViewer(ViewerForm):
+    """File Viewer embedded in a Pytis form.
+
+    The form displays the file contents in its main content area.  The viewer
+    currently only supports PDF files.
+
+    """
+    DESCR = _(u"file view")
+
+    def _create_form_parts(self, sizer):
+        self._viewer = viewer = wx.lib.pdfviewer.viewer.pdfViewer(
+            self, -1, wx.DefaultPosition, wx.DefaultSize,
+            wx.HSCROLL | wx.VSCROLL,
+        )
+        viewer.ShowLoadProgress = False
+        sizer.Add(viewer, 1, wx.EXPAND)
+        if self._content is not None:
+            self.load_file(self._content)
+
+    def load_file(self, data):
+        """Display preview of given file-like object in the form."""
+        try:
+            self._viewer.LoadFile(data)
+        except Exception as e:
+            message(_("Loading document failed: %s", e), beep_=True)
+            self._viewer.Show(False)
+        else:
+            self._viewer.Show(True)

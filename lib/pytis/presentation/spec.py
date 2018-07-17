@@ -2133,8 +2133,8 @@ class Binding(object):
     """
     def __init__(self, id, title, name=None, binding_column=None, condition=None,
                  descr=None, single=False, enabled=True, arguments=None,
-                 prefill=None, search=None, uri=None, content=None):
-        """Arguments:
+                 prefill=None, search=None, uri=None, content=None, preview_column=None):
+        """Arguments:.
 
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
@@ -2211,6 +2211,10 @@ class Binding(object):
             functions 'pytis.util.lcg_to_html()' or
             'pytis.util.parse_lcg_text()' may be useful if you need to display
             the formatted content of a field containing LCG Structured Text.
+          preview_column -- id of a binary data column to show preview.  If not
+            None, this binding results in a file viewer which displays the
+            preview of the column contents as a file.  Currently only PDF files
+            are supported.
 
         """
         assert isinstance(id, basestring), id
@@ -2224,14 +2228,19 @@ class Binding(object):
                 "At least one of 'binding_column', 'condition', `arguments' must be used."
             assert isinstance(single, bool), single
             assert prefill is None or isinstance(prefill, collections.Callable), prefill
-            assert uri is None
+            assert uri is None, uri
+            assert content is None, content
+            assert preview_column is None, preview_column
         else:
-            if uri is not None:
+            if preview_column is not None:
+                assert isinstance(preview_column, basestring), preview_column
+                assert uri is content is None, (uri, content)
+            elif uri is not None:
                 assert isinstance(uri, collections.Callable), uri
-                assert content is None, content
+                assert content is preview_column is None, (content, preview_column)
             else:
                 assert isinstance(content, collections.Callable), content
-                assert uri is None, uri
+                assert uri is preview_column is None, (uri, preview_column)
             assert name is binding_column is condition is arguments is prefill is None
         assert enabled is None or isinstance(enabled, (bool, collections.Callable)), enabled
         self._id = id
@@ -2247,6 +2256,7 @@ class Binding(object):
         self._search = search
         self._uri = uri
         self._content = content
+        self._preview_column = preview_column
 
     def id(self):
         return self._id
@@ -2286,6 +2296,9 @@ class Binding(object):
 
     def content(self):
         return self._content
+
+    def preview_column(self):
+        return self._preview_column
 
 
 class Editable(object):

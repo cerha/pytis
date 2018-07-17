@@ -27,13 +27,14 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 import copy
 import re
 import wx
+import cStringIO as StringIO
 
 import pytis.data
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 from dialog import MultiQuestion
 from event import wx_callback
-from form import BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm
+from form import BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm, FileViewer
 from list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
 from screen import CheckItem, Menu, MItem, \
     busy_cursor, is_busy_cursor, microsleep, popup_menu, wx_focused_window
@@ -1030,6 +1031,24 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             self._load_content(row)
 
+    class TabbedFileViewer(TabbedForm, FileViewer):
+
+        def _init_attributes(self, binding, main_form, **kwargs):
+            self._preview_column = binding.preview_column()
+            super(MultiSideForm.TabbedFileViewer, self)._init_attributes(binding=binding, **kwargs)
+
+        def on_selection(self, row):
+            value = row[self._preview_column].value()
+            if value is None:
+                main_form = top_window().main_form()
+                data = main_form.data()
+                row = data.row(row[data.key()[0].id()], arguments=main_form._current_arguments())
+                value = row[self._preview_column].value()
+            if value:
+                self.load_file(StringIO.StringIO(value.buffer()))
+            else:
+                self.load_file(None)
+
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
@@ -1039,7 +1058,9 @@ class MultiSideForm(MultiForm):
         if binding.name() and not has_access(binding.name()):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
-        if binding.name() is None:
+        if binding.preview_column() is not None:
+            form = self.TabbedFileViewer
+        elif binding.name() is None:
             form = self.TabbedWebForm
         elif binding.single():
             form = self.TabbedShowForm
