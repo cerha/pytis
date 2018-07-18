@@ -2640,12 +2640,18 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         if not data:
             self.Show(False)
         else:
-            self.Show(True)
+            import magic
+            mime_type = magic.from_buffer(data.read(1024), mime=True)
+            data.seek(0)
             try:
-                self.LoadFile(data)
+                if mime_type != 'application/pdf':
+                    raise Exception(_("Unsupported file type: %s", mime_type))
+                else:
+                    self.Show(True)
+                    self.LoadFile(data)
             except Exception as e:
-                pytis.form.message(_("Loading document failed: %s", e), beep_=True)
                 self.Show(False)
+                pytis.form.message(_("Loading document failed: %s", e), beep_=True)
 
 
 class FileViewerFrame(wx.Frame):
