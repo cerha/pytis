@@ -35,7 +35,6 @@ import wx
 import pytis.data
 import pytis.form
 import pytis.output
-import wx.lib.pdfviewer
 from pytis.presentation import ActionContext, Button, Computer, Editable, Field, GroupSpec, \
     Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
     Text, TextFormat, ViewSpec
@@ -43,7 +42,7 @@ from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, 
     find, format_traceback, log, super_, xlist, xtuple, argument_names
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
-    MSeparator, Window, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
+    MSeparator, Window, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
     db_operation, decrypted_names, delete_record, form_settings_manager, \
@@ -3578,33 +3577,16 @@ class WebForm(ViewerForm):
             self._browser.load_content(content)
 
 
-class FileViewer(ViewerForm):
-    """File Viewer embedded in a Pytis form.
-
-    The form displays the file contents in its main content area.  The viewer
-    currently only supports PDF files.
-
-    """
-    DESCR = _(u"file view")
+class FileViewerForm(ViewerForm):
+    """File Viewer embedded in a Pytis form."""
+    DESCR = _(u"file preview")
 
     def _create_form_parts(self, sizer):
-        self._viewer = viewer = wx.lib.pdfviewer.viewer.pdfViewer(
-            self, -1, wx.DefaultPosition, wx.DefaultSize,
-            wx.HSCROLL | wx.VSCROLL,
-        )
-        viewer.ShowLoadProgress = False
+        self._viewer = viewer = FileViewer(self)
         sizer.Add(viewer, 1, wx.EXPAND)
         if self._content is not None:
             self.load_file(self._content)
 
     def load_file(self, data):
         """Display preview of given file-like object in the form."""
-        if not data:
-            self._viewer.Show(False)
-        else:
-            self._viewer.Show(True)
-            try:
-                self._viewer.LoadFile(data)
-            except Exception as e:
-                message(_("Loading document failed: %s", e), beep_=True)
-                self._viewer.Show(False)
+        self._viewer.load_file(data)

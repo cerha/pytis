@@ -34,7 +34,10 @@ from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 from dialog import MultiQuestion
 from event import wx_callback
-from form import BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm, FileViewer
+from form import (
+    BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm,
+    FileViewerForm,
+)
 from list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
 from screen import CheckItem, Menu, MItem, \
     busy_cursor, is_busy_cursor, microsleep, popup_menu, wx_focused_window
@@ -1031,11 +1034,11 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             self._load_content(row)
 
-    class TabbedFileViewer(TabbedForm, FileViewer):
+    class TabbedFileViewerForm(TabbedForm, FileViewerForm):
 
         def _init_attributes(self, binding, main_form, **kwargs):
             self._preview_column = binding.preview_column()
-            super(MultiSideForm.TabbedFileViewer, self)._init_attributes(binding=binding, **kwargs)
+            super(MultiSideForm.TabbedFileViewerForm, self)._init_attributes(binding=binding, **kwargs)
 
         def on_selection(self, row):
             value = row[self._preview_column].value()
@@ -1059,7 +1062,7 @@ class MultiSideForm(MultiForm):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
         if binding.preview_column() is not None:
-            form = self.TabbedFileViewer
+            form = self.TabbedFileViewerForm
         elif binding.name() is None:
             form = self.TabbedWebForm
         elif binding.single():

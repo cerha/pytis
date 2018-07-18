@@ -43,6 +43,7 @@ import weakref
 
 import lcg
 
+import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 if not hasattr(supertooltip.SuperToolTip, 'DoHideNow'):
     # Hack: Older wx versions (including wx 2.8) include a very old version of SuperToolTip.
@@ -2610,6 +2611,64 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,
                        resource_provider=node.resource_provider())
+
+
+class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
+    """File viewer widget.
+
+    Wx window displaying file preview in its main content area.
+
+    Only PDF files are currently supported (using 'wx.lib.pdfviewer') but the
+    intention is to possibly have one such widget supporting multiple file
+    formats, such as images.
+
+    """
+
+    def __init__(self, parent):
+        wx.lib.pdfviewer.viewer.pdfViewer.__init__(
+            self, parent, -1, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL | wx.VSCROLL,
+        )
+        self.ShowLoadProgress = False
+
+    def load_file(self, data):
+        """Display preview of given file-like object in the viewer.
+
+        If 'data' is None, empty, or of unsupported format, display an empty
+        (gray) area.
+
+        """
+        if not data:
+            self.Show(False)
+        else:
+            self.Show(True)
+            try:
+                self.LoadFile(data)
+            except Exception as e:
+                pytis.form.message(_("Loading document failed: %s", e), beep_=True)
+                self.Show(False)
+
+
+class FileViewerFrame(wx.Frame):
+    """Standalone frame displaying file content preview."""
+
+    def __init__(self, title, data, size=(800, 600)):
+        """
+        Arguments:
+          title -- Frame title (string)
+          data -- File-like object to show preview of
+          size -- Initial frame size as a tuple of pixels
+
+        """
+        wx.Frame.__init__(self, None, title=title)
+        sizer = wx.BoxSizer()
+        viewer = FileViewer(self)
+        viewer.load_file(data)
+        sizer.Add(viewer, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.SetSize(size)
+        self.Show()
+        self.Raise()
 
 
 class IN(pytis.data.Operator):
