@@ -1140,7 +1140,21 @@ class Menu(_TitledMenuObject):
                         hotkey_items.append((item, wxitem, wx_title, width))
                     max_label_width = max(width + max_hotkey_width, max_label_width)
                 elif isinstance(item, Menu):
+                    # AppendMenu riases the following exception in wx 2.9 after some time
+                    # of using the application (when wx.NewId() gets to return 63851):
+                    #
+                    # PyAssertionError: C++ assertion "(itemid >= 0 && itemid < SHRT_MAX)
+                    # || (itemid >= wxID_AUTO_LOWEST && itemid <= wxID_AUTO_HIGHEST)"
+                    # failed at ../src/common/menucmn.cpp(260) in wxMenuItemBase():
+                    # invalid itemid value
+                    #
+                    # The assertion seems to be quite useless according to:
+                    # https://groups.google.com/forum/#!topic/wx-users/yZD1PRaKbz4
+                    #
+                    app = wx.GetApp()
+                    app.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
                     menu.AppendMenu(wx.NewId(), wx_title, item.create(parent, keymap))
+                    app.SetAssertMode(wx.PYAPP_ASSERT_EXCEPTION)
                     max_label_width = max(width + 20, max_label_width)
                 else:
                     raise ProgramError('Invalid menu item type', item)
