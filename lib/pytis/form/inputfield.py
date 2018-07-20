@@ -184,7 +184,8 @@ class _Completer(wx.PopupWindow):
                 listctrl.Select(sel + 1)
             elif code == wx.WXK_UP and sel > 0:
                 listctrl.Select(sel - 1)
-            listctrl.EnsureVisible(sel)
+            if sel != -1:
+                listctrl.EnsureVisible(sel)
             self._show()
             return True
         if self.IsShown():
