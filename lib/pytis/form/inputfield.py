@@ -1189,20 +1189,24 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
     _DEFAULT_HEIGHT = 0
 
     def _create_ctrl(self, parent):
-        if self._spec.orientation() == Orientation.HORIZONTAL:
+        spec = self._spec
+        if spec.orientation() == Orientation.HORIZONTAL:
             style = wx.RA_SPECIFY_COLS
             dimension = self.width()
         else:
             style = wx.RA_SPECIFY_ROWS
             dimension = self.height()
-        label = self.spec().label()
+        label = spec.label()
         if label:
             label = label + ':'
         # Radio Box enumeration is STATIC.
-        enumeration = self._row.enumerate(self.id())
-        self._radio_values = [self._type.export(value) for value, label_ in enumeration]
+        choices = self._row.enumerate(self.id())
+        if not (self._type.not_null() and spec.default() is not None):
+            # Even NOT NULL fields may initially have NULL value when 'default' is not set.
+            choices.insert(0, (None, spec.null_display() or ''))
+        self._radio_values = [self._type.export(value) for value, choice in choices]
         control = wx.RadioBox(parent, -1, label, style=style, majorDimension=dimension,
-                              choices=[label_ for value, label_ in enumeration])
+                              choices=[choice for value, choice in choices])
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
 
@@ -1219,13 +1223,19 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         try:
             selection = self._radio_values.index(value)
         except ValueError:
-            selection = wx.NOT_FOUND
-        self._ctrl.SetSelection(selection)
-        self._on_change()  # call manually, since SetSelection() doesn't emit an event.
+            pass
+        else:
+            self._ctrl.SetSelection(selection)
+            self._on_change()  # call manually, since SetSelection() doesn't emit an event.
 
 
 class EnumerationField(GenericEnumerationField):
-    """Common base class for fields based on 'wx.ControlWithItems'."""
+    """Common base class for fields based on 'wx.ControlWithItems'.
+
+    'wx.ControlWithItems' allows the items to be updated dynamically (as
+    opposed to static enumeration controls, such as 'wx.RadioBox').
+
+    """
     _INVALID_SELECTION = wx.NOT_FOUND
 
     def _enumeration(self):
