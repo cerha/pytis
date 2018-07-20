@@ -27,6 +27,7 @@ i třídy, které tyto specifikace následně zpracovávají.
 
 """
 
+import sys
 import collections
 import copy
 import os
@@ -40,6 +41,7 @@ import SimpleHTTPServer
 import thread
 import mimetypes
 import weakref
+import fitz
 
 import lcg
 
@@ -2627,6 +2629,65 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                        resource_provider=node.resource_provider())
 
 
+class mupdfProcessor(object):
+    """PDF processor for 'wx.lib.pdfviewer.viewer.pdfViewer'.
+
+    Version taken from wx 4.0 because the version in wx 3.0 does not work.
+
+    """
+
+    def __init__(self, parent, pdf_file):
+        """
+        :param `pdf_file`: a File object or an object that supports the standard
+        read and seek methods similar to a File object.
+        Could also be a string representing a path to a PDF file.
+        """
+        self.parent = parent
+        if isinstance(pdf_file, types.StringTypes):
+            # a filename/path string, pass the name to fitz.open
+            pathname = pdf_file
+            self.pdfdoc = fitz.open(pathname)
+        else:
+            # assume it is a file-like object, pass the stream content to fitz.open
+            # and a '.pdf' extension in pathname to identify the stream type
+            pathname = 'fileobject.pdf'
+            if pdf_file.tell() > 0:     # not positioned at start
+                pdf_file.seek(0)
+            stream = bytearray(pdf_file.read())
+            self.pdfdoc = fitz.open(pathname, stream)
+
+        self.numpages = self.pdfdoc.pageCount
+        page = self.pdfdoc.loadPage(0)
+        self.pagewidth = page.bound().width
+        self.pageheight = page.bound().height
+        self.page_rect = page.bound()
+        self.zoom_error = False     # set if memory errors during render
+
+    def DrawFile(self, frompage, topage):
+        """
+        This is a no-op for mupdf. Each page is scaled and drawn on
+        demand during RenderPage directly via a call to page.getPixmap()
+        """
+        self.parent.GoPage(frompage)
+
+    def RenderPage(self, gc, pageno, scale=1.0):
+        " Render the set of pagedrawings into gc for specified page "
+        page = self.pdfdoc.loadPage(pageno)
+        matrix = fitz.Matrix(scale, scale)
+        try:
+            pix = page.getPixmap(matrix=matrix)   # MUST be keyword arg(s)
+            bmp = wx.BitmapFromBufferRGBA(pix.width, pix.height, pix.samples)
+            gc.DrawBitmap(bmp, 0, 0, pix.width, pix.height)
+            self.zoom_error = False
+        except (RuntimeError, MemoryError):
+            if not self.zoom_error:     # report once only
+                self.zoom_error = True
+                dlg = wx.MessageDialog(self.parent, 'Out of memory. Zoom level too high?',
+                              'pdf viewer' , wx.OK |wx.ICON_EXCLAMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+
+
 class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
     """File viewer widget.
 
@@ -2643,6 +2704,31 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
             self, parent, -1, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL | wx.VSCROLL,
         )
         self.ShowLoadProgress = False
+
+    def LoadFile(self, pdf_file):
+        # Override this method to fix behavior when file-like object is passed
+        # and to use the mupdfProcessor taken from wx 4.0 (defined above).
+        if isinstance(pdf_file, types.StringTypes):
+            # it must be a filename/path string, open it as a file
+            fileobj = file(pdf_file, 'rb')
+            self.pdfpathname = pdf_file
+        else:
+            # assume it is a file-like object
+            fileobj = pdf_file
+            self.pdfpathname = ''  # empty default file name
+        self.ShowLoadProgress = True
+        self.pdfdoc = mupdfProcessor(self, fileobj)
+        self.numpages = self.pdfdoc.numpages
+        self.pagewidth = self.pdfdoc.pagewidth
+        self.pageheight = self.pdfdoc.pageheight
+        self.newdoc = True
+        self.Scroll(0,0)                # in case this is a re-LoadFile
+        self.CalculateDimensions(True)  # to get initial visible page range
+        # draw and display the minimal set of pages
+        self.pdfdoc.DrawFile(self.frompage, self.topage)
+        self.have_file = True
+        # now draw full set of pages
+        wx.CallAfter(self.pdfdoc.DrawFile, 0, self.numpages-1)
 
     def load_file(self, data):
         """Display preview of given file-like object in the viewer.
