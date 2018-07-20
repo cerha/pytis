@@ -2753,6 +2753,13 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
                 self.Show(False)
                 pytis.form.message(_("Loading document failed: %s", e), beep_=True)
 
+    def buttons(self):
+        buttons = wx.lib.pdfviewer.pdfButtonPanel(self.GetParent(), wx.ID_ANY,
+                                                  wx.DefaultPosition, wx.DefaultSize, 0)
+        buttons.viewer = self
+        self.buttonpanel = buttons
+        return buttons
+
 
 class FileViewerFrame(wx.Frame):
     """Standalone frame displaying file content preview."""
@@ -2766,12 +2773,13 @@ class FileViewerFrame(wx.Frame):
 
         """
         wx.Frame.__init__(self, None, title=title)
-        sizer = wx.BoxSizer()
+        sizer = wx.BoxSizer(wx.VERTICAL)
         viewer = FileViewer(self)
-        viewer.load_file(data)
+        sizer.Add(viewer.buttons(), 0, wx.EXPAND)
         sizer.Add(viewer, 1, wx.EXPAND)
         self.SetSizer(sizer)
         sizer.Fit(self)
+        viewer.load_file(data)
         self.SetSize(size)
         self.Show()
         self.Raise()
