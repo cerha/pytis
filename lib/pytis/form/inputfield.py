@@ -1319,7 +1319,9 @@ class ListBoxField(EnumerationField):
 
     def _set_value(self, value):
         super(ListBoxField, self)._set_value(value)
-        self._ctrl.SetFirstItem(self._ctrl.GetSelection())
+        selection = self._ctrl.GetSelection()
+        if selection != self._INVALID_SELECTION:
+            self._ctrl.SetFirstItem(selection)
 
 
 class Invocable(object, CommandHandler):
