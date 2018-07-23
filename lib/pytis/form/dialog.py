@@ -190,9 +190,9 @@ class GenericDialog(Dialog):
         sizer.Add(button_sizer, 0, wx.CENTER)
         pytis.form.wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
         # dokonči ...
-        sizer.SetSizeHints(dialog)
         dialog.SetAutoLayout(True)
         dialog.SetSizer(sizer)
+        sizer.SetSizeHints(dialog)
         sizer.Fit(dialog)
 
     def _create_content(self, sizer):
