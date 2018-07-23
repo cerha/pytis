@@ -1727,7 +1727,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _set_selection(self, i):
         list = self._list
-        if self._selected_item is not None:
+        if self._selected_item is not None and self._selected_item < list.GetItemCount():
             # Deselect the old item.
             fgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
             bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
