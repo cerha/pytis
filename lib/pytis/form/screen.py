@@ -1153,10 +1153,17 @@ class Menu(_TitledMenuObject):
                     # The assertion seems to be quite useless according to:
                     # https://groups.google.com/forum/#!topic/wx-users/yZD1PRaKbz4
                     #
-                    app = wx.GetApp()
-                    app.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
-                    menu.AppendMenu(wx.NewId(), wx_title, item.create(parent, keymap))
-                    app.SetAssertMode(wx.PYAPP_ASSERT_EXCEPTION)
+                    # UPDATE:
+                    # The hack with setting assertion mode does not solve the issue
+                    # completely. The problem looks to be related to C integer constants
+                    # wxID_AUTO_LOWEST and wxID_AUTO_HIGHEST, which are negative values
+                    # but wx.NewId gives values which don't correspond to these
+                    # constants properly (when overflows occur).
+                    # So instead of having about million possible ids (-1000000 , -2000),
+                    # in reality there are only like 32667 ids available.
+                    # Giving some offset to the obtained newid value seems to help.
+                    newid = wx.NewId() + wx.ID_AUTO_LOWEST
+                    menu.AppendMenu(newid, wx_title, item.create(parent, keymap))
                     max_label_width = max(width + 20, max_label_width)
                 else:
                     raise ProgramError('Invalid menu item type', item)
