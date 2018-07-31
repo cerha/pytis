@@ -814,7 +814,13 @@ class TextField(InputField):
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
         wxid = control.GetId()
         maxlen = self._maxlen()
-        if maxlen is not None:
+        if maxlen is not None and self.height() == 1:
+            # TODO: Setting max length on multiline TextCtrl fields
+            # is not supported on wx3.x anymore, so we will not try
+            # to set it. This could be problem in varchar fields
+            # using multiline TextCtrl.
+            # So later we should find another way to check maxlen
+            # for multiline fields.
             control.SetMaxLength(maxlen)
             wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
                         lambda e: message(_("Maximal length exceeded."), beep_=True))
