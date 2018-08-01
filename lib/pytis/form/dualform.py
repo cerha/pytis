@@ -27,7 +27,7 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 import copy
 import re
 import wx
-import cStringIO as StringIO
+import cStringIO
 
 import pytis.data
 from pytis.presentation import Orientation
@@ -1048,7 +1048,7 @@ class MultiSideForm(MultiForm):
                 row = data.row(row[data.key()[0].id()], arguments=main_form._current_arguments())
                 value = row[self._preview_column].value()
             if value:
-                self.load_file(StringIO.StringIO(value.buffer()))
+                self.load_file(cStringIO.StringIO(value.buffer()))
             else:
                 self.load_file(None)
 
