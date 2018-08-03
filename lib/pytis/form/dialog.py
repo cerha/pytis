@@ -186,6 +186,8 @@ class GenericDialog(Dialog):
             report = wx_text_view(dialog, self._report,
                                   format=self._report_format,
                                   width=self._report_size[0], height=self._report_size[1])
+            # Set the min size to be respected by the sizer (but unset again below).
+            report.SetMinSize(report.GetSize())
             sizer.Add(report, 1, wx.EXPAND)
         sizer.Add(button_sizer, 0, wx.CENTER)
         pytis.form.wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
@@ -194,6 +196,10 @@ class GenericDialog(Dialog):
         dialog.SetSizer(sizer)
         sizer.SetSizeHints(dialog)
         sizer.Fit(dialog)
+        if self._report is not None:
+            # Unset report's min size to allow manually sizing the dialog to a smaller size.
+            report.SetMinSize((100, 100))
+
 
     def _create_content(self, sizer):
         """Create the main dialog content and add it to the top level sizer.
