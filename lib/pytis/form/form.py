@@ -3583,6 +3583,7 @@ class FileViewerForm(ViewerForm):
 
     def _create_form_parts(self, sizer):
         self._viewer = viewer = FileViewer(self)
+        sizer.Add(viewer.buttons(), 0, wx.EXPAND)
         sizer.Add(viewer, 1, wx.EXPAND)
         if self._content is not None:
             self.load_file(self._content)
