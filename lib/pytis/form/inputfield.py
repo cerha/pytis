@@ -815,15 +815,11 @@ class TextField(InputField):
         wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
-            # TODO: Setting max length on multiline TextCtrl fields
-            # is not supported on wx3.x anymore, so we will not try
-            # to set it. This could be problem in varchar fields
-            # using multiline TextCtrl.
-            # So later we should find another way to check maxlen
-            # for multiline fields.
+            # Setting max length on multiline TextCtrl fields is not supported
+            # on wx 3.x and later.  Thus we limit the length only on single line
+            # fields and instead of handling wx.EVT_TEXT_MAXLEN we implement our
+            # own maxlen check in _on_change().
             control.SetMaxLength(maxlen)
-            wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
-                        lambda e: message(_("Maximal length exceeded."), beep_=True))
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
@@ -888,11 +884,17 @@ class TextField(InputField):
                                    self._enabled and wx_focused_window() == self._ctrl)
 
     def _on_change(self, event=None):
+        value = self._get_value()
         post_process = self._post_process_func()
         if post_process:
-            value = post_process(self._get_value())
+            value = post_process(value)
             if value != self._get_value():
                 self._set_value(value)
+        maxlen = self._maxlen()
+        if maxlen is not None and len(value) > maxlen:
+            # wx 3.x and later does not support wx.EVT_TEXT_MAXLEN on multiline TextCtrl fields.
+            # Thus we handle maxlen ourselves here without using wx.EVT_TEXT_MAXLEN altogether.
+            message(_("Maximal length exceeded."), beep_=True)
         if event and self._completer:
             self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
