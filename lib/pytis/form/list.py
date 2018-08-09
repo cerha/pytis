@@ -2123,7 +2123,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._aggregation_results[(cid, operation)] is not None
 
     def _can_edit(self):
-        return self._current_key() is not None
+        return self.current_row() is not None
 
     def _cmd_edit(self):
         table = self._table
