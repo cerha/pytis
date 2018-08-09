@@ -1357,9 +1357,16 @@ class MItem(_TitledMenuObject):
         if icon:
             item.SetBitmap(icon)
 
+    def _on_invoke_command(self, event):
+        # Invoke the command through CallAfter to finish menu event processing before
+        # command invocation.  Calling dirrectly for example resulted in disfunctional
+        # TAB traversal in a popup form which was opended through a popup menu command
+        # due to FindFocus() returning a wrong window.  Using CallAfter fixes this.
+        wx.CallAfter(self._command.invoke, **self._args)
+
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(), lambda e: self._command.invoke(**self._args))
+        wx_callback(wx.EVT_MENU, parent, item.GetId(), self._on_invoke_command)
         wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         self._create_icon(item)
         return item

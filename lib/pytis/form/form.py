@@ -2842,7 +2842,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                           self._fields, ())
                    + tuple(self._tab_navigated_widgets))
         order = [w for w in widgets if w.IsEnabled()]
-        current = wx_focused_window()
+        current = self.FindFocus()
         if current in order:
             i = (order.index(current) + (-1 if back else 1)) % len(order)
             target = order[i]
