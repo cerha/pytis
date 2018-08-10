@@ -28,6 +28,7 @@ import copy
 import re
 import wx
 import cStringIO
+import fitz
 
 import pytis.data
 from pytis.presentation import Orientation
@@ -1047,7 +1048,7 @@ class MultiSideForm(MultiForm):
     class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
         def on_selection(self, row):
             content = self._get_content(row)
-            if content and not hasattr(content, 'read'):
+            if content and not hasattr(content, 'read') and not isinstance(content, fitz.Document):
                 content = cStringIO.StringIO(content)
             self.load_file(content)
 

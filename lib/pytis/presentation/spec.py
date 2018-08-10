@@ -2217,8 +2217,8 @@ class Binding(object):
               displayed in a web browser.  Use 'pytis.util.parse_lcg_text()' to
               convert LCG Structured Text into 'lcg.ContentNode'.
             'uri' ... URI string to load into a web browser.
-            'pdf' ... binary value containing a PDF document to be displayed in
-              a PDF viewer.
+            'pdf' ... binary value containing a serialized PDF document or a
+              'fitz.Document' instance to be displayed in a PDF viewer.
           uri -- Deprecated.  Use 'content' with 'content_type' = 'uri'.
 
         """

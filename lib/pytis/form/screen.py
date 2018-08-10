@@ -2661,6 +2661,9 @@ class mupdfProcessor(object):
             # a filename/path string, pass the name to fitz.open
             pathname = pdf_file
             self.pdfdoc = fitz.open(pathname)
+        if isinstance(pdf_file, fitz.Document):
+            pathname = 'fileobject.pdf'
+            self.pdfdoc = pdf_file
         else:
             # assume it is a file-like object, pass the stream content to fitz.open
             # and a '.pdf' extension in pathname to identify the stream type
@@ -2720,18 +2723,18 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.ShowLoadProgress = False
 
     def LoadFile(self, pdf_file):
-        # Override this method to fix behavior when file-like object is passed
-        # and to use the mupdfProcessor taken from wx 4.0 (defined above).
+        # Override this method to fix behavior when file-like object is passed,
+        # to allow passing fitz.Document directly and to use the mupdfProcessor
+        # taken from wx 4.0 (defined above).
         if isinstance(pdf_file, types.StringTypes):
             # it must be a filename/path string, open it as a file
-            fileobj = file(pdf_file, 'rb')
             self.pdfpathname = pdf_file
+            pdf_file = file(pdf_file, 'rb')
         else:
-            # assume it is a file-like object
-            fileobj = pdf_file
+            # assume it is a file-like object or a fitz.Document
             self.pdfpathname = ''  # empty default file name
         self.ShowLoadProgress = True
-        self.pdfdoc = mupdfProcessor(self, fileobj)
+        self.pdfdoc = mupdfProcessor(self, pdf_file)
         self.numpages = self.pdfdoc.numpages
         self.pagewidth = self.pdfdoc.pagewidth
         self.pageheight = self.pdfdoc.pageheight
@@ -2745,7 +2748,9 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         wx.CallAfter(self.pdfdoc.DrawFile, 0, self.numpages-1)
 
     def load_file(self, data):
-        """Display preview of given file-like object in the viewer.
+        """Display preview of given document in the viewer.
+
+        'data' is either a file-like object or a 'fitz.Document' instance.
 
         If 'data' is None, empty, or of unsupported format, display an empty
         (gray) area.
@@ -2754,9 +2759,13 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         if not data:
             self.Show(False)
         else:
-            import magic
-            mime_type = magic.from_buffer(data.read(1024), mime=True)
-            data.seek(0)
+            if hasattr(data, 'read'):
+                import magic
+                mime_type = magic.from_buffer(data.read(1024), mime=True)
+                data.seek(0)
+            else:
+                assert isinstance(data, fitz.Document), data
+                mime_type = 'application/pdf'
             try:
                 if mime_type != 'application/pdf':
                     raise Exception(_("Unsupported file type: %s", mime_type))
