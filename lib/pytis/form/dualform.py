@@ -41,7 +41,7 @@ from form import (
 from list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
 from screen import CheckItem, Menu, MItem, \
     busy_cursor, is_busy_cursor, microsleep, popup_menu, wx_focused_window
-from application import current_form, has_access, message, run_dialog, run_form
+from application import current_form, has_access, message, run_dialog, run_form, top_window
 
 _ = translations('pytis-wx')
 
@@ -1002,7 +1002,6 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
 
     class TabbedShowForm(TabbedForm, ShowForm):
-
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
             self._sbcol = main_form.data(init_select=False).find_column(bcol).type().\
@@ -1012,45 +1011,45 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
 
-    class TabbedWebForm(TabbedForm, WebForm):
-
+    class TabbedContentForm(TabbedForm):
         def _init_attributes(self, binding, main_form, **kwargs):
-            if binding.uri():
-                get_uri = binding.uri()
+            self._binding_content = binding.content()
+            self._content_type = binding.content_type()
+            super(MultiSideForm.TabbedContentForm, self)._init_attributes(binding=binding, **kwargs)
 
-                def load_content(row):
-                    uri = get_uri(row)
-                    restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
-                                                 lambda m: m.group(1), uri)
-                    self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
+        def _get_content(self, row):
+            if isinstance(self._binding_content, basestring):
+                column = self._binding_content
+                value = row[column].value()
+                if value is None:
+                    main_form = top_window().main_form()
+                    data = main_form.data()
+                    row = data.row(row[data.key()[0].id()],
+                                   arguments=main_form._current_arguments())
+                    value = row[column].value()
+                if value and isinstance(row[column].type(), pytis.data.Binary):
+                    value = value.buffer()
+                content = value
             else:
-                get_content = binding.content()
+                content = self._binding_content(row)
+            return content
 
-                def load_content(row):
-                    self.load_content(get_content(row))
-            self._load_content = load_content
-            super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
-
+    class TabbedWebForm(TabbedContentForm, WebForm):
         def on_selection(self, row):
-            self._load_content(row)
+            if self._content_type == 'uri':
+                uri = self._get_content(row)
+                restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
+                                             lambda m: m.group(1), uri)
+                self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
+            elif self._content_type in ('html', 'lcg'):
+                self._browser.load_content(self._get_content(row))
 
-    class TabbedFileViewerForm(TabbedForm, FileViewerForm):
-
-        def _init_attributes(self, binding, main_form, **kwargs):
-            self._preview_column = binding.preview_column()
-            super(MultiSideForm.TabbedFileViewerForm, self)._init_attributes(binding=binding, **kwargs)
-
+    class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
         def on_selection(self, row):
-            value = row[self._preview_column].value()
-            if value is None:
-                main_form = top_window().main_form()
-                data = main_form.data()
-                row = data.row(row[data.key()[0].id()], arguments=main_form._current_arguments())
-                value = row[self._preview_column].value()
-            if value:
-                self.load_file(cStringIO.StringIO(value.buffer()))
-            else:
-                self.load_file(None)
+            content = self._get_content(row)
+            if content and not hasattr(content, 'read'):
+                content = cStringIO.StringIO(content)
+            self.load_file(content)
 
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
@@ -1061,14 +1060,14 @@ class MultiSideForm(MultiForm):
         if binding.name() and not has_access(binding.name()):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
-        if binding.preview_column() is not None:
-            form = self.TabbedFileViewerForm
-        elif binding.name() is None:
-            form = self.TabbedWebForm
-        elif binding.single():
+        if binding.single():
             form = self.TabbedShowForm
-        else:
+        elif binding.name():
             form = self.TabbedBrowseForm
+        elif binding.content_type() == 'pdf':
+            form = self.TabbedFileViewerForm
+        else:
+            form = self.TabbedWebForm
         form_instance = form(parent, self._resolver, binding.name(), full_init=False, **kwargs)
         return form_instance
 

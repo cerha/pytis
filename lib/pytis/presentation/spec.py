@@ -2133,7 +2133,8 @@ class Binding(object):
     """
     def __init__(self, id, title, name=None, binding_column=None, condition=None,
                  descr=None, single=False, enabled=True, arguments=None,
-                 prefill=None, search=None, uri=None, content=None, preview_column=None):
+                 prefill=None, search=None,
+                 content=None, content_type='content', uri=None):
         """Arguments:.
 
           id -- identifier of the binding as a string.  It must be unique among
@@ -2197,24 +2198,28 @@ class Binding(object):
             representing the side form key column value or a dictionary of
             column values (keys are column identifiers and values are
             pytis.data.Value instances).
-          uri -- a function of one argument (PresentedRow instance) returning
-            side form URI as a string.  If not None, the binding referes to a
-            "web form" -- an embedded browser window showing given URI.  In
-            this case the arguments 'name', 'binding_column', 'condition',
-            'arguments' and 'prefill' make no sense and must be None.
           content -- function of one argument (PresentedRow instance) returning
-            either an HTML string or 'lcg.ContentNode' instance to be displayed
-            as side form content.  If not None, the binding referes to a "web
-            form" -- an embedded browser window showing given content.  In this
-            case the arguments 'name', 'binding_column', 'condition',
-            'arguments' and 'prefill' make no sense and must be None.  The
-            functions 'pytis.util.lcg_to_html()' or
-            'pytis.util.parse_lcg_text()' may be useful if you need to display
-            the formatted content of a field containing LCG Structured Text.
-          preview_column -- id of a binary data column to show preview.  If not
-            None, this binding results in a file viewer which displays the
-            preview of the column contents as a file.  Currently only PDF files
-            are supported.
+            the content to be displayed in the side form.  If not None, the
+            binding is not a standard data form, but an embedded "viewer" of
+            the content returned by this function.  In this case the arguments
+            'name', 'binding_column', 'condition', 'arguments' and 'prefill'
+            make no sense and must be None.  The argument 'content_type'
+            further specifies which kind of content is returned by this
+            function.  A string may also be passed instead of a function.  This
+            string is the identifier of the main form column containing the
+            content to be displayed ('content_type' also specifying its type).
+          content_type -- determines what the 'content' function actually
+            returns.  Possible string values are:
+            'html' ... HTML string to be displayed in a web browser.  Use
+              'pytis.util.lcg_to_html()' to convert LCG structured text into
+              HTML.
+            'lcg' ... 'lcg.ContentNode' instance to be exported to HTML and
+              displayed in a web browser.  Use 'pytis.util.parse_lcg_text()' to
+              convert LCG Structured Text into 'lcg.ContentNode'.
+            'uri' ... URI string to load into a web browser.
+            'pdf' ... binary value containing a PDF document to be displayed in
+              a PDF viewer.
+          uri -- Deprecated.  Use 'content' with 'content_type' = 'uri'.
 
         """
         assert isinstance(id, basestring), id
@@ -2228,19 +2233,13 @@ class Binding(object):
                 "At least one of 'binding_column', 'condition', `arguments' must be used."
             assert isinstance(single, bool), single
             assert prefill is None or isinstance(prefill, collections.Callable), prefill
-            assert uri is None, uri
             assert content is None, content
-            assert preview_column is None, preview_column
         else:
-            if preview_column is not None:
-                assert isinstance(preview_column, basestring), preview_column
-                assert uri is content is None, (uri, content)
-            elif uri is not None:
-                assert isinstance(uri, collections.Callable), uri
-                assert content is preview_column is None, (content, preview_column)
-            else:
-                assert isinstance(content, collections.Callable), content
-                assert uri is preview_column is None, (uri, preview_column)
+            if uri is not None:
+                assert content is None, content
+                content = uri
+                content_type = 'uri'
+            assert isinstance(content, (basestring, collections.Callable)), content
             assert name is binding_column is condition is arguments is prefill is None
         assert enabled is None or isinstance(enabled, (bool, collections.Callable)), enabled
         self._id = id
@@ -2254,9 +2253,8 @@ class Binding(object):
         self._arguments = arguments
         self._prefill = prefill
         self._search = search
-        self._uri = uri
         self._content = content
-        self._preview_column = preview_column
+        self._content_type = content_type
 
     def id(self):
         return self._id
@@ -2291,14 +2289,11 @@ class Binding(object):
     def search(self):
         return self._search
 
-    def uri(self):
-        return self._uri
-
     def content(self):
         return self._content
 
-    def preview_column(self):
-        return self._preview_column
+    def content_type(self):
+        return self._content_type
 
 
 class Editable(object):
