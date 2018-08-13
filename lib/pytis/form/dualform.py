@@ -1042,7 +1042,9 @@ class MultiSideForm(MultiForm):
                 restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
                                              lambda m: m.group(1), uri)
                 self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
-            elif self._content_type in ('html', 'lcg'):
+            elif self._content_type == 'html':
+                self._browser.load_html(self._get_content(row))
+            elif self._content_type == 'lcg':
                 self._browser.load_content(self._get_content(row))
 
     class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
