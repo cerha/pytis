@@ -256,9 +256,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         else:
                             run_dialog(pytis.form.Error, _("Invalid password"))
                 if crypto_password:
-                    pytis.data.DBFunctionDefault('pytis_crypto_unlock_current_user_passwords',
-                                                 lambda: config.dbconnection)\
-                              .reset_crypto_password(crypto_password)
+                    pytis.data.DBFunctionDefault(
+                        'pytis_crypto_unlock_current_user_passwords',
+                        lambda: config.dbconnection
+                    ).reset_crypto_password(crypto_password)
         decrypted_names = set()
         if count > 0 and crypto_password and data is not None:
             crypto_password_value = pytis.data.sval(crypto_password)
