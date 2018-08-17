@@ -6,7 +6,7 @@ import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, \
-    default_access_rights
+    default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 from pytis.dbdefs.db_pytis_crypto_basic import PytisBasicCryptoFunctions
 import pytis.util
@@ -20,6 +20,7 @@ crypto_select_rights = sql.SQLFlexibleValue('app_crypto_select_rights',
 class CPytisCryptoNames(Base_LogSQLTable):
     """Codebook of encryption areas defined in the application."""
     name = 'c_pytis_crypto_names'
+    schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('name', pytis.data.String(not_null=False),
                                 label=_(u"Šifrovací oblast")),
               sql.Column('description', pytis.data.String(not_null=False), label=_(u"Popis")),
@@ -32,6 +33,7 @@ class CPytisCryptoNames(Base_LogSQLTable):
 class EPytisCryptoKeys(Base_LogSQLTable):
     """Table of encryption keys of users for defined encryption areas."""
     name = 'e_pytis_crypto_keys'
+    schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('key_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), label=_(u"Šifrovací oblast"),
                          references=sql.a(sql.r.CPytisCryptoNames.name, onupdate='CASCADE')),
@@ -50,6 +52,8 @@ class EPytisCryptoKeys(Base_LogSQLTable):
 
 class EvPytisUserCryptoKeys(sql.SQLView):
     name = 'ev_pytis_user_crypto_keys'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def query(cls):
         keys = sql.t.EPytisCryptoKeys.alias('keys')
@@ -64,6 +68,8 @@ class EvPytisUserCryptoKeys(sql.SQLView):
 
 class PytisCryptoKeyFunctions(sql.SQLRaw):
     name = 'pytis_crypto_key_functions'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """
@@ -167,6 +173,7 @@ $$ language plpgsql;
 
 class PytisCryptoTUserContact(sql.SQLType):
     name = 'pytis_crypto_t_user_contact'
+    schemas = pytis_schemas.value(globals())
     fields = (sql.Column('email', pytis.data.String(not_null=False)),
               sql.Column('gpg_key', pytis.data.String(not_null=False)),
               )
@@ -180,6 +187,7 @@ class PytisCryptoDbKeys(sql.SQLTable):
     Use select pytis_crypto_create_db_key('pytis', 1024) to create a key for that purpose.
     """
     name = 'pytis_crypto_db_keys'
+    schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('key_name', pytis.data.String(not_null=False)),
               sql.Column('public', pytis.data.String(not_null=False)),
               sql.Column('private', pytis.data.String(not_null=False)),
@@ -190,6 +198,7 @@ class PytisCryptoDbKeys(sql.SQLTable):
 
 class PytisCryptoTKeyPair(sql.SQLType):
     name = 'pytis_crypto_t_key_pair'
+    schemas = pytis_schemas.value(globals())
     fields = (sql.Column('public', pytis.data.String(not_null=False)),
               sql.Column('private', pytis.data.String(not_null=False)),
               )
@@ -198,6 +207,7 @@ class PytisCryptoTKeyPair(sql.SQLType):
 
 class PytisCryptoGenerateKey(Base_PyFunction):
     name = 'pytis_crypto_generate_key'
+    schemas = pytis_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.Integer()),)
     result_type = PytisCryptoTKeyPair
     multirow = False
@@ -216,6 +226,7 @@ class PytisCryptoGenerateKey(Base_PyFunction):
 
 class PytisCryptoDecryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_decrypt_using_key'
+    schemas = pytis_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = pytis.data.String()
@@ -234,6 +245,7 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
 
 class PytisCryptoEncryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_encrypt_using_key'
+    schemas = pytis_schemas.value(globals())
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
     result_type = pytis.data.String()
@@ -253,6 +265,8 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
 
 class PytisCryptoDbKey(sql.SQLRaw):
     name = 'pytis_crypto_db_key'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """
@@ -271,6 +285,8 @@ $$ language plpgsql stable security definer;
 
 class PytisCryptoDecryptDbPassword(sql.SQLRaw):
     name = 'pytis_crypto_decrypt_db_password'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """
@@ -290,6 +306,8 @@ $$ language plpgsql stable;
 
 class PytisCryptoCreateDbKey(sql.SQLRaw):
     name = 'pytis_crypto_create_db_key'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """
@@ -303,6 +321,8 @@ $$ language sql;
 
 class PytisCryptoUnlockPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_passwords'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """
@@ -332,6 +352,8 @@ $$ language plpgsql;
 
 class PytisCryptoUnlockCurrentUserPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_current_user_passwords'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """

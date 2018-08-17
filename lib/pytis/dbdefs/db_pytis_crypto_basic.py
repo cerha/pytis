@@ -3,9 +3,12 @@
 from __future__ import unicode_literals
 
 import pytis.data.gensqlalchemy as sql
+from pytis.dbdefs.db_pytis_base import pytis_schemas
 
 class PytisBasicCryptoFunctions(sql.SQLRaw):
     name = 'pytis_basic_crypto_functions'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return """

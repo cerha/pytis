@@ -5,12 +5,14 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights
+from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
 class EPytisOutputTemplates(Base_LogSQLTable):
     """Storage of print output templates handled by a DatabaseResolver."""
     name = 'e_pytis_output_templates'
+    schemas = pytis_schemas.value(globals())
+
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('module', pytis.data.String(not_null=True)),
               sql.Column('specification', pytis.data.String(not_null=True)),
@@ -29,6 +31,8 @@ class EPytisOutputTemplates(Base_LogSQLTable):
 
 class EvPytisGlobalOutputTemplates(sql.SQLView):
     name = 'ev_pytis_global_output_templates'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
@@ -46,6 +50,8 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
 
 class EvPytisUserOutputTemplates(sql.SQLView):
     name = 'ev_pytis_user_output_templates'
+    schemas = pytis_schemas.value(globals())
+
     @classmethod
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
