@@ -1187,7 +1187,9 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
             # before their instances are created so that all classes and
             # objects are available in _SQLQuery (to get columns and
             # dynamic dependencies) even without explicit dependencies.
-            _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
+            init_functions = _PytisSchematicMetaclass.init_functions.get(cls.pytis_name(), set([]))
+            init_functions.add(init_function)
+            _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_functions
             _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
 
     @classmethod
@@ -1223,13 +1225,14 @@ def object_by_name(name, allow_external=True):
     except KeyError:
         o = None
         basename = name.split('.')[-1]
-        init_function = _PytisSchematicMetaclass.init_functions.get(basename)
-        if init_function is None:
+        init_functions = _PytisSchematicMetaclass.init_functions.get(basename)
+        if init_functions is None:
             if not allow_external:
                 raise
         else:
             del _PytisSchematicMetaclass.init_functions[basename]
-            _PytisSchematicMetaclass.call_init_function(init_function)
+            for func in init_functions:
+                _PytisSchematicMetaclass.call_init_function(func)
             try:
                 o = _metadata.tables[name]
             except KeyError:
