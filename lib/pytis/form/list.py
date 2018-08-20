@@ -1055,7 +1055,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._selection_callback_candidate = None
                 the_row = self._table.row(row)
                 if the_row is not None:
-                    self._run_callback(self.CALL_SELECTION, the_row)
+                    wx.CallAfter(self._run_callback, self.CALL_SELECTION, the_row)
                     self._post_selection_hook(the_row)
         # Update grid when lazy row count computation is in progress; we
         # mustn't do it much often otherwise row count computation gets disrupted
