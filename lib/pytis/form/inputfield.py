@@ -204,23 +204,21 @@ class _Completer(wx.PopupWindow):
         listctrl.ClearAll()
         listctrl.InsertColumn(0, "")
         height_limit = None
-        listctrl.SetSize((17, 17))  # Needed for GetViewRect to work consistently.
+        # Set initial size very large to make GetViewRect to always return sizes
+        # without scrollbars.
+        listctrl.SetSize((1000, 1000))
         for i, choice in enumerate(completions):
             listctrl.InsertStringItem(i, "")
             listctrl.SetStringItem(i, 0, choice)
             if i == 10:
-                height_limit = listctrl.GetViewRect()[3] + 5
+                height_limit = listctrl.GetViewRect()[3]
         listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         width, height = listctrl.GetViewRect()[2:]
         if height_limit:
             height = height_limit
-        else:
-            # Vertical scrollbars are not displayed in this case.
-            width -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
-            # Actually, horizontal scrollbars are not needed too, but if we reduce the height,
-            # they show up.  Grin...
-        listctrl.SetSize((width, height))
-        self.SetClientSize((width, height))
+            width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+        listctrl.SetSize((width - 3, height - 3))
+        self.SetClientSize(listctrl.GetSize())
         if completions and show:
             self._show(True)
             listctrl.Select(0)
