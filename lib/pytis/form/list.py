@@ -1003,6 +1003,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._reshuffle_request = max(now, maybe_future)
         self._update_data_status()
 
+    def _update_cell_tooltip(self, row, col):
+        value = self._get_cell_tooltip_string(row, col)
+        gw = self._grid.GetGridWindow()
+        if value:
+            tooltip = gw.GetToolTip()
+            if tooltip is None:
+                tooltip = wx.ToolTip(value)
+                gw.SetToolTip(tooltip)
+            elif tooltip.GetTip() != value:
+                tooltip.SetTip(value)
+        else:
+            gw.SetToolTip(None)
+
     def _on_idle(self, event):
         if super(ListForm, self)._on_idle(event):
             return True
@@ -1019,7 +1032,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if timestamp is not None:
             now = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
             delay = now - timestamp
-            gw = self._grid.GetGridWindow()
             if delay > 10:
                 # Adding 10ms delay helps to keep the tooltip close to the current
                 # mouse position.  Without it the tooltip stays at the same place
@@ -1031,19 +1043,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 # custom widget...
                 row, col = self._grid.XYToCell(x, y)
                 if (row, col) != self._last_cell_tooltip_position:
-                    value = self._get_cell_tooltip_string(row, col)
-                    if value:
-                        tooltip = gw.GetToolTip()
-                        if tooltip is None:
-                            tooltip = wx.ToolTip(value)
-                            gw.SetToolTip(tooltip)
-                        elif tooltip.GetTip() != value:
-                            tooltip.SetTip(value)
-                    else:
-                        gw.SetToolTip(None)
+                    wx.CallAfter(self._update_cell_tooltip, row, col)
                     self._last_cell_tooltip_position = row, col
             else:
-                gw.SetToolTip(None)
+                self._grid.GetGridWindow().SetToolTip(None)
                 self._last_cell_tooltip_position = (None, None)
         if self._selection_callback_candidate is not None:
             if self._selection_callback_tick > 0:
