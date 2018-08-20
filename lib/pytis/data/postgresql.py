@@ -397,7 +397,7 @@ class PostgreSQLAccessor(object_2_5):
                     callback(c)
                 try:
                     c._connection.rollback()
-                except:
+                except Exception:
                     pass
 
         @classmethod
@@ -479,6 +479,8 @@ class PostgreSQLAccessor(object_2_5):
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
+        self._postgresql_initialize_search_path(connection,
+                                                self._pg_connection_data().schemas())
         self._postgresql_initialize_crypto(connection)
         self._postgresql_initialize_session_variables(connection)
 
