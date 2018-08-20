@@ -1599,6 +1599,7 @@ class StatusBar(object):
         self._bitmaps = [None for f in fields]
         self._tooltip = ToolTip(sb)
         self._last_tooltip_index = None
+        sb.SetMinHeight(22)
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
         SB_SUNKEN = 3 # This wx constant is missing in wx Python???
