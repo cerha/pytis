@@ -1037,15 +1037,19 @@ class MultiSideForm(MultiForm):
 
     class TabbedWebForm(TabbedContentForm, WebForm):
         def on_selection(self, row):
-            if self._content_type == 'uri':
-                uri = self._get_content(row)
+            content = self._get_content(row)
+            content_type = self._content_type
+            if content_type == 'uri':
                 restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
-                                             lambda m: m.group(1), uri)
-                self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
-            elif self._content_type == 'html':
-                self._browser.load_html(self._get_content(row))
-            elif self._content_type == 'lcg':
-                self._browser.load_content(self._get_content(row))
+                                             lambda m: m.group(1), content)
+                self._browser.load_uri(content, restrict_navigation=restrict_navigation)
+            elif ((content_type == 'html' or
+                   # Backwards compatibility hack for existing specifications
+                   # which don't define content_type='html' properly.
+                   (content_type == 'lcg' and isinstance(content, basestring)))):
+                self._browser.load_html(content)
+            elif content_type == 'lcg':
+                self._browser.load_content(content)
 
     class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
         def on_selection(self, row):
