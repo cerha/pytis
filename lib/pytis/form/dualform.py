@@ -783,7 +783,11 @@ class MultiForm(Form, Refreshable):
         else:
             selection = self._notebook.GetSelection()
             old_selection = self._old_notebook_selection
-        if selection != -1:
+        # The check "selection < len(self._forms)" is necessary to avoid traceback
+        # when a hiden side form is re-added into the notebook in _cmd_toggle_sideform,
+        # because the call to nb.AddPage() results in EVT_AUINOTEBOOK_PAGE_CHANGING
+        # at the time when self._forms is not yet updated in _cmd_toggle_sideform.
+        if selection != -1 and selection < len(self._forms):
             form = self._forms[selection]
             if form:
                 # The SetSelection call below is necessary here to make
