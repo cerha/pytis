@@ -2134,7 +2134,7 @@ class Binding(object):
     def __init__(self, id, title, name=None, binding_column=None, condition=None,
                  descr=None, single=False, enabled=True, arguments=None,
                  prefill=None, search=None,
-                 content=None, content_type='content', uri=None):
+                 content=None, content_type='lcg', uri=None):
         """Arguments:.
 
           id -- identifier of the binding as a string.  It must be unique among
@@ -2240,6 +2240,7 @@ class Binding(object):
                 content = uri
                 content_type = 'uri'
             assert isinstance(content, (basestring, collections.Callable)), content
+            assert content_type in ('html', 'lcg', 'uri', 'pdf'), content_type
             assert name is binding_column is condition is arguments is prefill is None
         assert enabled is None or isinstance(enabled, (bool, collections.Callable)), enabled
         self._id = id
