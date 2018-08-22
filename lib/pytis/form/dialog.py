@@ -31,8 +31,8 @@ se vyskytující dialogové operace.
 
 from __future__ import unicode_literals
 
-from wx import calendar
-from wx.lib import masked
+import wx.calendar
+import wx.lib.masked
 import wx.lib.mixins.listctrl
 
 import collections
@@ -42,13 +42,15 @@ import decimal
 
 import pytis.data
 import pytis.form
-from pytis.presentation import TextFormat
 import pytis.util
+
+from pytis.presentation import TextFormat
 from pytis.util import ProgramError, super_
 from command import CommandHandler
 from screen import KeyHandler, beep, char2px, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
 
 _ = pytis.util.translations('pytis-wx')
+
 
 class Dialog(KeyHandler, CommandHandler, object):
     """Abstraktní třída, která je základem všech dialogů.
@@ -543,7 +545,7 @@ class InputDialog(Message):
             akceptován, jinak dialog vyžaduje zadání nějaké hodnoty
 
           Klíčové argumenty jsou předány konstruktoru třídy
-          wx.pytis.masked.TextCtrl.
+          wx.lib.masked.TextCtrl.
           Zbývající argumenty odpovídají stejným argumentům rodičovské třídy
           s tím, že následující argumenty tato třída definuje vždy napevno:
 
@@ -578,9 +580,9 @@ class InputDialog(Message):
         size = dlg2px(self._parent, width, 8 * self._input_height + 4)
         if self._input_height > 1:
             style = style | wx.TE_MULTILINE
-        control = masked.TextCtrl(self._dialog, -1, "", style=style,
-                                  size=size, emptyInvalid=not self._allow_empty,
-                                  mask=self._mask, autoformat=self._autoformat)
+        control = wx.lib.masked.TextCtrl(self._dialog, -1, "", style=style,
+                                         size=size, emptyInvalid=not self._allow_empty,
+                                         mask=self._mask, autoformat=self._autoformat)
         if self._value is not None:
             control.SetValue(self._value)
         self._control = control
@@ -619,8 +621,8 @@ class InputDate(InputDialog):
         import config
         format = config.date_format.lower().replace('%d', 'dd')
         format = format.replace('%m', 'mm').replace('%y', 'yyyy')
-        for tag in masked.masktags.keys():
-            if masked.masktags[tag]['description'].lower() == format:
+        for tag in wx.lib.masked.masktags.keys():
+            if wx.lib.masked.masktags[tag]['description'].lower() == format:
                 self._autoformat = tag
                 break
         else:
@@ -675,17 +677,16 @@ class InputNumeric(InputDialog):
         kwargs = {}
         if self._thousands_sep:
             kwargs['groupChar'] = self._thousands_sep
-        control = masked.NumCtrl(self._dialog, -1, 0,
-                                 allowNegative=self._allow_negative,
-                                 allowNone=self._allow_empty,
-                                 selectOnEntry=self._select_on_entry,
-                                 integerWidth=self._integer_width,
-                                 fractionWidth=self._decimal_width,
-                                 groupDigits=True,
-                                 decimalChar=self._decimal_point,
-                                 signedForegroundColour=self._signed_colour,
-                                 **kwargs
-                                 )
+        control = wx.lib.masked.NumCtrl(self._dialog, -1, 0,
+                                        allowNegative=self._allow_negative,
+                                        allowNone=self._allow_empty,
+                                        selectOnEntry=self._select_on_entry,
+                                        integerWidth=self._integer_width,
+                                        fractionWidth=self._decimal_width,
+                                        groupDigits=True,
+                                        decimalChar=self._decimal_point,
+                                        signedForegroundColour=self._signed_colour,
+                                        **kwargs)
         if self._value is not None:
             if isinstance(self._value, decimal.Decimal):
                 control.SetValue(float(self._value))
@@ -944,16 +945,16 @@ class Calendar(GenericDialog):
         except:
             modal = wx.wxDIALOG_MODAL
         style = (modal |
-                 calendar.CAL_SHOW_HOLIDAYS |
-                 calendar.CAL_SHOW_SURROUNDING_WEEKS)
+                 wx.calendar.CAL_SHOW_HOLIDAYS |
+                 wx.calendar.CAL_SHOW_SURROUNDING_WEEKS)
         if not enable_year:
-            style = style | calendar.CAL_NO_YEAR_CHANGE
+            style = style | wx.calendar.CAL_NO_YEAR_CHANGE
         if not enable_month:
-            style = style | calendar.CAL_NO_MONTH_CHANGE
+            style = style | wx.calendar.CAL_NO_MONTH_CHANGE
         if monday_first:
-            style = style | calendar.CAL_MONDAY_FIRST
+            style = style | wx.calendar.CAL_MONDAY_FIRST
         else:
-            style = style | calendar.CAL_SUNDAY_FIRST
+            style = style | wx.calendar.CAL_SUNDAY_FIRST
         self._style = style
         if date is None:
             self._date = pytis.data.Date.datetime()
@@ -962,13 +963,13 @@ class Calendar(GenericDialog):
             self._date = date
 
     def _create_content(self, sizer):
-        cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
+        cal = wx.calendar.CalendarCtrl(self._dialog, -1, style=self._style)
         size = cal.GetSize()
         cal.SetMinSize((size.GetWidth() + 10, size.GetHeight()))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
-        pytis.form.wx_callback(calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
+        pytis.form.wx_callback(wx.calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal
