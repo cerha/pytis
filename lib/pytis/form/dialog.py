@@ -84,6 +84,7 @@ class Dialog(KeyHandler, CommandHandler, object):
         """
         return True
 
+
 class GenericDialog(Dialog):
     """Obecný dialog s tlačítky.
 
@@ -198,7 +199,6 @@ class GenericDialog(Dialog):
         if self._report is not None:
             # Unset report's min size to allow manually sizing the dialog to a smaller size.
             report.SetMinSize((100, 100))
-
 
     def _create_content(self, sizer):
         """Create the main dialog content and add it to the top level sizer.
@@ -338,6 +338,7 @@ class GenericDialog(Dialog):
 
     def focus(self):
         self._dialog.SetFocus()
+
 
 class Message(GenericDialog):
     """Dialog zobrazující zprávu a vracející odpověď.
@@ -889,6 +890,7 @@ class RepeatedOperationDialog(ProgressDialog):
         """
         assert (step is None or
                 isinstance(step, types.IntType) and step in range(1, 100))
+
         def do(update, *args_list):
             total = len(args_list)
             last_status = 0
