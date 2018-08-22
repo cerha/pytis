@@ -62,6 +62,7 @@ import config
 
 _ = pytis.util.translations('pytis-wx')
 
+
 class _TextValidator(wx.PyValidator):
     def __init__(self, control, filter):
         wx.PyValidator.__init__(self)
@@ -1044,6 +1045,7 @@ class PasswordField(StringField):
         if self._ctrl2:
             widgets += (self._ctrl2,)
         return widgets
+
 
 class SpinnableField(InputField):
     """Field capable of spinning its value up/down (incrementing/decrementing)."""
@@ -2095,6 +2097,7 @@ class StructuredTextField(TextField):
             self._storage = storage
             self._images = images
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
+
         def values(self, transaction=None):
             try:
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
@@ -2108,6 +2111,7 @@ class StructuredTextField(TextField):
         enumeration = (('inline', _("Inline")),
                        ('left', _("Left")),
                        ('right', _("Right")))
+
     class ImageSizes(Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
@@ -2117,6 +2121,7 @@ class StructuredTextField(TextField):
                                              LARGE_THUMBNAIL_SIZE)),
                        # ('custom-thumbnail', _("Vlastní velikost náhledu")),
                        ('full-size', _("Full size (appropriate for screenshot etc.)")))
+
         @classmethod
         def matching_size(cls, thumbnail):
             if thumbnail:
@@ -2129,6 +2134,7 @@ class StructuredTextField(TextField):
                     return 'custom-thumbnail'
             else:
                 return 'full-size'
+
         @classmethod
         def thumbnail_size_bounds(cls, size, custom_size):
             if size == 'small-thumbnail':
@@ -2139,6 +2145,7 @@ class StructuredTextField(TextField):
                 return (custom_size, custom_size)
             elif size == 'full-size':
                 return None
+
         @classmethod
         def preview_size(cls, size, custom_size, orig_size):
             if size == 'small-thumbnail':
