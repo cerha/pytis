@@ -432,7 +432,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
             form.on_selection(row)
             form.Show(True)
         finally:
-            if focused:
+            if focused and focused is not wx_focused_window():
                 focused.SetFocus()
         return True
 
