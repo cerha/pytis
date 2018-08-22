@@ -507,6 +507,29 @@ class InputField(object, KeyHandler, CommandHandler):
     def _check(self):
         return self._row.check(self.id())
 
+    def _do_validation(self, do_validation, do_check):
+        transaction = self._row.transaction()
+        if transaction and not transaction.open():
+            # Don't validate when the transaction is already closed.
+            return
+        valid_before = self.valid()
+        if do_validation:
+            try:
+                error = self._validate()
+            except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+                error = None
+                self._connection_closed = True
+            self._last_validation_error = error
+            self._on_change_hook()
+        if do_check:
+            self._last_check_result = self._check()
+        if self.valid() != valid_before:
+            self._on_validity_change()
+        if self._last_validation_error:
+            message(self._last_validation_error.message())
+        elif self._last_check_result:
+            message(self._last_check_result)
+
     def _on_idle(self, event):
         w = wx_focused_window()
         if w in [x[0] for x in self._controls]:
@@ -516,28 +539,8 @@ class InputField(object, KeyHandler, CommandHandler):
             self._set_focus(self._current_ctrl())
         self._want_focus = False
         if self._needs_validation or self._needs_check:
-            transaction = self._row.transaction()
-            # Don't validate when the transaction is already closed.
-            if transaction is None or transaction.open():
-                valid_before = self.valid()
-                if self._needs_validation:
-                    self._needs_validation = False
-                    try:
-                        error = self._validate()
-                    except (pytis.data.DBRetryException, pytis.data.DBSystemException):
-                        error = None
-                        self._connection_closed = True
-                    self._last_validation_error = error
-                    self._on_change_hook()
-                if self._needs_check:
-                    self._needs_check = False
-                    self._last_check_result = self._check()
-                if self.valid() != valid_before:
-                    self._on_validity_change()
-                if self._last_validation_error:
-                    message(self._last_validation_error.message())
-                elif self._last_check_result:
-                    message(self._last_check_result)
+            wx.CallAfter(self._do_validation, self._needs_validation, self._needs_check)
+            self._needs_validation = self._needs_check = False
         while self._call_on_idle:
             callback = self._call_on_idle.pop()
             callback()
