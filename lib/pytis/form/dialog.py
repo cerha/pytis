@@ -599,7 +599,14 @@ class InputDialog(Message):
         sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
 
     def _on_kill_control_focus(self, e):
-        if not self._control.IsValid(self._control.GetValue()):
+        value = self._control.GetValue()
+        if value:
+            valid = self._control.IsValid(value)
+        else:
+            # wx.lib.masked.TextCtrl is buggy and raises IndexError
+            # when an empty string is passed to IsValid().
+            valid = self._allow_empty
+        if not valid:
             self._control.SetFocus()
         e.Skip()
 
