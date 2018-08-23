@@ -87,18 +87,14 @@ def go():
         util.log.add_hook(util.mem_info)
     try:
         if config.profile:
-            import profile
-            profile.run('run_application()', _PROFILE)
+            import cProfile
+            cProfile.run('run_application()', _PROFILE)
             import pstats
-            stats = pstats.Stats(_PROFILE)
-            stats.sort_stats('cumulative')
-            stdout = sys.stdout
-            f = open(_PROFILE_RESULTS, 'w')
-            sys.stdout = f
-            try:
+            with open(_PROFILE_RESULTS, 'w') as stream:
+                stats = pstats.Stats(_PROFILE, stream=stream)
+                stats.sort_stats('cumulative')
                 stats.print_stats()
-            finally:
-                sys.stdout = stdout
+                print "Profile statistics written to '%s'." % (os.path.realpath(_PROFILE_RESULTS),)
         else:
             run_application()
     except SystemExit:
