@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2017 Brailcom, o.p.s.
+# Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,8 +43,6 @@ _EXIT_USAGE = 1
 _PROFILE = 'profile'
 _PROFILE_RESULTS = '%s.results' % _PROFILE
 
-_profile = 0 # FALSE
-
 
 def _usage(optexception=None):
     _USAGE = """
@@ -68,6 +66,7 @@ Options:
         sys.stderr.write('\n')
     sys.stderr.write(_USAGE)
     sys.exit(_EXIT_USAGE)
+
 
 def go():
     import pytis.util as util             # až po konfiguraci
@@ -130,8 +129,8 @@ def run_application():
         # Init gobject threads as we use gtk widgets at some places (such as a
         # webkit browser widget).
         gobject.threads_init()
-    gc.enable() # pro jistotu
-    import pytis.form # musí být až za zpracováním voleb
+    gc.enable()  # pro jistotu
+    import pytis.form  # musí být až za zpracováním voleb
     # Ošetření chyby Pythonu způsobující chybné parsování reálných čísel ve
     # zdrojových textech po importu wxWindows.
     # ??? Možná je to již opraveno, zdá se, že se tato chyba již neprojevuje.
