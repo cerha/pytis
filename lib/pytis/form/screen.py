@@ -47,12 +47,6 @@ import lcg
 
 import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
-if not hasattr(supertooltip.SuperToolTip, 'DoHideNow'):
-    # Hack: Older wx versions (including wx 2.8) include a very old version of SuperToolTip.
-    # If that's the case, use the more recent version included in Pytis (which is compatible
-    # with older wx versions).  Once we drop support for wx 2.8, this hack can be removed
-    # together with the file supertooltip.py in lib/pytis/form.
-    from . import supertooltip
 
 import pytis.form
 import pytis.presentation
