@@ -92,8 +92,6 @@ Command(BrowseForm, 'PRINT',
         "Print the current form data")
 Command(Form, 'LEAVE_FORM',
         "Close the form")
-Command(Form, 'SAFE_LEAVE_FORM',
-        "Close the form in idle loop")
 Command(Form, 'HELP',
         "Show the form help in the help browser")
 Command(InnerForm, 'DESCRIBE',
@@ -338,7 +336,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-l',           Application.COMMAND_REFRESH),
     ('Ctrl-F11',         Application.COMMAND_RELOAD_SPECIFICATIONS),
     ('Ctrl-F1',          Form.COMMAND_HELP),
-    ('Escape',           Form.COMMAND_SAFE_LEAVE_FORM),
+    ('Escape',           Form.COMMAND_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
     ('F6',               RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',          RecordForm.COMMAND_NEW_RECORD(copy=True)),

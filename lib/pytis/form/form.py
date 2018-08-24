@@ -189,7 +189,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._governing_transaction = transaction
         self._spec_kwargs = copy.copy(spec_kwargs)
         self._data_kwargs = copy.copy(data_kwargs)
-        self._leave_form_requested = False
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
@@ -336,15 +335,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._data.sleep()
 
     def _on_idle(self, event):
-        if self._leave_form_requested:
-            try:
-                self._cmd_leave_form()
-            finally:
-                self._leave_form_requested = False
-            result = True
-        else:
-            result = False
-        return result
+        pass
 
     def _cleanup(self):
         super(Form, self)._cleanup()
@@ -368,18 +359,19 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Application.COMMAND_HELP.invoke(topic=('spec/' + self._name))
 
     def _cmd_leave_form(self):
-        block_yield(True)
-        try:
-            return self.close()
-        finally:
-            block_yield(False)
-
-    def _cmd_safe_leave_form(self):
-        # Segmentation fault may happen when closing a form using Escape key.
-        # It happens inside wx key event processing.  We try to overcome the
-        # problem by just setting a leave form flag and closing the form later,
-        # in idle event processing.
-        self._leave_form_requested = True
+        def leave():
+            block_yield(True)
+            try:
+                return self.close()
+            finally:
+                block_yield(False)
+        # We noticed segmentation faults inside wx key event processing
+        # when the form had been closed using the Escape key.  Previously,
+        # we worked around the problem by executing the leave form command
+        # in the IDLE thread.  As it got a little too complicated, we now
+        # try executing it through wx.CallAfter.
+        self.Unbind(wx.EVT_IDLE)
+        wx.CallAfter(leave)
 
     # Veřejné metody
 
@@ -1059,8 +1051,7 @@ class LookupForm(InnerForm):
                                                self._view, self._data, self._default_profile)
 
     def _on_idle(self, event):
-        if super(LookupForm, self)._on_idle(event):
-            return True
+        super(LookupForm, self)._on_idle(event)
         if self._invalid_initial_profile:
             invalid_profile = self._invalid_initial_profile
             self._invalid_initial_profile = None
@@ -1068,7 +1059,6 @@ class LookupForm(InnerForm):
         if not self._transaction_close_scheduled:
             self._on_idle_close_transactions()
             self._transaction_close_scheduled = True
-        return False
 
     def _on_idle_close_transactions(self):
         pytis.data.DBTransactionDefault.close_transactions()
@@ -1655,12 +1645,10 @@ class RecordForm(LookupForm):
         self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
 
     def _on_idle(self, event):
-        if super(RecordForm, self)._on_idle(event):
-            return True
+        super(RecordForm, self)._on_idle(event)
         if not self._initial_select_row_called:
             self._initial_select_row_called = True
             self._initial_select_row()
-        return False
 
     def _initial_select_row(self):
         # The initial select_row() call is important mainly for the case
@@ -2666,12 +2654,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._disable_buttons(self._parent)
 
     def _on_idle(self, event):
-        if super(EditForm, self)._on_idle(event):
-            return True
+        super(EditForm, self)._on_idle(event)
         if not self._closed_connection_handled and any(f.connection_closed() for f in self._fields):
             self._closed_connection_handled = True
             self._on_closed_connection()
-        return False
 
     def _commit_form(self, close=True):
         # Re-validate all fields.
@@ -3107,13 +3093,12 @@ class PopupEditForm(PopupForm, EditForm):
             self._load_next_row()
         return result
 
-    def _cmd_safe_leave_form(self):
-        # Leaving form in idle thread causes recursion in popup forms, when a
-        # dialog asking for confirmation of leaving unsaved form appears.  So
-        # we just leave the form immediately here.  Hopefuly, the problems
-        # which lead to moving _leave_form to the idle thread don't apply to
-        # popup forms.
-        self._cmd_leave_form()
+    def _cmd_leave_form(self):
+        # Leaving the form in wx.CallAfter (as in the parent method) causes
+        # recursion in popup forms. Closing the form immediately seems to
+        # work fine, on the other hand.
+        self.Unbind(wx.EVT_IDLE)
+        self.close()
 
     def can_command(self, command, **kwargs):
         if ((command.handler() in (LookupForm, RecordForm) and
@@ -3280,8 +3265,7 @@ class QueryFieldsForm(_VirtualEditForm):
             super(QueryFieldsForm, self)._set_focus_field(event=event)
 
     def _on_idle(self, event):
-        if super(QueryFieldsForm, self)._on_idle(event):
-            return True
+        super(QueryFieldsForm, self)._on_idle(event)
         if not self._autoapply:
             enabled = self._unapplied_query_field_changes and all(f.valid() for f in self._fields)
             self._query_fields_apply_button.Enable(enabled)
@@ -3290,7 +3274,6 @@ class QueryFieldsForm(_VirtualEditForm):
             if run_dialog(pytis.form.Question,
                           _("Query fields contain unapplied changes. Apply now?"), True):
                 self._apply_query_fields(self._row)
-        return False
 
     def _on_query_fields_changed(self):
         # Due to the CALL_CHANGE definition, this callback is called only after

@@ -344,9 +344,10 @@ class DualForm(Form, Refreshable):
             self._side_form.refresh(interactive=interactive)
 
     def close(self, force=False):
-        # Prevent certain actions to happen in the side form when the form is
-        # being closed.
-        self._side_form._leave_form_requested = True
+        # Prevent _on_page_change() and _on_idle() to be run in side form
+        # while the form is being closed.
+        self._side_form.Show(False)
+        self._side_form.Unbind(wx.EVT_IDLE)
         return super(DualForm, self).close(force=force)
 
     def _print_form_kwargs(self):
@@ -381,8 +382,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
         super(PostponedSelectionDualForm, self)._full_init(*args, **kwargs)
 
     def _on_idle(self, event):
-        if super(PostponedSelectionDualForm, self)._on_idle(event):
-            return True
+        super(PostponedSelectionDualForm, self)._on_idle(event)
         if self._side_form is None or self._selection_candidate is None:
             pass
         elif self._selection_tick > 0:
@@ -550,8 +550,7 @@ class ShowDualForm(SideBrowseDualForm):
         self._initialization_done = False
 
     def _on_idle(self, event):
-        if super(ShowDualForm, self)._on_idle(event):
-            return True
+        super(ShowDualForm, self)._on_idle(event)
         if not self._initialization_done:
             self._initialization_done = True
             self._select_form(self._main_form, force=True)
@@ -770,10 +769,9 @@ class MultiForm(Form, Refreshable):
             self._on_page_change()
 
     def _on_page_change(self, event=None):
-        if self._leave_form_requested or self._hide_form_requested or not self.IsShown():
+        if self._hide_form_requested or not self.IsShown():
             # Prevent (possibly expensive) database queries on NotebookEvent
-            # called when the form is being closed asynchronously from _on_idle
-            # method.
+            # called when the form is being closed.
             return
         if self._block_on_page_change:
             return
@@ -845,7 +843,7 @@ class MultiForm(Form, Refreshable):
         return True
 
     def _cleanup(self):
-        self._leave_form_requested = True
+        self.Show(False)
         try:
             nb = self._notebook
             nb.Show(False)
@@ -1130,7 +1128,7 @@ class MultiSideForm(MultiForm):
         event.Skip()
 
     def _on_page_change(self, event=None):
-        if self._leave_form_requested or self._block_on_page_change:
+        if self._block_on_page_change or not self.IsShown():
             return
         super(MultiSideForm, self)._on_page_change(event=event)
         binding = self._forms[self._notebook.GetSelection()].binding()
