@@ -120,7 +120,7 @@ def go():
         sys.stderr.write('Final pending data: %s\n' % gc.garbage)
     if config.dump_queries:
         sys.stderr.write('Dumping top %s DB queries:\n' % config.dump_queries)
-        for time, query in sorted(queries)[:int(config.dump_queries)]:
+        for time, query in sorted(queries, reverse=True)[:int(config.dump_queries)]:
             sys.stderr.write('   %0.3f %s\n' % (time, query))
     sys.stderr.flush()
 
