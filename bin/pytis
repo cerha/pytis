@@ -50,17 +50,18 @@ Usage: pytis [OPTION ...]
 
 Options:
 
-  --config FILE       application configuration file
-  --dbuser USER       connect to the database as USER
+  --config FILE        application configuration file
+  --dbuser USER        connect to the database as USER
 
-  --help              display this help and exit
-  --debug             turn on debugging logging
-  --debug-on-error    run debugger on unhandled exception
-  --debug-memory      display memory info
-  --profile           run in profiler and write results to `%s'
-  --session-id        use the given session_id
+  --help               display this help and exit
+  --debug              turn on debugging logging
+  --debug-on-error     run debugger on unhandled exception
+  --debug-memory       display memory info
+  --profile            run in profiler and write results to `%s'
+  --dump-queries COUNT dump COUNT most time consuming SQL queries to STDOUT
+  --session-id         use the given session_id
 
-""" % (_PROFILE)
+""" % (_PROFILE_RESULTS)
     if optexception:
         sys.stderr.write(optexception.msg)
         sys.stderr.write('\n')
@@ -69,7 +70,7 @@ Options:
 
 
 def go():
-    import pytis.util as util             # až po konfiguraci
+    import pytis.util as util  # až po konfiguraci
     import config
     try:
         config.add_command_line_options(sys.argv)
@@ -85,6 +86,12 @@ def go():
         gc.set_debug(gc.DEBUG_COLLECTABLE | gc.DEBUG_UNCOLLECTABLE |
                      gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
         util.log.add_hook(util.mem_info)
+    queries = []
+    if config.dump_queries:
+        def query_callback(query, start_time, end_time):
+            queries.append((end_time - start_time, query))
+        import pytis.data
+        pytis.data.DBDataDefault.set_query_callback(query_callback)
     try:
         if config.profile:
             import cProfile
@@ -94,7 +101,8 @@ def go():
                 stats = pstats.Stats(_PROFILE, stream=stream)
                 stats.sort_stats('cumulative')
                 stats.print_stats()
-                print "Profile statistics written to '%s'." % (os.path.realpath(_PROFILE_RESULTS),)
+                sys.stderr.write("Profile statistics written to '%s'.\n" %
+                                 (os.path.realpath(_PROFILE_RESULTS),))
         else:
             run_application()
     except SystemExit:
@@ -110,6 +118,11 @@ def go():
             traceback.print_exception(*einfo)
     if config.debug_memory:
         sys.stderr.write('Final pending data: %s\n' % gc.garbage)
+    if config.dump_queries:
+        sys.stderr.write('Dumping top %s DB queries:\n' % config.dump_queries)
+        for time, query in sorted(queries)[:int(config.dump_queries)]:
+            sys.stderr.write('   %0.3f %s\n' % (time, query))
+    sys.stderr.flush()
 
 
 def gg():

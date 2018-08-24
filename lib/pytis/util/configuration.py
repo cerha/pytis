@@ -461,6 +461,17 @@ class Configuration(object):
         """
         _DEFAULT = False
 
+    class _Option_dump_queries(NumericOption, CommandlineOption):
+        u"""Number of the most time consuming SQL queries to be printed.
+
+        This option may be practical for debugging the efficiency of SQL queries.
+        If non-zero, the times of all SQL queries throughout program execution
+        is collected and the given number of the most time consuming queries is
+        written to STDOUT when the program ends.
+
+        """
+        _DEFAULT = 0
+
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
         u"""Příznak určující, zda mají být spouštěny i interaktivní testy.
 
