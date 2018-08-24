@@ -883,7 +883,6 @@ class LookupForm(InnerForm):
         # initially selected profile.
         self._default_profile = Profile('__default_profile__', _(u"Default profile"))
         self._profiles = self._load_profiles()
-        self._invalid_initial_profile = None
         if filter or sorting or columns or grouping:
             assert profile_id is None
             # When profile parameters were passed to the constructor, create an
@@ -911,7 +910,7 @@ class LookupForm(InnerForm):
                 # because invalid user customized system profiles are replaced
                 # by the original system profiles automatically by profile
                 # manager when loaded.
-                self._invalid_initial_profile = initial_profile
+                wx.CallAfter(self._handle_invalid_profile, initial_profile)
                 initial_profile = self._default_profile
         self._initial_profile = initial_profile
         # Profile instances may contain None values to denote default
@@ -1052,10 +1051,6 @@ class LookupForm(InnerForm):
 
     def _on_idle(self, event):
         super(LookupForm, self)._on_idle(event)
-        if self._invalid_initial_profile:
-            invalid_profile = self._invalid_initial_profile
-            self._invalid_initial_profile = None
-            self._handle_invalid_profile(invalid_profile)
         if not self._transaction_close_scheduled:
             self._on_idle_close_transactions()
             self._transaction_close_scheduled = True
