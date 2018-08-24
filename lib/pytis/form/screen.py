@@ -59,14 +59,6 @@ from .managers import FormProfileManager
 
 import config
 
-for const in ('EVT_WEBVIEW_NAVIGATING', 'EVT_WEBVIEW_NAVIGATED', 'EVT_WEBVIEW_LOADED',
-              'EVT_WEBVIEW_ERROR', 'EVT_WEBVIEW_TITLE_CHANGED', 'WEBVIEW_RELOAD_NO_CACHE'):
-    # wxPython on MAC OS X uses a different naming scheme.  We don't want
-    # to care about it later, so we just duplicate the used identifiers here.
-    if not hasattr(wx.html2, const):
-        setattr(wx.html2, const, getattr(wx.html2, const.replace('WEBVIEW', 'WEB_VIEW')))
-
-import config
 if config.http_proxy is not None:
     # On Linux, proxy can be set through webkitgtk library (used by the GTK wx.html2.WebView
     # implementation).  Setting up http_proxy will currently fail on other platforms.
@@ -82,6 +74,14 @@ if config.http_proxy is not None:
         proxy_uri = libsoup.soup_uri_new(config.http_proxy)
         session = libwebkitgtk.webkit_get_default_session()
         libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
+
+for const in ('EVT_WEBVIEW_NAVIGATING', 'EVT_WEBVIEW_NAVIGATED', 'EVT_WEBVIEW_LOADED',
+              'EVT_WEBVIEW_ERROR', 'EVT_WEBVIEW_TITLE_CHANGED', 'WEBVIEW_RELOAD_NO_CACHE'):
+    # wxPython on MAC OS X uses a different naming scheme.  We don't want
+    # to care about it later, so we just duplicate the used identifiers here.
+    if not hasattr(wx.html2, const):
+        setattr(wx.html2, const, getattr(wx.html2, const.replace('WEBVIEW', 'WEB_VIEW')))
+
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -219,9 +219,11 @@ def paste_from_clipboard(ctrl):
         ctrl.ChangeValue(text)
         ctrl.SetInsertionPoint(point)
 
+
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
     return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
+
 
 def file_menu_items(fields, row, select_arguments):
     from .application import Application, decrypted_names
@@ -1314,7 +1316,6 @@ class MItem(_TitledMenuObject):
             try:
                 return eval(symbol)
             except AttributeError:
-                import sys
                 sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
                 return None
         if components[-1]:
@@ -1505,8 +1506,8 @@ class ToolTipWindow(supertooltip.ToolTipWindow):
         # the case for status bar tooltips).
         self.SetPosition((position.x, position.y - size.y))
 
-
 supertooltip.ToolTipWindow = ToolTipWindow
+
 
 class ToolTip(supertooltip.SuperToolTip):
 
@@ -1538,6 +1539,7 @@ class ToolTip(supertooltip.SuperToolTip):
             self.OnEndTimer()
         if not self._startTimer.IsRunning():
             self._startTimer.Start(self._startDelayTime * 1000)
+
 
 # Status bar
 
@@ -1596,7 +1598,7 @@ class StatusBar(object):
         sb.SetMinHeight(22)
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)
-        SB_SUNKEN = 3 # This wx constant is missing in wx Python???
+        SB_SUNKEN = 3  # This wx constant is missing in wx Python???
         sb.SetStatusStyles([SB_SUNKEN for f in fields])
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
@@ -1849,7 +1851,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.InsertStringItem(i, label)
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
-            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL, wx.BOLD))
+            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(),
+                                        wx.DEFAULT, wx.NORMAL, wx.BOLD))
         self.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):
@@ -2431,8 +2434,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 handler(uri, name, **kwargs)
                 event.Veto()
                 return
-        if ((self._restricted_navigation_uri is not None
-             and not uri.startswith(self._restricted_navigation_uri))):
+        if ((self._restricted_navigation_uri is not None and
+             not uri.startswith(self._restricted_navigation_uri))):
             pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
             log(OPERATIONAL, "Restricted to :", self._restricted_navigation_uri)
             event.Veto()
@@ -2695,7 +2698,7 @@ class mupdfProcessor(object):
             if not self.zoom_error:     # report once only
                 self.zoom_error = True
                 dlg = wx.MessageDialog(self.parent, 'Out of memory. Zoom level too high?',
-                              'pdf viewer' , wx.OK |wx.ICON_EXCLAMATION)
+                                       'pdf viewer', wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
 
@@ -2708,15 +2711,15 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
         import wx.lib.pdfviewer.images as images
         import wx.lib.agw.buttonpanel as bp
         self.pagelabel = wx.StaticText(self, -1, 'Page')
-        self.page = wx.TextCtrl(self, -1, size=(30, -1), style=wx.TE_CENTRE|wx.TE_PROCESS_ENTER)
+        self.page = wx.TextCtrl(self, -1, size=(30, -1), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
         self.page.Bind(wx.EVT_KILL_FOCUS, self.OnPage)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnPage, self.page)
         self.maxlabel = wx.StaticText(self, -1, '          ')
-        self.zoom = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN|wx.TE_PROCESS_ENTER)
+        self.zoom = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER)
         self.comboval = (('Actual size', 1.0), ('Fit width', -1), ('Fit page', -2),
-                          ('25%', 0.25), ('50%', 0.5), ('75%', 0.75), ('100%', 1.0),
-                            ('125%', 1.25), ('150%', 1.5), ('200%', 2.0), ('400%', 4.0),
-                            ('800%', 8.0), ('1000%', 10.0))
+                         ('25%', 0.25), ('50%', 0.5), ('75%', 0.75), ('100%', 1.0),
+                         ('125%', 1.25), ('150%', 1.5), ('200%', 2.0), ('400%', 4.0),
+                         ('800%', 8.0), ('1000%', 10.0))
         for item in self.comboval:
             self.zoom.Append(item[0], item[1])      # string value and client data
         self.Bind(wx.EVT_COMBOBOX, self.OnZoomSet, self.zoom)
@@ -2742,7 +2745,7 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
         for item in panelitems:
             if item[0].lower() == 'btn':
                 type, image, kind, popup, handler = item
-                btn = bp.ButtonInfo(self, wx.NewId(),image, kind=kind,
+                btn = bp.ButtonInfo(self, wx.NewId(), image, kind=kind,
                                     shortHelp=popup, longHelp='')
                 self.AddButton(btn)
                 self.Bind(wx.EVT_BUTTON, handler, id=btn.GetId())
@@ -2790,7 +2793,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.pagewidth = self.pdfdoc.pagewidth
         self.pageheight = self.pdfdoc.pageheight
         self.newdoc = True
-        self.Scroll(0,0)                # in case this is a re-LoadFile
+        self.Scroll(0, 0)               # in case this is a re-LoadFile
         self.CalculateDimensions(True)  # to get initial visible page range
         # draw and display the minimal set of pages
         self.pdfdoc.DrawFile(self.frompage, self.topage)
@@ -3053,6 +3056,7 @@ def make_fullname(form_class, spec_name):
 def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
     return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
+
 
 def popup_menu(parent, items, keymap=None, position=None):
     """Pop-up a wx context menu.
@@ -3414,6 +3418,7 @@ def _wildcards(patterns, pattern):
         (),
     )
 
+
 def _client_mode():
     """Return the client operation mode as one of 'remote', 'local' or None.
 
@@ -3441,6 +3446,7 @@ def _client_mode():
                 return None
         return 'local'
 
+
 def _dirname(client_mode, filename):
     """Return the directory name for given file name in given client mode.
 
@@ -3462,6 +3468,7 @@ def _dirname(client_mode, filename):
     else:
         return None
 
+
 def _get_recent_directory(client_mode, context):
     if client_mode and context:
         directory = pytis.form.get_recent_directory((client_mode, context))
@@ -3470,6 +3477,7 @@ def _get_recent_directory(client_mode, context):
     else:
         directory = None
     return directory
+
 
 def select_file(filename=None, patterns=(), pattern=None, context='default'):
     """Return a filename selected by the user in a GUI dialog.
@@ -3516,6 +3524,7 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
         pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result))
     return result
 
+
 def select_files(directory=None, patterns=(), pattern=None, context='default'):
     """Return a tuple of filenames selected by the user in a GUI dialog.
 
@@ -3549,6 +3558,7 @@ def select_files(directory=None, patterns=(), pattern=None, context='default'):
         pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result[0]))
     return result
 
+
 def select_directory(context='default'):
     """Return a directory selected by the user in a GUI dialog.
 
@@ -3571,6 +3581,7 @@ def select_directory(context='default'):
     if context and result:
         pytis.form.set_recent_directory((cmode, context), result)
     return result
+
 
 def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
                        context='default'):
@@ -3610,6 +3621,7 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
         pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result.name))
     return result
 
+
 def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
                         context='default'):
     """Write 'data' to a file selected by the user using a GUI dialog.
@@ -3639,6 +3651,7 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(),
         return True
     else:
         return False
+
 
 def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default'):
     """Return a read-only 'file' like object of a user selected file and its filename.
@@ -3681,6 +3694,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
             return open(filename), os.path.basename(filename)
     return None, None
 
+
 def open_file(filename, mode='w'):
     """Return a read-only 'file' like object of the given file.
 
@@ -3695,6 +3709,7 @@ def open_file(filename, mode='w'):
     else:
         f = open(filename, str(mode))
     return f
+
 
 def write_file(data, filename, mode='w'):
     """Write given 'data' to given file.
@@ -3711,6 +3726,7 @@ def write_file(data, filename, mode='w'):
         f.write(data)
     finally:
         f.close()
+
 
 def _launch_file_or_data(filename, data=None, decrypt=False):
     import config
@@ -3753,7 +3769,10 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
         # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.
         command = (config.postscript_viewer, filename)
         log(OPERATIONAL, "Running external PDF viewer:", ' '.join(command))
-        viewer = lambda: subprocess.Popen(command)
+
+        def viewer():
+            subprocess.Popen(command)
+
     elif mime_type:
         # Find a local viewer through mailcap.
         import mailcap
@@ -3761,7 +3780,10 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
         if match:
             command = match['view'] % (filename,)
             log(OPERATIONAL, "Running external file viewer:", command)
-            viewer = lambda: subprocess.Popen(command, shell=True)
+
+            def viewer():
+                subprocess.Popen(command, shell=True)
+
     if viewer:
         if data is not None:
             try:
@@ -3778,6 +3800,7 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
     else:
         pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
                                                   filename, mime_type or 'unknown'))
+
 
 def launch_file(filename):
     """Launch a viewer for given file.
@@ -3801,6 +3824,7 @@ def launch_file(filename):
     """
     return _launch_file_or_data(filename)
 
+
 def open_data_as_file(data, suffix, decrypt=False):
     """Save given data to a temporary file and launch a viewer.
 
@@ -3822,6 +3846,7 @@ def open_data_as_file(data, suffix, decrypt=False):
     """
     filename = os.tempnam() + suffix
     return _launch_file_or_data(filename, decrypt=decrypt, data=data)
+
 
 def launch_url(url):
     """Open given URL in a web browser.
