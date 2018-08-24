@@ -1055,10 +1055,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 row = self._selection_callback_candidate
                 self._selection_callback_candidate = None
-                the_row = self._table.row(row)
-                if the_row is not None:
-                    wx.CallAfter(self._run_callback, self.CALL_SELECTION, the_row)
-                    self._post_selection_hook(the_row)
+                wx.CallAfter(self._run_selection_callback, row)
         # Update grid when lazy row count computation is in progress; we
         # mustn't do it much often otherwise row count computation gets disrupted
         # and slowed down significantly.  Hence the timeout value below.
@@ -1091,6 +1088,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return tooltip
         else:
             return None
+
+    def _run_selection_callback(self, row):
+        the_row = self._table.row(row)
+        if the_row is not None:
+            self._run_callback(self.CALL_SELECTION, the_row)
+            self._post_selection_hook(the_row)
 
     def _post_selection_hook(self, the_row):
         if focused_window() is self:
