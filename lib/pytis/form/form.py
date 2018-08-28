@@ -3093,7 +3093,11 @@ class PopupEditForm(PopupForm, EditForm):
         # recursion in popup forms. Closing the form immediately seems to
         # work fine, on the other hand.
         self.Unbind(wx.EVT_IDLE)
-        self.close()
+        block_yield(True)
+        try:
+            return self.close()
+        finally:
+            block_yield(False)
 
     def can_command(self, command, **kwargs):
         if ((command.handler() in (LookupForm, RecordForm) and
