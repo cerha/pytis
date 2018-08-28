@@ -3771,7 +3771,12 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
         log(OPERATIONAL, "Running external PDF viewer:", ' '.join(command))
 
         def viewer():
-            subprocess.Popen(command)
+            proc = subprocess.Popen(command)
+            proc.communicate()
+            try:
+                os.remove(filename)
+            except Exception:
+                pass
 
     elif mime_type:
         # Find a local viewer through mailcap.
@@ -3782,7 +3787,13 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
             log(OPERATIONAL, "Running external file viewer:", command)
 
             def viewer():
-                subprocess.Popen(command, shell=True)
+                proc = subprocess.Popen(command, shell=True)
+                proc.communicate()
+                try:
+                    os.remove(filename)
+                except Exception:
+                    pass
+
 
     if viewer:
         if data is not None:

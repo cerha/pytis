@@ -340,13 +340,17 @@ class PrintForm(Form):
 
 class PrintFormExternal(PrintForm, PopupForm):
 
+    class _TemporaryFile(pytis.util.TemporaryFile):
+        def __del__(self):
+            pass
+
     def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:
-            file_ = pytis.util.TemporaryFile(suffix='.pdf')
+            file_ = self._TemporaryFile(suffix='.pdf')
         self._formatter.printout(file_, hook=hook)
         return file_
 
@@ -357,7 +361,7 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
 
     def run(self, *args, **kwargs):
-        file_ = pytis.util.TemporaryFile(suffix='.pdf')
+        file_ = self._TemporaryFile(suffix='.pdf')
         def previewer():
             thread.start_new_thread(self._run_viewer, (file_,))
         self._run_formatter_process(None, hook=previewer, file_=file_)
