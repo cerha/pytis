@@ -2033,7 +2033,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             cid = self._columns[col].id()
             if not self._data.permitted(cid, pytis.data.Permission.VIEW):
                 return
-            cond = self._current_condition()
+            ctype = self._data.find_column(self._columns[col].id()).type()
+            cond = pytis.data.AND(
+                self._current_condition(),
+                pytis.data.NE(cid, pytis.data.Value(ctype, None)))
             arguments = self._current_arguments()
             limit = 60
             distinct = self._autofilter_values(cid, limit, condition=cond, arguments=arguments)
