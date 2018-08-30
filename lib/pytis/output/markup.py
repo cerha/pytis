@@ -37,7 +37,7 @@ import os
 import re
 
 import lcg
-from lcg import Unit, UPoint, Color
+from lcg import Unit, UPoint
 import pytis.output
 import pytis.util
 from pytis.util import some, super_
@@ -84,7 +84,6 @@ class _Mark(object):
 
     def _dimension(self, x):
         return x if x is None or isinstance(x, lcg.Unit) else lcg.UMm(x)
-
 
 
 class _Container(_Mark):
@@ -476,8 +475,8 @@ class _Group(_Container):
                 contents.append(HSpace(padding_right).lcg())
             if padding_top or padding_bottom:
                 group = VGroup(contents,
-                              padding_top=padding_top,
-                              padding_bottom=padding_bottom)
+                               padding_top=padding_top,
+                               padding_bottom=padding_bottom)
                 contents = group.lcg()
         return lcg.Container(contents, orientation=orientation,
                              presentation=presentation,
@@ -600,7 +599,7 @@ class Document(_Container):
                 value = definition.lcg()
             return value
         content_id = 'pytismarkup%d' % (self._counter.next(),)
-        return lcg.ContentNode(id=content_id, title=' ', # let's avoid printing the id
+        return lcg.ContentNode(id=content_id, title=' ',  # let's avoid printing the id
                                content=self.lcg(),
                                page_header=arg(self.arg_page_header),
                                page_footer=arg(self.arg_page_footer),
@@ -809,6 +808,7 @@ class LongTable(Table):
         assert isinstance(line_separator_margin, (float, int, long, Unit,)), line_separator_margin
         self._row_generator = row_generator
         self._row_generator_init = row_generator_init
+
         def convert(size):
             if not isinstance(size, Unit):
                 size = UPoint(size)
@@ -869,11 +869,12 @@ class LongTable(Table):
 class Image(_Mark):
     """EPS image."""
 
-    def __init__(self, file_name, standalone=True, width=None, height=None):
+    def __init__(self, file_or_data, standalone=True, width=None, height=None):
         """Arguments:
 
-          file_name -- image file name relative to the directory given by
-            configuration option 'print_spec_dir'.
+          file_or_data -- image file name relative to the directory given by
+            configuration option 'print_spec_dir' or image as a memory data
+            (buffer or bytearray).
           width -- explicit output image width as lcg.Unit subclass instance.
             If only one of width/height is specified (not None), the other
             dimension is computed to maintain the original image proportions.
@@ -886,23 +887,61 @@ class Image(_Mark):
             resized automatically to fit inside the current context.
 
         """
+        assert (isinstance(file_or_data, basestring) or
+                isinstance(file_or_data, bytearray) or
+                isinstance(file_or_data, buffer) or
+                hasattr(file_or_data, 'buffer')), file_or_data
         super(Image, self).__init__()
-        self._file_name = file_name
         self._standalone = standalone
         self._width = width
         self._height = height
+        if isinstance(file_or_data, basestring):
+            self._file_name = file_or_data
+            self._bytes = None
+        elif isinstance(file_or_data, buffer):
+            self._file_name = '_mem_image'
+            self._bytes = bytearray(file_or_data)
+        elif hasattr(file_or_data, 'buffer'):
+            self._file_name = '_mem_image'
+            self._bytes = bytearray(file_or_data.buffer())
+        else:
+            self._file_name = '_mem_image'
+            self._bytes = file_or_data
 
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
         return self._file_name
 
     def _lcg(self):
-        import config
-        file_name = os.path.join(config.print_spec_dir, self._file_name)
-        return lcg.InlineImage(lcg.Image(file_name, src_file=file_name),
-                               width=self._dimension(self._width),
-                               height=self._dimension(self._height),
-                               standalone=self._standalone)
+        if self._bytes:
+            class _Image(lcg.InlineImage):
+                def __init__(self, bytes, **kwargs):
+                    self._bytes = bytes
+                    super(_Image, self).__init__("_mem_image", **kwargs)
+
+                def image(self, context):
+                    # We need to return the image as a stream object
+                    # (necessary for reportlab in PDFExporter)
+                    # but we also need to satisfy assert in the
+                    # contructor of lcg.export.pdf.Image
+                    import StringIO
+
+                    class _StringIO(StringIO.StringIO, lcg.Image):
+                        def src_file(self):
+                            return self
+                    return _StringIO(self._bytes)
+            return _Image(self._bytes,
+                          width=self._dimension(self._width),
+                          height=self._dimension(self._height),
+                          standalone=self._standalone)
+        else:
+            import config
+            file_name = os.path.join(config.print_spec_dir, self._file_name)
+            return lcg.InlineImage(lcg.Image(file_name, src_file=file_name),
+                                   width=self._dimension(self._width),
+                                   height=self._dimension(self._height),
+                                   standalone=self._standalone)
+
 
 class StructuredText(_Mark):
     """LCG structured text."""
