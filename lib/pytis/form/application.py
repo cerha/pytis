@@ -85,6 +85,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
+    _STATE_FRAME_SIZE = 'frame_size'
 
     @classmethod
     def _get_command_handler_instance(cls):
@@ -131,9 +132,26 @@ class Application(wx.App, KeyHandler, CommandHandler):
             clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
             clipboard.connect("owner-change", self._on_clipboard_copy)
         init_colors()
+        self._initial_config = [
+            (o, copy.copy(getattr(config, o)))
+            for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
+        # Initialize all needed user settings managers.
+        self._application_config_manager = pytis.form.ApplicationConfigManager(config.dbconnection)
+        self._form_settings_manager = pytis.form.FormSettingsManager(config.dbconnection)
+        self._profile_manager = pytis.form.FormProfileManager(config.dbconnection)
+        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(config.dbconnection)
+        # Read the stored configuration.
+        self._saved_state = {}
+        for option, value in self._application_config_manager.load():
+            if hasattr(config, option):
+                setattr(config, option, value)
+            else:
+                self._saved_state[option] = value
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
-                                       pos=(0, 0), size=(800, 600), style=wx.DEFAULT_FRAME_STYLE)
+                                       size=self._get_state_param(self._STATE_FRAME_SIZE,
+                                                                  (1000, 800), tuple, int),
+                                       pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
@@ -189,15 +207,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                          if isinstance(x, tuple) else x
                          for x in self._specification.status_fields()]
         self._statusbar = StatusBar(frame, status_fields)
-        self._initial_config = [
-            (o, copy.copy(getattr(config, o)))
-            for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
-        self._saved_state = {}
-        # Initialize all needed user settings managers.
-        self._application_config_manager = pytis.form.ApplicationConfigManager(config.dbconnection)
-        self._form_settings_manager = pytis.form.FormSettingsManager(config.dbconnection)
-        self._profile_manager = pytis.form.FormProfileManager(config.dbconnection)
-        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(config.dbconnection)
         # Initialize user action logger.
         try:
             self._logger = DbActionLogger(config.dbconnection, config.dbuser)
@@ -207,12 +216,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # lead to logging being ignored.
             log(OPERATIONAL, "Form action logging not activated:", e)
             self._logger = None
-        # Read the stored configuration.
-        for option, value in self._application_config_manager.load():
-            if hasattr(config, option):
-                setattr(config, option, value)
-            else:
-                self._saved_state[option] = value
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Unlock crypto keys
@@ -802,6 +805,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES,
                                   tuple(self._recent_directories.items()))
+            self._set_state_param(self._STATE_FRAME_SIZE, tuple(self._frame.GetSize()))
         except Exception as e:
             safelog(str(e))
         try:
