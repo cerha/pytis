@@ -31,6 +31,7 @@ from cStringIO import StringIO
 import datetime
 import os
 import re
+import textwrap
 
 import wx.lib.colourselect
 
@@ -51,7 +52,7 @@ from dialog import Calendar, ColorSelector, Error
 from event import wx_callback
 from screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
-    char2px, dlg2px, file_menu_items, mitem, open_data_as_file,
+    char2px, dlg2px, file_menu_items, get_icon, mitem, open_data_as_file,
     paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
 )
 from application import (
@@ -396,6 +397,11 @@ class InputField(object, KeyHandler, CommandHandler):
             self._widget = ctrl
         else:
             self._widget = self._create_widget(parent, ctrl)
+            if spec.descr():
+                if spec.compact():
+                    self._label = self._add_help_button(parent, self._label)
+                else:
+                    self._widget = self._add_help_button(parent, self._widget)
         if not self._enabled:
             self._set_editable(False)
         if not inline:
@@ -418,8 +424,6 @@ class InputField(object, KeyHandler, CommandHandler):
         wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, lambda e: self._on_context_menu(ctrl))
         wx_callback(wx.EVT_NAVIGATION_KEY, ctrl, self._on_navigation(ctrl))
-        if self._spec.descr() is not None:
-            ctrl.SetToolTipString(self._spec.descr())
 
     def __str__(self):
         try:
@@ -439,7 +443,10 @@ class InputField(object, KeyHandler, CommandHandler):
         # Helper function to group wx widgets into a horizontal box (sizer).
         hbox = wx.BoxSizer()
         for x in content:
-            hbox.Add(x, 0, wx.FIXED_MINSIZE)
+            if isinstance(x, tuple):
+                hbox.Add(*x)
+            else:
+                hbox.Add(x, 0, wx.FIXED_MINSIZE)
         return hbox
 
     def _create_label(self, parent):
@@ -461,6 +468,11 @@ class InputField(object, KeyHandler, CommandHandler):
         # etc. to create more sophisticated user interface.  This method is not
         # called in "inline" mode where additional controls are not allowed.
         return ctrl
+
+    def _add_help_button(self, parent, widget):
+        button = wx.StaticBitmap(parent, bitmap=get_icon('info'))
+        button.SetToolTipString(textwrap.fill(self._spec.descr(), 60))
+        return self._hbox(widget, (button, 0, wx.LEFT, 4))
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -2498,7 +2510,6 @@ class StructuredTextField(TextField):
         selection = ctrl.GetRange(*ctrl.GetSelection())
         if selection:
             if '\n' in selection:
-                import textwrap
                 selection = textwrap.fill(selection, 80, subsequent_indent='  ')
             new_text = markup + ' ' + selection.strip() + '\n'
         else:
