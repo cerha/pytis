@@ -1232,7 +1232,10 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
             label = label + ':'
         # Radio Box enumeration is STATIC.
         choices = self._row.enumerate(self.id())
-        if not (self._type.not_null() and spec.default() is not None):
+        default = spec.default()
+        if default is None:
+            default = self._type.default_value().value()
+        if not (self._type.not_null() and default is not None):
             # Even NOT NULL fields may initially have NULL value when 'default' is not set.
             choices.insert(0, (None, spec.null_display() or ''))
         self._radio_values = [self._type.export(value) for value, choice in choices]
