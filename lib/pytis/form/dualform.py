@@ -636,7 +636,8 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return None
 
     def _create_side_form(self, parent):
-        return self._SideForm(parent, self._resolver, self._name, main_form=self._main_form)
+        return self._SideForm(parent, self._resolver, self._name, main_form=self._main_form,
+                              **self._unprocessed_kwargs)
 
     def _set_side_form_callbacks(self):
         self._side_form.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)
