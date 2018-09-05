@@ -85,6 +85,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
+    _STATE_FRAME_SIZE = 'frame_size'
 
     @classmethod
     def _get_command_handler_instance(cls):
@@ -133,7 +134,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         init_colors()
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
-                                       pos=(0, 0), size=(800, 600), style=wx.DEFAULT_FRAME_STYLE)
+                                       pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
@@ -327,6 +328,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if mb is None:
             return False
         # Finish and show the frame.
+        frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, (1000, 800), tuple, int))a
         wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
@@ -802,6 +804,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES,
                                   tuple(self._recent_directories.items()))
+            self._set_state_param(self._STATE_FRAME_SIZE, tuple(self._frame.GetSize()))
         except Exception as e:
             safelog(str(e))
         try:
