@@ -1001,7 +1001,15 @@ class TextField(InputField):
 
     def _can_paste(self):
         ctrl = self._current_ctrl()
-        return hasattr(ctrl, 'CanPaste') and ctrl.CanPaste()
+        if hasattr(ctrl, 'CanPaste'):
+            try:
+                return ctrl.CanPaste()
+            except wx.PyAssertionError as e:
+                # This error has been observed on Linux when attempting to paste text
+                # by clicking the middle mouse button.  Ignoring it looks safe here.
+                if not str(e).endswith('reentrancy in clipboard code'):
+                    raise
+        return False
 
     def _cmd_paste(self):
         paste_from_clipboard(self._current_ctrl())
