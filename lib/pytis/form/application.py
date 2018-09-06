@@ -438,13 +438,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             x[2] = f.title()
                 i += 1
         menu_items = pytis.extensions.get_menu_forms()
-        filtered_forms = []
-        for i, f in enumerate(startup_forms[:]):
-            for m in menu_items:
-                if f[0] == m[0] and f[1] == m[1]:
-                    filtered_forms.append(f)
-                    break
-        startup_forms = filtered_forms
+        if menu_items:
+            # get_menu_forms() returns an empty list if DMP is not used!
+            filtered_forms = []
+            for i, f in enumerate(startup_forms[:]):
+                for m in menu_items:
+                    if f[0] == m[0] and f[1] == m[1]:
+                        filtered_forms.append(f)
+                        break
+            startup_forms = filtered_forms
         if len(startup_forms) > 1:
             run_dialog(pytis.form.ProgressDialog, run_startup_forms, args=(startup_forms,),
                        title=_("Opening saved forms"),
