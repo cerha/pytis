@@ -1421,63 +1421,44 @@ class AggregationSetupDialog(GenericDialog):
 
 
 class ExitDialog(Question):
-    """Application exit question with a choice of items to save for next startup.
+    """Application exit question with a checkbox to save forms for next startup.
 
-    The dialog lets the user to save the application state by checking the items (forms, documents)
-    which should be opened automatically on next startup.
+    The dialog confirms the exit and lets the user decide whether the currently
+    opened forms should be saved to allow their automatic re-opening on next
+    startup.
 
-    The result returned by the `run()' method is a pair (EXIT, ITEMS).  EXIT is True if the user
-    really wants to quit the application or False otherwise.  ITEMS is a sequence of boolean
-    values, one for each item of 'save_items' passed to the constructor.  The value is True for
-    items which were checked and False for unchecked items.  ITEMS is None if the user doesn't want
-    to save the current state (so the prevoius saved state should be used).
+    The result returned by the `run()' method is a pair (EXIT, SAVE).  EXIT is
+    True if the user really wants to quit the application or False otherwise.
+    SAVE is True if the user wants to save the currently opened forms.  If
+    False the prevoiusly saved state should be used.
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
 
     def __init__(self, parent, title=_("Exit application"),
                  message=_("Really quit the application?"), icon=Message.ICON_QUIT,
-                 save_label=_("Automatically open the checked forms on next startup"),
-                 save_state=True, save_columns=(), save_items=()):
+                 checkbox=_("Save open forms for next startup"),
+                 checked=True):
         """Arguments:
 
-           save_label -- save state checkbox label as a string or unicode.  This checkbox
-             indicates, whether the current application state should be saved or not.
-           save_state -- initial state of the save checkbox as a boolean value.
-           save_columns -- sequence of column labels for the list of items to save.
-           save_items -- a sequence of checkable items.  Each item is a sequence.  The first value
-             in this sequence is a boolean flag indicating the initial checkbox state for this
-             item.  The following values are textual fields describing the item.  The number of
-             textual fields must be the same as the numer of column labels passed in
-             'save_columns'.  These fields are presented in a table-like list.
+           checkbox -- checkbox label as a string or unicode.
+           checked -- initial state of the checkbox as a boolean value.
 
         """
         super(ExitDialog, self).__init__(parent, message, title=title, default=True, icon=icon)
-        assert isinstance(save_state, bool)
-        assert isinstance(save_columns, (list, tuple))
-        assert isinstance(save_items, (list, tuple))
-        assert isinstance(save_label, basestring)
-        self._save_state = save_state
-        self._save_label = save_label
-        self._save_columns = save_columns
-        self._save_items = save_items
+        assert isinstance(checkbox, basestring)
+        assert isinstance(checked, bool)
+        self._checkbox = checkbox
+        self._checked = checked
 
     def _create_content(self, sizer):
         super(ExitDialog, self)._create_content(sizer)
-        if self._save_items:
-            self._checklist = _CheckListCtrl(self._dialog, self._save_columns, self._save_items)
-            self._checkbox = wx.CheckBox(self._dialog, -1, self._save_label)
-            self._checkbox.SetValue(self._save_state)
-            sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
-            sizer.Add(self._checkbox, 0, wx.ALL | wx.ALIGN_LEFT, 5)
+        self._checkbox = wx.CheckBox(self._dialog, -1, self._checkbox)
+        self._checkbox.SetValue(self._checked)
+        sizer.Add(self._checkbox, 0, wx.ALL | wx.ALIGN_LEFT, 5)
 
     def _customize_result(self, result):
-        exit = super(ExitDialog, self)._customize_result(result)
-        if self._save_items and self._checkbox.IsChecked():
-            items = [self._checklist.IsChecked(i) for i, triple in enumerate(self._save_items)]
-        else:
-            items = None
-        return (exit, items)
+        return (super(ExitDialog, self)._customize_result(result), self._checkbox.IsChecked())
 
 
 class FileDialog(Dialog):

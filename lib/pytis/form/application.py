@@ -359,6 +359,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     if config.debug:
                         log(DEBUG, 'Menu item:', (item.title(), enabled))
 
+    def _spec_title(self, name):
+        if name.find('::') != -1:
+            names = name.split('::')
+            return (config.resolver.get(names[0], 'binding_spec')[names[1]].title() or
+                    ' / '.join([spec_title(n) for n in names]))
+        else:
+            return config.resolver.get(name, 'view_spec').title()
+
     def _init(self):
         # Check RPC client version
         self._check_x2goclient()
@@ -386,16 +394,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
                            pytis.form.BrowseForm or
                            pytis.form.BrowseDualForm)
                 startup_forms.append((cls, name.strip()))
-        self._saved_startup_forms = []
-        for pair in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
-            if len(pair) == 2:
-                cls, name = pair
-                if issubclass(cls, pytis.form.Form) and self._is_valid_spec(name):
-                    if pair not in startup_forms:
-                        startup_forms.insert(0, pair)
-                    self._saved_startup_forms.append(list(pair) + [None])
-                    continue
-            log(OPERATIONAL, "Ignoring saved startup form:", pair)
+        saved_forms = []
+        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
+            if ((issubclass(cls, pytis.form.Form) and
+                 self._is_valid_spec(name) and
+                 (cls, name) not in startup_forms)):
+                saved_forms.append((cls, name))
+            else:
+                log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
+        if saved_forms:
+            checked = self.run_dialog(pytis.form.CheckListDialog,
+                                      title=_("Restore forms"),
+                                      message=_("Restore these forms saved on last exit?"),
+                                      columns=(_("Title"), _("Type")),
+                                      items=[(True, self._spec_title(name), f.descr())
+                                             for f, name in saved_forms])
+            if checked:
+                startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))
 
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
@@ -406,13 +421,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     run_form(cls, name)
                 except Exception as e:
                     log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
-                else:
-                    # Assign titles to saved startup forms (we need a form instance for this).
-                    f = self._windows.active()
-                    if f:
-                        x = find([f.__class__, f.name(), None], self._saved_startup_forms)
-                        if x:
-                            x[2] = f.title()
                 i += 1
         menu_items = pytis.extensions.get_menu_forms()
         if menu_items:
@@ -760,26 +768,21 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(EVENT, "Couldn't close application with modal windows:",
                     self._modals.top())
                 return False
-            forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
-                     if not isinstance(f, (pytis.form.PrintForm, pytis.form.AggregationForm,
-                                           pytis.form.AggregationDualForm))]
-            for cls, name, title in self._saved_startup_forms:
-                if title is not None and (cls, name) not in [x[:2] for x in forms]:
-                    forms.append((cls, name, title, False))
-            if forms:
-                items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
-                save_state = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                exit, result = self.run_dialog(pytis.form.ExitDialog,
-                                               save_columns=(_("Title"), _("Type")),
-                                               save_items=items, save_state=save_state)
-                if not exit:
-                    return False
-                self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, result is not None)
-                if result:
-                    startup_forms = [f[:2] for f, checked in zip(forms, result) if checked]
-                    self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
-                else:
-                    self._unset_state_param(self._STATE_STARTUP_FORMS)
+            exit_, save = self.run_dialog(
+                pytis.form.ExitDialog,
+                checked=self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True),
+            )
+            if not exit_:
+                return False
+            self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, save)
+            if save:
+                forms = [(f.__class__, f.name()) for f in self._windows.items()
+                         if not isinstance(f, (pytis.form.PrintForm,
+                                               pytis.form.AggregationForm,
+                                               pytis.form.AggregationDualForm))]
+                self._set_state_param(self._STATE_STARTUP_FORMS, tuple(forms))
+            #else:
+            #    self._unset_state_param(self._STATE_STARTUP_FORMS)
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES,
                                   tuple(self._recent_directories.items()))
