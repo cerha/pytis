@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1691,6 +1691,9 @@ class DBDataDefault(_DBTest):
         key = B('x', 'viewtest5', 'x')
         col = B('y', 'viewtest5', 'y')
         view5 = pd.DBDataDefault((key, col,), key, conn)
+        key = B('x', 'viewtest5', 'x', type_=pd.Serial())
+        col = B('y', 'viewtest5', 'y')
+        view5_serial = pd.DBDataDefault((key, col,), key, conn)
         key = B('x', 'viewtest7', 'x')
         col = B('y', 'viewtest7', 'y')
         view7 = pd.DBDataDefault((key, col,), key, conn)
@@ -1719,6 +1722,7 @@ class DBDataDefault(_DBTest):
         self.view3 = view3
         self.view4 = view4
         self.view5 = view5
+        self.view5_serial = view5_serial
         self.view7 = view7
         self.rudeview = rudeview
         self.funcdata = funcdata
@@ -2075,6 +2079,9 @@ class DBDataDefault(_DBTest):
         result, success = self.view5.insert(row)
         self.assertTrue(success)
         self.assertIsNone(result, ('unexpected insert result', result,))
+        result, success = self.view5_serial.insert(row)
+        self.assertTrue(success)
+        self.assertEqual(result['y'].value(), 5)
 
     def test_update(self):
         row = self.newrow

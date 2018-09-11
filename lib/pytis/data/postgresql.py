@@ -2666,7 +2666,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 key = None
                 if isinstance(self._key_binding[0].type(), Serial):
                     try:
-                        key_data = self._pg_query(self._pdbb_command_insert_get_last,
+                        key_data = self._pg_query(self._pdbb_command_insert_get_last.update(dict(row_count=ival(1))),
                                                   transaction=transaction)
                         key_row = self._pg_make_row_from_raw_data(
                             key_data, template=(self._pg_make_row_template[0],))
