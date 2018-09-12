@@ -328,7 +328,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if mb is None:
             return False
         # Finish and show the frame.
-        frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, (1000, 800), tuple, int))
+        #
+        # TODO: There are problems when users use multiply monitors or start application
+        # with different screens or screen resolutions. So until we find the adequate
+        # solution, we use some safe default frame size.
+        #
+        # frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, (1000, 800), tuple, int))
+        frame.SetSize((1000, 800))
         wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
