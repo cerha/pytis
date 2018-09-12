@@ -65,7 +65,7 @@ class CommandHandler:
         Each class derived from CommandHandler must define this method and
         return an instance of itself which is currently active to process its
         commands or None if no such instance is active in the application.
-        
+
         """
         raise pytis.util.ProgramError("This method must be overriden in a derived class.")
 
@@ -82,7 +82,7 @@ class CommandHandler:
     @classmethod
     def command_enabled(cls, command, **kwargs):
         """Return true if given command is active (can be invoked).
-        
+
         The commands which are not compatible with the active object in the
         application ('CommandHandler' instance) are automatically inactive.  If
         there is an active handler compatible with the command (the command is
@@ -110,7 +110,7 @@ class CommandHandler:
         calling the method 'on_command()' of the instance (which normally
         futher calls a method '_cmd_<command-name>()' matching the command
         name).
-        
+
         Returns: The return value of the command handler method.
 
         """
@@ -150,7 +150,7 @@ class CommandHandler:
         Každá třída, pro kterou jsou definovány příkazy, by tak měla definovat
         všechny odpovídající obslužné rutiny.  Druhou možností je předefinování
         této metody a implementace vlastního mechanismu zpracování příkazů.
-        
+
         Vrací: Návratovou hodnotu obslužné rutiny daného příkazu.
 
         """
@@ -207,10 +207,10 @@ class Command(object):
         Arguments:
 
           name -- name of the command, string
-          
+
         """
         return class_._commands.get(name)
-    
+
     def __init__(self, handler, name, doc=None, log_=True):
         """Definuj příkaz.
 
@@ -260,7 +260,7 @@ class Command(object):
 
         """
         return (self, kwargs)
-        
+
     def handler(self):
         """Vrať třídu uživatelského rozhraní, která tento příkaz zpracovává."""
         return self._handler
@@ -268,20 +268,20 @@ class Command(object):
     def name(self):
         """Vrať název příkazu zadaný v konstruktoru."""
         return self._name
-    
+
     def id(self):
         """Vrať identifikátor příkazu jako řetězec.
 
         Identifikátor je vhodný např. pro logování.  Příkazy jsou rozpoznávány
         dle konkrétních instancí, ne podle svého identifikátoru.
-    
+
         """
         return self._id
 
     def doc(self):
         """Vrať dokumentační řetězec příkazu jako string, nebo None."""
         return self._doc
-    
+
     def enabled(self, **kwargs):
         """Vrať pravdu, pokud je příkaz aktivní (smí být vyvolán).
 
@@ -304,7 +304,7 @@ class Command(object):
             from pytis.form import message
             message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
             return False
-    
+
     def __cmp__(self, other):
         if pytis.util.sameclass(self, other):
             if self._id == other._id:
@@ -315,7 +315,7 @@ class Command(object):
                 return 1
         else:
             return pytis.util.compare_objects(self, other)
-        
+
     def __str__(self):
         return '<Command: %s>' % self._id
 
@@ -426,7 +426,7 @@ class UICommand(object):
                         lambda e: cmd.invoke(**args))
             wx_callback(wx.EVT_UPDATE_UI, parent, tool.GetId(),
                         lambda e: e.Enable(cmd.enabled(**args)))
-    
+
 
 _command_icons = None
 def command_icon(command, args):
@@ -441,7 +441,7 @@ def command_icon(command, args):
     within 'COMMAND_ICONS' specification (see the 'commands_' module).
 
     The returned value is the icon identifier as accepted by 'get_icon()'.
-    
+
     """
     global _command_icons
     if _command_icons is None:
@@ -454,7 +454,7 @@ def command_icon(command, args):
                 cmd, iargs = item, {}
             icons = _command_icons[cmd] = _command_icons.get(cmd, [])
             icons.append((iargs, icon))
-            
+
     try:
         icons = _command_icons[command]
     except KeyError:
