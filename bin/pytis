@@ -24,11 +24,6 @@ import os
 import sys
 import locale
 
-try:
-    import gobject
-except ImportError:
-    gobject = None
-
 # Make Python respect users locale settings (https://docs.python.org/2/library/locale.html).
 locale.setlocale(locale.LC_ALL, '')
 
@@ -134,10 +129,6 @@ def gg():
 
 
 def run_application():
-    if gobject is not None:
-        # Init gobject threads as we use gtk widgets at some places (such as a
-        # webkit browser widget).
-        gobject.threads_init()
     gc.enable()  # pro jistotu
     import pytis.form  # musí být až za zpracováním voleb
     # Ošetření chyby Pythonu způsobující chybné parsování reálných čísel ve
