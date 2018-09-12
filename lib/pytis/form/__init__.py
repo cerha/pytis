@@ -27,28 +27,6 @@ specifikace jednotlivých prvků rozhraní.
 
 import os
 
-if 'WXVER' in os.environ:
-    version = os.environ["WXVER"]
-else:
-    try:
-        import wx
-    except ImportError:
-        version = '2.6'
-    else:
-        version = None
-if version is not None:
-    import wxversion
-    try:
-        ok = wxversion.checkInstalled(version)
-    except ValueError:
-        ok = False
-    if ok:
-        wxversion.select(version)
-    else:
-        import sys
-        sys.stderr.write("Invalid wx version: %s\nInstalled versions are: %s\n" % \
-                         (version, ', '.join(wxversion.getInstalled())))
-
 _list = list
 
 from event import *
