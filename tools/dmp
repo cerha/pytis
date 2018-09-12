@@ -296,7 +296,7 @@ def parse_options():
         if not arg or arg[0] != '-':
             break
         command_index += 1
-    args = sys.argv[command_index:]
+    args = [unicode(arg, sys.stdin.encoding) for arg in sys.argv[command_index:]]
     if not args or not find_command(args[0]):
         parser.print_help()
         sys.exit(1)
