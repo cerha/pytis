@@ -31,7 +31,7 @@ se vyskytující dialogové operace.
 
 from __future__ import unicode_literals
 
-import wx.calendar
+import wx.lib.calendar
 import wx.lib.masked
 import wx.lib.mixins.listctrl
 
@@ -222,7 +222,7 @@ class GenericDialog(Dialog):
 
     def _create_icon(self, artid):
         bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
-        if bitmap.Ok():
+        if bitmap.IsOk():
             return wx.StaticBitmap(self._dialog, -1, bitmap)
         else:
             return None
@@ -954,16 +954,16 @@ class Calendar(GenericDialog):
         except:
             modal = wx.wxDIALOG_MODAL
         style = (modal |
-                 wx.calendar.CAL_SHOW_HOLIDAYS |
-                 wx.calendar.CAL_SHOW_SURROUNDING_WEEKS)
+                 wx.lib.calendar.CAL_SHOW_HOLIDAYS |
+                 wx.lib.calendar.CAL_SHOW_SURROUNDING_WEEKS)
         if not enable_year:
-            style = style | wx.calendar.CAL_NO_YEAR_CHANGE
+            style = style | wx.lib.calendar.CAL_NO_YEAR_CHANGE
         if not enable_month:
-            style = style | wx.calendar.CAL_NO_MONTH_CHANGE
+            style = style | wx.lib.calendar.CAL_NO_MONTH_CHANGE
         if monday_first:
-            style = style | wx.calendar.CAL_MONDAY_FIRST
+            style = style | wx.lib.calendar.CAL_MONDAY_FIRST
         else:
-            style = style | wx.calendar.CAL_SUNDAY_FIRST
+            style = style | wx.lib.calendar.CAL_SUNDAY_FIRST
         self._style = style
         if date is None:
             self._date = pytis.data.Date.datetime()
@@ -972,13 +972,13 @@ class Calendar(GenericDialog):
             self._date = date
 
     def _create_content(self, sizer):
-        cal = wx.calendar.CalendarCtrl(self._dialog, -1, style=self._style)
+        cal = wx.lib.calendar.CalendarCtrl(self._dialog, -1, style=self._style)
         size = cal.GetSize()
         cal.SetMinSize((size.GetWidth() + 10, size.GetHeight()))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
-        pytis.form.wx_callback(wx.calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
+        pytis.form.wx_callback(wx.lib.calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal

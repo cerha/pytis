@@ -34,7 +34,6 @@ import os
 import string
 import types
 import wx
-import wx.combo
 import wx.html2
 import SocketServer
 import SimpleHTTPServer
@@ -440,8 +439,8 @@ class WxKey:
                  ('Backspace', wx.WXK_BACK),
                  ('Home', wx.WXK_HOME),
                  ('End', wx.WXK_END),
-                 ('Prior', wx.WXK_PRIOR),
-                 ('Next', wx.WXK_NEXT),
+                 ('Prior', wx.WXK_PAGEUP),
+                 ('Next', wx.WXK_PAGEDOWN),
                  ('Up', wx.WXK_UP),
                  ('Down', wx.WXK_DOWN),
                  ('Left', wx.WXK_LEFT),
@@ -1812,17 +1811,16 @@ class InfoWindow(object):
         frame.ShowModal()
 
 
-class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
+class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
     """Profile selection menu implemented using wx.ListCtrl.
 
-    This class implements the 'wx.combo.ComboPopup' API and thus can be used as
+    This class implements the 'wx.ComboPopup' API and thus can be used as
     a popup selection of the 'ProfileSelector' control, which is derived form
-    'wx.combo.ComboCtrl'.
+    'wx.ComboCtrl'.
 
     """
     def __init__(self):
-        self.PostCreate(wx.PreListCtrl())
-        wx.combo.ComboPopup.__init__(self)
+        wx.ComboPopup.__init__(self)
         self._selected_profile_index = None
 
     def _on_motion(self, event):
@@ -1928,20 +1926,20 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     def OnPopup(self):
         # Called immediately after the popup is shown.
-        wx.combo.ComboPopup.OnPopup(self)
+        wx.ComboPopup.OnPopup(self)
 
     def OnDismiss(self):
         # Called when popup is dismissed.
-        wx.combo.ComboPopup.OnDismiss(self)
+        wx.ComboPopup.OnDismiss(self)
         self.Select(wx.NOT_FOUND)
         self.DeleteAllItems()
 
 
-class ProfileSelector(wx.combo.ComboCtrl):
+class ProfileSelector(wx.ComboCtrl):
     """Toolbar control for form profile selection and management."""
 
     def __init__(self, parent, uicmd, size):
-        wx.combo.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
+        wx.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
         self._on_enter_perform = None
@@ -3006,7 +3004,7 @@ def dlg2px(window, x, y=None):
     dlgsize = (x, y)
     pxsize = wx.DLG_SZE(window, dlgsize)
     if single:
-        return pxsize.GetWidth()
+        return pxsize[0]
     else:
         return pxsize
 
@@ -3094,7 +3092,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     if icon_id is None:
         bitmap = None
     elif icon_id.startswith('wx'):
-        bitmap = wx.ArtProvider_GetBitmap(icon_id, type, size)
+        bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
         imgfile = os.path.join(config.icon_dir, icon_id + '.png')
         if os.path.exists(imgfile):
@@ -3103,7 +3101,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
             bitmap = None
-    if bitmap and bitmap.Ok():
+    if bitmap and bitmap.IsOk():
         return bitmap
     else:
         return None

@@ -407,7 +407,7 @@ class UICommand(object):
             ctrl = ctrl_cls(toolbar, self, **kwargs)
             ctrl.SetToolTipString(self._title)
             tool = toolbar.AddControl(ctrl)
-            toolbar.SetToolLongHelp(tool.GetId(), self._descr) # Doesn't work...
+            toolbar.SetToolLongHelp(tool.GetId(), self._descr)  # Doesn't work...
         else:
             cmd, args = self._command, self._args
             assigned_icon = command_icon(cmd, args)
@@ -418,9 +418,8 @@ class UICommand(object):
             icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
             if icon is None:
                 icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
-            tool = toolbar.AddTool(-1, icon,
-                                   shortHelpString=self._title,
-                                   longHelpString=self._descr)
+            tool = toolbar.AddTool(-1, self._title, icon, wx.NullBitmap,
+                                   shortHelp=self._title, longHelp=self._descr)
             parent = toolbar.GetParent()
             from pytis.form import wx_callback
             wx_callback(wx.EVT_TOOL, parent, tool.GetId(),
