@@ -518,7 +518,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _create_help_menu(self, menus):
         if [m for m in menus if m.title() == _("Help")]:
-            log(OPERATIONAL, "Menu nápovědy nalezeno - nevytvářím vlastní.")
+            log(OPERATIONAL, "Help menu found - not creating one.")
             return
         items = [mitem(pytis.form.UICommands.PYTIS_HELP)]
         items.extend((MSeparator(),
@@ -713,7 +713,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
-                log(EVENT, "Reparent -- možná je to tu opravdu potřeba...")
+                log(EVENT, "Reparent -- maybe it is really needed here...")
                 form.Reparent(self._frame)
             old = self._windows.active()
             if form is not old:
@@ -832,7 +832,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if current_value != initial_value:
                     options.append((option, current_value))
             self._application_config_manager.save(options)
-            log(OPERATIONAL, "Konfigurace uložena: %d položek" % len(options))
+            log(OPERATIONAL, "Configuration saved: %d items" % len(options))
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
         try:
@@ -870,7 +870,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _on_form_close(self, event):
         form = event.GetEventObject()
         assert form is self._windows.active()
-        log(EVENT, "Okno nemodálního formuláře uzavřeno:", form)
+        log(EVENT, "Non-modal form closed:", form)
         self._windows.remove(form)
         self._update_window_menu()
         self.restore()
@@ -988,7 +988,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 name = name()
                 if name is None:
                     return None
-            log(ACTION, 'Vytvářím nový formulář:', (form_class, name, kwargs))
+            log(ACTION, 'Running form:', (form_class, name, kwargs))
             message(_("Opening form..."), root=True)
             assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring)  # May be None for InputForm.
@@ -1146,7 +1146,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 result = proc(*args, **kwargs)
             if False:
                 # The return value may contain secret data, so we don't log it.
-                log(ACTION, u"Návratová hodnota procedury:", result)
+                log(ACTION, u"Procedure return value:", result)
             if focused:
                 focused.SetFocus()
         except UserBreakException:
