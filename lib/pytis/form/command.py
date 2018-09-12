@@ -30,6 +30,7 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-wx')
 
+
 class CommandHandler:
     """Mix-in class for objects capable of handling user commands.
 
@@ -429,6 +430,8 @@ class UICommand(object):
 
 
 _command_icons = None
+
+
 def command_icon(command, args):
     """Return the icon identifier for given command and its arguments.
 
