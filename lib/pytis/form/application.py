@@ -95,13 +95,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def OnInit(self):
         import pytis.extensions
         self._specification = config.resolver.specification('Application')
-        try:
-            import gtk
-        except ImportError:
-            pass
-        else:
-            clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-            clipboard.connect("owner-change", self._on_clipboard_copy)
+
+        from gi.repository import Gtk, Gdk
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.connect('owner-change', self._on_clipboard_copy)
+
         init_colors()
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
