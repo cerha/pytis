@@ -94,36 +94,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def OnInit(self):
         import pytis.extensions
-        try:
-            self._specification = config.resolver.specification('Application')
-        except ResolverError as e:
-            class LegacyApplication(object):
-                def init(self):
-                    return self._spec('init')
-
-                def post_init(self):
-                    return self._spec('post_init')
-
-                def menu(self):
-                    return self._spec('menu', ())
-
-                def login_hook(self, success):
-                    hook = self._spec('login_hook')
-                    if hook:
-                        hook(success)
-
-                def keymap(self):
-                    return self._spec('keymap', ())
-
-                def status_fields(self):
-                    return self._spec('status_fields', ())
-
-                def _spec(self, name, default=None):
-                    try:
-                        return config.resolver.get('application', name)
-                    except ResolverError:
-                        return default
-            self._specification = LegacyApplication()
+        self._specification = config.resolver.specification('Application')
         try:
             import gtk
         except ImportError:
