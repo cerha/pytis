@@ -1573,7 +1573,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
         assert len(keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
-        key_cond = _Query('%(key_column)s=%(key)s', dict(key_column=first_key_column))
+        keys_cond = _Query('%(key_column)s IN (%(keys)s)', dict(key_column=first_key_column))
         if self._distinct_on:
             distinct_columns_string = self._pdbb_sql_column_list_from_names(self._distinct_on)
             distinct_on = _Query(' DISTINCT ON (') + distinct_columns_string + ')'
@@ -1598,7 +1598,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return _Query.join(items)
         ordering = sortspec('ASC')
         rordering = sortspec('DESC')
-        condition = key_cond
+        condition = keys_cond
         relation_and_condition = _Query.join((relation.wrap(), condition.wrap(),), ' and ')
         if self._condition is None:
             filter_condition = _Query('true')
@@ -1825,13 +1825,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 'where (%(relation)s) and %(filter_condition)s and %(condition)s',
                 args)
         self._pdbb_command_insert = _Query(
-            'insert into %s (%%(columns)s) values (%%(values)s) returning %%(key_column)s' %
+            'insert into %s (%%(columns)s) values %%(values)s returning %%(key_column)s' %
             (main_table,),
             args)
         self._pdbb_command_insert_alternative = _Query(
-            'insert into %s (%%(columns)s) values (%%(values)s)' % (main_table,))
+            'insert into %s (%%(columns)s) values %%(values)s' % (main_table,))
         self._pdbb_command_insert_get_last = _Query(
-            'select %%(key_column)s from %s order by %%(key_column)s desc limit 1' % (main_table,),
+            'select %%(key_column)s from %s order by %%(key_column)s desc limit %%(row_count)s' % (main_table,),
             args)
         if self._ordering:
             ordering = []
@@ -1852,7 +1852,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 eqstring = xeqstring = ''
             self._pdbb_command_insert_shift = _Query(
-                'update %s set %s=%s+1 where %s>=%%(position)s %s' %
+                'update %s set %s=%s+%%(shift_amount)s where %s>=%%(position)s %s' %
                 (main_table, ocol, ocol, ocol, xeqstring))
             self._pdbb_command_insert_newpos = _Query(
                 'select max(%s) from %s where %s' % (ocol, main_table, eqstring))
@@ -2133,9 +2133,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 call_arguments.append(arg_value)
             args[self._arguments_arg] = _Query.join(call_arguments)
 
-    def _pg_row(self, key_value, columns, transaction=None, supplement='', arguments={}):
+    def _pg_rows(self, key_values, columns, transaction=None, supplement='', arguments={}):
         """Retrieve and return raw data corresponding to 'key_value'."""
-        args = dict(key=key_value, supplement=_Query(supplement))
+        key_values = tuple(key_values)
+        if len(key_values)==0:
+            # Avoid executing any query with empty array
+            return PostgreSQLResult(())
+        args = dict(keys=_Query.join(key_values), supplement=_Query(supplement))
         if columns:
             args['columns'] = self._pdbb_sql_column_list_from_names(
                 columns, operations=self._pdbb_operations,
@@ -2143,6 +2147,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_row.update(args)
         return self._pg_query(query, transaction=transaction)
+
+    def _pg_row(self, key_value, columns, transaction=None, supplement='', arguments={}):
+        return self._pg_rows((key_value,), columns, transaction, supplement, arguments)
 
     def _pg_search(self, row, condition, direction, transaction=None, arguments={}):
         if transaction is None:
@@ -2607,8 +2614,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         args = dict(number=ival(position), selection=self._pdbb_selection_number)
         self._pg_query(self._pdbb_command_move_absolute.update(args), transaction=transaction)
 
-    def _pg_insert(self, row, after=None, before=None, transaction=None):
-        """Vlož 'row' a vrať jej jako nová raw data nebo vrať 'None'."""
+    def _pg_insert(self, rows, after=None, before=None, transaction=None):
+        """Vlož 'rows' a vrať pole nových raw dat."""
+        if not rows:
+            return ()
+        rows = tuple(rows)
         ordering = self._ordering
         if ordering:
             ocol = self._ordering[0]
@@ -2619,16 +2629,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 neighbor = before
                 n = neighbor[ocol].value()
             else:
-                neighbor = row
+                neighbor = rows[0]
                 n = -1
             try:
                 args = {}
                 for i in range(1, len(self._ordering)):
                     args['param_%d' % (i,)] = neighbor[ordering[i]]
             except KeyError:
-                raise ProgramError('Invalid column id in ordering', self._ordering, row)
+                raise ProgramError('Invalid column id in ordering', self._ordering, neighbor)
             if n >= 0:
                 args['position'] = ival(n)
+                args['shift_amount'] = ival(len(rows))
                 self._pg_query(self._pdbb_command_insert_shift.update(args), backup=True,
                                transaction=transaction)
             else:
@@ -2642,47 +2653,55 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         n = int(raw)
                 else:
                     n = 1
-            oval = Value(Integer(), n)
-            try:
-                row[ocol] = oval
-            except KeyError:
-                row.append(ocol, oval)
-        cols, vals = self._pdbb_table_row_lists(row)
-        columns = _Query.join(cols)
-        values = _Query.join(vals)
+            for i, row in enumerate(rows):
+                oval = Value(Integer(), n + i)
+                try:
+                    row[ocol] = oval
+                except KeyError:
+                    row.append(ocol, oval)
+        first_cols = None
+        values = []
+        for i, row in enumerate(rows):
+            cols, vals = self._pdbb_table_row_lists(row)
+            if first_cols is None:
+                first_cols = cols
+                columns = _Query.join(cols)
+            if cols != first_cols:
+                raise ProgramError('Differing columns between inserted rows', (0, first_cols), (i, cols))
+            values.append(_Query.join(vals).wrap())
+        values = _Query.join(values)
         self._pg_query(_Query("savepoint _insert"), transaction=transaction)
         try:
             key_data = self._pg_query(
                 self._pdbb_command_insert.update(dict(columns=columns, values=values)),
                 backup=True, transaction=transaction)
         except DBInsertException:
+            # Happens e.g. with VIEWs with INSERT RULE with DO INSTEAD *without* a RETURNING clause.
+            # See `CREATE RULE` docs for details.
             self._pg_query(_Query("rollback to _insert"), transaction=transaction)
             self._pg_query(
                 self._pdbb_command_insert_alternative.update(dict(columns=columns, values=values)),
                 backup=True, transaction=transaction)
             try:
-                key = row[self._key_binding[0].id()]
+                keys = [row[self._key_binding[0].id()] for row in rows]
             except KeyError:
-                key = None
+                keys = ()
                 if isinstance(self._key_binding[0].type(), Serial):
                     try:
-                        key_data = self._pg_query(self._pdbb_command_insert_get_last.update(dict(row_count=ival(1))),
+                        key_data = self._pg_query(self._pdbb_command_insert_get_last
+                                                  .update(dict(row_count=ival(len(rows)))),
                                                   transaction=transaction)
-                        key_row = self._pg_make_row_from_raw_data(
+                        key_rows = self._pg_make_rows_from_raw_data(
                             key_data, template=(self._pg_make_row_template[0],))
-                        key = key_row[0]
+                        keys = [key_row[0] for key_row in key_rows]
                     except DBException:
                         pass
         else:
-            key_row = self._pg_make_row_from_raw_data(
+            key_rows = self._pg_make_rows_from_raw_data(
                 key_data, template=(self._pg_make_row_template[0],))
-            key = key_row[0]
+            keys = [key_row[0] for key_row in key_rows]
             self._pg_query(_Query("release _insert"), transaction=transaction)
-        if key is None:
-            result = None
-        else:
-            result = self.row(key, transaction=transaction)
-        return result
+        return self.rows(keys, transaction=transaction)
 
     def _pg_update(self, condition, row, transaction=None):
         """Updatuj řádky identifikované 'condition'.
@@ -2887,18 +2906,30 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return Row([(cid, Value(ctype, dbvalue))
                     for dbvalue, (cid, typid, ctype) in zip(data_[0], template)])
 
-    def _pg_already_present(self, row, transaction=None):
-        key = []
-        for k in self.key():
+    def _pg_make_rows_from_raw_data(self, data_, template=None):
+        return [self._pg_make_row_from_raw_data((data,), template) for data in data_]
+
+    def _pg_already_present_any(self, rows, transaction=None):
+        keys = []
+        for row in rows:
+            k = self.key()[0]
             try:
                 id = k.id()
             except Exception:
                 return False
             try:
-                key.append(row[id])
+                key = row[id]
             except KeyError:
                 return False
-        return self.row(key, transaction=transaction)
+            keys.append(key)
+        return self.rows(keys, transaction=transaction)
+
+    def _pg_already_present(self, row, transaction=None):
+        rows = self._pg_already_present_any((row,), transaction)
+        if rows:
+            return rows[0]
+        else:
+            return None
 
     def _pg_key_condition(self, key):
         if __debug__:
@@ -2955,24 +2986,18 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Veřejné metody a jimi přímo volané abstraktní metody
 
-    def row(self, key, columns=None, transaction=None, arguments={}):
+    def rows(self, keys, columns=None, transaction=None, arguments={}):
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
-            return None
+            return ()
         if __debug__:
             self._pg_check_arguments(arguments)
-        # TODO: Temporary compatibility hack.  The current internal db code
-        # uses multikeys, but user code does not anymore.  Before we rewrite
-        # the internal parts to use single keys only, we should allow both
-        # kinds of keys.
-        if not is_sequence(key):
-            key = (key,)
         if columns:
             template = self._pg_limited_make_row_template(columns)
         else:
             template = None
         try:
-            data = self._pg_row(key[0], columns, transaction=transaction, arguments=arguments)
-        except Exception:
+            data = self._pg_rows(keys, columns, transaction=transaction, arguments=arguments)
+        except:
             cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
@@ -2981,8 +3006,21 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             raise_(cls, e, tb)
         if transaction is None and self._pg_select_transaction is None:
             self._postgresql_commit_transaction()
-        result = self._pg_make_row_from_raw_data(data, template=template)
+        result = self._pg_make_rows_from_raw_data(data, template=template)
         return result
+
+    def row(self, key, columns=None, transaction=None, arguments={}):
+        # TODO: Temporary compatibility hack.  The current internal db code
+        # uses multikeys, but user code does not anymore.  Before we rewrite
+        # the internal parts to use single keys only, we should allow both
+        # kinds of keys.
+        if is_sequence(key):
+            key = key[0]
+        rows = self.rows((key,), columns, transaction, arguments)
+        if len(rows)==0:
+            return None
+        else:
+            return rows[0]
 
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
                arguments={}, async_count=False, stop_check=None, timeout_callback=None,
@@ -3286,15 +3324,29 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pg_select_transaction is not None
 
     def insert(self, row, after=None, before=None, transaction=None):
+        rows, success = self.insert_many((row,), after, before, transaction)
+        if success:
+            if len(rows)==0:
+                row = None
+            else:
+                row = rows[0]
+        else:
+            row = rows
+        return row, success
+
+    def insert_many(self, rows, after=None, before=None, transaction=None):
         assert after is None or before is None, 'Both after and before specified'
-        log(ACTION, 'Insert row:', (row, after, before))
+        rows = tuple(rows)
+        if not rows:
+            return (), True
+        log(ACTION, 'Insert rows:', (rows, after, before))
         if transaction is None:
             self._pg_begin_transaction()
         try:
             # Jestliže je definováno ordering, které je součástí klíče, bude
             # nově vložený řádek nutně unikátní.
             if (((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) and
-                 self._pg_already_present(row, transaction=transaction))):
+                 self._pg_already_present_any(rows, transaction=transaction))):
                 msg = 'Row with this key already exists'
                 result = msg, False
                 log(ACTION, msg)
@@ -3309,7 +3361,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     log(ACTION, msg, (after, before))
                     result = msg, False
                 else:
-                    r = self._pg_insert(row, after=after, before=before, transaction=transaction)
+                    r = self._pg_insert(rows, after=after, before=before, transaction=transaction)
                     result = r, True
         except Exception:
             cls, e, tb = sys.exc_info()
@@ -3325,7 +3377,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result[1]:
-            log(ACTION, 'Row inserted:', result)
+            log(ACTION, 'Rows inserted:', result)
         return result
 
     def update(self, key, row, transaction=None):

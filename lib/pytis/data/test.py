@@ -33,7 +33,7 @@ import pytest
 import unittest
 
 import pytis
-from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT
+from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT, ProgramError
 import pytis.data as pd
 from pytis.data import bval, fval, ival, sval
 
@@ -1442,6 +1442,8 @@ class _DBTest(_DBBaseTest):
                   "insert into xcosi values(2, 'specialni')",
                   "insert into xcosi values(3, 'zvlastni')",
                   "insert into xcosi values(5, 'nove')",
+                  "insert into xcosi values(6, 'divne')",
+                  "insert into xcosi values(7, 'nase')",
                   "insert into xcosi values(999, NULL)",
                   "insert into dist values (1, 1)",
                   "insert into dist values (2, 1)",
@@ -1547,6 +1549,8 @@ class DBDataDefault(_DBTest):
             'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', 'U.S.A.', 'nove')
     NEWROW = ('5', '2001-07-06', '9.90', 'U.S.A.', 'specialni')
+    NEWROW2 = ('6', '2001-07-08', '9.80', 'U.S.A.', 'divne')
+    NEWROW3 = ('7', '2001-07-10', '9.60', 'U.S.A.', 'nase')
 
     def setUp(self):
         _DBTest.setUp(self)
@@ -1728,12 +1732,16 @@ class DBDataDefault(_DBTest):
         self.funcdata = funcdata
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
-        row = []
-        for c, v in zip(self.data.columns(), self.NEWROW):
-            value, error = c.type().validate(v)
-            assert error is None, (c.id(), c.type(), v, error)
-            row.append((c.id(), value))
-        self.newrow = pd.Row(row)
+        newrows = []
+        for newrow in (self.NEWROW, self.ROW3, self.NEWROW2, self.NEWROW3,):
+            rowdata = []
+            for c, v in zip(self.data.columns(), newrow):
+                value, error = c.type().validate(v)
+                assert error is None, (c.id(), c.type(), v, error)
+                rowdata.append((c.id(), value))
+            newrows.append(pytis.data.Row(rowdata))
+        self.newrow = newrows[0]
+        self.newrows = newrows[1:]
 
     def tearDown(self):
         if hasattr(self, '_to_kill'):
@@ -1865,7 +1873,7 @@ class DBDataDefault(_DBTest):
         # NULL test
         nrows_test(pd.EQ('popis', sval(None)), 1)
         # Function test
-        nrows_test(pd.GT(pd.OpFunction('pow', 'id', ival(2)), ival(10)), 2)
+        nrows_test(pd.GT(pd.OpFunction('pow', 'id', ival(2)), ival(10)), 4)
         # ANY_OF
         nrows_test(pd.ANY_OF('popis', sval('specialni'), sval('zvlastni'),
                              sval('podivny'), sval(None)), 3)
@@ -2053,7 +2061,7 @@ class DBDataDefault(_DBTest):
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
-        self.assertTrue(success)
+        assert success
         eresult = []
         for c, v in zip(self.data.columns(), self.ROW3):
             eresult.append((c.id(), c.type().validate(v)[0]))
@@ -2067,21 +2075,145 @@ class DBDataDefault(_DBTest):
     def test_insert_view(self):
         row = pd.Row((('x', ival(5),),))
         result, success = self.view3.insert(row)
-        self.assertTrue(success)
+        assert success
         self.assertEqual(result['x'].value(), 5)
         result, success = self.view4.insert(row)
-        self.assertTrue(success)
+        assert success
         self.assertEqual(result['x'].value(), 5)
         row = pd.Row((('y', ival(5),),))
         result, success = self.view7.insert(row)
-        self.assertTrue(success)
+        assert success
         self.assertIsNone(result, ('unexpected insert result', result,))
         result, success = self.view5.insert(row)
-        self.assertTrue(success)
+        assert success
         self.assertIsNone(result, ('unexpected insert result', result,))
         result, success = self.view5_serial.insert(row)
-        self.assertTrue(success)
+        assert success
         self.assertEqual(result['y'].value(), 5)
+
+    def test_insert_many_succeeds(self):
+        expected_rows = self.newrows
+        actual_rows, success = self.data.insert_many(expected_rows)
+        assert success
+        assert set(actual_rows) == set(expected_rows)
+
+    def test_insert_many_empty_succeeds(self):
+        actual_rows, success = self.data.insert_many(())
+        assert success
+        assert set(actual_rows) == set()
+
+    def test_insert_many_fails_with_some_rows_already_present(self):
+        expected_rows = self.newrows
+        expected_rows[2]['cislo'] = ival(3)
+        actual_rows, success = self.data.insert_many(expected_rows)
+        assert not success
+
+    def test_insert_many_fails_with_duplicate_key(self):
+        expected_rows = self.newrows
+        expected_rows[2]['cislo'] = expected_rows[0]['cislo']
+        self.assertRaisesRegex(pd.DBUserException, 'integrity', self.data.insert_many, expected_rows)
+
+    def test_insert_many_fails_with_differing_columns(self):
+        CHANGED_ROW_INDEX = 2
+        DELETED_COLUMN_ID = 'datum'
+        expected_rows = self.newrows
+        expected_rows[CHANGED_ROW_INDEX] = pd.Row([
+            (k, v) for k, v in expected_rows[CHANGED_ROW_INDEX].items()
+            if k != DELETED_COLUMN_ID
+        ])
+
+        with self.assertRaises(ProgramError) as e:
+            self.data.insert_many(expected_rows)
+        e = e.exception
+        self.assertEqual(len(e.args), 3)
+
+        self.assertEqual(len(e.args[1]), 2)
+        self.assertEqual(e.args[1][0], 0)
+        self.assertIn(DELETED_COLUMN_ID, e.args[1][1])
+
+        self.assertEqual(len(e.args[2]), 2)
+        self.assertEqual(e.args[2][0], CHANGED_ROW_INDEX)
+        self.assertNotIn(DELETED_COLUMN_ID, e.args[2][1])
+
+    def test_insert_many_succeeds_with_view_wo_returning(self):
+        expected_rows = [pd.Row((('x', ival(3 + i)),)) for i in range(3)]
+        actual_rows, success = self.view3.insert_many(expected_rows)
+        assert success
+        assert set(actual_rows) == set(expected_rows)
+
+    def test_insert_many_succeeds_with_view_w_serialkey_wo_returning(self):
+        expected_rows = [pd.Row((('y', ival(i)),)) for i in range(3)]
+        actual_rows, success = self.view5_serial.insert_many(expected_rows)
+        assert success
+        self.longMessage = True
+        self.assertEqual(len(actual_rows), len(expected_rows), (actual_rows, expected_rows,))
+        for i, (actual_row, expected_row) in enumerate(zip(actual_rows, expected_rows)):
+            self.assertEqual(actual_row['y'].value(), expected_row['y'].value(), "Row #%d" % (i,))
+            self.assertIn('x', actual_row, "Row #%d" % (i,))
+
+        result, success = self.view5_serial.insert(row)
+        assert success
+        self.assertEqual(result['y'].value(), 5)
+
+    def test_insert_many_succeeds(self):
+        expected_rows = self.newrows
+        actual_rows, success = self.data.insert_many(expected_rows)
+        assert success
+        assert set(actual_rows) == set(expected_rows)
+
+    def test_insert_many_empty_succeeds(self):
+        actual_rows, success = self.data.insert_many(())
+        assert success
+        assert set(actual_rows) == set(())
+
+    def test_insert_many_fails_with_some_rows_already_present(self):
+        expected_rows = self.newrows
+        expected_rows[2]['cislo'] = ival(3)
+        actual_rows, success = self.data.insert_many(expected_rows)
+        assert not success
+
+    def test_insert_many_fails_with_duplicate_key(self):
+        expected_rows = self.newrows
+        expected_rows[2]['cislo'] = expected_rows[0]['cislo']
+        self.assertRaisesRegex(pd.DBUserException, 'integrity', self.data.insert_many, expected_rows)
+
+    def test_insert_many_fails_with_differing_columns(self):
+        CHANGED_ROW_INDEX = 2
+        DELETED_COLUMN_ID = 'datum'
+        expected_rows = self.newrows
+        expected_rows[CHANGED_ROW_INDEX] = pd.Row([
+            (k, v) for k, v in expected_rows[CHANGED_ROW_INDEX].items()
+            if k != DELETED_COLUMN_ID
+        ])
+
+        with self.assertRaises(ProgramError) as e:
+            self.data.insert_many(expected_rows)
+        e = e.exception
+        self.assertEqual(len(e.args), 3)
+
+        self.assertEqual(len(e.args[1]), 2)
+        self.assertEqual(e.args[1][0], 0)
+        self.assertIn(DELETED_COLUMN_ID, e.args[1][1])
+
+        self.assertEqual(len(e.args[2]), 2)
+        self.assertEqual(e.args[2][0], CHANGED_ROW_INDEX)
+        self.assertNotIn(DELETED_COLUMN_ID, e.args[2][1])
+
+    def test_insert_many_succeeds_with_view_wo_returning(self):
+        expected_rows = [pd.Row((('x', ival(3 + i)),)) for i in range(3)]
+        actual_rows, success = self.view3.insert_many(expected_rows)
+        assert success
+        assert set(actual_rows) == set(expected_rows)
+
+    def test_insert_many_succeeds_with_view_w_serialkey_wo_returning(self):
+        expected_rows = [pd.Row((('y', ival(i)),)) for i in range(3)]
+        actual_rows, success = self.view5_serial.insert_many(expected_rows)
+        assert success
+        self.longMessage = True
+        self.assertEqual(len(actual_rows), len(expected_rows), (actual_rows, expected_rows,))
+        for i, (actual_row, expected_row) in enumerate(zip(actual_rows, expected_rows)):
+            self.assertEqual(actual_row['y'].value(), expected_row['y'].value(), "Row #%d" % (i,))
+            self.assertIn('x', actual_row, "Row #%d" % (i,))
 
     def test_update(self):
         row = self.newrow
@@ -2092,7 +2224,7 @@ class DBDataDefault(_DBTest):
         k1 = row1[0]
         k2 = pd.Value(self.data.columns()[0].type(), self.ROW2[0])
         result, success = self.data.update(k1, row)
-        self.assertTrue(success)
+        assert success
         eresult = []
         for c, v in zip(self.data.columns(), self.ROW3):
             eresult.append((c.id(), c.type().validate(v)[0]))
@@ -2181,7 +2313,9 @@ class DBDataDefault(_DBTest):
     def test_table_function(self):
         id_value = ival(3)
         try:
-            self.assertEqual(self.funcdata.select(arguments=dict(id=id_value)), 2)
+            self.assertEqual(self.funcdata.select(arguments=dict(id=id_value)), 4)
+            self.assertIsNotNone(self.funcdata.fetchone())
+            self.assertIsNotNone(self.funcdata.fetchone())
             self.assertIsNotNone(self.funcdata.fetchone())
             self.assertIsNotNone(self.funcdata.fetchone())
             self.assertIsNone(self.funcdata.fetchone())
@@ -2189,8 +2323,10 @@ class DBDataDefault(_DBTest):
             self.funcdata.close()
         try:
             result = [v.value() for v in self.funcdata.distinct('id', arguments=dict(id=id_value))]
-            self.assertEqual(len(result), 2)
+            self.assertEqual(len(result), 4)
             self.assertIn(5, result)
+            self.assertIn(6, result)
+            self.assertIn(7, result)
             self.assertIn(999, result)
         finally:
             self.funcdata.close()
@@ -2708,7 +2844,7 @@ class DBMultiData(object):  # (DBDataDefault): Temporarily disabled
         d = self.mdata
         row = self.newrow
         result, success = d.insert(row)
-        self.assertTrue(success)
+        assert success
         eresult = []
         for c, v in zip(d.columns(), self.ROW3):
             eresult.append((c.id(), c.type().validate(v)[0]))
@@ -2731,7 +2867,7 @@ class DBMultiData(object):  # (DBDataDefault): Temporarily disabled
         k1 = row1[0]
         k2 = pd.Value(d.columns()[0].type(), self.ROW2[0])
         result, success = d.update(k1, row)
-        self.assertTrue(success)
+        assert success
         eresult = []
         for c, v in zip(d.columns(), newrow):
             eresult.append((c.id(), c.type().validate(v)[0]))
@@ -3129,7 +3265,7 @@ class DBDataAggregated(DBDataDefault):
                  arguments=(func_spec[0],))
         try:
             count = data.select_aggregate((D.AGG_COUNT, 'id',), arguments=dict(id=ival(2))).value()
-            self.assertEqual(count, 3, ('Unexpected number of aggregate rows', count))
+            self.assertEqual(count, 5, ('Unexpected number of aggregate rows', count))
         finally:
             data.close()
 
