@@ -2556,7 +2556,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if event.AltDown() or event.ControlDown():
                 return False
             code = event.GetKeyCode()
-            return code not in(wx.WXK_PRIOR, wx.WXK_NEXT, wx.WXK_LEFT,
+            return code not in(wx.WXK_PAGEUP, wx.WXK_PAGEDOWN, wx.WXK_LEFT,
                                wx.WXK_RIGHT, wx.WXK_DOWN, wx.WXK_UP,
                                wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB,
                                wx.WXK_ESCAPE)
