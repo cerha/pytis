@@ -949,12 +949,7 @@ class Calendar(GenericDialog):
                                   buttons=(GenericDialog.BUTTON_OK,
                                            GenericDialog.BUTTON_CANCEL))
         # vytvoř kalendář
-        try:
-            modal = wx.DIALOG_MODAL
-        except:
-            modal = wx.wxDIALOG_MODAL
-        style = (modal |
-                 wx.lib.calendar.CAL_SHOW_HOLIDAYS |
+        style = (wx.lib.calendar.CAL_SHOW_HOLIDAYS |
                  wx.lib.calendar.CAL_SHOW_SURROUNDING_WEEKS)
         if not enable_year:
             style = style | wx.lib.calendar.CAL_NO_YEAR_CHANGE
