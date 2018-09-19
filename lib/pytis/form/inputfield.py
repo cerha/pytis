@@ -671,7 +671,7 @@ class InputField(object, KeyHandler, CommandHandler):
             for ctrl, set_editable, set_color in self._controls:
                 ctrl.GetId()
             return True
-        except wx.PyDeadObjectError:
+        except wx.RuntimeError:
             return False
 
     # Command processing
@@ -1003,7 +1003,7 @@ class TextField(InputField):
         if hasattr(ctrl, 'CanPaste'):
             try:
                 return ctrl.CanPaste()
-            except wx.PyAssertionError as e:
+            except wx.wxAssertionError as e:
                 # This error has been observed on Linux when attempting to paste text
                 # by clicking the middle mouse button.  Ignoring it looks safe here.
                 if not str(e).endswith('reentrancy in clipboard code'):
