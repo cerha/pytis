@@ -2401,7 +2401,8 @@ class StructuredTextField(TextField):
             size = None
         ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(), size=size)
         # Set a monospace font
-        ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
+        ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
+                             wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
         self._completer = None
         self._update_completions = None

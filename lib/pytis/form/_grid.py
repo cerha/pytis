@@ -546,7 +546,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
             font = self._font_cache[flags]
         except KeyError:
             size = self._form.GetFont().GetPointSize()
-            font = self._font_cache[flags] = font = wx.FFont(size, wx.DEFAULT, flags)
+            font = self._font_cache[flags] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
         return (color2wx(fg), color2wx(bg), font)
 
     def _init_group_bg_downgrade(self):

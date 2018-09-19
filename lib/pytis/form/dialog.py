@@ -1077,7 +1077,8 @@ class BugReport(GenericDialog):
     def _create_content(self, sizer):
         dialog = self._dialog
         label = wx.StaticText(dialog, -1, self._message or _("Oops"))
-        font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, encoding=wx.FONTENCODING_DEFAULT)
+        font = wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
+                       encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
         if icon is not None:
@@ -1101,7 +1102,8 @@ class BugReport(GenericDialog):
         else:
             style = wx.TE_MULTILINE | wx.TE_DONTWRAP  # |wx.TE_READONLY
             traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
-            font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
+            font = wx.Font(traceback.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
+                           wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
             traceback.SetFont(font)
             for line in pytis.util.exception_info(self._einfo).splitlines():
                 # Příliš "dlouhý" text se nemusí povést do políčka vložit...

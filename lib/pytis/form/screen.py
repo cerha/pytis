@@ -1850,7 +1850,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
             self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(),
-                                        wx.DEFAULT, wx.NORMAL, wx.BOLD))
+                                        wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+                                        wx.FONTWEIGHT_BOLD))
         self.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):

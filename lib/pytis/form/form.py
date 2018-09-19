@@ -784,7 +784,7 @@ class TitledForm:
         caption = wx.StaticText(parent, -1, text, style=wx.ALIGN_CENTER)
         if size is None:
             size = caption.GetFont().GetPointSize()
-        font = wx.Font(size, wx.DEFAULT, wx.NORMAL, wx.BOLD,
+        font = wx.Font(size, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
                        encoding=wx.FONTENCODING_DEFAULT)
         caption.SetFont(font)
         width, height, d, e = self.GetFullTextExtent(text, font)
