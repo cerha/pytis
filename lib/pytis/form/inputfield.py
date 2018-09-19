@@ -210,8 +210,8 @@ class _Completer(wx.PopupWindow):
         # without scrollbars.
         listctrl.SetSize((1000, 1000))
         for i, choice in enumerate(completions):
-            listctrl.InsertStringItem(i, "")
-            listctrl.SetStringItem(i, 0, choice)
+            listctrl.InsertItem(i, "")
+            listctrl.SetItem(i, 0, choice)
             if i == 10:
                 height_limit = listctrl.GetViewRect()[3]
         listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
@@ -1738,7 +1738,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                                transaction=self._row.transaction(), sort=sorting or (),
                                arguments=self._codebook_arguments())
         for i, row in enumerate(rows):
-            list.InsertStringItem(i, "")
+            list.InsertItem(i, "")
             v = row[value_column]
             self._list_data.append(v)
             if v.export() == current:
@@ -1755,7 +1755,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                     exported_value = u' — '.join(x or _("unlimited") for x in value.export())
                 else:
                     exported_value = value.export().replace("\n", ";")
-                list.SetStringItem(i, j, exported_value)
+                list.SetItem(i, j, exported_value)
         self._set_selection(select_item)
 
     def _set_selection(self, i):
