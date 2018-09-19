@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2016 Brailcom, o.p.s.
+# Copyright (C) 2011-2016, 2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -313,11 +313,11 @@ class WxUIBackend(ClientUIBackend):
         style = wx.STAY_ON_TOP
         if save:
             # TODO: Overwrite prompt doesn't seem to appear on Mac OS X.
-            style |= wx.SAVE | wx.OVERWRITE_PROMPT
+            style |= wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
         else:
-            style |= wx.OPEN
+            style |= wx.FD_OPEN
         if multi:
-            style |= wx.MULTIPLE
+            style |= wx.FD_MULTIPLE
         dialog = wx.FileDialog(None, style=style, message=title,
                                defaultDir=directory or '', defaultFile=filename or '',
                                wildcard='|'.join(["%s|%s" % (self._pattern_label(label, pat),

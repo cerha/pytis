@@ -1554,12 +1554,12 @@ class FileDialog(Dialog):
 
         """
         directory = self._dir or FileDialog._last_directory.get(self._mode, '')
-        style = {FileDialog.OPEN: wx.OPEN,
-                 FileDialog.SAVE: wx.SAVE}[self._mode]
+        style = {FileDialog.OPEN: wx.FD_OPEN,
+                 FileDialog.SAVE: wx.FD_SAVE}[self._mode]
         if self._multi and self._mode == FileDialog.OPEN:
-            style = style | wx.MULTIPLE
+            style = style | wx.FD_MULTIPLE
         if self._overwrite_prompt and self._mode == FileDialog.SAVE:
-            style = style | wx.OVERWRITE_PROMPT
+            style = style | wx.FD_OVERWRITE_PROMPT
         self._dialog = d = wx.FileDialog(self._parent,
                                          message=self._title,
                                          defaultDir=directory,
