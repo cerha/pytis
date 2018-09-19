@@ -308,18 +308,18 @@ class DualForm(Form, Refreshable):
         return 0.5
 
     def _default_sash_position(self, total_size):
-        def dimension(size):
+        def dimension(width, height):
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
-                return size.height
+                return height
             else:
-                return size.width
+                return width
         if isinstance(self._main_form, EditForm):
-            return min(dimension(wx.Size(*self._main_form.size())), dimension(total_size) - 200)
+            return min(dimension(*self._main_form.size()), dimension(*total_size) - 200)
         elif isinstance(self._side_form, EditForm):
-            return max(dimension(total_size) - dimension(wx.Size(*self._side_form.size())), 200)
+            return max(dimension(*total_size) - dimension(*self._side_form.size()), 200)
         else:
             r = self._default_sash_ratio()
-            return dimension(wx.Size(total_size.width * r, total_size.height * r))
+            return dimension(total_size.width * r, total_size.height * r)
 
     def _on_sash_changed(self, event):
         self._set_saved_setting('sash_position', event.GetSashPosition())

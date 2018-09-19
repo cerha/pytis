@@ -788,7 +788,7 @@ class TitledForm:
                        encoding=wx.FONTENCODING_DEFAULT)
         caption.SetFont(font)
         width, height, d, e = self.GetFullTextExtent(text, font)
-        caption.SetSize(wx.Size(width, height))
+        caption.SetSize((width, height))
         return caption
 
     def _create_title_bar(self):

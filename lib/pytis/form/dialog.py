@@ -1101,7 +1101,7 @@ class BugReport(GenericDialog):
                 traceback.SetSize(char2px(traceback, 140, 35))
         else:
             style = wx.TE_MULTILINE | wx.TE_DONTWRAP  # |wx.TE_READONLY
-            traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
+            traceback = wx.TextCtrl(dialog, -1, style=style, size=(600, 360))
             font = wx.Font(traceback.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
                            wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
             traceback.SetFont(font)

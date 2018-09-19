@@ -162,7 +162,7 @@ class _Completer(wx.PopupWindow):
         if show and self._list.GetItemCount() > 0:
             size = self.GetSize()
             height = self._ctrl.GetSizeTuple()[1]
-            x, y = self._ctrl.ClientToScreenXY(0, height)
+            x, y = self._ctrl.ClientToScreen(0, height)
             if (y + size.GetHeight()) >= wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y):
                 y = y - height - size.GetHeight()
             self.SetPosition(wx.Point(x, y))
@@ -655,8 +655,7 @@ class InputField(object, KeyHandler, CommandHandler):
         return self._row.field_changed(self.id())
 
     def _px_size(self, parent, width, height):
-        size = dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
-        return (size.width, size.height)
+        return dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
 
     def _set_focus(self, ctrl):
         parent = ctrl.GetParent()
@@ -824,7 +823,7 @@ class TextField(InputField):
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
-            size = None
+            size = wx.DefaultSize
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
         wxid = control.GetId()
         maxlen = self._maxlen()
@@ -1348,7 +1347,7 @@ class ListBoxField(EnumerationField):
             # the maximal field size is restricted to 3x the specified width to
             # avoid very wide field when values are too long.
             width = min(max(width, min_width), 3 * min_width)
-        height = char2px(ctrl, 1, float(10) / 7).height * (self.height() or ctrl.GetCount())
+        height = char2px(ctrl, 1, float(10) / 7)[1] * (self.height() or ctrl.GetCount())
         ctrl.SetMinSize((width, height))
 
     def _set_value(self, value):
@@ -2205,7 +2204,7 @@ class StructuredTextField(TextField):
             # Find out whether the current cursor position is within an
             # existing attachment link.
             self._position = position = ctrl.GetInsertionPoint()
-            column_number, line_number = ctrl.PositionToXY(position)
+            success, column_number, line_number = ctrl.PositionToXY(position)
             self._column_number = column_number
             line_text = ctrl.GetLineText(line_number)
             self._start = start = line_text[:column_number].rfind('[')
@@ -2398,7 +2397,7 @@ class StructuredTextField(TextField):
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
-            size = None
+            size = wx.DefaultSize
         ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(), size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,

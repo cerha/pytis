@@ -2056,7 +2056,7 @@ class TextHeadingSelector(wx.Choice):
 
     def __init__(self, parent, uicmd, size=None):
         self._uicmd = uicmd
-        wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size)
+        wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size or wx.DefaultSize)
         wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
         wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
 
@@ -2200,8 +2200,8 @@ class LocationBar(wx.TextCtrl):
     def __init__(self, parent, uicmd, editable=True, size=None):
         self._toolbar = parent
         self._uicmd = uicmd
-        wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER,
-                             name='location-bar')
+        wx.TextCtrl.__init__(self, parent, -1, size=size or wx.DefaultSize,
+                             style=wx.TE_PROCESS_ENTER, name='location-bar')
         self.SetEditable(editable)
         wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
         if editable:
@@ -2958,43 +2958,38 @@ class IN(pytis.data.Operator):
 # Převodní funkce
 
 def char2px(window, x, y):
-    """Přepočítej znakový rozměr na pixely a vrať instanci 'wx.Size'.
+    """Return dimension in pixels for given dimension in characters.
 
-    Vstupní rozměr je chápán jako šířka a výška \"běžného\" znaku.
+    The input dimension is the number of "common" characters displayed in given
+    widget.
 
-    Argumenty:
+    Arguments:
 
-      window -- okno, podle jehož fontu má být rozměr vypočítán.
-      x -- šířka; počet znaků
-      y -- výška; počet znaků
+      window -- wx.Window instance inside which the dimension applies
+      x -- width as an integer (number of characters)
+      y -- height as an integer (number of characters)
 
-    Vrací: Rozměry v pixelech jako instanci 'wx.Size'.
+    Returns: Pixel size as a tuple of two integers (width, height).
 
     """
-
     return dlg2px(window, 4 * x, 8 * y)
 
 
 def dlg2px(window, x, y=None):
-    """Přepočítej znakový rozměr na pixely.
+    """Return dimension in pixels for given dimension in "dialog units".
 
-    Vstupní rozměr je chápán jako šířka a výška \"běžného\" znaku.
+    The "dialog units" are defined by wxWidgets as 1/4 of a single character
+    width horizontally and 1/8 of a single character height vertically, where
+    the character is one "common" character displayed in given widget.
 
-    Tento přepočet by nás měl odstínit od závislosti na použitém výstupním
-    zařízení / systémových nastaveních. Poskytuje možnost získat rozměry
-    v pixelech odpovídající aktuálním rozměrům znaků v daném okně.
+    Arguments:
 
-    Funkčnost je v této implementaci založená na tzv. \"dialog units\"
-    z wxWindows, takže případnou další dokumentaci je nutno hledat tam.
+      window -- wx.Window instance inside which the dimension applies
+      x -- width as an integer (number of 1/4 characters)
+      y -- height as an integer (number of 1/8 characters)
 
-    Argumenty:
-
-      window -- okno, podle jehož fontu má být rozměr vypočítán.
-      x -- šířka; jednotkou je 1/4 šířky znaku; integer
-      y -- výška; jednotkou je 1/8 výšky znaku; integer
-
-    Vrací: Rozměry v pixelech jako instanci wxSize, pokud byl zadán i y-ový
-      rozměr.  Pokud je volán pouze s x-ovým rozměrem, vrátí rovnou integer.
+    Returns: Pixel size as a tuple of two integers (width, height) if y was
+    passed (not None) or width directly as a single integer in the other case.
 
     """
     if y is None:
@@ -3174,6 +3169,8 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         style |= wx.BU_EXACTFIT
     if noborder:
         style |= wx.NO_BORDER
+    if size is None:
+        size = wx.DefaultSize
     if bitmap:
         button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
     else:
@@ -3257,6 +3254,8 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
         assert not choices or isinstance(choices[0], basestring)
         labels = choices
         values = None
+    if size is None:
+        size = wx.DefaultSize
     ctrl = cls(parent, -1, choices=labels, size=size, style=style)
     ctrl.SetSelection(0)
     if values:

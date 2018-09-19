@@ -269,8 +269,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
         g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         g.SetLabelFont(g.GetFont())  # Use standard font instead of bold.
-        self._row_height = row_height = dlg2px(g, 0, 10).GetHeight()
-        self._label_height = dlg2px(g, 0, 12).GetHeight()
+        self._row_height = row_height = dlg2px(g, 0, 10)[1]
+        self._label_height = dlg2px(g, 0, 12)[1]
         self._init_col_attr()
         self._update_colors()
         self._update_label_height()
