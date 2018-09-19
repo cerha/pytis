@@ -2731,6 +2731,19 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
         self.Thaw()
         self.DoLayout()
 
+    def SetProperties(self):
+        import wx.lib.agw.buttonpanel as bp
+        art = self.GetBPArt()
+        art.SetGradientType(bp.BP_GRADIENT_VERTICAL)
+        art.SetColor(bp.BP_GRADIENT_COLOUR_FROM, wx.Colour(225, 225, 225))
+        art.SetColor(bp.BP_GRADIENT_COLOUR_TO, wx.Colour(235, 235, 235))
+        art.SetColor(bp.BP_BORDER_COLOUR, wx.Colour(225, 225, 225))
+        art.SetColor(bp.BP_BUTTONTEXT_COLOUR, wx.Colour(0, 0, 0))
+        art.SetColor(bp.BP_SEPARATOR_COLOUR,
+                     bp.BrightenColour(wx.Colour(220, 222, 224), 0.85))
+        art.SetColor(bp.BP_SELECTION_PEN_COLOUR,
+                     wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION))
+
 
 class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
     """File viewer widget.
