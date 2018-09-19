@@ -128,7 +128,7 @@ class DualForm(Form, Refreshable):
 
     def _create_form(self):
         # Vytvoř rozdělené okno
-        self._splitter = splitter = wx.SplitterWindow(self._parent, -1)
+        self._splitter = splitter = wx.SplitterWindow(self._parent, -1, style=wx.SP_LIVE_UPDATE)
         wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter,
                     splitter.GetId(), lambda e: True)
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
