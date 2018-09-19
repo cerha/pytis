@@ -2682,7 +2682,7 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
         import wx.lib.agw.buttonpanel as bp
         self.disabled_controls = []
         self.pagelabel = wx.StaticText(self, -1, 'Page')
-        self.page = wx.TextCtrl(self, -1, size=(30, -1), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
+        self.page = wx.TextCtrl(self, -1, size=(46, -1), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
         self.page.Enable(False)
         self.disabled_controls.append(self.page)
         self.page.Bind(wx.EVT_KILL_FOCUS, self.OnPage)
