@@ -221,7 +221,7 @@ class GenericDialog(Dialog):
         return self._buttons
 
     def _create_icon(self, artid):
-        bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
+        bitmap = wx.ArtProvider.GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
         if bitmap.IsOk():
             return wx.StaticBitmap(self._dialog, -1, bitmap)
         else:

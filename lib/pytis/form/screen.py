@@ -3110,7 +3110,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
 
 def wx_focused_window():
     """Vrať aktuálně zaostřené wx okno, jako instanci 'wx.Window'."""
-    return wx.Window_FindFocus()
+    return wx.Window.FindFocus()
 
 
 def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, height=None):

@@ -782,8 +782,8 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
         dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
         try:
             if isSelected:
-                fg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
-                bg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+                fg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
             else:
                 fg = attr.GetTextColour()
                 bg = attr.GetBackgroundColour()
