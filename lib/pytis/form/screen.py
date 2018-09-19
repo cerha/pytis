@@ -2645,19 +2645,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                        resource_provider=node.resource_provider())
 
 
-class mupdfProcessor(object):
-    """PDF processor for 'wx.lib.pdfviewer.viewer.pdfViewer'.
-
-    Version taken from wx 4.0 because the version in wx 3.0 does not work.
-
-    """
+class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
+    """Overriden to allow passing fitz.Document instances directly."""
 
     def __init__(self, parent, pdf_file):
-        """
-        :param `pdf_file`: a File object or an object that supports the standard
-        read and seek methods similar to a File object.
-        Could also be a string representing a path to a PDF file.
-        """
         self.parent = parent
         if isinstance(pdf_file, types.StringTypes):
             # a filename/path string, pass the name to fitz.open
@@ -2682,44 +2673,24 @@ class mupdfProcessor(object):
         self.page_rect = page.bound()
         self.zoom_error = False     # set if memory errors during render
 
-    def DrawFile(self, frompage, topage):
-        """
-        This is a no-op for mupdf. Each page is scaled and drawn on
-        demand during RenderPage directly via a call to page.getPixmap()
-        """
-        self.parent.GoPage(frompage)
-
-    def RenderPage(self, gc, pageno, scale=1.0):
-        " Render the set of pagedrawings into gc for specified page "
-        page = self.pdfdoc.loadPage(pageno)
-        matrix = fitz.Matrix(scale, scale)
-        try:
-            pix = page.getPixmap(matrix=matrix)   # MUST be keyword arg(s)
-            bmp = wx.BitmapFromBufferRGBA(pix.width, pix.height, pix.samples)
-            gc.DrawBitmap(bmp, 0, 0, pix.width, pix.height)
-            self.zoom_error = False
-        except (RuntimeError, MemoryError):
-            if not self.zoom_error:     # report once only
-                self.zoom_error = True
-                dlg = wx.MessageDialog(self.parent, 'Out of memory. Zoom level too high?',
-                                       'pdf viewer', wx.OK | wx.ICON_EXCLAMATION)
-                dlg.ShowModal()
-                dlg.Destroy()
-
 
 class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
     """Button panel for FileViewer"""
 
     def CreateButtons(self):
-        " Add buttons and controls"
         import wx.lib.pdfviewer.images as images
         import wx.lib.agw.buttonpanel as bp
+        self.disabled_controls = []
         self.pagelabel = wx.StaticText(self, -1, 'Page')
         self.page = wx.TextCtrl(self, -1, size=(30, -1), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
+        self.page.Enable(False)
+        self.disabled_controls.append(self.page)
         self.page.Bind(wx.EVT_KILL_FOCUS, self.OnPage)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnPage, self.page)
         self.maxlabel = wx.StaticText(self, -1, '          ')
         self.zoom = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER)
+        self.zoom.Enable(False)
+        self.disabled_controls.append(self.zoom)
         self.comboval = (('Actual size', 1.0), ('Fit width', -1), ('Fit page', -2),
                          ('25%', 0.25), ('50%', 0.5), ('75%', 0.75), ('100%', 1.0),
                          ('125%', 1.25), ('150%', 1.5), ('200%', 2.0), ('400%', 4.0),
@@ -2728,13 +2699,12 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
             self.zoom.Append(item[0], item[1])      # string value and client data
         self.Bind(wx.EVT_COMBOBOX, self.OnZoomSet, self.zoom)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnZoomSet, self.zoom)
-        self.zoom.Bind(wx.EVT_KILL_FOCUS, self.OnZoomSet)
         panelitems = [
             ('btn', images.First.GetBitmap(), wx.ITEM_NORMAL, "First page", self.OnFirst),
             ('btn', images.Prev.GetBitmap(), wx.ITEM_NORMAL, "Previous page", self.OnPrev),
             ('btn', images.Next.GetBitmap(), wx.ITEM_NORMAL, "Next page", self.OnNext),
             ('btn', images.Last.GetBitmap(), wx.ITEM_NORMAL, "Last page", self.OnLast),
-            ('Ctrl', self.pagelabel),
+            ('ctrl', self.pagelabel),
             ('ctrl', self.page),
             ('ctrl', self.maxlabel),
             ('sep',),
@@ -2744,19 +2714,18 @@ class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
             ('btn', images.Width.GetBitmap(), wx.ITEM_NORMAL, "Fit page width", self.OnWidth),
             ('btn', images.Height.GetBitmap(), wx.ITEM_NORMAL, "Fit page height", self.OnHeight),
         ]
-
         self.Freeze()
         for item in panelitems:
             if item[0].lower() == 'btn':
-                type, image, kind, popup, handler = item
-                btn = bp.ButtonInfo(self, wx.NewId(), image, kind=kind,
+                x_type, image, kind, popup, handler = item
+                btn = bp.ButtonInfo(self, wx.ID_ANY, image, kind=kind,
                                     shortHelp=popup, longHelp='')
                 self.AddButton(btn)
+                btn.Enable(False)
+                self.disabled_controls.append(btn)
                 self.Bind(wx.EVT_BUTTON, handler, id=btn.GetId())
             elif item[0].lower() == 'sep':
                 self.AddSeparator()
-            elif item[0].lower() == 'space':
-                self.AddSpacer(item[1])
             elif item[0].lower() == 'ctrl':
                 self.AddControl(item[1])
         self.Thaw()
@@ -2781,29 +2750,24 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.ShowLoadProgress = False
 
     def LoadFile(self, pdf_file):
-        # Override this method to fix behavior when file-like object is passed,
-        # to allow passing fitz.Document directly and to use the mupdfProcessor
-        # taken from wx 4.0 (defined above).
+        # Override this method use the overriden version of 'mupdfProcessor' (defined above).
         if isinstance(pdf_file, types.StringTypes):
-            # it must be a filename/path string, open it as a file
+            # a filename/path string, save its name
             self.pdfpathname = pdf_file
-            pdf_file = file(pdf_file, 'rb')
         else:
-            # assume it is a file-like object or a fitz.Document
-            self.pdfpathname = ''  # empty default file name
-        self.ShowLoadProgress = True
+            self.pdfpathname = ''
         self.pdfdoc = mupdfProcessor(self, pdf_file)
         self.numpages = self.pdfdoc.numpages
         self.pagewidth = self.pdfdoc.pagewidth
         self.pageheight = self.pdfdoc.pageheight
-        self.newdoc = True
+        self.page_buffer_valid = False
         self.Scroll(0, 0)               # in case this is a re-LoadFile
-        self.CalculateDimensions(True)  # to get initial visible page range
+        self.CalculateDimensions()      # to get initial visible page range
         # draw and display the minimal set of pages
         self.pdfdoc.DrawFile(self.frompage, self.topage)
         self.have_file = True
         # now draw full set of pages
-        wx.CallAfter(self.pdfdoc.DrawFile, 0, self.numpages-1)
+        wx.CallAfter(self.pdfdoc.DrawFile, 0, self.numpages - 1)
 
     def load_file(self, data):
         """Display preview of given document in the viewer.
@@ -3796,7 +3760,6 @@ def _launch_file_or_data(filename, data=None, decrypt=False):
                     os.remove(filename)
                 except Exception:
                     pass
-
 
     if viewer:
         if data is not None:
