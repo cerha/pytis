@@ -3070,7 +3070,7 @@ def popup_menu(parent, items, keymap=None, position=None):
 
     """
     menu = Menu('', items).create(parent, keymap)
-    parent.PopupMenu(menu, position)
+    parent.PopupMenu(menu, position or wx.DefaultPosition)
     menu.Destroy()
 
 
