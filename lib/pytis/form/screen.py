@@ -1811,7 +1811,7 @@ class InfoWindow(object):
         frame.ShowModal()
 
 
-class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
+class ProfileSelectorPopup(wx.ComboPopup):
     """Profile selection menu implemented using wx.ListCtrl.
 
     This class implements the 'wx.ComboPopup' API and thus can be used as
@@ -1822,13 +1822,15 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
     def __init__(self):
         wx.ComboPopup.__init__(self)
         self._selected_profile_index = None
+        self._listctrl = None
 
     def _on_motion(self, event):
-        item, flags = self.HitTest(event.GetPosition())
+        ctrl = self._listctrl
+        item, flags = ctrl.HitTest(event.GetPosition())
         if item >= 0:
-            profile_index = self.GetItemData(item)
+            profile_index = ctrl.GetItemData(item)
             if profile_index != -1:
-                self.Select(item)
+                ctrl.Select(item)
                 self._selected_profile_index = profile_index
 
     def _on_left_down(self, event):
@@ -1845,40 +1847,41 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
                                                                _command_handler=self._current_form)
 
     def _append_label(self, label, toplevel=True):
-        i = self.GetItemCount()
-        self.InsertStringItem(i, label)
-        self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
+        ctrl = self._listctrl
+        i = ctrl.GetItemCount()
+        ctrl.InsertItem(i, label)
+        ctrl.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
-            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(),
+            ctrl.SetItemFont(i, wx.Font(ctrl.GetFont().GetPointSize(),
                                         wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
                                         wx.FONTWEIGHT_BOLD))
-        self.SetItemData(i, -1)
+        ctrl.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):
+        ctrl = self._listctrl
         title = indent + profile.title()
         if profile.errors():
             title += ' ' + _("(invalid)")
-        i = self.GetItemCount()
-        self.InsertStringItem(i, title)
-        self.SetItemData(i, index)
+        i = ctrl.GetItemCount()
+        ctrl.InsertItem(i, title)
+        ctrl.SetItemData(i, index)
         if select:
-            self.Select(i)
+            ctrl.Select(i)
 
     # The following methods implement the ComboPopup API.
 
     def Create(self, parent):
         # Create the popup child control. Return True for success.
-        wx.ListCtrl.Create(self, parent,
-                           style=(wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER |
-                                  wx.LC_NO_HEADER))
-        self.InsertColumn(0, 'profile')
-        self.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
-        self.Bind(wx.EVT_MOTION, self._on_motion)
+        self._listctrl = ctrl = wx.ListCtrl(parent, style=(wx.LC_REPORT | wx.LC_SINGLE_SEL |
+                                                           wx.SIMPLE_BORDER | wx.LC_NO_HEADER))
+        ctrl.InsertColumn(0, 'profile')
+        ctrl.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
+        ctrl.Bind(wx.EVT_MOTION, self._on_motion)
         return True
 
     def GetControl(self):
         # Return the widget that is to be used for the popup.
-        return self
+        return self._listctrl
 
     def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
         # Called just prior to displaying the popup.
@@ -1906,9 +1909,10 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
         for i, profile in enumerate(profiles):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 self._append_profile(profile, i, profile is current)
-        self.SetColumnWidth(0, minWidth)
-        self.SetSize((1, 1))  # Needed for GetViewRect to work consistently.
-        width, height = self.GetViewRect()[2:]  # Returned sizes are 16 px greater than the reality.
+        ctrl = self._listctrl
+        ctrl.SetColumnWidth(0, minWidth)
+        ctrl.SetSize((1, 1))  # Needed for GetViewRect to work consistently.
+        width, height = ctrl.GetViewRect()[2:]  # Returned sizes are 16 px greater than the reality.
         return wx.Size(max(width - 16, minWidth), min(height - 16, maxHeight))
 
     def SetStringValue(self, value):
@@ -1919,9 +1923,9 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
 
     def GetStringValue(self):
         # Return a string representation of the current item.
-        selected = self.GetFirstSelected()
+        selected = self._listctrl.GetFirstSelected()
         if selected != -1:
-            return self.GetItemText(selected)
+            return self._listctrl.GetItemText(selected)
         else:
             return ''
 
@@ -1931,9 +1935,10 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.ComboPopup):
 
     def OnDismiss(self):
         # Called when popup is dismissed.
+        ctrl = self._listctrl
         wx.ComboPopup.OnDismiss(self)
-        self.Select(wx.NOT_FOUND)
-        self.DeleteAllItems()
+        ctrl.Select(wx.NOT_FOUND)
+        ctrl.DeleteAllItems()
 
 
 class ProfileSelector(wx.ComboCtrl):
