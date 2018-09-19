@@ -1137,14 +1137,14 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
         wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
         pytis.form.wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self, self.GetId(),
-                               lambda e: self.ToggleItem(e.m_itemIndex))
+                               lambda e: self.ToggleItem(e.GetIndex()))
         for i, label in enumerate(columns):
             self.InsertColumn(i, label)
         for i, item in enumerate(items):
-            self.InsertStringItem(i, item[1])
+            self.InsertItem(i, item[1])
             self.CheckItem(i, item[0])
             for j, value in enumerate(item[1:]):
-                self.SetStringItem(i, j, value)
+                self.SetItem(i, j, value)
         for i in range(len(columns)):
             self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
         self.SetMinSize((0, max(80, min(300, len(items) * 20 + 30))))
