@@ -1424,9 +1424,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 d = 1
             if self._lf_filter is not None and config.filter_color:
-                dc.SetBrush(wx.Brush(config.filter_color, wx.SOLID))
+                dc.SetBrush(wx.Brush(config.filter_color, wx.BRUSHSTYLE_SOLID))
             else:
-                dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
+                dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
             # Draw the rectangle around.
             dc.DrawRectangle(x - d, y, width + d, label_height)
             # Indicate when the column is being moved (before we clip the active refion).
@@ -1439,7 +1439,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     ax = None
                 if ax is not None:
-                    dc.SetBrush(wx.Brush('GREEN', wx.SOLID))
+                    dc.SetBrush(wx.Brush('GREEN', wx.BRUSHSTYLE_SOLID))
                     dc.DrawPolygon(arrow(ax, label_height - 2))
             dc.SetClippingRegion(x, 0, total_width - x, total_height)
             # Draw the label itself.
@@ -1457,13 +1457,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     color = 'GREEN'
                 else:
                     color = 'CORAL'
-                dc.SetBrush(wx.Brush(color, wx.SOLID))
+                dc.SetBrush(wx.Brush(color, wx.BRUSHSTYLE_SOLID))
                 for i in range(pos):
                     dc.DrawLine(left, top + 2 * i, left + 9, top + 2 * i)
                 dc.DrawPolygon(triangle(left, top + pos * 2, reversed=r))
             # Draw the filter sign.
             if id in filtered_columns:
-                dc.SetBrush(wx.Brush('GOLD', wx.SOLID))
+                dc.SetBrush(wx.Brush('GOLD', wx.BRUSHSTYLE_SOLID))
                 dc.DrawPolygon(funnel(x + 2, y + 3))
             # Draw the aggregation results.
             y += label_height
@@ -1471,7 +1471,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for op, title, icon_id, label in self._AGGREGATIONS:
                     if op in self._aggregations:
                         rect = (x - d, y - 1, width + d, row_height + 1)
-                        dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
+                        dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
                         dc.DrawRectangle(*rect)
                         value = self._aggregation_results[(id, op)]
                         if value is not None:
@@ -1494,7 +1494,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._aggregations:
             dc = wx.PaintDC(self._grid.GetGridCornerLabelWindow())
             dc.SetTextForeground(wx.BLACK)
-            dc.SetBrush(wx.Brush('GRAY', wx.TRANSPARENT))
+            dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
             width = dc.GetSize().GetWidth()
             row_height = self._row_height
             y = self._label_height

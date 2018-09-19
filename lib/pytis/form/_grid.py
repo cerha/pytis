@@ -787,7 +787,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
             else:
                 fg = attr.GetTextColour()
                 bg = attr.GetBackgroundColour()
-            dc.SetBrush(wx.Brush(bg, wx.SOLID))
+            dc.SetBrush(wx.Brush(bg, wx.BRUSHSTYLE_SOLID))
             dc.SetPen(wx.TRANSPARENT_PEN)
             dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
             if grid.GetGridCursorRow() == row:
@@ -801,7 +801,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
                             color = config.row_highlight_edited_color
                         else:
                             color = config.row_highlight_color
-                        dc.SetPen(wx.Pen(color, border_width, wx.SOLID))
+                        dc.SetPen(wx.Pen(color, border_width, wx.PENSTYLE_SOLID))
                         r, mod = divmod(border_width, 2)
                         x, y, width, height = rect
                         left, right, top, bottom = x, x + width, y + r, y + height - r - mod
