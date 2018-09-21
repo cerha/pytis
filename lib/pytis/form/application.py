@@ -1616,6 +1616,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             config.dbconnection.update_login_data(user=login_result['login'].value(),
                                                   password=login_result['password'].value())
             config.dbconnection = config.dbconnection  # mark as changed
+            config.dbuser = config.dbconnection.user()
         except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
