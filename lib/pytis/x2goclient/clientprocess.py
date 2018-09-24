@@ -88,13 +88,13 @@ class ClientService(rpyc.Service):
         return self._client.list_sessions()
 
     def exposed_terminate_session(self, session):
-        self._client.terminate_session(session)
+        return self._client.terminate_session(session)
 
     def exposed_resume_session(self, session):
-        self._client.resume_session(session)
+        return self._client.resume_session(session)
 
     def exposed_start_new_session(self):
-        self._client.start_new_session()
+        return self._client.start_new_session()
 
     def exposed_main_loop(self):
         self._client.main_loop()
@@ -152,15 +152,15 @@ class ClientProcess(object):
 
     def terminate_session(self, session):
         """Call 'X2GoClient.terminate_session()' on the subprocess instance."""
-        self._conn.root.terminate_session(session)
+        return self._conn.root.terminate_session(session)
 
     def resume_session(self, session):
         """Call 'X2GoClient.resume_session()' on the subprocess instance."""
-        self._conn.root.resume_session(session)
+        return self._conn.root.resume_session(session)
 
     def start_new_session(self):
         """Call 'X2GoClient.start_new_session()' on the subprocess instance."""
-        self._conn.root.start_new_session()
+        return self._conn.root.start_new_session()
 
     def main_loop(self):
         """Call 'X2GoClient.main_loop()' on the subprocess instance."""

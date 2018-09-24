@@ -724,8 +724,20 @@ class X2GoClient(x2go.X2GoClient):
                 self._handle_info()
                 gevent.sleep(0.1)
         terminal_session = self.get_session(self._x2go_session_uuid).terminal_session
-        self._pytis_server_info = self.ServerInfo(terminal_session)
-        gevent.spawn(info_handler)
+        if terminal_session:
+            self._pytis_server_info = self.ServerInfo(terminal_session)
+            gevent.spawn(info_handler)
+            return True
+        else:
+            # Terminal session is None for example in the case that the session
+            # command does not exist on the server.  We unfortunately don't know
+            # any other details, such as a traceback, error code or any kind of
+            # error message here.  The logic is implemented in the parent class.
+            # In case that we are able to obtain such information somewhere, it
+            # would make more sense to raise an exception, but without this
+            # information it seems enough to just return False to indicate the
+            # problem.
+            return False
 
     def _handle_info(self):
         try:
@@ -742,7 +754,8 @@ class X2GoClient(x2go.X2GoClient):
 
     def _cleanup(self):
         terminal_session = self.get_session(self._x2go_session_uuid).terminal_session
-        terminal_session.stop_rpyc_tunnel()
+        if terminal_session:
+            terminal_session.stop_rpyc_tunnel()
         self._rpyc_launcher.stop_thread()
         x2go.x2go_cleanup()
 
@@ -788,7 +801,7 @@ class X2GoClient(x2go.X2GoClient):
         self.logger('command for new session is: %s' % self._session_parameters['cmd'],
                     loglevel=x2go.log.loglevel_DEBUG)
         self._X2GoClient__start_session(self._x2go_session_uuid)
-        self._init_session()
+        return self._init_session()
 
     def resume_session(self, session):
         """Resume given server-side suspended X2Go session."""
@@ -800,7 +813,7 @@ class X2GoClient(x2go.X2GoClient):
                            self._session_parameters['port']),
                           exitcode=20)
         self._X2GoClient__resume_session(self._x2go_session_uuid, session.name)
-        self._init_session()
+        return self._init_session()
 
     def main_loop(self):
         """Monitor the running X2Go session and wait for its completion.

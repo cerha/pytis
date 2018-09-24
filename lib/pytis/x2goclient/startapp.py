@@ -741,17 +741,23 @@ class Pytis2GoApp(wx.App):
             session = self._session_selection_dialog(progress, client, sessions)
         if session:
             progress.message(_("Resuming session: %s", session.name))
-            client.resume_session(session)
+            result = client.resume_session(session)
             delay = 2000
         else:
             progress.message(_("Starting new session."))
-            client.start_new_session()
+            result = client.start_new_session()
             delay = 11000
-        progress.message(_("Waiting for the application to come up..."))
-        wx.CallLater(delay, progress.close)
-        session = Session(client, session_parameters)
-        self._sessions.append(session)
-        session.start()
+        if result:
+            progress.message(_("Waiting for the application to come up..."))
+            wx.CallLater(delay, progress.close)
+            session = Session(client, session_parameters)
+            self._sessions.append(session)
+            session.start()
+        else:
+            progress.close()
+            self._info_dialog(_("Session startup failed"),
+                              _("The session %(profile_name)s at %(server)s "
+                                "did not come up correctly.", **session_parameters))
 
     def _info_dialog(self, title, text):
         def create_dialog(dialog):
