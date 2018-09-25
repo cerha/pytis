@@ -1322,7 +1322,11 @@ class ChoiceField(EnumerationField):
         control = wx.Choice(parent)
         self._append_items(control)
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
+        self._update_size(control)
         return control
+
+    def _update_size(self, ctrl):
+        ctrl.SetSize((ctrl.GetBestSize().width, self._px_size(ctrl, 1, 1.5)[1]))
 
 
 class ListBoxField(EnumerationField):
