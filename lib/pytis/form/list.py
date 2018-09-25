@@ -501,7 +501,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return super(ListForm, self).restore()
 
     def _update_query_fields_panel_button_bitmaps(self):
-        sizer = self._top_level_sizer
+        sizer = self.Sizer
         grid_position = sizer.GetItem(self._grid).Position.y
         panel_position = sizer.GetItem(self._query_fields_form.GetParent()).Position.y
         for button in self._query_fields_panel_buttons:
@@ -516,7 +516,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             button.SetBitmapLabel(bitmap)
 
     def _on_move_query_fields(self, event):
-        sizer = self._top_level_sizer
+        sizer = self.Sizer
         target_position = sizer.GetChildren().index(sizer.GetItem(self._grid))
         panel = event.GetEventObject().GetParent()
         sizer.Detach(panel)
@@ -542,7 +542,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         for child in panel.GetChildren():
             if child not in self._query_fields_panel_buttons:
                 child.Show(not child.IsShown())
-        self._top_level_sizer.Layout()
+        self.Sizer.Layout()
         if self._query_fields_minimized():
             row = form.row()
             values = ['%s: %s' % (field.spec().label(), row.format(field.id()))
@@ -628,8 +628,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         sizer.Add(controls[-1])
         panel.SetSizer(sizer)
         panel.SetAutoLayout(True)
-        self._top_level_sizer.Add(panel, 0, wx.EXPAND)
-        self._top_level_sizer.Layout()
+        self.Sizer.Add(panel, 0, wx.EXPAND)
+        self.Sizer.Layout()
         if prefill:
             controls[1].SetValue(prefill)
         else:
@@ -686,11 +686,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel_controls = None
         if rollback and self._incremental_search_results:
             self.select_row(self._incremental_search_results[0][0])
-        sizer = self._top_level_sizer
         panel.Enable(False)
-        sizer.Detach(panel)
+        self.Sizer.Detach(panel)
         panel.Destroy()
-        sizer.Layout()
+        self.Sizer.Layout()
         self._grid.SetFocus()
         if not rollback:
             the_row = self._table.row(self._table.current_row())

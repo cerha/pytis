@@ -254,10 +254,13 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _create_form(self):
         # Build the form from parts
-        self._top_level_sizer = sizer = wx.BoxSizer(wx.VERTICAL)
-        self._create_form_parts(sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
+        self._create_form_parts(sizer)
         sizer.Fit(self)  # Set the size of window `self' to size of the sizer.
+
+    def _create_form_parts(self, sizer):
+        pass
 
     def _form_log_info(self):
         return ''
@@ -270,9 +273,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
              self._transaction is not self._governing_transaction)):
             self._transaction = self._default_transaction()
         return self._transaction
-
-    def _create_form_parts(self, sizer):
-        pass
 
     def _toolbar_commands(self):
         """Return toolbar commands for this form's toolbar as a sequence of command groups.
