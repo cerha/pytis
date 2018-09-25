@@ -314,9 +314,11 @@ class DualForm(Form, Refreshable):
             else:
                 return width
         if isinstance(self._main_form, EditForm):
-            return min(dimension(*self._main_form.size()), dimension(*total_size) - 200)
+            return min(dimension(*self._main_form.GetSizer().CalcMin()),
+                       dimension(*total_size) - 200)
         elif isinstance(self._side_form, EditForm):
-            return max(dimension(*total_size) - dimension(*self._side_form.size()), 200)
+            return max(dimension(*total_size) -
+                       dimension(*self._side_form.GetSizer().CalcMin()) - 6, 200)
         else:
             r = self._default_sash_ratio()
             return dimension(total_size.width * r, total_size.height * r)

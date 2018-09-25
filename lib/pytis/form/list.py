@@ -3123,17 +3123,6 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     def _on_dclick(self, event):
         return self.COMMAND_ACTIVATE.invoke()
 
-    def size(self):
-        """Return the prefered form size in pixels as a tuple of two integers (width, height).
-
-        In this class, the returned size is always the total size of the form
-        (wide to fit all displayed columns and high to fit all rows).  The
-        calling side is responsible to limit the returned size to fit the
-        current context (screen).
-
-        """
-        return (self._total_width(), self._total_height())
-
 
 class SelectRowsForm(CodebookForm):
     """Řádkový pop-up formulář vracející tuple všech vybraných řádků."""

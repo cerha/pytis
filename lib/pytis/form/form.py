@@ -463,14 +463,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         return self._full_init_called
 
-    def size(self):
-        """Return the prefered form size in pixels as a tuple of two integers (width, height).
-
-        None may be returned if the prefered form size is not defined or known.
-
-        """
-        return None
-
 
 class InnerForm(Form):
     """Formulář, který zpracuje příkazy samostatně i unvitř duálního formuláře.
@@ -2305,36 +2297,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
-        # Calculate the ideal total form size.  We first count the size of the sizer without the
-        # form panel (that's why its hidden and shown below) and then add the manually computed
-        # size of the panel to the result.  The size of the forma panel computed by wx Windows is
-        # totaly useless.  It doesn't reflect the form content at all.
-        panel = self._form_controls_window
-        panel.Show(False)
-        size = self.GetSizer().CalcMin()
-        panel.Show(True)
-        if isinstance(panel, (wx.ScrolledWindow, wx.Panel)):
-            # The size of a scrollable window is simly its virtual size.
-            panel_size = panel.GetVirtualSize()
-            width = panel_size.width
-            height = panel_size.height
-            if (wx.MAJOR_VERSION, wx.MINOR_VERSION) == (2, 6):
-                width += 16
-                height += 16
-        else:
-            # If the form controls window is a wx.Notebook instance we need to
-            # count the size of the largest tab page.
-            width = height = 0
-            for i in range(panel.GetPageCount()):
-                page_size = panel.GetPage(i).GetSizer().CalcMin()
-                width = max(page_size.width, width)
-                height = max(page_size.height, height)
-            # Modify the computed size by some empiric numbers...
-            width += 8  # Add space for border manually.
-            height += 53  # Add space for border and Notebook tabs.
-        size.width = max(size.width, width)
-        size.height += height
-        self._size = size
         if isinstance(self._parent, wx.Dialog):
             pytis.form.wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
@@ -2445,10 +2407,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 window.AddPage(panel, item.label())
         else:
             window = self._create_group_panel(self, group)
-        # Store the scrollable form panel to be able to compute the popup
-        # window size.  If we want to keep the panel scrollable, it will not
-        # propagate its size through the sizer automatically in wx 2.8.
-        self._form_controls_window = window
         return window
 
     def _create_group_panel(self, parent, group):
@@ -2465,6 +2423,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(group_sizer, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 8)
         panel.SetSizer(sizer)
+        # SetMinSize is necessary here in order to get correct results from
+        # form.GetVirtualSize(), especially when wx.Notebook is involved.
+        panel.SetMinSize(sizer.CalcMin())
         pytis.form.wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
 
@@ -2831,17 +2792,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """Return the form title as a string."""
         return self._view.layout().caption()
 
-    def size(self):
-        """Return the prefered form size in pixels as a tuple of two integers (width, height).
-
-        The returned size in this class represents the total size of the form
-        needed to display all fields without scrolling.  The current real size
-        may be greater or smaller depending on the size of the window where the
-        form is displayed.
-
-        """
-        return (self._size.width, self._size.height)
-
     def field(self, id):
         """Return the 'InputField' instance for the field 'id'.
 
@@ -2879,7 +2829,8 @@ class PopupEditForm(PopupForm, EditForm):
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
-        size = wx.Size(*self.size())
+        size = self.GetVirtualSize()
+        size.height += 14  # Necessary empiric adjustment since wx 4.0.
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
 
@@ -3235,7 +3186,7 @@ class QueryFieldsForm(_VirtualEditForm):
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
-        size = wx.Size(*self.size())
+        size = self.GetVirtualSize()
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
         if load:
@@ -3333,7 +3284,6 @@ class ResizableEditForm(object):
                                                      readonly=self.readonly())
                 self._fields.append(field)
                 field_sizer.Add(field.widget(), 1, wx.EXPAND)
-        self._form_controls_window = panel
         sizer.Add(panel, 1, wx.EXPAND)
         sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
 
