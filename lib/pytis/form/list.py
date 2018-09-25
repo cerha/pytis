@@ -457,11 +457,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._query_fields_panel_buttons = buttons = (
                 wx_button(panel, label=_("Minimize"),
                           tooltip=_("Minimize/maximize query panel."),
-                          icon='minimize-down', noborder=True,
+                          icon='minimize-down', noborder=True, size=(26, 20),
                           callback=self._on_minimize_query_fields),
                 wx_button(panel, label=_("Move up"),
                           tooltip=_("Move the query panel to the top/bottom edge of the form."),
-                          icon='move-up', noborder=True,
+                          icon='move-up', noborder=True, size=(26, 20),
                           callback=self._on_move_query_fields))
             panel_sizer = wx.BoxSizer()
             panel_sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
