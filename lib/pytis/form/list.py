@@ -473,7 +473,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             panel.SetAutoLayout(1)
             position = self._get_saved_setting('query-fields-position', 'up')
             if position == 'up':
-                sizer.Insert(sizer.GetItemIndex(self._grid), panel, 0, wx.EXPAND)
+                i = sizer.GetChildren().index(sizer.GetItem(self._grid))
+                sizer.Insert(i, panel, 0, wx.EXPAND)
             else:
                 sizer.Add(panel, 0, wx.EXPAND)
             if self._get_saved_setting('query-fields-minimized', False):
@@ -501,8 +502,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _update_query_fields_panel_button_bitmaps(self):
         sizer = self._top_level_sizer
-        grid_position = sizer.GetItemIndex(self._grid)
-        panel_position = sizer.GetItemIndex(self._query_fields_form.GetParent())
+        grid_position = sizer.GetItem(self._grid).Position.y
+        panel_position = sizer.GetItem(self._query_fields_form.GetParent()).Position.y
         for button in self._query_fields_panel_buttons:
             if button is self._query_fields_panel_buttons[0]:
                 if self._query_fields_minimized():
@@ -516,13 +517,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _on_move_query_fields(self, event):
         sizer = self._top_level_sizer
-        target_position = sizer.GetItemIndex(self._grid)
+        target_position = sizer.GetChildren().index(sizer.GetItem(self._grid))
         panel = event.GetEventObject().GetParent()
         sizer.Detach(panel)
         sizer.Insert(target_position, panel, 0, wx.EXPAND)
         sizer.Layout()
         self._update_query_fields_panel_button_bitmaps()
-        position = sizer.GetItemIndex(panel) < sizer.GetItemIndex(self._grid) and 'up' or 'down'
+        position = ('up' if sizer.GetItem(panel).Position.y < sizer.GetItem(self._grid).Position.y
+                    else 'down')
         self._set_saved_setting('query-fields-position', position)
 
     def _on_minimize_query_fields(self, event):
