@@ -2525,7 +2525,7 @@ class StructuredTextField(TextField):
             new_text = markup + ' ' + selection.strip() + '\n'
         else:
             new_text = markup + ' '
-        column_number = ctrl.PositionToXY(ctrl.GetInsertionPoint())[0]
+        column_number = ctrl.PositionToXY(ctrl.GetInsertionPoint())[1]
         if column_number != 0:
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
@@ -2544,7 +2544,7 @@ class StructuredTextField(TextField):
             verbatim_text = '\n'
             position = ctrl.GetInsertionPoint()
         new_text = '-----\n' + verbatim_text + '-----\n'
-        column_number = ctrl.PositionToXY(position)[0]
+        column_number = ctrl.PositionToXY(position)[1]
         if column_number != 0:
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
@@ -2748,7 +2748,7 @@ class StructuredTextField(TextField):
     def _cmd_heading(self, level):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
-        column_number, line_number = ctrl.PositionToXY(position)
+        success, column_number, line_number = ctrl.PositionToXY(position)
         line_text = ctrl.GetLineText(line_number)
         match = self._HEADING_MATCHER.match(line_text)
         line_beginning = position - column_number
@@ -2780,7 +2780,7 @@ class StructuredTextField(TextField):
     def current_heading_level(self):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
-        line_number = ctrl.PositionToXY(position)[1]
+        line_number = ctrl.PositionToXY(position)[2]
         line_text = ctrl.GetLineText(line_number)
         match = self._HEADING_MATCHER.match(line_text)
         if match:
