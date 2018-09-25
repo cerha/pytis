@@ -502,16 +502,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _update_query_fields_panel_button_bitmaps(self):
         sizer = self.Sizer
-        grid_position = sizer.GetItem(self._grid).Position.y
-        panel_position = sizer.GetItem(self._query_fields_form.GetParent()).Position.y
+        children = sizer.GetChildren()
+        grid_position = children.index(sizer.GetItem(self._grid))
+        panel_position = children.index(sizer.GetItem(self._query_fields_form.GetParent()))
+        on_top = panel_position < grid_position
         for button in self._query_fields_panel_buttons:
             if button is self._query_fields_panel_buttons[0]:
                 if self._query_fields_minimized():
-                    icon = panel_position > grid_position and 'maximize-up' or 'maximize-down'
+                    icon = 'maximize-down' if on_top else 'maximize-up'
                 else:
-                    icon = panel_position > grid_position and 'minimize-down' or 'minimize-up'
+                    icon = 'minimize-up' if on_top else 'minimize-down'
             else:
-                icon = panel_position > grid_position and 'move-up' or 'move-down'
+                icon = 'move-down' if on_top else 'move-up'
             bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
             button.SetBitmapLabel(bitmap)
 
