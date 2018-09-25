@@ -239,16 +239,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.SetColLabelSize(height)
         g.FitInside()
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         if self.title() is not None and self._ALLOW_TITLE_BAR:
             self._title_bar = self._create_title_bar()
-            sizer.Add(self._title_bar, 0, wx.EXPAND)
+            self.Sizer.Add(self._title_bar, 0, wx.EXPAND)
         else:
             self._title_bar = None
         if self._ALLOW_TOOLBAR:
-            sizer.Add(self._create_toolbar(), 0, wx.EXPAND)
-        sizer.Add(self._create_grid(), 1, wx.EXPAND)
-        self._create_query_fields_panel(sizer)
+            self.Sizer.Add(self._create_toolbar(), 0, wx.EXPAND)
+        self.Sizer.Add(self._create_grid(), 1, wx.EXPAND)
+        self._create_query_fields_panel()
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
@@ -444,7 +444,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # argument.
             return form.row()
 
-    def _create_query_fields_panel(self, sizer):
+    def _create_query_fields_panel(self):
         query_fields = self._view.query_fields()
         if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
@@ -463,20 +463,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           tooltip=_("Move the query panel to the top/bottom edge of the form."),
                           icon='move-up', noborder=True, size=(26, 20),
                           callback=self._on_move_query_fields))
-            panel_sizer = wx.BoxSizer()
-            panel_sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
-            panel_sizer.Add((0, 0), 1)
+            sizer = wx.BoxSizer()
+            sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
+            sizer.Add((0, 0), 1)
             for button in buttons:
-                panel_sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
-            panel.SetSizer(panel_sizer)
-            panel_sizer.Fit(panel)
+                sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
+            panel.SetSizer(sizer)
+            sizer.Fit(panel)
             panel.SetAutoLayout(1)
             position = self._get_saved_setting('query-fields-position', 'up')
             if position == 'up':
-                i = sizer.GetChildren().index(sizer.GetItem(self._grid))
-                sizer.Insert(i, panel, 0, wx.EXPAND)
+                i = self.Sizer.GetChildren().index(self.Sizer.GetItem(self._grid))
+                self.Sizer.Insert(i, panel, 0, wx.EXPAND)
             else:
-                sizer.Add(panel, 0, wx.EXPAND)
+                self.Sizer.Add(panel, 0, wx.EXPAND)
             if self._get_saved_setting('query-fields-minimized', False):
                 self._toggle_query_fields_minimization()
             self._update_query_fields_panel_button_bitmaps()

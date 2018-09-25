@@ -256,10 +256,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         # Build the form from parts
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        self._create_form_parts(sizer)
+        self._create_form_parts()
         sizer.Fit(self)  # Set the size of window `self' to size of the sizer.
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         pass
 
     def _form_log_info(self):
@@ -2385,10 +2385,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             field = find(True, self._fields, key=lambda f: f.enabled()) or self._fields[0]
         field.set_focus()
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         # Create all parts and add them to top-level sizer.
-        sizer.Add(self._create_title_bar(), 0, wx.EXPAND)
-        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+        self.Sizer.Add(self._create_title_bar(), 0, wx.EXPAND)
+        self.Sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
 
     def _create_form_controls(self):
         self._fields = []
@@ -2903,17 +2903,12 @@ class PopupEditForm(PopupForm, EditForm):
         self._inserted_data_pointer = 0
         self._multi_insert = multi_insert
 
-    def _create_form_parts(self, sizer):
-        # Create all parts and add them to top-level sizer.
-        caption = self._create_caption(self, size=18)
-        panel = self._create_form_controls()
-        buttons = self._create_buttons()
-        status_bar = self._create_status_bar()
-        # Add parts to the sizer.
-        sizer.Add(caption, 0, wx.ALIGN_CENTER | wx.ALL, 8)
-        sizer.Add(panel, 1, wx.EXPAND)
-        sizer.Add(buttons, 0, wx.ALIGN_CENTER)
-        sizer.Add(status_bar, 0, wx.EXPAND)
+    def _create_form_parts(self):
+        sizer = self.Sizer
+        sizer.Add(self._create_caption(self, size=18), 0, wx.ALIGN_CENTER | wx.ALL, 8)
+        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+        sizer.Add(self._create_buttons(), 0, wx.ALIGN_CENTER)
+        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
 
     def _create_status_bar(self):
         # We use our own statusbar implementation
@@ -3189,8 +3184,8 @@ class QueryFieldsForm(_VirtualEditForm):
         if load:
             load(self._row)
 
-    def _create_form_parts(self, sizer):
-        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+    def _create_form_parts(self):
+        self.Sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
 
     def _create_button(self, parent, button):
         result = super(QueryFieldsForm, self)._create_button(parent, button)
@@ -3271,18 +3266,18 @@ class ResizableEditForm(object):
     def _resizable_fields(self):
         return self._view.layout().group().order()
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         panel = wx.Panel(self)
-        field_sizer = wx.BoxSizer()
-        panel.SetSizer(field_sizer)
+        sizer = wx.BoxSizer()
+        panel.SetSizer(sizer)
         for field_id in self._resizable_fields():
             if self._view.field(field_id).width() != 0:
                 field = pytis.form.InputField.create(panel, self._row, field_id, guardian=self,
                                                      readonly=self.readonly())
                 self._fields.append(field)
-                field_sizer.Add(field.widget(), 1, wx.EXPAND)
-        sizer.Add(panel, 1, wx.EXPAND)
-        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
+                sizer.Add(field.widget(), 1, wx.EXPAND)
+        self.Sizer.Add(panel, 1, wx.EXPAND)
+        self.Sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
 
 
 class ResizableInputForm(ResizableEditForm, InputForm):
@@ -3484,10 +3479,10 @@ class WebForm(ViewerForm):
     """
     DESCR = _(u"document view")
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         self._browser = browser = Browser(self, guardian=self)
-        sizer.Add(browser.toolbar(self), 0, wx.EXPAND)
-        sizer.Add(browser, 1, wx.EXPAND)
+        self.Sizer.Add(browser.toolbar(self), 0, wx.EXPAND)
+        self.Sizer.Add(browser, 1, wx.EXPAND)
         content = self._content
         if content is not None:
             self.load_content(content)
@@ -3506,10 +3501,10 @@ class FileViewerForm(ViewerForm):
     """File Viewer embedded in a Pytis form."""
     DESCR = _(u"file preview")
 
-    def _create_form_parts(self, sizer):
+    def _create_form_parts(self):
         self._viewer = viewer = FileViewer(self)
-        sizer.Add(viewer.buttons(), 0, wx.EXPAND)
-        sizer.Add(viewer, 1, wx.EXPAND)
+        self.Sizer.Add(viewer.buttons(), 0, wx.EXPAND)
+        self.Sizer.Add(viewer, 1, wx.EXPAND)
         if self._content is not None:
             self.load_file(self._content)
 
