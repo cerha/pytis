@@ -252,12 +252,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return create_data_object(self._name, spec_kwargs=self._spec_kwargs,
                                   kwargs=self._data_kwargs)
 
-    def _create_top_level_sizer(self):
-        return wx.BoxSizer(wx.VERTICAL)
-
     def _create_form(self):
         # Build the form from parts
-        self._top_level_sizer = sizer = self._create_top_level_sizer()
+        self._top_level_sizer = sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_form_parts(sizer)
         self.SetSizer(sizer)
         sizer.Fit(self)  # Set the size of window `self' to size of the sizer.
