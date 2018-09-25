@@ -3150,7 +3150,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     if not fullsize:
         style |= wx.BU_EXACTFIT
     if noborder:
-        style |= wx.NO_BORDER
+        style |= wx.BORDER_NONE
     if size is None:
         size = wx.DefaultSize
     if bitmap:
