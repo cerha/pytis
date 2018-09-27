@@ -2401,6 +2401,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
                 panel = self._create_group_panel(window, group)
+                panel.SetOwnBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME))
                 window.AddPage(panel, item.label())
         else:
             window = self._create_group_panel(self, group)
