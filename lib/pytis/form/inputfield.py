@@ -1322,11 +1322,15 @@ class ChoiceField(EnumerationField):
         control = wx.Choice(parent)
         self._append_items(control)
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
-        self._update_size(control)
+        self._update_size(control, initial=True)
         return control
 
-    def _update_size(self, ctrl):
+    def _update_size(self, ctrl, initial=False):
         ctrl.SetSize((ctrl.GetBestSize().width, self._px_size(ctrl, 1, 1.5)[1]))
+        if not initial and not self._inline:
+            # Necessary to move the help icon properly when the control size changes.
+            ctrl.SetMinSize(ctrl.Size)
+            ctrl.Parent.Sizer.Layout()
 
 
 class ListBoxField(EnumerationField):
