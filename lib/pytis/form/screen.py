@@ -1137,28 +1137,7 @@ class Menu(_TitledMenuObject):
                         hotkey_items.append((item, wxitem, wx_title, width))
                     max_label_width = max(width + max_hotkey_width, max_label_width)
                 elif isinstance(item, Menu):
-                    # AppendMenu riases the following exception in wx 2.9 after some time
-                    # of using the application (when wx.NewId() gets to return 63851):
-                    #
-                    # PyAssertionError: C++ assertion "(itemid >= 0 && itemid < SHRT_MAX)
-                    # || (itemid >= wxID_AUTO_LOWEST && itemid <= wxID_AUTO_HIGHEST)"
-                    # failed at ../src/common/menucmn.cpp(260) in wxMenuItemBase():
-                    # invalid itemid value
-                    #
-                    # The assertion seems to be quite useless according to:
-                    # https://groups.google.com/forum/#!topic/wx-users/yZD1PRaKbz4
-                    #
-                    # UPDATE:
-                    # The hack with setting assertion mode does not solve the issue
-                    # completely. The problem looks to be related to C integer constants
-                    # wxID_AUTO_LOWEST and wxID_AUTO_HIGHEST, which are negative values
-                    # but wx.NewId gives values which don't correspond to these
-                    # constants properly (when overflows occur).
-                    # So instead of having about million possible ids (-1000000 , -2000),
-                    # in reality there are only like 32667 ids available.
-                    # Giving some offset to the obtained newid value seems to help.
-                    newid = wx.NewId() + wx.ID_AUTO_LOWEST
-                    menu.AppendMenu(newid, wx_title, item.create(parent, keymap))
+                    menu.AppendMenu(wx.ID_ANY, wx_title, item.create(parent, keymap))
                     max_label_width = max(width + 20, max_label_width)
                 else:
                     raise ProgramError('Invalid menu item type', item)
