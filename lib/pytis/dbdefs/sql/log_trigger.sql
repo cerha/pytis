@@ -58,10 +58,10 @@ begin
     end if;
   end loop;
   if tg_op != 'UPDATE' or detail_ != '' then
-    insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
+    insert into public.t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
            values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
            returning id into strict id_;
-    insert into t_changes_detail (id, detail) values (id_, detail_);
+    insert into public.t_changes_detail (id, detail) values (id_, detail_);
   end if;
   return null;
 end;
