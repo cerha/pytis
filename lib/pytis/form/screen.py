@@ -1928,6 +1928,10 @@ class ProfileSelector(wx.ComboCtrl):
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
         self._on_enter_perform = None
+        # SetButtonPosition works around incorrect initial text control sizing in
+        # codebook form, which starts with size 10x35 and resizes to the correct
+        # size only after resizing the parent Dialog manually.
+        self.SetButtonPosition(width=20, height=size[1] - 1)
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
         wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
