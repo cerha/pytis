@@ -52,6 +52,7 @@ import config
 
 _ = pytis.util.translations('pytis-wx')
 
+
 class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
     def __init__(self, *args, **kwargs):
@@ -60,6 +61,7 @@ class FormProfile(object):
 
 class FormSettings(FormProfile):
     pass
+
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
@@ -2775,8 +2777,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_navigate(self, back=False):
         widgets = (reduce(lambda w, f: w + (f.tab_navigated_widgets() if f.enabled() else ()),
-                          self._fields, ())
-                   + tuple(self._tab_navigated_widgets))
+                          self._fields, ()) +
+                   tuple(self._tab_navigated_widgets))
         order = [w for w in widgets if w.IsEnabled()]
         current = self.FindFocus()
         if current in order:
