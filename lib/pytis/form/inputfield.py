@@ -64,42 +64,6 @@ import config
 _ = pytis.util.translations('pytis-wx')
 
 
-class _TextValidator(wx.PyValidator):
-    def __init__(self, control, filter):
-        wx.PyValidator.__init__(self)
-        self._control = control
-        self._filter = filter
-        wx_callback(wx.EVT_CHAR, self, self._on_char)
-
-    def Clone(self):
-        return _TextValidator(self._control, self._filter)
-
-    def _on_char(self, event):
-        key = event.GetKeyCode()
-        if ((self._filter is not None and
-             key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 and
-             not self._filter(chr(key)))):
-            message(_("Invalid character!"), beep_=True)
-            return True
-        else:
-            event.Skip()
-            return True
-
-
-class _ReadOnlyValidator(wx.PyValidator):
-
-    def __init__(self):
-        wx.PyValidator.__init__(self)
-        # Eat all interaction events without calling e.Skip()
-        # so no default event processing takes place.
-        wx_callback(wx.EVT_KEY_DOWN, self, lambda e: None)
-        wx_callback(wx.EVT_LEFT_DOWN, self, lambda e: None)
-        wx_callback(wx.EVT_LEFT_DCLICK, self, lambda e: None)
-
-    def Clone(self):
-        return _ReadOnlyValidator()
-
-
 class _Completer(wx.PopupWindow):
     """Autocompletion selection control."""
 
@@ -812,6 +776,27 @@ class Unlabeled:
 class TextField(InputField):
     """Textové vstupní políčko."""
 
+    class TextValidator(wx.PyValidator):
+        def __init__(self, control, filter):
+            wx.PyValidator.__init__(self)
+            self._control = control
+            self._filter = filter
+            wx_callback(wx.EVT_CHAR, self, self._on_char)
+
+        def Clone(self):
+            return TextField.TextValidator(self._control, self._filter)
+
+        def _on_char(self, event):
+            key = event.GetKeyCode()
+            if ((self._filter is not None and
+                 key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 and
+                 not self._filter(chr(key)))):
+                message(_("Invalid character!"), beep_=True)
+                return True
+            else:
+                event.Skip()
+                return True
+
     NUMBERS = map(str, range(10))
     SIGNS = ['-', '+']
     DECIMAL_POINTS = ['.', ',']
@@ -834,7 +819,7 @@ class TextField(InputField):
             # own maxlen check in _on_change().
             control.SetMaxLength(maxlen)
         filter = self._filter()
-        control.SetValidator(_TextValidator(control, filter=filter))
+        control.SetValidator(self.TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
         wx_callback(wx.EVT_KILL_FOCUS, control, self._on_ctrl_kill_focus)
@@ -848,7 +833,7 @@ class TextField(InputField):
     def _set_ctrl_editable(self, ctrl, editable):
         ctrl.SetEditable(editable)
         if editable:
-            validator = _TextValidator(ctrl, filter=self._filter())
+            validator = self.TextValidator(ctrl, filter=self._filter())
         else:
             validator = wx.DefaultValidator
         ctrl.SetValidator(validator)
@@ -1145,6 +1130,18 @@ class NumericField(TextField, SpinnableField):
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
+    class ReadOnlyValidator(wx.PyValidator):
+        def __init__(self):
+            wx.PyValidator.__init__(self)
+            # Eat all interaction events without calling e.Skip()
+            # so no default event processing takes place.
+            wx_callback(wx.EVT_KEY_DOWN, self, lambda e: None)
+            wx_callback(wx.EVT_LEFT_DOWN, self, lambda e: None)
+            wx_callback(wx.EVT_LEFT_DCLICK, self, lambda e: None)
+
+        def Clone(self):
+            return self.ReadOnlyValidator()
+
     def _create_ctrl(self, parent):
         """Vrať instanci 'wx.CheckBox'."""
         if self._inline:
@@ -1166,7 +1163,7 @@ class CheckBoxField(Unlabeled, InputField):
     def _set_ctrl_editable(self, ctrl, editable):
         if self._readonly:
             # Avoid graying the field out in read only forms.
-            ctrl.SetValidator(_ReadOnlyValidator())
+            ctrl.SetValidator(self.ReadOnlyValidator())
         else:
             ctrl.Enable(editable)
 
