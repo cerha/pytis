@@ -1723,10 +1723,10 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._list.SetItemState(event.GetIndex(), 0, wx.LIST_STATE_SELECTED)
 
     def _on_activation(self, event):
-        event.Skip()
         i = event.GetIndex()
         if self._enabled and i != self._selected_item:
             self._set_selection(i)
+        event.Skip()
 
     def _reload_enumeration(self):
         if self._last_set_invalid_value is not None:
