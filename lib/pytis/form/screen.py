@@ -1137,7 +1137,7 @@ class Menu(_TitledMenuObject):
                         hotkey_items.append((item, wxitem, wx_title, width))
                     max_label_width = max(width + max_hotkey_width, max_label_width)
                 elif isinstance(item, Menu):
-                    menu.AppendMenu(wx.ID_ANY, wx_title, item.create(parent, keymap))
+                    menu.AppendSubMenu(item.create(parent, keymap), wx_title)
                     max_label_width = max(width + 20, max_label_width)
                 else:
                     raise ProgramError('Invalid menu item type', item)
