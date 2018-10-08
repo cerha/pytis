@@ -148,13 +148,16 @@ class GenericDialog(Dialog):
         self._shown = False
 
     def _create_dialog(self):
-        """Vytvoř celý dialog (postupně okno, jeho obsah a tlačítka).
+        """Create the dialog wx instance and build its contents.
 
-        Nejprve je vytvořeno okno dialogu jako takové ('wx.Dialog') a potom
-        je zavolána metoda `_create_dialog_elements'.
+        The goal is of this method is to assign the wx instance to
+        'self._dialog' and initialize its contents.
 
-        Tuto metodu by nemělo být třeba předefinovávat. Ve většině případů by
-        mělo stačit předefinovat metodu '_create_content()'.
+        The base class creates a 'wx.Dialog' and calls
+        '_create_dialog_elements()'.  Most subclasses will only need to
+        override the methods used by '_create_dialog_elements()' to build
+        specific dialog contents.  Overriding this method may be necessary when
+        another wx class is to be used instead of 'wx.Dialog'.
 
         """
         style = self._STYLE
@@ -208,6 +211,9 @@ class GenericDialog(Dialog):
 
     def _create_content(self, sizer):
         """Create the main dialog content and add it to the top level sizer.
+
+        The main content is the area above the dialog buttons, which is
+        constructed specifically for each derived class.
 
         This method must be defined by all derived classes.  The base class
         implementation does nothing.
