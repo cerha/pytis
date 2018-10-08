@@ -192,7 +192,7 @@ class SortingDialog(SFSDialog):
     def _create_content(self, sizer):
         super(SortingDialog, self)._create_content(sizer)
         button = self._create_button(_("Add"), self._on_add,
-                                     _("Add secundary sorting column."))
+                                     _("Add secondary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
