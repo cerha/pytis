@@ -402,13 +402,14 @@ class SFDialog(SFSDialog):
     def _create_content(self, sizer):
         super(SFDialog, self)._create_content(sizer)
         choice, button = self._create_choice, self._create_button
-        buttons = [
+        buttons = (
             button(_("Add AND"), lambda e: self._on_add(),
                    tooltip=_("Add a new condition in conjunction.")),
             button(_("Add OR"), lambda e: self._on_add(or_=True),
                    tooltip=_("Add a new condition in disjunction.")),
             button(_("Remove all"), lambda e: self._on_reset(),
-                   tooltip=_("Remove all current conditions."))]
+                   tooltip=_("Remove all current conditions."), enabled=len(self._controls) > 1),
+        )
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             bsizer.Add(b, 0, wx.RIGHT, 10)
