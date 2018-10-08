@@ -354,7 +354,7 @@ class SFDialog(SFSDialog):
                 field(value, length=self._TEXT_CTRL_SIZE,
                       tooltip=_("Enter the operand value.")),
                 button(_("Gather"), lambda e: self._on_suck(i),
-                       _("Use the value of the current cell."),
+                       _("Use the value from the current form row."),
                        enabled=self._row is not None),
                 button(_("Clear"), lambda e: self._on_clear(i),
                        _("Clear the condition.")),
