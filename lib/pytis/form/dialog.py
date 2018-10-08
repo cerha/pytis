@@ -164,6 +164,11 @@ class GenericDialog(Dialog):
         self._create_dialog_elements()
         self._handle_keys(dialog)
 
+    def _rebuild(self):
+        self._dialog.DestroyChildren()
+        self._create_dialog_elements()
+        self.focus()
+
     def _create_dialog_elements(self):
         """Vlož do dialogu jeho vnitřní prvky.
 
@@ -315,27 +320,6 @@ class GenericDialog(Dialog):
         result = self._customize_result(self._run_dialog())
         self._dialog.Destroy()
         return result
-
-    def rebuild(self):
-        """Znovu vytvoř obsah dialogu bez jeho uzavření.
-
-        Tato metoda je určena k použití v případech, kdy je během zobrazení
-        modálního dialogu nutno změnit jeho obsah, například přidat nebo
-        odebrat (nikoliv pouze zapnout nebo vypnout) některé prvky.
-
-        """
-        dialog = self._dialog
-        if wx is 'working':
-            dialog.DestroyChildren()
-        else:
-            for c in dialog.GetChildren():
-                c.Show(False)
-                c.Enable(False)
-                c.Close()
-                c.Destroy()
-        assert not dialog.GetChildren()
-        self._create_dialog_elements()
-        dialog.SetFocus()
 
     def focus(self):
         self._dialog.SetFocus()

@@ -215,7 +215,7 @@ class SortingDialog(SFSDialog):
     def _on_add(self, event):
         new = (self._columns[0].id(), pytis.data.DESCENDANT)
         self._sorting = self._selected_sorting() + (new,)
-        self.rebuild()
+        self._rebuild()
 
 
 class SFDialog(SFSDialog):
@@ -538,7 +538,7 @@ class SFDialog(SFSDialog):
             pass
         else:
             self._condition = condition
-            self.rebuild()
+            self._rebuild()
 
     def _on_add(self, or_=False):
         try:
@@ -550,11 +550,11 @@ class SFDialog(SFSDialog):
             c = self._find_column(self._col) or self._columns[0]
             v = pytis.data.Value(c.type(), None)
             self._condition = op(condition, pytis.data.EQ(c.id(), v))
-            self.rebuild()
+            self._rebuild()
 
     def _on_reset(self):
         self._condition = None
-        self.rebuild()
+        self._rebuild()
 
 
 class SearchDialog(SFDialog):
