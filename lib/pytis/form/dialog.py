@@ -161,10 +161,10 @@ class GenericDialog(Dialog):
         if self._report is not None:
             style |= wx.RESIZE_BORDER
         self._dialog = dialog = wx.Dialog(self._parent, title=self._title, style=style)
-        self._create_dialog_elements(dialog)
+        self._create_dialog_elements()
         self._handle_keys(dialog)
 
-    def _create_dialog_elements(self, dialog):
+    def _create_dialog_elements(self):
         """Vlož do dialogu jeho vnitřní prvky.
 
         Pomocí sizerů je do dialogu vložen hlavní obsah (výsledek metody
@@ -175,6 +175,7 @@ class GenericDialog(Dialog):
         '_create_buttons()'.
 
         """
+        dialog = self._dialog
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_content(sizer)
         # vytvoř tlačítka a poskládej je vedle sebe
@@ -333,7 +334,7 @@ class GenericDialog(Dialog):
                 c.Close()
                 c.Destroy()
         assert not dialog.GetChildren()
-        self._create_dialog_elements(dialog)
+        self._create_dialog_elements()
         dialog.SetFocus()
 
     def focus(self):
