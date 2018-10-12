@@ -21,7 +21,7 @@
 """Zpracování událostí.
 
 Hlavním cílem tohoto modulu je umožnit vyřízení wx události během zpracování
-jiné wx události.  Události ve wxWindows jsou blokující, během zpracování
+jiné wx události.  Události ve wxWidgets jsou blokující, během zpracování
 události musí další události čekat na její dokončení.  To má některé nepříjemné
 důsledky, jako například nemožnost průběžné aktualizace obsahu oken nebo
 možnost přerušení dlouhotrvajícího zpracování události uživatelem.  Modul se
@@ -411,7 +411,7 @@ def _stop_check(start_time, confirmed, command_number):
             confirmed = True
     else:
         # Allow user break by Ctrl-g.  This has actually no real effect, mainly
-        # because wxWindows apparently doesn't pass key events until the run
+        # because wxWidgets apparently doesn't pass key events until the run
         # form event finishes.  But maybe we find a workaround sometimes...
         yield_()
     return confirmed

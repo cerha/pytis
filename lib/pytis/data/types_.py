@@ -18,13 +18,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Práce s datovými typy, jejich hodnotami a vnější reprezentací.
+"""Data types, their values and internal/external representation.
 
 Základní ideou modulu je, že uvnitř programu vždy pracujeme s hodnotami
 určitého, námi definovaného, typu.  Z důvodu datové abstrakce při práci s daty
 nepoužíváme přímo standardní typy Pythonu a jeho knihoven, nýbrž naše vlastní
 obálky okolo nich, které nám zajistí nezávislost vůči konkrétní reprezentaci
-hodnot daného typu v různých částech programu (PostgreSQL, wxWindows, ...).
+hodnot daného typu v různých částech programu (PostgreSQL, wxWidgets, ...).
 Kromě toho nám tyto typové obálky mohou také poskytovat některé doplňující
 funkce související s typy dat, jako je například validace vstupní hodnoty
 daného typu reprezentované stringem a její převod na interní reprezentaci, se

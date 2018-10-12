@@ -20,7 +20,7 @@
 
 """Formulář s tiskovým preview a tiskem.
 
-Tento soubor definuje příslušný formulář a napojení tisku přes wxWindows.
+Tento soubor definuje příslušný formulář a napojení tisku přes wxWidgets.
 Neřeší tvorbu tiskových sestav jako takových, to je záležitost modulu
 'pytis.output'.
 
@@ -55,7 +55,7 @@ class PostscriptException(Exception):
 class _Ghostscript(pytis.util.Tmpdir):
     # Používáme vyrendrování PostScriptu do souborů po stránkách.  To sice
     # není optimální, je to však nejjednodušší, zejména s ohledem na potíže
-    # s wxWindows.
+    # s wxWidgets.
 
     def __init__(self, stream, zoom):
         super(_Ghostscript, self).__init__(prefix='pytisps')

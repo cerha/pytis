@@ -22,13 +22,13 @@ from __future__ import unicode_literals
 
 Modul jednak interpretuje specifikaci formulářů (viz modul 'spec') pro
 seznamové zobrazení a jednak zajišťuje práci s ní prostřednictvím objektů
-wxWindows.
+wxWidgets.
 
 """
 
 # Terminologická poznámka: Proměnné s názvem `row' obvykle značí číslo řádku
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
-# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWindows.
+# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
 
 import collections
 import copy

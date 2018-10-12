@@ -865,7 +865,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def on_key_down(self, event, dont_skip=False):
         # Toto je záchranný odchytávač.  Věřte tomu nebo ne, ale pokud tady ta
-        # metoda není, wxWindows se při více příležitostech po stisku klávesy
+        # metoda není, wxWidgets se při více příležitostech po stisku klávesy
         # zhroutí.
         return KeyHandler.on_key_down(self, event)
 

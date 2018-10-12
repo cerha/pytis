@@ -19,7 +19,7 @@
 """Práce s uživatelským rozhraním.
 
 Modul obsahuje vše co souvisí s uživatelským rozhraním a vše co má něco
-společného s wxWindows.  Všechny obslužné záležitosti uživatelského rozhraní
+společného s wxWidgets.  Všechny obslužné záležitosti uživatelského rozhraní
 jsou implementovány v tomto modulu, mimo tento modul se definují pouze
 specifikace jednotlivých prvků rozhraní.
 
@@ -52,4 +52,3 @@ list = _list
 for file in (event, application, command, dialog, form, dualform,
              inputfield, list_, output, screen, search, _grid):
     file.__dict__.update(globals())
-

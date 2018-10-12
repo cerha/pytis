@@ -20,7 +20,7 @@
 
 # Terminologická poznámka: Proměnné s názvem `row' obvykle značí číslo řádku
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
-# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWindows.
+# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
 
 import collections
 import copy
@@ -370,8 +370,8 @@ class DataTable(object):
                                                      prefill=inserted_row_prefill, new=True)
 
     def close(self):
-        # Tato metoda je nutná kvůli jistému podivnému chování wxWindows,
-        # kdy wxWindows s tabulkou pracuje i po jejím zrušení.
+        # Tato metoda je nutná kvůli jistému podivnému chování wxWidgets,
+        # kdy wxWidgets s tabulkou pracuje i po jejím zrušení.
         self._data = None
         # TODO: Následující (a možná i ta předcházející) operace jsou
         # jsou v principu zbytečné, ale protože z neznámých důvodů
@@ -596,7 +596,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
             # K této situaci dochází, když se kliknutím myši opouští
             # rozeditované políčko řádku, jemuž ještě nebyla změněna žádná
             # hodnota.  V takovém případě naše metody editaci nakrásno
-            # ukončí a wxWindows po provedené změně řádku vesele zavolá
+            # ukončí a wxWidgets po provedené změně řádku vesele zavolá
             # SetValue ...
             return
         # Nastav hodnotu editovanému sloupci

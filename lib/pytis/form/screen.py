@@ -592,14 +592,14 @@ class WxColor(wx.Colour):
                       cmp(self.Green(), other.Green()) or
                       cmp(self.Blue(), other.Blue()))
         except AttributeError:
-            # Je-li `other' barvou, může být ve wxWindows ledacos, proto nelze
+            # Je-li `other' barvou, může být ve wxWidgets ledacos, proto nelze
             # zařadit nějaký rozumný test na třídu instance.
             result = compare_objects(self, other)
         return result
 
 
 def color2wx(color):
-    """Vrať barvu ve formě akceptované wxWindows.
+    """Vrať barvu ve formě akceptované wxWidgets.
 
     Pokud odpovídající barva není známa, vrať 'None'.
 
@@ -902,7 +902,7 @@ class KeyHandler:
             self._current_keymap = keydef
             return True
         else:
-            # Pozor, wxWindows je debilní a ne vždy předává události rodičům!
+            # Pozor, wxWidgets je debilní a ne vždy předává události rodičům!
             self._current_keymap = None
             self._prefix_key_sequence = []
             if keydef is not None:
