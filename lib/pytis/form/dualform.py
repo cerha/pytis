@@ -858,7 +858,7 @@ class MultiForm(Form, Refreshable):
                     nb.RemovePage(0)
                 except:
                     pass
-                form.close(force=True)
+                form._cleanup()
             else:
                 try:
                     nb.DeletePage(0)
