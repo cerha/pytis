@@ -422,10 +422,9 @@ class UICommand(object):
                                    shortHelp=self._title, longHelp=self._descr)
             parent = toolbar.GetParent()
             from pytis.form import wx_callback
-            wx_callback(wx.EVT_TOOL, parent, tool.GetId(),
-                        lambda e: cmd.invoke(**args))
-            wx_callback(wx.EVT_UPDATE_UI, parent, tool.GetId(),
-                        lambda e: e.Enable(cmd.enabled(**args)))
+            wx_callback(wx.EVT_TOOL, parent, lambda e: cmd.invoke(**args), source=tool)
+            wx_callback(wx.EVT_UPDATE_UI, parent, lambda e: e.Enable(cmd.enabled(**args)),
+                        source=tool)
 
 
 _command_icons = None

@@ -1208,8 +1208,8 @@ class MItem(_TitledMenuObject):
 
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(), self._on_invoke_command)
-        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_MENU, parent, self._on_invoke_command, source=item)
+        wx_callback(wx.EVT_UPDATE_UI, parent, self._on_ui_event, source=item)
         self._create_icon(item)
         return item
 
@@ -1803,10 +1803,10 @@ class ProfileSelector(wx.ComboCtrl):
         self.SetButtonPosition(width=20, height=size[1] - 1)
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
-        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
         wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
+        wx_callback(wx.EVT_TEXT_ENTER, ctrl, self._on_enter)
         wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
 
@@ -1914,8 +1914,8 @@ class TextHeadingSelector(wx.Choice):
     def __init__(self, parent, uicmd, size=None):
         self._uicmd = uicmd
         wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size or wx.DefaultSize)
-        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
-        wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
+        wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
+        wx_callback(wx.EVT_CHOICE, self, self._on_selection)
 
     def _on_ui_event(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1950,8 +1950,8 @@ class FormStateToolbarControl(wx.BitmapButton):
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
-        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
-        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        wx_callback(wx.EVT_BUTTON, self, self._on_click)
+        wx_callback(wx.EVT_UPDATE_UI, self, self._on_update_ui)
 
     def _on_click(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -2000,7 +2000,7 @@ class KeyboardSwitcher(wx.BitmapButton):
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
-        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+        wx_callback(wx.EVT_BUTTON, self, self._on_click)
 
     def _on_click(self, event):
         popup_menu(self._toolbar, self._menu)
@@ -2060,9 +2060,9 @@ class LocationBar(wx.TextCtrl):
         wx.TextCtrl.__init__(self, parent, -1, size=size or wx.DefaultSize,
                              style=wx.TE_PROCESS_ENTER, name='location-bar')
         self.SetEditable(editable)
-        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        wx_callback(wx.EVT_UPDATE_UI, self, self._on_update_ui)
         if editable:
-            wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
+            wx_callback(wx.EVT_TEXT_ENTER, self, self._on_enter)
         else:
             self.SetOwnBackgroundColour(config.field_disabled_color)
             self.Refresh()
@@ -2232,12 +2232,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             'call': self._call_handler,
         }
         self._exporter_instance = {}
-        wxid = webview.GetId()
-        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
-        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
-        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_loaded)
-        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_error)
-        wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, self._on_navigating)
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, self._on_navigated)
+        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, self._on_loaded)
+        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, self._on_error)
+        wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, self._on_title_changed)
         KeyHandler.__init__(self, webview)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
@@ -2947,7 +2946,7 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
         ctrl.SetToolTipString(tooltip)
     if update:
         # Bug: 'parent' is undefined!
-        # wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
+        # wx_callback(wx.EVT_UPDATE_UI, ctrl, update)
         pass
     if not enabled:
         ctrl.Enable(False)
@@ -3039,10 +3038,9 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
         # if update:
-        #     wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
-        #                 lambda e: e.Enable(cmd.enabled(**args)))
+        #     wx_callback(wx.EVT_UPDATE_UI, button, lambda e: e.Enable(cmd.enabled(**args)))
     if callback:
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
+        wx_callback(wx.EVT_BUTTON, button, callback)
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return button
 
@@ -3100,7 +3098,7 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
     elif selected:
         ctrl.SetSelection(labels.index(selected))
     if on_change:
-        wx_callback(evt, ctrl, ctrl.GetId(), on_change)
+        wx_callback(evt, ctrl, on_change)
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
@@ -3128,7 +3126,7 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
     if on_key_down:
         wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
-        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
+        wx_callback(wx.EVT_TEXT, ctrl, on_text)
     wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
     if value is not None:
         ctrl.SetValue(value)

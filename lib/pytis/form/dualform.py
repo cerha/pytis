@@ -129,10 +129,8 @@ class DualForm(Form, Refreshable):
     def _create_form(self):
         # Vytvoř rozdělené okno
         self._splitter = splitter = wx.SplitterWindow(self.Parent, -1, style=wx.SP_LIVE_UPDATE)
-        wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter,
-                    splitter.GetId(), lambda e: True)
-        wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
-                    splitter.GetId(), self._on_sash_changed)
+        wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter, lambda e: True)
+        wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter, self._on_sash_changed)
         # Vytvoř formuláře
         self._main_form = self._create_main_form(splitter, **self._unprocessed_kwargs)
         self._side_form = self._create_side_form(splitter)
@@ -719,15 +717,14 @@ class MultiForm(Form, Refreshable):
         self._tab_order = range(len(forms))
         tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
         wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, tabctrl.GetId(),
-                    self._on_tab_move_started)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, nb.GetId(), self._on_tab_move_done)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, self._on_page_change)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, self._on_tab_move_started)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, self._on_tab_move_done)
         try:
             tab_right_down = wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN
         except:
             tab_right_down = wx.aui.EVT__AUINOTEBOOK_TAB_RIGHT_DOWN
-        wx_callback(tab_right_down, nb, nb.GetId(), self._on_tab_mouse_right)
+        wx_callback(tab_right_down, nb, self._on_tab_mouse_right)
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)

@@ -191,7 +191,7 @@ class GenericDialog(Dialog):
         for b in self._create_buttons():
             button_sizer.Add(b, 0, wx.ALL, 8)
             # registruj handlery událostí
-            pytis.form.wx_callback(wx.EVT_BUTTON, dialog, b.GetId(), self._on_button)
+            pytis.form.wx_callback(wx.EVT_BUTTON, b, self._on_button)
             self._handle_keys(b)
         # poskládej obsah a tlačítka do top-level sizeru (nad sebe)
         if self._report is not None:
@@ -964,7 +964,7 @@ class Calendar(GenericDialog):
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
-        pytis.form.wx_callback(wx.adv.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
+        pytis.form.wx_callback(wx.adv.EVT_CALENDAR, cal, self._on_calendar)
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal
@@ -1127,7 +1127,7 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
     def __init__(self, parent, columns, items):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
         wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
-        pytis.form.wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self, self.GetId(),
+        pytis.form.wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self,
                                lambda e: self.ToggleItem(e.GetIndex()))
         for i, label in enumerate(columns):
             self.InsertColumn(i, label)

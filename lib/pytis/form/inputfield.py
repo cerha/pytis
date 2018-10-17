@@ -80,7 +80,7 @@ class _Completer(wx.PopupWindow):
         wx_callback(wx.EVT_LEFT_DOWN, ctrl, self._on_ctrl_mouse_down)
         wx_callback(wx.EVT_LEFT_UP, ctrl, self._on_ctrl_mouse_up)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_ctrl_kill_focus)
-        wx_callback(wx.EVT_LISTBOX, listctrl, listctrl.GetId(), self._on_list_item_selected)
+        wx_callback(wx.EVT_LISTBOX, listctrl, self._on_list_item_selected)
         wx_callback(wx.EVT_LEFT_DOWN, listctrl, self._on_list_click)
         wx_callback(wx.EVT_LEFT_DCLICK, listctrl, self._on_list_dclick)
 
@@ -820,8 +820,8 @@ class TextField(InputField):
             control.SetMaxLength(maxlen)
         filter = self._filter()
         control.SetValidator(self.TextValidator(control, filter=filter))
-        wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
-        wx_callback(wx.EVT_TEXT_ENTER, control, wxid, self._on_enter_key)
+        wx_callback(wx.EVT_TEXT, control, self._on_change)
+        wx_callback(wx.EVT_TEXT_ENTER, control, self._on_enter_key)
         wx_callback(wx.EVT_KILL_FOCUS, control, self._on_ctrl_kill_focus)
         if not self._denied and not self._readonly and self._row.has_completer(self.id()):
             self._completer = _Completer(control)
@@ -1149,7 +1149,7 @@ class CheckBoxField(Unlabeled, InputField):
         else:
             label = self.spec().label()
         control = wx.CheckBox(parent, -1, label)
-        wx_callback(wx.EVT_CHECKBOX, control, control.GetId(), self._on_change)
+        wx_callback(wx.EVT_CHECKBOX, control, self._on_change)
         return control
 
     def _get_value(self):
@@ -1237,7 +1237,7 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         self._radio_values = [self._type.export(value) for value, choice in choices]
         control = wx.RadioBox(parent, -1, label, style=style, majorDimension=dimension,
                               choices=[choice for value, choice in choices])
-        wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
+        wx_callback(wx.EVT_RADIOBOX, control, self._on_change)
         return control
 
     def _get_value(self):
@@ -1318,7 +1318,7 @@ class ChoiceField(EnumerationField):
     def _create_ctrl(self, parent):
         control = wx.Choice(parent)
         self._append_items(control)
-        wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
+        wx_callback(wx.EVT_CHOICE, control, self._on_change)
         self._update_size(control, initial=True)
         return control
 
@@ -1339,7 +1339,7 @@ class ListBoxField(EnumerationField):
         control = wx.ListBox(parent, style=wx.LB_SINGLE | wx.LB_NEEDED_SB)
         self._append_items(control)
         self._update_size(control)
-        wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
+        wx_callback(wx.EVT_LISTBOX, control, self._on_change)
         return control
 
     def _update_size(self, ctrl):
@@ -1387,8 +1387,7 @@ class Invocable(object, CommandHandler):
         if button:
             self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
             button.SetToolTipString(self._INVOKE_TITLE)
-            wx_callback(wx.EVT_BUTTON, button, button.GetId(),
-                        lambda e: self._on_invoke_selection(ctrl))
+            wx_callback(wx.EVT_BUTTON, button, lambda e: self._on_invoke_selection(ctrl))
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             widget = self._hbox(widget, button)
         self._invocation_button = button
@@ -1608,7 +1607,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
             button.SetToolTipString(_("Insert a new codebook value."))
-            wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
+            wx_callback(wx.EVT_BUTTON, button, lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             self._controls.append((button, lambda b, e: b.Enable(e), lambda b, e: None))
         return self._hbox(*[x[0] for x in self._controls])
@@ -1697,9 +1696,8 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._DEFAULT_WIDTH = total_width + 3
         listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
         self._list = listctrl
-        wxid = listctrl.GetId()
-        wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, wxid, self._on_select)
-        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, wxid, self._on_activation)
+        wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, self._on_select)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, self._on_activation)
         wx_callback(wx.EVT_MOUSEWHEEL, listctrl, lambda e: e.Skip())
         self._selected_item = None
         self._enumeration_changed = True
@@ -2398,7 +2396,7 @@ class StructuredTextField(TextField):
         # positioning etc.  Once this is resolved, we can re-enable usiong the
         # derived TextCtrl class defined above.
         # ctrl = TextCtrl(parent, -1, style=self._text_ctrl_style())
-        # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
+        # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, self._on_change)
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
@@ -2407,8 +2405,7 @@ class StructuredTextField(TextField):
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
-        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
-        self._completer = None
+        wx_callback(wx.EVT_TEXT, ctrl, self._on_change)
         self._update_completions = None
         self._storage = self._row.attachment_storage(self._id)
         return ctrl

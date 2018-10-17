@@ -206,21 +206,18 @@ def _is_user_event(event):
 _system_callback_lock = None
 _system_callback_thread_ident = None
 _system_callback_access_lock = thread.allocate_lock()
-def wx_callback(evt_function, *args):
+def wx_callback(event_kind, handler, callback, **kwargs):
     """Obal wx callback hlídacím kódem.
 
-    Funkce zavolá 'evt_function' s argumenty 'args'.  Poslední prvek 'args'
-    musí být callback ošetřující příslušnou událost.  Tento callback je obalen
+    Funkce zavolá handler.Bind(event_kind, callback, **kwargs).  Callback je obalen
     kódem, který zajišťuje ošetření události i v případě, kdy právě probíhá
     zpracování jiné události.
 
     Příklad typického volání funkce:
 
-      wx_callback(EVT_BUTTON, (self, button.GetId(), self.on_button))
+      wx_callback(EVT_BUTTON, button, self.on_button)
 
     """
-    evt_function_args, callback = args[:-1], args[-1]
-    assert isinstance(evt_function, collections.Callable)
     assert isinstance(callback, collections.Callable)
     def process_event(event, callback=callback):
         def system_callback():
@@ -331,7 +328,7 @@ def wx_callback(evt_function, *args):
             if is_user:
                 _last_user_event_time = time.time()
         return result
-    evt_function(*(evt_function_args + (process_event,)))
+    handler.Bind(event_kind, process_event, **kwargs)
 
 
 def unlock_callbacks():
