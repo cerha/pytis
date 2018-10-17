@@ -61,7 +61,7 @@ from form import BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm, 
     RecordForm, Refreshable, ShowForm, TitledForm
 from output import print_form
 from screen import CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, \
-    busy_cursor, copy_to_clipboard, dlg2px, file_menu_items, focused_window, get_icon, \
+    busy_cursor, copy_to_clipboard, dlg2px, file_menu_items, get_icon, \
     is_busy_cursor, microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl
 from search import sfs_columns
 from application import Application, \
@@ -1099,7 +1099,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._post_selection_hook(the_row)
 
     def _post_selection_hook(self, the_row):
-        if focused_window() is self:
+        if Form.focused_form() is self:
             # TODO: viz poznámka v _select_cell.
             self._update_list_position()
             # Show display value in status line (this is also shown in tooltips,

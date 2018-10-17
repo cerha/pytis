@@ -42,7 +42,7 @@ from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, 
     find, format_traceback, log, super_, xlist, xtuple, argument_names
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
-    MSeparator, Window, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
+    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
     db_operation, decrypted_names, delete_record, form_settings_manager, \
@@ -63,7 +63,7 @@ class FormSettings(FormProfile):
     pass
 
 
-class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
+class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
 
     Formulář si podle jména specifikace předaného konstruktoru vyžádá od
@@ -76,9 +76,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     interpretace prezentační specifikace a pracují s daty s pomocí datového
     objektu a jeho API (které je nezávislé na konkrétním zdroji dat).
 
-    Form je potomkem 'Window', díky čemuž je možné jej ukládat na zásobník oken
-    aplikace a provádět další operace, jako zaostřování, skrývání, zobrazování
-    apod.
+    Formuláře jsou schopné popsat svůj stav a později tento stav dle onoho
+    popisu obnovit.  K získání popisu stavu, resp. obnovení stavu, slouží
+    metoda 'save()', resp. 'restore()'.
 
     Používané specifikační funkce:
 
@@ -91,6 +91,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     _LOG_STATISTICS = True
     DESCR = None
+
+    _focused_form = None
 
     class InitError(Exception):
         """Exception signaling errors on form initializations."""
@@ -106,6 +108,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             return cls.DESCR
         else:
             return cls.__name__
+
+    @classmethod
+    def focused_form(cls):
+        """Return the currently focused form or 'None' if no form is focused."""
+        return cls._focused_form
 
     def __init__(self, parent, resolver, name, full_init=True, **kwargs):
         """Inicializuj instanci.
@@ -169,7 +176,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         být dodržováno i v odvozených třídách.
 
         """
-        Window.__init__(self, parent)
+        wx.Panel.__init__(self, parent, -1)
+        self._parent = parent
+        self._hide_form_requested = False
         self._name = name
         if full_init:
             self._full_init_called = True
@@ -337,7 +346,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         pass
 
     def _cleanup(self):
-        super(Form, self)._cleanup()
+        """Perform cleanup before the form is definitively closed."""
         self._cleanup_data()
 
     def _cleanup_data(self):
@@ -430,12 +439,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         return False
 
-    def save(self):
-        self._release_data()
-
-    def restore(self):
-        pass
-
     def data(self):
         """Return a new instance of the data object used by the form."""
         return self._create_data_object()
@@ -461,6 +464,89 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         return self._full_init_called
+
+    def save(self):
+        """Save form state to be able to restore it later when 'restore()' is called."""
+        self._release_data()
+
+    def restore(self):
+        """Restore form state as saved by 'save()'."""
+        pass
+
+    def _exit_check(self):
+        """Check whether it is ok to close the form.
+
+        Performed on user's attempt to close the form.  Returns True if the
+        form may be closed or False otherwise.
+
+        """
+        return True
+
+    def close(self, force=False):
+        """Close the form and destroy all its UI elements.
+
+        If 'force' is False, '_exit_check()' is performed and closing is only
+        really done if it returns True.  If 'force' is True, the form is closed
+        unconditionally.
+
+        """
+        return self._close(force=force)
+
+    def _close(self, force=False):
+        if force or self._exit_check():
+            self.hide()
+            try:
+                self._cleanup()
+            finally:
+                self.Close()
+                self.Destroy()
+            return True
+        else:
+            return False
+
+    def parent(self):
+        """Vrať rodičovské okno zadané v konstruktoru."""
+        return self._parent
+
+    def resize(self, size=None):
+        """Nastav velikost okna na velikost danou jako tuple (x, y).
+
+        Pokud není velikost udána, je okno automaticky nastaveno na velikost
+        svého rodičovského okna.
+
+        """
+        if size is None:
+            size = self._parent.GetClientSize()
+        self.SetSize(size)
+
+    def show(self):
+        """Make the form active to user interaction and display it visually."""
+        self.Enable(True)
+        self.Show(True)
+        self.focus()
+
+    def hide(self):
+        """Make the form inactive to user interaction and hide it visually."""
+        orig_hide_form_requested = self._hide_form_requested
+        self._hide_form_requested = True
+        try:
+            self.defocus()
+            self.Enable(False)
+            self.Show(False)  # nutné i před uzavřením
+        finally:
+            self._hide_form_requested = orig_hide_form_requested
+
+    def focus(self):
+        """Focus this form."""
+        if Form._focused_form:
+            Form._focused_form.defocus()
+        Form._focused_form = self
+        self.SetFocus()
+
+    def defocus(self):
+        """Defocus this form."""
+        if Form._focused_form is self:
+            Form._focused_form = None
 
 
 class InnerForm(Form):

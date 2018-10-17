@@ -38,7 +38,7 @@ from pytis.util import DEBUG, EVENT, ProgramError, log
 from application import db_operation
 from form import Form
 from inputfield import InputField
-from screen import color2wx, focused_window, get_icon
+from screen import color2wx, get_icon
 
 import config
 
@@ -795,7 +795,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
                 try:
                     border_width = config.row_highlight_width
                     if border_width != 0:
-                        if grid.GetParent() is not focused_window():
+                        if grid.GetParent() is not Form.focused_form():
                             color = config.row_highlight_unfocused_color
                         elif self._table.editing():
                             color = config.row_highlight_edited_color
