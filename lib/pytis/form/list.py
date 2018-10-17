@@ -1712,32 +1712,30 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _resize_columns(self, size=None):
         g = self._grid
         if size is None:
-            size = g.GetSize()
+            size = g.Parent.GetClientSize()
         width = size.width
-        height = size.height
-        if height < self._total_height():
-            width = width - wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) - 1
         total_width = self._total_width()
         if width > total_width > 0:
             coef = float(width) / (total_width - g.GetRowLabelSize())
         else:
             coef = 1
         total = g.GetRowLabelSize()
-        last = None
-        # Přenastav šířky sloupců
-        for i, c in enumerate(self._columns):
-            w = self._column_width(c)
-            if not c.fixed() and config.stretch_tables:
-                w = int(w * coef)
-                last = i
-            g.SetColSize(i, w)
-            total += w
-        if coef != 1 and total != width and last is not None:
-            g.SetColSize(last, g.GetColSize(last) + (width - total))
+        last_flexible_column_index = None
+        # Recompute column widths to fit the current form size.
+        for i, column in enumerate(self._columns):
+            column_width = self._column_width(column)
+            if not column.fixed() and config.stretch_tables:
+                column_width = int(column_width * coef)
+                last_flexible_column_index = i
+            g.SetColSize(i, column_width)
+            total += column_width
+        i = last_flexible_column_index
+        if coef != 1 and total != width and i is not None:
+            g.SetColSize(i, g.GetColSize(i) + (width - total))
 
     def _on_size(self, event):
         size = event.GetSize()
-        if size.width != self._grid.GetSize().width:
+        if size.width != self._grid.Size.width:
             self._resize_columns(size)
         event.Skip()
 
