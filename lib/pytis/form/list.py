@@ -410,7 +410,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if c.editable() is not False:
                 editing = self._table.editing()
                 if editing:
-                    e = _grid.InputFieldCellEditor(self._parent, editing.the_row, c.id(),
+                    e = _grid.InputFieldCellEditor(self.Parent, editing.the_row, c.id(),
                                                    self, registration)
                     self._editors.append(e)
                     # self._grid.SetCellEditor(row, col, e)
@@ -3023,9 +3023,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         parent = self._popup_frame(parent)
         super(CodebookForm, self).__init__(parent, *args, **kwargs)
 
-    def _full_init(self, parent, *args, **kwargs):
-        parent = self._popup_frame(parent)
-        super(CodebookForm, self)._full_init(parent, *args, **kwargs)
+    def _full_init(self, *args, **kwargs):
+        super(CodebookForm, self)._full_init(*args, **kwargs)
         self._set_real_size()
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid, self._on_dclick)
 
@@ -3118,7 +3117,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     def _on_activation(self, alternate=False):
         """Nastav návratovou hodnotu a ukonči modální dialog."""
         self._result = self.current_row()
-        self._parent.EndModal(1)
+        self.Parent.EndModal(1)
         return True
 
     def _on_dclick(self, event):
@@ -3133,7 +3132,7 @@ class SelectRowsForm(CodebookForm):
         if len(selected_rows) == 0:
             selected_rows = (self.current_row(),)
         self._result = selected_rows
-        self._parent.EndModal(1)
+        self.Parent.EndModal(1)
         return True
 
 class BrowseForm(FoldableForm):

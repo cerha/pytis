@@ -177,26 +177,21 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         wx.Panel.__init__(self, parent, -1)
-        self._parent = parent
         self._hide_form_requested = False
         self._name = name
         if full_init:
             self._full_init_called = True
-            self._full_init(parent, resolver, name, **kwargs)
+            self._full_init(resolver, name, **kwargs)
         else:
             self._full_init_called = False
-            self._full_init_kwargs = dict(kwargs,
-                                          parent=parent,
-                                          resolver=resolver,
-                                          name=name)
+            self._full_init_kwargs = dict(kwargs, resolver=resolver, name=name)
 
-    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
+    def _full_init(self, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
         import pytis.extensions
         start_time = pytis.data.DateTime.now(without_timezone=True)
-        self._parent = parent
         self._resolver = resolver
-        self._guardian = guardian or parent
+        self._guardian = guardian or self.Parent
         self._governing_transaction = transaction
         self._spec_kwargs = copy.copy(spec_kwargs)
         self._data_kwargs = copy.copy(data_kwargs)
@@ -504,10 +499,6 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         else:
             return False
 
-    def parent(self):
-        """Vrať rodičovské okno zadané v konstruktoru."""
-        return self._parent
-
     def resize(self, size=None):
         """Nastav velikost okna na velikost danou jako tuple (x, y).
 
@@ -516,7 +507,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         if size is None:
-            size = self._parent.GetClientSize()
+            size = self.Parent.GetClientSize()
         self.SetSize(size)
 
     def show(self):
@@ -827,7 +818,7 @@ class PopupForm:
                     if not self._lock_record(lock_key):
                         return None
                 pytis.form.unlock_callbacks()
-                frame = self._parent
+                frame = self.Parent
                 frame.SetTitle(self.title())
                 frame.SetClientSize(self.GetSize())
             finally:
@@ -2382,8 +2373,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
-        if isinstance(self._parent, wx.Dialog):
-            pytis.form.wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
+        if isinstance(self.Parent, wx.Dialog):
+            pytis.form.wx_callback(wx.EVT_INIT_DIALOG, self.Parent, self._set_focus_field)
         else:
             self._set_focus_field()
 
@@ -2444,7 +2435,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                         "Do you want to continue?"),
                               timeout=20)
             if not edit:
-                self._disable_buttons(self._parent)
+                self._disable_buttons(self.Parent)
                 callback = self._transaction_timeout_callback
                 if callback is not None:
                     callback()
@@ -2689,7 +2680,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _on_closed_connection(self):
         super(EditForm, self)._on_closed_connection()
-        self._disable_buttons(self._parent)
+        self._disable_buttons(self.Parent)
 
     def _on_idle(self, event):
         super(EditForm, self)._on_idle(event)
@@ -3040,7 +3031,7 @@ class PopupEditForm(PopupForm, EditForm):
             if i < len(data):
                 self.set_status('progress', "%d/%d" % (i + 1, len(data),))
                 self._inserted_data_pointer += 1
-                ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
+                ok_button = wx.FindWindowById(wx.ID_OK, self.Parent)
                 ok_button.Enable(i == len(data) - 1)
                 for id, value in data[i].items():
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
@@ -3163,7 +3154,7 @@ class _VirtualEditForm(EditForm):
 
     """
 
-    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
+    def _full_init(self, resolver, name, guardian=None, transaction=None,
                    prefill=None, **kwargs):
         self._specification = Specification.create_from_kwargs(
             resolver,
@@ -3174,7 +3165,7 @@ class _VirtualEditForm(EditForm):
             additional_kwargs = dict(multi_insert=False)
         else:
             additional_kwargs = dict()
-        super(_VirtualEditForm, self)._full_init(parent, resolver, name, guardian=guardian,
+        super(_VirtualEditForm, self)._full_init(resolver, name, guardian=guardian,
                                                  mode=self.MODE_INSERT, prefill=prefill,
                                                  transaction=transaction, **additional_kwargs)
 
@@ -3234,7 +3225,7 @@ class InputForm(_VirtualEditForm, PopupEditForm):
 class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
-    def _full_init(self, parent, resolver, name, query_fields, callback, **kwargs):
+    def _full_init(self, resolver, name, query_fields, callback, **kwargs):
         self._query_fields_apply_callback = callback
         self._autoapply = autoapply = query_fields.autoapply()
         self._autoinit = autoinit = query_fields.autoinit()
@@ -3258,8 +3249,7 @@ class QueryFieldsForm(_VirtualEditForm):
                 handler=self._apply_query_fields,
                 tooltip=_("Reload form data with current query field values."),
             ),))))
-        _VirtualEditForm._full_init(self, parent, resolver, name, layout=layout, fields=fields,
-                                    **kwargs)
+        _VirtualEditForm._full_init(self, resolver, name, layout=layout, fields=fields, **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',
                                     self._on_query_fields_changed)
         if not autoapply and autoinit:
