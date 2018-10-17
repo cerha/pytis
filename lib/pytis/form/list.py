@@ -2616,11 +2616,13 @@ class FoldableForm(ListForm):
 
             """
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
+
         def __cmp__(self, other):
             if sameclass(self, other):
                 return cmp(self._folding, other._folding)
             else:
                 return compare_objects(self, other)
+
         def _find_node(self, node):
             state = self._folding
             labels = (node or '').split('.')
@@ -2628,6 +2630,7 @@ class FoldableForm(ListForm):
                 l = labels.pop(0)
                 state = state.subnodes().get(l)
             return state
+
         def _folding_level(self, node):
             state = self._folding
             labels = (node or '').split('.')
@@ -2643,6 +2646,7 @@ class FoldableForm(ListForm):
             else:
                 folding_level = state.level()
             return folding_level
+
         def _expand(self, node, level):
             def fold(state, path, level):
                 state_level = state.level()
@@ -2686,6 +2690,7 @@ class FoldableForm(ListForm):
             new_state = fold(state, path, level)
             self._folding = new_state
             return state is not new_state
+
         def expand(self, node, level=None):
             """Set folding level of 'node' to 'level'.
 
@@ -2701,14 +2706,17 @@ class FoldableForm(ListForm):
             # level==1 => expand just the next level
             # level==N, N>0 => expand up to level N
             return self._expand(node, level)
+
         def collapse(self, node):
             return self._expand(node, 0)
+
         def expand_or_collapse(self, node, level):
             if self._folding_level(node) == 0:
                 result = self.expand(node, level=level)
             else:
                 result = self.collapse(node)
             return result
+
         def condition(self, column_id):
             queries = []
 
@@ -2734,14 +2742,17 @@ class FoldableForm(ListForm):
             add('', self._folding)
             condition = pytis.data.OR(*[pytis.data.LTreeMatch(column_id, q) for q in queries])
             return condition
+
         def level(self, node):
             return self._folding_level(node)
+
         def folding_state(self):
             def transform(folding):
                 level = folding.level()
                 subnodes = [(k, transform(v),) for k, v in folding.subnodes().items()]
                 return (level, subnodes,)
             return transform(self._folding)
+
         def set_folding_state(self, state):
             def transform(state):
                 level, subnodes_state = state
@@ -2999,6 +3010,7 @@ class FoldableForm(ListForm):
             level = ''
         return level
 
+
 class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     """Formulář pro zobrazení výběrového seznamu (číselníku).
 
@@ -3133,16 +3145,20 @@ class SelectRowsForm(CodebookForm):
         self.Parent.EndModal(1)
         return True
 
+
 class BrowseForm(FoldableForm):
     """Formulář pro prohlížení dat s možností editace."""
 
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
+
         class _Spec:
             # This class has to emulate a specification module as well as a
             # (new style) specification class.
+
             def __init__(self, resolver):
                 self._resolver = resolver
+
             def body(self, resolver=None, variant=None, **kwargs):
                 if config.fallback_table_print:
                     table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
@@ -3151,8 +3167,10 @@ class BrowseForm(FoldableForm):
                     return result
                 else:
                     run_dialog(Error, _("Print specification not found!"))
+
             def doc_header(self, resolver=None, variant=None, **kwargs):
                 return None
+
             def doc_footer(self, resolver=None, variant=None, **kwargs):
                 return None
 
