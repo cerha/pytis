@@ -549,9 +549,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             row = form.row()
             values = ['%s: %s' % (field.spec().label(), row.format(field.id()))
                       for field in form.fields()]
-            panel.SetToolTipString(', '.join(values))
+            panel.SetToolTip(', '.join(values))
         elif panel.GetToolTip():
-            panel.SetToolTipString(' ')
+            panel.SetToolTip(' ')
             panel.GetToolTip().Enable(False)  # Doesn't seem to work, thus the line above...
 
     def _context_menu(self):

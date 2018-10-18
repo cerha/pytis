@@ -508,13 +508,13 @@ class DataTable(object):
         return self._column_count
 
 
-class ListTable(wx.grid.PyGridTableBase, DataTable):
+class ListTable(wx.grid.GridTableBase, DataTable):
 
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(form, Form)
         assert isinstance(grouping, types.TupleType)
-        wx.grid.PyGridTableBase.__init__(self)
+        wx.grid.GridTableBase.__init__(self)
         DataTable.__init__(self, form, data, presented_row, columns, row_count,
                            sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
         self._init_group_bg_downgrade()
@@ -550,7 +550,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return (color2wx(fg), color2wx(bg), font)
 
     def _init_group_bg_downgrade(self):
-        c = wx.NamedColour(config.grouping_background_downgrade)
+        c = wx.Colour(config.grouping_background_downgrade)
         self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
 
     def update(self, *args, **kwargs):
@@ -759,7 +759,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         self.SetControl(None)
 
 
-class CustomCellRenderer(wx.grid.PyGridCellRenderer):
+class CustomCellRenderer(wx.grid.GridCellRenderer):
     """Custom renderer which highlights the current row using a rectangle.
 
     The base class doesn't allow using the default behavior and only add the

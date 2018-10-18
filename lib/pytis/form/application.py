@@ -124,7 +124,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for name in ('pytis', 'pytis-mini'):
             icon_bmp = get_icon(name)
             if icon_bmp:
-                icon = wx.EmptyIcon()
+                icon = wx.Icon()
                 icon.CopyFromBitmap(icon_bmp)
                 icons.AddIcon(icon)
         frame.SetIcons(icons)
@@ -644,7 +644,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     menu.Remove(item.GetId())
                     item.Destroy()
             for i, form in enumerate(self._windows.items()):
-                menu.AppendItem(wmitem(i, form).create(self._frame, menu))
+                menu.Append(wmitem(i, form).create(self._frame, menu))
 
     def _update_recent_forms(self, item=None):
         if self._recent_forms_menu is not None:
@@ -667,7 +667,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if isinstance(item, MSeparator):
                     menu.AppendSeparator()
                 else:
-                    menu.AppendItem(item.create(self._frame, menu))
+                    menu.Append(item.create(self._frame, menu))
 
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,

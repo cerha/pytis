@@ -2997,7 +2997,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_status_bar_field(self, sizer, width, descr):
         panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
-        panel.SetToolTipString(descr)
+        panel.SetToolTip(descr)
         panel.SetAutoLayout(True)
         box = wx.BoxSizer()
         field = wx.StaticText(panel, -1, '', style=wx.ALIGN_LEFT)

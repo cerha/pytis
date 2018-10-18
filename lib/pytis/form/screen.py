@@ -999,7 +999,7 @@ class Menu(_TitledMenuObject):
                 if isinstance(item, MItem):
                     wxitem = item.create(parent, menu)
                     wxitem.SetText(wx_title)
-                    menu.AppendItem(wxitem)
+                    menu.Append(wxitem)
                     if isinstance(item, (RadioItem, CheckItem)):
                         wxitem.Check(item.state())
                     if item in hotkey_str:
@@ -2831,7 +2831,7 @@ def dlg2px(window, x, y=None):
     else:
         single = False
     dlgsize = (x, y)
-    pxsize = wx.DLG_SZE(window, dlgsize)
+    pxsize = wx.DLG_UNIT(window, dlgsize)
     if single:
         return pxsize[0]
     else:
@@ -2926,7 +2926,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
         imgfile = os.path.join(config.icon_dir, icon_id + '.png')
         if os.path.exists(imgfile):
             img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
-            bitmap = wx.BitmapFromImage(img)
+            bitmap = wx.Bitmap(img)
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
             bitmap = None
@@ -2943,7 +2943,7 @@ def wx_focused_window():
 
 def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, height=None):
     if tooltip:
-        ctrl.SetToolTipString(tooltip)
+        ctrl.SetToolTip(tooltip)
     if update:
         # Bug: 'parent' is undefined!
         # wx_callback(wx.EVT_UPDATE_UI, ctrl, update)
@@ -3146,7 +3146,7 @@ def wx_spin_ctrl(parent, value=None, **kwargs):
 def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     checkbox = wx.CheckBox(parent, -1, label=label)
     if tooltip is not None:
-        checkbox.SetToolTipString(unicode(tooltip))
+        checkbox.SetToolTip(unicode(tooltip))
     checkbox.SetValue(checked)
     return checkbox
 

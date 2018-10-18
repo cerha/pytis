@@ -405,7 +405,7 @@ class UICommand(object):
             else:
                 ctrl_cls, kwargs = self._ctrl, {}
             ctrl = ctrl_cls(toolbar, self, **kwargs)
-            ctrl.SetToolTipString(self._title)
+            ctrl.SetToolTip(self._title)
             tool = toolbar.AddControl(ctrl)
             toolbar.SetToolLongHelp(tool.GetId(), self._descr)  # Doesn't work...
         else:

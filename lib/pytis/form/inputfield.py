@@ -435,7 +435,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _add_help_button(self, parent, widget):
         button = wx.StaticBitmap(parent, bitmap=get_icon('info'))
-        button.SetToolTipString(textwrap.fill(self._spec.descr(), 60))
+        button.SetToolTip(textwrap.fill(self._spec.descr(), 60))
         return self._hbox(widget, (button, 0, wx.LEFT, 4))
 
     def _get_value(self):
@@ -776,9 +776,9 @@ class Unlabeled:
 class TextField(InputField):
     """Textové vstupní políčko."""
 
-    class TextValidator(wx.PyValidator):
+    class TextValidator(wx.Validator):
         def __init__(self, control, filter):
-            wx.PyValidator.__init__(self)
+            wx.Validator.__init__(self)
             self._control = control
             self._filter = filter
             wx_callback(wx.EVT_CHAR, self, self._on_char)
@@ -1130,9 +1130,9 @@ class NumericField(TextField, SpinnableField):
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
-    class ReadOnlyValidator(wx.PyValidator):
+    class ReadOnlyValidator(wx.Validator):
         def __init__(self):
-            wx.PyValidator.__init__(self)
+            wx.Validator.__init__(self)
             # Eat all interaction events without calling e.Skip()
             # so no default event processing takes place.
             wx_callback(wx.EVT_KEY_DOWN, self, lambda e: None)
@@ -1386,7 +1386,7 @@ class Invocable(object, CommandHandler):
         button = self._create_invocation_button(parent)
         if button:
             self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
-            button.SetToolTipString(self._INVOKE_TITLE)
+            button.SetToolTip(self._INVOKE_TITLE)
             wx_callback(wx.EVT_BUTTON, button, lambda e: self._on_invoke_selection(ctrl))
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             widget = self._hbox(widget, button)
@@ -1606,7 +1606,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 self._controls.append((display, lambda c, e: None, lambda c, e: None))
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
-            button.SetToolTipString(_("Insert a new codebook value."))
+            button.SetToolTip(_("Insert a new codebook value."))
             wx_callback(wx.EVT_BUTTON, button, lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             self._controls.append((button, lambda b, e: b.Enable(e), lambda b, e: None))
@@ -2102,7 +2102,7 @@ class ImageField(FileField):
             stream.seek(0)
             wximg = wx.EmptyImage()
             wximg.LoadStream(stream, type=wx.BITMAP_TYPE_PNG)
-            return wx.BitmapFromImage(wximg)
+            return wx.Bitmap(wximg)
         return wx.EmptyBitmap(1, 1, depth=1)
 
     def _on_button(self):
