@@ -828,7 +828,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._frame.SetSize(size)
         top = self._windows.active()
         if top is not None:
-            top.SetSize(top.Parent.GetClientSize())
+            top.resize()
         if self._logo is not None:
             logo = self._logo.GetBitmap()
             logo_posx = max((size.GetWidth() - logo.GetWidth()) / 2, 0)
@@ -1031,6 +1031,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     message('', root=True)
+                    form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
                     if not isinstance(form, (pytis.form.PrintForm, pytis.form.WebForm)):
@@ -1280,6 +1281,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """Obnov stav aplikace."""
         form = self._windows.active()
         if form is not None:
+            form.resize()
             if isinstance(form, pytis.form.Refreshable):
                 form.refresh()
             form.show()
