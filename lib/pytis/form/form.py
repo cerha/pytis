@@ -499,16 +499,9 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         else:
             return False
 
-    def resize(self, size=None):
-        """Nastav velikost okna na velikost danou jako tuple (x, y).
-
-        Pokud není velikost udána, je okno automaticky nastaveno na velikost
-        svého rodičovského okna.
-
-        """
-        if size is None:
-            size = self.Parent.GetClientSize()
-        self.SetSize(size)
+    def resize(self):
+        """Resize the form to fit the parent window."""
+        self.Size = self.Parent.ClientSize
 
     def show(self):
         """Make the form active to user interaction and display it visually."""
