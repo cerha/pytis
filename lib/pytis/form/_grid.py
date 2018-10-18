@@ -808,7 +808,8 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
                         dc.DrawLine(left, top, right, top)
                         dc.DrawLine(left, bottom, right, bottom)
                         if col == 0:
-                            dc.DrawLine(left + r + mod, top, left + r + mod, bottom)
+                            leftx = left + r + mod - 1
+                            dc.DrawLine(leftx, top, leftx, bottom)
                         if col + 1 == grid.GetNumberCols():
                             dc.DrawLine(right - r - mod, top, right - r - mod, bottom)
 
