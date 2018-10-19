@@ -47,6 +47,7 @@ import thread
 import time
 
 import wx
+import wx.aui
 
 import pytis.form
 from pytis.util import DEBUG, OPERATIONAL, format_traceback, log, translations
@@ -328,7 +329,14 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             if is_user:
                 _last_user_event_time = time.time()
         return result
-    handler.Bind(event_kind, process_event, **kwargs)
+    if event_kind is wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING:
+        # Hack: This particular event kind needs to be bound using the EVT_* call,
+        # otherwise sideform tabs don't resize the contained form properly when
+        # switching to another tab (start a multiuform and switch to another tab).
+        # Strangely, this doesn't produce the depracation warning as the other events.
+        event_kind(handler, handler.GetId(), process_event)
+    else:
+        handler.Bind(event_kind, process_event, **kwargs)
 
 
 def unlock_callbacks():
