@@ -635,6 +635,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
             title += " (%s)" % form.descr()
         return title
 
+    def _modal_parent(self):
+        # Return the wx parent for a newly created modal form or dialog.
+        # Returns the top most modal form or the main application frame.
+        # Modal pytis dialogs are ignored as they are not wx.Window subclasses.
+        if not self._modals.empty() and isinstance(self._modals.top(), wx.Window):
+            parent = self._modals.top()
+        else:
+            parent = self._frame
+        return parent
+
     def _update_window_menu(self):
         def wmitem(i, form):
             info = form.__class__.__name__
@@ -990,12 +1000,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.load_content(kwargs['content'])
                 return result
             if issubclass(form_class, pytis.form.PopupForm):
-                parent = self._modals.top() or self._frame
+                parent = self._modal_parent()
                 kwargs['guardian'] = self._modals.top() or self
             else:
                 # assert self._modals.empty()
-                kwargs['guardian'] = self
                 parent = self._frame
+                kwargs['guardian'] = self
             args = (parent, config.resolver, name)
             try:
                 form = form_class(*args, **kwargs)
@@ -1197,10 +1207,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if not isinstance(dialog_or_class_, pytis.form.Dialog):
             class_ = dialog_or_class_
             assert issubclass(class_, pytis.form.Dialog)
-            parent = self._frame
-            if not self._modals.empty() and \
-               isinstance(self._modals.top(), wx.Window):
-                parent = self._modals.top()
+            parent = self._modal_parent()
             dialog = class_(parent, *args, **kwargs)
             args, kwargs = (), {}
         else:
