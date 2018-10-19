@@ -827,6 +827,5 @@ class CustomBooleanCellRenderer(CustomCellRenderer):
     def _draw_value(self, value, dc, rect, align):
         icon = get_icon(value == 'T' and 'checkbox-checked' or 'checkbox-unchecked')
         if icon:
-            dc.DrawImageLabel('', icon, rect, wx.ALIGN_CENTER_VERTICAL | align)
-        elif value == 'T':
-            dc.DrawLabel(value, rect, wx.ALIGN_CENTER_VERTICAL | align)
+            value = ''
+        dc.DrawLabel(value, bitmap=icon, rect=rect, alignment=wx.ALIGN_CENTER_VERTICAL | align)

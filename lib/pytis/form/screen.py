@@ -479,7 +479,7 @@ def color2wx(color):
         (instance wxTheColourDatabase)
 
     """
-    return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.NamedColour(color)
+    return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.Colour(color)
 
 
 # Common handlers

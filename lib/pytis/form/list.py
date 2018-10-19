@@ -1484,11 +1484,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             else:
                                 align = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT
                             label_rect = (x - d + 2, y, width + d, row_height)
-                            exported_value = value.export()
-                            if icon:
-                                dc.DrawImageLabel(' ' + exported_value, icon, label_rect, align)
-                            else:
-                                dc.DrawLabel(label + ' ' + exported_value, label_rect, align)
+                            label_text = ' ' + value.export()
+                            if not icon:
+                                label_text = label + label_text
+                                dc.DrawLabel(label_text, bitmap=icon, rect=label_rect, alignment=align)
                         y += row_height
                 dc.DrawLine(x - d, y, x + width, y)
             x += width
