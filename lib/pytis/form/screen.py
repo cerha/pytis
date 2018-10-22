@@ -2290,7 +2290,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 event.Veto()
                 return
         if ((self._restricted_navigation_uri is not None and
-             not uri.startswith(self._restricted_navigation_uri))):
+             not uri.startswith(self._restricted_navigation_uri) and
+             not uri.startswith('about:'))):
             pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
             log(OPERATIONAL, "Restricted to :", self._restricted_navigation_uri)
             event.Veto()
