@@ -363,7 +363,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if name.find('::') != -1:
             names = name.split('::')
             return (config.resolver.get(names[0], 'binding_spec')[names[1]].title() or
-                    ' / '.join([spec_title(n) for n in names]))
+                    ' / '.join([self._spec_title(n) for n in names]))
         else:
             return config.resolver.get(name, 'view_spec').title()
 
