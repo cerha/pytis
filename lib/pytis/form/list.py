@@ -1219,7 +1219,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             Menu(_("Secondary Sorting"), (
                 MItem(_("Sort Ascending"),
                       command=LookupForm.COMMAND_SORT(col=col,
-                                                      direction=LookupForm.SORTING_DESCENDANT)),
+                                                      direction=LookupForm.SORTING_ASCENDENT)),
                 MItem(_("Sort Descending"),
                       command=LookupForm.COMMAND_SORT(col=col,
                                                       direction=LookupForm.SORTING_DESCENDANT)),
