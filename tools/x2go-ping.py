@@ -8,33 +8,32 @@ import sys
 sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
 
 import pytis.remote
-import pytis.remote.pytisproc as pytisproc
+
 
 def report(message):
     sys.stderr.write(message + '\n')
+
 
 def main():
     session_id = pytis.remote.x2go_session_id()
     if not session_id:
         report("X2GO_SESSION environment variable not set.")
         return
-    pytis_x2go_file = pytis.remote.pytis_x2go_info_file(session_id)
-    if not os.path.exists(pytis_x2go_file):
-        report("Pytis configuration file not present: %s" % (pytis_x2go_file,))
+    info_file = pytis.remote.pytis_x2go_info_file(session_id)
+    if not os.path.exists(info_file):
+        report("P2Go info file not present: %s" % (info_file,))
         return
-    if not os.access(pytis_x2go_file, os.R_OK):
-        report("Pytis configuration file not readable: %s" % (pytis_x2go_file,))
+    if not os.access(info_file, os.R_OK):
+        report("P2Go info file not readable: %s" % (info_file,))
         return
     try:
-        access_data = pytis.remote.parse_x2go_info_file(pytis_x2go_file)
+        access_data = pytis.remote.parse_x2go_info_file(info_file)
     except pytis.remote.X2GoInfoException as e:
-        report("Exception when parsing pytis info file: %s" % (e.args,))
+        report("Exception when parsing P2Go info file: %s" % (e.args,))
         return
-    port = access_data['port']
-    password = access_data['password']
-    authenticator = pytisproc.PasswordAuthenticator(password)
+    connector = pytis.remote.Connector(access_data['password'])
     try:
-        connection = authenticator.connect('localhost', port)
+        connection = connector.connect('localhost', access_data['port'])
     except rpyc.utils.authenticators.AuthenticationError:
         report("Authentication failed")
         return

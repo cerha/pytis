@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -19,9 +20,14 @@
 
 import os
 import re
-import subprocess
+import rpyc
 import time
+import random
+import string
+import socket
+import hashlib
 import getpass
+import subprocess
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
 import config
 
@@ -43,6 +49,47 @@ class RPCInfo(object):
     remote_client_version = None
     remote_status_info = (False, time.time())
     remote_connection_initially_available = False
+
+
+class Connector(object):
+    """Pytis RPyC service connector
+
+    This is the client part of the authentication protocol implemented by
+    'p2go.PasswordAuthenticator'.  This class is actually a partial duplication
+    of 'p2go.PasswordAuthenticator' because the server side also implements the
+    method 'connect()' for P2Go's internal purposes.  The duplication is
+    necessary in order to avoid Pytis runtime to have dependencies on P2go and
+    vice versa.
+
+    """
+    def __init__(self, password):
+        self._password = password
+
+    def _challenge(self):
+        r = random.SystemRandom()
+        return string.join([r.choice('0123456789abcdef') for i in range(len(self._password))], '')
+
+    def _password_hash(self, challenge):
+        token = string.join([chr(ord(x) ^ ord(y)) for x, y in zip(self._password, challenge)], '')
+        return hashlib.sha256(token).hexdigest()
+
+    def connect(self, host, port):
+        client_challenge = self._challenge()
+        connection = rpyc.connect(host, port)
+        if hasattr(socket, 'fromfd'):
+            fd = connection.fileno()
+            sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            # There is no socket.fromfd in Python 2.x on Windows, so let's use
+            # the original hidden socket.
+            sock = connection._channel.stream.sock
+        sock.send(client_challenge + self._password_hash(client_challenge))
+
+        server_challenge = self._challenge()
+        server_hash = connection.root.authenticate_server(server_challenge)
+        if server_hash != self._password_hash(server_challenge):
+            raise rpyc.utils.authenticators.AuthenticationError("Invalid server authentication")
+        return connection
 
 
 def nx_ip():
@@ -229,9 +276,8 @@ def _connect():
         connection = rpyc.connect('localhost', port)
     else:
         rpc_info.direct_connection = True
-        import pytisproc
-        authenticator = pytisproc.PasswordAuthenticator(password)
-        connection = authenticator.connect('localhost', port)
+        connector = Connector(password)
+        connection = connector.connect('localhost', port)
     return connection
 
 
@@ -304,7 +350,7 @@ def session_password():
     version = library_version()
     if version and version >= '2018-06-27 16:00':
         # We try to be safer by not even trying to call the method for older
-        # pytisproc versions.  The try/except block would handle it here
+        # P2Go versions.  The try/except block would handle it here
         # anyway, but in some more complicated cases testing the version
         # might be necessary.
         try:

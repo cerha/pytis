@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -32,5 +33,5 @@ from .remote import (
     run_python, x2go_session_id, x2go_display,
     pytis_x2go_info_file, parse_x2go_info_file, read_x2go_info_file,
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException,
-    RPCInfo,
+    RPCInfo, Connector
 )
