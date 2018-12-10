@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +52,7 @@ import unicodedata
 import platform
 
 
-### Classes
+# Classes
 
 class ProgramError(Exception):
     """Výjimka signalizující programovou chybu.
@@ -135,6 +136,8 @@ class Counter:
 
 
 _emergency_encoder = codecs.getencoder('utf-8')
+
+
 def safe_encoding_write(stream, string_):
     try:
         stream.write(string_)
@@ -211,6 +214,7 @@ class Pipe:
             raise ValueError("I/O operation on closed file")
         if self._encoder is not None:
             string_ = self._encoder(string_, 'replace')[0]
+
         def lfunction():
             buffer = self._buffer
             if not buffer or len(buffer[-1]) > 4096:
@@ -658,14 +662,19 @@ class Attribute(object):
         self._type = type
         self._default = default
         self._mutable = mutable
+
     def name(self):
         return self._name
+
     def type(self):
         return self._type
+
     def default(self):
         return self._default
+
     def mutable(self):
         return self._mutable
+
 
 class Structure (object):
     """Simple data structures.
@@ -748,7 +757,7 @@ class object_2_5(object):
         object.__init__(self)
 
 
-### Functions
+# Functions
 
 def identity(x):
     """Vrať 'x'."""
@@ -863,6 +872,7 @@ if hasattr(operator, 'eq'):
 else:
     _eq = (lambda x, y: x == y)
 
+
 def find(element, sequence, key=identity, test=_eq):
     """Vrať nejlevější prvek 'sequence' rovnající se 'element'.
 
@@ -973,18 +983,6 @@ def nreverse(list):
     return list
 
 
-def starts_with(string_, prefix):
-    """Vrať pravdu, právě když 'string_' začíná 'prefix'.
-
-    Argumenty:
-
-      string_ -- string
-      prefix -- string
-
-    """
-    return string_.startswith(prefix)
-
-
 def super_(class_):
     """Vrať prvního předka třídy 'class_'."""
     return class_.__bases__[0]
@@ -1052,6 +1050,8 @@ def sameclass(o1, o2, strict=False):
 
 
 _public_attributes = {}
+
+
 def public_attributes(class_):
     """Vrať tuple všech jmen veřejných atributů třídy 'class_'.
 
@@ -1077,6 +1077,7 @@ def public_attributes(class_):
     _public_attributes[class_] = result
     return result
 
+
 def public_attr_values(class_):
     """Return a tuple of values of all public attributes of class 'class_'.
 
@@ -1091,6 +1092,7 @@ def public_attr_values(class_):
     # used.
     return tuple(getattr(class_, attr) for attr in public_attributes(class_))
 
+
 def argument_names(callable):
     """Return names of all function/method arguments as a tuple of strings.
 
@@ -1104,6 +1106,7 @@ def argument_names(callable):
         args = args[1:]
     return tuple(args)
 
+
 def direct_public_members(obj):
     """Vrať tuple všech přímých veřejných atributů a metod třídy objektu 'obj'.
 
@@ -1116,6 +1119,7 @@ def direct_public_members(obj):
         cls = obj
     else:
         cls = obj.__class__
+
     def public_members(cls):
         return [(name, value) for name, value in inspect.getmembers(cls)
                 if name and not name.startswith('_')]
@@ -1152,6 +1156,7 @@ def compare_objects(o1, o2):
     else:
         return 1
 
+
 def less(o1, o2):
     """Similar to '<' operator but handles 'None' values.
 
@@ -1169,6 +1174,7 @@ def less(o1, o2):
     if o1 is None:
         return True
     return o1 < o2
+
 
 def less_equal(o1, o2):
     """Similar to '<=' operator but handles 'None' values.
@@ -1234,6 +1240,7 @@ def hash_attr(self, attributes):
 
     """
     dict = self.__dict__
+
     def h(obj):
         if isinstance(obj, list):
             obj = tuple(obj)
@@ -1251,17 +1258,21 @@ def is_dictionary(x):
     """Vrať pravdu, právě když 'x' je dictionary."""
     return type(x) == pytypes.DictionaryType
 
+
 def is_string(x):
     """Vrať pravdu, právě když 'x' je běžný řetězec."""
     return isinstance(x, str)
+
 
 def is_unicode(x):
     """Vrať pravdu, právě když 'x' je unicode řetězec."""
     return isinstance(x, unicode)
 
+
 def is_anystring(x):
     """Vrať pravdu, právě když 'x' je unicode řetězec nebo běžný řetězec."""
     return isinstance(x, basestring)
+
 
 def unormalize(unicode_):
     """Return a normalized version of 'unicode_'.
@@ -1276,6 +1287,7 @@ def unormalize(unicode_):
 
     """
     return unicodedata.normalize('NFC', unicode_)
+
 
 def ecase(value, *settings):
     """Vrať hodnotu ze 'settings' odpovídající 'value'.
@@ -1303,6 +1315,8 @@ def ecase(value, *settings):
 if __debug__:
     _active_locks = None
     _with_lock_lock = thread.allocate_lock()
+
+
 def with_lock(lock, function):
     """Call 'function' as protected by 'lock'.
 
@@ -1360,6 +1374,7 @@ def with_locks(locks, function):
         return_value = function()
     else:
         lock = locks[0]
+
         def lfunction():
             return with_locks(locks[1:], function)
         return_value = with_lock(lock, lfunction)
@@ -1390,6 +1405,7 @@ class _Throw(Exception):
         """Vrať hodnotu 'value' zadanou v konstruktoru."""
         return self._value
 
+
 def catch(tag, function, *args, **kwargs):
     """Volej 'function' s ošetřením nelokálního přechodu.
 
@@ -1416,6 +1432,7 @@ def catch(tag, function, *args, **kwargs):
         else:
             raise
     return result
+
 
 def throw(tag, value=None):
     """Vyvolej nelokální přechod identifikovaný 'tag'.
@@ -1489,6 +1506,8 @@ def dev_null_stream(mode):
 
 
 _mktempdir_counter = None
+
+
 def mktempdir(prefix='pytis'):
     """Vytvoř podadresář v adresáři pro dočasné soubory.
 
@@ -1543,6 +1562,8 @@ def format_byte_size(size):
 
 
 _CAMEL_CASE_WORD = re.compile(r'[A-Z][a-z\d]*')
+
+
 def split_camel_case(string):
     """Return a lowercase string using 'separator' to concatenate words."""
     return _CAMEL_CASE_WORD.findall(string)
@@ -1551,6 +1572,7 @@ def split_camel_case(string):
 def camel_case_to_lower(string, separator='-'):
     """Return a lowercase string using 'separator' to concatenate words."""
     return separator.join([w.lower() for w in split_camel_case(string)])
+
 
 def nextval(seq, connection_name=None):
     """Return a function generating next value from given DB sequence.
@@ -1564,11 +1586,13 @@ def nextval(seq, connection_name=None):
 
     """
     import pytis.data
+
     def conn_spec():
         import config
         return config.dbconnection
     counter = pytis.data.DBCounterDefault(seq, conn_spec, connection_name=connection_name)
     return lambda transaction=None: counter.next(transaction=transaction)
+
 
 def rsa_encrypt(key, text):
     """Return text encrypted using RSA 'key' and base64 encoded.
@@ -1590,6 +1614,7 @@ def rsa_encrypt(key, text):
     else:
         return text
 
+
 def load_module(module_name):
     """Load and return module named 'module_name'.
 
@@ -1608,6 +1633,7 @@ def load_module(module_name):
         except AttributeError:
             raise ImportError(module_name)
     return module
+
 
 def form_view_data(resolver, name, dbconnection_spec=None):
     """Return pair of specification objects (VIEW, DATA) for specification 'name'.
@@ -1634,7 +1660,7 @@ def form_view_data(resolver, name, dbconnection_spec=None):
     return view, data
 
 
-### Miscellaneous
+# Miscellaneous
 
 
 UNDEFINED = object()
@@ -1645,15 +1671,8 @@ nutno provádět jejich definici a zkoumání prostřednictvím **kwargs.
 
 """
 
-# @generator
-# def with_temp_file():
-#     ...
-
-# def with_temp_dir():
-#     ...
-
 
-### Debugging functions
+# Debugging functions
 
 
 def debugger():
@@ -1667,6 +1686,8 @@ def debugger():
 
 
 _mem_info = None
+
+
 def mem_info():
     """Vypiš na standardní chybový výstup informaci o paměti.
 
@@ -1680,6 +1701,7 @@ def mem_info():
                 self._length = 0
                 self._report_length = 1
                 self._count = Counter()
+
             def update(self):
                 glen = len(gc.garbage)
                 if glen != self._length:
@@ -1786,10 +1808,11 @@ def exception_info(einfo=None):
         args, varargs, varkw, locals = inspect.getargvalues(frame)
         call = ''
         if func != '?':
-            call = 'in ' + func + \
-                inspect.formatargvalues(args, varargs, varkw, locals,
-                    formatvalue=lambda value: '=' + deepstr(value))
-        highlight = {}
+            call = ('in ' + func +
+                    inspect.formatargvalues(args, varargs, varkw, locals,
+                                            formatvalue=lambda value: '=' + deepstr(value)))
+            highlight = {}
+
         def reader(lnum=[lnum]):
             highlight[lnum[0]] = 1
             try:
@@ -1854,6 +1877,7 @@ def stack_info(depth=None):
                       (frame[5] and ':\n    %s' % frame[5] or '')
                       for frame in stack])
 
+
 def positive_id(obj):
     """Return id(obj) as a non-negative integer."""
     result = id(obj)
@@ -1868,8 +1892,9 @@ def positive_id(obj):
             # Undo that, and try 64 bits.
             result -= 1L << 32
             result += 1L << 64
-            assert result >= 0 # else addresses are fatter than 64 bits
+            assert result >= 0  # else addresses are fatter than 64 bits
     return result
+
 
 def parse_lcg_text(text, resource_path=(), resources=()):
     """Return lcg.ContentNode created by parsing given LCG Structured Text.
@@ -1896,6 +1921,7 @@ def parse_lcg_text(text, resource_path=(), resources=()):
     content = lcg.Container(lcg.Parser().parse(text))
     return lcg.ContentNode('', content=content, resource_provider=resource_provider)
 
+
 def lcg_to_html(text, styles=('default.css',), resource_path=()):
     """Return given LCG structured text converted into HTML.
 
@@ -1915,13 +1941,16 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
 
     """
     import lcg
+
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
         pass
+
     node = parse_lcg_text(text, resource_path=resource_path)
     exporter = Exporter(styles=styles, inlinestyles=True)
     context = exporter.context(node, None)
     html = exporter.export(context)
     return html.encode('utf-8')
+
 
 def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=3):
     """Return a human readable overview of differences between given two texts.
@@ -1959,6 +1988,8 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
     return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
 
 _current_language = None
+
+
 def current_language():
     """Return current language code as string.
 
@@ -1968,6 +1999,7 @@ def current_language():
     if _current_language is None:
         set_current_language(environment_language())
     return _current_language
+
 
 def set_current_language(language):
     """Set current language to 'language'.
@@ -1979,6 +2011,7 @@ def set_current_language(language):
     """
     global _current_language
     _current_language = language
+
 
 def environment_language(default=None):
     """Return code of the language of the current locale environment.
@@ -2001,6 +2034,7 @@ def environment_language(default=None):
     else:
         lang = default
     return lang
+
 
 def translation_status():
     """Return the current status of translations in all available translation files.
@@ -2034,6 +2068,7 @@ def translation_status():
                              ))
     return info
 
+
 def translation_path():
     """Return the current translation path as a list of strings.
 
@@ -2052,6 +2087,7 @@ def translation_path():
         base_dir = os.path.normpath(os.path.dirname(__file__) + '/../../..')
         path = (os.path.join(base_dir, 'translations'),)
     return path
+
 
 def translations(domain, origin='en'):
     """Create 'lcg.TranslatedTextFactory' for the current locale.
@@ -2072,6 +2108,7 @@ def translations(domain, origin='en'):
         import lcg
     except ImportError:
         import gettext
+
         class Translator(object):
             """Implement 'lcg.TranslatedTextFactory' interface using pure gettext."""
 
@@ -2092,7 +2129,8 @@ def translations(domain, origin='en'):
                     n = args[0]
                 else:
                     n = kwargs['n']
-                return self._interpolate(self._gettext.ungettext(singular, plural, n), *args, **kwargs)
+                return self._interpolate(self._gettext.ungettext(singular, plural, n),
+                                         *args, **kwargs)
 
             def pgettext(self, context, text, *args, **kwargs):
                 return self.__call__(context + '\x04' + text, *args, **kwargs).split('\x04', 1)[-1]
@@ -2102,6 +2140,7 @@ def translations(domain, origin='en'):
         path = translation_path()
         lang = environment_language(default=origin)
         return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
+
 
 def translate(text):
     """Return translation object for given text.
@@ -2120,6 +2159,7 @@ def translate(text):
 
     """
     return text
+
 
 def on_windows():
     """Return True iff we are currently running on Windows."""

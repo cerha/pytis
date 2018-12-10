@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Cache
-# 
-# Copyright (C) 2002, 2005, 2006, 2007, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +23,11 @@ Modul nabízí třídy umožňující provádět různé typy cachování.
 
 """
 
+import thread
 import collections
 import UserDict
 
-from pytis.util import *
+from pytis.util import with_lock, Counter
 
 
 class _Cache(object, UserDict.UserDict):
@@ -44,7 +44,7 @@ class _Cache(object, UserDict.UserDict):
             pravdu právě když položka odpovídající klíči je platná; může být
             též 'None', v kterémžto případě jsou všechny položky automaticky
             považovány za platné
-          
+
         """
         UserDict.UserDict.__init__(self)
         assert isinstance(provider, collections.Callable)
@@ -95,10 +95,10 @@ class LimitedCache(_Cache):
           provider -- stejné jako v předkovi
           limit -- nezáporný integer určující maximální povolený počet položek
             cache
-          
+
         """
         super(LimitedCache, self).__init__(provider)
-        assert type(limit) == type(0)
+        assert isinstance(limit, int), limit
         self._limit = limit
         self._counter = Counter()
         self._lock = thread.allocate_lock()
@@ -118,7 +118,7 @@ class LimitedCache(_Cache):
     def reset(self):
         super(LimitedCache, self).reset()
         self._counter.reset()
-        
+
     def _collect(self):
         self.reset()
 
@@ -140,5 +140,5 @@ class RangeCache(_Cache):
 
         """
         super(RangeCache, self).__init__(self, provider)
-        assert type(size) == type(0)
+        assert isinstance(size, int), size
         self._size = size

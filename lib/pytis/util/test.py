@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@ import sys
 import types
 import unittest
 
-from pytis.util import *
+from pytis.util import translations, direct_public_members
 
 _ = translations('pytis-wx')
 
@@ -42,7 +43,7 @@ class TestSuite(unittest.TestSuite):
     v našem kódu.  Oproti poděděné třídě poskytuje doplňující metodu 'add'.
 
     Užitečné (pouze) pro tvorbu testů.
-    
+
     """
     def add(self, class_):
         """Přidej do testů všechny metody třídy 'class_' s prefixem 'check_'.
@@ -50,9 +51,9 @@ class TestSuite(unittest.TestSuite):
         Nepřidávej metody, které jsou beze změny poděděny od předka.  Je-li
         'config.run_interactive_tests' nepravda, nepřidávej metody začínající
         prefixem 'check_interactive_'.
-        
+
         Testy jsou přidány jako samostatná test suite.
-        
+
         """
         tests = [x for x in direct_public_members(class_)
                  if x.startswith('test_')]
@@ -68,14 +69,14 @@ class InteractiveTestCase(unittest.TestCase):
 
     Třída definuje novou metodu 'ask_user()' pro interakci s obsluhou
     testování.
-    
+
     """
     def _format_instructions(self, instructions):
         lines = string.split(instructions, '\n')
         formatted_lines = map(lambda l: '|' + l, lines)
         instructions = string.join(formatted_lines, '\n')
         return instructions
-    
+
     def _print_instructions(self, instructions):
         print
         print instructions
@@ -132,18 +133,17 @@ def transform_args():
       seznamem metod této třídy začínajících prefixem 'check_'.
 
     """
-    import __main__
     argv = sys.argv
     for i in range(len(argv))[1:]:
         try:
             object = eval('__main__.%s' % argv[i])
         except:
             continue
-        if type(object) == types.ClassType and \
-           issubclass(object, unittest.TestCase):
+        if ((isinstance(object, (types.ClassType, types.TypeType)) and
+             issubclass(object, unittest.TestCase))):
             a = []
             for m in dir(object):
-                if starts_with (m, 'check_'):
+                if m.startswith('check_'):
                     a.append('%s.%s' % (argv[i], m))
             argv[i:i+1] = a
     return argv

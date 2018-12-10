@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -21,6 +22,7 @@ import pdb
 import socket
 import sys
 
+
 # Based on the example from http://www.dzone.com/snippets/remote-debugging-python-using
 class Rdb(pdb.Pdb):
     """Debugger for remote processes such as Wiking applications.
@@ -32,7 +34,7 @@ class Rdb(pdb.Pdb):
     Then you can connect to the debugger from a command line like follows:
 
       telnet localhost 1111
-    
+
     """
     def __init__(self, port=1111):
         """
@@ -70,6 +72,8 @@ class Rdb(pdb.Pdb):
     do_r = do_run
 
 _rdb = None
+
+
 def rdb(port=1111):
     "Return the shared 'Rdb' instance."
     global _rdb

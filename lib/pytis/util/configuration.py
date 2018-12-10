@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Prostředky pro definici a zpracování konfigurace běhu aplikace
-#
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,6 +40,7 @@ _ = translations('pytis-wx')
 class _OrderedDefinitionClass(type):
     """A metaclass allowing us to find out the order of class definitions."""
     _class_counter = 0
+
     def __init__(cls, name, bases, dict):
         cls._class_definition_order = _OrderedDefinitionClass._class_counter
         _OrderedDefinitionClass._class_counter += 1
@@ -347,6 +347,7 @@ class Configuration(object):
     class ColorOption(Option):
         """Třída pro volby typu barva."""
         _DOC = "Barva je reprezentována řetězcem '#RRGGBB'."
+
         def _type(self):
             import pytis.data
             return pytis.data.Color()
@@ -378,6 +379,7 @@ class Configuration(object):
         """Configuration file location."""
         _LONG_OPTION = 'config='
         _ENVIRONMENT = ('PYTISCONFIG',)
+
         def default(self):
             for filename in ('./config.py', '/etc/pytis/config.py'):
                 if os.access(filename, os.F_OK):
@@ -540,6 +542,7 @@ class Configuration(object):
     class _Option_tmp_dir(StringOption):
         u"""Adresář pro dočasné pomocné soubory."""
         _DEFAULT_STRING = "'/tmp'"
+
         def default(self):
             dirs = ['/tmp', '/var/tmp', '/usr/tmp']
             tmpdir = os.getenv('TMPDIR')
@@ -566,6 +569,7 @@ class Configuration(object):
     class _Option_dbuser(StringOption, CommandlineOption):
         """Database user login name."""
         _DEFAULT_STRING = 'getpass.getuser()'
+
         def default(self):
             import getpass
             return getpass.getuser()
@@ -722,6 +726,7 @@ class Configuration(object):
         """
 
         _DEFAULT_STRING = '(log.StreamLogger, (sys.stderr,), {})'
+
         def default(self):
             import log
             return (log.StreamLogger, (sys.stderr,), {})
@@ -734,6 +739,7 @@ class Configuration(object):
 
         """
         _DEFAULT_STRING = '[DEBUG]'
+
         def default(self):
             if self._configuration.debug:
                 return []
@@ -1145,6 +1151,7 @@ class Configuration(object):
         """
         _DESCR = _("Current table row highlight border width in pixels.")
         _DEFAULT = 3
+
         def _type(self):
             import pytis.data
             return pytis.data.Integer(minimum=0, maximum=10)
@@ -1398,7 +1405,7 @@ class Configuration(object):
         'stream' must be a stream opened for writing.
 
         """
-        #stream.write('# -*- coding: utf-8 -*-\n\n')
+        # stream.write('# -*- coding: utf-8 -*-\n\n')
         from textwrap import wrap
         for option in self.options(sort=True):
             if option.visible():

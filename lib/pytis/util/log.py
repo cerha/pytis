@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -301,7 +302,7 @@ class LoggingInterface:
 
     """
     def __init__(self):
-        self._logger = None # nelze inicializovat teď, kvůli závislostem modulů
+        self._logger = None  # nelze inicializovat teď, kvůli závislostem modulů
         self._hooks = []
 
     def __call__(self, kind, message, data=None):
@@ -317,7 +318,7 @@ class LoggingInterface:
         zalogováno.
 
         """
-        if __debug__ or kind is not DEBUG: # optimalizační záležitost
+        if __debug__ or kind is not DEBUG:  # optimalizační záležitost
             logger = self._logger
             if not logger:
                 import config
