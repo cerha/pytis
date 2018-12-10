@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2009-2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -18,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytis.data
+
 
 class PrettyType(pytis.data.Type):
     """Type providing pretty exports.
@@ -44,6 +46,7 @@ class PrettyType(pytis.data.Type):
         """
         return self.export(self, value, **kwargs)
 
+
 class PrettyTreeOrder(PrettyType):
     """Type providing indented pretty values based on a tree order column.
 
@@ -53,7 +56,7 @@ class PrettyTreeOrder(PrettyType):
 
     The other column of 'TreeOrder' type must have unique non-NULL values
     (typically it should be a primary key).
-    
+
     Extra constructor arguments:
 
       tree_column_id -- id of the column defining tree ordering; string
@@ -73,7 +76,7 @@ class PrettyTreeOrder(PrettyType):
     def tree_column_id(self):
         """Return id of the column defining the tree ordering."""
         return self._tree_column_id
-    
+
     def pretty_export(self, value, row, form=None, **kwargs):
         exported = self.export(value, **kwargs)
         order = row[self._tree_column_id].export()
@@ -83,6 +86,7 @@ class PrettyTreeOrder(PrettyType):
             level = len(order.split('.')) - 1
             exported = self._indentation(level, row, form) + exported
         return exported
+
 
 class PrettyFoldable(PrettyTreeOrder):
     """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
@@ -102,11 +106,11 @@ class PrettyFoldable(PrettyTreeOrder):
     "Folding indicator for a foldable node in a unfolded state."
     NON_FOLDABLE_MARK = u'⊙'
     "Folding indicator for an unfoldable node."
-    
+
     def _init(self, tree_column_id, subcount_column_id=None, **kwargs):
         super(PrettyFoldable, self)._init(tree_column_id, **kwargs)
         self._tree_column_nsub_id = subcount_column_id
-        
+
     def _indentation(self, level, row, form):
         if form is None:
             mark = ''
@@ -114,9 +118,9 @@ class PrettyFoldable(PrettyTreeOrder):
             folding = form.folding_level(row)
             if folding == '':
                 return ''
-            if (self._tree_column_nsub_id and
-                self._tree_column_nsub_id in row and
-                not row[self._tree_column_nsub_id].value()):
+            if ((self._tree_column_nsub_id and
+                 self._tree_column_nsub_id in row and
+                 not row[self._tree_column_nsub_id].value())):
                 mark = self.NON_FOLDABLE_MARK + ' '
             elif folding == 0:
                 mark = self.FOLDED_MARK + ' '

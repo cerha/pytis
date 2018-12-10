@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +28,7 @@ import config
 ############
 # field.py #
 ############
+
 
 class PresentedRow(unittest.TestCase):
 
@@ -109,6 +111,7 @@ class PresentedRow(unittest.TestCase):
 
         class TestResolver(pytis.util.Resolver):
             _specifications = {'Fruits': Fruits}
+
             def _get_object_by_name(self, name):
                 try:
                     return self._specifications[name]
@@ -197,7 +200,7 @@ class PresentedRow(unittest.TestCase):
         # so we can't create a real transaction here.  Using 'x' is invalid for
         # real use but it stil verifies that set_transaction works as long as
         # set_transaction doesn't validate its argument.
-        transaction = 'x' #pd.DBTransactionDefault(config.dbconnection)
+        transaction = 'x'  # pd.DBTransactionDefault(config.dbconnection)
         row.set_transaction(transaction)
         self.assertEqual(row.transaction(), transaction)
 
@@ -229,12 +232,15 @@ class PresentedRow(unittest.TestCase):
         self._check_values(row, a=5, b=10, c=20, d=30, total=3)
         row['array'] = ('apl', 'str')
         self.assertEqual([v.value() for v in row['array'].value()], ['apl', 'str'])
+
         def assign_invalid():
             row['c'] = 'x'
         self.assertRaises(TypeError, assign_invalid)
+
         def assign_invalid_value():
             row['c'] = pd.sval('x')
         self.assertRaises(TypeError, assign_invalid_value)
+
         def assign_invalid_array():
             row['array'] = (1, 2)
         self.assertRaises(TypeError, assign_invalid_array)
@@ -277,11 +283,13 @@ class PresentedRow(unittest.TestCase):
         # The computer for 'a' is called to compute the initial value and will lead to recursion
         # because it requires validation of 'b' which needs the value of 'a'...
         self.assertRaises(RuntimeError, lambda: self._row(fields, new=True))
+
         class Specification(pp.Specification):
             pass
         Specification.fields = fields
         # ViewSpec initialization should detect the cyclic dependency.
         self.assertRaises(AssertionError, lambda: Specification().view_spec())
+
         class Specification2(Specification):
             def _customize_fields(self, fields):
                 fields.modify('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0,
@@ -347,6 +355,7 @@ class PresentedRow(unittest.TestCase):
     def test_callback(self):
         row = self._mega_row(new=True, b=3)
         changed = []
+
         def callback(id):
             def cb():
                 row[id].value()
@@ -372,8 +381,9 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('half_total', changed)
 
     def test_editability_callbacks(self):
-        enabled = [None] # we need a mutable object...
+        enabled = [None]  # we need a mutable object...
         row = self._mega_row(a=6)
+
         def callback():
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
@@ -410,6 +420,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_enumeration_callbacks(self):
         called = []
+
         def callback():
             called.append(True)
         row = self._mega_row(a=0)
@@ -643,6 +654,7 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(row['c'].value(), '0')
         # Set 'b' to an invalid value (violates maxlen=1).
         row.validate('b', 'xxx')
+
         def cb():
             # This used to fail when the computer for 'c' was not called
             # due to invalid value of 'b' (when 'b' validity was not refreshed
@@ -658,7 +670,7 @@ class PresentedRow(unittest.TestCase):
             pp.Field('a', type=pd.String(not_null=True, enumerator=enumerator)),
         ))
         self.assertFalse(row.validate('a', '3') is None)
-        data = enumerator._data # There is currently no need to make this public elsewhere.
+        data = enumerator._data  # There is currently no need to make this public elsewhere.
         data.insert(pd.Row((('id', pd.sval('3')), ('title', pd.sval('Third')))))
         self.assertEqual(row.validate('a', '3'), None)
 
@@ -712,6 +724,7 @@ class PrettyTypes(unittest.TestCase):
             super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
                                                           subcount_column_id='tree_nsub',
                                                           **kwargs)
+
     def test_instance(self):
         t = PrettyTypes.CustomFoldable(maxlen=5)
         self.assertEqual(t.maxlen(), 5)

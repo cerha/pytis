@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -122,7 +123,7 @@ class PresentedRow(object):
                 elif not ctype:
                     # String is the default type of virtual columns.
                     ctype = pytis.data.String(**fspec.type_kwargs())
-                elif type(ctype) == type(pytis.data.Type):
+                elif not isinstance(ctype, pytis.data.Type):
                     ctype = ctype(**fspec.type_kwargs())
             self.type = ctype
             self.line_separator = fspec.line_separator()
@@ -511,7 +512,9 @@ class PresentedRow(object):
         # Returns a display function to apply to an enumeration value."
         if self._secret_column(column):
             hidden_value = column.type.secret_export()
-            display = lambda v: hidden_value
+
+            def display(v):
+                return hidden_value
         else:
             display = column.display
             if display:
@@ -523,7 +526,9 @@ class PresentedRow(object):
                     # better to respect the line_separator of the display
                     # field, but we don't have simple access to it from here
                     # and the semicolons are fine in most cases.
-                    row_function = lambda row: '; '.join(row[display_column].export().splitlines())
+
+                    def row_function(row):
+                        return '; '.join(row[display_column].export().splitlines())
                 elif argument_names(display) == ('row',):
                     row_function = display
                 else:
@@ -555,19 +560,27 @@ class PresentedRow(object):
         # select for each row of the select).
         if self._secret_column(column):
             hidden_value = column.type.secret_export()
-            display = lambda row: hidden_value
+
+            def display(row):
+                return hidden_value
         else:
             display = column.display
             if display is None:
                 value_column = column.type.enumerator().value_column()
-                display = lambda row: row[value_column].export()
+
+                def display(row):
+                    return row[value_column].export()
             elif isinstance(display, basestring):
                 display_column = display
-                display = lambda row: row[display_column].export()
+
+                def display(row):
+                    return row[display_column].export()
             elif argument_names(display) != ('row',):
                 value_column = column.type.enumerator().value_column()
                 display_function = display
-                display = lambda row: display_function(row[value_column].value())
+
+                def display(row):
+                    return display_function(row[value_column].value())
         return display
 
     def get(self, key, default=None, lazy=False, secure=False):
@@ -1052,7 +1065,8 @@ class PresentedRow(object):
         else:
             display = self._display(column)
             if display is None:
-                display = lambda v: column.type.export(v)
+                def display(v):
+                    return column.type.export(v)
             runtime_filter = self.runtime_filter(key)
             kwargs = (self.runtime_arguments(key) or {})
             if isinstance(enumerator, pytis.data.TransactionalEnumerator):

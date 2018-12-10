@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -320,6 +321,7 @@ class Button(object):
 
     def active_in_readonly_form(self):
         return self._active_in_readonly_form
+
 
 class ActionContext(object):
     """Enumeration class defining available constants for 'Action' context specification."""
@@ -1279,7 +1281,6 @@ class QueryFields(object):
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""
         return dict(fields=self._fields, layout=self._layout, **self._kwargs)
-
 
 
 class ViewSpec(object):
@@ -2557,6 +2558,7 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
         depends = argument_names(function)[1:]
         if depends:
             original_function = function
+
             def function(row):
                 kwargs = {name: row[name].value() for name in depends}
                 return original_function(row, **kwargs)
@@ -3471,7 +3473,8 @@ class Field(object):
             assert runtime_filter is None
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
-        assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
+        assert runtime_arguments is None or isinstance(runtime_arguments, Computer), \
+            runtime_arguments
         assert (selection_type is None or
                 selection_type in public_attributes(SelectionType)), selection_type
         assert orientation is None or orientation in public_attributes(Orientation), orientation
@@ -3667,10 +3670,10 @@ class Field(object):
         kwargs = dict(self._kwargs, **field._kwargs)
         if 'type' in self._kwargs and 'type' in field._kwargs:
             t1 = self._kwargs['type']
-            if type(t1) == type(pytis.data.Type):
+            if not isinstance(t1, pytis.data.Type):
                 t1 = t1()
             t2 = field._kwargs['type']
-            if type(t2) == type(pytis.data.Type):
+            if not isinstance(t2, pytis.data.Type):
                 t2 = t2()
             kwargs['type'] = t1.clone(t2)
         new_field = Field(**kwargs)
@@ -3884,7 +3887,7 @@ class Field(object):
             # to inner type kwargs.  There is another similar hack in Field.clone()
             # which works for the case that types are instances (not classes).
             inner_type = kwargs.pop('inner_type')
-            if type(inner_type) == type(pytis.data.Type):
+            if not isinstance(inner_type, pytis.data.Type):
                 kwargs = {'inner_type': inner_type(**kwargs)}
         return kwargs
 
@@ -4368,6 +4371,7 @@ class FileAttachmentStorage(AttachmentStorage):
                     path = os.path.join(self._directory, subdir, filename)
                     if os.path.exists(path):
                         os.remove(path)
+
 
 class HttpAttachmentStorage(AttachmentStorage):
     """Remote AttachmentStorage implementation storing files through HTTP.
@@ -4967,6 +4971,7 @@ class Application(SpecificationBase):
         import pytis.form
         return pytis.form.built_in_status_fields()
 
+
 class _SpecificationMetaclass(type):
 
     def __init__(cls, clsname, bases, clsdict):
@@ -5185,6 +5190,7 @@ class Specification(SpecificationBase):
                 if f.id() == id_:
                     return f
             raise KeyError(id_)
+
         def set(self, id_, field):
             """Replace field with id 'id_' by 'field' in the field list.
 
@@ -5201,10 +5207,12 @@ class Specification(SpecificationBase):
                     self[i] = field
                     return field
             raise KeyError(id_)
+
         def _modify(self, field_ids, **properties):
             for id_ in field_ids:
                 property_field = Field(id_, **properties)
                 self.set(id_, self.get(id_).clone(property_field))
+
         def modify(self, field_id, **properties):
             """Modify properties of the field identified by 'field_id'.
 
@@ -5218,6 +5226,7 @@ class Specification(SpecificationBase):
 
             """
             self._modify((field_id,), **properties)
+
         def modify_many(self, field_ids, **properties):
             """Modify properties of the fields identified by 'field_ids'.
 
@@ -5232,6 +5241,7 @@ class Specification(SpecificationBase):
 
             """
             self._modify(field_ids, **properties)
+
         def modify_except(self, field_ids, **properties):
             """Modify properties of all fields except of those with 'field_ids'.
 
@@ -5248,6 +5258,7 @@ class Specification(SpecificationBase):
             """
             field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
             self._modify(field_ids_to_modify, **properties)
+
         def set_property(self, property_, **settings):
             """Set field 'property' of several fields to given values.
 
@@ -5262,6 +5273,7 @@ class Specification(SpecificationBase):
             """
             for id_, value in settings.items():
                 self._modify((id_,), **{property_: value})
+
         def exclude(self, field_ids):
             """Remove fields with ids in 'field_ids' from the list.
 
@@ -5276,6 +5288,7 @@ class Specification(SpecificationBase):
             fields_to_remove = [self.get(id_) for id_ in field_ids]
             for f in fields_to_remove:
                 self.remove(f)
+
         def __add__(self, other):
             return self.__class__(list(self) + list(other))
 
@@ -5380,7 +5393,7 @@ class Specification(SpecificationBase):
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
                               'add_specification_by_db_spec_name', 'create_from_kwargs',
-                              'ro_select', 'oid', 'data', # for backwards compatibility
+                              'ro_select', 'oid', 'data',  # for backwards compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
@@ -5409,7 +5422,7 @@ class Specification(SpecificationBase):
                 if kwargs:
                     ftype = field.type()
                     if ftype is not None:
-                        if type(ftype) == type(pytis.data.Type):
+                        if not isinstance(ftype, pytis.data.Type):
                             if issubclass(ftype, pytis.data.Array):
                                 ftype = ftype(inner_type=kwargs['inner_type'])
                             else:
@@ -5540,7 +5553,7 @@ class Specification(SpecificationBase):
         else:
             def type_(f):
                 t = f.type() or pytis.data.String
-                if type(t) == type(pytis.data.Type):
+                if not isinstance(t, pytis.data.Type):
                     t = t()
                 type_kwargs = f.type_kwargs()
                 if type_kwargs:
@@ -5748,8 +5761,10 @@ class Specification(SpecificationBase):
                     # in Specification.__init__ work.  It actually makes sure that the
                     # condition len(argument_names(value)) == 0 returns the same results
                     # for 'value' and for 'function'.
-                    value = lambda self, x, *args, **kwargs: function(x, *args, **kwargs)
+                    def value(self, x, *args, **kwargs):
+                        return function(x, *args, **kwargs)
                 else:
-                    value = lambda self, *args, **kwargs: function(*args, **kwargs)
+                    def value(self, *args, **kwargs):
+                        return function(*args, **kwargs)
             setattr(Spec, key, value)
         return Spec(resolver)
