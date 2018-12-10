@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Formulář s tiskovým preview a tiskem
-#
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,9 +40,9 @@ from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, w
 import pytis.output
 import pytis.util
 import pytis.remote
-import config
 
 _ = pytis.util.translations('pytis-wx')
+
 
 class PostscriptException(Exception):
     """Výjimka vyvolávaná při jakékoliv chybě interpretace PS dat."""
@@ -60,7 +59,7 @@ class _Ghostscript(pytis.util.Tmpdir):
     def __init__(self, stream, zoom):
         super(_Ghostscript, self).__init__(prefix='pytisps')
         self._file_pattern = os.path.join(self._tmpdir, '%d')
-        self._number_of_pages = None, False # number-of-pages, finished
+        self._number_of_pages = None, False  # number-of-pages, finished
         self._start_gs(stream, zoom)
 
     def __del__(self):
@@ -319,6 +318,7 @@ def print_form():
     """Return proper print preview class."""
     return PrintFormExternal
 
+
 class PrintForm(Form):
     """Common ancestor of both internal and external print previewers."""
 
@@ -337,6 +337,7 @@ class PrintForm(Form):
         except UserBreakException:
             pass
         return result
+
 
 class PrintFormExternal(PrintForm, PopupForm):
 
@@ -362,6 +363,7 @@ class PrintFormExternal(PrintForm, PopupForm):
 
     def run(self, *args, **kwargs):
         file_ = self._TemporaryFile(suffix='.pdf')
+
         def previewer():
             thread.start_new_thread(self._run_viewer, (file_,))
         self._run_formatter_process(None, hook=previewer, file_=file_)

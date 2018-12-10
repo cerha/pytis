@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -810,7 +811,6 @@ class TextField(InputField):
         else:
             size = wx.DefaultSize
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
-        wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
             # Setting max length on multiline TextCtrl fields is not supported

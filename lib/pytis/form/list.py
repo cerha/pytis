@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1487,7 +1488,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             label_text = ' ' + value.export()
                             if not icon:
                                 label_text = label + label_text
-                                dc.DrawLabel(label_text, bitmap=icon, rect=label_rect, alignment=align)
+                                dc.DrawLabel(label_text, bitmap=icon, rect=label_rect,
+                                             alignment=align)
                         y += row_height
                 dc.DrawLine(x - d, y, x + width, y)
             x += width
@@ -3569,10 +3571,14 @@ class SideBrowseForm(BrowseForm):
         self._side_prefill = prefill
         self._side_search = search
         if binding_column:
-            column_condition = lambda row: pytis.data.EQ(side_binding_column, row[binding_column])
+
+            def column_condition(row):
+                return pytis.data.EQ(side_binding_column, row[binding_column])
             if condition is not None:
                 cond = condition
-                condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
+
+                def condition(row):
+                    return pytis.data.AND(column_condition(row), cond(row))
             else:
                 condition = column_condition
         self._main_form = main_form

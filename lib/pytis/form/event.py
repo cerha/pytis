@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Zpracování událostí
-#
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -55,6 +54,7 @@ import config
 
 _ = translations('pytis-wx')
 
+
 class UserBreakException(Exception):
     """Výjimka vyvolávaná při přerušení zpracování události.
 
@@ -75,6 +75,8 @@ _wx_key = None
 
 
 _in_top_level_exception = False
+
+
 def top_level_exception(message=None, einfo=None):
     """Zpracuj aktuálně vyvolanou výjimku aplikace."""
     global _in_top_level_exception
@@ -132,6 +134,7 @@ def top_level_exception(message=None, einfo=None):
                 import email.Message
                 import email.Utils
                 import smtplib
+
                 def header(value):
                     if isinstance(value, basestring):
                         try:
@@ -168,6 +171,8 @@ def top_level_exception(message=None, einfo=None):
 
 
 _last_user_event = None
+
+
 def last_user_event():
     """Vrať poslední přijatou uživatelskou událost jako instanci 'wx.Event'.
 
@@ -177,6 +182,8 @@ def last_user_event():
     return _last_user_event
 
 _last_user_event_time = None
+
+
 def last_event_age():
     """Return the age of the last user event in seconds.
 
@@ -187,6 +194,7 @@ def last_event_age():
         return -1
     else:
         return time.time() - _last_user_event_time
+
 
 def _is_user_event(event):
     # Sem nelze přidat jen tak jakoukoliv událost, protože některé uživatelské
@@ -207,6 +215,8 @@ def _is_user_event(event):
 _system_callback_lock = None
 _system_callback_thread_ident = None
 _system_callback_access_lock = thread.allocate_lock()
+
+
 def wx_callback(event_kind, handler, callback, **kwargs):
     """Obal wx callback hlídacím kódem.
 
@@ -220,6 +230,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
 
     """
     assert isinstance(callback, collections.Callable)
+
     def process_event(event, callback=callback):
         def system_callback():
             # Při zamykání atd. se využívá toho, že v existují jen dvě vlákna
@@ -297,7 +308,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
         try:
             if thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost během události
-                if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'): # TODO: ne natvr.
+                if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'):  # TODO: ne natvr.
                     _interrupted = True
                     result = True
                 elif is_user:
@@ -314,7 +325,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                 try:
                     result = callback(event)
                 finally:
-                    _interrupted = False # událost končí -> nebude co přerušit
+                    _interrupted = False  # událost končí -> nebude co přerušit
                     _current_event = None
                     _last_user_event = event
             else:
@@ -359,6 +370,7 @@ def yield_():
 
 _idle_blocked = False
 
+
 def idle_blocked():
     """Return whether idle events are blocked."""
     # We used to check for busy_cursor here as well.
@@ -366,6 +378,7 @@ def idle_blocked():
     # pytis dialogs depend on _on_idle action invocation, while the cursor is
     # set to busy, to finish their construction.
     return _idle_blocked
+
 
 def block_idle(block):
     """Block or unblock idle events.
@@ -387,6 +400,8 @@ def block_idle(block):
 
 
 _stop_check_running = False
+
+
 def _stop_check(start_time, confirmed, command_number):
     global _stop_check_running
     if _stop_check_running:
@@ -421,6 +436,7 @@ def _stop_check(start_time, confirmed, command_number):
         yield_()
     return confirmed
 
+
 def standard_stop_check_function():
     """Return standard stop check function.
 
@@ -431,6 +447,7 @@ def standard_stop_check_function():
     """
     confirmed = [False]
     __, command_number = pytis.form.CommandHandler.command_running()
+
     def maybe_stop_check(start_time):
         confirmed[0] = _stop_check(start_time, confirmed[0], command_number)
     return maybe_stop_check
@@ -440,6 +457,7 @@ def interrupt_watcher():
     """Spusť vlákno sledující wx události během zpracování jiné wx události."""
     lock = thread.allocate_lock()
     lock.acquire()
+
     def watcher():
         interrupt_init(_watcher_thread_ident_=thread.get_ident())
         lock.release()
@@ -456,6 +474,7 @@ def interrupt_watcher():
     # Čekání na dokončení inicializace watcheru
     lock.acquire()
     lock.release()
+
 
 def interrupt_init(_main_thread_ident_=thread.get_ident(),
                    _watcher_thread_ident_=None):

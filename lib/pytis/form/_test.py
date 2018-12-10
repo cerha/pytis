@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2005 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,18 +19,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import locale
-
-from pytis.util import *
-import wx
+import unittest
 import pytis.util.test
 
 locale.setlocale(locale.LC_NUMERIC, 'C')
 
 tests = pytis.util.test.TestSuite()
-
-#================#
-# list.py        #
-#================#
 
 # Co je potřeba (bohužel ručně, protože tvorba testů je soustavně
 # ignorována :-((((((( ) otestovat po změnách v inline editaci:

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014, 2016 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,6 +99,7 @@ _FIELDSPEC_KWARGS = {
     'row_highlight_width': dict(width=2, slider=True),
 }
 
+
 def config_menu_items(hotkeys={}):
     """Vrať seznam položek menu pro otevření konfiguračních formulářů.
 
@@ -117,6 +119,7 @@ def config_menu_items(hotkeys={}):
              for name, layout in _LAYOUT]
     return tuple(items)
 
+
 def configurable_options():
     """Vrať seznam všech voleb nastavitelných pomocí konfiguračních formulářů.
 
@@ -127,6 +130,7 @@ def configurable_options():
     for id, layout in _LAYOUT:
         options = options + tuple(layout.order())
     return options
+
 
 class _ConfigData(pytis.data.RestrictedData):
     """Falešná datová třída."""

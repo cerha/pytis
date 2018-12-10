@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014, 2018 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,6 +43,7 @@ from screen import color2wx, get_icon
 
 import config
 
+
 class DataTable(object):
     # Tato třída není až tak triviální, jak bychom si možná přáli.
     # Požadavky na ni jsou následující:
@@ -75,6 +77,7 @@ class DataTable(object):
             assert data_row is None or isinstance(data_row, pytis.data.Row)
             DataTable._CurrentRow.__init__(self, row, record)
             self.orig_row = copy.copy(data_row)
+
         def update(self, colid, value):
             self.the_row[colid] = value
 
@@ -89,8 +92,10 @@ class DataTable(object):
             self._size = size
             self._start_row = 0
             self._cache = self._allocate(size)
+
         def _allocate(self, size):
             return map(lambda __: None, range(size))
+
         def __getitem__(self, row):
             try:
                 index = row - self._start_row
@@ -100,6 +105,7 @@ class DataTable(object):
                     raise IndexError()
             except IndexError:
                 return None
+
         def __setitem__(self, row, the_row):
             start = self._start_row
             try:
@@ -213,6 +219,7 @@ class DataTable(object):
 
     def _retrieve_row(self, row, require=True):
         data = self._data
+
         def fetch(row, direction=pytis.data.FORWARD):
             result = self._data.fetchone(direction=direction)
             if result is None:
@@ -821,6 +828,7 @@ class CustomCellRenderer(wx.grid.GridCellRenderer):
             self._draw_value(grid.GetCellValue(row, col), dc, rect, attr.GetAlignment()[0])
         finally:
             dc.DestroyClippingRegion()
+
 
 class CustomBooleanCellRenderer(CustomCellRenderer):
 

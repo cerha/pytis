@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013, 2014, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,6 +53,7 @@ import pytis.form
 import pytis.presentation
 
 from pytis.presentation import Profile
+
 
 class UserSetttingsManager(object):
     """Common base class for all user settings managers."""
@@ -584,8 +586,8 @@ class FormProfileManager(UserSetttingsManager):
         """Generate a new unique user profile id based on given list of existing profiles."""
         prefix = self.USER_PROFILE_PREFIX
         user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
-                                if profile.id().startswith(prefix)
-                                and profile.id()[len(prefix):].isdigit()]
+                                if (profile.id().startswith(prefix) and
+                                    profile.id()[len(prefix):].isdigit())]
         return prefix + str(max(user_profile_numbers + [0]) + 1)
 
 

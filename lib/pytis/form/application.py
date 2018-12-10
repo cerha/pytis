@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -791,8 +792,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                                pytis.form.AggregationForm,
                                                pytis.form.AggregationDualForm))]
                 self._set_state_param(self._STATE_STARTUP_FORMS, tuple(forms))
-            #else:
-            #    self._unset_state_param(self._STATE_STARTUP_FORMS)
+            # else:
+            #     self._unset_state_param(self._STATE_STARTUP_FORMS)
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES,
                                   tuple(self._recent_directories.items()))
@@ -1379,6 +1380,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if pytis.form.run_dialog(pytis.form.Question, msg):
                     self.COMMAND_EXIT.invoke()
 
+
 class DbActionLogger(object):
 
     """Log user actions into the database."""
@@ -1685,6 +1687,7 @@ def top_window(**kwargs):
     if _application is not None:
         return _application.top_window(**kwargs)
 
+
 def recent_forms_menu():
     """Vrať menu posledně otevřených formulářů jako instanci 'pytis.form.Menu'.
 
@@ -1729,15 +1732,18 @@ def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
     return _application.log(spec_name, form_name, action, info=info)
 
+
 def frame_title(title):
     """Set title of the main application frame"""
     _application._frame.SetTitle(_application._frame_title(title))
+
 
 def close_forms():
     """Close all currently opened forms."""
     return _application._close_forms()
 
 # Ostatní funkce.
+
 
 def set_status(id, text, log_=True, **kwargs):
     """Set status bar field 'id' to display given 'text'."""
@@ -1746,9 +1752,11 @@ def set_status(id, text, log_=True, **kwargs):
             log(DEBUG, u"Status text updated:", (id, text))
     return _application._statusbar.set_status(id, text, **kwargs)
 
+
 def refresh_status(id=None):
     """Refresh given status bar field or all fields if 'id' is None."""
     return _application._statusbar.refresh(id)
+
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
@@ -2091,6 +2099,7 @@ def password_dialog(title=_("Enter your password"), message=None):
     else:
         return None
 
+
 def custom_command(name):
     return _application.custom_command(name)
 
@@ -2165,17 +2174,21 @@ def built_in_status_fields():
 # is made public in future (which seems most desirable), these
 # functions can be turned into its methods.
 
+
 def remote_connection_initially_available():
     """Return True if the remote connection was available at application startup."""
     return pytis.remote.RPCInfo.remote_connection_initially_available
+
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""
     return _application._recent_directories.get(key)
 
+
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
     _application._recent_directories[key] = directory
+
 
 def menu():
     """Return the application menu structure as a sequence of 'Menu' instances."""

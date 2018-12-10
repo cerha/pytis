@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Prvky uživatelského rozhraní související s vyhledáváním
-#
-# Copyright (C) 2001-2013, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,6 +37,7 @@ from dialog import Error, GenericDialog
 from screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl
 
 _ = pytis.util.translations('pytis-wx')
+
 
 class SFSColumn(object):
     """Column specification for dialog selectors."""
@@ -77,6 +77,7 @@ class SFSDialog(GenericDialog):
     _TITLE = None
     _ESCAPE_BUTTON = _("Close")
     _BUTTONS = (_ESCAPE_BUTTON,)
+
     def __init__(self, parent, columns, col=None):
         """Initialize the dialog.
 
@@ -231,7 +232,7 @@ class SFDialog(SFSDialog):
     _WM_OPERATORS = {pytis.data.EQ: pytis.data.WM,
                      pytis.data.NE: pytis.data.NW}
     _LABELS = {pytis.data.EQ: '=',
-               pytis.data.NE: '=/=', #u'\u2260',
+               pytis.data.NE: '=/=',  # u'\u2260',
                pytis.data.LE: '=<',
                pytis.data.GE: '>=',
                pytis.data.LT: '<',
@@ -255,10 +256,10 @@ class SFDialog(SFSDialog):
 
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):
-            msg = _("Error in condition no. %d: %s",i + 1, msg)
+            msg = _("Error in condition no. %d: %s", i + 1, msg)
             pytis.form.run_dialog(Error, msg)
-            #ctrl.SetFocus()
-            #self.focus()
+            # ctrl.SetFocus()
+            # self.focus()
             super(SFDialog.SFConditionError, self).__init__(msg)
 
     def __init__(self, parent, columns, row, condition=None, **kwargs):
@@ -334,13 +335,16 @@ class SFDialog(SFSDialog):
         choice, spin, label, field, button = self._create_choice, self._create_spin_ctrl, \
             self._create_label, self._create_text_ctrl, self._create_button
         # Construct the ui controls based on the current condition.
+
         def create_logical_operator(i, n, operator, level):
             return (
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
                        selected=operator,
                        tooltip=_("Choose the logical operator to join with previous conditions.")),
                 label(_("Operator weight:")),
-                spin(level, length=4, tooltip=_("Choose the level of precedence of the logical operator.")))
+                spin(level, length=4,
+                     tooltip=_("Choose the level of precedence of the logical operator.")))
+
         def create_relational_operator(i, n, operator, col1, col2, value):
             return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
@@ -360,6 +364,7 @@ class SFDialog(SFSDialog):
                        _("Clear the condition.")),
                 button(_("Remove"), lambda e: self._on_remove(i),
                        _("Remove this condition."), enabled=n > 1))
+
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
                 op_label = _(u"NOT IN")
@@ -377,14 +382,16 @@ class SFDialog(SFSDialog):
             return (ctrl,
                     button(_("Remove"), lambda e: self._on_remove(i),
                            _("Remove this condition."), enabled=n > 1))
+
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
-        #print "===", self._strop(self._condition or empty)
+        # print "===", self._strop(self._condition or empty)
         try:
             operators = self._decompose_condition(self._condition or empty)
         except Exception as e:
             pytis.form.run_dialog(Warning,
-                                  _("Failed to decompose the conditional expression:") + " " + str(e))
+                                  _("Failed to decompose the conditional expression:") + " " +
+                                  str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
             if len(items) == 1:
@@ -417,11 +424,13 @@ class SFDialog(SFSDialog):
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
+
         def logical_operator(i):
             wop, wlabel, wweight = self._controls[i]
             op = self._LOGICAL_OPERATORS[wop.GetSelection()]
             weight = wweight.GetValue()
             return (op, weight)
+
         def relational_operator(i):
             wcol1, wop, wcol2, wval, b1, b2, b3 = self._controls[i]
             col1 = self._columns[wcol1.GetSelection()]
@@ -458,9 +467,11 @@ class SFDialog(SFSDialog):
                     raise self.SFConditionError(i, wval, err.message())
                 arg2 = value
             return op(col1.id(), arg2)
+
         def in_operator(i):
             ctrl = self._controls[i][0]
             return ctrl._pytis_in_operator
+
         def apply_logical_operator(operator, operators, level):
             # Apply the logical operators at given level to its operands and return the reduced
             # list of top-level operators.
@@ -507,7 +518,7 @@ class SFDialog(SFSDialog):
             operators = apply_logical_operator(pytis.data.AND, operators, weight)
             if len(operators) > 1:
                 operators = apply_logical_operator(pytis.data.OR, operators, weight)
-        #print "***", self._strop(operators[0])
+        # print "***", self._strop(operators[0])
         assert len(operators) == 1
         return operators[0]
 
