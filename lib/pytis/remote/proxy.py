@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -26,8 +27,10 @@ import config
 
 logging_level = logging.INFO
 
+
 class ProxyException(Exception):
     pass
+
 
 class ProxyService(rpyc.Service):
 
@@ -65,6 +68,7 @@ class ProxyService(rpyc.Service):
             remote_method = getattr(connection.root, request)
         return remote_method(*args, **kwargs)
 
+
 class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
 
     def _get_logger(self):
@@ -73,6 +77,7 @@ class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
         handler = logging.StreamHandler()
         logger.addHandler(handler)
         return logger
+
 
 def run_proxy():
     t = ProxyThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port,

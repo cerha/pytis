@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@ import pytis.util
 import config
 
 _ = pytis.util.translations('pytis-wx')
+
 
 def data_object(spec):
     """Vrať sestavený datový objekt na základě názvu specifikace.
@@ -284,6 +286,7 @@ def save_field(field, spec_name, column, condition):
             data.update_many(condition, row)
     return save
 
+
 def safe_commit(transaction, msg=None):
     """Commit transaction and handle possible timeout errors.
 
@@ -301,6 +304,7 @@ def safe_commit(transaction, msg=None):
     except pytis.data.DBSystemException:
         pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
         return False
+
 
 def safe_rollback(transaction, msg=None):
     """Rollback transaction and handle possible timeout errors.

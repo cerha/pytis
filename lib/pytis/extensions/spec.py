@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -69,17 +70,20 @@ FieldStyle = Style
 
 # Funkce pro zjednodušení vytváření položek menu.
 
+
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_FORM
     args = dict(form_class=form_class, name=name, **kwargs)
     help = _('Open %s "%s"', form_class.DESCR or _("form"), title.replace('&', ''))
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
+
 def new_record_mitem(title, name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
     args = dict(kwargs, name=name)
     help = _('Open insertion form "%s"', title)
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
@@ -102,20 +106,30 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
 
 nr = new_record_mitem
 rp = run_procedure_mitem
+
+
 def bf(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey, **kwargs)
+
+
 def df(title, name, hotkey=None, **kwargs):
-    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey,
-                          **kwargs)
+    return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey, **kwargs)
+
+
 def mf(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.MultiBrowseDualForm, hotkey, **kwargs)
+
+
 def sf(title, name, hotkey=None, **kwargs):
     return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
+
+
 def ddf(title, name, hotkey=None):
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
+
+
 def ef(title, name, hotkey=None, **kwargs):
-    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey,
-                          **kwargs)
+    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey, **kwargs)
 
 
 # Další funkce pro zjednodušení často používaných konstrukcí
@@ -133,6 +147,7 @@ def get_value(value, default=None):
     else:
         return value.value()
 
+
 def format_value(value, default=None):
     """Return the formatted (string) value of given 'pytis.data.Value' instance.
 
@@ -145,6 +160,7 @@ def format_value(value, default=None):
         return default
     else:
         return value.export()
+
 
 def rp_handler(spec_name, proc_name, *args, **kwargs):
     """Vrať handler uživatelské akce, který spustí proceduru s danými argumenty.
@@ -229,13 +245,14 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                filter=filter,
                                transaction=transaction)
 
+
 def make_presented_row(specname, prefill={}):
-    import config
     data = pytis.extensions.data_create(specname)
     resolver = config.resolver
     spec = resolver.get(specname, 'view_spec')
     prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
     return prow
+
 
 def run_any_form():
     form_types = (
@@ -395,6 +412,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
             return None
     else:
         return "No print data available."
+
 
 class ReusableSpec:
     def __init__(self, resolver):

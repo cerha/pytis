@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@ from email.MIMEText import MIMEText
 from email.Header import Header
 
 _ = pytis.util.translations('pytis-wx')
+
 
 class SimpleEmail(object):
     """Třída pro vytvoření a odeslaní jednoduchého mailu."""
@@ -139,8 +141,8 @@ class SimpleEmail(object):
         self.msg['Date'] = date
         if self.replyto:
             self.msg['Reply-to'] = get_header(self.replyto)
-            #replyto = get_header(self.replyto)
-            #self.msg.add_header('reply-to', replyto)
+            # replyto = get_header(self.replyto)
+            # self.msg.add_header('reply-to', replyto)
 
     def get_content_text(self, data, html=False, charset=None):
         if not charset:
@@ -197,6 +199,7 @@ class SimpleEmail(object):
         except Exception:
             pass
         return success
+
 
 class GPGEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní jednoduchého kryptovaného mailu."""
@@ -324,6 +327,7 @@ class GPGEmail(SimpleEmail):
         # Přidání částí do main
         self.msg.attach(firstSubMsg)
         self.msg.attach(secondSubMsg)
+
 
 class ComplexEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní mailu s přílohami."""

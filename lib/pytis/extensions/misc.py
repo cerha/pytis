@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,6 +91,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
     except:
         print 'ERROR: e-mail se nepodařilo odeslat'
         return 1
+
 
 # TODO: argument sendmail_command should be removed when all applications reflect this change
 def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
@@ -191,6 +193,7 @@ class UserDefaultPrinter(object):
     def __repr__(self):
         return "<UserDefaultPrinter (%s)>" % repr(self.get())
 
+
 def set_default_printer():
     try:
         import cups
@@ -230,6 +233,7 @@ cmd_set_default_printer = (pytis.form.Application.COMMAND_HANDLED_ACTION,
 
 # Additional constraints
 
+
 def constraints_email(email):
     """Ověř platnost zápisu e-mailové adresy.
 
@@ -244,6 +248,7 @@ def constraints_email(email):
     if mask.match(email.strip()) is None:
         return "Špatný tvar emailu " + email.strip() + " !"
     return None
+
 
 def constraints_email_many(emails):
     """Ověř platnost zápisu seznamu e=mailových adres oddělených čárkami.
@@ -263,36 +268,45 @@ def constraints_email_many(emails):
         return None
     return '\n'.join(not_match)
 
+
 # Některé často používané konfigurační parametry.
+
 
 def session_date(transaction=None):
     """Vrať vnitřní hodnotu nastaveného pracovního datumu."""
     return session_date_value().value()
+
 
 def session_date_value(transaction=None):
     """Vrať nastavené pracovní datum přihlášeného uživatele."""
     from pytis.extensions import cfg_param
     return cfg_param('datum', 'Nastaveni.BvUsersCfg')
 
+
 def start_date(transaction=None):
     """Vrať vnitřní hodnotu nastaveného 'datumu od'."""
     return start_date_value().value()
+
 
 def start_date_value(transaction=None):
     """Vrať nastavené 'datum od' přihlášeného uživatele."""
     from pytis.extensions import cfg_param
     return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
 
+
 def end_date(transaction=None):
     """Vrať vnitřní hodnotu nastaveného 'datumu do'."""
     return end_date_value().value()
+
 
 def end_date_value(transaction=None):
     """Vrať nastavené 'datum do' přihlášeného uživatele."""
     from pytis.extensions import cfg_param
     return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
 
+
 # Database encryption utilities
+
 
 def crypto_key_table(connection_data):
     """Return data object corresponding to the table of crypto keys.
@@ -306,6 +320,7 @@ def crypto_key_table(connection_data):
     return pytis.data.dbtable('e_pytis_crypto_keys',
                               ('key_id', 'name', 'username', 'key', 'fresh',),
                               connection_data)
+
 
 def crypto_admin_key(area, admin_user, connection_data):
     """Return crypto admin key for the given user and area.
@@ -329,6 +344,7 @@ def crypto_admin_key(area, admin_user, connection_data):
     row = data.fetchone()
     return row['key_id'], row['key']
 
+
 def check_crypto_password(key, password, connection_data):
     """Return true iff the given key and password match.
 
@@ -343,6 +359,7 @@ def check_crypto_password(key, password, connection_data):
     function = pytis.data.DBFunctionDefault('pytis_crypto_extract_key', connection_data)
     row = pytis.data.Row((('encrypted', key,), ('psw', pytis.data.sval(password),),))
     return True if function.call(row)[0][0].value() else False
+
 
 def add_crypto_user(area, user, admin_user, admin_password, admin_address, connection_data,
                     transaction=None, user_password=None):

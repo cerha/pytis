@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2012-2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -35,7 +36,7 @@ class SQLException(Exception):
 
 
 class SQLFlexibleValue(object):
-    
+
     def __init__(self, name, default=None, environment=None):
         assert isinstance(name, basestring), name
         assert isinstance(environment, (basestring, types.NoneType,)), environment
@@ -65,6 +66,7 @@ default_user = SQLFlexibleValue('default_user', environment='GENSQL_DEFAULT_USER
 
 _name_mapping = {}
 
+
 class _BasicMetaclass(type):
     def __new__(metaclass_, name, bases, dict_):
         class_ = type.__new__(metaclass_, name, bases, dict_)
@@ -75,6 +77,7 @@ class _BasicMetaclass(type):
             raise SQLException("Duplicate object name", (class_, _name_mapping[name],))
         _name_mapping[name] = class_
         return class_
+
 
 class SQLDatabaseSpecification(object):
     __metaclass__ = _BasicMetaclass
@@ -91,21 +94,23 @@ class SQLDatabaseSpecification(object):
         assert isinstance(self.name, basestring), self.name
         assert isinstance(self.schemas, tuple), self.schemas
         assert isinstance(self.search_path, tuple), self.search_path
-        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.schemas], self.schemas)
-        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.search_path], self.search_path)
+        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.schemas],
+                   self.schemas)
+        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.search_path],
+                   self.search_path)
 
     def sql_create_all(self):
         commands = ()
         for schema in self.search_path:
             commands = commands + self.sql_create(schema)
         return commands
-        
+
     def sql_update_all(self, cursor):
         commands = ()
         for schema in self.search_path:
             commands = commands + self.sql_update(schema, cursor)
         return commands
-        
+
     def sql_create(self, schema):
         return (self._sql_search_path(schema) +
                 self._sql_create(schema))
@@ -122,7 +127,7 @@ class SQLDatabaseSpecification(object):
     def dependencies(self):
         return set([self._sql_flexible_value(s) for s in self.schemas if s])
 
-    def _sql_flexible_value(self, value ):
+    def _sql_flexible_value(self, value):
         if isinstance(value, SQLFlexibleValue):
             value = value.value()
         return value
@@ -152,7 +157,7 @@ class SQLDatabaseSpecification(object):
         if schema:
             name = '%s.%s' % (self._escape(schema), name,)
         return name
-        
+
     def _sql_id_escape(self, identifier):
         identifier = self._sql_flexible_value(identifier)
         return '"%s"' % (identifier.replace('"', '""'),)
@@ -175,10 +180,10 @@ class SQLDatabaseSpecification(object):
         else:
             output = str(value)
         return output
-    
+
 
 class SQLPredefined(SQLDatabaseSpecification):
-    
+
     def sql_create(self, schema):
         if self._sql_predefined():
             return ()
@@ -211,7 +216,7 @@ class SQLDocumented(SQLDatabaseSpecification):
 
 
 class SQLProprietary(SQLDocumented):
-    
+
     owner = None
     rights = (('all', (default_user,),),)
 
@@ -242,13 +247,16 @@ class SQLProprietary(SQLDocumented):
             commands = ("ALTER %s SET OWNER TO %s" % (self._sql_identification(schema),
                                                       self._sql_id_escape(self.owner),))
         return commands
-    
+
     def _sql_create_grant(self, schema):
         commands = ()
         for right, users in self.rights:
             for user in users:
-                commands = commands + (("GRANT %s on %s to %s" % (right, self._sql_identification(schema),
-                                                                  self._sql_id_escape(user),)),)
+                commands = commands + (("GRANT %s on %s to %s" % (
+                    right,
+                    self._sql_identification(schema),
+                    self._sql_id_escape(user),
+                )),)
         return commands
 
 
@@ -258,7 +266,7 @@ class SQLSchema(SQLProprietary):
 
     _SQL_OBJECT = 'SCHEMA'
     _AVAILABLE_RIGHTS = ('all', 'create', 'usage',)
-        
+
     def _sql_create(self, schema):
         if self.owner is None:
             owner = ''
@@ -266,6 +274,7 @@ class SQLSchema(SQLProprietary):
             owner = " AUTHORIZATION %s" % (self._pg_escape(self.owner),)
         command = "CREATE SCHEMA %s%s" % (self._pg_escape(self.name), owner,)
         return (command,)
+
 
 class Public(SQLPredefined, SQLSchema):
     name = 'public'
@@ -311,7 +320,7 @@ class SQLIndex(SQLDocumented):
     method = None
 
     _SQL_OBJECT = 'INDEX'
-    
+
     def __init__(self):
         super(SQLIndex, self).__init__()
         assert self.method in (None, 'btree', 'hash', 'gist', 'gin',), self.method
@@ -339,7 +348,7 @@ class SQLIndex(SQLDocumented):
 
 
 class Column(pytis.data.ColumnSpec):
-    
+
     def __init__(self, id, type, doc=None, old_ids=(), name=None, unique=False, check=None,
                  default=None, references=None, key=False, index=False):
         super(Column, self).__init__(id, type)
@@ -413,6 +422,7 @@ class Column(pytis.data.ColumnSpec):
             new._key = key
         return new
 
+
 class PrimaryColumn(Column):
 
     def __init__(self, id, type, doc=None, old_ids=(), name=None, check=None,
@@ -429,13 +439,15 @@ class _AttributeDictionary(dict):
         except KeyError:
             raise AttributeError(name)
 
+
 class _TabularMetaclass(_BasicMetaclass):
     def __new__(metaclass_, name, bases, dict_):
         class_ = _BasicMetaclass.__new__(metaclass_, name, bases, dict_)
         columns = [(c.id(), ColumnInfo(id=c, table=class_),) for c in class_.columns]
         class_.c = _AttributeDictionary(columns)
         return class_
-    
+
+
 class SQLTabular(SQLDatabaseSpecification):
     __metaclass__ = _TabularMetaclass
 
@@ -462,7 +474,8 @@ class SQLTabular(SQLDatabaseSpecification):
                 self._sql_def_outro(schema),)
 
     def _sql_def_intro(self, schema):
-        return "CREATE %s %s %s" % (self._SQL_OBJECT, self._sql_name(schema), self._SQL_CREATE_FILLER,)
+        return "CREATE %s %s %s" % (self._SQL_OBJECT, self._sql_name(schema),
+                                    self._SQL_CREATE_FILLER,)
 
     def _sql_def_outro(self, schema):
         return ""
@@ -533,12 +546,13 @@ class SQLTabular(SQLDatabaseSpecification):
     @classmethod
     def columns_except(class_, *exceptions):
         return [c for c in class_().columns if c not in exceptions]
-    
+
 
 class ColumnInfo(pytis.util.Structure):
     _attributes = (pytis.util.Attribute('id', type=basestring),
                    pytis.util.Attribute('table', type=SQLTabular),
                    )
+
 
 class Reference(pytis.util.Structure):
     _attributes = (pytis.util.Attribute('column', type=ColumnInfo),
@@ -553,7 +567,7 @@ class Reference(pytis.util.Structure):
 
 
 class _TableMetaclass(_TabularMetaclass):
-    
+
     def __new__(metaclass_, name, bases, dict_):
         class_ = _TabularMetaclass.__new__(metaclass_, name, bases, dict_)
         class_._indexes = []
@@ -569,9 +583,10 @@ class _TableMetaclass(_TabularMetaclass):
                 class_._indexes.append(Index)
         return class_
 
+
 class SQLTable(SQLTabular):
     __metaclass__ = _TableMetaclass
-    
+
     inherits = ()
     tablespace = None
     init_columns = None
@@ -585,7 +600,8 @@ class SQLTable(SQLTabular):
 
     def __init__(self):
         super(SQLTable, self).__init__()
-        assert isinstance(self.tablespace, (types.NoneType, basestring, SQLFlexibleValue,)), self.tablespace
+        assert isinstance(self.tablespace, (types.NoneType, basestring, SQLFlexibleValue,)), \
+            self.tablespace
         assert isinstance(self.inherits, tuple)
         if __debug__:
             for i in self.inherits:
@@ -622,7 +638,8 @@ class SQLTable(SQLTabular):
     def dependencies(self):
         dependencies = super(SQLTable, self).dependencies()
         dependencies = dependencies.union(set(self.inherits))
-        dependencies = dependencies.union(set([c.references()[0] for c in self.columns if c.references()]))
+        dependencies = dependencies.union(set([c.references()[0]
+                                               for c in self.columns if c.references()]))
         return dependencies
 
     def key_column(self):
@@ -645,7 +662,7 @@ class SQLTable(SQLTabular):
                 commands.append("INSERT INTO %s (%s) VALUES (%s)" %
                                 (table_name, columns, values,))
         return commands
-    
+
     def _sql_def_outro(self, schema):
         outro = "%s OIDS" % ("WITH" if self.with_oids else "WITHOUT",)
         if self.inherits:
@@ -679,7 +696,7 @@ class SQLTable(SQLTabular):
             if reference.delete():
                 sql += " ON DELETE %s" % (reference.delete(),)
         return sql
-    
+
     def _sql_def_extra_columns(self):
         extra = []
         for unique in self.unique:
@@ -694,31 +711,34 @@ class SQLView(SQLTabular):
     # columns = (...) -- table column, view column, function column, direct value
     #  it may be a column directly, or a named column created from something
 
-    condition = None # pytis like condition, combined with (outer) joins as "pytis condition macros"
+    # pytis like condition, combined with (outer) joins as "pytis condition macros"
+    condition = None
 
     # how about schemas (of inserted tables etc.)?
 
-    insert = None # or a sequence of SQLTable's or a sequence of columns
+    insert = None  # or a sequence of SQLTable's or a sequence of columns
     update = None
     delete = None
 
-    # class ...(SQLRule): ... 
+    # class ...(SQLRule): ...
 
     def dependencies(self):
         dependencies = super(SQLView, self).dependencies()
         dependencies = dependencies.union(set(self.inherits))
-        dependencies = dependencies.union(set([c.references()[0] for c in self.columns if c.references()]))
+        dependencies = dependencies.union(set([c.references()[0]
+                                               for c in self.columns if c.references()]))
         return dependencies
 
+
 class SQLSet(SQLTabular):
-    
+
     kind = 'union'
     tables = ()
     # ...
 
 
 class SQLType(SQLTabular):
-    
+
     _SQL_OBJECT = 'TYPE'
     _AVAILABLE_RIGHTS = ()
 
@@ -744,7 +764,9 @@ class SQLFunctional(SQLTabular):
         assert isinstance(self.setof, bool), self.setof
         assert isinstance(self.security_definer, bool), self.security_definer
         assert self.stability in ('immutable', 'stable', 'volatile',)
-        assert self.return_type is None or issubclass(self.return_type, (pytis.data.Type, SQLType, SQLTable,)), self.return_type
+        assert (self.return_type is None or
+                issubclass(self.return_type, (pytis.data.Type, SQLType, SQLTable,))), \
+            self.return_type
         assert isinstance(self.arguments, (types.NoneType, tuple,)), self.arguments
         if __debug__:
             if self.arguments:
@@ -822,12 +844,13 @@ class SQLFunctional(SQLTabular):
     def _sql_body(self):
         return ''
 
+
 class SQLSystemFunction(SQLPredefined, SQLFunctional):
     # e.g. current_date, session_user
     arguments = None
 
-class SQLFunctionalRaw(SQLFunctional):
 
+class SQLFunctionalRaw(SQLFunctional):
     body = ''
 
     def __init__(self):
@@ -838,16 +861,16 @@ class SQLFunctionalRaw(SQLFunctional):
     def _sql_body(self):
         return self.body
 
-class SQLFunction(SQLFunctionalRaw):
 
+class SQLFunction(SQLFunctionalRaw):
     _LANGUAGE = 'sql'
 
+
 class SQLPlFunction(SQLFunctionalRaw):
-    
     _LANGUAGE = 'plpgsql'
 
-class SQLPyFunction(SQLPredefined, SQLFunctional):
 
+class SQLPyFunction(SQLPredefined, SQLFunctional):
     _LANGUAGE = 'plpythonu'
     _STATICMETHOD_MATCHER = re.compile('( *)@staticmethod\r?\n?', re.MULTILINE)
 
@@ -858,17 +881,17 @@ class SQLPyFunction(SQLPredefined, SQLFunctional):
 
     def _sql_predefined(self):
         return not self.name
-    
+
     def _sql_body(self):
         arglist = string.join([c.id() for c in self.arguments], ', ')
         lines = ['def %s(%s):' % (self.name, arglist,),
-                 '    %s = args' % (arglist,)] # hard-wired indentation
+                 '    %s = args' % (arglist,)]  # hard-wired indentation
         main_lines = self._method_source_lines(self.name, 0)
         main_lines = main_lines[1:]
         prefix = 'sub_'
         for name in dir(self):
             if name.startswith(prefix):
-                function_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
+                function_lines = self._method_source_lines(name, 4)  # hard-wired forev^h^h now
                 first_line = function_lines[0]
                 i = first_line.find(prefix)
                 j = i + len(prefix)
@@ -901,7 +924,7 @@ class SQLPyFunction(SQLPredefined, SQLFunctional):
 
 
 class _TableHookMetaclass(_TabularMetaclass):
-    
+
     def __new__(metaclass_, name, bases, dict_):
         class_ = _TabularMetaclass.__new__(metaclass_, name, bases, dict_)
         table = class_.table
@@ -916,9 +939,10 @@ class _TableHookMetaclass(_TabularMetaclass):
             #     raise SQLException("Can't find associated table", (class_,))
         return class_
 
+
 class SQLEventHandler(SQLFunctional):
     __metaclass__ = _TableHookMetaclass
-    
+
     table = None
 
     def __init__(self):
@@ -927,7 +951,7 @@ class SQLEventHandler(SQLFunctional):
         # This is not required for triggers, but we don't use trigger function
         # arguments in practice and it simplifies things:
         assert len(self.arguments) == 0, self.arguments
-        
+
     def dependencies(self):
         dependencies = super(SQLEventHandler, self).dependencies()
         dependencies = dependencies.union(self.table)
@@ -935,10 +959,11 @@ class SQLEventHandler(SQLFunctional):
 
     def _sql_events(self):
         return string.join(self.events, ' or ')
-    
-    
+
+
 class Trigger(pytis.data.Type):
     pass
+
 
 class SQLTrigger(SQLEventHandler):
 
@@ -946,7 +971,7 @@ class SQLTrigger(SQLEventHandler):
     position = 'after'
     each_row = True
     events = ('insert', 'update', 'delete', 'truncate',)
-    
+
     def __init__(self):
         super(SQLTrigger, self).__init__()
         assert isinstance(self.return_type, Trigger), self.return_type
@@ -969,10 +994,10 @@ class SQLTrigger(SQLEventHandler):
         scope = 'ROW' if self.each_row else 'STATEMENT'
         return ("CREATE TRIGGER %s %s %s ON %s FOR EACH %s EXECUTE PROCEDURE %s()" %
                 (trigger_name, self.position, events, table_name, scope, function_name,),)
-        
+
     def _sql_remove_trigger(self, schema):
         trigger_name = self._trigger_name(schema)
-        table_name = self.table._sql_name(schema)    
+        table_name = self.table._sql_name(schema)
         return ("DROP TRIGGER %s ON %s" % (trigger_name, table_name,),)
 
     def _sql_create(self, schema):
@@ -1027,6 +1052,6 @@ class SQLRaw(SQLDatabaseSpecification):
         dependencies = super(SQLRaw, self).dependencies()
         dependencies = dependencies.union(self.depends_on)
         return dependencies
-        
+
     def _sql_create(self):
         return self.body

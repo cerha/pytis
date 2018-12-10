@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -88,6 +89,7 @@ import pytis.extensions
 import pytis.form
 import pytis.presentation
 from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
+
 
 class DMPMessage(Structure):
     """Message about DMP operation to be presented to the user.
@@ -229,6 +231,7 @@ class DMPObject(object):
         def __init__(self):
             self._messages = []
             self._active = True
+
         def write(self, message):
             if self._active:
                 for prefix in ('declare ', 'fetch ', 'move ', 'close ', 'select ',
@@ -238,16 +241,22 @@ class DMPObject(object):
                         break
                 else:
                     self.append('SQL: %s' % (message,))
+
         def append(self, message):
             self._messages.append(message)
+
         def clear(self):
             self._messages = []
+
         def active(self):
             return self._active
+
         def disable(self):
             self._active = False
+
         def enable(self):
             self._active = True
+
         def messages(self):
             return copy.copy(self._messages)
 
@@ -537,8 +546,10 @@ class DMPMenu(DMPObject):
                        Attribute('help', unicode),
                        Attribute('locked', bool, mutable=True),
                        )
+
         def signature(self):
             return self.action
+
         def equal(self, other):
             equal = DMPItem.equal(self, other)
             if equal is False and self.signature() == other.signature():
@@ -1086,16 +1097,18 @@ class DMPRights(DMPObject):
 
 class DMPRoles(DMPObject):
     """Representation of DMP roles and their memberships."""
-
     EXCLUDED_ROLES = ('postgres',)
+
     class Role(DMPItem):
         _attributes = (Attribute('name', basestring),
                        Attribute('description', basestring),
                        Attribute('purposeid', basestring, mutable=True),
                        Attribute('members', list, mutable=True),
                        )
+
         def signature(self):
             return self.name
+
         def equal(self, other):
             equal = DMPItem.equal(self, other)
             if equal is False and self.name == other.name:
@@ -2027,15 +2040,18 @@ def dmp_import(parameters, fake):
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_import(fake)
 
+
 def dmp_add_member(parameters, fake, member, role):
     """Add member to role."""
     configuration = DMPConfiguration(**parameters)
     return DMPRoles(configuration).dmp_add_member(fake, member, role)
 
+
 def dmp_add_action(parameters, fake, fullname, position, title):
     """Add new action from specifications to database menu."""
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_add_action(fake, fullname, position, title)
+
 
 def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
@@ -2043,9 +2059,11 @@ def dmp_update_form(parameters, fake, specification, new_fullname):
     return DMPActions(configuration).dmp_update_forms(fake, specification,
                                                       new_fullname=new_fullname)
 
+
 def dmp_rename_specification(parameters, fake, old_name, new_name):
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_rename_specification(fake, old_name, new_name)
+
 
 def dmp_reset_rights(parameters, fake, specification):
     """Restore access rights of the given specification.
@@ -2057,35 +2075,43 @@ def dmp_reset_rights(parameters, fake, specification):
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).dmp_restore(fake, [specification])
 
+
 def dmp_commit(parameters, fake):
     """Make access rights prepared in the database actually effective."""
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).commit(fake=fake)
+
 
 def dmp_delete_menu(parameters, fake, position):
     configuration = DMPConfiguration(**parameters)
     condition = pytis.data.EQ('position', pytis.data.sval(position))
     return DMPMenu(configuration).delete_menu(fake, condition, position)
 
+
 def dmp_delete_fullname(parameters, fake, fullname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).dmp_delete_name(fake, fullname, 'fullname')
+
 
 def dmp_delete_shortname(parameters, fake, shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).dmp_delete_name(fake, shortname, 'shortname')
 
+
 def dmp_convert_system_rights(parameters, fake, shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).convert_system_rights(fake, shortname)
+
 
 def dmp_change_rights(parameters, fake, requests):
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).dmp_change_rights(fake, requests)
 
+
 def dmp_copy_rights(parameters, fake, from_shortname, to_shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).dmp_copy_rights(fake, from_shortname, to_shortname)
+
 
 def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)

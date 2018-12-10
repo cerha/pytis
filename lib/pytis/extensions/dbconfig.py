@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -124,6 +125,7 @@ class DBConfig(object):
 
     def items(self):
         return tuple([(key, self[key]) for key in self._row.keys()])
+
 
 def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, condition=None,
               transaction=None):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2009, 2010, 2011, 2013, 2015 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2006-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +27,7 @@ import pytis.presentation
 import pytis.util
 import config
 
+
 def get_form_defs(resolver, messages=None):
     """Return sequence of names of all public form specifications in the application.
 
@@ -50,6 +52,7 @@ def get_form_defs(resolver, messages=None):
             add_message(messages, DMPMessage.NOTE_MESSAGE,
                         "Private specification, ignored", (name,))
     return specification_names
+
 
 def get_menu_forms():
     """Return sequence of all forms present in application menu as tuples (form_class, specname).
@@ -78,11 +81,12 @@ def get_menu_forms():
             menus = appl.menu()
         forms = [(item.args()['form_class'], item.args()['name'])
                  for item in flatten_menus(menus, [])
-                 if (isinstance(item, pytis.form.MItem)
-                     and item.command() == pytis.form.Application.COMMAND_RUN_FORM
-                     and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
+                 if (isinstance(item, pytis.form.MItem) and
+                     item.command() == pytis.form.Application.COMMAND_RUN_FORM and
+                     not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
     else:
         forms = []
+
         def get_values(row):
             return row['shortname'].value(), row['fullname'].value()
         for shortname, fullname in data.select_map(get_values):
@@ -92,11 +96,13 @@ def get_menu_forms():
                 forms.append((formclass, shortname[5:]))
     return forms
 
+
 def get_menu_defs():
     """Return sequence of names of all specifications present in application menu.
     """
     forms = get_menu_forms()
     return pytis.util.remove_duplicates([f[1] for f in forms])
+
 
 def _get_default_select(spec):
     def init_select(view, data):
@@ -169,6 +175,7 @@ def check_form():
 cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                   dict(handler=check_form))
 
+
 class CheckReporter(object):
 
     def start(self, number_of_items):
@@ -182,6 +189,7 @@ class CheckReporter(object):
 
     def error(self, message):
         print "Error:", message
+
 
 class MenuChecker(object):
     _specnames = None
@@ -385,11 +393,12 @@ class MenuChecker(object):
         specnames = self._specification_names(errors)
         self._output_specs = {}
         width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
+
         def check_specs(update, specnames):
             check_spec = self._check_spec
             total = len(specnames)
             last_error = ''
-            step = 1 # aktualizujeme jen po každých 'step' procentech...
+            step = 1  # aktualizujeme jen po každých 'step' procentech...
             for n, name in enumerate(specnames):
                 newmsg = "\n".join(("Kontroluji datové specifikace...",
                                     "Specifikace: " + name,
@@ -435,11 +444,12 @@ class MenuChecker(object):
         specnames = self._specification_names(errors)
         self._output_specs = {}
         width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
+
         def check_specs(update, specnames):
             check_spec = self.check_codebook_rights
             total = len(specnames)
             last_error = ''
-            step = 1 # aktualizujeme jen po každých 'step' procentech...
+            step = 1  # aktualizujeme jen po každých 'step' procentech...
             for n, name in enumerate(specnames):
                 newmsg = "\n".join(("Kontroluji přístupová práva...",
                                     "Specifikace: " + name,
@@ -464,12 +474,14 @@ class MenuChecker(object):
             pytis.form.run_dialog(pytis.form.Message, "Chyby v přístupových právech",
                                   report="\n".join(errors))
 
+
 class AppChecker(MenuChecker):
 
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
         form_specs = get_form_defs(self._resolver, errors)
         return pytis.util.remove_duplicates(menu_specs + form_specs)
+
 
 class DevelChecker(MenuChecker):
     """This checker serves for application testing after global changes.
@@ -490,12 +502,14 @@ class DevelChecker(MenuChecker):
     def check_reverse_codebook_rights(self, *args, **kwargs):
         return []
 
+
 def check_menus_defs():
     """Zkontroluje všechny specifikace uvedené v menu aplikace."""
     MenuChecker().interactive_check()
 
 cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                         dict(handler=check_menus_defs))
+
 
 def check_access_rights():
     """Zkontroluje práva všech specifikací uvedených v menu aplikace."""
@@ -504,8 +518,10 @@ def check_access_rights():
 cmd_check_access_rights = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                            dict(handler=check_access_rights))
 
+
 def cache_spec(*args, **kwargs):
     resolver = pytis.util.resolver()
+
     def do(update, specs):
         def cache(name):
             for spec in ('data_spec', 'view_spec',
@@ -517,7 +533,7 @@ def cache_spec(*args, **kwargs):
 
         total = len(specs)
         last_status = 0
-        step = 5 # aktualizujeme jen po každých 'step' procentech...
+        step = 5  # aktualizujeme jen po každých 'step' procentech...
         for n, name in enumerate(specs):
             status = int(float(n) / total * 100 / step)
             if status != last_status:

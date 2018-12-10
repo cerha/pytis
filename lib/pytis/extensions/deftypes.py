@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2001, 2002, 2003, 2005, 2009, 2011, 2013 Brailcom, o.p.s.
+
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,20 +22,23 @@
 import pytis.data
 import pytis.util
 
-       
+
 class Price(pytis.data.Float):
     def _init(self, not_null=True, precision=2, **kwargs):
         super(Price, self)._init(precision=precision, not_null=not_null, **kwargs)
+
     def default_value(self):
         value, error = self.validate('0')
         if error is not None:
             raise pytis.util.ProgramError("Can't validate default value")
         return value
-        
+
+
 class StringNotNull(pytis.data.String):
     def _init(self, **kwargs):
         kwargs['not_null'] = True
         super(StringNotNull, self)._init(**kwargs)
+
 
 class _TreeOrder(pytis.presentation.PrettyTreeOrder, pytis.data.String):
     pass

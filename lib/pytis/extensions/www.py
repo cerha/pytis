@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2005, 2006, 2009, 2011, 2013 Brailcom, o.p.s.
+
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2005-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@ import pytis.data
 from pytis.util import xtuple
 from pytis.extensions import dbselect, data_object
 
+
 class BaseDBTable(object):
 
     def __init__(self, spec, columns, condition=None, sort=(),
@@ -43,9 +45,9 @@ class BaseDBTable(object):
         klass -- None nebo funkce jednoho argumentu, kterým je řádek tabulky
                  a která vrací None nebo odpovídající styl
         attrs -- atributy pro HyperText.TABLE
-        
+
         Vrací instanci HyperText.TABLE.
-        
+
         """
         self._spec = spec
         self._columns = columns
@@ -96,7 +98,7 @@ class BaseDBTable(object):
                         sort=self._sort)
         return [pytis.data.Row([(c, r[c]) for c in self._columns])
                 for r in rows]
-        
+
     def table(self):
         secret_columns = [c for c in self._columns
                           if not self._data.permitted(c, pytis.data.Permission.VIEW)]
@@ -113,15 +115,14 @@ class BaseDBTable(object):
                     if self._klass:
                         style = self._klass(row, self._columns[i])
                         if style:
-                            r.append(TD(val, align=aligns[i],
-                                klass=style))
+                            r.append(TD(val, align=aligns[i], klass=style))
                         else:
                             r.append(TD(val, align=aligns[i]))
                     else:
                         r.append(TD(val, align=aligns[i]))
                 self._table.append(r)
         return self._table
-    
+
 
 class BrowsableDBTable(BaseDBTable):
 
@@ -163,7 +164,7 @@ class BrowsableDBTable(BaseDBTable):
 
     def lastpageno(self):
         return int(self._row_count / self._limit)
-           
+
     def first(self):
         return Href(URL(self._uri), self._labelfirst())
 
@@ -171,12 +172,12 @@ class BrowsableDBTable(BaseDBTable):
         previousno = max(self._pageno - 1, 1)
         return Href(URL(self._uri, pageno=str(previousno)),
                     self._labelprevious())
-   
+
     def next(self):
         nextno = min(self._pageno + 1, self.lastpageno())
         return Href(URL(self._uri, pageno=str(nextno)),
                     self._labelnext())
-    
+
     def last(self):
         return Href(URL(self._uri, pageno=str(self.lastpageno())),
                     self._labellast())
@@ -196,9 +197,11 @@ class BrowsableDBTable(BaseDBTable):
             self._table.append(rcontrols)
         return self._table
 
+
 def base_db_table(*args, **kwargs):
     t = BaseDBTable(*args, **kwargs)
     return t.table()
+
 
 def browsable_db_table(*args, **kwargs):
     t = BrowsableDBTable(*args, **kwargs)
@@ -225,7 +228,7 @@ def form_validate(spec, prefill):
     else:
         return pytis.data.Row(row), None
 
-        
+
 def PopupCB(spec, name, column, returned_column,
             selected=None,
             condition=None, sort=(), **attrs):
@@ -244,7 +247,7 @@ def PopupCB(spec, name, column, returned_column,
       condition -- podmínka odpovídající argumentu volání pytis.data.select()
 
     Vrací instanci HyperText.Select nebo None v případě neúspěchu.
-    
+
     """
     dbrows = dbselect(spec, condition=condition, sort=sort)
     if len(dbrows) == 0:
