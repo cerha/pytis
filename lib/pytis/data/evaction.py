@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007, 2009, 2013 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2007-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,11 +31,13 @@ class EvparseException(Exception):
             text = text[:10] + '...'
         Exception.__init__(self, 'ev_action_parse_error on ' + kind, text)
 
+
 def pg_parse_ev_action(text):
     value, text = _evparse(text)
     if text != '':
         raise EvparseException('extra text', text)
     return value
+
 
 def _evparse(text):
     try:
@@ -62,8 +65,10 @@ def _evparse(text):
     except IndexError:
         raise EvparseException('premature end', text)
 
+
 def _evparse_list(text):
     list = []
+
     def parse(text):
         if text[0] == ')':
             return True, text[1:]
@@ -76,9 +81,11 @@ def _evparse_list(text):
             break
     return list, text
 
+
 def _evparse_structure(text):
     name, text = _evparse_identifier(text)
     structure = {'__name': name}
+
     def parse(text):
         i = 0
         while text[i] == ' ':
@@ -101,11 +108,13 @@ def _evparse_structure(text):
             break
     return structure, text
 
+
 def _evparse_empty(text):
     if text[0] == '>':
         return None, text[1:]
     else:
         raise EvparseException('empty', text)
+
 
 def _evparse_identifier(text, skip_whitespace=True):
     if skip_whitespace:
@@ -125,11 +134,13 @@ def _evparse_identifier(text, skip_whitespace=True):
         raise EvparseException('identifier', text)
     return text[:i], text[i:]
 
+
 def _evparse_string(text):
     i = 0
     while text[i] != '"':
         i = i + 1
     return text[:i], text[i + 1:]
+
 
 def _evparse_boolean(text):
     if text[:len('false')] == 'false':
@@ -138,6 +149,7 @@ def _evparse_boolean(text):
         return True, text[len('true'):]
     else:
         raise EvparseException('boolean', text)
+
 
 def _evparse_number(text):
     if text[0] == '-':
@@ -149,6 +161,7 @@ def _evparse_number(text):
     while text[i] in string.digits:
         i = i + 1
     return sign * int(text[:i]), text[i:]
+
 
 def _evparse_array(text):
     i = 0

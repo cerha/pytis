@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -53,6 +54,7 @@ FORWARD = 'FORWARD'
 """Konstanta pro dopředný posun v 'Data.fetchone'."""
 BACKWARD = 'BACKWARD'
 """Konstanta pro zpětný posun v 'Data.fetchone'."""
+
 
 def opposite_direction(direction):
     """Vrať směr opačný k 'direction'.
@@ -492,6 +494,7 @@ class Data(object_2_5):
         try:
             select_result = self.select(condition=condition, reuse=reuse,
                                         sort=sort, columns=columns, transaction=transaction)
+
             def aggregate_value(cid):
                 if ((operation == self.AGG_COUNT or
                      isinstance(self.find_column(cid).type(), Number))):
@@ -1168,6 +1171,7 @@ def EQ(x, y, ignore_case=False):
     """
     return Operator('EQ', x, y, ignore_case=ignore_case)
 
+
 def NE(x, y, ignore_case=False):
     """Podmínkový operátor nerovnosti.
 
@@ -1183,6 +1187,7 @@ def NE(x, y, ignore_case=False):
     """
     t = NOT(EQ(x, y, ignore_case=ignore_case))
     return Operator('NE', x, y, ignore_case=ignore_case, translation=t)
+
 
 def WM(x, y, ignore_case=True):
     """Podmínkový operátor 'WM' (\"wildcard matches\") porovnání dle vzoru.
@@ -1201,6 +1206,7 @@ def WM(x, y, ignore_case=True):
     """
     return Operator('WM', x, y, ignore_case=ignore_case)
 
+
 def NW(x, y, ignore_case=True):
     """Podmínkový operátor negace porovnání dle vzoru.
 
@@ -1218,6 +1224,7 @@ def NW(x, y, ignore_case=True):
     t = NOT(WM(x, y, ignore_case=ignore_case))
     return Operator('NW', x, y, ignore_case=ignore_case, translation=t)
 
+
 def LT(x, y, ignore_case=False):
     """Podmínkový operátor 'LT' relace '<'.
 
@@ -1232,6 +1239,7 @@ def LT(x, y, ignore_case=False):
 
     """
     return Operator('LT', x, y, ignore_case=ignore_case)
+
 
 def LE(x, y, ignore_case=False):
     """Podmínkový operátor relace '<='.
@@ -1268,6 +1276,7 @@ def GT(x, y, ignore_case=False):
             NOT(LT(x, y, ignore_case=ignore_case)))
     return Operator('GT', x, y, ignore_case=ignore_case, translation=t)
 
+
 def GE(x, y, ignore_case=False):
     """Podmínkový operátor relace '>='.
 
@@ -1285,6 +1294,7 @@ def GE(x, y, ignore_case=False):
            EQ(x, y, ignore_case=ignore_case))
     return Operator('GE', x, y, ignore_case=ignore_case, translation=t)
 
+
 def NOT(x):
     """Logical operator 'NOT' for logical negation.
 
@@ -1296,6 +1306,7 @@ def NOT(x):
 
     """
     return Operator('NOT', x)
+
 
 def AND(*args):
     """Logical operator 'AND' for logical conjunction.
@@ -1312,6 +1323,7 @@ def AND(*args):
     """
     return Operator('AND', *[arg for arg in args if arg is not None])
 
+
 def OR(*args):
     """Logical operator 'OR' for logical disjunction.
 
@@ -1327,6 +1339,7 @@ def OR(*args):
     """
     t = NOT(AND(*map(NOT, args)))
     return Operator('OR', *args, **{'translation': t})
+
 
 def ANY_OF(column, *args):
     """Matching one of the given values.
@@ -1346,6 +1359,7 @@ def ANY_OF(column, *args):
     assert all([isinstance(a, Value) for a in args]), args
     return OR(*[EQ(column, value) for value in args])
 
+
 def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
     """Operator testing presence in a subquery.
 
@@ -1364,6 +1378,8 @@ def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
     return Operator('IN', column_id, data, table_column_id, table_condition, table_arguments)
 
 _ft_query_id = None
+
+
 def FT(column_id, query):
     """Full text search.
 
@@ -1384,6 +1400,7 @@ def FT(column_id, query):
     query_id = _ft_query_id.next()
     return Operator('FT', column_id, query, query_id)
 
+
 def LTreeMatch(column_id, match):
     """ltree matching.
 
@@ -1394,6 +1411,7 @@ def LTreeMatch(column_id, match):
 
     """
     return Operator('LTreeMatch', column_id, match)
+
 
 def LTreeAncestor(x, y):
     """ltree comparison: The left an ancestor or equal to the right.
@@ -1407,6 +1425,7 @@ def LTreeAncestor(x, y):
     """
     return Operator('LTreeAncestor', x, y)
 
+
 def LTreeDescendant(x, y):
     """ltree comparison: The left a descendant or equal to the right.
 
@@ -1419,6 +1438,7 @@ def LTreeDescendant(x, y):
     """
     return Operator('LTreeDescendant', x, y)
 
+
 def RangeContains(column, value):
     """Range "contains" operator.
 
@@ -1429,6 +1449,7 @@ def RangeContains(column, value):
 
     """
     return Operator('RangeContains', column, value)
+
 
 def RangeContained(column, value):
     """Range "is contained by" operator.
@@ -1441,6 +1462,7 @@ def RangeContained(column, value):
     """
     return Operator('RangeContained', column, value)
 
+
 def RangeOverlap(column, value):
     """Range overlap test.
 
@@ -1451,6 +1473,7 @@ def RangeOverlap(column, value):
 
     """
     return Operator('RangeOverlap', column, value)
+
 
 def FunctionCondition(function, *args):
     """Function call.
@@ -1464,6 +1487,7 @@ def FunctionCondition(function, *args):
     """
     return Operator('Function', function, *args)
 
+
 def OpFunction(function, *args):
     """Function call to be used in relation operators.
 
@@ -1475,6 +1499,7 @@ def OpFunction(function, *args):
 
     """
     return Operator('Function', function, *args)
+
 
 def reversed_sorting(sorting):
     """Vrať specifikaci třídění reverzní ke specifikaci 'sorting'.
@@ -1839,6 +1864,7 @@ class DataFactory(object):
         """
         assert issubclass(class_, Data)
         self._class_ = class_
+
         def adjust(arg):
             if isinstance(arg, list):
                 arg = tuple(arg)

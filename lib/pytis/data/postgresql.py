@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -57,8 +58,10 @@ except AttributeError:
         def __init__(self):
             weakref.WeakValueDictionary.__init__(self)
             self._pg_counter = pytis.util.Counter()
+
         def add(self, item):
             self[self._pg_counter.next()] = item
+
         def __iter__(self):
             for v in self.values():
                 yield v
@@ -138,6 +141,7 @@ class _PgValue(object):
     def query(self):
         template, args = _Query.next_arg(self)
         return _Query(template, args)
+
 
 class _Query(object):
 
@@ -262,6 +266,7 @@ class _Query(object):
         t, a = class_.next_arg(value)
         return _Query(t, a)
 
+
 class _QFunction(_Query):
 
     def __init__(self, name, arguments=None):
@@ -281,6 +286,7 @@ class _QFunction(_Query):
         args = copy.copy(self._args)
         args[self._values_arg] = self.join(values)
         return _Query(self._template, args)
+
 
 class _QInsert(_Query):
 
@@ -1055,10 +1061,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._basic = basic
             self._default = default
             self._unique = unique
+
         def basic(self):
             return self._basic
+
         def default(self):
             return self._default
+
         def unique(self):
             return self._unique
 
@@ -1413,7 +1422,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         btype = binding.type()
         kwargs = binding.kwargs()
         if btype:
-            if type(btype) == type(pytis.data.Type):
+            if not isinstance(btype, pytis.data.Type):
                 btype = btype()
             if ctype is None or ctype.__class__ == Binary and not isinstance(btype, Binary):
                 # Maybe a crypto column
@@ -1946,9 +1955,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 t2 = arg2.type()
                 a2null = val.value() is None
             if kwargs.get('ignore_case') and isinstance(t1, String) and isinstance(t2, String):
-                fix_case = lambda x: x.wrap('lower')
+                def fix_case(x):
+                    return x.wrap('lower')
             else:
-                fix_case = lambda x: x
+                def fix_case(x):
+                    return x
             if rel in ('=', '!=') and a2null:
                 relarg = _Query(' IS' + (' NOT' if rel == '!=' else '') + ' NULL')
             else:
@@ -2110,13 +2121,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                 raise DBUserException("Time value without time zone", None,
                                                       (value.value(), b.table(), colid,))
                             except DBUserException as e:
-                                import pytis.form
-                                if pytis.form.top_window() is not None:
-                                    message = _("Application error. "
-                                                "You can report it to get it fixed soon.")
-                                    pytis.form.top_level_exception(message)
-                                else:
+                                try:
+                                    import pytis.form
+                                except:
                                     raise e
+                                else:
+                                    if pytis.form.top_window() is not None:
+                                        message = _("Application error. "
+                                                    "You can report it to get it fixed soon.")
+                                        pytis.form.top_level_exception(message)
+                                    else:
+                                        raise e
                         value = Value(ctype, tz_value)
             if crypto_name is not None:
                 if isinstance(ctype, String):
@@ -2261,6 +2276,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             _PG_MAX_STEP = 100000
             _PG_DEFAULT_TIMEOUT = 0.1
             _PG_STOP_CHECK_TIMEOUT = 0.1
+
             def __init__(self, data, initial_count, transaction, selection, position):
                 threading.Thread.__init__(self)
                 self._pg_data = data
@@ -2275,6 +2291,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_urgent = False
                 self._pg_correction = 0
                 self._pg_exception = None
+
             def run(self):
                 try:
                     data = self._pg_data
@@ -2309,7 +2326,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         except DBUserException as e:
                             log(OPERATIONAL, "Database exception in counting thread",
                                 pytis.util.format_traceback())
-                            import sys
                             self._pg_exception = (sys.exc_info(), e)
                             self._pg_finished = True
                             self._pg_terminate_event.set()
@@ -2330,9 +2346,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     self._pg_finished = True
                 finally:
                     self._pg_terminate_event.set()
+
             def _pg_dead(self):
                 return (self._pg_terminate or self._pg_exception is not None or
                         (self._pg_transaction and not self._pg_transaction.open()))
+
             def pg_count(self, min_value=None, timeout=None, corrected=False):
                 self._pg_urgent = True
                 stop_check = self._pg_data._pg_stop_check
@@ -2361,6 +2379,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     count += self._pg_correction
                 self._pg_urgent = False
                 return count, self._pg_finished
+
             def pg_stop(self):
                 if self._pg_dead():
                     return
@@ -2370,18 +2389,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 args = dict(selection=self._pg_selection, number=ival(self._pg_position() + 1))
                 query = data._pdbb_command_move_absolute.update(args)
                 data._pg_query(query, transaction=self._pg_transaction)
+
             def pg_restart(self):
                 new_thread = self.__class__(self._pg_data, self._pg_current_count,
                                             self._pg_transaction, self._pg_selection,
                                             self._pg_position)
                 new_thread.start()
                 return new_thread
+
             def pg_correct(self, correction):
                 self._pg_correction += correction
+
         def __init__(self, data, transaction, selection, position):
             self._thread = self._Thread(data, 0, transaction, selection, position)
+
         def start(self):
             self._thread.start()
+
         def count(self, min_value=None, timeout=None, corrected=False):
             result = self._thread.pg_count(min_value, timeout, corrected)
             if self._thread._pg_exception:
@@ -2391,10 +2415,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 einfo = exception[0]
                 pytis.form.top_level_exception(message=message, einfo=einfo)
             return result
+
         def stop(self):
             self._thread.pg_stop()
+
         def restart(self):
             self._thread = self._thread.pg_restart()
+
         def __add__(self, correction):
             self._thread.pg_correct(correction)
             return self

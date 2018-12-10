@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -64,7 +65,7 @@ from pytis.util import compare_attr, flatten, hash_attr, is_sequence, log, rsa_e
 
 _ = translations('pytis-data')
 
-### Obecné třídy
+# Obecné třídy
 
 
 class DBData(Data):
@@ -266,6 +267,7 @@ class DBConnectionPool:
         import config
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
+
         def lfunction():
             try:
                 connections = pool[spec_id]
@@ -311,6 +313,7 @@ class DBConnectionPool:
     def put_back(self, connection_spec, connection):
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
+
         def lfunction():
             try:
                 connections = pool[spec_id]
@@ -355,7 +358,7 @@ class DBConnectionPool:
         return info
 
 
-### Specifikační třídy
+# Specifikační třídy
 
 
 class DBConnection:
@@ -675,7 +678,7 @@ class DBColumnBinding(DBBinding):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
 
-### Databázové výjimky
+# Databázové výjimky
 
 
 class DBException(Exception):

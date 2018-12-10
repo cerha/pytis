@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013, 2014, 2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -37,6 +38,7 @@ select = sqlalchemy.select
 exists = sqlalchemy.exists
 distinct = sqlalchemy.distinct
 
+
 def dval(date):
     """Return literal date value.
 
@@ -46,6 +48,7 @@ def dval(date):
 
     """
     return sqlalchemy.literal_column("'%s'" % (date,), type_=sqlalchemy.Date())
+
 
 def ival(number):
     """Return literal integer value.
@@ -57,6 +60,7 @@ def ival(number):
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Integer())
 
+
 def fval(number):
     """Return literal float value.
 
@@ -66,6 +70,7 @@ def fval(number):
 
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Float())
+
 
 def itval(interval):
     """Return literal interval value.
@@ -77,6 +82,7 @@ def itval(interval):
     """
     return sqlalchemy.literal_column("'%s'" % (interval,), type_=sqlalchemy.Interval())
 
+
 def sval(text):
     """Return literal string value.
 
@@ -86,6 +92,7 @@ def sval(text):
 
     """
     return sqlalchemy.literal_column("'%s'" % (text.replace("'", "''"),), type_=sqlalchemy.String())
+
 
 def dtype(expr):
     """Return SQLAlchemy expression casted to date.
@@ -97,6 +104,7 @@ def dtype(expr):
     """
     return sqlalchemy.cast(expr, sqlalchemy.Date())
 
+
 def itype(expr):
     """Return SQLAlchemy expression casted to integer.
 
@@ -106,6 +114,7 @@ def itype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Integer())
+
 
 def ftype(expr, precision, scale, asdecimal=False):
     """Return SQLAlchemy expression casted to numeric.
@@ -118,6 +127,7 @@ def ftype(expr, precision, scale, asdecimal=False):
     return sqlalchemy.cast(expr, sqlalchemy.Numeric(precision=precision, scale=scale,
                                                     asdecimal=asdecimal))
 
+
 def rtype(expr):
     """Return SQLAlchemy expression casted to float.
 
@@ -127,6 +137,7 @@ def rtype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Float())
+
 
 def ittype(expr):
     """Return SQLAlchemy expression casted to interval.
@@ -138,6 +149,7 @@ def ittype(expr):
     """
     return sqlalchemy.cast(expr, sqlalchemy.Interval())
 
+
 def stype(expr, **kwargs):
     """Return SQLAlchemy expression casted to string.
 
@@ -148,6 +160,7 @@ def stype(expr, **kwargs):
     """
     return sqlalchemy.cast(expr, sqlalchemy.String(**kwargs))
 
+
 def btype(expr, **kwargs):
     """Return SQLAlchemy expression casted to boolean.
 
@@ -157,6 +170,7 @@ def btype(expr, **kwargs):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Boolean(**kwargs))
+
 
 def is_(column, other):
     """Like SQLAlchemy 'is_()' method, but casted to boolean.
@@ -169,6 +183,7 @@ def is_(column, other):
     """
     return sqlalchemy.cast(column.is_(other), sqlalchemy.Boolean())
 
+
 def if_(condition, then_, else_):
     """Return simple conditional expression.
 
@@ -180,6 +195,7 @@ def if_(condition, then_, else_):
 
     """
     return case([(condition, then_)], else_=else_)
+
 
 def _rule_assignments(values):
     assignments = {}
@@ -195,6 +211,7 @@ def _rule_assignments(values):
         else:
             raise Exception("Invalid rule assignment specifier", v)
     return assignments
+
 
 def rule_condition(*specifiers):
     """Return condition expression based on 'specifiers'.
@@ -233,6 +250,7 @@ def rule_condition(*specifiers):
         conditions.append(c)
     return and_(*conditions)
 
+
 def rule_insert(table, values):
     """Return typical insert rule statement.
 
@@ -252,6 +270,7 @@ def rule_insert(table, values):
     """
     insert = table.insert()
     return insert.values(**_rule_assignments(values))
+
 
 def rule_update(table, conditions, values):
     """Return typical update rule statement.

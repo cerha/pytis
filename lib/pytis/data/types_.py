@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Datové typy
-#
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -46,7 +45,12 @@ import cStringIO
 import thread
 import time
 
+from pytis.util import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
+    assoc, compare_objects, format_byte_size, identity, log, rassoc, sameclass, super_, \
+    with_lock, xtuple
+
 import pytis.util
+
 _ = pytis.util.translations('pytis-data')
 
 try:
@@ -61,11 +65,7 @@ except Exception as e:
 else:
     import sqlalchemy.dialects.postgresql
 
-from pytis.util import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
-    assoc, compare_objects, format_byte_size, identity, log, rassoc, sameclass, super_, \
-    with_lock, xtuple
 
-
 class _MType(type):
 
     def __call__(self, *args, **kwargs):
@@ -618,6 +618,7 @@ class Big(Type):
 
     """
 
+
 class Large(Big):
     """Mixin class denoting types with really large values.
 
@@ -625,6 +626,7 @@ class Large(Big):
     Pytis, but possibly inside databases as well.
 
     """
+
 
 class Limited(Type):
     """Mixin class for types with possibly limited maximal and/or minimal length.
@@ -750,6 +752,7 @@ class Range(Type):
                 else:
                     range_1 = range_type.adjust_value(self)
                     range_2 = range_type.adjust_value(other)
+
                 def cmp_(x, y):
                     if x is None and y is not None:
                         return -1
@@ -784,6 +787,7 @@ class Range(Type):
         """
         self._lower_inc = lower_inc
         self._upper_inc = upper_inc
+
         class InstanceRange(Range.Range):
             _type = self
             _default_lower_inc = lower_inc
@@ -946,43 +950,54 @@ class Integer(Number):
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
 
+
 class IntegerRange(Range, Integer):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT4RANGE()
+
     def base_type(self):
         return pytis.data.Integer()
+
     def _increase_bound(self, value):
         if value is None:
             return None
         return value + 1
+
     def _decrease_bound(self, value):
         if value is None:
             return None
         return value - 1
+
 
 class SmallInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.SmallInteger()
 
+
 class LargeInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
+
 
 class LargeIntegerRange(Range, Integer):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT8RANGE()
+
     def base_type(self):
         return pytis.data.LargeInteger()
+
     def _increase_bound(self, value):
         if value is None:
             return None
         return value + 1
+
     def _decrease_bound(self, value):
         if value is None:
             return None
         return value - 1
+
 
 class Oid(Integer):
     def sqlalchemy_type(self):
@@ -1005,6 +1020,7 @@ class Serial(Integer):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.SERIAL()
+
 
 class LargeSerial(Integer):
     def sqlalchemy_type(self):
@@ -1582,6 +1598,7 @@ class _LocalTimezone(datetime.tzinfo):
         localtime = time.localtime(stamp)
         return localtime.tm_isdst > 0
 
+
 class _UTCTimezone(datetime.tzinfo):
 
     def __init__(self):
@@ -1598,6 +1615,7 @@ class _UTCTimezone(datetime.tzinfo):
 
     def dst(self, dt):
         return self._zero_diff
+
 
 class _CommonDateTime(Type):
     """Common base class of all date and time types.
@@ -1647,6 +1665,7 @@ class _CommonDateTime(Type):
             matcher = self._check_matcher[format]
         except KeyError:
             special = {'%Y': r'\d\d\d\d', ' ': '\s+', '%p': '[AP]M'}
+
             def subst(match):
                 m = match.group(1)
                 try:
@@ -1762,6 +1781,7 @@ class _CommonDateTime(Type):
 
     def sqlalchemy_type(self):
         return sqlalchemy.DateTime(timezone=True)
+
 
 class DateTime(_CommonDateTime):
     """Time stamp represented by a 'datetime.datetime' instance.
@@ -1981,6 +2001,8 @@ class DateTime(_CommonDateTime):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
                                                         precision=0)
+
+
 class LocalDateTime(DateTime):
     "Datetime stored as UTC in database but presented as local time by default."
 
@@ -1994,6 +2016,7 @@ class LocalDateTime(DateTime):
             local = True
         return super(LocalDateTime, self)._validate(string, format=format, local=local)
 
+
 class DateTimeRange(Range, DateTime):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -2002,8 +2025,10 @@ class DateTimeRange(Range, DateTime):
         else:
             sql_class = pytis.data.gensqlalchemy.TSTZRANGE
         return sql_class()
+
     def base_type(self):
         return pytis.data.DateTime(utc=self._utc, without_timezone=self._without_timezone)
+
 
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.
@@ -2019,6 +2044,7 @@ class ISODateTime(DateTime):
 
         """
         return self.export(value, format=True, local=False)
+
 
 class Date(DateTime):
     """Date without a time.
@@ -2080,20 +2106,25 @@ class Date(DateTime):
     def sqlalchemy_type(self):
         return sqlalchemy.Date()
 
+
 class DateRange(Range, Date):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.DATERANGE()
+
     def base_type(self):
         return pytis.data.Date()
+
     def _increase_bound(self, value):
         if value is None:
             return None
         return value + datetime.timedelta(1)
+
     def _decrease_bound(self, value):
         if value is None:
             return None
         return value - datetime.timedelta(1)
+
 
 class Time(_CommonDateTime):
     """Time of day without the date part.
@@ -2174,6 +2205,7 @@ class Time(_CommonDateTime):
 
     def sqlalchemy_type(self):
         return sqlalchemy.Time(timezone=(not self._without_timezone))
+
 
 class LocalTime(Time):
     "Time stored as UTC in database but presented as local time by default."
@@ -2285,6 +2317,7 @@ class TimeInterval(Type):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.INTERVAL()
 
+
 def date_and_time(date, time):
     """Combine given 'date' and 'time' 'Value's into a 'datetime.datetime' return value.
 
@@ -2303,6 +2336,7 @@ def date_and_time(date, time):
         time_value = time_value.replace(tzinfo=time.type().timezone())
     value = datetime.datetime.combine(date_value, time_value)
     return value
+
 
 def add_timedelta(value, timedelta):
     """Return information about 'DateTime' 'value' with 'timedelta' added.
@@ -2900,6 +2934,7 @@ class TransactionalEnumerator(object):
 
     """
 
+
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration passed to the constructor.
 
@@ -3041,6 +3076,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         validity_condition = self._condition(condition=condition)
         if validity_condition is not None:
             the_condition = AND(the_condition, validity_condition)
+
         def lfunction():
             data = self._data
             try:
@@ -3080,6 +3116,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         if arguments is None:
             arguments = {}
         the_condition = self._condition(condition=condition)
+
         def lfunction():
             result = []
             try:
@@ -3160,6 +3197,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         if arguments is None:
             arguments = {}
         the_condition = self._condition(condition=condition)
+
         def lfunction():
             return self._data.select_map(identity, transaction=transaction,
                                          condition=the_condition, arguments=arguments,
@@ -3308,6 +3346,7 @@ class _Value(object):
         """
         return self._value
 
+
 class Value(_Value):
     """Reprezentace hodnoty daného typu.
 
@@ -3412,6 +3451,7 @@ class WMValue(_Value):
 
 # Shorthand functions for values
 
+
 def sval(value, maxlen=None):
     """Return 'Value' instance of type 'String' with given value.
 
@@ -3423,6 +3463,7 @@ def sval(value, maxlen=None):
     assert value is None or isinstance(value, basestring), value
     return Value(String(maxlen=maxlen), value)
 
+
 def ival(value):
     """Return 'Value' instance of type 'Value' with given value.
 
@@ -3433,6 +3474,7 @@ def ival(value):
     """
     assert value is None or isinstance(value, int), value
     return Value(Integer(), value)
+
 
 def fval(value, digits=None, precision=None):
     """Return 'Value' instance of type 'Float' with given value.
@@ -3450,6 +3492,7 @@ def fval(value, digits=None, precision=None):
         precision = max(-value.as_tuple().exponent, 0)
     return Value(Float(digits=digits, precision=precision), value)
 
+
 def bval(value):
     """Return 'Value' instance of type 'Boolean' with given value.
 
@@ -3461,6 +3504,7 @@ def bval(value):
     assert value is None or isinstance(value, bool), value
     return Value(Boolean(), value)
 
+
 def dval(value):
     """Return 'Value' instance of type 'Date' with given value.
 
@@ -3471,6 +3515,7 @@ def dval(value):
     """
     assert value is None or isinstance(value, datetime.date), value
     return Value(Date(), value)
+
 
 def dtval(value, without_timezone=False):
     """Return 'Value' instance of type 'DateTime' with given value.
@@ -3484,6 +3529,7 @@ def dtval(value, without_timezone=False):
     assert value is None or isinstance(value, datetime.datetime), value
     return Value(DateTime(without_timezone=without_timezone), value)
 
+
 def tval(value, without_timezone=False):
     """Return 'Value' instance of type 'Time' with given value.
 
@@ -3495,6 +3541,7 @@ def tval(value, without_timezone=False):
     """
     assert value is None or isinstance(value, datetime.time), value
     return Value(Time(without_timezone=without_timezone), value)
+
 
 def wmval(value):
     """Return 'VMValue' instance of type 'String' with given value.

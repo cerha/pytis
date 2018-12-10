@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,8 +46,8 @@ from postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunct
                         PostgreSQLNotifier, PostgreSQLUserGroups, PostgreSQLConnector)
 
 
-
 _ = translations('pytis-data')
+
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 
@@ -251,7 +252,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 raise DBLockException()
             result, connection = retry(_(u"Database operational error"), e)
         except dbapi.InternalError as e:
-            if e.args and e.args[0].find('terminating connection due to idle-in-transaction timeout') != -1:
+            if e.args and e.args[0].find('terminating connection due to '
+                                         'idle-in-transaction timeout') != -1:
                 # We believe this shouldn't happen as a program error and it
                 # may occur as a result of database engine connection crash.
                 log(OPERATIONAL, "Access to closed database connection")
@@ -379,6 +381,7 @@ class DBAPIFunction(_DBAPIAccessor, DBPostgreSQLFunction):
     def __init__(self, name, connection_data, sql_logger=None, **kwargs):
         self._sql_logger = sql_logger
         super(DBAPIFunction, self).__init__(name=name, connection_data=connection_data, **kwargs)
+
 
 class DBAPITransaction(_DBAPIAccessor, DBPostgreSQLTransaction):
     pass
@@ -524,6 +527,7 @@ DBFunctionDefault = DBAPIFunction
 DBTransactionDefault = DBAPITransaction
 """Standard transaction class."""
 
+
 def _postgresql_access_groups(connection_data):
     import pytis.data.dbapi
 
@@ -535,6 +539,7 @@ def _postgresql_access_groups(connection_data):
 
 default_access_groups = _postgresql_access_groups
 """Funkce vracející seznam skupin uživatele specifikovaného spojení."""
+
 
 def _reload_session_variables(connection_data):
     PostgreSQLConnector(connection_data)._pg_flush_connections()

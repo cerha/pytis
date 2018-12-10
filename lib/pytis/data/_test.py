@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,9 +30,10 @@ from pytis.util import TestSuite, super_, DEBUG, OPERATIONAL, ACTION, EVENT
 import pytis.data
 from pytis.data import bval, fval, ival, sval
 
+import config
+
 _connection_data = {'database': 'test'}
 
-import config
 config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
 tests = TestSuite()
@@ -44,6 +46,7 @@ tests = TestSuite()
 
 class ValidationError(unittest.TestCase):
     MESSAGE = 'test message'
+
     def test_it(self):
         ValidationError.e = pytis.data.ValidationError(ValidationError.MESSAGE)
         self.assertEqual(ValidationError.e.message(), ValidationError.MESSAGE)
@@ -60,6 +63,7 @@ class Value(unittest.TestCase):
         v3 = pytis.data.Value(t, t)
         self.assertTrue(v1.type() == t and v2.type() == t and v3.type() == t, 'type lost')
         self.assertTrue(v1.value() is None and v2.value() == 1 and v3.value() == t, 'value lost')
+
     def test_cmp(self):
         t = pytis.data.Type()
         v1 = pytis.data.Value(t, 1)
@@ -91,6 +95,7 @@ class _TypeCheck(unittest.TestCase):
             result, error = type_.validate(type_.export(v.value(), **ekwargs), **kwargs)
             self.assertEqual(result, v, ('export failed', str(v), str(result)))
         return v, e
+
     def _test_null_validation(self):
         v, e = self._test_instance.validate('')
         self.assertIsNone(e, ('Null validation failed', e,))
@@ -105,12 +110,15 @@ class _TypeCheck(unittest.TestCase):
 
 class Type(_TypeCheck):
     _test_instance = pytis.data.Type()
+
     def test_validation(self):
         self._test_null_validation()
+
     def test_noncmp(self):
         self.assertNotEqual(self._test_instance, pytis.data.Integer())
         self.assertNotEqual(pytis.data.Integer(not_null=True), pytis.data.Integer())
         self.assertNotEqual(pytis.data.String(maxlen=2), pytis.data.String(maxlen=3))
+
     def test_cloning(self):
         i1 = pytis.data.Integer()
         i2 = pytis.data.Integer(not_null=True)
@@ -135,6 +143,7 @@ tests.add(Type)
 
 class Integer(_TypeCheck):
     _test_instance = pytis.data.Integer()
+
     def test_validation(self):
         self._test_validity(None, '1', 1)
         self._test_validity(None, '-11111111111111111111',
@@ -153,12 +162,14 @@ tests.add(Integer)
 
 class Float(_TypeCheck):
     _test_instance = pytis.data.Float()
+
     def test_validation(self):
         self._test_validity(None, '3', 3.0)
         self._test_validity(None, '3.14', 3.14)
         self._test_validity(None, '-3.14', -3.14)
         self._test_validity(None, '0.0', 0.0)
         self._test_validity(None, 'foo', None)
+
     def test_precision(self):
         PRECISION = 3
         t = pytis.data.Float(precision=PRECISION)
@@ -167,6 +178,7 @@ class Float(_TypeCheck):
                                    check_export=False)
         self.assertEqual(v.type().precision(), PRECISION)
         self.assertEqual(v.export(), '3.142')
+
     def test_rounding(self):
         self._test_validity(None, '3.1415', 3.14, kwargs={'precision': 2})
         self._test_validity(None, '3.1415', 3.142, kwargs={'precision': 3})
@@ -181,6 +193,7 @@ class Float(_TypeCheck):
                                                         'rounding': F})
         self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
                                                         'rounding': C})
+
     def test_value(self):
         f = 3.14
         d = decimal.Decimal('3.14')
@@ -193,6 +206,7 @@ class Float(_TypeCheck):
         T = pytis.data.Float(digits=8)
         self.assertIsInstance(pytis.data.Value(T, f).value(), decimal.Decimal)
         self.assertIsInstance(pytis.data.Value(T, d).value(), decimal.Decimal)
+
     def test_fval(self):
         self.assertIsInstance(fval(decimal.Decimal('3.14')).value(), decimal.Decimal)
         self.assertIsInstance(fval(3.14, precision=2).value(), decimal.Decimal)
@@ -204,6 +218,7 @@ tests.add(Float)
 
 class String(_TypeCheck):
     _test_instance = pytis.data.String()
+
     def test_validation_limited(self):
         MINLEN = 3
         MAXLEN = 5
@@ -214,12 +229,14 @@ class String(_TypeCheck):
         self._test_validity(t, 'ab', None)
         self._test_validity(t, 'abcdef', None)
         self._test_validity(t, 'abcd', 'abcd')
+
     def test_validation_unlimited(self):
         v = self._test_null_validation()
         self.assertIsNone(v.type().maxlen())
         self._test_validity(None, 'abcdefghi', 'abcdefghi')
         t = pytis.data.String(maxlen=None)
         self._test_validity(t, 'abcdefghi', 'abcdefghi')
+
     def test_cmp(self):
         MAXLEN = 1
         _TypeCheck.test_cmp(self)
@@ -231,8 +248,10 @@ class String(_TypeCheck):
 
 tests.add(String)
 
+
 class Password(_TypeCheck):
     _test_instance = pytis.data.Password(minlen=4)
+
     def test_validation(self):
         self._test_validity(None, 'abcdef', 'abcdef')
         self._test_validity(None, 'abcdef', 'abcdef', kwargs={'verify': 'abcdef'})
@@ -281,14 +300,17 @@ class Password(_TypeCheck):
 
 tests.add(Password)
 
+
 class Color(_TypeCheck):
     _test_instance = pytis.data.Color()
+
     def test_validation(self):
         self._test_validity(None, '#0030ab', '#0030ab')
         self._test_validity(None, '0030ab', None)
         self._test_validity(None, '#h030ab', None)
         v, e = self._test_validity(None, '', None, check_value=False)
         self.assertIsNone(v.value(), ('invalid value', v))
+
     def test_cmp(self):
         _TypeCheck.test_cmp(self)
         t = pytis.data.Color()
@@ -298,8 +320,10 @@ class Color(_TypeCheck):
 
 tests.add(Color)
 
+
 class DateTime(_TypeCheck):
     _test_instance = pytis.data.DateTime(format='%Y-%m-%d %H:%M:%S')
+
     def test_validation(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = {'local': False}
@@ -324,6 +348,7 @@ class DateTime(_TypeCheck):
                             kwargs=vkwargs, ekwargs=vkwargs)
         self._test_validity(None, '2001-02-28 24:00:00', None,
                             kwargs=vkwargs, ekwargs=vkwargs)
+
     def test_export(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = {'local': False}
@@ -343,8 +368,10 @@ class DateTime(_TypeCheck):
 
 tests.add(DateTime)
 
+
 class ISODateTime(_TypeCheck):
     _test_instance = pytis.data.ISODateTime()
+
     def test_validation(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = dict(local=False, format=pytis.data.ISODateTime.SQL_FORMAT)
@@ -362,6 +389,7 @@ class ISODateTime(_TypeCheck):
                             kwargs=vkwargs, ekwargs=vkwargs)
         self._test_validity(None, '2999-12-31 25:0:0', None,
                             kwargs=vkwargs, ekwargs=vkwargs)
+
     def test_export(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = dict(local=False, format=pytis.data.ISODateTime.SQL_FORMAT)
@@ -379,8 +407,10 @@ class ISODateTime(_TypeCheck):
 
 tests.add(ISODateTime)
 
+
 class Date(_TypeCheck):
     _test_instance = pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)
+
     def test_validation(self):
         self._test_validity(None, '2001-02-28', datetime.date(2001, 2, 28))
         self._test_validity(None, '2999-12-31', datetime.date(2999, 12, 31))
@@ -392,6 +422,7 @@ class Date(_TypeCheck):
         self._test_validity(None, '01-02-29', None)
         self._test_validity(None, '2000-13-01', None)
         self._test_validity(None, '2001-02-29', None)
+
     def test_date_and_time(self):
         date_value = pytis.data.Value(self._test_instance, datetime.date(2001, 2, 3))
         time_value = pytis.data.Value(pytis.data.Time(utc=True), datetime.time(12, 34, 56))
@@ -406,8 +437,10 @@ class Date(_TypeCheck):
 
 tests.add(Date)
 
+
 class Time(_TypeCheck):
     _test_instance = pytis.data.Time(format='%H:%M:%S')
+
     def test_validation(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = {'local': False}
@@ -426,6 +459,7 @@ class Time(_TypeCheck):
                             kwargs=vkwargs, ekwargs=vkwargs)
         self._test_validity(None, '24:00:00', None,
                             kwargs=vkwargs, ekwargs=vkwargs)
+
     def test_export(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = {'local': False}
@@ -441,14 +475,17 @@ class Time(_TypeCheck):
 
 tests.add(Time)
 
+
 class TimeInterval(_TypeCheck):
     _test_instance = pytis.data.TimeInterval()
+
     def test_validation(self):
         self._test_validity(None, '0:15:01', datetime.timedelta(0, 901))
         self._test_validity(None, '24:00:00', datetime.timedelta(1, 0))
         self._test_validity(None, '1 day 1:00:00', datetime.timedelta(1, 3600), check_export=False)
         self._test_validity(None, '1000 days 1:00:00', datetime.timedelta(1000, 3600),
                             check_export=False)
+
     def test_export(self):
         value = pytis.data.Value(self._test_instance, datetime.timedelta(1, 3600))
         exported = value.export()
@@ -462,10 +499,13 @@ class TimeInterval(_TypeCheck):
 
 tests.add(TimeInterval)
 
+
 class TimeInterval2(_TypeCheck):
     _test_instance = pytis.data.TimeInterval(format='%H:%M')
+
     def test_validation(self):
         self._test_validity(None, '01:02', datetime.timedelta(0, 3720))
+
     def test_export(self):
         value = pytis.data.Value(self._test_instance, datetime.timedelta(1, 3600))
         exported = value.export()
@@ -482,6 +522,7 @@ tests.add(TimeInterval2)
 
 class Boolean(_TypeCheck):
     _test_instance = pytis.data.Boolean()
+
     def test_validation(self):
         v, _ = self._test_validity(None, 'T', None, check_value=False)
         self.assertTrue(v.value(), 'T not mapped to true')
@@ -489,6 +530,7 @@ class Boolean(_TypeCheck):
         self.assertFalse(v.value(), 'F not mapped to false')
         self._test_validity(None, 't', None)
         self._test_validity(None, '0', None)
+
     def test_noncmp(self):
         self.assertNotEqual(self._test_instance, pytis.data.String())
 
@@ -498,12 +540,14 @@ tests.add(Boolean)
 
 class Array(_TypeCheck):
     _test_instance = pytis.data.Array(inner_type=pytis.data.Integer(not_null=True), maxlen=3)
+
     def test_validation(self):
         self._test_validity(None, (), ())
         value, _ = self._test_validity(None, ('1', '2', '3'), None, check_value=False)
         self.assertEqual([v.value() for v in value.value()], [1, 2, 3])
         self.assertEqual(value.export(), ('1', '2', '3'), value.export())
         self.assertEqual(value.primitive_value(), [1, 2, 3], value.primitive_value())
+
     def test_cmp(self):
         cls = self._test_instance.__class__
         inner_type = self._test_instance.inner_type()
@@ -516,6 +560,7 @@ tests.add(Array)
 class Enumerator(_TypeCheck):
     # Netestováno, neboť třída není používána přímo, stačí testovat potomky
     pass
+
 
 class DataEnumerator(unittest.TestCase):
     def setUp(self):
@@ -533,6 +578,7 @@ class DataEnumerator(unittest.TestCase):
         self.cb1 = pytis.data.String(enumerator=e1)
         self.cb2 = pytis.data.String(enumerator=e2, not_null=True)
         self.cb3 = pytis.data.String(enumerator=e3)
+
     def _test_validate(self, cb, value, expected=None, invalid=False):
         v, e = cb.validate(value)
         if invalid:
@@ -540,9 +586,11 @@ class DataEnumerator(unittest.TestCase):
         else:
             self.assertIsNone(e)
             self.assertEqual(v.value(), expected)
+
     def _test_export(self, cb, value, expected):
         result = self.cb1.export(value)
         self.assertEqual(result, expected, ('Invalid exported value:', result))
+
     def test_validate(self):
         self._test_validate(self.cb1, '1', '1')
         self._test_validate(self.cb1, '', None)
@@ -554,14 +602,17 @@ class DataEnumerator(unittest.TestCase):
         self._test_validate(self.cb3, '1', '1')
         self._test_validate(self.cb3, '3', None, invalid=True)
         self._test_validate(self.cb3, None, None)
+
     def test_export(self):
         self._test_export(self.cb1, '2', '2')
         self._test_export(self.cb2, '8', '8')
         self._test_export(self.cb2, '', '')
         self._test_export(self.cb2, None, '')
+
     def test_values(self):
         v = self.cb1.enumerator().values()
         self.assertEqual(v, ('1', '2', '3'))
+
     def test_get(self):
         e = self.cb1.enumerator()
         r = e.row('2')
@@ -570,9 +621,11 @@ class DataEnumerator(unittest.TestCase):
 
 tests.add(DataEnumerator)
 
+
 class FixedEnumerator(unittest.TestCase):
     _values = (1, 3, 5, 7, 9,)
     _enumerator = pytis.data.FixedEnumerator(_values)
+
     def test_check(self):
         e = self._enumerator
         for i in range(100):
@@ -581,6 +634,7 @@ class FixedEnumerator(unittest.TestCase):
             else:
                 self.assertFalse(e.check(i))
         self.assertFalse(e.check('1'))
+
     def test_values(self):
         self.assertEqual(self._enumerator.values(), self._values)
 
@@ -602,11 +656,14 @@ class ReversedSorting(unittest.TestCase):
         self.assertEqual((('foo', D), ('bar', A)),
                          pytis.data.reversed_sorting((('foo', A), ('bar', D))))
 
+
 class ColumnSpec(unittest.TestCase):
     _test_instance = pytis.data.ColumnSpec('foo', pytis.data.Integer())
+
     def test_class_(self):
         self.assertEqual(ColumnSpec._test_instance.id(), 'foo')
         self.assertEqual(ColumnSpec._test_instance.type(), pytis.data.Integer())
+
     def test_cmp(self):
         x = pytis.data.ColumnSpec('foo', pytis.data.Integer())
         y = pytis.data.ColumnSpec('bar', pytis.data.Integer())
@@ -623,6 +680,7 @@ class Row(unittest.TestCase):
     def test_empty(self):
         r = pytis.data.Row()
         self.assertEqual(len(r), 0)
+
     def test_nonempty(self):
         v1 = ival(1)
         v2 = sval('prvni prvek')
@@ -646,6 +704,7 @@ class Row(unittest.TestCase):
         x1, x2 = r[0:2]
         self.assertTrue(x1 == v2 and x2 == v1, 'get slice not working')
         self.assertTrue(r[0:1][0] == v2 and r[1:2][0] == v1, 'get slice not working')
+
     def test_columns(self):
         v1 = ival(1)
         v2 = sval('prvni prvek')
@@ -653,6 +712,7 @@ class Row(unittest.TestCase):
         r = pytis.data.Row((('poradi', v1), ('popis', v2), ('cislo', v3)))
         self.assertEqual(r.columns(()), ())
         self.assertEqual(r.columns(('poradi', 'cislo')), (v1, v3))
+
     def test_update(self):
         v1 = ival(1)
         v2 = sval('prvni prvek')
@@ -661,6 +721,7 @@ class Row(unittest.TestCase):
         r2 = pytis.data.Row((('poradi', u1),))
         r.update(r2)
         self.assertTrue(r[0] == u1 and r[1] == v2, 'row update failed')
+
     def test_append(self):
         r = pytis.data.Row((('x', ival(1)), ('y', ival(2))))
         r.append('z', ival(3))
@@ -681,6 +742,7 @@ class Data(unittest.TestCase):
         self._value = pytis.data.Value(pytis.data.Type(), None)
         self._row = pytis.data.Row()
         self._data = pytis.data.Data((c1, c2), c1)
+
     def test_it(self):
         c1, c2 = self._column1, self._column2
         r = self._row
@@ -696,6 +758,7 @@ class Data(unittest.TestCase):
         self.assertEqual(d.insert(r), (None, False), 'insert not working')
         self.assertEqual(d.update(v, r), (None, False), 'update not working')
         self.assertEqual(d.delete(v), 0, 'delete not working')
+
     def test_row_key(self):
         v1 = ival(1)
         v2 = sval('xxx')
@@ -778,6 +841,7 @@ class DataFactory(unittest.TestCase):
         c2 = self._column2 = pytis.data.ColumnSpec('bar',
                                                    pytis.data.String())
         self._columns = (c1, c2)
+
     def test_basic(self):
         columns = self._columns
         key = (columns[1],)
@@ -790,6 +854,7 @@ class DataFactory(unittest.TestCase):
         for d in data1, data2, data3:
             self.assertEqual(d.columns(), columns)
             self.assertEqual(d.key(), key, ("Key doesn't match", d.key(), key))
+
     def test_create(self):
         columns = self._columns
         key = (columns[0],)
@@ -820,6 +885,7 @@ class DBConnection(unittest.TestCase):
                               host='localhost', port=1234, database='db')
         self._connection3 = C(user='login', password='heslo',
                               host='localhost', port=1234, database='xxx')
+
     def test_it(self):
         c = self._connection
         self.assertEqual(c.user(), 'login')
@@ -827,9 +893,11 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(c.host(), 'localhost')
         self.assertEqual(c.port(), 1234)
         self.assertEqual(c.database(), 'db')
+
     def test_cmp(self):
         self.assertEqual(self._connection, self._connection2)
         self.assertNotEqual(self._connection, self._connection3)
+
     def test_modified(self):
         c = self._connection
         cc = c.modified(host='remotehost')
@@ -839,6 +907,7 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(c.database(), cc.database())
         self.assertEqual(c.host(), 'localhost')
         self.assertEqual(cc.host(), 'remotehost')
+
     def test_select(self):
         c = self._connection
         c1 = c.select('remote')
@@ -878,6 +947,7 @@ class DBColumnBinding(unittest.TestCase):
         self.assertEqual(b.column(), 'sloupec')
         self.assertIsNone(b.related_to(), 'intruding relation')
         self.assertFalse(b.is_hidden(), 'secret column')
+
     def test_specified(self):
         b1 = pytis.data.DBColumnBinding('', 'ciselnik', 'id')
         self.assertEqual(b1.id(), '')
@@ -936,6 +1006,7 @@ class _DBBaseTest(unittest.TestCase):
         self._dconnection = pytis.data.DBConnection(**_connection_data)
         import psycopg2
         self._connector = psycopg2.connect(**_connection_data)
+
     def _sql_command(self, command):
         cursor = self._connector.cursor()
         try:
@@ -954,10 +1025,13 @@ class _DBBaseTest(unittest.TestCase):
         self._connector.commit()
         cursor.close()
         return result
+
     def setUp(self):
         pass
+
     def tearDown(self):
         pass
+
 
 class _DBTest(_DBBaseTest):
     def setUp(self):
@@ -1056,6 +1130,7 @@ class _DBTest(_DBBaseTest):
             except:
                 self.tearDown()
                 raise
+
     def tearDown(self):
         for t in ('tablefunc(int)',):
             try:
@@ -1090,13 +1165,16 @@ class DBDataPostgreSQL(_DBTest):
     # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
 
+
 class DBDataPyPgSQL(_DBTest):
     # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
 
+
 class PostgreSQLStandardBindingHandler(_DBTest):
     # Testujeme v rámci testování potomka 'DBDataDefault'.
     pass
+
 
 class DBDataDefault(_DBTest):
     ROW1 = (2, datetime.date(2001, 1, 2), 1000.0, 'U.S.A.', 'specialni')
@@ -1288,14 +1366,17 @@ class DBDataDefault(_DBTest):
                 raise e
             row.append((c.id(), v))
         self.newrow = pytis.data.Row(row)
+
     def tearDown(self):
         if hasattr(self, '_to_kill'):
             for d in self._to_kill:
                 d.sleep()
         _DBTest.tearDown(self)
+
     def test_constructor(self):
         # Již otestováno v setUp
         pass
+
     def test_row(self):
         I = pytis.data.Integer()
         for x in ('0', '1'):
@@ -1311,12 +1392,14 @@ class DBDataDefault(_DBTest):
         for i, j in ((0, 2,), (1, 3,)):
             self.assertNotEqual(result[i], self.ROW1[j],
                                 ('invalid response', i, result[i], self.ROW1[j]))
+
     def test_unique(self):
         self.assertTrue(self.dstat.find_column('stat').type().unique())
         self.assertTrue(self.dstat.find_column('nazev').type().unique())
         self.assertTrue(self.dosnova.find_column('id').type().unique())
         for colname in ('popis', 'druh', 'stat',):
             self.assertFalse(self.dosnova.find_column(colname).type().unique(), colname)
+
     def test_select_fetch(self, arguments={}):
         self.data.select(arguments=arguments)
         for r in (self.ROW1, self.ROW2):
@@ -1332,6 +1415,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(self.data.fetchone())
         self.assertIsNone(self.data.fetchone())
         self.data.close()
+
     def test_limited_select(self):
         self.data.select(columns=('castka', 'stat-nazev',))
         for r in (self.ROW1, self.ROW2):
@@ -1354,6 +1438,7 @@ class DBDataDefault(_DBTest):
             v = result[i].value()
             self.assertEqual(v, self.ROW1[i], ('row doesn\'t match', v, r[i]))
         self.data.close()
+
     def test_select_map(self):
         result = self.data.select_map(lambda row: (row, 'foo'))
         for r, x in zip((self.ROW1, self.ROW2), result):
@@ -1361,6 +1446,7 @@ class DBDataDefault(_DBTest):
             xx = x[0]
             for i in range(len(r)):
                 self.assertEqual(r[i], xx[i].value(), ('invalid value', r[i], xx[i].value()))
+
     def test_select_fetch_direction(self):
         self.data.select()
         F, B = pytis.data.FORWARD, pytis.data.BACKWARD
@@ -1379,6 +1465,7 @@ class DBDataDefault(_DBTest):
                 self.assertIsNone(result, ('data reincarnation', str(result), d, r, n))
             n = n + 1
         self.data.close()
+
     def test_select_condition(self):
         v = ival(2)
         condition = pytis.data.AND(pytis.data.EQ('cislo', v))
@@ -1416,6 +1503,7 @@ class DBDataDefault(_DBTest):
         # ANY_OF
         nrows_test(pytis.data.ANY_OF('popis', sval('specialni'), sval('zvlastni'),
                                      sval('podivny'), sval(None)), 3)
+
     def test_select_special_characters(self):
         d = self.dcosi
         for v in ("'...", "\\'...", "'...\x00", "'...\n"):
@@ -1429,6 +1517,7 @@ class DBDataDefault(_DBTest):
                     raise
             self.assertIsNone(row, 'too many lines')
             d.close()
+
     def test_select_sorting(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT
@@ -1449,6 +1538,7 @@ class DBDataDefault(_DBTest):
                 self.assertEqual(synt, k1, ('bad value', synt, k1, spec))
                 self.assertEqual(anal, k2, ('bad value', anal, k2, spec))
             self.assertIsNone(d.fetchone(), 'too many lines')
+
     def test_select_sorting_limited(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT
@@ -1471,6 +1561,7 @@ class DBDataDefault(_DBTest):
                 self.assertEqual(anal, k2, ('bad value', anal, k2, spec))
             self.assertIsNone(d.fetchone(), 'too many lines')
             d.close()
+
     def test_select_distinct_on(self):
         def check(d, condition, result):
             d.select(condition=condition)
@@ -1498,6 +1589,7 @@ class DBDataDefault(_DBTest):
         finally:
             self.dist.close()
         self.assertEqual(result, 2, ('distinct on search failed', result,))
+
     def test_select_aggregate(self):
         d = self.data
         result = d.select_aggregate((d.AGG_MIN, 'castka')).value()
@@ -1512,6 +1604,7 @@ class DBDataDefault(_DBTest):
         self.assertEqual(result, 2)
         result = d.select_aggregate((d.AGG_SUM, 'castka')).value()
         self.assertEqual(result, 3000)
+
     def test_select_and_aggregate(self):
         d = self.data
         select_result, aggregate_result = d.select_and_aggregate(d.AGG_SUM)
@@ -1529,6 +1622,7 @@ class DBDataDefault(_DBTest):
         select_result, aggregate_result = d.select_and_aggregate(d.AGG_COUNT)
         self.assertEqual(select_result, 2)
         self.assertEqual(aggregate_result[0].value(), 2)
+
     def test_constructor_condition(self):
         d = self._dcosi_condition
         self.assertIsNone(d.row(ival(2)), 'Excluded row found in limited data object')
@@ -1547,6 +1641,7 @@ class DBDataDefault(_DBTest):
         test_select(None, 2)
         test_select(pytis.data.LT('id', ival(5)), 1)
         test_select(pytis.data.GT('id', ival(6)), 0)
+
     def test_async_select(self, arguments={}):
         self.data.select(async_count=True, arguments=arguments)
         for r in (self.ROW1, self.ROW2):
@@ -1558,6 +1653,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(self.data.fetchone(), 'too many lines')
         self.assertIsNone(self.data.fetchone(), 'data reincarnation')
         self.data.close()
+
     def test_dummy_select(self):
         UNKNOWN_ARGUMENTS = self.data.UNKNOWN_ARGUMENTS
         self.test_select_fetch(arguments=UNKNOWN_ARGUMENTS)
@@ -1570,6 +1666,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(self.funcdata.fetchone())
         self.assertEqual(self.funcdata.select(arguments=UNKNOWN_ARGUMENTS), 0)
         self.assertEqual(self.funcdata.search(None, arguments=UNKNOWN_ARGUMENTS), 0)
+
     def test_restore_select(self):
         d = self.dcosi
         condition = pytis.data.EQ('id', pytis.data.ival(3))
@@ -1581,6 +1678,7 @@ class DBDataDefault(_DBTest):
         result = d.search(condition)
         self.assertEqual(result, 0)
         d.close()
+
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
@@ -1594,6 +1692,7 @@ class DBDataDefault(_DBTest):
         self.assertIs(result2[1], False, 'invalid insertion succeeded')
         self.assertTrue(result2[0] is None or isinstance(result2[0], basestring),
                         'invalid failed insertion result')
+
     def test_insert_view(self):
         row = pytis.data.Row((('x', ival(5),),))
         result, success = self.view3.insert(row)
@@ -1609,6 +1708,7 @@ class DBDataDefault(_DBTest):
         result, success = self.view5.insert(row)
         self.assertTrue(success)
         self.assertIsNone(result, ('unexpected insert result', result,))
+
     def test_update(self):
         row = self.newrow
         row1 = []
@@ -1631,12 +1731,14 @@ class DBDataDefault(_DBTest):
                             'invalid failed update result')
             result2 = self.data.update(k, row)
         self.assertEqual(self.data.update(row[0], row1)[0], row1, 'update failed')
+
     def test_view_update(self):
         I = pytis.data.Integer()
         key = I.validate('2')[0]
         row = pytis.data.Row((('x', I.validate('3')[0]),))
         result, success = self.view.update(key, row)
         self.assertTrue(result and success, 'view update failed')
+
     def test_update_many(self):
         row = self.newrow
         row1 = []
@@ -1658,6 +1760,7 @@ class DBDataDefault(_DBTest):
         self.assertTrue(ok, 'invalid update succeeded')
         self.assertEqual(self.data.update_many(pytis.data.EQ('cislo', row[0]), row1), 1,
                          'update failed')
+
     def test_delete(self):
         def lines(keys, self=self):
             n = len(keys)
@@ -1675,6 +1778,7 @@ class DBDataDefault(_DBTest):
         lines((2, 3, 4))
         self.assertEqual(self.data.delete(I.validate('4')[0]), 1, 'row not deleted')
         lines((2, 3))
+
     def test_delete_many(self):
         def lines(keys, self=self):
             n = len(keys)
@@ -1699,6 +1803,7 @@ class DBDataDefault(_DBTest):
         self.assertEqual(self.data.delete_many(pytis.data.EQ('castka', x3000)), 1,
                          'row not deleted')
         lines((3,))
+
     def test_table_function(self):
         id_value = ival(3)
         try:
@@ -1715,6 +1820,7 @@ class DBDataDefault(_DBTest):
             self.assertIn(999, result)
         finally:
             self.funcdata.close()
+
     def test_binary(self):
         B = pytis.data.Binary()
         I = pytis.data.Integer()
@@ -1748,6 +1854,7 @@ class DBDataDefault(_DBTest):
         result = str(self.dbin.row(key)[1].value().buffer())
         self.assertEqual(result, str(data2.value().buffer()), ('Invalid binary data', result,))
         self.assertEqual(self.dbin.delete(key), 1, 'Binary deletion failed')
+
     def test_full_text_select(self):
         ts_config = self._sql_command("select get_current_ts_config()")[0][0]
         self.assertEqual(ts_config, 'simple',
@@ -1783,6 +1890,7 @@ class DBDataDefault(_DBTest):
         check1('lazy&fox', ["The quick brown <b>fox</b> jumps over the <b>lazy</b> dog. * cat",
                             "GNU's Not Unix * <b>lazy</b> <b>fox</b> and <b>lazy</b> dog"])
         check1('world', ["Hello, <b>world</b>! * bear"])
+
     def test_dateformats(self):
         data = self.dateformats
         row = data.row(pytis.data.ival(1))
@@ -1791,6 +1899,7 @@ class DBDataDefault(_DBTest):
         delta = datetime.datetime.now(pytis.data.DateTime.UTC_TZINFO) - value
         self.assertGreaterEqual(delta, datetime.timedelta(), value)
         self.assertLess(delta, datetime.timedelta(seconds=3600), value)
+
     def test_timezones(self):
         data = self.timezones
         V = pytis.data.Value
@@ -1822,6 +1931,7 @@ class DBDataDefault(_DBTest):
         data.update(key_val, pytis.data.Row((('dt', dttz_val), ('dttz', dt_val),
                                              ('t', ttz_val), ('ttz', pytis.data.tval(None)),)))
         check_row()
+
     def test_ranges(self):
         if self._connector.server_version < 90200:
             return
@@ -1926,6 +2036,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(err)
         pytis.data.Value(IR, IR.Range(1, 1))
         self.assertRaises(TypeError, pytis.data.Value, IR, IR.Range(1, 0))
+
     def test_arrays(self):
         int_array_type = pytis.data.Array(inner_type=pytis.data.Integer())
         str_array_type = pytis.data.Array(inner_type=pytis.data.String())
@@ -1973,6 +2084,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(row)
         self.assertEqual(row[1].value(), ())
         self.assertEqual(row[2].value(), ())
+
     def test_backslash(self):
         data = self.dstat
         backslash = 'back\\012slash'
@@ -1989,6 +2101,7 @@ class DBDataDefault(_DBTest):
         self.assertEqual(result[1].value(), backslash,
                          ('invalid inserted value', result[1].value(), backslash,))
         self.assertEqual(data.delete(row[0]), 1, 'row not deleted')
+
     def test_lock(self):
         us = pytis.data.String().validate('us')[0]
         cz = pytis.data.String().validate('cz')[0]
@@ -2019,6 +2132,7 @@ class DBDataDefault(_DBTest):
                 transaction_2.rollback()
             except:
                 pass
+
     def test_lock_view(self):
         v = self.view
         v.select()
@@ -2053,6 +2167,7 @@ class DBDataDefault(_DBTest):
                     t.rollback()
                 except:
                     pass
+
     def _perform_transaction(self, transaction):
         d = self.dstat
         d1 = self.dstat1
@@ -2086,6 +2201,7 @@ class DBDataDefault(_DBTest):
                 value = d.fetchone()[0].value()
                 self.assertEqual(value, k, ('invalid select value', k, value,))
         d.close()
+
     def test_transaction_commit(self):
         d = self.dstat
         transaction = \
@@ -2103,6 +2219,7 @@ class DBDataDefault(_DBTest):
                 self.assertIsNotNone(result, ('value not present', k,))
                 self.assertEqual(result['nazev'].value(), v,
                                  ('invalid value', k, result['nazev'].value(),))
+
     def test_transaction_rollback(self):
         d = self.dstat
         transaction = \
@@ -2120,6 +2237,7 @@ class DBDataDefault(_DBTest):
                 self.assertIsNotNone(result, ('value not present', k,))
                 self.assertEqual(result['nazev'].value(), v,
                                  ('invalid value', k, result['nazev'].value(),))
+
     def test_partial_transaction(self):
         d = self.dstat
 
@@ -2157,6 +2275,7 @@ class DBMultiData(DBDataDefault):
             ('100', '008'),
             'Czech Republic', 'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', ('100', '007'), 'U.S.A.', 'nove')
+
     def test_row(self):
         for x, r in (('2', self.ROW1), ('3', self.ROW2)):
             result = self.mdata.row(pytis.data.Integer().validate(x)[0])
@@ -2167,6 +2286,7 @@ class DBMultiData(DBDataDefault):
                         self.assertEqual(v[j], r[i][j], ("row doesn't match", v[i][j], r[i][j]))
                 else:
                     self.assertEqual(v, r[i], ("row doesn't match", v, r[i]))
+
     def test_select_fetch(self):
         d = self.mdata
         d.select()
@@ -2177,6 +2297,7 @@ class DBMultiData(DBDataDefault):
                 self.assertEqual(r[i], result[i].value(),
                                  ('invalid value', r[i], result[i].value()))
         d.close()
+
     def test_select_condition(self):
         d = self.mdata
         v = ival(2)
@@ -2190,6 +2311,7 @@ class DBMultiData(DBDataDefault):
                                  ('invalid value', r[i], result[i].value()))
         self.assertIsNone(d.fetchone(), 'too many lines')
         d.close()
+
     def test_select_fetch_direction(self):
         dat = self.mdata
         dat.select()
@@ -2209,6 +2331,7 @@ class DBMultiData(DBDataDefault):
                 self.assertIsNone(result, 'data reincarnation')
             n = n + 1
         dat.close()
+
     def test_search(self):
         E = pytis.data.EQ
         d = self.dosnova
@@ -2240,12 +2363,14 @@ class DBMultiData(DBDataDefault):
                        direction=pytis.data.BACKWARD)
         self.assertEqual(res, 3)
         d.close()
+
     def test_search_key(self):
         d = self.dosnova
         d.select()
         res = d.search_key((sval('100'), sval('008')))
         self.assertEqual(res, 2)
         d.close()
+
     def test_insert(self):
         d = self.mdata
         row = self.newrow
@@ -2257,6 +2382,7 @@ class DBMultiData(DBDataDefault):
         eresult = pytis.data.Row(eresult)
         self.assertEqual(result[:-1], eresult, 'insertion failed')
         self.assertEqual(d.insert(row), (None, False), 'invalid insertion succeeded')
+
     def test_update(self):
         d = self.mdata
         newrow = ('5', '2001-07-06', '9.90', ('100', '008'), 'Czech Republic',
@@ -2281,6 +2407,7 @@ class DBMultiData(DBDataDefault):
         self.assertEqual(d.update(k1, row), (None, False), 'invalid update succeeded')
         self.assertEqual(d.update(k2, row), (None, False), 'invalid update succeeded')
         self.assertEqual(d.update(row[0], row1)[0][:-1], row1, 'update failed')
+
     def test_delete(self):
         d = self.mdata
 
@@ -2305,6 +2432,7 @@ class DBMultiData(DBDataDefault):
 if False:
     tests.add(DBMultiData)
 
+
 class DBSessionVariables(_DBBaseTest):
     def setUp(self):
         try:
@@ -2318,6 +2446,7 @@ class DBSessionVariables(_DBBaseTest):
         import config
         config.session_variables = {'myvars.test': 'value'}
         _DBBaseTest.setUp(self)
+
     def test_it(self):
         function = pytis.data.DBFunctionDefault('foo', self._dconnection)
         row = pytis.data.Row()
@@ -2329,6 +2458,7 @@ class DBSessionVariables(_DBBaseTest):
             self.tearDown()
             raise
         self.tearDown()
+
     def tearDown(self):
         try:
             self._sql_command("drop function foo")
@@ -2360,6 +2490,7 @@ class DBDataFetchBuffer(_DBBaseTest):
         self.data = pytis.data.DBDataDefault((key,), key, self._dconnection)
         key2 = pytis.data.DBColumnBinding('x', 'small', 'x')
         self.data2 = pytis.data.DBDataDefault((key2,), key2, self._dconnection)
+
     def tearDown(self):
         try:
             self.data.sleep()
@@ -2371,6 +2502,7 @@ class DBDataFetchBuffer(_DBBaseTest):
         except:
             pass
         _DBBaseTest.tearDown(self)
+
     def _check_skip_fetch(self, d, spec, noresult=False):
         d.select()
         n = 0
@@ -2394,6 +2526,7 @@ class DBDataFetchBuffer(_DBBaseTest):
         else:
             self.assertIsNotNone(row, ('Missing row', n))
             self.assertEqual(row['x'].value(), n, ('Invalid result', row['x'].value(), n))
+
     def test_skip_fetch(self):
         import config
         fsize = config.initial_fetch_size
@@ -2453,12 +2586,14 @@ class DBDataOrdering(_DBTest):
             key,
             self._dconnection,
             ordering='id')
+
     def tearDown(self):
         try:
             self.data.sleep()
         except:
             pass
         super_(DBDataOrdering).tearDown(self)
+
     def test_insert(self):
         row = pytis.data.Row((('popis', sval('bla bla')),))
         d = self.data
@@ -2568,26 +2703,31 @@ class DBDataAggregated(DBDataDefault):
                                      ('Missing aggregate row item', test_result,))
         finally:
             data.close()
+
     def test_basic(self, **kwargs):
         test_result = ((('castka', 1000.0), ('madatisum', 2), ('count', 2),),
                        (('castka', 2000.0), ('madatisum', 2), ('count', 1),),
                        (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
                        )
         self._aggtest(test_result, **kwargs)
+
     def test_columns(self):
         self.test_basic(columns=('castka', 'madatisum', 'count'))
+
     def test_columns_groupby_function(self):
         test_result = ((('castka', 1000.0), ('madatisum', 2), ('count', 2), ('mesic', 1.0),),
                        (('castka', 2000.0), ('madatisum', 2), ('count', 1), ('mesic', 1.0),),
                        (('castka', 3000.0), ('madatisum', 3), ('count', 1), ('mesic', 1.0),),
                        )
         self._aggtest(test_result)
+
     def test_condition(self):
         test_result = ((('castka', 2000.0), ('madatisum', 2), ('count', 1),),
                        (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
                        )
         condition = pytis.data.EQ('count', ival(1))
         self._aggtest(test_result, condition=condition)
+
     def test_double_aggregated(self):
         D = pytis.data.DBDataDefault
         self._aggtest(3, operation=(D.AGG_COUNT, 'madatisum',))
@@ -2595,12 +2735,15 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM,
                       columns=('castka', 'madatisum', 'count',))
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM)
+
     def test_row(self):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
+
     def test_group_only_row(self):
         self._aggtest(((('mesic', 1.0),),), group_only=True)
         self._aggtest(((('mesic', 1.0),),), group_only=True,
                       sort=(('mesic', pytis.data.ASCENDENT,),))
+
     def test_aggregated_filter(self):
         D = pytis.data.DBDataDefault
         condition = pytis.data.EQ('cislo', ival(2))
@@ -2608,6 +2751,7 @@ class DBDataAggregated(DBDataDefault):
                       filter_condition=condition)
         condition = pytis.data.EQ('cislo', ival(3))
         self._aggtest(1, operation=(D.AGG_COUNT, 'madatisum',), filter_condition=condition)
+
     def test_distinct(self):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
@@ -2628,6 +2772,7 @@ class DBDataAggregated(DBDataDefault):
         data.select(columns=('count',), sort=('count',))
         data.fetchone()
         data.close()
+
     def test_table_function(self):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
@@ -2658,23 +2803,29 @@ class DBDataNotification(DBDataDefault):
         self._ddn_1 = False
         self._ddn_2 = False
         self._ddn_3 = False
+
     def _ddn_callback_1(self):
         self._ddn_1 = True
+
     def _ddn_callback_2(self):
         self._ddn_2 = True
+
     def _ddn_callback_3(self):
         self._ddn_3 = True
+
     def _ddn_check_result(self):
         time.sleep(1)                   # hmm
         self.assertTrue(self._ddn_1, 'failure of callback 1')
         self.assertFalse(self._ddn_2, 'failure of callback 2')
         self.assertTrue(self._ddn_3, 'failure of callback 3')
+
     def test_notification(self):
         d = self.data
         self.assertEqual(d.change_number(), 0)
         d.insert(self.newrow)
         self._ddn_check_result()
         self.assertEqual(d.change_number(), 1)
+
     def test_side_notification(self):
         d = self.dstat
         cnumber_1 = d.change_number()
@@ -2702,6 +2853,7 @@ class DBCounter(_DBBaseTest):
                 self.tearDown()
                 raise
         self._counter = pytis.data.DBCounterDefault('fooseq', self._dconnection)
+
     def tearDown(self):
         for q in ("drop sequence fooseq",):
             try:
@@ -2709,6 +2861,7 @@ class DBCounter(_DBBaseTest):
             except:
                 pass
         _DBBaseTest.tearDown(self)
+
     def test_next(self):
         self.assertEqual(self._counter.next(), 1)
         self.assertEqual(self._counter.next(), 2)
@@ -2741,6 +2894,7 @@ class DBFunction(_DBBaseTest):
         except:
             self.tearDown()
             raise
+
     def tearDown(self):
         for q in ("foo1(int)",
                   "foo2(text,text)",
@@ -2762,6 +2916,7 @@ class DBFunction(_DBBaseTest):
             except:
                 pass
         _DBBaseTest.tearDown(self)
+
     def test_int(self):
         function = pytis.data.DBFunctionDefault('foo1', self._dconnection)
         row = pytis.data.Row((('arg1',
@@ -2769,6 +2924,7 @@ class DBFunction(_DBBaseTest):
                               ))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 42, ('Invalid result', result))
+
     def test_string(self):
         function = pytis.data.DBFunctionDefault('foo2', self._dconnection)
         row = pytis.data.Row((('arg1',
@@ -2777,6 +2933,7 @@ class DBFunction(_DBBaseTest):
                                pytis.data.String().validate('bar')[0])))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'foobar', ('Invalid result', result))
+
     def test_numeric(self):
         function = pytis.data.DBFunctionDefault('foo8', self._dconnection)
         row = pytis.data.Row(())
@@ -2786,11 +2943,13 @@ class DBFunction(_DBBaseTest):
         row = pytis.data.Row(())
         result = function.call(row)[0][0].value()
         self.assertIsInstance(result, float)
+
     def test_empty(self):
         function = pytis.data.DBFunctionDefault('foo3', self._dconnection)
         row = pytis.data.Row(())
         result = function.call(row)[0][0].value()
         self.assertIsNone(result, ('Invalid result', result))
+
     def test_row_result(self):
         function = pytis.data.DBFunctionDefault('foo4', self._dconnection)
         row = pytis.data.Row(())
@@ -2799,6 +2958,7 @@ class DBFunction(_DBBaseTest):
         values = [col.value() for col in result[0]]
         self.assertTrue(values == [10] or values == [20] or values == [30],
                         ('Invalid result', values))
+
     def test_setof_result(self):
         function = pytis.data.DBFunctionDefault('foo5', self._dconnection)
         row = pytis.data.Row((('arg1',
@@ -2809,6 +2969,7 @@ class DBFunction(_DBBaseTest):
         self.assertEqual(value, 20, ('Invalid result', value))
         value = result[1][0].value()
         self.assertEqual(value, 30, ('Invalid result', value))
+
     def test_void(self):
         function = pytis.data.DBFunctionDefault('foo6', self._dconnection)
         row = pytis.data.Row((('arg1',
@@ -2816,6 +2977,7 @@ class DBFunction(_DBBaseTest):
         function.call(row)
         data = self._sql_command("select count(*) from tab where x = 1000")
         self.assertEqual(data[0][0], 1, ('Invalid data', data))
+
     def test_complex_result(self):
         C = pytis.data.ColumnSpec
         I = pytis.data.Integer()
@@ -2838,6 +3000,7 @@ class DBSearchPath(_DBTest):
                   "nazev varchar(40) UNIQUE NOT NULL)",
                   "insert into special.cstat values ('sk', 'Slovakia')",):
             self._sql_command(q)
+
     def tearDown(self):
         try:
             for q in ("drop table special.cstat",
@@ -2846,6 +3009,7 @@ class DBSearchPath(_DBTest):
         except:
             pass
         _DBTest.tearDown(self)
+
     def _retrieve(self, schemas):
         connection_data = copy.copy(_connection_data)
         connection_data['schemas'] = schemas
@@ -2860,6 +3024,7 @@ class DBSearchPath(_DBTest):
             key)
         dstat = dstat_spec.create(connection_data=connection, connection_name=name)
         return dstat.select_map(lambda row: row[0].value())
+
     def test_default_path(self):
         def test(schemas):
             keys = self._retrieve(schemas)
@@ -2868,6 +3033,7 @@ class DBSearchPath(_DBTest):
         test([])
         test(['public'])
         test(['public', 'special'])
+
     def test_special_path(self):
         def test(schemas):
             keys = self._retrieve(schemas)
@@ -2877,6 +3043,7 @@ class DBSearchPath(_DBTest):
 
 
 tests.add(DBSearchPath)
+
 
 class DBCrypto(_DBBaseTest):
     def setUp(self):
@@ -2905,6 +3072,7 @@ class DBCrypto(_DBBaseTest):
             key)
         self._data = spec.create(connection_data=self._dconnection)
         self._data._pg_flush_connections()
+
     def tearDown(self):
         for q in ("drop table cfoo",
                   "delete from e_pytis_crypto_keys",
@@ -2914,6 +3082,7 @@ class DBCrypto(_DBBaseTest):
             except:
                 pass
         _DBBaseTest.tearDown(self)
+
     def test_basic(self):
         data = self._data
 
@@ -2985,12 +3154,14 @@ class TutorialTest(_DBBaseTest):
             except:
                 self.tearDown()
                 raise
+
     def tearDown(self):
         for t in ('tab', 'cis'):
             try:
                 self._sql_command("DROP TABLE %s" % (t,))
             except:
                 pass
+
     def test_it(self):
         # set up
         connection = pytis.data.DBConnection(**_connection_data)
@@ -3079,6 +3250,7 @@ class AccessRightsTest(_DBBaseTest):
         connection_data = pytis.data.DBConnection(**_connection_data)
         self._access_rights = pytis.data.DBAccessRights(
             'table1', connection_data=connection_data)
+
     def tearDown(self):
         for q in ("DROP TABLE pytis.access_rights",
                   "DROP SCHEMA pytis",):
@@ -3086,6 +3258,7 @@ class AccessRightsTest(_DBBaseTest):
                 self._sql_command(q)
             except:
                 pass
+
     def test_permitted_groups(self):
         P = pytis.data.Permission
         a = self._access_rights
@@ -3101,6 +3274,7 @@ class AccessRightsTest(_DBBaseTest):
         self.assertEqual(groups, ['group1', 'group2', 'group3'], ('Invalid groups', groups,))
         groups = a.permitted_groups(P.INSERT, 'column4')
         self.assertEqual(groups, ['group1', 'group2'], ('Invalid groups', groups,))
+
     def test_permitted(self):
         P = pytis.data.Permission
         a = self._access_rights
@@ -3129,12 +3303,14 @@ class ThreadTest(_DBBaseTest):
         except:
             self.tearDown()
             raise
+
     def tearDown(self):
         try:
             self._sql_command("drop table tab")
         except:
             pass
         _DBBaseTest.tearDown(self)
+
     def test_it(self):
         import thread
         B = pytis.data.DBColumnBinding
@@ -3185,6 +3361,7 @@ class ThreadTest(_DBBaseTest):
 if False:
     tests.add(ThreadTest)
 
+
 class OperatorTest(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
@@ -3204,6 +3381,7 @@ class OperatorTest(_DBBaseTest):
         except:
             self.tearDown()
             raise
+
     def tearDown(self):
         try:
             self._sql_command("drop table a")
@@ -3211,6 +3389,7 @@ class OperatorTest(_DBBaseTest):
         except:
             pass
         _DBBaseTest.tearDown(self)
+
     def test_in(self):
         a = pytis.data.dbtable('a', ('a', 'b'),
                                pytis.data.DBConnection(**_connection_data))
@@ -3237,6 +3416,7 @@ class OperatorTest(_DBBaseTest):
             a.close()
             self.assertEqual(result, values,
                              '%s: expected %r, got %r' % (condition, values, result))
+
     def test_equality(self):
         a = pytis.data.EQ('a', sval('a'))
         b = pytis.data.EQ('b', sval('a'))
