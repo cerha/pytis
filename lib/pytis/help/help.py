@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2012-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,9 +43,11 @@ import pytis.data as pd
 import pytis.form
 import pytis.util
 import config
-from pytis.util import current_language, log, OPERATIONAL, translations, ProgramError
+
+from pytis.util import log, OPERATIONAL, translations, ProgramError
 
 _ = translations('pytis-wx')
+
 
 class HelpUpdater(object):
     """Create/update initial help texts in the database according to specifications.
@@ -271,6 +274,8 @@ class HelpUpdater(object):
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
 
 generator = None
+
+
 def help_page(uri):
     """Return a help page for given URI as a 'lcg.ContentNode' instance."""
     global generator
@@ -302,9 +307,11 @@ class HelpGenerator(object):
         pass
 
     class ContentNode(lcg.ContentNode):
+
         def append_child(self, node):
             self._children += (node,)
             node._set_parent(self)
+
         def update(self, content):
             self._default_variant = lcg.Variant('--', content=content)
 
@@ -379,7 +386,7 @@ class HelpGenerator(object):
         resolver = pytis.util.resolver()
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
-        except pytis.util.ResolverError as e:
+        except pytis.util.ResolverError:
             return None, None
 
         def field_label(f):
@@ -491,6 +498,7 @@ class SpecHelpGenerator(HelpGenerator):
 
     def _application_help_nodes(self):
         counter = pytis.util.Counter()
+
         def node(item):
             if isinstance(item, pytis.form.Menu):
                 content = lcg.NodeIndex()
