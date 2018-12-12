@@ -1077,7 +1077,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self.refresh()
             if row >= self._lf_count(min_value=(row + 1)):
                 return None
-        record = self._table.row(row)
+        try:
+            # Despite the above checks we've seen "Not within select" tracebacks so the
+            # checks are probably insufficient or there is a race condition.  The question
+            # is whether it is not enough to handle the exception here and remove the
+            # checks alltogether.
+            record = self._table.row(row)
+        except pytis.data.NotWithinSelect:
+            return True
         if record:
             cid = self._columns[col].id()
             tooltip = record.display(cid) or None

@@ -59,9 +59,10 @@ import thread
 import weakref
 
 from pytis.data import ColumnSpec, Data, Type
-from pytis.util import compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt, \
-    super_, translations, with_lock, \
-    DEBUG, EVENT, OPERATIONAL
+from pytis.util import (
+    compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt,
+    super_, translations, with_lock, ProgramError, DEBUG, EVENT, OPERATIONAL,
+)
 
 _ = translations('pytis-data')
 
@@ -790,3 +791,9 @@ class DBInsertException(DBException):
     """
     def __init__(self):
         super_(DBLockException).__init__(self, None)
+
+
+class NotWithinSelect(ProgramError):
+    """Exception thrown on an attempt for a cursor operation when there is no active select."""
+    def __init__(self):
+        ProgramError.__init__(self, 'Not within select')

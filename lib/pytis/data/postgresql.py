@@ -38,7 +38,7 @@ import weakref
 
 import pytis.data
 from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
-    DBSystemException, DBUserException, DBConnection, DBConnectionPool, DBData, \
+    DBSystemException, DBUserException, NotWithinSelect, DBConnection, DBConnectionPool, DBData, \
     ColumnSpec, DBColumnBinding, Row, Function, dbtable, reversed_sorting, \
     Array, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
     Macaddr, Number, Range, Serial, String, Time, TimeInterval, ival, sval, \
@@ -3447,7 +3447,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             ('Invalid direction', direction)
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')
+                raise NotWithinSelect()
         # Tady začíná opravdové vytažení aktuálních dat
         buffer = self._pg_buffer
         row = buffer.fetch(direction, self._pdbb_select_rows)
@@ -3553,7 +3553,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def last_row_number(self):
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')
+                raise NotWithinSelect()
         return self._pg_buffer.current()[1]
 
     def last_select_condition(self):
@@ -3569,7 +3569,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')
+                raise NotWithinSelect()
         result = self._pg_buffer.skip(count, direction,
                                       self._pg_number_of_rows)
         if count > 0:
@@ -3581,7 +3581,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def rewind(self):
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')
+                raise NotWithinSelect()
         __, pos = self._pg_buffer.current()
         if pos >= 0:
             self.skip(pos + 1, BACKWARD)
@@ -3601,7 +3601,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_check_arguments(arguments)
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')
+                raise NotWithinSelect()
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return 0
         row, pos = self._pg_buffer.current()
