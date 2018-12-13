@@ -39,6 +39,8 @@ import collections
 import datetime
 import types
 import decimal
+import cgitb
+import os
 
 import pytis.data
 import pytis.form
@@ -47,7 +49,7 @@ import pytis.util
 from pytis.presentation import TextFormat
 from pytis.util import ProgramError, super_
 from command import CommandHandler
-from screen import KeyHandler, beep, char2px, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
+from screen import KeyHandler, beep, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -1024,97 +1026,146 @@ class ColorSelector(GenericDialog):
 
 
 class BugReport(GenericDialog):
-    """Dialog pro zobrazení neočekávané výjimky.
+    """Dialog displaying information about unhandled exception.
 
-    Dialog nabízí uživateli možnost výběru reakce na výjimku, včetně možnosti
-    odeslání oznámení o chybě.
+    It is possible to send a bug report by email before closing the dialog.
 
-    Dialog vrací jednu z následujících hodnot:
+    The user may close the dialog by choosing between two options:
+      - Ignore the exception and try continuing running the program
+        (which may not always work).
+      - Exit the application
 
-      None -- požaduje-li uživatel ukončení aplikace
-      prázdný string -- požaduje-li uživatel chybu ignorovat
-      neprázdný string -- požaduje-li uživatel poslat oznámení o chybě s textem
-        stringu
+    The return value is True if exit is requested or False otherwise.
 
     """
-    # Existuje sice wxPython.pytis.ErrorDialogs, ale to vypadá jako těžký a
-    # nepříliš funkční hack.
-
     _IGNORE_LABEL = _("Ignore")
-    _REPORT_LABEL = _("Send error report")
     _EXIT_LABEL = _("Exit application")
     _COMMIT_BUTTON = _EXIT_LABEL
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
 
-    def __init__(self, parent, einfo, message=None):
-        """Inicializuj instanci.
+    def __init__(self, parent, einfo):
+        """Arguments:
 
-        Argumenty:
-
-          parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
-          einfo -- informace o výjimce ve tvaru vraceném funkcí
-            'sys.exc_info()'
-          message -- error message to display to the user
+          parent -- wx parent window; 'wx.Frame' or 'wx.Dialog' instance
+          einfo -- exception information as returned by 'sys.exc_info()'
 
         """
         super_(BugReport).__init__(self, parent, _("Unhandled exception"),
-                                   buttons=(self._IGNORE_LABEL,
-                                            self._REPORT_LABEL,
-                                            self._EXIT_LABEL),
+                                   buttons=(self._IGNORE_LABEL, self._EXIT_LABEL),
                                    default=self._IGNORE_LABEL)
         self._einfo = einfo
-        self._message = message
 
     def _create_content(self, sizer):
+        import config
         dialog = self._dialog
-        label = wx.StaticText(dialog, -1, self._message or _("Oops"))
+        label = wx.StaticText(dialog, -1, _("Oops"))
         font = wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
                        encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
+        self._sent = False
         if icon is not None:
-            vsizer = wx.BoxSizer(wx.HORIZONTAL)
-            vsizer.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
-            vsizer.Add(icon, 0, wx.ALL, 5)
-            label = vsizer
-        # store the traceback text
-        if False:
-            # Fancy HTML traceback
-            import cgitb
-            from wx import html
-            traceback = html.HtmlWindow(dialog, -1)
-            text = "<html>" + cgitb.html(self._einfo) + "</html>"
-            step = 3000
-            pointer = 0
-            while (pointer < len(text)):
-                traceback.AppendToPage(text[pointer:min(pointer + step, len(text))])
-                pointer += step
-                traceback.SetSize(char2px(traceback, 140, 35))
+            hsizer = wx.BoxSizer(wx.HORIZONTAL)
+            hsizer.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
+            hsizer.Add(icon, 0, wx.ALL, 5)
+            label = hsizer
+        nb = wx.Notebook(dialog)
+        panel = wx.Panel(nb, -1)
+        email = config.sender_address
+        if not email:
+            import commands
+            status, domain = commands.getstatusoutput('hostname -f')
+            if not status and domain != 'localhost':
+                email = '%s@%s' % (config.dbconnection.user(), domain)
+            else:
+                email = ''
+        email_ctrl = wx.TextCtrl(panel, value=email or '', size=(740, 30), name='from')
+        email_ctrl.SetToolTip(_('Set your address in form "%s" to avoid being asked next time.',
+                                _("User interface settings")))
+        msg_ctrl = wx.TextCtrl(panel, value='', size=(740, 200), name='message',
+                               style=wx.TE_MULTILINE)
+        button = wx.Button(panel, -1, label=_("Send error report"))
+        button.Bind(wx.EVT_UPDATE_UI,
+                    lambda e: e.Enable(not self._sent and email_ctrl.GetValue() != ''))
+        button.Bind(wx.EVT_BUTTON, self._on_send_bug_report)
+        vsizer = wx.BoxSizer(wx.VERTICAL)
+        vsizer.Add(wx.StaticText(panel, -1, _("Your email address:")), 0,
+                   wx.TOP | wx.LEFT | wx.RIGHT, 6)
+        vsizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
+        vsizer.Add(wx.StaticText(panel, -1, _("Your message:")), 0, wx.TOP | wx.LEFT | wx.RIGHT, 6)
+        vsizer.Add(msg_ctrl, 1, wx.EXPAND | wx.ALL, 6)
+        vsizer.Add(button, 0, wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_RIGHT, 6)
+        panel.SetSizer(vsizer)
+        view = wx_text_view(nb, "<html>" + cgitb.html(self._einfo) + "</html>",
+                            format=TextFormat.HTML)
+        nb.AddPage(panel, _("Message"))
+        nb.AddPage(view, _("Exception details"))
+        sizer.Add(label, 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
+        sizer.Add(nb, 1, wx.EXPAND)
+        self._want_focus = msg_ctrl if email else email_ctrl
+
+    def _on_send_bug_report(self, event):
+        import email.Header
+        import email.Message
+        import email.Utils
+        import smtplib
+        import config
+
+        to = config.bug_report_address
+        if not to:
+            pytis.form.run_dialog(pytis.form.Message,
+                                  _("Destination address not known. The configuration option "
+                                    "`bug_report_address' must be set."))
+            return
+        addr, message = [self._dialog.FindWindowByName(f).GetValue() for f in ('from', 'message')]
+
+        tb = self._einfo[2]
+        while tb.tb_next is not None:
+            tb = tb.tb_next
+        filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
+        buginfo = "%s at %s line %d" % (self._einfo[0].__name__, filename, tb.tb_lineno)
+        if message:
+            message = message.strip() + "\n\n"
+        message += pytis.util.exception_info(self._einfo)
+
+        def header(value):
+            if isinstance(value, basestring):
+                try:
+                    unicode(value, 'us-ascii')
+                except:
+                    pass
+                else:
+                    return value
+            return email.Header.Header(value, 'utf-8')
+
+        msg = email.Message.Message()
+        msg['From'] = header(addr)
+        msg['To'] = header(to)
+        msg['Subject'] = header('%s: %s' % (config.bug_report_subject or _("Error"), buginfo))
+        msg['Date'] = email.Utils.formatdate()
+        msg.set_payload(message)
+        try:
+            try:
+                server = smtplib.SMTP(config.smtp_server)
+                server.sendmail(addr, to, msg.as_string())
+            finally:
+                try:
+                    server.quit()
+                except:
+                    pass
+        except Exception as e:
+            dlg, msg = Error, _("Failed sending error report:") + "\n" + unicode(e)
         else:
-            style = wx.TE_MULTILINE | wx.TE_DONTWRAP  # |wx.TE_READONLY
-            traceback = wx.TextCtrl(dialog, -1, style=style, size=(600, 360))
-            font = wx.Font(traceback.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
-                           wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
-            traceback.SetFont(font)
-            for line in pytis.util.exception_info(self._einfo).splitlines():
-                # Příliš "dlouhý" text se nemusí povést do políčka vložit...
-                traceback.AppendText(line + '\n')
-        self._traceback = traceback
-        self._want_focus = traceback
-        sizer.Add(label, 0, wx.EXPAND | wx.ALL | wx.CENTER, 5)
-        sizer.Add(traceback, 1, wx.EXPAND | wx.ALL, 5)
+            dlg, msg = Message, _("Error report sent.")
+            self._sent = True
+        pytis.form.run_dialog(dlg, msg)
 
     def _customize_result(self, result):
         label = self._button_label(result)
         if label == self._EXIT_LABEL:
-            result = None
+            result = True
         elif label == self._IGNORE_LABEL or label is None:
-            result = ''
-        elif label == self._REPORT_LABEL:
-            if isinstance(self._traceback, wx.TextCtrl):
-                result = self._traceback.GetValue()
-            else:
-                result = pytis.util.exception_info(self._einfo)
+            result = False
         else:
             raise ProgramError('Unknown BugReport dialog result', label)
         return result

@@ -2127,9 +2127,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                     raise e
                                 else:
                                     if pytis.form.top_window() is not None:
-                                        message = _("Application error. "
-                                                    "You can report it to get it fixed soon.")
-                                        pytis.form.top_level_exception(message)
+                                        pytis.form.top_level_exception()
                                     else:
                                         raise e
                         value = Value(ctype, tz_value)
@@ -2326,7 +2324,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         except DBUserException as e:
                             log(OPERATIONAL, "Database exception in counting thread",
                                 pytis.util.format_traceback())
-                            self._pg_exception = (sys.exc_info(), e)
+                            self._pg_exception = sys.exc_info()
                             self._pg_finished = True
                             self._pg_terminate_event.set()
                             return
@@ -2410,10 +2408,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             result = self._thread.pg_count(min_value, timeout, corrected)
             if self._thread._pg_exception:
                 import pytis.form
-                exception = self._thread._pg_exception
-                message = exception[1].message()
-                einfo = exception[0]
-                pytis.form.top_level_exception(message=message, einfo=einfo)
+                pytis.form.top_level_exception(self._thread._pg_exception)
             return result
 
         def stop(self):

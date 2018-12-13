@@ -77,98 +77,31 @@ _wx_key = None
 _in_top_level_exception = False
 
 
-def top_level_exception(message=None, einfo=None):
+def top_level_exception(einfo=None):
     """Zpracuj aktuálně vyvolanou výjimku aplikace."""
     global _in_top_level_exception
-    if _in_top_level_exception:
-        return
-    _in_top_level_exception = True
-    if not einfo:
-        einfo = sys.exc_info()
-    if issubclass(einfo[0], SystemExit):
-        sys.exit()
-    tbstring = format_traceback()
-    import cgitb
-    try:
-        tbstring = cgitb.text(einfo)
-    except:
-        import traceback
-        tbstring = "\n".join(traceback.format_exception(*einfo))
-    log(OPERATIONAL, 'Top-level exception caught', tbstring)
-    text = pytis.form.run_dialog(pytis.form.BugReport, einfo, message=message)
-    if text is None:
-        sys.exit()
-    elif text:
-        to = config.bug_report_address
-        if not to:
-            pytis.form.run_dialog(pytis.form.Message,
-                                  _("Destination address not known. The configuration option "
-                                    "`bug_report_address' must be set."))
-        else:
-            tb = einfo[2]
-            while tb.tb_next is not None:
-                tb = tb.tb_next
-            filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
-            buginfo = "%s at %s line %d" % (einfo[0].__name__, filename, tb.tb_lineno)
-            address = config.sender_address
-            if not address:
-                import commands
-                status, domain = commands.getstatusoutput('hostname -f')
-                username = config.dbconnection.user()
-                if status:
-                    address = username
-                else:
-                    address = '%s@%s' % (username, domain)
-                while True:
-                    address = pytis.form.run_dialog(pytis.form.InputDialog,
-                                                    prompt=_("Your e-mail address") + ': ',
-                                                    value=address, input_width=30,
-                                                    message=(_('Set your address in form "%s" '
-                                                               'to avoid being '
-                                                               'asked next time.') %
-                                                             (_("User interface settings"),)))
-                    if address is None or address and address.strip() != '':
-                        break
-            if address:
-                import email.Header
-                import email.Message
-                import email.Utils
-                import smtplib
-
-                def header(value):
-                    if isinstance(value, basestring):
-                        try:
-                            unicode(value, 'us-ascii')
-                        except:
-                            pass
-                        else:
-                            return value
-                    return email.Header.Header(value, 'utf-8')
-                msg = email.Message.Message()
-                msg['From'] = header(address)
-                msg['To'] = header(to)
-                msg['Subject'] = header('%s: %s' % (config.bug_report_subject, buginfo))
-                msg['Date'] = email.Utils.formatdate()
-                msg.set_payload(text)
-                try:
-                    try:
-                        server = smtplib.SMTP(config.smtp_server)
-                        server.sendmail(address, to, msg.as_string())
-                    finally:
-                        try:
-                            server.quit()
-                        except:
-                            pass
-                except Exception as e:
-                    pytis.form.run_dialog(pytis.form.Error, _("Failed sending error report:") +
-                                          "\n" + unicode(e))
-                else:
-                    pytis.form.run_dialog(pytis.form.Message, _("Error report sent."))
-    if config.debug_on_error:
-        import pdb
-        pdb.post_mortem(sys.exc_info()[2])
-    _in_top_level_exception = False
-
+    if not _in_top_level_exception:
+        _in_top_level_exception = True
+        try:
+            if not einfo:
+                einfo = sys.exc_info()
+            if issubclass(einfo[0], SystemExit):
+                sys.exit()
+            tbstring = format_traceback()
+            import cgitb
+            try:
+                tbstring = cgitb.text(einfo)
+            except:
+                import traceback
+                tbstring = "\n".join(traceback.format_exception(*einfo))
+            log(OPERATIONAL, 'Top-level exception caught', tbstring)
+            if pytis.form.run_dialog(pytis.form.BugReport, einfo):
+                sys.exit()
+            if config.debug_on_error:
+                import pdb
+                pdb.post_mortem(sys.exc_info()[2])
+        finally:
+            _in_top_level_exception = False
 
 _last_user_event = None
 
