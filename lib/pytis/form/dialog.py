@@ -1471,47 +1471,6 @@ class AggregationSetupDialog(GenericDialog):
             return None
 
 
-class ExitDialog(Question):
-    """Application exit question with a checkbox to save forms for next startup.
-
-    The dialog confirms the exit and lets the user decide whether the currently
-    opened forms should be saved to allow their automatic re-opening on next
-    startup.
-
-    The result returned by the `run()' method is a pair (EXIT, SAVE).  EXIT is
-    True if the user really wants to quit the application or False otherwise.
-    SAVE is True if the user wants to save the currently opened forms.  If
-    False the prevoiusly saved state should be used.
-
-    """
-    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
-
-    def __init__(self, parent, title=_("Exit application"),
-                 message=_("Really quit the application?"), icon=Message.ICON_QUIT,
-                 checkbox=_("Save open forms for next startup"),
-                 checked=True):
-        """Arguments:
-
-           checkbox -- checkbox label as a string or unicode.
-           checked -- initial state of the checkbox as a boolean value.
-
-        """
-        super(ExitDialog, self).__init__(parent, message, title=title, default=True, icon=icon)
-        assert isinstance(checkbox, basestring)
-        assert isinstance(checked, bool)
-        self._checkbox = checkbox
-        self._checked = checked
-
-    def _create_content(self, sizer):
-        super(ExitDialog, self)._create_content(sizer)
-        self._checkbox = wx.CheckBox(self._dialog, -1, self._checkbox)
-        self._checkbox.SetValue(self._checked)
-        sizer.Add(self._checkbox, 0, wx.ALL | wx.ALIGN_LEFT, 5)
-
-    def _customize_result(self, result):
-        return (super(ExitDialog, self)._customize_result(result), self._checkbox.IsChecked())
-
-
 class FileDialog(Dialog):
     """Dialog pro výběr souboru.
 

@@ -84,7 +84,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
-    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
     _STATE_FRAME_SIZE = 'frame_size'
 
@@ -779,21 +778,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(EVENT, "Couldn't close application with modal windows:",
                     self._modals.top())
                 return False
-            exit_, save = self.run_dialog(
-                pytis.form.ExitDialog,
-                checked=self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True),
-            )
-            if not exit_:
-                return False
-            self._set_state_param(self._STATE_SAVE_FORMS_ON_EXIT, save)
-            if save:
-                forms = [(f.__class__, f.name()) for f in self._windows.items()
-                         if not isinstance(f, (pytis.form.PrintForm,
-                                               pytis.form.AggregationForm,
-                                               pytis.form.AggregationDualForm))]
-                self._set_state_param(self._STATE_STARTUP_FORMS, tuple(forms))
-            # else:
-            #     self._unset_state_param(self._STATE_STARTUP_FORMS)
+            self._set_state_param(self._STATE_STARTUP_FORMS, tuple(
+                (f.__class__, f.name())
+                for f in self._windows.items()
+                if not isinstance(f, (pytis.form.PrintForm,
+                                      pytis.form.AggregationForm,
+                                      pytis.form.AggregationDualForm))
+            ))
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES,
                                   tuple(self._recent_directories.items()))
