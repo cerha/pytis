@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2017-12-01 19:46+0100\n"
+"POT-Creation-Date: 2018-12-17 21:34+0100\n"
 "PO-Revision-Date: 2017-09-12 21:37+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -21,61 +21,56 @@ msgstr ""
 msgid "Access denied"
 msgstr "Neoprávněný přístup"
 
-#: ../lib/pytis/data/dbapi.py:78
+#: ../lib/pytis/data/dbapi.py:80
 msgid "Waiting for server recovery"
 msgstr "Čekám na zotavení serveru"
 
-#: ../lib/pytis/data/dbapi.py:90
+#: ../lib/pytis/data/dbapi.py:92
 msgid "Can't connect to database"
 msgstr "Nemohu se připojit do databáze"
 
-#: ../lib/pytis/data/dbapi.py:215
+#: ../lib/pytis/data/dbapi.py:217
 msgid "Database interface error"
 msgstr "Chyba v databázovém rozhraní"
 
-#: ../lib/pytis/data/dbapi.py:234
+#: ../lib/pytis/data/dbapi.py:236
 msgid "Database connection timeout"
 msgstr "Vypršel časový limit pro navázání databázového spojení"
 
-#: ../lib/pytis/data/dbapi.py:236 ../lib/pytis/data/dbapi.py:369
+#: ../lib/pytis/data/dbapi.py:238 ../lib/pytis/data/dbapi.py:371
 msgid "Database connection error"
 msgstr "Chyba databázového spojení"
 
-#: ../lib/pytis/data/dbapi.py:250
+#: ../lib/pytis/data/dbapi.py:252
 msgid "Database operational error"
 msgstr "Chyba databázové operace"
 
-#: ../lib/pytis/data/dbapi.py:256
+#: ../lib/pytis/data/dbapi.py:258
 msgid "Database internal error"
 msgstr "Interní databázová chyba"
 
-#: ../lib/pytis/data/dbapi.py:260
+#: ../lib/pytis/data/dbapi.py:262
 msgid "Database integrity violation"
 msgstr "Porušení integrity dat v databázi"
 
-#: ../lib/pytis/data/dbdata.py:299
+#: ../lib/pytis/data/dbdata.py:301
 msgid "Too many database connections"
 msgstr "Příliš mnoho databázových spojení"
 
-#: ../lib/pytis/data/dbdata.py:707
+#: ../lib/pytis/data/dbdata.py:708
 msgid "Database error"
 msgstr "Databázová chyba"
 
-#: ../lib/pytis/data/dbdata.py:775
+#: ../lib/pytis/data/dbdata.py:776
 msgid "Invalid user name or password"
 msgstr "Chybné uživatelské jméno nebo heslo"
 
-#: ../lib/pytis/data/postgresql.py:457 ../lib/pytis/data/postgresql.py:541
-#: ../lib/pytis/data/postgresql.py:553
+#: ../lib/pytis/data/postgresql.py:457 ../lib/pytis/data/postgresql.py:553
+#: ../lib/pytis/data/postgresql.py:565
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:2103
-msgid "Application error. You can report it to get it fixed soon."
-msgstr ""
-"Chyba aplikace. Můžete ji nyní nahlásit, aby mohla být co nejdříve opravena."
-
-#: ../lib/pytis/data/postgresql.py:3874
+#: ../lib/pytis/data/postgresql.py:3883
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -240,13 +235,18 @@ msgstr "Jedna z položek hierarchické hodnoty je příliš dlouhá"
 msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 
-#: ../lib/pytis/presentation/field.py:476
+#: ../lib/pytis/presentation/field.py:479
 msgid "Such value already exists."
 msgstr "Taková hodnota již existuje"
 
-#: ../lib/pytis/presentation/field.py:707
+#: ../lib/pytis/presentation/field.py:722
 msgid "unlimited"
 msgstr "neomezeno"
+
+#~ msgid "Application error. You can report it to get it fixed soon."
+#~ msgstr ""
+#~ "Chyba aplikace. Můžete ji nyní nahlásit, aby mohla být co nejdříve "
+#~ "opravena."
 
 #~ msgid "Unable to connect to the database"
 #~ msgstr "Nelze se připojit k databázi"
