@@ -1058,10 +1058,9 @@ class BugReport(GenericDialog):
     def _create_content(self, sizer):
         import config
         dialog = self._dialog
-        label = wx.StaticText(dialog, -1, _("Oops"))
-        font = wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
-                       encoding=wx.FONTENCODING_DEFAULT)
-        label.SetFont(font)
+        label = wx.StaticText(dialog, -1, _("Program Error"))
+        label.SetFont(wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
+                              encoding=wx.FONTENCODING_DEFAULT))
         icon = self._create_icon(Message.ICON_ERROR)
         self._sent = False
         if icon is not None:
@@ -1069,44 +1068,48 @@ class BugReport(GenericDialog):
             hsizer.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
             hsizer.Add(icon, 0, wx.ALL, 5)
             label = hsizer
+        sizer.Add(label, 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
+        sizer.Add(wx.StaticText(dialog, -1, _(
+            "Unhandled exception caught. Please, use the button below to report the problem."
+        )), 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
+
         nb = wx.Notebook(dialog)
-        panel = wx.Panel(nb, -1)
-        email = config.sender_address
-        if not email:
+        nb.AddPage(wx_text_view(nb, "<html>" + cgitb.html(self._einfo) + "</html>",
+                                format=TextFormat.HTML, width=74, height=14),
+                   _("Exception details"))
+        nb.AddPage(wx.TextCtrl(nb, value='', name='message', size=(740, 200),
+                               style=wx.TE_MULTILINE),
+                   _("Your message (optional)"))
+        sizer.Add(nb, 1, wx.EXPAND | wx.ALL, 6)
+
+        if not config.sender_address:
             import commands
             status, domain = commands.getstatusoutput('hostname -f')
             if not status and domain != 'localhost':
-                email = '%s@%s' % (config.dbconnection.user(), domain)
+                addr = '%s@%s' % (config.dbconnection.user(), domain)
             else:
-                email = ''
-        email_ctrl = wx.TextCtrl(panel, value=email or '', size=(740, 30), name='from')
-        email_ctrl.SetToolTip(_('Set your address in form "%s" to avoid being asked next time.',
-                                _("User interface settings")))
-        msg_ctrl = wx.TextCtrl(panel, value='', size=(740, 200), name='message',
-                               style=wx.TE_MULTILINE)
-        button = wx.Button(panel, -1, label=_("Send error report"))
-        button.Bind(wx.EVT_UPDATE_UI,
-                    lambda e: e.Enable(not self._sent and email_ctrl.GetValue() != ''))
+                addr = ''
+            email_ctrl = wx.TextCtrl(dialog, value=addr or '', name='from')  # size=(740, 30),
+            email_ctrl.SetToolTip(_('Set your address in form "%s" to '
+                                    'avoid being asked next time.',
+                                    _("User interface settings")))
+            sizer.Add(wx.StaticText(dialog, -1, _("Your email address:")), 0,
+                      wx.TOP | wx.LEFT | wx.RIGHT, 6)
+            sizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
+
+        button = wx.Button(dialog, -1, label=_("Send error report"))
         button.Bind(wx.EVT_BUTTON, self._on_send_bug_report)
-        vsizer = wx.BoxSizer(wx.VERTICAL)
-        vsizer.Add(wx.StaticText(panel, -1, _("Your email address:")), 0,
-                   wx.TOP | wx.LEFT | wx.RIGHT, 6)
-        vsizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
-        vsizer.Add(wx.StaticText(panel, -1, _("Your message:")), 0, wx.TOP | wx.LEFT | wx.RIGHT, 6)
-        vsizer.Add(msg_ctrl, 1, wx.EXPAND | wx.ALL, 6)
-        vsizer.Add(button, 0, wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_RIGHT, 6)
-        panel.SetSizer(vsizer)
-        view = wx_text_view(nb, "<html>" + cgitb.html(self._einfo) + "</html>",
-                            format=TextFormat.HTML)
-        nb.AddPage(panel, _("Message"))
-        nb.AddPage(view, _("Exception details"))
-        sizer.Add(label, 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
-        sizer.Add(nb, 1, wx.EXPAND)
-        self._want_focus = msg_ctrl if email else email_ctrl
+        button.Bind(wx.EVT_UPDATE_UI, lambda e: e.Enable(bool(
+            not self._sent and (config.sender_address or
+                                dialog.FindWindowByName('from').GetValue() != '')
+        )))
+        sizer.Add(button, 0, wx.ALIGN_RIGHT | wx.ALL, 6)
+        self._want_focus = button
 
     def _on_send_bug_report(self, event):
         import email.Header
         import email.Message
+
         import email.Utils
         import smtplib
         import config
@@ -1117,7 +1120,10 @@ class BugReport(GenericDialog):
                                   _("Destination address not known. The configuration option "
                                     "`bug_report_address' must be set."))
             return
-        addr, message = [self._dialog.FindWindowByName(f).GetValue() for f in ('from', 'message')]
+        addr = config.sender_address
+        if not addr:
+            addr = self._dialog.FindWindowByName('from').GetValue()
+        message = self._dialog.FindWindowByName('message').GetValue()
 
         tb = self._einfo[2]
         while tb.tb_next is not None:
