@@ -1103,7 +1103,10 @@ class BugReport(GenericDialog):
             not self._sent and (config.sender_address or
                                 dialog.FindWindowByName('from').GetValue() != '')
         )))
-        sizer.Add(button, 0, wx.ALIGN_RIGHT | wx.ALL, 6)
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(wx.StaticText(dialog, -1, "", name='feedback'), 1, wx.TOP, 8)
+        hsizer.Add(button, 0)
+        sizer.Add(hsizer, 0, wx.EXPAND | wx.ALL, 6)
         self._want_focus = button
 
     def _on_send_bug_report(self, event):
@@ -1160,11 +1163,12 @@ class BugReport(GenericDialog):
                 except:
                     pass
         except Exception as e:
-            dlg, msg = Error, _("Failed sending error report:") + "\n" + unicode(e)
+            pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unicode(e))
         else:
-            dlg, msg = Message, _("Error report sent.")
+            self._dialog.FindWindowByName('feedback').SetLabel(
+                _("The report has been sent succesfully.")
+            )
             self._sent = True
-        pytis.form.run_dialog(dlg, msg)
 
     def _customize_result(self, result):
         label = self._button_label(result)
