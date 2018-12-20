@@ -1104,7 +1104,11 @@ class BugReport(GenericDialog):
                                 dialog.FindWindowByName('from').GetValue() != '')
         )))
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer.Add(wx.StaticText(dialog, -1, "", name='feedback'), 1, wx.TOP, 8)
+        bitmap = wx.ArtProvider.GetBitmap(wx.ART_TICK_MARK, wx.ART_MESSAGE_BOX, (16, 16))
+        icon = wx.StaticBitmap(dialog, -1, bitmap, name='icon')
+        icon.Show(False)
+        hsizer.Add(icon, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT, 6)
+        hsizer.Add(wx.StaticText(dialog, -1, "", name='feedback'), 1, wx.ALIGN_CENTER_VERTICAL)
         hsizer.Add(button, 0)
         sizer.Add(hsizer, 0, wx.EXPAND | wx.ALL, 6)
         self._want_focus = button
@@ -1168,6 +1172,8 @@ class BugReport(GenericDialog):
             self._dialog.FindWindowByName('feedback').SetLabel(
                 _("The report has been sent succesfully.")
             )
+            self._dialog.FindWindowByName('icon').Show()
+            self._dialog.Sizer.Layout()
             self._sent = True
 
     def _customize_result(self, result):
