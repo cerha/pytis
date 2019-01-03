@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2017 Brailcom, o.p.s.
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1227,23 +1228,33 @@ class MultiBrowseDualForm(BrowseDualForm):
 
     class MainForm(BrowseForm):
 
-        def bindings(self):
-            return self._view.bindings()
-
-        def orientation(self):
-            return self._view.orientation()
-
         def _print_form_kwargs(self):
             return dict(form_bindings=self.bindings())
 
-        def filter(self, *args, **kwargs):
-            BrowseForm.filter(self, *args, **kwargs)
+        def _update_selection(self):
             row = self.current_row()
             if row is None:
                 # How to clear the side form?
                 pass
             else:
                 self._guardian._do_selection(row)
+
+        def _cmd_edit_record(self):
+            BrowseForm._cmd_edit_record(self)
+            # This will update the side form prefill after main form editation.  Without it, the
+            # prefill would use the original row values until the main form row selection is
+            # changed.
+            self._update_selection()
+
+        def filter(self, *args, **kwargs):
+            BrowseForm.filter(self, *args, **kwargs)
+            self._update_selection()
+
+        def bindings(self):
+            return self._view.bindings()
+
+        def orientation(self):
+            return self._view.orientation()
 
     def _create_view_spec(self):
         return None
