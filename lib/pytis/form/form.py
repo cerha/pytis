@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -178,6 +178,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         wx.Panel.__init__(self, parent, -1)
+        # TODO: The background color should be taken from system settings, but
+        # wx.SYS_COLOUR_WINDOW returns white and wx.SYS_COLOUR_BACKGROUND returns
+        # gray which is darker than it should be, so we rather hard code the color
+        # which looks fine with the default GTK+ color theme.
+        #self.SetOwnBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
+        self.SetOwnBackgroundColour('#e8e8e8')
         self._hide_form_requested = False
         self._name = name
         if full_init:
@@ -2474,7 +2480,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
                 panel = self._create_group_panel(window, group)
-                panel.SetOwnBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME))
+                panel.SetOwnBackgroundColour(self.BackgroundColour)
                 window.AddPage(panel, item.label())
         else:
             window = self._create_group_panel(self, group)
