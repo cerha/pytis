@@ -460,7 +460,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
             from_columns = set([r[0] for r in rows])
             components = to_shortname.value().split('/')
             spec_name = components[1]
-            view_spec = self._resolver.get(spec_name, 'view_spec')
+            import config
+            view_spec = config.resolver.get(spec_name, 'view_spec')
             to_columns = set([f.id() for f in view_spec.fields()])
             missing_columns = from_columns - to_columns
             if missing_columns:
