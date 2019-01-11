@@ -961,8 +961,8 @@ class Calendar(GenericDialog):
 
     def _create_content(self, sizer):
         cal = wx.adv.GenericCalendarCtrl(self._dialog, -1, style=self._style)
-        size = cal.GetSize()
-        cal.SetMinSize((size.GetWidth() + 10, size.GetHeight()))
+        # This makes year +/- buttons visible, but the calendar is not centered (not nice).
+        cal.SetMinSize((cal.Size.width + 40, cal.Size.height))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
