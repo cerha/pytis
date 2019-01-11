@@ -1376,7 +1376,7 @@ class ToolTip(supertooltip.SuperToolTip):
 
     def OnStartTimer(self):
         label = self._label
-        content = self._content()
+        content = self._content() if self._content else None
         if label is not None or content is not None:
             self.SetHeader(label or '')
             self.SetDrawHeaderLine(label is not None)
@@ -1388,6 +1388,7 @@ class ToolTip(supertooltip.SuperToolTip):
         # for the same field.  Thus we know that the content has changed
         # (we are above a different field) and thus we need to hide the
         # old content (if shown) and restart timers.
+        assert isinstance(content, collections.Callable), content
         self._label = label
         self._content = content
         if self.GetTipWindow():
