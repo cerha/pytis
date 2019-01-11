@@ -241,12 +241,12 @@ class DualForm(Form, Refreshable):
     def show(self):
         # Musíme volat show obou podformulářů, protože splitter je nevolá a
         # přitom v nich mohou být inicializační či ukončovací akce.
+        self.Enable(True)
+        self.Show(True)
         self._splitter.Enable(True)
         self._splitter.Show(True)
         self._side_form.show()
         self._main_form.show()
-        self.Show(True)
-        self.Enable(True)
 
     def hide(self):
         orig_hide_form_requested = self._hide_form_requested
@@ -897,6 +897,8 @@ class MultiForm(Form, Refreshable):
 
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
+        self.Enable(True)
+        self.Show(True)
         active = self.active_form()
         for form in self._forms:
             if form and form.initialized():
@@ -906,8 +908,6 @@ class MultiForm(Form, Refreshable):
                     form.Show(False)
         self._notebook.Enable(True)
         self._notebook.Show(True)
-        self.Show(True)
-        self.Enable(True)
 
     def hide(self):
         orig_hide_form_requested = self._hide_form_requested
