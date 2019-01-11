@@ -245,6 +245,8 @@ class DualForm(Form, Refreshable):
         self._splitter.Show(True)
         self._side_form.show()
         self._main_form.show()
+        self.Show(True)
+        self.Enable(True)
 
     def hide(self):
         orig_hide_form_requested = self._hide_form_requested
@@ -254,6 +256,8 @@ class DualForm(Form, Refreshable):
             self._main_form.hide()
             self._splitter.Show(False)
             self._splitter.Enable(False)
+            self.Show(False)
+            self.Enable(False)
         finally:
             self._hide_form_requested = orig_hide_form_requested
 
@@ -902,6 +906,8 @@ class MultiForm(Form, Refreshable):
                     form.Show(False)
         self._notebook.Enable(True)
         self._notebook.Show(True)
+        self.Show(True)
+        self.Enable(True)
 
     def hide(self):
         orig_hide_form_requested = self._hide_form_requested
@@ -913,6 +919,8 @@ class MultiForm(Form, Refreshable):
                     form._release_data()
             self._notebook.Show(False)
             self._notebook.Enable(False)
+            self.Show(False)
+            self.Enable(False)
         finally:
             self._hide_form_requested = orig_hide_form_requested
 
