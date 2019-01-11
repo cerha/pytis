@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,13 @@ _ = pytis.util.translations('pytis-wx')
 
 _WX_COLORS = {}
 _WX_COLOR_DB = {}
+
+# TODO: The background color should be taken from system settings, but
+# wx.SYS_COLOUR_WINDOW returns white and wx.SYS_COLOUR_BACKGROUND returns
+# gray which is darker than it should be, so we rather hard code the color
+# which looks fine with the default GTK+ color theme.
+# DEFAULT_WINDOW_BACKGROUND_COLOUR = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
+DEFAULT_WINDOW_BACKGROUND_COLOUR = '#e8e8e8'
 
 
 def init_colors():
@@ -1443,6 +1450,7 @@ class StatusBar(object):
         self._bitmaps = [None for f in fields]
         self._tooltip = ToolTip(sb)
         self._last_tooltip_index = None
+        sb.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
         sb.SetMinHeight(22)
         sb.SetFieldsCount(len(fields))
         sb.SetStatusWidths(widths)

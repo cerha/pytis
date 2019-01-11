@@ -43,7 +43,8 @@ from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, 
     find, format_traceback, log, super_, xlist, xtuple, argument_names
 from command import CommandHandler
 from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
-    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
+    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button, \
+    DEFAULT_WINDOW_BACKGROUND_COLOUR
 from application import Application, action_has_access, \
     block_refresh, block_yield, create_data_object, current_form, db_op, \
     db_operation, decrypted_names, delete_record, form_settings_manager, \
@@ -178,12 +179,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         wx.Panel.__init__(self, parent, -1)
-        # TODO: The background color should be taken from system settings, but
-        # wx.SYS_COLOUR_WINDOW returns white and wx.SYS_COLOUR_BACKGROUND returns
-        # gray which is darker than it should be, so we rather hard code the color
-        # which looks fine with the default GTK+ color theme.
-        #self.SetOwnBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-        self.SetOwnBackgroundColour('#e8e8e8')
+        self.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
         self._hide_form_requested = False
         self._name = name
         if full_init:
@@ -2480,7 +2476,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
                 panel = self._create_group_panel(window, group)
-                panel.SetOwnBackgroundColour(self.BackgroundColour)
+                panel.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
                 window.AddPage(panel, item.label())
         else:
             window = self._create_group_panel(self, group)
