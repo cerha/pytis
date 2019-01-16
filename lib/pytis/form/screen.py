@@ -36,9 +36,12 @@ import string
 import types
 import wx
 import wx.html2
-import SocketServer
 import SimpleHTTPServer
+import SocketServer
+import cStringIO as StringIO
+import tempfile
 import thread
+import time
 import mimetypes
 import weakref
 import fitz
@@ -3569,88 +3572,45 @@ def write_file(data, filename, mode='w'):
         f.close()
 
 
-def _launch_file_or_data(filename, data=None, decrypt=False):
+def _open_remote_file_viewer(f, suffix, decrypt=False):
+    with pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt) as remote_file:
+        with f:
+            while True:
+                data = f.read(10000000)
+                if not data:
+                    break
+            remote_file.write(data)
+        log(OPERATIONAL, "Launching file on remote client at %s:" % pytis.remote.client_ip(),
+            remote_file.name)
+        pytis.remote.launch_file(remote_file.name)
+    # log(OPERATIONAL, "Can't create remote temporary file.")
+    # pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file."))
+
+
+def _open_local_file_viewer(filename):
     import config
-    # Try to launch the file remotely first.
-    if pytis.remote.client_available():
-        suffix = os.path.splitext(filename)[1]
-        try:
-            remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
-        except Exception as e:
-            log(OPERATIONAL, "Can't create remote temporary file: %s" % (e,))
-            pytis.form.run_dialog(pytis.form.Error,
-                                  _("Unable to create temporary file: %s" % (e,)))
-        else:
-            if remote_file:
-                try:
-                    if data is None:
-                        f = open(filename)
-                        try:
-                            while True:
-                                data = f.read(10000000)
-                                if not data:
-                                    break
-                                remote_file.write(data)
-                        finally:
-                            f.close()
-                    else:
-                        remote_file.write(data)
-                finally:
-                    remote_file.close()
-                log(OPERATIONAL, "Launching file on remote client at %s:" %
-                    pytis.remote.client_ip(),
-                    remote_file.name)
-                pytis.remote.launch_file(remote_file.name)
-                return
     import mimetypes
-    mime_type = mimetypes.guess_type(filename)[0]
-    viewer = None
     import subprocess
+    mime_type = mimetypes.guess_type(filename)[0]
     if mime_type == 'application/pdf' and config.postscript_viewer:
         # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.
         command = (config.postscript_viewer, filename)
-        log(OPERATIONAL, "Running external PDF viewer:", ' '.join(command))
-
-        def viewer():
-            proc = subprocess.Popen(command)
-            proc.communicate()
-            try:
-                os.remove(filename)
-            except Exception:
-                pass
-
+        shell = False
     elif mime_type:
-        # Find a local viewer through mailcap.
+        # Find the viewer through mailcap.
         import mailcap
         match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
         if match:
             command = match['view'] % (filename,)
-            log(OPERATIONAL, "Running external file viewer:", command)
-
-            def viewer():
-                proc = subprocess.Popen(command, shell=True)
-                proc.communicate()
-                try:
-                    os.remove(filename)
-                except Exception:
-                    pass
-
-    if viewer:
-        if data is not None:
-            try:
-                f = open(filename, 'wb')
-                try:
-                    f.write(data)
-                finally:
-                    f.close()
-                viewer()
-            except Exception:
-                pass
+            shell = True
         else:
-            viewer()
-    else:
-        pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
-                                                  filename, mime_type or 'unknown'))
+            pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
+                                                      filename, mime_type or 'unknown'))
+            return
+    log(OPERATIONAL, "Running file viewer:", command)
+    subprocess.Popen(command, shell=shell)
+    # This doesn't seem to be necessary.
+    # threading.Thread(target=process.communicate)
 
 
 def launch_file(filename):
@@ -3673,7 +3633,10 @@ def launch_file(filename):
     run in the background in all cases.
 
     """
-    return _launch_file_or_data(filename)
+    if pytis.remote.client_available():
+        _open_remote_file_viewer(open(filename), suffix=os.path.splitext(filename)[1])
+    else:
+        _open_local_file_viewer(filename)
 
 
 def open_data_as_file(data, suffix, decrypt=False):
@@ -3681,7 +3644,7 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     Arguments:
 
-      data -- the (possibly binary) data as a basestring.  This the contents
+      data -- the (possibly binary) data as a basestring.  This is the contents
         of the file to be viewed.
       suffix -- the filename suffix including the leading dot.
       decrypt -- if true then decrypt the file contents before saving.
@@ -3695,8 +3658,16 @@ def open_data_as_file(data, suffix, decrypt=False):
     run in the background in all cases.
 
     """
-    filename = os.tempnam() + suffix
-    return _launch_file_or_data(filename, decrypt=decrypt, data=data)
+    if pytis.remote.client_available():
+        _open_remote_file_viewer(StringIO.StringIO(data), suffix=suffix, decrypt=decrypt)
+    else:
+        with tempfile.NamedTemporaryFile(suffix=suffix) as f:
+            f.write(data)
+            f.flush()
+            _open_local_file_viewer(f.name)
+            # Give the viewer some time to read the file as it will be
+            # removed when the "with" statement is left.
+            time.sleep(1)
 
 
 def launch_url(url):

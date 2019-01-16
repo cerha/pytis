@@ -2224,6 +2224,25 @@ class RecordForm(LookupForm):
         run_form(StructuredTextEditor, self.name(),
                  field_id=field_id, select_row=self.current_key())
 
+    def _can_view_field_pdf(self, field_id):
+        f = find(field_id, self._row.fields(), key=lambda f: f.id())
+        return f and f.text_format() == TextFormat.LCG
+
+    def _cmd_view_field_pdf(self, field_id):
+        import lcg.export.pdf
+        storage = self._row.attachment_storage(field_id)
+        if storage:
+            resources = storage.resources(transaction=self._row.transaction())
+        else:
+            resources = ()
+        content = lcg.Container(lcg.Parser().parse(self._row[field_id].value() or ''))
+        node = lcg.ContentNode('export', title=_("Preview"), content=content,
+                               resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
+        exporter = lcg.export.pdf.PDFExporter()  # translations=cfg.translation_path)
+        context = exporter.context(node, 'cs')
+        pdf = exporter.export(context)
+        pytis.form.open_data_as_file(pdf, '.pdf')
+
     # Public methods
 
     def record(self, row, **kwargs):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2206,7 +2206,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
             except Exception:
                 pass
-            if export_file is not None:
+            else:
                 remote = True
         else:
             log(EVENT, 'RPC communication not available')
@@ -3269,12 +3269,18 @@ class BrowseForm(FoldableForm):
                   command=ListForm.COMMAND_CLEAR_SELECTION(),
                   help=_("Cancel the selection of rows for bulk operations.")),
         )
-        editor_items = [MItem(_("Text editor for field %s") % f.label(),
-                              command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
-                              help=_("Open a structured text editor."))
-                        for f in self._fields if f.text_format() == TextFormat.LCG]
-        if editor_items:
-            menu += (MSeparator(),) + tuple(editor_items)
+        structured_text_fields = [f for f in self._fields if f.text_format() == TextFormat.LCG]
+        if structured_text_fields:
+            menu += (MSeparator(),)
+        for f in structured_text_fields:
+            menu += (
+                MItem(_("Text editor for field %s") % f.label(),
+                      command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
+                      help=_("Open a structured text editor.")),
+                MItem(_("PDF preview of %s") % f.label(),
+                      command=ListForm.COMMAND_VIEW_FIELD_PDF(field_id=f.id()),
+                      help=_("Open PDF preview of field contents.")),
+            )
         action_items = self._action_mitems(self._view.actions())
         if action_items:
             menu += (MSeparator(),) + tuple(action_items)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -147,6 +147,8 @@ Command(RecordForm, 'CONTEXT_ACTION',
         "Vyvolání akce nad aktuálním řádkem formuláře (mandatory arg. 'action')")
 Command(RecordForm, 'OPEN_EDITOR',
         "Open StructuredTextEditor form for field given by the argument 'field_id'")
+Command(RecordForm, 'VIEW_FIELD_PDF',
+        "Open PDF viewer with current exported content of field given by the argument 'field_id'")
 Command(RecordForm, 'REFRESH_DB',
         "Refresh the underlying database object")
 Command(ListForm, 'ACTIVATE',

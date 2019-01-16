@@ -472,11 +472,8 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
     assert isinstance(decrypt, bool), decrypt
-    try:
-        return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode,
-                        decrypt=decrypt)
-    except:
-        return None
+    return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode,
+                    decrypt=decrypt)
 
 
 def select_directory(directory=None):
