@@ -3580,7 +3580,7 @@ def _open_remote_file_viewer(f, suffix, decrypt=False):
                 if not data:
                     break
             remote_file.write(data)
-        log(OPERATIONAL, "Launching file on remote client at %s:" % pytis.remote.client_ip(),
+        log(OPERATIONAL, "Launching remote file viewer on %s:" % pytis.remote.client_ip(),
             remote_file.name)
         pytis.remote.launch_file(remote_file.name)
     # log(OPERATIONAL, "Can't create remote temporary file.")
@@ -3607,7 +3607,7 @@ def _open_local_file_viewer(filename):
             pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
                                                       filename, mime_type or 'unknown'))
             return
-    log(OPERATIONAL, "Running file viewer:", command)
+    log(OPERATIONAL, "Launching local file viewer:", command)
     subprocess.Popen(command, shell=shell)
     # This doesn't seem to be necessary.
     # threading.Thread(target=process.communicate)
