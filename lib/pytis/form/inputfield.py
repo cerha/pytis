@@ -2406,6 +2406,7 @@ class StructuredTextField(TextField):
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, self._on_change)
+        self._completer = None
         self._update_completions = None
         self._storage = self._row.attachment_storage(self._id)
         return ctrl
@@ -2485,20 +2486,7 @@ class StructuredTextField(TextField):
         InfoWindow(_(u"Preview"), text=text, format=TextFormat.LCG, resources=resources)
 
     def _cmd_export_pdf(self):
-        if self._storage:
-            resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
-        else:
-            resources = ()
-        content = lcg.Container(lcg.Parser().parse(self._get_value()))
-        node = lcg.ContentNode('export', title=_("Preview"), content=content,
-                               resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
-        exporter = lcg.pdf.PDFExporter()  # translations=cfg.translation_path)
-        context = exporter.context(node, 'cs')
-        pdf = exporter.export(context)
-        process = Popen(config.printing_command, from_child=dev_null_stream('w'))
-        stream = process.to_child()
-        stream.write(pdf)
-        stream.close()
+        RecordForm.COMMAND_VIEW_FIELD_PDF.invoke(field_id=self._id)
 
     def _cmd_strong(self):
         self._insert_markup('*')

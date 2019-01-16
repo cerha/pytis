@@ -3135,7 +3135,8 @@ class PopupEditForm(PopupForm, EditForm):
 
     def can_command(self, command, **kwargs):
         if ((command.handler() in (LookupForm, RecordForm) and
-             command != RecordForm.COMMAND_CONTEXT_ACTION)):
+             command not in (RecordForm.COMMAND_CONTEXT_ACTION,
+                             RecordForm.COMMAND_VIEW_FIELD_PDF))):
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
 
