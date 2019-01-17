@@ -2225,8 +2225,8 @@ class RecordForm(LookupForm):
                  field_id=field_id, select_row=self.current_key())
 
     def _can_view_field_pdf(self, field_id):
-        f = find(field_id, self._row.fields(), key=lambda f: f.id())
-        return f and f.text_format() == TextFormat.LCG
+        field = find(field_id, self._row.fields(), key=lambda f: f.id())
+        return field and field.text_format() == TextFormat.LCG
 
     def _cmd_view_field_pdf(self, field_id):
         import lcg.export.pdf
