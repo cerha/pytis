@@ -2237,7 +2237,14 @@ class RecordForm(LookupForm):
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(row[field_id].value() or ''))
-        node = lcg.ContentNode('export', title=_("Preview"), content=content,
+        if len(content.sections()) == 1:
+            section = content.sections()[0]
+            title = section.title()
+            content = section.content()
+        else:
+            field = find(field_id, self._row.fields(), key=lambda f: f.id())
+            title = field.label()
+        node = lcg.ContentNode('preview', title=title, content=content,
                                resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
         exporter = lcg.export.pdf.PDFExporter()  # translations=cfg.translation_path)
         context = exporter.context(node, 'cs')
