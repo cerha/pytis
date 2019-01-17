@@ -3573,18 +3573,22 @@ def write_file(data, filename, mode='w'):
 
 
 def _open_remote_file_viewer(f, suffix, decrypt=False):
-    with pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt) as remote_file:
-        with f:
-            while True:
-                data = f.read(10000000)
-                if not data:
-                    break
+    try:
+    remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
+    except Exception as e:
+        log(OPERATIONAL, "Can't create remote temporary file:", str(e))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file: %s", e))
+    try:
+        while True:
+            data = f.read(10000000)
+            if not data:
+                break
             remote_file.write(data)
         log(OPERATIONAL, "Launching remote file viewer on %s:" % pytis.remote.client_ip(),
             remote_file.name)
         pytis.remote.launch_file(remote_file.name)
-    # log(OPERATIONAL, "Can't create remote temporary file.")
-    # pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file."))
+    finally:
+        remote_file.close()
 
 
 def _open_local_file_viewer(filename):
@@ -3634,7 +3638,8 @@ def launch_file(filename):
 
     """
     if pytis.remote.client_available():
-        _open_remote_file_viewer(open(filename), suffix=os.path.splitext(filename)[1])
+        with open(filename) as f:
+            _open_remote_file_viewer(f, suffix=os.path.splitext(filename)[1])
     else:
         _open_local_file_viewer(filename)
 
