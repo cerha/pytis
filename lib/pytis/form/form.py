@@ -2230,12 +2230,13 @@ class RecordForm(LookupForm):
 
     def _cmd_view_field_pdf(self, field_id):
         import lcg.export.pdf
-        storage = self._row.attachment_storage(field_id)
+        row = self.current_row()
+        storage = row.attachment_storage(field_id)
         if storage:
-            resources = storage.resources(transaction=self._row.transaction())
+            resources = storage.resources(transaction=row.transaction())
         else:
             resources = ()
-        content = lcg.Container(lcg.Parser().parse(self._row[field_id].value() or ''))
+        content = lcg.Container(lcg.Parser().parse(row[field_id].value() or ''))
         node = lcg.ContentNode('export', title=_("Preview"), content=content,
                                resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
         exporter = lcg.export.pdf.PDFExporter()  # translations=cfg.translation_path)
