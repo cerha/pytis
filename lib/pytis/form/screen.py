@@ -3574,7 +3574,7 @@ def write_file(data, filename, mode='w'):
 
 def _open_remote_file_viewer(f, suffix, decrypt=False):
     try:
-    remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
+        remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
     except Exception as e:
         log(OPERATIONAL, "Can't create remote temporary file:", str(e))
         pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file: %s", e))
