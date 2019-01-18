@@ -211,6 +211,7 @@ class InputField(object, KeyHandler, CommandHandler):
     _DEFAULT_BACKGROUND_COLOR = None
 
     _last_focused_field = None
+    _icon_cache = {}
 
     @classmethod
     def _get_command_handler_instance(cls):
@@ -298,6 +299,14 @@ class InputField(object, KeyHandler, CommandHandler):
         else:
             return None
 
+    @classmethod
+    def icon(cls, icon):
+        try:
+            result = cls._icon_cache[icon]
+        except KeyError:
+            result = cls._icon_cache[icon] = get_icon(icon)
+        return result
+
     # Instance methods
 
     def __init__(self, parent, row, id, inline=False, guardian=None, readonly=False):
@@ -362,11 +371,10 @@ class InputField(object, KeyHandler, CommandHandler):
             self._widget = ctrl
         else:
             self._widget = self._create_widget(parent, ctrl)
-            if spec.descr():
-                if spec.compact():
-                    self._label = self._add_help_button(parent, self._label)
-                else:
-                    self._widget = self._add_help_button(parent, self._widget)
+            if spec.compact():
+                self._label = self._add_icons(parent, self._label)
+            else:
+                self._widget = self._add_icons(parent, self._widget)
         if not self._enabled:
             self._set_editable(False)
         if not inline:
@@ -434,10 +442,15 @@ class InputField(object, KeyHandler, CommandHandler):
         # called in "inline" mode where additional controls are not allowed.
         return ctrl
 
-    def _add_help_button(self, parent, widget):
-        button = wx.StaticBitmap(parent, bitmap=get_icon('info'))
-        button.SetToolTip(textwrap.fill(self._spec.descr(), 60))
-        return self._hbox(widget, (button, 0, wx.LEFT, 4))
+    def _add_icons(self, parent, widget):
+        self._validation_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('validation-ok'))
+        content = (widget, (self._validation_icon, 0, wx.LEFT, 4))
+        descr = self._spec.descr()
+        if descr:
+            help_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('info'))
+            help_icon.SetToolTip(textwrap.fill(descr, 60))
+            content += ((help_icon, 0, wx.LEFT, 1),)
+        return self._hbox(*content)
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -529,7 +542,15 @@ class InputField(object, KeyHandler, CommandHandler):
         Overriding this method allows any additional actions after each change of the field value.
 
         """
-        pass
+        error = self._last_validation_error
+        if error:
+            tooltip = _("Validation error:") + ' ' + error.message()
+            if self._type.not_null() and self._row[self._id].value() is None:
+                tooltip += ' (' + _("this field is mandatory") + ')'
+        else:
+            tooltip = _("The current field value is valid.")
+        self._validation_icon.SetToolTip(tooltip)
+
 
     def _on_validity_change(self):
         """Handle field validity changes.
@@ -538,7 +559,11 @@ class InputField(object, KeyHandler, CommandHandler):
         highlighting this state in the UI.
 
         """
-        self._update_background_color()
+        if self.valid():
+            icon = 'validation-ok'
+        else:
+            icon = 'validation-error'
+        self._validation_icon.SetBitmap(InputField.icon(icon))
 
     def _current_ctrl(self):
         """
@@ -605,8 +630,6 @@ class InputField(object, KeyHandler, CommandHandler):
             color = config.field_disabled_color
         elif self._hidden and not self._modified():
             color = config.field_hidden_color
-        elif not self.valid():
-            color = config.field_invalid_color
         else:
             color = self._DEFAULT_BACKGROUND_COLOR
         self._set_background_color(color)
