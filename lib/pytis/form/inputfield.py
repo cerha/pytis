@@ -363,15 +363,16 @@ class InputField(object, KeyHandler, CommandHandler):
         self._had_focus = False
         self._init_attributes()
         self._call_on_idle = []
-        self._label = self._create_label(parent)
         self._ctrl = ctrl = self._create_ctrl(parent)
         self._controls = [(ctrl, self._set_ctrl_editable, self._set_ctrl_color)]
         self._init_ctrl(ctrl)
         if inline:
+            self._label = None
             self._widget = ctrl
         else:
+            self._label = self._create_label(parent)
             self._widget = self._create_widget(parent, ctrl)
-            if spec.compact():
+            if spec.compact() and self._label:
                 self._label = self._add_icons(parent, self._label)
             else:
                 self._widget = self._add_icons(parent, self._widget)
@@ -425,7 +426,7 @@ class InputField(object, KeyHandler, CommandHandler):
     def _create_label(self, parent):
         # Return field label as 'wx.StaticText' instance.
         label = self.spec().label()
-        if label and not self._inline:
+        if label:
             return wx.StaticText(parent, -1, label + ':', style=wx.ALIGN_RIGHT)
         else:
             return None
@@ -561,9 +562,16 @@ class InputField(object, KeyHandler, CommandHandler):
         """
         if self.valid():
             icon = 'validation-ok'
+            color = '#000000'
         else:
             icon = 'validation-error'
+            color = '#aa0000'
         self._validation_icon.SetBitmap(InputField.icon(icon))
+        label = self._label
+        if isinstance(self._label, wx.Sizer):
+            label = label.GetItem(0).Window  # When .compact(), the label includes icons.
+        if label:
+            label.SetForegroundColour(color)
 
     def _current_ctrl(self):
         """
