@@ -1531,7 +1531,7 @@ class ColorSelectionField(Invocable, TextField):
 
     def _set_value(self, value):
         if not self._inline:
-            self._invocation_button.SetColour(value)
+            self._invocation_button.SetColour(value or '#e8e8e8')
         return super(ColorSelectionField, self)._set_value(value)
 
 
