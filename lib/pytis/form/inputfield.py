@@ -1092,7 +1092,8 @@ class PasswordField(StringField):
 
     def _set_background_color(self, color):
         super(PasswordField, self)._set_background_color(color)
-        self._ctrl2.SetOwnBackgroundColour(color)
+        if self._ctrl2:
+            self._ctrl2.SetOwnBackgroundColour(color)
 
     def tab_navigated_widgets(self):
         widgets = super(PasswordField, self).tab_navigated_widgets()
