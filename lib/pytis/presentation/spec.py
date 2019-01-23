@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3261,7 +3261,7 @@ class Field(object):
             enumerator are not desirable).  The value of this argument may be
             an enumerator instance directly (e.g. 'pytis.data.FixedEnumerator')
             or a name of the specification used to create a
-            'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is
+            'pytis.data.DataEnumerator'.  Also a sequence (list or tuple) is
             accepted and converted to a 'FixedEnumerator' instance.
           selection_type -- one of 'SelectionType' constants defining the type
             of user interface element used to present the related enumeration.
