@@ -208,7 +208,6 @@ class InputField(object, KeyHandler, CommandHandler):
 
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
-    _DEFAULT_BACKGROUND_COLOR = None
 
     _last_focused_field = None
     _icon_cache = {}
@@ -364,7 +363,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self._init_attributes()
         self._call_on_idle = []
         self._ctrl = ctrl = self._create_ctrl(parent)
-        self._controls = [(ctrl, self._set_ctrl_editable, self._set_ctrl_color)]
+        self._controls = [(ctrl, self._set_ctrl_editable)]
         self._init_ctrl(ctrl)
         if inline:
             self._label = None
@@ -388,7 +387,7 @@ class InputField(object, KeyHandler, CommandHandler):
         if value is None:
             value = row.format(id, single=False, secure='')
         self._set_value(value)
-        self._call_on_idle.append(self._update_background_color)
+        self._call_on_idle.append(self._update_field_state)
 
     def _init_attributes(self):
         pass
@@ -444,8 +443,8 @@ class InputField(object, KeyHandler, CommandHandler):
         return ctrl
 
     def _add_icons(self, parent, widget):
-        self._validation_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('validation-ok'))
-        content = (widget, (self._validation_icon, 0, wx.LEFT, 4))
+        self._status_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('field-ok'))
+        content = (widget, (self._status_icon, 0, wx.LEFT, 4))
         descr = self._spec.descr()
         if descr:
             help_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('info'))
@@ -503,7 +502,6 @@ class InputField(object, KeyHandler, CommandHandler):
         if transaction and not transaction.open():
             # Don't validate when the transaction is already closed.
             return
-        valid_before = self.valid()
         if do_validation:
             try:
                 error = self._validate()
@@ -514,8 +512,7 @@ class InputField(object, KeyHandler, CommandHandler):
             self._on_change_hook()
         if do_check:
             self._last_check_result = self._check()
-        if self.valid() != valid_before:
-            self._on_validity_change()
+        self._update_field_state()
         if self._last_validation_error:
             message(self._last_validation_error.message())
         elif self._last_check_result:
@@ -543,35 +540,7 @@ class InputField(object, KeyHandler, CommandHandler):
         Overriding this method allows any additional actions after each change of the field value.
 
         """
-        error = self._last_validation_error
-        if error:
-            tooltip = _("Validation error:") + ' ' + error.message()
-            if self._type.not_null() and self._row[self._id].value() is None:
-                tooltip += ' (' + _("this field is mandatory") + ')'
-        else:
-            tooltip = _("The current field value is valid.")
-        self._validation_icon.SetToolTip(tooltip)
-
-
-    def _on_validity_change(self):
-        """Handle field validity changes.
-
-        Overriding this method allows any additional actions after field validity changes, such as
-        highlighting this state in the UI.
-
-        """
-        if self.valid():
-            icon = 'validation-ok'
-            color = '#000000'
-        else:
-            icon = 'validation-error'
-            color = '#aa0000'
-        self._validation_icon.SetBitmap(InputField.icon(icon))
-        label = self._label
-        if isinstance(self._label, wx.Sizer):
-            label = label.GetItem(0).Window  # When .compact(), the label includes icons.
-        if label:
-            label.SetForegroundColour(color)
+        pass
 
     def _current_ctrl(self):
         """
@@ -595,7 +564,7 @@ class InputField(object, KeyHandler, CommandHandler):
                 self._enabled = enabled
                 self._set_editable(enabled)
                 # The change won't take effect for certain fields if we do it directly!
-                self._call_on_idle.append(self._update_background_color)
+                self._call_on_idle.append(self._update_field_state)
 
     def _check_callback(self):
         self._needs_check = True
@@ -606,12 +575,12 @@ class InputField(object, KeyHandler, CommandHandler):
         # operations (such as complicated field recomputations).
         if not self._readonly:
             self._needs_validation = True
-            self._update_background_color()
+            self._update_field_state()
         if event:
             event.Skip()
 
     def _set_editable(self, editable):
-        for ctrl, set_editable, set_color in self._controls:
+        for ctrl, set_editable in self._controls:
             set_editable(ctrl, editable)
             if editable:
                 # ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
@@ -624,27 +593,66 @@ class InputField(object, KeyHandler, CommandHandler):
     def _set_ctrl_editable(self, ctrl, editable):
         ctrl.Enable(editable)
 
-    def _set_ctrl_color(self, ctrl, color):
-        if hasattr(ctrl, 'SetOwnBackgroundColour'):
-            ctrl.SetOwnBackgroundColour(color)
-            ctrl.Refresh()
+    def _update_field_state(self):
+        """Update UI field state indication.
 
-    def _update_background_color(self):
+        The field state is primarily indicated by an icon which is normally on
+        the upper right edge of the field.  The field states such as disabled,
+        locked, invalid, ...) have distinct icons and some of them may also by
+        indicated by different label or background color.
+
+        """
         if self._denied:
-            color = config.field_denied_color
-        elif self._readonly:
-            color = config.field_disabled_color
-        elif not self._enabled:
-            color = config.field_disabled_color
+            icon = 'field-locked'
+            tooltip = _("The field is ineditable due to insufficient permissions.")
+            color = '#606060'
+            background = config.field_denied_color
         elif self._hidden and not self._modified():
-            color = config.field_hidden_color
+            icon = 'field-hidden'
+            tooltip = _("The field value is not visible due to insufficient permissions.")
+            color = '#606060'
+            background = config.field_hidden_color
+        elif not self._row.editable(self._id):
+            icon = 'field-disabled'
+            tooltip = _("The field is not editable.")
+            color = '#606060'
+            background = config.field_disabled_color
+        elif not self.valid():
+            icon = 'field-invalid'
+            error = self._last_validation_error
+            if error:
+                tooltip = _("Validation error:") + ' ' + error.message()
+                if self._type.not_null() and self._row[self._id].value() is None:
+                    tooltip += ' (' + _("this field is mandatory") + ')'
+            else:
+                tooltip = self._last_check_result
+            color = '#ba344f'
+            background = config.field_invalid_color
         else:
-            color = self._DEFAULT_BACKGROUND_COLOR
-        self._set_background_color(color)
+            icon = 'field-ok'
+            tooltip = _("The current field value is valid.")
+            color = '#000000'
+            background = None
+        self._status_icon.SetBitmap(InputField.icon(icon))
+        self._status_icon.SetToolTip(tooltip)
+        label = self._label
+        if isinstance(label, wx.Sizer):
+            label = label.GetItem(0).Window  # When 'compact', the label includes icons.
+        if label:
+            label.SetForegroundColour(color)
+        self._set_background_color(background)
 
     def _set_background_color(self, color):
-        for ctrl, set_editable, set_color in self._controls:
-            set_color(ctrl, color)
+        """Set field background to given color.
+
+        The color may be None for default background color.  Must be
+        implemented for each field type specifically.  Many field types may not
+        support setting the background color at all.  The color is just an
+        additional indication of the field state (non-editable, locked,
+        invalid, ...) which is primarily displayed by field icon.
+
+        """
+        pass
 
     def _modified(self):
         # Returns always false for virtual fields
@@ -664,7 +672,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     def _alive(self):
         try:
-            for ctrl, set_editable, set_color in self._controls:
+            for ctrl, set_editable in self._controls:
                 ctrl.GetId()
             return True
         except wx.RuntimeError:
@@ -679,7 +687,7 @@ class InputField(object, KeyHandler, CommandHandler):
         self.reset()
 
     def _cmd_context_menu(self):
-        for ctrl, set_editable, set_color in self._controls:
+        for ctrl, set_editable in self._controls:
             size = ctrl.GetSize()
             self._on_context_menu(ctrl, position=(size.x / 3, size.y / 2))
 
@@ -837,10 +845,10 @@ class TextField(InputField):
     LETTERS = map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1))
 
     def _create_ctrl(self, parent):
-        if not self._inline:
-            size = self._px_size(parent, self.width(), self.height())
-        else:
+        if self._inline:
             size = wx.DefaultSize
+        else:
+            size = self._px_size(parent, self.width(), self.height())
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
@@ -864,10 +872,14 @@ class TextField(InputField):
     def _set_ctrl_editable(self, ctrl, editable):
         ctrl.SetEditable(editable)
         if editable:
+            color = None
             validator = self.TextValidator(ctrl, filter=self._filter())
         else:
             validator = wx.DefaultValidator
         ctrl.SetValidator(validator)
+
+    def _set_background_color(self, color):
+        self._ctrl.SetOwnBackgroundColour(color)
 
     def _create_button(self, parent, label, icon=None):
         return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
@@ -1055,7 +1067,7 @@ class PasswordField(StringField):
         widget = super(PasswordField, self)._create_widget(parent, ctrl)
         if self._type.verify():
             self._ctrl2 = ctrl2 = self._create_ctrl(parent)
-            self._controls.append((ctrl2, self._set_ctrl_editable, self._set_ctrl_color))
+            self._controls.append((ctrl2, self._set_ctrl_editable))
             widget = self._hbox(widget, ctrl2)
         else:
             self._ctrl2 = None
@@ -1077,6 +1089,10 @@ class PasswordField(StringField):
         else:
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
+
+    def _set_background_color(self, color):
+        super(PasswordField, self)._set_background_color(color)
+        self._ctrl2.SetOwnBackgroundColour(color)
 
     def tab_navigated_widgets(self):
         widgets = super(PasswordField, self).tab_navigated_widgets()
@@ -1140,7 +1156,7 @@ class NumericField(TextField, SpinnableField):
                                maxValue=(self._type.maximum() is None and
                                          100 or self._type.maximum()),
                                size=(200, 25))
-            self._controls.append((slider, lambda c, e: c.Enable(e), lambda c, e: None))
+            self._controls.append((slider, lambda c, e: c.Enable(e)))
 
             def on_slider(event):
                 ctrl.SetValue(str(slider.GetValue()))
@@ -1364,7 +1380,6 @@ class ChoiceField(EnumerationField):
 class ListBoxField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.ListBox'."""
     _DEFAULT_HEIGHT = None
-    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
     def _create_ctrl(self, parent):
         control = wx.ListBox(parent, style=wx.LB_SINGLE | wx.LB_NEEDED_SB)
@@ -1416,7 +1431,7 @@ class Invocable(object, CommandHandler):
         widget = super(Invocable, self)._create_widget(parent, ctrl)
         button = self._create_invocation_button(parent)
         if button:
-            self._controls.append((button, lambda c, e: c.Enable(e), lambda c, e: None))
+            self._controls.append((button, lambda c, e: c.Enable(e)))
             button.SetToolTip(self._INVOKE_TITLE)
             wx_callback(wx.EVT_BUTTON, button, lambda e: self._on_invoke_selection(ctrl))
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
@@ -1634,13 +1649,13 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
-                self._controls.append((display, lambda c, e: None, lambda c, e: None))
+                self._controls.append((display, lambda c, e: None))
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
             button.SetToolTip(_("Insert a new codebook value."))
             wx_callback(wx.EVT_BUTTON, button, lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
-            self._controls.append((button, lambda b, e: b.Enable(e), lambda b, e: None))
+            self._controls.append((button, lambda b, e: b.Enable(e)))
         return self._hbox(*[x[0] for x in self._controls])
 
     def _menu(self):
@@ -1693,7 +1708,6 @@ class ListField(GenericCodebookField, CallbackHandler):
     """
     _DEFAULT_WIDTH = 30
     _DEFAULT_HEIGHT = 6
-    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
     CALL_LIST_CHANGE = 'CALL_LIST_CHANGE'
     """Callback called on list modification (codebook values inserted/edited/deleted)."""
@@ -2098,7 +2112,6 @@ class ImageField(FileField):
     """Input field for bitmap images showing a thumbnail within the control."""
 
     _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
-    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
     def _create_ctrl(self, parent):
         return wx_button(parent, bitmap=self._bitmap(),
@@ -2815,7 +2828,7 @@ class RangeField(InputField):
     def _create_widget(self, parent, ctrl):
         w1 = super(RangeField, self)._create_widget(parent, ctrl)
         ctrl2 = self._create_ctrl(parent)
-        self._controls.append((ctrl2, self._set_ctrl_editable, self._set_ctrl_color))
+        self._controls.append((ctrl2, self._set_ctrl_editable))
         self._init_ctrl(ctrl2)
         w2 = super(RangeField, self)._create_widget(parent, ctrl2)
         self._inputs = (ctrl, ctrl2)
@@ -2845,6 +2858,10 @@ class RangeField(InputField):
 
     def tab_navigated_widgets(self):
         return self._inputs
+
+    def _set_background_color(self, color):
+        for ctrl in self._inputs:
+            ctrl.SetOwnBackgroundColour(color)
 
 
 class NumericRangeField(RangeField, NumericField):
