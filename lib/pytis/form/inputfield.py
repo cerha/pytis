@@ -2145,10 +2145,8 @@ class ImageField(FileField):
             stream = StringIO()
             img.save(stream, 'PNG')
             stream.seek(0)
-            wximg = wx.EmptyImage()
-            wximg.LoadStream(stream, type=wx.BITMAP_TYPE_PNG)
-            return wx.Bitmap(wximg)
-        return wx.EmptyBitmap(1, 1, depth=1)
+            return wx.Bitmap(wx.Image(stream, type=wx.BITMAP_TYPE_PNG))
+        return wx.Bitmap(1, 1)
 
     def _on_button(self):
         if self.COMMAND_OPEN.enabled():
