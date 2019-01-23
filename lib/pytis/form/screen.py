@@ -38,7 +38,7 @@ import wx
 import wx.html2
 import SimpleHTTPServer
 import SocketServer
-import cStringIO as StringIO
+from cStringIO import StringIO
 import tempfile
 import thread
 import time
@@ -3664,7 +3664,7 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     """
     if pytis.remote.client_available():
-        _open_remote_file_viewer(StringIO.StringIO(data), suffix=suffix, decrypt=decrypt)
+        _open_remote_file_viewer(StringIO(data), suffix=suffix, decrypt=decrypt)
     else:
         with tempfile.NamedTemporaryFile(suffix=suffix) as f:
             f.write(data)
