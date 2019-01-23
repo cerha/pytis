@@ -341,6 +341,15 @@
 
 ** FEEDBACK Kontrola práv při volání funkcí jako dbupdatemany apod
 
+** FEEDBACK Povinný label políčka
+   
+   Label nyní může být prázdný řetězec.  Na různých místech se v tom případě
+   použije id políčka namísto labelu, ale to je špatně.  Pokud chceme políčko
+   ve formuláři bez labelu, měla by na to být nějaká další volba
+   (např. unlabeled=True), ale label by mělo každé políčko mít.  Kvůli možné
+   prázdné hodnotě by se teď např. všude, kde se používá f.label() nebo
+   f.column_label() mělo použít "or f.id()", ale ne všude to je a může to vést
+   k tracebacku.
 
 * INTERNÍ ZÁLEŽITOSTI [2/4] [50%]
 
