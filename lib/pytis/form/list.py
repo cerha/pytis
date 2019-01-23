@@ -1171,7 +1171,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if hidden_columns:
             position = column_index + 1 if column_index is not None else len(self._columns)
             menu.append(Menu(_("Add column"),
-                             [MItem(c.column_label(),
+                             [MItem(c.column_label() or c.id(),
                                     command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(),
                                                                            position=position))
                               for c in hidden_columns]))
