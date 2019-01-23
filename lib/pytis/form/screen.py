@@ -2937,13 +2937,20 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     elif icon_id.startswith('wx'):
         bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
-        imgfile = os.path.join(config.icon_dir, icon_id + '.png')
-        if os.path.exists(imgfile):
-            img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
-            bitmap = wx.Bitmap(img)
+        filename = os.path.join(config.icon_dir, icon_id)
+        if os.path.exists(filename + '.png'):
+            img = wx.Image(filename + '.png', type=wx.BITMAP_TYPE_PNG)
+        elif os.path.exists(filename + '.svg'):
+            import cairosvg
+            with open(filename + '.svg') as f:
+                data = f.read()
+            png = cairosvg.svg2png(data, parent_width=size[0], parent_height=size[1])
+            img = wx.Image(StringIO(png), wx.BITMAP_TYPE_PNG)
+            img = img.Scale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
         else:
-            log(OPERATIONAL, "Could not find icon file:", imgfile)
-            bitmap = None
+            log(OPERATIONAL, "Could not find icon file:", filename + '.(svg|png)')
+            return None
+        bitmap = wx.Bitmap(img)
     if bitmap and bitmap.IsOk():
         return bitmap
     else:
