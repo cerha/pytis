@@ -65,6 +65,17 @@ import config
 _ = pytis.util.translations('pytis-wx')
 
 
+def field_size(parent, width, height):
+    """Return pixel size of a wx.TextCtrl fitting text of given character width/height.
+
+    Text fields are the most common fields so some other widgets, such as
+    buttons etc. may also use 'field_size()' to match text field sizes and
+    align with them nicely.
+
+    """
+    return dlg2px(parent, 4 * width + 8, 8 * height + 6)
+
+
 class _Completer(wx.PopupWindow):
     """Autocompletion selection control."""
 
@@ -658,9 +669,6 @@ class InputField(object, KeyHandler, CommandHandler):
         # Returns always false for virtual fields
         return self._row.field_changed(self.id())
 
-    def _px_size(self, parent, width, height):
-        return dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
-
     def _set_focus(self, ctrl):
         parent = ctrl.GetParent()
         nb = parent.GetParent()
@@ -848,7 +856,7 @@ class TextField(InputField):
         if self._inline:
             size = wx.DefaultSize
         else:
-            size = self._px_size(parent, self.width(), self.height())
+            size = field_size(parent, self.width(), self.height())
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
@@ -1364,7 +1372,7 @@ class ChoiceField(EnumerationField):
         return control
 
     def _update_size(self, ctrl, initial=False):
-        ctrl.SetSize((ctrl.GetBestSize().width, self._px_size(ctrl, 1, 1.5)[1]))
+        ctrl.SetSize((ctrl.GetBestSize().width, 30))
         if not initial and not self._inline:
             # Necessary to move the help icon properly when the control size changes.
             ctrl.SetMinSize(ctrl.Size)
@@ -1433,8 +1441,7 @@ class Invocable(object, CommandHandler):
         return widget
 
     def _button_size(self, parent):
-        x = self._px_size(parent, 1, 1)[1]
-        return (x, x)
+        return field_size(parent, 1.7, 1)
 
     def _create_invocation_button(self, parent):
         return wx_button(parent, label='...', icon=self._INVOKE_ICON, size=self._button_size(parent),
@@ -1634,7 +1641,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             if display_size is None:
                 display_size = cb_spec.display_size()
             if display_size:
-                size = self._px_size(parent, display_size, 1)
+                size = field_size(parent, display_size, 1)
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
@@ -1965,15 +1972,14 @@ class FileField(Invocable, InputField):
             size = 50
         else:
             size = 10
-        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, size, 1))
+        ctrl = wx.TextCtrl(parent, -1, '', size=field_size(parent, size, 1))
         ctrl.SetEditable(False)
         ctrl.SetOwnBackgroundColour(config.field_disabled_color)
         wx_callback(wx.EVT_LEFT_DCLICK, ctrl, self._on_filename_dclick)
         return ctrl
 
     def _button_size(self, parent):
-        x = self._px_size(parent, 1, 1)[1]
-        return (x + 5, x + 2)
+        return field_size(parent, 2.5, 1)
 
     def _validate(self):
         filename = self._buffer and self._buffer.filename()
@@ -2107,10 +2113,6 @@ class ImageField(FileField):
         return wx_button(parent, bitmap=self._bitmap(),
                          size=(self.width() + 10, self.height() + 10),
                          callback=lambda e: self._on_button())
-
-    def _button_size(self, parent):
-        x = self._px_size(parent, 1, 1)[1]
-        return (x + 4, x + 2)
 
     def _create_invocation_button(self, parent):
         if self._spec.editable() is False:
@@ -2429,10 +2431,10 @@ class StructuredTextField(TextField):
         # derived TextCtrl class defined above.
         # ctrl = TextCtrl(parent, -1, style=self._text_ctrl_style())
         # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, self._on_change)
-        if not self._inline:
-            size = self._px_size(parent, self.width(), self.height())
-        else:
+        if self._inline:
             size = wx.DefaultSize
+        else:
+            size = field_size(parent, self.width(), self.height())
         ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(), size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
