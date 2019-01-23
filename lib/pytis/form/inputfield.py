@@ -881,13 +881,6 @@ class TextField(InputField):
     def _set_background_color(self, color):
         self._ctrl.SetOwnBackgroundColour(color)
 
-    def _create_button(self, parent, label, icon=None):
-        return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
-
-    def _button_size(self, parent):
-        x = self._px_size(parent, 1, 1)[1]
-        return (x, x)
-
     def on_key_down(self, event):
         if self._enabled and self._completer and self._completer.on_key_down(event):
             return
@@ -1433,22 +1426,19 @@ class Invocable(object, CommandHandler):
         button = self._create_invocation_button(parent)
         if button:
             self._controls.append((button, lambda c, e: c.Enable(e)))
-            button.SetToolTip(self._INVOKE_TITLE)
-            wx_callback(wx.EVT_BUTTON, button, lambda e: self._on_invoke_selection(ctrl))
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
+            wx_callback(wx.EVT_BUTTON, button, lambda e: self._on_invoke_selection(ctrl))
             widget = self._hbox(widget, button)
         self._invocation_button = button
         return widget
-
-    def _create_invocation_button(self, parent):
-        return self._create_button(parent, '...', icon=self._INVOKE_ICON)
 
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
         return (x, x)
 
-    def _create_button(self, parent, label, icon=None):
-        return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
+    def _create_invocation_button(self, parent):
+        return wx_button(parent, label='...', icon=self._INVOKE_ICON, size=self._button_size(parent),
+                         tooltip=self._INVOKE_TITLE)
 
     def _menu(self):
         return super(Invocable, self)._menu() + \
@@ -1536,9 +1526,8 @@ class ColorSelectionField(Invocable, TextField):
         if color is not None:
             self._set_value(color)
 
-    def _create_button(self, parent, label, **kwargs):
-        size = self._button_size(parent)
-        return wx.lib.colourselect.ColourSelect(parent, -1, size=size)
+    def _create_invocation_button(self, parent):
+        return wx.lib.colourselect.ColourSelect(parent, -1, size=self._button_size(parent))
 
     def _set_value(self, value):
         if not self._inline:
@@ -1652,9 +1641,9 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
                 self._controls.append((display, lambda c, e: None))
         if spec.allow_codebook_insert():
-            button = self._create_button(parent, '+', icon='new-record')
-            button.SetToolTip(_("Insert a new codebook value."))
-            wx_callback(wx.EVT_BUTTON, button, lambda e: self._codebook_insert())
+            button = wx_button(parent, label='+', icon='new-record', size=self._button_size(parent),
+                               tooltip=_("Insert a new codebook value."),
+                               callback=lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             self._controls.append((button, lambda b, e: b.Enable(e)))
         return self._hbox(*[x[0] for x in self._controls])
