@@ -617,17 +617,14 @@ class InputField(object, KeyHandler, CommandHandler):
             icon = 'field-locked'
             tooltip = _("The field is ineditable due to insufficient permissions.")
             color = '#606060'
-            background = config.field_denied_color
         elif self._hidden and not self._modified():
             icon = 'field-hidden'
             tooltip = _("The field value is not visible due to insufficient permissions.")
             color = '#606060'
-            background = config.field_hidden_color
         elif not self._row.editable(self._id):
             icon = 'field-disabled'
             tooltip = _("The field is not editable.")
             color = '#606060'
-            background = config.field_disabled_color
         elif not self.valid():
             icon = 'field-invalid'
             error = self._last_validation_error
@@ -638,12 +635,10 @@ class InputField(object, KeyHandler, CommandHandler):
             else:
                 tooltip = self._last_check_result
             color = '#ba344f'
-            background = config.field_invalid_color
         else:
             icon = 'field-ok'
             tooltip = _("The current field value is valid.")
             color = '#000000'
-            background = None
         self._status_icon.SetBitmap(InputField.icon(icon))
         self._status_icon.SetToolTip(tooltip)
         label = self._label
@@ -651,19 +646,6 @@ class InputField(object, KeyHandler, CommandHandler):
             label = label.GetItem(0).Window  # When 'compact', the label includes icons.
         if label:
             label.SetForegroundColour(color)
-        self._set_background_color(background)
-
-    def _set_background_color(self, color):
-        """Set field background to given color.
-
-        The color may be None for default background color.  Must be
-        implemented for each field type specifically.  Many field types may not
-        support setting the background color at all.  The color is just an
-        additional indication of the field state (non-editable, locked,
-        invalid, ...) which is primarily displayed by field icon.
-
-        """
-        pass
 
     def _modified(self):
         # Returns always false for virtual fields
@@ -852,6 +834,18 @@ class TextField(InputField):
     ASCII = map(chr, range(127))
     LETTERS = map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1))
 
+    FIELD_DISABLED_COLOR = '#f0f0f0'
+    """Ineditable input field background color.
+
+    'wx.TextCtrl' has its own system color in the disabled state, but we don't
+    use the disabled state because of its side effects and make the field read
+    only and change the color manually.  This color should match the system
+    color, particularly we use the default color used by GTK+ 3 on Linux as
+    this is our primary target platform.  To support other platforms or themes,
+    we would need to do some decision making here.
+
+    """
+
     def _create_ctrl(self, parent):
         if self._inline:
             size = wx.DefaultSize
@@ -883,11 +877,10 @@ class TextField(InputField):
             color = None
             validator = self.TextValidator(ctrl, filter=self._filter())
         else:
+            color = self.FIELD_DISABLED_COLOR
             validator = wx.DefaultValidator
         ctrl.SetValidator(validator)
-
-    def _set_background_color(self, color):
-        self._ctrl.SetOwnBackgroundColour(color)
+        ctrl.SetOwnBackgroundColour(color)
 
     def on_key_down(self, event):
         if self._enabled and self._completer and self._completer.on_key_down(event):
@@ -1090,11 +1083,6 @@ class PasswordField(StringField):
         else:
             verify = value
         return self._row.validate(self.id(), value, verify=verify)
-
-    def _set_background_color(self, color):
-        super(PasswordField, self)._set_background_color(color)
-        if self._ctrl2:
-            self._ctrl2.SetOwnBackgroundColour(color)
 
     def tab_navigated_widgets(self):
         widgets = super(PasswordField, self).tab_navigated_widgets()
@@ -1643,7 +1631,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             if display_size:
                 size = field_size(parent, display_size, 1)
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
-                display.SetOwnBackgroundColour(config.field_disabled_color)
+                display.SetOwnBackgroundColour(self.FIELD_DISABLED_COLOR)
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
                 self._controls.append((display, lambda c, e: None))
@@ -1974,7 +1962,7 @@ class FileField(Invocable, InputField):
             size = 10
         ctrl = wx.TextCtrl(parent, -1, '', size=field_size(parent, size, 1))
         ctrl.SetEditable(False)
-        ctrl.SetOwnBackgroundColour(config.field_disabled_color)
+        ctrl.SetOwnBackgroundColour(TextField.FIELD_DISABLED_COLOR)
         wx_callback(wx.EVT_LEFT_DCLICK, ctrl, self._on_filename_dclick)
         return ctrl
 
@@ -2848,10 +2836,6 @@ class RangeField(InputField):
 
     def tab_navigated_widgets(self):
         return self._inputs
-
-    def _set_background_color(self, color):
-        for ctrl in self._inputs:
-            ctrl.SetOwnBackgroundColour(color)
 
 
 class NumericRangeField(RangeField, NumericField):

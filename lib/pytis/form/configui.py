@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -51,9 +51,6 @@ _LAYOUT = (
                 'cell_highlight_color',
                 'grid_line_color',
                 'grouping_background_downgrade',
-                'field_disabled_color',
-                'field_denied_color',
-                'field_invalid_color',
                 ),
         LVGroup(_("Behavior"),
                 'stretch_tables',
@@ -78,10 +75,6 @@ _LABELS = {
     'cell_highlight_color': _("Current cell highlight"),
     'grid_line_color': _("Table grid"),
     'grouping_background_downgrade': _("Grouping background change"),
-
-    'field_disabled_color': _("Inactive input field"),
-    'field_denied_color': _("Disabled input field"),
-    'field_invalid_color': _("Invalid input field"),
     'show_splash': _("Show start-up dialog"),
     'show_tooltips': _("Show tooltips"),
     'auto_menu_accel': _("Automatically numbered menus with accellerator keys"),

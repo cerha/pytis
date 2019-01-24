@@ -33,10 +33,6 @@
 # číselných položek.
 #lc_numeric = 'C'
 
-# Barva pozadí needitovatelného vstupního políčka. Barva je reprezentována
-# řetězcem '#RRGGBB'.
-#field_disabled_color = '#c0c0c0'
-
 # Jméno tabulky, do které mají být logovány DML SQL příkazy.
 #dblogtable = ''
 
@@ -220,4 +216,3 @@
 
 # Flag určující, zda má být spouštěn dohlížeč změn dat.
 #dblisten = True
-

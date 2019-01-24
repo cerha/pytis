@@ -2077,7 +2077,8 @@ class LocationBar(wx.TextCtrl):
         if editable:
             wx_callback(wx.EVT_TEXT_ENTER, self, self._on_enter)
         else:
-            self.SetOwnBackgroundColour(config.field_disabled_color)
+            from .inputfield import TextField
+            self.SetOwnBackgroundColour(TextField.FIELD_DISABLED_COLOR)
             self.Refresh()
         browser = uicmd.args()['_command_handler']
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1189,30 +1189,6 @@ class Configuration(object):
                  "color as specified.  But some rows may be already colored "
                  "otherwise and in this case the two colors are combined.")
         _DEFAULT = '#eceef0'
-
-    class _Option_field_disabled_color(ColorOption):
-        """Ineditable input field background color."""
-        _DESCR = _("Ineditable input field background color.")
-        _DEFAULT = '#d8d8d8'
-
-    class _Option_field_denied_color(ColorOption):
-        """Color of input field ineditable due to access rights."""
-        _DESCR = _("Color of input field ineditable due to access rights.")
-        _DEFAULT = '#e0e4f0'
-
-    class _Option_field_hidden_color(ColorOption):
-        """Color of input field with hidden value due to access rights."""
-        _DEFAULT = '#404040'
-
-    class _Option_field_invalid_color(ColorOption):
-        """Invalid input field background color.
-
-        Background color during field editation when the current value doesn't
-        pass validation.
-
-        """
-        _DESCR = _("Background color during field editation when the current value is not valid.")
-        _DEFAULT = '#ffffc0'
 
     class _Option_filter_color(ColorOption):
         u"""Barva záhlaví tabulky při zapnutém filtrování."""
