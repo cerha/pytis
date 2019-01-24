@@ -136,11 +136,11 @@ class _Completer(wx.PopupWindow):
 
     def _show(self, show=True):
         if show and self._list.GetItemCount() > 0:
-            size = self.GetSize()
-            height = self._ctrl.GetSizeTuple()[1]
+            size = self.Size
+            height = self._ctrl.Size.height
             x, y = self._ctrl.ClientToScreen(0, height)
-            if (y + size.GetHeight()) >= wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y):
-                y = y - height - size.GetHeight()
+            if (y + size.height) >= wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y):
+                y = y - height - size.height
             self.SetPosition(wx.Point(x, y))
             self.Show(True)
         else:
