@@ -1522,7 +1522,7 @@ class TimeField(TextField, SpinnableField):
 class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
 
-    _DEFAULT_WIDTH = 7
+    _DEFAULT_WIDTH = 9  # Value is max. 7 chars, but may include wide letters, such as D.
     _INVOKE_TITLE = _("Select Color")
     _INVOKE_HELP = _("Show the color selection dialog.")
 
