@@ -1733,9 +1733,10 @@ class ListField(GenericCodebookField, CallbackHandler):
         height = listctrl.GetCharHeight() * self.height() * 1.4 + 26  # TODO: any better?
         self._DEFAULT_WIDTH = total_width + 3
         listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
-        wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, self._on_select)
-        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, self._on_activation)
+        wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, self._on_select_or_activate)
+        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, self._on_select_or_activate)
         wx_callback(wx.EVT_MOUSEWHEEL, listctrl, lambda e: e.Skip())
+        wx_callback(wx.EVT_LIST_KEY_DOWN, listctrl, self._on_key_down)
         self._selected_item = None
         self._enumeration_changed = True
         self._list_data = []
@@ -1744,7 +1745,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _set_ctrl_editable(self, ctrl, editable):
         # Disabling the control also disables scrolling.
-        # Instead we simply don't perform any changes when disabled.
+        # Instead we simply don't perform selection changes when disabled.
         if editable:
             ctrl.SetBackgroundColour(wx.WHITE)
         else:
@@ -1754,14 +1755,34 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._reload_enumeration()
         super(ListField, self)._change_callback()
 
-    def _on_select(self, event):
-        self._list.SetItemState(event.GetIndex(), 0, wx.LIST_STATE_SELECTED)
-
-    def _on_activation(self, event):
+    def _on_select_or_activate(self, event):
+        # We want to ACTIVATE the item on single mouse click, but wx
+        # default behavior is to focus on single click and activate
+        # on double click.
         i = event.GetIndex()
-        if self._enabled and i != self._selected_item:
+        if i != self._selected_item:
+            if self._enabled:
+                self._set_selection(i)
+            else:
+                # Force return previous selection as wx has already selected the
+                # clicked item before calling this event handler (but without
+                # changing self._selected_item).
+                self._set_selection(self._selected_item, ensure_visible=False)
+                self._list.Focus(i)
+
+    def _on_key_down(self, event):
+        code = event.GetKeyCode()
+        i = self._list.GetFocusedItem() or 0
+        if code in (wx.WXK_RETURN, wx.WXK_SPACE, wx.WXK_NUMPAD_ENTER) and self._enabled:
             self._set_selection(i)
-        event.Skip()
+        elif code == wx.WXK_UP and i > 0:
+            self._list.Focus(i - 1)
+        elif code == wx.WXK_DOWN and i + 1 < self._list.GetItemCount():
+            self._list.Focus(i + 1)
+        elif code == wx.WXK_PAGEUP and i > 0:
+            self._list.Focus(max(i - self.height(), 0))
+        elif code == wx.WXK_PAGEDOWN and i + 1 < self._list.GetItemCount():
+            self._list.Focus(min(i + self.height(), self._list.GetItemCount()))
 
     def _reload_enumeration(self):
         if self._last_set_invalid_value is not None:
@@ -1801,7 +1822,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                 list.SetItem(i, j, exported_value)
         self._set_selection(select_item)
 
-    def _set_selection(self, i):
+    def _set_selection(self, i, ensure_visible=True):
         list = self._list
         if self._selected_item is not None and self._selected_item < list.GetItemCount():
             # Deselect the old item.
@@ -1817,7 +1838,8 @@ class ListField(GenericCodebookField, CallbackHandler):
             list.SetItemTextColour(i, fgcolor)
             list.SetItemBackgroundColour(i, bgcolor)
             list.SetItemState(i, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
-            list.EnsureVisible(i)
+            if ensure_visible:
+                list.EnsureVisible(i)
         self._on_change()
 
     def _set_value(self, value):
