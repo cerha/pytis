@@ -1733,9 +1733,12 @@ class ListField(GenericCodebookField, CallbackHandler):
         return listctrl
 
     def _set_ctrl_editable(self, ctrl, editable):
-        # Disabling the control also disables scrolling.  We instead simply don't perform
-        # any changes in the disabled state.
-        pass
+        # Disabling the control also disables scrolling.
+        # Instead we simply don't perform any changes when disabled.
+        if editable:
+            ctrl.SetBackgroundColour(wx.WHITE)
+        else:
+            ctrl.SetBackgroundColour(TextField.FIELD_DISABLED_COLOR)
 
     def _change_callback(self):
         self._reload_enumeration()
