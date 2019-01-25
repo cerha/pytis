@@ -72,8 +72,18 @@ def field_size(parent, width, height):
     buttons etc. may also use 'field_size()' to match text field sizes and
     align with them nicely.
 
+    Note, that the width computation can not exactly suit to any text when
+    proportional fonts are used.  It usually suits an average text with even
+    occurence of wide and narrow letters.  The computation is tuned to make
+    small fields (up to three chars) wide enough to fit exactly the given
+    number of letters even if these are the widest possible capital letters,
+    such as G.  With higher width values (4 and above) the wide letters will
+    stop to fit but the field size will match well for numbers.  So if wide
+    letters are expected in field values, their width must be proportionally
+    set higher than the number of characters intended to fit.
+
     """
-    return dlg2px(parent, 4 * width + 8, 8 * height + 6)
+    return dlg2px(parent, 4 * width + 12, 8 * height + 6)
 
 
 class _Completer(wx.PopupWindow):
