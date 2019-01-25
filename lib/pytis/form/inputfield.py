@@ -1439,7 +1439,7 @@ class Invocable(object, CommandHandler):
         return widget
 
     def _button_size(self, parent):
-        return field_size(parent, 1.7, 1)
+        return field_size(parent, 1, 1)
 
     def _create_invocation_button(self, parent):
         return wx_button(parent, label='...', icon=self._INVOKE_ICON, size=self._button_size(parent),
@@ -1977,7 +1977,7 @@ class FileField(Invocable, InputField):
         return ctrl
 
     def _button_size(self, parent):
-        return field_size(parent, 2.5, 1)
+        return field_size(parent, 2, 1)
 
     def _validate(self):
         filename = self._buffer and self._buffer.filename()
