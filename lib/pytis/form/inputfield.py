@@ -1702,13 +1702,11 @@ class ListField(GenericCodebookField, CallbackHandler):
         CallbackHandler.__init__(self)
 
     def _create_ctrl(self, parent):
-        # Načtu specifikace.
+        style = wx.LC_REPORT | wx.LC_SINGLE_SEL
+        self._list = listctrl = wx.ListCtrl(parent, -1, style=style)
+        # Set up column headings according to specification.
         view_spec = config.resolver.get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
-        # Vytvořím vlastní seznamový widget.
-        style = wx.LC_REPORT | wx.SIMPLE_BORDER | wx.LC_SINGLE_SEL
-        listctrl = wx.ListCtrl(parent, -1, style=style)
-        # Nastavím záhlaví sloupců.
         total_width = 0
         for i, cid in enumerate(columns):
             col = view_spec.field(cid)
@@ -1725,7 +1723,6 @@ class ListField(GenericCodebookField, CallbackHandler):
         height = listctrl.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10  # TODO: any better?
         self._DEFAULT_WIDTH = total_width + 3
         listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
-        self._list = listctrl
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, self._on_select)
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, listctrl, self._on_activation)
         wx_callback(wx.EVT_MOUSEWHEEL, listctrl, lambda e: e.Skip())
