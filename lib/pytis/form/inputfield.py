@@ -1730,7 +1730,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                 width = len(col.column_label())
             listctrl.SetColumnWidth(i, dlg2px(listctrl, 4 * (width + 1)))
             total_width = total_width + width
-        height = listctrl.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10  # TODO: any better?
+        height = listctrl.GetCharHeight() * self.height() * 1.4 + 26  # TODO: any better?
         self._DEFAULT_WIDTH = total_width + 3
         listctrl.SetMinSize((dlg2px(listctrl, 4 * (self.width() + 1)), height))
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, listctrl, self._on_select)
