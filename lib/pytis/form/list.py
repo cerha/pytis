@@ -402,8 +402,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         for i, c in enumerate(self._columns):
             # zarovnání
             attr = wx.grid.GridCellAttr()
-            if isinstance(self._row.type(c.id()), pytis.data.Number):
+            ctype = self._row.type(c.id())
+            if isinstance(ctype, pytis.data.Number):
                 alignment = wx.ALIGN_RIGHT
+            elif isinstance(ctype, pytis.data.Boolean):
+                alignment = wx.ALIGN_CENTER
             else:
                 alignment = wx.ALIGN_LEFT
             attr.SetAlignment(alignment, wx.CENTER)
