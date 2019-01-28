@@ -1772,9 +1772,9 @@ class ProfileSelectorPopup(wx.ComboPopup):
                 self._append_profile(profile, i, profile is current)
         ctrl = self._listctrl
         ctrl.SetColumnWidth(0, minWidth)
-        ctrl.SetSize((1, 1))  # Needed for GetViewRect to work consistently.
-        width, height = ctrl.GetViewRect()[2:]  # Returned sizes are 16 px greater than the reality.
-        return wx.Size(max(width - 16, minWidth), min(height - 16, maxHeight))
+        ctrl.SetSize((1000, 3000))  # Needed for GetViewRect to work consistently.
+        width, height = ctrl.GetViewRect()[2:]
+        return wx.Size(max(width - 1, minWidth), min(height - 1, maxHeight))
 
     def SetStringValue(self, value):
         # Called just prior to displaying the popup, but after GetAdjustedSize.
