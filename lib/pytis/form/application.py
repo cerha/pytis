@@ -411,8 +411,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             checked = self.run_dialog(pytis.form.CheckListDialog,
                                       title=_("Restore forms"),
                                       message=_("Restore these forms saved on last exit?"),
-                                      columns=(_("Title"), _("Type")),
-                                      items=[(True, self._spec_title(name), f.descr())
+                                      items=[(True, self._spec_title(name) + ' (' + f.descr() + ')')
                                              for f, name in saved_forms])
             if checked:
                 startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))

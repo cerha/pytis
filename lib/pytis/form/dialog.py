@@ -33,7 +33,6 @@ from __future__ import unicode_literals
 
 import wx.adv
 import wx.lib.masked
-import wx.lib.mixins.listctrl
 
 import collections
 import datetime
@@ -1190,30 +1189,11 @@ class BugReport(GenericDialog):
         self._end_modal(self._button_id(self._IGNORE_LABEL))
 
 
-class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
-    def __init__(self, parent, columns, items):
-        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
-        wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
-        pytis.form.wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self,
-                               lambda e: self.ToggleItem(e.GetIndex()))
-        for i, label in enumerate(columns):
-            self.InsertColumn(i, label)
-        for i, item in enumerate(items):
-            self.InsertItem(i, item[1])
-            self.CheckItem(i, item[0])
-            for j, value in enumerate(item[1:]):
-                self.SetItem(i, j, value)
-        for i in range(len(columns)):
-            self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
-        self.SetMinSize((0, max(80, min(300, len(items) * 20 + 30))))
-
-
 class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
     The dialog displays a question with a list of items and a checkbox for each
-    of the items.  Items can consist of several columns aligned vertically in a
-    tabular fashion.
+    of the items.
 
     The result returned by the `run()' method is a sequence of boolean values,
     one for each item of 'items' passed to the constructor.  The value is True
@@ -1224,13 +1204,11 @@ class CheckListDialog(Message):
 
     def __init__(self, parent, columns=(), items=(), **kwargs):
         """Arguments:
-             columns -- sequence of column labels (strings).
-             items -- a sequence of checkable items.  Each item is a sequence.
-               The first value in this sequence is a boolean flag indicating
-               the initial checkbox state for this item.  The following values
-               are textual fields describing the item.  The number of textual
-               fields must be the same as the numer of column labels passed in
-               'columns'.  These fields are presented in a table-like list.
+             items -- a sequence of checkable items.  Each item is a pair of
+               (bool, unicode).  The bool value in indicates the initial
+               checkbox state for this item.  The unicode value is the textual
+               label for the item.
+
         """
         super(CheckListDialog, self).__init__(parent, buttons=(GenericDialog.BUTTON_OK,
                                                                GenericDialog.BUTTON_CANCEL),
@@ -1242,12 +1220,14 @@ class CheckListDialog(Message):
 
     def _create_content(self, sizer):
         super(CheckListDialog, self)._create_content(sizer)
-        self._checklist = _CheckListCtrl(self._dialog, self._columns, self._items)
-        sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
+        self._checklist = box = wx.CheckListBox(self._dialog,
+                                                choices=[label for state, label in self._items])
+        box.SetCheckedItems([i for i, (state, label) in enumerate(self._items) if state])
+        sizer.Add(box, 1, wx.EXPAND | wx.ALL, 5)
 
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
-            return [self._checklist.IsChecked(i) for i, triple in enumerate(self._items)]
+            return [self._checklist.IsChecked(i) for i in range(len(self._items))]
         else:
             return None
 
