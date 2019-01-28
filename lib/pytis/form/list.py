@@ -1495,8 +1495,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             label_text = ' ' + value.export()
                             if not icon:
                                 label_text = label + label_text
-                                dc.DrawLabel(label_text, bitmap=icon, rect=label_rect,
-                                             alignment=align)
+                            dc.DrawLabel(label_text, bitmap=icon, rect=label_rect, alignment=align)
                         y += row_height
                 dc.DrawLine(x - d, y, x + width, y)
             x += width
