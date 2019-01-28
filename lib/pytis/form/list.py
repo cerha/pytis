@@ -1856,11 +1856,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         state = [c in self._columns for c in columns]
         result = run_dialog(CheckListDialog, title=_("Displayed columns"),
                             message=_("Select the columns to be displayed:"),
-                            items=[(checked, c.column_label(), c.descr() or '')
-                                   for checked, c in zip(state, columns)],
-                            columns=(_("Column"), _("Description")))
+                            items=[(c in self._columns, c.column_label()) for c in columns])
         if result:
-            for c, present, checked, i in zip(columns, state, result, range(len(columns))):
+            for i, (c, checked) in enumerate(zip(columns, result)):
+                present = c in self._columns
                 if present and not checked:
                     self._update_grid(delete_column=c)
                 elif not present and checked:
