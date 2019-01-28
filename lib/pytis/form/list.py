@@ -1494,8 +1494,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             text = ' ' + value.export()
                             if not icon:
                                 text = label + text
+                            dc.SetClippingRegion(x, y, width, row_height)
                             dc.DrawLabel(text, bitmap=icon, alignment=align,
-                                         rect=(x - d + 2, y, width + d - 4, row_height))
+                                         rect=(x - d + 2, y + 1, width + d - 4, row_height))
+                            dc.DestroyClippingRegion()
                         y += row_height
                 dc.DrawLine(x - d, y, x + width, y)
             x += width
