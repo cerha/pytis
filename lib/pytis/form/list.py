@@ -1335,7 +1335,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             pos = 0
             lastwidth = 0
             for col in range(n + 1):
-                if col <= n:
+                if col < n:
                     width = g.GetColSize(col)
                 else:
                     width = 0
