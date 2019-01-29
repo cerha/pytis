@@ -233,7 +233,7 @@ class InputField(object, KeyHandler, CommandHandler):
         return InputField.last_focused_field()
 
     @classmethod
-    def create(cls, parent, row, id, inline=False, **kwargs):
+    def create(cls, parent, row, id, **kwargs):
         """Create an instance of the class corresponding to the field specification.
 
         The arguments are the same as for the 'InputField' constructor.
@@ -242,22 +242,15 @@ class InputField(object, KeyHandler, CommandHandler):
         # assert isinstance(parent, wx.Window)
         assert isinstance(row, PresentedRow)
         assert isinstance(id, basestring)
-        assert isinstance(inline, bool)
         spec = find(id, row.fields(), key=lambda f: f.id())
-        type = row.type(id)
-        if type.enumerator() is not None:
-            codebook = row.codebook(id)
+        ftype = row.type(id)
+        if ftype.enumerator() is not None:
             selection_type = spec.selection_type()
-            if isinstance(type, pytis.data.Boolean) and selection_type is None:
+            if isinstance(ftype, pytis.data.Boolean) and selection_type is None:
                 field = CheckBoxField
-            elif inline:
-                if codebook:
-                    field = CodebookField
-                else:
-                    field = ChoiceField
             else:
                 if selection_type is None:
-                    if codebook is not None:
+                    if row.codebook(id) is not None:
                         selection_type = SelectionType.CODEBOOK
                     else:
                         selection_type = SelectionType.CHOICE
@@ -269,38 +262,38 @@ class InputField(object, KeyHandler, CommandHandler):
                     SelectionType.RADIO: RadioBoxField,
                 }
                 field = mapping[selection_type]
-        elif isinstance(type, pytis.data.IntegerRange):
+        elif isinstance(ftype, pytis.data.IntegerRange):
             field = NumericRangeField
-        elif isinstance(type, pytis.data.LargeIntegerRange):
+        elif isinstance(ftype, pytis.data.LargeIntegerRange):
             field = NumericRangeField
-        elif isinstance(type, pytis.data.DateRange):
+        elif isinstance(ftype, pytis.data.DateRange):
             field = DateRangeField
-        elif isinstance(type, pytis.data.DateTimeRange):
+        elif isinstance(ftype, pytis.data.DateTimeRange):
             field = DateTimeRangeField
-        elif isinstance(type, pytis.data.Image):
+        elif isinstance(ftype, pytis.data.Image):
             field = ImageField
-        elif isinstance(type, pytis.data.Binary):
+        elif isinstance(ftype, pytis.data.Binary):
             field = FileField
-        elif isinstance(type, pytis.data.Date):
+        elif isinstance(ftype, pytis.data.Date):
             field = DateField
-        elif isinstance(type, pytis.data.Time):
+        elif isinstance(ftype, pytis.data.Time):
             field = TimeField
-        elif isinstance(type, pytis.data.DateTime):
+        elif isinstance(ftype, pytis.data.DateTime):
             field = DateTimeField
-        elif isinstance(type, pytis.data.Color):
+        elif isinstance(ftype, pytis.data.Color):
             field = ColorSelectionField
-        elif isinstance(type, pytis.data.Password):
+        elif isinstance(ftype, pytis.data.Password):
             field = PasswordField
-        elif isinstance(type, pytis.data.String):
+        elif isinstance(ftype, pytis.data.String):
             if spec.text_format() == TextFormat.LCG:
                 field = StructuredTextField
             else:
                 field = StringField
-        elif isinstance(type, pytis.data.Number):
+        elif isinstance(ftype, pytis.data.Number):
             field = NumericField
         else:
             field = TextField
-        return field(parent, row, id, inline=inline, **kwargs)
+        return field(parent, row, id, **kwargs)
 
     @classmethod
     def set_last_focused_field(cls, field):
@@ -324,7 +317,7 @@ class InputField(object, KeyHandler, CommandHandler):
 
     # Instance methods
 
-    def __init__(self, parent, row, id, inline=False, guardian=None, readonly=False):
+    def __init__(self, parent, row, id, guardian=None, readonly=False):
         """Initialize the input field according to its specification.
 
         Arguments:
@@ -332,11 +325,6 @@ class InputField(object, KeyHandler, CommandHandler):
           parent -- wx parent for the created widgets.
           row -- 'PresentedRow' instance.
           id -- field specification as a 'Field' instance.
-
-          inline -- if true, only the basic input widget is created.  The label
-            and all surrounding widgets are omitted, so that the widget can be
-            used in the inline editation mode in of a table cell.
-
           guardian -- parent 'KeyHandler'.
           readonly --
 
@@ -348,14 +336,12 @@ class InputField(object, KeyHandler, CommandHandler):
         assert isinstance(row, PresentedRow)
         assert isinstance(id, basestring)
         assert isinstance(guardian, KeyHandler)
-        assert isinstance(inline, bool)
         spec = find(id, row.fields(), key=lambda f: f.id())
         self._row = row
         self._type = row.type(id)
         self._spec = spec
         self._guardian = guardian
         self._id = id = spec.id()
-        self._inline = inline
         self._want_focus = False
         self._last_focused_ctrl = None
         self._connection_closed = False
@@ -381,24 +367,20 @@ class InputField(object, KeyHandler, CommandHandler):
         self._ctrl = ctrl = self._create_ctrl(parent)
         self._controls = [(ctrl, self._set_ctrl_editable)]
         self._init_ctrl(ctrl)
-        if inline:
-            self._label = None
-            self._widget = ctrl
+        label = self._create_label(parent)
+        widget = self._create_widget(parent, ctrl)
+        if label and spec.compact():
+            label = self._add_icons(parent, label)
         else:
-            self._label = self._create_label(parent)
-            self._widget = self._create_widget(parent, ctrl)
-            if spec.compact() and self._label:
-                self._label = self._add_icons(parent, self._label)
-            else:
-                self._widget = self._add_icons(parent, self._widget)
+            widget = self._add_icons(parent, widget)
+        self._label = label
+        self._widget = widget
         if not self._enabled:
             self._set_editable(False)
-        if not inline:
-            row.register_callback(row.CALL_CHANGE, id, self._change_callback)
-            row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
-                                  self._editability_change_callback)
-            row.register_callback(row.CALL_CHECK, id, self._check_callback)
-
+        row.register_callback(row.CALL_CHANGE, id, self._change_callback)
+        row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
+                              self._editability_change_callback)
+        row.register_callback(row.CALL_CHECK, id, self._check_callback)
         value = row.invalid_string(id)
         if value is None:
             value = row.format(id, single=False, secure='')
@@ -454,8 +436,7 @@ class InputField(object, KeyHandler, CommandHandler):
         # Create additional UI elements for the field control.  Return a wx
         # widget containing all UI elements for given field.  This class simply
         # returns the actual control, but derived classes may add extra buttons
-        # etc. to create more sophisticated user interface.  This method is not
-        # called in "inline" mode where additional controls are not allowed.
+        # etc. to create more sophisticated user interface.
         return ctrl
 
     def _add_icons(self, parent, widget):
@@ -852,11 +833,8 @@ class TextField(InputField):
     """
 
     def _create_ctrl(self, parent):
-        if self._inline:
-            size = wx.DefaultSize
-        else:
-            size = field_size(parent, self.width(), self.height())
-        control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(), size=size)
+        control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(),
+                              size=field_size(parent, self.width(), self.height()))
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
             # Setting max length on multiline TextCtrl fields is not supported
@@ -1186,11 +1164,7 @@ class CheckBoxField(Unlabeled, InputField):
 
     def _create_ctrl(self, parent):
         """Vrať instanci 'wx.CheckBox'."""
-        if self._inline:
-            label = ''
-        else:
-            label = self.spec().label()
-        control = wx.CheckBox(parent, -1, label)
+        control = wx.CheckBox(parent, -1, self.spec().label())
         wx_callback(wx.EVT_CHECKBOX, control, self._on_change)
         return control
 
@@ -1366,7 +1340,7 @@ class ChoiceField(EnumerationField):
 
     def _update_size(self, ctrl, initial=False):
         ctrl.SetSize((ctrl.GetBestSize().width, 30))
-        if not initial and not self._inline:
+        if not initial:
             # Necessary to move the help icon properly when the control size changes.
             ctrl.SetMinSize(ctrl.Size)
             ctrl.Parent.Sizer.Layout()
@@ -1530,8 +1504,7 @@ class ColorSelectionField(Invocable, TextField):
         return wx.lib.colourselect.ColourSelect(parent, -1, size=self._button_size(parent))
 
     def _set_value(self, value):
-        if not self._inline:
-            self._invocation_button.SetColour(value or '#e8e8e8')
+        self._invocation_button.SetColour(value or '#e8e8e8')
         return super(ColorSelectionField, self)._set_value(value)
 
 
@@ -2446,11 +2419,8 @@ class StructuredTextField(TextField):
         # derived TextCtrl class defined above.
         # ctrl = TextCtrl(parent, -1, style=self._text_ctrl_style())
         # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, self._on_change)
-        if self._inline:
-            size = wx.DefaultSize
-        else:
-            size = field_size(parent, self.width(), self.height())
-        ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(), size=size)
+        ctrl = wx.TextCtrl(parent, -1, style=self._text_ctrl_style(),
+                           size=field_size(parent, self.width(), self.height()))
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
@@ -2840,26 +2810,13 @@ class RangeField(InputField):
         return self._hbox(w1, w2)
 
     def _set_value(self, value):
-        if self._inline:
-            if isinstance(value, tuple):
-                if value == ('', ''):
-                    value = ''
-                else:
-                    value = ' - '.join(value)
-            self._ctrl.SetValue(value)
-        else:
-            for val, ctrl in zip(value, self._inputs):
-                ctrl.SetValue(val)
+        for val, ctrl in zip(value, self._inputs):
+            ctrl.SetValue(val)
         self._on_change()
 
     def _validate(self):
-        if self._inline:
-            value = re.split(r'\s*-\s*', self._ctrl.GetValue())
-            if len(value) != 2:
-                return pytis.data.ValidationError(_("Invalid range format."))
-        else:
-            value = [ctrl.GetValue() for ctrl in self._inputs]
-        return self._row.validate(self.id(), tuple(value))
+        value = tuple([ctrl.GetValue() for ctrl in self._inputs])
+        return self._row.validate(self.id(), value)
 
     def tab_navigated_widgets(self):
         return self._inputs

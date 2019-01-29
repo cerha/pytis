@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,6 @@ from pytis.util import DEBUG, EVENT, ProgramError, log
 
 from application import db_operation
 from form import Form
-from inputfield import InputField
 from screen import color2wx, get_icon
 
 import config
@@ -698,72 +697,6 @@ class TableRowIterator(object):
 
         """
         return self._table.form()
-
-
-class InputFieldCellEditor(wx.grid.PyGridCellEditor):
-
-    def __init__(self, parent, row, id, guardian, registration):
-        wx.grid.PyGridCellEditor.__init__(self)
-        self._parent = parent
-        self._row = row
-        self._id = id
-        self._guardian = guardian
-        self._registration = registration
-        self._field = None
-
-    # Povinné metody
-
-    def Create(self, parent, id, evt_handler):
-        self._field = InputField.create(parent, self._row, self._id,
-                                        guardian=self._guardian, inline=True)
-        control = self._field.widget()
-        self.SetControl(control)
-        return control
-
-    def BeginEdit(self, row, col, grid):
-        self._registration(self)
-        field = self._field
-        field.widget().Enable(True)
-        field.set_focus()
-        try:
-            field.widget().SetInsertionPointEnd()
-        except AttributeError:
-            pass
-
-    def EndEdit(self, row, col, grid, *args):
-        field = self._field
-        field.validate(interactive=False)
-        field.widget().Enable(False)
-        self._parent.SetFocus()
-        self._registration(None)
-        return True
-
-    def Reset(self):
-        self._field.reset()
-
-    def Clone(self):
-        return InputFieldCellEditor()
-
-    # Ostatní metody
-
-    def field(self):
-        """Vrať svůj 'InputField'."""
-        return self._field
-
-    def IsAcceptedKey(self, event):
-        # TODO/wx: Z neznámých důvodů není voláno.
-        if __debug__:
-            log(DEBUG, 'Neuvěřitelné -- voláno IsAcceptedKey')
-        return False
-
-    def close(self):
-        """Proveď ukončovací akce.
-
-        Tuto metodu je nutno volat explicitně, neboť definování metod
-        `Close()' a `Destroy()' nemá žádný účinek.
-
-        """
-        self.SetControl(None)
 
 
 class CustomCellRenderer(wx.grid.GridCellRenderer):

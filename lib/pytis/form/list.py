@@ -253,7 +253,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
-        self._editors = []
         self._table = None
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
@@ -388,20 +387,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             g.FitInside()
 
     def _notify_grid(self, message_id, *args):
-        if message_id == wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED:
-            self._close_editors()
         msg = wx.grid.GridTableMessage(self._table, message_id, *args)
         self._grid.ProcessTableMessage(msg)
 
     def _init_col_attr(self):
-        # (Re)inicializuj atributy sloupců gridu.
-        def registration(editor):
-            self._current_editor = editor
-        if self._editors:
-            self._close_editors()
         for i, c in enumerate(self._columns):
-            # zarovnání
             attr = wx.grid.GridCellAttr()
+            attr.SetReadOnly()
             ctype = self._row.type(c.id())
             if isinstance(ctype, pytis.data.Number):
                 alignment = wx.ALIGN_RIGHT
@@ -410,17 +402,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 alignment = wx.ALIGN_LEFT
             attr.SetAlignment(alignment, wx.CENTER)
-            # editor
-            if c.editable() is not False:
-                editing = self._table.editing()
-                if editing:
-                    e = _grid.InputFieldCellEditor(self.Parent, editing.the_row, c.id(),
-                                                   self, registration)
-                    self._editors.append(e)
-                    # self._grid.SetCellEditor(row, col, e)
-                    attr.SetEditor(e)
-            else:
-                attr.SetReadOnly()
             self._grid.SetColAttr(i, attr)
 
     def _query_fields_row(self):
@@ -571,16 +552,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _edit_menu(self):
         return (
-            MItem(_("Edit cell"),
-                  command=ListForm.COMMAND_EDIT,
-                  help=_("Enter the input field for this value.")),
-            MItem(_("Save Record"),
-                  command=ListForm.COMMAND_LINE_COMMIT,
-                  help=_("Save the record and leave editation.")),
-            MItem(_("Quit editation"),
-                  command=ListForm.COMMAND_FINISH_EDITING,
-                  help=_("Leave editation without saving the record.")),
-            MSeparator(),
+            #MItem(_("Edit cell"),
+            #      command=ListForm.COMMAND_EDIT,
+            #      help=_("Enter the input field for this value.")),
+            #MItem(_("Save Record"),
+            #      command=ListForm.COMMAND_LINE_COMMIT,
+            #      help=_("Save the record and leave editation.")),
+            #MItem(_("Quit editation"),
+            #      command=ListForm.COMMAND_FINISH_EDITING,
+            #      help=_("Leave editation without saving the record.")),
+            #MSeparator(),
             MItem(_("Copy cell content"),
                   command=ListForm.COMMAND_COPY_CELL,
                   help=_("Copy the value into the clipboard.")),
@@ -1751,12 +1732,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._resize_columns(size)
         event.Skip()
 
-    def _close_editors(self):
-        for e in self._editors:
-            if e:
-                e.close()
-        self._editors = []
-
     def _release_data(self):
         if not self._table.editing():
             super(ListForm, self)._release_data()
@@ -1764,8 +1739,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cleanup(self):
         super(ListForm, self)._cleanup()
         if self._grid is not None:
-            # Musíme ručně zrušit editory, jinak se dočkáme segmentation fault.
-            self._close_editors()
             # Musíme tabulce zrušit datový objekt, protože jinak do něj bude šahat
             # i po kompletním uzavření starého gridu (!!) a rozhodí nám tak data
             # v novém gridu.
@@ -1780,18 +1753,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def can_command(self, command, **kwargs):
         # Příkazy platné i během editace, pokud není aktivní editor.
-        UNIVERSAL_COMMANDS = (ListForm.COMMAND_COPY_CELL,
-                              ListForm.COMMAND_RESIZE_COLUMN,
-                              ListForm.COMMAND_EDIT,
-                              ListForm.COMMAND_FIRST_COLUMN,
-                              ListForm.COMMAND_LAST_COLUMN,
-                              ListForm.COMMAND_CONTEXT_MENU)
+        UNIVERSAL_COMMANDS = (
+            ListForm.COMMAND_COPY_CELL,
+            ListForm.COMMAND_RESIZE_COLUMN,
+            #ListForm.COMMAND_EDIT,
+            ListForm.COMMAND_FIRST_COLUMN,
+            ListForm.COMMAND_LAST_COLUMN,
+            ListForm.COMMAND_CONTEXT_MENU
+        )
         # Příkazy platné pouze během editace řádku.
-        EDIT_COMMANDS = (ListForm.COMMAND_LINE_COMMIT,
-                         ListForm.COMMAND_LINE_ROLLBACK,
-                         ListForm.COMMAND_FINISH_EDITING,
-                         ListForm.COMMAND_CELL_COMMIT,
-                         ListForm.COMMAND_CELL_ROLLBACK)
+        EDIT_COMMANDS = (
+            #ListForm.COMMAND_LINE_COMMIT,
+            #ListForm.COMMAND_LINE_ROLLBACK,
+            #ListForm.COMMAND_FINISH_EDITING,
+            #ListForm.COMMAND_CELL_COMMIT,
+            #ListForm.COMMAND_CELL_ROLLBACK,
+        )
         if not self.initialized():
             self.full_init()
         if self._table.editing():
@@ -3241,9 +3218,9 @@ class BrowseForm(FoldableForm):
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
-            MItem(_("Edit cell"),
-                  command=ListForm.COMMAND_EDIT,
-                  help=_("Edit the value in in-line mode.")),
+            #MItem(_("Edit cell"),
+            #      command=ListForm.COMMAND_EDIT,
+            #      help=_("Edit the value in in-line mode.")),
             MItem(_("Filter by cell"),
                   command=ListForm.COMMAND_FILTER_BY_CELL,
                   help=_("Filter the rows containing the same value in this column.")),
