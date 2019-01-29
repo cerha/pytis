@@ -457,7 +457,7 @@ class WxKey:
             else:
                 try:
                     key = chr(code).lower()
-                except:
+                except Exception:
                     key = '???'
         return prefix + key
 
@@ -1363,6 +1363,7 @@ class ToolTipWindow(supertooltip.ToolTipWindow):
         # show at all when it gets below the main application frame (which is always
         # the case for status bar tooltips).
         self.SetPosition((position.x, position.y - size.y))
+
 
 supertooltip.ToolTipWindow = ToolTipWindow
 
@@ -2334,7 +2335,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 raise ProgramError("Unable to call '%s' from help. "
                                    "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
             proc(**kwargs)
-        except:
+        except Exception:
             pytis.form.top_level_exception()
 
     def _parse_kwargs(self, uri):
@@ -2662,7 +2663,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         else:
             if hasattr(data, 'read'):
                 import magic
-                mime_type = magic.from_buffer(data.read(1024), mime=True)
+                mime_type = magic.detect_from_content(data.read(1024)).mime_type
                 data.seek(0)
             else:
                 assert isinstance(data, fitz.Document), data
