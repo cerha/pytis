@@ -3216,7 +3216,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         ctrl.SetValue(content)
         size = char2px(ctrl, width, height)
         # Slightly enlarge the size to avoid scrollbars when not necessary (for small sizes).
-        ctrl.SetBestFittingSize((size[0] + 30, size[1] + 2))
+        ctrl.SetInitialSize((size[0] + 30, size[1] + 2))
         return ctrl
     else:
         browser = Browser(parent)
