@@ -478,10 +478,7 @@ def mime_type_constraint(*allowed_mime_types):
     import magic
 
     def constraint(value):
-        try:
-            mime_type = magic.detect_from_content(str(value.buffer()))
-        except Exception:
-            mime_type = None
+        mime_type = magic.detect_from_content(str(value.buffer())).mime_type
 
         if mime_type in allowed_mime_types:
             return None
