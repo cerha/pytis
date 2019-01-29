@@ -45,7 +45,7 @@ from pytis.presentation import (
     SelectionType, TextFilter, TextFormat, computer
 )
 from pytis.util import (
-    Popen, ProgramError, ResolverError,
+    ProgramError, ResolverError,
     dev_null_stream, find, format_byte_size, argument_names,
 )
 from command import CommandHandler, UICommand
