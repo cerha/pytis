@@ -214,19 +214,14 @@ class _Completer(wx.PopupWindow):
 
 
 class InputField(object, KeyHandler, CommandHandler):
-    """Abstraktní třída vstupního pole.
+    """Abstract base class for input fields.
 
-    Vstupní políčko není samo o sobě wx prvkem. Odpovídající prvky
-    uživatelského rozhraní lze získat metodami 'label()' a 'widget()'.
-    Políčko je rozděleno na části widget a label, aby mohly být tyto dvě části
-    umístěny do gridu...
-
-    Tato třída není sama o sobě instanciovatelná! Odvozením další
-    třídy a předefinováním dále popsaných metod však lze vytvořit políčka
-    s libvolným chováním realizovaná libovolným UI prvkem.
+    Subclasses of this class implement input fields for particular field types
+    according to their specification.  Instances of InputField subclasses are
+    not themselves wx widgets, but they create widgets and return them through
+    the methods 'label()' and 'widget()'.
 
     """
-
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
 
