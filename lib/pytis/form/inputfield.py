@@ -48,18 +48,20 @@ from pytis.util import (
     ProgramError, ResolverError,
     dev_null_stream, find, format_byte_size, argument_names,
 )
-from command import CommandHandler, UICommand
-from dialog import Calendar, ColorSelector, Error
-from event import wx_callback
-from screen import (
+
+from .command import CommandHandler, UICommand
+from .dialog import Calendar, ColorSelector, Error
+from .event import wx_callback
+from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, mitem, open_data_as_file,
     paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
 )
-from application import (
+from .application import (
     Application, create_data_object, decrypted_names, delete_record,
     global_keymap, message, new_record, run_dialog, run_form,
 )
+
 import config
 
 _ = pytis.util.translations('pytis-wx')

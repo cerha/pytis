@@ -46,29 +46,41 @@ import wx.grid
 import pytis.data
 import pytis.form
 import pytis.output
-import pytis.presentation
+
 from pytis.presentation import (
     Action, ActionGroup, AggregatedView, CodebookSpec, Field,
-    FormType, Link, TextFormat, ViewSpec)
-from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
-    Attribute, ProgramError, ResolverError, SimpleCache, Structure, \
-    UNDEFINED, compare_objects, find, form_view_data, log, sameclass
+    FormType, Link, TextFormat, ViewSpec, ActionContext,
+    PrettyFoldable,
+)
+from pytis.util import (
+    ACTION, DEBUG, EVENT, OPERATIONAL,
+    Attribute, ProgramError, ResolverError, SimpleCache, Structure,
+    UNDEFINED, compare_objects, find, form_view_data, log, sameclass,
+)
 import pytis.remote
-from dialog import AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question, \
-    CheckListDialog
-from event import UserBreakException, wx_callback
-from form import BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm, \
-    QueryFieldsForm, \
-    RecordForm, Refreshable, ShowForm, TitledForm
-from output import print_form
-from screen import CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, \
-    busy_cursor, copy_to_clipboard, dlg2px, file_menu_items, get_icon, \
-    is_busy_cursor, microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl
-from search import sfs_columns
-from application import Application, \
-    aggregated_views_manager, block_refresh, current_form, db_operation, \
-    message, refresh, run_dialog, run_form
-import _grid
+
+from .event import UserBreakException, wx_callback
+from .dialog import (
+    AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question,
+    CheckListDialog,
+)
+from .form import (
+    BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
+    QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
+)
+from .output import print_form
+from .screen import (
+    CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, busy_cursor,
+    copy_to_clipboard, dlg2px, file_menu_items, get_icon, is_busy_cursor,
+    microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
+)
+from .search import sfs_columns
+from .application import (
+    Application, aggregated_views_manager, block_refresh, current_form,
+    db_operation, message, refresh, run_dialog, run_form,
+)
+from ._grid import TableRowIterator, ListTable
+
 import config
 
 _ = pytis.util.translations('pytis-wx')
@@ -256,10 +268,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._table = None
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
-            _grid.ListTable(self, self._data, self._row, self._columns, self._lf_select_count_,
-                            sorting=self._lf_sorting, grouping=self._grouping,
-                            prefill=self._prefill,
-                            row_style=self._view.row_style())
+            ListTable(self, self._data, self._row, self._columns, self._lf_select_count_,
+                      sorting=self._lf_sorting, grouping=self._grouping,
+                      prefill=self._prefill,
+                      row_style=self._view.row_style())
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
         # g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
@@ -552,16 +564,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _edit_menu(self):
         return (
-            #MItem(_("Edit cell"),
-            #      command=ListForm.COMMAND_EDIT,
-            #      help=_("Enter the input field for this value.")),
-            #MItem(_("Save Record"),
-            #      command=ListForm.COMMAND_LINE_COMMIT,
-            #      help=_("Save the record and leave editation.")),
-            #MItem(_("Quit editation"),
-            #      command=ListForm.COMMAND_FINISH_EDITING,
-            #      help=_("Leave editation without saving the record.")),
-            #MSeparator(),
+            # MItem(_("Edit cell"),
+            #       command=ListForm.COMMAND_EDIT,
+            #       help=_("Enter the input field for this value.")),
+            # MItem(_("Save Record"),
+            #       command=ListForm.COMMAND_LINE_COMMIT,
+            #       help=_("Save the record and leave editation.")),
+            # MItem(_("Quit editation"),
+            #       command=ListForm.COMMAND_FINISH_EDITING,
+            #       help=_("Leave editation without saving the record.")),
+            # MSeparator(),
             MItem(_("Copy cell content"),
                   command=ListForm.COMMAND_COPY_CELL,
                   help=_("Copy the value into the clipboard.")),
@@ -713,7 +725,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return result
 
     def selected_rows(self):
-        return _grid.TableRowIterator(self._table, self._grid.GetSelectedRows())
+        return TableRowIterator(self._table, self._grid.GetSelectedRows())
 
     def unselect_selected_rows(self):
         self._grid.ClearSelection()
@@ -1756,18 +1768,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         UNIVERSAL_COMMANDS = (
             ListForm.COMMAND_COPY_CELL,
             ListForm.COMMAND_RESIZE_COLUMN,
-            #ListForm.COMMAND_EDIT,
+            # ListForm.COMMAND_EDIT,
             ListForm.COMMAND_FIRST_COLUMN,
             ListForm.COMMAND_LAST_COLUMN,
             ListForm.COMMAND_CONTEXT_MENU
         )
         # Příkazy platné pouze během editace řádku.
         EDIT_COMMANDS = (
-            #ListForm.COMMAND_LINE_COMMIT,
-            #ListForm.COMMAND_LINE_ROLLBACK,
-            #ListForm.COMMAND_FINISH_EDITING,
-            #ListForm.COMMAND_CELL_COMMIT,
-            #ListForm.COMMAND_CELL_ROLLBACK,
+            # ListForm.COMMAND_LINE_COMMIT,
+            # ListForm.COMMAND_LINE_ROLLBACK,
+            # ListForm.COMMAND_FINISH_EDITING,
+            # ListForm.COMMAND_CELL_COMMIT,
+            # ListForm.COMMAND_CELL_ROLLBACK,
         )
         if not self.initialized():
             self.full_init()
@@ -1830,7 +1842,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_toggle_columns(self):
         columns = self._available_columns()
-        state = [c in self._columns for c in columns]
         result = run_dialog(CheckListDialog, title=_("Displayed columns"),
                             message=_("Select the columns to be displayed:"),
                             items=[(c in self._columns, c.column_label()) for c in columns])
@@ -2782,7 +2793,7 @@ class FoldableForm(ListForm):
             return self._folding_column_id
         folding_column_id = None
         for c in self._data.columns():
-            if isinstance(c.type(), pytis.presentation.PrettyFoldable):
+            if isinstance(c.type(), PrettyFoldable):
                 folding_column_id = c.type().tree_column_id()
                 break
         return folding_column_id
@@ -2914,12 +2925,12 @@ class FoldableForm(ListForm):
         if self._folding_enabled():
             col = event.GetCol()
             column = self._columns[col]
-            if isinstance(self._row.type(column.id()), pytis.presentation.PrettyFoldable):
+            if isinstance(self._row.type(column.id()), PrettyFoldable):
                 row = event.GetRow()
                 value = self._table.row(row).format(column.id(), pretty=True, form=self)
-                pos = value.find(pytis.presentation.PrettyFoldable.FOLDED_MARK)
+                pos = value.find(PrettyFoldable.FOLDED_MARK)
                 if pos == -1:
-                    pos = value.find(pytis.presentation.PrettyFoldable.UNFOLDED_MARK)
+                    pos = value.find(PrettyFoldable.UNFOLDED_MARK)
                 if pos != -1:
                     x1 = self._grid.GetTextExtent(value[:pos])[0]
                     x2 = self._grid.GetTextExtent(value[:pos + 1])[0]
@@ -3218,9 +3229,9 @@ class BrowseForm(FoldableForm):
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
-            #MItem(_("Edit cell"),
-            #      command=ListForm.COMMAND_EDIT,
-            #      help=_("Edit the value in in-line mode.")),
+            # MItem(_("Edit cell"),
+            #       command=ListForm.COMMAND_EDIT,
+            #       help=_("Edit the value in in-line mode.")),
             MItem(_("Filter by cell"),
                   command=ListForm.COMMAND_FILTER_BY_CELL,
                   help=_("Filter the rows containing the same value in this column.")),
@@ -3506,7 +3517,7 @@ class BrowseForm(FoldableForm):
         return menu
 
     def _cmd_print(self, print_spec_path=None, language=None, handler=None,
-                   context=pytis.presentation.ActionContext.RECORD):
+                   context=ActionContext.RECORD):
         log(EVENT, 'Print form invocation:', print_spec_path)
         name = self._name
         if not print_spec_path:

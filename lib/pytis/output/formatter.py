@@ -55,7 +55,9 @@ import pytis.data
 import pytis.output
 import pytis.presentation
 import pytis.util
+
 from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, form_view_data, log, xtuple
+from pytis.form import UserBreakException
 
 import config
 
@@ -165,7 +167,7 @@ class _DataIterator(lcg.SubstitutionIterator):
                 message = (_("Going to format a table with many rows (%d).", count) + "\n" +
                            _("Do you want to continue printing anyway?"))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
-                    raise pytis.form.UserBreakException()
+                    raise UserBreakException()
     def _value(self):
         return self._RowDictionary(self._presented_row, self._codebooks)
     def _next(self):

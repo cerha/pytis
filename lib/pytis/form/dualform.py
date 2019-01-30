@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,17 +34,21 @@ import fitz
 import pytis.data
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
-from dialog import MultiQuestion
-from event import wx_callback
-from form import (
+
+from .dialog import MultiQuestion
+from .event import wx_callback
+from .form import (
     BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm,
     FileViewerForm,
 )
-from list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
-from screen import CheckItem, Menu, MItem, \
-    busy_cursor, is_busy_cursor, microsleep, popup_menu, wx_focused_window
-from application import current_form, has_access, message, run_dialog, run_form, top_window
-
+from .list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
+from .screen import (
+    CheckItem, Menu, MItem, busy_cursor, is_busy_cursor, microsleep,
+    popup_menu, wx_focused_window,
+)
+from .application import (
+    current_form, has_access, message, run_dialog, run_form, top_window
+)
 _ = translations('pytis-wx')
 
 

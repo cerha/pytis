@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,9 @@ import wx
 import pytis.data
 from pytis.presentation import Field
 from pytis.util import find
-from dialog import Error, GenericDialog
-from screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl
+
+from .dialog import Error, GenericDialog
+from .screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl
 
 _ = pytis.util.translations('pytis-wx')
 

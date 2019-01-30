@@ -47,8 +47,9 @@ import pytis.util
 
 from pytis.presentation import TextFormat
 from pytis.util import ProgramError, super_
-from command import CommandHandler
-from screen import KeyHandler, beep, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
+
+from .command import CommandHandler
+from .screen import KeyHandler, beep, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
 
 _ = pytis.util.translations('pytis-wx')
 

@@ -114,9 +114,10 @@ class CommandHandler:
         Returns: The return value of the command handler method.
 
         """
+        from .event import UserBreakException
+        from .screen import busy_cursor
         handler, kwargs = cls._command_handler(command, **kwargs)
         CommandHandler._command_counter.next()
-        from pytis.form import UserBreakException, busy_cursor
         try:
             try:
                 CommandHandler._command_running = True

@@ -39,7 +39,7 @@ from pytis.util import DEBUG, EVENT, ProgramError, log
 from .application import db_operation
 from .form import Form
 from .screen import color2wx, get_icon
-from pytis.form import top_level_exception
+from .event import top_level_exception
 
 import config
 

@@ -41,15 +41,22 @@ definujeme na jediném místě v tomto modulu.
 import wx
 
 import pytis.util
-from command import Command, UICommand
-from dialog import Dialog
-from dualform import DualForm, MultiForm, MultiSideForm
-from form import BrowsableShowForm, EditForm, Form, InnerForm, LookupForm, RecordForm
-from inputfield import FileField, GenericCodebookField, InputField, Invocable, \
-    ListField, SpinnableField, StructuredTextField, TextField
-from list import BrowseForm, FoldableForm, ListForm
-from screen import Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector, KeyboardSwitcher
-from application import Application
+from .command import Command, UICommand
+from .dialog import Dialog
+from .dualform import DualForm, MultiForm, MultiSideForm
+from .form import (
+    BrowsableShowForm, EditForm, Form, InnerForm, LookupForm, RecordForm,
+)
+from .inputfield import (
+    FileField, GenericCodebookField, InputField, Invocable,
+    ListField, SpinnableField, StructuredTextField, TextField,
+)
+from .list import BrowseForm, FoldableForm, ListForm
+from .screen import (
+    Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector,
+    KeyboardSwitcher,
+)
+from .application import Application
 import config
 
 _ = pytis.util.translations('pytis-wx')

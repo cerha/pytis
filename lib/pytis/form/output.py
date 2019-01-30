@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -35,11 +35,15 @@ import time
 import wx
 
 import lcg
-from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, wx_callback, \
-    run_dialog, launch_file
 import pytis.output
 import pytis.util
 import pytis.remote
+
+from .event import UserBreakException, wx_callback
+from .dialog import Error
+from .form import Form, PopupForm
+from .screen import microsleep, launch_file
+from .application import run_dialog
 
 _ = pytis.util.translations('pytis-wx')
 

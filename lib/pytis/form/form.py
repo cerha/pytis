@@ -36,20 +36,32 @@ import wx
 import pytis.data
 import pytis.form
 import pytis.output
-from pytis.presentation import ActionContext, Button, Computer, Editable, Field, GroupSpec, \
-    Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
-    Text, TextFormat, ViewSpec
-from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED, \
-    find, format_traceback, log, super_, xlist, xtuple, argument_names
-from command import CommandHandler
-from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
-    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button, \
-    DEFAULT_WINDOW_BACKGROUND_COLOUR
-from application import Application, action_has_access, \
-    block_refresh, block_yield, create_data_object, current_form, db_op, \
-    db_operation, decrypted_names, delete_record, form_settings_manager, \
-    has_access, message, new_record, profile_manager, refresh, run_dialog, run_form, \
-    top_window, wx_focused_window
+
+from pytis.presentation import (
+    ActionContext, Button, Computer, Editable, Field, GroupSpec,
+    Orientation, PresentedRow, PrintAction, Profile, Specification,
+    TabGroup, Text, TextFormat, ViewSpec,
+)
+from pytis.util import (
+    ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
+    find, format_traceback, log, super_, xlist, xtuple, argument_names,
+)
+
+from .event import UserBreakException
+from .command import CommandHandler
+from .screen import (
+    Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem,
+    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu,
+    wx_button, DEFAULT_WINDOW_BACKGROUND_COLOUR,
+)
+from .application import (
+    Application, action_has_access, block_refresh, block_yield,
+    create_data_object, current_form, db_op, db_operation, decrypted_names,
+    delete_record, form_settings_manager, has_access, message, new_record,
+    profile_manager, refresh, run_dialog, run_form, top_window,
+    wx_focused_window,
+)
+
 import config
 
 _ = pytis.util.translations('pytis-wx')
@@ -1366,7 +1378,7 @@ class LookupForm(InnerForm):
             orig_profile = self._current_profile
             try:
                 self._apply_profile(profile)
-            except pytis.form.UserBreakException:
+            except UserBreakException:
                 self._apply_profile(orig_profile)
         self.focus()
 
@@ -1573,7 +1585,7 @@ class LookupForm(InnerForm):
         try:
             self._apply_filter(condition)
             success = True
-        except pytis.form.UserBreakException:
+        except UserBreakException:
             self._lf_filter = old_filter
             self._apply_filter(self._lf_filter)
         if not self._is_user_defined_profile(self._current_profile) \
