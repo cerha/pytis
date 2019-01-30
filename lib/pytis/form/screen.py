@@ -56,7 +56,7 @@ import pytis.presentation
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
-from pytis.form import wx_callback
+from pytis.form import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
@@ -2336,7 +2336,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                                    "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
             proc(**kwargs)
         except Exception:
-            pytis.form.top_level_exception()
+            top_level_exception()
 
     def _parse_kwargs(self, uri):
         def value(v):

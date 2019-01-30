@@ -36,9 +36,9 @@ import pytis.presentation
 from pytis.presentation import PresentedRow
 from pytis.util import DEBUG, EVENT, ProgramError, log
 
-from application import db_operation
-from form import Form
-from screen import color2wx, get_icon
+from .application import db_operation
+from .form import Form
+from .screen import color2wx, get_icon
 
 import config
 
