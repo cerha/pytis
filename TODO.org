@@ -299,6 +299,14 @@
 
    Po vypršení timeoutu vrátit buď výchozí volbu nebo "Nevybráno".
 
+** FEEDBACK Umožnit standardní label u radioboxu a checkboxu
+
+   Label je nyní u checkboxu a radioboxu vždy součástí políčka.  Někdy může být
+   ale lepší aby byl label standardně zarovnaný v layoutu formuláře jako u
+   ostatních políček.  Mohlo by se to řídit např. podle 'compact'.
+
+** FEEDBACK Skrýt prázdnou hodnotu v radioboxu pokud nemá null_display?
+
 
 * SPECIFIKACE [0/6] [0%]
 
@@ -340,9 +348,8 @@
    ověřit, jestli se toho někde nevyužívá.
 
 ** FEEDBACK Kontrola práv při volání funkcí jako dbupdatemany apod
-
 ** FEEDBACK Povinný label políčka
-   
+
    Label nyní může být prázdný řetězec.  Na různých místech se v tom případě
    použije id políčka namísto labelu, ale to je špatně.  Pokud chceme políčko
    ve formuláři bez labelu, měla by na to být nějaká další volba
@@ -437,13 +444,17 @@
    využíváno jen ve webových formulářích.  Bylo by dobré to samé doimplementovat
    i do GUI formulářů.
 
+** TODO Zrušit všechny hvězdičkové importy
+** TODO Zrušit konfigurační volby pro nastavení cest k resources
 
-* wx-2.8 [0/2] [0%]
+Cesty jako icons, translations apod. si pytis může zjistit sám a nemusí kvůli
+tomu existovat konfigurační volby, které jsou dobré tak maximálně k tomu, aby v
+tom člověk měl chybu, která se někdy těžko dohledává.
 
-** VERIFY Problémy při úpravách filtrů ve filtračním formuláři
 
-   Po změně ve filtračním formuláři se "zboří" layout celého formuláře.
+** TODO Odstranit vše co se týká inline editace
 
-** VERIFY Chybný layout tracebackového formuláře
+Zatím je většina kódu stále ponechána a pouze jsou zakomentovány příslušné
+příkazy v commitu f2967ad1baee146cc6deaf304a94e8536e41afd3.
 
-   Tlačítka jsou uvnitř tracebackového okna.
+

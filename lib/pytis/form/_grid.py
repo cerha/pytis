@@ -39,6 +39,7 @@ from pytis.util import DEBUG, EVENT, ProgramError, log
 from .application import db_operation
 from .form import Form
 from .screen import color2wx, get_icon
+from pytis.form import top_level_exception
 
 import config
 
@@ -624,41 +625,44 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return wx.grid.GRID_VALUE_STRING
 
     def GetAttr(self, row, col, kind):
-        if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.number_of_columns():
-            # it may happen
-            return None
-        column = self._columns[col]
-        if column.id in self._secret_columns:
-            style = self._plain_style
-        else:
-            style = column.style
-            if isinstance(style, collections.Callable):
-                style = self._cached_value(row, column.id, style=True)
-        row_style = self._row_style
-        if isinstance(row_style, collections.Callable):
-            row_style = self._cached_value(row, None, style=True)
-        if row_style:
-            style += row_style
         try:
-            fg, bg, font = self._attr_cache[style]
-        except KeyError:
-            fg, bg, font = self._attr_cache[style] = self._make_attr(style)
-        if self._group(row):
-            rgb = (bg.Red(), bg.Green(), bg.Blue())
-            bg = wx.Colour(*[max(0, x - y) for x, y in zip(rgb, self._group_bg_downgrade)])
-        provider = self.GetAttrProvider()
-        if provider:
-            attr = provider.GetAttr(row, col, kind)
-            if attr:
-                attr.SetTextColour(fg)
-                attr.SetBackgroundColour(bg)
-                attr.SetFont(font)
-                if column.type.__class__ == pytis.data.Boolean:
-                    attr.SetRenderer(CustomBooleanCellRenderer(self))
-                else:
-                    attr.SetRenderer(CustomCellRenderer(self))
-                return attr
-        return None
+            if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.number_of_columns():
+                # it may happen
+                return None
+            column = self._columns[col]
+            if column.id in self._secret_columns:
+                style = self._plain_style
+            else:
+                style = column.style
+                if isinstance(style, collections.Callable):
+                    style = self._cached_value(row, column.id, style=True)
+            row_style = self._row_style
+            if isinstance(row_style, collections.Callable):
+                row_style = self._cached_value(row, None, style=True)
+            if row_style:
+                style += row_style
+            try:
+                fg, bg, font = self._attr_cache[style]
+            except KeyError:
+                fg, bg, font = self._attr_cache[style] = self._make_attr(style)
+            if self._group(row):
+                rgb = (bg.Red(), bg.Green(), bg.Blue())
+                bg = wx.Colour(*[max(0, x - y) for x, y in zip(rgb, self._group_bg_downgrade)])
+            provider = self.GetAttrProvider()
+            if provider:
+                attr = provider.GetAttr(row, col, kind)
+                if attr:
+                    attr.SetTextColour(fg)
+                    attr.SetBackgroundColour(bg)
+                    attr.SetFont(font)
+                    if column.type.__class__ == pytis.data.Boolean:
+                        attr.SetRenderer(CustomBooleanCellRenderer(self))
+                    else:
+                        attr.SetRenderer(CustomCellRenderer(self))
+                    return attr
+            return None
+        except Exception:
+            top_level_exception()
 
 
 class TableRowIterator(object):
