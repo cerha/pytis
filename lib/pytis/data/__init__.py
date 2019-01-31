@@ -33,7 +33,7 @@ The module defines:
 
 """
 
-from types_ import (
+from types_ import (  # noqa!
     UnsupportedPrimitiveValueConversion, Type, Number, Big, Large, Limited,
     Range, Integer, IntegerRange, SmallInteger, LargeInteger, LargeIntegerRange,
     Oid, Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name,
@@ -44,7 +44,7 @@ from types_ import (
     FixedEnumerator, DataEnumerator, ValidationError, Value, WMValue,
     sval, ival, fval, bval, dval, dtval, tval, wmval,
 )
-from data import (
+from data import (  # noqa!
     FORWARD, BACKWARD, ASCENDENT, DESCENDANT,
     Operator, Data, Counter, Function, MemData, ColumnSpec, Row, DataFactory,
     EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
@@ -52,23 +52,24 @@ from data import (
     RangeOverlap, FunctionCondition, OpFunction,
     reversed_sorting, opposite_direction, dbtable,
 )
-from access import (
+from access import (  # noqa!
     Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
     DataAccessException, is_in_groups,
 )
-from dbdata import (
+from dbdata import (  # noqa!
     DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
     DBSystemException, DBUserException, DBLoginException, DBInsertException,
     DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
 )
-from defaults import (
+from defaults import (  # noqa!
     DBDataDefault, DBCounterDefault, DBFunctionDefault,
     DBTransactionDefault, default_access_groups, reload_session_variables,
 )
-from deprecated import Oid
-import dbdefs
+from deprecated import Oid  # noqa!
+
+import dbdefs  # noqa!
 
 # TODO: The following import serves for backward compatibility of applications
 # and should be removed once applications switch to using the
 # default_access_groups function.
-from postgresql import PostgreSQLUserGroups
+from postgresql import PostgreSQLUserGroups  # noqa!

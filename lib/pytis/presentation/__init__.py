@@ -27,7 +27,7 @@ checking, dynamic codebook filtering etc.
 
 """
 
-from spec import (
+from spec import (  # noqa!
     TextFormat, Color, Style, Orientation, Text, Button, ActionContext,
     Action, PrintAction, ActionGroup, Profile, ProfileGroup, AggregatedView,
     Profiles, Filter, Condition, GroupSpec, HGroup, FieldSet, TabGroup,
@@ -40,6 +40,6 @@ from spec import (
     specification_path,
 )
 
-from field import PresentedRow
+from field import PresentedRow  # noqa!
 
-from types_ import PrettyType, PrettyTreeOrder, PrettyFoldable
+from types_ import PrettyType, PrettyTreeOrder, PrettyFoldable  # noqa!
