@@ -393,7 +393,10 @@ class MenuChecker(object):
         errors = []
         specnames = self._specification_names(errors)
         self._output_specs = {}
-        width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
+        if specnames:
+            width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
+        else:
+            width = 30
 
         def check_specs(update, specnames):
             check_spec = self._check_spec
