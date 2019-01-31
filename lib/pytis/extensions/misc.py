@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -29,10 +29,10 @@ import os
 import re
 import string
 
-import pytis.presentation
-import pytis.util
+import pytis.data
+from pytis.util import translations, ProgramError
 
-_ = pytis.util.translations('pytis-wx')
+_ = translations('pytis-wx')
 
 
 def smssend(tel, message, server='192.168.1.55'):
@@ -107,8 +107,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
             try:
                 arg = unicode(arg, charset)
             except:
-                raise pytis.util.ProgramError("Cannot convert argument to unicode for charset %s" %
-                                              (charset,))
+                raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset,))
         return arg.encode('UTF-8')
     # Převedení na UTF-8
     to = get_utf8_argument(to)
@@ -187,7 +186,7 @@ class UserDefaultPrinter(object):
         (stdout, stderr) = p.communicate()
         exitcode = p.wait()
         if exitcode != 0:
-            raise pytis.util.ProgramError(stderr.strip())
+            raise ProgramError(stderr.strip())
         return
 
     def __repr__(self):
@@ -195,14 +194,16 @@ class UserDefaultPrinter(object):
 
 
 def set_default_printer():
+    from pytis.presentation import Field
+    from pytis.form import Error, Text, InputForm, run_dialog, run_form
     try:
         import cups
         import cupshelpers
     except ImportError:
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Default printer setup failed.\n"
-                                "CUPS Python interface not present.\n"
-                                "Please, contact the system administrator."))
+        run_dialog(Error,
+                   _("Default printer setup failed.\n"
+                     "CUPS Python interface not present.\n"
+                     "Please, contact the system administrator."))
         return None
     connection = cups.Connection()
     user_default = UserDefaultPrinter()
@@ -210,19 +211,17 @@ def set_default_printer():
     if not default_printer:
         default_printer = connection.getDefault()
     printers = cupshelpers.getPrinters(connection)
-    printer_names = printers.keys()
-    fields = (pytis.presentation.Field('printer', "",
-                                       width=40, not_null=True,
-                                       type=pytis.data.String,
-                                       enumerator=pytis.data.FixedEnumerator(printer_names),
-                                       default=default_printer,
-                                       ),
-              )
-    layout = (pytis.form.Text(_("Choose the default printer:")), 'printer')
-    result = pytis.form.run_form(pytis.form.InputForm,
-                                 title=_("Printer Selection"),
-                                 fields=fields,
-                                 layout=layout)
+    result = run_form(
+        InputForm,
+        title=_("Printer Selection"),
+        fields=(
+            Field('printer', "", width=40, not_null=True,
+                  type=pytis.data.String,
+                  enumerator=pytis.data.FixedEnumerator(printers.keys()),
+                  default=default_printer),
+        ),
+        layout=(Text(_("Choose the default printer:")), 'printer'),
+    )
     if result:
         user_default.set(result['printer'].value())
     return None

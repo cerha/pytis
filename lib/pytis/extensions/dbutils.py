@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,11 +20,11 @@
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
 import pytis.data
-import pytis.util
+from pytis.util import ProgramError, translations, resolver, is_anystring, xtuple
 
 import config
 
-_ = pytis.util.translations('pytis-wx')
+_ = translations('pytis-wx')
 
 
 def data_object(spec):
@@ -35,14 +35,11 @@ def data_object(spec):
 
     """
     if isinstance(spec, basestring):
-        spec = pytis.util.resolver().get(spec, 'data_spec')
+        spec = resolver().get(spec, 'data_spec')
 
     def conn_spec():
         return config.dbconnection
     success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
-    # if not success:
-    #    errmsg = "Nepodařilo se vytvořit datový objekt pro %s!" % (spec)
-    #    raise ProgramError(errmsg)
     return data
 
 
@@ -96,14 +93,14 @@ def dbinsert(spec, row, transaction=None):
         for item in row:
             if not isinstance(item, (tuple, list,)) or len(item) != 2:
                 errmsg = 'Column definition must be (ID, VALUE) pair.'
-                raise pytis.util.ProgramError(errmsg)
+                raise ProgramError(errmsg)
             k, v = item
-            if not pytis.util.is_anystring(k):
+            if not is_anystring(k):
                 errmsg = 'Invalid column id %s' % k
-                raise pytis.util.ProgramError(errmsg)
+                raise ProgramError(errmsg)
             if not isinstance(v, pytis.data.Value):
                 errmsg = 'Invalid column value %s' % v
-                raise pytis.util.ProgramError(errmsg)
+                raise ProgramError(errmsg)
         row = pytis.data.Row(row)
     data = data_object(spec)
     success, result = pytis.form.db_operation(data.insert, row, transaction=transaction)
@@ -153,10 +150,10 @@ def dbupdate_many(spec, condition=None, update_row=None,
     """
     if not isinstance(condition, pytis.data.Operator):
         errmsg = "Nebyla předána podmínka pro update_many."
-        raise pytis.util.ProgramError(errmsg)
+        raise ProgramError(errmsg)
     if not isinstance(update_row, pytis.data.Row):
         errmsg = "Nebyl předán řádek pro update_many."
-        raise pytis.util.ProgramError(errmsg)
+        raise ProgramError(errmsg)
     data = data_object(spec)
     return data.update_many(condition, update_row, transaction=transaction)
 
@@ -210,14 +207,14 @@ def enum(name, **kwargs):
     specifikace, ze které bude získán datový objekt enumerátoru.
 
     """
-    data_spec = pytis.util.resolver().get(name, 'data_spec')
+    data_spec = resolver().get(name, 'data_spec')
     return pytis.data.DataEnumerator(data_spec, **kwargs)
 
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
 def is_in_groups(groups):
     if isinstance(groups, basestring):
-        groups = pytis.util.xtuple(groups)
+        groups = xtuple(groups)
 
     def conn_spec():
         return config.dbconnection

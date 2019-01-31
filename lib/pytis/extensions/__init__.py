@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,18 +16,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytis.data
-import pytis.form
+from email_ import SimpleEmail, GPGEmail, ComplexEmail  # noqa!
 
-from email_ import *
-from dbconfig import *
-from dbutils import *
-from misc import *
-from deftypes import *
-from deftypes import _TreeOrder
-from spec import *
-from defs import *
-from dmp import (
+from dbconfig import DBConfig, cfg_param  # noqa!
+
+from dbutils import (  # noqa!
+    data_object, data_create, dbselect, dbinsert, dbupdate, row_update,
+    dbupdate_many, dbfunction, enum, is_in_groups, load_field, save_field,
+    safe_commit, safe_rollback,
+)
+
+from misc import (  # noqa!
+    smssend, emailsend, send_mail, UserDefaultPrinter, set_default_printer,
+    cmd_set_default_printer, constraints_email, constraints_email_many,
+    session_date, session_date_value, start_date, start_date_value, end_date,
+    end_date_value, crypto_key_table, crypto_admin_key, check_crypto_password,
+    add_crypto_user,
+)
+
+from deftypes import StringNotNull, Price, _TreeOrder  # noqa!
+
+from spec import (  # noqa!
+    ASC, DESC, UPCASE, LOWER, ALPHA, NUMERIC, ALPHANUMERIC, ASCII, FLOAT,
+    ALWAYS, ONCE, NEVER, BROWSE_FORM, EDIT_FORM, INSERT_FORM, VIEW_FORM,
+    FIELD_STYLE_DEFAULT, FIELD_STYLE_EMPHASIS, FIELD_STYLE_WARNING,
+    FieldStyle, run_form_mitem, new_record_mitem, run_procedure_mitem,
+    nr, rp, bf, df, mf, sf, ddf, ef, get_value, format_value, rp_handler,
+    cb2colvalue, run_cb, make_presented_row, run_any_form,
+    cmd_run_any_form, printdirect, print2mail, ReusableSpec,
+    mime_type_constraint,
+)
+
+from defs import (  # noqa!
+    get_form_defs, get_menu_forms, get_menu_defs, _get_default_select,
+    check_form, cmd_check_form, CheckReporter, MenuChecker, AppChecker,
+    DevelChecker, check_menus_defs, cmd_check_menus_defs,
+    check_access_rights, cmd_check_access_rights, cache_spec,
+)
+
+from dmp import (  # noqa!
     dmp_add_member, dmp_add_action, dmp_change_rights,
     dmp_commit, dmp_import, dmp_ls, dmp_reset_rights,
     dmp_update_form, dmp_delete_menu, dmp_delete_fullname,
@@ -35,6 +62,3 @@ from dmp import (
     dmp_copy_rights, dmp_rename_specification,
     DMPConfiguration,
 )
-
-for file in (dbconfig, dbutils, misc, deftypes, spec, defs):
-    file.__dict__.update(globals())

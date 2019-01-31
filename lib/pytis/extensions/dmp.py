@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -87,8 +87,9 @@ import sys
 import pytis.data
 import pytis.extensions
 import pytis.form
-import pytis.presentation
+
 from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
+from pytis.presentation import Binding, specification_path
 
 
 class DMPMessage(Structure):
@@ -310,7 +311,7 @@ class DMPObject(object):
 
     def _all_form_specification_names(self, messages):
         specification_names = pytis.extensions.get_form_defs(self._resolver(), messages)
-        return [pytis.presentation.specification_path(name)[1] for name in specification_names]
+        return [specification_path(name)[1] for name in specification_names]
 
     def _specification(self, name, messages):
         resolver = self._resolver()
@@ -1490,8 +1491,7 @@ class DMPActions(DMPObject):
                     add_message(messages, DMPMessage.ERROR_MESSAGE,
                                 "Can't create specification instance to get binding title",
                                 (name, e,))
-            return pytis.presentation.Binding(id=name, title=title, name=name,
-                                              binding_column='dummy')
+            return Binding(id=name, title=title, name=name, binding_column='dummy')
         resolver = self._resolver()
         if form_class is not None and issubclass(form_class, pytis.form.DualForm):
             pos = form_name.find('::')

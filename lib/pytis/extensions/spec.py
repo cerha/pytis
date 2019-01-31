@@ -31,9 +31,14 @@ import os
 
 import config
 import pytis.util
-from pytis.presentation import Color, Editable, Field, FormType, PostProcess, Style, TextFilter, \
-    Computer, SelectionType, specification_path
-import pytis.extensions
+from pytis.presentation import (
+    Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
+    Computer, SelectionType, specification_path,
+)
+
+from .email_ import ComplexEmail
+from .dbutils import data_create
+from .defs import get_form_defs
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -247,7 +252,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 
 
 def make_presented_row(specname, prefill={}):
-    data = pytis.extensions.data_create(specname)
+    data = data_create(specname)
     resolver = config.resolver
     spec = resolver.get(specname, 'view_spec')
     prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
@@ -265,7 +270,7 @@ def run_any_form():
     )
     resolver = config.resolver
     all_defs = []
-    for d in pytis.extensions.get_form_defs(resolver):
+    for d in get_form_defs(resolver):
         all_defs.append(specification_path(d)[1])
     all_defs.sort()
 
@@ -401,7 +406,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
         if not filename:
             filename = os.path.basename(fname)
 
-        mail = pytis.extensions.ComplexEmail(to, from_, subject, msg, charset=charset)
+        mail = ComplexEmail(to, from_, subject, msg, charset=charset)
         mail.add_content_data(document, filename)
         result = mail.send()
         if not result:
