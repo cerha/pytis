@@ -27,10 +27,11 @@ from dbutils import (  # noqa!
 )
 
 from misc import (  # noqa!
-    smssend, emailsend, send_mail, UserDefaultPrinter, constraints_email,
-    constraints_email_many, session_date, session_date_value, start_date,
-    start_date_value, end_date, end_date_value, crypto_key_table,
-    crypto_admin_key, check_crypto_password, add_crypto_user,
+    smssend, emailsend, send_mail, UserDefaultPrinter, set_default_printer,
+    cmd_set_default_printer, constraints_email, constraints_email_many,
+    session_date, session_date_value, start_date, start_date_value, end_date,
+    end_date_value, crypto_key_table, crypto_admin_key, check_crypto_password,
+    add_crypto_user,
 )
 
 from deftypes import StringNotNull, Price, _TreeOrder  # noqa!

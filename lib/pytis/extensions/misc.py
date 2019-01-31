@@ -193,6 +193,43 @@ class UserDefaultPrinter(object):
         return "<UserDefaultPrinter (%s)>" % repr(self.get())
 
 
+def set_default_printer():
+    from pytis.presentation import Field
+    from pytis.form import Error, Text, InputForm, run_dialog, run_form
+    try:
+        import cups
+        import cupshelpers
+    except ImportError:
+        run_dialog(Error,
+                   _("Default printer setup failed.\n"
+                     "CUPS Python interface not present.\n"
+                     "Please, contact the system administrator."))
+        return None
+    connection = cups.Connection()
+    user_default = UserDefaultPrinter()
+    default_printer = user_default.get()
+    if not default_printer:
+        default_printer = connection.getDefault()
+    printers = cupshelpers.getPrinters(connection)
+    result = run_form(
+        InputForm,
+        title=_("Printer Selection"),
+        fields=(
+            Field('printer', "", width=40, not_null=True,
+                  type=pytis.data.String,
+                  enumerator=pytis.data.FixedEnumerator(printers.keys()),
+                  default=default_printer),
+        ),
+        layout=(Text(_("Choose the default printer:")), 'printer'),
+    )
+    if result:
+        user_default.set(result['printer'].value())
+    return None
+
+
+cmd_set_default_printer = (pytis.form.Application.COMMAND_HANDLED_ACTION,
+                           dict(handler=set_default_printer))
+
 # Additional constraints
 
 
