@@ -799,6 +799,7 @@ class Profile(object):
         return self._errors
 
     def is_user_defined_profile(self):
+        import pytis.form
         return self._id.startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
 
 
