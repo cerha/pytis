@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,10 +41,12 @@ import weakref
 import BaseHTTPServer
 
 import pytis.data
-from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
-    public_attributes, public_attr_values, split_camel_case, xtuple, nextval, \
-    log, OPERATIONAL, ProgramError, UNDEFINED
-import pytis.presentation
+
+from pytis.util import (
+    argument_names, camel_case_to_lower, find, is_anystring, is_sequence,
+    public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
+    log, OPERATIONAL, ProgramError, UNDEFINED,
+)
 
 
 def specification_path(specification_name):
@@ -1672,9 +1674,9 @@ class ViewSpec(object):
 
             def all_deps(fid):
                 result = set((fid,))
-                computer = self._field_dict[fid].computer()
-                if computer:
-                    for k in computer.depends():
+                comp = self._field_dict[fid].computer()
+                if comp:
+                    for k in comp.depends():
                         result.update(all_deps(k))
                 return result
 
@@ -1685,14 +1687,14 @@ class ViewSpec(object):
                     assert f.computer().field() in self._field_dict
                 for attr in ('computer', 'editable', 'visible', 'check',
                              'runtime_filter', 'runtime_arguments'):
-                    computer = getattr(f, attr)()
-                    if isinstance(computer, Computer):
-                        for dep in computer.depends():
+                    comp = getattr(f, attr)()
+                    if isinstance(comp, Computer):
+                        for dep in comp.depends():
                             assert dep in self._field_dict, \
                                 err("Unknown field '%s' in dependencies for '%s' "
-                                    "specification of '%s': %s", dep, attr, f.id(), computer)
-                            if dep in computer.validate() and attr in ('runtime_filter',
-                                                                       'runtime_arguments'):
+                                    "specification of '%s': %s", dep, attr, f.id(), comp)
+                            if dep in comp.validate() and attr in ('runtime_filter',
+                                                                   'runtime_arguments'):
                                 assert f.id() not in all_deps(dep), \
                                     err("Cyclic dependency in '%s' specification of '%s'. "
                                         "Add '%s' to 'novalidate' to avoid recursion.",
@@ -1731,7 +1733,7 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
-        check = tuple(map(pytis.presentation.computer, xtuple(check)))
+        check = tuple(map(computer, xtuple(check)))
         if __debug__:
             for c in check:
                 if isinstance(c, Computer):
@@ -3631,7 +3633,7 @@ class Field(object):
         self._attachment_storage = attachment_storage
         self._printable = printable
         self._slider = slider
-        self._check = pytis.presentation.computer(check)
+        self._check = globals()['computer'](check)
         self._crypto_name = crypto_name
         self._encrypt_empty = encrypt_empty
 
@@ -5515,7 +5517,7 @@ class Specification(SpecificationBase):
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
         spec_name = spec_name.replace('/', '.')
-        return pytis.presentation.specification_path(spec_name)[1]
+        return specification_path(spec_name)[1]
 
     def _create_data_spec(self):
         kwargs = dict(condition=self.condition)
@@ -5717,7 +5719,7 @@ class Specification(SpecificationBase):
     @classmethod
     def _spec_name(class_):
         full_name = class_.__module__ + '.' + class_.__name__
-        return pytis.presentation.specification_path(full_name)[1]
+        return specification_path(full_name)[1]
 
     @classmethod
     def _codebook_by_db_spec_name(class_, db_spec_name):

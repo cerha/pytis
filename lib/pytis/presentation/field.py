@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,10 +28,13 @@ import collections
 import copy
 
 import pytis.data
-from pytis.util import UNDEFINED, ProgramError, Resolver, \
-    argument_names, positive_id, remove_duplicates, translations, format_byte_size
-from spec import CbComputer, CodebookSpec, Computer
-from types_ import PrettyType
+from pytis.util import (
+    UNDEFINED, ProgramError, Resolver, argument_names, positive_id,
+    remove_duplicates, translations, format_byte_size,
+)
+
+from .spec import CbComputer, CodebookSpec, Computer
+from .types_ import PrettyType
 
 _ = translations('pytis-data')
 

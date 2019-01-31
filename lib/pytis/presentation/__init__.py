@@ -27,9 +27,19 @@ checking, dynamic codebook filtering etc.
 
 """
 
-from spec import *
-from field import *
-from types_ import PrettyType, PrettyTreeOrder, PrettyFoldable
+from spec import (
+    TextFormat, Color, Style, Orientation, Text, Button, ActionContext,
+    Action, PrintAction, ActionGroup, Profile, ProfileGroup, AggregatedView,
+    Profiles, Filter, Condition, GroupSpec, HGroup, FieldSet, TabGroup,
+    ColumnLayout, VGroup, LHGroup, LVGroup, LayoutSpec, QueryFields,
+    ViewSpec, BindingSpec, Binding, Editable, SelectionType, PostProcess,
+    TextFilter, Computer, computer, CbComputer, CodebookSpec, FormType,
+    Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
+    FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
+    StatusField, SpecificationBase, Application, Specification,
+    specification_path,
+)
 
-for file in (spec, field):
-    file.__dict__.update(globals())
+from field import PresentedRow
+
+from types_ import PrettyType, PrettyTreeOrder, PrettyFoldable
