@@ -22,7 +22,6 @@ from __future__ import unicode_literals
 """Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
 import pytis.data
-import pytis.output
 import config
 
 from pytis.presentation import PresentedRow
@@ -61,6 +60,7 @@ def get_form_defs(resolver, messages=None):
 def get_menu_forms():
     """Return sequence of all forms present in application menu as tuples (form_class, specname).
     """
+    import pytis.form
     def flatten_menus(queue, found, level=0):
         if queue:
             head, tail = queue[0], queue[1:]
@@ -108,6 +108,7 @@ def get_menu_defs():
 
 
 def _get_default_select(spec):
+    import pytis.form
     def init_select(view, data):
         sorting = view.sorting()
         if sorting is None:
@@ -206,6 +207,7 @@ class MenuChecker(object):
             prefix (basestring) are tested
 
         """
+        import pytis.output
         print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
         self._output_resolver = pytis.output.OutputResolver(print_file_resolver, config.resolver)
         self._dbconn = config.dbconnection
@@ -344,6 +346,7 @@ class MenuChecker(object):
         return errors
 
     def check_data(self, spec_name):
+        import pytis.form
         errors = []
         resolver = config.resolver
         try:
@@ -390,6 +393,7 @@ class MenuChecker(object):
                 self.check_codebook_rights(name))
 
     def interactive_check(self):
+        import pytis.form
         errors = []
         specnames = self._specification_names(errors)
         self._output_specs = {}
@@ -444,6 +448,7 @@ class MenuChecker(object):
         reporter.end()
 
     def access_check(self):
+        import pytis.form
         errors = []
         specnames = self._specification_names(errors)
         self._output_specs = {}
@@ -524,6 +529,7 @@ cmd_check_access_rights = (pytis.form.Application.COMMAND_HANDLED_ACTION,
 
 
 def cache_spec(*args, **kwargs):
+    import pytis.form
     resolver = config.resolver
 
     def do(update, specs):

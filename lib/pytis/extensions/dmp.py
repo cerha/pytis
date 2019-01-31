@@ -86,7 +86,6 @@ import sys
 
 import pytis.data
 import pytis.extensions
-import pytis.form
 
 from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
 from pytis.presentation import Binding, specification_path
@@ -605,6 +604,7 @@ class DMPMenu(DMPObject):
         return menu_item
 
     def _load_specifications(self):
+        import pytis.form
         self._top_item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=None,
                                        title=u"CELÉ MENU", position='2')
         messages = []
@@ -1298,6 +1298,7 @@ class DMPActions(DMPObject):
             self._make_alternate_fullname(resolver, messages)
 
         def _make_alternate_fullname(self, resolver, messages):
+            import pytis.form
             fullname = self.fullname()
             components = fullname.split('/')
             if components[0] == 'RUN_FORM':
@@ -1463,6 +1464,7 @@ class DMPActions(DMPObject):
             self._load_complete_action(action, messages)
 
     def _load_complete_action(self, action, messages):
+        import pytis.form
         # Retrieve specification
         form_name = action.form_name()
         if form_name is None:

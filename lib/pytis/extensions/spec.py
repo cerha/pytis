@@ -77,6 +77,7 @@ FieldStyle = Style
 
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
+    import pytis.form
     cmd = pytis.form.Application.COMMAND_RUN_FORM
     args = dict(form_class=form_class, name=name, **kwargs)
     help = _('Open %s "%s"', form_class.DESCR or _("form"), title.replace('&', ''))
