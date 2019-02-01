@@ -57,6 +57,11 @@ from pytis.util import (
     Attribute, ProgramError, ResolverError, SimpleCache, Structure,
     UNDEFINED, compare_objects, find, form_view_data, log, sameclass,
 )
+
+from pytis.output import (
+    OutputResolver, PlainFileResolver, DatabaseResolver
+)
+
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
@@ -3148,7 +3153,7 @@ class SelectRowsForm(CodebookForm):
 class BrowseForm(FoldableForm):
     """Formulář pro prohlížení dat s možností editace."""
 
-    class _PrintResolver (pytis.output.OutputResolver):
+    class _PrintResolver (OutputResolver):
         P_NAME = 'P_NAME'
 
         class _Spec:
@@ -3189,20 +3194,20 @@ class BrowseForm(FoldableForm):
                 x = self._Spec(self)
             return x
 
-    class _PlainPrintResolver(pytis.output.PlainFileResolver):
+    class _PlainPrintResolver(PlainFileResolver):
 
         def get(self, *args, **kwargs):
-            result = pytis.output.PlainFileResolver.get(self, *args, **kwargs)
+            result = PlainFileResolver.get(self, *args, **kwargs)
             if result and isinstance(result, basestring):
                 result = pytis.output.StructuredText(result)
             return result
 
-    class _DBPrintResolver(pytis.output.DatabaseResolver):
+    class _DBPrintResolver(DatabaseResolver):
 
         def __init__(self, db_table):
-            pytis.output.DatabaseResolver.__init__(self, db_table,
-                                                   ('template', 'rowtemplate', 'header',
-                                                    'first_page_header', 'footer', 'style',))
+            DatabaseResolver.__init__(self, db_table,
+                                      ('template', 'rowtemplate', 'header',
+                                       'first_page_header', 'footer', 'style',))
 
         def get(self, module_name, spec_name, **kwargs):
             specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
