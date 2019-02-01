@@ -183,8 +183,10 @@ def check_form():
         _get_default_select(spec)
         pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
 
-cmd_check_form = (pytis.form.Application.COMMAND_HANDLED_ACTION,
-                  dict(handler=check_form))
+
+def cmd_check_form():
+    import pytis.form
+    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_form)
 
 
 class CheckReporter(object):
@@ -523,16 +525,20 @@ def check_menus_defs():
     """Zkontroluje všechny specifikace uvedené v menu aplikace."""
     MenuChecker().interactive_check()
 
-cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
-                        dict(handler=check_menus_defs))
+
+def cmd_check_menus_defs():
+    import pytis.form
+    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_menus_defs)
 
 
 def check_access_rights():
     """Zkontroluje práva všech specifikací uvedených v menu aplikace."""
     MenuChecker().access_check()
 
-cmd_check_access_rights = (pytis.form.Application.COMMAND_HANDLED_ACTION,
-                           dict(handler=check_access_rights))
+
+def cmd_check_access_rights():
+    import pytis.form
+    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_access_rights)
 
 
 def cache_spec(*args, **kwargs):

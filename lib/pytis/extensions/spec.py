@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -316,8 +316,9 @@ def run_any_form():
         pytis.form.run_form(form_type, row['name'].value())
 
 
-cmd_run_any_form = \
-    pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
+def cmd_run_any_form():
+    import pytis.form
+    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
 def printdirect(resolver, spec, print_spec, row, output_file=None,

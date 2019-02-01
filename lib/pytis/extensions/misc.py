@@ -227,8 +227,10 @@ def set_default_printer():
     return None
 
 
-cmd_set_default_printer = (pytis.form.Application.COMMAND_HANDLED_ACTION,
-                           dict(handler=set_default_printer))
+def cmd_set_default_printer():
+    import pytis.form
+    pytis.form.Application.COMMAND_HANDLED_ACTION(handler=set_default_printer)
+
 
 # Additional constraints
 
