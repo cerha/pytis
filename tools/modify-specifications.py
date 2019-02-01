@@ -58,14 +58,17 @@ import os
 from pytis.extensions.ast_unparser import Unparser
 from pytis.util import find
 
+
 def die(message, *args):
     sys.stderr.write(message % args + '\n')
     sys.exit(1)
+
 
 def unparse(node):
     x = cStringIO.StringIO()
     Unparser(node, x)
     return x.getvalue()
+
 
 def warn(filename, node, message=None, *args):
     if not message:
@@ -73,6 +76,7 @@ def warn(filename, node, message=None, *args):
     elif args:
         message %= args
     print "File %s, line %d\n  %s" % (filename, node.keywords[0].value.lineno, message)
+
 
 def attr(x):
     return tuple(x for x in dir(x) if not x.startswith('_'))
@@ -82,7 +86,7 @@ class Position(object):
     def __init__(self, ln, offset):
         self.ln = ln
         self.offset = offset
-    
+
 
 class Arg(object):
     def __init__(self, lines, kw, previous):
@@ -130,7 +134,7 @@ class Arg(object):
 
 
 class FieldLocator(ast.NodeVisitor):
-    
+
     def __init__(self, process_fields=True, process_customize_fields=True, process_override=True):
         self._process_fields = process_fields
         self._process_customize_fields = process_customize_fields
@@ -154,8 +158,8 @@ class FieldLocator(ast.NodeVisitor):
             self._class_name = None
 
     def visit_Assign(self, node):
-        if ((len(node.targets) == 1 and hasattr(node.targets[0], 'id')
-             and node.targets[0].id in ('override', 'overriden'))):
+        if ((len(node.targets) == 1 and hasattr(node.targets[0], 'id') and
+             node.targets[0].id in ('override', 'overriden'))):
             self._inside_override = True
             try:
                 self.generic_visit(node)
@@ -167,11 +171,10 @@ class FieldLocator(ast.NodeVisitor):
     def visit_Call(self, node):
         f = node.func
         fname = hasattr(f, 'id') and f.id or hasattr(f, 'attr') and f.attr or None
-        if ((fname == 'Field' and self._process_fields and 
-             (self._process_override or not self._inside_override)
-             or
-             fname in ('modify', 'modify_many', 'modify_except')
-             and self._inside_customize_fields and self._process_customize_fields)):
+        if ((fname == 'Field' and self._process_fields and
+             (self._process_override or not self._inside_override) or
+             fname in ('modify', 'modify_many', 'modify_except') and
+             self._inside_customize_fields and self._process_customize_fields)):
             args = []
             previous = None
             for kw in node.keywords:
@@ -198,14 +201,15 @@ class FieldLocator(ast.NodeVisitor):
         self.visit(ast.parse(''.join(lines), filename))
         return self._found
 
-#------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+
 
 def cmd_set_codebooks_not_null(filename, lines):
     """Add explicit not_null=True to field specifications with codebook or enumerator.
-    
+
     This must be done as a preparation for the planned pytis change of the
     implicit not_null dependency on codebook and enumerator.
-    
+
     """
     for node, arguments, cls in FieldLocator(True, False, False).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
@@ -213,17 +217,17 @@ def cmd_set_codebooks_not_null(filename, lines):
             for cb in (args.get('codebook'), args.get('enumerator')):
                 val = cb and cb.value
                 if cb and not (isinstance(val, ast.Name) and val.id == 'None'):
-                    if not (isinstance(val, ast.Str) # String values are ok
-                            or (isinstance(val, ast.Attribute) and 
-                                val.attr[0] == val.attr[0].upper())
-                            or (isinstance(val, ast.Name) and
-                                val.id[0] == val.id[0].upper())
-                            or (isinstance(val, ast.Call) and
-                                isinstance(val.func, ast.Attribute) and
-                                val.func.attr in ('enum', 'FixedEnumerator'))
-                            or (isinstance(val, ast.Call) and
-                                isinstance(val.func, ast.Name) and
-                                val.func.id in ('enum', 'FixedEnumerator'))):
+                    if not (isinstance(val, ast.Str) or  # String values are ok
+                            (isinstance(val, ast.Attribute) and
+                             val.attr[0] == val.attr[0].upper()) or
+                            (isinstance(val, ast.Name) and
+                             val.id[0] == val.id[0].upper()) or
+                            (isinstance(val, ast.Call) and
+                             isinstance(val.func, ast.Attribute) and
+                             val.func.attr in ('enum', 'FixedEnumerator')) or
+                            (isinstance(val, ast.Call) and
+                             isinstance(val.func, ast.Name) and
+                             val.func.id in ('enum', 'FixedEnumerator'))):
                         warn(filename, node, "Can't determine '%s' value: %s",
                              cb.name, unparse(val))
                     else:
@@ -232,11 +236,12 @@ def cmd_set_codebooks_not_null(filename, lines):
                         lines[ln] = lines[ln][:offset] + ', not_null=True' + lines[ln][offset:]
                     break
 
+
 def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
     """Revert specific cases of previous wrong cmd_set_codebooks_not_null.
-    
+
     cmd_set_codebooks_not_null is now fixed, this is left jast as an example...
-    
+
     """
     lines_to_delete = []
     for node, arguments, cls in FieldLocator(False, True).search_fields(lines, filename):
@@ -251,12 +256,14 @@ def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
     for i, ln in enumerate(sorted(lines_to_delete)):
         del lines[ln - i]
 
+
 def cmd_check_codebooks_not_null(filename, lines):
     for node, arguments, cls in FieldLocator(True, False).search_fields(lines, filename):
         args = dict((a.name, a) for a in arguments)
-        if (((args.get('codebook') or args.get('enumerator'))
-             and not args.get('not_null') and not args.get('inherit'))):
+        if (((args.get('codebook') or args.get('enumerator')) and
+             not args.get('not_null') and not args.get('inherit'))):
             warn(filename, node)
+
 
 def cmd_set_explicit_ineditable(filename, lines):
     """Add explicit editable=NEVER to field specifications where needed.
@@ -278,14 +285,11 @@ def cmd_set_explicit_ineditable(filename, lines):
                 else:
                     if ((isinstance(val, ast.Call) and
                          (isinstance(val.func, ast.Attribute) and
-                          val.func.attr in ('computer', 'Computer', 'CbComputer')
-                          or
+                          val.func.attr in ('computer', 'Computer', 'CbComputer') or
                           isinstance(val.func, ast.Name) and
-                          val.func.id in ('computer', 'Computer', 'CbComputer')
-                          or
+                          val.func.id in ('computer', 'Computer', 'CbComputer') or
                           isinstance(val, ast.Name) and
-                          val.func.id in ('computer', 'Computer', 'CbComputer')
-                      ))):
+                          val.func.id in ('computer', 'Computer', 'CbComputer')))):
                         modify = True
                     else:
                         warn(filename, node, "Can't determine '%s' value: %s %s",
@@ -303,6 +307,7 @@ def cmd_set_explicit_ineditable(filename, lines):
                 offset = arg.start.offset
                 lines[ln] = lines[ln][:offset] + ', editable=pp.Editable.NEVER' + lines[ln][offset:]
 
+
 def cmd_type_kwargs(filename, lines, type_map=None):
     """Convert type kwargs in field specifications to type instance aruments.
 
@@ -318,14 +323,14 @@ def cmd_type_kwargs(filename, lines, type_map=None):
     type_kwargs = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                    'minimum', 'maximum', 'encrypted', 'precision', 'format',
                    'mindate', 'maxdate', 'utc', 'validation_messages',
-                   'inner_type', 'minsize', 'maxsize', 'formats', 
+                   'inner_type', 'minsize', 'maxsize', 'formats',
                    'strength', 'md5', 'verify', 'text',)
     if type_map:
         type_dict = make_type_map(type_map)
     else:
         type_dict = None
     for node, args, cls in FieldLocator().search_fields(lines, filename):
-        #print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
+        # print "*", filename, node.lineno, node.args and unparse(node.args[0]) or '?'
         type_cls = None
         type_arg = find('type', args, key=lambda a: a.name)
         type_args = [arg for arg in args if arg.name in type_kwargs]
@@ -361,7 +366,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                                      node.args and eval(unparse(node.args[0])) or '?'))
                 if type_dict:
                     type_cls = type_dict.get(field_id)
-                    #if type_cls:
+                    # if type_cls:
                     #    print ("File %s, line %d\n"
                     #           "  Data type %s of field %s taken from type map %s.") % \
                     #        (filename, node.lineno, type_cls, field_id, type_map)
@@ -378,8 +383,8 @@ def cmd_type_kwargs(filename, lines, type_map=None):
             for ln in range(arg.start.ln + 1, arg.end.ln + 1):
                 if ln not in lines_to_delete:
                     lines_to_delete.append(ln)
-            if range(arg.start.ln + 1, arg.end.ln + 1):
-                lx = lines_to_delete[-1]+1
+            # if range(arg.start.ln + 1, arg.end.ln + 1):
+            #    lx = lines_to_delete[-1] + 1
             for a in args[args.index(arg)+1:]:
                 if a.start.ln == arg.end.ln:
                     if arg.start.ln == arg.end.ln:
@@ -393,7 +398,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                         if a.end and a.end.ln == start_ln:
                             a.end.ln = arg.start.ln
                             a.end.offset = a.start.offset + a.end.offset - start_offset
-        # Move type direct kwargs to type instance kwargs. 
+        # Move type direct kwargs to type instance kwargs.
         if type_arg and (type_args or not isinstance(type_arg.value, ast.Call)):
             if type_arg.start.ln == type_arg.end.ln:
                 x = lines[type_arg.start.ln][type_arg.start.offset:type_arg.end.offset]
@@ -433,7 +438,8 @@ def cmd_type_kwargs(filename, lines, type_map=None):
     for i, ln in enumerate(sorted(lines_to_delete)):
         del lines[ln - i]
 
-#------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+
 
 def run_commands(commands, filename, no_act=False):
     if os.path.isfile(filename) and filename.endswith('.py'):
@@ -446,29 +452,32 @@ def run_commands(commands, filename, no_act=False):
             try:
                 ast.parse(new_text)
             except SyntaxError as e:
-                text_lines = new_text.splitlines() # Resplit to make sure that line numbers match.
+                text_lines = new_text.splitlines()  # Resplit to make sure that line numbers match.
                 print "File %s, line %d\n  Invalid syntax after conversion:" % (filename, e.lineno)
-                print ''.join(['  %s%d: %s\n' % ('>' if ln + 1 == e.lineno else ' ', 
-                                                ln + 1, text_lines[ln])
+                print ''.join(['  %s%d: %s\n' % ('>' if ln + 1 == e.lineno else ' ',
+                                                 ln + 1, text_lines[ln])
                                for ln in range(max(0, e.lineno - 6),
                                                min(e.lineno + 2, len(text_lines) - 1))])
                 sys.exit(1)
             else:
-                #print ''.join(['%d: %s' % (ln, lines[ln]) for ln in range(len(lines))])
+                # print ''.join(['%d: %s' % (ln, lines[ln]) for ln in range(len(lines))])
                 if not no_act:
                     open(filename, 'w').write(new_text)
     elif os.path.isdir(filename):
         for x in os.listdir(filename):
             run_commands(commands, os.path.join(filename, x), no_act=no_act)
 
+
 _type_maps = {}
+
+
 def make_type_map(filename):
     """Process the type map file and return a dictionary mapping fields to type names."""
     try:
         type_map = _type_maps[filename]
     except KeyError:
         import re
-        type_map =  _type_maps[filename] = {}
+        type_map = _type_maps[filename] = {}
         matcher = re.compile('^(?:\w+\.)+?(\w+\.\w+.\w+) .*type=<(\w+).*')
         with file(os.path.abspath(os.path.expanduser(filename))) as f:
             for line in f.readlines():
@@ -477,6 +486,7 @@ def make_type_map(filename):
                     field, tname = match.groups()
                     type_map[field] = 'pd.' + tname
     return type_map
+
 
 if __name__ == '__main__':
     commands = []
