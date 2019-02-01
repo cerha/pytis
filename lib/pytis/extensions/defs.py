@@ -21,7 +21,7 @@ from __future__ import unicode_literals
 
 """Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
-import pytis.data
+import pytis.data as pd
 import config
 
 from pytis.presentation import PresentedRow
@@ -29,6 +29,9 @@ from pytis.util import (
     Resolver, ResolverError, remove_duplicates, identity,
     log, EVENT, OPERATIONAL,
 )
+
+
+from .dbutils import dbfunction
 
 
 def get_form_defs(resolver, messages=None):
@@ -61,6 +64,7 @@ def get_menu_forms():
     """Return sequence of all forms present in application menu as tuples (form_class, specname).
     """
     import pytis.form
+
     def flatten_menus(queue, found, level=0):
         if queue:
             head, tail = queue[0], queue[1:]
@@ -72,7 +76,7 @@ def get_menu_forms():
             result = found
         return result
     try:
-        data = pytis.data.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
+        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
     except:
         data = None
     if data is None:
@@ -109,10 +113,11 @@ def get_menu_defs():
 
 def _get_default_select(spec):
     import pytis.form
+
     def init_select(view, data):
         sorting = view.sorting()
         if sorting is None:
-            sorting = tuple([(k.id(), pytis.data.DESCENDANT) for k in data.key()
+            sorting = tuple([(k.id(), pd.DESCENDANT) for k in data.key()
                              if view.field(k.id()) is not None])
         success, select_count = pytis.form.db_operation(data.select, sort=sorting, reuse=False)
         if not success:
@@ -140,6 +145,8 @@ def _get_default_select(spec):
 
 def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
+    import pytis.form
+
     resolver = config.resolver
     spec = pytis.form.run_dialog(pytis.form.InputDialog,
                                  message="Kontrola defsu",
@@ -212,8 +219,8 @@ class MenuChecker(object):
         self._output_resolver = pytis.output.OutputResolver(print_file_resolver, config.resolver)
         self._dbconn = config.dbconnection
         connection_data = config.dbconnection
-        data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
-        condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
+        data = pd.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
+        condition = pd.NE('purposeid', pd.Value(pd.String(), 'user'))
         self._application_roles = [row[0].value()
                                    for row in data.select_map(identity, condition=condition)]
         self._spec_name_prefix = spec_name_prefix
@@ -297,13 +304,13 @@ class MenuChecker(object):
                 codebook = f.codebook()
                 if codebook is not None:
                     def arg(name, value):
-                        return name, pytis.data.Value(pytis.data.String(), value)
+                        return name, pd.Value(pd.String(), value)
                     arguments = (arg('form', spec_name),
                                  arg('field', f.id()),
                                  arg('codebook', codebook),
-                                 ('new', (pytis.data.Value(pytis.data.Boolean(), new)),),
+                                 ('new', (pd.Value(pd.Boolean(), new)),),
                                  )
-                    users = pytis.extensions.dbfunction('pytis_check_codebook_rights', *arguments)
+                    users = dbfunction('pytis_check_codebook_rights', *arguments)
                     if users:
                         if isinstance(users, (tuple, list,)):
                             users = [str(row[0].value()) for row in users]
@@ -368,7 +375,7 @@ class MenuChecker(object):
                     # Hack to avoid printing errors on non-existent image files
                     # referred from the database.
                     if ((len(e.args) == 3 and
-                         isinstance(e.args[2], pytis.data.ValidationError) and
+                         isinstance(e.args[2], pd.ValidationError) and
                          e.args[2][0] == u'Neplatný grafický formát')):
                         row = None
                     else:

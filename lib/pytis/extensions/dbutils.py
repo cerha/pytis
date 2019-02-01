@@ -19,7 +19,7 @@
 
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
-import pytis.data
+import pytis.data as pd
 from pytis.util import ProgramError, translations, resolver, is_anystring, xtuple
 
 import config
@@ -31,9 +31,10 @@ def data_object(spec):
     """Vrať sestavený datový objekt na základě názvu specifikace.
 
     Argumentem je název specifikace datového objektu nebo přímo instance třídy
-    'pytis.data.DataFactory'
+    'pd.DataFactory'
 
     """
+    import pytis.form
     if isinstance(spec, basestring):
         spec = resolver().get(spec, 'data_spec')
 
@@ -53,9 +54,9 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
     Argumenty:
 
       spec -- název specifikace datového objektu nebo přímo instance třídy
-        'pytis.data.DataFactory'
+        'pd.DataFactory'
       condition, sort, transaction -- argumenty volání
-        'pytis.data.postgresql.select()'.
+        'pd.postgresql.select()'.
 
     Vrací všechny řádky vrácené z databáze jako list.
 
@@ -81,13 +82,14 @@ def dbinsert(spec, row, transaction=None):
       spec -- název specifikace datového objektu nad kterým má být proveden
         insert.
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
-        pytis.data.Row
-      transaction -- instance pytis.data.DBTransactionDefault
+        pd.Row
+      transaction -- instance pd.DBTransactionDefault
 
     Vrací počet vložených řádků.
 
     """
-    assert isinstance(row, pytis.data.Row) or isinstance(row, (tuple, list,)), \
+    import pytis.form
+    assert isinstance(row, pd.Row) or isinstance(row, (tuple, list,)), \
         ("Argument must be a sequence or Row instance.", row)
     if isinstance(row, (tuple, list,)):
         for item in row:
@@ -98,10 +100,10 @@ def dbinsert(spec, row, transaction=None):
             if not is_anystring(k):
                 errmsg = 'Invalid column id %s' % k
                 raise ProgramError(errmsg)
-            if not isinstance(v, pytis.data.Value):
+            if not isinstance(v, pd.Value):
                 errmsg = 'Invalid column value %s' % v
                 raise ProgramError(errmsg)
-        row = pytis.data.Row(row)
+        row = pd.Row(row)
     data = data_object(spec)
     success, result = pytis.form.db_operation(data.insert, row, transaction=transaction)
     return result
@@ -116,9 +118,10 @@ def dbupdate(row, values=(), transaction=None):
       values -- sekvence dvouprvkových sekvencí ('id', value) ,
         kde 'id' je řetězcový identifikátor políčka a value je
         instance, kterou se bude políčko aktualizovat
-      transaction -- instance pytis.data.DBTransactionDefault
+      transaction -- instance pd.DBTransactionDefault
 
     """
+    import pytis.form
     data = row.data()
     updaterow = row.row()
     key = data.key()
@@ -143,15 +146,15 @@ def dbupdate_many(spec, condition=None, update_row=None,
         select; string'
       condition -- podmínka updatovaní.
       update_row -- řádek kterým se provede update,
-      transaction -- instance pytis.data.DBTransactionDefault
+      transaction -- instance pd.DBTransactionDefault
 
     Vrací počet updatovaných řádků.
 
     """
-    if not isinstance(condition, pytis.data.Operator):
+    if not isinstance(condition, pd.Operator):
         errmsg = "Nebyla předána podmínka pro update_many."
         raise ProgramError(errmsg)
-    if not isinstance(update_row, pytis.data.Row):
+    if not isinstance(update_row, pd.Row):
         errmsg = "Nebyl předán řádek pro update_many."
         raise ProgramError(errmsg)
     data = data_object(spec)
@@ -176,9 +179,10 @@ def dbfunction(name, *args, **kwargs):
         databázové funkce.  To znamená úsporu pokud je tato funkce použita v
         computeru políčka, které je závislé na jiných políčkách, která ještě
         nejsou vyplněna.
-      transaction -- instance pytis.data.DBTransactionDefault
+      transaction -- instance pd.DBTransactionDefault
 
     """
+    import pytis.form
     proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
     transaction = kwargs.get('transaction')
     if not proceed_with_empty_values:
@@ -189,8 +193,8 @@ def dbfunction(name, *args, **kwargs):
 
     def conn_spec():
         return config.dbconnection
-    success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
-    success, result = pytis.form.db_operation(function.call, pytis.data.Row(args),
+    success, function = pytis.form.db_operation(pd.DBFunctionDefault, name, conn_spec)
+    success, result = pytis.form.db_operation(function.call, pd.Row(args),
                                               transaction=transaction)
     if not success:
         return None
@@ -208,17 +212,17 @@ def enum(name, **kwargs):
 
     """
     data_spec = resolver().get(name, 'data_spec')
-    return pytis.data.DataEnumerator(data_spec, **kwargs)
+    return pd.DataEnumerator(data_spec, **kwargs)
 
 
-# Pozor, stejná metoda metoda je definována i v pytis.data.access
+# Pozor, stejná metoda metoda je definována i v pd.access
 def is_in_groups(groups):
     if isinstance(groups, basestring):
         groups = xtuple(groups)
 
     def conn_spec():
         return config.dbconnection
-    dbgroups = pytis.data.default_access_groups(conn_spec)
+    dbgroups = pd.default_access_groups(conn_spec)
     if set(groups) & set(dbgroups) == set([]):
         return False
     else:
@@ -234,7 +238,7 @@ def load_field(field, spec_name, column, condition):
         value from
       column -- name of the table column containing the value to load
       condition -- condition identifying the table row containing the value to
-        load as a 'pytis.data.Operator' instance.
+        load as a 'pd.Operator' instance.
 
     The returned value is a function of one argument -- the PresentedRow
     instance to be updated.  When called, the function loads the value from the
@@ -250,7 +254,7 @@ def load_field(field, spec_name, column, condition):
         if len(rows) == 1:
             row = rows[0]
             t = query_fields_row.type(field)
-            query_fields_row[field] = pytis.data.Value(t, row[column].value())
+            query_fields_row[field] = pd.Value(t, row[column].value())
     return load
 
 
@@ -263,7 +267,7 @@ def save_field(field, spec_name, column, condition):
         value to
       column -- name of the table column containing the value to save
       condition -- condition identifying the table row for saving the vaule as
-        a 'pytis.data.Operator' instance.
+        a 'pd.Operator' instance.
 
     The returned value is a function of one argument -- the PresentedRow
     instance to be saved.  When called, the function saves the current value of
@@ -278,7 +282,7 @@ def save_field(field, spec_name, column, condition):
         assert len(rows) in (0, 1)
         if len(rows) == 1:
             row = rows[0]
-            row[column] = pytis.data.Value(row[column].type(), query_fields_row[field].value())
+            row[column] = pd.Value(row[column].type(), query_fields_row[field].value())
             data = data_object(spec_name)
             data.update_many(condition, row)
     return save
@@ -294,11 +298,12 @@ def safe_commit(transaction, msg=None):
     Returns True if commit was successful, otherwise returns False.
 
     """
+    import pytis.form
     DEFAULT_MSG = _("The database connection was closed because of long inactivity.")
     try:
         transaction.commit()
         return True
-    except pytis.data.DBSystemException:
+    except pd.DBSystemException:
         pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
         return False
 
@@ -312,10 +317,11 @@ def safe_rollback(transaction, msg=None):
 
     Returns True if rollback was successful, otherwise return False.
     """
+    import pytis.form
     DEFAULT_MSG = _("The database connection was closed because of long inactivity.")
     try:
         transaction.rollback()
         return True
-    except pytis.data.DBSystemException:
+    except pd.DBSystemException:
         pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
         return False

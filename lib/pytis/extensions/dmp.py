@@ -84,11 +84,14 @@ import re
 import string
 import sys
 
-import pytis.data
-import pytis.extensions
-
-from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
+import pytis.data as pd
+from pytis.util import (
+    Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure,
+    set_configuration_file,
+)
 from pytis.presentation import Binding, specification_path
+
+from pytis.extensions import run_form_mitem, run_procedure_mitem, get_form_defs
 
 
 class DMPMessage(Structure):
@@ -155,7 +158,7 @@ class DMPConfiguration(object):
 
         """
         import config
-        pytis.util.set_configuration_file(configuration_file)
+        set_configuration_file(configuration_file)
         arguments_options = (('schemas', 'dbschemas'),
                              ('database', 'dbname'),
                              ('host', 'dbhost'),
@@ -280,9 +283,9 @@ class DMPObject(object):
     def _data(self, table):
         logger_active = self._logger.active()
         self._logger.disable()
-        data = pytis.data.dbtable(table, self._DB_TABLES[table],
-                                  self._configuration.connection_data(),
-                                  sql_logger=self._logger)
+        data = pd.dbtable(table, self._DB_TABLES[table],
+                          self._configuration.connection_data(),
+                          sql_logger=self._logger)
         if logger_active:
             self._logger.enable()
         return data
@@ -290,26 +293,26 @@ class DMPObject(object):
     def _dbfunction(self, function):
         logger_active = self._logger.active()
         self._logger.disable()
-        dbfunction = pytis.data.DBFunctionDefault(function, self._configuration.connection_data(),
-                                                  sql_logger=self._logger)
+        dbfunction = pd.DBFunctionDefault(function, self._configuration.connection_data(),
+                                          sql_logger=self._logger)
         if logger_active:
             self._logger.enable()
         return dbfunction
 
     def _transaction(self):
-        return pytis.data.DBTransactionDefault(self._configuration.connection_data())
+        return pd.DBTransactionDefault(self._configuration.connection_data())
 
     def _b_(self, value):
-        return pytis.data.Value(pytis.data.Boolean(), value)
+        return pd.Value(pd.Boolean(), value)
 
     def _i_(self, value):
-        return pytis.data.Value(pytis.data.Integer(), value)
+        return pd.Value(pd.Integer(), value)
 
     def _s_(self, value):
-        return pytis.data.Value(pytis.data.String(), value)
+        return pd.Value(pd.String(), value)
 
     def _all_form_specification_names(self, messages):
-        specification_names = pytis.extensions.get_form_defs(self._resolver(), messages)
+        specification_names = get_form_defs(self._resolver(), messages)
         return [specification_path(name)[1] for name in specification_names]
 
     def _specification(self, name, messages):
@@ -323,15 +326,15 @@ class DMPObject(object):
 
     def _disable_triggers(self, transaction=None, disable_import=False):
         data = self._data('e_pytis_disabled_dmp_triggers')
-        data.insert(pytis.data.Row((('id', self._s_('genmenu'),),)), transaction=transaction)
+        data.insert(pd.Row((('id', self._s_('genmenu'),),)), transaction=transaction)
         if disable_import:
-            data.insert(pytis.data.Row((('id', self._s_('import'),),)), transaction=transaction)
+            data.insert(pd.Row((('id', self._s_('import'),),)), transaction=transaction)
 
     def _enable_triggers(self, transaction=None, disable_import=False):
         data = self._data('e_pytis_disabled_dmp_triggers')
-        data.delete_many(pytis.data.EQ('id', self._s_('genmenu')), transaction=transaction)
+        data.delete_many(pd.EQ('id', self._s_('genmenu')), transaction=transaction)
         if disable_import:
-            data.delete_many(pytis.data.EQ('id', self._s_('import')), transaction=transaction)
+            data.delete_many(pd.EQ('id', self._s_('import')), transaction=transaction)
 
     def items(self):
         """Return sequence of all data items registered in the instance."""
@@ -425,7 +428,7 @@ class DMPObject(object):
 
     def _delete_condition(self, transaction, specifications):
         if specifications is None:
-            condition = pytis.data.AND()
+            condition = pd.AND()
         else:
             condition = self._specifications_condition(transaction, specifications)
         return condition
@@ -450,11 +453,11 @@ class DMPObject(object):
     def _specifications_condition(self, transaction, specifications):
         def spec2cond(s):
             if len(s.split('/')) > 1:
-                condition = pytis.data.EQ('shortname', self._s_(s))
+                condition = pd.EQ('shortname', self._s_(s))
             else:
-                condition = pytis.data.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
+                condition = pd.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
             return condition
-        return pytis.data.OR(*[spec2cond(s) for s in specifications])
+        return pd.OR(*[spec2cond(s) for s in specifications])
 
     def dump_specifications(self, stream):
         """Dump DMP data in the form of Python source code."""
@@ -617,15 +620,15 @@ class DMPMenu(DMPObject):
         menu[0]._items = (
             (pytis.form.Menu(
                 u"Správa menu a uživatelských rolí",
-                (pytis.extensions.run_form_mitem(u"Menu", 'menu.ApplicationMenu',
-                                                 pytis.form.BrowseForm),
-                 pytis.extensions.run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
-                                                 pytis.form.MultiBrowseDualForm),
-                 pytis.extensions.run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
-                                                 pytis.form.MultiBrowseDualForm),
-                 pytis.extensions.run_procedure_mitem(u"Aplikace změn práv",
-                                                      'menu.ApplicationMenuRights',
-                                                      'commit_changes'),
+                (run_form_mitem(u"Menu", 'menu.ApplicationMenu',
+                                pytis.form.BrowseForm),
+                 run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
+                                pytis.form.MultiBrowseDualForm),
+                 run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
+                                pytis.form.MultiBrowseDualForm),
+                 run_procedure_mitem(u"Aplikace změn práv",
+                                     'menu.ApplicationMenuRights',
+                                     'commit_changes'),
                  pytis.form.MItem(u"Přenačtení menu a práv",
                                   command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),)),
              ) + menu[0]._items)
@@ -744,16 +747,17 @@ class DMPMenu(DMPObject):
                 if not action.specifications_match(specifications):
                     continue
             item_id_value = I(item.id())
-            row = pytis.data.Row((('menuid', item_id_value,),
-                                  ('name', S(item.name()),),
-                                  ('title', S(item.title()),),
-                                  ('fullname', S(fullname),),
-                                  ('position', S(item.position()),),
-                                  ('next_position', S(item.position() + '4'),),
-                                  ('help', S(item.help()),),
-                                  ('hotkey', S(item.hotkey()),),
-                                  ('locked', B(item.locked()),),
-                                  ))
+            row = pd.Row((
+                ('menuid', item_id_value,),
+                ('name', S(item.name()),),
+                ('title', S(item.title()),),
+                ('fullname', S(fullname),),
+                ('position', S(item.position()),),
+                ('next_position', S(item.position() + '4'),),
+                ('help', S(item.help()),),
+                ('hotkey', S(item.hotkey()),),
+                ('locked', B(item.locked()),),
+            ))
             if not data.row(item_id_value):
                 _, result = data.insert(row, transaction=transaction)
                 if not result:
@@ -868,8 +872,8 @@ class DMPRights(DMPObject):
                 for groups_permissions in item[1:]:
                     groups = groups_permissions[0]
                     permissions = groups_permissions[1:]
-                    if pytis.data.Permission.ALL in permissions:
-                        permissions = pytis.data.Permission.all_permissions()
+                    if pd.Permission.ALL in permissions:
+                        permissions = pd.Permission.all_permissions()
                     else:
                         permissions = remove_duplicates(list(permissions))
                     if not is_sequence(groups):
@@ -903,7 +907,7 @@ class DMPRights(DMPObject):
                 add_message(messages, DMPMessage.NOTE_MESSAGE,
                             "No access rights specified for form, assuming everything permitted",
                             (spec_name,))
-                access_specification = ((None, (None, pytis.data.Permission.ALL)),)
+                access_specification = ((None, (None, pd.Permission.ALL)),)
             else:
                 access_specification = access_rights.specification()
             add_rights(shortname, access_specification, all_columns)
@@ -912,7 +916,7 @@ class DMPRights(DMPObject):
             if form_actions:
                 for a in form_actions:
                     form_action_name = 'action/%s/%s' % (a.id(), spec_name,)
-                    form_action_rights = ((None, (a.access_groups(), pytis.data.Permission.CALL)),)
+                    form_action_rights = ((None, (a.access_groups(), pd.Permission.CALL)),)
                     add_rights(form_action_name, form_action_rights, all_columns)
             # Print actions access rights
             for p in (spec.print_spec() or []):
@@ -921,14 +925,14 @@ class DMPRights(DMPObject):
                     print_access_groups = None
                 else:
                     print_access_groups = \
-                        access_rights.permitted_groups(pytis.data.Permission.PRINT, None)
-                print_action_rights = ((None, (print_access_groups, pytis.data.Permission.PRINT)),)
+                        access_rights.permitted_groups(pd.Permission.PRINT, None)
+                print_action_rights = ((None, (print_access_groups, pd.Permission.PRINT)),)
                 add_rights(form_action_name, print_action_rights, all_columns)
         return messages
 
     def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_action_rights')
-        condition = pytis.data.LE('status', self._i_(0))
+        condition = pd.LE('status', self._i_(0))
 
         def process(row):
             return self.Right(shortname=row['shortname'].value(),
@@ -953,14 +957,15 @@ class DMPRights(DMPObject):
                     components = shortname.split('/')
                     if len(components) <= 1 or components[1] not in specifications:
                         continue
-            row = pytis.data.Row((('shortname', S(shortname),),
-                                  ('roleid', S(right.roleid()),),
-                                  ('rightid', S(right.rightid()),),
-                                  ('colname', S(right.colname()),),
-                                  ('system', B(right.system()),),
-                                  ('granted', B(right.granted(),),),
-                                  ('status', I(0),),
-                                  ))
+            row = pd.Row((
+                ('shortname', S(shortname),),
+                ('roleid', S(right.roleid()),),
+                ('rightid', S(right.rightid()),),
+                ('colname', S(right.colname()),),
+                ('system', B(right.system()),),
+                ('granted', B(right.granted(),),),
+                ('status', I(0),),
+            ))
             data.insert(row, transaction=transaction)
         return True
 
@@ -1053,8 +1058,8 @@ class DMPRights(DMPObject):
 
     def dmp_copy_rights(self, fake, from_shortname, to_shortname):
         transaction = self._transaction()
-        row = pytis.data.Row((('copy_from', pytis.data.sval(from_shortname),),
-                              ('copy_to', pytis.data.sval(to_shortname),),))
+        row = pd.Row((('copy_from', pd.sval(from_shortname),),
+                      ('copy_to', pd.sval(to_shortname),),))
         dbfunction = self._dbfunction('pytis_copy_rights')
         dbfunction.call(row, transaction=transaction)
         if fake:
@@ -1081,7 +1086,7 @@ class DMPRights(DMPObject):
                                                      'pytis_update_summary_rights',
                                                      'pytis_update_rights_redundancy',)]
         self._logger.clear()
-        empty_row = pytis.data.Row(())
+        empty_row = pd.Row(())
         for f in dbfunctions:
             f.call(empty_row, transaction=transaction_)
         if fake:
@@ -1157,18 +1162,19 @@ class DMPRoles(DMPObject):
         S = self._s_
         data = self._data('e_pytis_roles')
         for role in self.items():
-            row = pytis.data.Row((('name', S(role.name()),),
-                                  ('description', S(role.description()),),
-                                  ('purposeid', S(role.purposeid()),),
-                                  ))
+            row = pd.Row((
+                ('name', S(role.name()),),
+                ('description', S(role.description()),),
+                ('purposeid', S(role.purposeid()),),
+            ))
             data.insert(row, transaction=transaction)
         data = self._data('e_pytis_role_members')
         for role in self.items():
             name = role.name()
             for member in (role.members() or ()):
                 if member not in self.EXCLUDED_ROLES:
-                    row = pytis.data.Row((('roleid', S(name),),
-                                          ('member', S(member),),))
+                    row = pd.Row((('roleid', S(name),),
+                                  ('member', S(member),),))
                     data.insert(row, transaction=transaction)
         return True
 
@@ -1246,10 +1252,10 @@ class DMPRoles(DMPObject):
 
         """
         messages = []
-        member_value = pytis.data.sval(member)
-        role_value = pytis.data.sval(role)
-        condition = pytis.data.AND(pytis.data.EQ('member', member_value),
-                                   pytis.data.EQ('roleid', role_value))
+        member_value = pd.sval(member)
+        role_value = pd.sval(role)
+        condition = pd.AND(pd.EQ('member', member_value),
+                           pd.EQ('roleid', role_value))
         data = self._data('e_pytis_role_members')
         already_present = (data.select(condition=condition) > 0)
         data.close()
@@ -1257,9 +1263,10 @@ class DMPRoles(DMPObject):
             add_message(messages, DMPMessage.ERROR_MESSAGE,
                         "Member already present in the role", (member, role,))
         else:
-            row = pytis.data.Row((('member', member_value,),
-                                  ('roleid', role_value,),
-                                  ))
+            row = pd.Row((
+                ('member', member_value,),
+                ('roleid', role_value,),
+            ))
             transaction = self._transaction()
             self._logger.clear()
             data.insert(row, transaction=transaction)
@@ -1502,7 +1509,7 @@ class DMPActions(DMPObject):
                 bindings = (binding(form_name),) + tuple(bindings)
             else:
                 bindings = (binding(form_name[:pos]), binding(form_name[pos + 2:]),)
-            if pytis.util.is_sequence(bindings):
+            if is_sequence(bindings):
                 for i in range(len(bindings)):
                     b = bindings[i]
                     subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
@@ -1566,11 +1573,12 @@ class DMPActions(DMPObject):
             if ((original_actions is not None and
                  action.fullname() in original_actions._fullnames)):
                 continue
-            row = pytis.data.Row((('fullname', S(action.fullname()),),
-                                  ('shortname', S(action.shortname()),),
-                                  ('action_title', S(unicode(action.title() or '')),),
-                                  ('description', S(unicode(action.description() or '')),),
-                                  ))
+            row = pd.Row((
+                ('fullname', S(action.fullname()),),
+                ('shortname', S(action.shortname()),),
+                ('action_title', S(unicode(action.title() or '')),),
+                ('description', S(unicode(action.description() or '')),),
+            ))
             data.insert(row, transaction=transaction)
         return True
 
@@ -1629,12 +1637,12 @@ class DMPActions(DMPObject):
         self._logger.clear()
         if not keep_old:
             condition = \
-                pytis.data.OR(pytis.data.WM('fullname',
-                                            self._s_('sub/*/form/?/%s' % (specification,)),
-                                            ignore_case=False),
-                              pytis.data.WM('fullname',
-                                            self._s_('sub/*/form/*/%s/*/' % (specification,)),
-                                            ignore_case=False))
+                pd.OR(pd.WM('fullname',
+                            self._s_('sub/*/form/?/%s' % (specification,)),
+                            ignore_case=False),
+                      pd.WM('fullname',
+                            self._s_('sub/*/form/*/%s/*/' % (specification,)),
+                            ignore_case=False))
             self._delete_data(transaction=transaction_, condition=condition)
         self._store_data(transaction=transaction_, specifications=[specification],
                          subforms_only=True)
@@ -1647,7 +1655,7 @@ class DMPActions(DMPObject):
             if ((action.specifications_match([specification]) and
                  action.kind() in ('action', 'print',) and
                  action.fullname() not in self._fullnames)):
-                condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
+                condition = pd.EQ('fullname', self._s_(action.fullname()))
                 self._delete_data(transaction_, condition)
         if new_fullname:
             data = self._data('c_pytis_menu_actions')
@@ -1661,8 +1669,8 @@ class DMPActions(DMPObject):
                             "More than one specification to rename",
                             [a.fullname() for a in actions_to_rename])
             else:
-                row = pytis.data.Row((('fullname', pytis.data.sval(new_fullname),),))
-                data.update(pytis.data.sval(actions_to_rename[0].fullname()), row,
+                row = pd.Row((('fullname', pd.sval(new_fullname),),))
+                data.update(pd.sval(actions_to_rename[0].fullname()), row,
                             transaction=transaction_)
         if fake:
             messages += self._logger.messages()
@@ -1676,7 +1684,7 @@ class DMPActions(DMPObject):
     def dmp_delete_name(self, fake, name, action_type):
         messages = []
         data = self._data('c_pytis_menu_actions')
-        condition = pytis.data.EQ(action_type, pytis.data.sval(name))
+        condition = pd.EQ(action_type, pd.sval(name))
         data.select(condition=condition)
         row = data.fetchone()
         data.close()
@@ -1696,20 +1704,20 @@ class DMPActions(DMPObject):
             if action_type == 'shortname' and len(components) == 2 and components[0] == 'form':
                 forms = components[1].split('::')
                 if len(forms) > 1:
-                    subconditions = [pytis.data.AND(pytis.data.EQ('shortname',
-                                                                  self._s_('form/' + f)),
-                                                    pytis.data.WM('fullname',
-                                                                  self._s_('sub/*/form/*/%s/*' %
-                                                                           (components[1],)),
-                                                                  ignore_case=False))
+                    subconditions = [pd.AND(pd.EQ('shortname',
+                                                  self._s_('form/' + f)),
+                                            pd.WM('fullname',
+                                                  self._s_('sub/*/form/*/%s/*' %
+                                                           (components[1],)),
+                                                  ignore_case=False))
                                      for f in forms]
-                    condition = pytis.data.OR(condition, *subconditions)
+                    condition = pd.OR(condition, *subconditions)
                 else:
-                    condition = pytis.data.OR(condition,
-                                              pytis.data.WM('fullname',
-                                                            self._s_('action/*/%s' %
-                                                                     (components[1],)),
-                                                            ignore_case=False))
+                    condition = pd.OR(condition,
+                                      pd.WM('fullname',
+                                            self._s_('action/*/%s' %
+                                                     (components[1],)),
+                                            ignore_case=False))
             self._delete_data(transaction, condition)
             self._enable_triggers(transaction=transaction)
             if fake:
@@ -1849,12 +1857,12 @@ class DMPActions(DMPObject):
         return messages
 
     def convert_system_rights(self, fake, shortname):
-        row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
+        row = pd.Row((('shortname', pd.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
 
     def registered(self, fullname, transaction=None):
         data = self._data('c_pytis_menu_actions')
-        condition = pytis.data.EQ('fullname', pytis.data.sval(fullname))
+        condition = pd.EQ('fullname', pd.sval(fullname))
         return data.select(condition=condition, transaction=transaction) > 0
 
 
@@ -2024,8 +2032,8 @@ class DMPImport(DMPObject):
 
     def dmp_rename_specification(self, fake, old_name, new_name):
         transaction = self._transaction()
-        row = pytis.data.Row((('old_name', pytis.data.sval(old_name),),
-                              ('new_name', pytis.data.sval(new_name),),))
+        row = pd.Row((('old_name', pd.sval(old_name),),
+                      ('new_name', pd.sval(new_name),),))
         dbfunction = self._dbfunction('pytis_change_specification_name')
         dbfunction.call(row, transaction=transaction)
         if fake:
@@ -2086,7 +2094,7 @@ def dmp_commit(parameters, fake):
 
 def dmp_delete_menu(parameters, fake, position):
     configuration = DMPConfiguration(**parameters)
-    condition = pytis.data.EQ('position', pytis.data.sval(position))
+    condition = pd.EQ('position', pd.sval(position))
     return DMPMenu(configuration).delete_menu(fake, condition, position)
 
 

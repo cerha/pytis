@@ -29,8 +29,13 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 import collections
 import os
 
+import pytis.data as pd
+
 import config
-import pytis.util
+
+from pytis.util import (
+    ResolverError, TemporaryFile, log, find, translations, EVENT
+)
 from pytis.presentation import (
     Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
     Computer, SelectionType, specification_path,
@@ -40,13 +45,13 @@ from .email_ import ComplexEmail
 from .dbutils import data_create
 from .defs import get_form_defs
 
-_ = pytis.util.translations('pytis-wx')
+_ = translations('pytis-wx')
 
 
 # Zkratky na často používané identifikátory.
 
-ASC = pytis.data.ASCENDENT
-DESC = pytis.data.DESCENDANT
+ASC = pd.ASCENDENT
+DESC = pd.DESCENDANT
 
 UPCASE = PostProcess.UPPER
 LOWER = PostProcess.LOWER
@@ -85,6 +90,7 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
 
 
 def new_record_mitem(title, name, hotkey=None, **kwargs):
+    import pytis.form
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
     args = dict(kwargs, name=name)
     help = _('Open insertion form "%s"', title)
@@ -92,6 +98,7 @@ def new_record_mitem(title, name, hotkey=None, **kwargs):
 
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
+    import pytis.form
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     if groups is not None:
         assert isinstance(groups, (tuple, list))
@@ -99,7 +106,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
         enabled_ = enabled
 
         def enabled(**kwargs_):
-            if not pytis.data.is_in_groups(groups):
+            if not pd.is_in_groups(groups):
                 return False
             if enabled_ is not None:
                 return enabled_(**kwargs_)
@@ -115,36 +122,42 @@ rp = run_procedure_mitem
 
 
 def bf(title, name, hotkey=None, **kwargs):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.BrowseForm, hotkey, **kwargs)
 
 
 def df(title, name, hotkey=None, **kwargs):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.BrowseDualForm, hotkey, **kwargs)
 
 
 def mf(title, name, hotkey=None, **kwargs):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.MultiBrowseDualForm, hotkey, **kwargs)
 
 
 def sf(title, name, hotkey=None, **kwargs):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
 
 
 def ddf(title, name, hotkey=None):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
 
 
 def ef(title, name, hotkey=None, **kwargs):
+    import pytis.form
     return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey, **kwargs)
 
 
 # Další funkce pro zjednodušení často používaných konstrukcí
 
 def get_value(value, default=None):
-    """Return the Python value of given 'pytis.data.Value' instance.
+    """Return the Python value of given 'pd.Value' instance.
 
-    Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
-    will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
+    Accepts a 'pd.Value' instance or None.  If the 'value' is None, the 'default' value
+    will be returned without complaining.  If the 'value' is a 'pd.Value' instance, its
     internal (Python) value will be returned.
 
     """
@@ -155,10 +168,10 @@ def get_value(value, default=None):
 
 
 def format_value(value, default=None):
-    """Return the formatted (string) value of given 'pytis.data.Value' instance.
+    """Return the formatted (string) value of given 'pd.Value' instance.
 
-    Accepts a 'pytis.data.Value' instance or None.  If the 'value' is None, the 'default' value
-    will be returned without complaining.  If the 'value' is a 'pytis.data.Value' instance, its
+    Accepts a 'pd.Value' instance or None.  If the 'value' is None, the 'default' value
+    will be returned without complaining.  If the 'value' is a 'pd.Value' instance, its
     formatted (string) value will be returned.
 
     """
@@ -179,6 +192,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     Klíčové argumenty jsou předány beze změn.
 
     """
+    import pytis.form
     if __debug__:
         for arg in (spec_name, proc_name) + args:
             assert isinstance(arg, basestring)
@@ -193,7 +207,7 @@ def cb2colvalue(value, column=None, transaction=None):
     Argumenty:
 
       value -- Instance `Value', jejíž typ má definován enumerátor typu
-        'pytis.data.DataEnumerator'.
+        'pd.DataEnumerator'.
       column -- název sloupce číselníku poskytujícího výslednou hodnotu.
       transaction -- transakce pro předání datovým operacím.
 
@@ -205,7 +219,7 @@ def cb2colvalue(value, column=None, transaction=None):
     (například voláním 'value.type().enumerator().row(value.value())'.
 
     """
-    assert isinstance(value, pytis.data.Value)
+    assert isinstance(value, pd.Value)
     assert value.type().enumerator() is not None
     if column is None:
         return value
@@ -214,7 +228,7 @@ def cb2colvalue(value, column=None, transaction=None):
         if row is not None:
             return row[column]
         else:
-            return pytis.data.Value(value.type(), None)
+            return pd.Value(value.type(), None)
 
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
@@ -228,7 +242,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
       begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
         inkrementální vyhledávání.
       condition -- podmínka pro filtrování záznamů.
-      sort -- řazení (viz pytis.data.select())
+      sort -- řazení (viz pd.select())
       columns -- seznam sloupců, pokud se má lišit od seznamu uvedeného
         ve specifikaci.
       select_row -- řádek, na který se má nastavit kurzor.
@@ -239,6 +253,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
     tuple vybraných řádků (pokud je argument multirow nastaven).
 
     """
+    import pytis.form
     if multirow:
         class_ = pytis.form.SelectRowsForm
     else:
@@ -253,6 +268,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 
 
 def make_presented_row(specname, prefill={}):
+    import pytis.form
     data = data_create(specname)
     resolver = config.resolver
     spec = resolver.get(specname, 'view_spec')
@@ -261,6 +277,7 @@ def make_presented_row(specname, prefill={}):
 
 
 def run_any_form():
+    import pytis.form
     form_types = (
         ("BrowseForm", pytis.form.BrowseForm),
         ("PopupEditForm", pytis.form.PopupEditForm),
@@ -285,11 +302,11 @@ def run_any_form():
         pytis.form.InputForm,
         title=_("Run Form"),
         fields=(Field('type', _("Form type"), not_null=True,
-                      enumerator=pytis.data.FixedEnumerator([x[0] for x in form_types]),
+                      enumerator=pd.FixedEnumerator([x[0] for x in form_types]),
                       default='BrowseForm'),
                 Field('name_substr', _("Search string"), width=40,),
                 Field('name', _("Specification name"), width=40, height=10,
-                      enumerator=pytis.data.FixedEnumerator(all_defs), not_null=True,
+                      enumerator=pd.FixedEnumerator(all_defs), not_null=True,
                       selection_type=SelectionType.LISTBOX,
                       runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
                       ),
@@ -351,11 +368,11 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
                 module_name = os.path.join('output', module_name)
             try:
                 result = pytis.output.OutputResolver._get_module(self, module_name)
-            except pytis.util.ResolverError:
+            except ResolverError:
                 result = self._Spec()
             return result
 
-    pytis.util.log(pytis.util.EVENT, 'Vyvolání tiskového formuláře')
+    log(EVENT, 'Vyvolání tiskového formuláře')
     P = _PrintResolver
     parameters = {(spec + '/' + pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
@@ -372,7 +389,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     if output_file:
         formatter.printout(output_file)
     else:
-        file_ = pytis.util.TemporaryFile(suffix='.pdf')
+        file_ = TemporaryFile(suffix='.pdf')
         formatter.printout(file_, hook=lambda: pytis.form.launch_file(file_.name))
     return True
 
@@ -427,7 +444,7 @@ class ReusableSpec:
         self._fields = self._fields()
 
     def __getitem__(self, id):
-        return pytis.util.find(id, self._fields, key=lambda f: f.id())
+        return find(id, self._fields, key=lambda f: f.id())
 
     def _bindings(self):
         pass
@@ -451,7 +468,7 @@ class ReusableSpec:
         """Vrať seznam specifikací sloupců vyjmenovaných sloupců.
 
         Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'pytis.data.DBColumnBinding'.
+        všech sloupců.  Vrací sekvenci instancí 'pd.DBColumnBinding'.
 
         """
         if len(args) == 0:
@@ -475,10 +492,10 @@ class ReusableSpec:
 def mime_type_constraint(*allowed_mime_types):
     """Return a validation function checking the binary vaslue's MIME type.
 
-    The function is designed to be used in 'pytis.data.Binary' data type's
+    The function is designed to be used in 'pd.Binary' data type's
     constraints as follows:
 
-       type = pytis.data.Binary(constraints=(mime_type_constraint('application/pdf'),))
+       type = pd.Binary(constraints=(mime_type_constraint('application/pdf'),))
 
     """
     import magic
