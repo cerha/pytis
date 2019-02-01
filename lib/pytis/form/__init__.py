@@ -67,7 +67,7 @@ from .search import (  # noqa!
     FilterDialog, sfs_columns,
 )
 
-from .inputfield import InputField  # noqa!
+from .inputfield import InputField, TextField  # noqa!
 
 from .form import (  # noqa!
     FormProfile, FormSettings, Form, InnerForm, Refreshable, PopupForm,
