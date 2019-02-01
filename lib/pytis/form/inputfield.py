@@ -45,12 +45,12 @@ from pytis.presentation import (
     SelectionType, TextFilter, TextFormat, computer
 )
 from pytis.util import (
-    ProgramError, ResolverError,
-    dev_null_stream, find, format_byte_size, argument_names,
+    ProgramError, ResolverError, find, format_byte_size, argument_names,
 )
 
 from .command import CommandHandler, UICommand
 from .dialog import Calendar, ColorSelector, Error
+from .form import RecordForm
 from .event import wx_callback
 from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
@@ -1415,8 +1415,8 @@ class Invocable(object, CommandHandler):
         return field_size(parent, 1, 1)
 
     def _create_invocation_button(self, parent):
-        return wx_button(parent, label='...', icon=self._INVOKE_ICON, size=self._button_size(parent),
-                         tooltip=self._INVOKE_TITLE)
+        return wx_button(parent, label='...', icon=self._INVOKE_ICON,
+                         size=self._button_size(parent), tooltip=self._INVOKE_TITLE)
 
     def _menu(self):
         return super(Invocable, self)._menu() + \
