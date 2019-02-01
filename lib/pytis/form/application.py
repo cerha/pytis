@@ -38,7 +38,7 @@ import wx.html
 
 import pytis.data
 import pytis.form
-from pytis.presentation import Field, Specification, StatusField, computer
+from pytis.presentation import Field, Specification, StatusField, computer, Text
 import pytis.util
 import pytis.remote
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
@@ -2081,7 +2081,7 @@ def block_yield(block=False):
 
 def password_dialog(title=_("Enter your password"), message=None):
     if message:
-        layout = (pytis.form.Text(message), 'password')
+        layout = (Text(message), 'password')
     else:
         layout = ('password',)
     result = run_form(pytis.form.InputForm, title=title,
