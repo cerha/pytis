@@ -477,11 +477,11 @@ class FullOuterJoin(sqlalchemy.sql.Join):
 @compiles(FullOuterJoin)
 def visit_full_outer_join(join, compiler, asfrom=False, **kwargs):
     return (
-        join.left._compiler_dispatch(compiler, asfrom=True, **kwargs) +
-        " FULL OUTER JOIN " +
-        join.right._compiler_dispatch(compiler, asfrom=True, **kwargs) +
-        " ON " +
-        join.onclause._compiler_dispatch(compiler, **kwargs)
+        join.left._compiler_dispatch(compiler, asfrom=True, **kwargs)
+        + " FULL OUTER JOIN "
+        + join.right._compiler_dispatch(compiler, asfrom=True, **kwargs)
+        + " ON "
+        + join.onclause._compiler_dispatch(compiler, **kwargs)
     )
 
 
@@ -804,8 +804,8 @@ class Column(pytis.data.ColumnSpec):
         assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
             original_column
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
-        if (((primary_key or original_column is not None and original_column.primary_key) and
-             (not type.not_null() or not type.unique()))):
+        if (((primary_key or original_column is not None and original_column.primary_key)
+             and (not type.not_null() or not type.unique()))):
             type = type.clone(type.__class__(not_null=True, unique=True))
         pytis.data.ColumnSpec.__init__(self, name, type)
         self._label = label
@@ -1029,9 +1029,9 @@ def _sql_plain_name(name):
 
 
 def _is_specification_name(name):
-    return (not name.startswith('SQL') and
-            not name.startswith('_') and
-            not name.startswith('Base_'))
+    return (not name.startswith('SQL')
+            and not name.startswith('_')
+            and not name.startswith('Base_'))
 
 
 _enforced_schema = None
@@ -1285,9 +1285,9 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
-        if ((cls._is_specification(clsname) and
-             cls.schemas is None and
-             cls.table is not None)):
+        if ((cls._is_specification(clsname)
+             and cls.schemas is None
+             and cls.table is not None)):
             cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
 
@@ -1898,8 +1898,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                            }
 
     def _pytis_ctype_changed(self, column_1, column_2):
-        if ((column_1.type != column_2.type and
-             not isinstance(column_2.type, sqlalchemy.types.NullType))):
+        if ((column_1.type != column_2.type
+             and not isinstance(column_2.type, sqlalchemy.types.NullType))):
             new_type = str(column_2.type)
             new_type = self._PYTIS_TYPE_MAPPING.get(new_type, new_type)
             orig_type = str(column_1.type)
@@ -1914,11 +1914,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         default_2 = column_2.server_default
         if default_1 is None and default_2 is None:
             return None
-        if (((default_1 is None and default_2 is not None) or
-             (default_1 is not None and default_2 is None))):
+        if (((default_1 is None and default_2 is not None)
+             or (default_1 is not None and default_2 is None))):
             return ''
-        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
-                 isinstance(column_2.type, sqlalchemy.Boolean))
+        lower = (isinstance(column_1.type, sqlalchemy.Boolean)
+                 and isinstance(column_2.type, sqlalchemy.Boolean))
 
         def textify(default):
             for_update = ' FOR UPDATE' if default.for_update else ''
@@ -1941,11 +1941,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return t_default_1 if t_default_1 != t_default_2 else None
 
     def _pytis_distinct_columns(self, db_column, spec_column):
-        if (db_column.name != spec_column.name or
-            self._pytis_ctype_changed(db_column, spec_column) or
-            (not spec_column.primary_key and
-             (db_column.nullable != spec_column.nullable or
-              self._pytis_defaults_changed(db_column, spec_column) is not None))):
+        if (db_column.name != spec_column.name
+            or self._pytis_ctype_changed(db_column, spec_column)
+            or (not spec_column.primary_key
+                and (db_column.nullable != spec_column.nullable
+                     or self._pytis_defaults_changed(db_column, spec_column) is not None))):
             return True
 
     def _pytis_columns_changed(self, metadata):
@@ -2606,8 +2606,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                                                              existing_server_default=server_default)
                         _engine.execute(ddl)
                         changed = True
-                if ((not orig_c.primary_key and not c.primary_key and
-                     orig_c.nullable != c.nullable)):
+                if ((not orig_c.primary_key and not c.primary_key
+                     and orig_c.nullable != c.nullable)):
                     ddl = alembic.ddl.base.ColumnNullable(table_name, c.name, c.nullable,
                                                           schema=self.schema,
                                                           existing_nullable=orig_c.nullable)
@@ -2935,8 +2935,8 @@ class _SQLQuery(SQLObject):
         return []
 
     def pytis_dependencies(self):
-        return (list(super(_SQLQuery, self).pytis_dependencies()) +
-                self._pytis_query_dependencies)
+        return (list(super(_SQLQuery, self).pytis_dependencies())
+                + self._pytis_query_dependencies)
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
@@ -3402,9 +3402,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         if self.replaces is not None:
             self.add_is_dependent_on(object_by_class(self.replaces, self._search_path))
         result_type = self.result_type
-        if ((result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
-             not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
-             result_type != SQLFunctional.RECORD)):
+        if ((result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,)
+             and not isinstance(result_type, (tuple, list, Column, pytis.data.Type,))
+             and result_type != SQLFunctional.RECORD)):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
         for a in self.arguments:
             if isinstance(a, Argument):
@@ -3464,8 +3464,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                 db_body = self._pytis_definition(connection)
             pos = db_body.find(marker)
             if pos >= 0:
-                db_body = (db_body[:pos].replace('\n', ' ').replace('  ', ' ').lower() +
-                           db_body[pos:])
+                db_body = (db_body[:pos].replace('\n', ' ').replace('  ', ' ').lower()
+                           + db_body[pos:])
             return body.strip() != db_body.strip()
         return False
 
@@ -3503,10 +3503,10 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
         expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
         result_type = self.result_type
-        if ((result_type is None or
-             result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER or
-             result_type == self.RECORD or
-             isinstance(result_type, (tuple, list,)))):
+        if ((result_type is None
+             or result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER
+             or result_type == self.RECORD
+             or isinstance(result_type, (tuple, list,)))):
             return sqlalchemy.sql.expression.TextClause(expression)
         else:
             return sqlalchemy.sql.expression.literal_column(expression,
@@ -3990,8 +3990,8 @@ def _db_dependencies(metadata):
              "deptype = 'n'")
     result = connection.execute(query)
     # Let's reduce the set and break unimportant circular dependencies:
-    regexp = re.compile('[A-Z]+ "(pg_catalog|information_schema)"\.|'
-                        'FUNCTION "public"\."(ltree|ltxtq|lquery|gbtree.*|gtrgm)_')
+    regexp = re.compile(r'[A-Z]+ "(pg_catalog|information_schema)"\.|'
+                        r'FUNCTION "public"\."(ltree|ltxtq|lquery|gbtree.*|gtrgm)_')
     for oid, reltypename, refoid, refreltypename in result:
         try:
             base = loc[refreltypename][refoid]
@@ -3999,8 +3999,8 @@ def _db_dependencies(metadata):
         except KeyError:
             # Some objects may be no longer present in the database
             continue
-        if ((regexp.match(base) is None and regexp.match(dependent) is None and
-             base != dependent)):
+        if ((regexp.match(base) is None and regexp.match(dependent) is None
+             and base != dependent)):
             dependencies.append((base, dependent,))
     result.close()
     connection.close()
@@ -4145,9 +4145,9 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             cls = o.__class__
         else:
             cls = o
-        if ((module_name is not None and
-             not o.__module__ == module_name and
-             not o.__module__.startswith(module_name + '.'))):
+        if ((module_name is not None
+             and not o.__module__ == module_name
+             and not o.__module__.startswith(module_name + '.'))):
             return False
         if (views or functions):
             if issubclass(cls, SQLView):
@@ -4218,8 +4218,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             if matching(o):
                 _enforced_schema_objects.add(o)
     # Preprocessing
-    full_init = (not ((no_deps and names_only) or (no_deps and regexp)) or
-                 upgrade_metadata is not None)
+    full_init = (not ((no_deps and names_only) or (no_deps and regexp))
+                 or upgrade_metadata is not None)
     for o, f in _PytisSchematicMetaclass.init_function_list:
         if matching(o):
             if names_only:
