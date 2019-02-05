@@ -928,7 +928,7 @@ class TextField(InputField):
         """
         try:
             return self._stored_post_process_func
-        except:
+        except Exception:
             pp_spec = self.spec().post_process()
             if isinstance(pp_spec, collections.Callable):
                 self._stored_post_process_func = pp_spec
@@ -1094,7 +1094,9 @@ class SpinnableField(InputField):
         spinning logic, it is possible to override this method as well.
 
         """
-        if up:
+        if value is None:
+            return None
+        elif up:
             value += self._SPIN_STEP
         else:
             value -= self._SPIN_STEP
