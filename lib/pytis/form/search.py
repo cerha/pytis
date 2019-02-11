@@ -128,15 +128,13 @@ class SFSDialog(GenericDialog):
     def _create_content(self, sizer):
         self._controls = []
         self._create_controls()
-        for i, ctrls in enumerate(self._controls):
+        for ctrls in self._controls:
             row = wx.BoxSizer()
             for x in ctrls:
                 if x:
                     row.Add(x)
-            flags = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT
-            if i == 0:
-                flags |= wx.TOP
-            sizer.Add(row, 0, flags, 8)
+            sizer.AddSpacer(3)
+            sizer.Add(row, 0, wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT, 8)
 
     def _create_controls(self):
         pass
@@ -422,8 +420,11 @@ class SFDialog(SFSDialog):
         )
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
-            bsizer.Add(b, 0, wx.RIGHT, 10)
-        sizer.Add(bsizer, 0, wx.ALL | wx.CENTER, 5)
+            if bsizer.ItemCount != 0:
+                bsizer.AddSpacer(14)
+            bsizer.Add(b)
+        sizer.AddSpacer(12)
+        sizer.Add(bsizer, 0, wx.CENTER)
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
@@ -690,7 +691,7 @@ class FilterDialog(SFDialog):
         for ctrl in self._agg_controls:
             boxsizer.Add(ctrl)
         pane.SetSizer(boxsizer)
-        sizer.Add(cp, 0, wx.ALL, 5)
+        sizer.Add(cp, 0, wx.LEFT | wx.TOP | wx.RIGHT, 8)
 
     def _on_compute_aggregate(self, event):
         try:
