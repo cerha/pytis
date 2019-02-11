@@ -74,7 +74,7 @@ class SFSColumn(object):
 class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
-    _FIELD_HEIGHT = 27
+    _FIELD_HEIGHT = 32
     _TITLE = None
     _ESCAPE_BUTTON = _("Close")
     _BUTTONS = (_ESCAPE_BUTTON,)
@@ -99,22 +99,22 @@ class SFSDialog(GenericDialog):
 
     def _create_ctrl(self, constructor, *args, **kwargs):
         parent = kwargs.pop('parent', self._dialog)
+        kwargs['height'] = self._FIELD_HEIGHT
         ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
         return ctrl
 
-    def _create_button(self, label, callback, tooltip=None, **kwargs):
-        return self._create_ctrl(wx_button, label=label, callback=callback,
-                                 tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
+    def _create_button(self, label, callback, **kwargs):
+        return self._create_ctrl(wx_button, label=label, callback=callback, **kwargs)
 
     def _create_choice(self, choices, tooltip=None, **kwargs):
-        return self._create_ctrl(wx_choice, choices, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_choice, choices, **kwargs)
 
     def _create_text_ctrl(self, value, **kwargs):
-        return self._create_ctrl(wx_text_ctrl, value, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_text_ctrl, value, **kwargs)
 
     def _create_spin_ctrl(self, value, **kwargs):
-        return self._create_ctrl(wx_spin_ctrl, value, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_spin_ctrl, value, **kwargs)
 
     def _create_label(self, label, **kwargs):
         panel = wx.Panel(self._dialog, -1)
@@ -194,7 +194,7 @@ class SortingDialog(SFSDialog):
     def _create_content(self, sizer):
         super(SortingDialog, self)._create_content(sizer)
         button = self._create_button(_("Add"), self._on_add,
-                                     _("Add secondary sorting column."))
+                                     tooltip=_("Add secondary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
@@ -359,12 +359,12 @@ class SFDialog(SFSDialog):
                 field(value, length=self._TEXT_CTRL_SIZE,
                       tooltip=_("Enter the operand value.")),
                 button(_("Gather"), lambda e: self._on_suck(i),
-                       _("Use the value from the current form row."),
-                       enabled=self._row is not None),
+                       enabled=self._row is not None,
+                       tooltip=_("Use the value from the current form row.")),
                 button(_("Clear"), lambda e: self._on_clear(i),
-                       _("Clear the condition.")),
-                button(_("Remove"), lambda e: self._on_remove(i),
-                       _("Remove this condition."), enabled=n > 1))
+                       tooltip=_("Clear the condition.")),
+                button(_("Remove"), lambda e: self._on_remove(i), enabled=n > 1,
+                       tooltip=_("Remove this condition.")))
 
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
@@ -382,7 +382,8 @@ class SFDialog(SFSDialog):
             ctrl._pytis_in_operator = operator
             return (ctrl,
                     button(_("Remove"), lambda e: self._on_remove(i),
-                           _("Remove this condition."), enabled=n > 1))
+                           enabled=n > 1,
+                           tooltip=_("Remove this condition.")))
 
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
@@ -416,7 +417,8 @@ class SFDialog(SFSDialog):
             button(_("Add OR"), lambda e: self._on_add(or_=True),
                    tooltip=_("Add a new condition in disjunction.")),
             button(_("Remove all"), lambda e: self._on_reset(),
-                   tooltip=_("Remove all current conditions."), enabled=len(self._controls) > 1),
+                   enabled=len(self._controls) > 1,
+                   tooltip=_("Remove all current conditions."))
         )
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
