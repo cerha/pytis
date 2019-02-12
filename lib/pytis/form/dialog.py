@@ -1116,7 +1116,6 @@ class BugReport(GenericDialog):
     def _on_send_bug_report(self, event):
         import email.Header
         import email.Message
-        from email import Charset
 
         import email.Utils
         import smtplib
@@ -1152,7 +1151,6 @@ class BugReport(GenericDialog):
                     return value
             return email.Header.Header(value, 'utf-8')
 
-        Charset.add_charset('utf-8', Charset.SHORTEST, None, 'utf-8')
         msgid = email.utils.make_msgid('pytis_bugs')
         msg = email.Message.Message()
         msg['From'] = header(addr)
