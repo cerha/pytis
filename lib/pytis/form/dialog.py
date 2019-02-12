@@ -495,7 +495,7 @@ class Question(MultiQuestion):
             def destroy():
                 try:
                     self._dialog.EndModal(-1000)
-                except:
+                except Exception:
                     # The wx instance of `self' may already be inactive
                     pass
             wx.FutureCall(self._timeout_limit * 1000, destroy)
@@ -1116,6 +1116,7 @@ class BugReport(GenericDialog):
     def _on_send_bug_report(self, event):
         import email.Header
         import email.Message
+        from email import Charset
 
         import email.Utils
         import smtplib
@@ -1145,18 +1146,21 @@ class BugReport(GenericDialog):
             if isinstance(value, basestring):
                 try:
                     unicode(value, 'us-ascii')
-                except:
+                except Exception:
                     pass
                 else:
                     return value
             return email.Header.Header(value, 'utf-8')
 
+        Charset.add_charset('utf-8', Charset.SHORTEST, None, 'utf-8')
+        msgid = email.utils.make_msgid('pytis_bugs')
         msg = email.Message.Message()
         msg['From'] = header(addr)
         msg['To'] = header(to)
         msg['Subject'] = header('%s: %s' % (config.bug_report_subject or _("Error"), buginfo))
         msg['Date'] = email.Utils.formatdate()
-        msg.set_payload(message)
+        msg['Message-ID'] = msgid
+        msg.set_payload(message, 'utf-8')
         try:
             try:
                 server = smtplib.SMTP(config.smtp_server)
@@ -1164,7 +1168,7 @@ class BugReport(GenericDialog):
             finally:
                 try:
                     server.quit()
-                except:
+                except Exception:
                     pass
         except Exception as e:
             pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unicode(e))
