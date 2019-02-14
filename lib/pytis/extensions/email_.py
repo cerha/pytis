@@ -204,11 +204,6 @@ class SimpleEmail(object):
 class GPGEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní jednoduchého kryptovaného mailu."""
 
-    ERR_GPG_MODULE = _(u"Could not import Python GnuPG module")
-    ERR_GPG_INSTANCE = _(u"Could not create GPG instance")
-    ERR_GPG_KEYRING = _(u"Could not create a temporary GPG keyring")
-    ERR_GPG_OUTPUT = _(u"GPG process did not return string.")
-
     def __init__(self, to, from_, subject, content, key, html=False,
                  smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
@@ -230,46 +225,26 @@ class GPGEmail(SimpleEmail):
         """Return basic instance of Message."""
         self.msg = Message()
 
-    def _setup_gpg(self):
-        "Setup GPG process. Returns initialized gpg instance."
-        try:
-            import tempfile
-            self._keyring = tempfile.mkstemp()[1]
-        except Exception:
-            self._error_msg = self.ERR_GPG_KEYRING
-            return None
-        options = ('--no-secmem-warning', '--always-trust', '--no-default-keyring',
-                   '--keyring=%s' % self._keyring)
-        try:
-            import gnupg
-        except Exception as e:
-            self._error_msg = self.ERR_GPG_MODULE
-            return None
-        try:
-            gpg = gnupg.GPG(options=options)
-        except Exception as e:
-            self._error_msg = self.ERR_GPG_INSTANCE + ': ' + str(e)
-            return None
-        result = gpg.import_keys(self.key)
-        self._fingerprints = [r['fingerprint'] for r in result.results]
-        return gpg
-
     def _gpg_encrypt_content(self):
-        "Encrypt the content."
-        gpg = self._setup_gpg()
-        if not gpg:
-            raise pytis.util.ProgramError(self._error_msg)
+        import gnupg
+        import tempfile
+        keyring = tempfile.mkstemp()[1]
+        options = ('--no-secmem-warning', '--always-trust', '--no-default-keyring',
+                   '--keyring=%s' % keyring)
+        gpg = gnupg.GPG(options=options)
+        import_result = gpg.import_keys(self.key)
+        fingerprints = [r['fingerprint'] for r in import_result.results]
         content = self.get_content_text(self.content, html=self.html, charset=self.charset)
-        result = gpg.encrypt(str(content), self._fingerprints[0])
-        if not result.ok:
-            raise pytis.util.ProgramError(result.stderr)
+        encryption_result = gpg.encrypt(str(content), fingerprints[0])
+        if not encryption_result.ok:
+            raise pytis.util.ProgramError(encryption_result.stderr)
         # BUG: There is no `keyring' defined here so the following
         # statement is effectively void:
         try:
-            os.remove(self._keyring)
+            os.remove(keyring)
         except Exception:
             pass
-        return str(result)
+        return str(encryption_result)
 
     def create_headers(self):
         super(GPGEmail, self).create_headers()
