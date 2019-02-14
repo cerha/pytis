@@ -61,6 +61,12 @@ from .application import (
     profile_manager, refresh, run_dialog, run_form, top_window,
     wx_focused_window,
 )
+from .dialog import (
+    Message, Question, Warning, Error, MultiQuestion, InputDialog, InputNumeric,
+)
+from .search import (
+    SearchDialog, FilterDialog, SortingDialog
+)
 
 import config
 
@@ -1228,7 +1234,7 @@ class LookupForm(InnerForm):
         max_value = self._lf_count()
         if max_value > 0:
             prompt = _(u"Record number (1-%s):") % (max_value,)
-            result = run_dialog(pytis.form.InputNumeric, message=_(u"Jump to record"),
+            result = run_dialog(InputNumeric, message=_(u"Jump to record"),
                                 prompt=prompt, min_value=1, max_value=max_value)
             row = result.value()
             if row is not None:
@@ -1246,7 +1252,7 @@ class LookupForm(InnerForm):
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
             direction, condition = block_refresh(
-                lambda: run_dialog(pytis.form.SearchDialog, self._lf_sfs_columns(),
+                lambda: run_dialog(SearchDialog, self._lf_sfs_columns(),
                                    self.current_row(), col=self._current_column_id(),
                                    condition=self._lf_search_condition))
         if direction is not None:
@@ -1353,8 +1359,8 @@ class LookupForm(InnerForm):
                 "or keep it and ask the administrator to update it.", profile.title())
         errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
         keep, remove = (_(u"Keep"), _(u"Remove"))
-        answer = run_dialog(pytis.form.MultiQuestion, title=_("Invalid profile"), message=msg,
-                            icon=pytis.form.Question.ICON_ERROR, buttons=(keep, remove),
+        answer = run_dialog(MultiQuestion, title=_("Invalid profile"), message=msg,
+                            icon=Question.ICON_ERROR, buttons=(keep, remove),
                             report=errors, default=keep)
         if answer == remove:
             if self._is_user_defined_profile(profile):
@@ -1463,7 +1469,7 @@ class LookupForm(InnerForm):
         if condition:
             perform = True
         else:
-            perform, condition = run_dialog(pytis.form.FilterDialog, self._lf_sfs_columns(),
+            perform, condition = run_dialog(FilterDialog, self._lf_sfs_columns(),
                                             self.current_row(), self._compute_aggregate,
                                             col=self._current_column_id(),
                                             condition=self._lf_filter)
@@ -1533,7 +1539,7 @@ class LookupForm(InnerForm):
                 mapping = {self.SORTING_ASCENDENT: pytis.data.ASCENDENT,
                            self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
                 direction = mapping[direction]
-            sorting = run_dialog(pytis.form.SortingDialog, columns, self._lf_sorting,
+            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
                                  col=col, direction=direction)
             if sorting is None:
                 return None
@@ -1855,13 +1861,13 @@ class RecordForm(LookupForm):
                                        transaction=self._open_transaction())
         if success and locked is not None:
             log(EVENT, 'Record is locked')
-            run_dialog(pytis.form.Message, _(u"The record is locked."))
+            run_dialog(Message, _(u"The record is locked."))
             return False
         else:
             return True
 
     def _on_closed_connection(self):
-        run_dialog(pytis.form.Error,
+        run_dialog(Error,
                    _("The database connection was closed because of long inactivity.") + "\n" +
                    _("Please close the form using the Cancel button."))
 
@@ -2023,7 +2029,7 @@ class RecordForm(LookupForm):
                              u"but you don't have access to its codebook values.",
                              field.label()) + '\n' +
                            _(u"Please contact the access rights administrator."))
-                    run_dialog(pytis.form.Error, msg)
+                    run_dialog(Error, msg)
                     return False
                 else:
                     msg = (_(u"This form contains the field %s,\n"
@@ -2038,7 +2044,7 @@ class RecordForm(LookupForm):
                         u"but this field is encrypted and the encryption "
                         u"area '%s' has not been unlocked.",
                         field.label(), crypto_name)
-                run_dialog(pytis.form.Error, msg)
+                run_dialog(Error, msg)
                 return False
 
         import copy as copy_
@@ -2142,7 +2148,7 @@ class RecordForm(LookupForm):
         def error_dialog(message, line_number=None):
             if line_number is not None:
                 message = _("Error at line %d:", line_number) + '\n' + message
-            run_dialog(pytis.form.Error, message)
+            run_dialog(Error, message)
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             msg = _(u"Insufficient permissions to insert records to this table.")
             message(msg, beep_=True)
@@ -2163,7 +2169,7 @@ class RecordForm(LookupForm):
             "\n".join(["|*%s*|=%s=|" % (f.column_label(), f.id())
                        for f in [self._view.field(fid) for fid in order]
                        if f.editable() is not False])))
-        separator = run_dialog(pytis.form.InputDialog,
+        separator = run_dialog(InputDialog,
                                title=_(u"Batch import"),
                                report=msg, report_format=TextFormat.LCG,
                                prompt=_("Separator"), value='|')
@@ -2310,7 +2316,7 @@ class RecordForm(LookupForm):
             if self._lf_filter and retry:
                 profile = find(True, self._profiles, lambda p: p.filter() is None)
                 if profile:
-                    if run_dialog(pytis.form.Question, title=_("Record not found"),
+                    if run_dialog(Question, title=_("Record not found"),
                                   message=_("The searched record was not found. "
                                             "It may be caused by the active filter.\n"
                                             "Do you want to activate the unfiltered "
@@ -2465,7 +2471,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _on_idle_close_transactions(self):
         age = pytis.form.last_event_age()
         if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
-            edit = run_dialog(pytis.form.Question, title=_("Continue editing?"),
+            edit = run_dialog(Question, title=_("Continue editing?"),
                               message=_("The time limit for form editing has expired.\n"
                                         "Do you want to continue?"),
                               timeout=20)
@@ -2476,7 +2482,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     callback()
                 self._edit_form_timeout = None
                 if edit is None:
-                    run_dialog(pytis.form.Error,
+                    run_dialog(Error,
                                _("The time limit for form editation has elapsed."))
         if self._open_transaction() is not None:
             self._transaction.set_max_age(age)
@@ -2704,7 +2710,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if msg:
             if field_id:
                 msg = self._view.field(field_id).label() + ": " + msg
-            run_dialog(pytis.form.Error, title=_("Integrity check failed"), message=msg)
+            run_dialog(Error, title=_("Integrity check failed"), message=msg)
         if field_id:
             f = self._field(field_id)
             if f:
@@ -2856,7 +2862,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if ((isinstance(result, tuple) and
                  isinstance(result[0], basestring))):
                 msg = "%s\n\n%s" % (result[0], msg)
-            run_dialog(pytis.form.Error, msg)
+            run_dialog(Error, msg)
             return False
 
     def _insert_op_args(self, rdata):
@@ -2869,7 +2875,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if self.changed():
             q = _(u"Unsaved changes in form data!") + "\n" + \
                 _(u"Do you really want to close the form?")
-            if not run_dialog(pytis.form.Question, q):
+            if not run_dialog(Question, q):
                 return False
         return True
 
@@ -3072,7 +3078,7 @@ class PopupEditForm(PopupForm, EditForm):
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
-                run_dialog(pytis.form.Message, _(u"All records processed."))
+                run_dialog(Message, _(u"All records processed."))
                 self._inserted_data = None
         self._set_focus_field()
 
@@ -3082,7 +3088,7 @@ class PopupEditForm(PopupForm, EditForm):
         if data is not None and i <= len(data):
             msg = _("Not all input records processed yet.\n" +
                     "Really quit batch insertion?")
-            if not run_dialog(pytis.form.Question, msg, default=False):
+            if not run_dialog(Question, msg, default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
 
@@ -3324,7 +3330,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._query_fields_apply_button.Enable(enabled)
         if self._unapplied_query_field_changes_after_restore:
             self._unapplied_query_field_changes_after_restore = False
-            if run_dialog(pytis.form.Question,
+            if run_dialog(Question,
                           _("Query fields contain unapplied changes. Apply now?"), True):
                 self._apply_query_fields(self._row)
 
@@ -3461,7 +3467,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                         "changes into your version.")
                 revert, merge, ignore = (_(u"Discard my changes"), _(u"Merge"),
                                          _(u"Ignore the concurrent changes"))
-                answer = run_dialog(pytis.form.MultiQuestion, title=_(u"Conflicting modifications"),
+                answer = run_dialog(MultiQuestion, title=_(u"Conflicting modifications"),
                                     message=msg, report=diff, report_format=TextFormat.HTML,
                                     buttons=(revert, ignore))  # TODO: Add merge button.
                 if answer == merge:
