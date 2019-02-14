@@ -391,3 +391,22 @@ class ComplexEmail(SimpleEmail):
                                                   charset=self.charset))
         for part in self.parts:
             self.msg.attach(part)
+
+
+if __name__ == '__main__':
+    import sys
+    try:
+        sender, recipient, subject, text, key_filename, smtp = sys.argv[1:]
+    except ValueError:
+        sys.stderr.write("Sends GPG mail to given e-mail address encrypted by given public key.\n")
+        sys.stderr.write("Arguments: from to subject message-text key-filename smtp-server\n")
+        sys.exit(1)
+    mail = GPGEmail(recipient, sender, subject, text,
+                    open(key_filename).read(),
+                    html=False,
+                    charset='UTF8',
+                    smtp=smtp)
+    if mail.send():
+        print "Sent ok"
+    else:
+        print mail.get_error_msg()
