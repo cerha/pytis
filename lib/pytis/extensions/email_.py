@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -234,31 +234,24 @@ class GPGEmail(SimpleEmail):
         "Setup GPG process. Returns initialized gpg instance."
         try:
             import tempfile
-            import GnuPGInterface
-        except Exception:
-            self._error_msg = self.ERR_GPG_MODULE
-            return None
-        try:
-            gpg = GnuPGInterface.GnuPG()
-        except Exception:
-            self._error_msg = self.ERR_GPG_INSTANCE
-            return None
-        try:
             self._keyring = tempfile.mkstemp()[1]
         except Exception:
             self._error_msg = self.ERR_GPG_KEYRING
             return None
-        gpg.options.armor = 1
-        gpg.options.meta_interactive = 0
-        gpg.options.extra_args.append('--no-secmem-warning')
-        for o in ('--always-trust', '--no-default-keyring', '--keyring=%s' % self._keyring):
-            gpg.options.extra_args.append(o)
-        proc = gpg.run(['--import'], create_fhs=['stdin', 'stderr'])
-        proc.handles['stdin'].write(self.key)
-        proc.handles['stdin'].close()
-        proc.handles['stderr'].read()
-        proc.handles['stderr'].close()
-        proc.wait()
+        options = ('--no-secmem-warning', '--always-trust', '--no-default-keyring',
+                   '--keyring=%s' % self._keyring)
+        try:
+            import gnupg
+        except Exception as e:
+            self._error_msg = self.ERR_GPG_MODULE
+            return None
+        try:
+            gpg = gnupg.GPG(options=options)
+        except Exception as e:
+            self._error_msg = self.ERR_GPG_INSTANCE + ': ' + str(e)
+            return None
+        result = gpg.import_keys(self.key)
+        self._fingerprints = [r['fingerprint'] for r in result.results]
         return gpg
 
     def _gpg_encrypt_content(self):
@@ -266,36 +259,17 @@ class GPGEmail(SimpleEmail):
         gpg = self._setup_gpg()
         if not gpg:
             raise pytis.util.ProgramError(self._error_msg)
-        if isinstance(self.to, basestring):
-            to = (self.to,)
-        elif isinstance(self.to, unicode):
-            # Unicode arguments are problem for GPG process, so we will convert them to UTF-8
-            to = []
-            for t in self.to:
-                to.append(t.encode('UTF-8'))
-        else:
-            to = self.to
         content = self.get_content_text(self.content, html=self.html, charset=self.charset)
-        gpg.options.recipients = to   # a list or tuple!
-        proc = gpg.run(['--encrypt'], create_fhs=['stdin', 'stdout'])
-        proc.handles['stdin'].write(content.as_string())
-        proc.handles['stdin'].close()
-        output = proc.handles['stdout'].read()
-        proc.handles['stdout'].close()
-        proc.wait()
-        success = True
-        if not isinstance(output, basestring):
-            success = False
+        result = gpg.encrypt(str(content), self._fingerprints[0])
+        if not result.ok:
+            raise pytis.util.ProgramError(result.stderr)
         # BUG: There is no `keyring' defined here so the following
         # statement is effectively void:
         try:
             os.remove(self._keyring)
         except Exception:
             pass
-        if not success:
-            raise pytis.util.ProgramError(self.ERR_GPG_OUTPUT)
-        else:
-            return output
+        return str(result)
 
     def create_headers(self):
         super(GPGEmail, self).create_headers()
