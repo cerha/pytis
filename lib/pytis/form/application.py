@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,9 @@ from .event import UserBreakException, interrupt_init, interrupt_watcher, \
 from .screen import Browser, CheckItem, KeyHandler, Keymap, \
     Menu, MenuBar, MItem, MSeparator, StatusBar, \
     acceskey_prefix, beep, busy_cursor, get_icon, init_colors, mitem, wx_focused_window
+from .dialog import (
+    Message, Question, Error, CheckListDialog, ProgressDialog,
+)
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -218,7 +221,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             crypto_password = rsa_encrypt(db_key, crypto_password)
                             break
                         else:
-                            run_dialog(pytis.form.Error, _("The passwords don't match"))
+                            run_dialog(Error, _("The passwords don't match"))
                     else:
                         crypto_password = rsa_encrypt(db_key, crypto_password)
                         if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
@@ -226,7 +229,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                                         pytis.data.sval(crypto_password),)):
                             break
                         else:
-                            run_dialog(pytis.form.Error, _("Invalid password"))
+                            run_dialog(Error, _("Invalid password"))
                 if crypto_password:
                     pytis.data.DBFunctionDefault(
                         'pytis_crypto_unlock_current_user_passwords',
@@ -390,8 +393,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(pytis.form.Error,
-                                        _("Invalid form class in 'startup_forms':") +
+                        self.run_dialog(Error, _("Invalid form class in 'startup_forms':") +
                                         ' ' + cls_name)
                         continue
                 else:
@@ -408,7 +410,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         if saved_forms:
-            checked = self.run_dialog(pytis.form.CheckListDialog,
+            checked = self.run_dialog(CheckListDialog,
                                       title=_("Restore forms"),
                                       message=_("Restore these forms saved on last exit?"),
                                       items=[(True, self._spec_title(name) + ' (' + f.descr() + ')')
@@ -437,7 +439,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         break
             startup_forms = filtered_forms
         if len(startup_forms) > 1:
-            run_dialog(pytis.form.ProgressDialog, run_startup_forms, args=(startup_forms,),
+            run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
                        title=_("Opening saved forms"),
                        message=_("Opening form") + ' ' * 40)  # , can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
@@ -1009,7 +1011,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(pytis.form.Error, _("Form creation failed: %s", name))
+                self.run_dialog(Error, _("Form creation failed: %s", name))
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
@@ -1372,7 +1374,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         "Please perform Pytis2go update during application startup.\n\n"
                         "Shall the application be terminated now to allow Pytis2go update?",
                         version)
-                if pytis.form.run_dialog(pytis.form.Question, msg):
+                if pytis.form.run_dialog(Question, msg):
                     self.COMMAND_EXIT.invoke()
 
 
@@ -1508,7 +1510,7 @@ def delete_record(view, data, transaction, record,
         elif result == 1:
             return True
         elif isinstance(result, basestring):
-            run_dialog(pytis.form.Error, result)
+            run_dialog(Error, result)
             return False
         elif isinstance(result, pytis.data.Operator):
             ask = False
@@ -1520,7 +1522,7 @@ def delete_record(view, data, transaction, record,
             message(_("This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
-    if ask and not run_dialog(pytis.form.Question, question):
+    if ask and not run_dialog(Question, question):
         return False
     log(EVENT, 'Deleting record:', arg)
     success, result = db_operation(op, arg, transaction=transaction)
@@ -1584,7 +1586,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
-            run_dialog(pytis.form.Error, _("Access denied"))
+            run_dialog(Error, _("Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is not None and _application:
@@ -1635,12 +1637,12 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(pytis.form.Message, message, title=_("Database error"),
+                run_dialog(Message, message, title=_("Database error"),
                            icon=pytis.form.Message.ICON_ERROR)
                 return FAILURE
             else:
                 message += '\n' + _("Try again?")
-                if not run_dialog(pytis.form.Question, message, title=_("Database error"),
+                if not run_dialog(Question, message, title=_("Database error"),
                                   icon=pytis.form.Question.ICON_ERROR):
                     return FAILURE
 
@@ -1654,7 +1656,7 @@ def delete_record_question(msg=None):
     log(EVENT, 'Record deletion dialog')
     if msg is None:
         msg = _("Are you sure to delete the record permanently?")
-    if not run_dialog(pytis.form.Question, msg):
+    if not run_dialog(Question, msg):
         log(EVENT, 'Record deletion refused by user')
         return False
     log(EVENT, u'Record deletion confirmed by user')

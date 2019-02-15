@@ -66,8 +66,8 @@ import pytis.remote
 
 from .event import UserBreakException, wx_callback
 from .dialog import (
-    AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question,
-    CheckListDialog,
+    AggregationSetupDialog, Error, Warning, FileDialog, ProgressDialog,
+    InputNumeric, MultiQuestion, Question, CheckListDialog,
 )
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
@@ -2208,7 +2208,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             log(EVENT, 'RPC communication not available')
         if not export_file:
             export_dir = config.export_directory
-            filename = pytis.form.run_dialog(pytis.form.FileDialog, title=_("Export to file"),
+            filename = pytis.form.run_dialog(FileDialog, title=_("Export to file"),
                                              dir=export_dir, file=default_filename, mode='SAVE',
                                              wildcards=tuple(wildcards))
             if not filename:
@@ -2302,7 +2302,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 csv_buffer.write('\n')
             export_file.write(csv_buffer.getvalue())
             export_file.close()
-        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
     def _cmd_export_xlsx(self, file_):
@@ -2429,7 +2429,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             w.close()
             with open(tmp_file_name, 'rb') as f:
                 file_.write(f.read())
-        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
     def _cmd_insert_line(self, before=False, copy=False):
