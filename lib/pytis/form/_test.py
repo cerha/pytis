@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2005 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@ tests = pytis.util.test.TestSuite()
 
 def get_tests():
     return tests
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='get_tests',

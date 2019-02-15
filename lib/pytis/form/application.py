@@ -321,11 +321,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             for uicmd in group:
                 uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
+
         def init():
             try:
                 self._init()
             except Exception:
                 top_level_exception()
+
         wx.CallAfter(init)
         rpc_info = pytis.remote.RPCInfo
         rpc_info.remote_connection_initially_available = pytis.remote.client_available()

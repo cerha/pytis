@@ -191,20 +191,20 @@ Command(ListForm, 'EXPORT_FILE',
 
 # Inline editation commands are currently deactivated.
 # The whole concept needs to be either removed or completely reworked.
-#Command(ListForm, 'EDIT',
-#        "Vyvolání inline editace aktuální buňky")
-#Command(ListForm, 'LINE_COMMIT',
-#        "Dokončení editace záznamu (uložení)")
-#Command(ListForm, 'LINE_ROLLBACK',
-#        "Zrušení změn v editovaném záznamu (arg. 'soft')")
-#Command(ListForm, 'FINISH_EDITING',
-#        "Opuštění editace řádku")
-#Command(ListForm, 'CELL_COMMIT',
-#        "Ukončení editace políčka s novou hodnotou")
-#Command(ListForm, 'CELL_ROLLBACK',
-#        "Ukončení editace políčka s vrácením původní hodnoty")
-#Command(ListForm, 'INSERT_LINE',
-#        "In-line vložení nového záznamu (arg. 'before' and 'copy')")
+# Command(ListForm, 'EDIT',
+#         "Vyvolání inline editace aktuální buňky")
+# Command(ListForm, 'LINE_COMMIT',
+#         "Dokončení editace záznamu (uložení)")
+# Command(ListForm, 'LINE_ROLLBACK',
+#         "Zrušení změn v editovaném záznamu (arg. 'soft')")
+# Command(ListForm, 'FINISH_EDITING',
+#         "Opuštění editace řádku")
+# Command(ListForm, 'CELL_COMMIT',
+#         "Ukončení editace políčka s novou hodnotou")
+# Command(ListForm, 'CELL_ROLLBACK',
+#         "Ukončení editace políčka s vrácením původní hodnoty")
+# Command(ListForm, 'INSERT_LINE',
+#         "In-line vložení nového záznamu (arg. 'before' and 'copy')")
 
 Command(ListForm, 'SET_GROUPING_COLUMN',
         "Změna sloupce vizuáního seskupování")
@@ -377,17 +377,17 @@ DEFAULT_KEYMAP = (
     ('Home',             ListForm.COMMAND_FIRST_COLUMN),
     ('End',              ListForm.COMMAND_LAST_COLUMN),
     ('Ctrl-e',           ListForm.COMMAND_EXPORT_FILE),
-    #('F2',               ListForm.COMMAND_EDIT),
-    #('F9',               ListForm.COMMAND_EDIT),
-    #('Ctrl-F12',         ListForm.COMMAND_LINE_ROLLBACK),
-    #('Escape',           ListForm.COMMAND_FINISH_EDITING),
-    #('F12',              ListForm.COMMAND_LINE_COMMIT),
-    #('Enter',            ListForm.COMMAND_CELL_COMMIT),
-    #('Escape',           ListForm.COMMAND_CELL_ROLLBACK),
-    #('Insert',           ListForm.COMMAND_INSERT_LINE()),
-    #('F7',               ListForm.COMMAND_INSERT_LINE(copy=True)),
-    #('Ctrl-Insert',      ListForm.COMMAND_INSERT_LINE(before=True)),
-    #('Ctrl-F7',          ListForm.COMMAND_INSERT_LINE(before=True, copy=True)),
+    # ('F2',               ListForm.COMMAND_EDIT),
+    # ('F9',               ListForm.COMMAND_EDIT),
+    # ('Ctrl-F12',         ListForm.COMMAND_LINE_ROLLBACK),
+    # ('Escape',           ListForm.COMMAND_FINISH_EDITING),
+    # ('F12',              ListForm.COMMAND_LINE_COMMIT),
+    # ('Enter',            ListForm.COMMAND_CELL_COMMIT),
+    # ('Escape',           ListForm.COMMAND_CELL_ROLLBACK),
+    # ('Insert',           ListForm.COMMAND_INSERT_LINE()),
+    # ('F7',               ListForm.COMMAND_INSERT_LINE(copy=True)),
+    # ('Ctrl-Insert',      ListForm.COMMAND_INSERT_LINE(before=True)),
+    # ('Ctrl-F7',          ListForm.COMMAND_INSERT_LINE(before=True, copy=True)),
     ('Ctrl-Shift-Right', ListForm.COMMAND_RESIZE_COLUMN(diff=+5)),
     ('Ctrl-Shift-Left',  ListForm.COMMAND_RESIZE_COLUMN(diff=-5)),
     ('Shift-Right',      ListForm.COMMAND_MOVE_COLUMN(diff=+1)),
@@ -489,16 +489,16 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_PREVIEW, 'preview'),
     (StructuredTextField.COMMAND_EXPORT_PDF, 'print-preview'),
     (ListForm.COMMAND_COPY_CELL, wx.ART_COPY),
-    #(ListForm.COMMAND_EDIT, 'edit-cell'),
+    # (ListForm.COMMAND_EDIT, 'edit-cell'),
     (ListForm.COMMAND_FILTER_BY_CELL, 'filter-by-cell'),
     (ListForm.COMMAND_AUTOFILTER, 'autofilter'),
     (ListForm.COMMAND_INCREMENTAL_SEARCH, 'search-incremental'),
     (ListForm.COMMAND_EXPORT_FILE, wx.ART_FILE_SAVE),  # 'export'),
     (ListForm.COMMAND_IMPORT_INTERACTIVE, wx.ART_FILE_OPEN),  # 'import'),
-    #(ListForm.COMMAND_INSERT_LINE(before=True, copy=True), 'insert-line-before-copy'),
-    #(ListForm.COMMAND_INSERT_LINE(before=True), 'insert-line-before'),
-    #(ListForm.COMMAND_INSERT_LINE(copy=True), 'insert-line-copy'),
-    #(ListForm.COMMAND_INSERT_LINE, 'insert-line'),
+    # (ListForm.COMMAND_INSERT_LINE(before=True, copy=True), 'insert-line-before-copy'),
+    # (ListForm.COMMAND_INSERT_LINE(before=True), 'insert-line-before'),
+    # (ListForm.COMMAND_INSERT_LINE(copy=True), 'insert-line-copy'),
+    # (ListForm.COMMAND_INSERT_LINE, 'insert-line'),
     (ListForm.COMMAND_TOGGLE_COLUMN(position=None), 'hide-column'),
     (ListForm.COMMAND_AGGREGATE, 'aggregate'),
     (ListForm.COMMAND_UNAGGREGATE, 'unaggregate'),
@@ -604,22 +604,22 @@ class UICommands(object):
         RecordForm.COMMAND_DELETE_RECORD(),
         _("Delete record"),
         _("Delete the current record."))
-    #INSERT_LINE = UICommand(
-    #    ListForm.COMMAND_INSERT_LINE(),
-    #    _("Insert row below"),
-    #    _("Insert a new record below the current row in inline mode."))
-    #INSERT_LINE_BEFORE = UICommand(
-    #    ListForm.COMMAND_INSERT_LINE(before=True),
-    #    _("Insert row above"),
-    #    _("Insert a new record above the current row in inline mode."))
-    #INSERT_LINE_COPY = UICommand(
-    #    ListForm.COMMAND_INSERT_LINE(copy=True),
-    #    _("Copy row below"),
-    #    _("Insert a new record as a copy below the current row in inline mode."))
-    #INSERT_LINE_COPY_BEFORE = UICommand(
-    #    ListForm.COMMAND_INSERT_LINE(copy=True, before=True),
-    #    _("Copy row above"),
-    #    _("Insert a new record as a copy above the current row in inline mode."))
+    # INSERT_LINE = UICommand(
+    #     ListForm.COMMAND_INSERT_LINE(),
+    #     _("Insert row below"),
+    #     _("Insert a new record below the current row in inline mode."))
+    # INSERT_LINE_BEFORE = UICommand(
+    #     ListForm.COMMAND_INSERT_LINE(before=True),
+    #     _("Insert row above"),
+    #     _("Insert a new record above the current row in inline mode."))
+    # INSERT_LINE_COPY = UICommand(
+    #     ListForm.COMMAND_INSERT_LINE(copy=True),
+    #     _("Copy row below"),
+    #     _("Insert a new record as a copy below the current row in inline mode."))
+    # INSERT_LINE_COPY_BEFORE = UICommand(
+    #     ListForm.COMMAND_INSERT_LINE(copy=True, before=True),
+    #     _("Copy row above"),
+    #     _("Insert a new record as a copy above the current row in inline mode."))
     EXPORT_FILE = UICommand(
         ListForm.COMMAND_EXPORT_FILE(),
         _("Export to file"),
@@ -693,11 +693,11 @@ FORM_MENU_COMMANDS = ((UICommands.INCREMENTAL_SEARCH,
                        UICommands.NEW_RECORD_COPY,
                        UICommands.DELETE_RECORD,
                        ),
-                      #(UICommands.INSERT_LINE,
-                      # UICommands.INSERT_LINE_BEFORE,
-                      # UICommands.INSERT_LINE_COPY,
-                      # UICommands.INSERT_LINE_COPY_BEFORE,
-                      # ),
+                      # (UICommands.INSERT_LINE,
+                      #  UICommands.INSERT_LINE_BEFORE,
+                      #  UICommands.INSERT_LINE_COPY,
+                      #  UICommands.INSERT_LINE_COPY_BEFORE,
+                      #  ),
                       (UICommands.EXPORT_FILE,
                        UICommands.IMPORT_INTERACTIVE,
                        ),

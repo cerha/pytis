@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ import wx.aui
 import pytis.form
 from pytis.util import DEBUG, OPERATIONAL, format_traceback, log, translations
 import config
+
 
 _ = translations('pytis-wx')
 
@@ -103,6 +104,7 @@ def top_level_exception(einfo=None):
         finally:
             _in_top_level_exception = False
 
+
 _last_user_event = None
 
 
@@ -113,6 +115,7 @@ def last_user_event():
 
     """
     return _last_user_event
+
 
 _last_user_event_time = None
 
