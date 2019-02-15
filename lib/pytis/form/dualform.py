@@ -728,11 +728,7 @@ class MultiForm(Form, Refreshable):
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, self._on_page_change)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, self._on_tab_move_started)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, self._on_tab_move_done)
-        try:
-            tab_right_down = wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN
-        except Exception:
-            tab_right_down = wx.aui.EVT__AUINOTEBOOK_TAB_RIGHT_DOWN
-        wx_callback(tab_right_down, nb, self._on_tab_mouse_right)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
