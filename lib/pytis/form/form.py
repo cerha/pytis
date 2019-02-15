@@ -62,7 +62,7 @@ from .application import (
     wx_focused_window,
 )
 from .dialog import (
-    Message, Question, Warning, Error, MultiQuestion, InputDialog, InputNumeric,
+    Message, Question, Warning, Error, MultiQuestion, InputNumeric,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -2149,35 +2149,60 @@ class RecordForm(LookupForm):
             if line_number is not None:
                 message = _("Error at line %d:", line_number) + '\n' + message
             run_dialog(Error, message)
+
+        class Separators(pytis.presentation.Enumeration):
+            enumeration = (
+                ('|', _("Pipe '|'")),
+                (',', _("Comma ','")),
+                (';', _("Semicolon ';'")),
+                ('\t', _("TAB")),
+                ('other', _.pgettext('custom', "Other")),
+            )
+            default = '|'
+            selection_type = pytis.presentation.SelectionType.RADIO
+
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             msg = _(u"Insufficient permissions to insert records to this table.")
             message(msg, beep_=True)
             return False
         order = self._view.layout().order()
-        msg = "\n\n".join((
-            _("Choose the file containing the imported data first. "
-              "You will be able to check and confirm each record separately "
-              "in the next step."),
-            "*" + _("Input file format:") + "*",
-            _("Each row contains a sequence of values separated by given "
-              "separator character (select above). Write tabelator as %s.",
-              "='\\t'="),
-            _("The first row contains column identifiers, so it determines "
-              "the meaning and the order of the values in the following "
-              "data rows."),
-            _("Possible column identifiers for this form are:"),
-            "\n".join(["|*%s*|=%s=|" % (f.column_label(), f.id())
-                       for f in [self._view.field(fid) for fid in order]
-                       if f.editable() is not False])))
-        separator = run_dialog(InputDialog,
-                               title=_(u"Batch import"),
-                               report=msg, report_format=TextFormat.LCG,
-                               prompt=_("Separator"), value='|')
-        if not separator:
-            if separator is not None:
-                message(_(u"No separator given."), beep_=True)
+        content = lcg.container(
+            lcg.p(_("You will be able to choose the file containing the imported "
+                    "data in the next step.  You will be prompted to check and "
+                    "confirm each record separately afterwards.")),
+            lcg.Section(title=_("Input file format"), content=(
+                lcg.p(_("Each row contains a sequence of values separated by the "
+                        "separator selected below.")),
+                lcg.p(_("The first row must contain a sequence of column "
+                        "identifiers. The following rows contain sequences "
+                        "of data values for the columns named in the first "
+                        "row.")),
+                lcg.p(_("Possible column identifiers for this form are:")),
+                lcg.fieldset([(lcg.strong(f.column_label()), lcg.code(f.id()))
+                              for f in [self._view.field(fid) for fid in order]
+                              if f.editable() is not False]),
+            )),
+        )
+        computer = pytis.presentation.computer
+        result = run_form(
+            InputForm, title=_(u"Batch import"),
+            fields=(
+                Field('separator', _("Common separators"), enumerator=Separators,
+                      not_null=True,
+                      descr=_("The character used to separate column values "
+                              "in each input file row.")),
+                Field('custom', _("Custom separator"),
+                      check=computer(lambda r, separator, custom:
+                                     _("The value is mandatory when 'Other' is selected above.")
+                                     if separator == 'other' and not custom else None),
+                      editable=computer(lambda e, separator: separator == 'other')),
+            ), layout=(content, 'separator', 'custom'),
+        )
+        if not result:
             return False
-        separator = separator.replace('\\t', '\t')
+        separator = result['separator'].value()
+        if separator == 'other':
+            separator = result['custom'].value()
         fh, filename = pytis.form.open_selected_file(
             patterns=(('CSV files', ('*.csv', '*.CSV', '*.txt', '*.TXT')),))
         if filename is None:
