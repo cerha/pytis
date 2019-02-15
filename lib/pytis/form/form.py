@@ -27,10 +27,10 @@ jednotlivých tříd.
 
 """
 
-import copy
 import collections
+import copy
+import lcg
 import time
-
 import wx
 
 import pytis.data
@@ -51,8 +51,8 @@ from .event import UserBreakException
 from .command import CommandHandler
 from .screen import (
     Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem,
-    MSeparator, FileViewer, busy_cursor, dlg2px, orientation2wx, popup_menu,
-    wx_button, DEFAULT_WINDOW_BACKGROUND_COLOUR,
+    MSeparator, FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
+    popup_menu, wx_button, DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
     Application, action_has_access, block_refresh, block_yield,
@@ -2577,6 +2577,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _create_text(self, parent, text):
         return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
 
+    def _create_lcg_content(self, parent, content):
+        browser = Browser(parent)
+        browser.load_content(lcg.ContentNode('', content=content))
+        browser.SetMinSize(char2px(parent, 72, 18))
+        return browser
+
     def _create_group(self, parent, group, aligned=False):
         # Each continuous sequence of fields is first stored in an array and
         # finally packed into a grid sizer by self._pack_fields() and added to
@@ -2634,6 +2640,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 x = self._create_button(parent, item)
             elif isinstance(item, Text):
                 x = self._create_text(parent, item)
+            elif isinstance(item, lcg.Content):
+                x = self._create_lcg_content(parent, item)
             else:
                 raise ProgramError("Unsupported layout item!", item)
             if aligned:

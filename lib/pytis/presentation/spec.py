@@ -31,14 +31,16 @@ immutable.  Thus they can be shared as needed.
 
 """
 
+import BaseHTTPServer
 import collections
 import copy
+import lcg
 import os
 import re
 import string
+import sys
 import types
 import weakref
-import BaseHTTPServer
 
 import pytis.data
 
@@ -1014,16 +1016,6 @@ class GroupSpec(object):
         assert orientation in public_attributes(Orientation)
         assert isinstance(align_hgroups, bool), align_hgroups
         assert isinstance(flexible, bool), flexible
-        self._allowed_item_types = (Button, Text, str, unicode)
-        if __debug__:
-            allowed_item_types = (GroupSpec, Button, Text, basestring)
-            try:
-                # Avoid the dependency on LCG, but allow LCG content if LCG is available.
-                import lcg
-            except Exception:
-                pass
-            else:
-                allowed_item_types += (lcg.Content,)
         for i, item in enumerate(items):
             if isinstance(item, (tuple, list)):
                 if isinstance(items, tuple):
@@ -1031,8 +1023,8 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert (isinstance(item, allowed_item_types) or
-                        isinstance(item, collections.Callable)), item
+                assert isinstance(item, (GroupSpec, Button, Text, basestring,
+                                         lcg.Content, collections.Callable)), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation
@@ -1663,9 +1655,7 @@ class ViewSpec(object):
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_ids, \
                             err("Unknown button action in layout: %s", item.action())
-                    elif isinstance(item, Text):
-                        pass
-                    elif isinstance(item, collections.Callable):
+                    elif isinstance(item, (Text, collections.Callable, lcg.Content)):
                         pass
                     else:
                         assert item in self._field_dict, err("Unknown field in layout: %r" % item,)
@@ -3982,7 +3972,6 @@ class AttachmentStorage(object):
         '_thumbnail_src_file()'.
 
         """
-        import lcg
         cls = self._resource_cls(filename)
         is_image = issubclass(cls, lcg.Image)
         if is_image and has_thumbnail:
@@ -4004,7 +3993,6 @@ class AttachmentStorage(object):
                    **kwargs)
 
     def _resource_cls(self, filename):
-        import lcg
         return lcg.Resource.subclass(filename)
 
     def _resource_uri(self, filename):
@@ -4202,7 +4190,6 @@ class AttachmentStorage(object):
         None is returned when a corresponding resource is not found.
 
         """
-        import lcg
         for resource in self.resources(transaction=transaction):
             if resource.uri() == uri:
                 return resource
@@ -4285,7 +4272,6 @@ class FileAttachmentStorage(AttachmentStorage):
         return os.path.join(self._directory, 'thumbnails', filename)
 
     def insert(self, filename, data, values, transaction=None):
-        import lcg
         import PIL.Image
         path = self._resource_src_file(filename)
         try:
@@ -4316,7 +4302,6 @@ class FileAttachmentStorage(AttachmentStorage):
             raise self.StorageError(str(e))
 
     def _resource_kwargs(self, filename):
-        import lcg
         if issubclass(self._resource_cls(filename), lcg.Image):
             import PIL.Image
             img = PIL.Image.open(self._resource_src_file(filename))
