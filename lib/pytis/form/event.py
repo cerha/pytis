@@ -40,7 +40,6 @@ Aby modul plnil svůj účel, je nutno zajistit následující:
 """
 
 import collections
-import os
 import sys
 import thread
 import time
