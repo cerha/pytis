@@ -242,7 +242,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return [c.id() for c in self._data.columns()
                 if not isinstance(c.type(), pytis.data.Big)]
 
-    def _column_width(self, column):
+    def _ideal_column_width(self, column):
+        """Return the ideal column width.
+
+        If the user previously explicitly resized the column, the resized width
+        is returned.  Otherwise the ideal width is determined by the
+        specification.
+
+        """
         try:
             return self._column_widths[column.id()]
         except KeyError:
@@ -1382,7 +1389,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             tip.SetTip(descr)
 
     def _on_label_drag_size(self, event):
-        self._remember_column_size(event.GetRowOrCol())
+        self._remember_column_width(event.GetRowOrCol())
         self._grid.FitInside()
         # Mohli bychom rozšířit poslední sloupec, ale jak ho potom zase zúžit?
         # if config.stretch_tables:
@@ -1393,10 +1400,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         #     if w < x:
         #         col = n-1
         #         g.SetColSize(col, g.GetColSize(col) + (x - w))
-        #         self._remember_column_size(col)
+        #         self._remember_column_width(col)
         event.Skip()
 
-    def _remember_column_size(self, col):
+    def _remember_column_width(self, col):
         self._column_widths[self._columns[col].id()] = self._grid.GetColSize(col)
 
     def _on_label_paint(self, event):
@@ -1703,45 +1710,32 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if config.grid_line_color is not None:
             self._grid.SetGridLineColour(config.grid_line_color)
 
-    def _total_width(self):
-        total = self._grid.GetRowLabelSize()
-        for c in self._columns:
-            total += self._column_width(c)
-        return total
-
-    def _total_height(self):
-        g = self._grid
-        height = g.GetColLabelSize()
-        rows = self._grid.GetNumberRows()
-        if rows:
-            height += rows * g.GetRowSize(0)
-        if self._title_bar:
-            height += self._title_bar.GetSize().height
-        return height
-
     def _resize_columns(self, size=None):
+        # Recompute column widths to fit the current form size.
         g = self._grid
         if size is None:
             size = g.Parent.GetClientSize()
-        width = size.width
-        total_width = self._total_width()
-        if width > total_width > 0:
-            coef = float(width) / (total_width - g.GetRowLabelSize())
-        else:
-            coef = 1
-        total = g.GetRowLabelSize()
-        last_flexible_column_index = None
-        # Recompute column widths to fit the current form size.
+        available_width = size.width - g.GetRowLabelSize()
+        flexible_columns = []
+        flexible_width = 0
         for i, column in enumerate(self._columns):
-            column_width = self._column_width(column)
+            column_width = self._ideal_column_width(column)
             if not column.fixed() and config.stretch_tables:
-                column_width = int(column_width * coef)
-                last_flexible_column_index = i
+                flexible_columns.append((i, column_width))
+                flexible_width += column_width
+            else:
+                available_width -= column_width
             g.SetColSize(i, column_width)
-            total += column_width
-        i = last_flexible_column_index
-        if coef != 1 and total != width and i is not None:
-            g.SetColSize(i, g.GetColSize(i) + (width - total))
+        if flexible_columns and available_width > flexible_width > 0:
+            coef = float(available_width) / float(flexible_width)
+            for i, column_width in flexible_columns:
+                if i == flexible_columns[-1][0]:
+                    # Avoid rounding inaccuracy shift for the last column.
+                    column_width = max(0, available_width)
+                else:
+                    column_width = int(column_width * coef)
+                g.SetColSize(i, column_width)
+                available_width -= column_width
 
     def _on_size(self, event):
         size = event.GetSize()
@@ -1878,7 +1872,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             g.SetColSize(col, newsize)
             g.SetSize(g.GetSize())
             g.Refresh()
-            self._remember_column_size(col)
+            self._remember_column_width(col)
             if g.IsCellEditControlEnabled():
                 row = g.GetGridCursorRow()
                 self._current_editor.SetSize(g.CellToRect(row, col))
@@ -3058,23 +3052,28 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         super(CodebookForm, self)._init_attributes(**kwargs)
 
     def _set_real_size(self):
+        g = self._grid
         if self._folding_enabled():
             height = self._DEFAULT_WINDOW_HEIGHT
         else:
-            height = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height() + 50)
+            height = g.GetColLabelSize() + g.GetNumberRows() * g.GetRowSize(0) + 50
+            if self._title_bar:
+                height += self._title_bar.Size.height
+            height = min(self._DEFAULT_WINDOW_HEIGHT, height)
         if self._search_panel:
             height += 30
         if self._query_fields_form and self._query_fields_form.IsShown():
             height += self._query_fields_form.GetSize().y
-        size = (self._total_width() + 30, height)
-        self.SetSize(size)
+        # 660 seems to be the minimal width to make the profile selector in the toolbar visible.
+        grid_width = functools.reduce(lambda x, c: x + self._ideal_column_width(c),
+                                      self._columns,
+                                      g.GetRowLabelSize())
+
+        width = max(grid_width + 30, 660)
+        self.SetSize((width, height))
 
     def _popup_frame_style(self):
         return super(CodebookForm, self)._popup_frame_style() | wx.RESIZE_BORDER
-
-    def _total_width(self):
-        # 630 seems to be the minimal width to make the profile selector in the toolbar visible.
-        return max(super(CodebookForm, self)._total_width(), 630)
 
     def _current_arguments(self):
         return self._arguments
