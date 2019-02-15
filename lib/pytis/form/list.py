@@ -1407,14 +1407,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 return ((x + r, y), (x + 2 * r, y + r), (x, y + r))
 
-        def arrow(x, y, r=5, l=4):
+        def arrow(x, y, r=5, length=4):
             # Return polygon coordinates for an arrow.
-            return ((x, y), (x - r, y - r), (x - r / 2, y - r), (x - r / 2, y - r - l),
-                    (x + r / 2, y - r - l), (x + r / 2, y - r), (x + r, y - r))
+            return ((x, y), (x - r, y - r), (x - r / 2, y - r), (x - r / 2, y - r - length),
+                    (x + r / 2, y - r - length), (x + r / 2, y - r), (x + r, y - r))
 
-        def funnel(x, y, r=3, l=8):
+        def funnel(x, y, r=3, length=8):
             # Return polygon coordinates for a funnel.
-            return ((x, y), (x + r, y + r), (x + r, y + l), (x + r + 2, y + l),
+            return ((x, y), (x + r, y + r), (x + r, y + length), (x + r + 2, y + length),
                     (x + r + 2, y + r), (x + r * 2 + 2, y), (x, y))
         g = self._grid
         # t = self._table
@@ -1900,8 +1900,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             try:
                 # Update grouping first.
                 cols = self._sorting_columns()
-                l = min(len(cols), len(self._grouping))
-                self._grouping = tuple(cols[:l])
+                minlen = min(len(cols), len(self._grouping))
+                self._grouping = tuple(cols[:minlen])
                 # Make the changes visible.
                 self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
                 # Force to count at least one line.  This is to allow user
@@ -1912,8 +1912,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             except UserBreakException:
                 self._lf_sorting = old_sorting
                 cols = self._sorting_columns()
-                l = min(len(cols), len(self._grouping))
-                self._grouping = tuple(cols[:l])
+                minlen = min(len(cols), len(self._grouping))
+                self._grouping = tuple(cols[:minlen])
                 # Make the changes visible.
                 self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': self._lf_sorting})
         return sorting
@@ -2013,8 +2013,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  grouping_functions=grouping_functions,
                  aggregation_columns=aggregation_columns,
                  aggregation_condition=condition,
-                 aggregation_arguments=arguments,
-                 )
+                 aggregation_arguments=arguments)
 
     def _cmd_delete_aggregated_view(self, aggregated_view_id):
         manager = aggregated_views_manager()
@@ -2631,8 +2630,8 @@ class FoldableForm(ListForm):
             state = self._folding
             labels = (node or '').split('.')
             while labels and state is not None:
-                l = labels.pop(0)
-                state = state.subnodes().get(l)
+                label = labels.pop(0)
+                state = state.subnodes().get(label)
             return state
 
         def _folding_level(self, node):
@@ -2640,8 +2639,8 @@ class FoldableForm(ListForm):
             labels = (node or '').split('.')
             while labels and state is not None:
                 level = state.level()
-                l = labels.pop(0)
-                state = state.subnodes().get(l)
+                label = labels.pop(0)
+                state = state.subnodes().get(label)
             if state is None:
                 if level is None:
                     folding_level = None
