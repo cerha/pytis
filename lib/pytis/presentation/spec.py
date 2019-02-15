@@ -1020,7 +1020,7 @@ class GroupSpec(object):
             try:
                 # Avoid the dependency on LCG, but allow LCG content if LCG is available.
                 import lcg
-            except:
+            except Exception:
                 pass
             else:
                 allowed_item_types += (lcg.Content,)
@@ -4300,7 +4300,7 @@ class FileAttachmentStorage(AttachmentStorage):
                 if values.get('has_thumbnail', False):
                     try:
                         self._save_resized_image(filename, image, values)
-                    except:
+                    except Exception:
                         for subdir in ('', 'thumbnails', 'resized'):
                             path = os.path.join(self._directory, subdir, filename)
                             if os.path.exists(path):
@@ -4436,10 +4436,10 @@ class HttpAttachmentStorage(AttachmentStorage):
                                             pytis.data.EQ('uri', pytis.data.sval(uri))),
                              transaction=transaction)
             data.insert(row, transaction=transaction)
-        except:
+        except Exception:
             try:
                 transaction.rollback()
-            except:
+            except Exception:
                 pass
             raise
         else:
@@ -5436,7 +5436,7 @@ class Specification(SpecificationBase):
         for arg in ('layout', 'list_layout', 'actions', 'columns', 'grouping'):
             try:
                 value = self._view_spec_kwargs[arg]
-            except:
+            except Exception:
                 continue
             if isinstance(value, collections.Callable):
                 self._view_spec_kwargs[arg] = value()
@@ -5469,7 +5469,7 @@ class Specification(SpecificationBase):
                     ref = args[0]
                 try:
                     ref = ref.id  # make Reference from ColumnLookup if needed
-                except:
+                except Exception:
                     pass
                 db_spec_name = ref.specification_name()
                 codebook = self._codebook_by_db_spec_name(db_spec_name)
@@ -5744,7 +5744,7 @@ class Specification(SpecificationBase):
             mapping = class_._specifications_by_db_spec_name
             try:
                 specification_names = mapping[db_spec_name]
-            except:
+            except Exception:
                 specification_names = mapping[db_spec_name] = []
             name = specification._spec_name()
             if name not in specification_names:

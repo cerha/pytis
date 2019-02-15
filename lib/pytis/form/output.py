@@ -121,7 +121,7 @@ class _Ghostscript(pytis.util.Tmpdir):
             if __debug__:
                 pytis.util.log(pytis.util.DEBUG, 'Vracím stránku:', number)
             return wx.Image(file_name)
-        except:
+        except Exception:
             # wxImage nahazuje chybové okno bez ohledu na ošetření výjimky zde
             return None
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -130,7 +130,7 @@ class CommandHandler:
             pass
         except SystemExit:
             raise
-        except:
+        except Exception:
             from pytis.form import top_level_exception
             top_level_exception()
 

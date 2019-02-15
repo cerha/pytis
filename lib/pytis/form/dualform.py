@@ -279,20 +279,20 @@ class DualForm(Form, Refreshable):
     def _cleanup(self):
         try:
             self._side_form.close(force=True)
-        except:
+        except Exception:
             pass
         self._side_form = None
         self._active_form = None
         try:
             self._main_form.close(force=True)
-        except:
+        except Exception:
             pass
         self._main_form = None
         try:
             self._splitter.Show(False)
             self._splitter.Close()
             self._splitter.Destroy()
-        except:
+        except Exception:
             pass
 
     def focus(self):
@@ -447,7 +447,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
     def _cleanup(self):
         try:
             self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
-        except:
+        except Exception:
             pass
         super(SideBrowseDualForm, self)._cleanup()
 
@@ -541,7 +541,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
     def _cleanup(self):
         try:
             self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
-        except:
+        except Exception:
             pass
         super(AggregationDualForm, self)._cleanup()
 
@@ -730,7 +730,7 @@ class MultiForm(Form, Refreshable):
         wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, self._on_tab_move_done)
         try:
             tab_right_down = wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN
-        except:
+        except Exception:
             tab_right_down = wx.aui.EVT__AUINOTEBOOK_TAB_RIGHT_DOWN
         wx_callback(tab_right_down, nb, self._on_tab_mouse_right)
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
@@ -855,26 +855,26 @@ class MultiForm(Form, Refreshable):
         try:
             nb = self._notebook
             nb.Show(False)
-        except:
+        except Exception:
             pass
         for form in self._forms:
             if form and form.initialized():
                 form.Reparent(self)
                 try:
                     nb.RemovePage(0)
-                except:
+                except Exception:
                     pass
                 form._cleanup()
             else:
                 try:
                     nb.DeletePage(0)
-                except:
+                except Exception:
                     pass
         self._forms = None
         try:
             nb.Close()
             nb.Destroy()
-        except:
+        except Exception:
             pass
         super(MultiForm, self)._cleanup()
 

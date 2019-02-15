@@ -91,7 +91,7 @@ def top_level_exception(einfo=None):
             import cgitb
             try:
                 tbstring = cgitb.text(einfo)
-            except:
+            except Exception:
                 import traceback
                 tbstring = "\n".join(traceback.format_exception(*einfo))
             log(OPERATIONAL, 'Top-level exception caught', tbstring)
@@ -266,7 +266,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                 result = system_callback()
         except SystemExit:
             raise
-        except:
+        except Exception:
             top_level_exception()
             return
         finally:

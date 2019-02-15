@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -304,7 +304,7 @@ def _request(request, *args, **kwargs):
     if RPCInfo.direct_connection:
         try:
             RPCInfo.connection.root.echo
-        except:
+        except Exception:
             RPCInfo.connection = _connect()
         r = getattr(RPCInfo.connection.root, request)
     else:
@@ -312,7 +312,7 @@ def _request(request, *args, **kwargs):
         user_name = getpass.getuser()
         try:
             r = RPCInfo.connection.root.request
-        except:
+        except Exception:
             RPCInfo.connection = _connect()
             r = RPCInfo.connection.root.request
         args = (target_ip, user_name, request,) + args
@@ -322,13 +322,13 @@ def _request(request, *args, **kwargs):
 def version():
     try:
         version = _request('version')
-    except:
+    except Exception:
         try:
             if _request('echo', 'hello') == 'hello':
                 version = '-old-'
             else:
                 version = ''
-        except:
+        except Exception:
             version = ''
     return version or ''
 
@@ -342,7 +342,7 @@ def library_version():
             versions = dict([x.strip() for x in v.split(':', 1)]
                             for v in version_string.split(';'))
             return versions['library']
-        except:
+        except Exception:
             return None
 
 
@@ -355,7 +355,7 @@ def session_password():
         # might be necessary.
         try:
             return _request('session_password')
-        except:
+        except Exception:
             return None
     else:
         return None
@@ -364,13 +364,13 @@ def session_password():
 def x2goclient_version():
     try:
         version = _request('x2goclient_version')
-    except:
+    except Exception:
         try:
             if _request('echo', 'hello') == 'hello':
                 version = '-old-'
             else:
                 version = ''
-        except:
+        except Exception:
             version = ''
     return version or ''
 
@@ -378,7 +378,7 @@ def x2goclient_version():
 def get_clipboard_text():
     try:
         text = _request('get_clipboard_text')
-    except:
+    except Exception:
         return None
     if text:
         text = text.replace('\r\n', '\n')
@@ -390,7 +390,7 @@ def set_clipboard_text(text):
     text = text.replace('\n', '\r\n')
     try:
         _request('set_clipboard_text', text)
-    except:
+    except Exception:
         pass
 
 
@@ -408,7 +408,7 @@ def launch_url(url):
     assert isinstance(url, basestring), url
     try:
         return _request('launch_file', url)
-    except:
+    except Exception:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Unable to open URL %s", url))
 
@@ -508,5 +508,5 @@ def select_file(filename=None, directory=None, patterns=(), pattern=None, templa
 def run_python(script):
     try:
         return _request('run_python', script)
-    except:
+    except Exception:
         return None

@@ -230,7 +230,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         self._result = None
         try:
             self._create_form()
-        except:
+        except Exception:
             # This is necessary to prevent database connection leaks
             self._cleanup()
             raise
@@ -368,13 +368,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def _cleanup_data(self):
         try:
             self._data.close()
-        except:
+        except Exception:
             pass
         self._data = None
         if self._transaction is not None and self._transaction is not self._governing_transaction:
             try:
                 self._transaction.rollback()
-            except:
+            except Exception:
                 pass
 
     # Zpracování příkazů

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,7 @@ class UserSetttingsManager(object):
         finally:
             try:
                 self._data.close()
-            except:
+            except Exception:
                 pass
         return row
 
@@ -415,10 +415,10 @@ class FormProfileManager(UserSetttingsManager):
             kwargs['transaction'] = transaction
             try:
                 operation(*args, **kwargs)
-            except:
+            except Exception:
                 try:
                     transaction.rollback()
-                except:
+                except Exception:
                     pass
                 raise
             else:

@@ -321,7 +321,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         def init():
             try:
                 self._init()
-            except:
+            except Exception:
                 top_level_exception()
         wx.CallAfter(init)
         rpc_info = pytis.remote.RPCInfo
