@@ -148,11 +148,11 @@ def check_form():
     import pytis.form
 
     resolver = config.resolver
-    spec = pytis.form.run_dialog(pytis.form.InputDialog,
-                                 message="Kontrola defsu",
-                                 prompt="Specifikace",
-                                 input_width=30)
-    if spec:
+    result = pytis.form.run_form(pytis.form.InputForm, title="Kontrola specifikace", fields=(
+        pytis.presentation.Field('spec', "Specifikace", not_null=True, width=30),
+    ))
+    if result:
+        spec = result['spec'].value()
         try:
             data_spec = resolver.get(spec, 'data_spec')
             view_spec = resolver.get(spec, 'view_spec')
