@@ -67,11 +67,12 @@ import pytis.remote
 from .event import UserBreakException, wx_callback
 from .dialog import (
     AggregationSetupDialog, Error, Warning, FileDialog, ProgressDialog,
-    InputNumeric, MultiQuestion, Question, CheckListDialog,
+    MultiQuestion, Question, CheckListDialog,
 )
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
     QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
+    InputForm,
 )
 from .output import print_form
 from .screen import (
@@ -2977,14 +2978,13 @@ class FoldableForm(ListForm):
 
     def _cmd_folding_level(self):
         if self._folding_enabled():
-            result = run_dialog(InputNumeric,
-                                message=_("Folding/unfolding form nodes to a particular level."),
-                                prompt=_("Folding level (1-...):"),
-                                min_value=1,
-                                integer_width=2)
-            level = result.value()
-            if level is not None:
-                self._folding = self.Folding(level=level)
+            result = run_form(InputForm, title=_("Select folding level"), fields=(
+                Field('level', _("Folding level"), width=2,
+                      type=pytis.data.Integer(not_null=True, minimum=1),
+                      descr=_("Enter the number denoting the folding level to fold/unfold")),
+            ))
+            if result:
+                self._folding = self.Folding(level=result['level'].value())
                 self._refresh_folding()
 
     def folding_level(self, row):

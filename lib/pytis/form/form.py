@@ -62,7 +62,7 @@ from .application import (
     wx_focused_window,
 )
 from .dialog import (
-    Message, Question, Warning, Error, MultiQuestion, InputNumeric,
+    Message, Question, Warning, Error, MultiQuestion,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -1233,12 +1233,13 @@ class LookupForm(InnerForm):
     def _cmd_jump(self):
         max_value = self._lf_count()
         if max_value > 0:
-            prompt = _(u"Record number (1-%s):") % (max_value,)
-            result = run_dialog(InputNumeric, message=_(u"Jump to record"),
-                                prompt=prompt, min_value=1, max_value=max_value)
-            row = result.value()
-            if row is not None:
-                self.select_row(row - 1)
+            result = run_form(InputForm, title=_(u"Jump to record"), fields=(
+                Field('row', _("Row number"),
+                      type=pytis.data.Integer(not_null=True, minimum=1, maximum=max_value),
+                      descr=_("Row number between 1 and %d", max_value)),
+            ))
+            if result:
+                self.select_row(result['row'].value() - 1)
 
     def _cmd_first_record(self):
         self.select_row(0)
