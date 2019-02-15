@@ -239,7 +239,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             pytis.form.message('')
         if not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent)):
             if __debug__:
-                log(DEBUG, 'Zpracování události:', (event, event.__class__))
+                log(DEBUG, 'Processing event:', (event, event.__class__))
         try:
             if thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost během události
@@ -356,7 +356,8 @@ def _stop_check(start_time, confirmed, command_number):
         _stop_check_running = True
         try:
             answer = pytis.form.run_dialog(pytis.form.Question,
-                                           u"Zobrazení formuláře už trvá dlouho, má se přerušit?")
+                                           _("Form startup already takes long. "
+                                             "Should it be interrupted?"))
         finally:
             _stop_check_running = False
             block_idle(False)
