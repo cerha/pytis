@@ -56,7 +56,7 @@ import pytis.presentation
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import DEBUG, EVENT, OPERATIONAL, \
     ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
-from pytis.form import wx_callback, top_level_exception
+from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
