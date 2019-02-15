@@ -628,26 +628,25 @@ class Configuration(object):
                    'dbport': 'port',
                    'dbuser': 'user',
                    'dbpass': 'password',
+                   'dbschemas': 'schemas',
                    'dbsslm': 'sslmode'}
 
             def connection_options(items):
                 # Transform configuration option names to DBConnection option names.
-                return dict([(map[key], value) for key, value in items
-                             if value is not None])
+                options = {'schemas': None}
+                for key, value in items:
+                    if value is not None:
+                        if key == 'dbschemas':
+                            value = [s.strip() for s in value.split(',')]
+                        options[map[key]] = value
+                return options
             cfg = self._configuration
             options = connection_options([(option, getattr(cfg, option))
                                           for option in map.keys() if hasattr(cfg, option)])
             alternatives = [(name, connection_options(opts.items()))
                             for name, opts in cfg.dbconnections.items()]
-            schemas_string = cfg.dbschemas
-            if schemas_string:
-                schemas = [s.strip() for s in schemas_string.split(',')]
-            else:
-                schemas = None
             import pytis.data
-            return pytis.data.DBConnection(alternatives=dict(alternatives),
-                                           schemas=schemas,
-                                           **options)
+            return pytis.data.DBConnection(alternatives=dict(alternatives), **options)
 
     class _Option_session_variables(HiddenOption):
         """Custom session variables.
