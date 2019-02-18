@@ -52,14 +52,14 @@ from .command import CommandHandler
 from .screen import (
     Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem,
     MSeparator, FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
-    popup_menu, wx_button, DEFAULT_WINDOW_BACKGROUND_COLOUR,
+    popup_menu, wx_button, wx_focused_window,
+    DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
     Application, action_has_access, block_refresh, block_yield,
     create_data_object, current_form, db_op, db_operation, decrypted_names,
     delete_record, form_settings_manager, has_access, message, new_record,
     profile_manager, refresh, run_dialog, run_form, top_window,
-    wx_focused_window,
 )
 from .dialog import (
     Message, Question, Warning, Error, MultiQuestion,
