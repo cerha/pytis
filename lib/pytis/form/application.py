@@ -1726,6 +1726,23 @@ class InputDate(object):
 
 
 def input_text(title, label, default=None, not_null=False, width=20, height=1, descr=None):
+    """Display a form for entering a single textual value and return this value.
+
+    Arguments:
+      title -- input form main title (basestring).
+      label -- field label (basestring).
+      default -- initial field value (basestring).
+      not_null -- iff True, it will not be possible to submit the form without
+        entering a value.
+      width -- input field width (number of characters).
+      height -- input field height (number of characters).
+      descr -- field description displayed in a tooltip of a blue icon right from the field.
+
+    Returns the value entered into the field as a basestring or None if the
+    form was escaped or the value was empty (only possible when not_null is
+    False).
+
+    """
     row = run_form(pytis.form.InputForm, title=title, fields=(
         Field('text', label, default=default, type=pytis.data.String(not_null=not_null),
               width=width, height=height, descr=descr),
@@ -1738,6 +1755,26 @@ def input_text(title, label, default=None, not_null=False, width=20, height=1, d
 
 def input_number(title, label, default=None, not_null=True, width=14, precision=None,
                  minimum=None, maximum=None, descr=None):
+    """Display a form for entering a single numeric value and return this value.
+
+    Arguments:
+      title -- input form main title (basestring).
+      label -- field label (basestring).
+      default -- initial field value as int or float (float when
+        precision is given).
+      not_null -- iff True, it will not be possible to submit the form without
+        entering a value.
+      width -- total input field width (number of characters).
+      precision -- number of digits after decimal point or None for an integer field.
+      minimum -- minimal value; 'None' denotes no limit.
+      maximum -- maximal value; 'None' denotes no limit.
+      descr -- field description displayed in a tooltip of a blue icon right from the field.
+
+    Returns the value entered into the field as int or float (float when
+    precision was given) or None if the form was escaped or the value was empty
+    (only possible when not_null is False).
+
+    """
     kwargs = dict(not_null=not_null, minimum=minimum, maximum=maximum)
     if precision:
         t = pytis.data.Float(precision=precision, **kwargs)
@@ -1753,6 +1790,21 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
 
 
 def input_date(title, label, default=None, not_null=True, descr=None):
+    """Display a form for entering a date and return this value.
+
+    Arguments:
+      title -- input form main title (basestring).
+      label -- field label (basestring).
+      default -- initial field value as 'datetime.date' or None.
+      not_null -- iff True, it will not be possible to submit the form without
+        entering a value.
+      descr -- field description displayed in a tooltip of a blue icon right from the field.
+
+    Returns the value entered into the field as a 'datetime.date' instance or
+    None if the form was escaped or the value was empty (only possible when
+    not_null is False).
+
+    """
     row = run_form(pytis.form.InputForm, title=title, fields=(
         Field('date', label, default=default, type=pytis.data.Date(not_null=not_null),
               descr=descr),
