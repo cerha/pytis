@@ -54,8 +54,7 @@ from .screen import (  # noqa!
 )
 
 from .dialog import (  # noqa!
-    Dialog, Message, Warning, Error, MultiQuestion,
-    Question, InputDialog, InputDate, InputNumeric, OperationDialog,
+    Dialog, Message, Warning, Error, MultiQuestion, Question, OperationDialog,
     ProgressDialog, RepeatedOperationDialog, Calendar, ColorSelector,
     BugReport, CheckListDialog, CheckMatrixDialog, AggregationSetupDialog,
     FileDialog, DirDialog,
@@ -94,9 +93,10 @@ from .output import (  # noqa!
 )
 
 from .application import (  # noqa!
-    Application, DbActionLogger, run_form, run_procedure, new_record,
-    delete_record, refresh, exit, db_operation, db_op,
-    delete_record_question, run_dialog, current_form, top_window,
+    Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
+    run_form, run_dialog, run_procedure, input_text, input_number, input_date,
+    new_record, delete_record, refresh, exit, db_operation, db_op,
+    delete_record_question, current_form, top_window,
     recent_forms_menu, wx_frame, profile_manager, form_settings_manager,
     aggregated_views_manager, decrypted_names, log_user_action,
     frame_title, close_forms, set_status, refresh_status, message,

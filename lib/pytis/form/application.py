@@ -1664,15 +1664,103 @@ def delete_record_question(msg=None):
     log(EVENT, u'Record deletion confirmed by user')
     return True
 
+
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.
 
 
-def run_dialog(*args, **kwargs):
+def run_dialog(arg1, *args, **kwargs):
     """Zobraz dialog v okně aplikace (viz 'Application.run_dialog()')."""
-    if _application is not None:
-        return _application.run_dialog(*args, **kwargs)
+    if _application is None:
+        log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
+    elif arg1 == InputDialog:
+        return input_text(title=kwargs.get('message'),
+                          label=kwargs.get('prompt'),
+                          default=kwargs.get('value'),
+                          width=kwargs.get('input_width'),
+                          height=kwargs.get('input_height'))
+    elif arg1 == InputNumeric:
+        precision = kwargs.get('decimal_width', 0)
+        minimum = kwargs.get('min_value')
+        maximum = kwargs.get('max_value')
+        if precision:
+            t = pytis.data.Float(precision=precision)
+            cast = float
+        else:
+            t = pytis.data.Integer()
+            cast = int
+        value = input_number(title=kwargs.get('message'),
+                             label=kwargs.get('prompt'),
+                             width=kwargs.get('integer_width', 10) + precision + 1,
+                             precision=precision,
+                             minimum=cast(minimum) if minimum else None,
+                             maximum=cast(maximum) if maximum else None,
+                             #select_on_entry=False,
+                             default=kwargs.get('value'))
+        return pytis.data.Value(t, value)
+
+    elif arg1 == InputDate:
+        # Backwards compatibility hack.
+        value = kwargs.get('value')
+        if value:
+            value, error = pytis.data.Date().validate(value)
+            if value:
+                value = value.value()
+        return input_date(title=kwargs.get('message'), label=kwargs.get('prompt'), default=value)
     else:
-        log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
+        return _application.run_dialog(arg1, *args, **kwargs)
+
+
+class InputDialog(object):
+    """Legacy hack for replacing the DEPRECATED InputDialog by InputForm."""
+    pass
+
+
+class InputNumeric(object):
+    """Legacy hack for replacing the DEPRECATED InputNumeric dialog by InputForm."""
+    pass
+
+
+class InputDate(object):
+    """Legacy hack for replacing the DEPRECATED InputDate dialog by InputForm."""
+    pass
+
+
+def input_text(title, label, default=None, not_null=False, width=20, height=1, descr=None):
+    row = run_form(pytis.form.InputForm, title=title, fields=(
+        Field('text', label, default=default, type=pytis.data.String(not_null=not_null),
+              width=width, height=height, descr=descr),
+    ))
+    if row:
+        return row['text'].value()
+    else:
+        return None
+
+
+def input_number(title, label, default=None, not_null=True, width=14, precision=None,
+                 minimum=None, maximum=None, descr=None):
+    kwargs = dict(not_null=not_null, minimum=minimum, maximum=maximum)
+    if precision:
+        t = pytis.data.Float(precision=precision, **kwargs)
+    else:
+        t = pytis.data.Integer(**kwargs)
+    row = run_form(pytis.form.InputForm, title=title, fields=(
+        Field('number', label, default=default, type=t, width=width, descr=descr, **kwargs),
+    ))
+    if row:
+        return row['number'].value()
+    else:
+        return None
+
+
+def input_date(title, label, default=None, not_null=True, descr=None):
+    row = run_form(pytis.form.InputForm, title=title, fields=(
+        Field('date', label, default=default, type=pytis.data.Date(not_null=not_null),
+              descr=descr),
+    ))
+    if row:
+        return row['date'].value()
+    else:
+        return None
 
 
 def current_form(**kwargs):
