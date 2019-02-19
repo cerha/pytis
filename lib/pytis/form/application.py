@@ -1705,7 +1705,8 @@ def run_dialog(arg1, *args, **kwargs):
             value, error = pytis.data.Date().validate(value)
             if value:
                 value = value.value()
-        return input_date(title=kwargs.get('message'), label=kwargs.get('prompt'), default=value)
+        value = input_date(title=kwargs.get('message'), label=kwargs.get('prompt'), default=value)
+        return pytis.data.Value(pytis.data.Date(), value)
     else:
         return _application.run_dialog(arg1, *args, **kwargs)
 
