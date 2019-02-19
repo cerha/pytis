@@ -47,7 +47,7 @@ from pytis.util import (
     find, format_traceback, log, super_, xlist, xtuple, argument_names,
 )
 
-from .event import UserBreakException
+from .event import UserBreakException, wx_callback
 from .command import CommandHandler
 from .screen import (
     Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem,
@@ -244,7 +244,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
                                                                   self._form_log_info())),
                                         ('t_start', start_time,),
                                         ('t_show', show_time,),)
-        pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
+        wx_callback(wx.EVT_IDLE, self, self._on_idle)
         log(EVENT, 'Form created in %.3fs:' %
             (pytis.data.DateTime.diff_seconds(start_time, show_time),), self)
 
@@ -795,7 +795,7 @@ class PopupForm:
         except AttributeError:
             frame = wx.Dialog(parent, style=self._popup_frame_style())
             self._popup_frame_ = frame
-            pytis.form.wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
+            wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         return frame
 
     def _popup_frame_style(self):
@@ -2441,7 +2441,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
         if isinstance(self.Parent, wx.Dialog):
-            pytis.form.wx_callback(wx.EVT_INIT_DIALOG, self.Parent, self._set_focus_field)
+            wx_callback(wx.EVT_INIT_DIALOG, self.Parent, self._set_focus_field)
         else:
             self._set_focus_field()
 
@@ -2570,7 +2570,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # SetMinSize is necessary here in order to get correct results from
         # form.GetVirtualSize(), especially when wx.Notebook is involved.
         panel.SetMinSize(sizer.CalcMin())
-        pytis.form.wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
+        wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
 
     def _field(self, id):
@@ -3158,7 +3158,7 @@ class PopupEditForm(PopupForm, EditForm):
             button = wx_button(self, fullsize=True, **kwargs)
             if i == 0:
                 button.SetDefault()
-            pytis.form.wx_callback(wx.EVT_KEY_DOWN, button, self.on_key_down)
+            wx_callback(wx.EVT_KEY_DOWN, button, self.on_key_down)
             self._tab_navigated_widgets.append(button)
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer

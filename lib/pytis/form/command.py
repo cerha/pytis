@@ -114,7 +114,7 @@ class CommandHandler:
         Returns: The return value of the command handler method.
 
         """
-        from .event import UserBreakException
+        from .event import UserBreakException, top_level_exception
         from .screen import busy_cursor
         handler, kwargs = cls._command_handler(command, **kwargs)
         CommandHandler._command_counter.next()
@@ -131,7 +131,6 @@ class CommandHandler:
         except SystemExit:
             raise
         except Exception:
-            from pytis.form import top_level_exception
             top_level_exception()
 
     def on_command(self, command, **kwargs):
@@ -302,7 +301,7 @@ class Command(object):
             pytis.util.log(kind, 'Invoking command:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            from pytis.form import message
+            from .application import message
             message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
             return False
 
@@ -414,14 +413,14 @@ class UICommand(object):
             if assigned_icon is None:
                 raise Exception("No icon assigned for command %s %s." % (cmd, args))
             import wx
-            from pytis.form import get_icon
+            from .screen import get_icon
             icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
             if icon is None:
                 icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
             tool = toolbar.AddTool(-1, self._title, icon, wx.NullBitmap,
                                    shortHelp=self._title, longHelp=self._descr)
             parent = toolbar.GetParent()
-            from pytis.form import wx_callback
+            from .event import wx_callback
             wx_callback(wx.EVT_TOOL, parent, lambda e: cmd.invoke(**args), source=tool)
             wx_callback(wx.EVT_UPDATE_UI, parent, lambda e: e.Enable(cmd.enabled(**args)),
                         source=tool)

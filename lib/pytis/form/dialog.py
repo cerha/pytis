@@ -47,6 +47,7 @@ from pytis.presentation import TextFormat
 from pytis.util import ProgramError, super_
 
 from .command import CommandHandler
+from .event import wx_callback
 from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view
 
 _ = pytis.util.translations('pytis-wx')
@@ -191,7 +192,7 @@ class GenericDialog(Dialog):
         for b in self._create_buttons():
             button_sizer.Add(b, 0, wx.ALL, 8)
             # registruj handlery událostí
-            pytis.form.wx_callback(wx.EVT_BUTTON, b, self._on_button)
+            wx_callback(wx.EVT_BUTTON, b, self._on_button)
             self._handle_keys(b)
         # poskládej obsah a tlačítka do top-level sizeru (nad sebe)
         if self._report is not None:
@@ -202,7 +203,7 @@ class GenericDialog(Dialog):
             report.SetMinSize(report.GetSize())
             sizer.Add(report, 1, wx.EXPAND)
         sizer.Add(button_sizer, 0, wx.CENTER)
-        pytis.form.wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
+        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
         if self._report is not None:
@@ -727,7 +728,7 @@ class Calendar(GenericDialog):
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
-        pytis.form.wx_callback(wx.adv.EVT_CALENDAR, cal, self._on_calendar)
+        wx_callback(wx.adv.EVT_CALENDAR, cal, self._on_calendar)
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal
