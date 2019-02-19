@@ -1694,7 +1694,7 @@ def run_dialog(arg1, *args, **kwargs):
                              precision=precision,
                              minimum=cast(minimum) if minimum else None,
                              maximum=cast(maximum) if maximum else None,
-                             #select_on_entry=False,
+                             avoid_initial_selection=kwargs.get('select_on_entry', False),
                              default=kwargs.get('value'))
         return pytis.data.Value(t, value)
 
@@ -1725,7 +1725,8 @@ class InputDate(object):
     pass
 
 
-def input_text(title, label, default=None, not_null=False, width=20, height=1, descr=None):
+def input_text(title, label, default=None, not_null=False, width=20, height=1, descr=None,
+               avoid_initial_selection=True):
     """Display a form for entering a single textual value and return this value.
 
     Arguments:
@@ -1736,17 +1737,24 @@ def input_text(title, label, default=None, not_null=False, width=20, height=1, d
         entering a value.
       width -- input field width (number of characters).
       height -- input field height (number of characters).
-      descr -- field description displayed in a tooltip of a blue icon right from the field.
+      descr -- field description displayed in a tooltip of a blue icon right
+        from the field.
+      avoid_initial_selection -- the input field value is by default initially
+        selected, which results in overwriting the whole value when the user
+        starts typing.  Passing False here avoids this initial selection.
 
     Returns the value entered into the field as a basestring or None if the
     form was escaped or the value was empty (only possible when not_null is
     False).
 
     """
-    row = run_form(pytis.form.InputForm, title=title, fields=(
-        Field('text', label, default=default, type=pytis.data.String(not_null=not_null),
-              width=width, height=height, descr=descr),
-    ))
+    row = run_form(
+        pytis.form.InputForm, title=title, fields=(
+            Field('text', label, default=default, type=pytis.data.String(not_null=not_null),
+                  width=width, height=height, descr=descr),
+        ),
+        avoid_initial_selection=avoid_initial_selection,
+    )
     if row:
         return row['text'].value()
     else:
@@ -1754,7 +1762,7 @@ def input_text(title, label, default=None, not_null=False, width=20, height=1, d
 
 
 def input_number(title, label, default=None, not_null=True, width=14, precision=None,
-                 minimum=None, maximum=None, descr=None):
+                 minimum=None, maximum=None, descr=None, avoid_initial_selection=True):
     """Display a form for entering a single numeric value and return this value.
 
     Arguments:
@@ -1768,7 +1776,11 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
       precision -- number of digits after decimal point or None for an integer field.
       minimum -- minimal value; 'None' denotes no limit.
       maximum -- maximal value; 'None' denotes no limit.
-      descr -- field description displayed in a tooltip of a blue icon right from the field.
+      descr -- field description displayed in a tooltip of a blue icon right
+        from the field.
+      avoid_initial_selection -- the input field value is by default initially
+        selected, which results in overwriting the whole value when the user
+        starts typing.  Passing False here avoids this initial selection.
 
     Returns the value entered into the field as int or float (float when
     precision was given) or None if the form was escaped or the value was empty
@@ -1780,16 +1792,21 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
         t = pytis.data.Float(precision=precision, **kwargs)
     else:
         t = pytis.data.Integer(**kwargs)
-    row = run_form(pytis.form.InputForm, title=title, fields=(
-        Field('number', label, default=default, type=t, width=width, descr=descr, **kwargs),
-    ))
+    row = run_form(
+        pytis.form.InputForm, title=title, fields=(
+            Field('number', label, default=default, type=t, width=width, descr=descr, **kwargs),
+        ),
+        avoid_initial_selection=avoid_initial_selection,
+    )
     if row:
         return row['number'].value()
     else:
         return None
 
 
-def input_date(title, label, default=None, not_null=True, descr=None):
+def input_date(title, label, default=None, not_null=True, descr=None,
+               avoid_initial_selection=True):
+
     """Display a form for entering a date and return this value.
 
     Arguments:
@@ -1798,17 +1815,24 @@ def input_date(title, label, default=None, not_null=True, descr=None):
       default -- initial field value as 'datetime.date' or None.
       not_null -- iff True, it will not be possible to submit the form without
         entering a value.
-      descr -- field description displayed in a tooltip of a blue icon right from the field.
+      descr -- field description displayed in a tooltip of a blue icon right
+        from the field.
+      avoid_initial_selection -- the input field value is by default initially
+        selected, which results in overwriting the whole value when the user
+        starts typing.  Passing False here avoids this initial selection.
 
     Returns the value entered into the field as a 'datetime.date' instance or
     None if the form was escaped or the value was empty (only possible when
     not_null is False).
 
     """
-    row = run_form(pytis.form.InputForm, title=title, fields=(
-        Field('date', label, default=default, type=pytis.data.Date(not_null=not_null),
-              descr=descr),
-    ))
+    row = run_form(
+        pytis.form.InputForm, title=title, fields=(
+            Field('date', label, default=default, type=pytis.data.Date(not_null=not_null),
+                  descr=descr),
+        ),
+        avoid_initial_selection=avoid_initial_selection,
+    )
     if row:
         return row['date'].value()
     else:

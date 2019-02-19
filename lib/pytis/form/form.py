@@ -3228,10 +3228,18 @@ class _VirtualEditForm(EditForm):
     keyword arguments passed to the form constructor and the data object is
     created as MemData object so no "real" database objects are needed as well.
 
+    Special constructor arguments:
+
+      avoid_initial_selection -- the initial value of the initially focused
+        input field (determines by 'focus_field') is by default also selected
+        (when this is an editable text field).  This results in overwriting the
+        whole value when the user starts typing.  Passing False here avoids
+        this initial selection.
+
     """
 
     def _full_init(self, resolver, name, guardian=None, transaction=None,
-                   prefill=None, **kwargs):
+                   prefill=None, avoid_initial_selection=False, **kwargs):
         self._specification = Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
@@ -3244,6 +3252,14 @@ class _VirtualEditForm(EditForm):
         super(_VirtualEditForm, self)._full_init(resolver, name, guardian=guardian,
                                                  mode=self.MODE_INSERT, prefill=prefill,
                                                  transaction=transaction, **additional_kwargs)
+        self._avoid_initial_selection = avoid_initial_selection
+
+    def _set_focus_field(self, event=None):
+        super(_VirtualEditForm, self)._set_focus_field(event=event)
+        if self._avoid_initial_selection:
+            w = wx_focused_window()
+            if isinstance(w, wx.TextCtrl):
+                w.SetSelection(0, 0)
 
     def _create_view_spec(self):
         return self._specification.view_spec()
