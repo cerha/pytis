@@ -3245,6 +3245,7 @@ class _VirtualEditForm(EditForm):
             data_cls=pytis.data.RestrictedMemData,
             **kwargs
         )
+        self._avoid_initial_selection = avoid_initial_selection
         if isinstance(self, PopupEditForm):
             additional_kwargs = dict(multi_insert=False)
         else:
@@ -3252,7 +3253,6 @@ class _VirtualEditForm(EditForm):
         super(_VirtualEditForm, self)._full_init(resolver, name, guardian=guardian,
                                                  mode=self.MODE_INSERT, prefill=prefill,
                                                  transaction=transaction, **additional_kwargs)
-        self._avoid_initial_selection = avoid_initial_selection
 
     def _set_focus_field(self, event=None):
         super(_VirtualEditForm, self)._set_focus_field(event=event)
