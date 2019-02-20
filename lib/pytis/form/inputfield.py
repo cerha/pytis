@@ -653,7 +653,7 @@ class InputField(object, KeyHandler, CommandHandler):
             for ctrl, set_editable in self._controls:
                 ctrl.GetId()
             return True
-        except wx.RuntimeError:
+        except RuntimeError:
             return False
 
     # Command processing
