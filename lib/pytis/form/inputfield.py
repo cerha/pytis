@@ -835,22 +835,8 @@ class TextField(InputField):
     """
 
     def _create_ctrl(self, parent):
-        class TextCtrl(wx.TextCtrl):
-            def GetEditable(self):
-                # Calling GetEditable on a multiline field raises:
-                # wxAssertionError: C++ assertion "IsSingleLine()"
-                # failed at wxWidgets/src/gtk/textctrl.cpp(853) in
-                # GetEditable(): shouldn't be called for multiline.
-                # We actually never call GetEditable() ourselves,
-                # but wx seems to call it internally when .Copy()
-                # is called (although we are unable to reproduce it).
-                if self.IsSingleLine():
-                    return super(TextCtrl, self).GetEditable()
-                else:
-                    return False
-
-        control = TextCtrl(parent, -1, '', style=self._text_ctrl_style(),
-                           size=field_size(parent, self.width(), self.height()))
+        control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(),
+                              size=field_size(parent, self.width(), self.height()))
         maxlen = self._maxlen()
         if maxlen is not None and self.height() == 1:
             # Setting max length on multiline TextCtrl fields is not supported
