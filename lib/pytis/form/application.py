@@ -1675,7 +1675,7 @@ def run_dialog(arg1, *args, **kwargs):
         log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
     elif arg1 == InputDialog:
         return input_text(title=kwargs.get('message'),
-                          label=kwargs.get('prompt'),
+                          label=kwargs.get('prompt', '').rstrip(':'),
                           default=kwargs.get('value'),
                           width=kwargs.get('input_width'),
                           height=kwargs.get('input_height'))
@@ -1690,7 +1690,7 @@ def run_dialog(arg1, *args, **kwargs):
             t = pytis.data.Integer()
             cast = int
         value = input_number(title=kwargs.get('message'),
-                             label=kwargs.get('prompt'),
+                             label=kwargs.get('prompt', '').rstrip(':'),
                              width=kwargs.get('integer_width', 10) + precision + 1,
                              precision=precision,
                              minimum=cast(minimum) if minimum else None,
@@ -1706,7 +1706,9 @@ def run_dialog(arg1, *args, **kwargs):
             value, error = pytis.data.Date().validate(value)
             if value:
                 value = value.value()
-        value = input_date(title=kwargs.get('message'), label=kwargs.get('prompt'), default=value)
+        value = input_date(title=kwargs.get('message'),
+                           label=kwargs.get('prompt', '').rstrip(':'),
+                           default=value)
         return pytis.data.Value(pytis.data.Date(), value)
     else:
         return _application.run_dialog(arg1, *args, **kwargs)
