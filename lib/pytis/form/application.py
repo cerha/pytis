@@ -27,6 +27,7 @@ uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
 
 import collections
 import copy
+import decimal
 import os.path
 import string
 import sys
@@ -1788,14 +1789,16 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
     (only possible when not_null is False).
 
     """
-    kwargs = dict(not_null=not_null, minimum=minimum, maximum=maximum)
     if precision:
-        t = pytis.data.Float(precision=precision, **kwargs)
+        quantizer = decimal.Decimal('1.' + '0' * precision)
+        t = pytis.data.Float(precision=precision, not_null=not_null,
+                             minimum=decimal.Decimal(minimum).quantize(quantizer),
+                             maximum=decimal.Decimal(maximum).quantize(quantizer))
     else:
-        t = pytis.data.Integer(**kwargs)
+        t = pytis.data.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
     row = run_form(
         pytis.form.InputForm, title=title, fields=(
-            Field('number', label, default=default, type=t, width=width, descr=descr, **kwargs),
+            Field('number', label, default=default, type=t, width=width, descr=descr),
         ),
         avoid_initial_selection=avoid_initial_selection,
     )
