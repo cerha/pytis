@@ -318,7 +318,12 @@ class SFDialog(SFSDialog):
                 value = None
             elif isinstance(arg2, (pytis.data.WMValue, pytis.data.Value)):
                 col2 = None
-                value = isinstance(arg2, pytis.data.WMValue) and arg2.value() or arg2.export()
+                if isinstance(arg2, pytis.data.WMValue):
+                    value = arg2.value()
+                elif isinstance(col1.type(), pytis.data.Range):
+                    value = ' - '.join(arg2.export())
+                else:
+                    value = arg2.export()
             else:
                 raise Exception("Invalid operand type: " + repr(arg))
             return (op, col1, col2, value),
@@ -466,6 +471,11 @@ class SFDialog(SFSDialog):
                     kwargs = dict(strict=False)
                     if isinstance(col1.type(), pytis.data.Boolean):
                         kwargs['extended'] = True
+                    elif isinstance(col1.type(), pytis.data.Range):
+                        val = tuple(x.strip() for x in val.split('-'))
+                        if len(val) != 2:
+                            raise self.SFConditionError(i, wval, _("Range must consist of two "
+                                                                   "values separated by a dash."))
                     value, err = col1.type().validate(val, **kwargs)
                 if err:
                     raise self.SFConditionError(i, wval, err.message())
@@ -543,7 +553,9 @@ class SFDialog(SFSDialog):
         wcol1, wop, wcol2, wval = self._controls[i][:4]
         col = self._columns[wcol1.GetSelection()]
         v = self._row[col.id()].export()
-        if isinstance(v, (tuple, list,)):
+        if isinstance(col.type(), pytis.data.Range):
+            v = ' - '.join(v)
+        elif isinstance(v, (tuple, list,)):
             v = v[0]
         wval.SetValue(v)
 
