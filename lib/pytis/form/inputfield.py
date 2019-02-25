@@ -56,6 +56,7 @@ from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, mitem, open_data_as_file,
     paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
+    copy_to_clipboard,
 )
 from .application import (
     Application, create_data_object, decrypted_names, delete_record,
@@ -995,7 +996,10 @@ class TextField(InputField):
         return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
 
     def _cmd_cut(self):
-        self._current_ctrl().Cut()
+        ctrl = self._current_ctrl()
+        selection = ctrl.GetSelection()
+        self._cmd_copy()
+        ctrl.Remove(*selection)
         self._on_change()
 
     def _can_copy(self):
@@ -1003,7 +1007,16 @@ class TextField(InputField):
         return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
 
     def _cmd_copy(self):
-        self._current_ctrl().Copy()
+        ctrl = self._current_ctrl()
+        if self.height() > 1:
+            # Calling Copy on a multiline field raises: "wxAssertionError:
+            # C++ assertion "IsSingleLine()" failed at
+            # .../wxWidgets/src/gtk/textctrl.cpp(853)
+            # in GetEditable(): shouldn't be called for multiline"
+            # since wxPython 4.0.4.  Thus we need to work around:
+            copy_to_clipboard(ctrl.GetStringSelection())
+        else:
+            ctrl.Copy()
 
     def _can_paste(self):
         ctrl = self._current_ctrl()
