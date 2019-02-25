@@ -1380,14 +1380,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             descr = ''
         window = event.GetEventObject()
-        tip = window.GetToolTip()
-        # Setting to None doesn't remove the tooltip, so we at least set the tooltip to an ampty
-        # string.
-        if tip is None:
-            tip = wx.ToolTip(descr)
-            window.SetToolTip(tip)
-        elif tip.GetTip() != descr:
-            tip.SetTip(descr)
+        # Testing the attribute is here to work around strange errors, where
+        # we got a MenuItem instance from GetEventObject.  We didn't manage
+        # to reproduce it, but we received such tracebacks.
+        if hasattr(window, 'GetToolTip'):
+            tip = window.GetToolTip()
+            # Setting to None doesn't remove the tooltip, so we at least set
+            # the tooltip to an ampty string.
+            if tip is None:
+                tip = wx.ToolTip(descr)
+                window.SetToolTip(tip)
+            elif tip.GetTip() != descr:
+                tip.SetTip(descr)
 
     def _on_label_drag_size(self, event):
         self._remember_column_width(event.GetRowOrCol())
