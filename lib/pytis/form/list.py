@@ -3060,7 +3060,10 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         if self._folding_enabled():
             height = self._DEFAULT_WINDOW_HEIGHT
         else:
-            height = g.GetColLabelSize() + g.GetNumberRows() * g.GetRowSize(0) + 50
+            height = g.GetColLabelSize()
+            rows = g.GetNumberRows()
+            if rows:
+                height += rows * g.GetRowSize(0) + 50
             if self._title_bar:
                 height += self._title_bar.Size.height
             height = min(self._DEFAULT_WINDOW_HEIGHT, height)
@@ -3068,11 +3071,10 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             height += 30
         if self._query_fields_form and self._query_fields_form.IsShown():
             height += self._query_fields_form.GetSize().y
-        # 660 seems to be the minimal width to make the profile selector in the toolbar visible.
         grid_width = functools.reduce(lambda x, c: x + self._ideal_column_width(c),
                                       self._columns,
                                       g.GetRowLabelSize())
-
+        # 660 seems to be the minimal width to make the profile selector in the toolbar visible.
         width = max(grid_width + 30, 660)
         self.SetSize((width, height))
 
