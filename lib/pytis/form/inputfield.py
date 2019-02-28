@@ -56,7 +56,7 @@ from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, mitem, open_data_as_file,
     paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
-    copy_to_clipboard,
+    copy_to_clipboard, field_size
 )
 from .application import (
     Application, create_data_object, decrypted_names, delete_record,
@@ -66,27 +66,6 @@ from .application import (
 import config
 
 _ = pytis.util.translations('pytis-wx')
-
-
-def field_size(parent, width, height):
-    """Return pixel size of a wx.TextCtrl fitting text of given character width/height.
-
-    Text fields are the most common fields so some other widgets, such as
-    buttons etc. may also use 'field_size()' to match text field sizes and
-    align with them nicely.
-
-    Note, that the width computation can not exactly suit to any text when
-    proportional fonts are used.  It usually suits an average text with even
-    occurence of wide and narrow letters.  The computation is tuned to make
-    small fields (up to three chars) wide enough to fit exactly the given
-    number of letters even if these are the widest possible capital letters,
-    such as G.  With higher width values (4 and above) the wide letters will
-    stop to fit but the field size will match well for numbers.  So if wide
-    letters are expected in field values, their width must be proportionally
-    set higher than the number of characters intended to fit.
-
-    """
-    return dlg2px(parent, 4 * width + 12, 8 * height + 6)
 
 
 class _Completer(wx.PopupWindow):

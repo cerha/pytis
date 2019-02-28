@@ -35,7 +35,7 @@ from pytis.presentation import Field
 from pytis.util import find
 
 from .dialog import Error, GenericDialog
-from .screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl
+from .screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl, field_size
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -74,7 +74,6 @@ class SFSColumn(object):
 class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
-    _FIELD_HEIGHT = 32
     _TITLE = None
     _ESCAPE_BUTTON = _("Close")
     _BUTTONS = (_ESCAPE_BUTTON,)
@@ -99,7 +98,7 @@ class SFSDialog(GenericDialog):
 
     def _create_ctrl(self, constructor, *args, **kwargs):
         parent = kwargs.pop('parent', self._dialog)
-        kwargs['height'] = self._FIELD_HEIGHT
+        kwargs['height'] = field_size(parent, 1, 1)[1]
         ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
         return ctrl
@@ -122,7 +121,7 @@ class SFSDialog(GenericDialog):
         label_ctrl = wx.StaticText(panel, -1, label)
         sizer.Add(label_ctrl, border=12, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT)
         panel.SetSizer(sizer)
-        panel.SetMinSize((label_ctrl.GetSize().width + 12, self._FIELD_HEIGHT))
+        panel.SetMinSize((label_ctrl.GetSize().width + 12, field_size(panel, 1, 1)[1]))
         return panel
 
     def _create_content(self, sizer):

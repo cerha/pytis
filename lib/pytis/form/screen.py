@@ -98,6 +98,38 @@ _WX_COLOR_DB = {}
 # DEFAULT_WINDOW_BACKGROUND_COLOUR = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
 DEFAULT_WINDOW_BACKGROUND_COLOUR = '#e8e8e8'
 
+FIELD_PADDING = (24, 11)
+"""Text field padding as a tuple of (x-padding, y-padding) in pixels.
+
+This padding is used to compute the size of a wx.TextCtrl in 'field_size()'.
+
+"""
+if wx.version().split(' ')[1] == 'gtk2':
+    FIELD_PADDING = (24, 17)
+
+
+def field_size(parent, width, height):
+    """Return pixel size of a wx.TextCtrl fitting text of given character width/height.
+
+    Text fields are the most common fields so some other widgets, such as
+    buttons etc. may also use 'field_size()' to match text field sizes and
+    align with them nicely.
+
+    Note, that the width computation can not exactly suit to any text when
+    proportional fonts are used.  It usually suits an average text with even
+    occurence of wide and narrow letters.  The computation is tuned to make
+    small fields (up to three chars) wide enough to fit exactly the given
+    number of letters even if these are the widest possible capital letters,
+    such as G.  With higher width values (4 and above) the wide letters will
+    stop to fit but the field size will match well for numbers.  So if wide
+    letters are expected in field values, their width must be proportionally
+    set higher than the number of characters intended to fit.
+
+    Returns: Pixel size as a tuple of two integers (width, height)
+
+    """
+    return tuple(a + b for a, b in zip(char2px(parent, width, height), FIELD_PADDING))
+
 
 def init_colors():
     global _WX_COLORS, _WX_COLOR_DB
