@@ -100,11 +100,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         import pytis.extensions
         self._specification = config.resolver.specification('Application')
 
-        import gi
-        gi.require_version('Gtk', '3.0')
-        from gi.repository import Gtk, Gdk
-        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        clipboard.connect('owner-change', self._on_clipboard_copy)
+        if wx.version().split(' ')[1] == 'gtk3':
+            import gi
+            gi.require_version('Gtk', '3.0')
+            from gi.repository import Gtk, Gdk
+            clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+            clipboard.connect('owner-change', self._on_clipboard_copy)
 
         init_colors()
         # Create the main application frame.
