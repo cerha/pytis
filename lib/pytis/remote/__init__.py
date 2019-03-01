@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -24,7 +24,7 @@ except ImportError as e:
     def run_proxy(*args, **kwargs):
         raise e
 
-from .remote import (
+from .remote import (  # noqa!
     nx_ip, client_ip, x2go_ip, client_available,
     version, library_version, x2goclient_version,
     session_password, get_clipboard_text, set_clipboard_text,

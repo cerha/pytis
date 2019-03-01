@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -54,7 +54,7 @@ class ProxyService(rpyc.Service):
         else:
             try:
                 port = getattr(master_connection.root, 'user_port')(user_name)
-            except:
+            except Exception:
                 master_connection = self._connections[master_port] = \
                     self._new_pytis_connection(target_ip, master_port)
                 port = getattr(master_connection.root, 'user_port')(user_name)
@@ -63,7 +63,7 @@ class ProxyService(rpyc.Service):
             connection = self._connections.get(port)
         try:
             remote_method = getattr(connection.root, request)
-        except:
+        except Exception:
             connection = self._connections[port] = self._new_pytis_connection(target_ip, port)
             remote_method = getattr(connection.root, request)
         return remote_method(*args, **kwargs)
