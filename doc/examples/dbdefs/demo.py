@@ -147,7 +147,7 @@ class DistantServer(sql.SQLForeignServer):
     host = 'db.example.com'
     database = 'foo'
     port = 5432
-    
+
 class DistantTable(sql.SQLForeignTable):
     name = 'distant_table'
     server = DistantServer
@@ -208,12 +208,12 @@ class AnonymousTrigger(sql.SQLTrigger):
     """There is no explicit name for this trigger.
 
     The trigger name is generated from its table name, events and position.
-    
+
     """
     body = LogFunction
     table = Bar
     schemas = ((Private, 'public',),)
-    
+
 class ReferencingTable(sql.SQLTable):
     name = 'referencing_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
@@ -345,9 +345,9 @@ class SimplifiedEditableView(sql.SQLView):
 
 class ViewOverView(sql.SQLView):
     """This view defines modification rules on SimplifiedEditableView.
-    
+
     For this reason SimplifiedEditableView must define primary_column.
-    
+
     """
     name = 'view_over_view'
     schemas = ((Private, 'public',),)
@@ -518,7 +518,7 @@ class TableSelectFunction(sql.SQLPyFunction):
     @staticmethod
     def tableselect(foo):
         return plpy.execute("select * from private.bar where foo_id >= %s" % (foo,))
-    
+
 class TableFunction(sql.SQLPyFunction):
     name = 'pseudotable'
     arguments = (sql.Argument('n', pytis.data.Integer()),)

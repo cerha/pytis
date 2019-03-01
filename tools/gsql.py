@@ -80,7 +80,7 @@ def update_config(options):
         password = os.getenv('PGPASSWORD')
         if password is not None:
             config.dbpass = password
-    
+
 def run():
     options, module = parse_options()
     update_config(options)

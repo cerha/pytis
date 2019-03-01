@@ -108,7 +108,7 @@ class DirectUserOutputTemplates(UserOutputTemplates):
         overridde = (pytis.presentation.Field('module', editable=Editable.NEVER),
                      )
         return self._inherited_fields(DirectUserOutputTemplates, override=overridde)
-    
+
     def proc_spec(self):
         def delete_template(module, specification):
             def s(value):

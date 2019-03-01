@@ -33,7 +33,7 @@ Pytis CMS allows management of the following aspects of a web application:
   * Hierarchical main menu and content of the pages behind particular menu items
   * Assigning acces rights for particular menu items to user roles
   * Extension modules capable to display additional `inteligent' content within pages
-  
+
 Wiking modules of Pytis CMS implement the following features of a web application:
 
   * Authentication
@@ -54,7 +54,7 @@ CMS in an existing Pytis Application are:
      pytis-demo).
 
   4) Import all Wiking modules from 'pytis.cms.web' into the python module which is in
-     your web application's 'modules' search path.  See 'wwwdemo.py' in pytis-demo. 
+     your web application's 'modules' search path.  See 'wwwdemo.py' in pytis-demo.
 
 """
 

@@ -115,7 +115,7 @@ class FormUserStatisticsNoinfo(Specification):
         Field('last_used', _(u"Poslední spuštění")),
         )
     columns = ('login', 'class', 'n_open', 'last_used',)
-    
+
     def on_new_record(self, prefill=None, transaction=None):
         try:
             pytis.form.run_form(pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',

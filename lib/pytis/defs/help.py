@@ -100,7 +100,7 @@ class Help(Specification):
             # The attachments are not allowed for some special pages, such as the menu root page.
             return None
         return pp.DbAttachmentStorage(table, ref, record[ref].value())
-    
+
     def redirect(self, record):
         if record['page_id'].value() is not None:
             return None
@@ -127,18 +127,18 @@ class Help(Specification):
                                        filter=pd.EQ('removed', pd.bval(False)),
                                        columns=('title', 'description', 'spec_name', 'removed')),),
                            default='active')
-    
+
 
 class SpecHelp(Help):
     def fields(self):
         return self._inherited_fields(SpecHelp, override=(Field('menu_help', height=2),))
     layout = ('title', 'fullname', 'menu_help', 'spec_name', 'spec_description', 'spec_help')
 
-    
+
 class MenuHelp(Help):
     layout = ('title', 'fullname', 'menu_help')
 
-    
+
 class NoHelp(Help):
     layout = ('title', pp.Text(_("This item has no editable help.")))
 
@@ -160,7 +160,7 @@ class ItemsHelp(Specification):
             Field('changed', _("Changed"), editable=Editable.NEVER,
                   computer=computer(lambda r, content: True)),
             )
-    
+
     def row_style(self, row):
         return not row['changed'].value() and pp.Style(background='#ffd') or None
 
@@ -187,7 +187,7 @@ class ItemsHelp(Specification):
                 return item.name()
         else:
             return identifier
-        
+
     def condition(self):
         return pd.EQ('kind', pd.sval(self._ITEM_KIND))
     columns = ('identifier', 'label', 'changed', 'removed')
@@ -196,7 +196,7 @@ class ItemsHelp(Specification):
                                        filter=pd.EQ('removed', pd.bval(False)),
                                        columns=('identifier', 'label', 'changed')),),
                            default='active')
-    
+
 
 class FieldItemsHelp(ItemsHelp):
     _ITEM_KIND = 'field'
@@ -212,4 +212,3 @@ class ProfileItemsHelp(ItemsHelp):
 
 class ActionItemsHelp(ItemsHelp):
     _ITEM_KIND = 'action'
-    

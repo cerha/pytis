@@ -32,7 +32,7 @@ def open_connection(db):
                          user=getattr(db, 'dbuser', None),
                          password=getattr(db, 'dbpass', None),
                          port=getattr(db, 'dbport', None))
-    
+
 def run(current_db, sample_db):
     if current_db.endswith('.py'):
         current_db = current_db[:-3]
@@ -109,7 +109,7 @@ def run(current_db, sample_db):
                 output("-- Multiple occurrences of index: %s (for %s)" % (old_name, name,))
         else:
             output("-- Can't determine original index name: %s" % (name,))
-    
+
 
 if __name__ == '__main__':
     run(sys.argv[1], sys.argv[2])
