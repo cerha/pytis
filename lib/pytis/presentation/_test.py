@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,7 @@ class PresentedRow(unittest.TestCase):
             # This class is overriden just to allow definition of runtime_filter
             # and runtime_arguments for the same field (which is only important
             # to improve test coverage)
+
             def values(self, a=None):
                 # Accepts argument a as returned by runtime_arguments.
                 return super(SpecialEnumerator, self).values()
@@ -291,6 +292,7 @@ class PresentedRow(unittest.TestCase):
         self.assertRaises(AssertionError, lambda: Specification().view_spec())
 
         class Specification2(Specification):
+
             def _customize_fields(self, fields):
                 fields.modify('b', runtime_filter=pp.computer(lambda r, a: lambda x: x % a == 0,
                                                               validate=True, novalidate=('a',)))
@@ -433,8 +435,8 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('a', row)
         self.assertIn('half_total', row)
         self.assertNotIn('blabla', row)
-        self.assertTrue(row.has_key('a'))
-        self.assertFalse(row.has_key('xxx'))
+        self.assertTrue(row.has_key('a'))  # noqa!
+        self.assertFalse(row.has_key('xxx'))  # noqa!
 
     def test_changed(self):
         row = self._mega_row()
@@ -720,6 +722,7 @@ class PresentedRow(unittest.TestCase):
 class PrettyTypes(unittest.TestCase):
 
     class CustomFoldable(pp.PrettyFoldable, pd.String):
+
         def _init(self, **kwargs):
             super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
                                                           subcount_column_id='tree_nsub',
@@ -732,6 +735,7 @@ class PrettyTypes(unittest.TestCase):
 
 
 class DocTest(unittest.TestCase):
+
     def test_field_computations(self):
         import doctest
         doctest.testfile('../../../doc/tutorials/Fields.txt')

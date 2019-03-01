@@ -90,6 +90,7 @@ class PresentedRow(object):
     class _Column(object):
 
         class ComputedValue(object):
+
             def __init__(self, column, computer, callback):
                 self.column = column
                 self.callback = callback
@@ -175,7 +176,8 @@ class PresentedRow(object):
             self.editable = cval(fspec.editable(), PresentedRow.CALL_EDITABILITY_CHANGE)
             self.visible = cval(fspec.visible(), PresentedRow.CALL_VISIBILITY_CHANGE)
             self.check = cval(fspec.check(), PresentedRow.CALL_CHECK)
-            self.runtime_filter = cval(fspec.runtime_filter(), PresentedRow.CALL_ENUMERATION_CHANGE)
+            self.runtime_filter = cval(fspec.runtime_filter(),
+                                       PresentedRow.CALL_ENUMERATION_CHANGE)
             self.runtime_arguments = cval(fspec.runtime_arguments(),
                                           PresentedRow.CALL_ENUMERATION_CHANGE)
 
@@ -401,7 +403,7 @@ class PresentedRow(object):
         if row:
             # Preserve any extra row columns - they may include inline_display values.
             keys = [x[0] for x in row_data]
-            row_data.extend([(key, row[key]) for key in row.keys() if key not in keys])
+            row_data.extend([(k, row[k]) for k in row.keys() if k not in keys])
         self._row = pytis.data.Row(row_data)
         self._formatted_value_cache = {}
         if reset:

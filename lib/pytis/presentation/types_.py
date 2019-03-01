@@ -31,6 +31,7 @@ class PrettyType(pytis.data.Type):
     inheritance.
 
     """
+
     def pretty_export(self, value, row, **kwargs):
         """Return pretty 'value' as a string or unicode.
 
@@ -62,13 +63,14 @@ class PrettyTreeOrder(PrettyType):
       tree_column_id -- id of the column defining tree ordering; string
 
     """
+
     def _init(self, tree_column_id, **kwargs):
         super(PrettyTreeOrder, self)._init(**kwargs)
         self._tree_column_id = tree_column_id
 
     def _indentation(self, level, row, form):
         if level > 0:
-            indentation = 3*level*' ' + '- '
+            indentation = 3 * level * ' ' + '- '
         else:
             indentation = ''
         return indentation
@@ -126,4 +128,4 @@ class PrettyFoldable(PrettyTreeOrder):
                 mark = self.FOLDED_MARK + ' '
             else:
                 mark = self.UNFOLDED_MARK + ' '
-        return 3*level*' ' + mark
+        return 3 * level * ' ' + mark

@@ -38,7 +38,6 @@ import lcg
 import os
 import re
 import string
-import sys
 import types
 import weakref
 
@@ -139,14 +138,16 @@ class Color(object):
 class Style(object):
     """Text style specification.
 
-    Style instance is returned by the 'style' attribute of 'Field' or 'row_style' attribute of
-    'ViewSpec'.  Both specifiers may be functions and compute the style based on the values of the
-    current row.  They may also return None to indicate the default style.  Field style has a
-    higher precedence, so all properties not defined by field style default to those defined by row
-    style and if they are not defined by row style, global defaults are used.
+    Style instance is returned by the 'style' attribute of 'Field' or
+    'row_style' attribute of 'ViewSpec'.  Both specifiers may be functions and
+    compute the style based on the values of the current row.  They may also
+    return None to indicate the default style.  Field style has a higher
+    precedence, so all properties not defined by field style default to those
+    defined by row style and if they are not defined by row style, global
+    defaults are used.
 
     """
-    _COLOR_RE = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
+    _COLOR_RE = re.compile('^#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def __init__(self, foreground=None, background=None, bold=None, slanted=None,
                  overstrike=None, underline=None, name=None):
@@ -234,6 +235,7 @@ class Text(object):
     constructor) to place arbitrary text to forms.
 
     """
+
     def __init__(self, text):
         assert isinstance(text, basestring), text
         self._text = text
@@ -372,6 +374,7 @@ class Action(object):
     'ViewSpec'.
 
     """
+
     def __init__(self, id, title, handler=None, context=ActionContext.RECORD,
                  secondary_context=None, enabled=True, visible=True, access_groups=None,
                  descr=None, hotkey=None, icon=None, kwargs=None, form_content=None,
@@ -541,6 +544,7 @@ class Action(object):
 
 class PrintAction(object):
     """Output (print) action specification."""
+
     def __init__(self, id, title, name, language=None, handler=None, context=None):
         """Arguments:
 
@@ -691,6 +695,7 @@ class Profile(object):
     user data.
 
     """
+
     def __init__(self, id, title, filter=None, descr=None, sorting=None, columns=None,
                  grouping=None, aggregations=None, folding=None, column_widths=None, errors=()):
         """Arguments:
@@ -929,6 +934,7 @@ class Profiles(list):
 
 class Filter(Profile):
     """Deprecated: Use Profile instead."""
+
     def __init__(self, id, name, condition=None):
         super(Filter, self).__init__(id, name, filter=condition)
 
@@ -971,6 +977,7 @@ class GroupSpec(object):
     nested layouts.
 
     """
+
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, border=3, align_hgroups=True, flexible=False):
         """Arguments:
@@ -1078,6 +1085,7 @@ class HGroup(GroupSpec):
     vertical.
 
     """
+
     def __init__(self, *items, **kwargs):
         super(HGroup, self).__init__(items, orientation=Orientation.HORIZONTAL, **kwargs)
 
@@ -1091,6 +1099,7 @@ class FieldSet(GroupSpec):
     group items to force horizontal arrangement.
 
     """
+
     def __init__(self, label, items):
         super(FieldSet, self).__init__(items, label=label, orientation=Orientation.VERTICAL)
 
@@ -1117,12 +1126,14 @@ ColumnLayout = HGroup
 
 class VGroup(GroupSpec):
     """Deprecated: Use a list or tuple instead."""
+
     def __init__(self, *items, **kwargs):
         super(VGroup, self).__init__(items, orientation=Orientation.VERTICAL, **kwargs)
 
 
 class LHGroup(HGroup):
     """Deprecated: Use FieldSet with a HGroup."""
+
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LHGroup, self).__init__(*items, **kwargs)
@@ -1130,6 +1141,7 @@ class LHGroup(HGroup):
 
 class LVGroup(VGroup):
     """Deprecated: Use FieldSet instead."""
+
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LVGroup, self).__init__(*items, **kwargs)
@@ -1137,6 +1149,7 @@ class LVGroup(VGroup):
 
 class LayoutSpec(object):
     """Deprecated: Use 'GroupSpec' directly to specify 'ViewSpec' 'layout'."""
+
     def __init__(self, caption, group, order=None):
         """Inicializace a doplnění defaultních hodnot atributů.
 
@@ -1201,6 +1214,7 @@ class QueryFields(object):
     of the query fields form.
 
     """
+
     def __init__(self, fields, autoapply=False, autoinit=False, layout=None, load=None,
                  save=None, on_main_form_selection=None, **kwargs):
         """Arguments:
@@ -2125,6 +2139,7 @@ class Binding(object):
     main form and defines its connection to the side form.
 
     """
+
     def __init__(self, id, title, name=None, binding_column=None, condition=None,
                  descr=None, single=False, enabled=True, arguments=None,
                  prefill=None, search=None,
@@ -2578,6 +2593,7 @@ class CbComputer(Computer):
     políčka apod.
 
     """
+
     def __init__(self, field, column, default=None):
         """Inicialize the instance.
 
@@ -2632,6 +2648,7 @@ class CodebookSpec(object):
     'CodebookSpec' may be defined as the 'cb' attribute of a 'Specification'.
 
     """
+
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
                  display_size=20, enable_autocompletion=True, begin_search=None):
         """Arguments:
@@ -2757,6 +2774,7 @@ class Link(object):
     Used as a value of 'Field' constructor argument  'link'.
 
     """
+
     def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
                  enabled=True, filter=None, arguments=None):
         """Arguments:
@@ -2856,6 +2874,7 @@ class ListLayout(object):
     message...).
 
     """
+
     def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
                  meta_labels=False, columns=1, allow_index=False, popup_actions=False):
         """Arguments:
@@ -3034,6 +3053,7 @@ class Field(object):
     all features may be supported by all user interface implementations.
 
     """
+
     def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
         """Arguments:
 
@@ -4572,6 +4592,7 @@ class DbAttachmentStorage(AttachmentStorage):
         The client is the built-in webkit browser.
 
         """
+
         def do_GET(self):
             storage = self.server.storage_weakref()
             if storage:
@@ -5164,6 +5185,7 @@ class Specification(SpecificationBase):
         setting, removing and modifying the fields in the list.
 
         """
+
         def get(self, id_):
             """Return field with id 'id_' from the field list.
 
