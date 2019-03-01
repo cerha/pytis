@@ -19,11 +19,13 @@
 
 from __future__ import unicode_literals
 
-import pytis.data as pd, pytis.util
+import pytis.data as pd
+import pytis.util
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
     computer
 
 _ = pytis.util.translations('pytis-defs')
+
 
 class FormProfiles(Specification):
     public = True
@@ -47,7 +49,7 @@ class FormProfiles(Specification):
         Field('errors', _(u"Chyby"), width=80, height=8, editable=Editable.NEVER),
         Field('invalid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
               computer=computer(lambda r, errors: errors is not None), editable=Editable.NEVER),
-        )
+    )
     cb = CodebookSpec(display='title')
     columns = ('title', 'profile_id', 'username', 'spec_name', 'form_name', 'invalid')
     layout = HGroup(('title', 'profile_id', 'username'),
@@ -59,6 +61,7 @@ class FormProfiles(Specification):
                 Profile('system-profiles', _("Systémové profily"),
                         filter=pd.NW('profile_id', pd.WMValue(pd.String(), '_user_profile_*'))),
                 )
+
 
 class FormSettings(Specification):
     public = True
@@ -72,7 +75,7 @@ class FormSettings(Specification):
         Field('form_name', _(u"Typ formuláře"), width=50, editable=Editable.NEVER),
         Field('pickle', editable=Editable.NEVER),
         Field('dump', _("Content"), width=40, height=5, editable=Editable.NEVER),
-        )
+    )
     columns = ('username', 'spec_name', 'form_name')
     layout = HGroup(('username', 'spec_name', 'form_name'),
                     ('dump'))

@@ -17,38 +17,48 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytis.data as pd, pytis.presentation as pp, pytis.util
-from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
-    Binding, computer
+import pytis.data as pd
+import pytis.presentation as pp
+import pytis.util
+from pytis.presentation import (
+    Specification, Field, CodebookSpec, Editable, Binding, computer,
+)
 from pytis.util import nextval
+
 
 class _TreeOrderLTree(pp.PrettyFoldable, pd.String):
     pass
 
+
 _ = pytis.util.translations('pytis-defs')
+
 
 class HelpParents(Specification):
     # Codebook of parent items for Help (to prevent recursion).
     public = True
     title = _("Parent item")
     table = 'ev_pytis_help'
-    def fields(self): return (
-        Field('page_id'),
-        Field('position'),
-        Field('title', _("Title")),
+
+    def fields(self):
+        return (
+            Field('page_id'),
+            Field('position'),
+            Field('title', _("Title")),
         )
     sorting = ('position', pd.ASCENDENT),
     columns = ('title',)
     cb = CodebookSpec(display='title', prefer_display=True)
 
+
 class Help(Specification):
     public = True
     table = 'ev_pytis_help'
     title = _("Help")
+
     def fields(self):
         return (
             Field('help_id',
-                  # The computer is only used for help pages (, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=pp.Editable.NEVER, editable=Editable.NEVERwith page_id) so
+                  # The computer is only used for help pages (with page_id) so
                   # we don't need to care about other kinds of help_id.  New
                   # record is always a new page.
                   computer=computer(lambda r, page_id: 'page/%d' % page_id)),
@@ -58,14 +68,16 @@ class Help(Specification):
             Field('position'),
             Field('position_nsub'),
             Field('title', _("Title"), width=20, editable=computer(self._is_page),
-                  type=_TreeOrderLTree(tree_column_id='position', subcount_column_id='position_nsub'),
+                  type=_TreeOrderLTree(tree_column_id='position',
+                                       subcount_column_id='position_nsub'),
                   ),
             Field('description', _("Description"), width=70, editable=computer(self._is_page),),
             Field('content', _("Content"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
             Field('menu_help', _(u"Menu item description"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('spec_description', _("Brief form description"), width=80, height=3, compact=True),
+            Field('spec_description', _("Brief form description"), width=80, height=3,
+                  compact=True),
             Field('spec_help', _("Detailed form help"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
             Field('parent', _("Parent item"), not_null=False,
@@ -81,7 +93,8 @@ class Help(Specification):
                           "automatically to bottom.")),
             Field('removed', _("Removed"), editable=Editable.NEVER),
             Field('changed', _("Changed"), editable=Editable.NEVER),
-            )
+        )
+
     def row_style(self, row):
         return not row['changed'].value() and pp.Style(background='#ffd') or None
 
@@ -110,14 +123,15 @@ class Help(Specification):
             return 'help.MenuHelp'
         else:
             return 'help.NoHelp'
+
     def bindings(self):
         return (
-            Binding('content', _("Content"), uri=lambda r: 'help:'+r['help_id'].value()),
+            Binding('content', _("Content"), uri=lambda r: 'help:' + r['help_id'].value()),
             Binding('fields', _("Fields"), 'help.FieldItemsHelp', 'spec_name'),
             Binding('profiles', _("Profiles"), 'help.ProfileItemsHelp', 'spec_name'),
             Binding('actions', _("Actions"), 'help.ActionItemsHelp', 'spec_name'),
             Binding('bindings', _("Side Forms"), 'help.BindingItemsHelp', 'spec_name'),
-            )
+        )
 
     layout = ('title', 'description', 'parent', 'ord', 'content')
     cb = CodebookSpec(display='title')
@@ -130,6 +144,7 @@ class Help(Specification):
 
 
 class SpecHelp(Help):
+
     def fields(self):
         return self._inherited_fields(SpecHelp, override=(Field('menu_help', height=2),))
     layout = ('title', 'fullname', 'menu_help', 'spec_name', 'spec_description', 'spec_help')
@@ -147,6 +162,7 @@ class ItemsHelp(Specification):
     _ITEM_KIND = None
     public = True
     table = 'e_pytis_help_spec_items'
+
     def fields(self):
         return (
             Field('item_id'),
@@ -155,11 +171,12 @@ class ItemsHelp(Specification):
             Field('identifier', _("Identifier"), width=30, editable=Editable.NEVER),
             Field('content', _("Description"), width=80, height=15, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('label', _("Title"), width=30, virtual=True, editable=pp.Editable.NEVER, computer=computer(self._label)),
+            Field('label', _("Title"), width=30, virtual=True,
+                  editable=pp.Editable.NEVER, computer=computer(self._label)),
             Field('removed', _("Removed"), editable=Editable.NEVER),
             Field('changed', _("Changed"), editable=Editable.NEVER,
                   computer=computer(lambda r, content: True)),
-            )
+        )
 
     def row_style(self, row):
         return not row['changed'].value() and pp.Style(background='#ffd') or None
@@ -167,6 +184,7 @@ class ItemsHelp(Specification):
     def _attachment_storage(self, record):
         return pp.DbAttachmentStorage('e_pytis_help_spec_attachments', 'spec_name',
                                       record['spec_name'].value())
+
     def _label(self, record, spec_name, kind, identifier):
         if not kind or not identifier:
             return None
@@ -176,7 +194,7 @@ class ItemsHelp(Specification):
         except pytis.util.ResolverError:
             return identifier
         kwargs = dict(unnest=True) if kind == 'action' else {}
-        items = getattr(view_spec, kind+'s')(**kwargs)
+        items = getattr(view_spec, kind + 's')(**kwargs)
         item = pytis.util.find(identifier, items, key=lambda x: x.id())
         if item:
             if kind in ('field',):

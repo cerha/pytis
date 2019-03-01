@@ -26,6 +26,7 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-defs')
 
+
 class FormShortStatistics(Specification):
     public = True
     table = 'ev_pytis_form_short_summary'
@@ -37,11 +38,15 @@ class FormShortStatistics(Specification):
         Field('n_open', _(u"Počet otevření")),
         Field('avg_start', _(u"Průměrná doba startu")),
         Field('last_used', _(u"Poslední spuštění")),
-        )
-    bindings = (Binding('users', _(u"Uživatelé"), 'statistics.FormUsers',
-                        condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
-                                                              pytis.data.EQ('class', row['class'])))),
-                )
+    )
+    bindings = (
+        Binding('users', _(u"Uživatelé"), 'statistics.FormUsers',
+                condition=(lambda row: pytis.data.AND(
+                    pytis.data.EQ('form', row['form']),
+                    pytis.data.EQ('class', row['class'])
+                ))),
+    )
+
 
 class FormStatistics(Specification):
     public = True
@@ -55,12 +60,13 @@ class FormStatistics(Specification):
         Field('n_open', _(u"Počet otevření")),
         Field('avg_start', _(u"Průměrná doba startu")),
         Field('last_used', _(u"Poslední spuštění")),
-        )
+    )
     bindings = (Binding('users', _(u"Uživatelé"), 'statistics.FormUsers',
                         condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
                                                               pytis.data.EQ('class', row['class']),
                                                               pytis.data.EQ('info', row['info'])))),
                 )
+
 
 class FormUsers(Specification):
     public = True
@@ -73,8 +79,9 @@ class FormUsers(Specification):
         Field('info', _(u"Parametry formuláře")),
         Field('n_open', _(u"Počet otevření")),
         Field('last_used', _(u"Poslední spuštění")),
-        )
+    )
     columns = ('login', 'info', 'n_open', 'last_used',)
+
 
 class FormUserList(Specification):
     public = True
@@ -82,11 +89,12 @@ class FormUserList(Specification):
     title = _(u"Uživatelé")
     fields = (
         Field('login', _(u"Login")),
-        )
+    )
     bindings = (Binding('users', _(u"Formuláře"), 'statistics.FormUserStatistics',
                         condition=(lambda row: pytis.data.EQ('login', row['login']))),
                 Binding('profiles', _("Profiles"), 'profiles.FormProfiles', 'username'),
                 )
+
 
 class FormUserStatistics(Specification):
     public = True
@@ -99,8 +107,9 @@ class FormUserStatistics(Specification):
         Field('info', _(u"Parametry formuláře")),
         Field('n_open', _(u"Počet otevření")),
         Field('last_used', _(u"Poslední spuštění")),
-        )
+    )
     columns = ('form', 'class', 'info', 'n_open', 'last_used',)
+
 
 class FormUserStatisticsNoinfo(Specification):
     public = True
@@ -113,12 +122,15 @@ class FormUserStatisticsNoinfo(Specification):
         Field('class', _("Form Class")),
         Field('n_open', _(u"Počet otevření")),
         Field('last_used', _(u"Poslední spuštění")),
-        )
+    )
     columns = ('login', 'class', 'n_open', 'last_used',)
 
     def on_new_record(self, prefill=None, transaction=None):
         try:
-            pytis.form.run_form(pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
-                                select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'))
+            pytis.form.run_form(
+                pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
+                select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'),
+            )
         except pytis.util.ResolverError:
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Tato databáze neobsahuje uživatelskou konfiguraci"))
+            pytis.form.run_dialog(pytis.form.Warning, _(
+                u"Tato databáze neobsahuje uživatelskou konfiguraci"))

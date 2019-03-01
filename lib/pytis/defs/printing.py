@@ -29,6 +29,7 @@ import pytis.presentation
 
 _ = pytis.util.translations('pytis-defs')
 
+
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_global_output_templates'
@@ -48,6 +49,7 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
     )
     columns = ('module', 'specification', 'template',)
     layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
+
 
 class UserOutputTemplates(pytis.presentation.Specification):
     public = True
@@ -82,10 +84,11 @@ class UserOutputTemplates(pytis.presentation.Specification):
     columns = ('module', 'specification', 'username', 'template',)
     layout = pytis.presentation.TabGroup((_("Šablona"), ('module', 'specification', 'template',)),
                                          (_("Řádková šablona"), ('rowtemplate',)),
-                                         (_("Hlavičky a patičky"), ('header', 'first_page_header',
-                                                                    'footer',)),
+                                         (_("Hlavičky a patičky"),
+                                          ('header', 'first_page_header', 'footer',)),
                                          (_("Styl"), ('style',)),
                                          (_("Help"), ('help',)))
+
     def on_delete_record(self, row):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Můžete mazat pouze své vlastní záznamy."))
@@ -95,6 +98,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
         if not pytis.form.run_dialog(pytis.form.Question, question):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
+
     def check(self, row):
         condition = pytis.data.AND(pytis.data.EQ('specification', row['specification']),
                                    pytis.data.EQ('module', row['module']),
@@ -103,7 +107,9 @@ class UserOutputTemplates(pytis.presentation.Specification):
             pytis.form.message(_("Tento název šablony již existuje"))
             return 'specification'
 
+
 class DirectUserOutputTemplates(UserOutputTemplates):
+
     def fields(self):
         overridde = (pytis.presentation.Field('module', editable=Editable.NEVER),
                      )

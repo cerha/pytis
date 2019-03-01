@@ -27,6 +27,7 @@ from pytis.dbdefs import db_pytis_crypto
 
 _ = translations('pytis')
 
+
 class NewAdminPasswd(Specification):
     public = True
 
@@ -105,6 +106,7 @@ class CryptoAreas(Specification):
 
     def on_delete_record(self, row):
         return None
+
 
 class Users(Specification):
     public = True

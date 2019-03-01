@@ -30,6 +30,7 @@ from pytis.form import BrowseForm, run_form
 
 _ = pytis.util.translations('pytis-defs')
 
+
 class FormActionLog(Specification):
     # This specification is used for insertion of log record by pytis
     # internally, so it is not public.  The derived specification
@@ -99,6 +100,7 @@ class ChangesLog(Specification):
             Field("detail", _("Řádek"), width=40, height=20, type=pd.String),
         )
 
+
 class ChangesLogUser(ChangesLog):
     """Specification providing query fields for users"""
     public = True
@@ -135,6 +137,7 @@ class ChangesLogUser(ChangesLog):
             'key_value_': key_value_,
             'detail_': detail_,
             'search_path_': search_path_}
+
 
 def proc_spec():
 
