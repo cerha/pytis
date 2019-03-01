@@ -412,7 +412,7 @@ class SFDialog(SFSDialog):
 
     def _create_content(self, sizer):
         super(SFDialog, self)._create_content(sizer)
-        choice, button = self._create_choice, self._create_button
+        button = self._create_button
         buttons = (
             button(_("Add AND"), lambda e: self._on_add(),
                    tooltip=_("Add a new condition in conjunction.")),
