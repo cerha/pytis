@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ class HelpUpdater(object):
     objects are updated.
 
     """
+
     def __init__(self):
         self._menu_help_data = pd.dbtable(
             'e_pytis_help_menu',
@@ -272,6 +273,7 @@ class HelpUpdater(object):
                 break
             if row['fullname'].value():
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
+
 
 generator = None
 
@@ -638,7 +640,7 @@ class DmpHelpGenerator(HelpGenerator):
             if row['menu_help'].value():
                 return lcg.Parser().parse(row['menu_help'].value())
             else:
-                fullname, spec_name = row['fullname'].value(), row['spec_name'].value()
+                spec_name = row['spec_name'].value()
                 # TODO: Use the default descriptions from HelpUpdater.
                 if spec_name:
                     content = self._spec_help_content(spec_name)[1]
