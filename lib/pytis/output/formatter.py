@@ -87,26 +87,37 @@ PAGE_LANDSCAPE_MODE = 'landscape_mode'
 class AbortOutput(Exception):
     """Exception raised when printing should be aborted."""
 
+
 class _ProxyDict(dict):
+
     def __getitem__(self, key):
         result = dict.__getitem__(self, key)
         if ((not isinstance(result, (basestring, lcg.Content, _ProxyDict,)) and
              callable(result))):
             result = self[key] = result()
         return result
+
+
 class HashableDict(dict):
+
     def __hash__(self):
         return 0
+
     def __setitem__(self, key, value):
         raise Exception('immutable object')
+
+
 class _DataIterator(lcg.SubstitutionIterator):
+
     class _CodebookDictionary(dict):
+
         def __init__(self, row, field_id, columns, secret_columns):
             self._row = row
             self._field_id = field_id
             self._secret_columns = secret_columns
             data = [(c, True,) for c in columns]
             dict.__init__(self, data)
+
         def get(self, key, default=None):
             try:
                 value = self._row.cb_value(self._field_id, key)
@@ -114,7 +125,9 @@ class _DataIterator(lcg.SubstitutionIterator):
                 return default
             result = value.secret_export() if key in self._secret_columns else value.export()
             return result
+
     class _RowDictionary(dict):
+
         def __init__(self, row, codebooks):
             if codebooks is None:
                 keys = row.keys()
@@ -123,6 +136,7 @@ class _DataIterator(lcg.SubstitutionIterator):
             dict.__init__(self, [(k, True,) for k in keys])
             self._row = row
             self._codebooks = codebooks
+
         def get(self, key, default=None):
             try:
                 if self._codebooks is None:
@@ -133,6 +147,7 @@ class _DataIterator(lcg.SubstitutionIterator):
                                                              secret_columns)
             except KeyError:
                 return default
+
     def __init__(self, resolver, form_name, condition, sorting, transaction, codebooks=None):
         self._transaction = transaction
         self._select_kwargs = dict(condition=condition, sort=sorting, transaction=transaction)
@@ -155,6 +170,7 @@ class _DataIterator(lcg.SubstitutionIterator):
                         secret_columns.append(cb_id)
                 self._codebooks[field_id] = (columns, secret_columns)
         super(_DataIterator, self).__init__()
+
     def _init_select(self):
         # It is necessary to delay the select until its data is actually used,
         # otherwise many connections may be opened concurrently when using row
@@ -168,8 +184,10 @@ class _DataIterator(lcg.SubstitutionIterator):
                            _("Do you want to continue printing anyway?"))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
                     raise UserBreakException()
+
     def _value(self):
         return self._RowDictionary(self._presented_row, self._codebooks)
+
     def _next(self):
         self._init_select()
         row = self._data.fetchone(transaction=self._transaction)
@@ -178,10 +196,14 @@ class _DataIterator(lcg.SubstitutionIterator):
             return False
         self._presented_row.set_row(row)
         return True
+
     def _reset(self):
         if self._select_kwargs is None:
             self._data.rewind()
+
+
 class _FormDataIterator(_DataIterator):
+
     def __init__(self, resolver, form, transaction, parameters):
         name = form.name()
         condition = form.condition()
@@ -192,20 +214,27 @@ class _FormDataIterator(_DataIterator):
             sorting = parameters.get(name + '/' + pytis.output.P_SORTING)
         super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
                                                 sorting=sorting, transaction=transaction)
+
+
 class _FakeDataIterator(lcg.SubstitutionIterator):
+
     def _value(self):
         raise lcg.SubstitutionIterator.NotStartedError(None)
+
     def _reset(self):
         pass
+
 
 class LCGFormatter(object):
     """LCG based formatter."""
 
     class _DummyDict(dict):
+
         def __getitem__(self, key):
             return ''
 
     class _LCGGlobals(_ProxyDict):
+
         def __init__(self, resolver, form, form_bindings, codebooks, transaction,
                      current_row=None, parameters={}):
             self._resolver = resolver
@@ -215,10 +244,11 @@ class LCGFormatter(object):
             dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row,
                                                   parameters)
             _ProxyDict.__init__(self, dictionary)
+
         def _initial_dictionary(self, form, form_bindings, codebooks, current_row, parameters):
             dictionary = _ProxyDict()
             if form is not None:
-                import pytis.form # must be placed before first `pytis' use here
+                import pytis.form  # must be placed before first `pytis' use here
                 if current_row is None:
                     dictionary['data'] = _FormDataIterator(self._resolver, form,
                                                            transaction=self._transaction,
@@ -257,10 +287,12 @@ class LCGFormatter(object):
                              pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
+
                                 def __init__(self, binding, processor, current_row):
                                     self._binding = binding
                                     self._current_row = current_row
                                     self._processor = processor
+
                                 def __call__(self):
                                     return self._processor(self._binding, self._current_row)
                             binding_id = re.sub('[^A-Za-z0-9_]', '_', binding.id())
@@ -286,6 +318,7 @@ class LCGFormatter(object):
                                     return current_row.cb_value(field_id, cb_id).secret_export()
                             field_dictionary[cb_id] = cb_value
             return dictionary
+
         def _make_table(self):
             form = self._form
             if form is None:
@@ -294,6 +327,7 @@ class LCGFormatter(object):
                                             condition=form.condition(), sorting=form.sorting(),
                                             transaction=self._transaction)
             return table.lcg()
+
         def _make_agg(self, op):
             if self._form is None:
                 return lcg.Content()
@@ -304,6 +338,7 @@ class LCGFormatter(object):
                         return self._make_agg_value(op, column)
                     dictionary[column.id()] = value
             return dictionary
+
         def _make_agg_value(self, op, column):
             form = self._form
             if form is None:
@@ -316,6 +351,7 @@ class LCGFormatter(object):
             condition = form.condition()
             return data.select_aggregate((op, colid,), condition=condition,
                                          transaction=self._transaction).value()
+
         def _make_binding(self, binding, current_row):
             binding_dictionary = {}
             binding_name = binding.name()
@@ -384,7 +420,7 @@ class LCGFormatter(object):
         style, __ = self._resolve(template_id, 'style', default=None)
         if style:
             style_parser = lcg.StyleFile()
-            style_parser.read(StringIO.StringIO(style)) # doesn't work with cStringIO
+            style_parser.read(StringIO.StringIO(style))  # doesn't work with cStringIO
             self._style = style_parser.presentations()
         else:
             self._style = None
@@ -403,7 +439,7 @@ class LCGFormatter(object):
             if p not in parameters:
                 if a is None:
                     value = None
-                elif isinstance(a, list): # presentation style
+                elif isinstance(a, list):  # presentation style
                     value = a
                 elif isinstance(a, lcg.Content):
                     value = a
@@ -415,7 +451,7 @@ class LCGFormatter(object):
              body and
              not (isinstance(body, (tuple, list,)) and body and
                   isinstance(body[0], pytis.output.Document)))):
-            body.lcg() # to generate parameters
+            body.lcg()  # to generate parameters
             body = pytis.output.Document(body, **parameters)
         else:
             # It's unclear how to interpret this situation.  In the Lout
@@ -498,7 +534,7 @@ class LCGFormatter(object):
                 id_ = 'pytissubdoc%d' % (i,)
                 row_template_lcg = row_template.lcg()
                 parameters = self._template_parameters(row_template)
-                document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
+                document = lcg.ContentNode(id=id_, title=' ',  # let's avoid printing the id
                                            content=row_template_lcg, globals=row_lcg_globals,
                                            **parameters)
                 template_nodes.append(document)
@@ -506,6 +542,7 @@ class LCGFormatter(object):
         lcg_globals = self._LCGGlobals(self._resolver, self._form, self._form_bindings,
                                        self._codebooks, transaction, parameters=self._parameters)
         lcg_globals['app'] = self._application_variables
+
         def margin(key):
             size = self._page_layout.get(key)
             if size is None:
@@ -672,6 +709,7 @@ class PrintSpecification(object):
     output.  You can use 'init()' method for that purpose.
 
     """
+
     def __init__(self, parameters):
         """
         Arguments:

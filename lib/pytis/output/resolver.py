@@ -97,6 +97,7 @@ class Resolver(object):
     'get_object()') nebo jimi vytvořené instance (metoda 'get()').
 
     """
+
     def __init__(self):
         """Inicializuj resolver."""
         self._module_cache = SimpleCache(self._get_module)
@@ -235,6 +236,7 @@ class FileResolver(Resolver):
     resolveru.  Jména specifikačních souborů musí začínat velkým písmenem.
 
     """
+
     def __init__(self, path):
         """Inicializuj resolver.
 
@@ -282,6 +284,7 @@ class PlainFileResolver(Resolver):
     resolver's constructor.
 
     """
+
     def __init__(self, path, extension=None):
         """
         Arguments:
@@ -310,7 +313,7 @@ class PlainFileResolver(Resolver):
             try:
                 obj = codecs.open(file_name, 'r', 'utf-8').read()
                 break
-            except:
+            except Exception:
                 raise ResolverSpecError(module_name, spec_name)
         else:
             raise ResolverSpecError(module_name, spec_name)
@@ -344,6 +347,7 @@ class DatabaseResolver(Resolver):
     doesn't return anything reasonable for module only requests.
 
     """
+
     def __init__(self, table, result_columns=('data',)):
         """
         Arguments:
@@ -404,7 +408,9 @@ class OutputResolver(Resolver):
 
         """
         super(OutputResolver, self).__init__()
+
         class P(dict):
+
             def __getattr__(self, name):
                 try:
                     p = self[name]

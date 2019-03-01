@@ -28,9 +28,11 @@ import pytis.output
 
 _FONT_STEP = 1.2
 
+
 def f_larger(*contents):
     """Nechť 'contents' je vysázeno fontem větší velikosti vzhledem k okolí."""
     return pytis.output.FontSize(_FONT_STEP, *contents)
+
 
 def f_smaller(*contents):
     """Nechť 'contents' je vysázeno fontem menší velikosti vzhledem k okolí."""

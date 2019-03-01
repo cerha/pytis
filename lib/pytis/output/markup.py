@@ -57,12 +57,14 @@ def _something_to_lcg(something):
         result = something.lcg()
     return result
 
+
 def _color(color):
     if isinstance(color, (tuple, list)):
         color = lcg.Color(*color)
     if isinstance(color, basestring):
         color = lcg.Color(color)
     return color
+
 
 class _Mark(object):
 
@@ -131,6 +133,7 @@ class Null(_Mark):
 
     """
 
+
 class Nbsp(_Mark):
     """Značka reprezentující znak nezalomitelné mezery.
 
@@ -138,41 +141,53 @@ class Nbsp(_Mark):
     Značka slouží jako alternativní forma zápisu.
 
     """
+
     def _lcg(self):
         return lcg.TextContent(u" ")
 
+
 class Euro(_Mark):
     """Značka reprezentující znak měny Euro."""
+
     def _lcg(self):
         return lcg.TextContent(u"€")
 
+
 class Pound(_Mark):
     """Značka reprezentující znak libry."""
+
     def _lcg(self):
         return lcg.TextContent(u"£")
 
+
 class _HAlignContainer(_Container):
     _ALIGNMENT = None
+
     def _lcg(self):
         contents = self._lcg_contents()
         if len(contents) > 1:
             contents = [lcg.Container(contents, orientation=lcg.Orientation.HORIZONTAL)]
         return lcg.Container(contents, halign=self._ALIGNMENT, orientation=lcg.Orientation.VERTICAL)
 
+
 class Center(_HAlignContainer):
     """Značka horizontálního vycentrování svého obsahu."""
     _ALIGNMENT = lcg.HorizontalAlignment.CENTER
+
 
 class AlignLeft(_HAlignContainer):
     """Značka zarovnání svého obsahu vlevo."""
     _ALIGNMENT = lcg.HorizontalAlignment.LEFT
 
+
 class AlignRight(_HAlignContainer):
     """Značka zarovnání svého obsahu vpravo."""
     _ALIGNMENT = lcg.HorizontalAlignment.RIGHT
 
+
 class VCenter(_Container):
     """Značka vertikálního vycentrování svého obsahu."""
+
     def _lcg(self):
         return lcg.Container(self._lcg_contents(),
                              valign=lcg.VerticalAlignment.CENTER,
@@ -205,6 +220,7 @@ class _Space(_Mark):
         size = self._dimension(self._size) or lcg.UAny(1)
         return mark(size)
 
+
 class VSpace(_Space):
     """Značka prázdného vertikálního objektu dané šířky."""
 
@@ -221,6 +237,7 @@ class VSpace(_Space):
 
         """
         super(VSpace, self).__init__(height, self.VERTICAL)
+
 
 class HSpace(_Space):
     """Značka prázdného horizontálního objektu dané šířky."""
@@ -242,6 +259,7 @@ class HSpace(_Space):
 
 class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
+
     def __init__(self, thickness=None, color=None, **kwargs):
         """Arguments:
 
@@ -261,12 +279,14 @@ class HLine(_Mark):
     def _lcg(self):
         return lcg.HorizontalSeparator(thickness=self._thickness, color=self._color)
 
+
 class Paragraph(_Container):
     """Značka odstavce."""
     KWARGS = {'noindent': False}
 
     def _lcg(self):
         return lcg.Paragraph(self._lcg_contents(), noindent=self.arg_noindent)
+
 
 class List(_Container):
     """Seznam.
@@ -292,10 +312,13 @@ class List(_Container):
             raise Exception('Unexpected list type', self.arg_mark)
         return lcg.ItemizedList(self._lcg_contents(), order=order)
 
+
 class NewPage(_Mark):
     """Značka nové stránky."""
+
     def _lcg(self):
         return lcg.NewPage()
+
 
 class PageNumber(_Mark):
     """Značka generující číslo aktuální stránky.
@@ -306,6 +329,7 @@ class PageNumber(_Mark):
     Tato značka smí být použita jen uvnitř hlaviček a patiček stránek.
 
     """
+
     def __init__(self, total=False):
         """Inicializuj instanci.
 
@@ -329,26 +353,33 @@ class PageNumber(_Mark):
             result = lcg.PageNumber(total=False)
         return result
 
+
 class Bold(_Container):
     """Tučně sázený text."""
+
     def _lcg(self):
         presentation = lcg.Presentation()
         presentation.bold = True
         return lcg.Container(self._lcg_contents(), presentation=presentation)
 
+
 class Italic(_Container):
     """Text sázený kurzívou."""
+
     def _lcg(self):
         presentation = lcg.Presentation()
         presentation.italic = True
         return lcg.Container(self._lcg_contents(), presentation=presentation)
 
+
 class Roman(_Container):
     """Standardně sázený text."""
+
     def _lcg(self):
         presentation = lcg.Presentation()
         presentation.bold = presentation.italic = False
         return lcg.Container(self._lcg_contents(), presentation=presentation)
+
 
 class FontSize(_Container):
     """Standardně sázený text."""
@@ -375,6 +406,7 @@ class FontSize(_Container):
         presentation = lcg.Presentation()
         presentation.font_size = self._size
         return lcg.Container(self._lcg_contents(), presentation=presentation)
+
 
 class FontFamily(_Container):
     """Text sázený zadanou rodinou fontu.
@@ -416,6 +448,7 @@ class FontFamily(_Container):
             family = lcg.FontFamily.FIXED_WIDTH
         presentation.font_family = family
         return lcg.Container(self._lcg_contents(), presentation=presentation)
+
 
 class _Group(_Container):
     KWARGS = dict(boxed=False,
@@ -528,6 +561,7 @@ class HGroup(_Group):
     in mimimeters).
 
     """
+
     def _orientation(self):
         return lcg.Orientation.HORIZONTAL
 
@@ -539,6 +573,7 @@ class VGroup(_Group):
     which the items are arranged is vertical.
 
     """
+
     def _orientation(self):
         return lcg.Orientation.VERTICAL
 
@@ -607,6 +642,7 @@ class Document(_Container):
                                page_background=arg(self.arg_page_background),
                                presentation=self.arg_presentation,
                                **kwargs)
+
 
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.
@@ -750,6 +786,7 @@ class Table(_Mark):
             column_widths.append(width)
         return self._lcg_table(table_rows, column_widths)
 
+
 class LongTable(Table):
     """Tabulka, potenciálně vícestránková.
 
@@ -866,6 +903,7 @@ class LongTable(Table):
                          presentation=self._lcg_presentation(),
                          halign=lcg.HorizontalAlignment.LEFT)
 
+
 class Image(_Mark):
     """EPS image."""
 
@@ -915,6 +953,7 @@ class Image(_Mark):
     def _lcg(self):
         if self._bytes:
             class _Image(lcg.InlineImage):
+
                 def __init__(self, bytes, **kwargs):
                     self._bytes = bytes
                     super(_Image, self).__init__("_mem_image", **kwargs)
@@ -927,6 +966,7 @@ class Image(_Mark):
                     import StringIO
 
                     class _StringIO(StringIO.StringIO, lcg.Image):
+
                         def src_file(self):
                             return self
                     return _StringIO(self._bytes)

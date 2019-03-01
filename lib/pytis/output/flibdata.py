@@ -87,11 +87,12 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
         else:
             alignment = pytis.output.LongTable.Column.ALIGN_LEFT
         tc = pytis.output.LongTable.Column(label, width, alignment=alignment)
-        tc.id = cid # fuj, viz `table_row' níže
+        tc.id = cid  # fuj, viz `table_row' níže
         columns.append(tc)
     # Data
     data.select(condition=condition, sort=sorting, transaction=transaction)
     # Formátování
+
     def table_row(*args, **kwargs):
         row = data.fetchone(transaction=transaction)
         if row is None:
