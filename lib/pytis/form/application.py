@@ -99,14 +99,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def OnInit(self):
         import pytis.extensions
         self._specification = config.resolver.specification('Application')
-
-        if wx.version().split(' ')[1] == 'gtk3':
-            import gi
-            gi.require_version('Gtk', '3.0')
-            from gi.repository import Gtk, Gdk
-            clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-            clipboard.connect('owner-change', self._on_clipboard_copy)
-
         init_colors()
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
@@ -855,25 +847,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._windows.remove(form)
         self._update_window_menu()
         self.restore()
-
-    def _on_clipboard_copy(self, clipboard, event):
-        """Handle event of text copied into system clipboard.
-
-        This method propagates all local clipboard changes into the remote
-        clipboard when pytis.remote is available.  Don't use it to copy things
-        to the clipboard.  Copy them to the local system clipboard (eg. through
-        standard wx methods of wx controls or using the function
-        copy_to_clipboard() when no aplicable control is available).
-
-        """
-        # Beware, the `event' here is not a wx event, but a GTK event!
-        if pytis.remote.client_available():
-            text = clipboard.wait_for_text()
-            client_ip = pytis.remote.client_ip()
-            log(EVENT, 'Copy text to windows clipboard on %s' % (client_ip,))
-            if isinstance(text, str):
-                text = unicode(text)
-            pytis.remote.set_clipboard_text(text)
 
     def on_key_down(self, event, dont_skip=False):
         # Toto je záchranný odchytávač.  Věřte tomu nebo ne, ale pokud tady ta
