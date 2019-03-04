@@ -21,16 +21,16 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
-import argparse
-import imp
-import os
-import sys
+import argparse  # noqa: E402
+import imp  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
 
-import gevent
-import gevent.subprocess
-import paramiko
+import gevent  # noqa: E402
+import gevent.subprocess  # noqa: E402
+import paramiko  # noqa: E402
 
-import pytis.remote
+import pytis.remote  # noqa: E402
 
 
 class Application(object):
@@ -106,6 +106,7 @@ class Application(object):
             if application.poll():
                 break
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--command', default=None),
@@ -113,11 +114,13 @@ def parse_arguments():
     parser.add_argument('conffile', metavar='CONFIGURATION_FILE', nargs='?')
     return parser.parse_args()
 
+
 def main():
     args = parse_arguments()
     config_file = args.conffile
     application = Application(config_file, command=args.command, hostname=args.hostname)
     application.run()
+
 
 if __name__ == '__main__':
     main()
