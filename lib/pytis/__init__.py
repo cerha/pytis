@@ -18,8 +18,8 @@
 
 __version__ = "1.2.1"
 
-import util  # noqa!
-import data  # noqa!
+import util  # noqa: F401
+import data  # noqa: F401
 
 import sys
 config = util.Configuration()

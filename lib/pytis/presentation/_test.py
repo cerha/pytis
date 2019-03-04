@@ -435,8 +435,8 @@ class PresentedRow(unittest.TestCase):
         self.assertIn('a', row)
         self.assertIn('half_total', row)
         self.assertNotIn('blabla', row)
-        self.assertTrue(row.has_key('a'))  # noqa!
-        self.assertFalse(row.has_key('xxx'))  # noqa!
+        self.assertTrue(row.has_key('a'))  # noqa: W601
+        self.assertFalse(row.has_key('xxx'))  # noqa: W601
 
     def test_changed(self):
         row = self._mega_row()

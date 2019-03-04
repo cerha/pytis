@@ -16,20 +16,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from request import (  # noqa!
+from request import (  # noqa: F401
     FileUpload, Request,
 )
 
-from field import (  # noqa!
+from field import (  # noqa: F401
     UriType, Link, localizable_export, Content, Field,
     localizable_export as localizable_datetime,  # For backwards compatibility.
 )
 
-from form import (  # noqa!
+from form import (  # noqa: F401
     BadRequest, Form, ShowForm, DeletionForm, EditForm, VirtualForm, FilterForm,
     BrowseForm, ListView, ItemizedView, CheckRowsForm, EditableBrowseForm,
 )
 
-from dialog import (  # noqa!
+from dialog import (  # noqa: F401
     Dialog, SelectionDialog,
 )

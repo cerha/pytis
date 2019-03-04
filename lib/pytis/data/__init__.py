@@ -33,7 +33,7 @@ The module defines:
 
 """
 
-from types_ import (  # noqa!
+from types_ import (  # noqa: F401
     UnsupportedPrimitiveValueConversion, Type, Number, Big, Large, Limited,
     Range, Integer, IntegerRange, SmallInteger, LargeInteger, LargeIntegerRange,
     Oid, Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name,
@@ -44,7 +44,7 @@ from types_ import (  # noqa!
     FixedEnumerator, DataEnumerator, ValidationError, Value, WMValue,
     sval, ival, fval, bval, dval, dtval, tval, wmval,
 )
-from data import (  # noqa!
+from data import (  # noqa: F401
     FORWARD, BACKWARD, ASCENDENT, DESCENDANT,
     Operator, Data, Counter, Function, MemData, ColumnSpec, Row, DataFactory,
     EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
@@ -52,24 +52,24 @@ from data import (  # noqa!
     RangeOverlap, FunctionCondition, OpFunction,
     reversed_sorting, opposite_direction, dbtable,
 )
-from access import (  # noqa!
+from access import (  # noqa: F401
     Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
     DataAccessException, is_in_groups,
 )
-from dbdata import (  # noqa!
+from dbdata import (  # noqa: F401
     DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
     DBSystemException, DBUserException, DBLoginException, DBInsertException,
     DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
 )
-from defaults import (  # noqa!
+from defaults import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault,
     DBTransactionDefault, default_access_groups, reload_session_variables,
 )
-from deprecated import Oid  # noqa!
+from deprecated import Oid  # noqa: F401
 
-import dbdefs  # noqa!
+import dbdefs  # noqa: F401
 
 # TODO: The following import serves for backward compatibility of applications
 # and should be removed once applications switch to using the
 # default_access_groups function.
-from postgresql import PostgreSQLUserGroups  # noqa!
+from postgresql import PostgreSQLUserGroups  # noqa: F401

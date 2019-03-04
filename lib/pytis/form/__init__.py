@@ -26,17 +26,17 @@ specifikace jednotlivých prvků rozhraní.
 
 """
 
-from .event import (  # noqa!
+from .event import (  # noqa: F401
     UserBreakException, top_level_exception, last_user_event, last_event_age,
     wx_callback, unlock_callbacks, yield_, idle_blocked, block_idle,
     standard_stop_check_function, interrupt_watcher, interrupt_init,
 )
 
-from .command import (  # noqa!
+from .command import (  # noqa: F401
     CommandHandler, Command, UICommand,
 )
 
-from .screen import (  # noqa!
+from .screen import (  # noqa: F401
     WxKey, WxColor, Keymap, KeyHandler, CallbackHandler, MSeparator,
     Menu, MItem, CheckItem, RadioItem, MenuBar, ToolTipWindow, ToolTip,
     StatusBar, InfoWindow, ProfileSelectorPopup, ProfileSelector,
@@ -53,21 +53,21 @@ from .screen import (  # noqa!
     open_data_as_file, launch_url,
 )
 
-from .dialog import (  # noqa!
+from .dialog import (  # noqa: F401
     Dialog, Message, Warning, Error, MultiQuestion, Question, OperationDialog,
     ProgressDialog, RepeatedOperationDialog, Calendar, ColorSelector,
     BugReport, CheckListDialog, CheckMatrixDialog, AggregationSetupDialog,
     FileDialog, DirDialog,
 )
 
-from .search import (  # noqa!
+from .search import (  # noqa: F401
     SFSColumn, SFSDialog, SortingDialog, SFDialog, SearchDialog,
     FilterDialog, sfs_columns,
 )
 
-from .inputfield import InputField, TextField  # noqa!
+from .inputfield import InputField, TextField  # noqa: F401
 
-from .form import (  # noqa!
+from .form import (  # noqa: F401
     FormProfile, FormSettings, Form, InnerForm, Refreshable, PopupForm,
     TitledForm, LookupForm, RecordForm, EditForm, PopupEditForm,
     InputForm, QueryFieldsForm, ResizableEditForm, ResizableInputForm,
@@ -75,24 +75,24 @@ from .form import (  # noqa!
     ViewerForm, WebForm, FileViewerForm,
 )
 
-from .list import (  # noqa!
+from .list import (  # noqa: F401
     ListForm, FoldableForm, CodebookForm, SelectRowsForm, BrowseForm,
     SideBrowseForm, AggregationForm,
 )
 
-from .dualform import (  # noqa!
+from .dualform import (  # noqa: F401
     DualForm, ImmediateSelectionDualForm, PostponedSelectionDualForm,
     SideBrowseDualForm, BrowseDualForm, AggregationDualForm,
     ShowDualForm, BrowseShowDualForm, DescriptiveDualForm, MultiForm,
     MultiSideForm, MultiBrowseDualForm,
 )
 
-from .output import (  # noqa!
+from .output import (  # noqa: F401
     PostscriptException, PostscriptViewer, print_form, PrintForm,
     PrintFormExternal,
 )
 
-from .application import (  # noqa!
+from .application import (  # noqa: F401
     Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
     run_form, run_dialog, run_procedure, input_text, input_number, input_date,
     new_record, delete_record, refresh, exit, db_operation, db_op,
@@ -107,16 +107,16 @@ from .application import (  # noqa!
     get_recent_directory, set_recent_directory, menu,
 )
 
-from .configui import (  # noqa!
+from .configui import (  # noqa: F401
     ConfigForm, config_menu_items, configurable_options,
 )
 
-from .commands_ import (  # noqa!
+from .commands_ import (  # noqa: F401
     UICommands, DEFAULT_KEYMAP, COMMAND_ICONS, TOOLBAR_COMMANDS,
     FORM_MENU_COMMANDS,
 )
 
-from .managers import (  # noqa!
+from .managers import (  # noqa: F401
     UserSetttingsManager, ApplicationConfigManager,
     FormSettingsManager, FormProfileManager,
     FormProfileParamsManager, AggregatedViewsManager,
