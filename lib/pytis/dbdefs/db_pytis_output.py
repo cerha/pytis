@@ -8,6 +8,7 @@ import pytis.data
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
+
 class EPytisOutputTemplates(Base_LogSQLTable):
     """Storage of print output templates handled by a DatabaseResolver."""
     name = 'e_pytis_output_templates'
@@ -29,6 +30,7 @@ class EPytisOutputTemplates(Base_LogSQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class EvPytisGlobalOutputTemplates(sql.SQLView):
     name = 'ev_pytis_global_output_templates'
     schemas = pytis_schemas.value(globals())
@@ -47,6 +49,7 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
     delete_order = (EPytisOutputTemplates,)
     depends_on = (EPytisOutputTemplates,)
     access_rights = default_access_rights.value(globals())
+
 
 class EvPytisUserOutputTemplates(sql.SQLView):
     name = 'ev_pytis_user_output_templates'
@@ -70,6 +73,7 @@ class EvPytisUserOutputTemplates(sql.SQLView):
                 "rowtemplate, header, first_page_header, footer, style, username) "
                 "values (new.module, new.specification, new.template, new.rowtemplate, new.header, "
                 "new.first_page_header, new.footer, new.style, current_user)",)
+
     def on_update(self):
         return ("""(
        insert into e_pytis_output_templates (module, specification, template, rowtemplate, header,
@@ -79,6 +83,7 @@ class EvPytisUserOutputTemplates(sql.SQLView):
        delete from e_pytis_output_templates where id=old.id and username=current_user;
        )
        """,)
+
     def on_delete(self):
         return ("delete from e_pytis_output_templates where id=old.id and username=current_user",)
     depends_on = (EPytisOutputTemplates,)

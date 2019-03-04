@@ -7,27 +7,32 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
 
+
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
     name = 'cms_languages'
     schemas = cms_schemas.value(globals())
-    fields = (sql.PrimaryColumn('lang_id', pytis.data.Serial()),
-              sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), unique=True),
-              )
+    fields = (
+        sql.PrimaryColumn('lang_id', pytis.data.Serial()),
+        sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), unique=True),
+    )
     with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
+
 
 class CmsModules(sql.SQLTable):
     """Codebook of extension modules available in the CMS."""
     name = 'cms_modules'
     schemas = cms_schemas.value(globals())
-    fields = (sql.PrimaryColumn('mod_id', pytis.data.Serial()),
-              sql.Column('modname', pytis.data.String(maxlen=64, not_null=True), unique=True),
-              )
+    fields = (
+        sql.PrimaryColumn('mod_id', pytis.data.Serial()),
+        sql.Column('modname', pytis.data.String(maxlen=64, not_null=True), unique=True),
+    )
     with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
+
 
 class CmsMenuStructure(sql.SQLTable):
     """Language independent menu structure."""
@@ -42,20 +47,25 @@ class CmsMenuStructure(sql.SQLTable):
               sql.Column('ord', pytis.data.Integer(not_null=True)),
               sql.Column('tree_order', pytis.data.LTree(not_null=False)),
               )
-    index_columns = (#('ord', sqlalchemy.literal_column('coalesce(parent, 0)'),),
-                     ('parent', 'ord',),)
+    index_columns = (
+        # ('ord', sqlalchemy.literal_column('coalesce(parent, 0)'),),
+        ('parent', 'ord',),
+    )
     with_oids = True
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsMenuStructureUniqueTreeOrder(sql.SQLRaw):
     name = 'cms_menu_structure_unique_tree_order'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return ("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
                 "ON cms_menu_structure (ord, coalesce(parent, 0));")
     depends_on = (CmsMenuStructure,)
+
 
 class CmsMenuStructureTreeOrder(sql.SQLFunction):
     """Generate a sortable string representing the hierarchical position of given menu item."""
@@ -67,6 +77,7 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (CmsMenuStructure,)
     access_rights = ()
+
 
 class CmsMenuTexts(sql.SQLTable):
     """Language dependent texts and properties for menu items."""
@@ -86,29 +97,32 @@ class CmsMenuTexts(sql.SQLTable):
     depends_on = (CmsMenuStructure, CmsLanguages,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsMenu(sql.SQLView):
     """Complete menu structure with texts for each language defined in cms_languages."""
     name = 'cms_menu'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def query(cls):
-        s = sql.t.CmsMenuStructure.alias('s')
-        l = sql.t.CmsLanguages.alias('l')
-        t_ = sql.t.CmsMenuTexts.alias('t')
-        m = sql.t.CmsModules.alias('m')
+        struc = sql.t.CmsMenuStructure.alias('s')
+        lang = sql.t.CmsLanguages.alias('l')
+        texts = sql.t.CmsMenuTexts.alias('t')
+        mod = sql.t.CmsModules.alias('m')
         return sqlalchemy.select(
-            cls._exclude(s) +
-            cls._exclude(l, 'lang_id') +
-            cls._exclude(t_, 'menu_item_id', 'lang', 'published') +
-            cls._exclude(m, 'mod_id') +
+            cls._exclude(struc) +
+            cls._exclude(lang, 'lang_id') +
+            cls._exclude(texts, 'menu_item_id', 'lang', 'published') +
+            cls._exclude(mod, 'mod_id') +
             [sql.gL("s.menu_item_id ||'.'|| l.lang").label('menu_id'),
              sql.gL("coalesce(t.published, 'FALSE')").label('published'),
              sql.gL("coalesce(t.title, s.identifier)").label('title_or_identifier'),
              sql.gL("(select count(*)-1 from cms_menu_structure "
-                   "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
-            from_obj=[s.join(l, sqlalchemy.sql.true()).
-                      outerjoin(t_, sql.gR('t.menu_item_id = s.menu_item_id AND t.lang = l.lang')).
-                      outerjoin(m, sql.gR('m.mod_id = s.mod_id'))]
+                    "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
+            from_obj=[struc.join(lang, sqlalchemy.sql.true()).
+                      outerjoin(texts, sql.gR('t.menu_item_id = s.menu_item_id '
+                                              'AND t.lang = l.lang')).
+                      outerjoin(mod, sql.gR('m.mod_id = s.mod_id'))]
         )
 
     def on_insert(self):
@@ -127,6 +141,7 @@ class CmsMenu(sql.SQLView):
           lang, title, heading, description, content, NULL::varchar(64),
           menu_item_id ||'.'|| lang, published, title, 0::bigint
        )""",)
+
     def on_update(self):
         return ("""(
        UPDATE cms_menu_structure SET
@@ -150,10 +165,12 @@ class CmsMenu(sql.SQLView):
          WHERE new.lang NOT IN (SELECT lang FROM cms_menu_texts WHERE menu_item_id=old.menu_item_id)
                 AND coalesce(new.title, new.heading, new.description, new.content) IS NOT NULL;
        )""",)
+
     def on_delete(self):
         return ("(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",)
     depends_on = (CmsMenuStructure, CmsLanguages, CmsMenuTexts, CmsModules,)
     access_rights = cms_rights.value(globals())
+
 
 class CmsRoles(sql.SQLTable):
     """CMS roles."""
@@ -167,6 +184,7 @@ class CmsRoles(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
+
 
 class CmsActions(sql.SQLTable):
     """Enumeration of valid actions.
@@ -186,6 +204,7 @@ class CmsActions(sql.SQLTable):
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsRightsAssignment(sql.SQLTable):
     """Underlying binding table between menu items, roles and module actions."""
     name = 'cms_rights_assignment'
@@ -203,10 +222,12 @@ class CmsRightsAssignment(sql.SQLTable):
     depends_on = (CmsMenuStructure, CmsRoles, CmsActions,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsRights(sql.SQLView):
     """User editable access rights assignment."""
     name = 'cms_rights'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def query(cls):
         x = sql.t.CmsRightsAssignment.alias('x')
@@ -231,6 +252,7 @@ class CmsRights(sql.SQLView):
     delete_order = (CmsRightsAssignment,)
     depends_on = (CmsRightsAssignment, CmsMenuStructure, CmsRoles, CmsActions,)
     access_rights = cms_rights.value(globals())
+
 
 class CmsThemes(sql.SQLTable):
     """Definition of available color themes."""
@@ -271,6 +293,7 @@ class CmsThemes(sql.SQLTable):
     depends_on = ()
     access_rights = cms_rights.value(globals())
 
+
 class CmsUsersTable(sql.SQLTable):
     name = 'cms_users_table'
     schemas = cms_schemas.value(globals())
@@ -278,6 +301,7 @@ class CmsUsersTable(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = ()
+
 
 class CmsUserRoleAssignment(sql.SQLTable):
     """Binding table assigning CMS roles to CMS users."""
@@ -294,6 +318,7 @@ class CmsUserRoleAssignment(sql.SQLTable):
     depends_on = (CmsRoles,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsSession(sql.SQLTable):
     """Web user session information for authentication and login history."""
     name = 'cms_session'
@@ -308,6 +333,7 @@ class CmsSession(sql.SQLTable):
     unique = (('uid', 'session_key',),)
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
+
 
 class CmsSessionLogData(sql.SQLTable):
     """Log of web user logins (underlying data)."""
@@ -330,6 +356,7 @@ class CmsSessionLogData(sql.SQLTable):
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
 
+
 class CmsAccessLogData(sql.SQLTable):
     """Log of cms page access."""
     name = 'cms_access_log_data'
@@ -349,15 +376,18 @@ class CmsAccessLogData(sql.SQLTable):
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
 
+
 class X186(sql.SQLRaw):
     name = '@186'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def sql(class_):
         return ("create or replace rule session_delete as on delete to cms_session do "
                 "( update cms_session_log_data set end_time=old.last_access "
                 "WHERE session_id=old.session_id;)")
     depends_on = (CmsSession, CmsSessionLogData,)
+
 
 class CmsUsers(sql.SQLTable):
     name = 'pytis_cms_users'
@@ -371,9 +401,11 @@ class CmsUsers(sql.SQLTable):
     depends_on = ()
     access_rights = ()
 
+
 class CmsUserRoles(sql.SQLView):
     name = 'cms_user_roles'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def query(cls):
         a_ = sql.t.CmsUserRoleAssignment.alias('a')
@@ -384,7 +416,11 @@ class CmsUserRoles(sql.SQLView):
             cls._exclude(r_, 'role_id') +
             [u.c.login.label('login'),
              u.c.fullname.label('fullname')],
-            from_obj=[a_.join(u, sql.gR('a.uid = u.uid')).join(r_, sql.gR('a.role_id = r.role_id'))]
+            from_obj=[
+                a_
+                .join(u, sql.gR('a.uid = u.uid'))
+                .join(r_, sql.gR('a.role_id = r.role_id')),
+            ]
         )
 
     def on_insert(self):
@@ -392,30 +428,34 @@ class CmsUserRoles(sql.SQLView):
                 "VALUES (new.user_role_id, new.uid, new.role_id) "
                 "RETURNING user_role_id, uid, role_id, NULL::text, NULL::text, NULL::text, "
                 "NULL::text, NULL::text",)
+
     def on_update(self):
         return ("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id "
                 "WHERE user_role_id=old.user_role_id",)
+
     def on_delete(self):
         return ("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id",)
     depends_on = (CmsUserRoleAssignment, CmsUsers, CmsRoles,)
     access_rights = cms_rights.value(globals())
 
+
 class CmsSessionLog(sql.SQLView):
     """Log of web user logins (user visible information)."""
     name = 'cms_session_log'
     schemas = cms_schemas.value(globals())
+
     @classmethod
     def query(cls):
-        l = sql.t.CmsSessionLogData.alias('l')
-        s = sql.t.CmsSession.alias('s')
-        u = sql.t.CmsUsers.alias('u')
+        log = sql.t.CmsSessionLogData.alias('l')
+        session = sql.t.CmsSession.alias('s')
+        users = sql.t.CmsUsers.alias('u')
         return sqlalchemy.select(
-            cls._exclude(l, 'end_time') +
-            [u.c.fullname.label('fullname'),
+            cls._exclude(log, 'end_time') +
+            [users.c.fullname.label('fullname'),
              sql.gL("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
              sql.gL("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
-            from_obj=[l.outerjoin(s, sql.gR('l.session_id = s.session_id')).
-                      join(u, sql.gR('l.uid = u.uid'))]
+            from_obj=[log.outerjoin(session, sql.gR('l.session_id = s.session_id')).
+                      join(users, sql.gR('l.uid = u.uid'))]
         )
 
     def on_insert(self):

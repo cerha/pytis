@@ -8,6 +8,7 @@ import pytis.data
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
     XDeletes, XInserts, XUpdates, default_access_rights, pytis_schemas
 
+
 class PartitioningTrigger(Base_PyTriggerFunction):
     name = 'partitioning_trigger'
     arguments = ()
@@ -20,7 +21,8 @@ class PartitioningTrigger(Base_PyTriggerFunction):
     @staticmethod
     def partitioning_trigger():
         """Updatuje datum a místo odeslání"""
-        class Part(Partitioning_Trigger.Util.BaseTriggerObject):
+        class Part(Base_PyTriggerFunction.Util.BaseTriggerObject):
+
             def _get_table_name(self):
                 max_id = int(self._args[0])
                 step = int(self._args[1])
@@ -40,19 +42,22 @@ class PartitioningTrigger(Base_PyTriggerFunction):
                     min_id_table = count_tables * step + 1
                     max_id_table = count_tables * step + step
                 return "%s_%s_%s" % (self._table_name, min_id_table, max_id_table), key_serial, key
+
             def _do_before_delete(self):
                 table, id_key, key = self._get_table_name()
                 plpy.execute("delete from %s where %s = %s" % (table, id_key, key))
                 self._return_code = self._RETURN_CODE_SKIP
+
             def _do_before_insert(self):
                 table, id_key, key = self._get_table_name()
-                values = ", ".join([pg_val(x) for x in self._new.values()])
+                values = ", ".join([Base_PyFunction.Util.pg_val(x) for x in self._new.values()])
                 keys = ", ".join([x for x in self._new.keys()])
                 plpy.execute("insert into %s (%s) values (%s)" % (table, keys, values))
                 self._return_code = self._RETURN_CODE_SKIP
+
             def _do_before_update(self):
                 table, id_key, key = self._get_table_name()
-                updates = ", ".join(["%s = %s" % (x, pg_val(self._new[x]))
+                updates = ", ".join(["%s = %s" % (x, Base_PyFunction.Util.pg_val(self._new[x]))
                                      for x in self._new.keys()])
                 plpy.execute("update %s set %s where %s = %s" % (table, updates, id_key, key))
                 self._return_code = self._RETURN_CODE_SKIP
@@ -61,8 +66,10 @@ class PartitioningTrigger(Base_PyTriggerFunction):
         result = part.do_trigger()
         return result
 
+
 class CommaAggregate(sql.SQLRaw):
     name = 'comma_aggregate'
+
     @classmethod
     def sql(class_):
         return """create or replace function comma_aggregate(text,text) returns
@@ -79,16 +86,20 @@ end;
 """
     depends_on = ()
 
+
 class CommaConcat(sql.SQLRaw):
     name = 'comma_concat'
+
     @classmethod
     def sql(class_):
         return """create aggregate comma_concat (basetype=text, sfunc=comma_aggregate,
 stype=text, initcond='' );"""
     depends_on = (CommaAggregate,)
 
+
 class LineFeedAggregate(sql.SQLRaw):
     name = 'line_feed_aggregate'
+
     @classmethod
     def sql(class_):
         return """create or replace function line_feed_aggregate(text,text) returns
@@ -106,16 +117,20 @@ end;
 """
     depends_on = ()
 
+
 class LineFeedConcat(sql.SQLRaw):
     name = 'line_feed_concat'
+
     @classmethod
     def sql(class_):
         return """create aggregate line_feed_concat (basetype=text, sfunc=line_feed_aggregate,
 stype=text, initcond='' );"""
     depends_on = (LineFeedAggregate,)
 
+
 class SpaceAggregate(sql.SQLRaw):
     name = 'space_aggregate'
+
     @classmethod
     def sql(class_):
         return """create or replace function space_aggregate(text,text) returns
@@ -132,13 +147,16 @@ end;
 """
     depends_on = ()
 
+
 class SpaceConcat(sql.SQLRaw):
     name = 'space_concat'
+
     @classmethod
     def sql(class_):
         return """create aggregate space_concat (basetype=text, sfunc=space_aggregate,
 stype=text, initcond='' );"""
     depends_on = (SpaceAggregate,)
+
 
 class GenMirrorSpec(Base_PyFunction):
     """Vygeneruje základní specifikace pro seznam tabulek"""
@@ -188,6 +206,7 @@ class GenMirrorSpec(Base_PyFunction):
             specs.append(spec + fields)
         return "\n\n\n".join(specs)
 
+
 class Log(sql.SQLTable):
     """Tabulka pro logování provedených DML příkazů."""
     name = 'log'
@@ -201,6 +220,7 @@ class Log(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class OnlyDigits(sql.SQLFunction):
     """Pomocná funkce pro CHECK constraint."""
     name = 'only_digits'
@@ -213,6 +233,7 @@ class OnlyDigits(sql.SQLFunction):
 
     def body(self):
         return "select ($1 ~ '^[0-9]+$')"
+
 
 class FDateYear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -228,6 +249,7 @@ class FDateYear(sql.SQLFunction):
     def body(self):
         return "select date_part('year', $1)::int"
 
+
 class FDateHalfyear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
     schemas = pytis_schemas.value(globals())
@@ -241,6 +263,7 @@ class FDateHalfyear(sql.SQLFunction):
 
     def body(self):
         return "select case when date_part('month', $1) < 7 then 1 else 2 end::int"
+
 
 class FDateQuarter(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -256,6 +279,7 @@ class FDateQuarter(sql.SQLFunction):
     def body(self):
         return "select date_part('quarter', $1)::int"
 
+
 class FDateMonth(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
     schemas = pytis_schemas.value(globals())
@@ -269,6 +293,7 @@ class FDateMonth(sql.SQLFunction):
 
     def body(self):
         return "select date_part('month', $1)::int"
+
 
 class XChanges(sql.SQLTable):
     """Sloupečky zaznamenávající uživatele a časy vytvoření a změn údajů.
@@ -287,10 +312,12 @@ class XChanges(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class TempnamesSeq(sql.SQLSequence):
     name = 'tempnames_seq'
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class NewTempname(sql.SQLFunction):
     """Pomocná funkce pro generování unikátních jmen."""
@@ -305,10 +332,12 @@ class NewTempname(sql.SQLFunction):
     def body(self):
         return "select '__t' || nextval('tempnames_seq')::text as jmeno"
 
+
 class VInserts(sql.SQLView):
     """Tabulka zaznamenávající přidávání záznamů standardních
     tabulek."""
     name = 'v_inserts'
+
     @classmethod
     def query(cls):
         _inserts = sql.t.XInserts
@@ -326,10 +355,12 @@ class VInserts(sql.SQLView):
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
 
+
 class VInsertsUser(sql.SQLView):
     """Tabulka zaznamenávající přidávání záznamů standardních
     tabulek."""
     name = 'v_inserts_user'
+
     @classmethod
     def query(cls):
         _inserts = sql.t.XInserts
@@ -347,10 +378,12 @@ class VInsertsUser(sql.SQLView):
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
 
+
 class VUpdates(sql.SQLView):
     """Tabulka zaznamenávající změny v záznamech standardních
     tabulek."""
     name = 'v_updates'
+
     @classmethod
     def query(cls):
         _updates = sql.t.XUpdates
@@ -369,10 +402,12 @@ class VUpdates(sql.SQLView):
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
 
+
 class VUpdatesUser(sql.SQLView):
     """Tabulka zaznamenávající změny v záznamech standardních
     tabulek."""
     name = 'v_updates_user'
+
     @classmethod
     def query(cls):
         _updates = sql.t.XUpdates
@@ -391,10 +426,12 @@ class VUpdatesUser(sql.SQLView):
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
 
+
 class VDeletes(sql.SQLView):
     """Tabulka zaznamenávající vymazávání záznamů ve standardních
     tabulkách."""
     name = 'v_deletes'
+
     @classmethod
     def query(cls):
         _deletes = sql.t.XDeletes
@@ -412,10 +449,12 @@ class VDeletes(sql.SQLView):
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
 
+
 class VDeletesUser(sql.SQLView):
     """Tabulka zaznamenávající vymazávání záznamů ve standardních
     tabulkách."""
     name = 'v_deletes_user'
+
     @classmethod
     def query(cls):
         _deletes = sql.t.XDeletes
@@ -433,6 +472,7 @@ class VDeletesUser(sql.SQLView):
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
 
+
 class XChangesStatistic(sql.SQLTable):
     """Tabulka pro statistiky změn v tabulkách."""
     name = '_changes_statistic'
@@ -448,8 +488,10 @@ class XChangesStatistic(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class XChangesStatisticTotal(sql.SQLRaw):
     name = '_changes_statistic_total'
+
     @classmethod
     def sql(class_):
         return """
@@ -474,6 +516,7 @@ CREATE OR REPLACE RULE _changes_statistic_total_del AS
  NOTHING;
 """
     depends_on = (XChangesStatistic,)
+
 
 class UpdateStatistic(Base_PyFunction):
     """Aktualizuje tabulku statistiky"""
@@ -563,6 +606,7 @@ class UpdateStatistic(Base_PyFunction):
         pocet = q[0]["pocet"]
         return pocet
 
+
 class TChanges(sql.SQLTable):
     """Log of data changes."""
     name = 't_changes'
@@ -581,6 +625,7 @@ class TChanges(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class TChangesDetail(sql.SQLTable):
     """Detail information about database changes."""
     name = 't_changes_detail'
@@ -594,9 +639,11 @@ class TChangesDetail(sql.SQLTable):
     depends_on = (TChanges,)
     access_rights = default_access_rights.value(globals())
 
+
 class VChanges(sql.SQLView):
     name = 'v_changes'
     schemas = (('public',),)
+
     @classmethod
     def query(cls):
         changes = sql.t.TChanges.alias('changes')
@@ -613,8 +660,10 @@ class VChanges(sql.SQLView):
     depends_on = (TChanges, TChangesDetail,)
     access_rights = default_access_rights.value(globals())
 
+
 class LogTriggerSupport(sql.SQLRaw):
     name = 'log_trigger_support'
+
     @classmethod
     def sql(class_):
         return """
@@ -722,8 +771,10 @@ $$ language plpgsql stable;
 """
     depends_on = (TChanges, TChangesDetail, VChanges,)
 
+
 class XUpdateColumnZmeneno(sql.SQLRaw):
     name = '_update_column_zmeneno'
+
     @classmethod
     def sql(class_):
         return """
@@ -737,8 +788,10 @@ CREATE OR REPLACE FUNCTION _update_column_zmeneno()
         $$ language 'plpgsql';"""
     depends_on = ()
 
+
 class Disabletriggers(sql.SQLRaw):
     name = 'DisableTriggers'
+
     @classmethod
     def sql(class_):
         return """
@@ -758,8 +811,10 @@ END;
 ' LANGUAGE plpgsql WITH (isstrict);"""
     depends_on = ()
 
+
 class Enabletriggers(sql.SQLRaw):
     name = 'EnableTriggers'
+
     @classmethod
     def sql(class_):
         return """
@@ -780,6 +835,7 @@ BEGIN
 END;
 ' LANGUAGE plpgsql WITH (isstrict);"""
     depends_on = ()
+
 
 class DropTemptables(Base_PyFunction):
     """Slouží k zrušení dočasných temporery tabulek.
@@ -817,6 +873,7 @@ class DropTemptables(Base_PyFunction):
             plpy.execute("drop table %s" % ",".join(tables))
         return pocet
 
+
 class CTypFormular(Base_LogSQLTable):
     """Slouží jako číselník typů formulářů"""
     name = 'c_typ_formular'
@@ -831,6 +888,7 @@ class CTypFormular(Base_LogSQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class EasterDate(Base_PyFunction):
     """Pro udaný rok (parametr) vrátí datum velikonoční
@@ -856,8 +914,8 @@ class EasterDate(Base_PyFunction):
         i3 = i2 - int(i2 / 28) * (1 - int(i2 / 28) * int(29 / (i2 + 1)) * int((21 - n) / 11))
         a1 = rok + int(rok / 4) + i3 + 2 - c + int(c / 4)
         a2 = a1 - 7 * int(a1 / 7)
-        l = i3 - a2
-        m = 3 + int((l + 40) / 44)
-        d = l + 28 - 31 * int(m / 4)
+        x = i3 - a2
+        m = 3 + int((x + 40) / 44)
+        d = x + 28 - 31 * int(m / 4)
         datum = """%s-%s-%s""" % (rok, m, d)
         return datum

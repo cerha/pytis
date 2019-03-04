@@ -7,6 +7,7 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import http_attachment_storage_rights, pytis_schemas
 
+
 class EPytisHttpAttachmentStorageKeys(sql.SQLTable):
     """Store HttpAttachmentStorage access keys."""
     name = 'e_pytis_http_attachment_storage_keys'

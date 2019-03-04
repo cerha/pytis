@@ -38,9 +38,11 @@ class Base_PyFunction(sql.SQLPyFunction):
     class Util(sql.SQLPyFunction.Util):
         TMoney = 'numeric(15,2)'
         TKurz = 'numeric(12,6)'
+
         @staticmethod
         def pg_escape(val):
             return str(val).replace("'", "''").replace("\\", "\\\\")  # '
+
         @staticmethod
         def pg_val(val):
             if val is None:
@@ -52,6 +54,7 @@ class Base_PyFunction(sql.SQLPyFunction):
             else:
                 pg_value = "'%s'" % (str(val).replace("'", "''").replace("\\", "\\\\"),)  # '
             return pg_value
+
         @staticmethod
         def html_table(columns_labels, rows):
             def st(val):
@@ -71,9 +74,11 @@ class Base_PyFunction(sql.SQLPyFunction):
             html_rows.append('</table>')
             html_table = '\n'.join(html_rows)
             return html_table.replace("'", "''")  # '
+
         @staticmethod
         def execute(query):
-            result = plpy.execute("select setting from pg_settings where name = 'application_name'")
+            result = plpy.execute("select setting from pg_settings "
+                                  "where name = 'application_name'")
             if result[0]['setting'] == 'debug':
                 plpy.info(query)
             return plpy.execute(query)
@@ -87,6 +92,7 @@ class Base_PyTriggerFunction(Base_PyFunction):
             _RETURN_CODE_MODIFY = "MODIFY"
             _RETURN_CODE_SKIP = "SKIP"
             _RETURN_CODE_OK = None
+
             def __init__(self, TD):
                 self._TD = TD
                 self._event = TD["event"].lower()
@@ -105,18 +111,25 @@ class Base_PyTriggerFunction(Base_PyFunction):
                     self._old = TD["old"]
                 #
                 self._return_code = self._RETURN_CODE_OK
+
             def _do_after_insert(self):
                 pass
+
             def _do_after_update(self):
                 pass
+
             def _do_after_delete(self):
                 pass
+
             def _do_before_insert(self):
                 pass
+
             def _do_before_update(self):
                 pass
+
             def _do_before_delete(self):
                 pass
+
             def do_trigger(self):
                 if self._when == 'before':
                     if self._event == 'insert':
@@ -150,6 +163,8 @@ class XInserts(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
+
 class XUpdates(sql.SQLTable):
     """Tabulka zaznamenávající změny v záznamech standardních
     tabulek."""
@@ -166,6 +181,8 @@ class XUpdates(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
+
 class XDeletes(sql.SQLTable):
     """Tabulka zaznamenávající vymazávání záznamů ve standardních
     tabulkách."""
@@ -181,6 +198,8 @@ class XDeletes(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
+
 class XLogUpdateTrigger(Base_PyFunction):
     """Slouží k evidenci editací nad záznamy tabulek."""
     name = '_log_update_trigger'
@@ -260,12 +279,15 @@ class LogTrigger(sql.SQLPlFunction):
     depends_on = ()
     access_rights = ()
 
+
 class Base_LogTrigger(sql.SQLTrigger):
     name = 'log'
     events = ('insert', 'update', 'delete',)
     body = LogTrigger
 
+
 class Base_LogSQLTable(sql.SQLTable):
+
     @property
     def triggers(self):
         keys = ','.join([f.id() for f in self.fields if f.primary_key()])

@@ -7,6 +7,7 @@ import pytis.data
 from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
+
 class EPytisActionLog(sql.SQLTable):
     """Pytis user actions log."""
     name = 'e_pytis_action_log'

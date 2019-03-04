@@ -9,6 +9,7 @@ from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights
 from pytis.dbdefs.db_pytis_common import XChanges
 from pytis.dbdefs.db_pytis_menu import EPytisMenu, PytisViewUserMenu
 
+
 class EPytisHelpPages(Base_LogSQLTable):
     """Structure of static help pages."""
     name = 'e_pytis_help_pages'
@@ -26,13 +27,16 @@ class EPytisHelpPages(Base_LogSQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class EPytisHelpPagesUniquePosition(sql.SQLRaw):
     name = 'e_pytis_help_pages_unique_position'
+
     @classmethod
     def sql(class_):
         return ("create unique index e_pytis_help_pages_unique_position on "
                 "e_pytis_help_pages (ord, coalesce(parent, 0));")
     depends_on = (EPytisHelpPages,)
+
 
 class FPytisHelpPagePosition(sql.SQLFunction):
     """Generate a sortable string representing the hierarchical position of given help item."""
@@ -43,6 +47,7 @@ class FPytisHelpPagePosition(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (EPytisHelpPages,)
     access_rights = ()
+
 
 class EPytisHelpSpec(Base_LogSQLTable):
     """Help texts for specifications."""
@@ -59,6 +64,7 @@ class EPytisHelpSpec(Base_LogSQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisHelpSpecItems(Base_LogSQLTable):
     """Help texts for specification items, such as fields, bindings, actions."""
@@ -82,6 +88,7 @@ class EPytisHelpSpecItems(Base_LogSQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class EPytisHelpMenu(Base_LogSQLTable):
     """Texts for help pages."""
     name = 'e_pytis_help_menu'
@@ -99,9 +106,11 @@ class EPytisHelpMenu(Base_LogSQLTable):
     depends_on = (EPytisMenu,)
     access_rights = default_access_rights.value(globals())
 
+
 class EvPytisHelp(sql.SQLView):
     """Complete help structure including texts and DMP menu structure."""
     name = 'ev_pytis_help'
+
     @classmethod
     def query(cls):
         def select_1():
@@ -139,6 +148,7 @@ class EvPytisHelp(sql.SQLView):
                           outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
                 whereclause='nlevel(position) >= 2'
             )
+
         def select_2():
             series = sqlalchemy.select(["*"], from_obj=["generate_series(0, 0)"]).alias('series')
             return sqlalchemy.select(
@@ -166,6 +176,7 @@ class EvPytisHelp(sql.SQLView):
                 from_obj=[series]
             )
         set_1 = sqlalchemy.union(select_1(), select_2())
+
         def select_3():
             p = sql.t.EPytisHelpPages.alias('p')
             return sqlalchemy.select(
@@ -179,7 +190,7 @@ class EvPytisHelp(sql.SQLView):
                      sql.gL("null").label('spec_description'),
                      sql.gL("null").label('spec_help'),
                      sql.gL("(select count(*)-1 from e_pytis_help_pages "
-                           "where position <@ p.position)").label('position_nsub'),
+                            "where position <@ p.position)").label('position_nsub'),
                      sql.gL("false").label('changed'),
                      sql.gL("false").label('removed')],
                     ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
@@ -188,6 +199,7 @@ class EvPytisHelp(sql.SQLView):
                 from_obj=[p]
             )
         return sqlalchemy.union(set_1, select_3())
+
     def on_insert(self):
         return ("""(
        insert into e_pytis_help_pages (page_id, title, description, content, parent, position, ord)
@@ -196,6 +208,7 @@ class EvPytisHelp(sql.SQLView):
                                   where coalesce(parent, 0)=coalesce(new.parent, 0)), 100));
        update e_pytis_help_pages SET position = f_pytis_help_page_position(page_id);
        )""",)
+
     def on_update(self):
         return ("""(
        update e_pytis_help_pages set
@@ -227,14 +240,17 @@ class EvPytisHelp(sql.SQLView):
                    or coalesce(new.spec_description, '') != coalesce(old.spec_description, '')
          where spec_name = old.spec_name;
        )""",)
+
     def on_delete(self):
         return ("delete from e_pytis_help_pages where page_id = old.page_id;",)
     depends_on = (EPytisHelpPages, EPytisHelpMenu,)
     access_rights = default_access_rights.value(globals())
 
+
 class EvPytisUserHelp(sql.SQLView):
     """Help menu structure limited to the current user according to DMP rights."""
     name = 'ev_pytis_user_help'
+
     @classmethod
     def query(cls):
         def select_1():
@@ -248,6 +264,7 @@ class EvPytisUserHelp(sql.SQLView):
                                      'position_nsub', 'changed', 'removed']),
                 from_obj=[h.join(u, sql.gR('h.menuid = u.menuid'))]
             )
+
         def select_2():
             h = sql.t.EvPytisHelp.alias('h')
             return sqlalchemy.select(
@@ -262,6 +279,7 @@ class EvPytisUserHelp(sql.SQLView):
         return sqlalchemy.union(select_1(), select_2())
     depends_on = (EvPytisHelp, PytisViewUserMenu,)
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisHelpSpecAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
@@ -287,6 +305,7 @@ class EPytisHelpSpecAttachments(Base_LogSQLTable):
     unique = (('spec_name', 'file_name',),)
     depends_on = (EPytisHelpSpec,)
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisHelpPagesAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""

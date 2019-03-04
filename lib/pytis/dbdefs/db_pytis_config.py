@@ -8,6 +8,7 @@ import pytis.data
 from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
+
 class EPytisConfig(sql.SQLTable):
     """Pytis application configuration storage."""
     name = 'e_pytis_config'
@@ -22,6 +23,7 @@ class EPytisConfig(sql.SQLTable):
     unique = (('username', 'option',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisFormSettings(sql.SQLTable):
     """Storage of pytis profile independent form settings."""
@@ -39,6 +41,7 @@ class EPytisFormSettings(sql.SQLTable):
     unique = (('username', 'spec_name', 'form_name',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisFormProfileBase(sql.SQLTable):
     """Pytis form configuration storage."""
@@ -59,6 +62,7 @@ class EPytisFormProfileBase(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class EPytisFormProfileParams(sql.SQLTable):
     """Pytis form profile form type specific parameters."""
     name = 'e_pytis_form_profile_params'
@@ -78,10 +82,12 @@ class EPytisFormProfileParams(sql.SQLTable):
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
+
 class EvPytisFormProfiles(sql.SQLView):
     """Pytis profiles."""
     name = 'ev_pytis_form_profiles'
     schemas = pytis_schemas.value(globals())
+
     @classmethod
     def query(cls):
         profile = sql.t.EPytisFormProfileBase.alias('profile')
@@ -94,16 +100,16 @@ class EvPytisFormProfiles(sql.SQLView):
              sql.gL("'form/'|| params.form_name ||'/'|| profile.spec_name ||'//'")
              .label('fullname'),
              sql.gL("case when profile.errors is not null and params.errors is not null "
-                   "then profile.errors ||'\n'||params.errors "
-                   "else coalesce(profile.errors, params.errors) end").label('errors'),
+                    "then profile.errors ||'\n'||params.errors "
+                    "else coalesce(profile.errors, params.errors) end").label('errors'),
              sql.gL("case when profile.dump is not null and params.dump is not null "
-                   "then profile.dump ||'\n'||params.dump "
-                   "else coalesce(profile.dump, params.dump) end").label('dump'),
+                    "then profile.dump ||'\n'||params.dump "
+                    "else coalesce(profile.dump, params.dump) end").label('dump'),
              profile.c.pickle.label('pickled_filter'),
              params.c.pickle.label('pickled_params')],
             from_obj=[profile.join(params, sql.gR('profile.username = params.username and '
-                                                 'profile.spec_name = params.spec_name and '
-                                                 'profile.profile_id = params.profile_id'))]
+                                                  'profile.spec_name = params.spec_name and '
+                                                  'profile.profile_id = params.profile_id'))]
         )
 
     def on_delete(self):
@@ -112,6 +118,7 @@ class EvPytisFormProfiles(sql.SQLView):
                 ";)",)
     depends_on = (EPytisFormProfileBase, EPytisFormProfileParams,)
     access_rights = default_access_rights.value(globals())
+
 
 class CopyUserProfile(sql.SQLFunction):
     """Zkopíruje profil z ev_pytis_form_profiles jinému uživateli."""
@@ -124,6 +131,7 @@ class CopyUserProfile(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (EvPytisFormProfiles,)
     access_rights = ()
+
 
 class EPytisAggregatedViews(sql.SQLTable):
     """Pytis aggregated views storage."""

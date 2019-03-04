@@ -17,6 +17,7 @@ crypto_select_rights = sql.SQLFlexibleValue('app_crypto_select_rights',
                                             environment='GSQL_CRYPTO_SELECT_RIGHTS',
                                             default=(('select', 'pytis',),))
 
+
 class CPytisCryptoNames(Base_LogSQLTable):
     """Codebook of encryption areas defined in the application."""
     name = 'c_pytis_crypto_names'
@@ -29,6 +30,7 @@ class CPytisCryptoNames(Base_LogSQLTable):
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
+
 
 class EPytisCryptoKeys(Base_LogSQLTable):
     """Table of encryption keys of users for defined encryption areas."""
@@ -50,6 +52,7 @@ class EPytisCryptoKeys(Base_LogSQLTable):
     depends_on = (CPytisCryptoNames,)
     access_rights = default_access_rights.value(globals())
 
+
 class EvPytisUserCryptoKeys(sql.SQLView):
     name = 'ev_pytis_user_crypto_keys'
     schemas = pytis_schemas.value(globals())
@@ -65,6 +68,7 @@ class EvPytisUserCryptoKeys(sql.SQLView):
 
     depends_on = (EPytisCryptoKeys,)
     access_rights = default_access_rights.value(globals())
+
 
 class PytisCryptoKeyFunctions(sql.SQLRaw):
     name = 'pytis_crypto_key_functions'
@@ -171,6 +175,7 @@ $$ language plpgsql;
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions,)
 
+
 class PytisCryptoTUserContact(sql.SQLType):
     name = 'pytis_crypto_t_user_contact'
     schemas = pytis_schemas.value(globals())
@@ -179,6 +184,7 @@ class PytisCryptoTUserContact(sql.SQLType):
               )
     depends_on = ()
     access_rights = ()
+
 
 class PytisCryptoDbKeys(sql.SQLTable):
     """
@@ -196,6 +202,7 @@ class PytisCryptoDbKeys(sql.SQLTable):
     depends_on = ()
     access_rights = crypto_select_rights.value(globals())
 
+
 class PytisCryptoTKeyPair(sql.SQLType):
     name = 'pytis_crypto_t_key_pair'
     schemas = pytis_schemas.value(globals())
@@ -204,6 +211,7 @@ class PytisCryptoTKeyPair(sql.SQLType):
               )
     depends_on = ()
     access_rights = ()
+
 
 class PytisCryptoGenerateKey(Base_PyFunction):
     name = 'pytis_crypto_generate_key'
@@ -224,6 +232,7 @@ class PytisCryptoGenerateKey(Base_PyFunction):
         private = rsa.exportKey()
         return [public, private]
 
+
 class PytisCryptoDecryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_decrypt_using_key'
     schemas = pytis_schemas.value(globals())
@@ -242,6 +251,7 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
         import base64
         rsa = Crypto.PublicKey.RSA.importKey(private)
         return rsa.decrypt(base64.decodestring(encrypted))
+
 
 class PytisCryptoEncryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_encrypt_using_key'
@@ -263,6 +273,7 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
         encrypted = rsa.encrypt(text, None)[0]
         return base64.encodestring(encrypted)
 
+
 class PytisCryptoDbKey(sql.SQLRaw):
     name = 'pytis_crypto_db_key'
     schemas = pytis_schemas.value(globals())
@@ -282,6 +293,7 @@ end;
 $$ language plpgsql stable security definer;
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
+
 
 class PytisCryptoDecryptDbPassword(sql.SQLRaw):
     name = 'pytis_crypto_decrypt_db_password'
@@ -304,6 +316,7 @@ $$ language plpgsql stable;
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
 
+
 class PytisCryptoCreateDbKey(sql.SQLRaw):
     name = 'pytis_crypto_create_db_key'
     schemas = pytis_schemas.value(globals())
@@ -318,6 +331,7 @@ $$ language sql;
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
                   PytisCryptoGenerateKey,)
+
 
 class PytisCryptoUnlockPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_passwords'
@@ -349,6 +363,7 @@ $$ language plpgsql;
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
                   PytisCryptoDecryptDbPassword,)
+
 
 class PytisCryptoUnlockCurrentUserPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_current_user_passwords'
