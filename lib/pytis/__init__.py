@@ -18,10 +18,10 @@
 
 __version__ = "1.2.1"
 
-import util
-import data
+import util  # noqa!
+import data  # noqa!
 
-config = util.Configuration()
 import sys
+config = util.Configuration()
 sys.modules['config'] = config
 del sys

@@ -17,6 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import unittest
+import pytis.util.test
+
 TESTED_MODULES = (
     'pytis.data',
     'pytis.presentation',
@@ -24,9 +27,6 @@ TESTED_MODULES = (
     'pytis.remote',
     'pytis.web',
 )
-
-import unittest
-import pytis.util.test
 
 tests = pytis.util.test.TestSuite()
 for module_name in TESTED_MODULES:
@@ -36,12 +36,13 @@ for module_name in TESTED_MODULES:
     else:
         for attr in dir(module):
             obj = getattr(module, attr)
-            if type(obj) == type(unittest.TestCase) and issubclass(obj, unittest.TestCase):
+            if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
                 tests.add(obj)
 
 
 def get_tests():
     return tests
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='get_tests')
