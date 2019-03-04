@@ -4,6 +4,7 @@ import sys
 import os
 from distutils.core import setup
 
+
 def files_list(basedir):
     result = []
     if not basedir:
