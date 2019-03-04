@@ -147,7 +147,7 @@ class Style(object):
     defaults are used.
 
     """
-    _COLOR_RE = re.compile('^#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
+    _COLOR_RE = re.compile(r'^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def __init__(self, foreground=None, background=None, bold=None, slanted=None,
                  overstrike=None, underline=None, name=None):
