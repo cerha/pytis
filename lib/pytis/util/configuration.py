@@ -334,12 +334,14 @@ class Configuration(object):
 
     class StringOption(Option):
         """Třída pro volby řetězcového typu."""
+
         def _type(self):
             import pytis.data
             return pytis.data.String()
 
     class BooleanOption(Option):
         """Třída pro volby typu boolean."""
+
         def _type(self):
             import pytis.data
             return pytis.data.Boolean()
@@ -354,11 +356,13 @@ class Configuration(object):
 
     class NumericOption(Option):
         """Třída pro volby celočíselného typu."""
+
         def _type(self):
             import pytis.data
             return pytis.data.Integer()
 
     class FileOption(StringOption):
+
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
             if not os.path.isabs(value):
@@ -397,6 +401,7 @@ class Configuration(object):
         have higher precedence than the options in the main configuration file
 
         """
+
         def default(self):
             config_file = self._configuration.config_file
             if config_file:
@@ -433,6 +438,7 @@ class Configuration(object):
         implicitně zapnuta i tato volba.  Užitečné pouze pro ladění.
 
         """
+
         def default(self):
             return self._configuration.debug
 
@@ -505,6 +511,7 @@ class Configuration(object):
         Instance of 'pytis.util.Resolver' used globally to resolve specification names.
 
         """
+
         def default(self):
             return Resolver(search=self._configuration.search_modules)
 
@@ -622,6 +629,7 @@ class Configuration(object):
         The instance is constructed from the above db* option by default.
 
         """
+
         def default(self):
             map = {'dbname': 'database',
                    'dbhost': 'host',
@@ -853,6 +861,7 @@ class Configuration(object):
         'pytis.data.DateTime'.
 
         """
+
         def default(self):
             import pytis.data
             return pytis.data.DateTime.DEFAULT_FORMAT
@@ -864,6 +873,7 @@ class Configuration(object):
         'pytis.data.Date'.
 
         """
+
         def default(self):
             import pytis.data
             return pytis.data.Date.DEFAULT_FORMAT
@@ -875,6 +885,7 @@ class Configuration(object):
         'pytis.data.Time'.
 
         """
+
         def default(self):
             import pytis.data
             return pytis.data.Time.DEFAULT_FORMAT
@@ -1267,15 +1278,15 @@ class Configuration(object):
     def _read_configuration_file(self, filename=True):
         try:
             filetime = os.stat(filename)[stat.ST_MTIME]
-        except:
+        except Exception:
             raise Exception("Unable to stat configuration file:", filename)
         try:
             f = open(filename)
-        except:
+        except Exception:
             raise Exception("Unable to open configuration file:", filename)
         try:
             del sys.modules['_config']
-        except:
+        except Exception:
             pass
         try:
             confmodule = imp.load_source('_config', filename, f)

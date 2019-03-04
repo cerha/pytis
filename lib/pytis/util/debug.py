@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -36,6 +36,7 @@ class Rdb(pdb.Pdb):
       telnet localhost 1111
 
     """
+
     def __init__(self, port=1111):
         """
         Arguments:
@@ -70,6 +71,7 @@ class Rdb(pdb.Pdb):
         return 1
 
     do_r = do_run
+
 
 _rdb = None
 

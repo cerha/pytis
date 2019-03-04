@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ class TestSuite(unittest.TestSuite):
     Užitečné (pouze) pro tvorbu testů.
 
     """
+
     def add(self, class_):
         """Přidej do testů všechny metody třídy 'class_' s prefixem 'check_'.
 
@@ -71,6 +72,7 @@ class InteractiveTestCase(unittest.TestCase):
     testování.
 
     """
+
     def _format_instructions(self, instructions):
         lines = string.split(instructions, '\n')
         formatted_lines = map(lambda l: '|' + l, lines)
@@ -137,7 +139,7 @@ def transform_args():
     for i in range(len(argv))[1:]:
         try:
             object = eval('__main__.%s' % argv[i])
-        except:
+        except Exception:
             continue
         if ((isinstance(object, (types.ClassType, types.TypeType)) and
              issubclass(object, unittest.TestCase))):
@@ -145,7 +147,7 @@ def transform_args():
             for m in dir(object):
                 if m.startswith('check_'):
                     a.append('%s.%s' % (argv[i], m))
-            argv[i:i+1] = a
+            argv[i:i + 1] = a
     return argv
 
 

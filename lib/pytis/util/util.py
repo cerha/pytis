@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ import types as pytypes
 import unicodedata
 import platform
 
-
+
 # Classes
 
 class ProgramError(Exception):
@@ -86,6 +86,7 @@ class InvalidAccessError(Exception):
     nebo s argumenty chybných typů.
 
     """
+
     def __init__(self, *args):
         import pytis.util
         pytis.util.log(pytis.util.OPERATIONAL, 'Neoprávněný přístup', args)
@@ -117,6 +118,7 @@ class Counter:
     Třída není thread-safe.
 
     """
+
     def __init__(self, value=0):
         """Inicializuj instanci."""
         self._value = value
@@ -277,7 +279,7 @@ class Pipe:
         for s in self._cc:
             try:
                 s.close()
-            except:
+            except Exception:
                 pass
 
 
@@ -293,6 +295,7 @@ class Popen:
     dostupné přes metodu 'pid()'.
 
     """
+
     def __init__(self, command, to_child=None, from_child=None,
                  directory=None):
         """Spusť 'command' v samostatném procesu.
@@ -343,7 +346,7 @@ class Popen:
                 for i in range(3, 256):
                     try:
                         os.close(i)
-                    except:
+                    except Exception:
                         pass
                 os.execvp(command[0], command)
             finally:
@@ -415,6 +418,7 @@ class TemporaryDirectory(object):
     You can get the name of the directory using 'name()' method.
 
     """
+
     def __init__(self, prefix='tmppytis', *args, **kwargs):
         """
         Arguments:
@@ -438,16 +442,16 @@ class TemporaryDirectory(object):
                 for d in dirnames:
                     try:
                         os.rmdir(os.path.join(dirpath, d))
-                    except:
+                    except Exception:
                         pass
                 for f in filenames:
                     try:
                         os.remove(os.path.join(dirpath, f))
-                    except:
+                    except Exception:
                         pass
             try:
                 os.rmdir(self._directory)
-            except:
+            except Exception:
                 pass
 
 
@@ -471,7 +475,7 @@ class TemporaryFile(object):
         if not self._file.delete and os.getpid() == self._pid:
             try:
                 os.remove(self._file.name)
-            except:
+            except Exception:
                 pass
 
 
@@ -540,6 +544,7 @@ class XStack(Stack):
     stack, not to the top of the stack as in the superclass.
 
     """
+
     def __init__(self):
         self._active = None
         self._mru = []
@@ -756,7 +761,7 @@ class object_2_5(object):
     def __init__(self, **kwargs):
         object.__init__(self)
 
-
+
 # Functions
 
 def identity(x):
@@ -1038,7 +1043,7 @@ def sameclass(o1, o2, strict=False):
     try:
         c1 = o1.__class__
         c2 = o2.__class__
-    except:
+    except Exception:
         return False
     if c1 == c2:
         return True
@@ -1478,14 +1483,14 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                 safe_encoding_write(output, data)
             if __debug__:
                 log(DEBUG, 'Stream zkopírován:', (input, output))
-        except:
+        except Exception:
             if not _catch:
                 raise
     finally:
         if close:
             try:
                 output.close()
-            except:
+            except Exception:
                 pass
 
 
@@ -1659,7 +1664,7 @@ def form_view_data(resolver, name, dbconnection_spec=None):
     data = data_spec.create(dbconnection_spec=dbconnection_spec)
     return view, data
 
-
+
 # Miscellaneous
 
 
@@ -1671,7 +1676,7 @@ nutno provádět jejich definici a zkoumání prostřednictvím **kwargs.
 
 """
 
-
+
 # Debugging functions
 
 
@@ -1697,6 +1702,7 @@ def mem_info():
     global _mem_info
     if _mem_info is None:
         class MemInfo:
+
             def __init__(self):
                 self._length = 0
                 self._report_length = 1
@@ -1757,10 +1763,10 @@ def deepstr(obj):
         result = unicode(transformed)
     except UnicodeEncodeError:
         result = transformed.encode('unicode_escape')
-    except:
+    except Exception:
         try:
             result = unicode(repr(transformed))
-        except:
+        except Exception:
             result = '<<unicode conversion error>>'
     return result
 
@@ -1986,6 +1992,7 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
     ):
         result = result.replace(context % src, context % dst)
     return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
+
 
 _current_language = None
 

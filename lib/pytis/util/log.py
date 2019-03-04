@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,7 @@ class Logger(object):
     nýbrž použít funkci 'log.log()'.
 
     """
+
     def __init__(self):
         """Inicializuj logger."""
         import config
@@ -102,7 +103,7 @@ class Logger(object):
                     else:
                         class_[i] = eval(c)
             self._class_filter = class_
-        except:
+        except Exception:
             self._class_filter = ()
 
     def _retrieve_info(self):
@@ -117,15 +118,15 @@ class Logger(object):
                     # TODO: Z neznámého důvodu od jisté doby nefunguje zjištění
                     # modulu pro pytis.form.
                     module = inspect.getmodule(frame).__name__
-                except:
+                except Exception:
                     pass
-            l = frame.f_locals
-            if 'self' in l:
-                s = l['self']
+            f_locals = frame.f_locals
+            if 'self' in f_locals:
+                s = f_locals['self']
                 try:
                     class_ = s.__class__
                     class_name = class_.__name__
-                except:
+                except Exception:
                     pass
                 id_ = '%x' % (positive_id(s),)
         self._module = module
@@ -236,6 +237,7 @@ class StreamLogger(Logger):
     třídy uzavřen.
 
     """
+
     def __init__(self, stream):
         """Inicializuj logování.
 
@@ -291,7 +293,7 @@ class SyslogLogger(Logger):
             syslog.syslog(priority, msg)
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
 
-
+
 ###
 
 
@@ -301,6 +303,7 @@ class LoggingInterface:
     Tato třída není určena k instanciaci mimo modul 'pytis.util.log'.
 
     """
+
     def __init__(self):
         self._logger = None  # nelze inicializovat teď, kvůli závislostem modulů
         self._hooks = []

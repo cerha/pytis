@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ tests = test.TestSuite()
 
 
 class Counter(unittest.TestCase):
+
     def test_it(self):
         counter = util.Counter()
         self.assertEqual(counter.current(), 0)
@@ -49,10 +50,13 @@ class Counter(unittest.TestCase):
         self.assertEqual(counter.next(), 1)
         self.assertEqual(counter.next(), 2)
         self.assertEqual(counter.current(), 2)
+
+
 tests.add(Counter)
 
 
 class Pipe(unittest.TestCase):
+
     def test_it(self):
         p = util.Pipe()
         p.write('foo')
@@ -97,6 +101,8 @@ class Pipe(unittest.TestCase):
         self.assertEqual(r, 'arbaz')
         r = p.read()
         self.assertIsNone(r)
+
+
 tests.add(Pipe)
 
 
@@ -130,10 +136,13 @@ class Popen(unittest.TestCase):
         out.write(self.STRING)
         out.close()
         self.assertEqual(popen3.from_child().read(), self.RSTRING)
+
+
 tests.add(Popen)
 
 
 class Stack(unittest.TestCase):
+
     def test_it(self):
         stack = util.Stack()
         self.assertTrue(stack.empty())
@@ -150,10 +159,13 @@ class Stack(unittest.TestCase):
         self.assertIs(stack.top(), a)
         stack.pop()
         self.assertTrue(stack.empty())
+
+
 tests.add(Stack)
 
 
 class XStack(unittest.TestCase):
+
     def test_it(self):
         xstack = util.XStack()
         self.assertTrue(xstack.empty())
@@ -198,10 +210,13 @@ class XStack(unittest.TestCase):
         self.assertIs(xstack.active(), c)
         self.assertIsNone(xstack.prev())
         self.assertIsNone(xstack.next())
+
+
 tests.add(XStack)
 
 
 class Sameclass(unittest.TestCase):
+
     class A:
         pass
 
@@ -216,10 +231,13 @@ class Sameclass(unittest.TestCase):
                          'different classes not recognized')
         self.assertTrue(util.sameclass(1, 1), 'same inteeger classes not recognized')
         self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
+
+
 tests.add(Sameclass)
 
 
 class CompareObjects(unittest.TestCase):
+
     class A:
         pass
 
@@ -242,10 +260,13 @@ class CompareObjects(unittest.TestCase):
         self.assertNotEqual(util.compare_objects(o1, o2), 0)
         self.assertGreater(util.compare_objects(o2, o3), 0)
         self.assertLess(util.compare_objects(o3, o2), 0)
+
+
 tests.add(CompareObjects)
 
 
 class MiscFunctions(unittest.TestCase):
+
     def test_is_sequence(self):
         self.longMessage = True
         self.assertTrue(util.is_sequence((1, 2, 3)), 'sequence not a sequence')
@@ -257,20 +278,23 @@ class MiscFunctions(unittest.TestCase):
         self.assertFalse(util.is_sequence({}), 'non-sequence as sequence')
 
     def test_safedel(self):
-        d = {'alpha': 1, 'beta': 2, 'gamma': 3}
-        l = ['alpha', 'beta', 'gamma']
-        self.assertEqual(util.safedel(d, 'delta'), d)
-        self.assertEqual(util.safedel(l, 3), l)
-        dx = util.safedel(d, 'alpha')
+        dictionary = {'alpha': 1, 'beta': 2, 'gamma': 3}
+        list_ = ['alpha', 'beta', 'gamma']
+        self.assertEqual(util.safedel(dictionary, 'delta'), dictionary)
+        self.assertEqual(util.safedel(list_, list_), 3)
+        dx = util.safedel(dictionary, 'alpha')
         self.assertEqual(dx,  {'beta': 2, 'gamma': 3})
-        lx = util.safedel(l, 1)
+        lx = util.safedel(list_, 1)
         self.assertEqual(lx,  ['alpha', 'gamma'])
         self.assertEqual(util.safedel({}, 'foo'),  {})
         self.assertEqual(util.safedel([], 2),  [])
+
+
 tests.add(MiscFunctions)
 
 
 class ListUtils(unittest.TestCase):
+
     def test_some(self):
         T = True
         F = False
@@ -304,18 +328,23 @@ class ListUtils(unittest.TestCase):
     def test_nreverse(self):
         self.assertEqual(util.nreverse([1, 2, 3]), [3, 2, 1])
         self.assertEqual(util.nreverse([]), [])
+
+
 tests.add(ListUtils)
 
 
 class CopyStream(unittest.TestCase):
+
     def test_it(self):
-        value = 'abc' + 'x'*10000
+        value = 'abc' + 'x' * 10000
         import StringIO
         input = StringIO.StringIO(value)
         input.seek(0)
         output = StringIO.StringIO(value)
         util.copy_stream(input, output)
         self.assertEqual(output.getvalue(), value)
+
+
 tests.add(CopyStream)
 
 
@@ -336,7 +365,7 @@ class FindUtils(unittest.TestCase):
         self.assertEqual(util.find(42, [-41, -42, -43], key=operator.neg), -42)
         self.assertEqual(util.find(42, [41, 42, 43, 44], test=(lambda x, y: x < y)), 43)
         self.assertEqual(util.find(42, [-40, -41, -42, -43], key=operator.neg,
-                         test=(lambda x, y: x < y)), -43)
+                                   test=(lambda x, y: x < y)), -43)
 
     def test_assoc(self):
         self.assertEqual(util.assoc(1, self._ALIST), (1, 6))
@@ -353,10 +382,13 @@ class FindUtils(unittest.TestCase):
         self.assertEqual(util.ecase(3, *settings), 'gamma')
         with self.assertRaises(util.ProgramError):
             util.ecase(0, *settings)
+
+
 tests.add(FindUtils)
 
 
 class NonLocalTransfers(unittest.TestCase):
+
     def _function(self, arg):
         if arg == 'foo':
             return 1
@@ -375,10 +407,12 @@ class NonLocalTransfers(unittest.TestCase):
             util.catch('foo', self._function, 'foobar')
         util.catch('foobar', util.catch, 'foo', self._function, 'bar')
 
+
 tests.add(NonLocalTransfers)
 
 
 class DevNullStream(unittest.TestCase):
+
     def test_read(self):
         f = util.dev_null_stream('r')
         self.assertEqual(f.read(), '')
@@ -386,14 +420,16 @@ class DevNullStream(unittest.TestCase):
 
     def test_write(self):
         f = util.dev_null_stream('w')
-        f.write('a'*100)
-        f.write('b'*100000)
+        f.write('a' * 100)
+        f.write('b' * 100000)
         f.close()
+
 
 tests.add(DevNullStream)
 
 
 class Mktempdir(unittest.TestCase):
+
     def test_it(self):
         import os
         dir1 = dir2 = dir3 = None
@@ -409,12 +445,15 @@ class Mktempdir(unittest.TestCase):
                 if d:
                     try:
                         os.rmdir(d)
-                    except:  # pragma: no cover
+                    except Exception:  # pragma: no cover
                         pass
+
+
 tests.add(Mktempdir)
 
 
 class Classes(unittest.TestCase):
+
     class _A:
         x = 1
 
@@ -449,10 +488,13 @@ class Classes(unittest.TestCase):
                                                                  'test_direct_public_members',
                                                                  'test_next_subclass',
                                                                  'test_public_attributes'])
+
+
 tests.add(Classes)
 
 
 class Caching(unittest.TestCase):
+
     def test_simple_cache(self):
         counter = [0]
 
@@ -468,17 +510,20 @@ class Caching(unittest.TestCase):
 
     def test_limited_cache(self):
         def squarer(key):
-            return key*key
+            return key * key
         c = caching.LimitedCache(squarer, limit=2)
         self.assertEqual(c[2], 4)
         self.assertEqual(c[3], 9)
         self.assertEqual(len(c), 2)
         self.assertEqual(c[4], 16)
         self.assertLessEqual(len(c), 2)
+
+
 tests.add(Caching)
 
 
 class Resolver(unittest.TestCase):
+
     def test_resolver(self):
         from resolver import Resolver
         import pytis.presentation
@@ -493,6 +538,8 @@ class Resolver(unittest.TestCase):
         specifications = [spec_ for name, spec_ in r.walk()]
         from pytis.cms import Languages
         self.assertIn(Languages, specifications)
+
+
 tests.add(Resolver)
 
 
@@ -501,6 +548,7 @@ tests.add(Resolver)
 
 def get_tests():
     return tests
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -99,7 +99,8 @@ class Resolver(object):
                     # Raise resolver error only if the import error actually
                     # related to importing the named module itself and not to some
                     # nested import within this module.
-                    raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+                    raise ResolverError("Resolver error loading specification '%s': %s" %
+                                        (name, e))
             # The error inside the imported module (typically the imported
             # module attempts to import a python module which is not
             # installed) must raise the original exception so that we can

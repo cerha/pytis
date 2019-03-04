@@ -87,6 +87,7 @@ class LimitedCache(_Cache):
     překročen.
 
     """
+
     def __init__(self, provider, limit=1000):
         """Inicializuj instanci.
 
@@ -130,6 +131,7 @@ class RangeCache(_Cache):
     V podstatě se tedy jedná o pole cachovaných hodnot.
 
     """
+
     def __init__(self, provider, size=1000):
         """Inicializuj instanci.
 
