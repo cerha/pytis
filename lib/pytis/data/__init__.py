@@ -36,7 +36,7 @@ The module defines:
 from types_ import (  # noqa: F401
     UnsupportedPrimitiveValueConversion, Type, Number, Big, Large, Limited,
     Range, Integer, IntegerRange, SmallInteger, LargeInteger, LargeIntegerRange,
-    Oid, Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name,
+    Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name,
     Password, RegexString, Color, Inet, Macaddr, Email, TreeOrderBase, TreeOrder,
     FullTextIndex, DateTime, LocalDateTime, DateTimeRange, ISODateTime, Date,
     DateRange, Time, LocalTime, TimeInterval, date_and_time, add_timedelta,

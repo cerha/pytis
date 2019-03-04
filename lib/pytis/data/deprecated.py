@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
-# Copyright (C) 2007, 2013, 2018 Brailcom, o.p.s.
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2007-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,4 +23,7 @@ from pytis.data import Integer
 
 
 class Oid(Integer):
-    pass
+
+    def sqlalchemy_type(self):
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.OID()

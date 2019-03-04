@@ -1005,13 +1005,6 @@ class LargeIntegerRange(Range, Integer):
         return value - 1
 
 
-class Oid(Integer):
-
-    def sqlalchemy_type(self):
-        import pytis.data.gensqlalchemy
-        return pytis.data.gensqlalchemy.OID()
-
-
 class Serial(Integer):
     """Integer s automaticky generovanými hodnotami.
 
