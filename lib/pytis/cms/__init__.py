@@ -58,7 +58,10 @@ CMS in an existing Pytis Application are:
 
 """
 
-from cms import Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
-     Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights, SessionLog, AccessLog, \
-     UserSessionLog, Themes
-import web
+from cms import (  # noqa!
+    Menu, MenuParents, Languages, Modules, Actions, GenericActions,
+    Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights,
+    SessionLog, AccessLog, UserSessionLog, Themes,
+)
+
+import web  # noqa!

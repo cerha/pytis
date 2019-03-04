@@ -46,6 +46,7 @@ ALWAYS = pp.Editable.ALWAYS
 ONCE = pp.Editable.ONCE
 NEVER = pp.Editable.NEVER
 
+
 def nextval(seq):
     def conn_spec():
         return config.dbconnection
@@ -54,6 +55,7 @@ def nextval(seq):
 
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
+
     def _init(self, **kwargs):
         super(_TreeOrder, self)._init(tree_column_id='tree_order',
                                       subcount_column_id='tree_order_nsub',
@@ -63,6 +65,7 @@ class _TreeOrder(pp.PrettyFoldable, pd.String):
 class Specification(pp.Specification):
     access_rights = pd.AccessRights((None, (('cms_user', 'cms_admin'), pd.Permission.ALL)))
     public = True
+
     def _spec_name(self, name, needed_in_wiking=True):
         # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
         # specification is inherited by the Wiking Module).
@@ -73,6 +76,7 @@ class Languages(Specification):
     title = _("Jazyky")
     help = _("Správa jazyků dostupných v CMS.")
     table = 'cms_languages'
+
     def fields(self):
         return (
             Field('lang_id', default=nextval('cms_languages_lang_id_seq')),
@@ -81,11 +85,13 @@ class Languages(Specification):
             Field('name', _("Title"), virtual=True, editable=NEVER,
                   computer=computer(lambda record, lang: self._language_name(lang))),
         )
+
     def _language_name(self, lang):
         lcg_dir = os.environ.get('LCGDIR', '/usr/local/share/lcg')
         translation_dir = os.path.join(lcg_dir, 'translations')
         t = lcg.GettextTranslator('cs', path=(translation_dir,), fallback=True)
         return t.gettext(lcg.language_name(lang))
+
     def cb(self):
         return CodebookSpec(display=lambda lang: self._language_name(lang), prefer_display=True)
     sorting = ('lang', ASC),
@@ -99,6 +105,7 @@ class Modules(Specification):
     table = 'cms_modules'
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
+
     def fields(self):
         return (
             Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
@@ -106,6 +113,7 @@ class Modules(Specification):
             Field('descr', _("Description"), width=64, virtual=True,
                   editable=NEVER, computer=computer(self._descr)),
         )
+
     def _module(self, modname):
         if modname:
             for python_module_name in self._SEARCH_MODULES:
@@ -115,10 +123,12 @@ class Modules(Specification):
                 if hasattr(python_module, modname):
                     module = getattr(python_module, modname)
                     import wiking
-                    if type(module) == type(wiking.Module) and issubclass(module, wiking.Module):
+                    if isinstance(module, type) and issubclass(module, wiking.Module):
                         return module
         return None
+
     def _descr(self, rrecord, modname):
+        import wiking
         module = wiking.module(modname)
         if module:
             return module.descr() or module.title()
@@ -128,11 +138,14 @@ class Modules(Specification):
     cb = CodebookSpec(display='modname', prefer_display=True)
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
+
     def bindings(self):
         return (Binding('actions', _("Dostupné akce tohoto modul"), self._spec_name('Actions'),
                         'mod_id'),)
+
     def actions(self):
         return (Action('reload', _("Přenačíst dostupné akce"), self._reload_actions),)
+
     def on_delete_record(self, record):
         import pytis.form
         data = pytis.form.create_data_object(self._spec_name('Menu'))
@@ -143,15 +156,17 @@ class Modules(Specification):
                      "Pokud jej chcete vymazat, zrušte nejprve všechny navázané stránky.")
         else:
             return True
-    #def on_new_record(self, prefill, transaction=None):
+    # def on_new_record(self, prefill, transaction=None):
     #    import pytis.form
     #    record = pytis.form.new_record(self._spec_name('Modules'), prefill=prefill,
     #                                   block_on_new_record=True, transaction=transaction)
     #    if record:
     #
     #    return record
+
     def _reload_actions(self, record):
         import wiking
+
         def action_descr(module, action):
             if issubclass(module, wiking.PytisModule):
                 for a in module.Spec.actions:
@@ -181,7 +196,10 @@ class Modules(Specification):
                        isinstance(getattr(module, attr), collections.Callable)]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
-            order = lambda a: a in default_actions and (default_actions.index(a) + 1) or a
+
+            def order(a):
+                return a in default_actions and (default_actions.index(a) + 1) or a
+
             actions.sort(lambda a, b: cmp(order(a), order(b)))
             descriptions = [action_descr(module, action) for action in actions]
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
@@ -227,6 +245,7 @@ class MenuParents(Specification):
     # Codebook of parent items for Menu (to prevent recursion).
     title = _("Men")
     table = 'cms_menu'
+
     def fields(self):
         return (
             Field('menu_id'),
@@ -236,7 +255,7 @@ class MenuParents(Specification):
             Field('title_or_identifier', _("Title"), width=32, type=_TreeOrder),
             Field('identifier', _("Identifier"), width=20),
             Field('modname', _("Modul")),
-            #Field('description', _("Description"), width=64),
+            # Field('description', _("Description"), width=64),
         )
     sorting = ('tree_order', ASC),
     columns = ('title_or_identifier', 'identifier', 'modname')
@@ -247,8 +266,10 @@ class Menu(Specification):
     title = _("Menu")
     help = _("Správa položek hlavního menu, jejich hierarchie a obsahu.")
     table = 'cms_menu'
+
     def _parent_filter(self, record, lang):
         return pd.EQ('lang', pd.Value(pd.String(), lang))
+
     def fields(self):
         return (
             Field('menu_id'),
@@ -294,6 +315,7 @@ class Menu(Specification):
                           "pages of the same hierarchy level.  Leave empty to put the item "
                           "automatically to bottom.")),
         )
+
     def _attachment_storage(self, record, base_uri=None):
         # Determines the directory for storing the attachments for the 'content' field.
         storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
@@ -310,6 +332,7 @@ class Menu(Specification):
                 return pp.FileAttachmentStorage(directory, base_uri=base_uri)
         else:
             return None
+
     def _check_menu_order_condition(self, record):
         # Return a list of 'pd.Operator' instances to find menu items with duplicate order at the
         # same level.  The returned operators will be applied in conjunction.  Designed to allow
@@ -317,6 +340,7 @@ class Menu(Specification):
         return [pd.EQ('parent', record['parent']),
                 pd.EQ('ord', record['ord']),
                 pd.NE('menu_item_id', record['menu_item_id'])]
+
     def check(self, record):
         data = record.data()
         if record['parent'].value() is not None:
@@ -345,6 +369,7 @@ class Menu(Specification):
                      "Pokud ji chcete vymazat, vymažte nejprve všechny podpoložky.")
         else:
             return True
+
     def row_style(self, record):
         if not record['published'].value():
             return pp.Style(foreground='#777', background='#eee')
@@ -356,6 +381,7 @@ class Menu(Specification):
               VGroup('lang', 'title', 'heading', 'description', 'content', 'published',
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
+
     def bindings(self):
         return (
             Binding('rights', _("Přístupová práva"), self._spec_name('Rights'),
@@ -387,6 +413,7 @@ class Users(Specification):
     title = _("Uživatelé")
     help = _("Správa uživatelských účtů, které je poté možno zařazovat do rolí.")
     table = 'cms_users'
+
     def fields(self):
         return (
             Field('uid', _("UID"), width=5, default=nextval('cms_users_uid_seq')),
@@ -399,6 +426,7 @@ class Users(Specification):
     columns = ('uid', 'login', 'fullname')
     cb = CodebookSpec(display='fullname')
     sorting = (('login', ASC),)
+
     def bindings(self):
         return (Binding('roles', _("Uživatelské role"), self._spec_name('UserRoles'), 'uid'),
                 Binding('sessions', _("Historie přihlášení"), self._spec_name('UserSessionLog'),
@@ -410,6 +438,7 @@ class Roles(Specification):
     title = _("Uživatelské role")
     help = _("Správa dostupných uživatelských rolí, které je možné přiřazovat uživatelům.")
     table = 'cms_roles'
+
     def fields(self):
         return (
             Field('role_id', default=nextval('cms_roles_role_id_seq')),
@@ -420,12 +449,14 @@ class Roles(Specification):
     layout = ('name', 'description')
     columns = ('name', 'description')
     condition = pd.EQ('system_role', pd.Value(pd.String(), None))
+
     def bindings(self):
         return (
             Binding('users', _("Uživatelé zařazení do této role"), self._spec_name('RoleUsers'),
                     'role_id'),
         )
     cb = CodebookSpec(display='name')
+
 
 class SystemRoles(Roles):
     title = _("Systémové role")
@@ -448,6 +479,7 @@ class UserRoles(Specification):
     title = _("Přiřazení uživatelských rolí")
     help = _("Správa přiřazení uživatelských rolí jednotlivým uživatelům.")
     table = 'cms_user_roles'
+
     def fields(self):
         return (
             Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
@@ -476,6 +508,7 @@ class Actions(Specification):
     table = 'cms_actions'
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
+
     def fields(self):
         return (
             Field('action_id', default=nextval('cms_actions_action_id_seq')),
@@ -501,6 +534,7 @@ class Rights(Specification):
     title = _("Přístupová práva")
     help = _("Přiřazení práv k akcím modulů pro jednotlivé uživatelské role.")
     table = 'cms_rights'
+
     def fields(self):
         return (
             Field('rights_assignment_id',
@@ -519,9 +553,11 @@ class Rights(Specification):
     sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
     columns = ('role_name', 'action_name', 'action_description')
     layout = ('role_id', 'action_id')
+
     def _action_filter(self, record, mod_id):
         return pd.OR(pd.EQ('mod_id', record['mod_id']),
                      pd.EQ('mod_id', pd.Value(pd.Integer(), None)))
+
     def row_style(self, record):
         if not record['mod_id'].value():
             return None
@@ -531,6 +567,7 @@ class Rights(Specification):
 
 class _Log(Specification):
     public = False
+
     def fields(self):
         return (
             Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
@@ -539,18 +576,21 @@ class _Log(Specification):
             Field('user_agent', _("User agent"), column_width=25, width=80),
             Field('referer', _("Referer"), column_width=25, width=80)
         )
+
     def _hostname(self, row, ip_address):
         try:
             hostname = socket.gethostbyaddr(ip_address)[0]
-        except:
+        except Exception:
             hostname = _("Neznámý")
         return hostname
+
 
 class SessionLog(_Log):
     title = _("Log přihlášení")
     help = _("Záznam informací o přihlášení uživatelů k webu.")
     table = 'cms_session_log'
     public = True
+
     def fields(self):
         return (
             Field('log_id'),
@@ -563,6 +603,7 @@ class SessionLog(_Log):
             Field('duration', _("Trvání"), width=17),
             Field('active', _("Active")),
         ) + super(SessionLog, self).fields()
+
     def row_style(self, row):
         if row['success'].value():
             return None
@@ -588,6 +629,7 @@ class AccessLog(_Log):
     help = _("Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu.")
     table = 'cms_access_log_data'
     public = True
+
     def fields(self):
         return (
             Field('log_id'),
@@ -605,7 +647,9 @@ class AccessLog(_Log):
 
 
 class Themes(Specification):
+
     class _Field(Field):
+
         def __init__(self, id, label, descr=None):
             Field.__init__(self, id, label, descr=descr, type=pd.Color(),
                            dbcolumn=id.replace('-', '_'))

@@ -50,8 +50,10 @@ import pytis.presentation as pp
 import pytis.data as pd
 import cms
 
+
 class Specification(wiking.Specification):
     access_rights = None
+
     def _spec_name(self, name, needed_in_wiking=True):
         if needed_in_wiking:
             return name
@@ -74,6 +76,7 @@ class RestrictedPytisModule(wiking.PytisModule):
 
 
 class Languages(RestrictedPytisModule):
+
     class Spec(Specification, cms.Languages):
         pass
 
@@ -86,7 +89,7 @@ class Menu(RestrictedPytisModule):
     class Spec(Specification, cms.Menu):
         pass
 
-    _SEPARATOR = re.compile('^====+\s*$', re.MULTILINE)
+    _SEPARATOR = re.compile(r'^====+\s*$', re.MULTILINE)
     _SUBSTITUTION_PROVIDERS = ()
     """Sequence of names of modules providing substitution variables.
 
@@ -198,6 +201,7 @@ class Menu(RestrictedPytisModule):
         children = {None: []}
         translations = {}
         rights = wiking.module.Rights
+
         def item(row):
             menu_item_id = row['menu_item_id'].value()
             identifier = self._menu_item_identifier(row)
@@ -266,7 +270,8 @@ class Menu(RestrictedPytisModule):
             text = lcg.MacroParser(globals=globals).parse(text)
             parser = lcg.Parser()
             if self._SEPARATOR.search(text):
-                pre, post = [parser.parse(part) for part in self._SEPARATOR.split(text, maxsplit=2)]
+                pre, post = [parser.parse(part)
+                             for part in self._SEPARATOR.split(text, maxsplit=2)]
             else:
                 pre, post = parser.parse(text), []
         else:
@@ -316,6 +321,7 @@ class Menu(RestrictedPytisModule):
 
 
 class UserRoles(RestrictedPytisModule):
+
     class Spec(Specification, cms.UserRoles):
         pass
 
@@ -344,6 +350,7 @@ class UserRoles(RestrictedPytisModule):
 
 
 class Rights(RestrictedPytisModule):
+
     class Spec(Specification, cms.Rights):
         pass
 
@@ -355,6 +362,7 @@ class Rights(RestrictedPytisModule):
 
 
 class Users(RestrictedPytisModule):
+
     class Spec(Specification, cms.Users):
         pass
 
@@ -419,6 +427,7 @@ class Session(RestrictedPytisModule, wiking.Session):
 
 
 class SessionLog(RestrictedPytisModule):
+
     class Spec(wiking.Specification):
         table = 'cms_session_log_data'
         fields = [pp.Field(_id) for _id in
@@ -435,6 +444,7 @@ class SessionLog(RestrictedPytisModule):
 
 
 class AccessLog(RestrictedPytisModule):
+
     class Spec(wiking.Specification):
         table = 'cms_access_log_data'
         fields = [pp.Field(_id) for _id in
@@ -696,10 +706,12 @@ class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
                                                 sorting=(('xy', pd.ASC),))}
 
         """
+
         def __init__(self, data, **kwargs):
             self._data = data
             self._kwargs = kwargs
             self._row = None
+
         def __getitem__(self, key):
             if self._row is None:
                 # Perform the database access only when needed.
@@ -709,6 +721,7 @@ class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
                 else:
                     self._row = pd.Row(())
             return self._row[key].export()
+
         def get(self, key, default=None):
             try:
                 return self[key]
@@ -717,15 +730,18 @@ class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
 
 
 class Themes(RestrictedPytisModule):
+
     class Spec(Specification, cms.Themes):
         pass
 
     class Theme(wiking.Theme):
+
         def __init__(self, row):
             self._theme_id = row['theme_id'].value()
             colors = [(c.id(), row[c.id()].value())
                       for c in self.COLORS if row[c.id()].value() is not None]
             super(Themes.Theme, self).__init__(colors=dict(colors))
+
         def theme_id(self):
             return self._theme_id
 
@@ -747,6 +763,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
     Override the method '_authorize()' to control authorization per directory.
 
     """
+
     def __init__(self, *args, **kwargs):
         super(HttpAttachmentStorageBackend, self).__init__(*args, **kwargs)
         import config
