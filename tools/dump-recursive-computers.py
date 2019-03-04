@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011, 2015, 2017 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -26,16 +27,18 @@ STDOUT.
 """
 
 import sys
-import re
 import getopt
 import argparse
 
 import pytis.presentation
 import pytis.util
 
+
 class NullLogger(pytis.util.Logger):
+
     def log(self, *args, **kwargs):
         pass
+
 
 def run():
     parser = argparse.ArgumentParser(
@@ -120,7 +123,7 @@ def run():
                     try:
                         import cgitb
                         tb = cgitb.text(sys.exc_info())
-                    except:
+                    except Exception:
                         import traceback
                         tb = "".join(traceback.format_exception(*sys.exc_info())) + "\n"
                     sys.stderr.write(tb)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -18,18 +19,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt, binascii, zlib, cPickle as pickle
-import pytis.util, pytis.data, config
+import sys
+import getopt
+import pytis.util
+import pytis.data
+import config
 from pytis.form import DBConfigurationStorage
+
 
 def die(message):
     sys.stderr.write(message + "\n")
     sys.exit(1)
 
+
 def usage(msg=None):
     message = ("View/update saved Pytis user configurations.\n"
                "Usage: %s [options] command username [option [value]]\n"
-               "  options: Pytis command line options to specify database connection (defined by pytis configuration)\n"
+               "  options: Pytis command line options to specify database connection"
+               " (defined by pytis configuration)\n"
                "  command: One of 'set', 'get', 'unset'\n"
                "  username: Name of the pytis user whose configuration is to be operated\n"
                "  option: Configuration option name (optional for the 'get' command)\n"
@@ -37,6 +44,7 @@ def usage(msg=None):
     if msg:
         message += '\n' + msg
     die(message)
+
 
 def run():
     # Process command line options and init configuration.
@@ -76,10 +84,11 @@ def run():
                 die("Option '%s' not set for user '%s'." % (option, username))
             else:
                 del cfg[option]
-        else: # command == 'set'
+        else:  # command == 'set'
             cfg[option] = value
         # Avoid pytis logging during the update.
-        config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+        config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                              pytis.util.DEBUG, pytis.util.OPERATIONAL]
         # Update the saved configuration.
         storage.write(cfg.items())
 

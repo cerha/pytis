@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011, 2015 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -18,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Dump Pytis application specifications to STDOUT.
- 
+
 Specifications, thier fields and properties are dumped to standard output in a
 way, that allows comparing these outputs to detect changes caused by
 modifications of specification files or Pytis API changes (or both).
@@ -33,11 +34,15 @@ import argparse
 import pytis.presentation
 import pytis.util
 
+
 class NullLogger(pytis.util.Logger):
+
     def log(self, *args, **kwargs):
         pass
 
+
 OBJID_REGEX = re.compile(r'(object )?at 0x[0-9a-f]+')
+
 
 def run():
     parser = argparse.ArgumentParser(
@@ -100,15 +105,15 @@ def run():
                     if not spec.public:
                         continue
                     data_spec = spec.data_spec()
-                    data = data_spec.create(dbconnection_spec=config.dbconnection)            
-                #print ' ', spec.table
+                    data = data_spec.create(dbconnection_spec=config.dbconnection)
+                # print ' ', spec.table
                 view_spec = spec.view_spec()
                 record = pytis.presentation.PresentedRow(view_spec.fields(), data, None)
                 for fid in sorted(record.keys()):
                     t = record.type(fid)
                     f = view_spec.field(fid)
                     attr = (
-                        #('label', f.label()),
+                        # ('label', f.label()),
                         ('not_null', t.not_null()),
                         # We care only about the resulting not_null value which
                         # is printed above, not about type's not_null argument.
@@ -126,7 +131,7 @@ def run():
                     try:
                         import cgitb
                         tb = cgitb.text(sys.exc_info())
-                    except:
+                    except Exception:
                         import traceback
                         tb = "".join(traceback.format_exception(*sys.exc_info())) + "\n"
                     sys.stderr.write(tb)

@@ -2,6 +2,7 @@
 
 import sys
 
+
 def _usage():
     print 'usage: genconfig.py file'
     sys.exit(1)
@@ -12,7 +13,7 @@ def go():
         _usage()
     outfile = sys.argv[1]
     sys.argv = sys.argv[:1]
-    import pytis.util
+    import pytis.util  # noqa: F401 (importing for the side effect of 'config' module init)
     f = open(outfile, 'w')
     import config
     config.dump_config_template(f)

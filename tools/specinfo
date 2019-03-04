@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,9 +39,11 @@ import config
 
 output = sys.stdout
 
+
 def error(message):
     sys.stderr.write(message + '\n')
     sys.exit(1)
+
 
 def find_specification(spec_name):
     resolver = config.resolver
@@ -49,6 +52,7 @@ def find_specification(spec_name):
     except pytis.util.ResolverError:
         error("Specification not found: %s\n" % (spec_name,))
     return spec
+
 
 def specification_info(spec):
     info = {}
@@ -59,6 +63,8 @@ def specification_info(spec):
 
 field_matcher = re.compile('^<Field: id="([^"]+)", (.*)>$')
 address_matcher = re.compile(' at 0x[0-9a-f]+>')
+
+
 def print_info(info):
     for f in info['fields']:
         formatted_field = unicode(f)
@@ -69,12 +75,13 @@ def print_info(info):
             field_info = ' Field %s: %s' % m.groups()
         field_info = address_matcher.sub('>', field_info)
         output.write(field_info + u'\n')
+
     def print_layout(layout, indent=0):
         indentation_string = ' ' * indent
         if isinstance(layout, pytis.presentation.GroupSpec):
             output.write('%s%s\n' % (indentation_string, layout.__class__.__name__,))
             for item in layout.items():
-                print_layout(item, indent=indent+1)
+                print_layout(item, indent=indent + 1)
         elif isinstance(layout, basestring):
             output.write('%sLayout: %s\n' % (indentation_string, layout,))
         elif isinstance(layout, pytis.presentation.Text):
@@ -87,6 +94,7 @@ def print_info(info):
     if isinstance(layout, pytis.presentation.LayoutSpec):
         layout = layout.group()
     print_layout(layout)
+
     def enabled_action(action):
         if isinstance(action, pytis.presentation.Action):
             enabled = action.enabled()
@@ -102,6 +110,7 @@ def print_info(info):
         else:
             enabled = True
         return enabled
+
     def print_action(action, indent=0):
         indentation_string = ' ' * indent
         if isinstance(action, pytis.presentation.Action):
@@ -111,12 +120,12 @@ def print_info(info):
             if enabled_action(action):
                 output.write('%sAction Group\n' % (indentation_string,))
                 for a in action.actions():
-                    print_action(a, indent=indent+1)
+                    print_action(a, indent=indent + 1)
         elif isinstance(action, (list, tuple,)):
             if enabled_action(action):
                 output.write('%sAction Sequence\n' % (indentation_string,))
                 for a in action:
-                    print_action(a, indent=indent+1)
+                    print_action(a, indent=indent + 1)
         else:
             output.write('%sUnknown action object: %s\n' % (indentation_string, action,))
     actions = info['actions']
@@ -126,12 +135,14 @@ def print_info(info):
     for a in actions:
         print_action(a)
 
+
 def info(spec_name):
     pos = spec_name.rfind('.')
-    output.write('*** %s\n' % (spec_name[pos+1:],))
+    output.write('*** %s\n' % (spec_name[pos + 1:],))
     spec = find_specification(spec_name)
     info = specification_info(spec)
     print_info(info)
+
 
 def module_info(module_name, regexp=None):
     try:
@@ -154,6 +165,7 @@ def module_info(module_name, regexp=None):
     names.sort()
     for spec_name in names:
         info(spec_name)
+
 
 def module_diff(directory, branch, module_name, regexp=None):
     global output
@@ -182,6 +194,7 @@ def module_diff(directory, branch, module_name, regexp=None):
     orig_dir = repo.working_dir
     if orig_dir[-1] != '/':
         orig_dir += '/'
+
     def info(file_):
         global output
         if os.fork():
@@ -194,6 +207,7 @@ def module_diff(directory, branch, module_name, regexp=None):
     file_1 = pytis.util.TemporaryFile()
     info(file_1)
     sys_path = sys.path
+
     def change_path(path):
         if path.startswith(orig_dir):
             path = work_tree + '/' + path[len(orig_dir):]
@@ -205,8 +219,9 @@ def module_diff(directory, branch, module_name, regexp=None):
     finally:
         sys.path = sys_path
     subprocess.call(['diff', '-u', file_1.name, file_2.name])
-    
+
 USAGE = """usage: %prog [ OPTIONS ] MODULE-NAME [ REGEXP ]"""
+
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
@@ -221,6 +236,7 @@ def parse_options():
         parser.print_help()
         sys.exit(1)
     return options, args
+
 
 def run():
     options, args = parse_options()

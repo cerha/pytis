@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
 #
 # COPYRIGHT NOTICE
 #
@@ -30,6 +31,7 @@ if os.path.isdir(pytislib) and pytislib not in sys.path:
 import pytis.extensions
 import pytis.util
 
+
 class CheckReporterExt(pytis.extensions.CheckReporter):
 
     def start(self, number_of_items):
@@ -48,15 +50,19 @@ class CheckReporterExt(pytis.extensions.CheckReporter):
         self._current += 1
         procent = (float(self._current) / self._number_of_items) * 100
         elapsed = datetime.datetime.now() - self._start_time
-        print "%s sec\t%s/%s\t%s%%\t%s" % (elapsed.seconds, self._current, self._number_of_items, int(procent), message)
+        print "%s sec\t%s/%s\t%s%%\t%s" % (elapsed.seconds, self._current, self._number_of_items,
+                                           int(procent), message)
         sys.stdout.flush()
 
     def error(self, message):
         print 'Error:', message
 
+
 class NullLogger(pytis.util.Logger):
+
     def log(self, *args, **kwargs):
         pass
+
 
 def usage(optexception=None):
     sys.stderr.write("""usage: %s OPTIONS [ SPEC-NAME-PREFIX ]
@@ -70,13 +76,15 @@ def usage(optexception=None):
         sys.stderr.write('\n')
     sys.exit(1)
 
+
 def checkopt(argv, option):
     try:
         i = argv.index(option)
         del argv[i]
-    except:
+    except Exception:
         return False
     return True
+
 
 def run():
     argv = copy.copy(sys.argv)

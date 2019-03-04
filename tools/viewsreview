@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2011-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -43,10 +44,12 @@ def db_connection():
     connection = dbapi.connect(**kwargs)
     return connection
 
+
 def view_names(cursor):
     sys.stdout.write('View names...\n')
     cursor.execute("select relname, relfilenode from pg_class c left join pg_namespace n on n.oid = c.relnamespace where relkind = 'v' and n.nspname <> 'pg_catalog' and n.nspname <> 'information_schema' and n.nspname !~ '^pg_toast' and pg_catalog.pg_table_is_visible(c.oid)")
     return cursor.fetchall()
+
 
 def view_info(cursor, names):
     sys.stdout.write('View info...\n')
@@ -64,6 +67,7 @@ def view_info(cursor, names):
         info.append((name, columns, rules, source,))
     return info
 
+
 def view_groups(cursor, info):
     sys.stdout.write('View grouping...\n')
     groups = {}
@@ -72,6 +76,7 @@ def view_groups(cursor, info):
         key = (tuple(columns), tuple([r[0] for r in rules]),)
         groups[key] = groups.get(key, []) + [item]
     return groups.values()
+
 
 def output_groups(cursor, groups):
     sys.stdout.write('Output...\n')
@@ -88,12 +93,14 @@ def output_groups(cursor, groups):
                     f.write('%s: %s\n' % r[1:])
                 f.close()
 
+
 def usage(optexception=None):
     if optexception:
         sys.stderr.write(optexception.msg)
         sys.stderr.write('\n')
     sys.stderr.write('usage: %s [ --config=CONFIG-FILE ]\n' % (sys.argv[0],))
     sys.exit(1)
+
 
 def run():
     cursor = db_connection().cursor()

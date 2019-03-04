@@ -13,6 +13,8 @@ import pytis.data.gensqlalchemy as sql
 import pytis.util
 
 db_connection = None
+
+
 def connect():
     global db_connection
     if db_connection is None:
@@ -29,6 +31,7 @@ def connect():
                 kwargs[option] = value
         db_connection = dbapi.connect(**kwargs)
 
+
 def query(query, args):
     connect()
     c = db_connection.cursor()
@@ -36,6 +39,7 @@ def query(query, args):
     result = c.fetchall()
     c.close()
     return result
+
 
 def load_table(schema_name, table_name):
     q = ("select attname, typname from pg_class "
@@ -46,6 +50,7 @@ def load_table(schema_name, table_name):
     a = dict(schema=schema_name, table=table_name)
     columns = [(row[0], row[1].endswith('tz'),) for row in query(q, a)]
     return dict(columns)
+
 
 def load_function(schema_name, function_name):
     q = ("select proargtypes from pg_proc "
@@ -59,16 +64,20 @@ def load_function(schema_name, function_name):
     return dict(enumerate(arguments))
 
 type_mapping = None
+
+
 def load_type_mapping():
     global type_mapping
     if type_mapping is None:
         q = "select oid, typname from pg_type"
         type_mapping = dict(query(q, {}))
 
+
 def load_specifications(module):
     pytis.util.load_module(module)
     return [s for s in sql.specification_instances()
             if isinstance(s, (sql.SQLTable, sql.SQLFunctional,))]
+
 
 def check_specifications(specifications):
     load_type_mapping()
@@ -78,6 +87,7 @@ def check_specifications(specifications):
                                               if isinstance(s, sql.SQLFunctional) and
                                               s.__class__.__name__ != 'T'])
     return changes
+
 
 def check_table_specifications(specifications):
     changes = []
@@ -120,6 +130,7 @@ def check_table_specifications(specifications):
                         print 'OK:', spec_name, column_name
     return changes
 
+
 def check_function_specifications(specifications):
     changes = []
     for function in specifications:
@@ -158,13 +169,14 @@ def check_function_specifications(specifications):
                         print 'OK:', spec_name, a
     return changes
 
+
 def update_specifications(changes):
     python_path = sys.path
     re_class = re.compile('^class +([a-zA-Z_0-9]+) *[(]')
     re_field = re.compile('^[ a-zA-Z_0-9.]*Column *'
                           '[(][\'"]([a-zA-Z_0-9]+)[\'"],.*Time(Range)? *[(]')
     re_without_timezone = re.compile('.*without_timezone=(True|False)')
-    updates = {} # file - class - field - without_timezone value
+    updates = {}  # file - class - field - without_timezone value
     for module, class_, column, value in changes:
         class_dict = updates[module] = updates.get(module, {})
         column_dict = class_dict[class_] = class_dict.get(class_, {})
@@ -226,7 +238,8 @@ def update_specifications(changes):
         for class_name, field_dict in class_dict.items():
             for field_name in field_dict:
                 print 'NOT UPDATED:', module_name, class_name, field_name
-                
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('config_file', metavar='CONFIG-FILE',

@@ -12,21 +12,25 @@ import pytis.util
 
 _wiking_resolver = None
 
+
 def check():
     import config
     resolver = config.resolver
     errors = []
+
     def error(message, data=None):
         if data is not None:
             if not isinstance(data, basestring):
                 data = data.__class__.__name__
             message += ": " + data
         errors.append(message)
+
     def function(name, args):
         return '%s(%s)' % (name, string.join(args, ','),)
     spec_objects = set()
     modules_seen = set()
     functions = set()
+
     def argument_type(argument):
         t = argument.type()
         if isinstance(t, pytis.data.Type):
@@ -78,6 +82,7 @@ def check():
         if m.endswith('.defs'):
             pytis.util.load_module(m[:-4] + 'dbdefs')
     dbdefs = sql.specification_instances()
+
     def spec_table(s):
         if not isinstance(s, sql.SQLObject):
             return None
@@ -117,6 +122,7 @@ def check():
     # Output report
     for e in errors:
         print e
+
 
 def run():
     parser = optparse.OptionParser()

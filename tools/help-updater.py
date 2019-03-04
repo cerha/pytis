@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -17,8 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt, types
-import pytis.util, pytis.data, pytis.help, config
+import sys
+import getopt
+import pytis.util
+import pytis.data
+import pytis.help
+import config
+
 
 def usage(msg=None):
     sys.stderr.write("""Update DB help texts for a Pytis application
@@ -30,7 +36,7 @@ Usage: %s [options]
         sys.stderr.write('\n')
     sys.exit(1)
 
-    
+
 def run():
     if '--help' in sys.argv:
         usage()
@@ -44,7 +50,8 @@ def run():
     # creating data objects for profile validation).
     config.dblisten = False
     # Disable pytis logging of data operations etc.
-    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                          pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
             updater = pytis.help.HelpUpdater()
@@ -60,6 +67,7 @@ def run():
         else:
             break
     updater.update()
+
 
 if __name__ == '__main__':
     run()

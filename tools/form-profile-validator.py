@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010, 2011, 2016 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2010-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -29,6 +30,7 @@ from pytis.presentation import Profile
 # Cache of ViewSpec instances and data objects.
 cache = {}
 
+
 def run():
     parser = argparse.ArgumentParser(
         description="Validate and optionally fix saved form profiles",
@@ -38,8 +40,8 @@ def run():
     )
     parser.add_argument('-d', '--delete-column', nargs='+', metavar='SPEC_NAME:COLUMN',
                         default=(), help="Delete COLUMN of SPEC_NAME from all existing profiles")
-    parser.add_argument('-r', '--rename-column', nargs='+', metavar='SPEC_NAME:OLD:NEW',
-                        default=(), help="Rename column OLD of SPEC_NAME to NEW in all existing profiles")
+    parser.add_argument('-r', '--rename-column', nargs='+', metavar='SPEC_NAME:OLD:NEW', default=(),
+                        help="Rename column OLD of SPEC_NAME to NEW in all existing profiles")
     parser.add_argument('--config', required=True, metavar='PATH',
                         help="Configuration file path")
     args, argv = parser.parse_known_args()
@@ -59,7 +61,8 @@ def run():
     # creating data objects for profile validation).
     config.dblisten = False
     # Disable pytis logging of data operations etc.
-    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                          pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
             data = pytis.data.dbtable('e_pytis_form_profile_base', ('id', 'username'),
@@ -109,7 +112,8 @@ def run():
                         # Update the 'errors' column in the database table.
                         manager.save_profile(spec_name, form_name, profile)
                         for param, error in profile.errors():
-                            print ':'.join((username, spec_name, form_name, profile.id(), ' %s: %s' % (param, error)))
+                            print ':'.join((username, spec_name, form_name, profile.id(),
+                                            ' %s: %s' % (param, error)))
                         if profile.errors():
                             total_invalid += 1
                         else:

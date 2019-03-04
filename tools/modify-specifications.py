@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015 Brailcom, o.p.s.
+#
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2015-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -83,12 +85,14 @@ def attr(x):
 
 
 class Position(object):
+
     def __init__(self, ln, offset):
         self.ln = ln
         self.offset = offset
 
 
 class Arg(object):
+
     def __init__(self, lines, kw, previous):
         self.kw = kw
         self.name = kw.arg
@@ -252,7 +256,7 @@ def cmd_revert_set_codebooks_not_null_in_modify(filename, lines):
             if cb.start.offset == nn.end.offset and cb.start.ln == nn.end.ln:
                 so, eo, sl, el = nn.start.offset, nn.end.offset, nn.start.ln, nn.end.ln
                 lines[sl] = lines[sl][:so] + lines[el][eo:]
-                lines_to_delete.extend(range(sl+1, el+1))
+                lines_to_delete.extend(range(sl + 1, el + 1))
     for i, ln in enumerate(sorted(lines_to_delete)):
         del lines[ln - i]
 
@@ -305,7 +309,9 @@ def cmd_set_explicit_ineditable(filename, lines):
             if modify:
                 ln = arg.start.ln
                 offset = arg.start.offset
-                lines[ln] = lines[ln][:offset] + ', editable=pp.Editable.NEVER' + lines[ln][offset:]
+                lines[ln] = (lines[ln][:offset] +
+                             ', editable=pp.Editable.NEVER' +
+                             lines[ln][offset:])
 
 
 def cmd_type_kwargs(filename, lines, type_map=None):
@@ -385,7 +391,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                     lines_to_delete.append(ln)
             # if range(arg.start.ln + 1, arg.end.ln + 1):
             #    lx = lines_to_delete[-1] + 1
-            for a in args[args.index(arg)+1:]:
+            for a in args[args.index(arg) + 1:]:
                 if a.start.ln == arg.end.ln:
                     if arg.start.ln == arg.end.ln:
                         a.start.offset -= arg.end.offset - arg.start.offset
@@ -405,7 +411,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
             else:
                 x = (lines[type_arg.start.ln][type_arg.start.offset:].strip() + ' ' +
                      ''.join([lines[ln].strip() + ' '
-                              for ln in range(type_arg.start.ln+1, type_arg.end.ln)
+                              for ln in range(type_arg.start.ln + 1, type_arg.end.ln)
                               if ln not in lines_to_delete]) +
                      lines[type_arg.end.ln][:type_arg.end.offset].strip())
             x = x.strip(',').strip()
@@ -414,7 +420,8 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                        "  Warning: Can't verify position, please check this change.\n"
                        "  '%s'\n  '%s'") % \
                     (filename,
-                     type_arg.start.ln - len([l for l in lines_to_delete if l < type_arg.start.ln]),
+                     type_arg.start.ln -
+                     len([l for l in lines_to_delete if l < type_arg.start.ln]),
                      x, unparse(type_arg.kw))
             ln, offset = type_arg.end.ln, type_arg.end.offset
             if isinstance(type_arg.value, ast.Call):
@@ -478,7 +485,7 @@ def make_type_map(filename):
     except KeyError:
         import re
         type_map = _type_maps[filename] = {}
-        matcher = re.compile('^(?:\w+\.)+?(\w+\.\w+.\w+) .*type=<(\w+).*')
+        matcher = re.compile(r'^(?:\w+\.)+?(\w+\.\w+.\w+) .*type=<(\w+).*')
         with file(os.path.abspath(os.path.expanduser(filename))) as f:
             for line in f.readlines():
                 match = matcher.match(line)

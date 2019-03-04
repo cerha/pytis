@@ -7,7 +7,7 @@ import sys
 
 sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
 
-import pytis.remote
+import pytis.remote  # noqa: E402
 
 
 def report(message):
@@ -49,6 +49,7 @@ def main():
         report("Invalid echo result: %s" % (echoed_message,))
         return
     report("Connection OK!")
+
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2014 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2012-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -32,7 +33,9 @@ import pytis.util
 
 admin_user = 'admin'
 
+
 class Configuration(object):
+
     def __init__(self, configuration_file=None, schemas=None,
                  database=None, host=None, port=None, user=None, password=None, sslmode=None):
         self._raw_connection_data = raw_config = {}
@@ -68,12 +71,15 @@ class Configuration(object):
             cursor.execute("set search_path to %s" % (string.join(schemas, ','),))
         return connection
 
+
 def key_table(connection_data):
     return pytis.extensions.crypto_key_table(connection_data)
+
 
 def check_area(connection_data, name):
     data = pytis.data.dbtable('c_pytis_crypto_names', ('name', 'description',), connection_data)
     return True if data.row(pytis.data.sval(name)) else False
+
 
 def read_password(repeat=False, prompt="Password: "):
     password = getpass.getpass(prompt=prompt)
@@ -86,11 +92,14 @@ def read_password(repeat=False, prompt="Password: "):
     encrypted_password = pytis.util.rsa_encrypt(db_key, password)
     return password, encrypted_password
 
+
 def check_password(key, password, connection_data):
     return pytis.extensions.check_crypto_password(key, password, connection_data)
 
+
 def admin_key(area, connection_data):
     return pytis.extensions.crypto_admin_key(area, admin_user, connection_data)
+
 
 def command_new_key(configuration, args):
     if not args:
@@ -138,6 +147,7 @@ def command_new_key(configuration, args):
         return
     print "New admin key for encryption area %s inserted" % (area,)
 
+
 def command_password(configuration, args):
     if not args:
         print "Error: encryption area not specified"
@@ -168,6 +178,7 @@ def command_password(configuration, args):
         return
     print "Password for encryption area %s changed" % (area,)
 
+
 def command_add_user(configuration, args):
     if len(args) < 3:
         print "Error: not enough arguments"
@@ -186,6 +197,7 @@ def command_add_user(configuration, args):
     if error:
         print "Error: %s" % (error,)
 
+
 def command_add_user_password(configuration, args):
     if len(args) < 3:
         print "Error: not enough arguments"
@@ -203,6 +215,7 @@ def command_add_user_password(configuration, args):
                                                  None, connection_data, user_password=password)
     if error:
         print "Error: %s" % (error,)
+
 
 def command_delete_user(configuration, args):
     if len(args) < 2:
@@ -225,6 +238,7 @@ def command_delete_user(configuration, args):
         print "Error: delete error"
         return
     print "Key of %s user for area %s deleted" % (user, area,)
+
 
 def command_encrypt(configuration, args):
     if len(args) < 3:
@@ -298,6 +312,7 @@ def command_encrypt(configuration, args):
     print ("Original column data retained in column %s._tmp_%s, drop it after testing and backup." %
            (table, column,))
 
+
 def command_new_communication_key(configuration, args):
     if len(args) < 1:
         print "Error: not enough arguments"
@@ -319,6 +334,7 @@ def command_new_communication_key(configuration, args):
     cursor = connection.cursor()
     cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
     connection.commit()
+
 
 def find_command(command_string):
     command = command_string.replace('-', '_')
@@ -343,6 +359,7 @@ Commands:
   new-communication-key BITS
     - generate new communication key and remove the old one"""
 
+
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
     parser.add_option("--config", default=None, action="store", dest="config")
@@ -362,6 +379,7 @@ def parse_options():
         sys.exit(1)
     options, _args = parser.parse_args(args=sys.argv[1:command_index])
     return options, args
+
 
 def run():
     options, args = parse_options()

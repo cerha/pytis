@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Nástroj pro zpracování specifikací databází
-#
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -60,15 +59,21 @@ import string
 import sys
 import UserDict
 import types
+import imp
+import os
 
-from pytis.util import *
 import pytis.data
+from pytis.util import (
+    UNDEFINED, is_sequence, find, Counter, ProgramError, xtuple, xor,
+    position, sameclass, assoc, rassoc, some,
+)
 
 imp.reload(sys)
 sys.setdefaultencoding('utf-8')
 
 gensql_file = 'gensql'
-_CONV_PREPROCESSED_NAMES = ('_log_update_trigger', '_inserts', '_updates', '_deletes', 'log_trigger',)
+_CONV_PREPROCESSED_NAMES = ('_log_update_trigger', '_inserts',
+                            '_updates', '_deletes', 'log_trigger',)
 
 
 exit_code = 0
@@ -76,10 +81,12 @@ _EXIT_USAGE = 1
 _EXIT_NOT_IMPLEMENTED = 2
 _EXIT_ERROR = 3
 
+
 def _signal_error(message):
     sys.stderr.write(message)
     global exit_code
     exit_code = _EXIT_ERROR
+
 
 class GensqlError(Exception):
     """Výjimka signalizovaná tímto programem při chybách specifikace."""
@@ -97,12 +104,12 @@ def _gsql_column_table_column(column):
     if pos == -1:
         result = None, column
     else:
-        result = column[:pos], column[pos+1:]
+        result = column[:pos], column[pos + 1:]
     return result
 
 
 def _gsql_format_type(type_):
-    if type(type_) == type(''):
+    if isinstance(type_, basestring):
         result = type_
     elif type_.__class__ == pytis.data.String:
         minlen = type_.minlen()
@@ -113,7 +120,7 @@ def _gsql_format_type(type_):
             result = 'char(%d)' % maxlen
         else:
             result = 'varchar(%d)' % maxlen
-    elif type_.__class__  == pytis.data.DateTime:
+    elif type_.__class__ == pytis.data.DateTime:
         if type_.utc():
             result = 'timestamp(0)'
         else:
@@ -137,6 +144,7 @@ def _gsql_format_type(type_):
             raise ProgramError('Unknown type', type_)
     return result
 
+
 def _gsql_warning(message):
     if _GsqlConfig.warnings:
         return '-- WARNING: %s\n' % message
@@ -145,6 +153,7 @@ def _gsql_warning(message):
 
 
 _convert_local_names = []
+
 
 class _GsqlSpec(object):
 
@@ -299,9 +308,9 @@ class _GsqlSpec(object):
           connection -- PgConnection objekt zpřístupňující příslušnou databázi
 
         """
-        data = connection.query(("select relname from pg_class, pg_namespace "+
-                                 "where relkind='%s' and "+
-                                 "pg_class.relnamespace=pg_namespace.oid and "+
+        data = connection.query(("select relname from pg_class, pg_namespace " +
+                                 "where relkind='%s' and " +
+                                 "pg_class.relnamespace=pg_namespace.oid and " +
                                  "pg_namespace.nspname='public'") %
                                 class_._PGSQL_TYPE)
         names = []
@@ -342,7 +351,7 @@ class _GsqlSpec(object):
         if text is None:
             return None
         lines = text.split('\n')
-        lines = [' '*level + l for l in lines]
+        lines = [' ' * level + l for l in lines]
         return string.join(lines, '\n')
 
     def _convert_name(self, name=None, new=False, short=False):
@@ -390,7 +399,7 @@ class _GsqlSpec(object):
             try:
                 float(value)
                 return value
-            except:
+            except Exception:
                 return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
     def _convert_string_type(self, stype, allow_none=False, constraints=()):
@@ -404,8 +413,8 @@ class _GsqlSpec(object):
                    'inet': 'pytis.data.Inet()',
                    'date': 'pytis.data.Date()',
                    'time': 'pytis.data.Time()',
-                   'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
-                   'timestamp(0)': 'pytis.data.DateTime()', # assumes UTC, not always valid
+                   'timestamp': 'pytis.data.DateTime()',  # assumes UTC, not always valid
+                   'timestamp(0)': 'pytis.data.DateTime()',  # assumes UTC, not always valid
                    'timestamp(0) without time zone': 'pytis.data.DateTime()',
                    'timestamp with time zone': 'pytis.data.DateTime(utc=False)',
                    'macaddr': 'pytis.data.Macaddr()',
@@ -420,24 +429,25 @@ class _GsqlSpec(object):
                    }
         type_ = mapping.get(stype.lower())
         if type_ is None:
-            match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', stype, re.I)
+            match = re.match(r'^(?P<var>var)?char\((?P<len>[0-9]+)\)$', stype, re.I)
             if match:
                 groups = match.groupdict()
                 minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
                 type_ = 'pytis.data.String(%smaxlen=%s)' % (minlen, groups['len'],)
             else:
-                match = re.match('(numeric|decimal)\(([0-9]+), *([0-9]+)\)', stype)
+                match = re.match(r'(numeric|decimal)\(([0-9]+), *([0-9]+)\)', stype)
                 if match:
                     type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()[1:]
                 else:
-                    match = re.match('(numeric|decimal)\(([0-9]+)\)', stype)
+                    match = re.match(r'(numeric|decimal)\(([0-9]+)\)', stype)
                     if match:
                         type_ = 'pytis.data.Float(digits=%s)' % match.groups()[1:]
                     elif allow_none:
                         type_ = None
                     else:
                         type_ = 'XXX: %s' % (stype,)
-        if 'not null' in constraints or 'unique not null' in constraints and type_ and type_[-1] == ')':
+        if (('not null' in constraints or 'unique not null' in constraints and
+             type_ and type_[-1] == ')')):
             if type_[-2] != '(':
                 type_ = type_[:-1] + ', )'
             type_ = type_[:-1] + 'not_null=True)'
@@ -455,10 +465,12 @@ class _GsqlSpec(object):
                 arguments.append('precision=%s' % (ctype.precision(),))
             if ctype.digits() is not None:
                 arguments.append('digits=%s' % (ctype.digits(),))
-        elif isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)) and not isinstance(ctype, pytis.data.Date):
+        elif ((isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)) and
+               not isinstance(ctype, pytis.data.Date))):
             if not ctype.utc():
                 arguments.append('utc=False')
-        if (ctype.not_null() and not isinstance(ctype, pytis.data.Boolean)) or 'not null' in constraints or 'unique not null' in constraints:
+        if (((ctype.not_null() and not isinstance(ctype, pytis.data.Boolean)) or
+             'not null' in constraints or 'unique not null' in constraints)):
             if not isinstance(ctype, pytis.data.Serial):
                 arguments.append('not_null=True')
         else:
@@ -473,8 +485,9 @@ class _GsqlSpec(object):
             name = name.lower()
         pos = name.rfind('.')
         if pos >= 0:
-            name = name[pos+1:]
-        cls = 'sql.PrimaryColumn' if name in [c.split('.')[-1].lower() for c in self.key_columns()] else 'sql.Column'
+            name = name[pos + 1:]
+        cls = 'sql.PrimaryColumn' if name in [
+            c.split('.')[-1].lower() for c in self.key_columns()] else 'sql.Column'
         name = repr(name)
         constraints = [c.lower() for c in column.constraints]
         ctype = column.type
@@ -514,20 +527,21 @@ class _GsqlSpec(object):
                     if keyword == 'on':
                         action = (components and components.pop(0).lower())
                         if (components and action in ('update', 'delete',) and
-                            components[0].lower() in ('cascade', 'delete', 'restrict',)):
+                                components[0].lower() in ('cascade', 'delete', 'restrict',)):
                             reaction = components.pop(0).upper()
                             if references and components == ['INITIALLY', 'DEFERRED']:
                                 initially = 'DEFERRED'
                                 components = []
                             references += ", on%s='%s'" % (action, reaction,)
                         elif (len(components) >= 2 and action in ('update', 'delete',) and
-                            (components[0].lower(), components[1].lower(),) == ('set', 'null',)):
+                              (components[0].lower(), components[1].lower(),) == ('set', 'null',)):
                             references += ", on%s='SET NULL'" % (action,)
                             components = components[2:]
                         else:
                             references = None
                             break
-                    elif keyword == 'initially' and components.pop(0).lower() == 'deferred' and not components:
+                    elif (keyword == 'initially' and components.pop(0).lower() == 'deferred' and
+                          not components):
                         references += ", onupdate='NO ACTION', ondelete='NO ACTION'"
                         initially = 'DEFERRED'
                     else:
@@ -563,7 +577,8 @@ class _GsqlSpec(object):
                 c = c[5:].strip()
                 spec += ', check="%s"' % (c[1:-1],)
         for c in constraints:
-            if c not in ('unique', 'not null',) and not c.startswith('check(') and not c.startswith('check ('):
+            if ((c not in ('unique', 'not null',) and
+                 not c.startswith('check(') and not c.startswith('check ('))):
                 spec = spec + (', #XXX:%s' % (c,))
         spec += ')'
         return spec
@@ -573,8 +588,10 @@ class _GsqlSpec(object):
         if _GsqlConfig.application == 'pytis':
             if (self._name.startswith('cms_') or
                 (isinstance(self, _GsqlRaw) and
-                 (self._sql.startswith('create or replace rule session_delete as on delete to cms_session') or
-                  self._sql.startswith('CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order')))):
+                 (self._sql.startswith('create or replace rule session_delete '
+                                       'as on delete to cms_session') or
+                  self._sql.startswith('CREATE UNIQUE INDEX '
+                                       'cms_menu_structure_unique_tree_order')))):
                 schemas = 'db.cms_schemas.value(globals())'
             elif self._schemas == ('xxx',):
                 schemas = 'db.pytis_schemas.value(globals())'
@@ -587,7 +604,8 @@ class _GsqlSpec(object):
                         schemas = 'db.%s' % (name,)
                     break
             if schemas is None:
-                schemas = repr(tuple([tuple([s.strip() for s in ss.split(',')]) for ss in self._schemas]))
+                schemas = repr(tuple([tuple([s.strip() for s in ss.split(',')])
+                                      for ss in self._schemas]))
         if schemas is not None:
             items.append('    schemas = %s' % (schemas,))
 
@@ -607,22 +625,24 @@ class _GsqlSpec(object):
         if raw.find('pracovnik()') >= 0:
             self._add_conversion_dependency('pracovnik', None)
         while True:
-            match = re.search(' (from|join|on) ([a-zA-Z0-9][a-zA-Z_0-9]+)($|[ ,;(])', raw, flags=re.I|re.M)
+            match = re.search(' (from|join|on) ([a-zA-Z0-9][a-zA-Z_0-9]+)($|[ ,;(])',
+                              raw, flags=re.I | re.M)
             if not match:
                 break
             raw = raw[match.end():].lstrip()
             identifier = match.group(2)
             if identifier.endswith('_seq'):
                 identifier = string.join(string.split('_')[:-2], '_')
-            ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror', 'generate_series',
-                               'dblink', 'date_trunc', 'diff', 'avg', 'case', 'current_date',
-                               'insert', 'update', 'delete', 'view', 'function', 'table', 'regexp_matches',
-                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu', 'nulovy_cenik',
-                               'relnamespace', 'regexp_split_to_table',)
+            ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror',
+                               'generate_series', 'dblink', 'date_trunc', 'diff', 'avg',
+                               'case', 'current_date', 'insert', 'update', 'delete',
+                               'view', 'function', 'table', 'regexp_matches',
+                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu',
+                               'nulovy_cenik', 'relnamespace', 'regexp_split_to_table',)
             if (len(identifier) < 3 or
                 identifier.lower() in ignored_objects or
                 identifier.startswith('temp_') or
-                identifier.find('sogo') >= 0):
+                    identifier.find('sogo') >= 0):
                 continue
             self._add_conversion_dependency(identifier, None)
 
@@ -699,6 +719,7 @@ class Column(object):
         self.index = index
         self.doc = doc
 
+
 class PrimaryColumn(Column):
     """Úložná třída specifikace sloupce, který je primárním klíčem.
 
@@ -706,6 +727,7 @@ class PrimaryColumn(Column):
     jsou primárními klíči.
 
     """
+
 
 class ViewColumn(object):
     """Úložná třída specifikace sloupce view."""
@@ -777,8 +799,10 @@ class JoinType(object):
                  CROSS: 'CROSS JOIN %s %s%s',
                  }
 
+
 class SelectRelation(object):
     """Úložná třída specifikace relace pro select."""
+
     def __init__(self, relation, alias=None,
                  key_column=None, exclude_columns=(), column_aliases=(),
                  jointype=JoinType.FROM, condition=None,
@@ -805,9 +829,9 @@ class SelectRelation(object):
             použít pro tuto relaci
         """
         assert jointype != JoinType.CROSS or \
-               condition is None
+            condition is None
         assert isinstance(relation, basestring) or \
-               isinstance(relation, Select)
+            isinstance(relation, Select)
         assert schema is None or isinstance(schema, basestring), schema
         self.relation = relation
         self.schema = schema
@@ -830,6 +854,7 @@ class SelectSetType(object):
     INTERSECT_ALL = 'INTERSECT_ALL'
     EXCEPT_ALL = 'EXCEPT_ALL'
 
+
 class SelectSet(object):
     """Úložná třída specifikace kombinace selectů."""
     _FORMAT_SET = {
@@ -839,7 +864,8 @@ class SelectSet(object):
         SelectSetType.UNION_ALL: 'UNION ALL',
         SelectSetType.INTERSECT_ALL: 'INTERSECT ALL',
         SelectSetType.EXCEPT_ALL: 'EXCEPT ALL',
-        }
+    }
+
     def __init__(self, select,
                  settype=None
                  ):
@@ -856,12 +882,13 @@ class SelectSet(object):
     def format_select(self, indent=0):
         output = self.select.format_select(indent=indent)
         if self.settype:
-            outputset = ' ' * (indent+1) + self._FORMAT_SET[self.settype]
+            outputset = ' ' * (indent + 1) + self._FORMAT_SET[self.settype]
             output = '%s\n%s' % (outputset, output)
         return output
 
     def sort_columns(self, aliases):
         self.select.sort_columns(aliases)
+
 
 class TableView(object):
     """Úložná třída specifikace view asociovaného s tabulkou.
@@ -962,6 +989,7 @@ class ArgumentType(object):
 
     Tato třída se využívá pouze ve specifikaci třídy '_GsqlFunction'.
     """
+
     def __init__(self, typ, name='', out=False):
         """Nastav atributy.
 
@@ -975,12 +1003,14 @@ class ArgumentType(object):
         self.name = name
         self.out = out
 
+
 class ReturnType(object):
     """Úložná třída specifikace návratového typu.
 
     Tato třída se využívá pouze ve specifikaci třídy '_GsqlFunction'.
 
     """
+
     def __init__(self, name, setof=False):
         """Nastav atributy.
 
@@ -991,6 +1021,7 @@ class ReturnType(object):
         """
         self.name = name
         self.setof = setof
+
 
 class _GsqlSchema(_GsqlSpec):
     """Specifikace SQL schématu."""
@@ -1029,6 +1060,7 @@ class _GsqlSchema(_GsqlSpec):
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
         return result
+
 
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
@@ -1105,7 +1137,7 @@ class _GsqlTable(_GsqlSpec):
         self._with_oids = with_oids
         self._sql = sql
         self._on_insert, self._on_update, self._on_delete = \
-          on_insert, on_update, on_delete
+            on_insert, on_update, on_delete
         self._init_values = init_values
         self._tablespace = tablespace
         self._upd_log_trigger = upd_log_trigger
@@ -1168,8 +1200,7 @@ class _GsqlTable(_GsqlSpec):
         if isinstance(column, PrimaryColumn):
             cconstraints = ('PRIMARY KEY',) + cconstraints
         if column.references is not None:
-            cconstraints = ('REFERENCES %s' % column.references,) + \
-                           cconstraints
+            cconstraints = ('REFERENCES %s' % column.references,) + cconstraints
         constraints = string.join(cconstraints, ' ')
         if column.default:
             default = ' DEFAULT %s' % column.default
@@ -1187,6 +1218,7 @@ class _GsqlTable(_GsqlSpec):
 
     def _format_index(self, index_spec):
         columns, options = index_spec
+
         def strip(name):
             return name.split('.')[-1]
         columns = [strip(c) for c in columns]
@@ -1202,7 +1234,7 @@ class _GsqlTable(_GsqlSpec):
 
     def _format_rule(self, action):
         laction = string.lower(action)
-        body = self.__dict__['_on_'+laction]
+        body = self.__dict__['_on_' + laction]
         if body is None:
             result = ''
         else:
@@ -1344,12 +1376,13 @@ class _GsqlTable(_GsqlSpec):
         name = self.name()
         query_args = dict(name=name, schema=schema)
         # Inheritance
-        data = connection.query(
-            ("select anc.relname from pg_class succ, pg_class anc, pg_inherits, pg_namespace "
-             "where succ.relname='%(name)s' and pg_inherits.inhrelid=succ.oid and "
-             "pg_inherits.inhparent=anc.oid and "
-             "succ.relnamespace=pg_namespace.oid and "+
-             "pg_namespace.nspname='%(schema)s'") % query_args)
+        data = connection.query((
+            "select anc.relname from pg_class succ, pg_class anc, pg_inherits, pg_namespace "
+            "where succ.relname='%(name)s' and pg_inherits.inhrelid=succ.oid and "
+            "pg_inherits.inhparent=anc.oid and "
+            "succ.relnamespace=pg_namespace.oid and "
+            "pg_namespace.nspname='%(schema)s'"
+        ) % query_args)
         inherits = []
         for i in range(data.ntuples):
             inherits.append(data.getvalue(i, 0))
@@ -1360,49 +1393,61 @@ class _GsqlTable(_GsqlSpec):
         # Columns: name, type, primaryp, references, default,
         # constraints (unique, not null)
         result = ''
-        data = connection.query(
-            ("select attname, typname as typename, atttypmod as typelen, attnotnull as notnull "
-             "from pg_attribute, pg_class, pg_namespace, pg_type "
-             "where pg_class.relname='%(name)s' and "
-             "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
-             "pg_attribute.attrelid=pg_class.oid and not pg_attribute.attisdropped and pg_attribute.atttypid=pg_type.oid and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
+        data = connection.query((
+            "select attname, typname as typename, atttypmod as typelen, attnotnull as notnull "
+            "from pg_attribute, pg_class, pg_namespace, pg_type "
+            "where pg_class.relname='%(name)s' and "
+            "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+            "pg_attribute.attrelid=pg_class.oid and not pg_attribute.attisdropped and "
+            "pg_attribute.atttypid=pg_type.oid and pg_attribute.attnum>0 and "
+            "pg_attribute.attislocal"
+        ) % query_args)
         fnames = [data.fname(j) for j in range(1, data.nfields)]
         dbcolumns = {}
         for i in range(data.ntuples):
             cname = data.getvalue(i, 0)
             other = {}
             for j in range(1, data.nfields):
-                k, v = fnames[j-1], data.getvalue(i, j)
+                k, v = fnames[j - 1], data.getvalue(i, j)
                 other[k] = v
             dbcolumns[cname] = other
-        data = connection.query(
-            ("select count(*) from pg_index, pg_class, pg_namespace "
-             "where pg_class.relname='%(name)s' and "
-             "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
-             "pg_index.indrelid=pg_class.oid and pg_index.indisunique and pg_index.indkey[1] is not null") % query_args)
+        data = connection.query((
+            "select count(*) from pg_index, pg_class, pg_namespace "
+            "where pg_class.relname='%(name)s' and "
+            "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+            "pg_index.indrelid=pg_class.oid and pg_index.indisunique and "
+            "pg_index.indkey[1] is not null"
+        ) % query_args)
         if data.getvalue(0, 0) != 0:
             result = (result +
                       _gsql_warning("Can't handle multicolumn indexes in %s" %
                                     name))
-        data = connection.query(
-                ("select attname as column, indisprimary as primary, indisunique as unique "
-                 "from pg_index, pg_class, pg_namespace, pg_attribute "
-                 "where pg_class.relname='%(name)s' and "
-                 "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
-                 "pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
+        data = connection.query((
+            "select attname as column, indisprimary as primary, indisunique as unique "
+            "from pg_index, pg_class, pg_namespace, pg_attribute "
+            "where pg_class.relname='%(name)s' and "
+            "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+            "pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and "
+            "pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and "
+            "pg_attribute.attnum>0 and pg_attribute.attislocal"
+        ) % query_args)
         for i in range(data.ntuples):
             cname = data.getvalue(i, 0)
             cproperties = dbcolumns[cname]
             cproperties['primaryp'] = cproperties.get('primaryp') or data.getvalue(i, 1)
             cproperties['uniquep'] = cproperties.get('uniquep') or data.getvalue(i, 2)
-        data = connection.query(
-                ("select attname, adsrc from pg_attribute, pg_attrdef, pg_class, pg_namespace "
-                 "where pg_class.relname='%(name)s' and "
-                 "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
-                 "pg_attribute.attrelid=pg_class.oid and pg_attrdef.adrelid=pg_class.oid and pg_attribute.attnum=pg_attrdef.adnum and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
+        data = connection.query((
+            "select attname, adsrc from pg_attribute, pg_attrdef, pg_class, pg_namespace "
+            "where pg_class.relname='%(name)s' and "
+            "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+            "pg_attribute.attrelid=pg_class.oid and pg_attrdef.adrelid=pg_class.oid and "
+            "pg_attribute.attnum=pg_attrdef.adnum and pg_attribute.attnum>0 and "
+            "pg_attribute.attislocal"
+        ) % query_args)
         for i in range(data.ntuples):
             dbcolumns[data.getvalue(i, 0)]['default'] = data.getvalue(i, 1)
         columns = list(copy.copy(self._columns))
+
         def column_changed(column, dbcolumn):
             def normalize(s):
                 s = string.lower(string.strip(s))
@@ -1472,11 +1517,11 @@ class _GsqlTable(_GsqlSpec):
                     return ('Type mismatch (%s x %s)' %
                             (ctclass, TYPE_MAPPING[dbcolumn['typename']]))
                 if column.type.__class__ == pytis.data.String:
-                    l = column.type.maxlen()
-                    if l:
-                        if l != dbcolumn['typelen'] - 4:
+                    ln = column.type.maxlen()
+                    if ln:
+                        if ln != dbcolumn['typelen'] - 4:
                             return ('Type mismatch (length: %s x %s)' %
-                                    (l, dbcolumn['typelen']))
+                                    (ln, dbcolumn['typelen']))
                     else:
                         if dbcolumn['typename'] != 'text':
                             return ('Type mismatch (text x %s)' %
@@ -1508,6 +1553,7 @@ class _GsqlTable(_GsqlSpec):
                 return 'Primary status mismatch'
             # OK
             return ''
+
         def tmp_col_name():
             i = 0
             while True:
@@ -1515,6 +1561,7 @@ class _GsqlTable(_GsqlSpec):
                 if name not in dbcolumns:
                     return name
                 i = i + 1
+
         def column_name(column):
             return _gsql_column_table_column(column.name)[1]
         for cname, other in dbcolumns.items():
@@ -1543,16 +1590,13 @@ class _GsqlTable(_GsqlSpec):
         pass
         # Raw SQL
         if self._sql is not None:
-            result = (result +
-                      _gsql_warning(
-                        'SQL statements present, not checked in %s' % name))
+            result = (result + _gsql_warning('SQL statements present, not checked in %s' % name))
         # Initial values
         init_values = []
         for values in self._init_values:
             if tuple(values) == ('now()',):
                 result = (result +
-                          _gsql_warning(
-                            "`now()' initial value not checked in %s" % name))
+                          _gsql_warning("`now()' initial value not checked in %s" % name))
                 continue
             spec = []
             for col, value in zip(self._init_columns, values):
@@ -1617,8 +1661,8 @@ class _GsqlTable(_GsqlSpec):
                 break
             level = 1
             end = start + 1
-            l = len(sql)
-            while end < l:
+            ln = len(sql)
+            while end < ln:
                 if sql[end] == '(':
                     level += 1
                 elif sql[end] == ')':
@@ -1629,18 +1673,19 @@ class _GsqlTable(_GsqlSpec):
             if level > 0:
                 break
             action = sql[:start].rstrip().lower()
+
             def trim(sql):
-                sql = sql[end+1:].strip()
+                sql = sql[end + 1:].strip()
                 if sql and sql[0] == ',':
                     sql = sql[1:].lstrip()
                 return sql
             if action == 'unique':
-                components = sql[start+1:end].split(',')
+                components = sql[start + 1:end].split(',')
                 components = ["'%s'" % (c.strip(),) for c in components]
                 unique += "(%s,)," % (string.join(components, ', '),)
                 sql = trim(sql)
             elif action == 'check':
-                check.append(sql[start+1:end])
+                check.append(sql[start + 1:end])
                 sql = trim(sql)
             else:
                 break
@@ -1655,15 +1700,17 @@ class _GsqlTable(_GsqlSpec):
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
         items.append(self._convert_depends())
         items.append(self._convert_grant())
+
         def add_rule(kind, command):
             if command:
                 items.append('    def on_%s_also(self):' % (kind,))
-                items.append ('        return ("%s",)' % (command,))
+                items.append('        return ("%s",)' % (command,))
         add_rule('insert', self._on_insert)
         add_rule('update', self._on_update)
         add_rule('delete', self._on_delete)
         result = string.join(items, '\n') + '\n'
         return result
+
 
 class Select(_GsqlSpec):
     """Specifikace SQL selectu."""
@@ -1731,18 +1778,18 @@ class Select(_GsqlSpec):
         return '%s AS %s' % (cname, alias)
 
     def _format_columns(self, indent=0):
-        COLSEP = ',\n%s' % (' '*(indent+1))
+        COLSEP = ',\n%s' % (' ' * (indent + 1))
         result = COLSEP.join([self._format_column(c)
                               for c in self._columns])
         return result
 
     def _format_relations(self, indent=1):
-        def format_relation(i,rel):
+        def format_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
-                sel = rel.relation.format_select(indent=indent+1)
+                sel = rel.relation.format_select(indent=indent + 1)
                 sel = sel.strip().strip('\n')
-                relation = '\n%s(%s)' % (' '*(indent+1), sel)
+                relation = '\n%s(%s)' % (' ' * (indent + 1), sel)
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = '%s.%s' % (rel.schema, rel.relation,)
@@ -1756,17 +1803,17 @@ class Select(_GsqlSpec):
             return JoinType.TEMPLATES[jtype] % (relation, alias, condition)
         # První relace je FROM a podmínka nebude použita
         wherecondition = self._relations[0].condition
-        joins = [format_relation(i,r) for i,r in enumerate(self._relations)]
+        joins = [format_relation(i, r) for i, r in enumerate(self._relations)]
         result = '\n '.join(joins)
         if wherecondition:
             result = '%s\n WHERE %s' % (result, wherecondition)
         return result
 
-
     def set_columns(self, relation_columns):
         self._relation_columns = relation_columns
         vcolumns = []
         aliases = []
+
         def make_columns(cols, column_aliases, rel_alias):
             for c in cols:
                 if isinstance(c, ViewColumn):
@@ -1842,14 +1889,14 @@ class Select(_GsqlSpec):
         if not self._set:
             relations = self._format_relations(indent=indent)
             columns = self._format_columns(indent=indent)
-            select = '%sSELECT\n\t%s\n %s\n' % (' '*(indent+1), columns,
+            select = '%sSELECT\n\t%s\n %s\n' % (' ' * (indent + 1), columns,
                                                 relations)
             if self._group_by:
                 select = '%s GROUP BY %s\n' % (select, self._group_by)
             if self._having:
                 select = '%s HAVING %s\n' % (select, self._having)
         else:
-            #self.sort_set_columns()
+            # self.sort_set_columns()
             selects = []
             aliases = [c.alias for c in self._columns[0]]
             for r in self._relations:
@@ -1866,7 +1913,8 @@ class Select(_GsqlSpec):
         return ''
 
     def _convert_raw_columns(self, columns):
-        string_columns = ["'%s'" % (c.strip().replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n'),) for c in columns.split(',')]
+        string_columns = ["'%s'" % (c.strip().replace('\\', '\\\\').replace(
+            "'", "\\'").replace('\n', '\\n'),) for c in columns.split(',')]
         return string.join(string_columns, ', ')
 
     def _convert_raw_condition(self, condition, as_object=False):
@@ -1917,7 +1965,7 @@ class Select(_GsqlSpec):
                     plain_name = cname
                     pos = plain_name.rfind('.')
                     if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
-                        plain_name = plain_name[pos+1:]
+                        plain_name = plain_name[pos + 1:]
                     if isinstance(c, ViewColumn) and c.alias:
                         if c.alias != plain_name:
                             aliases.append((plain_name, c.alias,))
@@ -1932,7 +1980,8 @@ class Select(_GsqlSpec):
                 else:
                     spec = '%s.c' % (relname,)
                 if aliases:
-                    alias_spec = string.join(['%s=%s.c.%s' % (self._convert_local_name(alias), relname, name,)
+                    alias_spec = string.join(['%s=%s.c.%s' % (self._convert_local_name(alias),
+                                                              relname, name,)
                                               for name, alias in aliases],
                                              ', ')
                     spec = 'cls._alias(%s, %s)' % (spec, alias_spec,)
@@ -1944,7 +1993,8 @@ class Select(_GsqlSpec):
                                 if isinstance(r, SelectRelation) and
                                 isinstance(r.relation, basestring) and
                                 r.relation.find('(') == -1]
-            included = [self._convert_select_column(c, simple_relations) for c in self._include_columns]
+            included = [self._convert_select_column(c, simple_relations)
+                        for c in self._include_columns]
             column_spec.append('[%s]' % (string.join(included, ',\n    '),))
         result = string.join(column_spec, ' +\n    ')
         if column_ordering is not None:
@@ -1964,11 +2014,12 @@ class Select(_GsqlSpec):
         plain_name = cname
         pos = plain_name.rfind('.')
         if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
-            plain_name = plain_name[pos+1:].lower()
-        alias = None if (column.alias.lower() == plain_name and cname == plain_name) else column.alias.lower()
+            plain_name = plain_name[pos + 1:].lower()
+        alias = None if (column.alias.lower() == plain_name and cname ==
+                         plain_name) else column.alias.lower()
         if alias is None:
             cname, alias = self._convert_unalias_column(cname)
-        match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
+        match = re.match(r'^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
         if match and match.group(1) in simple_relations and match.group(2) != 'oid':
             cstring = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
                                    match.group(2).lower(),)
@@ -2018,7 +2069,8 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
-                funcsig = rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                funcsig = rel.relation.replace('\\', '\\\\').replace(
+                    '"', '\\"').replace('\n', '\\n')
                 local_name = self._convert_local_name(self._convert_id_name(relation))
                 if rel.relation.startswith('dblink'):
                     expr = ('sqlalchemy.alias(sqlalchemy.literal("%s"), \'%s\')' %
@@ -2033,27 +2085,33 @@ class Select(_GsqlSpec):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
                 d = "%s = sql.object_by_name('%s.%s')" % (self._convert_local_name(relation),
-                                                      rel.schema, rel.relation,)
+                                                          rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
-                match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
+                match = re.match(r'^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
                 if match:
                     selector = 'sql.object_by_name'
                     rschema, dependency = match.groups()
-                    d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation.lower(),)
+                    d = "%s = %s('%s')" % (self._convert_local_name(relation),
+                                           selector, rrelation.lower(),)
                 elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
-                    d = "%s = sql.gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                    d = "%s = sql.gO('%s')" % (self._convert_local_name(relation),
+                                               rrelation.lower(),)
                 else:
                     dependency = rrelation
                     rschema = None
-                    d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
+                    d = "%s = sql.t.%s" % (self._convert_local_name(relation),
+                                           self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias and not noalias:
                 if d is None:
-                    d = '%s = %s' % (self._convert_local_name(self._convert_id_name(rel.alias.lower())), relation,)
+                    d = '%s = %s' % (
+                        self._convert_local_name(self._convert_id_name(rel.alias.lower())),
+                        relation,
+                    )
                     relation = rel.alias.lower()
                 d += ".alias('%s')" % (rel.alias.lower(),)
             if d:
@@ -2066,15 +2124,20 @@ class Select(_GsqlSpec):
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
-                result = '%s.join(%s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True),)
+                result = '%s.join(%s, %s)' % (prev_result, relation,
+                                              self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.LEFT_OUTER:
-                result = '%s.outerjoin(%s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True),)
+                result = '%s.outerjoin(%s, %s)' % (prev_result, relation,
+                                                   self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.CROSS and not condition:
                 result = '%s.join(%s, sqlalchemy.sql.true())' % (prev_result, relation,)
             elif jtype == JoinType.FULL_OUTER:
-                result = 'sql.FullOuterJoin(%s, %s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True))
+                result = 'sql.FullOuterJoin(%s, %s, %s)' % (
+                    prev_result, relation, self._convert_raw_condition(condition, True)
+                )
             else:
-                result = '%s.XXX:%s(%s, %s)' % (prev_result, jtype, relation, self._convert_raw_condition(condition),)
+                result = '%s.XXX:%s(%s, %s)' % (prev_result, jtype, relation,
+                                                self._convert_raw_condition(condition),)
             return result
         result = ''
         for i, r in enumerate(self._relations):
@@ -2101,7 +2164,8 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
-                funcsig = rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                funcsig = rel.relation.replace('\\', '\\\\').replace(
+                    '"', '\\"').replace('\n', '\\n')
                 local_name = self._convert_local_name(self._convert_id_name(relation))
                 if rel.relation.startswith('dblink'):
                     expr = ('sqlalchemy.alias(sqlalchemy.literal("%s"), \'%s\')' %
@@ -2116,23 +2180,26 @@ class Select(_GsqlSpec):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
                 d = "%s = sql.object_by_name('%s.%s')" % (self._convert_local_name(relation),
-                                                      rel.schema, rel.relation,)
+                                                          rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
-                match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
+                match = re.match(r'^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
                 if match:
                     selector = 'sql.object_by_name'
                     rschema, dependency = match.group()
-                    d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation,)
+                    d = "%s = %s('%s')" % (self._convert_local_name(
+                        relation), selector, rrelation,)
                 elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
-                    d = "%s = sql.gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                    d = "%s = sql.gO('%s')" % (
+                        self._convert_local_name(relation), rrelation.lower(),)
                 else:
                     dependency = rrelation
                     rschema = None
-                    d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
+                    d = "%s = sql.t.%s" % (self._convert_local_name(
+                        relation), self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias and not noalias:
                 if d is None:
@@ -2171,7 +2238,8 @@ class Select(_GsqlSpec):
             dname = 'join_%s_%s' % (last_relation.rstrip('_'), relation.rstrip('_'),)
             if dname.startswith('join_join_'):
                 dname = dname[5:]
-            self._convert_add_definition(definitions, '%s = %s' % (self._convert_local_name(dname), result,),
+            self._convert_add_definition(definitions,
+                                         '%s = %s' % (self._convert_local_name(dname), result,),
                                          level)
             return dname
         last_relation = None
@@ -2206,7 +2274,8 @@ class Select(_GsqlSpec):
                             settype += '_'
                         condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
                         select_name = select_n('set')
-                        self._convert_add_definition(definitions, '%s = %s' % (select_name, condition,), level)
+                        self._convert_add_definition(
+                            definitions, '%s = %s' % (select_name, condition,), level)
                         condition = select_name
                     else:
                         assert not condition, condition
@@ -2235,7 +2304,8 @@ class Select(_GsqlSpec):
                 if c.rstrip(' +').endswith(']'):
                     in_list -= 1
             columns = string.join(split_columns, '\n')
-            whereclause = ',\n        whereclause=%s' % (where_condition,) if where_condition else ''
+            whereclause = ',\n        whereclause=%s' % (
+                where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(\n    %s,\n        from_obj=[%s]%s\n        )' %
                          (columns, relations, whereclause,))
             if self._group_by:
@@ -2307,8 +2377,9 @@ class _GsqlViewNG(Select):
             relace v pořadí jejich uvedení, pokud je uvedena sekvence názvů,
             budou provedeny v uvedeném pořadí. Vynecháním názvu SelectRelation
             se docílí toho, že delete pro danou relaci nebude vůbec proveden.
+
         """
-        #assert relations[0].jointype == JoinType.FROM
+        # assert relations[0].jointype == JoinType.FROM
         super(ViewNG, self).__init__(relations, **kwargs)
         self._set_name(name)
         self._set_schemas(schemas)
@@ -2333,20 +2404,23 @@ class _GsqlViewNG(Select):
                        not isinstance(rel.relation, SelectRelation):
                         rels.append(rel)
             return rels
+
         def get_key_column(relation):
             key = relation.key_column
             if not key:
                 try:
                     key = table_keys[relation.relation]
-                except:
+                except Exception:
                     pass
-            if isinstance(key, (tuple,list)):
+            if isinstance(key, (tuple, list)):
                 return _gsql_column_table_column(key[0])[1]
             else:
                 return _gsql_column_table_column(key)[1]
+
         def get_default_body(kind):
             columns = self._columns
             body = []
+
             def make_table_name(r):
                 table_name = r.relation
                 if isinstance(r, SelectRelation) and r.schema is not None:
@@ -2402,7 +2476,7 @@ class _GsqlViewNG(Select):
                         key_column = get_key_column(r)
                         if not key_column:
                             raise ProgramError("Update rule: no key column "
-                                           "specified", table_name)
+                                               "specified", table_name)
                         condition = '%s = old.%s' % (key_column, key_column)
                         body.append('UPDATE %s SET\n      %s \n    WHERE %s' %
                                     (table_name, settings, condition))
@@ -2421,6 +2495,7 @@ class _GsqlViewNG(Select):
             else:
                 raise ProgramError('Invalid rule specifier', kind)
             return body
+
         def get_params(kind):
             if kind == self._INSERT:
                 command = 'INSERT'
@@ -2452,9 +2527,8 @@ class _GsqlViewNG(Select):
                 body = '(%s;)' % (';\n    '.join(body))
         else:
             body = action
-        return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
-                '    %s;\n\n') % \
-               (self._name, suffix, command, self._name, body)
+        return (('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n    %s;\n\n') %
+                (self._name, suffix, command, self._name, body))
 
     def _output(self, table_keys):
         select = self.format_select()
@@ -2490,11 +2564,11 @@ class _GsqlViewNG(Select):
         condition = self._convert_select(definitions, 0)
         if definitions and definitions[-1].startswith(condition + ' = '):
             condition = definitions.pop()
-            condition = condition[condition.find(' = ')+3:]
+            condition = condition[condition.find(' = ') + 3:]
         if (condition == 'select_1()' and
             definitions and
             definitions[0] == 'def select_1():' and
-            all([d and d[0] == ' ' for d in definitions[1:]])):
+                all([d and d[0] == ' ' for d in definitions[1:]])):
             new_definitions = []
             for d in definitions[1:]:
                 new_definitions.append(string.join([dd[4:] for dd in d.split('\n')], '\n'))
@@ -2502,28 +2576,37 @@ class _GsqlViewNG(Select):
             condition = None
         definition_lines = []
         for d in definitions:
-            definition_lines.append(string.join(['        %s\n' % (dd,) for dd in d.split('\n')], ''))
-        items.append('    @classmethod\n    def query(cls):\n%s' % (string.join(definition_lines, ''),))
+            definition_lines.append(string.join(['        %s\n' % (dd,)
+                                                 for dd in d.split('\n')], ''))
+        items.append('    @classmethod\n    def query(cls):\n%s' %
+                     (string.join(definition_lines, ''),))
         if condition is not None:
             items[-1] += '        return %s' % (condition,)
         if self._name == 'ev_pytis_menu_structure':
-            items.append('    @classmethod\n    def join_columns(class_):\n        return ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)')
+            items.append(
+                '    @classmethod\n    def join_columns(class_):\n'
+                '        return ((sql.c.APytisActionsStructure.fullname, '
+                '                 sql.c.CPytisMenuActions.fullname),)'
+            )
+
         def quote(command):
             if '\n' in command:
                 command = '""%s""' % (command,)
             return command
+
         def add_rule(kind, command, order):
             if command is None:
                 return
             if isinstance(command, basestring):
                 items.append('    def on_%s(self):' % (kind,))
-                items.append ('        return ("%s",)' % (quote(command),))
+                items.append('        return ("%s",)' % (quote(command),))
             else:
                 def make_table_name(r):
                     table_name = r.relation
                     if isinstance(r, SelectRelation) and r.schema is not None:
                         table_name = '%s.%s' % (r.schema, table_name,)
                     return table_name
+
                 def relations(list_order):
                     if self._set:
                         return ()
@@ -2537,6 +2620,7 @@ class _GsqlViewNG(Select):
                                not isinstance(rel.relation, SelectRelation):
                                 rels.append(rel)
                     return rels
+
                 def update_value(c):
                     return c.insert if kind == 'insert' else c.update
                 real_order = relations(order)
@@ -2565,27 +2649,31 @@ class _GsqlViewNG(Select):
                                         no_update_columns.append(cc_alias)
                                     elif u_value != 'new.%s' % (cc_alias,):
                                         cc_orig_name = cc.name.split('.')[-1]
-                                        special_update_columns.append((t_name, cc_orig_name, u_value,))
+                                        special_update_columns.append(
+                                            (t_name, cc_orig_name, u_value,))
                                 break
                 prefix = ''
                 for o in real_order_relations:
                     if o.find('.') >= 0:
                         prefix = '#XXX:'
                         break
-                order_string = string.join([self._convert_name(o.lower()) for o in real_order_relations], ', ')
+                order_string = string.join([self._convert_name(o.lower())
+                                            for o in real_order_relations], ', ')
                 if order_string:
                     order_string += ','
                 items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
                 if no_update_columns:
-                    column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
+                    column_string = string.join(["'%s'" % (c,)
+                                                 for c in no_update_columns], ', ') + ','
                     items.append('    no_%s_columns = (%s)' % (kind, column_string,))
                 if special_update_columns:
-                    column_string = string.join([repr(c) for c in special_update_columns], ', ') + ','
+                    column_string = string.join([repr(c)
+                                                 for c in special_update_columns], ', ') + ','
                     items.append('    special_%s_columns = (%s)' % (kind, column_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
-                    items.append ('        return (%s,)' % (command_string,))
+                    items.append('        return (%s,)' % (command_string,))
         add_rule('insert', self._insert, self._insert_order)
         add_rule('update', self._update, self._update_order)
         add_rule('delete', self._delete, self._delete_order)
@@ -2594,7 +2682,9 @@ class _GsqlViewNG(Select):
         result = string.join(items, '\n') + '\n'
         return result
 
+
 ViewNG = _GsqlViewNG
+
 
 class _GsqlView(_GsqlSpec):
     """Specifikace view."""
@@ -2670,11 +2760,8 @@ class _GsqlView(_GsqlSpec):
         self._update = update
         self._delete = delete
         self._key_columns = key_columns
-        self._complexp = some(lambda c: is_sequence(c.name)
-                              or is_sequence(c.sql),
-                              self._columns)
-        self._simple_columns, self._complex_columns = \
-                              self._split_columns()
+        self._complexp = some(lambda c: is_sequence(c.name) or is_sequence(c.sql), self._columns)
+        self._simple_columns, self._complex_columns = self._split_columns()
         self._complex_len = self._complex_columns_length()
         self._tables_from, self._tables = self._make_tables()
 
@@ -2697,19 +2784,17 @@ class _GsqlView(_GsqlSpec):
                 simple_columns.append(c)
         return simple_columns, complex_columns
 
-
     def _complex_columns_length(self):
         if not self._complexp:
             return None
-        complex_len = is_sequence(self._complex_columns[0].name) and \
-                      len(self._complex_columns[0].name) or \
-                      len(self._complex_columns[0].sql)
+        complex_len = (is_sequence(self._complex_columns[0].name) and
+                       len(self._complex_columns[0].name) or
+                       len(self._complex_columns[0].sql))
         for c in self._complex_columns[1:]:
             clen = is_sequence(c.name) and len(c.name) or len(c.sql)
             if clen != complex_len:
                 raise GensqlError("Non-matching column length", c)
         return complex_len
-
 
     def _make_tables(self):
         """Vytvoří seznam tabulek pro klauzuli from
@@ -2729,7 +2814,7 @@ class _GsqlView(_GsqlSpec):
                              for t in self._columns
                              if self._column_table(t) is not None]
             for t in simple_tables:
-                if not t in column_tables:
+                if t not in column_tables:
                     column_tables.append(t)
         # Now we have the list of used tables
         # and we can check the appropriate use of table aliases
@@ -2778,7 +2863,6 @@ class _GsqlView(_GsqlSpec):
             tables_from = tables = column_tables
         return tables_from, tables
 
-
     def _format_column(self, column, i=None, type=UNDEFINED):
         if isinstance(column, basestring):
             cname = alias = column
@@ -2804,6 +2888,7 @@ class _GsqlView(_GsqlSpec):
 
     def _format_complex_columns(self):
         COLSEP = ',\n        '
+
         def format_simple_columns(columns):
             return string.join(map(self._format_column, columns), COLSEP)
         if self._complexp:
@@ -2860,15 +2945,13 @@ class _GsqlView(_GsqlSpec):
                     column_names = [self._column_column(c)
                                     for c in table_columns[t]
                                     if c.insert]
-                    column_values = [c.insert == '' and
-                              'new.%s' % (c.alias) or
-                              c.insert
-                              for c in table_columns[t]
-                              if c.insert]
+                    column_values = [c.insert == '' and 'new.%s' % (c.alias) or c.insert
+                                     for c in table_columns[t]
+                                     if c.insert]
                     columns = ',\n      '.join(column_names)
                     values = ',\n      '.join(column_values)
                     if column_names:
-                        body.append('INSERT INTO %s (\n      %s)\n     VALUES (\n      %s)' % \
+                        body.append('INSERT INTO %s (\n      %s)\n     VALUES (\n      %s)' %
                                     (t, columns, values))
             action = self._insert
             body = string.join(body, ';\n    ')
@@ -2894,7 +2977,7 @@ class _GsqlView(_GsqlSpec):
                             if _gsql_column_table_column(c)[0] == t]
                     condition = string.join(rels, ' AND ')
                     if column_names:
-                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' % \
+                        body.append('UPDATE %s SET\n      %s \n    WHERE %s' %
                                     (t, settings, condition))
             action = self._update
             body = string.join(body, ';\n    ')
@@ -2919,7 +3002,7 @@ class _GsqlView(_GsqlSpec):
             body = '(%s;\n    %s)' % (body, string.join(action, ';\n    '))
         else:
             body = action
-        return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
+        return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' +
                 '    %s;\n\n') % \
                (self._name, suffix, command, self._name, body)
 
@@ -3006,7 +3089,7 @@ class _GsqlView(_GsqlSpec):
             cname = "NULL::%s" % (_gsql_format_type(type),)
         elif isinstance(type, basestring):
             cname = "NULL::%s" % (type,)
-        match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
+        match = re.match(r'^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
         if match and match.group(2) != 'oid':
             crepr = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
                                  match.group(2).lower(),)
@@ -3016,6 +3099,7 @@ class _GsqlView(_GsqlSpec):
 
     def _convert_complex_columns(self):
         COLSEP = ',\n        '
+
         def format_simple_columns(columns):
             return string.join(map(self._convert_column, columns), COLSEP)
         if self._complexp:
@@ -3080,10 +3164,10 @@ class _GsqlView(_GsqlSpec):
                     accessor = "sql.t.%s" % (self._convert_name(t[0], short=True),)
                     alias = t[0]
                 elif len(t) == 2:
-                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[1],)
+                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[1])
                     alias = t[-1]
                 elif len(t) == 3 and t[1].lower() == 'as':
-                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[2],)
+                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[2])
                     alias = t[2]
                 else:
                     raise Exception("Can't decode table name", table)
@@ -3094,8 +3178,10 @@ class _GsqlView(_GsqlSpec):
             tables = [string.join(t, ', ') for t in tables_from]
             selections = []
             for t, c, w in zip(tables, columns, where):
-                selections.append('sqlalchemy.select(\n    [\n%s],\n    from_obj=[%s],\n    whereclause=%s)' %
-                                  (c, t, repr(w),))
+                selections.append(
+                    'sqlalchemy.select(\n    [\n%s],\n    from_obj=[%s],\n    whereclause=%s)' %
+                    (c, t, repr(w),)
+                )
             condition = string.join(selections, '.union_all(')
             condition += ')' * (len(selections) - 1)
         else:
@@ -3107,8 +3193,8 @@ class _GsqlView(_GsqlSpec):
                 pos = t.rfind(' ')
                 if pos > 0:
                     name = t[:pos].rstrip()
-                    alias = t[pos+1:]
-                    if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
+                    alias = t[pos + 1:]
+                    if re.match(r'^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
                         selector = 'sql.object_by_name'
                 else:
                     name = alias = t
@@ -3131,20 +3217,24 @@ class _GsqlView(_GsqlSpec):
                 if c.rstrip().endswith(']'):
                     in_list -= 1
             columns = string.join(split_columns, '\n')
-            condition = ('sqlalchemy.select(\n            [%s],\n            from_obj=[%s],\n            whereclause=%s)' %
+            condition = ('sqlalchemy.select(\n            [%s],\n'
+                         '            from_obj=[%s],\n'
+                         '            whereclause=%s)' %
                          (columns, string.join(from_obj, ', '), repr(where),))
         items.append('        return %s' % (condition,))
         # Rules
+
         def quote(command):
             if '\n' in command:
                 command = '""%s""' % (command,)
             return command
+
         def add_rule(kind, command):
             if command is None:
                 return
             if isinstance(command, basestring):
                 items.append('    def on_%s(self):' % (kind,))
-                items.append ('        return ("%s",)' % (quote(command),))
+                items.append('        return ("%s",)' % (quote(command),))
             else:
                 prefix = ''
                 for t in self._tables:
@@ -3172,7 +3262,8 @@ class _GsqlView(_GsqlSpec):
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
-                    items.append ('        return (%s,)' % (command_string,))
+                    items.append('        return (%s,)' % (command_string,))
+
             def update_value(c):
                 return c.insert if kind == 'insert' else c.update
             no_update_columns = []
@@ -3184,12 +3275,15 @@ class _GsqlView(_GsqlSpec):
                     no_update_columns.append(cc_alias)
                 elif u_value != 'new.%s' % (cc_alias,):
                     cc_orig_name = cc.name.split('.')[-1]
-                    special_update_columns.append((self._convert_name(self._tables[0]), cc_orig_name, u_value.replace('\n', ' '),))
+                    special_update_columns.append(
+                        (self._convert_name(self._tables[0]), cc_orig_name,
+                         u_value.replace('\n', ' '),))
             if no_update_columns:
                 column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
                 items.append('    no_%s_columns = (%s)' % (kind, column_string,))
             if special_update_columns:
-                column_string = string.join(['(%s, "%s", "%s")' % c for c in special_update_columns], ', ') + ','
+                column_string = string.join(
+                    ['(%s, "%s", "%s")' % c for c in special_update_columns], ', ') + ','
                 items.append('    special_%s_columns = (%s)' % (kind, column_string,))
         add_rule('insert', self._insert)
         add_rule('update', self._update)
@@ -3285,7 +3379,7 @@ class _GsqlFunction(_GsqlSpec):
                     skip = skip + len(string.split(f.__doc__, '\n'))
                 lines = [l for l in lines if l.strip() != '']
                 return _gsql_escape(string.join(lines[skip:], ''))
-            source_list = map(get_source, tuple(self._use_functions)+(body,))
+            source_list = map(get_source, tuple(self._use_functions) + (body,))
             # plpython nemá rád prázdné řádky
             source_text = string.join(source_list, '')
             result = "'%s' LANGUAGE plpythonu" % source_text
@@ -3296,11 +3390,11 @@ class _GsqlFunction(_GsqlSpec):
         for a in self._ins:
             typ = _gsql_format_type(a.typ)
             arg = "in %s %s" % (a.name, typ)
-            args.append(arg.replace('  ',' '))
+            args.append(arg.replace('  ', ' '))
         for a in self._outs:
             typ = _gsql_format_type(a.typ)
             arg = "out %s %s" % (a.name, typ)
-            args.append(arg.replace('  ',' '))
+            args.append(arg.replace('  ', ' '))
         return ', '.join(args)
 
     def _format_output_type(self):
@@ -3371,8 +3465,8 @@ class _GsqlFunction(_GsqlSpec):
         result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s%s%s;\n' % \
                  (self._name, arguments, returns, body, optimizer, security)
         if self._doc:
-        #    doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
-        #          (self._name, input_types, _gsql_escape(self._doc))
+            # doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
+            #       (self._name, input_types, _gsql_escape(self._doc))
             doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
                   (self._name, arguments, _gsql_escape(self._doc))
             result = result + doc
@@ -3471,6 +3565,7 @@ class _GsqlFunction(_GsqlSpec):
         result = string.join(items, '\n') + '\n'
         if python:
             intro_lines = []
+
             def get_source(f, main):
                 lines, __ = inspect.getsourcelines(f)
                 lines = [l.replace('\\\\', '\\') for l in lines if l.strip() != '']
@@ -3491,7 +3586,11 @@ class _GsqlFunction(_GsqlSpec):
                 if main:
                     name_pos = match.end(2)
                     lines[0] = lines[0][:name_pos] + name + lines[0][match.end(3):]
-                    lines = lines[:skip] + [long_fill + l for l in intro_lines if not ignore_regexp.match(l)] + lines[skip:]
+                    lines = (
+                        lines[:skip] +
+                        [long_fill + l for l in intro_lines if not ignore_regexp.match(l)] +
+                        lines[skip:]
+                    )
                     lines.insert(0, static_method)
                 else:
                     def_regexp = re.compile('def ( *)([^(]*)')
@@ -3508,7 +3607,8 @@ class _GsqlFunction(_GsqlSpec):
                         if match:
                             sub_pos = indentation + match.end(1)
                             sub_name = match.group(2)
-                            if sub_name in ('pg_val', 'pg_escape', 'string', 'boolean', 'num', '_html_table',):
+                            if sub_name in ('pg_val', 'pg_escape', 'string',
+                                            'boolean', 'num', '_html_table',):
                                 skip = True
                             else:
                                 skip = False
@@ -3687,7 +3787,8 @@ class _GsqlRaw(_GsqlSpec):
         self._convert_schemas(items)
         items.append('    @classmethod')
         items.append('    def sql(class_):')
-        items.append('        return """%s"""' % (self._sql.replace("\\'", "'").replace('\\', '\\\\'),))
+        items.append('        return """%s"""' %
+                     (self._sql.replace("\\'", "'").replace('\\', '\\\\'),))
         items.append(self._convert_depends())
         result = string.join(items, '\n') + '\n'
         self._convert_add_raw_dependencies(self._sql)
@@ -3739,8 +3840,7 @@ class _GviewsqlRaw(_GsqlSpec):
             body = action
         rule = ("CREATE OR REPLACE RULE %s_%s\n"
                 "AS ON %s TO %s DO INSTEAD\n"
-                "%s;\n\n") % (self._name, suffixes[kind],
-                           kind, self._name, body)
+                "%s;\n\n") % (self._name, suffixes[kind], kind, self._name, body)
         return rule
 
     def _output(self):
@@ -3804,7 +3904,7 @@ class _GsqlDefs(UserDict.UserDict):
         return not missing
 
     def _update_unresolved(self):
-        resolved, unresolved = self._resolved, self._unresolved
+        unresolved = self._unresolved
         while True:
             new_unresolved = []
             for o in unresolved:
@@ -3913,7 +4013,7 @@ class _GsqlDefs(UserDict.UserDict):
                                      ('port', _GsqlConfig.dbport),
                                      ('dbname', _GsqlConfig.dbname)):
                 value = accessor
-                if value != None:
+                if value is not None:
                     connection_string = "%s %s='%s'" % \
                                         (connection_string, option, value)
             try:
@@ -3940,6 +4040,7 @@ class _GsqlDefs(UserDict.UserDict):
         names = {}
         sql_types_classes = {}
         classes = []
+
         def process(name):
             o = self[name]
             c = o.__class__
@@ -3958,6 +4059,7 @@ class _GsqlDefs(UserDict.UserDict):
         to_create = []
         to_update = []
         to_remove = []
+
         def process(name):
             o = self[name]
             i = position(name, all_names)
@@ -4032,17 +4134,18 @@ database dumps if you want to be sure about your schema.
                 continue
             else:
                 depends.append(v)
-            data = connection.query(
-               ("select distinct c.relname "
+            data = connection.query((
+                "select distinct c.relname "
                 " from pg_class d, pg_depend a join pg_rewrite b on a.objid=b.oid "
                 " join pg_class c on ev_class=c.oid "
                 " join pg_views e on e.viewname=c.relname "
                 " where refclassid = 'pg_class'::regclass and refobjid = d.oid "
-                " and ev_class<>d.oid and d.relname='%s'") %
-               v)
+                " and ev_class<>d.oid and d.relname='%s'"
+            ) % v)
             for i in range(data.ntuples):
                 todo.append(data.getvalue(i, 0))
         # sys.stdout.write('drop view %s cascade;\n' % obj)
+
         def process(o):
             name = self[o].name()
             if name not in depends:
@@ -4094,23 +4197,27 @@ from db_pytis_base import *
 
 """
             else:
-                init_preamble += """
-app_default_access_rights = (('all', '%s',),)
-app_pytis_schemas = %s
-app_cms_rights = (('all', '%s',),)
-app_cms_rights_rw = (('all', '%s',),)
-app_cms_users_table = '%s'
-app_cms_schemas = %s
-app_http_attachment_storage_rights = (('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),)
-
-import imp
-import os
-import sys
-_file, _pathname, _description = imp.find_module('pytis')
-sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
-""" % (application, repr(_GsqlConfig.convert_pytis_schemas),
-       application, application, _GsqlConfig.convert_cms_users_table,
-       repr(_GsqlConfig.convert_cms_schemas), application, application, application,)
+                init_preamble += "\n".join((
+                    "app_default_access_rights = (('all', '%s',),)",
+                    "app_pytis_schemas = %s",
+                    "app_cms_rights = (('all', '%s',),)",
+                    "app_cms_rights_rw = (('all', '%s',),)",
+                    "app_cms_users_table = '%s'",
+                    "app_cms_schemas = %s",
+                    "app_http_attachment_storage_rights ="
+                    " (('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),)",
+                    "",
+                    "import imp",
+                    "import os",
+                    "import sys",
+                    "_file, _pathname, _description = imp.find_module('pytis')",
+                    "sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))")) % (
+                        application, repr(_GsqlConfig.convert_pytis_schemas),
+                        application, application,
+                        _GsqlConfig.convert_cms_users_table,
+                        repr(_GsqlConfig.convert_cms_schemas),
+                        application, application, application,
+                    )
                 init_preamble += """
 sql.clear()
 
@@ -4137,9 +4244,11 @@ cms_users_table = sql.SQLFlexibleValue('db.app_cms_users_table',
 cms_schemas = sql.SQLFlexibleValue('db.app_cms_schemas',
                                      environment='GSQL_CMS_SCHEMAS',
                                      default=(('public',),))
-http_attachment_storage_rights = sql.SQLFlexibleValue('db.app_http_attachment_storage_rights',
-                                                        environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
-                                                        default=(('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),))
+http_attachment_storage_rights = sql.SQLFlexibleValue(
+    'db.app_http_attachment_storage_rights',
+    environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
+    default=(('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),)
+)
 
 """ % (application, application, application, application, application, application,)
         preamble_1 += '''
@@ -4261,6 +4370,7 @@ class Base_LogSQLTable(sql.SQLTable):
 
 '''
         preamble_x = ['']
+
         def preprocess(o):
             dbobj = self[o]
             if dbobj.name() in _CONV_PREPROCESSED_NAMES:
@@ -4288,6 +4398,7 @@ class Base_LogSQLTable(sql.SQLTable):
             f.close()
         last_visited_file = [None]
         last_visited_suffix = ['']
+
         def process(o):
             local_file = True
             dbobj = self[o]
@@ -4327,10 +4438,10 @@ class Base_LogSQLTable(sql.SQLTable):
                 if application and application != 'pytis' and basename.startswith('db_pytis_'):
                     local_file = False
                 if new_file:
-                    if (application and
-                        not re.match('db_pytis_cms_[3-9]', basename) and
-                        # solas hack
-                        (basename != 'db_pytis_cms_1' or application != 'solas')):
+                    if ((application and
+                         not re.match('db_pytis_cms_[3-9]', basename) and
+                         # solas hack
+                         (basename != 'db_pytis_cms_1' or application != 'solas'))):
                         f = open(index_file, 'a')
                         import_name = os.path.splitext(basename)[0]
                         # solas hack
@@ -4349,7 +4460,8 @@ class Base_LogSQLTable(sql.SQLTable):
                         output = open(file_name, 'a')
             converted = dbobj.convert()
             if not dbobj._convert:
-                converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
+                converted = string.join(['#' + line for line in ['XXX:'] +
+                                         string.split(converted, '\n')], '\n')
             converted = converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY')
             if local_file:
                 output.write(converted)
@@ -4363,26 +4475,32 @@ class Base_LogSQLTable(sql.SQLTable):
 
 _gsql_defs = _GsqlDefs()
 
+
 def _gsql_process(class_, args, kwargs):
     spec = class_(*args, **kwargs)
     _gsql_defs.add(spec)
     return spec
 
+
 def sqltype(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlType."""
     return _gsql_process(_GsqlType, args, kwargs)
+
 
 def schema(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlSchema."""
     return _gsql_process(_GsqlSchema, args, kwargs)
 
+
 def table(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlTable."""
     return _gsql_process(_GsqlTable, args, kwargs)
 
+
 def view(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlView."""
     return _gsql_process(_GsqlView, args, kwargs)
+
 
 def viewng(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlViewNG."""
@@ -4393,6 +4511,7 @@ def function(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlFunction.
     """
     return _gsql_process(_GsqlFunction, args, kwargs)
+
 
 def sequence(*args, **kwargs):
     """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlSequence.
@@ -4508,7 +4627,8 @@ _GSQL_OPTIONS = (
     ('user=USER        ', 'connect to DATABASE as USER'),
     ('password=PASSWORD', 'use PASSWORD when connecting to DATABASE'),
     ('database=DATABASE', 'DATABASE for connection string'),
-    )
+)
+
 
 def _usage(optexception=None):
     _USAGE = 'usage: %s file\n' % sys.argv[0]
@@ -4526,12 +4646,13 @@ def _usage(optexception=None):
 def _go(argv=None):
     if argv is None:
         argv = sys.argv[1:]
+
     def extract_option(odef):
         option = odef[0]
         option = string.strip(option)
         pos = option.find('=')
         if pos >= 0:
-            option = option[:pos+1]
+            option = option[:pos + 1]
         return option
     try:
         opts, args = getopt.getopt(argv, '',

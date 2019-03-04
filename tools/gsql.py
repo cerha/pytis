@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2012-2018 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -25,6 +26,7 @@ import sys
 import pytis.data.gensqlalchemy
 
 USAGE = """usage: %prog [ OPTIONS ] SPECIFICATION-MODULE"""
+
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
@@ -63,6 +65,7 @@ def parse_options():
         sys.exit(1)
     return options, args[0]
 
+
 def update_config(options):
     import config
     pytis.util.set_configuration_file(options.config_file)
@@ -81,6 +84,7 @@ def update_config(options):
         if password is not None:
             config.dbpass = password
 
+
 def run():
     options, module = parse_options()
     update_config(options)
@@ -91,6 +95,7 @@ def run():
                                          schema=options.schema, source=options.source,
                                          upgrade=options.upgrade, debug=options.debug,
                                          limit_module=options.limit_module)
+
 
 if __name__ == '__main__':
     run()
