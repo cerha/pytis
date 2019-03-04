@@ -19,22 +19,23 @@ from pytis.util import ProgramError
 
 """Abstract specification of APIs used by pytis web components to access the HTTP request data."""
 
+
 class FileUpload(object):
     """Abstract definition of file upload API.
 
     Instances of 'FileUpload' class should be used to represent file uploads within the request
     parameters.
-    
+
     """
 
     def file(self):
         """Return an open file-like object from which the data may be read."""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
-        
+
     def filename(self):
         """Return the original filename (without path) as a unicode string."""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
-        
+
     def mime_type(self):
         """Return the mime type provided byt he UA as a string"""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
@@ -48,7 +49,7 @@ class Request(object):
     it must implement this interface.
 
     """
-    
+
     def uri(self):
         """Return request URI path relative to server's root.
 
@@ -62,7 +63,7 @@ class Request(object):
     def has_param(self, name):
         """Return true if the parameter 'name' was sent with the request."""
         raise ProgramError("Pytis Request interface not implemented by derived class!")
-        
+
     def param(self, name, default=None):
         """Return the value of request parameter 'name'.
 
@@ -72,7 +73,7 @@ class Request(object):
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
-                
+
     def cookie(self, name, default=None):
         """Return the value of given cookie as a unicode string.
 
@@ -80,7 +81,7 @@ class Request(object):
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
-        
+
     def set_cookie(self, name, value, expires=None):
         """Set the value of given cookie.
 

@@ -16,14 +16,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import lcg
+from request import (  # noqa!
+    FileUpload, Request,
+)
 
-from request import FileUpload, Request
+from field import (  # noqa!
+    UriType, Link, localizable_export, Content, Field,
+    localizable_export as localizable_datetime,  # For backwards compatibility.
+)
 
-from field import UriType, Link, localizable_export, Content, Field, \
-    localizable_export as localizable_datetime # For backwards compatibility.
+from form import (  # noqa!
+    BadRequest, Form, ShowForm, DeletionForm, EditForm, VirtualForm, FilterForm,
+    BrowseForm, ListView, ItemizedView, CheckRowsForm, EditableBrowseForm,
+)
 
-from form import BadRequest, Form, ShowForm, DeletionForm, EditForm, VirtualForm, FilterForm, \
-    BrowseForm, ListView, ItemizedView, CheckRowsForm, EditableBrowseForm
-
-from dialog import Dialog, SelectionDialog
+from dialog import (  # noqa!
+    Dialog, SelectionDialog,
+)

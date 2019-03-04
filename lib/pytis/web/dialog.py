@@ -27,6 +27,7 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-web')
 
+
 class Dialog(lcg.Content):
 
     def __init__(self, hidden=(), handler='#', action=None):

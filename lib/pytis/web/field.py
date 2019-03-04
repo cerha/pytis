@@ -95,16 +95,21 @@ class Link(object):
     class instead of a string.
 
     """
+
     def __init__(self, uri, title=None, target=None):
         self._uri = uri
         self._title = title
         self._target = target
+
     def uri(self):
         return self._uri
+
     def title(self):
         return self._title
+
     def target(self):
         return self._target
+
 
 def localizable_export(value, **kwargs):
     """Try to convert a pytis value into a corresponding 'lcg.Localizable'.
@@ -377,12 +382,12 @@ class Field(object):
         field_value = self._value().value()
         try:
             value, info = self._format_cache[field_value]
-        except (TypeError, KeyError): # catch unhashable keys
+        except (TypeError, KeyError):  # catch unhashable keys
             value = self._format(context)
             info = self._display(context)
             try:
                 self._format_cache[field_value] = (value, info,)
-            except TypeError: # catch unhashable keys
+            except TypeError:  # catch unhashable keys
                 pass
         if self._uri_provider and (value or self._big):
             # Big values are not present in the select (value is None) but they may still
@@ -393,12 +398,12 @@ class Field(object):
                 if info is not None:
                     value += ' (' + info + ')'
                     info = None
-                value = g.img(src, alt=value) #, cls=cls)
+                value = g.img(src, alt=value)  # , cls=cls)
             if value:
                 link = self._uri_provider(self._row, UriType.LINK, self.id)
                 if link:
                     if isinstance(link, collections.Callable):
-                        kwargs = None # Ignore array item links here
+                        kwargs = None  # Ignore array item links here
                     elif isinstance(link, basestring):
                         kwargs = dict(href=link)
                     else:
@@ -584,11 +589,13 @@ class HtmlField(MultilineField):
 
     class AcfRule(object):
         """A single ACF rule for CKEditor"""
+
         def __init__(self, elements, attributes=(), styles=(), classes=()):
             self.elements = elements
             self.attributes = attributes
             self.styles = styles
             self.classes = classes
+
         def __str__(self):
             res = " ".join(self.elements)
             if (self.attributes):
@@ -601,8 +608,10 @@ class HtmlField(MultilineField):
 
     class AcfRequiredAttribute(object):
         """Required attribute in ACF rule for CKEditor"""
+
         def __init__(self, attribute):
             self.attribute = attribute
+
         def __str__(self):
             return '!' + self.attribute
 
@@ -621,14 +630,14 @@ class HtmlField(MultilineField):
             context.resource('ckeditor.css')
             context.resource('ASCIIMathML.js')
             toolbar = (
-                ('clipboard', ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
+                ('clipboard', ('Cut', 'Copy', 'Paste', 'PasteText',  # 'PasteFromWord',
                                '-', 'Undo', 'Redo')),
                 ('editing', ('Find', 'Replace', '-', 'SelectAll')),
-                ('basicstyles', ('Bold', 'Italic', 'Underline', #'Strike',
+                ('basicstyles', ('Bold', 'Italic', 'Underline',  # 'Strike',
                                  'Subscript', 'Superscript', '-', 'RemoveFormat')),
                 ('tools', ('Source', 'Maximize', 'ShowBlocks', '-', 'About')),
                 ('/', None),
-                ('styles', ('Format', 'Language')), #'Font','FontSize')),
+                ('styles', ('Format', 'Language')),  # 'Font','FontSize')),
                 ('paragraph', ('NumberedList', 'BulletedList', 'DefinitionList', '-',
                                'Outdent', 'Indent', '-', 'Blockquote', 'BlockquoteFooter', '-',
                                'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock',
@@ -637,7 +646,7 @@ class HtmlField(MultilineField):
                 ('pytis', ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
                            'PytisExercise', 'PytisMathML')),
                 ('links', ('Link', 'Unlink', 'Anchor', 'PytisIndexItem')),
-                ('insert', ('Table', 'HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
+                ('insert', ('Table', 'HorizontalRule', 'PageBreak', 'SpecialChar')),  # 'Smiley',
             )
 
             Rule = self.AcfRule
@@ -645,7 +654,8 @@ class HtmlField(MultilineField):
             acf_rules = (
                 # Text content
                 # Links
-                Rule(['a'], ['href', 'name', 'data-lcg-resource'], classes=['lcg-video', 'lcg-audio']),
+                Rule(['a'], ['href', 'name', 'data-lcg-resource'],
+                     classes=['lcg-video', 'lcg-audio']),
                 Rule(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'], ['align']),
                 Rule(['p'], ['align']),
                 Rule(['pre']),
@@ -725,7 +735,7 @@ class DateTimeField(TextField):
     _HANDLER = 'pytis.DateTimeField'
 
     def datetime_format(self, locale_data):
-        if hasattr(self.type, 'exact') and not self.type.exact(): # for wiking.DateTime
+        if hasattr(self.type, 'exact') and not self.type.exact():  # for wiking.DateTime
             time_format = locale_data.time_format
         else:
             time_format = locale_data.exact_time_format
@@ -879,7 +889,6 @@ class FileUploadField(Field):
         return self.type.not_null() and self._row.new()
 
 
-
 class EnumerationField(Field):
 
     def _format(self, context):
@@ -952,6 +961,7 @@ class ChoiceField(EnumerationField):
         enumeration = self._row.enumerate(self.id)
         value = self._value().value()
         selected = []
+
         def is_selected(val):
             if val == value:
                 selected.append(val)
@@ -1014,6 +1024,7 @@ class ChecklistField(ArrayField):
             uri_provider = self._uri_provider(self._row, UriType.LINK, self.id)
         else:
             uri_provider = None
+
         def checkbox(i, value, display):
             # Beware!  Any changes in checkbox rendering made here should be
             # also reflected in the javascript code rendering the items
@@ -1055,6 +1066,7 @@ class FileField(TextField):
     interface doesn't show the value itself, but provides a link to save it.
 
     """
+
     def _format(self, context):
         if self._value().value() is not None:
             value = self._row.filename(self.id)

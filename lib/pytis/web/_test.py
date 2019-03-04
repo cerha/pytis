@@ -27,15 +27,17 @@ import lcg
 import datetime
 from xml.sax import saxutils
 
+
 class Field(unittest.TestCase):
 
     class Request(object):
         """Minimal request representation for testing purposes."""
+
         def __init__(self, params=None):
             self._params = params or {}
+
         def param(self, name, default=None):
             return self._params.get(name, default)
-
 
     def _fields(self, fields):
         columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields]
@@ -46,10 +48,13 @@ class Field(unittest.TestCase):
     def _export_context(self, lang):
         class Timezone(datetime.tzinfo):
             _ZERO_DIFF = datetime.timedelta(0)
+
             def utcoffset(self, dt):
                 return self._ZERO_DIFF
+
             def tzname(self, dt):
                 return "XXX"
+
             def dst(self, dt):
                 return self._ZERO_DIFF
         exporter = lcg.Html5Exporter()

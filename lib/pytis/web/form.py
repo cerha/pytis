@@ -41,7 +41,7 @@ import re
 import pytis.data as pd
 
 from pytis.presentation import (
-    ActionContext, Button, Enumeration, Filter, Field, GroupSpec, HGroup,
+    ActionContext, Button, Enumeration, Field, GroupSpec, HGroup,
     Orientation, PresentedRow, Profiles, Specification, Text, TextFormat,
     ViewSpec,
 )
@@ -55,9 +55,11 @@ _ = pytis.util.translations('pytis-web')
 VERTICAL = Orientation.VERTICAL
 HORIZONTAL = Orientation.HORIZONTAL
 
+
 class BadRequest(Exception):
     """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
     pass
+
 
 class Exporter(lcg.Content):
     """Helper class to simplify returning exported content in AJAX responses.
@@ -66,6 +68,7 @@ class Exporter(lcg.Content):
     argument -- the LCG's export context (lcg.HtmlExporter.Context instance).
 
     """
+
     def __init__(self, exporter, **kwargs):
         self._exporter = exporter
         super(Exporter, self).__init__(**kwargs)
@@ -113,6 +116,7 @@ class Form(lcg.Content):
     """
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
+
     def __init__(self, view, req, row, handler='#', hidden=(), name=None,
                  uri_provider=None, actions=None, **kwargs):
         """Arguments:
@@ -194,12 +198,14 @@ class Form(lcg.Content):
         else:
             required_context = ActionContext.GLOBAL
             function_args = (self._req,)
+
         def is_visible(action):
             context = action.context()
             if context == required_context:
                 return self._call_if_callable(action.visible(), *function_args)
             else:
                 return False
+
         def is_enabled(action):
             return self._call_if_callable(action.enabled(), *function_args)
         if self._actions is not None:
@@ -298,6 +304,7 @@ class FieldForm(Form):
 
     def _interpolate(self, context, template, row):
         g = context.generator()
+
         def export_field(fid):
             if row.visible(fid):
                 return self._export_field(context, self._fields[fid])
@@ -327,6 +334,7 @@ class LayoutForm(FieldForm):
 
         """
         class Item(object):
+
             def __init__(self, label, content, fullsize, right_aligned, cls):
                 self.label = label
                 self.content = content
@@ -378,10 +386,13 @@ class LayoutForm(FieldForm):
 
         def needs_panel(self):
             return self._needs_panel
+
         def has_labeled_items(self):
             return self._has_labeled_items
+
         def allow_right_aligned_fields(self):
             return self._allow_right_aligned_fields
+
         def content(self):
             return self._content
 
@@ -552,7 +563,6 @@ class _SingleRecordForm(LayoutForm):
         """
         return req.param('_pytis_inline_form_request') is not None
 
-
     def ajax_response(self, req):
         """Return the AJAX request response data.
 
@@ -571,7 +581,6 @@ class _SingleRecordForm(LayoutForm):
         """
         if req.param('_pytis_inline_form_request'):
             return self
-
 
 
 class _SubmittableForm(Form):
@@ -867,7 +876,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _attachment_storage_update(self, req, row, storage):
         try:
             import json
-        except:
+        except Exception:
             import simplejson as json
         return storage.update(req.param('filename'), json.loads(req.param('values')))
 
@@ -875,7 +884,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         upload = req.param('upload')
         if not upload:
             raise BadRequest()
-        error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
+        error = storage.insert(upload.filename(), upload.file(),
+                               dict(mime_type=upload.mime_type()))
         return {'success': error is None, 'message': error and req.localizer().localize(error),
                 'filename': upload.filename()}
 
@@ -933,7 +943,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # Don't validate fields which depend on the field currently changed by
                     # the user during AJAX form updates.
                     error = None
-                elif row.editable(fid): # non-editable field values are empty in the request!
+                elif row.editable(fid):  # non-editable field values are empty in the request!
                     error = field.validate(req, locale_data)
                     if error:
                         fdata['error'] = localize(error.message())
@@ -963,6 +973,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                             fdata['enumeration'] = enumeration
                             if isinstance(field.type, pd.Array):
                                 func = self._uri_provider(row, UriType.LINK, fid)
+
                                 def link(value):
                                     lnk = func(value)
                                     if isinstance(lnk, Link):
@@ -1045,6 +1056,7 @@ class QueryFieldsForm(VirtualForm):
             layout = HGroup()
         if profiles:
             assert 'profile' not in [f.id() for f in fields]
+
             class Enum(Enumeration):
                 enumeration = [(p.id(), p.title()) for p in profiles.unnest()]
             fields.insert(0, Field(
@@ -1145,7 +1157,7 @@ class FilterForm(EditForm):
 
     def __init__(self, fields, req, row, **kwargs):
         view = ViewSpec(_("Filter"), fields)
-        kwargs['reset'] = kwargs.get('reset') # Default to None in this class.
+        kwargs['reset'] = kwargs.get('reset')  # Default to None in this class.
         kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
         super(FilterForm, self).__init__(view, req, row, **kwargs)
 
@@ -1159,7 +1171,7 @@ class BrowseForm(LayoutForm):
     _SORTING_DIRECTIONS = {pytis.data.ASCENDENT: 'asc',
                            pytis.data.DESCENDANT: 'desc'}
     _EXPORT_EMPTY_TABLE = False
-    _SEARCH_STRING_SPLITTER = re.compile('([^\s"]+)|"([^"]*)"|„([^„”]*)”')
+    _SEARCH_STRING_SPLITTER = re.compile(r'([^\s"]+)|"([^"]*)"|„([^„”]*)”')
     """Determines whether the table is present on output even if it contains no rows."""
 
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
@@ -1365,6 +1377,7 @@ class BrowseForm(LayoutForm):
         assert transform_sorting is None or isinstance(transform_sorting, collections.Callable), \
             transform_sorting
         data = self._row.data()
+
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
             if req.param('form_name') == self._name and req.has_param(name):
@@ -1372,7 +1385,7 @@ class BrowseForm(LayoutForm):
                 if func:
                     try:
                         return func(value)
-                    except:
+                    except Exception:
                         return default
                 else:
                     return value
@@ -1495,6 +1508,7 @@ class BrowseForm(LayoutForm):
                 text_search_condition_ = text_search_condition(text_search_string)
             else:
                 locale_data = self._req.localizer().locale_data()
+
                 def search_condition(field, string):
                     t = field.type
                     if isinstance(t, (pd.Password, pd.Binary, pd.Big, pd.Boolean)):
@@ -1687,7 +1701,7 @@ class BrowseForm(LayoutForm):
     def _columns_count(self):
         n = len(self._column_fields)
         if self._expand_row:
-            n += 1 # One extra column for row expansion controls.
+            n += 1  # One extra column for row expansion controls.
         return n
 
     def _export_row(self, context, row, n, row_id):
@@ -1735,6 +1749,7 @@ class BrowseForm(LayoutForm):
     def _export_headings(self, context):
         g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
+
         def sorting_indicator(field):
             sorting = pytis.util.find(field.id, self._sorting, key=lambda x: x[0])
             # Don't indicate default sorting.  It works only when the default
@@ -1768,7 +1783,7 @@ class BrowseForm(LayoutForm):
 
     def _export_body(self, context):
         g = context.generator()
-        if self._async_load: # TODO: Avoid for robot's requests
+        if self._async_load:  # TODO: Avoid for robot's requests
             if self._query_fields_form:
                 # Quick HACK: Make sure all resources needed by query fields,
                 # such as JavaScript and CSS files, ale allocated in advance.
@@ -1820,6 +1835,7 @@ class BrowseForm(LayoutForm):
                                       condition=self._conditions(),
                                       arguments=self._arguments,
                                       sort=self._data_sorting)
+
         def generator():
             try:
                 while True:
@@ -1830,7 +1846,7 @@ class BrowseForm(LayoutForm):
             finally:
                 try:
                     data.close()
-                except:
+                except Exception:
                     pass
         return generator()
 
@@ -2105,11 +2121,11 @@ class BrowseForm(LayoutForm):
                                  title=(_("Records per page") + ' ' +
                                         _("(Use ALT+arrow down to select)")),
                                  onchange='this.form.submit(); return true',
-                                 content=[g.option(str(i), value=i, selected=(i==limit))
+                                 content=[g.option(str(i), value=i, selected=(i == limit))
                                           for i in limits])),
                        cls='limit'),
                 g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
-                                             type='submit', cls='goto-page')),
+                                    type='submit', cls='goto-page')),
             )
             content.append(g.div(controls,
                                  cls='paging-controls' + (' one-page' if pages == 1 else '')))
@@ -2196,7 +2212,7 @@ class BrowseForm(LayoutForm):
     def heading_info(self):
         # TODO: This was implemented for filter sets only (now removed).  It would
         # probably make sense for query_fields as well.
-        #if self._query_fields_form:
+        # if self._query_fields_form:
         #    row = self._query_fields_form.row()
         #    filter_names = []
         #    if filter_names:
@@ -2299,9 +2315,12 @@ class ListView(BrowseForm):
 
     """
     _CSS_CLS = 'list-view'
+
     class _Interpolator(object):
+
         def __init__(self, func):
             self._func = func
+
         def __getitem__(self, key):
             return self._func(key)
 
@@ -2454,7 +2473,7 @@ class ItemizedView(BrowseForm):
 
         """
         if not columns:
-            columns = (view.columns()[0],) # Include just the first column by default.
+            columns = (view.columns()[0],)  # Include just the first column by default.
         super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
         assert (template is None or
@@ -2668,6 +2687,7 @@ class EditableBrowseForm(BrowseForm):
         self._row.inserted_row_number = None
         removed_keys = self._removed_keys()
         self._removed_rows = []
+
         def g():
             for row in rows:
                 if row[self._key].export() in removed_keys:
@@ -2705,6 +2725,7 @@ class EditableBrowseForm(BrowseForm):
         except (TypeError, ValueError):
             self._row.inserted_row_number = 0
         self._set_row(None)
+
         def export_row(context):
             self._group = True
             self._last_group = None
