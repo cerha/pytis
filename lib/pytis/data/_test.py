@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@ config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
 tests = TestSuite()
 
-
+
 #############
 # types_.py #
 #############
@@ -56,6 +56,7 @@ tests.add(ValidationError)
 
 
 class Value(unittest.TestCase):
+
     def test_values(self):
         t = pytis.data.Type()
         v1 = pytis.data.Value(t, None)
@@ -77,6 +78,7 @@ tests.add(Value)
 
 
 class _TypeCheck(unittest.TestCase):
+
     def _test_validity(self, type_, value, expected_value,
                        check_value=True, check_export=True, kwargs={},
                        ekwargs={}):
@@ -132,7 +134,7 @@ class Type(_TypeCheck):
         i31 = i3.clone(i1)
         self.assertFalse(i31.not_null())
         s1 = pytis.data.String(maxlen=4)
-        s2 = pytis.data.RegexString(regex='\d-\d+')
+        s2 = pytis.data.RegexString(regex=r'\d-\d+')
         s12 = s1.clone(s2)
         self.assertIsInstance(s12, pytis.data.RegexString)
         self.assertEqual(s12.maxlen(), 4)
@@ -394,7 +396,8 @@ class ISODateTime(_TypeCheck):
         tzinfo = pytis.data.DateTime.UTC_TZINFO
         vkwargs = dict(local=False, format=pytis.data.ISODateTime.SQL_FORMAT)
         v, e = self._test_validity(None, '2012-01-23 11:14:39.023104+01:00',
-                                   datetime.datetime(2012, 1, 23, 10, 14, 39, 23104, tzinfo=tzinfo),
+                                   datetime.datetime(2012, 1, 23, 10, 14, 39,
+                                                     23104, tzinfo=tzinfo),
                                    kwargs=vkwargs, ekwargs=vkwargs,
                                    check_export=False)
         exp = v.type().export
@@ -563,6 +566,7 @@ class Enumerator(_TypeCheck):
 
 
 class DataEnumerator(unittest.TestCase):
+
     def setUp(self):
         C = pytis.data.ColumnSpec
         S = pytis.data.String()
@@ -641,13 +645,14 @@ class FixedEnumerator(unittest.TestCase):
 
 tests.add(FixedEnumerator)
 
-
+
 ###########
 # data.py #
 ###########
 
 
 class ReversedSorting(unittest.TestCase):
+
     def test_it(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT
@@ -677,6 +682,7 @@ tests.add(ColumnSpec)
 
 
 class Row(unittest.TestCase):
+
     def test_empty(self):
         r = pytis.data.Row()
         self.assertEqual(len(r), 0)
@@ -693,7 +699,7 @@ class Row(unittest.TestCase):
         for key in (-3, 2, '', 'pop', None, self):
             try:
                 r[key]
-            except:
+            except Exception:
                 pass
             else:
                 self.fail(('exception not thrown', key))
@@ -734,6 +740,7 @@ tests.add(Row)
 
 
 class Data(unittest.TestCase):
+
     def setUp(self):
         c1 = self._column1 = pytis.data.ColumnSpec('foo',
                                                    pytis.data.Integer())
@@ -835,6 +842,7 @@ tests.add(MemData)
 
 
 class DataFactory(unittest.TestCase):
+
     def setUp(self):
         c1 = self._column1 = pytis.data.ColumnSpec('foo',
                                                    pytis.data.Integer())
@@ -867,13 +875,14 @@ class DataFactory(unittest.TestCase):
 
 tests.add(DataFactory)
 
-
+
 #############
 # dbdata.py #
 #############
 
 
 class DBConnection(unittest.TestCase):
+
     def setUp(self):
         C = pytis.data.DBConnection
         self._connection = C(user='login', password='heslo',
@@ -931,6 +940,7 @@ tests.add(DBConnection)
 
 
 class DBBinding(unittest.TestCase):
+
     def test_it(self):
         b = pytis.data.DBBinding('foo')
         self.assertEqual(b.id(), 'foo')
@@ -940,6 +950,7 @@ tests.add(DBBinding)
 
 
 class DBColumnBinding(unittest.TestCase):
+
     def test_defaults(self):
         b = pytis.data.DBColumnBinding('bar', 'tabulka', 'sloupec')
         self.assertEqual(b.id(), 'bar')
@@ -968,6 +979,7 @@ tests.add(DBColumnBinding)
 
 
 class DBExceptions(unittest.TestCase):
+
     def test_constructors(self):
         e = Exception()
         de = pytis.data.DBException('message', e, 'bla bla', 4)
@@ -987,6 +999,7 @@ tests.add(DBExceptions)
 
 
 class DBData(unittest.TestCase):
+
     def test_it(self):
         b1 = pytis.data.DBBinding('foo')
         b2 = pytis.data.DBBinding('bar')
@@ -1001,6 +1014,7 @@ tests.add(DBData)
 
 
 class _DBBaseTest(unittest.TestCase):
+
     def __init__(self, *args, **kwargs):
         super(_DBBaseTest, self).__init__(*args, **kwargs)
         self._dconnection = pytis.data.DBConnection(**_connection_data)
@@ -1015,12 +1029,12 @@ class _DBBaseTest(unittest.TestCase):
             try:
                 self._connector.rollback()
                 cursor.close()
-            except:
+            except Exception:
                 pass
             raise e
         try:
             result = cursor.fetchall()
-        except:
+        except Exception:
             result = ()
         self._connector.commit()
         cursor.close()
@@ -1034,6 +1048,7 @@ class _DBBaseTest(unittest.TestCase):
 
 
 class _DBTest(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         for q in ("create table cstat (stat char(2) PRIMARY KEY, "
@@ -1090,7 +1105,7 @@ class _DBTest(_DBBaseTest):
                   ("create table rangetable (x int, r int4range, r2 int4range, rdt tsrange)",
                    90200,),
                   (("insert into rangetable values "
-                   "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
+                    "(1, '[10, 20)', '[10, 20)', '[2014-01-01 00:00:00, 2014-01-01 00:00:02)')"),
                    90200,),
                   "create table arraytable (x int primary key, a int[], b text[])",
                   "insert into arraytable values (1, '{2, 3}', '{hello, world}')",
@@ -1127,7 +1142,7 @@ class _DBTest(_DBBaseTest):
                     min_version = None
                 if min_version is None or min_version <= self._connector.server_version:
                     self._sql_command(cmd)
-            except:
+            except Exception:
                 self.tearDown()
                 raise
 
@@ -1135,13 +1150,13 @@ class _DBTest(_DBBaseTest):
         for t in ('tablefunc(int)',):
             try:
                 self._sql_command('drop function %s' % (t,))
-            except:
+            except Exception:
                 pass
         for t in ('viewtest3', 'viewtest4', 'viewtest5', 'viewtest7',
                   'viewtest1', 'rudeview',):
             try:
                 self._sql_command('drop view %s' % (t,))
-            except:
+            except Exception:
                 pass
         tables = ['bin', 'arraytable', 'dateformats', 'timezones', 'fulltext',
                   'dist', 'xcosi', 'denik',
@@ -1151,12 +1166,12 @@ class _DBTest(_DBBaseTest):
         for t in tables:
             try:
                 self._sql_command('drop table %s' % (t,))
-            except:
+            except Exception:
                 pass
         for t in ('typ_xcosi',):
             try:
                 self._sql_command('drop type %s' % (t,))
-            except:
+            except Exception:
                 pass
         _DBBaseTest.tearDown(self)
 
@@ -1378,15 +1393,15 @@ class DBDataDefault(_DBTest):
         pass
 
     def test_row(self):
-        I = pytis.data.Integer()
+        t = pytis.data.Integer()
         for x in ('0', '1'):
-            self.assertIsNone(self.data.row((I.validate(x)[0],)), 'nonselectable row selected')
+            self.assertIsNone(self.data.row((t.validate(x)[0],)), 'nonselectable row selected')
         for x, r in (('2', self.ROW1), ('3', self.ROW2)):
-            result = self.data.row((I.validate(x)[0],))
+            result = self.data.row((t.validate(x)[0],))
             for i in range(len(result) - 1):
                 v = result[i].value()
                 self.assertEqual(v, r[i], ('row doesn\'t match', v, r[i]))
-        result = self.data.row((I.validate('2')[0],),
+        result = self.data.row((t.validate('2')[0],),
                                columns=('castka', 'stat-nazev',))
         self.assertEqual(len(result), 2, ('invalid number of columns', len(result),))
         for i, j in ((0, 2,), (1, 3,)):
@@ -1572,7 +1587,7 @@ class DBDataDefault(_DBTest):
                     x, y = r
                     self.assertTrue(x == row['x'].value() and y == row['y'].value(),
                                     ('unexpected result', condition, (x, y,),
-                                    (row['x'].value(), row['y'].value(),),))
+                                     (row['x'].value(), row['y'].value(),),))
                 self.assertIsNone(d.fetchone(), ('extra row', condition,))
             finally:
                 d.close()
@@ -1733,9 +1748,9 @@ class DBDataDefault(_DBTest):
         self.assertEqual(self.data.update(row[0], row1)[0], row1, 'update failed')
 
     def test_view_update(self):
-        I = pytis.data.Integer()
-        key = I.validate('2')[0]
-        row = pytis.data.Row((('x', I.validate('3')[0]),))
+        t = pytis.data.Integer()
+        key = t.validate('2')[0]
+        row = pytis.data.Row((('x', t.validate('3')[0]),))
         result, success = self.view.update(key, row)
         self.assertTrue(result and success, 'view update failed')
 
@@ -1769,14 +1784,14 @@ class DBDataDefault(_DBTest):
             for i in range(n):
                 v = result[i][0]
                 self.assertEqual(keys[i], v, ('nonmatching key', keys[i], v))
-        I = pytis.data.Integer()
-        self.assertEqual(self.data.delete(I.validate('0')[0]), 0, 'nonexistent row deleted')
+        t = pytis.data.Integer()
+        self.assertEqual(self.data.delete(t.validate('0')[0]), 0, 'nonexistent row deleted')
         lines((1, 2, 3, 4))
-        self.assertEqual(self.data.delete(I.validate('1')[0]), 1, 'row not deleted')
+        self.assertEqual(self.data.delete(t.validate('1')[0]), 1, 'row not deleted')
         lines((2, 3, 4))
-        self.assertEqual(self.data.delete(I.validate('1')[0]), 0, 'row deleted twice')
+        self.assertEqual(self.data.delete(t.validate('1')[0]), 0, 'row deleted twice')
         lines((2, 3, 4))
-        self.assertEqual(self.data.delete(I.validate('4')[0]), 1, 'row not deleted')
+        self.assertEqual(self.data.delete(t.validate('4')[0]), 1, 'row not deleted')
         lines((2, 3))
 
     def test_delete_many(self):
@@ -1822,25 +1837,24 @@ class DBDataDefault(_DBTest):
             self.funcdata.close()
 
     def test_binary(self):
-        B = pytis.data.Binary()
-        I = pytis.data.Integer()
-        R = pytis.data.Row
-        null_data, error = B.validate(None)
+        tb = pytis.data.Binary()
+        ti = pytis.data.Integer()
+        null_data, error = tb.validate(None)
         self.assertFalse(error, ('Null Binary validation failed', error,))
         self.assertIsNone(null_data.value(), ('Invalid null binary value', null_data.value()))
         data = [chr(i) for i in range(256)]
-        data1, error = B.validate(buffer(string.join(data, '')))
+        data1, error = tb.validate(buffer(string.join(data, '')))
         self.assertFalse(error, ('Binary validation failed', error,))
         self.assertIsInstance(data1.value(), pytis.data.Binary.Buffer,
                               ('Invalid binary value', data1.value(),))
         data.reverse()
-        data2, error = B.validate(buffer(string.join(data, '')))
+        data2, error = tb.validate(buffer(string.join(data, '')))
         self.assertFalse(error, ('Binary validation failed', error,))
         self.assertIsInstance(data2.value(), pytis.data.Binary.Buffer,
                               ('Invalid binary value', data2.value(),))
-        key, _error = I.validate('1')
-        row1 = R([('id', key,), ('data', data1,)])
-        row2 = R([('id', key,), ('data', data2,)])
+        key, _error = ti.validate('1')
+        row1 = pytis.data.Row([('id', key,), ('data', data1,)])
+        row2 = pytis.data.Row([('id', key,), ('data', data2,)])
         result, success = self.dbin.insert(row1)
         self.assertTrue(success, 'Binary insertion failed')
         self.assertEqual(str(result[1].value().buffer()), str(data1.value().buffer()),
@@ -2126,11 +2140,11 @@ class DBDataDefault(_DBTest):
         finally:
             try:
                 transaction_1.rollback()
-            except:
+            except Exception:
                 pass
             try:
                 transaction_2.rollback()
-            except:
+            except Exception:
                 pass
 
     def test_lock_view(self):
@@ -2165,7 +2179,7 @@ class DBDataDefault(_DBTest):
             for t in transaction, transaction_2:
                 try:
                     t.rollback()
-                except:
+                except Exception:
                     pass
 
     def _perform_transaction(self, transaction):
@@ -2423,7 +2437,8 @@ class DBMultiData(DBDataDefault):
         lines((1, 2, 3, 4))
         self.assertEqual(d.delete(pytis.data.Integer().validate('1')[0]), 1, 'column not deleted')
         lines((2, 3, 4))
-        self.assertEqual(d.delete(pytis.data.Integer().validate('1')[0]), 0, 'column deleted twice')
+        self.assertEqual(d.delete(pytis.data.Integer().validate('1')
+                                  [0]), 0, 'column deleted twice')
         lines((2, 3, 4))
         self.assertEqual(d.delete(pytis.data.Integer().validate('4')[0]), 1, 'column not deleted')
         lines((2, 3))
@@ -2434,13 +2449,14 @@ if False:
 
 
 class DBSessionVariables(_DBBaseTest):
+
     def setUp(self):
         try:
             self._sql_command("create function foo() "
                               "  returns text as "
                               "  $$select current_setting('myvars.test') as result$$ "
                               "  language sql")
-        except:
+        except Exception:
             self.tearDown()
             raise
         import config
@@ -2454,7 +2470,7 @@ class DBSessionVariables(_DBBaseTest):
         self.assertEqual(result, 'value', 'session variable not set properly')
         try:
             pytis.data.reload_session_variables(config.dbconnection)
-        except:
+        except Exception:
             self.tearDown()
             raise
         self.tearDown()
@@ -2462,7 +2478,7 @@ class DBSessionVariables(_DBBaseTest):
     def tearDown(self):
         try:
             self._sql_command("drop function foo")
-        except:
+        except Exception:
             pass
         _DBBaseTest.tearDown(self)
 
@@ -2471,6 +2487,7 @@ tests.add(DBSessionVariables)
 
 
 class DBDataFetchBuffer(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         import config
@@ -2483,7 +2500,7 @@ class DBDataFetchBuffer(_DBBaseTest):
             self._sql_command("create table small (x int)")
             for i in range(4):
                 self._sql_command('insert into "small" values(%d)' % i)
-        except:
+        except Exception:
             self.tearDown()
             raise
         key = pytis.data.DBColumnBinding('x', 'big', 'x')
@@ -2494,12 +2511,12 @@ class DBDataFetchBuffer(_DBBaseTest):
     def tearDown(self):
         try:
             self.data.sleep()
-        except:
+        except Exception:
             pass
         try:
             self._sql_command('drop table "big"')
             self._sql_command('drop table "small"')
-        except:
+        except Exception:
             pass
         _DBBaseTest.tearDown(self)
 
@@ -2555,6 +2572,7 @@ tests.add(DBDataFetchBuffer)
 
 
 class DBDataReuse(DBDataFetchBuffer):
+
     def test_it(self):
         d = self.data
         d.select()
@@ -2577,6 +2595,7 @@ tests.add(DBDataReuse)
 
 
 class DBDataOrdering(_DBTest):
+
     def setUp(self):
         super_(DBDataOrdering).setUp(self)
         B = pytis.data.DBColumnBinding
@@ -2590,7 +2609,7 @@ class DBDataOrdering(_DBTest):
     def tearDown(self):
         try:
             self.data.sleep()
-        except:
+        except Exception:
             pass
         super_(DBDataOrdering).tearDown(self)
 
@@ -2629,6 +2648,7 @@ tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
+
     def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None,
                  filter_condition=None, distinct_on=None, group_only=False, sort=()):
         D = pytis.data.DBDataDefault
@@ -2794,6 +2814,7 @@ tests.add(DBDataAggregated)
 
 
 class DBDataNotification(DBDataDefault):
+
     def setUp(self):
         DBDataDefault.setUp(self)
         self.data.add_callback_on_change(self._ddn_callback_1)
@@ -2844,12 +2865,13 @@ tests.add(DBDataNotification)
 
 
 class DBCounter(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         for q in ("create sequence fooseq",):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 self.tearDown()
                 raise
         self._counter = pytis.data.DBCounterDefault('fooseq', self._dconnection)
@@ -2858,7 +2880,7 @@ class DBCounter(_DBBaseTest):
         for q in ("drop sequence fooseq",):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 pass
         _DBBaseTest.tearDown(self)
 
@@ -2871,6 +2893,7 @@ tests.add(DBCounter)
 
 
 class DBFunction(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         try:
@@ -2891,7 +2914,7 @@ class DBFunction(_DBBaseTest):
                       "foo9() returns float as 'select 3.14::float'",
                       ):
                 self._sql_command("create function %s language sql " % q)
-        except:
+        except Exception:
             self.tearDown()
             raise
 
@@ -2908,12 +2931,12 @@ class DBFunction(_DBBaseTest):
                   ):
             try:
                 self._sql_command("drop function %s" % q)
-            except:
+            except Exception:
                 pass
         for table in ('tab', 'tab1',):
             try:
                 self._sql_command("drop table %s" % (table,))
-            except:
+            except Exception:
                 pass
         _DBBaseTest.tearDown(self)
 
@@ -2927,10 +2950,8 @@ class DBFunction(_DBBaseTest):
 
     def test_string(self):
         function = pytis.data.DBFunctionDefault('foo2', self._dconnection)
-        row = pytis.data.Row((('arg1',
-                             pytis.data.String().validate('foo')[0]),
-                              ('arg2',
-                               pytis.data.String().validate('bar')[0])))
+        row = pytis.data.Row((('arg1', pytis.data.String().validate('foo')[0]),
+                              ('arg2', pytis.data.String().validate('bar')[0])))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'foobar', ('Invalid result', result))
 
@@ -2961,8 +2982,7 @@ class DBFunction(_DBBaseTest):
 
     def test_setof_result(self):
         function = pytis.data.DBFunctionDefault('foo5', self._dconnection)
-        row = pytis.data.Row((('arg1',
-                             pytis.data.Integer().validate('20')[0]),))
+        row = pytis.data.Row((('arg1', pytis.data.Integer().validate('20')[0]),))
         result = function.call(row)
         self.assertEqual(len(result), 2, ('Invalid number of rows', result))
         value = result[0][0].value()
@@ -2972,19 +2992,17 @@ class DBFunction(_DBBaseTest):
 
     def test_void(self):
         function = pytis.data.DBFunctionDefault('foo6', self._dconnection)
-        row = pytis.data.Row((('arg1',
-                             pytis.data.Integer().validate('1000')[0]),))
+        row = pytis.data.Row((('arg1', pytis.data.Integer().validate('1000')[0]),))
         function.call(row)
         data = self._sql_command("select count(*) from tab where x = 1000")
         self.assertEqual(data[0][0], 1, ('Invalid data', data))
 
     def test_complex_result(self):
-        C = pytis.data.ColumnSpec
-        I = pytis.data.Integer()
-        columns = [C('result1', I), C('result2', I)]
+        t = pytis.data.Integer()
+        columns = [pytis.data.ColumnSpec('result1', t),
+                   pytis.data.ColumnSpec('result2', t)]
         function = pytis.data.DBFunctionDefault('foo7', self._dconnection, result_columns=columns)
-        row = pytis.data.Row((('arg1',
-                             pytis.data.Integer().validate('10')[0]),))
+        row = pytis.data.Row((('arg1', pytis.data.Integer().validate('10')[0]),))
         result = [col.value() for col in function.call(row)[0]]
         self.assertEqual(result, [10, 12], ('Invalid result', result))
 
@@ -2993,6 +3011,7 @@ tests.add(DBFunction)
 
 
 class DBSearchPath(_DBTest):
+
     def setUp(self):
         _DBTest.setUp(self)
         for q in ("create schema special",
@@ -3006,7 +3025,7 @@ class DBSearchPath(_DBTest):
             for q in ("drop table special.cstat",
                       "drop schema special",):
                 self._sql_command(q)
-        except:
+        except Exception:
             pass
         _DBTest.tearDown(self)
 
@@ -3046,6 +3065,7 @@ tests.add(DBSearchPath)
 
 
 class DBCrypto(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         for q in ("insert into c_pytis_crypto_names (name) values ('test')",
@@ -3055,7 +3075,7 @@ class DBCrypto(_DBBaseTest):
                   "create table cfoo (id serial, x bytea, y bytea, z bytea)",):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 self.tearDown()
                 raise
         import config
@@ -3079,7 +3099,7 @@ class DBCrypto(_DBBaseTest):
                   "delete from c_pytis_crypto_names",):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 pass
         _DBBaseTest.tearDown(self)
 
@@ -3103,7 +3123,7 @@ class DBCrypto(_DBBaseTest):
             finally:
                 try:
                     data.close()
-                except:
+                except Exception:
                     pass
         data.insert(pytis.data.Row((('x', ival(1),), ('y', fval(-1.10),), ('z', sval('abc'),),)))
         data.insert(pytis.data.Row((('x', ival(2),), ('y', fval(2.22),), ('z', sval('def'),),)))
@@ -3131,13 +3151,14 @@ class DBCrypto(_DBBaseTest):
 
 tests.add(DBCrypto)
 
-
+
 ###################
 # Complex DB test #
 ###################
 
 
 class TutorialTest(_DBBaseTest):
+
     def setUp(self):
         for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text)",
                   "CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), "
@@ -3151,7 +3172,7 @@ class TutorialTest(_DBBaseTest):
                   ):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 self.tearDown()
                 raise
 
@@ -3159,7 +3180,7 @@ class TutorialTest(_DBBaseTest):
         for t in ('tab', 'cis'):
             try:
                 self._sql_command("DROP TABLE %s" % (t,))
-            except:
+            except Exception:
                 pass
 
     def test_it(self):
@@ -3220,6 +3241,7 @@ tests.add(TutorialTest)
 
 
 class AccessRightsTest(_DBBaseTest):
+
     def setUp(self):
         for q in ("CREATE SCHEMA pytis",
                   ("CREATE TABLE pytis.access_rights (id serial, object varchar(32), "
@@ -3227,7 +3249,7 @@ class AccessRightsTest(_DBBaseTest):
                   ):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 self.tearDown()
                 raise
         P = pytis.data.Permission
@@ -3256,7 +3278,7 @@ class AccessRightsTest(_DBBaseTest):
                   "DROP SCHEMA pytis",):
             try:
                 self._sql_command(q)
-            except:
+            except Exception:
                 pass
 
     def test_permitted_groups(self):
@@ -3296,18 +3318,19 @@ tests.add(AccessRightsTest)
 class ThreadTest(_DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         try:
             self._sql_command("create table tab (x int, y int)")
-        except:
+        except Exception:
             self.tearDown()
             raise
 
     def tearDown(self):
         try:
             self._sql_command("drop table tab")
-        except:
+        except Exception:
             pass
         _DBBaseTest.tearDown(self)
 
@@ -3322,8 +3345,8 @@ class ThreadTest(_DBBaseTest):
         c = pytis.data.DBConnection(**_connection_data)
         d1 = d.create(connection_data=c)
         d2 = d.create(connection_data=c)
-        I = pytis.data.Integer()
-        yvalue = I.validate('1')[0]
+        t = pytis.data.Integer()
+        yvalue = t.validate('1')[0]
         nrepeat = 100
         thr = []
         for i in xrange(10):
@@ -3331,7 +3354,7 @@ class ThreadTest(_DBBaseTest):
 
         def go1(n, startx, thr=thr):
             for i in xrange(nrepeat):
-                key = I.validate('%d' % (i + startx,))[0]
+                key = t.validate('%d' % (i + startx,))[0]
                 row = pytis.data.Row([('x', key), ('y', yvalue)])
                 d1.insert(row)
                 d1.delete(key)
@@ -3339,7 +3362,7 @@ class ThreadTest(_DBBaseTest):
 
         def go2(n, startx, thr=thr):
             for i in xrange(nrepeat):
-                key = I.validate('%d' % (i + startx,))[0]
+                key = t.validate('%d' % (i + startx,))[0]
                 row = pytis.data.Row([('x', key), ('y', yvalue)])
                 d2.insert(row)
                 d2.delete(key)
@@ -3363,6 +3386,7 @@ if False:
 
 
 class OperatorTest(_DBBaseTest):
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         try:
@@ -3378,7 +3402,7 @@ class OperatorTest(_DBBaseTest):
             self._sql_command("insert into a values ('B', 2)")
             self._sql_command("insert into a values ('C', 3)")
             self._sql_command("insert into a values ('D', 4)")
-        except:
+        except Exception:
             self.tearDown()
             raise
 
@@ -3386,7 +3410,7 @@ class OperatorTest(_DBBaseTest):
         try:
             self._sql_command("drop table a")
             self._sql_command("drop type t cascade")
-        except:
+        except Exception:
             pass
         _DBBaseTest.tearDown(self)
 

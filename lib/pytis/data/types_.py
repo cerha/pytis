@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,7 @@ except Exception as e:
     # Ignore import error and re-raise it only when sqlalchemy is actually used
     # in run-time.
     class Dummy(object):
+
         def __getattr__(self, name):
             raise e
     sqlalchemy = Dummy()
@@ -74,6 +75,7 @@ class _MType(type):
 
 class UnsupportedPrimitiveValueConversion(Exception):
     """Exception raised for unsupported conversion by 'Type.primitive_value()'."""
+
     def __init__(self, type):
         msg = 'Object of type %s can not be converted to a primitive value.' % type
         super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
@@ -917,13 +919,13 @@ class Integer(Number):
         assert isinstance(string, basestring), ('Not a string', string)
         try:
             value = int(string)
-        except:
+        except Exception:
             # Dokumentace Pythonu 1.5.2 neříká, že by `int' mohlo metat metat
             # nějakou výjimkou, ale evidentně by mělo, pokud `string' nelze
             # na obyčejný integer převést.
             try:
                 value = long(string)
-            except:
+            except Exception:
                 # Podobně jako `int' i `long' by mělo v případě nemožnosti
                 # převodu metat výjimku.
                 value = None
@@ -952,6 +954,7 @@ class Integer(Number):
 
 
 class IntegerRange(Range, Integer):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT4RANGE()
@@ -971,16 +974,19 @@ class IntegerRange(Range, Integer):
 
 
 class SmallInteger(Integer):
+
     def sqlalchemy_type(self):
         return sqlalchemy.SmallInteger()
 
 
 class LargeInteger(Integer):
+
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
 
 
 class LargeIntegerRange(Range, Integer):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT8RANGE()
@@ -1000,6 +1006,7 @@ class LargeIntegerRange(Range, Integer):
 
 
 class Oid(Integer):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.OID()
@@ -1014,6 +1021,7 @@ class Serial(Integer):
     v řádku při vkládání nového záznamu.
 
     """
+
     def _init(self, not_null=True, **kwargs):
         super(Serial, self)._init(not_null=not_null, **kwargs)
 
@@ -1023,6 +1031,7 @@ class Serial(Integer):
 
 
 class LargeSerial(Integer):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.BIGSERIAL()
@@ -1106,7 +1115,7 @@ class Float(Number):
                 value = locale.atof(string_)
             else:
                 value = decimal.Decimal(string_)
-        except:
+        except Exception:
             value = None
         if value is not None:
             if precision is None:
@@ -1203,6 +1212,7 @@ class DoublePrecision(Float):
     Useful in specifications.
 
     """
+
     def __init__(self, **kwargs):
         super(DoublePrecision, self).__init__(**kwargs)
 
@@ -1224,6 +1234,7 @@ class Monetary(Float):
     formatting.
 
     """
+
     def _init(self, precision=2, **kwargs):
         super(Monetary, self)._init(precision=precision, **kwargs)
 
@@ -1433,7 +1444,7 @@ class Color(RegexString):
 
     # Translators: User input validation error message.
     _VM_FORMAT_MSG = _(u"Invalid color format ('#RGB' or '#RRGGBB')")
-    _REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
+    _REGEX = re.compile(r'^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def sqlalchemy_type(self):
         return sqlalchemy.String(length=7)
@@ -1452,7 +1463,7 @@ class Inet(String):
     # Translators: User input validation error message.
     _VM_INET_ADDR_MSG = _(u"Invalid inet address value %(addr)s")
 
-    _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
+    _INET4_FORMAT = re.compile(r'(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
     def _validate(self, string, *args, **kwargs):
         # TODO: Doplnit i validaci pro IPv6 formát
@@ -1506,9 +1517,9 @@ class Email(String):
 
     # Taken from HTML5.  Not compliant with RFC 5322 but it should be good
     # enough for practical purposes.
-    _EMAIL_FORMAT = re.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
-                               "[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
-                               "(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+    _EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+                               r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
+                               r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
     def _validate(self, string, *args, **kwargs):
         if not self._EMAIL_FORMAT.match(string):
@@ -1548,6 +1559,7 @@ class FullTextIndex(String):
         of this type is included in the full text search
 
     """
+
     def _init(self, columns=(), **kwargs):
         assert isinstance(columns, (list, tuple,)), ("Invalid argument type", columns,)
         super(FullTextIndex, self)._init(**kwargs)
@@ -1593,7 +1605,7 @@ class _LocalTimezone(datetime.tzinfo):
             # observed for reasonable dates on an 32-bit system
             stamp = time.mktime((dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
                                  dt.weekday(), 0, 0))
-        except:
+        except Exception:
             return False
         localtime = time.localtime(stamp)
         return localtime.tm_isdst > 0
@@ -1664,15 +1676,15 @@ class _CommonDateTime(Type):
         try:
             matcher = self._check_matcher[format]
         except KeyError:
-            special = {'%Y': r'\d\d\d\d', ' ': '\s+', '%p': '[AP]M'}
+            special = {'%Y': r'\d\d\d\d', ' ': r'\s+', '%p': '[AP]M'}
 
             def subst(match):
                 m = match.group(1)
                 try:
                     return special[m]
                 except KeyError:
-                    return m.startswith('%') and '\d?\d' or re.escape(m)
-            regexp = re.sub('(\%[a-zA-Z]|.|\s+)', subst, format)
+                    return m.startswith('%') and r'\d?\d' or re.escape(m)
+            regexp = re.sub(r'(\%[a-zA-Z]|.|\s+)', subst, format)
             self._check_matcher[format] = matcher = re.compile(regexp)
         return matcher.match(string)
 
@@ -1823,14 +1835,14 @@ class DateTime(_CommonDateTime):
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.DEFAULT_FORMAT)
-            except:
+            except Exception:
                 raise ProgramError('Bad value for mindate', mindate, self.DEFAULT_FORMAT)
         else:
             self._mindate = None
         if maxdate:
             try:
                 self._maxdate = datetime.datetime.strptime(maxdate, self.DEFAULT_FORMAT)
-            except:
+            except Exception:
                 raise ProgramError('Bad value for maxdate', maxdate)
         else:
             self._maxdate = None
@@ -1869,7 +1881,7 @@ class DateTime(_CommonDateTime):
             format_ = '%Y-%m-%d %H:%M:%S'
         try:
             value = datetime.datetime.strptime(common_string, format_)
-        except:
+        except Exception:
             return None, self._validation_error(self.VM_DT_FORMAT)
         value = value - datetime.timedelta(seconds=shift)
         value = datetime.datetime(value.year, value.month, value.day, value.hour, value.minute,
@@ -2018,6 +2030,7 @@ class LocalDateTime(DateTime):
 
 
 class DateTimeRange(Range, DateTime):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         if self._utc:
@@ -2108,6 +2121,7 @@ class Date(DateTime):
 
 
 class DateRange(Range, Date):
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.DATERANGE()
@@ -2448,6 +2462,7 @@ class Binary(Limited):
         provided, but these are mostly here for convenience.
 
         """
+
         def __init__(self, data, filename=None, mime_type=None):
             """Initialize a new buffer instance and validate the input data.
 
@@ -2633,6 +2648,7 @@ class Image(Binary, Big):
         See the documentation of the 'Image' type for more information.
 
         """
+
         def _validate(self, data):
             super(Image.Buffer, self)._validate(data)
             import PIL.Image
@@ -2756,7 +2772,7 @@ class LTree(Type):
     VM_INVALID_ITEM = 'VM_INVALID_ITEM'
     _VM_INVALID_ITEM_MSG = _(u"One of hierarchical value items contains invalid characters")
 
-    _REGEX = re.compile('^\w+$', re.UNICODE)
+    _REGEX = re.compile(r'^\w+$', re.UNICODE)
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
@@ -2873,7 +2889,7 @@ class Array(Limited):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.ARRAY(self.inner_type().sqlalchemy_type())
 
-
+
 # Pomocné třídy
 
 class Enumerator(object):
@@ -2896,6 +2912,7 @@ class Enumerator(object):
     used in types.
 
     """
+
     def check(self, value, **kwargs):
         """Return true, iff 'value' belongs to the enumeration.
 
@@ -2977,6 +2994,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     appropriate.
 
     """
+
     def __init__(self, data_factory, value_column=None, validity_column=None,
                  validity_condition=None, connection_data=None):
         """Initialize the instance.
@@ -3089,7 +3107,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             finally:
                 try:
                     data.close()
-                except:
+                except Exception:
                     pass
             return row
         return with_lock(self._data_lock, lfunction)
@@ -3133,7 +3151,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             finally:
                 try:
                     self._data.close()
-                except:
+                except Exception:
                     pass
             return tuple(result)
         result = with_lock(self._data_lock, lfunction)
@@ -3231,6 +3249,7 @@ class ValidationError(Exception):
     být srozumitelný jako zpráva pro uživatele.
 
     """
+
     def __init__(self, message):
         """Inicializuj zprávu o chybě.
 
@@ -3257,6 +3276,7 @@ class _Value(object):
     Hodnota samotná může být cokoliv, bez ohledu na uvedený typ.
 
     """
+
     def __init__(self, type, value):
         """Inicializuj instanci.
 
@@ -3448,7 +3468,7 @@ class Value(_Value):
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
 
-
+
 # Shorthand functions for values
 
 

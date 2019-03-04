@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@ try:
     WeakSet = weakref.WeakSet
 except AttributeError:
     class WeakSet(weakref.WeakValueDictionary):
+
         def __init__(self):
             weakref.WeakValueDictionary.__init__(self)
             self._pg_counter = pytis.util.Counter()
@@ -308,6 +309,7 @@ class PostgreSQLResult(object):
     potřeb konkrétního použitého backendu.
 
     """
+
     def __init__(self, data):
         """
 
@@ -417,6 +419,7 @@ class PostgreSQLAccessor(object_2_5):
     class _postgresql_Result(object):
         """Výsledek SQL příkazu.
         """
+
         def __init__(self, result):
             """
 
@@ -850,7 +853,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                 finally:
                     try:
                         tables.close()
-                    except:
+                    except Exception:
                         pass
         if PostgreSQLUserGroups._logical_access_groups is None:
             key = self._pgg_connection_key(connection_data)
@@ -1057,6 +1060,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     _pdbb_table_column_data = {}
 
     class _TableColumnData(object):
+
         def __init__(self, basic, default, unique):
             self._basic = basic
             self._default = default
@@ -1324,20 +1328,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return row[1:]
         try:
             type_, size_string, not_null = lookup_column(table_data.basic())
-        except:
+        except Exception:
             if noerror:
                 return None
             raise DBException("Unknown column '%s' in table '%s'" % (column, table),
                               None, table, column)
         try:
             default = lookup_column(table_data.default())[0]
-        except:
+        except Exception:
             default = ''
         try:
             # TODO: This is a quick hack to ignore multicolumn unique constraints. (TC)
             row = lookup_column(table_data.unique())
             unique = row and len(row[0]) == 1
-        except:
+        except Exception:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
         return self._pdbb_get_type(type_, size_string, not_null=not_null,
@@ -1396,7 +1400,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if type_ != 'text':
                 try:
                     size = int(size_string) - 4
-                except:
+                except Exception:
                     size = None
                 if size < 0:
                     size = None
@@ -1981,7 +1985,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             expression = relop(operators[op_name], op_args, op_kwargs)
         elif op_name in ('WM', 'NW'):
             cid, spec = op_args[0], op_args[1].value()
-            for old, new in (('%', '\%'), ('_', '\_')):
+            for old, new in (('%', '\\%'), ('_', '\\_')):
                 spec = string.replace(spec, old, new)
             for old, new in (('*', '%'), ('?', '_')):
                 i = -1
@@ -2123,7 +2127,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                             except DBUserException as e:
                                 try:
                                     import pytis.form
-                                except:
+                                except Exception:
                                     raise e
                                 else:
                                     if pytis.form.top_window() is not None:
@@ -2264,11 +2268,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                transaction=transaction)
         try:
             result = int(data_[0][0])
-        except:
+        except Exception:
             raise ProgramError('Unexpected result', data_)
         return result
 
     class _PgRowCounting(object):
+
         class _Thread(threading.Thread):
             _PG_INITIAL_STEP = 1000
             _PG_MAX_STEP = 100000
@@ -2321,7 +2326,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         query = data._pdbb_command_move_forward.update(args)
                         try:
                             result = data._pg_query(query, transaction=transaction)
-                        except DBUserException as e:
+                        except DBUserException:
                             log(OPERATIONAL, "Database exception in counting thread",
                                 pytis.util.format_traceback())
                             self._pg_exception = sys.exc_info()
@@ -2556,25 +2561,25 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             try:
                 data = self._pg_select_aggregate_1(operation, colids, condition,
                                                    transaction=transaction, arguments=arguments)
-            except:
+            except Exception:
                 cls, e, tb = sys.exc_info()
                 try:
                     if transaction is None:
                         self._pg_select_transaction.rollback()
-                except:
+                except Exception:
                     pass
                 self._pg_select_transaction = None
                 raise cls, e, tb
             if close_select:
                 self.close()
-        I = Integer()
-        F = Float()
+        ti = Integer()
+        tf = Float()
 
         def make_value(cid, dbvalue):
             if operation == self.AGG_COUNT:
-                t = I
+                t = ti
             elif operation == self.AGG_AVG:
-                t = F
+                t = tf
             else:
                 t = self.find_column(cid).type()
             return Value(t, dbvalue)
@@ -2735,7 +2740,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def extract_result(d):
             try:
                 return int(d[0][0])
-            except:
+            except Exception:
                 raise DBSystemException('Unexpected UPDATE result', None, d)
         try:
             broken = self._pdbb_broken_update_result
@@ -2767,7 +2772,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                            backup=True, transaction=transaction)
         try:
             result = int(d[0][0])
-        except:
+        except Exception:
             raise DBSystemException('Unexpected DELETE result', None, d)
         if result >= 0:
             return result
@@ -3195,7 +3200,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         for k in self.key():
             try:
                 id = k.id()
-            except:
+            except Exception:
                 return False
             try:
                 key.append(row[id])
@@ -3272,11 +3277,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             template = None
         try:
             data = self._pg_row(key[0], columns, transaction=transaction, arguments=arguments)
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None and self._pg_select_transaction is None:
@@ -3337,17 +3342,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
                                              arguments=arguments, async_count=async_count,
                                              stop_check=stop_check, limit=limit)
-        except:
+        except Exception:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 try:
                     self._pg_number_of_rows.stop()
-                except:
+                except Exception:
                     pass
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_select_transaction.rollback()
-            except:
+            except Exception:
                 pass
             self._pg_select_transaction = None
             raise cls, e, tb
@@ -3474,12 +3479,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     try:
                         self._pg_skip(xcount, skip_direction, exact_count=True,
                                       transaction=transaction_)
-                    except:
+                    except Exception:
                         cls, e, tb = sys.exc_info()
                         if not self._pg_select_user_transaction:
                             try:
                                 self._pg_select_transaction.rollback()
-                            except:
+                            except Exception:
                                 pass
                         self._pg_select_transaction = None
                         raise cls, e, tb
@@ -3517,12 +3522,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 else:
                     # Don't run an unnecessary SQL command
                     data_ = None
-            except:
+            except Exception:
                 cls, e, tb = sys.exc_info()
                 if not self._pg_select_user_transaction:
                     try:
                         self._pg_select_transaction.rollback()
-                    except:
+                    except Exception:
                         pass
                 self._pg_select_transaction = None
                 raise cls, e, tb
@@ -3610,17 +3615,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             try:
                 result = self._pg_search(row, condition, direction,
                                          transaction=transaction, arguments=arguments)
-            except:
+            except Exception:
                 cls, e, tb = sys.exc_info()
                 if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                     try:
                         self._pg_number_of_rows.stop()
-                    except:
+                    except Exception:
                         pass
                 if not self._pg_select_user_transaction:
                     try:
                         self._pg_select_transaction.rollback()
-                    except:
+                    except Exception:
                         pass
                 self._pg_select_transaction = None
                 raise cls, e, tb
@@ -3685,12 +3690,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 else:
                     r = self._pg_insert(row, after=after, before=before, transaction=transaction)
                     result = r, True
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None:
@@ -3744,12 +3749,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 msg = 'Row with given key does not exist'
                 result = msg, False
                 log(ACTION, msg, key)
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None:
@@ -3775,12 +3780,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         new_row_items.append((k, v))
                 row = Row(new_row_items)
             result = self._pg_update(condition, row, transaction=transaction)
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None:
@@ -3799,12 +3804,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         try:
             result = self._pg_delete(self._pg_key_condition(key),
                                      transaction=transaction)
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None:
@@ -3821,12 +3826,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_begin_transaction()
         try:
             result = self._pg_delete(condition, transaction=transaction)
-        except:
+        except Exception:
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
                     self._pg_rollback_transaction()
-            except:
+            except Exception:
                 pass
             raise cls, e, tb
         if transaction is None:
@@ -4110,7 +4115,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         if self._open:
             try:
                 self._pg_close_transaction()
-            except:
+            except Exception:
                 pass
 
     def _db_bindings_to_column_spec(self, __bindings):
@@ -4234,7 +4239,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                          now - c.connection_info('last_query_time') > t._trans_max_idle_time)):
                         try:
                             callback()
-                        except:
+                        except Exception:
                             # The callback may crash if the wx class is already inactive.
                             try:
                                 class_._watched_transactions.remove(t)

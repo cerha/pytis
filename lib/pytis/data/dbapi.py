@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -378,6 +378,7 @@ class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
 
 
 class DBAPIFunction(_DBAPIAccessor, DBPostgreSQLFunction):
+
     def __init__(self, name, connection_data, sql_logger=None, **kwargs):
         self._sql_logger = sql_logger
         super(DBAPIFunction, self).__init__(name=name, connection_data=connection_data, **kwargs)
@@ -478,7 +479,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     log(DEBUG, 'Notifications received:', notifications)
                 self._notif_invoke_callbacks(notifications)
 
-
+
 # Defaults
 
 
@@ -489,6 +490,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
     funkcionalitu kromě konstruktoru.
 
     """
+
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  dbconnection_spec=None, sql_logger=None, **kwargs):
@@ -543,6 +545,7 @@ default_access_groups = _postgresql_access_groups
 
 def _reload_session_variables(connection_data):
     PostgreSQLConnector(connection_data)._pg_flush_connections()
+
 
 reload_session_variables = _reload_session_variables
 """Reload all session variables

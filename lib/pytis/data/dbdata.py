@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -88,6 +88,7 @@ class DBData(Data):
     Všechny metody této třídy přístupující k datům mohou metat 'DBException'.
 
     """
+
     def __init__(self, bindings, ordering=None, distinct_on=(), arguments=None,
                  crypto_names=(), **kwargs):
         """Inicializuj tabulku s napojením do databáze.
@@ -148,7 +149,7 @@ class DBData(Data):
         self._crypto_names = crypto_names
         try:
             del kwargs['key']
-        except:
+        except Exception:
             pass
         super(DBData, self).__init__(columns=columns, key=key, ordering=ordering, **kwargs)
 
@@ -253,7 +254,7 @@ class DBConnectionPool:
             for c in flatten(self._pool.values()):
                 try:
                     self._connection_closer(c)
-                except:
+                except Exception:
                     pass
         with_lock(self._lock, lfunction)
 
@@ -334,13 +335,13 @@ class DBConnectionPool:
                 for c in connections.keys():
                     try:
                         close(c)
-                    except:
+                    except Exception:
                         pass
             for connections in self._pool.values():
                 for c in connections:
                     try:
                         close(c)
-                    except:
+                    except Exception:
                         pass
             self._allocated_connections = {}
             self._pool = {}
@@ -358,7 +359,7 @@ class DBConnectionPool:
                 info.append(c.connection_info('transaction_commands'))
         return info
 
-
+
 # Specifikační třídy
 
 
@@ -550,6 +551,7 @@ class DBBinding:
     sdílena.
 
     """
+
     def __init__(self, id):
         """Definuj napojení.
 
@@ -576,6 +578,7 @@ class DBColumnBinding(DBBinding):
     sdílena.
 
     """
+
     def __init__(self, id, table, column, related_to=None, type_=None, crypto_name=None,
                  encrypt_empty=True, **kwargs):
         """Define a column binding.
@@ -678,7 +681,7 @@ class DBColumnBinding(DBBinding):
     def __hash__(self):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
-
+
 # Databázové výjimky
 
 
@@ -691,6 +694,7 @@ class DBException(Exception):
     o výjimce.
 
     """
+
     def __init__(self, message, exception=None, *args):
         """Inicializuj výjimku a zaloguj informace o ní.
 
@@ -774,6 +778,7 @@ class DBLoginException(DBException):
     uživatel zadá chybné jméno nebo heslo.
 
     """
+
     def __init__(self):
         """Inicializuj databázovou výjimku s patřičnými argumenty."""
         super_(DBLoginException).__init__(self, _(u"Invalid user name or password"))
@@ -782,6 +787,7 @@ class DBLoginException(DBException):
 class DBLockException(DBException):
     """Exception thrown when trying to lock an already locked record.
     """
+
     def __init__(self):
         super_(DBLockException).__init__(self, None)
 
@@ -789,11 +795,13 @@ class DBLockException(DBException):
 class DBInsertException(DBException):
     """Exception thrown when INSERT ... RETURNING can't be performed.
     """
+
     def __init__(self):
         super_(DBLockException).__init__(self, None)
 
 
 class NotWithinSelect(ProgramError):
     """Exception thrown on an attempt for a cursor operation when there is no active select."""
+
     def __init__(self):
         ProgramError.__init__(self, 'Not within select')

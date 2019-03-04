@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -76,7 +76,7 @@ ASCENDENT = 'ASCENDENT'
 DESCENDANT = 'DESCENDANT'
 """Konstanta pro sestupné třídění."""
 
-
+
 # Data classes
 
 
@@ -102,6 +102,7 @@ class Operator(object):
     """
     class ComparableDateTime(object):
         """Wrapper for datetime values to enable their comparison to None."""
+
         def __init__(self, value):
             self._value = value
 
@@ -435,7 +436,7 @@ class Data(object_2_5):
         finally:
             try:
                 self.close()
-            except:
+            except Exception:
                 pass
         return result
 
@@ -508,7 +509,7 @@ class Data(object_2_5):
         finally:
             try:
                 self.close()
-            except:
+            except Exception:
                 pass
         return select_result, Row(aggregates)
 
@@ -896,6 +897,7 @@ class Counter(object):
     vzestupných čísel, blíže viz metoda 'next()'.
 
     """
+
     def next(self):
         """Vrať další hodnotu čítače jako integer.
 
@@ -912,6 +914,7 @@ class Function(object):
     počet argumentů daných svojí pozicí a vracející seznam řádků.
 
     """
+
     def call(self, row):
         """Zavolej funkci a vrať výsledek.
 
@@ -926,7 +929,7 @@ class Function(object):
         """
         raise NotImplementedException()
 
-
+
 class MemData(Data):
     """Data kept in memory.
 
@@ -980,7 +983,7 @@ class MemData(Data):
     def _mem_create_row(self, row, index=None):
         try:
             key = row[self.key()[0].id()]
-        except:
+        except Exception:
             return None
         i = self._mem_find_index(key)
         if index is not None and i is not None and i != index:
@@ -990,7 +993,7 @@ class MemData(Data):
             id = c.id()
             try:
                 val = row[id]
-            except:
+            except Exception:
                 val = None
             pairs.append((id, val))
         return Row(pairs)
@@ -1152,7 +1155,7 @@ class MemData(Data):
         del self._mem_data[index]
         return 1
 
-
+
 # Utility functions
 
 
@@ -1377,6 +1380,7 @@ def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
     """
     return Operator('IN', column_id, data, table_column_id, table_condition, table_arguments)
 
+
 _ft_query_id = None
 
 
@@ -1523,7 +1527,7 @@ def reversed_sorting(sorting):
     reversed = map(revspec, sorting)
     return tuple(reversed)
 
-
+
 # Pomocné třídy
 
 
@@ -1536,6 +1540,7 @@ class ColumnSpec(object):
     Instance třídy jsou považovány za immutable, tudíž je možno je sdílet.
 
     """
+
     def __init__(self, id, type):
         """Inicializuj specifikaci sloupce.
 
@@ -1600,6 +1605,7 @@ class Row:
     Mazání sloupců není možné.
 
     """
+
     def __init__(self, data=()):
         """Inicializuj řádek.
 
@@ -1913,7 +1919,7 @@ class DataFactory(object):
             for attr in result.__dict__.keys():
                 try:
                     result.__dict__[attr] = copy.copy(result.__dict__[attr])
-                except:
+                except Exception:
                     pass
             result.after_init()
         else:

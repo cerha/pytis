@@ -163,7 +163,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_view(self, view, create_ok=False):
         replace = 'OR REPLACE ' if view._REPLACE_ON_CREATE else ''
-        command = 'CREATE %s%s "%s"."%s" AS\n' % (replace, view._DB_OBJECT, view.schema, view.name,)
+        command = 'CREATE %s%s "%s"."%s" AS\n' % (replace, view._DB_OBJECT,
+                                                  view.schema, view.name,)
         with local_search_path(self._set_search_path(view.search_path())):
             query = view.query()
             query.pytis_prefix = command
@@ -179,7 +180,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_foreign_table(self, table, create_ok=False):
         with local_search_path(self._set_search_path(table.search_path())):
-            sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in table.fields]
+            sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None)
+                                  for c in table.fields]
 
             def compile(c):
                 # Any better way to reach the column compiler?
@@ -370,6 +372,7 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
 
 
 class _ObjectComment(sqlalchemy.schema.DDLElement):
+
     def __init__(self, obj, kind, comment):
         self.object = obj
         self.kind = kind
@@ -395,6 +398,7 @@ def visit_object_comment(element, compiler, **kw):
 
 
 class _ColumnComment(sqlalchemy.schema.DDLElement):
+
     def __init__(self, table, field):
         self.table = table
         self.field = field
@@ -408,6 +412,7 @@ def visit_column_comment(element, compiler, **kw):
 
 
 class _AccessRight(sqlalchemy.schema.DDLElement):
+
     def __init__(self, obj, right, group):
         self.object = obj
         self.right = right
@@ -435,6 +440,7 @@ def visit_access_right(element, compiler, **kw):
 
 
 class _Rule(sqlalchemy.schema.DDLElement):
+
     def __init__(self, table, action, instead_commands, also_commands):
         self.table = table
         self.action = action
@@ -488,6 +494,7 @@ def visit_full_outer_join(join, compiler, asfrom=False, **kwargs):
 # Based on an example from SQLAlchemy manual:
 class InsertFromSelect(sqlalchemy.sql.expression.Executable,
                        sqlalchemy.sql.expression.ClauseElement):
+
     def __init__(self, table, select):
         self.table = table
         self.select = select
@@ -560,6 +567,7 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
         self.name = name
 
     class _PytisColumn(object):
+
         def __init__(self, name):
             self.name = name
 
@@ -578,6 +586,7 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
     c = property(_pytis_column)
 
     class _PytisAlias(sqlalchemy.sql.Alias):
+
         def __init__(self, selectable, name, c):
             sqlalchemy.sql.Alias.__init__(self, selectable, name)
             self._pytis_c = c
@@ -709,7 +718,7 @@ def visit_TIMESTAMP(element, compiler, **kwargs):
     return "TIMESTAMP%s %s" % ('' if precision is None else "(%d)" % (precision,),
                                (element.timezone and "WITH" or "WITHOUT") + " TIME ZONE",)
 
-
+
 # Columns
 
 
@@ -735,6 +744,7 @@ class Column(pytis.data.ColumnSpec):
     methods.
 
     """
+
     def __init__(self, name, type, label=None, doc=None, unique=None, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False,
                  original_column=None, crypto_name=None):
@@ -919,6 +929,7 @@ class PrimaryColumn(Column):
     components.  Otherwise there is no difference to 'Column' class.
 
     """
+
     def __init__(self, *args, **kwargs):
         kwargs = copy.copy(kwargs)
         kwargs['primary_key'] = True
@@ -965,6 +976,7 @@ class Argument(Column):
     specifying '_SQLTabular' subclass as the argument type.
 
     """
+
     def __init__(self, name, type_, *args, **kwargs):
         if isinstance(type_, type) and issubclass(type_, _SQLTabular):
             type_ = _TabularType(type_)
@@ -1164,6 +1176,7 @@ class SQLException(Exception):
 
 
 class SQLNameException(SQLException):
+
     def __init__(self, *args):
         super(SQLNameException, self).__init__("Object not found", *args)
 
@@ -1284,6 +1297,7 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
+
     def __init__(cls, clsname, bases, clsdict):
         if ((cls._is_specification(clsname)
              and cls.schemas is None
@@ -1330,6 +1344,7 @@ def object_by_path(name, search_path=True, allow_external=True):
 
 
 class _Reference(object):
+
     def __init__(self, name, column):
         self._name = name
         self._column = column
@@ -1414,6 +1429,7 @@ class TableLookup(object):
     refer to table instances by expressions such as 't.FooTable'.
 
     """
+
     def __getattr__(self, specification):
         return object_by_specification_name(specification)
 
@@ -1438,6 +1454,7 @@ class ColumnLookup(object):
     (such as search path of current table).
 
     """
+
     def __getattr__(self, specification):
         return object_by_specification_name(specification).c
 
@@ -1465,6 +1482,7 @@ class ReferenceLookup(object):
 
     """
     class Reference(object):
+
         def __init__(self, specification, column):
             self._specification = specification
             self._column = column
@@ -1479,6 +1497,7 @@ class ReferenceLookup(object):
             return self._specification
 
     class ColumnLookup(object):
+
         def __init__(self, specification):
             self._name = specification
             self._column = None
@@ -1514,6 +1533,7 @@ class Arguments(object):
     This class is also available by short name 'a'.
 
     """
+
     def __init__(self, *args, **kwargs):
         self._args = args
         self._kwargs = kwargs
@@ -1744,7 +1764,7 @@ def _alchemy2pytis_type(atype):
         return None
     raise Exception("Unrecognized SQLAlchemy type", atype)
 
-
+
 # Database objects
 
 
@@ -3549,7 +3569,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             elif issubclass(function_type, _SQLTabular):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
-                raise SQLException("Invalid result type", (self.__class__.__name__, function_type,))
+                raise SQLException("Invalid result type",
+                                   (self.__class__.__name__, function_type,))
         result_type_prefix = 'SETOF ' if self.multirow else ''
         name = self.pytis_name(real=True) + suffix
         security = ' SECURITY DEFINER' if self.security_definer else ''
@@ -3654,7 +3675,8 @@ class SQLPyFunction(SQLFunctional):
             while lines and not lines[0].rstrip().endswith('):'):
                 lines.pop(0)
             lines.pop(0)
-        main_lines = self._method_source_lines(main_method_name, getattr(self, main_method_name), 0)
+        main_lines = self._method_source_lines(main_method_name,
+                                               getattr(self, main_method_name), 0)
         strip_header(main_lines)
 
         # Auxiliary objects
@@ -3714,7 +3736,8 @@ class SQLPyFunction(SQLFunctional):
             raise SQLException("Invalid plpythonu method", (self.__class__.__name__, name, e))
         match = self._SUBROUTINE_MATCHER.match(lines[0])
         if not match:
-            raise SQLException("@staticmethod decorator not found", (self.__class__.__name__, name))
+            raise SQLException("@staticmethod decorator not found",
+                               (self.__class__.__name__, name))
         indentation = indentation - len(match.group(1))
         if indentation == 0:
             def reindent(line):
@@ -3934,7 +3957,7 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     def pytis_drop(self):
         _warn("Can't drop raw object: %s" % (self.name,))
 
-
+
 # Specification processing
 
 
@@ -4454,7 +4477,8 @@ def clear():
     global _metadata
     _metadata = sqlalchemy.MetaData()
     global _engine
-    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock',
+                                       executor=_dump_sql_command)
 
 
 def specifications():

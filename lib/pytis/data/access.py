@@ -250,7 +250,7 @@ class DBAccessRights(AccessRights):
         finally:
             try:
                 data.close()
-            except:
+            except Exception:
                 pass
         return access_rights
 
@@ -406,6 +406,7 @@ class RestrictedMemData(RestrictedData, MemData):
     database table).
 
     """
+
     def __init__(self, columns, **kwargs):
         super(RestrictedMemData, self).__init__(columns=columns, **kwargs)
 
