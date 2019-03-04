@@ -77,7 +77,7 @@ def get_menu_forms():
         return result
     try:
         data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
-    except:
+    except Exception:
         data = None
     if data is None:
         try:
@@ -127,13 +127,13 @@ def _get_default_select(spec):
     resolver = config.resolver
     try:
         view = resolver.get(spec, 'view_spec')
-    except:
+    except Exception:
         log(OPERATIONAL, "Nepodařilo se vytvořit view_spec")
         return None
     from pytis.extensions import data_object
     try:
         data = data_object(spec)
-    except:
+    except Exception:
         log(OPERATIONAL, "Nepodařilo se vytvořit datový objekt")
         return None
     data = data_object(spec)
@@ -234,8 +234,8 @@ class MenuChecker(object):
             names = self.__class__._specnames
         else:
             prefix = self._spec_name_prefix
-            l = len(prefix)
-            names = [n for n in self.__class__._specnames if n[:l] == prefix]
+            ln = len(prefix)
+            names = [n for n in self.__class__._specnames if n[:ln] == prefix]
         return names
 
     def _find_specification_names(self, errors):
@@ -294,7 +294,7 @@ class MenuChecker(object):
             if field is None:
                 try:
                     view_spec = config.resolver.get(spec_name, 'view_spec')
-                except:
+                except Exception:
                     if no_spec_error:
                         return []
                     else:
@@ -338,7 +338,7 @@ class MenuChecker(object):
             for name in self._specification_names():
                 try:
                     view_spec = config.resolver.get(name, 'view_spec')
-                except:
+                except Exception:
                     continue
                 fields = view_spec.fields()
                 for f in fields:
@@ -385,7 +385,7 @@ class MenuChecker(object):
             finally:
                 try:
                     data.close()
-                except:
+                except Exception:
                     pass
             if row:
                 PresentedRow(fields, data, row)

@@ -59,6 +59,7 @@ class SQLFlexibleValue(object):
                 raise SQLException("Unknown flexible reference", name)
         return value
 
+
 public_schema = SQLFlexibleValue('default_schema', environment='GENSQL_DEFAULT_SCHEMA',
                                  default='public')
 default_user = SQLFlexibleValue('default_user', environment='GENSQL_DEFAULT_USER',

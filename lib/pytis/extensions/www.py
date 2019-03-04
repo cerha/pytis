@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -183,11 +183,7 @@ class BrowsableDBTable(BaseDBTable):
                     self._labellast())
 
     def controls(self):
-        f = self.first()
-        p = self.previous()
-        n = self.next()
-        l = self.last()
-        return f, nbsp, p, nbsp, n, nbsp, l
+        return self.first(), nbsp, self.previous(), nbsp, self.next(), nbsp, self.last()
 
     def table(self):
         super(BrowsableDBTable, self).table()

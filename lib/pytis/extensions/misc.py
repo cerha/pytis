@@ -88,7 +88,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         s.write(msg)
         s.close()
         return 0
-    except:
+    except Exception:
         print 'ERROR: e-mail se nepodařilo odeslat'
         return 1
 
@@ -106,7 +106,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
         if isinstance(arg, str):
             try:
                 arg = unicode(arg, charset)
-            except:
+            except Exception:
                 raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset,))
         return arg.encode('UTF-8')
     # Převedení na UTF-8

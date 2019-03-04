@@ -734,9 +734,9 @@ class DMPMenu(DMPObject):
 
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_menu')
-        B = self._b_
-        I = self._i_
-        S = self._s_
+        b = self._b_
+        i = self._i_
+        s = self._s_
         for item in self.items():
             fullname = item.action()
             if fullname is None:
@@ -746,17 +746,17 @@ class DMPMenu(DMPObject):
                 action = DMPActions.Action(self._resolver(), None, fullname=fullname)
                 if not action.specifications_match(specifications):
                     continue
-            item_id_value = I(item.id())
+            item_id_value = i(item.id())
             row = pd.Row((
                 ('menuid', item_id_value,),
-                ('name', S(item.name()),),
-                ('title', S(item.title()),),
-                ('fullname', S(fullname),),
-                ('position', S(item.position()),),
-                ('next_position', S(item.position() + '4'),),
-                ('help', S(item.help()),),
-                ('hotkey', S(item.hotkey()),),
-                ('locked', B(item.locked()),),
+                ('name', s(item.name()),),
+                ('title', s(item.title()),),
+                ('fullname', s(fullname),),
+                ('position', s(item.position()),),
+                ('next_position', s(item.position() + '4'),),
+                ('help', s(item.help()),),
+                ('hotkey', s(item.hotkey()),),
+                ('locked', b(item.locked()),),
             ))
             if not data.row(item_id_value):
                 _, result = data.insert(row, transaction=transaction)
@@ -823,8 +823,8 @@ class DMPRights(DMPObject):
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
                       [('e_pytis_action_rights',
-                        ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname',
-                         'status', 'redundant',),)])
+                        ('id', 'shortname', 'roleid', 'rightid', 'system',
+                         'granted', 'colname', 'status', 'redundant',),)])
 
     def _reset(self):
         self._rights = []
@@ -935,21 +935,22 @@ class DMPRights(DMPObject):
         condition = pd.LE('status', self._i_(0))
 
         def process(row):
-            return self.Right(shortname=row['shortname'].value(),
-                              roleid=row['roleid'].value(),
-                              rightid=row['rightid'].value(),
-                              colname=row['colname'].value(),
-                              system=row['system'].value(),
-                              granted=row['granted'].value(),
-                              redundant=row['redundant'].value(),
-                              )
+            return self.Right(
+                shortname=row['shortname'].value(),
+                roleid=row['roleid'].value(),
+                rightid=row['rightid'].value(),
+                colname=row['colname'].value(),
+                system=row['system'].value(),
+                granted=row['granted'].value(),
+                redundant=row['redundant'].value(),
+            )
         self._rights = data.select_map(process, condition=condition, transaction=transaction)
 
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_action_rights')
-        B = self._b_
-        I = self._i_
-        S = self._s_
+        b = self._b_
+        i = self._i_
+        s = self._s_
         for right in self.items():
             shortname = right.shortname()
             if specifications is not None:
@@ -958,13 +959,13 @@ class DMPRights(DMPObject):
                     if len(components) <= 1 or components[1] not in specifications:
                         continue
             row = pd.Row((
-                ('shortname', S(shortname),),
-                ('roleid', S(right.roleid()),),
-                ('rightid', S(right.rightid()),),
-                ('colname', S(right.colname()),),
-                ('system', B(right.system()),),
-                ('granted', B(right.granted(),),),
-                ('status', I(0),),
+                ('shortname', s(shortname),),
+                ('roleid', s(right.roleid()),),
+                ('rightid', s(right.rightid()),),
+                ('colname', s(right.colname()),),
+                ('system', b(right.system()),),
+                ('granted', b(right.granted(),),),
+                ('status', i(0),),
             ))
             data.insert(row, transaction=transaction)
         return True
@@ -1321,7 +1322,7 @@ class DMPActions(DMPObject):
                     if not issubclass(form_class, pytis.form.Form):
                         raise Exception()
                     form_name = args['name']
-                except:
+                except Exception:
                     if messages is not None:
                         add_message(messages, DMPMessage.WARNING_MESSAGE,
                                     "Failed to retrieve RUN_FORM command", (form_string,))
