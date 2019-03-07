@@ -3175,13 +3175,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return None
         if not template:
             template = self._pg_make_row_template
-        row_data = []
-        data_0 = data_[0]
-        i = 0
-        for id, typid, type_ in template:
-            i += 1
-            row_data.append((id, Value(type_, data_0[i])))
-        return Row(row_data)
+        return Row([(cid, Value(ctype, dbvalue))
+                    for dbvalue, (cid, typid, ctype) in zip(data_[0], template)])
 
     def _pg_already_present(self, row, transaction=None):
         key = []
