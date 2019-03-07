@@ -3179,16 +3179,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         data_0 = data_[0]
         i = 0
         for id, typid, type_ in template:
-            dbvalue = data_0[i]
             i += 1
-            if isinstance(type_, Array):
-                if dbvalue is None:
-                    dbvalue = ()
-                else:
-                    inner_type = type_.inner_type()
-                    dbvalue = tuple([Value(inner_type, v) for v in dbvalue])
-            else:
-                dbvalue = type_.adjust_value(dbvalue)
+            dbvalue = type_.adjust_value(data_0[i])
             row_data.append((id, Value(type_, dbvalue)))
         return Row(row_data)
 

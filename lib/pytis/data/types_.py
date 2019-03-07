@@ -2875,8 +2875,16 @@ class Array(Limited):
         return self._inner_type
 
     def adjust_value(self, value):
-        if value is not None and not isinstance(value, (tuple, list,)):
-            raise TypeError("Value not a sequence", value)
+        if value is None:
+            value = ()
+        else:
+            if not isinstance(value, (tuple, list)):
+                raise TypeError("Value not a sequence", value)
+            if value and not isinstance(value[0], Value):
+                inner_type = self.inner_type()
+                value = tuple(Value(inner_type, v) for v in value)
+            elif isinstance(value, list):
+                value = tuple(value)
         return value
 
     def sqlalchemy_type(self):
