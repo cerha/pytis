@@ -105,30 +105,26 @@ class PresentedRow(object):
             self.id = fspec.id()
             self.data_column = data.find_column(self.id)
             computer = fspec.computer()
-            if computer and isinstance(computer, CbComputer):
-                self.cb_computer_field = computer.field()
-            else:
-                self.cb_computer_field = None
             if self.data_column:
                 # Actually, the type taken from the data object always takes precedence, since it
                 # should already respect type and its arguments from field specification -- they are
                 # passed to column binding constructors when the data object is created.
                 ctype = self.data_column.type()
-            else:
+            elif fspec.type():
                 ctype = fspec.type()
-                if not ctype and self.cb_computer_field:
-                    # If a virtual field is a CbComputer, we can take the data type from
-                    # the related column enumerator's data object.
-                    cb_column = data.find_column(self.cb_computer_field)
-                    ctype = cb_column.type().enumerator().type(computer.column())
-                    assert ctype is not None, \
-                        "Invalid enumerator column '%s' in CbComputer for '%s'." % \
-                        (computer.column(), self.id)
-                elif not ctype:
-                    # String is the default type of virtual columns.
-                    ctype = pytis.data.String(**fspec.type_kwargs())
-                elif not isinstance(ctype, pytis.data.Type):
+                if not isinstance(ctype, pytis.data.Type):
                     ctype = ctype(**fspec.type_kwargs())
+            elif computer and isinstance(computer, CbComputer):
+                # If a virtual field is a CbComputer, we can take the data type from
+                # the related column enumerator's data object.
+                enumerator = data.find_column(computer.field()).type().enumerator()
+                ctype = enumerator.type(computer.column())
+                assert ctype is not None, \
+                    ("Invalid enumerator column '%s' in CbComputer for '%s'." %
+                     (computer.column(), self.id))
+            else:
+                # String is the default type of virtual columns.
+                ctype = pytis.data.String(**fspec.type_kwargs())
             self.type = ctype
             self.line_separator = fspec.line_separator()
             self.formatter = fspec.formatter()
@@ -1005,9 +1001,6 @@ class PresentedRow(object):
                 else:
                     return value.export()
         display = self._display(column)
-        if not display and column.cb_computer_field:
-            column = self._coldict[column.cb_computer_field]
-            display = self._display(column)
         value = self[column.id].value()
         if value is None:
             return column.null_display or ''

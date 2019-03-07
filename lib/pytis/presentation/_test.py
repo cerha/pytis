@@ -685,9 +685,7 @@ class PresentedRow(unittest.TestCase):
         row = self._row(fields)
         row['a'] = '1'
         self.assertEqual(row.display('a'), 'First')
-        # It seems quite strange that display for a CbComputer column actually
-        # returns its value, but it is the current status quo.
-        self.assertEqual(row.display('b'), 'First')
+        self.assertEqual(row.display('b'), '')
 
     def test_editable_always_bool(self):
         row = self._row((
