@@ -2586,7 +2586,7 @@ class Binary(Limited):
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, self.Buffer):
-            raise TypeError("Value not a Buffer", value)
+            value = self.Buffer(value)
         return value
 
     def sqlalchemy_type(self):
