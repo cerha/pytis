@@ -20,11 +20,9 @@
 
 import locale
 import unittest
-import pytis.util.test
 
 locale.setlocale(locale.LC_NUMERIC, 'C')
 
-tests = pytis.util.test.TestSuite()
 
 # Co je potřeba (bohužel ručně, protože tvorba testů je soustavně
 # ignorována :-((((((( ) otestovat po změnách v inline editaci:
@@ -71,13 +69,5 @@ tests = pytis.util.test.TestSuite()
 #   políčka.
 
 
-################
-
-
-def get_tests():
-    return tests
-
-
 if __name__ == '__main__':
-    unittest.main(defaultTest='get_tests',
-                  argv=pytis.util.test.transform_args())
+    unittest.main()

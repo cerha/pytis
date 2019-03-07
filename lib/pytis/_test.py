@@ -18,26 +18,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import unittest
-import pytis.util.test
 
 TESTED_MODULES = (
     'pytis.data',
     'pytis.presentation',
     'pytis.util',
-    'pytis.remote',
     'pytis.web',
 )
 
-tests = pytis.util.test.TestSuite()
-for module_name in TESTED_MODULES:
-    module = __import__(module_name + '._test', globals(), locals(), ['get_tests'])
-    if hasattr(module, 'get_tests'):
-        tests.addTest(module.get_tests())
-    else:
-        for attr in dir(module):
-            obj = getattr(module, attr)
-            if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
-                tests.add(obj)
+tests = unittest.TestSuite()
+
+for name in TESTED_MODULES:
+    name += '._test'
+    module = __import__(name)
+    for component in name.split('.')[1:]:
+        module = getattr(module, component)
+    for attr in dir(module):
+        obj = getattr(module, attr)
+        if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
+            tests.addTest(obj(methodName='run'))
 
 
 def get_tests():

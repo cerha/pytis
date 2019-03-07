@@ -26,7 +26,7 @@ import time
 
 import unittest
 
-from pytis.util import TestSuite, super_, DEBUG, OPERATIONAL, ACTION, EVENT
+from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT
 import pytis.data
 from pytis.data import bval, fval, ival, sval
 
@@ -35,8 +35,6 @@ import config
 _connection_data = {'database': 'test'}
 
 config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
-
-tests = TestSuite()
 
 
 #############
@@ -50,9 +48,6 @@ class ValidationError(unittest.TestCase):
     def test_it(self):
         ValidationError.e = pytis.data.ValidationError(ValidationError.MESSAGE)
         self.assertEqual(ValidationError.e.message(), ValidationError.MESSAGE)
-
-
-tests.add(ValidationError)
 
 
 class Value(unittest.TestCase):
@@ -72,9 +67,6 @@ class Value(unittest.TestCase):
         v3 = pytis.data.Value(t, 2)
         self.assertEqual(v1, v2)
         self.assertNotEqual(v1, v3)
-
-
-tests.add(Value)
 
 
 class _TypeCheck(unittest.TestCase):
@@ -140,9 +132,6 @@ class Type(_TypeCheck):
         self.assertEqual(s12.maxlen(), 4)
 
 
-tests.add(Type)
-
-
 class Integer(_TypeCheck):
     _test_instance = pytis.data.Integer()
 
@@ -157,9 +146,6 @@ class Integer(_TypeCheck):
         self._test_validity(limited, '3', None)
         self._test_validity(limited, '5', 5)
         self._test_validity(limited, '10', None)
-
-
-tests.add(Integer)
 
 
 class Float(_TypeCheck):
@@ -215,9 +201,6 @@ class Float(_TypeCheck):
         self.assertIsInstance(fval(3.14).value(), float)
 
 
-tests.add(Float)
-
-
 class String(_TypeCheck):
     _test_instance = pytis.data.String()
 
@@ -246,9 +229,6 @@ class String(_TypeCheck):
         self.assertEqual(t, pytis.data.String(maxlen=MAXLEN))
         self.assertNotEqual(t, self._test_instance)
         self.assertNotEqual(t, pytis.data.String(maxlen=(MAXLEN + 1)))
-
-
-tests.add(String)
 
 
 class Password(_TypeCheck):
@@ -300,9 +280,6 @@ class Password(_TypeCheck):
         self._test_validity(t7, 'Xabc', 'Xabc')
 
 
-tests.add(Password)
-
-
 class Color(_TypeCheck):
     _test_instance = pytis.data.Color()
 
@@ -318,9 +295,6 @@ class Color(_TypeCheck):
         t = pytis.data.Color()
         self.assertNotEqual(t, pytis.data.String())
         self.assertEqual(t, self._test_instance)
-
-
-tests.add(Color)
 
 
 class DateTime(_TypeCheck):
@@ -368,9 +342,6 @@ class DateTime(_TypeCheck):
         self.assertEqual(result2, '02.07.1841')
 
 
-tests.add(DateTime)
-
-
 class ISODateTime(_TypeCheck):
     _test_instance = pytis.data.ISODateTime()
 
@@ -408,9 +379,6 @@ class ISODateTime(_TypeCheck):
         self.assertEqual(v.primitive_value(), '2012-01-23 10:14:39.023104+00:00')
 
 
-tests.add(ISODateTime)
-
-
 class Date(_TypeCheck):
     _test_instance = pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)
 
@@ -436,9 +404,6 @@ class Date(_TypeCheck):
         value = pytis.data.date_and_time(date_value, time_value)
         self.assertEqual(value, datetime.datetime(2001, 2, 3, 2, 4, 6,
                                                   tzinfo=pytis.data.DateTime.LOCAL_TZINFO))
-
-
-tests.add(Date)
 
 
 class Time(_TypeCheck):
@@ -476,9 +441,6 @@ class Time(_TypeCheck):
         self.assertEqual(result, '01:02:03', ('Invalid time export', result))
 
 
-tests.add(Time)
-
-
 class TimeInterval(_TypeCheck):
     _test_instance = pytis.data.TimeInterval()
 
@@ -500,9 +462,6 @@ class TimeInterval(_TypeCheck):
         self.assertEqual(exported, '25', (value, exported,))
 
 
-tests.add(TimeInterval)
-
-
 class TimeInterval2(_TypeCheck):
     _test_instance = pytis.data.TimeInterval(format='%H:%M')
 
@@ -520,9 +479,6 @@ class TimeInterval2(_TypeCheck):
         self.assertEqual(exported, '25', (value, exported,))
 
 
-tests.add(TimeInterval2)
-
-
 class Boolean(_TypeCheck):
     _test_instance = pytis.data.Boolean()
 
@@ -536,9 +492,6 @@ class Boolean(_TypeCheck):
 
     def test_noncmp(self):
         self.assertNotEqual(self._test_instance, pytis.data.String())
-
-
-tests.add(Boolean)
 
 
 class Array(_TypeCheck):
@@ -555,9 +508,6 @@ class Array(_TypeCheck):
         cls = self._test_instance.__class__
         inner_type = self._test_instance.inner_type()
         self.assertEqual(cls(inner_type=inner_type), cls(inner_type=inner_type))
-
-
-tests.add(Array)
 
 
 class Enumerator(_TypeCheck):
@@ -623,9 +573,6 @@ class DataEnumerator(unittest.TestCase):
         self.assertEqual(r['y'].value(), 'b', ('Unexpected value', r['y'].value()))
 
 
-tests.add(DataEnumerator)
-
-
 class FixedEnumerator(unittest.TestCase):
     _values = (1, 3, 5, 7, 9,)
     _enumerator = pytis.data.FixedEnumerator(_values)
@@ -641,9 +588,6 @@ class FixedEnumerator(unittest.TestCase):
 
     def test_values(self):
         self.assertEqual(self._enumerator.values(), self._values)
-
-
-tests.add(FixedEnumerator)
 
 
 ###########
@@ -676,9 +620,6 @@ class ColumnSpec(unittest.TestCase):
         self.assertEqual(self._test_instance, x)
         self.assertNotEqual(self._test_instance, y)
         self.assertNotEqual(self._test_instance, z)
-
-
-tests.add(ColumnSpec)
 
 
 class Row(unittest.TestCase):
@@ -736,9 +677,6 @@ class Row(unittest.TestCase):
         self.assertEqual(r['z'].value(), 3)
 
 
-tests.add(Row)
-
-
 class Data(unittest.TestCase):
 
     def setUp(self):
@@ -771,9 +709,6 @@ class Data(unittest.TestCase):
         v2 = sval('xxx')
         row = pytis.data.Row((('foo', v1), ('bar', v2)))
         self.assertEqual(self._data.row_key(row), (v1,))
-
-
-tests.add(Data)
 
 
 class MemData(unittest.TestCase):
@@ -838,9 +773,6 @@ class MemData(unittest.TestCase):
         self.assertEqual(rows[1]['b'].value(), 'Bill')
 
 
-tests.add(MemData)
-
-
 class DataFactory(unittest.TestCase):
 
     def setUp(self):
@@ -871,9 +803,6 @@ class DataFactory(unittest.TestCase):
         data = factory.create(key=key)
         self.assertEqual(data.columns(), columns)
         self.assertEqual(data.key(), key)
-
-
-tests.add(DataFactory)
 
 
 #############
@@ -936,17 +865,11 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(c, c3)
 
 
-tests.add(DBConnection)
-
-
 class DBBinding(unittest.TestCase):
 
     def test_it(self):
         b = pytis.data.DBBinding('foo')
         self.assertEqual(b.id(), 'foo')
-
-
-tests.add(DBBinding)
 
 
 class DBColumnBinding(unittest.TestCase):
@@ -975,9 +898,6 @@ class DBColumnBinding(unittest.TestCase):
         self.assertFalse(b2.is_hidden(), 'secret column')
 
 
-tests.add(DBColumnBinding)
-
-
 class DBExceptions(unittest.TestCase):
 
     def test_constructors(self):
@@ -995,9 +915,6 @@ class DBExceptions(unittest.TestCase):
         self.assertTrue(isinstance(m, basestring) and len(m) > 0, ('Invalid message', m))
 
 
-tests.add(DBExceptions)
-
-
 class DBData(unittest.TestCase):
 
     def test_it(self):
@@ -1008,9 +925,6 @@ class DBData(unittest.TestCase):
         self.assertEqual(map(lambda c: c.id(), d.columns()), ['foo', 'bar'])
         self.assertEqual(len(d.key()), 1, ('invalid number of keys', d.key()))
         self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
-
-
-tests.add(DBData)
 
 
 class _DBBaseTest(unittest.TestCase):
@@ -2278,10 +2192,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
 
 
-tests.add(DBDataDefault)
-
-
-class DBMultiData(DBDataDefault):
+class _DBMultiData(DBDataDefault):
     ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pytis.data.DateTime.UTC_TZINFO), 1000.0,
             ('100', '007'),
             'U.S.A.', 'specialni')
@@ -2444,23 +2355,19 @@ class DBMultiData(DBDataDefault):
         lines((2, 3))
 
 
-if False:
-    tests.add(DBMultiData)
-
-
 class DBSessionVariables(_DBBaseTest):
 
     def setUp(self):
         try:
             self._sql_command("create function foo() "
                               "  returns text as "
-                              "  $$select current_setting('myvars.test') as result$$ "
+                              "  $$select current_setting('myvar.test') as result$$ "
                               "  language sql")
         except Exception:
             self.tearDown()
             raise
         import config
-        config.session_variables = {'myvars.test': 'value'}
+        config.session_variables = {'myvar.test': 'value'}
         _DBBaseTest.setUp(self)
 
     def test_it(self):
@@ -2481,9 +2388,6 @@ class DBSessionVariables(_DBBaseTest):
         except Exception:
             pass
         _DBBaseTest.tearDown(self)
-
-
-tests.add(DBSessionVariables)
 
 
 class DBDataFetchBuffer(_DBBaseTest):
@@ -2568,9 +2472,6 @@ class DBDataFetchBuffer(_DBBaseTest):
         # self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
 
 
-tests.add(DBDataFetchBuffer)
-
-
 class DBDataReuse(DBDataFetchBuffer):
 
     def test_it(self):
@@ -2589,9 +2490,6 @@ class DBDataReuse(DBDataFetchBuffer):
         d.select(reuse=True)
         row = d.fetchone()
         self.assertEqual(row['x'].value(), 0, ('Invalid result', str(row), 0))
-
-
-tests.add(DBDataReuse)
 
 
 class DBDataOrdering(_DBTest):
@@ -2642,9 +2540,6 @@ class DBDataOrdering(_DBTest):
         self.assertEqual(result['popis'].value(), 'bla bla',
                          ('Unexpected value', result['popis'].value()))
         d.close()
-
-
-tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
@@ -2810,9 +2705,6 @@ class DBDataAggregated(DBDataDefault):
             data.close()
 
 
-tests.add(DBDataAggregated)
-
-
 class DBDataNotification(DBDataDefault):
 
     def setUp(self):
@@ -2861,9 +2753,6 @@ class DBDataNotification(DBDataDefault):
                          (cnumber_2, self.data.change_number(),))
 
 
-tests.add(DBDataNotification)
-
-
 class DBCounter(_DBBaseTest):
 
     def setUp(self):
@@ -2887,9 +2776,6 @@ class DBCounter(_DBBaseTest):
     def test_next(self):
         self.assertEqual(self._counter.next(), 1)
         self.assertEqual(self._counter.next(), 2)
-
-
-tests.add(DBCounter)
 
 
 class DBFunction(_DBBaseTest):
@@ -3007,9 +2893,6 @@ class DBFunction(_DBBaseTest):
         self.assertEqual(result, [10, 12], ('Invalid result', result))
 
 
-tests.add(DBFunction)
-
-
 class DBSearchPath(_DBTest):
 
     def setUp(self):
@@ -3059,9 +2942,6 @@ class DBSearchPath(_DBTest):
             self.assertTrue(len(keys) == 1 and keys[0] == 'sk', ('Invalid result', keys,))
         test(['special'])
         test(['special', 'public'])
-
-
-tests.add(DBSearchPath)
 
 
 class DBCrypto(_DBBaseTest):
@@ -3149,9 +3029,6 @@ class DBCrypto(_DBBaseTest):
         check(())
 
 
-tests.add(DBCrypto)
-
-
 ###################
 # Complex DB test #
 ###################
@@ -3237,9 +3114,6 @@ class TutorialTest(_DBBaseTest):
             tab_data.sleep()
 
 
-tests.add(TutorialTest)
-
-
 class AccessRightsTest(_DBBaseTest):
 
     def setUp(self):
@@ -3312,10 +3186,7 @@ class AccessRightsTest(_DBBaseTest):
         self.assertTrue(not a.permitted(P.VIEW, ('group4',)), 'Invalid permission')
 
 
-tests.add(AccessRightsTest)
-
-
-class ThreadTest(_DBBaseTest):
+class _ThreadTest(_DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety
 
@@ -3379,10 +3250,6 @@ class ThreadTest(_DBBaseTest):
             else:
                 end = True
             time.sleep(1)
-
-
-if False:
-    tests.add(ThreadTest)
 
 
 class OperatorTest(_DBBaseTest):
@@ -3455,19 +3322,5 @@ class OperatorTest(_DBBaseTest):
         self.assertNotEqual(d, e)
 
 
-tests.add(OperatorTest)
-
-################
-
-
-def get_tests():
-    return tests
-
-
-def go():
-    unittest.main(defaultTest='get_tests',
-                  argv=pytis.util.test.transform_args())
-
-
 if __name__ == '__main__':
-    go()
+    unittest.main()

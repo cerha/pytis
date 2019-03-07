@@ -53,10 +53,6 @@ from configuration import (  # noqa: F401
     Configuration, set_configuration_file,
 )
 
-from test import (  # noqa: F401
-    TestSuite, InteractiveTestCase, transform_args, run_tests,
-)
-
 from debug import (  # noqa: F401
     Rdb, rdb,
 )

@@ -24,11 +24,7 @@ import StringIO
 import unittest
 
 import util
-import test
 import caching
-
-
-tests = test.TestSuite()
 
 
 ###########
@@ -50,9 +46,6 @@ class Counter(unittest.TestCase):
         self.assertEqual(counter.next(), 1)
         self.assertEqual(counter.next(), 2)
         self.assertEqual(counter.current(), 2)
-
-
-tests.add(Counter)
 
 
 class Pipe(unittest.TestCase):
@@ -103,9 +96,6 @@ class Pipe(unittest.TestCase):
         self.assertIsNone(r)
 
 
-tests.add(Pipe)
-
-
 class Popen(unittest.TestCase):
     COMMAND = 'tr a b'
     SCOMMAND = ['tr', 'a', 'b']
@@ -138,9 +128,6 @@ class Popen(unittest.TestCase):
         self.assertEqual(popen3.from_child().read(), self.RSTRING)
 
 
-tests.add(Popen)
-
-
 class Stack(unittest.TestCase):
 
     def test_it(self):
@@ -159,9 +146,6 @@ class Stack(unittest.TestCase):
         self.assertIs(stack.top(), a)
         stack.pop()
         self.assertTrue(stack.empty())
-
-
-tests.add(Stack)
 
 
 class XStack(unittest.TestCase):
@@ -212,9 +196,6 @@ class XStack(unittest.TestCase):
         self.assertIsNone(xstack.next())
 
 
-tests.add(XStack)
-
-
 class Sameclass(unittest.TestCase):
 
     class A:
@@ -231,9 +212,6 @@ class Sameclass(unittest.TestCase):
                          'different classes not recognized')
         self.assertTrue(util.sameclass(1, 1), 'same inteeger classes not recognized')
         self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
-
-
-tests.add(Sameclass)
 
 
 class CompareObjects(unittest.TestCase):
@@ -262,9 +240,6 @@ class CompareObjects(unittest.TestCase):
         self.assertLess(util.compare_objects(o3, o2), 0)
 
 
-tests.add(CompareObjects)
-
-
 class MiscFunctions(unittest.TestCase):
 
     def test_is_sequence(self):
@@ -288,9 +263,6 @@ class MiscFunctions(unittest.TestCase):
         self.assertEqual(lx,  ['alpha', 'gamma'])
         self.assertEqual(util.safedel({}, 'foo'),  {})
         self.assertEqual(util.safedel([], 2),  [])
-
-
-tests.add(MiscFunctions)
 
 
 class ListUtils(unittest.TestCase):
@@ -330,9 +302,6 @@ class ListUtils(unittest.TestCase):
         self.assertEqual(util.nreverse([]), [])
 
 
-tests.add(ListUtils)
-
-
 class CopyStream(unittest.TestCase):
 
     def test_it(self):
@@ -343,9 +312,6 @@ class CopyStream(unittest.TestCase):
         output = StringIO.StringIO(value)
         util.copy_stream(input, output)
         self.assertEqual(output.getvalue(), value)
-
-
-tests.add(CopyStream)
 
 
 class FindUtils(unittest.TestCase):
@@ -384,9 +350,6 @@ class FindUtils(unittest.TestCase):
             util.ecase(0, *settings)
 
 
-tests.add(FindUtils)
-
-
 class NonLocalTransfers(unittest.TestCase):
 
     def _function(self, arg):
@@ -408,9 +371,6 @@ class NonLocalTransfers(unittest.TestCase):
         util.catch('foobar', util.catch, 'foo', self._function, 'bar')
 
 
-tests.add(NonLocalTransfers)
-
-
 class DevNullStream(unittest.TestCase):
 
     def test_read(self):
@@ -423,9 +383,6 @@ class DevNullStream(unittest.TestCase):
         f.write('a' * 100)
         f.write('b' * 100000)
         f.close()
-
-
-tests.add(DevNullStream)
 
 
 class Mktempdir(unittest.TestCase):
@@ -447,9 +404,6 @@ class Mktempdir(unittest.TestCase):
                         os.rmdir(d)
                     except Exception:  # pragma: no cover
                         pass
-
-
-tests.add(Mktempdir)
 
 
 class Classes(unittest.TestCase):
@@ -490,9 +444,6 @@ class Classes(unittest.TestCase):
                                                                  'test_public_attributes'])
 
 
-tests.add(Classes)
-
-
 class Caching(unittest.TestCase):
 
     def test_simple_cache(self):
@@ -519,9 +470,6 @@ class Caching(unittest.TestCase):
         self.assertLessEqual(len(c), 2)
 
 
-tests.add(Caching)
-
-
 class Resolver(unittest.TestCase):
 
     def test_resolver(self):
@@ -538,16 +486,6 @@ class Resolver(unittest.TestCase):
         specifications = [spec_ for name, spec_ in r.walk()]
         from pytis.cms import Languages
         self.assertIn(Languages, specifications)
-
-
-tests.add(Resolver)
-
-
-################
-
-
-def get_tests():
-    return tests
 
 
 if __name__ == '__main__':  # pragma: no cover
