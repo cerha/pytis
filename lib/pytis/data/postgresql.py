@@ -3180,8 +3180,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         i = 0
         for id, typid, type_ in template:
             i += 1
-            dbvalue = type_.adjust_value(data_0[i])
-            row_data.append((id, Value(type_, dbvalue)))
+            row_data.append((id, Value(type_, data_0[i])))
         return Row(row_data)
 
     def _pg_already_present(self, row, transaction=None):
