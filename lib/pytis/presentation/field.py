@@ -327,10 +327,7 @@ class PresentedRow(object):
         column = self._coldict[key]
         ctype = column.type
         if not isinstance(value, pytis.data.Value):
-            if isinstance(column.type, pytis.data.Array):
-                itype = ctype.inner_type()
-                value = [pytis.data.Value(itype, itype.adjust_value(v)) for v in value]
-            value = pytis.data.Value(ctype, ctype.adjust_value(value))
+            value = pytis.data.Value(ctype, value)
         elif value.type() != ctype:
             raise TypeError("Invalid type for '%s': %s (expected %s)" % (key, value.type(), ctype))
         if key in self._row:
