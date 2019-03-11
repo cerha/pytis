@@ -1773,30 +1773,31 @@ class DBDataDefault(_DBTest):
             self.funcdata.close()
 
     def test_binary(self):
-        tb = pytis.data.Binary()
-        ti = pytis.data.Integer()
-        null_data, error = tb.validate(None)
-        self.assertFalse(error, ('Null Binary validation failed', error,))
+        t = pytis.data.Binary()
+        null_data, error = t.validate(None)
+        self.assertIsNone(error, ('Null Binary validation failed', error,))
         self.assertIsNone(null_data.value(), ('Invalid null binary value', null_data.value()))
         data = [chr(i) for i in range(256)]
-        data1, error = tb.validate(buffer(string.join(data, '')))
-        self.assertFalse(error, ('Binary validation failed', error,))
+        data1, error = t.validate(buffer(string.join(data, '')))
+        self.assertIsNone(error, ('Binary validation failed', error,))
         self.assertIsInstance(data1.value(), pytis.data.Binary.Buffer,
                               ('Invalid binary value', data1.value(),))
+        self.assertEqual(str(data1.value().buffer()), string.join(data, ''),
+                         ('Invalid binary value', data1.value().buffer(),))
         data.reverse()
-        data2, error = tb.validate(buffer(string.join(data, '')))
-        self.assertFalse(error, ('Binary validation failed', error,))
-        self.assertIsInstance(data2.value(), pytis.data.Binary.Buffer,
-                              ('Invalid binary value', data2.value(),))
-        key, _error = ti.validate('1')
+        key = pytis.data.ival(1)
         row1 = pytis.data.Row([('id', key,), ('data', data1,)])
-        row2 = pytis.data.Row([('id', key,), ('data', data2,)])
         result, success = self.dbin.insert(row1)
         self.assertTrue(success, 'Binary insertion failed')
         self.assertEqual(str(result[1].value().buffer()), str(data1.value().buffer()),
                          ('Invalid inserted binary data', str(result[1].value().buffer())))
         result = str(self.dbin.row(key)[1].value().buffer())
         self.assertEqual(result, str(data1.value().buffer()), ('Invalid binary data', result,))
+        data2, error = t.validate(buffer(string.join(data, '')))
+        self.assertIsNone(error, ('Binary validation failed', error,))
+        self.assertIsInstance(data2.value(), pytis.data.Binary.Buffer,
+                              ('Invalid binary value', data2.value(),))
+        row2 = pytis.data.Row([('id', key,), ('data', data2,)])
         result, succes = self.dbin.update(key, row2)
         self.assertTrue(success, 'Binary update failed')
         self.assertEqual(str(result[1].value().buffer()), str(data2.value().buffer()),
