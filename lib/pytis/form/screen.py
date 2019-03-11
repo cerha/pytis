@@ -2695,7 +2695,11 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         else:
             if hasattr(data, 'read'):
                 import magic
-                mime_type = magic.detect_from_content(data.read(1024)).mime_type
+                if hasattr(magic, 'detect_from_content'):
+                    # Hack for temporary compatibility with both python 'magic' modules...
+                    mime_type = magic.detect_from_content(data.read(1024)).mime_type
+                else:
+                    mime_type = magic.from_buffer(data.read(1024), mime=True)
                 data.seek(0)
             else:
                 assert isinstance(data, fitz.Document), data

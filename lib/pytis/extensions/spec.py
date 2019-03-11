@@ -502,7 +502,11 @@ def mime_type_constraint(*allowed_mime_types):
     import magic
 
     def constraint(value):
-        mime_type = magic.detect_from_content(str(value.buffer())).mime_type
+        if hasattr(magic, 'detect_from_content'):
+            # Hack for temporary compatibility with both python 'magic' modules...
+            mime_type = magic.detect_from_content(str(value.buffer())).mime_type
+        else:
+            mime_type = magic.from_buffer(value.buffer(), mime=True)
 
         if mime_type in allowed_mime_types:
             return None
