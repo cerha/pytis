@@ -4663,13 +4663,10 @@ class DbAttachmentStorage(AttachmentStorage):
         return condition
 
     def _make_row(self, values):
-        rowdata = []
-        for column, value in values.items():
-            t = self._data.find_column(column).type()
-            if isinstance(t, pytis.data.Binary) and value is not None:
-                value = t.Buffer(value)
-            rowdata.append((column, pytis.data.Value(t, value)))
-        return pytis.data.Row(rowdata)
+        return pytis.data.Row([
+            (cid, pytis.data.Value(self._data.find_column(cid).type(), value))
+            for cid, value in values.items()
+        ])
 
     def _get_row(self, filename, transaction=None):
         self._data.select(condition=self._condition(filename), transaction=transaction)
