@@ -2421,13 +2421,13 @@ class Boolean(Type):
 class Binary(Limited):
     """Binary data.
 
-    External representation of a value of this type is either a Python 'buffer'
-    object or 'None' (representing a null value).  Internal representation is
-    an instance of the 'Buffer' class.  This is in general a wrapper of the
-    Python buffer, which can add certain extended features, depending on the
-    actual type of binary data contained within the buffer (such as report
-    format or pixel size of an image, etc).  Thus each subclass of this type
-    may define it's own 'Buffer' subclass with such extended features.
+    Binary values are represented by instances of Python 'bytes' type or 'None'
+    (representing a null value).  Internal representation is an instance of the
+    'Binary.Data' class (or <derived-class>.Data for derived classes).  This
+    class adds optional possibility to keep file name and MIME type information
+    together with the value instance.  Derived classes may extend the internal
+    value representation to add more specific features, such as obtaining image
+    format or pixel size, etc.
 
     Usage of binary data is limited only to certain situations.  They may be
     used only in non-key columns, they can be retrieved from a database (but
@@ -2443,56 +2443,64 @@ class Binary(Limited):
     _VALIDATION_CACHE_LIMIT = 0
     _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
 
-    class Buffer(object):
-        """Wrapper of a buffer for internal representation of binary values.
+    class Data(bytes):
+        """Internal representation of binary values.
 
         The primary purpose of this class is to provide further validation of
         binary data depending on their content.  This class accepts any data,
         but subclasses may exist, which only accept certain binary formats,
         such as images, documents, audio files etc.
 
-        Methods for loading binary data from files or saving them are also
-        provided, but these are mostly here for convenience.
-
         """
 
+        def __new__(cls, data, **kwargs):
+            if isinstance(data, (str, bytes, buffer)):
+                pass
+            elif hasattr(data, 'read') and isinstance(data.read, collections.Callable):
+                # TODO: Make sure the file was opened in binary mode?  Make a conversion if not?
+                data = data.read()
+            else:
+                raise TypeError("Invalid type for binary data:", type(data))
+            return bytes.__new__(cls, data)
+
         def __init__(self, data, filename=None, mime_type=None):
-            """Initialize a new buffer instance and validate the input data.
+            """Initialize a new value instance and validate the input data.
 
             Arguments:
 
-              data -- The buffer data.  It can be a Python 'buffer' object,
-                input file path as a string or an open stream (a file-like
-                object).  A buffer object is used directly, file path is opened
-                and read and file-like object is just read (the caller is
-                responsible for closing it).
-              filename -- Filename for the buffer data as a string or None.
-                This name does not include directory and does not refer to any
-                actual file (has nothing to do with the input file for reading
-                the data).  It may be used to suggest what the contents of the
-                buffer is.  It is optional and its usage may be application
-                specific.
-              mime_type -- MIME type of buffer data as a string or None.  It is
+              data -- The binary data.  It can be a Python 'bytes', 'str' or
+                 'buffer' object or an open stream (a file-like object).  A
+                 'bytes' object is used directly, file-like object is read (the
+                 caller is responsible for closing it) and the other types are
+                 converted to 'bytes'.
+              filename -- Filename as a string or None.  This name does not
+                include directory and does not refer to any actual file (has
+                nothing to do with the input file for reading the data).  It
+                may be used to suggest what the content of the data is.  It is
                 optional and its usage may be application specific.
+              mime_type -- Data MIME type as a string or None.  It is optional
+                and its usage may be application specific.
 
             Raises 'ValidationError' if the data don't conform to the binary
-            format in use (depending on the actual 'Buffer' subclass).
+            format in use (depending on the actual 'Binary.Data' subclass).
+
+            Raises 'TypeError' if 'data' is a value of unsupported type.
 
             Raises 'IOError' if the input file can not be read.
 
             """
-            self._load(data, filename=filename, mime_type=mime_type)
-
-        def __len__(self):
-            return len(self._buffer)
+            assert filename is None or isinstance(filename, basestring), filename
+            assert mime_type is None or isinstance(mime_type, basestring), mime_type
+            self._validate(data)
+            self._filename = filename
+            self._mime_type = mime_type
 
         def _validate(self, data):
-            if not isinstance(data, buffer):
-                raise ValidationError(_(u"Not a buffer object: %r") % data)
+            pass
 
         def buffer(self):
-            """Return the binary data as a Python buffer instance."""
-            return self._buffer
+            """Return the binary data as a Python bytes instance."""
+            return buffer(self)
 
         def filename(self):
             """Return the suggested filename as passed to the constructor."""
@@ -2502,60 +2510,26 @@ class Binary(Limited):
             """Return the suggested MIME type as passed to the constructor."""
             return self._mime_type
 
-        def _load(self, data, filename=None, mime_type=None):
-            """Try to re-load buffer data with new content.
-
-            Arguments:
-
-              data, filename, mime_type -- same as in constructor.
-
-            Raises 'IOError' if the file can not be read.
-
-            Raises 'ValidationError' if the data format is invalid.
-
-            The original buffer contents remains unchanged in case of any error.
-
-            """
-            assert filename is None or isinstance(filename, basestring)
-            assert mime_type is None or isinstance(mime_type, basestring)
-            if isinstance(data, buffer):
-                path = None
-                buf = data
-            elif isinstance(data, basestring):
-                path = data
-                f = open(path, 'rb')
-                try:
-                    buf = buffer(f.read())
-                finally:
-                    f.close()
-            elif hasattr(data, 'read') and isinstance(data.read, collections.Callable):
-                path = None
-                buf = buffer(data.read())
-            else:
-                raise ProgramError("Invalid Buffer data:", data)
-            self._validate(buf)
-            self._buffer = buf
-            self._path = path
-            self._filename = filename
-            self._mime_type = mime_type
+    # Temporary backwards compatibility alias.
+    Buffer = Data
 
     def _init(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self)._init(**kwargs)
 
     def _validate(self, object, filename=None, mime_type=None, **kwargs):
-        value = Value(self, self.Buffer(object, filename=filename, mime_type=mime_type))
+        value = Value(self, self.Data(object, filename=filename, mime_type=mime_type))
         return value, None
 
     def _export(self, value):
-        return value and value.buffer()
+        return value
 
     def _format_length(self, length):
         return format_byte_size(length)
 
     def adjust_value(self, value):
-        if value is not None and not isinstance(value, self.Buffer):
-            value = self.Buffer(value)
+        if value is not None and not isinstance(value, self.Data):
+            value = self.Data(value)
         return value
 
     def sqlalchemy_type(self):
@@ -2565,9 +2539,9 @@ class Binary(Limited):
 class Image(Binary, Big):
     """Binary type for generic bitmap images.
 
-    The binary data of this type are represented by an 'Image.Buffer' instance.
+    The binary data of this type are represented by an 'Image.Data' instance.
 
-    'Image.Buffer' validates the binary data to conform to one of input image
+    'Image.Data' validates the binary data to conform to one of input image
     formats supported by the Python Imaging Library.  It also provides the
     `image()' method, which returns the 'PIL.Image' instance corresponding to
     the image contained within the data.
@@ -2604,7 +2578,7 @@ class Image(Binary, Big):
     VM_FORMAT = 'VM_FORMAT'
     _VM_FORMAT_MSG = _(u"Unsupported format %(format)s; valid formats: %(formats)s")
 
-    class Buffer(Binary.Buffer):
+    class Data(Binary.Data):
         """A bufer for internal representation of bitmap image data.
 
         See the documentation of the 'Image' type for more information.
@@ -2612,7 +2586,7 @@ class Image(Binary, Big):
         """
 
         def _validate(self, data):
-            super(Image.Buffer, self)._validate(data)
+            super(Image.Data, self)._validate(data)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
             f = cStringIO.StringIO(data)
@@ -2625,6 +2599,8 @@ class Image(Binary, Big):
         def image(self):
             """Return the image as a 'PIL.Image' instance."""
             return self._image
+
+    Buffer = Data
 
     def _init(self, minsize=(None, None), maxsize=(None, None),
               formats=None, **kwargs):
@@ -3358,7 +3334,9 @@ class Value(_Value):
           value -- hodnota samotná, libovolný objekt
 
         """
+        #print '---', type_, type(value), repr(value)
         value = type_.adjust_value(value)
+        #print '-->', type(value), repr(value)
         _Value.__init__(self, type_, value)
         self._init()
 

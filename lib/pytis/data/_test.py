@@ -510,6 +510,28 @@ class Array(_TypeCheck):
         self.assertEqual(cls(inner_type=inner_type), cls(inner_type=inner_type))
 
 
+class Binary(_TypeCheck):
+    _test_instance = pytis.data.Binary()
+
+    def test_validation(self):
+        self._test_validity(None, '', '')
+        self._test_validity(None, '0123456789', '0123456789')
+        self._test_validity(None, buffer('abc'), 'abc')
+        self._test_validity(None, open(__file__), open(__file__).read())
+        self._test_validity(pytis.data.Binary(maxlen=300), open(__file__), None)
+        self._test_validity(pytis.data.Binary(maxlen=300), 400 * 'x', None)
+        self._test_validity(pytis.data.Binary(maxlen=300), 300 * 'x', bytes(300 * 'x'))
+        #self._test_validity(None, u'abc', None)
+
+    def test_len(self):
+        v = pytis.data.Value(pytis.data.Binary(), '0123456789')
+        self.assertEqual(len(v.value()), 10)
+
+    def test_cmp(self):
+        self.assertEqual(pytis.data.Binary(), pytis.data.Binary())
+        self.assertNotEqual(pytis.data.Binary(), pytis.data.Binary(maxlen=3))
+
+
 class Enumerator(_TypeCheck):
     # Netestováno, neboť třída není používána přímo, stačí testovat potomky
     pass
