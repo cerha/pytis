@@ -2502,37 +2502,6 @@ class Binary(Limited):
             """Return the suggested MIME type as passed to the constructor."""
             return self._mime_type
 
-        def path(self):
-            """Return the path to the input file or None.
-
-            If the buffer was loaded from a file, the input path is returned as
-            a string.  None is returned if the buffer was loaded from an input
-            stream or buffer.  The application should not rely on the path to
-            still exist nor should it operate the file.  The returned value may
-            be used for preselecting the path in a dialog for saving the file
-            or a similar purpos.  Note, that in the client-server environment,
-            the path refers to the server filesystem, so might not be usable
-            for the client at all.
-
-            """
-            return self._path
-
-        def save(self, path):
-            """Save the buffer data into a file.
-
-            Arguments:
-
-              path -- string path to the output file.
-
-            Raises 'IOError' if the file can not be written.
-
-            """
-            f = open(path, 'wb')
-            try:
-                f.write(self._buffer)
-            finally:
-                f.close()
-
         def _load(self, data, filename=None, mime_type=None):
             """Try to re-load buffer data with new content.
 
