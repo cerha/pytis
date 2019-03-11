@@ -2481,7 +2481,7 @@ class Binary(Limited):
             Raises 'IOError' if the input file can not be read.
 
             """
-            self.load(data, filename=filename, mime_type=mime_type)
+            self._load(data, filename=filename, mime_type=mime_type)
 
         def __len__(self):
             return len(self._buffer)
@@ -2533,7 +2533,7 @@ class Binary(Limited):
             finally:
                 f.close()
 
-        def load(self, data, filename=None, mime_type=None):
+        def _load(self, data, filename=None, mime_type=None):
             """Try to re-load buffer data with new content.
 
             Arguments:

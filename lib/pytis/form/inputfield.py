@@ -2050,10 +2050,7 @@ class FileField(Invocable, InputField):
         if fh:
             try:
                 try:
-                    if self._buffer:
-                        self._buffer.load(fh, filename=filename)
-                    else:
-                        self._buffer = self._type.Buffer(fh, filename=filename)
+                    self._buffer = self._type.Buffer(fh, filename=filename)
                 except pytis.data.ValidationError as e:
                     message(e.message(), beep_=True)
                 except IOError as e:
