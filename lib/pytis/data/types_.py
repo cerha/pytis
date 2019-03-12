@@ -2481,22 +2481,19 @@ class Binary(Limited):
               mime_type -- Data MIME type as a string or None.  It is optional
                 and its usage may be application specific.
 
-            Raises 'ValidationError' if the data don't conform to the binary
-            format in use (depending on the actual 'Binary.Data' subclass).
-
             Raises 'TypeError' if 'data' is a value of unsupported type.
 
-            Raises 'IOError' if the input file can not be read.
+            Raises 'IOError' if 'data' is an open stream which can not be read.
+
+            Raises 'ValueError' if the data content does not conform to the
+            expected binary format (depending on the actual 'Binary.Data'
+            subclass).
 
             """
             assert filename is None or isinstance(filename, basestring), filename
             assert mime_type is None or isinstance(mime_type, basestring), mime_type
-            self._validate(data)
             self._filename = filename
             self._mime_type = mime_type
-
-        def _validate(self, data):
-            pass
 
         def buffer(self):
             """Return the binary data as a Python bytes instance."""
@@ -2518,8 +2515,11 @@ class Binary(Limited):
         super(Binary, self)._init(**kwargs)
 
     def _validate(self, object, filename=None, mime_type=None, **kwargs):
-        value = Value(self, self.Data(object, filename=filename, mime_type=mime_type))
-        return value, None
+        try:
+            value = self.Data(object, filename=filename, mime_type=mime_type)
+        except ValueError as e:
+            raise ValidationError(*e.args)
+        return Value(self, value), None
 
     def _export(self, value):
         return value
@@ -2585,15 +2585,15 @@ class Image(Binary, Big):
 
         """
 
-        def _validate(self, data):
-            super(Image.Data, self)._validate(data)
+        def __init__(self, *args, **kwargs):
+            super(Image.Data, self).__init__(*args, **kwargs)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
-            f = cStringIO.StringIO(data)
+            f = cStringIO.StringIO(self)
             try:
                 image = PIL.Image.open(f)
             except IOError:
-                raise ValidationError(_(u"Invalid graphics format"))
+                raise ValueError(_(u"Invalid graphics format"))
             self._image = image
 
         def image(self):
