@@ -23,6 +23,7 @@ import datetime
 import decimal
 import string
 import time
+import StringIO
 
 import unittest
 
@@ -530,6 +531,29 @@ class Binary(_TypeCheck):
     def test_cmp(self):
         self.assertEqual(pytis.data.Binary(), pytis.data.Binary())
         self.assertNotEqual(pytis.data.Binary(), pytis.data.Binary(maxlen=3))
+
+
+class Image(_TypeCheck):
+    _test_instance = pytis.data.Image()
+    _icon = ('\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x0c\x00\x00\x00\x05\x04'
+             '\x03\x00\x00\x00\x83T\x10\x1c\x00\x00\x00\x12PLTE\xef\xef\xef366rttSUU'
+             '\x91\x92\x92\xff\xff\xff\xa6\xcc.k\x00\x00\x00\x01tRNS\x00@\xe6\xd8f'
+             '\x00\x00\x00\x01bKGD\x00\x88\x05\x1dH\x00\x00\x00\tpHYs\x00\x00\x0b'
+             '\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdd'
+             '\x04\x1a\r\x13:\x07k\xbf\x19\x00\x00\x00\x1fIDAT\x08\xd7c`\x10d\x00!'
+             '\x06A\x01F\x10\xc5(((\xc0\x00\xe2\x828@.\x90\x03\x00\x0e:\x00\xbc\xe3'
+             '\xfd\xe4\x96\x00\x00\x00\x00IEND\xaeB`\x82')
+
+    def test_validation(self):
+        self._test_validity(None, self._icon, self._icon)
+        self._test_validity(None, StringIO.StringIO(self._icon), self._icon)
+        self._test_validity(pytis.data.Image(minsize=(100, 100)), self._icon, None)
+        self._test_validity(pytis.data.Image(maxsize=(10, 10)), self._icon, None)
+
+    def test_image(self):
+        value = pytis.data.Value(self._test_instance, self._icon)
+        image = value.value().image()
+        self.assertEqual(image.size, (12, 5))
 
 
 class Enumerator(_TypeCheck):
