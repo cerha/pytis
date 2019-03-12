@@ -1762,9 +1762,15 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
     """
     if precision:
         quantizer = decimal.Decimal('1.' + '0' * precision)
+
+        def quantize(number):
+            if number is not None:
+                return decimal.Decimal(number).quantize(quantizer)
+            else:
+                return None
+
         t = pytis.data.Float(precision=precision, not_null=not_null,
-                             minimum=decimal.Decimal(minimum).quantize(quantizer),
-                             maximum=decimal.Decimal(maximum).quantize(quantizer))
+                             minimum=quantize(minimum), maximum=quantize(maximum))
     else:
         t = pytis.data.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
     row = run_form(
