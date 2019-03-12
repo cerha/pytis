@@ -273,6 +273,21 @@ class PresentedRow(unittest.TestCase):
         row['b'] = 1
         self._check_values(row, total=3, d=4)
 
+    def test_binary_computer(self):
+        a = '\x04\x00\x00\x05\x00\x19\x00'
+        b = '\x00\x05\x04\xa4\xbb\x10\x00'
+        row = self._row((
+            pp.Field('x', type=pd.String()),
+            pp.Field('data', type=pd.Binary(not_null=True),
+                     computer=pp.computer(lambda r, x: x == 'a' and a or x == 'b' and b or None)),
+        ))
+        self.assertEqual(row['data'].value(), None)
+        row['x'] = pd.sval('a')
+        self.assertEqual(row['data'].value(), a)
+        self.assertIsInstance(row['data'].value(), pd.Binary.Data)
+        row['x'] = pd.sval('b')
+        self.assertEqual(row['data'].value(), b)
+
     def test_recursive_computer_validation(self):
         fields = (
             pp.Field('a', type=pd.Integer(not_null=True),
