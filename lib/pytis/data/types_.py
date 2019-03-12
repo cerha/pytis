@@ -2446,10 +2446,10 @@ class Binary(Limited):
     class Data(bytes):
         """Internal representation of binary values.
 
-        The primary purpose of this class is to provide further validation of
-        binary data depending on their content.  This class accepts any data,
-        but subclasses may exist, which only accept certain binary formats,
-        such as images, documents, audio files etc.
+        The primary purpose of this class is to provide verification od binary
+        data depending on their content.  This class accepts any data, but
+        subclasses may exist, which only accept certain binary formats, such as
+        images, documents, audio files etc.
 
         """
 
@@ -2464,7 +2464,7 @@ class Binary(Limited):
             return bytes.__new__(cls, data)
 
         def __init__(self, data, filename=None, mime_type=None):
-            """Initialize a new value instance and validate the input data.
+            """Initialize a new value instance.
 
             Arguments:
 
@@ -2541,10 +2541,10 @@ class Image(Binary, Big):
 
     The binary data of this type are represented by an 'Image.Data' instance.
 
-    'Image.Data' validates the binary data to conform to one of input image
-    formats supported by the Python Imaging Library.  It also provides the
-    `image()' method, which returns the 'PIL.Image' instance corresponding to
-    the image contained within the data.
+    'Image.Data' makes sure that the binary data represent an image in one of
+    the input formats supported by the Python Imaging Library.  It also
+    provides the `image()' method, which returns the 'PIL.Image' instance
+    corresponding to the image contained within the data.
 
     Image type can be further restricted to a list of allowed formats.  You may
     also restrict minimal/maximal pixel size of the image.
@@ -2553,7 +2553,7 @@ class Image(Binary, Big):
     'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX', 'PPM', 'XBM' or 'IM'.  See Python
     Imaging Library documentation for the full list.
 
-    The Python Imaging Library (PIL) must be installed when using this class.
+    The Python Imaging Library (PIL) must be installed when using this type.
 
     Constructor arguments:
 
