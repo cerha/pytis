@@ -1950,7 +1950,7 @@ class FileField(Invocable, InputField):
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
     def _init_attributes(self):
-        self._buffer = None
+        self._value = None
         super(FileField, self)._init_attributes()
 
     def _create_ctrl(self, parent):
@@ -1968,19 +1968,14 @@ class FileField(Invocable, InputField):
         return field_size(parent, 2, 1)
 
     def _validate(self):
-        filename = self._buffer and self._buffer.filename()
-        return self._row.validate(self.id(), self._get_value(), filename=filename)
+        return self._row.validate(self.id(), self._value,
+                                  filename=self._value and self._value.filename())
 
     def _get_value(self):
-        return self._buffer and self._buffer.buffer()
+        return self._value
 
     def _set_value(self, value):
-        if isinstance(value, self._type.Buffer):
-            # Workaround: When inserting an empty value into the field, this
-            # value may appear here. Why?
-            value = value.buffer()
-        assert value is None or isinstance(value, buffer)
-        self._buffer = value and self._type.Buffer(value) or None
+        self._value = self._type.adjust_value(value)
         if self._readonly:
             # _on_change() will not trigger _on_change_hook() for readonly
             # fields, so we need to run it manually here.
@@ -1995,8 +1990,8 @@ class FileField(Invocable, InputField):
     def _on_file_changed(self):
         filename = self._row.filename(self._id)
         display = filename or ''
-        if self._buffer is not None:
-            bytesize = format_byte_size(len(self._buffer))
+        if self._value is not None:
+            bytesize = format_byte_size(len(self._value))
             if display:
                 display = '%s (%s)' % (display, bytesize)
             else:
@@ -2010,7 +2005,7 @@ class FileField(Invocable, InputField):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
 
     def _filename_extension(self):
-        if self._buffer:
+        if self._value:
             filename = self._row.filename(self._id)
             if filename:
                 return os.path.splitext(filename)[1]
@@ -2035,10 +2030,10 @@ class FileField(Invocable, InputField):
              )
 
     def _can_open(self):
-        return self._enabled and self._buffer is not None and self._filename_extension()
+        return self._enabled and self._value is not None and self._filename_extension()
 
     def _cmd_open(self):
-        open_data_as_file(self._buffer.buffer(), suffix=self._filename_extension())
+        open_data_as_file(self._value, suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
@@ -2050,7 +2045,7 @@ class FileField(Invocable, InputField):
         if fh:
             try:
                 try:
-                    self._buffer = self._type.Buffer(fh, filename=filename)
+                    self._value = self._type.Data(fh, filename=filename)
                 except pytis.data.ValidationError as e:
                     message(e.message(), beep_=True)
                 except IOError as e:
@@ -2064,12 +2059,12 @@ class FileField(Invocable, InputField):
             message(_("Loading file canceled."))
 
     def _can_save(self):
-        return self._buffer is not None
+        return self._value is not None
 
     def _cmd_save(self):
         # msg = _("Save value of %s") % self.spec().label()
         try:
-            saved = pytis.form.write_selected_file(self._buffer.buffer(), mode='wb',
+            saved = pytis.form.write_selected_file(self._value, mode='wb',
                                                    filename=self._row.filename(self._id),
                                                    context='file-field')
         except IOError as e:
@@ -2081,7 +2076,7 @@ class FileField(Invocable, InputField):
                 message(_("Saving file canceled."))
 
     def _can_clear(self):
-        return self._enabled and self._buffer is not None
+        return self._enabled and self._value is not None
 
     def _cmd_clear(self):
         self._set_value(None)
@@ -2112,9 +2107,9 @@ class ImageField(FileField):
         pass
 
     def _bitmap(self):
-        if self._buffer is not None:
+        if self._value is not None:
             import PIL.Image
-            img = self._buffer.image().copy()
+            img = self._value.image().copy()
             img.thumbnail((self.width(), self.height()), PIL.Image.ANTIALIAS)
             stream = StringIO()
             img.save(stream, 'PNG')
@@ -2127,8 +2122,8 @@ class ImageField(FileField):
             self.COMMAND_OPEN.invoke()
 
     def _filename_extension(self):
-        if self._buffer:
-            return "." + self._buffer.image().format.lower()
+        if self._value:
+            return "." + self._value.image().format.lower()
         else:
             return None
 
