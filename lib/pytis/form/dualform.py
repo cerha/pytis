@@ -1038,8 +1038,6 @@ class MultiSideForm(MultiForm):
                     row = data.row(row[data.key()[0].id()],
                                    arguments=main_form._current_arguments())
                     value = row[column].value()
-                if value and isinstance(row[column].type(), pytis.data.Binary):
-                    value = value.buffer()
                 content = value
             else:
                 content = self._binding_content(row)

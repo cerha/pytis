@@ -912,7 +912,7 @@ class Image(_Mark):
 
           file_or_data -- image file name relative to the directory given by
             configuration option 'print_spec_dir' or image as a memory data
-            (buffer or bytearray).
+            (bytes, buffer or bytearray).
           width -- explicit output image width as lcg.Unit subclass instance.
             If only one of width/height is specified (not None), the other
             dimension is computed to maintain the original image proportions.
@@ -925,23 +925,18 @@ class Image(_Mark):
             resized automatically to fit inside the current context.
 
         """
-        assert (isinstance(file_or_data, basestring) or
-                isinstance(file_or_data, bytearray) or
-                isinstance(file_or_data, buffer) or
-                hasattr(file_or_data, 'buffer')), file_or_data
+        assert isinstance(file_or_data, (basestring, bytearray, buffer,
+                                         pytis.data.Binary.Data)), type(file_or_data)
         super(Image, self).__init__()
         self._standalone = standalone
         self._width = width
         self._height = height
-        if isinstance(file_or_data, basestring):
-            self._file_name = file_or_data
-            self._bytes = None
-        elif isinstance(file_or_data, buffer):
+        if isinstance(file_or_data, (pytis.data.Binary.Data, buffer)):
             self._file_name = '_mem_image'
             self._bytes = bytearray(file_or_data)
-        elif hasattr(file_or_data, 'buffer'):
-            self._file_name = '_mem_image'
-            self._bytes = bytearray(file_or_data.buffer())
+        elif isinstance(file_or_data, basestring):
+            self._file_name = file_or_data
+            self._bytes = None
         else:
             self._file_name = '_mem_image'
             self._bytes = file_or_data

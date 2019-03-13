@@ -126,7 +126,7 @@ class _PgValue(object):
         elif isinstance(t, Array):
             result = [vv.value() for vv in v]
         elif isinstance(t, Binary):
-            result = v.buffer()
+            result = buffer(v)
             if not str(result):
                 result = None
         else:

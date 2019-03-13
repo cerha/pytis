@@ -283,15 +283,11 @@ def file_menu_items(fields, row, select_arguments):
                 complete_row = data.fetchone()
                 data.close()
                 if complete_row is None:
-                    binary_value = None
+                    data = None
                 else:
-                    binary_value = complete_row[field_id].value()
+                    data = complete_row[field_id].value()
             else:
-                binary_value = value.value()
-            if binary_value is not None:
-                data = binary_value.buffer()
-            else:
-                data = None
+                data = value.value()
         else:
             if value.value() is not None:
                 data = value.export()

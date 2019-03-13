@@ -4745,7 +4745,7 @@ class DbAttachmentStorage(AttachmentStorage):
         return resources
 
     def insert(self, filename, data, values, transaction=None):
-        filedata = buffer(data.read())
+        filedata = data.read()
         rowdata = {self._ref_column: self._ref_value,
                    'file_name': filename,
                    'file': filedata,
@@ -4765,7 +4765,7 @@ class DbAttachmentStorage(AttachmentStorage):
     def update(self, filename, values, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
-            image = self._image(row['file'].value().buffer())
+            image = self._image(row['file'].value())
             if image:
                 rowdata = self._computed_row_values(image, **values)
                 try:
@@ -4781,7 +4781,7 @@ class DbAttachmentStorage(AttachmentStorage):
         row = self._get_row(filename, transaction=transaction)
         if row:
             import cStringIO
-            return cStringIO.StringIO(row['file'].value().buffer())
+            return cStringIO.StringIO(row['file'].value())
         else:
             return None
 
@@ -4808,7 +4808,7 @@ class DbAttachmentStorage(AttachmentStorage):
             if len(path) == 1:
                 row = self._get_row(path[0])
                 if row:
-                    return row[field].value().buffer()
+                    return row[field].value()
         return None
 
 

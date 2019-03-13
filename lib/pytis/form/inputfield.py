@@ -2572,7 +2572,7 @@ class StructuredTextField(TextField):
             f = self._storage_op('retrieve', filename, transaction=self._row.transaction())
             if f:
                 try:
-                    return pytis.data.Image.Buffer(f, filename=filename)
+                    return pytis.data.Image.Data(f, filename=filename)
                 finally:
                     f.close()
         return None
