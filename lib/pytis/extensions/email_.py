@@ -233,7 +233,7 @@ class GPGEmail(SimpleEmail):
                    '--keyring=%s' % keyring)
         gpg = gnupg.GPG(options=options)
         import_result = gpg.import_keys(self.key)
-        fingerprints = [r['fingerprint'] for r in import_result.results]
+        fingerprints = import_result.fingerprints
         content = self.get_content_text(self.content, html=self.html, charset=self.charset)
         encryption_result = gpg.encrypt(str(content), fingerprints[0])
         if not encryption_result.ok:
