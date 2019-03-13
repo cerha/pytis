@@ -2151,6 +2151,7 @@ class StructuredTextField(TextField):
         enumeration = (('inline', _("Inline")),
                        ('left', _("Left")),
                        ('right', _("Right")))
+        default = 'left'
 
     class ImageSizes(Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
@@ -2161,6 +2162,7 @@ class StructuredTextField(TextField):
                                              LARGE_THUMBNAIL_SIZE)),
                        # ('custom-thumbnail', _("Vlastní velikost náhledu")),
                        ('full-size', _("Full size (appropriate for screenshot etc.)")))
+        default = 'full-size'
 
         @classmethod
         def matching_size(cls, thumbnail):
