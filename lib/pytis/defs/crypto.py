@@ -147,9 +147,9 @@ class Users(Specification):
             pytis.presentation.HGroup(
                 'user_password',
                 pytis.presentation.Button(
-                    _("Generovat heslo"), self._gen_password),
+                    _(u"Generovat heslo"), self._gen_password),
                 pytis.presentation.Button(
-                    _("Zrušit heslo"), self._clear_password)
+                    _(u"Zrušit heslo"), self._clear_password)
             ))
 
     def _editable(self, row, col):
@@ -185,7 +185,7 @@ class Users(Specification):
         for f in fields:
             if f.virtual():
                 fields.modify(f.id(), virtual=False)
-        title = _("Nový uživatel šifrované oblasti")
+        title = _(u"Nový uživatel šifrované oblasti")
         prefill = {'name': area}
         record = pytis.form.run_form(pytis.form.InputForm, title=title, fields=fields,
                                      layout=self.view_spec().layout(),
