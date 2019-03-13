@@ -3512,8 +3512,7 @@ class Field(object):
             enumerator = codebook
         elif isinstance(enumerator, (list, tuple)):
             enumerator = pytis.data.FixedEnumerator(enumerator)
-        elif __builtins__['type'](enumerator) == __builtins__['type'](Enumeration) \
-                and issubclass(enumerator, Enumeration):
+        elif isinstance(enumerator, __builtins__['type']) and issubclass(enumerator, Enumeration):
             e = enumerator
             enumerator = pytis.data.FixedEnumerator([v for v, l in e.enumeration])
             assert e.selection_type in public_attributes(SelectionType), e.selection_type
