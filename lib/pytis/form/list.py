@@ -557,9 +557,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.Sizer.Layout()
         if self._query_fields_minimized():
             row = form.row()
-            values = ['%s: %s' % (field.spec().label(), row.format(field.id()))
-                      for field in form.fields()]
-            panel.SetToolTip(', '.join(values))
+            if row:
+                values = ['%s: %s' % (field.spec().label(), row.format(field.id()))
+                          for field in form.fields()]
+                panel.SetToolTip(', '.join(values))
         elif panel.GetToolTip():
             panel.SetToolTip(' ')
             panel.GetToolTip().Enable(False)  # Doesn't seem to work, thus the line above...
