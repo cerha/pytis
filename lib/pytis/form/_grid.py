@@ -83,12 +83,12 @@ class DataTable(object):
             except IndexError:
                 return None
 
-        def __setitem__(self, row, the_row):
+        def __setitem__(self, row, value):
             start = self._start_row
             try:
                 index = row - start
                 if index >= 0:
-                    self._cache[index] = the_row
+                    self._cache[index] = value
                 else:
                     raise IndexError()
             except IndexError:
@@ -108,7 +108,7 @@ class DataTable(object):
                     raise ProgramError(start, end, new_start, new_end)
                 assert len(cache) == self._size, len(cache)
                 self._start_row = new_start
-                cache[row - new_start] = the_row
+                cache[row - new_start] = value
                 self._cache = cache
 
     class _Column(object):
