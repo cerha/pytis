@@ -71,7 +71,7 @@ class DataTable(object):
             self._cache = self._allocate(size)
 
         def _allocate(self, size):
-            return map(lambda __: None, range(size))
+            return [None for i in range(size)]
 
         def __getitem__(self, row):
             try:
