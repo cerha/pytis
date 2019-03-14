@@ -45,25 +45,17 @@ import config
 
 
 class DataTable(object):
-    # Tato třída není až tak triviální, jak bychom si možná přáli.
     # Požadavky na ni jsou následující:
     # - základní práce s tabulkovými daty
-    # - možnost přítomnosti jednoho řádku navíc, nepřítomného v datech, na
-    #   nějakém místě v tabulce
-    # - znalost původních dat editovaného řádku
-    # - znalost aktuálních (zeditovaných) dat editovaného řádku
-    # - znalost až tří hodnot právě editovaného políčka: hodnota původní
-    #   (z databáze), platná hodnota zeditovaná, odeslaná nezvalidovaná
-    #   hodnota určená k opravné editaci uživatelem
     # - schopnost práce s počítanými sloupci
 
     # Uvnitř třídy pracujeme zásadně s vnitřními hodnotami, nikoliv
     # hodnotami uživatelskými.  *Jediné* metody, které pracují
     # s uživatelskou reprezentací, jsou `GetValue' a `SetValue'.
 
-    # Necachujeme žádná data, udržujeme pouze poslední řádek a data
-    # o editaci jednoho řádku; cachování většího množství dat vzhledem ke
-    # způsobu použití tabulky nedává příliš velký smysl.
+    # Necachujeme žádná data, udržujeme pouze poslední řádek; cachování
+    # většího množství dat vzhledem ke způsobu použití tabulky nedává
+    # příliš velký smysl.
 
     class _CurrentRow:
         def __init__(self, row, the_row):
@@ -71,21 +63,6 @@ class DataTable(object):
             assert isinstance(the_row, PresentedRow)
             self.row = row
             self.the_row = the_row
-
-    class _EditedRow(_CurrentRow):
-        def __init__(self, row, data_row, record):
-            assert data_row is None or isinstance(data_row, pytis.data.Row)
-            DataTable._CurrentRow.__init__(self, row, record)
-            self.orig_row = copy.copy(data_row)
-
-        def update(self, colid, value):
-            self.the_row[colid] = value
-
-    class EditInfo:
-        def __init__(self, row, the_row, orig_row):
-            self.row = row
-            self.the_row = the_row
-            self.orig_row = orig_row
 
     class _DisplayCache:
         def __init__(self, size=1000):
@@ -158,24 +135,14 @@ class DataTable(object):
         self._current_row = None
         self._row_style = row_style
         self._plain_style = pytis.presentation.Style()
-        # Zpracuj sloupce
         self._update_columns(columns)
-        # Vytvoř cache
+        # Create caches
         self._cache = self._DisplayCache()
         self._attr_cache = {}
         self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        # Nastav řádek
         self.rewind()
-        self._edited_row = None
-
-    def _init_edited_row(self, row_number, data_row=None, prefill=None, new=False):
-        assert data_row is None or isinstance(data_row, pytis.data.Row)
-        if prefill is None:
-            prefill = self._prefill
-        record = self._form.record(data_row, new=new, prefill=prefill)
-        return self._EditedRow(row_number, data_row, record)
 
     def _update_columns(self, columns):
         self._columns = [self._Column(c.id(),
@@ -191,28 +158,17 @@ class DataTable(object):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
-    def _get_row(self, row, autoadjust=False, require=True):
+    def _get_row(self, row, require=True):
         """Return the row number 'row' from the database as a 'PresentedRow' instance.
 
         Arguments:
 
           row -- row number within the *database select*, starting from 0
-          autoadjust -- when true, 'row' is decreased by one if it is located
-            behind an edited *new* row.  Also when the 'row', equals to the
-            number of the currently edited row (whether new or existing), this
-            edited row is returned.
           require -- when true, the requested row must exist, otherwise 'None'
             is returned if the given row doesn't exist
 
         """
-        edited = self._edited_row
-        if edited and row == edited.row:
-            return edited.the_row
-        elif edited and autoadjust and edited.the_row.new() and row > edited.row:
-            row_ = row - 1
-        else:
-            row_ = row
-        success, result = db_operation(self._retrieve_row, row_, require=require)
+        success, result = db_operation(self._retrieve_row, row, require=require)
         if not success:
             self._panic()
         return result
@@ -328,9 +284,10 @@ class DataTable(object):
         row -- nezáporný integer, první řádek má číslo 0
 
         """
-        if row < 0 or row >= self.number_of_rows(min_value=(row + 1)):
+        if row >= 0 and row < self.number_of_rows(min_value=(row + 1)):
+            return self._get_row(row, require=False)
+        else:
             return None
-        return self._get_row(row, autoadjust=True, require=False)
 
     def rewind(self, position=None):
         """Přesuň datové ukazovátko na začátek dat.
@@ -357,8 +314,7 @@ class DataTable(object):
     def form(self):
         return self._form
 
-    def update(self, columns, row_count, sorting, grouping, inserted_row_number,
-               inserted_row_prefill, prefill):
+    def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
         self._row_count = row_count
         self._sorting = sorting
@@ -370,11 +326,6 @@ class DataTable(object):
         self._group_value_cache = {}
         # Nastav řádek
         self.rewind()
-        if inserted_row_number is None:
-            self._edited_row = None
-        else:
-            self._edited_row = self._init_edited_row(inserted_row_number,
-                                                     prefill=inserted_row_prefill, new=True)
 
     def close(self):
         # Tato metoda je nutná kvůli jistému podivnému chování wxWidgets,
@@ -393,7 +344,6 @@ class DataTable(object):
         self._font_cache = None
         self._group_cache = None
         self._group_value_cache = None
-        self._edited_row = None
         self._presented_row = None
         self._current_row = None
         self._row_style = None
@@ -438,49 +388,6 @@ class DataTable(object):
         cached_row = cached_things[style and 1 or 0]
         return cached_row[col_id]
 
-    def edit_row(self, row):
-        """Zahaj editaci řádku číslo 'row'.
-
-        Pokud již nějaký řádek editován je, jeho editace je zrušena a obsah
-        vrácen do původního stavu (ovšem bez překreslení, to musí být
-        zajištěno jinak!).
-
-        Argumenty:
-
-          row -- nezáporný integer určující číslo editovaného řádku
-            počínaje od 0, nebo 'None' značící že nemá být editován žádný
-            řádek
-
-        """
-        if row is None:
-            self._edited_row = None
-        else:
-            assert row >= 0 and row < self.number_of_rows(min_value=row), \
-                ('Invalid row number', row)
-            self._edited_row = self._init_edited_row(row, data_row=self._get_row(row).row())
-
-    def editing(self):
-        """Vrať informaci o editovaném řádku nebo 'None'.
-
-        Pokud není editován žádný řádek, vrať 'None'.  Jinak vrať instanci
-        třídy 'EditInfo' s informacemi o čísle editovaného řádku, zda je
-        tento řádek nový, zda je jeho aktuální obsah různý od jeho
-        původního obsahu, zda jsou všechny sloupce validní, původní obsah
-        řádku (jako instanci 'pytis.data.Row') a aktuální obsah řádku (jako
-        instanci 'PresentedRow').
-
-        """
-        edited = self._edited_row
-        if edited:
-            the_row = edited.the_row
-            if the_row.new():
-                orig_row = None
-            else:
-                orig_row = edited.orig_row
-            return self.EditInfo(edited.row, the_row, orig_row)
-        else:
-            return None
-
     def column_id(self, col):
         return self._columns[col].id
 
@@ -504,8 +411,6 @@ class DataTable(object):
             count, finished = self._row_count.count(min_value=min_value, timeout=timeout)
             if finished:
                 self._row_count = count
-        if self._edited_row is not None and self._edited_row.the_row.new():
-            count += 1
         if full_result:
             return count, finished
         else:
@@ -580,37 +485,11 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return False
 
     def GetValue(self, row, col):
-        # `row' a `col' jsou číslovány od 0.
-        # Je tabulka již uzavřena?
-        if self._data is None or col >= self.GetNumberCols():
-            return ''
-        column = self._columns[col]
-        if self._edited_row and row == self._edited_row.row:
-            the_row = self._edited_row.the_row
-            if the_row is None:
-                return ''
-            value = the_row.format(column.id, secure=True)
+        # `row' and `col' are numbered from 0.
+        if self._data is not None and col < self.GetNumberCols():
+            return self._cached_value(row, self._columns[col].id)
         else:
-            value = self._cached_value(row, column.id)
-        return value
-
-    def SetValue(self, row, col, value):
-        # Tato metoda neodpovídá specifikaci gridu, ale to nevadí, protože
-        # políčka editujeme výhradně přes naše editory.
-        assert isinstance(value, pytis.data.Value), ('Value not a value', value)
-        edited = self._edited_row
-        if edited is None:
-            # K této situaci dochází, když se kliknutím myši opouští
-            # rozeditované políčko řádku, jemuž ještě nebyla změněna žádná
-            # hodnota.  V takovém případě naše metody editaci nakrásno
-            # ukončí a wxWidgets po provedené změně řádku vesele zavolá
-            # SetValue ...
-            return
-        # Nastav hodnotu editovanému sloupci
-        cid = self._columns[col].id
-        edited.update(cid, value)
-        log(EVENT, 'Nastavena hodnota editovaného políčka:',
-            (row, col, value))
+            return ''
 
     # Nepovinné wx gridové metody
 
@@ -741,8 +620,6 @@ class CustomCellRenderer(wx.grid.GridCellRenderer):
                     if border_width != 0:
                         if grid.GetParent() is not Form.focused_form():
                             color = config.row_highlight_unfocused_color
-                        elif self._table.editing():
-                            color = config.row_highlight_edited_color
                         else:
                             color = config.row_highlight_color
                         dc.SetPen(wx.Pen(color, border_width, wx.PENSTYLE_SOLID))

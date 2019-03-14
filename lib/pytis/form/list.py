@@ -156,7 +156,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._selection_callback_tick = None
         self._in_select_cell = False
         self._last_reshuffle_request = self._reshuffle_request = 0
-        self._current_editor = None
         self._column_to_move = None
         self._column_move_target = None
         self._mouse_dragged = False
@@ -305,7 +304,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         corner = g.GetGridCornerLabelWindow()
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE, g, self._on_label_drag_size)
-        wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN, g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_left_click)
         wx_callback(wx.EVT_MOTION, g.GetGridWindow(), self._on_mouse_move)
@@ -323,9 +321,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_PAINT, corner, self._on_corner_paint)
         return g
 
-    def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row_prefill=None,
-                     delete_column=None, insert_column=None, inserted_column_index=None,
-                     init_columns=False, retain_row=False):
+    def _update_grid(self, data_init=False, delete_column=None, insert_column=None,
+                     inserted_column_index=None, init_columns=False, retain_row=False):
         g = self._grid
         t = self._table
         notify = self._notify_grid
@@ -359,12 +356,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 row_count = self._lf_count(timeout=0)
                 self._data.rewind()
-            if inserted_row_number is not None:
-                row_count = row_count + 1
             t.update(columns=self._columns, row_count=self._lf_select_count_,
                      sorting=self._lf_sorting,
-                     grouping=self._grouping, inserted_row_number=inserted_row_number,
-                     inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
+                     grouping=self._grouping, prefill=self._prefill)
             old_row_count = g.GetNumberRows()
             self._update_grid_length(g, row_count, original_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
@@ -385,8 +379,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     self._select_cell(row=0)
         else:
-            r = original_row_number if inserted_row_number is None else inserted_row_number
-            self._select_cell(row=r)
+            self._select_cell(row=original_row_number)
         # Závěrečné úpravy
         self._update_colors()
         self._resize_columns()
@@ -576,24 +569,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         """
         return ()
 
-    def _edit_menu(self):
-        return (
-            # MItem(_("Edit cell"),
-            #       command=ListForm.COMMAND_EDIT,
-            #       help=_("Enter the input field for this value.")),
-            # MItem(_("Save Record"),
-            #       command=ListForm.COMMAND_LINE_COMMIT,
-            #       help=_("Save the record and leave editation.")),
-            # MItem(_("Quit editation"),
-            #       command=ListForm.COMMAND_FINISH_EDITING,
-            #       help=_("Leave editation without saving the record.")),
-            # MSeparator(),
-            MItem(_("Copy cell content"),
-                  command=ListForm.COMMAND_COPY_CELL,
-                  help=_("Copy the value into the clipboard.")),
-            # MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
-        )
-
     def _lf_sfs_columns(self):
         def labelfunc(c):
             label = c.column_label()
@@ -758,33 +733,28 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             current_col = g.GetGridCursorCol()
             if row is not None:
                 assert isinstance(row, types.IntType)
-                # Zkontroluj případné opuštění editace
-                if not self._finish_editing(row=row):
-                    log(EVENT, 'Quitting editation not confirmed')
-                    return False
+                if row >= g.GetNumberRows():
+                    row_count = self._table.number_of_rows(min_value=(row + 1))
+                    if row < row_count:
+                        self._update_grid_length(g, row_count, current_row)
+                if row < 0 or row >= g.GetNumberRows():
+                    row = 0
                 else:
-                    if row >= g.GetNumberRows():
-                        row_count = self._table.number_of_rows(min_value=(row + 1))
-                        if row < row_count:
-                            self._update_grid_length(g, row_count, current_row)
-                    if row < 0 or row >= g.GetNumberRows():
-                        row = 0
-                    else:
-                        if col is None:
-                            col = max(0, current_col)
-                        g.SetGridCursor(row, col)
-                        g.MakeCellVisible(row, col)
-                        self._selection_candidate = (row, col)
-                        if invoke_callback:
-                            # Delay callback invocation after the end of scrolling.
-                            self._selection_callback_candidate = row
-                            delay = self._SELECTION_CALLBACK_DELAY
-                            self._selection_callback_tick = delay
-                    # TODO: tady to způsobuje špatné zobrazování pozice v
-                    #       dualform. Nahrazeno voláním _update_list_position v
-                    #       _post_selection_hook.
-                    #       Jiné řešení?
-                    # self._update_list_position()
+                    if col is None:
+                        col = max(0, current_col)
+                    g.SetGridCursor(row, col)
+                    g.MakeCellVisible(row, col)
+                    self._selection_candidate = (row, col)
+                    if invoke_callback:
+                        # Delay callback invocation after the end of scrolling.
+                        self._selection_callback_candidate = row
+                        delay = self._SELECTION_CALLBACK_DELAY
+                        self._selection_callback_tick = delay
+                # TODO: tady to způsobuje špatné zobrazování pozice v
+                #       dualform. Nahrazeno voláním _update_list_position v
+                #       _post_selection_hook.
+                #       Jiné řešení?
+                # self._update_list_position()
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
@@ -793,185 +763,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return True
         finally:
             self._in_select_cell = False
-
-    def _edit_cell(self):
-        # Activate the editor of the current field.
-        # TODO: Cell editors must be recreated for the current edited row.  Reinitializing columns
-        # solves that, but some more gentle solution would be desirable...
-        if self._current_editor is None:
-            self._init_col_attr()
-        row, col = self._current_cell()
-        if self._view.on_edit_record() is not None:
-            message(_("In-line editation disabled.  Use a standalone form (F5)."), beep_=True)
-            return False
-        if not self._is_editable_cell(row, col):
-            message(_("Field not editable."), kind=ACTION, beep_=True)
-            return False
-        self._grid.EnableCellEditControl()
-        log(EVENT, 'Grid field editor started:', (row, col))
-        return True
-
-    def _on_editor_shown(self, event):
-        if self._table.editing():
-            event.Skip()
-        else:
-            event.Veto()
-            self._select_cell(row=max(0, event.GetRow()), col=event.GetCol())
-
-    def _finish_editing(self, question=None, row=None):
-        # Vrací pravdu, právě když nejsou akce blokovány editací řádku.
-        table = self._table
-        editing = table.editing()
-        if not editing:
-            return True
-        if editing.row == row:
-            return True
-        if not editing.the_row.changed():
-            if __debug__:
-                log(DEBUG, 'Quit unchanged row editation enabled.')
-            self._on_line_rollback()
-            finish = True
-        else:
-            log(EVENT, 'Quit unsaved edited record attempted.')
-            if question is None:
-                question = _("Revoke your changes?")
-            buttons = bcancel, bsave, bcontinue = \
-                _("Revoke"), _("Save"), _("Continue editation")
-            result = run_dialog(MultiQuestion, question, buttons=buttons, default=bsave)
-            finish = (result != bcontinue)
-            if result == bcancel:
-                log(EVENT, 'Quit confirmed by user')
-                self._on_line_rollback()
-                finish = True
-            elif result == bsave:
-                log(EVENT, 'Quit saving row data')
-                finish = self._on_line_commit()
-            elif result is None or result == bcontinue:
-                log(EVENT, 'Quit not confirmed')
-                finish = False
-            else:
-                raise ProgramError('Unexpected dialog result', result)
-        return finish
-
-    def _on_line_commit(self):
-        # The return value matters here, as it is used by _cmd_cell_commit().
-        log(EVENT, 'Saving changed form row to the database')
-        # Pick the new data.
-        table = self._table
-        editing = table.editing()
-        if not editing:
-            return False
-        row = editing.row
-        the_row = editing.the_row
-        # Check record integrity.
-        success, field_id, msg = self._check_record(the_row)
-        if not success:
-            if field_id:
-                col = find(field_id, self._columns, key=lambda c: c.id())
-                if col is not None:
-                    i = self._columns.index(col)
-                    self._select_cell(row=row, col=i, invoke_callback=False)
-                    self._edit_cell()
-            if msg:
-                message(msg)
-            return True
-        # Determine the operation and the key.
-        newp = editing.the_row.new()
-        if newp:
-            permission = pytis.data.Permission.INSERT
-        else:
-            permission = pytis.data.Permission.UPDATE
-        rdata = self._record_data(the_row, permission=permission, updated=(not newp))
-        kc = [c.id() for c in self._data.key()]
-        if newp:
-            if row > 0:
-                after = table.row(row - 1).row().columns(kc)
-                before = None
-            elif row < table.number_of_rows(min_value=(row + 2)) - 1:
-                after = None
-                before = table.row(row + 1).row().columns(kc)
-            else:
-                after = before = None
-            op, args, kwargs = self._data.insert, (rdata,), dict(after=after, before=before)
-        else:
-            key = editing.orig_row.columns(kc)
-            op, args, kwargs = self._data.update, (key, rdata,), {}
-        # Perform the operation.
-        success, result = db_operation(op, *args, **dict(kwargs,
-                                                         transaction=self._open_transaction()))
-        if self._governing_transaction is None and self._transaction is not None:
-            self._transaction.commit()
-        self._transaction = self._governing_transaction
-        if success and result[1]:
-            cleanup = self._view.cleanup()
-            if cleanup is not None:
-                original_row = copy.copy(the_row)
-                new_row = result[0]
-                if new_row is None:
-                    new_row = the_row.row()
-                the_row.set_row(new_row, reset=True)
-            table.edit_row(None)
-            message(_("Record saved to the database."), ACTION)
-            self.refresh()
-            self._run_callback(self.CALL_MODIFICATION)
-            if cleanup is not None:
-                cleanup(the_row, original_row)
-            self.focus()
-        elif success:
-            log(EVENT, 'Zamítnuto pro chybu klíče')
-            if editing.the_row.new():
-                msg = _("Row with this key already exists or adjacent row changed.")
-            else:
-                msg = _("Row with this key already exists or the original row "
-                        "doesn't exist anymore.")
-            run_dialog(Warning, msg)
-            return False
-        else:
-            log(EVENT, 'Chyba databázové operace')
-            return False
-        return True
-
-    def _on_line_rollback(self, soft=False):
-        log(EVENT, 'Zrušení editace řádku')
-        if self._transaction is not None:
-            if self._governing_transaction is None:
-                self._transaction.rollback()
-            else:
-                self._transaction.cut('inline')
-            self._transaction = self._governing_transaction
-        editing = self._table.editing()
-        if not editing:
-            return False
-        if soft and editing.the_row.changed():
-            return True
-        row = editing.row
-        if editing.the_row.new():
-            self._update_grid()
-        else:
-            self._table.edit_row(None)
-            self._grid.Refresh()
-        self._select_cell(row=row, invoke_callback=False)
-        self.refresh()
-        return True
-
-    def _is_editable_cell(self, row, col):
-        # Vrať pravdu, pokud je buňka daného řádku a sloupca editovatelná.
-        editing = self._table.editing()
-        if editing and row == editing.row:
-            the_row = editing.the_row
-        else:
-            the_row = self._table.row(row)
-        cid = self._columns[col].id()
-        return the_row.editable(cid)
-
-    def _find_next_editable_cell(self):
-        # Vrať pravdu, pokud bylo pohybem vpravo nalezeno editovatelné políčko.
-        row, col = self._current_cell()
-        while self._grid.MoveCursorRight(False):
-            col += 1
-            if self._is_editable_cell(row, col):
-                self._edit_cell()
-                return True
 
     def _search_adjust_data_position(self, row_number):
         if row_number is None:
@@ -1073,8 +864,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Update grid when lazy row count computation is in progress; we
         # mustn't do it much often otherwise row count computation gets disrupted
         # and slowed down significantly.  Hence the timeout value below.
-        if ((self._table.editing() is None and
-             self._last_updated_row_count != self._table.number_of_rows(timeout=0.3))):
+        if self._last_updated_row_count != self._table.number_of_rows(timeout=0.3):
             self._update_grid()
             self._update_list_position()
         # V budoucnu by zde mohlo být přednačítání dalších řádků nebo dat
@@ -1132,8 +922,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # callbacku při změnách v rámci _update_grid(), které nejsou
             # interaktivní.
             self._run_callback(self.CALL_USER_INTERACTION)
-            if ((self._table.editing() is None and
-                 self._last_updated_row_count != self._table.number_of_rows(timeout=0))):
+            if self._last_updated_row_count != self._table.number_of_rows(timeout=0):
                 self._update_grid()
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
             # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mělo
@@ -1595,25 +1384,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # TODO: the status is currently unused but it was designed
         # to be displayed in a status bar field.
 
-    def _is_changed(self):
-        editing = self._table.editing()
-        return editing and editing.the_row.changed()
-
-    def _exit_check(self):
-        # Opuštění formuláře je umožněno vždy, ale před opuštěním během editace
-        # je nutné provést dodatečné akce.
-        editing = self._table.editing()
-        if editing:
-            log(EVENT, 'Attempt to leave row form during editation')
-            if ((editing.the_row.changed() and
-                 run_dialog(Question, _("Save the editted record?"), True))):
-                log(EVENT, 'Saving confirmed')
-                self._on_line_commit()
-            else:
-                log(EVENT, 'Saving denied')
-                self._on_line_rollback()
-        return True
-
     def _initial_select_row(self):
         if self._select_row_argument is not None:
             self.select_row(self._select_row_argument)
@@ -1622,8 +1392,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def select_row(self, position, **kwargs):
         # Během editace může `position' obsahovat nevyhledatelná data.
-        if position is not None and self._table.editing():
-            position = self._table.editing().row
         if ((isinstance(position, int) and
              position < self._table.number_of_rows(min_value=(position + 1)))):
             # Pro číslo voláme rovnou _select_cell a nezdržujeme se převodem na
@@ -1684,15 +1452,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if ((self._reshuffle_request == self._last_reshuffle_request or
                  self._reshuffle_request > time.time())):
                 return False
-        if when is self.DOIT_IMMEDIATELY:
-            QUESTION = _("Cancel changes in row editation and refresh the form?")
-            delay = not self._finish_editing(question=QUESTION)
-        else:
-            delay = (self._table.editing() is not None)  # nechceme držet info
-        if delay:
-            if __debug__:
-                log(DEBUG, 'Refresh postponed until end of editation.')
-            return False
         if reset:
             for k, v in reset.items():
                 if k == 'filter':
@@ -1749,10 +1508,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._resize_columns(size)
         event.Skip()
 
-    def _release_data(self):
-        if not self._table.editing():
-            super(ListForm, self)._release_data()
-
     def _cleanup(self):
         super(ListForm, self)._cleanup()
         if self._grid is not None:
@@ -1768,42 +1523,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     # Zpracování příkazů
 
-    def can_command(self, command, **kwargs):
-        # Příkazy platné i během editace, pokud není aktivní editor.
-        UNIVERSAL_COMMANDS = (
-            ListForm.COMMAND_COPY_CELL,
-            ListForm.COMMAND_RESIZE_COLUMN,
-            # ListForm.COMMAND_EDIT,
-            ListForm.COMMAND_FIRST_COLUMN,
-            ListForm.COMMAND_LAST_COLUMN,
-            ListForm.COMMAND_CONTEXT_MENU
-        )
-        # Příkazy platné pouze během editace řádku.
-        EDIT_COMMANDS = (
-            # ListForm.COMMAND_LINE_COMMIT,
-            # ListForm.COMMAND_LINE_ROLLBACK,
-            # ListForm.COMMAND_FINISH_EDITING,
-            # ListForm.COMMAND_CELL_COMMIT,
-            # ListForm.COMMAND_CELL_ROLLBACK,
-        )
-        if not self.initialized():
-            self.full_init()
-        if self._table.editing():
-            allowed = EDIT_COMMANDS
-            if not self._grid.IsCellEditControlEnabled():
-                allowed += UNIVERSAL_COMMANDS
-            if command not in allowed:
-                return False
-        elif command in EDIT_COMMANDS:
-            return False
-        return super(ListForm, self).can_command(command, **kwargs)
-
     def _cmd_delete_record(self):
-        def blocked_code():
-            deleted = super(ListForm, self)._cmd_delete_record()
-            self._table.edit_row(None)
-            return deleted
-        if block_refresh(blocked_code):
+        if block_refresh(lambda: super(ListForm, self)._cmd_delete_record()):
             r = self._current_cell()[0]
             if r < self._table.number_of_rows(min_value=(r + 2)) - 1:
                 self._select_cell(row=r)
@@ -1879,9 +1600,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             g.SetSize(g.GetSize())
             g.Refresh()
             self._remember_column_width(col)
-            if g.IsCellEditControlEnabled():
-                row = g.GetGridCursorRow()
-                self._current_editor.SetSize(g.CellToRect(row, col))
 
     def _can_sort(self, **kwargs):
         col = kwargs.get('col')
@@ -1890,8 +1608,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return super(ListForm, self)._can_sort(**kwargs)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
-        if not self._finish_editing():
-            return
         if col is not None:
             col = self._columns[col].id()
         old_sorting = self._lf_sorting
@@ -2063,10 +1779,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._data.find_column(self._columns[col].id()) is not None
 
     def _cmd_context_menu(self, position=None):
-        if self._table.editing():
-            menu = self._edit_menu()
-        else:
-            menu = self._context_menu()
+        menu = self._context_menu()
         if menu:
             if position is None:
                 g = self._grid
@@ -2132,25 +1845,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None
-
-    def _can_edit(self):
-        return self.current_row() is not None
-
-    def _cmd_edit(self):
-        table = self._table
-        if self._transaction is None:
-            self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
-        self._transaction.set_point('inline')
-        if not table.editing():
-            if not self._lock_record(self._current_key()):
-                self._transaction.cut('inline')
-                self._transaction = self._governing_transaction
-                return False
-            table.edit_row(self._current_cell()[0])
-            self._grid.Refresh()
-        if not self._edit_cell():
-            self._on_line_rollback()
-        return True
 
     def _can_cmd_export(self):
         number_rows = self._table.number_of_rows()
@@ -2434,106 +2128,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
-    def _cmd_insert_line(self, before=False, copy=False):
-        row = self._current_cell()[0]
-        log(EVENT, 'Inserting new table row:', (row, before, copy))
-        if not self._data.permitted(True, pytis.data.Permission.INSERT):
-            message(_("You don't have insert permissions for this table!"), beep_=True)
-            return False
-        if self._view.on_new_record() is not None:
-            message(_("In-line insertion not allowed. Use a standalone form (F6)."), beep_=True)
-            return False
-        cols = [c.id() for c in self._columns]
-        for col in self._data.columns():
-            if ((col.type().not_null() and col.id() not in cols and
-                 (self._prefill is None or col.id() not in self._prefill) and
-                 self._view.field(col.id()) is not None)):
-                # We silently presume, that when a not null column is not in
-                # fields, it probably has a default value (if not, it would be
-                # an error anyway), so we can continue.
-                msg = _("Mandatory column '%s' not shown.\n"
-                        "Unable to insert new rows in in-line mode.\n"
-                        "Unhide the column or insert the record in a standalone form (F6).")
-                label = self._view.field(col.id()).column_label()
-                run_dialog(Warning, msg % label)
-                return False
-        table = self._table
-        if table.editing():
-            log(EVENT, 'Attempted to insert a new line while editting.')
-            return False
-        self._last_insert_copy = copy
-        oldg = self._grid
-        oldempty = (oldg.GetNumberRows() == 0)
-        if not copy or oldempty:
-            inserted_row_prefill = None
-        else:
-            inserted_row_prefill = self._row_copy_prefill(table.row(row))
-        if not before and not oldempty:
-            row = row + 1
-        if row == -1:
-            row = 0
-        self._update_grid(inserted_row_number=row, inserted_row_prefill=inserted_row_prefill)
-        self._select_cell(row=row, col=0, invoke_callback=False)
-        if ((not self._is_editable_cell(row, 0) and
-             not self._find_next_editable_cell())):
-            log(EVENT, 'No editable column')
-            return False
-        if self._transaction is not None:
-            self._transaction.set_point('inline')
-        self._edit_cell()
-        log(EVENT, 'Row inserted')
-        return True
-
-    def _can_line_commit(self):
-        return self._is_changed()
-
-    def _cmd_line_commit(self):
-        return self._on_line_commit()
-
-    def _can_line_rollback(self):
-        return self._is_changed()
-
-    def _cmd_line_rollback(self):
-        return self._on_line_rollback()
-
-    def _can_cell_commit(self):
-        return self._grid.IsCellEditControlEnabled()
-
-    def _cmd_finish_editing(self):
-        return self._finish_editing()
-
-    def _cmd_cell_commit(self):
-        row, col = self._current_cell()
-        id = self._columns[col].id()
-        log(EVENT, 'Cell commit in inline editation:', id)
-        self._grid.DisableCellEditControl()
-        editing = self._table.editing()
-        if not editing:
-            return
-        the_row = editing.the_row
-        if the_row.invalid_string(id) is None:
-            if not self._find_next_editable_cell():
-                if the_row.new():
-                    q = _("Save the record?")
-                    if run_dialog(Question, q, True):
-                        return self._on_line_commit()
-                    else:
-                        log(EVENT, "Line commit refused by the user.")
-                self._grid.SetGridCursor(row, 0)
-        if the_row.invalid_string(id) is not None or the_row.new():
-            log(EVENT, "Returning to in-line editation.")
-            self._edit_cell()
-
-    def _can_cell_rollback(self):
-        return self._grid.IsCellEditControlEnabled()
-
-    def _cmd_cell_rollback(self):
-        log(EVENT, 'Cell rollback in inline editation.')
-        self._current_editor.Reset()
-        row, col = self._current_cell()
-        self._grid.DisableCellEditControl()
-        self._current_editor = None
-
     def _can_clear_selection(self):
         return len(self.selected_rows()) > 0
 
@@ -2542,38 +2136,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     # Public methods
 
-    def is_edited(self):
-        """Return True, iff the table currently is in in-line edit mode."""
-        return self._table.editing()
-
-    # Other public methods
-
     def on_key_down(self, event, dont_skip=True):
         if self._search_panel is None:
             # Running this callback in dual-form would lead to focus loss on Shift, Ctrl etc.
             self._run_callback(self.CALL_USER_INTERACTION)
         if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
             return True
-
-        def evil_key(event):
-            # Tato věc je tu kvůli eliminaci vstupu do editace políčka
-            # libovolnou klávesou.  Není mi znám jiný způsob, jak této
-            # eliminace dosáhnout.
-            # Nelze použít hasModifiers ani test MetaDown kvůli NumLocku.
-            if event.AltDown() or event.ControlDown():
-                return False
-            code = event.GetKeyCode()
-            return code not in(wx.WXK_PAGEUP, wx.WXK_PAGEDOWN, wx.WXK_LEFT,
-                               wx.WXK_RIGHT, wx.WXK_DOWN, wx.WXK_UP,
-                               wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB,
-                               wx.WXK_ESCAPE)
-        if (evil_key(event) or
-            (self._grid.IsCellEditControlEnabled() and
-             WxKey().is_event_of_key(event, '\t'))):
-            return False
-        else:
-            event.Skip()
-            return False
+        event.Skip()
+        return False
 
     def focus(self):
         super(ListForm, self).focus()
@@ -3242,9 +2812,6 @@ class BrowseForm(FoldableForm):
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
-            # MItem(_("Edit cell"),
-            #       command=ListForm.COMMAND_EDIT,
-            #       help=_("Edit the value in in-line mode.")),
             MItem(_("Filter by cell"),
                   command=ListForm.COMMAND_FILTER_BY_CELL,
                   help=_("Filter the rows containing the same value in this column.")),
