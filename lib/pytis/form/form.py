@@ -687,49 +687,23 @@ class InnerForm(Form):
 
 
 class Refreshable:
-    """Třída zajišťující existenci metody 'refresh()' s daným významem.
+    """Abstract class providing the method 'refresh()' with given meaning.
 
-    Tuto třídu by měly dědit všechny formuláře, které mají být obnoveny při
-    změně dat (typicky způsobené jiným formulářem výše na zásobníku rámců).
-
-    """
-
-    DOIT_IMMEDIATELY = 'DOIT_IMMEDIATELY'
-    """Konstanta pro 'refresh()' pro okamžitý update.
-
-    Není-li seznam právě editován, je update proveden okamžitě.  Jinak je
-    uživatel dotázán, zda má být update proveden ihned; odpoví-li uživatel
-    negativně, je update proveden až po ukončení editace.
-
-    """
-    DOIT_AFTEREDIT = 'DOIT_AFTEREDIT'
-    """Konstanta pro 'refresh()' pro update po skončení editace.
-
-    Není-li seznam právě editován, je update proveden okamžitě.  Jinak je
-    proveden až po ukončení editace.
-
-    """
-    DOIT_IFNEEDED = 'DOIT_IFNEEDED'
-    """Konstanta pro 'refresh()' pro podmíněný update.
-
-    Update je proveden pouze tehdy, je-li známo, že došlo ke změně dat.
-    V takovém případě je proveden okamžitě pouze tehdy, jestliže seznam není
-    práve editován a v poslední době nebyl proveden žádný jiný update;
-    v opačném případě je update odložen \"až na vhodnější chvíli\" (nicméně
-    proveden bude).
+    All forms which may be refreshed from their data source should derive from
+    this class and implement the '_refresh()' method.
 
     """
     _block_refresh = 0
 
     @classmethod
     def block_refresh(cls, function, *args, **kwargs):
-        """Zablokuj veškerý refresh po dobu provádění funkce 'function'.
+        """Block performing any refresh during given 'function' runs.
 
-        Všechny argumenty jsou předány volané funkci.
+        All arguments are passed on th the called function.
 
-        Vrací: výsledek vrácený volanou funkcí.
+        Returns: The result returned by the function.
 
-        Refresh je zablokován globálně, pro všechny existující formuláře.
+        Refresh is blocked globally for all existing forms.
 
         """
         Refreshable._block_refresh += 1
@@ -739,34 +713,30 @@ class Refreshable:
             Refreshable._block_refresh -= 1
         return result
 
-    def refresh(self, when=None, interactive=False):
-        """Aktualizuj data formuláře z datového zdroje.
+    def refresh(self, interactive=False):
+        """Refresh form data from data source.
 
-        Překresli data ve formuláři v okamžiku daném argumentem 'when'.
+        Arguments:
 
-        Argumenty:
-
-          when -- určuje, zda a kdy má být aktualizace provedena, musí to být
-            jedna z 'DOIT_*' konstant třídy.  Implicitní hodnota je
-            'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
           interactive -- indicates whether the refresh was invoked by explicit
             user request
 
-        Vrací: Pravdu, právě když byla aktualizace provedena.
+        Returns: True iff the refresh has been performed.
 
         """
         level = Refreshable._block_refresh
         if level == 0:
-            self._refresh(when=when, interactive=interactive)
+            self._refresh(interactive=interactive)
         elif level > 0:
-            log(OPERATIONAL, "Refresh neproveden kvůli blokaci:", level)
+            log(OPERATIONAL, "Refresh bloked:", level)
         else:
-            raise ProgramError("Nepřípustná hodnota _block_refresh:", level)
+            raise ProgramError("Invalid _block_refresh level:", level)
 
-    def _refresh(self, when=None, interactive=False):
-        """Proveď vlastní refresh.
+    def _refresh(self, interactive=False):
+        """Perform refresh.
 
-        Tuto metodu nechť předefinují odvozené třídy.
+        This method should be overriden in derived classes to implement the
+        refresh itself.
 
         """
         pass
@@ -2725,7 +2695,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if isinstance(f, Refreshable):
             f.refresh()
 
-    def _refresh(self, when=None, interactive=False):
+    def _refresh(self, interactive=False):
         if interactive:
             self._apply_providers()
         self.Refresh()
@@ -3658,7 +3628,7 @@ class WebForm(ViewerForm):
         if content is not None:
             self.load_content(content)
 
-    def _refresh(self, when=None, interactive=False):
+    def _refresh(self, interactive=False):
         self._browser.reload()
 
     def load_content(self, content):

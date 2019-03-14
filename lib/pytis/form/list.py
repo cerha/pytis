@@ -224,7 +224,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._apply_profile_parameters(profile)
         self._update_label_height()
         self._update_grid(init_columns=True)
-        self._refresh(when=self.DOIT_IMMEDIATELY)
+        self._refresh()
         # Force to count at least one line.  This is to allow user
         # break in case the first cursor operation is very slow.  We
         # must do it here, otherwise the delay happens later in
@@ -778,7 +778,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=new_row)
 
     def _apply_filter(self, condition):
-        self._refresh(when=self.DOIT_IMMEDIATELY, reset={'filter': condition})
+        self._lf_filter = condition
+        self._refresh()
         # Force to count at least one line.  This is to allow user
         # break in case the first cursor operation is very slow.  We
         # must do it here, otherwise the delay happens later in
@@ -1412,54 +1413,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return False
 
-    def _refresh(self, when=None, reset=None, key_update=True, interactive=False):
-        """Aktualizuj data seznamu z datového zdroje.
-
-        Překresli celý seznam v okamžiku daném argumentem 'when' se zachováním
-        parametrů dle argumentu 'reset'.
-
-        Argumenty:
-
-          when -- určuje, zda a kdy má být aktualizace provedena, musí to být
-            jedna z 'DOIT_*' konstant třídy.  Implicitní hodnota je
-            'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
-          reset -- určuje, které parametry zobrazení mají být zachovány a které změněny.  Hodnotou
-            je buď 'None', nebo dictionary.  Je-li hodnotou 'None', zůstane zachována filtrovací
-            podmínka i třídění.  Jinak jsou resetovány právě ty parametry, pro něž
-            v dictionary existuje klíč (jeden z řetězců 'sorting', 'filter'), a to na hodnotou
-            z dictionary pro daný klíč.
-          key_update -- if true, try to select the previously selected row
-          interactive -- indicates whether the refresh was invoked by explicit
-            user request
-
-        Vrací: Pravdu, právě když byla aktualizace provedena.
-
-        """
-        assert when in (None,  # internal ONLY!
-                        self.DOIT_IMMEDIATELY, self.DOIT_AFTEREDIT, self.DOIT_IFNEEDED), when
-        assert reset is None or isinstance(reset, dict), reset
-        if when is None:
-            if reset is None:
-                when = self.DOIT_AFTEREDIT
-            else:
-                when = self.DOIT_IMMEDIATELY
-        # Jdeme na to
+    def _refresh(self, interactive=False):
         if __debug__:
-            log(DEBUG, 'Refresh request:', (when, reset))
+            log(DEBUG, 'Refresh request')
         if interactive:
             self._apply_providers()
-        if when is self.DOIT_IFNEEDED:
-            if ((self._reshuffle_request == self._last_reshuffle_request or
-                 self._reshuffle_request > time.time())):
-                return False
-        if reset:
-            for k, v in reset.items():
-                if k == 'filter':
-                    self._lf_filter = v
-                elif k == 'sorting':
-                    self._lf_sorting = v
-                else:
-                    raise ProgramError('Invalid refresh parameter', k)
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True, retain_row=True)
         self._update_data_status()
@@ -1618,8 +1576,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 cols = self._sorting_columns()
                 minlen = min(len(cols), len(self._grouping))
                 self._grouping = tuple(cols[:minlen])
+                self._lf_sorting = sorting
                 # Make the changes visible.
-                self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
+                self._refresh()
                 # Force to count at least one line.  This is to allow user
                 # break in case the first cursor operation is very slow.  We
                 # must do it here, otherwise the delay happens later in
@@ -1631,7 +1590,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 minlen = min(len(cols), len(self._grouping))
                 self._grouping = tuple(cols[:minlen])
                 # Make the changes visible.
-                self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': self._lf_sorting})
+                self._refresh()
         return sorting
 
     def _cmd_toggle_aggregation(self, operation):
@@ -3225,7 +3184,7 @@ class SideBrowseForm(BrowseForm):
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
             self._lf_condition = None
-        self._refresh(key_update=False, interactive=True)
+        self._refresh(interactive=True)
         query_fields = self._view.query_fields()
         if query_fields:
             callback = query_fields.on_main_form_selection()

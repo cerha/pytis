@@ -345,7 +345,7 @@ class DualForm(Form, Refreshable):
             self._splitter.SetSashPosition(position)
         event.Skip()
 
-    def _refresh(self, when=None, interactive=False):
+    def _refresh(self, interactive=False):
         if isinstance(self._main_form, Refreshable):
             self._main_form.refresh(interactive=interactive)
         if isinstance(self._side_form, Refreshable):
@@ -971,7 +971,7 @@ class MultiForm(Form, Refreshable):
         if active:
             active.defocus()
 
-    def _refresh(self, when=None, interactive=False):
+    def _refresh(self, interactive=False):
         active = self.active_form()
         if active and isinstance(active, Refreshable):
             active.refresh(interactive=interactive)
