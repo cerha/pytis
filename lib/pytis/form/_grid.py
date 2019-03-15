@@ -158,21 +158,6 @@ class DataTable(object):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
-    def _get_row(self, row, require=True):
-        """Return the row number 'row' from the database as a 'PresentedRow' instance.
-
-        Arguments:
-
-          row -- row number within the *database select*, starting from 0
-          require -- when true, the requested row must exist, otherwise 'None'
-            is returned if the given row doesn't exist
-
-        """
-        success, result = db_operation(self._retrieve_row, row, require=require)
-        if not success:
-            self._panic()
-        return result
-
     def _retrieve_row(self, row, require=True):
         data = self._data
 
@@ -285,7 +270,10 @@ class DataTable(object):
 
         """
         if row >= 0 and row < self.number_of_rows(min_value=(row + 1)):
-            return self._get_row(row, require=False)
+            success, result = db_operation(self._retrieve_row, row, require=False)
+            if not success:
+                self._panic()
+            return result
         else:
             return None
 
