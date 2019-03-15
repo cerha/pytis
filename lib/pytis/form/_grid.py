@@ -253,91 +253,6 @@ class DataTable(object):
                 self._group_value_cache = {values: False}
                 return False
 
-    # Public methods
-
-    def row(self, row):
-        """Vrať řádek číslo 'row' jako instanci třídy 'PresentedRow'.
-
-        Vrácený řádek zahrnuje změny provedené případnou editací a
-        obsahuje pouze sloupce datového objektu (nepočítané i počítané),
-        takže je možné jej přímo použít v databázových operacích.
-
-        Jestliže řádek daného čísla neexistuje, vrať 'None'.
-
-        Argumenty:
-
-        row -- nezáporný integer, první řádek má číslo 0
-
-        """
-        if row >= 0 and row < self.number_of_rows(min_value=(row + 1)):
-            success, result = db_operation(self._retrieve_row, row, require=False)
-            if not success:
-                self._panic()
-            return result
-        else:
-            return None
-
-    def rewind(self, position=None):
-        """Přesuň datové ukazovátko na začátek dat.
-
-        Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
-
-        """
-        if self._current_row is None:
-            return
-        if position is None:
-            self._data.rewind()
-            self._cache = self._DisplayCache()
-            self._current_row = None
-        elif position < -1 or position >= self.number_of_rows() - 1:
-            pass
-        else:
-            row = position
-            success, result = db_operation(self._retrieve_row, row)
-            if not success:
-                self._panic()
-            self._presented_row.set_row(result)
-            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
-
-    def form(self):
-        return self._form
-
-    def update(self, columns, row_count, sorting, grouping, prefill):
-        assert isinstance(grouping, tuple)
-        self._row_count = row_count
-        self._sorting = sorting
-        self._grouping = grouping
-        self._prefill = prefill
-        self._update_columns(columns)
-        # Smaž cache
-        self._group_cache = {0: False}
-        self._group_value_cache = {}
-        # Nastav řádek
-        self.rewind()
-
-    def close(self):
-        # Tato metoda je nutná kvůli jistému podivnému chování wxWidgets,
-        # kdy wxWidgets s tabulkou pracuje i po jejím zrušení.
-        self._data = None
-        # TODO: Následující (a možná i ta předcházející) operace jsou
-        # jsou v principu zbytečné, ale protože z neznámých důvodů
-        # nedochází při uzavření formuláře k likvidaci nějakých blíže
-        # neurčených dat, patrně i z této tabulky, tak raději významná
-        # data instance mažeme ručně...
-        self._form = None
-        self._fields = None
-        self._columns = None
-        self._cache = None
-        self._attr_cache = None
-        self._font_cache = None
-        self._group_cache = None
-        self._group_value_cache = None
-        self._presented_row = None
-        self._current_row = None
-        self._row_style = None
-        self._group_bg_downgrade = None
-        self._group_bg_color = None
-
     def _cached_value(self, row, col_id, style=False):
         # Return the cached value for given row and column id.
         #
@@ -376,11 +291,19 @@ class DataTable(object):
         cached_row = cached_things[style and 1 or 0]
         return cached_row[col_id]
 
+    # Public methods
+
+    def form(self):
+        return self._form
+
     def column_id(self, col):
         return self._columns[col].id
 
     def column_label(self, col):
         return self._columns[col].label
+
+    def number_of_columns(self):
+        return self._column_count
 
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
@@ -404,8 +327,81 @@ class DataTable(object):
         else:
             return count
 
-    def number_of_columns(self):
-        return self._column_count
+    def row(self, row):
+        """Return the row number 'row' as a 'PresentedRow' instance.
+
+        Arguments:
+
+          row -- row number within the *database select*, starting from 0
+
+        Jestliže řádek daného čísla neexistuje, vrať 'None'.
+
+        """
+        if row >= 0 and row < self.number_of_rows(min_value=(row + 1)):
+            success, result = db_operation(self._retrieve_row, row, require=False)
+            if not success:
+                self._panic()
+            return result
+        else:
+            return None
+
+    def rewind(self, position=None):
+        """Přesuň datové ukazovátko na začátek dat.
+
+        Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
+
+        """
+        if self._current_row is None:
+            return
+        if position is None:
+            self._data.rewind()
+            self._cache = self._DisplayCache()
+            self._current_row = None
+        elif position < -1 or position >= self.number_of_rows() - 1:
+            pass
+        else:
+            row = position
+            success, result = db_operation(self._retrieve_row, row)
+            if not success:
+                self._panic()
+            self._presented_row.set_row(result)
+            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
+
+    def update(self, columns, row_count, sorting, grouping, prefill):
+        assert isinstance(grouping, tuple)
+        self._row_count = row_count
+        self._sorting = sorting
+        self._grouping = grouping
+        self._prefill = prefill
+        self._update_columns(columns)
+        # Smaž cache
+        self._group_cache = {0: False}
+        self._group_value_cache = {}
+        # Nastav řádek
+        self.rewind()
+
+    def close(self):
+        # Tato metoda je nutná kvůli jistému podivnému chování wxWidgets,
+        # kdy wxWidgets s tabulkou pracuje i po jejím zrušení.
+        self._data = None
+        # TODO: Následující (a možná i ta předcházející) operace jsou
+        # jsou v principu zbytečné, ale protože z neznámých důvodů
+        # nedochází při uzavření formuláře k likvidaci nějakých blíže
+        # neurčených dat, patrně i z této tabulky, tak raději významná
+        # data instance mažeme ručně...
+        self._form = None
+        self._fields = None
+        self._columns = None
+        self._cache = None
+        self._attr_cache = None
+        self._font_cache = None
+        self._group_cache = None
+        self._group_value_cache = None
+        self._presented_row = None
+        self._current_row = None
+        self._row_style = None
+        self._group_bg_downgrade = None
+        self._group_bg_color = None
 
 
 class ListTable(wx.grid.GridTableBase, DataTable):
