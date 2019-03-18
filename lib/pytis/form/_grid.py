@@ -302,9 +302,6 @@ class DataTable(object):
     def column_label(self, col):
         return self._columns[col].label
 
-    def number_of_columns(self):
-        return self._column_count
-
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
 
@@ -463,7 +460,7 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return self.number_of_rows(timeout=0)
 
     def GetNumberCols(self):
-        return self.number_of_columns()
+        return self._column_count
 
     def IsEmptyCell(self, row, col):
         return False
@@ -489,7 +486,7 @@ class ListTable(wx.grid.GridTableBase, DataTable):
 
     def GetAttr(self, row, col, kind):
         try:
-            if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.number_of_columns():
+            if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.GetNumberCols():
                 # it may happen
                 return None
             column = self._columns[col]
