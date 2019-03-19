@@ -2193,7 +2193,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             fileformat = 'CSV'
         export_file = None
-        remote = False
         if pytis.remote.client_available():
             client_ip = pytis.remote.client_ip()
             log(EVENT, 'RPC communication on %s available' % client_ip)
@@ -2201,8 +2200,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
             except Exception:
                 pass
-            else:
-                remote = True
         else:
             log(EVENT, 'RPC communication not available')
         if not export_file:
@@ -2228,10 +2225,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_function = self._cmd_export_csv
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
-        if export_function(export_file) and remote:
+        if export_function(export_file):
             exported_filename = export_file.name
             export_file.close()
-            pytis.remote.launch_file(exported_filename)
+            pytis.form.launch_file(exported_filename)
 
     def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
