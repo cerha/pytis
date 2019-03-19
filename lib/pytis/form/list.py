@@ -2314,7 +2314,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             col_position = 0
             tmp_file = pytis.util.TemporaryFile()
             tmp_file_name = tmp_file.name
-            w = xlsxwriter.Workbook(tmp_file)
+            w = xlsxwriter.Workbook(tmp_file, {'remove_timezone': True})
             ws = w.add_worksheet('Export')
 
             def _get_format(ctype):
