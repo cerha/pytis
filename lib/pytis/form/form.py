@@ -1168,7 +1168,7 @@ class LookupForm(InnerForm):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
                                                        async_count)
         if not success:
-            log(EVENT, 'Selhání databázové operace')
+            log(EVENT, 'DB operation failed.')
             raise self.InitError()
         # Make sure at least one line is returned (if any is actually present),
         # otherwise segfault may happen when committing an edited line.
@@ -1894,7 +1894,7 @@ class RecordForm(LookupForm):
                 else:
                     # Otherwise ViewSpec.check returns an error message.
                     field_id, msg = None, result
-                log(EVENT, 'Kontrola integrity selhala:', field_id)
+                log(EVENT, 'Integrity check failed:', field_id)
                 return False, field_id, msg
         return True, None, None
 
@@ -2128,7 +2128,7 @@ class RecordForm(LookupForm):
     def _cmd_context_action(self, action):
         args = self._context_action_args(action)
         kwargs = action.kwargs()
-        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        log(EVENT, 'Calling context action handler:', (args, kwargs))
         action.handler()(*args, **kwargs)
         if action.context() == ActionContext.SELECTION:
             # Clear rows selection to avoid problems when the context action modifies
