@@ -2553,7 +2553,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     assert isinstance(t, allowed), (operation, cid, t, allowed,)
         close_select = False
         if self._pg_select_transaction is None:
-            self.select(condition=condition, transaction=transaction)
+            self.select(condition=condition, arguments=arguments, transaction=transaction)
             close_select = True
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             data = [[None for x in colids]]
