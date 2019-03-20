@@ -3584,7 +3584,7 @@ class SideBrowseForm(BrowseForm):
         self._hide_binding_column = hide_binding_column
         self._binding_condition = condition
         self._xarguments = arguments
-        self._selection_arguments = None
+        self._selection_arguments = {}
         self._side_prefill = prefill
         self._side_search = search
         if binding_column:
@@ -3607,11 +3607,6 @@ class SideBrowseForm(BrowseForm):
     def _current_arguments(self):
         arguments = self._arguments
         if arguments == self._data.UNKNOWN_ARGUMENTS:
-            return self._data.UNKNOWN_ARGUMENTS
-        if self._xarguments and self._selection_arguments is None:
-            # Avoid invalid selection arguments before 'on_selection' is called.
-            # This may happen for example in _get_aggregation_result which is called
-            # asynchronously too soon in label EVT_PAINT event handler.
             return self._data.UNKNOWN_ARGUMENTS
         return dict(self._selection_arguments, **(arguments or {}))
 
