@@ -3610,6 +3610,16 @@ class SideBrowseForm(BrowseForm):
             return self._data.UNKNOWN_ARGUMENTS
         return dict(self._selection_arguments, **(arguments or {}))
 
+    def _get_aggregation_result(self, key):
+        if self._main_form_row is None:
+            # Avoid calling select_aggregate with invalid function arguments
+            # before 'on_selection' is called.  This may happen because
+            # _get_aggregation_result() is called asynchronously from label
+            # EVT_PAINT event handler.
+            return None
+        else:
+            return super(SideBrowseForm, self)._get_aggregation_result(key)
+
     def _provider_kwargs(self):
         return dict(super(SideBrowseForm, self)._provider_kwargs(),
                     main_form_row=self._main_form_row)
