@@ -403,13 +403,9 @@ class DataTable(object):
 
 class ListTable(wx.grid.GridTableBase, DataTable):
 
-    def __init__(self, form, data, presented_row, columns, row_count,
-                 sorting=(), grouping=(), prefill=None, row_style=None):
-        assert isinstance(form, Form)
-        assert isinstance(grouping, types.TupleType)
+    def __init__(self, *args, **kwargs):
         wx.grid.GridTableBase.__init__(self)
-        DataTable.__init__(self, form, data, presented_row, columns, row_count,
-                           sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
+        DataTable.__init__(self, *args, **kwargs)
         self._init_group_bg_downgrade()
 
     def _panic(self):
