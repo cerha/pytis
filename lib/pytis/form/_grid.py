@@ -412,8 +412,6 @@ class ListTable(wx.grid.GridTableBase, DataTable):
                            sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
         self._init_group_bg_downgrade()
 
-    # Pomocné metody
-
     def _panic(self):
         DataTable._panic(self)
         Form.COMMAND_LEAVE_FORM.invoke()
@@ -450,7 +448,7 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         super(ListTable, self).update(*args, **kwargs)
         self._init_group_bg_downgrade()
 
-    # Povinné wx gridové metody
+    # Mandatory wx grid methods.
 
     def GetNumberRows(self):
         # We have to get only approximate number of rows here.  The reason is
@@ -472,16 +470,15 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         else:
             return ''
 
-    # Nepovinné wx gridové metody
+    # Optional wx grid methods.
 
     # def GetColLabelValue(self, col):
-    # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
+    # Now implemented in `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
-        # wx.grid.GRID_VALUE_BOOL causes segfault on doubleclicking a column
-        # and float is avoided in favor of our own numeric value formatting, so
-        # we rather blaim the grid that everyting is a string.  Bool values are
-        # rendered using a custom renderer...
+        # We pretend that everyting is a string in order to use our own
+        # formatting for floats, dates, etc.  Also using wx.grid.GRID_VALUE_BOOL
+        # causes a segfault on doubleclicking.
         return wx.grid.GRID_VALUE_STRING
 
     def GetAttr(self, row, col, kind):
