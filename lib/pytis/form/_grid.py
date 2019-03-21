@@ -263,6 +263,14 @@ class DataTable(object):
             the_row = self.row(row)
             if the_row is None:
                 return None
+            # If row_style is defined, lets compute it.
+            row_style = self._row_style
+            if isinstance(row_style, collections.Callable):
+                protected_row = the_row.protected()
+                try:
+                    row_style = row_style(protected_row)
+                except protected_row.ProtectionError:
+                    row_style = None
             style_dict = {}
             value_dict = {}
             # Cache the values and styles for all columns at once.
@@ -272,20 +280,11 @@ class DataTable(object):
                 style_ = c.style
                 if isinstance(style_, collections.Callable):
                     style_ = style_(the_row)
-                style_dict[cid] = style_
+                style_dict[cid] = (style_ or self._plain_style) + row_style
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if gcol not in value_dict:
                     value_dict[gcol] = self._format(the_row, gcol)
-            # If row_style is defined, lets compute it.
-            row_style = self._row_style
-            if isinstance(row_style, collections.Callable):
-                protected_row = the_row.protected()
-                try:
-                    row_style = row_style(protected_row)
-                except protected_row.ProtectionError:
-                    row_style = None
-            style_dict[None] = row_style
             self._cache[row] = value_dict, style_dict
         else:
             value_dict, style_dict = cached
@@ -366,14 +365,11 @@ class DataTable(object):
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
             return None
         else:
-            column = self._columns[col]
-            if column.id in self._secret_columns:
-                style = None
+            cid = self._columns[col].id
+            if cid in self._secret_columns:
+                return self._plain_style
             else:
-                style = self._cached_value(row, column.id, style=True)
-            row_style = self._cached_value(row, None, style=True)
-            # TODO: compose the final style already in _cached_value()
-            return (style or self._plain_style) + row_style
+                return self._cached_value(row, cid, style=True)
 
     def rewind(self, position=None):
         """Přesuň datové ukazovátko na začátek dat.
