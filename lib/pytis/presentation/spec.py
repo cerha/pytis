@@ -224,10 +224,15 @@ class Style(object):
     def name(self):
         return self._name
 
+    def __repr__(self):
+        return self.__str__()
+
     def __str__(self):
-        items = [k[1:] + '=' + repr(v) for k, v in self.__dict__.items()
-                 if k.startswith('_') and v is not None]
-        return "<%s %s>" % (self.__class__.__name__, ', '.join(items))
+        return "%s(%s)" % (self.__class__.__name__, ', '.join([
+            k[1:] + '=' + repr(v)
+            for k, v in self.__dict__.items()
+            if k.startswith('_') and v is not None
+        ]))
 
     def _dict(self):
         return tuple((k, bool(v) if k in ('_bold', '_slanted', '_overstrike', '_underline') else v)
