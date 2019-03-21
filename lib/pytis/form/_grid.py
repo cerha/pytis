@@ -452,22 +452,17 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return the_row.format(cid, pretty=True, form=self._form, secure=True)
 
     def _make_attr(self, style):
+        fg = style.foreground() or self._DEFAULT_FOREGROUND_COLOR
+        bg = style.background() or self._DEFAULT_BACKGROUND_COLOR
         flags = wx.FONTFLAG_DEFAULT
-        fg, bg = (self._DEFAULT_FOREGROUND_COLOR, self._DEFAULT_BACKGROUND_COLOR)
-        if style:
-            if style.slanted():
-                flags |= wx.FONTFLAG_ITALIC
-            if style.bold():
-                flags |= wx.FONTFLAG_BOLD
-            if style.overstrike():
-                flags |= wx.FONTFLAG_STRIKETHROUGH
-            if style.underline():
-                flags |= wx.FONTFLAG_UNDERLINED
-            if style.foreground():
-                fg = style.foreground()
-            if style.background():
-                bg = style.background()
-        flags |= wx.FONTFLAG_STRIKETHROUGH
+        if style.slanted():
+            flags |= wx.FONTFLAG_ITALIC
+        if style.bold():
+            flags |= wx.FONTFLAG_BOLD
+        if style.overstrike():
+            flags |= wx.FONTFLAG_STRIKETHROUGH
+        if style.underline():
+            flags |= wx.FONTFLAG_UNDERLINED
         try:
             font = self._font_cache[flags]
         except KeyError:
