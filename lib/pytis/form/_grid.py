@@ -118,14 +118,9 @@ class DataTable(object):
             self.label = label
             self.style = style
 
-    _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
-    _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
-
-    def __init__(self, form, data, presented_row, columns, row_count,
+    def __init__(self, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
-        assert isinstance(form, Form)
         assert isinstance(grouping, types.TupleType)
-        self._form = form
         self._data = data
         self._presented_row = copy.copy(presented_row)
         self._row_count = row_count
@@ -138,8 +133,6 @@ class DataTable(object):
         self._update_columns(columns)
         # Create caches
         self._cache = self._DisplayCache()
-        self._attr_cache = {}
-        self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
         self.rewind()
@@ -253,6 +246,9 @@ class DataTable(object):
                 self._group_value_cache = {values: False}
                 return False
 
+    def _format(self, the_row, cid):
+        return the_row.format(cid, secure=True)
+
     def _cached_value(self, row, col_id, style=False):
         # Return the cached value for given row and column id.
         #
@@ -262,39 +258,43 @@ class DataTable(object):
         # once we read the row value, because we can not cache the rows
         # inside the 'row()' method.
         #
-        cached_things = self._cache[row]
-        if cached_things is None:
+        cached = self._cache[row]
+        if cached is None:
             the_row = self.row(row)
+            if the_row is None:
+                return None
             style_dict = {}
             value_dict = {}
             # Cache the values and styles for all columns at once.
             for c in self._columns:
                 cid = c.id
-                s = c.style
-                if isinstance(s, collections.Callable):
-                    style_dict[cid] = s(the_row)
-                value_dict[cid] = the_row.format(cid, pretty=True, form=self._form, secure=True)
+                value_dict[cid] = self._format(the_row, cid)
+                style_ = c.style
+                if isinstance(style_, collections.Callable):
+                    style_ = style_(the_row)
+                style_dict[cid] = style_
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if gcol not in value_dict:
-                    value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form,
-                                                      secure=True)
+                    value_dict[gcol] = self._format(the_row, gcol)
             # If row_style is defined, lets compute it.
-            if isinstance(self._row_style, collections.Callable):
+            row_style = self._row_style
+            if isinstance(row_style, collections.Callable):
                 protected_row = the_row.protected()
                 try:
-                    row_style = self._row_style(protected_row)
+                    row_style = row_style(protected_row)
                 except protected_row.ProtectionError:
                     row_style = None
-                style_dict[None] = row_style
-            self._cache[row] = cached_things = [value_dict, style_dict]
-        cached_row = cached_things[style and 1 or 0]
-        return cached_row[col_id]
+            style_dict[None] = row_style
+            self._cache[row] = value_dict, style_dict
+        else:
+            value_dict, style_dict = cached
+        if style:
+            return style_dict[col_id]
+        else:
+            return value_dict[col_id]
 
     # Public methods
-
-    def form(self):
-        return self._form
 
     def column_id(self, col):
         return self._columns[col].id
@@ -342,6 +342,39 @@ class DataTable(object):
         else:
             return None
 
+    def cell_value(self, row, col):
+        """Return the formatted value for table cell at given 'row' and 'col'.
+
+        'row' and 'col' are numbered from 0.
+
+        None is returned when given cell does not exist in the data table
+
+        """
+        if self._data is not None and col < self._column_count:
+            return self._cached_value(row, self._columns[col].id)
+        else:
+            return None
+
+    def cell_style(self, row, col):
+        """Return style for table cell at given 'row' and 'col' as 'Style' instance.
+
+        'row' and 'col' are numbered from 0.
+
+        None is returned when given cell does not exist in the data table
+
+        """
+        if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
+            return None
+        else:
+            column = self._columns[col]
+            if column.id in self._secret_columns:
+                style = None
+            else:
+                style = self._cached_value(row, column.id, style=True)
+            row_style = self._cached_value(row, None, style=True)
+            # TODO: compose the final style already in _cached_value()
+            return (style or self._plain_style) + row_style
+
     def rewind(self, position=None):
         """Přesuň datové ukazovátko na začátek dat.
 
@@ -371,27 +404,23 @@ class DataTable(object):
         self._grouping = grouping
         self._prefill = prefill
         self._update_columns(columns)
-        # Smaž cache
+        # Erase cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        # Nastav řádek
+        # Set row
         self.rewind()
 
     def close(self):
-        # Tato metoda je nutná kvůli jistému podivnému chování wxWidgets,
-        # kdy wxWidgets s tabulkou pracuje i po jejím zrušení.
+        # This method is necessary because of some wierd wxWidgets behavior,
+        # where the table is being accessed even after the form is closed.
         self._data = None
-        # TODO: Následující (a možná i ta předcházející) operace jsou
-        # jsou v principu zbytečné, ale protože z neznámých důvodů
-        # nedochází při uzavření formuláře k likvidaci nějakých blíže
-        # neurčených dat, patrně i z této tabulky, tak raději významná
-        # data instance mažeme ručně...
-        self._form = None
+        # TODO: The following (and maybe the previous too) operations are in
+        # principal useless, but we try to remove all data of the instance
+        # manually because some data seem not to be destroyed when the form
+        # is closed.
         self._fields = None
         self._columns = None
         self._cache = None
-        self._attr_cache = None
-        self._font_cache = None
         self._group_cache = None
         self._group_value_cache = None
         self._presented_row = None
@@ -403,7 +432,14 @@ class DataTable(object):
 
 class ListTable(wx.grid.GridTableBase, DataTable):
 
-    def __init__(self, *args, **kwargs):
+    _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
+    _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
+
+    def __init__(self, form, *args, **kwargs):
+        assert isinstance(form, Form)
+        self._form = form
+        self._attr_cache = {}
+        self._font_cache = {}
         wx.grid.GridTableBase.__init__(self)
         DataTable.__init__(self, *args, **kwargs)
         self._init_group_bg_downgrade()
@@ -411,6 +447,9 @@ class ListTable(wx.grid.GridTableBase, DataTable):
     def _panic(self):
         DataTable._panic(self)
         Form.COMMAND_LEAVE_FORM.invoke()
+
+    def _format(self, the_row, cid):
+        return the_row.format(cid, pretty=True, form=self._form, secure=True)
 
     def _make_attr(self, style):
         flags = wx.FONTFLAG_DEFAULT
@@ -440,9 +479,18 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         c = wx.Colour(config.grouping_background_downgrade)
         self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
 
+    def form(self):
+        return self._form
+
     def update(self, *args, **kwargs):
         super(ListTable, self).update(*args, **kwargs)
         self._init_group_bg_downgrade()
+
+    def close(self):
+        self._form = None
+        self._attr_cache = None
+        self._font_cache = None
+        super(ListTable, self).close()
 
     # Mandatory wx grid methods.
 
@@ -460,11 +508,7 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return False
 
     def GetValue(self, row, col):
-        # `row' and `col' are numbered from 0.
-        if self._data is not None and col < self.GetNumberCols():
-            return self._cached_value(row, self._columns[col].id)
-        else:
-            return ''
+        return self.cell_value(row, col) or ''
 
     # Optional wx grid methods.
 
@@ -479,40 +523,29 @@ class ListTable(wx.grid.GridTableBase, DataTable):
 
     def GetAttr(self, row, col, kind):
         try:
-            if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.GetNumberCols():
-                # it may happen
-                return None
-            column = self._columns[col]
-            if column.id in self._secret_columns:
-                style = self._plain_style
-            else:
-                style = column.style
-                if isinstance(style, collections.Callable):
-                    style = self._cached_value(row, column.id, style=True)
-            row_style = self._row_style
-            if isinstance(row_style, collections.Callable):
-                row_style = self._cached_value(row, None, style=True)
-            if row_style:
-                style += row_style
-            try:
-                fg, bg, font = self._attr_cache[style]
-            except KeyError:
-                fg, bg, font = self._attr_cache[style] = self._make_attr(style)
-            if self._group(row):
-                rgb = (bg.Red(), bg.Green(), bg.Blue())
-                bg = wx.Colour(*[max(0, x - y) for x, y in zip(rgb, self._group_bg_downgrade)])
-            provider = self.GetAttrProvider()
-            if provider:
-                attr = provider.GetAttr(row, col, kind)
-                if attr:
-                    attr.SetTextColour(fg)
-                    attr.SetBackgroundColour(bg)
-                    attr.SetFont(font)
-                    if column.type.__class__ == pytis.data.Boolean:
-                        attr.SetRenderer(CustomBooleanCellRenderer(self))
-                    else:
-                        attr.SetRenderer(CustomCellRenderer(self))
-                    return attr
+            style = self.cell_style(row, col)
+            if style:
+                try:
+                    fg, bg, font = self._attr_cache[style]
+                except KeyError:
+                    fg, bg, font = self._attr_cache[style] = self._make_attr(style)
+                if self._group(row):
+                    bg = wx.Colour(*[max(0, x - y) for x, y in zip(
+                        (bg.Red(), bg.Green(), bg.Blue()),
+                        self._group_bg_downgrade,
+                    )])
+                provider = self.GetAttrProvider()
+                if provider:
+                    attr = provider.GetAttr(row, col, kind)
+                    if attr:
+                        attr.SetTextColour(fg)
+                        attr.SetBackgroundColour(bg)
+                        attr.SetFont(font)
+                        if self._columns[col].type.__class__ == pytis.data.Boolean:
+                            attr.SetRenderer(CustomBooleanCellRenderer(self))
+                        else:
+                            attr.SetRenderer(CustomCellRenderer(self))
+                        return attr
             return None
         except Exception:
             top_level_exception()
