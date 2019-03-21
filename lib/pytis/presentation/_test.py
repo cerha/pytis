@@ -747,6 +747,32 @@ class PrettyTypes(unittest.TestCase):
         self.assertEqual(t.tree_column_id(), 'tree_order')
 
 
+class Style(unittest.TestCase):
+
+    def test_colors(self):
+        self.assertRaises(TypeError, lambda: pp.Style(background=20))
+        self.assertRaises(TypeError, lambda: pp.Style(background={}))
+        self.assertRaises(TypeError, lambda: pp.Style(background=('a', 10, 20)))
+        self.assertRaises(ValueError, lambda: pp.Style(background='#1g2h3i'))
+        self.assertRaises(ValueError, lambda: pp.Style(background='fff'))
+        self.assertRaises(ValueError, lambda: pp.Style(background=(300, 10, 20)))
+        self.assertEqual(pp.Style(background='#fff'), pp.Style(background='#FFFFFF'))
+        self.assertEqual(pp.Style(background='#fff'), pp.Style(background=(255, 255, 255)))
+        self.assertEqual(pp.Style(background='#fff'), pp.Style(background=pp.Color.WHITE))
+        self.assertEqual(pp.Style(background='#002e6a'), pp.Style(background=[0, 46, 106]))
+        self.assertEqual(pp.Style(background='#e00020'), pp.Style(background=(0xe0, 0x00, 0x20)))
+
+    def test_cmp(self):
+        self.assertEqual(pp.Style(), pp.Style())
+        self.assertEqual(pp.Style(slanted=True), pp.Style(slanted=True))
+        self.assertEqual(pp.Style(slanted=True, foreground='#fff'),
+                         pp.Style(slanted=True, foreground='#FFF'))
+        self.assertEqual(pp.Style(slanted=False), pp.Style())
+        self.assertNotEqual(pp.Style(), pp.Orientation())
+        self.assertNotEqual(pp.Orientation(), pp.Style())
+        self.assertNotEqual(pp.Style(slanted=True), pp.Style(foreground='#fff'))
+
+
 class DocTest(unittest.TestCase):
 
     def test_field_computations(self):

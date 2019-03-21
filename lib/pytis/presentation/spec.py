@@ -153,18 +153,44 @@ class Style(object):
                  overstrike=None, underline=None, name=None):
         """Arguments:
 
-          foreground -- foreground color as one of 'Color' constants, a tuple of three integers
-            (RGB), or a hexadecimal string representation (such as '#ff0000')
-          background -- background color in the same format as the foreground color
+          foreground -- foreground color as one of 'Color' constants, a tuple
+            of three integers (RGB), or a hexadecimal string representation
+            (such as '#ff0000')
+          background -- background color in the same format as the foreground
+            color
           bold -- flag indicating bold text
           slanted -- flag indicating slanted (italics) text
           overstrike -- flag indicating that the text should be stroked through
           underline -- flag indicating that the text should be underlined
-          name -- style name (string) refering to a common style definition in a stylesheet
+          name -- style name (string) refering to a common style definition in
+            a stylesheet
 
         """
-        self._foreground = foreground
-        self._background = background
+        def color(c):
+            if c is None:
+                return c
+            elif isinstance(c, list):
+                return color(tuple(c))
+            elif (isinstance(c, tuple) and len(c) == 3 and
+                  all(isinstance(x, int) and 0 <= x <= 255 for x in c)):
+                return c
+            elif (isinstance(c, basestring) and c.startswith('#') and len(c) in (4, 7) and
+                  all(x in string.hexdigits for x in c[1:])):
+                if len(c) == 4:
+                    return color('#' + ''.join(x + x for x in c[1:]))
+                return tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
+            elif isinstance(c, basestring) or isinstance(c, tuple) and all(isinstance(x, int)
+                                                                           for x in c):
+                raise ValueError('Invalid color representation: %r' % (c,))
+            else:
+                raise TypeError('Invalid color representation: %r' % (c,))
+        assert bold is None or isinstance(bold, bool), bold
+        assert slanted is None or isinstance(slanted, bool), slanted
+        assert overstrike is None or isinstance(overstrike, bool), overstrike
+        assert underline is None or isinstance(underline, bool), underline
+        assert name is None or isinstance(name, basestring), name
+        self._foreground = color(foreground)
+        self._background = color(background)
         self._bold = bold
         self._slanted = slanted
         self._overstrike = overstrike
@@ -197,6 +223,16 @@ class Style(object):
                  if k.startswith('_') and v is not None]
         return "<%s %s>" % (self.__class__.__name__, ', '.join(items))
 
+    def _dict(self):
+        return tuple((k, bool(v) if k in ('_bold', '_slanted', '_overstrike', '_underline') else v)
+                     for k, v in self.__dict__.items())
+
+    def __cmp__(self, other):
+        if isinstance(other, self.__class__) or isinstance(self, other.__class__):
+            return cmp(self._dict(), other._dict())
+        else:
+            return -1
+
     def __radd__(self, other):
         if other is None:
             return self
@@ -205,9 +241,7 @@ class Style(object):
 
     def __add__(self, other):
         def coalesce(x, y):
-            if x is not None:
-                return x
-            return y
+            return x if x is not None else y
         if other is None:
             return self
         else:
