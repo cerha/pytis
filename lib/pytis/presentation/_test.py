@@ -772,6 +772,18 @@ class Style(unittest.TestCase):
         self.assertNotEqual(pp.Orientation(), pp.Style())
         self.assertNotEqual(pp.Style(slanted=True), pp.Style(foreground='#fff'))
 
+    def test_add(self):
+        self.assertEqual(pp.Style(), pp.Style() + pp.Style())
+        self.assertEqual(pp.Style(), pp.Style() + None)
+        self.assertEqual(pp.Style(), None + pp.Style())
+        self.assertEqual(pp.Style(bold=True), None + pp.Style(bold=True))
+        self.assertEqual(pp.Style(slanted=True, overstrike=True, foreground='#F00'),
+                         pp.Style(slanted=True) + pp.Style(overstrike=True, foreground='#F00'))
+        self.assertEqual(pp.Style(slanted=True), pp.Style(slanted=True) + pp.Style(slanted=False))
+        self.assertEqual(pp.Style(slanted=False), pp.Style(slanted=False) + pp.Style(slanted=True))
+        self.assertEqual(pp.Style(overstrike=True, foreground='#000'),
+                         pp.Style(foreground='#000') + pp.Style(overstrike=True, foreground='#F00'))
+
 
 class DocTest(unittest.TestCase):
 
