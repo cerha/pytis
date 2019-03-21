@@ -37,15 +37,15 @@ from .command import (  # noqa: F401
 )
 
 from .screen import (  # noqa: F401
-    WxKey, WxColor, Keymap, KeyHandler, CallbackHandler, MSeparator,
+    WxKey, Keymap, KeyHandler, CallbackHandler, MSeparator,
     Menu, MItem, CheckItem, RadioItem, MenuBar, ToolTipWindow, ToolTip,
     StatusBar, InfoWindow, ProfileSelectorPopup, ProfileSelector,
     TextHeadingSelector, FormStateToolbarControl, KeyboardSwitcher,
     DualFormSwitcher, DualFormResplitter, LocationBar, HelpProc,
     Browser, mupdfProcessor, FileViewerButtonPanel, FileViewer,
-    FileViewerFrame, IN, init_colors, beep, microsleep, busy_cursor,
+    FileViewerFrame, IN, beep, microsleep, busy_cursor,
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
-    hotkey_string, file_menu_items, color2wx, help_proc, char2px,
+    hotkey_string, file_menu_items, help_proc, char2px,
     dlg2px, acceskey_prefix, orientation2wx, make_fullname, mitem,
     popup_menu, get_icon, select_file, select_files,
     select_directory, make_selected_file, write_selected_file,

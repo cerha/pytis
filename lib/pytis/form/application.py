@@ -50,9 +50,10 @@ import config
 from .command import CommandHandler
 from .event import UserBreakException, interrupt_init, interrupt_watcher, \
     top_level_exception, unlock_callbacks, wx_callback, yield_
-from .screen import Browser, CheckItem, KeyHandler, Keymap, \
-    Menu, MenuBar, MItem, MSeparator, StatusBar, \
-    acceskey_prefix, beep, busy_cursor, get_icon, init_colors, mitem, wx_focused_window
+from .screen import (
+    Browser, CheckItem, KeyHandler, Keymap, Menu, MenuBar, MItem, MSeparator, StatusBar,
+    acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
+)
 from .dialog import (
     Message, Question, Error, CheckListDialog, ProgressDialog,
 )
@@ -99,7 +100,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def OnInit(self):
         import pytis.extensions
         self._specification = config.resolver.specification('Application')
-        init_colors()
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
                                        pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)

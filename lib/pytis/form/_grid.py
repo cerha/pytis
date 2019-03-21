@@ -38,7 +38,7 @@ from pytis.util import DEBUG, EVENT, ProgramError, log
 
 from .application import db_operation
 from .form import Form
-from .screen import color2wx, get_icon
+from .screen import Color, get_icon
 from .event import top_level_exception
 
 import config
@@ -465,7 +465,7 @@ class ListTable(wx.grid.GridTableBase, DataTable):
             if style.underline():
                 flags |= wx.FONTFLAG_UNDERLINED
             font = self._font_cache[key] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
-        return (color2wx(fg), color2wx(bg), font)
+        return (Color(fg), Color(bg), font)
 
     def _init_group_bg_downgrade(self):
         c = wx.Colour(config.grouping_background_downgrade)

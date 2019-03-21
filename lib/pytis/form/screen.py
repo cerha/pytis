@@ -88,9 +88,6 @@ for const in ('EVT_WEBVIEW_NAVIGATING', 'EVT_WEBVIEW_NAVIGATED', 'EVT_WEBVIEW_LO
 
 _ = pytis.util.translations('pytis-wx')
 
-_WX_COLORS = {}
-_WX_COLOR_DB = {}
-
 # TODO: The background color should be taken from system settings, but
 # wx.SYS_COLOUR_WINDOW returns white and wx.SYS_COLOUR_BACKGROUND returns
 # gray which is darker than it should be, so we rather hard code the color
@@ -130,17 +127,6 @@ def field_size(parent, width, height):
     """
     return tuple(a + b for a, b in zip(char2px(parent, width, height), FIELD_PADDING))
 
-
-def init_colors():
-    global _WX_COLORS, _WX_COLOR_DB
-    from pytis.presentation import Color
-    colors = [getattr(Color, name) for name in public_attributes(Color)]
-    _WX_COLORS = dict([(c, WxColor(*c)) for c in colors])
-    from wx.lib import colourdb
-    colourdb.updateColourDB()
-    for name in colourdb.getColourList():
-        wxcolour = wx.TheColourDatabase.FindColour(name)
-        _WX_COLOR_DB[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
 
 # Utility functions
 
@@ -490,35 +476,19 @@ class WxKey:
         return prefix + key
 
 
-class WxColor(wx.Colour):
-    """Stejné jako předek, avšak definuje rozumné porovnání."""
+class Color(wx.Colour):
+    """Same as the parent, but defines a reasonable comparison."""
 
     def __cmp__(self, other):
-        """Vrať shodu, právě když 'self' a 'other' mají shodné RGB složky."""
         try:
             result = (cmp(self.Red(), other.Red()) or
                       cmp(self.Green(), other.Green()) or
                       cmp(self.Blue(), other.Blue()))
         except AttributeError:
-            # Je-li `other' barvou, může být ve wxWidgets ledacos, proto nelze
-            # zařadit nějaký rozumný test na třídu instance.
+            # If `other' is a color, there may be just anything in wxWidgets,
+            # so it is impossible to do some sensible instance class test.
             result = compare_objects(self, other)
         return result
-
-
-def color2wx(color):
-    """Vrať barvu ve formě akceptované wxWidgets.
-
-    Pokud odpovídající barva není známa, vrať 'None'.
-
-    Argumenty:
-
-      color -- požadovaná barva, jedna z konstant třídy
-        'pytis.presentation.Color' nebo název barvy z databáze barev
-        (instance wxTheColourDatabase)
-
-    """
-    return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.Colour(color)
 
 
 # Common handlers
