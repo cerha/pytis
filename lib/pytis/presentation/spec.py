@@ -224,9 +224,6 @@ class Style(object):
     def name(self):
         return self._name
 
-    def __repr__(self):
-        return self.__str__()
-
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, ', '.join([
             k[1:] + '=' + repr(v)
@@ -234,9 +231,15 @@ class Style(object):
             if k.startswith('_') and v is not None
         ]))
 
+    def __repr__(self):
+        return self.__str__()
+
     def _dict(self):
         return tuple((k, bool(v) if k in ('_bold', '_slanted', '_overstrike', '_underline') else v)
                      for k, v in self.__dict__.items())
+
+    def __hash__(self):
+        return hash(self._dict())
 
     def __cmp__(self, other):
         if isinstance(other, self.__class__) or isinstance(self, other.__class__):

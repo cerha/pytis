@@ -784,6 +784,20 @@ class Style(unittest.TestCase):
         self.assertEqual(pp.Style(overstrike=True, foreground='#000'),
                          pp.Style(foreground='#000') + pp.Style(overstrike=True, foreground='#F00'))
 
+    def test_hash(self):
+        cache = {
+            pp.Style(): 'default',
+            pp.Style(background='#ff4'): 'yellow bg',
+            pp.Style(foreground='#f00', overstrike=True): 'red overstrike',
+            pp.Style(foreground='#00f', slanted=True): 'blue slanted',
+        }
+        self.assertEqual(cache[pp.Style()], 'default')
+        self.assertEqual(cache[pp.Style(slanted=False)], 'default')
+        self.assertEqual(cache[pp.Style(slanted=False, overstrike=False)], 'default')
+        self.assertEqual(cache[pp.Style(background='#FF4')], 'yellow bg')
+        self.assertEqual(cache[pp.Style(foreground='#F00', overstrike=True)], 'red overstrike')
+        self.assertEqual(cache[pp.Style(foreground='#00F', slanted=True)], 'blue slanted')
+
 
 class DocTest(unittest.TestCase):
 
