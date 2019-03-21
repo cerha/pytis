@@ -454,20 +454,21 @@ class ListTable(wx.grid.GridTableBase, DataTable):
     def _make_attr(self, style):
         fg = style.foreground() or self._DEFAULT_FOREGROUND_COLOR
         bg = style.background() or self._DEFAULT_BACKGROUND_COLOR
-        flags = wx.FONTFLAG_DEFAULT
-        if style.slanted():
-            flags |= wx.FONTFLAG_ITALIC
-        if style.bold():
-            flags |= wx.FONTFLAG_BOLD
-        if style.overstrike():
-            flags |= wx.FONTFLAG_STRIKETHROUGH
-        if style.underline():
-            flags |= wx.FONTFLAG_UNDERLINED
+        key = (style.slanted(), style.bold(), style.overstrike(), style.underline())
         try:
-            font = self._font_cache[flags]
+            font = self._font_cache[key]
         except KeyError:
             size = self._form.GetFont().GetPointSize()
-            font = self._font_cache[flags] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
+            flags = wx.FONTFLAG_DEFAULT
+            if style.slanted():
+                flags |= wx.FONTFLAG_ITALIC
+            if style.bold():
+                flags |= wx.FONTFLAG_BOLD
+            if style.overstrike():
+                flags |= wx.FONTFLAG_STRIKETHROUGH
+            if style.underline():
+                flags |= wx.FONTFLAG_UNDERLINED
+            font = self._font_cache[key] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
         return (color2wx(fg), color2wx(bg), font)
 
     def _init_group_bg_downgrade(self):
