@@ -42,14 +42,15 @@ import pytis.form
 from pytis.presentation import Field, Specification, StatusField, computer, Text
 import pytis.util
 import pytis.remote
-from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
-    ProgramError, ResolverError, Stack, XStack, \
-    argument_names, find, format_traceback, identity, log, rsa_encrypt
-import config
-
+from pytis.util import (
+    ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
+    argument_names, find, format_traceback, identity, log, rsa_encrypt,
+)
 from .command import CommandHandler
-from .event import UserBreakException, interrupt_init, interrupt_watcher, \
-    top_level_exception, unlock_callbacks, wx_callback, yield_
+from .event import (
+    UserBreakException, interrupt_init, interrupt_watcher,
+    top_level_exception, unlock_callbacks, wx_callback, yield_,
+)
 from .screen import (
     Browser, CheckItem, KeyHandler, Keymap, Menu, MenuBar, MItem, MSeparator, StatusBar,
     acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
@@ -57,6 +58,8 @@ from .screen import (
 from .dialog import (
     Message, Question, Error, CheckListDialog, ProgressDialog,
 )
+
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
