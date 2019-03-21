@@ -165,6 +165,12 @@ class Style(object):
           name -- style name (string) refering to a common style definition in
             a stylesheet
 
+        Font flags 'bold', 'slanted', 'overstrike', and 'underline' may be set
+        to True, False or None, where None (the default) is the same as False,
+        but is less aggressive when composing styles together (such as for
+        cell/row styles).  Setting False explicitly will override True, while
+        None will not.
+
         """
         def color(c):
             if c is None:
@@ -204,16 +210,16 @@ class Style(object):
         return self._background
 
     def bold(self):
-        return self._bold
+        return bool(self._bold)
 
     def slanted(self):
-        return self._slanted
+        return bool(self._slanted)
 
     def overstrike(self):
-        return self._overstrike
+        return bool(self._overstrike)
 
     def underline(self):
-        return self._underline
+        return bool(self._underline)
 
     def name(self):
         return self._name
