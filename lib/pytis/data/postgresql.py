@@ -3304,7 +3304,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_transaction = transaction
         self._pg_last_select_arguments = arguments
         self._pg_last_select_limit = limit
-        self._pg_last_fetch_row = None
         self._pg_last_select_row_number = None
         self._pg_stop_check = stop_check
         self._pg_async_count = async_count
@@ -3507,7 +3506,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 result = None
             start_counting()
-        self._pg_last_fetch_row = result
         if __debug__:
             log(DEBUG, 'Returned row', str(result))
         if self._pg_select_set_read_only:
@@ -3533,8 +3531,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_maybe_restore_select()
         result = self._pg_buffer.skip(count, direction,
                                       self._pg_number_of_rows)
-        if count > 0:
-            self._pg_last_fetch_row = None
         if __debug__:
             log(DEBUG, 'Rows skipped:', result)
         return result
