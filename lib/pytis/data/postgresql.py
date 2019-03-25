@@ -3011,17 +3011,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             """Return database pointer position within the database cursor."""
             return self._dbpointer
 
-        def copy(self):
-            """Vrať \"rozumnou\" kopii instance."""
-            # Nepoužíváme postupy modulu `copy', protože potřebujeme něco mezi
-            # hlubokou a mělkou kopií.
-            copy_ = self.__class__()
-            copy_._buffer = copy.copy(self._buffer)
-            copy_._pointer = self._pointer
-            copy_._dpointer = self._dpointer
-            copy_._dbposition = self._dbposition
-            return copy_
-
         def __str__(self):
             buffer = self._buffer
             pointer = self._pointer
