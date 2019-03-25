@@ -2537,8 +2537,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         query = self._pdbb_command_distinct.update(args)
         data = self._pg_query(query, transaction=transaction)
         tmpl = self._pg_create_make_row_template((colspec,))
-        result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
-                  for r in data]
+        result = [self._pg_make_row_from_raw_data([r], tmpl)[column] for r in data]
         return result
 
     def _pg_select_aggregate(self, operation, colids, condition, transaction=None, arguments={}):
@@ -3501,9 +3500,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_select_transaction = None
                 raise cls, e, tb
             if data_:
-                r = self._pg_make_row_from_raw_data
-                row_data = [r([d], template=self._pg_make_row_template_limited)
-                            for d in data_]
+                mkrow, tmpl = self._pg_make_row_from_raw_data, self._pg_make_row_template_limited
+                row_data = [mkrow([d], template=tmpl) for d in data_]
                 buffer.fill(row_data, FORWARD, len(row_data) != size)
                 if xskip:
                     buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
