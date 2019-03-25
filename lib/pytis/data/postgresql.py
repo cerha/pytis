@@ -891,7 +891,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         def __init__(self, connection_data, connection_name=None):
             if __debug__:
-                log(DEBUG, 'Vytvoření notifikátoru')
+                log(DEBUG, 'Notifier creation')
             PostgreSQLConnector.__init__(self, connection_data,
                                          connection_name=connection_name)
             self._notif_data_lock = thread.allocate_lock()
@@ -906,14 +906,14 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             # Zamykáme zde kvůli možnosti současného vyvolání této metody
             # z `register' i naslouchacího threadu.
             if __debug__:
-                log(DEBUG, 'Registruji notifikaci:', notification)
+                log(DEBUG, 'Registering notification:', notification)
 
             def lfunction():
                 self._notif_init_connection()
                 self._notif_do_registration(notification)
             with_lock(self._notif_connection_lock, lfunction)
             if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována:', notification)
+                log(DEBUG, 'Notification registered:', notification)
 
         def _notif_listen(self):
             if __debug__:
@@ -922,12 +922,12 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             self._notif_init_connection()
             while True:
                 if __debug__:
-                    log(DEBUG, 'Napichuji se na nové spojení')
+                    log(DEBUG, 'Listening on new connection')
                 notiflist = []
                 for d in self._notif_data_objects.values():
                     notiflist = notiflist + d
                 if __debug__:
-                    log(DEBUG, 'Notifikace k registraci:', notiflist)
+                    log(DEBUG, 'Notifications to register:', notiflist)
                 notiflist = []
                 for list_ in self._notif_data_objects.values():
                     notiflist += list_
@@ -947,7 +947,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         def _notif_invoke_callbacks(self, notifications):
             if __debug__:
-                log(DEBUG, 'Volám callbacky')
+                log(DEBUG, 'Invoking callbacks')
 
             def lfunction():
                 return copy.copy(self._notif_data_objects)
@@ -956,13 +956,13 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 for n in ns:
                     if n in notifications:
                         if __debug__:
-                            log(DEBUG, 'Volám callbacky datového objektu:', d)
+                            log(DEBUG, 'Invoking data object callbacks:', d)
                         d._call_on_change_callbacks()
                         break
 
         def register_notification(self, data, notification):
             if __debug__:
-                log(DEBUG, 'Registruji notifikaci:', notification)
+                log(DEBUG, 'Registering notification:', notification)
 
             def lfunction():
                 try:
@@ -973,7 +973,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             with_lock(self._notif_data_lock, lfunction)
             self._notif_register(notification)
             if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována')
+                log(DEBUG, 'Notification registered')
 
     def __init__(self, connection_data, **kwargs):
         """
@@ -2802,7 +2802,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         def __init__(self):
             if __debug__:
-                log(DEBUG, 'Nový buffer')
+                log(DEBUG, 'New buffer')
             self.reset()
 
         def _number_of_rows(self, row_count_info, min_value=None):
@@ -2815,7 +2815,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         def reset(self):
             """Kompletně resetuj buffer."""
             if __debug__:
-                log(DEBUG, 'Resetuji buffer')
+                log(DEBUG, 'Resetting buffer')
             self._buffer = []
             # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
             #   prvek kursoru počínaje od 0 ukazuje
@@ -2888,7 +2888,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
             """
             if __debug__:
-                log(DEBUG, 'Žádost o korekci:',
+                log(DEBUG, 'Request for correction:',
                     (self._dbpointer, self._dbposition, self._pointer, direction))
             pointer = self._pointer
             buflen = len(self._buffer)
@@ -2918,7 +2918,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 # Jsme uvnitř bufferu, žádný DB skip se nekoná.
                 correction = 0
             if __debug__:
-                log(DEBUG, 'Určená korekce:', correction)
+                log(DEBUG, 'Determined correction:', correction)
             return correction
 
         def goto(self, position):
@@ -2970,7 +2970,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             # řádků, musí být dbpointer přesunut ještě o jednu pozici dál (mimo
             # data).
             if __debug__:
-                log(DEBUG, 'Plním buffer:', direction)
+                log(DEBUG, 'Filling buffer:', direction)
             n = len(rows)
             buffer = self._buffer
             buflen = len(buffer)
@@ -3053,7 +3053,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         """
         if __debug__:
-            log(DEBUG, 'Vytvářím databázovou tabulku')
+            log(DEBUG, 'Creating data table')
         if is_sequence(key):
             self._key_binding = tuple(key)
         else:
@@ -3093,7 +3093,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         connections = self._pg_connections()
         if __debug__:
             if len(connections) >= 3:
-                log(DEBUG, 'Podezřele velká hloubka spojení:', len(connections))
+                log(DEBUG, 'Suspicious connection depth:', len(connections))
         connection = self._pg_get_connection(outside_transaction=True)[0]
         connections.append(connection)
 
@@ -3182,14 +3182,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def _pg_key_condition(self, key):
         if __debug__:
-            log(DEBUG, 'Vytvářím podmínku z klíče:', key)
+            log(DEBUG, 'Creating condition from key:', key)
         key = xtuple(key)
         keycols = map(lambda b: b.id(), self._key_binding)
         assert len(keycols) == len(key), ('Invalid key length', key, keycols)
         ands = map(EQ, keycols, key)
         condition = AND(*ands)
         if __debug__:
-            log(DEBUG, 'Podmínka z klíče vytvořena:', condition)
+            log(DEBUG, 'Key condition created:', condition)
         return condition
 
     def _pg_restore_select(self):
@@ -3412,11 +3412,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         """
         if __debug__:
-            log(DEBUG, 'Vytažení řádku ze selectu ve směru:', direction)
-        assert direction in(FORWARD, BACKWARD), \
-            ('Invalid direction', direction)
+            log(DEBUG, 'Fetching row from selection in direction:', direction)
+        assert direction in(FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
-        # Tady začíná opravdové vytažení aktuálních dat
         buffer = self._pg_buffer
         row = buffer.fetch(direction, self._pdbb_select_rows)
         if row:
@@ -3511,7 +3509,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             start_counting()
         self._pg_last_fetch_row = result
         if __debug__:
-            log(DEBUG, 'Vrácený řádek', str(result))
+            log(DEBUG, 'Returned row', str(result))
         if self._pg_select_set_read_only:
             self._pg_select_transaction.set_read_only()
             self._pg_select_set_read_only = False
@@ -3529,7 +3527,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def skip(self, count, direction=FORWARD):
         if __debug__:
-            log(DEBUG, 'Přeskočení řádků:', (direction, count))
+            log(DEBUG, 'Skipping rows:', (direction, count))
         assert isinstance(count, int) and count >= 0, ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
@@ -3538,7 +3536,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if count > 0:
             self._pg_last_fetch_row = None
         if __debug__:
-            log(DEBUG, 'Přeskočeno řádků:', result)
+            log(DEBUG, 'Rows skipped:', result)
         return result
 
     def rewind(self):
@@ -3555,9 +3553,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         """
         if __debug__:
-            log(DEBUG, 'Hledání řádku:', (condition, direction))
-        assert direction in (FORWARD, BACKWARD), \
-            ('Invalid direction', direction)
+            log(DEBUG, 'Searching row:', (condition, direction))
+        assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
         if __debug__:
             self._pg_check_arguments(arguments)
         self._pg_maybe_restore_select()
@@ -3589,7 +3586,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_select_transaction = None
                 raise cls, e, tb
         if __debug__:
-            log(DEBUG, 'Výsledek hledání:', result)
+            log(DEBUG, 'Search result:', result)
         return result
 
     def close(self):
