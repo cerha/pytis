@@ -3213,6 +3213,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self.skip(row_number + 1)
         return True
 
+    def _pg_maybe_restore_select(self):
+        if self._pg_select_transaction is None:
+            if not self._pg_restore_select():
+                raise NotWithinSelect()
+
     def _pg_number_of_rows_(self, min_value=None):
         if isinstance(self._pg_number_of_rows, int):
             number = self._pg_number_of_rows
@@ -3414,9 +3419,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Vytažení řádku ze selectu ve směru:', direction)
         assert direction in(FORWARD, BACKWARD), \
             ('Invalid direction', direction)
-        if self._pg_select_transaction is None:
-            if not self._pg_restore_select():
-                raise NotWithinSelect()
+        self._pg_maybe_restore_select()
         # Tady začíná opravdové vytažení aktuálních dat
         buffer = self._pg_buffer
         row = buffer.fetch(direction, self._pdbb_select_rows)
@@ -3520,9 +3523,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def last_row_number(self):
-        if self._pg_select_transaction is None:
-            if not self._pg_restore_select():
-                raise NotWithinSelect()
+        self._pg_maybe_restore_select()
         return self._pg_buffer.current()[1]
 
     def last_select_condition(self):
@@ -3536,9 +3537,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Přeskočení řádků:', (direction, count))
         assert isinstance(count, int) and count >= 0, ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
-        if self._pg_select_transaction is None:
-            if not self._pg_restore_select():
-                raise NotWithinSelect()
+        self._pg_maybe_restore_select()
         result = self._pg_buffer.skip(count, direction,
                                       self._pg_number_of_rows)
         if count > 0:
@@ -3548,9 +3547,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def rewind(self):
-        if self._pg_select_transaction is None:
-            if not self._pg_restore_select():
-                raise NotWithinSelect()
+        self._pg_maybe_restore_select()
         pos = self._pg_buffer.current()[1]
         if pos >= 0:
             self.skip(pos + 1, BACKWARD)
@@ -3568,9 +3565,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             ('Invalid direction', direction)
         if __debug__:
             self._pg_check_arguments(arguments)
-        if self._pg_select_transaction is None:
-            if not self._pg_restore_select():
-                raise NotWithinSelect()
+        self._pg_maybe_restore_select()
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return 0
         row, pos = self._pg_buffer.current()
