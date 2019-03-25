@@ -45,18 +45,15 @@ import config
 
 
 class DataTable(object):
-    # Požadavky na ni jsou následující:
-    # - základní práce s tabulkovými daty
-    # - schopnost práce s počítanými sloupci
+    """Access database table as a grid of numbered rows and columns.
 
-    # Uvnitř třídy pracujeme zásadně s vnitřními hodnotami, nikoliv
-    # hodnotami uživatelskými.  *Jediné* metody, které pracují
-    # s uživatelskou reprezentací, jsou `GetValue' a `SetValue'.
+    This class allows accessing table data as a visual grid of cells with
+    numeric row and column numbers.  Grid requests are translated into database
+    requests.  It doesn't cache database rows, but it caches displayed values
+    and cell styles for a limited number of rows (a window roughly matching the
+    currently visible portion of the table).
 
-    # Necachujeme žádná data, udržujeme pouze poslední řádek; cachování
-    # většího množství dat vzhledem ke způsobu použití tabulky nedává
-    # příliš velký smysl.
-
+    """
     class _CurrentRow:
         def __init__(self, row, the_row):
             assert isinstance(row, int)
@@ -203,7 +200,7 @@ class DataTable(object):
         return self._current_row.the_row
 
     def _group(self, row):
-        # Return true, if given row belongs to a highlighted group
+        # Return true, if given row belongs to a highlighted group.
         def cached_values(row, cols):
             return tuple([self._cached_value(row, cid) for cid in cols])
         grouping = self._grouping
