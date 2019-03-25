@@ -27,6 +27,42 @@ import pytis.data._test as dtest
 
 class DataTable(dtest._DBBaseTest):
 
+    class DataStream(object):
+        """Pretend a file-like object for given generator of row data.
+
+        Used as the first argument for cursor.copy_from() to insert data
+        efficiently.
+
+        """
+        def __init__(self, generator):
+            if isinstance(generator, (tuple, list)):
+                generator = (x for x in generator)
+            self._generator = generator
+            self._buffer = ''
+
+        def read(self, n=None):
+            while n is None or len(self._buffer) < n:
+                line = self.readline()
+                if not line:
+                    break
+                self._buffer += line
+            if not self._buffer:
+                result = ''
+            elif n is None:
+                result = self._buffer
+                self._buffer = ''
+            else:
+                result = self._buffer[:n]
+                self._buffer = self._buffer[n:]
+            return result
+
+        def readline(self):
+            try:
+                row = next(self._generator)
+                return '\t'.join('\\N' if x is None else str(x) for x in row) + '\n'
+            except StopIteration:
+                return None
+
     def setUp(self):
         self._sql_command('create table grid_test'
                           '(id int, name text, price decimal(10, 2), flag bool)')
@@ -34,7 +70,12 @@ class DataTable(dtest._DBBaseTest):
     def tearDown(self):
         self._sql_command('drop table grid_test')
 
-    def _table(self, rows, row_style=None, name_style=None, price_style=None):
+    def _table(self, rows, row_style=None, name_style=None, price_style=None, sorting=None):
+        if rows:
+            cursor = self._connector.cursor()
+            cursor.copy_from(self.DataStream(rows), 'grid_test')
+            self._connector.commit()
+
         class Specification(pp.Specification):
             table = 'grid_test'
             fields = (
@@ -43,14 +84,21 @@ class DataTable(dtest._DBBaseTest):
                 pp.Field('price', type=pd.Float(precision=2), style=price_style),
                 pp.Field('flag', type=pd.Boolean()),
             )
+
         data = Specification().data_spec().create(connection_data=self._dconnection)
         row = pp.PresentedRow(Specification.fields, data, None)
+        count = data.select(sort=sorting or ())  # , async_count=True)
+        table = grid.DataTable(data, row, row.fields(), count, row_style=row_style, sorting=sorting)
+        return table, data
 
-        for r in rows:
-            data.insert(pd.Row([(f.id(), pd.Value(f.type(), v)) for v, f in zip(r, row.fields())]))
-
-        count = data.select()
-        return grid.DataTable(data, row, row.fields(), count, row_style=row_style), data
+    def test_data_stream(self):
+        s = self.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+        self.assertEqual(s.readline(), 'a\t1\n')
+        self.assertEqual(s.read(2), 'b\t')
+        self.assertEqual(s.read(), '2\nc\t3\n')
+        self.assertEqual(self.DataStream(()).read(), '')
+        s = self.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+        self.assertEqual(s.read(4096), 'a\t1\nb\t2\nc\t3\n')
 
     def test_cell_value(self):
         t, data = self._table((
