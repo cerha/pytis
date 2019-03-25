@@ -2543,6 +2543,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pg_select_aggregate(self, operation, colids, condition, transaction=None, arguments={}):
         if __debug__:
+            self._pg_check_arguments(arguments)
             if operation != self.AGG_COUNT:
                 if operation in (self.AGG_MIN, self.AGG_MAX):
                     allowed = (Number, DateTime, String)
@@ -3342,16 +3343,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return row_count
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
-        if __debug__:
-            self._pg_check_arguments(arguments)
         return self._pg_select_aggregate(operation[0], (operation[1],),
                                          condition=condition, transaction=transaction,
                                          arguments=arguments)[0]
 
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None, arguments={}):
-        if __debug__:
-            self._pg_check_arguments(arguments)
         if columns is None:
             function_columns = [g[0] for g in (self._pdbb_column_groups or ()) if g[2] is not None]
             columns = [c.id() for c in self.columns()
