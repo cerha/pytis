@@ -3322,9 +3322,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             self._pg_make_row_template_limited = None
         try:
-            row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
-                                             arguments=arguments, async_count=async_count,
-                                             stop_check=stop_check, limit=limit)
+            row_count = self._pg_select(condition, sort, columns, transaction=transaction,
+                                        arguments=arguments, async_count=async_count,
+                                        stop_check=stop_check, limit=limit)
         except Exception:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 try:
@@ -3339,16 +3339,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             self._pg_select_transaction = None
             raise cls, e, tb
-        if ((use_cache and
-             (not isinstance(row_count_info, int) or row_count_info != self._pg_number_of_rows))):
-            use_cache = False
-        if use_cache:
+        if use_cache and isinstance(row_count, int) and row_count == self._pg_number_of_rows:
             self._pg_buffer.goto(-1)
         else:
             self._pg_buffer.reset()
             self._pg_initial_select = True
-        self._pg_number_of_rows = row_count_info
-        return row_count_info
+        self._pg_number_of_rows = row_count
+        return row_count
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
         if __debug__:
@@ -3565,7 +3562,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise NotWithinSelect()
-        __, pos = self._pg_buffer.current()
+        pos = self._pg_buffer.current()[1]
         if pos >= 0:
             self.skip(pos + 1, BACKWARD)
 
@@ -3622,7 +3619,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_select_transaction is not None:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
-            _, self._pg_last_select_row_number = self._pg_buffer.current()
+            self._pg_last_select_row_number = self._pg_buffer.current()[1]
             args = dict(selection=self._pdbb_selection_number)
         if self._pg_select_transaction is not None and not self._pg_select_user_transaction:
             try:
