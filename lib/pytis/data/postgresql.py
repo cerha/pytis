@@ -3468,8 +3468,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 if current_row_number <= 0:
                     if current_row_number == 0:
-                        skipped = buffer.skip(1, BACKWARD,
-                                              self._pg_number_of_rows)
+                        skipped = buffer.skip(1, BACKWARD, self._pg_number_of_rows)
                         assert skipped == 1, skipped
                         skip()
                     return None
@@ -3528,8 +3527,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert isinstance(count, int) and count >= 0, ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
-        result = self._pg_buffer.skip(count, direction,
-                                      self._pg_number_of_rows)
+        result = self._pg_buffer.skip(count, direction, self._pg_number_of_rows)
         if __debug__:
             log(DEBUG, 'Rows skipped:', result)
         return result
