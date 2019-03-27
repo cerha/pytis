@@ -558,11 +558,6 @@ class Image(_TypeCheck):
         self.assertEqual(image.size, (12, 5))
 
 
-class Enumerator(_TypeCheck):
-    # Netestováno, neboť třída není používána přímo, stačí testovat potomky
-    pass
-
-
 class DataEnumerator(unittest.TestCase):
 
     def setUp(self):
