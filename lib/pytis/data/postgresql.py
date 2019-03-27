@@ -2280,12 +2280,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             _PG_DEFAULT_TIMEOUT = 0.1
             _PG_STOP_CHECK_TIMEOUT = 0.1
 
-            def __init__(self, data, initial_count, transaction, selection, position):
+            def __init__(self, data, initial_count, transaction, selection):
                 threading.Thread.__init__(self)
                 self._pg_data = data
                 self._pg_transaction = transaction
                 self._pg_selection = selection
-                self._pg_position = position
                 self._pg_current_count = initial_count
                 self._pg_initial_count = initial_count
                 self._pg_finished = False
@@ -2311,7 +2310,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
                             args = dict(selection=selection,
-                                        number=ival(self._pg_position() + 1))
+                                        number=ival(data._pg_buffer.dbpointer() + 1))
                             query = data._pdbb_command_move_absolute.update(args)
                             if not transaction or transaction.open():
                                 # The transaction can still become dead before
@@ -2389,22 +2388,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_terminate = True
                 self._pg_terminate_event.wait()
                 data = self._pg_data
-                args = dict(selection=self._pg_selection, number=ival(self._pg_position() + 1))
+                args = dict(selection=self._pg_selection,
+                            number=ival(data._pg_buffer.dbpointer() + 1))
                 query = data._pdbb_command_move_absolute.update(args)
                 data._pg_query(query, transaction=self._pg_transaction)
 
             def pg_restart(self):
                 new_thread = self.__class__(self._pg_data, self._pg_current_count,
-                                            self._pg_transaction, self._pg_selection,
-                                            self._pg_position)
+                                            self._pg_transaction, self._pg_selection)
                 new_thread.start()
                 return new_thread
 
             def pg_correct(self, correction):
                 self._pg_correction += correction
 
-        def __init__(self, data, transaction, selection, position):
-            self._thread = self._Thread(data, 0, transaction, selection, position)
+        def __init__(self, data, transaction, selection):
+            self._thread = self._Thread(data, 0, transaction, selection)
 
         def start(self):
             self._thread.start()
@@ -2427,7 +2426,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return self
 
     def _pg_start_row_counting_thread(self, transaction, selection):
-        t = self._PgRowCounting(self, transaction, selection, self._pg_buffer.dbpointer)
+        t = self._PgRowCounting(self, transaction, selection)
         t.start()
         return t
 
