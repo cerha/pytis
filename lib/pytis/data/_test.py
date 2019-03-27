@@ -972,12 +972,6 @@ class DBData(unittest.TestCase):
 
 class _DBBaseTest(unittest.TestCase):
 
-    def __init__(self, *args, **kwargs):
-        super(_DBBaseTest, self).__init__(*args, **kwargs)
-        self._dconnection = pytis.data.DBConnection(**_connection_data)
-        import psycopg2
-        self._connector = psycopg2.connect(**_connection_data)
-
     def _sql_command(self, command):
         cursor = self._connector.cursor()
         try:
@@ -998,10 +992,12 @@ class _DBBaseTest(unittest.TestCase):
         return result
 
     def setUp(self):
-        pass
+        self._dconnection = pytis.data.DBConnection(**_connection_data)
+        import psycopg2
+        self._connector = psycopg2.connect(**_connection_data)
 
     def tearDown(self):
-        pass
+        self._connector.close()
 
 
 class _DBTest(_DBBaseTest):
