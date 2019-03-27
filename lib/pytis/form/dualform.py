@@ -723,10 +723,11 @@ class MultiForm(Form, Refreshable):
         # are also self._forms indexes) in the order of visual appearance of
         # the corresponding notebook tabs.
         self._tab_order = range(len(forms))
-        tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
-        wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
+        for child in nb.Children:
+            if isinstance(child, wx.aui.AuiTabCtrl):
+                wx_callback(wx.EVT_LEFT_DOWN, child, self._on_mouse_left)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, self._on_page_change)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, self._on_tab_move_started)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, nb, self._on_tab_move_started)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, self._on_tab_move_done)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
