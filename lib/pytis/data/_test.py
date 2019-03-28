@@ -2424,7 +2424,7 @@ class DBSessionVariables(_DBBaseTest):
 
     def tearDown(self):
         try:
-            self._sql_command("drop function foo")
+            self._sql_command("drop function foo()")
         except Exception:
             pass
         _DBBaseTest.tearDown(self)
