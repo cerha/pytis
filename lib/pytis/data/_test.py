@@ -2232,6 +2232,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
 
 
+# Temporarily disabled adding the _ prefix - see setUp for the reason.
 class _DBMultiData(DBDataDefault):
     ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pytis.data.DateTime.UTC_TZINFO), 1000.0,
             ('100', '007'),
@@ -2240,6 +2241,10 @@ class _DBMultiData(DBDataDefault):
             ('100', '008'),
             'Czech Republic', 'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', ('100', '007'), 'U.S.A.', 'nove')
+
+    def setUp(self):
+        DBDataDefault.setUp(self)
+        # TODO: 'self.mdata' needs to be initialized in order to make this test work.
 
     def test_row(self):
         for x, r in (('2', self.ROW1), ('3', self.ROW2)):
@@ -2984,7 +2989,9 @@ class DBSearchPath(_DBTest):
         test(['special', 'public'])
 
 
-class DBCrypto(_DBBaseTest):
+class _DBCrypto(_DBBaseTest):
+    # Temporarily disabled using the _ prefix.
+    # The tables donb't exist in the test DB. How were they supposed to be created?
 
     def setUp(self):
         _DBBaseTest.setUp(self)
@@ -3364,6 +3371,14 @@ class OperatorTest(_DBBaseTest):
         self.assertNotEqual(b, c)
         self.assertNotEqual(a, d)
         self.assertNotEqual(d, e)
+
+
+def load_tests(loader, tests, _):
+    # Ignore TestCase classes with names starting with underscore
+    # (used for abstract base classes and temporarily disabled tests).
+    tests = [test for test in tests
+             if test._tests and not test._tests[0].__class__.__name__.startswith('_')]
+    return loader.suiteClass(tests)
 
 
 if __name__ == '__main__':
