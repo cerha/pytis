@@ -2398,6 +2398,7 @@ class _DBMultiData(DBDataDefault):
 class DBSessionVariables(_DBBaseTest):
 
     def setUp(self):
+        _DBBaseTest.setUp(self)
         try:
             self._sql_command("create function foo() "
                               "  returns text as "
@@ -2408,7 +2409,6 @@ class DBSessionVariables(_DBBaseTest):
             raise
         import config
         config.session_variables = {'myvar.test': 'value'}
-        _DBBaseTest.setUp(self)
 
     def test_it(self):
         function = pytis.data.DBFunctionDefault('foo', self._dconnection)
@@ -3077,6 +3077,7 @@ class DBCrypto(_DBBaseTest):
 class TutorialTest(_DBBaseTest):
 
     def setUp(self):
+        _DBBaseTest.setUp(self)
         for q in ("CREATE TABLE cis (x varchar(10) PRIMARY KEY, y text)",
                   "CREATE TABLE tab (a int PRIMARY KEY, b varchar(30), "
                   "c varchar(10) REFERENCES cis)",
@@ -3099,6 +3100,7 @@ class TutorialTest(_DBBaseTest):
                 self._sql_command("DROP TABLE %s" % (t,))
             except Exception:
                 pass
+        _DBBaseTest.tearDown(self)
 
     def test_it(self):
         # set up
@@ -3157,6 +3159,7 @@ class TutorialTest(_DBBaseTest):
 class AccessRightsTest(_DBBaseTest):
 
     def setUp(self):
+        _DBBaseTest.setUp(self)
         for q in ("CREATE SCHEMA pytis",
                   ("CREATE TABLE pytis.access_rights (id serial, object varchar(32), "
                    "column_ varchar(32), group_ name, permission varchar(32))"),
@@ -3194,6 +3197,7 @@ class AccessRightsTest(_DBBaseTest):
                 self._sql_command(q)
             except Exception:
                 pass
+        _DBBaseTest.tearDown(self)
 
     def test_permitted_groups(self):
         P = pytis.data.Permission
