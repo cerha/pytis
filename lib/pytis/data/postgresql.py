@@ -2515,7 +2515,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 result = int(data[0][-1])
             else:
                 result = 0
-        self._pdbb_select_rows = result
+        self._pg_number_of_rows = result
         return result
 
     def _pg_distinct(self, column, prefix, condition, sort, transaction=None,
@@ -3314,14 +3314,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_limited_make_row_template(columns)
         else:
             self._pg_make_row_template_limited = None
+        last_number_of_rows = self._pg_number_of_rows
         try:
             row_count = self._pg_select(condition, sort, columns, transaction=transaction,
                                         arguments=arguments, async_count=async_count,
                                         stop_check=stop_check, limit=limit)
         except Exception:
-            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+            if isinstance(last_number_of_rows, self._PgRowCounting):
                 try:
-                    self._pg_number_of_rows.stop()
+                    last_number_of_rows.stop()
                 except Exception:
                     pass
             cls, e, tb = sys.exc_info()
@@ -3332,12 +3333,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             self._pg_select_transaction = None
             raise cls, e, tb
-        if use_cache and isinstance(row_count, int) and row_count == self._pg_number_of_rows:
+        if use_cache and isinstance(row_count, int) and row_count == last_number_of_rows:
             self._pg_buffer.goto(-1)
         else:
             self._pg_buffer.reset()
             self._pg_initial_select = True
-        self._pg_number_of_rows = row_count
         return row_count
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
@@ -3415,7 +3415,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert direction in(FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
         buffer = self._pg_buffer
-        row = buffer.fetch(direction, self._pdbb_select_rows)
+        row = buffer.fetch(direction, self._pg_number_of_rows)
         if row:
             result = row
         else:
@@ -3501,7 +3501,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 buffer.fill(row_data, FORWARD, len(row_data) != size)
                 if xskip:
                     buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
-                result = buffer.fetch(direction, self._pdbb_select_rows)
+                result = buffer.fetch(direction, self._pg_number_of_rows)
             else:
                 result = None
             start_counting()
