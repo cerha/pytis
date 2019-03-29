@@ -2689,10 +2689,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             key_data = self._pg_query(
                 self._pdbb_command_insert.update(dict(columns=columns, values=values)),
                 backup=True, transaction=transaction)
-            key_row = self._pg_make_row_from_raw_data(
-                key_data, template=(self._pg_make_row_template[0],))
-            key = key_row[0]
-            self._pg_query(_Query("release _insert"), transaction=transaction)
         except DBInsertException:
             self._pg_query(_Query("rollback to _insert"), transaction=transaction)
             self._pg_query(
@@ -2711,6 +2707,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         key = key_row[0]
                     except DBException:
                         pass
+        else:
+            key_row = self._pg_make_row_from_raw_data(
+                key_data, template=(self._pg_make_row_template[0],))
+            key = key_row[0]
+            self._pg_query(_Query("release _insert"), transaction=transaction)
         if key is None:
             result = None
         else:
