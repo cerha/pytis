@@ -2402,6 +2402,17 @@ class _DBMultiData(DBDataDefault):
 
 class DBSessionVariables(_DBBaseTest):
 
+    def __init__(self, *args, **kwargs):
+        # Session variables are only initialized when a new connection is
+        # created.  Thus we need to set the configuration option before
+        # *any* DB connection is made (even for any other tests), otherwise
+        # pool connections are reused and the configuration set later does
+        # not get applied.  Here we rely on the fact that test instances are
+        # created all at once before any tests are run.
+        import config
+        config.session_variables = {'myvar.test': 'value'}
+        super(DBSessionVariables, self).__init__(*args, **kwargs)
+
     def setUp(self):
         _DBBaseTest.setUp(self)
         try:
@@ -2412,8 +2423,6 @@ class DBSessionVariables(_DBBaseTest):
         except Exception:
             self.tearDown()
             raise
-        import config
-        config.session_variables = {'myvar.test': 'value'}
 
     def test_it(self):
         function = pytis.data.DBFunctionDefault('foo', self._dconnection)
