@@ -4130,7 +4130,7 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         _output = cStringIO.StringIO()
     else:
         _output = sys.stdout
-        if _output.encoding is None:
+        if not hasattr(_output, 'encoding') or _output.encoding is None:
             _output = codecs.getwriter('UTF-8')(_output)
     global _debug
     _debug = debug
@@ -4314,7 +4314,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         global _output
         str_output = _output.getvalue()
         _output = sys.stdout
-        if _output.encoding is None:
+        if not hasattr(_output, 'encoding') or _output.encoding is None:
             _output = codecs.getwriter('UTF-8')(_output)
         dependencies = _db_dependencies(upgrade_metadata)
         all_items = set()
@@ -4468,6 +4468,16 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade, debug, (module_name if limit_module else None))
+
+
+def capture(function, *args, **kwargs):
+    """Capture the output of given gsql function (meant for gsql_module or gsql_file)."""
+    stdout = sys.stdout
+    sys.stdout = cStringIO.StringIO()
+    function(*args, **kwargs)
+    result = sys.stdout.getvalue()
+    sys.stdout = stdout
+    return result
 
 
 def clear():
