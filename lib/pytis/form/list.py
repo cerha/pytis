@@ -1230,26 +1230,26 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         total_height = g.GetColLabelSize()
         label_height = self._label_height
         filtered_columns = self._filtered_columns()
-        for col, c in enumerate(self._columns):
+        for i, column in enumerate(self._columns):
             y = 0
-            id = c.id()
-            width = g.GetColSize(col)
-            if col == 0:
-                d = 0
+            cid = column.id()
+            width = g.GetColSize(i)
+            if i == 0:
+                dx = 0
             else:
-                d = 1
+                dx = 1
             if self._lf_filter is not None and config.filter_color:
                 dc.SetBrush(wx.Brush(config.filter_color, wx.BRUSHSTYLE_SOLID))
             else:
                 dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
             # Draw the rectangle around.
-            dc.DrawRectangle(x - d, y, width + d, label_height)
+            dc.DrawRectangle(x - dx, y, width + dx, label_height)
             # Indicate when the column is being moved (before we clip the active refion).
             move_target = self._column_move_target
             if self._column_to_move is not None and move_target is not None:
-                if col == move_target:
-                    ax = x - d + (col == 0 and 5 or 0)
-                elif col == move_target - 1 and col == len(self._columns) - 1:
+                if i == move_target:
+                    ax = x - dx + (i == 0 and 5 or 0)
+                elif i == move_target - 1 and i == len(self._columns) - 1:
                     ax = x + width - 5
                 else:
                     ax = None
@@ -1258,17 +1258,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     dc.DrawPolygon(arrow(ax, label_height - 2))
             dc.SetClippingRegion(x, 0, total_width - x, total_height)
             # Draw the label itself.
-            label = c.column_label()
+            label = column.column_label()
             while dc.GetTextExtent(label)[0] > width and len(label):
                 label = label[:-1]  # Shrink the label to fit the column width.
             dc.DrawLabel(label, (x, y, width, label_height), wx.ALIGN_CENTER)
             # Draw the sorting sign.
-            pos = self._sorting_position(id)
+            pos = self._sorting_position(cid)
             if pos is not None:
                 left = x + width - 12
                 top = y + 3
-                r = self._sorting_direction(id) == LookupForm.SORTING_ASCENDENT
-                if id in self._grouping:
+                r = self._sorting_direction(cid) == LookupForm.SORTING_ASCENDENT
+                if cid in self._grouping:
                     color = 'GREEN'
                 else:
                     color = 'CORAL'
@@ -1277,7 +1277,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     dc.DrawLine(left, top + 2 * i, left + 9, top + 2 * i)
                 dc.DrawPolygon(triangle(left, top + pos * 2, reversed=r))
             # Draw the filter sign.
-            if id in filtered_columns:
+            if cid in filtered_columns:
                 dc.SetBrush(wx.Brush('GOLD', wx.BRUSHSTYLE_SOLID))
                 dc.DrawPolygon(funnel(x + 2, y + 3))
             # Draw the aggregation results.
@@ -1285,10 +1285,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if self._aggregations:
                 for op, title, icon_id, label in self._AGGREGATIONS:
                     if op in self._aggregations:
-                        rect = (x - d, y - 1, width + d, row_height + 1)
+                        rect = (x - dx, y - 1, width + dx, row_height + 1)
                         dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
                         dc.DrawRectangle(*rect)
-                        value = self._aggregation_results[(id, op)]
+                        value = self._aggregation_results[(cid, op)]
                         if value is not None:
                             icon = get_icon(icon_id)
                             if isinstance(value.type(), pytis.data.Number):
@@ -1300,10 +1300,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                 text = label + text
                             dc.SetClippingRegion(x, y, width, row_height)
                             dc.DrawLabel(text, bitmap=icon, alignment=align,
-                                         rect=(x - d + 2, y + 1, width + d - 4, row_height))
+                                         rect=(x - dx + 2, y + 1, width + dx - 4, row_height))
                             dc.DestroyClippingRegion()
                         y += row_height
-                dc.DrawLine(x - d, y, x + width, y)
+                dc.DrawLine(x - dx, y, x + width, y)
             x += width
 
     def _on_corner_paint(self, event):
