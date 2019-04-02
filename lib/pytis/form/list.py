@@ -1231,9 +1231,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         label_height = self._label_height
         filtered_columns = self._filtered_columns()
         for i, column in enumerate(self._columns):
-            y = 0
-            cid = column.id()
+            if i >= g.GetNumberCols():
+                # This should not happen, but we have seen wxAssertionError
+                # tracebacks on g.GetColSize(i).
+                continue
             width = g.GetColSize(i)
+            cid = column.id()
+            y = 0
             if i == 0:
                 dx = 0
             else:
