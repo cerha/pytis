@@ -3695,13 +3695,13 @@ class Field(object):
         self._crypto_name = crypto_name
         self._encrypt_empty = encrypt_empty
 
-    def __str__(self):
-        return "<Field for '%s'>" % self.id()
+    def __repr__(self):
+        return "<Field '%s'>" % self.id()
 
     def __unicode__(self):
         properties = self._kwargs
         formatted = []
-        beg_names = ['id', 'label', 'type']
+        beg_names = ['label', 'type']
         end_names = ['descr']
         for name in (beg_names +
                      [k for k in properties.keys() if k not in beg_names + end_names] +
@@ -3716,7 +3716,10 @@ class Field(object):
                     formatted_value = value
                 info_string = u'%s=%s' % (name, formatted_value,)
                 formatted.append(info_string)
-        return u"<Field: %s>" % (string.join(formatted, ', '),)
+        return u"<Field '%s': %s>" % (self._id, string.join(formatted, ', '),)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
     def clone(self, field):
         """Clone this field by another field and return the cloned instance.
