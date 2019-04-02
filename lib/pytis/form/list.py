@@ -1234,6 +1234,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if i >= g.GetNumberCols():
                 # This should not happen, but we have seen wxAssertionError
                 # tracebacks on g.GetColSize(i).
+                log(OPERATIONAL, "Unexpected situation in _on_label_paint:",
+                    (g.GetNumberCols(), i, self._columns))
                 continue
             width = g.GetColSize(i)
             cid = column.id()
