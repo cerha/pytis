@@ -2227,7 +2227,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         nullval = Value(row[cid].type(), None)
                         neq = OR(neq, EQ(cid, nullval))
                     conds.append(neq)
-                if conds:
+                if conds and len(conds) > len(processed):
                     conditions.append(AND(*conds))
                 processed.append(cid)
             if mayeq:
