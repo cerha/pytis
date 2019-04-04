@@ -2495,6 +2495,13 @@ class Binary(Limited):
             self._filename = filename
             self._mime_type = mime_type
 
+        def __repr__(self):
+            if len(self) > 100:
+                # Prevent printing huge binary data in logs, tracebacks etc.
+                return '<binary value at 0x%x, %d bytes>' % (id(self), len(self))
+            else:
+                return super(Binary.Data, self).__repr__()
+
         def buffer(self):
             """Return the binary data as a Python bytes instance."""
             return buffer(self)
