@@ -255,58 +255,66 @@ def hotkey_string(hotkey):
 
 def file_menu_items(fields, row, select_arguments):
     from .application import Application, decrypted_names
+    data = row.data()
 
-    def file_field_data(field_id):
+    def field_not_null(field_id):
         value = row[field_id]
-        if isinstance(value.type(), pytis.data.Binary):
-            data = row.data()
-            if isinstance(value.type(), pytis.data.Big) and data.find_column(field_id):
-                # Big values are not included in list form select.
-                key_id = data.key()[0].id()
-                data.select(condition=pytis.data.EQ(key_id, row[key_id]),
-                            columns=(field_id,), transaction=row.transaction(),
-                            arguments=select_arguments)
-                complete_row = data.fetchone()
-                data.close()
-                if complete_row is None:
-                    data = None
-                else:
-                    data = complete_row[field_id].value()
-            else:
-                data = value.value()
+        t = value.type()
+        if isinstance(t, pytis.data.Big) and data.find_column(field_id):
+            # Big values are not included in list form select.
+            key_id = data.key()[0].id()
+            data.select(
+                condition=pytis.data.AND(pytis.data.EQ(key_id, row[key_id]),
+                                         pytis.data.NE(field_id, pytis.data.Value(t, None))),
+                arguments=select_arguments, columns=(key_id,), transaction=row.transaction(),
+            )
+            result = data.fetchone() is not None
+            data.close()
         else:
-            if value.value() is not None:
-                data = value.export()
-            else:
-                data = None
-        return data
+            result = value.value() is not None
+        return result
 
-    def open_file(data, filename):
-        suffix = os.path.splitext(filename)[1]
-        open_data_as_file(data, suffix=suffix)
+    def field_data(field_id):
+        value = row[field_id]
+        if isinstance(value.type(), pytis.data.Big) and data.find_column(field_id):
+            # Big values are not included in list form select.
+            key_id = data.key()[0].id()
+            data.select(condition=pytis.data.EQ(key_id, row[key_id]),
+                        columns=(field_id,), transaction=row.transaction(),
+                        arguments=select_arguments)
+            complete_row = data.fetchone()
+            data.close()
+            if complete_row:
+                value = complete_row[field_id]
+        if isinstance(value.type(), pytis.data.Binary):
+            result = value.value()
+        elif value.value() is not None:
+            result = value.export()
+        else:
+            result = None
+        return result
+
+    def open_file(field_id, filename):
+        open_data_as_file(field_data(field_id), suffix=os.path.splitext(filename)[1])
 
     def can_open(fspec):
         crypto_name = fspec.crypto_name()
 
-        def can_open_file(data, filename):
-            if crypto_name is None:
-                return True
-            else:
-                return crypto_name in decrypted_names()
+        def can_open_file(field_id, filename):
+            return crypto_name is None or crypto_name in decrypted_names()
         return can_open_file
+
     mitems = []
     for f in fields:
         fid = f.id()
         filename = row.filename(fid)
-        if filename is not None:
-            data = file_field_data(fid)
-            if data is not None:
-                command = Application.COMMAND_HANDLED_ACTION(handler=open_file,
-                                                             data=data,
-                                                             filename=filename,
-                                                             enabled=can_open(f))
-                mitems.append(MItem(_('Open file "%s"', filename), command=command,
-                                    help=_('Open the value of field "%s" as a file.', f.label())))
+        if filename is not None and field_not_null(fid):
+            command = Application.COMMAND_HANDLED_ACTION(handler=open_file,
+                                                         field_id=fid,
+                                                         filename=filename,
+                                                         enabled=can_open(f))
+            mitems.append(MItem(_('Open file "%s"', filename), command=command,
+                                help=_('Open the value of field "%s" as a file.', f.label())))
     return mitems
 
 
