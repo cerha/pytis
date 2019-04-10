@@ -666,43 +666,39 @@ class ColumnSpec(unittest.TestCase):
         self.assertNotEqual(self._test_instance, z)
 
 
-class Row(unittest.TestCase):
+class TestRow(object):
 
     def test_empty(self):
-        r = pd.Row()
-        self.assertEqual(len(r), 0)
+        row = pd.Row()
+        assert len(row) == 0
 
     def test_nonempty(self):
         v1 = ival(1)
         v2 = sval('prvni prvek')
         v3 = ival(2)
-        r = pd.Row((('poradi', v1), ('popis', v2)))
-        self.assertEqual(len(r), 2, 'invalid length')
-        self.assertTrue(r[0] == v1 and r[1] == v2, 'numeric indexing failed')
-        self.assertTrue(r[-2] == v1 and r[-1] == v2, 'numeric indexing failed')
-        self.assertTrue(r['poradi'] == v1 and r['popis'] == v2, 'string indexing failed')
+        row = pd.Row((('poradi', v1), ('popis', v2)))
+        assert len(row) == 2
+        assert row[0] == v1 and row[1] == v2
+        assert row[-2] == v1 and row[-1] == v2
+        assert row['poradi'] == v1 and row['popis'] == v2
         for key in (-3, 2, '', 'pop', None, self):
-            try:
-                r[key]
-            except Exception:
-                pass
-            else:
-                self.fail(('exception not thrown', key))
-        r[0] = r['popis'] = v3
-        self.assertTrue(r['poradi'] == r[1] == v3, 'value not set')
-        r[0:2] = (v2, v1)
-        self.assertTrue(r[0] == v2 and r[1] == v1, 'set slice not working')
-        x1, x2 = r[0:2]
-        self.assertTrue(x1 == v2 and x2 == v1, 'get slice not working')
-        self.assertTrue(r[0:1][0] == v2 and r[1:2][0] == v1, 'get slice not working')
+            with pytest.raises((IndexError, KeyError)):
+                row[key]
+        row[0] = row['popis'] = v3
+        assert row['poradi'] == row[1] == v3
+        row[0:2] = (v2, v1)
+        assert row[0] == v2 and row[1] == v1
+        x1, x2 = row[0:2]
+        assert x1 == v2 and x2 == v1
+        assert row[0:1][0] == v2 and row[1:2][0] == v1
 
     def test_columns(self):
         v1 = ival(1)
         v2 = sval('prvni prvek')
         v3 = ival(2)
         r = pd.Row((('poradi', v1), ('popis', v2), ('cislo', v3)))
-        self.assertEqual(r.columns(()), ())
-        self.assertEqual(r.columns(('poradi', 'cislo')), (v1, v3))
+        assert r.columns(()) == ()
+        assert r.columns(('poradi', 'cislo')) == (v1, v3)
 
     def test_update(self):
         v1 = ival(1)
@@ -711,14 +707,14 @@ class Row(unittest.TestCase):
         u1 = ival(8)
         r2 = pd.Row((('poradi', u1),))
         r.update(r2)
-        self.assertTrue(r[0] == u1 and r[1] == v2, 'row update failed')
+        assert r[0] == u1 and r[1] == v2
 
     def test_append(self):
         r = pd.Row((('x', ival(1)), ('y', ival(2))))
         r.append('z', ival(3))
-        self.assertEqual(r['x'].value(), 1)
-        self.assertEqual(r['y'].value(), 2)
-        self.assertEqual(r['z'].value(), 3)
+        assert r['x'].value() == 1
+        assert r['y'].value() == 2
+        assert r['z'].value() == 3
 
 
 class Data(unittest.TestCase):
