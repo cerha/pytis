@@ -1609,6 +1609,13 @@ class DBDataDefault(_DBTest):
         test_select(pytis.data.LT('id', ival(5)), 1)
         test_select(pytis.data.GT('id', ival(6)), 0)
 
+    def test_async_count(self, arguments={}):
+        count = self.data.select(async_count=True, arguments=arguments)
+        assert hasattr(count, 'count')
+        assert count.count(1)[0] > 1
+        assert count.count()[0] == 2
+        self.data.close()
+
     def test_async_select(self, arguments={}):
         self.data.select(async_count=True, arguments=arguments)
         for r in (self.ROW1, self.ROW2):
