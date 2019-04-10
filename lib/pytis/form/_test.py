@@ -18,126 +18,101 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import unittest
+import pytest
 import pytis.form._grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
 import pytis.data._test as dtest
 
 
-class DataTable(dtest._DBBaseTest):
+class TestDataTable(dtest.DBTest):
 
-    class DataStream(object):
-        """Pretend a file-like object for given generator of row data.
-
-        Used as the first argument for cursor.copy_from() to insert data
-        efficiently.
-
-        """
-        def __init__(self, generator):
-            if isinstance(generator, (tuple, list)):
-                generator = (x for x in generator)
-            self._generator = generator
-            self._buffer = ''
-
-        def read(self, n=None):
-            while n is None or len(self._buffer) < n:
-                line = self.readline()
-                if not line:
-                    break
-                self._buffer += line
-            if not self._buffer:
-                result = ''
-            elif n is None:
-                result = self._buffer
-                self._buffer = ''
-            else:
-                result = self._buffer[:n]
-                self._buffer = self._buffer[n:]
-            return result
-
-        def readline(self):
+    @pytest.fixture
+    def table(self, connector):
+        try:
+            self.sql('create table grid_test'
+                     '(id int, name text, price decimal(10, 2), flag bool)')
+            yield 'grid_test'
+        finally:
             try:
-                row = next(self._generator)
-                return '\t'.join('\\N' if x is None else str(x) for x in row) + '\n'
-            except StopIteration:
-                return None
+                self.sql('drop table grid_test')
+            except Exception:
+                pass
 
-    def setUp(self):
-        self._sql_command('create table grid_test'
-                          '(id int, name text, price decimal(10, 2), flag bool)')
-
-    def tearDown(self):
-        self._sql_command('drop table grid_test')
-
-    def _table(self, rows, row_style=None, name_style=None, price_style=None, sorting=None):
-        if rows:
-            cursor = self._connector.cursor()
-            cursor.copy_from(self.DataStream(rows), 'grid_test')
-            self._connector.commit()
-
+    @pytest.fixture
+    def spec(self):
         class Specification(pp.Specification):
             table = 'grid_test'
             fields = (
                 pp.Field('id', type=pd.Integer()),
-                pp.Field('name', type=pd.String(), style=name_style),
-                pp.Field('price', type=pd.Float(precision=2), style=price_style),
+                pp.Field('name', type=pd.String()),
+                pp.Field('price', type=pd.Float(precision=2)),
                 pp.Field('flag', type=pd.Boolean()),
             )
+        return Specification()
 
-        data = Specification().data_spec().create(connection_data=self._dconnection)
-        row = pp.PresentedRow(Specification.fields, data, None)
+    @pytest.fixture
+    def data(self, table, spec, dbconnection):
+        return spec.data_spec().create(connection_data=dbconnection)
+
+    def grid_table(self, spec, data, row_style=None, field_style={}, sorting=None):
+        fields = [f.clone(pp.Field(f.id(), style=field_style.get(f.id()))) for f in spec.fields]
+        row = pp.PresentedRow(fields, data, None)
         count = data.select(sort=sorting or ())  # , async_count=True)
-        table = grid.DataTable(data, row, row.fields(), count, row_style=row_style, sorting=sorting)
-        return table, data
+        return grid.DataTable(data, row, row.fields(), count, row_style=row_style, sorting=sorting)
 
-    def test_data_stream(self):
-        s = self.DataStream((('a', 1), ('b', '2'), ('c', 3)))
-        self.assertEqual(s.readline(), 'a\t1\n')
-        self.assertEqual(s.read(2), 'b\t')
-        self.assertEqual(s.read(), '2\nc\t3\n')
-        self.assertEqual(self.DataStream(()).read(), '')
-        s = self.DataStream((('a', 1), ('b', '2'), ('c', 3)))
-        self.assertEqual(s.read(4096), 'a\t1\nb\t2\nc\t3\n')
-
-    def test_cell_value(self):
-        t, data = self._table((
+    def test_cell_value(self, spec, data):
+        self.insert(data, (
             (1, 'Apple', 12.3, False),
             (2, 'Banana', 23.4, True),
             (3, 'Strawberry', 2.34, False),
             (4, 'Orange', None, True),
         ))
+        t = self.grid_table(spec, data)
         try:
-            self.assertEqual(t.cell_value(0, 0), '1')
-            self.assertEqual(t.cell_value(1, 2), '23.40')
-            self.assertEqual(t.cell_value(3, 2), '')
-            self.assertEqual(t.cell_value(3, 3), 'T')
-            self.assertEqual(t.cell_value(4, 2), None)
-            self.assertEqual(t.cell_value(3, 4), None)
+            assert t.cell_value(0, 0) == '1'
+            assert t.cell_value(1, 2) == '23.40'
+            assert t.cell_value(3, 2) == ''
+            assert t.cell_value(3, 3) == 'T'
+            assert t.cell_value(4, 2) is None
+            assert t.cell_value(3, 4) is None
         finally:
             data.close()
 
-    def test_cell_style(self):
-        t, data = self._table(
-            rows=(
-                (1, 'Apple', 12.3, False),
-                (2, 'Banana', 23.4, True),
-                (3, 'Strawberry', 2.34, True),
-                (4, 'Orange', None, True),
-            ),
+    def test_cell_style(self, spec, data):
+        self.insert(data, (
+            (1, 'Apple', 12.3, False),
+            (2, 'Banana', 23.4, True),
+            (3, 'Strawberry', 2.34, True),
+            (4, 'Orange', None, True),
+        ))
+        t = self.grid_table(
+            spec, data,
             row_style=lambda r: pp.Style(background='#ffa') if r['id'].value() % 2 else None,
-            price_style=lambda r: pp.Style(bold=True) if r['flag'].value() else None,
+            field_style={'price': lambda r: pp.Style(bold=True) if r['flag'].value() else None},
         )
         try:
-            self.assertEqual(t.cell_style(4, 1), None)
-            self.assertEqual(t.cell_style(3, 4), None)
-            self.assertEqual(t.cell_style(0, 2), pp.Style(background='#ffa'))
-            self.assertEqual(t.cell_style(1, 3), pp.Style())
-            self.assertEqual(t.cell_style(1, 2), pp.Style(bold=True))
-            self.assertEqual(t.cell_style(2, 2), pp.Style(bold=True, background='#ffa'))
+            assert t.cell_style(4, 1) is None
+            assert t.cell_style(3, 4) is None
+            assert t.cell_style(0, 2) == pp.Style(background='#ffa')
+            assert t.cell_style(1, 3) == pp.Style()
+            assert t.cell_style(1, 2) == pp.Style(bold=True)
+            assert t.cell_style(2, 2) == pp.Style(bold=True, background='#ffa')
         finally:
             data.close()
 
+    def test_slow_move(self, spec, data):
+        def rows(count):
+            i = 0
+            while i < count:
+                i += 1
+                yield (i, 'Row number %d' % i, 1.86 * i, i % 3 == 0)
+        self.insert(data, rows(9500))
 
-if __name__ == '__main__':
-    unittest.main()
+        t = self.grid_table(spec, data, sorting=(('id', pd.ASCENDENT),))
+        try:
+            for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436, 30):
+                print n
+                assert t.cell_value(n, 0) == str(n + 1)
+        finally:
+            data.close()
