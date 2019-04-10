@@ -25,6 +25,7 @@ import string
 import time
 import StringIO
 
+import pytest
 import unittest
 
 from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT
@@ -70,7 +71,7 @@ class Value(unittest.TestCase):
         self.assertNotEqual(v1, v3)
 
 
-class _TypeCheck(unittest.TestCase):
+class _TypeCheck:  # (unittest.TestCase):  Temporarily disabled
 
     def _test_validity(self, type_, value, expected_value,
                        check_value=True, check_export=True, kwargs={},
@@ -2232,8 +2233,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
 
 
-# Temporarily disabled adding the _ prefix - see setUp for the reason.
-class _DBMultiData(DBDataDefault):
+class DBMultiData:  # (DBDataDefault): Temporarily disabled
     ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pytis.data.DateTime.UTC_TZINFO), 1000.0,
             ('100', '007'),
             'U.S.A.', 'specialni')
@@ -2402,19 +2402,15 @@ class _DBMultiData(DBDataDefault):
 
 class DBSessionVariables(_DBBaseTest):
 
-    def __init__(self, *args, **kwargs):
-        # Session variables are only initialized when a new connection is
-        # created.  Thus we need to set the configuration option before
-        # *any* DB connection is made (even for any other tests), otherwise
-        # pool connections are reused and the configuration set later does
-        # not get applied.  Here we rely on the fact that test instances are
-        # created all at once before any tests are run.
-        import config
-        config.session_variables = {'myvar.test': 'value'}
-        super(DBSessionVariables, self).__init__(*args, **kwargs)
-
     def setUp(self):
         _DBBaseTest.setUp(self)
+        import config
+        config.session_variables = {'myvar.test': 'value'}
+        # Session variables are only initialized when a new connection is
+        # created.  When other tests run before this on, connections are
+        # already initialized in the pool and session variables don't get
+        # applied.  Calling reload_session_variables() solves that...
+        pytis.data.reload_session_variables(_connection_data)
         try:
             self._sql_command("create function foo() "
                               "  returns text as "
@@ -3266,7 +3262,7 @@ class AccessRightsTest(_DBBaseTest):
         self.assertTrue(not a.permitted(P.VIEW, ('group4',)), 'Invalid permission')
 
 
-class _ThreadTest(_DBBaseTest):
+class _ThreadTest(): #_DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety
 
@@ -3400,15 +3396,3 @@ class OperatorTest(_DBBaseTest):
         self.assertNotEqual(b, c)
         self.assertNotEqual(a, d)
         self.assertNotEqual(d, e)
-
-
-def load_tests(loader, tests, _):
-    # Ignore TestCase classes with names starting with underscore
-    # (used for abstract base classes and temporarily disabled tests).
-    tests = [test for test in tests
-             if test._tests and not test._tests[0].__class__.__name__.startswith('_')]
-    return loader.suiteClass(tests)
-
-
-if __name__ == '__main__':
-    unittest.main()
