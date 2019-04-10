@@ -671,6 +671,8 @@ class TestRow(object):
     def test_empty(self):
         row = pd.Row()
         assert len(row) == 0
+        assert row.keys() == []
+        assert row.values() == []
 
     def test_nonempty(self):
         v1 = ival(1)
@@ -681,6 +683,7 @@ class TestRow(object):
         assert row[0] == v1 and row[1] == v2
         assert row[-2] == v1 and row[-1] == v2
         assert row['poradi'] == v1 and row['popis'] == v2
+        assert row.values() == [v1, v2]
         for key in (-3, 2, '', 'pop', None, self):
             with pytest.raises((IndexError, KeyError)):
                 row[key]
