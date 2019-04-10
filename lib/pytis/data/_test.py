@@ -1420,19 +1420,17 @@ class DBDataDefault(_DBTest):
         self.data.select()
         F, B = pytis.data.FORWARD, pytis.data.BACKWARD
         R1, R2 = self.ROW1, self.ROW2
-        n = 0
         for d, r in ((B, None), (F, R1), (B, None), (F, R1), (F, R2),
                      (B, R1), (F, R2), (F, None), (F, None), (B, R2), (B, R1),
                      (B, None)):
+            print d, r and r[0]
             result = self.data.fetchone(direction=d)
+            print result and result[0].value()
             if r:
-                self.assertIsNotNone(result, ('line not received', n))
-                for i in range(len(r)):
-                    self.assertEqual(r[i], result[i].value(),
-                                     ('invalid value', r[i], result[i].value(), n))
+                assert result is not None
+                assert r == tuple(v.value() for v in result.values())
             else:
-                self.assertIsNone(result, ('data reincarnation', str(result), d, r, n))
-            n = n + 1
+                assert result is None
         self.data.close()
 
     def test_select_condition(self):
@@ -1615,12 +1613,10 @@ class DBDataDefault(_DBTest):
         self.data.select(async_count=True, arguments=arguments)
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
-            self.assertIsNotNone(result, 'missing lines')
-            for i in range(len(r)):
-                self.assertEqual(r[i], result[i].value(),
-                                 ('invalid value', r[i], result[i].value()))
-        self.assertIsNone(self.data.fetchone(), 'too many lines')
-        self.assertIsNone(self.data.fetchone(), 'data reincarnation')
+            assert result is not None
+            assert tuple(v.value() for v in result.values()) == r
+        assert self.data.fetchone() is None
+        assert self.data.fetchone() is None
         self.data.close()
 
     def test_dummy_select(self):
@@ -2475,6 +2471,7 @@ class DBDataFetchBuffer(_DBBaseTest):
         _DBBaseTest.tearDown(self)
 
     def _check_skip_fetch(self, d, spec, noresult=False):
+        print
         d.select()
         n = 0
         for op, count in spec:
@@ -2484,6 +2481,7 @@ class DBDataFetchBuffer(_DBBaseTest):
             else:
                 direction = pytis.data.BACKWARD
                 count = -count
+            print 'fetch' if op == 'f' else 'skip', count, direction
             if op == 'f':
                 for i in range(count):
                     d.fetchone(direction=direction)
@@ -2493,10 +2491,10 @@ class DBDataFetchBuffer(_DBBaseTest):
                 raise Exception('Invalid op', op)
         row = d.fetchone()
         if noresult:
-            self.assertIsNone(row, ('Extra result', str(row)))
+            assert row is None
         else:
-            self.assertIsNotNone(row, ('Missing row', n))
-            self.assertEqual(row['x'].value(), n, ('Invalid result', row['x'].value(), n))
+            assert row is not None
+            assert row['x'].value() == n
 
     def test_skip_fetch(self):
         import config
