@@ -1796,6 +1796,14 @@ class Row:
         """
         return map(copy.copy, self._data)
 
+    def values(self):
+        """Vrať seznam hodnot všech sloupců v jejich pořadí.
+
+        Vrací list hodnot typu 'pytis.data.Value'.
+
+        """
+        return [value for key, value in self._data]
+
     def columns(self, keys):
         """Vrať hodnoty sloupců odpovídající 'keys'.
 
