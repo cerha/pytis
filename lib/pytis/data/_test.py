@@ -1001,6 +1001,100 @@ class _DBBaseTest(unittest.TestCase):
         self._connector.close()
 
 
+class DBTest(object):
+    """Pytest alternative to _DBBaseTest.
+
+    All tests derived from '_DBBaseTest' should be gradually overwritten to
+    derive from this class and make better use of pytest.
+
+    """
+
+    class DataStream(object):
+        """Pretend a file-like object for given generator of row data.
+
+        Used as the first argument for cursor.copy_from() to insert data
+        efficiently.
+
+        TODO: Currently only used internally in tests, but might be generally
+        useful.
+
+        """
+        def __init__(self, generator):
+            if isinstance(generator, (tuple, list)):
+                generator = (x for x in generator)
+            self._generator = generator
+            self._buffer = ''
+
+        def read(self, n=None):
+            while n is None or len(self._buffer) < n:
+                line = self.readline()
+                if not line:
+                    break
+                self._buffer += line
+            if not self._buffer:
+                result = ''
+            elif n is None:
+                result = self._buffer
+                self._buffer = ''
+            else:
+                result = self._buffer[:n]
+                self._buffer = self._buffer[n:]
+            return result
+
+        def readline(self):
+            try:
+                row = next(self._generator)
+                return '\t'.join('\\N' if x is None else str(x) for x in row) + '\n'
+            except StopIteration:
+                return None
+
+    @pytest.fixture
+    def dbconnection(self):
+        return pytis.data.DBConnection(**_connection_data)
+
+    @pytest.fixture(autouse=True)
+    def connector(self):
+        import psycopg2
+        self._connector = psycopg2.connect(**_connection_data)
+        yield None
+        self._connector.close()
+
+    def sql(self, command):
+        cursor = self._connector.cursor()
+        try:
+            cursor.execute(command)
+        except Exception as e:
+            try:
+                self._connector.rollback()
+                cursor.close()
+            except Exception:
+                pass
+            raise e
+        try:
+            result = cursor.fetchall()
+        except Exception:
+            result = ()
+        self._connector.commit()
+        cursor.close()
+        return result
+
+    def insert(self, data, rows):
+        cursor = self._connector.cursor()
+        cursor.copy_from(self.DataStream(rows), data.table(data.columns()[0].id()))
+        self._connector.commit()
+
+
+def test_data_stream():
+    # Test testing infrastructure.
+    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+    assert s.readline() == 'a\t1\n'
+    assert s.read(2) == 'b\t'
+    assert s.read() == '2\nc\t3\n'
+    assert DBTest.DataStream(()).read() == ''
+    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+    assert s.read(4096) == 'a\t1\nb\t2\nc\t3\n'
+
+
 class _DBTest(_DBBaseTest):
 
     def setUp(self):
@@ -2443,39 +2537,30 @@ class DBSessionVariables(_DBBaseTest):
         _DBBaseTest.tearDown(self)
 
 
-class DBDataFetchBuffer(_DBBaseTest):
+class TestFetchBuffer(DBTest):
 
-    def setUp(self):
-        _DBBaseTest.setUp(self)
-        import config
+    @pytest.fixture
+    def table(self):
         try:
-            self._sql_command("create table big (x int)")
-            table_size = config.initial_fetch_size + config.fetch_size + 10
-            self._table_size = table_size
-            for i in range(table_size):
-                self._sql_command("insert into big values(%d)" % i)
-            self._sql_command("create table small (x int)")
-            for i in range(4):
-                self._sql_command('insert into "small" values(%d)' % i)
-        except Exception:
-            self.tearDown()
-            raise
-        key = pytis.data.DBColumnBinding('x', 'big', 'x')
-        self.data = pytis.data.DBDataDefault((key,), key, self._dconnection)
-        key2 = pytis.data.DBColumnBinding('x', 'small', 'x')
-        self.data2 = pytis.data.DBDataDefault((key2,), key2, self._dconnection)
+            self.sql("create table test (x int)")
+            yield 'test'
+        finally:
+            try:
+                self.sql('drop table test')
+            except Exception:
+                pass
 
-    def tearDown(self):
+    @pytest.fixture
+    def data(self, table, dbconnection):
         try:
-            self.data.sleep()
-        except Exception:
-            pass
-        try:
-            self._sql_command('drop table "big"')
-            self._sql_command('drop table "small"')
-        except Exception:
-            pass
-        _DBBaseTest.tearDown(self)
+            key = pytis.data.DBColumnBinding('x', table, 'x')
+            data = pytis.data.DBDataDefault((key,), key, dbconnection)
+            yield data
+        finally:
+            try:
+                data.sleep()
+            except Exception:
+                pass
 
     def _check_skip_fetch(self, d, spec, noresult=False):
         print
@@ -2503,48 +2588,62 @@ class DBDataFetchBuffer(_DBBaseTest):
             assert row is not None
             assert row['x'].value() == n
 
-    def test_skip_fetch(self):
+    @pytest.fixture
+    def rows(self, data):
         import config
-        fsize = config.initial_fetch_size
-        fsize2 = fsize + config.fetch_size
-        tsize = self._table_size
-        d1 = self.data
-        self._check_skip_fetch(d1, (('s', tsize - 1), ('f', 1), ('s', -2), ('f', -1)))
-        self._check_skip_fetch(d1, (('f', 12), ('s', 42)))
-        self._check_skip_fetch(d1, (('f', 12), ('s', 42), ('f', 10)))
-        self._check_skip_fetch(d1, (('f', 12), ('s', fsize)))
-        self._check_skip_fetch(d1, (('f', 12), ('s', fsize + 1), ('f', 5)))
-        self._check_skip_fetch(d1, (('f', 12), ('s', -6), ('f', 2)))
-        self._check_skip_fetch(d1, (('f', fsize + 10), ('s', -16)))
-        self._check_skip_fetch(d1, (('f', fsize + 10), ('s', -16), ('s', 20),
-                                    ('f', -10), ('f', 15)))
-        self._check_skip_fetch(d1, (('s', fsize2 + 3),))
-        self._check_skip_fetch(d1, (('s', 10 * fsize2),), noresult=True)
-        # small table
-        # Z neznámého důvodu to při ukončení vytuhne (testy ale proběhnou bez
-        # problémů...  TODO: Co s tím??
-        # self._check_skip_fetch(d2, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
-        # self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
+        table_size = config.initial_fetch_size + config.fetch_size + 10
+        self.insert(data, ((i,) for i in range(table_size)))
+        return table_size
 
+    def test_skip_fetch(self, data, rows):
+        import config
+        self._check_skip_fetch(data, (('f', 1),))
+        self._check_skip_fetch(data, (('f', 12), ('s', 42)))
+        self._check_skip_fetch(data, (('f', 12), ('s', 42), ('f', 10)))
+        self._check_skip_fetch(data, (('f', 1), ('s', rows - 1),
+                                      ('f', 1), ('s', -2), ('f', -1)))
+        self._check_skip_fetch(data, (('f', 12), ('s', config.initial_fetch_size)))
+        self._check_skip_fetch(data, (('f', 12), ('s', config.initial_fetch_size + 1), ('f', 5)))
+        self._check_skip_fetch(data, (('f', 12), ('s', -6), ('f', 2)))
+        self._check_skip_fetch(data, (('f', config.initial_fetch_size + 10), ('s', -16)))
+        self._check_skip_fetch(data, (('f', config.initial_fetch_size + 10), ('s', -16), ('s', 20),
+                                      ('f', -10), ('f', 15)))
+        self._check_skip_fetch(data, (('s', config.initial_fetch_size + config.fetch_size + 3),))
+        self._check_skip_fetch(data, (('s', 10 * config.initial_fetch_size + config.fetch_size),),
+                               noresult=True)
 
-class DBDataReuse(DBDataFetchBuffer):
+    def test_small_table_skip_fetch(self, data):
+        self.insert(data, ((i,) for i in range(4)))
+        self._check_skip_fetch(data, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
+        self._check_skip_fetch(data, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
 
-    def test_it(self):
-        d = self.data
-        d.select()
+    def test_rewind(self, data):
+        self.insert(data, ((i,) for i in range(10)))
+        data.select()
+        for n in (0, 1, 6, 10, 12):
+            for i in range(n):
+                data.fetchone()
+            data.rewind()
+            row = data.fetchone()
+            assert row is not None
+            assert row['x'].value() == 0
+
+    def test_reuse_select(self, data, rows):
         import config
         skip = config.initial_fetch_size
-        d.skip(skip)
+        data.select()
+        data.skip(skip)
         for i in range(3):
-            d.fetchone()
-        d.select(reuse=True)
-        d.skip(skip)
-        row = d.fetchone()
-        self.assertIsNotNone(row, ('Missing row', skip))
-        self.assertEqual(row['x'].value(), skip, ('Invalid result', str(row), skip))
-        d.select(reuse=True)
-        row = d.fetchone()
-        self.assertEqual(row['x'].value(), 0, ('Invalid result', str(row), 0))
+            data.fetchone()
+        data.select(reuse=True)
+        data.skip(skip)
+        row = data.fetchone()
+        assert row is not None
+        assert row['x'].value() == skip
+        data.select(reuse=True)
+        row = data.fetchone()
+        assert row is not None
+        assert row['x'].value() == 0
 
 
 class DBDataOrdering(_DBTest):
