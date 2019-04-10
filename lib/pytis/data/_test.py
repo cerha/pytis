@@ -2644,6 +2644,24 @@ class TestFetchBuffer(DBTest):
         assert row is not None
         assert row['x'].value() == 0
 
+    def test_skip_result(self, data):
+        self.insert(data, ((i,) for i in range(10)))
+        data.select()
+        assert data.skip(14) == 11
+        assert data.skip(12, pd.BACKWARD) == 11
+        row = data.fetchone()
+        assert row is not None
+        assert row['x'].value() == 0
+        assert data.skip(11) == 10
+        assert data.skip(10, pd.BACKWARD) == 10
+        row = data.fetchone()
+        assert row is not None
+        assert row['x'].value() == 1
+        assert data.skip(2, pd.BACKWARD) == 2
+        row = data.fetchone()
+        assert row is not None
+        assert row['x'].value() == 0
+
 
 class DBDataOrdering(_DBTest):
 
