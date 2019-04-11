@@ -111,7 +111,8 @@ class TestDataTable(dtest.DBTest):
 
         t = self.grid_table(spec, data, sorting=(('id', pd.ASCENDENT),))
         try:
-            for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436, 30, 120, 4444, 0):
+            for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436, 30, 120, 4444, 0,
+                      2453, 3890, 9499, 99, 100, 98):
                 print n
                 assert t.cell_value(n, 0) == str(n + 1)
         finally:
