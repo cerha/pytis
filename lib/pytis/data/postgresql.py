@@ -2639,6 +2639,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid direction', direction)
         return None
 
+    def _pg_move(self, position, transaction=None):
+        """Move DB cursor to given absolute position."""
+        args = dict(number=ival(position), selection=self._pdbb_selection_number)
+        self._pg_query(self._pdbb_command_move_absolute.update(args), transaction=transaction)
+
     def _pg_insert(self, row, after=None, before=None, transaction=None):
         """Vlož 'row' a vrať jej jako nová raw data nebo vrať 'None'."""
         ordering = self._ordering
@@ -3371,9 +3376,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if __debug__:
                     log(DEBUG, 'Determined skip:', skip)
                 try:
-                    if skip != 0:
-                        self._pg_skip(abs(skip), FORWARD if skip > 0 else BACKWARD,
-                                      exact_count=True, transaction=transaction)
+                    if skip > 0:
+                        self._pg_skip(skip, FORWARD, exact_count=True, transaction=transaction)
+                    elif skip < 0:
+                        self._pg_move(self._pg_dbpointer + skip + 1, transaction=transaction)
                     row_data = self._pg_fetchmany(fetch_size, FORWARD, transaction=transaction)
                     if not row_data:
                         # If rows are fetched, the pointer will be further updated.
