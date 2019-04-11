@@ -2309,8 +2309,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     while True:
                         if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
-                            args = dict(selection=selection,
-                                        number=ival(data._pg_buffer.dbpointer() + 1))
+                            args = dict(selection=selection, number=ival(data._pg_dbpointer + 1))
                             query = data._pdbb_command_move_absolute.update(args)
                             if not transaction or transaction.open():
                                 # The transaction can still become dead before
@@ -2388,8 +2387,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_terminate = True
                 self._pg_terminate_event.wait()
                 data = self._pg_data
-                args = dict(selection=self._pg_selection,
-                            number=ival(data._pg_buffer.dbpointer() + 1))
+                args = dict(selection=self._pg_selection, number=ival(data._pg_dbpointer + 1))
                 query = data._pdbb_command_move_absolute.update(args)
                 data._pg_query(query, transaction=self._pg_transaction)
 
@@ -2516,6 +2514,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 result = 0
         self._pg_number_of_rows = result
+        self._pg_dbpointer = -1
         return result
 
     def _pg_distinct(self, column, prefix, condition, sort, transaction=None,
@@ -2624,8 +2623,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return self._pg_query(query, transaction=transaction)
 
     def _pg_skip(self, count, direction, exact_count=False, transaction=None):
-        """Přeskoč 'count' řádků v 'direction' a vrať jejich počet nebo 'None'.
-        """
+        """Přeskoč 'count' řádků v 'direction'."""
         args = dict(number=ival(count), selection=self._pdbb_selection_number)
         if direction == FORWARD:
             self._pg_query(self._pdbb_command_move_forward.update(args),
@@ -2798,59 +2796,60 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
 
     class _PgBuffer:
-        # Dříve to býval buffer, nyní se přeměňuje na "buffer-cache".
 
         def __init__(self):
             if __debug__:
                 log(DEBUG, 'New buffer')
             self.reset()
 
-        def _number_of_rows(self, row_count_info, min_value=None):
-            if isinstance(row_count_info, int):
-                number = row_count_info
-            else:
-                number, finished = row_count_info.count(min_value=min_value)
-            return number
-
         def reset(self):
-            """Kompletně resetuj buffer."""
+            """Completely reset the buffer."""
             if __debug__:
                 log(DEBUG, 'Resetting buffer')
             self._buffer = []
-            # _dbpointer ... pozice ukazovátka kursoru v databázi, na který
-            #   prvek kursoru počínaje od 0 ukazuje
-            # _dbposition ... pozice začátku bufferu v databázi, číslo prvku
-            #   kurzoru počínaje 0, který odpovídá prvnímu prvku bufferu
-            # _pointer ... pozice ukazovátka v bufferu, ukazuje na poslední
-            #   přečtený prvek, nemusí vždy ukazovat dovnitř bufferu
-            self._dbposition = 0
-            self._dbpointer = self._pointer = -1
+            # _start ... position of the buffer begining within the database.
+            #    The row number of the first buffer item, starting from 0.
+            # _pointer ... position of the buffer pointer relative to the
+            #    first buffer item.  Points to the last fetched item.  May
+            #    point outside the buffer.
+            self._start = 0
+            self._pointer = -1
 
         def current(self):
-            """Vrať aktuální řádek a jeho pozici v databázi počínaje od 0.
+            """Return the current buffer item.
 
-            Výsledek je vrácen jako dvojice (ROW, POSITION).  Je-li aktuální
-            řádek mimo buffer, je ROW 'None'.  Je-li aktuální pozice mimo
-            buffer, je POSITION je -1 nebo počet řádků selectu.
+            If the current position points outside buffer data previously
+            loaded by 'fill()', returns None.
 
             """
-            buffer = self._buffer
+            buf = self._buffer
             pointer = self._pointer
-            position = self._dbposition + pointer
-            if pointer < 0 or pointer >= len(buffer):
+            if pointer < 0 or pointer >= len(buf):
                 row = None
             else:
-                row = buffer[pointer]
-            return row, position
+                row = buf[pointer]
+            return row
 
-        def fetch(self, direction, row_count_info):
-            """Vrať řádek nebo 'None' a updatuj ukazovátka.
+        def position(self):
+            """Return the current buffer position as int.
 
-            Pokud řádek není v bufferu, je vráceno 'None' a předpokládá se
-            následné volání metod 'correction()' a 'fill()'.
+            The position may point outside buffer data (previously loaded by
+            'fill()').
 
             """
-            buffer = self._buffer
+            return self._start + self._pointer
+
+        def fetch(self, direction):
+            """Return next buffer item in given direction from the current position.
+
+            If the row is not present in the buffer, 'None' is returned and it
+            is assumed that the buffer will be filled by subsequent 'fill()'
+            call if necessary.  Buffer position is updated in any case -
+            incremented when fetching forward and decremented when fetching
+            backwards.
+
+            """
+            buf = self._buffer
             pointer = self._pointer
             if direction == FORWARD:
                 pointer += 1
@@ -2858,158 +2857,76 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pointer -= 1
             else:
                 raise ProgramError('Invalid direction', direction)
-            if pointer < 0 or pointer >= len(buffer):
+            if pointer < 0 or pointer >= len(buf):
                 if __debug__:
                     log(DEBUG, 'Buffer miss:', pointer)
-                pos = self._dbposition + pointer
-                # Interní ukazovátko po obyčejném minutí neupdatujeme, protože
-                # přijde fill a pokus o znovuvytažení hodnoty, s novým updatem
-                # ukazovátka.  Avšak pokud jsme kompletně mimo rozsah dat, není
-                # tato zdrženlivost namístě a je nutno ukazovátko posunout na
-                # správnou pozici, tj. mimo rozsah dat.
-                if pos < 0:
-                    self._pointer = -1 - self._dbposition
-                elif pos >= self._number_of_rows(row_count_info, pos + 1):
-                    self._pointer = self._number_of_rows(row_count_info) - self._dbposition
-                return None
+                result = None
+            else:
+                if __debug__:
+                    log(DEBUG, 'Buffer hit:', pointer)
+                result = buf[pointer]
             self._pointer = pointer
-            result = buffer[pointer]
-            if __debug__:
-                log(DEBUG, 'Buffer hit:', pointer)  # , str(result))
             return result
 
-        def correction(self, direction, row_count_info):
-            """Vrať argument pro DB operaci SKIP před naplněním bufferu.
+        def skip(self, count, direction):
+            """Skip given number of items in given direction.
 
-            Kladná návratová hodnota odpovídá posunu vpřed, záporná posunu
-            zpět.
+            Moves buffer position relatively to the current position.
 
-            Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
+            Arguments:
+
+              count -- number of items to skip
+              direction -- One of the constants 'FORWARD'/'BACKWARD'
 
             """
-            if __debug__:
-                log(DEBUG, 'Request for correction:',
-                    (self._dbpointer, self._dbposition, self._pointer, direction))
-            pointer = self._pointer
-            buflen = len(self._buffer)
-            pos = self._dbposition + pointer
-            if pointer > buflen or pointer < -1:
-                # Dostali jsme se daleko za buffer, je nutno provést DB skip.
-                # TODO: zde by mohlo být dobré nastavit pozici tak, aby byla
-                # načtena ještě nějaká data proti směru bufferu.  Jak to ale
-                # udělat čistě?
-                if pos >= 0:
-                    pos = min(pos, self._number_of_rows(row_count_info, pos))
-                else:
-                    pos = max(pos, -1)
-                correction = pos - self._dbpointer
-                self._buffer = []
-                self._pointer = -1
-                self._dbpointer = self._dbpointer + correction
-                self._dbposition = self._dbpointer + 1
-            elif (direction == FORWARD and pointer >= buflen - 1) or \
-                 (direction == BACKWARD and pointer <= 1):
-                # Jsme u hranice bufferu, provedeme DB skip bez mazání bufferu.
-                # Rozsah v podmínce je zvolen tak, aby ošetřil i předchozí
-                # buffer miss.
-                correction = pos - self._dbpointer
-                self._dbpointer = self._dbpointer + correction
+            if direction == FORWARD:
+                self._pointer += count
+            elif direction == BACKWARD:
+                self._pointer -= count
             else:
-                # Jsme uvnitř bufferu, žádný DB skip se nekoná.
-                correction = 0
-            if __debug__:
-                log(DEBUG, 'Determined correction:', correction)
-            return correction
+                raise ProgramError('Invalid direction', direction)
 
         def goto(self, position):
-            """Updatuj databázovou pozici nastavenou bez vědomí bufferu.
+            """Set buffer position to given absolute position.
 
-            Argumenty:
+            Arguments:
 
-              position -- číslo prvku cursoru začínajícího od 0, na který
-                ukazovátko databázového kurzoru právě ukazuje
-
-            """
-            self._pointer = position - self._dbposition
-            self._dbpointer = position
-
-        def skip(self, count, direction, row_count_info):
-            """Proveď skip.
-
-            Argumenty:
-
-              count -- počet řádků, o kolik se má skok provést
-              direction -- jedna ze směrových konstant modulu
-              row_count_info -- informace o počtu řádků v aktuálním selectu
-
-            Vrací: Počet skutečně přeskočených řádků ve směru 'direction'.
+              position -- Item number starting from zero.
 
             """
-            pointer = self._pointer
-            if direction == FORWARD:
-                pointer = pointer + count
-            elif direction == BACKWARD:
-                pointer = pointer - count
-            else:
-                raise ProgramError('Invalid direction', direction)
-            pos = self._dbposition + pointer
-            if pos < -1:
-                pointer = -1 - self._dbposition
-            elif pos > self._number_of_rows(row_count_info, pos):
-                pointer = self._number_of_rows(row_count_info) - self._dbposition
-            result = pointer - self._pointer
-            if direction == BACKWARD:
-                result = -result
-            self._pointer = pointer
-            return result
+            self._pointer = position - self._start
 
-        def fill(self, rows, direction, extra_move=False):
-            """Naplň se daty 'rows' a updatuj ukazovátka."""
-            # extra_move je tu kvůli tomu, že pokud dojde ve fetchmany
-            # k překročení hranic dat ještě před získáním požadovaného počtu
-            # řádků, musí být dbpointer přesunut ještě o jednu pozici dál (mimo
-            # data).
+        def fill(self, position, items):
+            """Fill the buffer by given items and update the pointers.
+
+            Arguments:
+
+              position -- position of the first item within the database
+                select starting from zero.
+              items -- list of items to fill in the buffer.
+
+
+            """
             if __debug__:
-                log(DEBUG, 'Filling buffer:', direction)
-            n = len(rows)
-            buffer = self._buffer
-            buflen = len(buffer)
-            dbpointer = self._dbpointer
-            dbposition = self._dbposition
-            pointer = self._pointer + dbposition
-            import config
-            retain = max(config.cache_size - n, 0)
-            cutoff = max(buflen - retain, 0)
-            if direction == FORWARD:
-                if dbposition + buflen - 1 == dbpointer:
-                    buffer = buffer[cutoff:] + rows
-                    dbposition = dbposition + cutoff
-                else:
-                    buffer = rows
-                    dbposition = dbpointer + 1
-                dbpointer = dbpointer + n
-                if extra_move:
-                    dbpointer = dbpointer + 1
-            elif direction == BACKWARD:
-                rows.reverse()
-                if dbposition == dbpointer:
-                    buffer = rows + buffer[:retain]
-                else:
-                    buffer = rows
-                dbpointer = dbpointer - n
-                dbposition = dbpointer
-                if extra_move:
-                    dbpointer = dbpointer - 1
+                log(DEBUG, 'Filling buffer:', (position, len(items)))
+            n = len(items)
+            buf = self._buffer
+            buflen = len(buf)
+            start = self._start
+            if start + buflen == position:
+                import config
+                retain = max(config.cache_size - n, 0)
+                cutoff = max(buflen - retain, 0)
+                buf = buf[cutoff:] + items
+                start += cutoff
+                pointer = position - start - 1
             else:
-                raise ProgramError('Invalid direction', direction)
-            self._pointer = pointer - dbposition
-            self._dbpointer = dbpointer
-            self._dbposition = dbposition
-            self._buffer = buffer
-
-        def dbpointer(self):
-            """Return database pointer position within the database cursor."""
-            return self._dbpointer
+                buf = items
+                start = position
+                pointer = -1
+            self._buffer = buf
+            self._start = start
+            self._pointer = pointer
 
         def __str__(self):
             buffer = self._buffer
@@ -3033,8 +2950,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 bufstr = '%s\n...\n%s\n...\n%s' % \
                          (buffer[0], buffer[pointer], buffer[-1])
-            return '<PgBuffer: db=%d, start=%d, index=%d\n%s>' % \
-                   (self._dbpointer, self._dbposition, self._pointer, bufstr)
+            return '<PgBuffer: start=%d, index=%d\n%s>' % (self._start, self._pointer, bufstr)
 
     def __init__(self, bindings, key, connection_data, ro_select=True, **kwargs):
         """Inicializuj databázovou tabulku dle uvedených specifikací.
@@ -3062,6 +2978,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         super(DBDataPostgreSQL, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
+        self._pg_dbpointer = -1  # DB cursor position starting from zero
         self._pg_buffer = self._PgBuffer()
         self._pg_number_of_rows = None
         self._pg_initial_select = False
@@ -3199,7 +3116,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             # higher level transaction -- we mustn't continue in such a case.
             return False
         if row_number is None:
-            row_number = self._pg_buffer.current()[1]
+            row_number = self._pg_buffer.position()
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
                     columns=self._pg_last_select_columns,
@@ -3414,97 +3331,80 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Fetching row from selection in direction:', direction)
         assert direction in(FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
-        buffer = self._pg_buffer
-        row = buffer.fetch(direction, self._pg_number_of_rows)
+        buf = self._pg_buffer
+        position = buf.position()
+        row = buf.fetch(direction)
         if row:
             result = row
         else:
-            transaction_ = self._pg_select_transaction if transaction is None else transaction
-            # Kurzory v PostgreSQL mají spoustu chyb.  Například často
-            # kolabují při překročení hranic dat a mnohdy správně nefunguje
-            # FETCH BACKWARD.  V následujícím kódu se snažíme některé
-            # nejčastější chyby PostgreSQL obejít.
-
-            def stop_counting():
-                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                    self._pg_number_of_rows.stop()
-
-            def start_counting():
-                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                    self._pg_number_of_rows.restart()
-
-            def skip():
-                xcount = buffer.correction(FORWARD, self._pg_number_of_rows)
-                if xcount < 0:
-                    xcount = -xcount
-                    skip_direction = BACKWARD
-                else:
-                    skip_direction = FORWARD
-                if xcount > 0:
-                    try:
-                        self._pg_skip(xcount, skip_direction, exact_count=True,
-                                      transaction=transaction_)
-                    except Exception:
-                        cls, e, tb = sys.exc_info()
-                        if not self._pg_select_user_transaction:
-                            try:
-                                self._pg_select_transaction.rollback()
-                            except Exception:
-                                pass
-                        self._pg_select_transaction = None
-                        raise cls, e, tb
-            stop_counting()
-            skip()
+            if transaction is None:
+                transaction = self._pg_select_transaction
+            # PostgreSQL cursors have a number of problems.  They often fail
+            # at the edges and FETCH BACKWARD often doesn't work correctly.
+            # The following code tries to work around the known issues.
             if self._pg_initial_select:
                 self._pg_initial_select = False
-                std_size = self._pg_initial_fetch_size
+                fetch_size = self._pg_initial_fetch_size
             else:
-                std_size = self._pg_fetch_size
-            current_row_number = buffer.current()[1]
-            last_row_number = min(current_row_number + 1,
-                                  self._pg_number_of_rows_(current_row_number + 1))
+                fetch_size = self._pg_fetch_size
+            max_fetch_size = self._pg_number_of_rows_(fetch_size)
             if direction == FORWARD:
-                size = min(self._pg_number_of_rows_(last_row_number + std_size) - last_row_number,
-                           std_size)
+                last_position = min(position + 1, self._pg_number_of_rows_(position + 1))
+                number_of_rows = self._pg_number_of_rows_(last_position + fetch_size)
+                fetch_size = min(fetch_size, number_of_rows - last_position)
+            elif position <= 0:
+                fetch_size = 0
             else:
-                if current_row_number <= 0:
-                    if current_row_number == 0:
-                        skipped = buffer.skip(1, BACKWARD, self._pg_number_of_rows)
-                        assert skipped == 1, skipped
-                        skip()
-                    return None
-                size = min(self._pg_number_of_rows_(std_size), std_size)
-            assert size >= 0 and size <= self._pg_number_of_rows_(size)
-            if direction == FORWARD:
-                xskip = None
+                fetch_size = min(fetch_size, max_fetch_size)
+            assert 0 <= fetch_size <= max_fetch_size, (fetch_size, max_fetch_size)
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                self._pg_number_of_rows.stop()
+            correction = 0
+            if fetch_size != 0:
+                skip = position - self._pg_dbpointer
+                if direction == BACKWARD:
+                    if fetch_size < position:
+                        skip -= fetch_size + 1
+                    else:
+                        skip -= position + 1
+                        correction = fetch_size - position
+                if __debug__:
+                    log(DEBUG, 'Determined skip:', skip)
+                try:
+                    if skip != 0:
+                        self._pg_skip(abs(skip), FORWARD if skip > 0 else BACKWARD,
+                                      exact_count=True, transaction=transaction)
+                    row_data = self._pg_fetchmany(fetch_size, FORWARD, transaction=transaction)
+                    if not row_data:
+                        # If rows are fetched, the pointer will be further updated.
+                        self._pg_dbpointer += skip
+                except Exception:
+                    cls, e, tb = sys.exc_info()
+                    if not self._pg_select_user_transaction:
+                        try:
+                            self._pg_select_transaction.rollback()
+                        except Exception:
+                            pass
+                    self._pg_select_transaction = None
+                    raise cls, e, tb
             else:
-                xskip = buffer.skip(size, BACKWARD, self._pg_number_of_rows)
-                skip()
-            try:
-                if size != 0:
-                    data_ = self._pg_fetchmany(size, FORWARD, transaction=transaction_)
-                else:
-                    # Don't run an unnecessary SQL command
-                    data_ = None
-            except Exception:
-                cls, e, tb = sys.exc_info()
-                if not self._pg_select_user_transaction:
-                    try:
-                        self._pg_select_transaction.rollback()
-                    except Exception:
-                        pass
-                self._pg_select_transaction = None
-                raise cls, e, tb
-            if data_:
+                # Don't run an unnecessary SQL command
+                row_data = None
+            if row_data:
                 mkrow, tmpl = self._pg_make_row_from_raw_data, self._pg_make_row_template_limited
-                row_data = [mkrow([d], template=tmpl) for d in data_]
-                buffer.fill(row_data, FORWARD, len(row_data) != size)
-                if xskip:
-                    buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
-                result = buffer.fetch(direction, self._pg_number_of_rows)
+                rows = [mkrow([d], template=tmpl) for d in row_data]
+                # The last column is '_number' (convert long to int).
+                buf.fill(int(row_data[0][-1]) - 1, rows)
+                if direction == BACKWARD:
+                    buf.goto(buf.position() + len(rows) + 1 - correction)
+                self._pg_dbpointer = int(row_data[-1][-1]) - 1
+                result = buf.fetch(direction)
             else:
+                pos = buf.position()
+                buf.goto(min(max(pos, -1), self._pg_number_of_rows_(pos)))
                 result = None
-            start_counting()
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                self._pg_number_of_rows.restart()
         if __debug__:
             log(DEBUG, 'Returned row', str(result))
         if self._pg_select_set_read_only:
@@ -3514,7 +3414,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def last_row_number(self):
         self._pg_maybe_restore_select()
-        return self._pg_buffer.current()[1]
+        return self._pg_buffer.position()
 
     def last_select_condition(self):
         return self._pg_last_select_condition
@@ -3525,17 +3425,23 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def skip(self, count, direction=FORWARD):
         if __debug__:
             log(DEBUG, 'Skipping rows:', (direction, count))
-        assert isinstance(count, int) and count >= 0, ('Invalid count', count)
-        assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
+        assert isinstance(count, (int, long)) and count >= 0, count
+        assert direction in (FORWARD, BACKWARD), direction
         self._pg_maybe_restore_select()
-        result = self._pg_buffer.skip(count, direction, self._pg_number_of_rows)
+        buf = self._pg_buffer
+        position = buf.position()
+        if direction == FORWARD:
+            count = min(count, self._pg_number_of_rows_(position + count) - position)
+        else:
+            count = min(count, position + 1)
+        buf.skip(count, direction)
         if __debug__:
-            log(DEBUG, 'Rows skipped:', result)
-        return result
+            log(DEBUG, 'Rows skipped:', count)
+        return count
 
     def rewind(self):
         self._pg_maybe_restore_select()
-        pos = self._pg_buffer.current()[1]
+        pos = self._pg_buffer.position()
         if pos >= 0:
             self.skip(pos + 1, BACKWARD)
 
@@ -3554,12 +3460,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_maybe_restore_select()
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return 0
-        row, pos = self._pg_buffer.current()
+        row = self._pg_buffer.current()
+        pos = self._pg_buffer.position()
         if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos + 1):
             self.skip(1, BACKWARD)
             row = self.fetchone()
-        if not row and (pos < 0 and direction == BACKWARD or
-                        pos >= 0 and direction == FORWARD):
+        if not row and (pos < 0 and direction == BACKWARD or pos >= 0 and direction == FORWARD):
             result = 0
         else:
             try:
@@ -3589,7 +3495,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_select_transaction is not None:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
-            self._pg_last_select_row_number = self._pg_buffer.current()[1]
+            self._pg_last_select_row_number = self._pg_buffer.position()
             args = dict(selection=self._pdbb_selection_number)
         if self._pg_select_transaction is not None and not self._pg_select_user_transaction:
             try:

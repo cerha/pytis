@@ -970,6 +970,83 @@ class DBData(unittest.TestCase):
         self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
 
 
+class TestPgBuffer(object):
+
+    @pytest.fixture
+    def buf(self):
+        return pd.DBDataDefault._PgBuffer()
+
+    def test_init(self, buf):
+        assert buf.position() == -1
+        assert buf.current() is None
+
+    def test_empty_fetch(self, buf):
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == 0
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.position() == -1
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.position() == -2
+
+    def test_edge_fetch(self, buf):
+        buf.fill(0, ['A', 'B', 'C'])
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.fetch(pd.FORWARD) == 'A'
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.fetch(pd.FORWARD) == 'A'
+        assert buf.fetch(pd.FORWARD) == 'B'
+        assert buf.fetch(pd.FORWARD) == 'C'
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.fetch(pd.BACKWARD) == 'C'
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.fetch(pd.BACKWARD) == 'C'
+
+    def test_fill(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
+        assert buf.fetch(pd.FORWARD) == 'A'
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.fetch(pd.FORWARD) == 'A'
+
+    def test_skip(self, buf):
+        buf.fill(0, [chr(i) for i in range(ord('A'), ord('Z') + 1)])
+        assert buf.fetch(pd.FORWARD) == 'A'
+        buf.skip(8, pd.FORWARD)
+        buf.skip(8, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'B'
+        buf.skip(8, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'K'
+        assert buf.fetch(pd.FORWARD) == 'L'
+        buf.skip(11, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'X'
+        buf.skip(14, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'K'
+
+    def test_skip_outside(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
+        buf.skip(20, pd.FORWARD)
+        assert buf.position() == 19
+        buf.skip(32, pd.BACKWARD)
+        assert buf.position() == -13
+
+    def test_refill(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
+        buf.fill(10, ['K', 'L', 'M', 'N'])
+        assert buf.fetch(pd.FORWARD) == 'K'
+        assert buf.fetch(pd.FORWARD) == 'L'
+
+    def test_append(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
+        buf.fill(6, ['G', 'H', 'I', 'J'])
+        assert buf.fetch(pd.FORWARD) == 'G'
+        buf.skip(4, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'D'
+
+
 class _DBBaseTest(unittest.TestCase):
 
     def _sql_command(self, command):
