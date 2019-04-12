@@ -921,19 +921,15 @@ class Configuration(object):
         _DEFAULT = 'iso8859-2'
 
     class _Option_cache_size(NumericOption):
-        u"""Velikost cache pro řádky datového objektu.
-
-        Velikost je celé číslo, které udává počet řádků cache.
-
-        """
+        """Maximal total number of rows cached for a data object selection."""
         _DEFAULT = 20000
 
     class _Option_initial_fetch_size(NumericOption):
-        u"""Počet řádků, které se přednačtou do cache při první selectu z datového objektu."""
+        """Number of rows fetched into the cache during the first read from a DB select."""
         _DEFAULT = 100
 
     class _Option_fetch_size(NumericOption):
-        u"""Počet řádků, které se přinačítají do cache při dalších selectech z datového objektu."""
+        """Number of rows fetched into the cache during subsequent reads from a DB select."""
         _DEFAULT = 100
 
     class _Option_sender_address(StringOption):
