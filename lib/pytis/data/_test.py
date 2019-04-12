@@ -970,11 +970,11 @@ class DBData(unittest.TestCase):
         self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
 
 
-class TestPgBuffer(object):
+class TestFetchBuffer(object):
 
     @pytest.fixture
     def buf(self):
-        return pd.DBDataDefault._PgBuffer()
+        return pd.FetchBuffer(1000)
 
     def test_init(self, buf):
         assert buf.position() == -1
@@ -2613,7 +2613,8 @@ class DBSessionVariables(_DBBaseTest):
         _DBBaseTest.tearDown(self)
 
 
-class TestFetchBuffer(DBTest):
+class TestFetchSelect(DBTest):
+    """Test fetching rows from DB select."""
 
     @pytest.fixture
     def table(self):

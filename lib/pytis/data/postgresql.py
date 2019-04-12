@@ -2800,163 +2800,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
     _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
 
-    class _PgBuffer:
-
-        def __init__(self):
-            if __debug__:
-                log(DEBUG, 'New buffer')
-            self.reset()
-
-        def reset(self):
-            """Completely reset the buffer."""
-            if __debug__:
-                log(DEBUG, 'Resetting buffer')
-            self._buffer = []
-            # _start ... position of the buffer begining within the database.
-            #    The row number of the first buffer item, starting from 0.
-            # _pointer ... position of the buffer pointer relative to the
-            #    first buffer item.  Points to the last fetched item.  May
-            #    point outside the buffer.
-            self._start = 0
-            self._pointer = -1
-
-        def current(self):
-            """Return the current buffer item.
-
-            If the current position points outside buffer data previously
-            loaded by 'fill()', returns None.
-
-            """
-            buf = self._buffer
-            pointer = self._pointer
-            if pointer < 0 or pointer >= len(buf):
-                row = None
-            else:
-                row = buf[pointer]
-            return row
-
-        def position(self):
-            """Return the current buffer position as int.
-
-            The position may point outside buffer data (previously loaded by
-            'fill()').
-
-            """
-            return self._start + self._pointer
-
-        def fetch(self, direction):
-            """Return next buffer item in given direction from the current position.
-
-            If the row is not present in the buffer, 'None' is returned and it
-            is assumed that the buffer will be filled by subsequent 'fill()'
-            call if necessary.  Buffer position is updated in any case -
-            incremented when fetching forward and decremented when fetching
-            backwards.
-
-            """
-            buf = self._buffer
-            pointer = self._pointer
-            if direction == FORWARD:
-                pointer += 1
-            elif direction == BACKWARD:
-                pointer -= 1
-            else:
-                raise ProgramError('Invalid direction', direction)
-            if pointer < 0 or pointer >= len(buf):
-                if __debug__:
-                    log(DEBUG, 'Buffer miss:', pointer)
-                result = None
-            else:
-                if __debug__:
-                    log(DEBUG, 'Buffer hit:', pointer)
-                result = buf[pointer]
-            self._pointer = pointer
-            return result
-
-        def skip(self, count, direction):
-            """Skip given number of items in given direction.
-
-            Moves buffer position relatively to the current position.
-
-            Arguments:
-
-              count -- number of items to skip
-              direction -- One of the constants 'FORWARD'/'BACKWARD'
-
-            """
-            if direction == FORWARD:
-                self._pointer += count
-            elif direction == BACKWARD:
-                self._pointer -= count
-            else:
-                raise ProgramError('Invalid direction', direction)
-
-        def goto(self, position):
-            """Set buffer position to given absolute position.
-
-            Arguments:
-
-              position -- Item number starting from zero.
-
-            """
-            self._pointer = position - self._start
-
-        def fill(self, position, items):
-            """Fill the buffer by given items and update the pointers.
-
-            Arguments:
-
-              position -- position of the first item within the database
-                select starting from zero.
-              items -- list of items to fill in the buffer.
-
-
-            """
-            if __debug__:
-                log(DEBUG, 'Filling buffer:', (position, len(items)))
-            n = len(items)
-            buf = self._buffer
-            buflen = len(buf)
-            start = self._start
-            if start + buflen == position:
-                import config
-                retain = max(config.cache_size - n, 0)
-                cutoff = max(buflen - retain, 0)
-                buf = buf[cutoff:] + items
-                start += cutoff
-                pointer = position - start - 1
-            else:
-                buf = items
-                start = position
-                pointer = -1
-            self._buffer = buf
-            self._start = start
-            self._pointer = pointer
-
-        def __str__(self):
-            buffer = self._buffer
-            pointer = self._pointer
-            max = len(buffer) - 1
-            if max < 0:
-                bufstr = ''
-            elif max == 0:
-                bufstr = str(buffer[0])
-            elif max == 1:
-                bufstr = '%s\n%s' % (buffer[0], buffer[1])
-            elif pointer <= 0 or pointer >= max:
-                bufstr = '%s\n...\n%s' % (buffer[0], buffer[-1])
-            elif max == 2:
-                bufstr = '%s\n%s\n%s' % (buffer[0], buffer[1], buffer[2])
-            elif pointer == 1:
-                bufstr = '%s\n%s\n...\n%s' % (buffer[0], buffer[1], buffer[-1])
-            elif pointer == max - 1:
-                bufstr = '%s\n...\n%s\n%s' % \
-                         (buffer[0], buffer[-2], buffer[-1])
-            else:
-                bufstr = '%s\n...\n%s\n...\n%s' % \
-                         (buffer[0], buffer[pointer], buffer[-1])
-            return '<PgBuffer: start=%d, index=%d\n%s>' % (self._start, self._pointer, bufstr)
-
     def __init__(self, bindings, key, connection_data, ro_select=True, **kwargs):
         """Inicializuj databázovou tabulku dle uvedených specifikací.
 
@@ -2973,6 +2816,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           kwargs -- předá se předkovi
 
         """
+        import config
         if __debug__:
             log(DEBUG, 'Creating data table')
         if is_sequence(key):
@@ -2984,7 +2828,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
         self._pg_dbpointer = -1  # DB cursor position starting from zero
-        self._pg_buffer = self._PgBuffer()
+        self._pg_buffer = pytis.data.FetchBuffer(config.cache_size)
         self._pg_number_of_rows = None
         self._pg_initial_select = False
         self._pg_ro_select = ro_select
@@ -2998,14 +2842,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_create_make_row_template(filtered_columns,
                                               column_groups=getattr(self, '_pdbb_column_groups'))
         self._pg_make_row_template_limited = None
-        # NASTAVENÍ CACHE
-        # Protože pro různé parametry (rychlost linky mezi serverem a klientem,
-        # velikost paměti atd.), je vhodné různé nastavení cache,
-        # budeme parametry nastavovat z konfiguračního souboru.
-        # Pozor, config.cache_size je využíváno přímo v _PgBuffer.
-        # Zde tyto hodnoty zapamatujeme jako atributy objektu, protože jsou
-        # potřeba v kritických částech kódu a čtení konfigurace přeci jen trvá.
-        import config
+        # Remember configuration parameters as attributes to speed up
+        # their access in critical code.
         self._pg_initial_fetch_size = config.initial_fetch_size
         self._pg_fetch_size = config.fetch_size
 

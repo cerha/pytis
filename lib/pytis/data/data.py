@@ -43,9 +43,10 @@ import functools
 import operator
 
 import pytis.util
-from pytis.util import EVENT, \
-    InvalidAccessError, LimitedCache, NotImplementedException, ProgramError, \
-    compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple
+from pytis.util import (
+    EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
+    compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple,
+)
 from types_ import DateTime, Number, Type, Value, WMValue
 
 _ = translations('pytis-data')
@@ -1849,6 +1850,191 @@ class Row:
             assert isinstance(dict[k], Value), ('Invalid column value', dict[k],)
             if k in self:
                 self[k] = dict[k]
+
+
+class FetchBuffer(object):
+    """Buffer-cache optimizing data object reads.
+
+    Caches continuous sequences of numbered items.  The implementation is
+    agnostic about the stored items, but the intended use is for data rows read
+    from a data object.  To minimize the communication overhead with the data
+    source, the rows are typically read in chunks.
+
+    The rows are retrieved from the buffer using 'fetch()'.  If the requested
+    row doesn't exist within the current data, None is returned and the calling
+    side is supposed to call 'fill()' to load the buffer with the missing data
+    if needed (if the requested row isn't outside the current selection).
+
+    The maximal total number of cached items is limited by the constructor
+    argument 'limit'.  The buffer will, however, only grow the cached data if
+    the data passed to 'fill()' adjoin or overlap with the existing data.
+    Otherwise the old data are replaced.
+
+    The size of chunks passed to 'fill()' is up to the decision of the calling
+    side, but should never be larger than the 'limit' passed to the constructor.
+
+    """
+
+    def __init__(self, limit):
+        """Arguments:
+
+        limit -- The maximal total number of items kept in the cache.
+
+        """
+        self._limit = limit
+        if __debug__:
+            log(DEBUG, 'New buffer')
+        self.reset()
+
+    def reset(self):
+        """Completely reset the buffer."""
+        if __debug__:
+            log(DEBUG, 'Resetting buffer')
+        self._buffer = []
+        # _start ... position of the buffer begining within the database.
+        #    The row number of the first buffer item, starting from 0.
+        # _pointer ... position of the buffer pointer relative to the
+        #    first buffer item.  Points to the last fetched item.  May
+        #    point outside the buffer.
+        self._start = 0
+        self._pointer = -1
+
+    def current(self):
+        """Return the current buffer item.
+
+        If the current position points outside buffer data previously
+        loaded by 'fill()', returns None.
+
+        """
+        buf = self._buffer
+        pointer = self._pointer
+        if pointer < 0 or pointer >= len(buf):
+            row = None
+        else:
+            row = buf[pointer]
+        return row
+
+    def position(self):
+        """Return the current buffer position as int.
+
+        The position may point outside buffer data (previously loaded by
+        'fill()').
+
+        """
+        return self._start + self._pointer
+
+    def fetch(self, direction):
+        """Return next buffer item in given direction from the current position.
+
+        If the row is not present in the buffer, 'None' is returned and it
+        is assumed that the buffer will be filled by subsequent 'fill()'
+        call if necessary.  Buffer position is updated in any case -
+        incremented when fetching forward and decremented when fetching
+        backwards.
+
+        """
+        buf = self._buffer
+        pointer = self._pointer
+        if direction == FORWARD:
+            pointer += 1
+        elif direction == BACKWARD:
+            pointer -= 1
+        else:
+            raise ProgramError('Invalid direction', direction)
+        if pointer < 0 or pointer >= len(buf):
+            if __debug__:
+                log(DEBUG, 'Buffer miss:', pointer)
+            result = None
+        else:
+            if __debug__:
+                log(DEBUG, 'Buffer hit:', pointer)
+            result = buf[pointer]
+        self._pointer = pointer
+        return result
+
+    def skip(self, count, direction):
+        """Skip given number of items in given direction.
+
+        Moves buffer position relatively to the current position.
+
+        Arguments:
+
+          count -- number of items to skip
+          direction -- One of the constants 'FORWARD'/'BACKWARD'
+
+        """
+        if direction == FORWARD:
+            self._pointer += count
+        elif direction == BACKWARD:
+            self._pointer -= count
+        else:
+            raise ProgramError('Invalid direction', direction)
+
+    def goto(self, position):
+        """Set buffer position to given absolute position.
+
+        Arguments:
+
+          position -- Item number starting from zero.
+
+        """
+        self._pointer = position - self._start
+
+    def fill(self, position, items):
+        """Fill the buffer by given items and update the pointers.
+
+        Arguments:
+
+          position -- position of the first item within the database
+            select starting from zero.
+          items -- list of items to fill in the buffer.
+
+        If the new items overlap or adjoin with the current buffer content, old
+        content may be left in the buffer up to the size limit passed to the
+        constructor.  If the new content doesn't make a continuous sequence
+        with the old content, the old content is simply replaced by the new
+        content.
+
+        """
+        if __debug__:
+            log(DEBUG, 'Filling buffer:', (position, len(items)))
+        n = len(items)
+        buf = self._buffer
+        buflen = len(buf)
+        start = self._start
+        if start + buflen == position:
+            retain = max(self._limit - n, 0)
+            cutoff = max(buflen - retain, 0)
+            buf = buf[cutoff:] + items
+            start += cutoff
+            pointer = position - start - 1
+        else:
+            buf = items
+            start = position
+            pointer = -1
+        self._buffer = buf
+        self._start = start
+        self._pointer = pointer
+
+    def __str__(self):
+        buf = self._buffer
+        pointer = self._pointer
+        size = len(buf)
+        if size <= 2:
+            items = buf
+        elif pointer <= 0 or pointer > size:
+            items = (buf[0], '...', buf[-1])
+        elif size == 3:
+            items = buf
+        elif pointer == 1:
+            items = (buf[0], buf[pointer], '...', buf[-1])
+        elif pointer == size - 2:
+            items = (buf[0], '...', buf[pointer], buf[-1])
+        else:
+            items = (buf[0], '...', buf[pointer], '...', buf[-1])
+        return '<FetchBuffer: limit=%d, size=%d, start=%d, pointer=%d%s>' % \
+            (self._limit, len(buf), self._start, self._pointer,
+             ('\n' if items else '') + '\n'.join(items))
 
 
 class DataFactory(object):

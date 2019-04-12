@@ -46,8 +46,8 @@ from types_ import (  # noqa: F401
 )
 from data import (  # noqa: F401
     FORWARD, BACKWARD, ASCENDENT, DESCENDANT,
-    Operator, Data, Counter, Function, MemData, ColumnSpec, Row, DataFactory,
-    EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
+    Operator, Data, Counter, Function, MemData, ColumnSpec, Row, FetchBuffer,
+    DataFactory, EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
     LTreeMatch, LTreeAncestor, LTreeDescendant, RangeContains, RangeContained,
     RangeOverlap, FunctionCondition, OpFunction,
     reversed_sorting, opposite_direction, dbtable,
