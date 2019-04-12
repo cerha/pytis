@@ -974,7 +974,7 @@ class TestFetchBuffer(object):
 
     @pytest.fixture
     def buf(self):
-        return pd.FetchBuffer(1000)
+        return pd.FetchBuffer(100)
 
     def test_init(self, buf):
         assert buf.position() == -1
@@ -1039,12 +1039,46 @@ class TestFetchBuffer(object):
         assert buf.fetch(pd.FORWARD) == 'K'
         assert buf.fetch(pd.FORWARD) == 'L'
 
+    def test_exceed(self, buf):
+        with pytest.raises(ValueError):
+            buf.fill(0, range(101))
+
+    def test_limit(self, buf):
+        buf.fill(100, range(80))
+        buf.fill(160, range(80))
+        assert len(buf) == 100
+
     def test_append(self, buf):
         buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
         buf.fill(6, ['G', 'H', 'I', 'J'])
+        assert len(buf) == 10
         assert buf.fetch(pd.FORWARD) == 'G'
         buf.skip(4, pd.BACKWARD)
         assert buf.fetch(pd.FORWARD) == 'D'
+
+    def test_append_overlap(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+        buf.fill(4, ['e', 'f', 'g', 'h', 'i'])
+        assert len(buf) == 9
+        assert buf.fetch(pd.FORWARD) == 'e'
+        buf.skip(4, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'B'
+
+    def test_prepend(self, buf):
+        buf.fill(6, ['G', 'H', 'I', 'J'])
+        buf.fill(2, ['C', 'D', 'E', 'F'])
+        assert len(buf) == 8
+        assert buf.fetch(pd.FORWARD) == 'C'
+        buf.skip(4, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'H'
+
+    def test_prepend_overlap(self, buf):
+        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+        buf.fill(4, ['e', 'f', 'g', 'h', 'i'])
+        assert len(buf) == 9
+        assert buf.fetch(pd.FORWARD) == 'e'
+        buf.skip(4, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'B'
 
 
 class _DBBaseTest(unittest.TestCase):

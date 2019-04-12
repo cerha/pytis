@@ -1923,35 +1923,6 @@ class FetchBuffer(object):
         """
         return self._start + self._pointer
 
-    def fetch(self, direction):
-        """Return next buffer item in given direction from the current position.
-
-        If the row is not present in the buffer, 'None' is returned and it
-        is assumed that the buffer will be filled by subsequent 'fill()'
-        call if necessary.  Buffer position is updated in any case -
-        incremented when fetching forward and decremented when fetching
-        backwards.
-
-        """
-        buf = self._buffer
-        pointer = self._pointer
-        if direction == FORWARD:
-            pointer += 1
-        elif direction == BACKWARD:
-            pointer -= 1
-        else:
-            raise ProgramError('Invalid direction', direction)
-        if pointer < 0 or pointer >= len(buf):
-            if __debug__:
-                log(DEBUG, 'Buffer miss:', pointer)
-            result = None
-        else:
-            if __debug__:
-                log(DEBUG, 'Buffer hit:', pointer)
-            result = buf[pointer]
-        self._pointer = pointer
-        return result
-
     def skip(self, count, direction):
         """Skip given number of items in given direction.
 
@@ -1999,15 +1970,27 @@ class FetchBuffer(object):
         if __debug__:
             log(DEBUG, 'Filling buffer:', (position, len(items)))
         n = len(items)
+        if n > self._limit:
+            raise ValueError("FetchBuffer size limit %d exceeded: %d" % (self._limit, n))
         buf = self._buffer
-        buflen = len(buf)
+        size = len(buf)
         start = self._start
-        if start + buflen == position:
-            retain = max(self._limit - n, 0)
-            cutoff = max(buflen - retain, 0)
-            buf = buf[cutoff:] + items
+        end = start + size
+        retain = max(self._limit - n, 0)  # How many existing items can be left in the buffer.
+        if start < position <= end:
+            # Append items to the end of buffer (cut off from the start).
+            overlap = end - position
+            cutoff = max(size - retain - overlap, 0)
+            buf = buf[cutoff:-overlap or None] + items
             start += cutoff
             pointer = position - start - 1
+        elif position < start <= position + n:
+            # Prepend items to the beginning of buffer (cut off from the end).
+            overlap = position + n - start
+            cutoff = max(size - retain - overlap, 0)
+            buf = items + buf[overlap:-cutoff or None]
+            start = position
+            pointer = -1
         else:
             buf = items
             start = position
@@ -2015,6 +1998,39 @@ class FetchBuffer(object):
         self._buffer = buf
         self._start = start
         self._pointer = pointer
+        print buf
+
+    def fetch(self, direction):
+        """Return next buffer item in given direction from the current position.
+
+        If the row is not present in the buffer, 'None' is returned and it
+        is assumed that the buffer will be filled by subsequent 'fill()'
+        call if necessary.  Buffer position is updated in any case -
+        incremented when fetching forward and decremented when fetching
+        backwards.
+
+        """
+        buf = self._buffer
+        pointer = self._pointer
+        if direction == FORWARD:
+            pointer += 1
+        elif direction == BACKWARD:
+            pointer -= 1
+        else:
+            raise ProgramError('Invalid direction', direction)
+        if pointer < 0 or pointer >= len(buf):
+            if __debug__:
+                log(DEBUG, 'Buffer miss:', pointer)
+            result = None
+        else:
+            if __debug__:
+                log(DEBUG, 'Buffer hit:', pointer)
+            result = buf[pointer]
+        self._pointer = pointer
+        return result
+
+    def __len__(self):
+        return len(self._buffer)
 
     def __str__(self):
         buf = self._buffer
