@@ -3202,7 +3202,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             assert 0 <= fetch_size <= max_fetch_size, (fetch_size, max_fetch_size)
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
-            correction = 0
             if fetch_size != 0:
                 skip = position - self._pg_dbpointer
                 if direction == BACKWARD:
@@ -3210,7 +3209,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         skip -= fetch_size + 1
                     else:
                         skip -= position + 1
-                        correction = fetch_size - position
                 if __debug__:
                     log(DEBUG, 'Determined skip:', skip)
                 try:
@@ -3240,7 +3238,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 # The last column is '_number' (convert long to int).
                 buf.fill(int(row_data[0][-1]) - 1, rows)
                 if direction == BACKWARD:
-                    buf.goto(buf.position() + len(rows) + 1 - correction)
+                    # Fill leaves position on the first item, but here we need the last one.
+                    buf.goto(position)
                 self._pg_dbpointer = int(row_data[-1][-1]) - 1
                 result = buf.fetch(direction)
             else:
