@@ -3203,23 +3203,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
             if fetch_size != 0:
-                skip = position - self._pg_dbpointer
                 if direction == BACKWARD:
-                    if fetch_size < position:
-                        skip -= fetch_size + 1
-                    else:
-                        skip -= position + 1
-                if __debug__:
-                    log(DEBUG, 'Determined skip:', skip)
+                    start = max(0, position - fetch_size)
+                else:
+                    start = position + 1
                 try:
-                    if skip > 0:
-                        self._pg_skip(skip, FORWARD, exact_count=True, transaction=transaction)
-                    elif skip < 0:
-                        self._pg_move(self._pg_dbpointer + skip + 1, transaction=transaction)
+                    self._pg_move(start, transaction=transaction)
                     row_data = self._pg_fetchmany(fetch_size, FORWARD, transaction=transaction)
-                    if not row_data:
-                        # If rows are fetched, the pointer will be further updated.
-                        self._pg_dbpointer += skip
+                    self._pg_dbpointer = start + len(row_data)
                 except Exception:
                     cls, e, tb = sys.exc_info()
                     if not self._pg_select_user_transaction:
@@ -3240,7 +3231,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if direction == BACKWARD:
                     # Fill leaves position on the first item, but here we need the last one.
                     buf.goto(position)
-                self._pg_dbpointer = int(row_data[-1][-1]) - 1
                 result = buf.fetch(direction)
             else:
                 pos = buf.position()
