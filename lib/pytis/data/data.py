@@ -1590,7 +1590,7 @@ class ColumnSpec(object):
         return self._type
 
 
-class Row:
+class Row(object):
     """Reprezentace jednoho řádku řádkových dat.
 
     V podstatě se jedná o uspořádaný seznam sloupců (položek) a jejich hodnot.
