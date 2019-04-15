@@ -1998,7 +1998,6 @@ class FetchBuffer(object):
         self._buffer = buf
         self._start = start
         self._pointer = pointer
-        print buf
 
     def fetch(self, direction):
         """Return next buffer item in given direction from the current position.
