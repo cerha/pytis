@@ -3200,13 +3200,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 fetch_size = min(fetch_size, max_fetch_size)
             assert 0 <= fetch_size <= max_fetch_size, (fetch_size, max_fetch_size)
-            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                self._pg_number_of_rows.stop()
             if fetch_size != 0:
                 if direction == BACKWARD:
                     start = max(0, position - fetch_size)
                 else:
                     start = position + 1
+                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                    self._pg_number_of_rows.stop()
                 try:
                     self._pg_move(start, transaction=transaction)
                     row_data = self._pg_fetchmany(fetch_size, FORWARD, transaction=transaction)
@@ -3220,6 +3220,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                             pass
                     self._pg_select_transaction = None
                     raise cls, e, tb
+                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                    self._pg_number_of_rows.restart()
             else:
                 # Don't run an unnecessary SQL command
                 row_data = None
@@ -3236,8 +3238,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pos = buf.position()
                 buf.goto(min(max(pos, -1), self._pg_number_of_rows_(pos)))
                 result = None
-            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                self._pg_number_of_rows.restart()
         if __debug__:
             log(DEBUG, 'Returned row', str(result))
         if self._pg_select_set_read_only:
