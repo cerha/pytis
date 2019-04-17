@@ -1980,22 +1980,31 @@ class FetchBuffer(object):
         if start < position <= end:
             # Append items to the end of buffer (cut off from the start if necessary).
             overlap = end - position
+            if overlap:
+                del buf[-overlap:]
             cutoff = max(size - retain - overlap, 0)
-            buf = buf[cutoff:-overlap or None] + items
-            start += cutoff
+            if cutoff:
+                start += cutoff
+                del buf[:cutoff]
+            buf += items
             pointer = position - start - 1
         elif position < start <= position + n:
             # Prepend items to the beginning of buffer (cut off from the end if necessary).
             overlap = position + n - start
+            if overlap:
+                del buf[:overlap]
             cutoff = max(size - retain - overlap, 0)
-            buf = items + buf[overlap:-cutoff or None]
+            if cutoff:
+                del buf[:cutoff]
+            buf[0:0] = items
             start = position
             pointer = -1
         else:
-            buf = items
+            # If the new content doesn't adjoin or overlap with the old content,
+            # the old content is simply replaced by the new content.
+            self._buffer = items
             start = position
             pointer = -1
-        self._buffer = buf
         self._start = start
         self._pointer = pointer
 
@@ -2038,7 +2047,6 @@ class FetchBuffer(object):
             elif pointer < 0 and -pointer <= fetch_size:
                 # We are in front of the buffer start, but within the reach of fetch_size.
                 position = max(0, start - fetch_size)
-                print '-', pointer, fetch_size, position
                 fetch_size = min(start, fetch_size)
             else:
                 # We are nowhere near (up to fetch_size) to the current buffer
