@@ -719,7 +719,6 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                                                         self._pg_connection_data().schemas())
                 result, connection = self._postgresql_query(connection, query, outside_transaction)
             finally:
-                # Vrať DB spojení zpět
                 if connection is not None and connection is borrowed_connection:
                     self._postgresql_query(connection, "commit", outside_transaction)
                     self._pg_return_connection(connection)
@@ -732,7 +731,6 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 # automaticky správně řazeny.
                 logging_query = self._pdbb_logging_command.values((query.format(),))
                 self._postgresql_query(connection, logging_query, False)
-            # Získej a vrať data
             return self._postgresql_transform_query_result(result)
         data = with_lock(self._pg_query_lock, lfunction)
         if __debug__:
