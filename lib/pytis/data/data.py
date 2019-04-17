@@ -1955,7 +1955,7 @@ class FetchBuffer(object):
             raise ProgramError('Invalid direction', direction)
 
     def goto(self, position):
-        """Set buffer position to given absolute position.
+        """Set buffer pointer to given absolute position.
 
         Arguments:
 
@@ -2008,30 +2008,38 @@ class FetchBuffer(object):
         self._start = start
         self._pointer = pointer
 
-    def fetch(self, direction, **kwargs):
-        """Return next buffer item in given direction from the current position.
+    def fetch(self, position, **kwargs):
+        """Return buffer item from given position.
+
+        Arguments:
+          position -- either an absolute position as int or a direction (one of
+            'FORWARD', 'BACKWARD').  When int, buffer pointer is moved to given
+            position and the item at given position is returned.  If direction,
+            buffer pointer is incremented (on 'FORWARD') or decremented (on
+            'BACKWARD') and the item from the new position is returned.
+          **kwargs -- any keyword arguments are passed on to the function
+            'retrieve' (passed to the constructor) as additional keyword
+            arguments after 'position' and 'count' whenever 'retrieve' needs to
+            be called.
 
         If the item at the requested position is not present in the buffer, it
-        is automatically retrieved from the data source and returned.  Any
-        keyword arguments passed to 'fetch()' are passed on to the function
-        'retrieve' (passed to the constructor) as additional keyword arguments
-        after 'position' and 'count'.
+        is automatically retrieved from the data source and returned.  'None'
+        is returned if the data source doesn't contain any data at the
+        requested position.
 
-        'None' is returned if the data source doesn't contain any data at
-        the requested position.  Buffer position is updated in any case -
-        incremented when fetching forward and decremented when fetching
-        backwards.
+        Buffer position is updated in any case (set to given absolute position
+        or incremented/decremented when fetching forward/backward).
 
         """
+        if position == FORWARD:
+            pointer = self._pointer + 1
+        elif position == BACKWARD:
+            pointer = self._pointer - 1
+        else:
+            assert isinstance(position, int)
+            pointer = position - self._start
         buf = self._buffer
         size = len(buf)
-        pointer = self._pointer
-        if direction == FORWARD:
-            pointer += 1
-        elif direction == BACKWARD:
-            pointer -= 1
-        else:
-            raise ProgramError('Invalid direction', direction)
         if pointer >= 0 and pointer < size:
             if __debug__:
                 log(DEBUG, 'Buffer hit:', pointer)
@@ -2043,19 +2051,19 @@ class FetchBuffer(object):
             fetch_size = self._initial_fetch_size if size == 0 else self._fetch_size
             if size <= pointer < size + fetch_size:
                 # We are past the buffer end, but within the reach of fetch_size.
-                position = start + size
+                fetch_position = start + size
             elif pointer < 0 and -pointer <= fetch_size:
                 # We are in front of the buffer start, but within the reach of fetch_size.
-                position = max(0, start - fetch_size)
+                fetch_position = max(0, start - fetch_size)
                 fetch_size = min(start, fetch_size)
             else:
                 # We are nowhere near (up to fetch_size) to the current buffer
                 # content, so let's start from scratch around the requested position.
-                position = max(0, start + pointer - fetch_size // 2)
+                fetch_position = max(0, start + pointer - fetch_size // 2)
             if fetch_size:
-                items = self._retrieve(position, fetch_size, **kwargs)
+                items = self._retrieve(fetch_position, fetch_size, **kwargs)
                 if items:
-                    self._fill(position, items)
+                    self._fill(fetch_position, items)
             # If self._start was moved within _fill, update the pointer accordingly.
             pointer += start - self._start
             if pointer >= 0 and pointer < len(self._buffer):

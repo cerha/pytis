@@ -986,11 +986,16 @@ class TestFetchBuffer(object):
         assert buf.position() == -1
         assert buf.current() is None
 
-    def test_fetch(self, buf):
+    def test_fetch_direction(self, buf):
         F, B = pd.FORWARD, pd.BACKWARD
-        for i, (d, x) in enumerate(((F, 'A'), (F, 'B'), (F, 'C'), (F, 'D'), (B, 'C'), (B, 'B'))):
+        for d, x in ((F, 'A'), (F, 'B'), (F, 'C'), (F, 'D'), (B, 'C'), (B, 'B')):
             assert buf.fetch(d) == x
             assert buf.current() == x
+
+    def test_fetch_position(self, buf):
+        for position, char in ((0, 'A'), (10, 'K'), (14, 'O'), (25, 'Z'), (26, None), (-1, None)):
+            print position
+            assert buf.fetch(position) == char
 
     def test_skip(self, buf):
         assert buf.fetch(pd.FORWARD) == 'A'
