@@ -1911,6 +1911,10 @@ class FetchBuffer(object):
         self._start = 0
         self._pointer = -1
 
+    def rewind(self):
+        """Reset buffer pointer to the initial position (in front of the first item)."""
+        self._pointer = -1 - self._start
+
     def position(self):
         """Return the current buffer position as int.
 
@@ -1937,16 +1941,6 @@ class FetchBuffer(object):
             self._pointer -= count
         else:
             raise ProgramError('Invalid direction', direction)
-
-    def goto(self, position):
-        """Set buffer pointer to given absolute position.
-
-        Arguments:
-
-          position -- Item number starting from zero.
-
-        """
-        self._pointer = position - self._start
 
     def _fill(self, position, items):
         # If the new items overlap or adjoin with the current buffer content, old

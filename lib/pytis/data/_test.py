@@ -986,6 +986,13 @@ class TestFetchBuffer(object):
         assert buf.position() == -1
         assert len(buf) == 0
 
+    def test_rewind(self, buf):
+        assert buf.fetch(22) == 'W'
+        assert buf.position() == 22
+        buf.rewind()
+        assert buf.position() == -1
+        assert buf.fetch(pd.FORWARD) == 'A'
+
     def test_fetch_direction(self, buf):
         F, B = pd.FORWARD, pd.BACKWARD
         for d, x in ((F, 'A'), (F, 'B'), (F, 'C'), (F, 'D'), (B, 'C'), (B, 'B')):

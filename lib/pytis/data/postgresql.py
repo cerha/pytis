@@ -3090,7 +3090,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_transaction = None
             raise cls, e, tb
         if use_cache and isinstance(row_count, int) and row_count == last_number_of_rows:
-            self._pg_buffer.goto(-1)
+            self._pg_buffer.rewind()
         else:
             self._pg_buffer.reset()
         return row_count
@@ -3244,9 +3244,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def rewind(self):
         self._pg_maybe_restore_select()
-        pos = self._pg_buffer.position()
-        if pos >= 0:
-            self.skip(pos + 1, BACKWARD)
+        self._pg_buffer.rewind()
 
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
         """Vyhledej ve směru 'direction' první řádek od 'row' dle 'condition'.
