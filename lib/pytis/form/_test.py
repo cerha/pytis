@@ -101,7 +101,16 @@ class TestDataTable(dtest.DBTest):
         finally:
             data.close()
 
-    def test_slow_move(self, spec, data):
+    def test_big_table_performance(self, spec, data):
+        # This test can be used to examine row buffer filling strategy
+        # and database performance on bigger jumps.  It is practical to
+        # add something like:
+        #
+        # print '  ', query.format()[:140]
+        #
+        # into PostgreSQLConnector._pg_query() in postgresql.py and
+        # run pytest with -s to see how the buffer is filled in response
+        # to row requests.
         def rows(count):
             i = 0
             while i < count:
@@ -111,8 +120,9 @@ class TestDataTable(dtest.DBTest):
 
         t = self.grid_table(spec, data, sorting=(('id', pd.ASCENDENT),))
         try:
-            for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436, 30, 120, 4444, 0,
-                      2453, 3890, 9499, 99, 100, 98):
+            for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436,
+                      50, 199, 200, 299, 220, 160, 120, 80, 40, 0,
+                      4444, 0, 2453, 3890, 9499, 99, 140, 98, 30):
                 print n
                 assert t.cell_value(n, 0) == str(n + 1)
         finally:
