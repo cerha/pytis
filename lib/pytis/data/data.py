@@ -1911,22 +1911,6 @@ class FetchBuffer(object):
         self._start = 0
         self._pointer = -1
 
-    def current(self):
-        """Return the current buffer item.
-
-        If the current position points outside the current buffer data, returns
-        None.  This method even doesn't try to retrieve data from source if it
-        is not already cached thanks to a previous 'fetch()'.
-
-        """
-        buf = self._buffer
-        pointer = self._pointer
-        if 0 <= pointer < len(buf):
-            row = buf[pointer]
-        else:
-            row = None
-        return row
-
     def position(self):
         """Return the current buffer position as int.
 

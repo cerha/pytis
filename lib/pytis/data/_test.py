@@ -984,13 +984,12 @@ class TestFetchBuffer(object):
 
     def test_init(self, buf):
         assert buf.position() == -1
-        assert buf.current() is None
+        assert len(buf) == 0
 
     def test_fetch_direction(self, buf):
         F, B = pd.FORWARD, pd.BACKWARD
         for d, x in ((F, 'A'), (F, 'B'), (F, 'C'), (F, 'D'), (B, 'C'), (B, 'B')):
             assert buf.fetch(d) == x
-            assert buf.current() == x
 
     def test_fetch_position(self, buf):
         for position, char in ((0, 'A'), (10, 'K'), (14, 'O'), (25, 'Z'), (26, None), (-1, None)):
@@ -998,9 +997,8 @@ class TestFetchBuffer(object):
             assert buf.fetch(position) == char
 
     def test_skip(self, buf):
-        assert buf.fetch(pd.FORWARD) == 'A'
         buf.skip(8, pd.FORWARD)
-        assert buf.current() == 'I'
+        assert buf.fetch(pd.FORWARD) == 'I'
         buf.skip(8, pd.BACKWARD)
         assert buf.fetch(pd.FORWARD) == 'B'
         buf.skip(8, pd.FORWARD)

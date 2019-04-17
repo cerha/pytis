@@ -3263,11 +3263,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_maybe_restore_select()
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return 0
-        row = self._pg_buffer.current()
         pos = self._pg_buffer.position()
-        if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos + 1):
-            self.skip(1, BACKWARD)
-            row = self.fetchone()
+        row = self._pg_buffer.fetch(pos)
         if not row and (pos < 0 and direction == BACKWARD or pos >= 0 and direction == FORWARD):
             result = 0
         else:
