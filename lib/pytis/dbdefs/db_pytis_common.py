@@ -808,7 +808,7 @@ BEGIN
     RETURN False;
   END IF;
 END;
-' LANGUAGE plpgsql WITH (isstrict);"""
+' LANGUAGE plpgsql;"""
     depends_on = ()
 
 
@@ -833,7 +833,7 @@ BEGIN
     RETURN False;
   END IF;
 END;
-' LANGUAGE plpgsql WITH (isstrict);"""
+' LANGUAGE plpgsql;"""
     depends_on = ()
 
 
