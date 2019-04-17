@@ -3228,7 +3228,9 @@ class DBSearchPath(_DBTest):
 
 
 class DBCrypto(_DBBaseTest):
-    # Note: requires pgcrypto: (CREATE EXTENSION pgcrypto)
+    # Note: requires pgcrypto and db_pytis_crypto:
+    # psql test -c 'create extension pgcrypto;'
+    # gsql pytis.dbdefs.db_pytis_crypto | psql test
 
     def setUp(self):
         _DBBaseTest.setUp(self)
