@@ -829,7 +829,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                     if not schemas:
                         schemas = 'public'
                     for i in range(n):
-                        s_name = tables.fetchone()['table_schema'].value()
+                        s_name = tables.fetch()['table_schema'].value()
                         for s in schemas.split(','):
                             if s == s_name:
                                 schema_name = s
@@ -3154,28 +3154,34 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pg_distinct(column, prefix, condition, sort, transaction=transaction,
                                  arguments=arguments)
 
-    def fetchone(self, direction=FORWARD, transaction=None):
-        """Stejné jako v nadtřídě.
+    def fetch(self, position=FORWARD):
+        """Return data row from given position or next in given direction.
 
-        Metoda automaticky nereaguje na notifikace o změně dat souvisejících
-        tabulek a pokračuje (nedojde-li k přerušení transakce) v dodávce
-        starých dat.  Automatické přenačítání dat při změně by mohlo vést
-        k výkonnostním problémům, jeho provádění je tedy ponecháno na uvážení
-        aplikace, která se může nechat o změnách informovat registrací
-        prostřednictvím metody 'add_callback_on_change()'.
+        Interface is the same as described in parent class.
+
+        Doesn't automatically react to notifications about changes in relevant
+        tables and continues delivering old data until the transaction is
+        interrupted.
+
+        Reaction to notifications is left up to the application using the
+        method 'add_callback_on_change()'.
 
         """
         if __debug__:
-            log(DEBUG, 'Fetching row from selection in direction:', direction)
-        assert direction in(FORWARD, BACKWARD), ('Invalid direction', direction)
+            log(DEBUG, 'Fetching from selection:', position)
+        assert isinstance(position, int) or position in (FORWARD, BACKWARD), position
         self._pg_maybe_restore_select()
         buf = self._pg_buffer
-        pos = buf.position()
-        if ((direction == BACKWARD and pos >= 0 or
-             direction == FORWARD and pos < self._pg_number_of_rows_(pos))):
-            row = buf.fetch(direction, transaction=transaction)
-        else:
-            row = None
+        row = buf.fetch(position)
+        if row is None:
+            # Keep to position at the edge when we got outside available data.
+            pos = buf.position()
+            if pos < -1:
+                buf.skip(-pos - 1, FORWARD)
+            else:
+                last = self._pg_number_of_rows_(pos)
+                if pos > last:
+                    buf.skip(pos - last, BACKWARD)
         if __debug__:
             log(DEBUG, 'Returned row', str(row))
         if self._pg_select_set_read_only:
@@ -3183,14 +3189,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_set_read_only = False
         return row
 
-    def _pg_load_buffer(self, position, count, transaction=None):
-        if transaction is None:
-            transaction = self._pg_select_transaction
+    def _pg_load_buffer(self, position, count):
         count = min(count, max(0, self._pg_number_of_rows_(position + count) - position))
         if count != 0:
             # Only run SQL commands when necessary.
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
+            transaction = self._pg_select_transaction
             try:
                 self._pg_move(position, transaction=transaction)
                 row_data = self._pg_fetchmany(count, FORWARD, transaction=transaction)
@@ -3199,7 +3204,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 cls, e, tb = sys.exc_info()
                 if not self._pg_select_user_transaction:
                     try:
-                        self._pg_select_transaction.rollback()
+                        transaction.rollback()
                     except Exception:
                         pass
                 self._pg_select_transaction = None

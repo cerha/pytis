@@ -52,9 +52,9 @@ from types_ import DateTime, Number, Type, Value, WMValue
 _ = translations('pytis-data')
 
 FORWARD = 'FORWARD'
-"""Konstanta pro dopředný posun v 'Data.fetchone'."""
+"""Konstanta pro dopředný posun v 'Data.fetch'."""
 BACKWARD = 'BACKWARD'
-"""Konstanta pro zpětný posun v 'Data.fetchone'."""
+"""Konstanta pro zpětný posun v 'Data.fetch'."""
 
 
 def opposite_direction(direction):
@@ -225,9 +225,9 @@ class Data(object_2_5):
     - Metodu pro výběr konkrétního řádku: 'row()'.  Řádek je vybrán podle
       zadaného klíče.
 
-    - Metody pro výběr všech řádků: 'select()', 'fetchone()', 'skip()' a
+    - Metody pro výběr všech řádků: 'select()', 'fetch()', 'skip()' a
       'close()'.  Po zavolání metody 'select()' je možno postupně získávat
-      jednotlivé řádky pomocí metody 'fetchone()'.  Tento způsob umožňuje
+      jednotlivé řádky pomocí metody 'fetch()'.  Tento způsob umožňuje
       předávání i většího množství dat z externích zdrojů bez nutnosti je
       všechna najednou držet v paměti.  Metoda 'select' umožňuje kdykoliv
       zpřístupnění dat reinicializovat (\"rewind\").
@@ -366,31 +366,33 @@ class Data(object_2_5):
                arguments={}, async_count=False, timeout_callback=None, limit=None):
         """Initialize selection of records from the data source.
 
-        The method itself does not necessarily load any data, the selection is only initialized if
-        necessary.  The actual data may be obtained by repetitive calls to 'fetchone()' after
-        calling this method.  Rows can also be skipped using the 'skip()' method.  The number of
-        corresponding rows is returned if possible, but None may be returned if this feature is not
-        implemented.
+        The method itself does not necessarily load any data, the selection is
+        only initialized if necessary.  The actual data may be obtained by
+        repetitive calls to 'fetch()' after calling this method.  Rows can
+        also be skipped using the 'skip()' method.  The number of corresponding
+        rows is returned if possible, but None may be returned if this feature
+        is not implemented.
 
-        Repeated calls to this method may not result in the same data if the data source changes in
-        the meanwhile.
+        Repeated calls to this method may not result in the same data if the
+        data source changes in the meanwhile.
 
         Arguments:
-
-          condition -- condition limiting the set of resulting rows as an 'Operator' instance or
-            'None'
-          reuse -- boolean flag indicating, that the data of the previous select may be reused if
-            the condition matches
-          sort -- sequence of sorting specifiers.  Each specifier is a column identifier or a pair
-            (ID, DIRECTION).  DIRECTION os one of module constants 'ASCENDENT' or 'DESCENDANT'.
-            The default value is 'ASCENDENT'.
+          condition -- condition limiting the set of resulting rows as an
+            'Operator' instance or 'None'
+          reuse -- boolean flag indicating, that the data of the previous
+            select may be reused if the condition matches
+          sort -- sequence of sorting specifiers.  Each specifier is a column
+            identifier or a pair (ID, DIRECTION).  DIRECTION os one of module
+            constants 'ASCENDENT' or 'DESCENDANT'.  The default value is
+            'ASCENDENT'.
           columns -- sequence of IDs of columns to select; if not given, all
             columns are selected
           transaction -- transaction object encapsulating the database
             operation environment or 'None' (meaning default environment)
           async_count -- if true, try to count result lines asynchronously
           timeout_callback -- ignored
-          limit -- limit maximum number of selected rows, integer or 'None' (no limit)
+          limit -- limit maximum number of selected rows, integer or 'None' (no
+            limit)
 
         Je-li 'condition' různé od 'None', specifikuje podmínku pro výběr
         řádků.  Podtřídy nejsou povinny podmínky implementovat (mohou je
@@ -430,7 +432,7 @@ class Data(object_2_5):
         try:
             self.select(transaction=transaction, **kwargs)
             while True:
-                row = self.fetchone(transaction=transaction)
+                row = self.fetch()
                 if row is None:
                     break
                 result.append(function(row))
@@ -514,56 +516,45 @@ class Data(object_2_5):
                 pass
         return select_result, Row(aggregates)
 
-    def fetchone(self, direction=FORWARD, transaction=None):
-        """Vrať další řádek dat.
+    def fetch(self, position=FORWARD):
+        """Return data row from given position or next in given direction.
 
-        Opakovaným voláním této metody je možno získat všechny řádky tabulky.
-        Pokud již žádný další řádek dat k dispozici není, vrať 'None'.
+        Arguments:
 
-        Argumenty:
+          position -- either an absolute position as int or a direction (one of
+            'FORWARD', 'BACKWARD').  When int, the internal selection pointer
+            is moved to given position and the item at given position is
+            returned.  If direction, the pointer is incremented (on 'FORWARD')
+            or decremented (on 'BACKWARD') and the item from the new position
+            is returned (if it exists).
 
-          direction -- jedna z konstant 'FORWARD' a 'BACKWARD', určuje, zda
-            má být vrácen předchozí nebo následující řádek
-          transaction -- deprecated, don't use anymore
+        If there is no data row at the requested position (we got outside the
+        rows available within the current selection) 'None' is returned.
 
-        Ne všechny podtřídy jsou povinny implementovat vrácení předchozího
-        řádku (tj. situaci, kdy 'direction==BACKWARD').  Pokud je
-        neimplementují, musí to být uvedeno v dokumentaci a metoda musí
-        v případě odpovídajícího požadavku vyvolat výjimku
-        'UnsupportedOperation'.
+        The first call to this method must be preceeded by calling 'select()'.
+        Otherwise the behavior of this method is undefined.  Subsequent calls
+        to 'select()' resets the buffer so a following 'fetch()' will start
+        from the beginning.
 
-        Směr je vztahován k posledně vrácenému řádku.  Má-li tabulka _n_ řádků
-        a posledně vrácený řádek byl _k_-tý, kde 0 < _k_ < n+1, znamená
-        'FORWARD' vrácení _k+1_ního řádku (pokud existuje) a 'BACKWARD'
-        _k-1_ního řádku (pokud existuje).  Dojde-li k překročení prvního řádku,
-        nejblíže následující 'FORWARD' vrátí první řádek (pokud existuje),
-        a dojde-li k překročení posledního řádku, nejblíže následující
-        'BACKWARD' vrátí poslední řádek (pokud existuje).
+        Calls to 'select()', 'fetch()' and 'skip()' should not be interspersed
+        by calls to other public methods, otherwise the behavior is undefined.
 
-        Prvnímu volání této metody musí předcházet volání metody 'select()'.
-        Pokud se tak nestane, je chování metody nespecifikováno.  Následující
-        volání metody 'select()' provede reinicializaci natahování dat,
-        tj. následné volání 'fetchone()' začne vracet nová data, opět od
-        začátku.
+        After the last call to this method 'close()' should be called.
 
-        Každému volání 'fetchone()' musí předcházet volání 'select()',
-        'fetchone()' nebo 'skip()'.  Je-li během provádění výběru volána jiná
-        veřejná (nebo nesouvisející neveřejná) metoda třídy, je chování
-        následného volání metody 'fetchone()' bez bezprostředně
-        předcházejícího volání 'select()' nedefinováno.
-
-        Po posledním volání této metody by měla být zavolána metoda 'close()'.
-
-        V této třídě metoda vždy pouze vrací 'None'.
+        In this class always returns None.
 
         """
         return None
 
+    def fetchone(self, direction=FORWARD, transaction=None):
+        """Depracated.  Use 'fetch()' instead."""
+        return self.fetch(direction)
+
     def last_row_number(self):
-        """Vrať pořadí řádku posledně vráceného metodou 'fetchone()'.
+        """Vrať pořadí řádku posledně vráceného metodou 'fetch()'.
 
         Řádky jsou číslovány od 0.  Pokud v aktuálním selectu dosud nebyl žádný
-        řádek přes 'fetchone()' získán, vrať -1.
+        řádek přes 'fetch()' získán, vrať -1.
 
         """
         return self._select_last_row_number
@@ -588,12 +579,12 @@ class Data(object_2_5):
         'select()' a 'close()').
 
         V této třídě metoda přeskakuje řádky prostřednictvím volání metody
-        'fetchone()' a vrací počet řádků, pro které tato volání nevrátila
+        'fetch()' a vrací počet řádků, pro které tato volání nevrátila
         'None'.
 
         """
         for i in range(count):
-            if self.fetchone(direction=direction) is None:
+            if self.fetch(direction) is None:
                 return i
         return count
 
@@ -604,7 +595,7 @@ class Data(object_2_5):
         'select()' a 'close()').
 
         """
-        while self.fetchone(BACKWARD) is not None:
+        while self.fetch(BACKWARD) is not None:
             pass
 
     def search(self, condition, direction=FORWARD, transaction=None):
@@ -623,7 +614,7 @@ class Data(object_2_5):
         jako kladný integer.  Pokud řádek nebyl nalezen, je vrácena 0.
 
         Aktuální řádek je řádek, na který ukazuje ukazovátko.  Tj. například
-        řádek bezprostředně předtím vytažený metodou 'fetchone()'.
+        řádek bezprostředně předtím vytažený metodou 'fetch()'.
 
         Metodu je možno použít pouze během otevřeného selectu (viz metody
         'select()' a 'close()'), vyhledávání se provádí pouze mezi řádky
@@ -657,7 +648,7 @@ class Data(object_2_5):
         """Ukonči aktuální select.
 
         Tato metoda umožňuje explicitně uzavřít aktuální čtení dat pomocí
-        'select()' + 'fetchone()' a uvolnit tak již případné dále nepotřebné
+        'select()' + 'fetch()' a uvolnit tak již případné dále nepotřebné
         datové struktury nebo prostředky systému.
 
         Metoda může být volána pouze když je aktivní 'select()' spojení.
@@ -1083,27 +1074,23 @@ class MemData(Data):
     def close(self):
         self._mem_select = []
 
-    def fetchone(self, direction=FORWARD, transaction=None):
-        cursor = self._mem_cursor
+    def fetch(self, position=FORWARD):
         data = self._mem_select
-        if direction == FORWARD:
-            if cursor >= len(data):
-                return None
-            elif cursor == len(data) - 1:
-                self._mem_cursor = cursor + 1
-                return None
-            else:
-                self._mem_cursor = cursor = cursor + 1
-                return data[cursor]
+        cursor = self._mem_cursor
+        size = len(data)
+        if position == FORWARD:
+            cursor += 1
+        elif position == BACKWARD:
+            cursor += 1
         else:
-            if cursor < 0:
-                return None
-            elif cursor == 0:
-                self._mem_cursor = -1
-                return None
-            else:
-                self._mem_cursor = cursor = cursor - 1
-                return data[cursor]
+            assert isinstance(position, int), position
+            cursor = position
+        if 0 <= cursor < size:
+            result = data[cursor]
+        else:
+            result = None
+        self._mem_cursor = max(-1, min(cursor, size))
+        return result
 
     def last_row_number(self):
         return self._mem_cursor
@@ -1877,14 +1864,12 @@ class FetchBuffer(object):
         """Arguments:
 
         retrieve -- Function retrieving buffer items from data source.  Must be
-          a function of two arguments (may optionally accept additional keyword
-          arguments - see 'fetch()' for details).  The two mandatory arguments
-          are (position, count).  Both arguments are integers, where 'position'
-          is the position of the first item to retrieve numbered from zero and
-          'count' is the total number of items to retrieve.  The function must
-          return a list of items to store in the buffer.  The number of
-          returned items may be lower than requested if the data source doesn't
-          have any more data at given positions.
+          a function of two arguments (position, count).  Both arguments are
+          integers, where 'position' is the position of the first item to
+          retrieve numbered from zero and 'count' is the total number of items
+          to retrieve.  The function must return a list of items to store in
+          the buffer.  The number of returned items may be lower than requested
+          if the data source doesn't have any more data at given positions.
         limit -- The maximal total number of items kept in the cache.
         initial_fetch_size -- Number of items to fetch at once in the first
           request (when the buffer is empty).
@@ -1986,7 +1971,7 @@ class FetchBuffer(object):
         self._start = start
         self._pointer = pointer
 
-    def fetch(self, position, **kwargs):
+    def fetch(self, position):
         """Return buffer item from given position.
 
         Arguments:
@@ -1995,10 +1980,6 @@ class FetchBuffer(object):
             position and the item at given position is returned.  If direction,
             buffer pointer is incremented (on 'FORWARD') or decremented (on
             'BACKWARD') and the item from the new position is returned.
-          **kwargs -- any keyword arguments are passed on to the function
-            'retrieve' (passed to the constructor) as additional keyword
-            arguments after 'position' and 'count' whenever 'retrieve' needs to
-            be called.
 
         If the item at the requested position is not present in the buffer, it
         is automatically retrieved from the data source and returned.  'None'
@@ -2014,7 +1995,7 @@ class FetchBuffer(object):
         elif position == BACKWARD:
             pointer = self._pointer - 1
         else:
-            assert isinstance(position, int)
+            assert isinstance(position, int), position
             pointer = position - self._start
         buf = self._buffer
         size = len(buf)
@@ -2039,7 +2020,7 @@ class FetchBuffer(object):
                 # content, so let's start from scratch around the requested position.
                 fetch_position = max(0, start + pointer - fetch_size // 2)
             if fetch_size:
-                items = self._retrieve(fetch_position, fetch_size, **kwargs)
+                items = self._retrieve(fetch_position, fetch_size)
                 if items:
                     self._fill(fetch_position, items)
             # If self._start was moved within _fill, update the pointer accordingly.

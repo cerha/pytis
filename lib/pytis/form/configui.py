@@ -136,13 +136,14 @@ class _ConfigData(pytis.data.RestrictedData):
         self._giveone = True
         return 1
 
-    def fetchone(self, direction=pytis.data.FORWARD, transaction=None):
-        if direction != pytis.data.FORWARD or not self._giveone:
+    def fetch(self, position=pytis.data.FORWARD):
+        if self._giveone and position in (0, pytis.data.FORWARD):
+            self._giveone = False
+            row_data = [(o, pytis.data.Value(config.option(o).type(), getattr(config, o)))
+                        for o in [c.id() for c in self.columns()]]
+            return pytis.data.Row(row_data)
+        else:
             return None
-        self._giveone = False
-        row_data = [(o, pytis.data.Value(config.option(o).type(), getattr(config, o)))
-                    for o in [c.id() for c in self.columns()]]
-        return pytis.data.Row(row_data)
 
     def last_row_number(self):
         if self._giveone:

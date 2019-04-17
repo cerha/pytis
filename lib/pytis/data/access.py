@@ -362,8 +362,8 @@ class RestrictedData(Data):
         return super(RestrictedData, self).select(condition=condition,
                                                   sort=sort, **kwargs)
 
-    def fetchone(self, **kwargs):
-        row = super(RestrictedData, self).fetchone(**kwargs)
+    def fetch(self, *args, **kwargs):
+        row = super(RestrictedData, self).fetch(*args, **kwargs)
         return self._access_filter_row(row)
 
     def search(self, condition, **kwargs):
