@@ -2745,7 +2745,7 @@ class TestFetchSelect(DBTest):
         data.select()
         data.skip(skip)
         for i in range(3):
-            data.fetchone()
+            assert data.fetchone() is not None
         data.select(reuse=True)
         data.skip(skip)
         row = data.fetchone()
