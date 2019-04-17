@@ -1860,65 +1860,78 @@ class FetchBuffer(object):
     from a data object.  To minimize the communication overhead with the data
     source, the rows are typically read in chunks.
 
-    The rows are retrieved from the buffer using 'fetch()'.  If the requested
-    row doesn't exist within the current data, None is returned and the calling
-    side is supposed to call 'fill()' to load the buffer with the missing data
-    if needed (if the requested row isn't outside the current selection).
+    The items (typically data rows) are retrieved from the buffer using
+    'fetch()'.  If the requested item doesn't exist within the currently cached
+    range, it is automatically retrieved from the data source behind the scenes
+    using the method 'retrieve'
 
     The maximal total number of cached items is limited by the constructor
-    argument 'limit'.  The buffer will, however, only grow the cached data if
-    the data passed to 'fill()' adjoin or overlap with the existing data.
-    Otherwise the old data are replaced.
-
-    The size of chunks passed to 'fill()' is up to the decision of the calling
-    side, but should never be larger than the 'limit' passed to the constructor.
+    argument 'limit'.  The cache will grow up to this size if fetch requests
+    ask for rows which are near the currently cached range (up to 'fetch_size'
+    in distance).  If the newly requested item isn't in the reach of the
+    currently cached items, the cache is emptied and recreated.
 
     """
 
-    def __init__(self, limit):
+    def __init__(self, retrieve, limit=1000, initial_fetch_size=100, fetch_size=50):
         """Arguments:
 
+        retrieve -- Function retrieving buffer items from data source.  Must be
+          a function of two arguments (may optionally accept additional keyword
+          arguments - see 'fetch()' for details).  The two mandatory arguments
+          are (position, count).  Both arguments are integers, where 'position'
+          is the position of the first item to retrieve numbered from zero and
+          'count' is the total number of items to retrieve.  The function must
+          return a list of items to store in the buffer.  The number of
+          returned items may be lower than requested if the data source doesn't
+          have any more data at given positions.
         limit -- The maximal total number of items kept in the cache.
+        initial_fetch_size -- Number of items to fetch at once in the first
+          request (when the buffer is empty).
+        fetch_size -- Number of items to fetch at once in subsequent requests.
 
         """
+        assert limit > fetch_size and limit > initial_fetch_size
+        self._retrieve = retrieve
         self._limit = limit
+        self._initial_fetch_size = initial_fetch_size
+        self._fetch_size = fetch_size
+        self.reset()
         if __debug__:
             log(DEBUG, 'New buffer')
-        self.reset()
 
     def reset(self):
         """Completely reset the buffer."""
         if __debug__:
             log(DEBUG, 'Resetting buffer')
         self._buffer = []
-        # _start ... position of the buffer begining within the database.
-        #    The row number of the first buffer item, starting from 0.
-        # _pointer ... position of the buffer pointer relative to the
-        #    first buffer item.  Points to the last fetched item.  May
-        #    point outside the buffer.
+        # _start ... absolute position of the first buffer item, starting from 0.
+        # _pointer ... position of the last fetched item relative to the first
+        #   buffer item.  May also point outside the buffer.
         self._start = 0
         self._pointer = -1
 
     def current(self):
         """Return the current buffer item.
 
-        If the current position points outside buffer data previously
-        loaded by 'fill()', returns None.
+        If the current position points outside the current buffer data, returns
+        None.  This method even doesn't try to retrieve data from source if it
+        is not already cached thanks to a previous 'fetch()'.
 
         """
         buf = self._buffer
         pointer = self._pointer
-        if pointer < 0 or pointer >= len(buf):
-            row = None
-        else:
+        if 0 <= pointer < len(buf):
             row = buf[pointer]
+        else:
+            row = None
         return row
 
     def position(self):
         """Return the current buffer position as int.
 
-        The position may point outside buffer data (previously loaded by
-        'fill()').
+        The position may point outside the currenty buffered data or even
+        outside the source data range.
 
         """
         return self._start + self._pointer
@@ -1951,22 +1964,9 @@ class FetchBuffer(object):
         """
         self._pointer = position - self._start
 
-    def fill(self, position, items):
-        """Fill the buffer by given items and update the pointers.
-
-        Arguments:
-
-          position -- position of the first item within the database
-            select starting from zero.
-          items -- list of items to fill in the buffer.
-
-        If the new items overlap or adjoin with the current buffer content, old
-        content may be left in the buffer up to the size limit passed to the
-        constructor.  If the new content doesn't make a continuous sequence
-        with the old content, the old content is simply replaced by the new
-        content.
-
-        """
+    def _fill(self, position, items):
+        # If the new items overlap or adjoin with the current buffer content, old
+        # content is left in the buffer up to 'self._limit'.
         if __debug__:
             log(DEBUG, 'Filling buffer:', (position, len(items)))
         n = len(items)
@@ -1978,14 +1978,14 @@ class FetchBuffer(object):
         end = start + size
         retain = max(self._limit - n, 0)  # How many existing items can be left in the buffer.
         if start < position <= end:
-            # Append items to the end of buffer (cut off from the start).
+            # Append items to the end of buffer (cut off from the start if necessary).
             overlap = end - position
             cutoff = max(size - retain - overlap, 0)
             buf = buf[cutoff:-overlap or None] + items
             start += cutoff
             pointer = position - start - 1
         elif position < start <= position + n:
-            # Prepend items to the beginning of buffer (cut off from the end).
+            # Prepend items to the beginning of buffer (cut off from the end if necessary).
             overlap = position + n - start
             cutoff = max(size - retain - overlap, 0)
             buf = items + buf[overlap:-cutoff or None]
@@ -1999,17 +1999,23 @@ class FetchBuffer(object):
         self._start = start
         self._pointer = pointer
 
-    def fetch(self, direction):
+    def fetch(self, direction, **kwargs):
         """Return next buffer item in given direction from the current position.
 
-        If the row is not present in the buffer, 'None' is returned and it
-        is assumed that the buffer will be filled by subsequent 'fill()'
-        call if necessary.  Buffer position is updated in any case -
+        If the item at the requested position is not present in the buffer, it
+        is automatically retrieved from the data source and returned.  Any
+        keyword arguments passed to 'fetch()' are passed on to the function
+        'retrieve' (passed to the constructor) as additional keyword arguments
+        after 'position' and 'count'.
+
+        'None' is returned if the data source doesn't contain any data at
+        the requested position.  Buffer position is updated in any case -
         incremented when fetching forward and decremented when fetching
         backwards.
 
         """
         buf = self._buffer
+        size = len(buf)
         pointer = self._pointer
         if direction == FORWARD:
             pointer += 1
@@ -2017,14 +2023,37 @@ class FetchBuffer(object):
             pointer -= 1
         else:
             raise ProgramError('Invalid direction', direction)
-        if pointer < 0 or pointer >= len(buf):
-            if __debug__:
-                log(DEBUG, 'Buffer miss:', pointer)
-            result = None
-        else:
+        if pointer >= 0 and pointer < size:
             if __debug__:
                 log(DEBUG, 'Buffer hit:', pointer)
             result = buf[pointer]
+        else:
+            if __debug__:
+                log(DEBUG, 'Buffer miss:', pointer)
+            start = self._start
+            fetch_size = self._initial_fetch_size if size == 0 else self._fetch_size
+            if size <= pointer < size + fetch_size:
+                # We are past the buffer end, but within the reach of fetch_size.
+                position = start + size
+            elif pointer < 0 and -pointer <= fetch_size:
+                # We are in front of the buffer start, but within the reach of fetch_size.
+                position = max(0, start - fetch_size)
+                print '-', pointer, fetch_size, position
+                fetch_size = min(start, fetch_size)
+            else:
+                # We are nowhere near (up to fetch_size) to the current buffer
+                # content, so let's start from scratch around the requested position.
+                position = max(0, start + pointer - fetch_size // 2)
+            if fetch_size:
+                items = self._retrieve(position, fetch_size, **kwargs)
+                if items:
+                    self._fill(position, items)
+            # If self._start was moved within _fill, update the pointer accordingly.
+            pointer += start - self._start
+            if pointer >= 0 and pointer < len(self._buffer):
+                result = self._buffer[pointer]
+            else:
+                result = None
         self._pointer = pointer
         return result
 

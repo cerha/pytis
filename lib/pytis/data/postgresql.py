@@ -2828,9 +2828,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
         self._pg_dbpointer = -1  # DB cursor position starting from zero
-        self._pg_buffer = pytis.data.FetchBuffer(config.cache_size)
+        self._pg_buffer = pytis.data.FetchBuffer(self._pg_load_buffer,
+                                                 limit=config.cache_size,
+                                                 initial_fetch_size=config.initial_fetch_size,
+                                                 fetch_size=config.fetch_size)
         self._pg_number_of_rows = None
-        self._pg_initial_select = False
         self._pg_ro_select = ro_select
         # TODO: Ugly, fix this!
         if hasattr(self, '_pdbb_filtered_bindings'):
@@ -2842,10 +2844,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_create_make_row_template(filtered_columns,
                                               column_groups=getattr(self, '_pdbb_column_groups'))
         self._pg_make_row_template_limited = None
-        # Remember configuration parameters as attributes to speed up
-        # their access in critical code.
-        self._pg_initial_fetch_size = config.initial_fetch_size
-        self._pg_fetch_size = config.fetch_size
 
     # Metody pro transakce
 
@@ -3097,7 +3095,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_buffer.goto(-1)
         else:
             self._pg_buffer.reset()
-            self._pg_initial_select = True
         return row_count
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
@@ -3175,75 +3172,50 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert direction in(FORWARD, BACKWARD), ('Invalid direction', direction)
         self._pg_maybe_restore_select()
         buf = self._pg_buffer
-        position = buf.position()
-        row = buf.fetch(direction)
-        if row:
-            result = row
+        pos = buf.position()
+        if ((direction == BACKWARD and pos >= 0 or
+             direction == FORWARD and pos < self._pg_number_of_rows_(pos))):
+            row = buf.fetch(direction, transaction=transaction)
         else:
-            if transaction is None:
-                transaction = self._pg_select_transaction
-            # PostgreSQL cursors have a number of problems.  They often fail
-            # at the edges and FETCH BACKWARD often doesn't work correctly.
-            # The following code tries to work around the known issues.
-            if self._pg_initial_select:
-                self._pg_initial_select = False
-                fetch_size = self._pg_initial_fetch_size
-            else:
-                fetch_size = self._pg_fetch_size
-            max_fetch_size = self._pg_number_of_rows_(fetch_size)
-            if direction == FORWARD:
-                last_position = min(position + 1, self._pg_number_of_rows_(position + 1))
-                number_of_rows = self._pg_number_of_rows_(last_position + fetch_size)
-                fetch_size = min(fetch_size, number_of_rows - last_position)
-            elif position <= 0:
-                fetch_size = 0
-            else:
-                fetch_size = min(fetch_size, max_fetch_size)
-            assert 0 <= fetch_size <= max_fetch_size, (fetch_size, max_fetch_size)
-            if fetch_size != 0:
-                if direction == BACKWARD:
-                    start = max(0, position - fetch_size)
-                else:
-                    start = position + 1
-                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                    self._pg_number_of_rows.stop()
-                try:
-                    self._pg_move(start, transaction=transaction)
-                    row_data = self._pg_fetchmany(fetch_size, FORWARD, transaction=transaction)
-                    self._pg_dbpointer = start + len(row_data)
-                except Exception:
-                    cls, e, tb = sys.exc_info()
-                    if not self._pg_select_user_transaction:
-                        try:
-                            self._pg_select_transaction.rollback()
-                        except Exception:
-                            pass
-                    self._pg_select_transaction = None
-                    raise cls, e, tb
-                if isinstance(self._pg_number_of_rows, self._PgRowCounting):
-                    self._pg_number_of_rows.restart()
-            else:
-                # Don't run an unnecessary SQL command
-                row_data = None
-            if row_data:
-                mkrow, tmpl = self._pg_make_row_from_raw_data, self._pg_make_row_template_limited
-                rows = [mkrow([d], template=tmpl) for d in row_data]
-                # The last column is '_number' (convert long to int).
-                buf.fill(int(row_data[0][-1]) - 1, rows)
-                if direction == BACKWARD:
-                    # Fill leaves position on the first item, but here we need the last one.
-                    buf.goto(position)
-                result = buf.fetch(direction)
-            else:
-                pos = buf.position()
-                buf.goto(min(max(pos, -1), self._pg_number_of_rows_(pos)))
-                result = None
+            row = None
         if __debug__:
-            log(DEBUG, 'Returned row', str(result))
+            log(DEBUG, 'Returned row', str(row))
         if self._pg_select_set_read_only:
             self._pg_select_transaction.set_read_only()
             self._pg_select_set_read_only = False
-        return result
+        return row
+
+    def _pg_load_buffer(self, position, count, transaction=None):
+        if transaction is None:
+            transaction = self._pg_select_transaction
+        count = min(count, max(0, self._pg_number_of_rows_(position + count) - position))
+        if count != 0:
+            # Only run SQL commands when necessary.
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                self._pg_number_of_rows.stop()
+            try:
+                self._pg_move(position, transaction=transaction)
+                row_data = self._pg_fetchmany(count, FORWARD, transaction=transaction)
+                self._pg_dbpointer = position + len(row_data)
+            except Exception:
+                cls, e, tb = sys.exc_info()
+                if not self._pg_select_user_transaction:
+                    try:
+                        self._pg_select_transaction.rollback()
+                    except Exception:
+                        pass
+                self._pg_select_transaction = None
+                raise cls, e, tb
+            if isinstance(self._pg_number_of_rows, self._PgRowCounting):
+                self._pg_number_of_rows.restart()
+        else:
+            row_data = None
+        if row_data:
+            mkrow, tmpl = self._pg_make_row_from_raw_data, self._pg_make_row_template_limited
+            rows = [mkrow([d], template=tmpl) for d in row_data]
+        else:
+            rows = []
+        return rows
 
     def last_row_number(self):
         self._pg_maybe_restore_select()

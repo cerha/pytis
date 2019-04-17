@@ -974,111 +974,97 @@ class TestFetchBuffer(object):
 
     @pytest.fixture
     def buf(self):
-        return pd.FetchBuffer(100)
+        def retrieve(position, count):
+            start = position + ord('A')
+            end = min(ord('Z') + 1, start + count)
+            items = [chr(i) for i in range(start, end)]
+            print '  +', position, count, items
+            return items
+        return pd.FetchBuffer(retrieve, limit=20, initial_fetch_size=10, fetch_size=6)
 
     def test_init(self, buf):
         assert buf.position() == -1
         assert buf.current() is None
 
-    def test_empty_fetch(self, buf):
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.position() == 0
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.position() == -1
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.position() == -2
-
-    def test_edge_fetch(self, buf):
-        buf.fill(0, ['A', 'B', 'C'])
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.fetch(pd.FORWARD) == 'A'
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.fetch(pd.FORWARD) == 'A'
-        assert buf.fetch(pd.FORWARD) == 'B'
-        assert buf.fetch(pd.FORWARD) == 'C'
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.fetch(pd.BACKWARD) == 'C'
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.fetch(pd.FORWARD) is None
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.fetch(pd.BACKWARD) == 'C'
-
-    def test_fill(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
-        assert buf.fetch(pd.FORWARD) == 'A'
-        assert buf.fetch(pd.BACKWARD) is None
-        assert buf.fetch(pd.FORWARD) == 'A'
+    def test_fetch(self, buf):
+        F, B = pd.FORWARD, pd.BACKWARD
+        for i, (d, x) in enumerate(((F, 'A'), (F, 'B'), (F, 'C'), (F, 'D'), (B, 'C'), (B, 'B'))):
+            assert buf.fetch(d) == x
+            assert buf.current() == x
 
     def test_skip(self, buf):
-        buf.fill(0, [chr(i) for i in range(ord('A'), ord('Z') + 1)])
         assert buf.fetch(pd.FORWARD) == 'A'
         buf.skip(8, pd.FORWARD)
+        assert buf.current() == 'I'
         buf.skip(8, pd.BACKWARD)
         assert buf.fetch(pd.FORWARD) == 'B'
         buf.skip(8, pd.FORWARD)
         assert buf.fetch(pd.FORWARD) == 'K'
-        assert buf.fetch(pd.FORWARD) == 'L'
+        buf.skip(1, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'M'
         buf.skip(11, pd.FORWARD)
-        assert buf.fetch(pd.FORWARD) == 'X'
+        assert buf.fetch(pd.FORWARD) == 'Y'
         buf.skip(14, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'L'
+        buf.skip(13, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'Z'
+
+    def test_fetch_from_size(self, buf):
+        # Test corner cases of the implementation.
+        # First try fetching the last item in the reach of the initial fetch size.
+        buf.skip(10, pd.FORWARD)
         assert buf.fetch(pd.FORWARD) == 'K'
+        # Now try fetching the most distant item in the reach of a subsequent
+        # fetch when adding to the buffer from left (fetching L fills G..P,
+        # then fetching A is 6 items to the left from G (and 6 is fetch_size)).
+        buf.reset()
+        buf.skip(11, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'L'
+        buf.skip(12, pd.BACKWARD)
+        assert buf.fetch(pd.FORWARD) == 'A'
+
+    def test_edge_fetch(self, buf):
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.position() == -2
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.position() == -3
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == -2
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == -1
+        assert buf.fetch(pd.FORWARD) == 'A'
+        buf.skip(24, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'Z'
+        assert buf.position() == 25
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == 26
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == 27
+        assert buf.fetch(pd.BACKWARD) is None
+        assert buf.position() == 26
+        assert buf.fetch(pd.BACKWARD) == 'Z'
+        assert buf.position() == 25
 
     def test_skip_outside(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
-        buf.skip(20, pd.FORWARD)
-        assert buf.position() == 19
-        buf.skip(32, pd.BACKWARD)
-        assert buf.position() == -13
+        buf.skip(30, pd.FORWARD)
+        assert buf.position() == 29
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == 30
+        buf.skip(34, pd.BACKWARD)
+        assert buf.position() == -4
+        assert buf.fetch(pd.FORWARD) is None
+        assert buf.position() == -3
+        assert buf.fetch(pd.FORWARD) is None
 
-    def test_refill(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
-        buf.fill(10, ['K', 'L', 'M', 'N'])
-        assert buf.fetch(pd.FORWARD) == 'K'
+    def test_fetch_size(self, buf):
+        assert buf.fetch(pd.FORWARD) == 'A'
+        assert len(buf) == 10 # initial_fetch_size
+        buf.skip(10, pd.FORWARD)
         assert buf.fetch(pd.FORWARD) == 'L'
-
-    def test_exceed(self, buf):
-        with pytest.raises(ValueError):
-            buf.fill(0, range(101))
-
-    def test_limit(self, buf):
-        buf.fill(100, range(80))
-        buf.fill(160, range(80))
-        assert len(buf) == 100
-
-    def test_append(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F'])
-        buf.fill(6, ['G', 'H', 'I', 'J'])
-        assert len(buf) == 10
-        assert buf.fetch(pd.FORWARD) == 'G'
-        buf.skip(4, pd.BACKWARD)
-        assert buf.fetch(pd.FORWARD) == 'D'
-
-    def test_append_overlap(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-        buf.fill(4, ['e', 'f', 'g', 'h', 'i'])
-        assert len(buf) == 9
-        assert buf.fetch(pd.FORWARD) == 'e'
-        buf.skip(4, pd.BACKWARD)
-        assert buf.fetch(pd.FORWARD) == 'B'
-
-    def test_prepend(self, buf):
-        buf.fill(6, ['G', 'H', 'I', 'J'])
-        buf.fill(2, ['C', 'D', 'E', 'F'])
-        assert len(buf) == 8
-        assert buf.fetch(pd.FORWARD) == 'C'
-        buf.skip(4, pd.FORWARD)
-        assert buf.fetch(pd.FORWARD) == 'H'
-
-    def test_prepend_overlap(self, buf):
-        buf.fill(0, ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-        buf.fill(4, ['e', 'f', 'g', 'h', 'i'])
-        assert len(buf) == 9
-        assert buf.fetch(pd.FORWARD) == 'e'
-        buf.skip(4, pd.BACKWARD)
-        assert buf.fetch(pd.FORWARD) == 'B'
+        assert len(buf) == 16 # initial_fetch_size + fetch_size
+        buf.skip(6, pd.FORWARD)
+        assert buf.fetch(pd.FORWARD) == 'S'
+        assert len(buf) == 20 # limit
 
 
 class _DBBaseTest(unittest.TestCase):
