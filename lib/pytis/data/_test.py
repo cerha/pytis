@@ -720,38 +720,36 @@ class TestRow(object):
         assert r['z'].value() == 3
 
 
-class Data(unittest.TestCase):
+class TestData(object):
 
-    def setUp(self):
-        c1 = self._column1 = pd.ColumnSpec('foo',
-                                                   pd.Integer())
-        c2 = self._column2 = pd.ColumnSpec('bar',
-                                                   pd.String())
-        self._value = pd.Value(pd.Type(), None)
-        self._row = pd.Row()
-        self._data = pd.Data((c1, c2), c1)
+    @pytest.fixture
+    def columns(self):
+        return (
+            pd.ColumnSpec('foo', pd.Integer()),
+            pd.ColumnSpec('bar', pd.String()),
+        )
 
-    def test_it(self):
-        c1, c2 = self._column1, self._column2
-        r = self._row
-        v = self._value
-        d = self._data
-        self.assertEqual(d.columns(), (c1, c2), 'columns lost')
-        self.assertEqual(d.find_column('bar'), c2, 'column lost')
-        self.assertIsNone(d.find_column('foobar'), 'imaginary column')
-        self.assertEqual(d.key(), (c1,), 'key lost')
-        self.assertIsNone(d.row(v), 'row not working')
-        self.assertEqual(d.select(), 0, 'select not working')
-        self.assertIsNone(d.fetch(), 'fetch not working')
-        self.assertEqual(d.insert(r), (None, False), 'insert not working')
-        self.assertEqual(d.update(v, r), (None, False), 'update not working')
-        self.assertEqual(d.delete(v), 0, 'delete not working')
+    @pytest.fixture
+    def data(self, columns):
+        return pd.Data(columns, columns[0])
 
-    def test_row_key(self):
+    def test_it(self, data, columns):
+        assert data.columns() == columns
+        assert data.find_column('bar') == columns[1]
+        assert data.find_column('foobar') is None
+        assert data.key() == (columns[0],)
+        assert data.row(ival(None)) is None
+        assert data.select() == 0
+        assert data.fetch() is None
+        assert data.insert(pd.Row()) == (None, False)
+        assert data.update(ival(None), pd.Row()) == (None, False)
+        assert data.delete(ival(None)) == 0
+
+    def test_row_key(self, data):
         v1 = ival(1)
         v2 = sval('xxx')
         row = pd.Row((('foo', v1), ('bar', v2)))
-        self.assertEqual(self._data.row_key(row), (v1,))
+        assert data.row_key(row) == (v1,)
 
 
 class MemData(unittest.TestCase):
