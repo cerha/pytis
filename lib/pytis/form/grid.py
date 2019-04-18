@@ -148,7 +148,7 @@ class DataTable(object):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
-    def _retrieve_row(self, row, require=False):
+    def _retrieve_row(self, row):
         current = self._current_row
         if not current or current.row != row:
             data = self._data
@@ -158,10 +158,9 @@ class DataTable(object):
             if data_row:
                 self._presented_row.set_row(data_row)
                 current = self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
-            elif require:
-                raise Exception('Missing row', row)
             else:
-                log(DEBUG, "Missing grid row:", row)
+                if 0 <= row < self.number_of_rows(min_value=(row + 1)):
+                    log(DEBUG, "Missing grid row:", row)
                 return None
         return current.the_row
 
@@ -304,7 +303,8 @@ class DataTable(object):
             self._current_row = None
         elif -1 <= position < self.number_of_rows() - 1:
             # Rely on _retrieve_row() side effect setting self._current_row.
-            self._retrieve_row(position, require=True)
+            if not self._retrieve_row(position):
+                raise Exception('Missing row', row)
 
     def group(self, row):
         """Return true, if given row belongs to a highlighted group or False otherwise.
