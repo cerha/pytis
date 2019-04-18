@@ -85,7 +85,7 @@ from .application import (
     Application, aggregated_views_manager, block_refresh, current_form,
     db_operation, message, refresh, run_dialog, run_form,
 )
-from ._grid import TableRowIterator, ListTable
+from ._grid import TableRowIterator, GridTable
 
 import config
 
@@ -279,11 +279,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Create the grid and table.  Initialize the data select.
         self._table = None
         self._grid = g = wx.grid.Grid(self)
-        self._table = table = \
-            ListTable(self, self._data, self._row, self._columns, self._lf_select_count_,
-                      sorting=self._lf_sorting, grouping=self._grouping,
-                      prefill=self._prefill,
-                      row_style=self._view.row_style())
+        self._table = table = GridTable(
+            self, self._data, self._row, self._columns, self._lf_select_count_,
+            sorting=self._lf_sorting,
+            grouping=self._grouping,
+            prefill=self._prefill,
+            row_style=self._view.row_style(),
+        )
         g.SetTable(table, True)
         g.SetRowLabelSize(0)
         # g.SetColLabelAlignment(wx.CENTER, wx.CENTER)
@@ -324,7 +326,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _update_grid(self, data_init=False, delete_column=None, insert_column=None,
                      inserted_column_index=None, init_columns=False, retain_row=False):
         g = self._grid
-        t = self._table
         notify = self._notify_grid
         current_row_number = self._current_cell()[0]
         if current_row_number not in (0, -1):
@@ -356,9 +357,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 row_count = self._lf_count(timeout=0)
                 self._data.rewind()
-            t.update(columns=self._columns, row_count=self._lf_select_count_,
-                     sorting=self._lf_sorting,
-                     grouping=self._grouping, prefill=self._prefill)
+            self._table.update(columns=self._columns,
+                               row_count=self._lf_select_count_,
+                               sorting=self._lf_sorting,
+                               grouping=self._grouping,
+                               prefill=self._prefill)
             old_row_count = g.GetNumberRows()
             self._update_grid_length(g, row_count, original_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
@@ -705,7 +708,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 result = self._table.row(row)
             except Exception:
                 # It sometimes happens, under unknown circumstances, that the
-                # data select gets changed without updating ListTable selection
+                # data select gets changed without updating GridTable selection
                 # data.  Then `row' may actually be outside the reported number
                 # of rows limit and the table row call above may crash.  In
                 # such a case, it's probably better to return an unknown row
@@ -1220,7 +1223,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return ((x, y), (x + r, y + r), (x + r, y + length), (x + r + 2, y + length),
                     (x + r + 2, y + r), (x + r * 2 + 2, y), (x, y))
         g = self._grid
-        # t = self._table
         dc = wx.PaintDC(g.GetGridColLabelWindow())
         dc.SetTextForeground(wx.BLACK)
         # dc.SetFont(g.GetFont())

@@ -377,7 +377,7 @@ class DataTable(object):
         self._group_bg_color = None
 
 
-class ListTable(wx.grid.GridTableBase, DataTable):
+class GridTable(wx.grid.GridTableBase, DataTable):
 
     _DEFAULT_FOREGROUND_COLOR = pytis.presentation.Color.BLACK
     _DEFAULT_BACKGROUND_COLOR = pytis.presentation.Color.WHITE
@@ -426,14 +426,14 @@ class ListTable(wx.grid.GridTableBase, DataTable):
         return self._form
 
     def update(self, *args, **kwargs):
-        super(ListTable, self).update(*args, **kwargs)
+        super(GridTable, self).update(*args, **kwargs)
         self._init_group_bg_downgrade()
 
     def close(self):
         self._form = None
         self._attr_cache = None
         self._font_cache = None
-        super(ListTable, self).close()
+        super(GridTable, self).close()
 
     # Mandatory wx grid methods.
 
@@ -495,11 +495,14 @@ class ListTable(wx.grid.GridTableBase, DataTable):
 
 
 class TableRowIterator(object):
-    """Vytvoří iterátor nad tabulkou, který postupně vrací určené řádky.
+    """Greate a table iterator which gradually returns given rows.
 
     Argumenty konstruktoru:
-      table -- instance ListTable
-      rows -- sekvence celých čísel určujících jednotlivé řádky
+      table -- GridTable instance.
+      rows -- sequence of integers denoting the iterated row numbers.
+
+    The iteration returns PresentedRow instances corresponding to given row
+    numbers.
 
     """
     def __init__(self, table, rows):
