@@ -19,7 +19,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import pytest
-import pytis.form._grid as grid
+import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
 import pytis.data._test as dtest

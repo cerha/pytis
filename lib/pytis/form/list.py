@@ -85,7 +85,7 @@ from .application import (
     Application, aggregated_views_manager, block_refresh, current_form,
     db_operation, message, refresh, run_dialog, run_form,
 )
-from ._grid import TableRowIterator, GridTable
+from .grid import TableRowIterator, GridTable
 
 import config
 
