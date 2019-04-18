@@ -22,10 +22,10 @@ import pytest
 import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
-import pytis.data._test as dtest
+from pytis.data._test import DBTest
 
 
-class TestDataTable(dtest.DBTest):
+class TestDataTable(DBTest):
 
     @pytest.fixture
     def table(self, connector):
