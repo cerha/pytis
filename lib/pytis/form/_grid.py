@@ -148,11 +148,13 @@ class DataTable(object):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
-    def _retrieve_row(self, row, require=True):
+    def _retrieve_row(self, row, require=False):
         current = self._current_row
         if not current or current.row != row:
             data = self._data
-            data_row = data.fetch(row)
+            success, data_row = db_operation(data.fetch, row)
+            if not success:
+                self._panic()
             if data_row:
                 self._presented_row.set_row(data_row)
                 current = self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
@@ -294,13 +296,7 @@ class DataTable(object):
         Jestliže řádek daného čísla neexistuje, vrať 'None'.
 
         """
-        if row >= 0 and row < self.number_of_rows(min_value=(row + 1)):
-            success, result = db_operation(self._retrieve_row, row, require=False)
-            if not success:
-                self._panic()
-            return result
-        else:
-            return None
+        return self._retrieve_row(row)
 
     def cell_value(self, row, col):
         """Return the formatted value for table cell at given 'row' and 'col'.
@@ -345,10 +341,8 @@ class DataTable(object):
             self._cache = self._DisplayCache()
             self._current_row = None
         elif -1 <= position < self.number_of_rows() - 1:
-            row = position
-            success, result = db_operation(self._retrieve_row, row)
-            if not success:
-                self._panic()
+            # Rely on _retrieve_row() side effect setting self._current_row.
+            self._retrieve_row(position, require=True)
 
     def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
