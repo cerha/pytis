@@ -149,55 +149,19 @@ class DataTable(object):
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
     def _retrieve_row(self, row, require=True):
-        data = self._data
-
-        def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction)
-            if result is None:
-                # In theory this shouldn't happen but it actually happens so we
-                # have to attempt some workaround here.
-                data.rewind()
-                if row > 0:
-                    data.skip(row - 1, direction=pytis.data.FORWARD)
-                result = data.fetchone(direction=pytis.data.FORWARD)
-                if result is None:
-                    # This shouldn't happen at all but it still happens.
-                    log(DEBUG, "Missing grid row")
-                    if require:
-                        raise Exception('Missing row', row)
-                    return None
-                else:
-                    log(DEBUG, "Grid data synchronization error")
-            self._presented_row.set_row(result)
-            the_row = copy.copy(self._presented_row)
-            self._current_row = self._CurrentRow(row, the_row)
         current = self._current_row
-        if not current:
-            data.rewind()
-            if row > 0:
-                # Tento fetch pouze zabezpečí přednačtení bufferu v dopředném
-                # směru od začátku dat.  To je potřeba, protože grid
-                # načítá řádky od konce a bez tohoto hacku by buffer obsahoval
-                # pouze zobrazené řádky.  Lépe by to však bylo ošetřit lepší
-                # strategií plnění bufferu v dbdata.py ...
-                fetch(0)
-                data.skip(row - 1, direction=pytis.data.FORWARD)
-            fetch(row)
-        elif row != current.row:
-            last = data.last_row_number()
-            if row > last:
-                skip = row - last - 1
-                direction = pytis.data.FORWARD
-            elif row == last:
-                data.skip(1, pytis.data.BACKWARD)
-                skip = 0
-                direction = pytis.data.FORWARD
+        if not current or current.row != row:
+            data = self._data
+            data_row = data.fetch(row)
+            if data_row:
+                self._presented_row.set_row(data_row)
+                current = self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
+            elif require:
+                raise Exception('Missing row', row)
             else:
-                skip = last - row - 1
-                direction = pytis.data.BACKWARD
-            data.skip(skip, direction=direction)
-            fetch(row, direction)
-        return self._current_row.the_row
+                log(DEBUG, "Missing grid row:", row)
+                return None
+        return current.the_row
 
     def _group(self, row):
         # Return true, if given row belongs to a highlighted group.
@@ -380,15 +344,11 @@ class DataTable(object):
             self._data.rewind()
             self._cache = self._DisplayCache()
             self._current_row = None
-        elif position < -1 or position >= self.number_of_rows() - 1:
-            pass
-        else:
+        elif -1 <= position < self.number_of_rows() - 1:
             row = position
             success, result = db_operation(self._retrieve_row, row)
             if not success:
                 self._panic()
-            self._presented_row.set_row(result)
-            self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
 
     def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
