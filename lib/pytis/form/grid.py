@@ -519,23 +519,23 @@ class TableRowIterator(object):
     numbers.
 
     """
-    def __init__(self, table, rows):
+    def __init__(self, table, row_numbers):
         self._pointer = -1
         self._table = table
-        self._rows = rows
+        self._row_numbers = row_numbers
 
     def __iter__(self):
         return self
 
     def __len__(self):
-        return len(self._rows)
+        return len(self._row_numbers)
 
     def next(self):
         self._pointer += 1
-        if self._pointer >= len(self._rows):
+        if self._pointer >= len(self._row_numbers):
             raise StopIteration
         else:
-            return self._table.row(self._rows[self._pointer])
+            return self._table.row(self._row_numbers[self._pointer])
 
     def form(self):
         """Return the current form instance.
