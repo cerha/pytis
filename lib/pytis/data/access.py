@@ -241,7 +241,7 @@ class DBAccessRights(AccessRights):
         try:
             data.select(condition=EQ('object', sval(object_name)))
             while True:
-                row = data.fetchone()
+                row = data.fetch()
                 if row is None:
                     break
                 access_rights.append((row['column_'].value(),

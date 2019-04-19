@@ -129,8 +129,8 @@ class DirectUserOutputTemplates(UserOutputTemplates):
                 message = _("Tisková sestava neexistuje: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
-            row = data.fetchone()
-            if data.fetchone() is not None:
+            row = data.fetch()
+            if data.fetch() is not None:
                 message = _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return

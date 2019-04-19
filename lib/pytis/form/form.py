@@ -1197,7 +1197,7 @@ class LookupForm(InnerForm):
     def _search_skip(self, skip, direction):
         data = self._data
         data.skip(skip - 1, direction=direction)
-        row = data.fetchone(direction=direction)
+        row = data.fetch(direction=direction)
         self._select_row(row)
 
     def _cmd_jump(self):
@@ -1718,7 +1718,7 @@ class RecordForm(LookupForm):
         def find():
             data.rewind()
             data.skip(row_number)
-            return data.fetchone()
+            return data.fetch()
 
         def cleanup():
             data.rewind()
@@ -1746,7 +1746,7 @@ class RecordForm(LookupForm):
                     return None
                 else:
                     data.skip(position - 1)
-                    return data.fetchone()
+                    return data.fetch()
             finally:
                 data.rewind()
                 data.skip(current_row_number + 1)
@@ -1779,7 +1779,7 @@ class RecordForm(LookupForm):
             success = False
             result = 1
             while True:
-                r = data.fetchone()
+                r = data.fetch()
                 if r is None:
                     return
                 if r[key].value() == key_value:

@@ -820,7 +820,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
             data = self._data
             data.select(condition=pd.AND(pd.EQ('uri', pd.sval(uri)),
                                          pd.EQ('username', pd.sval(username))))
-            row = data.fetchone()
+            row = data.fetch()
             data.close()
             if row and row['key'].value() == key:
                 req.set_param('authorized_readonly', row['readonly'].value())

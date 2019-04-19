@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,7 @@ class DBConfig(object):
     def _select(self):
         def lfunction():
             self._data.select(condition=self._condition, transaction=self._transaction)
-            self._row = self._data.fetchone()
+            self._row = self._data.fetch()
             self._data.close()
         with_lock(self._data_object_lock, lfunction)
 

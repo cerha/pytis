@@ -140,7 +140,7 @@ def _get_default_select(spec):
     select_count = init_select(view, data)
     if select_count:
         print "Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,)
-        data.fetchone()
+        data.fetch()
 
 
 def check_form():
@@ -372,7 +372,7 @@ class MenuChecker(object):
             try:
                 data.select(limit=1)
                 try:
-                    row = data.fetchone()
+                    row = data.fetch()
                 except AssertionError as e:
                     # Hack to avoid printing errors on non-existent image files
                     # referred from the database.

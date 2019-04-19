@@ -156,7 +156,7 @@ class _ConfigData(pytis.data.RestrictedData):
             setattr(config, option, row[option].value())
         wx.ToolTip.Enable(config.show_tooltips)
         self.select()
-        new_row = self.fetchone()
+        new_row = self.fetch()
         return new_row, True
 
 

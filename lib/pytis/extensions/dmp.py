@@ -1687,7 +1687,7 @@ class DMPActions(DMPObject):
         data = self._data('c_pytis_menu_actions')
         condition = pd.EQ(action_type, pd.sval(name))
         data.select(condition=condition)
-        row = data.fetchone()
+        row = data.fetch()
         data.close()
         if row is None:
             add_message(messages, DMPMessage.ERROR_MESSAGE, "No such " + action_type, (name,))

@@ -82,7 +82,7 @@ class HelpUpdater(object):
 
     def _row(self, data, **kwargs):
         data.select(condition=pd.AND(*[pd.EQ(k, v) for k, v in self._values(data, **kwargs)]))
-        row = data.fetchone()
+        row = data.fetch()
         data.close()
         return row
 
@@ -268,7 +268,7 @@ class HelpUpdater(object):
                           config.dbconnection)
         data.select(sort=(('position', pd.ASCENDENT),))
         while True:
-            row = data.fetchone()
+            row = data.fetch()
             if row is None:
                 break
             if row['fullname'].value():
@@ -575,7 +575,7 @@ class DmpHelpGenerator(HelpGenerator):
         descriptions = dict([(x, {}) for x in
                              ('help', 'description', 'field', 'action', 'binding', 'profile')])
         while True:
-            row = data.fetchone()
+            row = data.fetch()
             if row is None:
                 break
             content = row['content'].value()
@@ -618,7 +618,7 @@ class DmpHelpGenerator(HelpGenerator):
         self._data.select(sort=(('position', pytis.data.ASCENDENT),))
         children = {}
         while True:
-            row = self._data.fetchone()
+            row = self._data.fetch()
             if not row:
                 break
             parent = '.'.join(row['position'].value().split('.')[:-1]) or None
@@ -628,7 +628,7 @@ class DmpHelpGenerator(HelpGenerator):
 
     def _application_help_page_content(self, node, uri):
         self._data.select(condition=pd.EQ('help_id', pd.sval(uri[5:])))
-        row = self._data.fetchone()
+        row = self._data.fetch()
         self._data.close()
         if row:
             if row['page_id'].value():

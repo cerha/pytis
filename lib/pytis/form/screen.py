@@ -269,7 +269,7 @@ def file_menu_items(fields, row, select_arguments):
                                          pytis.data.NE(field_id, pytis.data.Value(t, None))),
                 arguments=select_arguments, columns=(key_id,), transaction=row.transaction(),
             )
-            result = data.fetchone() is not None
+            result = data.fetch() is not None
             data.close()
         else:
             result = value.value() is not None
@@ -283,7 +283,7 @@ def file_menu_items(fields, row, select_arguments):
             data.select(condition=pytis.data.EQ(key_id, row[key_id]),
                         columns=(field_id,), transaction=row.transaction(),
                         arguments=select_arguments)
-            complete_row = data.fetchone()
+            complete_row = data.fetch()
             data.close()
             if complete_row:
                 value = complete_row[field_id]

@@ -94,7 +94,7 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
     # Formátování
 
     def table_row(*args, **kwargs):
-        row = data.fetchone(transaction=transaction)
+        row = data.fetch()
         if row is None:
             return None
         presented_row.set_row(row)

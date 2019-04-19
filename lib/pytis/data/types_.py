@@ -3056,7 +3056,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 if count > 1:
                     raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                        str(the_condition))
-                row = data.fetchone()
+                row = data.fetch()
             finally:
                 try:
                     data.close()
@@ -3097,7 +3097,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 if max is not None and count > max:
                     return None
                 while True:
-                    row = self._data.fetchone()
+                    row = self._data.fetch()
                     if row is None:
                         break
                     result.append(row[self._value_column].value())
