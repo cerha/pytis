@@ -19,9 +19,9 @@
 
 """Pomocné třídy pro seznamové formuláře."""
 
-# Terminologická poznámka: Proměnné s názvem `row' obvykle značí číslo řádku
-# (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
-# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
+# Note on terminology: Identifiers named `row' usually refer to row number
+# (starting from zero) as this is what wxWidgets use.  When refering to
+# data rows, we usually use 'the_row' for 'PresentedRow' instances.
 
 import collections
 import copy
@@ -290,9 +290,9 @@ class DataTable(object):
                 return self._cached_value(row, cid, style=True)
 
     def rewind(self, position=None):
-        """Přesuň datové ukazovátko na začátek dat.
+        """Move data pointer to given position or to the beginning.
 
-        Jestliže 'position' není 'None', přesuň ukazovátko na 'position'.
+        If 'position' not 'None', move the pointer there, otherwise to the beginning.
 
         """
         if self._current_row is None:
@@ -509,11 +509,11 @@ class GridTable(wx.grid.GridTableBase, DataTable):
 
 
 class TableRowIterator(object):
-    """Greate a table iterator which gradually returns given rows.
+    """Create a table iterator which gradually returns given rows.
 
     Argumenty konstruktoru:
       table -- GridTable instance.
-      rows -- sequence of integers denoting the iterated row numbers.
+      row_numbers -- sequence of integers containing the row numbers to be iterated.
 
     The iteration returns PresentedRow instances corresponding to given row
     numbers.
