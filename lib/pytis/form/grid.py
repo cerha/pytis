@@ -304,7 +304,7 @@ class DataTable(object):
         elif -1 <= position < self.number_of_rows() - 1:
             # Rely on _retrieve_row() side effect setting self._current_row.
             if not self._retrieve_row(position):
-                raise Exception('Missing row', row)
+                raise Exception('Missing row', position)
 
     def group(self, row):
         """Return true, if given row belongs to a highlighted group or False otherwise.
