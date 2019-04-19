@@ -37,16 +37,22 @@ import time
 import weakref
 
 import pytis.data
-from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
-    DBSystemException, DBUserException, NotWithinSelect, DBConnection, DBConnectionPool, DBData, \
-    ColumnSpec, DBColumnBinding, Row, Function, dbtable, reversed_sorting, \
-    Array, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
-    Macaddr, Number, Range, Serial, String, Time, TimeInterval, ival, sval, \
-    Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT, DESCENDANT
+from pytis.data import (
+    DBException, DBInsertException, DBLockException, DBRetryException,
+    DBSystemException, DBUserException, NotWithinSelect, DBConnection,
+    DBConnectionPool, DBData, ColumnSpec, DBColumnBinding, Row, Function,
+    dbtable, reversed_sorting, Array, Binary, Boolean, Date, DateTime,
+    Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
+    Serial, String, Time, TimeInterval, ival, sval, Type, Value,
+    Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT,
+    DESCENDANT,
+)
 import pytis.util
-from pytis.util import ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_sequence, \
-    log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates, UNDEFINED, \
-    with_lock, xtuple
+from pytis.util import (
+    ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_sequence,
+    log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates,
+    UNDEFINED, Locked, xtuple,
+)
 import evaction
 
 try:
@@ -712,8 +718,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         # Proveď dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query.format())
-
-        def lfunction(connection=connection):
+        with Locked(self._pg_query_lock):
             try:
                 self._postgresql_initialize_search_path(connection,
                                                         self._pg_connection_data().schemas())
@@ -731,8 +736,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 # automaticky správně řazeny.
                 logging_query = self._pdbb_logging_command.values((query.format(),))
                 self._postgresql_query(connection, logging_query, False)
-            return self._postgresql_transform_query_result(result)
-        data = with_lock(self._pg_query_lock, lfunction)
+            data = self._postgresql_transform_query_result(result)
         if __debug__:
             log(DEBUG, 'SQL query result', data)
         return data
@@ -905,11 +909,9 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             # z `register' i naslouchacího threadu.
             if __debug__:
                 log(DEBUG, 'Registering notification:', notification)
-
-            def lfunction():
+            with Locked(self._notif_connection_lock):
                 self._notif_init_connection()
                 self._notif_do_registration(notification)
-            with_lock(self._notif_connection_lock, lfunction)
             if __debug__:
                 log(DEBUG, 'Notification registered:', notification)
 
@@ -946,10 +948,8 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def _notif_invoke_callbacks(self, notifications):
             if __debug__:
                 log(DEBUG, 'Invoking callbacks')
-
-            def lfunction():
-                return copy.copy(self._notif_data_objects)
-            data_objects = with_lock(self._notif_data_lock, lfunction)
+            with Locked(self._notif_data_lock):
+                data_objects = copy.copy(self._notif_data_objects)
             for d, ns in data_objects.items():
                 for n in ns:
                     if n in notifications:
@@ -961,14 +961,12 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def register_notification(self, data, notification):
             if __debug__:
                 log(DEBUG, 'Registering notification:', notification)
-
-            def lfunction():
+            with Locked(self._notif_data_lock):
                 try:
                     notifications = self._notif_data_objects[data]
                 except KeyError:
                     self._notif_data_objects[data] = notifications = []
                 notifications.append(notification)
-            with_lock(self._notif_data_lock, lfunction)
             self._notif_register(notification)
             if __debug__:
                 log(DEBUG, 'Notification registered')
@@ -1075,9 +1073,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     @classmethod
     def _pdbb_next_selection_number(class_):
-        def lfunction():
+        with Locked(class_._pdbb_selection_counter_lock):
             return class_._pdbb_selection_counter.next()
-        return with_lock(class_._pdbb_selection_counter_lock, lfunction)
 
     def __init__(self, bindings=None, ordering=None, operations=None, column_groups=None,
                  db_spec=None, **kwargs):

@@ -45,10 +45,11 @@ import cStringIO
 import thread
 import time
 
-from pytis.util import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
-    assoc, compare_objects, format_byte_size, identity, log, rassoc, sameclass, super_, \
-    with_lock, xtuple
-
+from pytis.util import (
+    Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError,
+    assoc, compare_objects, format_byte_size, identity, log, rassoc,
+    sameclass, super_, Locked, xtuple,
+)
 import pytis.util
 
 _ = pytis.util.translations('pytis-data')
@@ -3047,8 +3048,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         validity_condition = self._condition(condition=condition)
         if validity_condition is not None:
             the_condition = AND(the_condition, validity_condition)
-
-        def lfunction():
+        with Locked(self._data_lock):
             data = self._data
             try:
                 count = data.select(the_condition, transaction=transaction, arguments=arguments,
@@ -3063,7 +3063,6 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 except Exception:
                     pass
             return row
-        return with_lock(self._data_lock, lfunction)
 
     def __str__(self):
         factory = self._data_factory
@@ -3087,8 +3086,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         if arguments is None:
             arguments = {}
         the_condition = self._condition(condition=condition)
-
-        def lfunction():
+        with Locked(self._data_lock):
             result = []
             try:
                 count = self._data.select(condition=the_condition, transaction=transaction,
@@ -3107,8 +3105,6 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 except Exception:
                     pass
             return tuple(result)
-        result = with_lock(self._data_lock, lfunction)
-        return result
 
     # Extended interface.
 
@@ -3168,13 +3164,11 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         if arguments is None:
             arguments = {}
         the_condition = self._condition(condition=condition)
-
-        def lfunction():
+        with Locked(self._data_lock):
             return self._data.select_map(identity, transaction=transaction,
                                          condition=the_condition, arguments=arguments,
                                          columns=self._non_big_columns,
                                          sort=sort)
-        return with_lock(self._data_lock, lfunction)
 
     def type(self, column):
         """Vrať datový typ daného sloupce v datovém objektu enumerátoru."""

@@ -61,7 +61,7 @@ import weakref
 from pytis.data import ColumnSpec, Data, Type
 from pytis.util import (
     compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt,
-    super_, translations, with_lock, ProgramError, DEBUG, EVENT, OPERATIONAL,
+    super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL,
 )
 
 _ = translations('pytis-data')
@@ -250,13 +250,12 @@ class DBConnectionPool:
         # zbytečné a zajištěno automaticky v pyPgSQL; třeba to pomůže
         # problému pozůstalých spojení.  Navíc pro jistotu zamykáme, co
         # kdyby ...
-        def lfunction():
+        with Locked(self._lock):
             for c in flatten(self._pool.values()):
                 try:
                     self._connection_closer(c)
                 except Exception:
                     pass
-        with_lock(self._lock, lfunction)
 
     def _connection_spec_id(self, connection_spec):
         c = connection_spec
@@ -269,8 +268,7 @@ class DBConnectionPool:
         import config
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
-
-        def lfunction():
+        with Locked(self._lock):
             try:
                 connections = pool[spec_id]
             except KeyError:
@@ -306,8 +304,6 @@ class DBConnectionPool:
                     if __debug__:
                         log(DEBUG, 'New connection created:', c)
                     allocated_connections[c] = True
-            return c
-        c = with_lock(self._lock, lfunction)
         if __debug__:
             log(DEBUG, 'Passing connection:', c)
         return c
@@ -315,8 +311,7 @@ class DBConnectionPool:
     def put_back(self, connection_spec, connection):
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
-
-        def lfunction():
+        with Locked(self._lock):
             try:
                 connections = pool[spec_id]
             except KeyError:
@@ -325,12 +320,11 @@ class DBConnectionPool:
             if ((config.max_pool_connections is None or
                  len(connections) < config.max_pool_connections)):
                 connections.append(connection)
-        with_lock(self._lock, lfunction)
         if __debug__:
             log(DEBUG, 'Connection returned to pool:', connection)
 
     def flush(self, close):
-        def lfunction():
+        with Locked(self._lock):
             for connections in self._allocated_connections.values():
                 for c in connections.keys():
                     try:
@@ -345,7 +339,6 @@ class DBConnectionPool:
                         pass
             self._allocated_connections = {}
             self._pool = {}
-        with_lock(self._lock, lfunction)
 
     def info(self):
         """Return list of current transaction commands of all known connections.

@@ -30,7 +30,7 @@ pythonového kódu ve specifikacích aplikace.
 
 """
 
-from pytis.util import with_lock
+from pytis.util import Locked
 
 import thread
 import pytis.data
@@ -90,11 +90,10 @@ class DBConfig(object):
             self._data.add_callback_on_change(self._on_change)
 
     def _select(self):
-        def lfunction():
+        with Locked(self._data_object_lock):
             self._data.select(condition=self._condition, transaction=self._transaction)
             self._row = self._data.fetch()
             self._data.close()
-        with_lock(self._data_object_lock, lfunction)
 
     def _on_change(self):
         self._select()

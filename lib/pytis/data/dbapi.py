@@ -37,7 +37,7 @@ import psycopg2 as dbapi
 import psycopg2.extensions
 import psycopg2.extras
 
-from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
+from pytis.util import log, translations, Locked, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, Range, RestrictedData
 from dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
                     DBLoginException, DBRetryException, DBSystemException, DBUserException)
@@ -414,11 +414,8 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations
-
-            def lfunction():
-                return self._postgresql_query(connection, query, True)
-            _result, self._pgnotif_connection = \
-                with_lock(self._pg_query_lock, lfunction)
+            with Locked(self._pg_query_lock):
+                _result, self._pgnotif_connection = self._postgresql_query(connection, query, True)
 
         def _notif_listen_loop(self):
             while True:
@@ -434,15 +431,12 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection = connection_.connection()
                 if __debug__:
                     log(DEBUG, 'Listening for notifications:', connection)
-
-                def lfunction():
+                with Locked(self._pg_query_lock):
                     cursor = connection.cursor()
                     try:
                         fileno = connection.fileno()
                     except AttributeError:  # older psycopg2 versions
                         fileno = cursor.fileno()
-                    return cursor, fileno
-                cursor, fileno = with_lock(self._pg_query_lock, lfunction)
                 try:
                     select.select([fileno], [], [], None)
                 except Exception as e:
@@ -451,8 +445,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     break
                 if __debug__:
                     log(DEBUG, 'Input received')
-
-                def lfunction():
+                with Locked(self._notif_connection_lock), Locked(self._pg_query_lock):
                     notifications = []
                     try:
                         connection.poll()
@@ -462,19 +455,14 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                             ready = cursor.isready()
                         except dbapi.OperationalError:
                             self._pg_notif_connection = None
-                            return notifications
+                            ready = False
                     if ready:
                         notifies = connection.notifies
                         if notifies:
                             if __debug__:
                                 log(DEBUG, 'Data change registered')
-                            notifications = []
                             while notifies:
                                 notifications.append(notifies.pop()[1])
-                    return notifications
-                notifications = with_locks((self._notif_connection_lock,
-                                            self._pg_query_lock,),
-                                           lfunction)
                 if __debug__:
                     log(DEBUG, 'Notifications received:', notifications)
                 self._notif_invoke_callbacks(notifications)

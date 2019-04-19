@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ import thread
 import collections
 import UserDict
 
-from pytis.util import with_lock, Counter
+from pytis.util import Locked, Counter
 
 
 class _Cache(object, UserDict.UserDict):
@@ -110,11 +110,10 @@ class LimitedCache(_Cache):
 
     def __setitem__(self, key, value):
         if self._limit > 0:
-            def lfunction():
+            with Locked(self._lock):
                 if self._counter.next() > self._limit:
                     self._collect()
                 super(LimitedCache, self).__setitem__(key, value)
-            with_lock(self._lock, lfunction)
 
     def reset(self):
         super(LimitedCache, self).reset()

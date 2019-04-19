@@ -216,8 +216,7 @@ class Pipe:
             raise ValueError("I/O operation on closed file")
         if self._encoder is not None:
             string_ = self._encoder(string_, 'replace')[0]
-
-        def lfunction():
+        with Locked(self._buffer_lock):
             buffer = self._buffer
             if not buffer or len(buffer[-1]) > 4096:
                 buffer.append(string_)
@@ -226,13 +225,11 @@ class Pipe:
             self._free_empty_lock()
             for s in self._cc:
                 safe_encoding_write(s, string_)
-        with_lock(self._buffer_lock, lfunction)
 
     def read(self, size=-1):
         """Stejné jako v případě třídy 'file'."""
-        # TODO: Z nepochopitelných důvodů je zde předávání size nutné.
-        def lfunction(size=size):
-            result = ''
+        result = ''
+        with Locked(self._read_lock):
             buffer = self._buffer
             while True:
                 self._buffer_lock.acquire()
@@ -240,17 +237,17 @@ class Pipe:
                     while buffer:
                         first = buffer[0]
                         if size < 0:
-                            result = result + first
+                            result += first
                             del buffer[0]
                         else:
                             if len(first) <= size:
-                                result = result + first
+                                result += first
                                 size = size - len(first)
                                 del buffer[0]
                             else:
-                                result = result + first[:size]
+                                result += first[:size]
                                 buffer[0] = first[size:]
-                                return result
+                                break
                 finally:
                     self._buffer_lock.release()
                 self._empty_lock.acquire()
@@ -258,10 +255,7 @@ class Pipe:
                 if self._closed:
                     break
             if not result and size != 0:
-                return None
-            else:
-                return result
-        result = with_lock(self._read_lock, lfunction)
+                result = None
         if self._decoder is not None:
             result = self._decoder(result)[0]
         return result
@@ -1317,73 +1311,57 @@ def ecase(value, *settings):
     return s[1]
 
 
-if __debug__:
-    _active_locks = None
-    _with_lock_lock = thread.allocate_lock()
+class Locked(object):
+    """Context manager for code protected by locking.
 
+    Usage:
 
-def with_lock(lock, function):
-    """Call 'function' as protected by 'lock'.
+       with Locked(my_lock):
+           do_something()
 
-    Arguments:
+    Constructor arguments:
 
       lock -- 'thread.lock' instance to be used for locking
-      function -- function of no arguments, the function to be called
 
-    The return value is the return value of the function call.
-
-    It is recommended to use this function instead of direct locking for the
-    following reasons:
+    It is recommended to use this context manager instead of direct locking for
+    the following reasons:
 
     - The calling locking code is somewhat shorter and safer.
 
-    - It is possible to wrap locking with other code in this function, as is
-      useful e.g. when debugging.
-
-    - This function may perform additional checks for deadlock prevention, etc.
+    - locking is wrapped with some additional code for debugging and deadlock
+      prevention.
 
     """
-    if __debug__:
-        _with_lock_lock.acquire()
-        try:
-            thread_id = thread.get_ident()
-            global _active_locks
-            if _active_locks is None:
-                _active_locks = {}
-            locks = _active_locks.get(thread_id, [])
-            if lock in locks:
-                raise Exception('Deadlock detected')
-            locks.append(lock)
-            _active_locks[thread_id] = locks
-        finally:
-            _with_lock_lock.release()
-    lock.acquire()
-    try:
-        return function()
-    finally:
+
+    _debug_lock = thread.allocate_lock() if __debug__ else None
+    _active_locks = {} if __debug__ else None
+
+    def __init__(self, lock):
+        self._lock = lock
+
+    def __enter__(self):
+        lock = self._lock
+        if __debug__:
+            self.__class__._debug_lock.acquire()
+            try:
+                self._thread_id = thread_id = thread.get_ident()
+                locks = self.__class__._active_locks.setdefault(thread_id, [])
+                if lock in locks:
+                    raise Exception('Deadlock detected')
+                locks.append(lock)
+            finally:
+                self.__class__._debug_lock.release()
+        lock.acquire()
+
+    def __exit__(self, type, value, tb):
+        lock = self._lock
         lock.release()
         if __debug__:
-            _with_lock_lock.acquire()
+            self.__class__._debug_lock.acquire()
             try:
-                _active_locks[thread_id].remove(lock)
+                self.__class__._active_locks[self._thread_id].remove(lock)
             finally:
-                _with_lock_lock.release()
-
-
-def with_locks(locks, function):
-    """The same as 'with_lock' except multiple locks are given.
-
-    'locks' is a sequence of locks to be applied in the given order.
-    """
-    if not locks:
-        return_value = function()
-    else:
-        lock = locks[0]
-
-        def lfunction():
-            return with_locks(locks[1:], function)
-        return_value = with_lock(lock, lfunction)
-    return return_value
+                self.__class__._debug_lock.release()
 
 
 class _Throw(Exception):
