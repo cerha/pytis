@@ -117,22 +117,15 @@ class DataTable(object):
 
     def __init__(self, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
-        assert isinstance(grouping, types.TupleType)
         self._data = data
         self._presented_row = copy.copy(presented_row)
-        self._row_count = row_count
-        self._sorting = sorting
-        self._grouping = grouping
-        self._prefill = prefill
-        self._current_row = None
         self._row_style = row_style
         self._plain_style = pytis.presentation.Style()
-        self._update_columns(columns)
-        # Create caches
-        self._cache = self._DisplayCache()
-        self._group_cache = {0: False}
-        self._group_value_cache = {}
-        self.rewind()
+        self.update(row_count=row_count,
+                    sorting=sorting,
+                    grouping=grouping,
+                    prefill=prefill,
+                    columns=columns)
 
     def _update_columns(self, columns):
         self._columns = [self._Column(c.id(),
@@ -289,19 +282,9 @@ class DataTable(object):
             else:
                 return self._cached_value(row, cid, style=True)
 
-    def rewind(self, position=None):
-        """Move data pointer to given position or to the beginning.
-
-        If 'position' not 'None', move the pointer there, otherwise to the beginning.
-
-        """
-        if self._current_row is None:
-            return
-        if position is None:
-            self._data.rewind()
-            self._cache = self._DisplayCache()
-            self._current_row = None
-        elif -1 <= position < self.number_of_rows() - 1:
+    def rewind(self, position):
+        """Move data pointer to given position."""
+        if self._current_row is not None and -1 <= position < self.number_of_rows() - 1:
             # Rely on _retrieve_row() side effect setting self._current_row.
             if not self._retrieve_row(position):
                 raise Exception('Missing row', position)
@@ -360,16 +343,17 @@ class DataTable(object):
 
     def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
+        self._data.rewind()
+        self._current_row = None
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
         self._prefill = prefill
         self._update_columns(columns)
-        # Erase cache
+        # (re)create caches
+        self._cache = self._DisplayCache()
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        # Set row
-        self.rewind()
 
     def close(self):
         # This method is necessary because of some wierd wxWidgets behavior,
@@ -403,7 +387,6 @@ class GridTable(wx.grid.GridTableBase, DataTable):
         self._font_cache = {}
         wx.grid.GridTableBase.__init__(self)
         DataTable.__init__(self, *args, **kwargs)
-        self._init_group_bg_downgrade()
 
     def _panic(self):
         DataTable._panic(self)
@@ -432,16 +415,13 @@ class GridTable(wx.grid.GridTableBase, DataTable):
             font = self._font_cache[key] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
         return (Color(fg), Color(bg), font)
 
-    def _init_group_bg_downgrade(self):
-        c = wx.Colour(config.grouping_background_downgrade)
-        self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
-
     def form(self):
         return self._form
 
     def update(self, *args, **kwargs):
         super(GridTable, self).update(*args, **kwargs)
-        self._init_group_bg_downgrade()
+        c = wx.Colour(config.grouping_background_downgrade)
+        self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
 
     def close(self):
         self._form = None
