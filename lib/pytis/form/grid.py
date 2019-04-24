@@ -26,6 +26,7 @@
 import collections
 import copy
 import types
+import cachetools
 
 import wx
 import wx.grid
@@ -60,53 +61,6 @@ class DataTable(object):
             assert isinstance(the_row, PresentedRow)
             self.row = row
             self.the_row = the_row
-
-    class _DisplayCache:
-        def __init__(self, size=1000):
-            self._size = size
-            self._start_row = 0
-            self._cache = self._allocate(size)
-
-        def _allocate(self, size):
-            return [None for i in range(size)]
-
-        def __getitem__(self, row):
-            try:
-                index = row - self._start_row
-                if index >= 0:
-                    return self._cache[index]
-                else:
-                    raise IndexError()
-            except IndexError:
-                return None
-
-        def __setitem__(self, row, value):
-            start = self._start_row
-            try:
-                index = row - start
-                if index >= 0:
-                    self._cache[index] = value
-                else:
-                    raise IndexError()
-            except IndexError:
-                size = self._size
-                end = start + size
-                new_start = max(row - size / 2, 0)
-                new_end = new_start + size
-                if end <= new_start or new_end <= start:
-                    cache = self._allocate(size)
-                elif end < new_end:
-                    diff = new_end - end
-                    cache = self._cache[diff:] + self._allocate(diff)
-                elif start > new_start:
-                    diff = start - new_start
-                    cache = self._allocate(diff) + self._cache[:-diff]
-                else:
-                    raise ProgramError(start, end, new_start, new_end)
-                assert len(cache) == self._size, len(cache)
-                self._start_row = new_start
-                cache[row - new_start] = value
-                self._cache = cache
 
     class _Column(object):
         def __init__(self, id_, type_, label, style):
@@ -169,8 +123,9 @@ class DataTable(object):
         # once we read the row value, because we can not cache the rows
         # inside the 'row()' method.
         #
-        cached = self._cache[row]
-        if cached is None:
+        try:
+            value_dict, style_dict = self._cache[row]
+        except KeyError:
             the_row = self.row(row)
             if the_row is None:
                 return None
@@ -197,8 +152,6 @@ class DataTable(object):
                 if gcol not in value_dict:
                     value_dict[gcol] = self._format(the_row, gcol)
             self._cache[row] = value_dict, style_dict
-        else:
-            value_dict, style_dict = cached
         if style:
             return style_dict[col_id]
         else:
@@ -351,7 +304,7 @@ class DataTable(object):
         self._prefill = prefill
         self._update_columns(columns)
         # (re)create caches
-        self._cache = self._DisplayCache()
+        self._cache = cachetools.LRUCache(maxsize=config.cache_size)
         self._group_cache = {0: False}
         self._group_value_cache = {}
 
