@@ -250,45 +250,35 @@ class DataTable(object):
         previously queried row may thus return different results next time.
 
         """
-        # Return true, if given row belongs to a highlighted group.
-        def cached_values(row, cols):
-            return tuple([self._cached_value(row, cid) for cid in cols])
+        def group_values(row):
+            return tuple(self._cached_value(row, cid) for cid in grouping)
         grouping = self._grouping
         if not grouping:
             return False
         try:
             return self._group_cache[row]
         except KeyError:
-            values = cached_values(row, grouping)
+            values = group_values(row)
             try:
                 result = self._group_value_cache[values]
                 self._group_cache[row] = result
                 return result
             except KeyError:
                 cached = self._group_cache.keys()
-                lower = filter(lambda k: k < row, cached)
-                if len(lower) and (row < 100 or row - max(lower) < 80):
-                    prev_values = cached_values(row - 1, grouping)
-                    prev_group = self.group(row - 1)
-                    if values == prev_values:
-                        result = prev_group
-                    else:
-                        result = not prev_group
-                    self._group_value_cache[values] = result
-                    self._group_cache[row] = result
-                    return result
-                higher = filter(lambda k: k > row, cached)
-                if len(higher) and min(higher) - row < 80:
-                    next_values = cached_values(row + 1, grouping)
-                    next_group = self.group(row + 1)
-                    if values == next_values:
-                        result = next_group
-                    else:
-                        result = not next_group
-                    self._group_cache[row] = result
-                    return result
-                # There is no cached group within nearest rows, so start
-                # again with an empty cache.
+                if cached:
+                    nearest = min(cached, key=lambda x: abs(x - row))
+                    if abs(nearest - row) <= 80:
+                        neighbour_row = row + 1 if nearest > row else row - 1
+                        neighbour_group = self.group(neighbour_row)
+                        if values == group_values(neighbour_row):
+                            result = neighbour_group
+                        else:
+                            result = not neighbour_group
+                        self._group_value_cache[values] = result
+                        self._group_cache[row] = result
+                        return result
+                # There is no cached group near enough (up to 80 rows away),
+                # so start again with an empty cache.
                 self._group_cache = {row: False}
                 self._group_value_cache = {values: False}
                 return False
