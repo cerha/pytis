@@ -55,11 +55,12 @@ class TestDataTable(DBTest):
     def data(self, table, spec, dbconnection):
         return spec.data_spec().create(connection_data=dbconnection)
 
-    def grid_table(self, spec, data, row_style=None, field_style={}, sorting=None):
+    def grid_table(self, spec, data, row_style=None, field_style={}, sorting=None, grouping=()):
         fields = [f.clone(pp.Field(f.id(), style=field_style.get(f.id()))) for f in spec.fields]
         row = pp.PresentedRow(fields, data, None)
         count = data.select(sort=sorting or ())  # , async_count=True)
-        return grid.DataTable(data, row, row.fields(), count, row_style=row_style, sorting=sorting)
+        return grid.DataTable(data, row, row.fields(), count, row_style=row_style,
+                              sorting=sorting, grouping=grouping)
 
     def test_cell_value(self, spec, data):
         self.insert(data, (
@@ -98,6 +99,39 @@ class TestDataTable(DBTest):
             assert t.cell_style(1, 3) == pp.Style()
             assert t.cell_style(1, 2) == pp.Style(bold=True)
             assert t.cell_style(2, 2) == pp.Style(bold=True, background='#ffa')
+        finally:
+            data.close()
+
+    def test_grouping(self, spec, data):
+        sequence = (
+            # Sequence of name, number of rows with flag=False, number of rows with flag=True.
+            ('Charles', 44, 21), ('Jerry', 21, 34), ('Joe', 25, 14), ('Mike', 67, 21),
+            ('Paul', 16, 8), ('Peter', 6, 56), ('Robert', 24, 36), ('Sam', 4, 81), ('Tom', 64, 32),
+        )
+        def rows():
+            i = 0
+            for name, false_count, true_count in sequence:
+                for count, flag in ((false_count, False), (true_count, True)):
+                    for x in range(count):
+                        i += 1
+                        # Generate some randomly looking price value.
+                        price = float(int(i % 8 + 140 * float(i % 6 + count) / (2 + i % 6))) / 100
+                        yield (i, name, price, flag)
+        self.insert(data, rows())
+        t = self.grid_table(spec, data, sorting=(('name', pd.ASCENDENT),
+                                                 ('flag', pd.ASCENDENT),
+                                                 ('price', pd.ASCENDENT),),
+                            grouping=('name', 'flag'))
+        try:
+            for row in range(0, 200, 16):
+                # The flag matches the group value because the group changes on each flag change...
+                assert t.group(row) is t.row(row)['flag'].value()
+            # But if we jump more than 80 rows away, the cache is discarded
+            # and we start from False again.
+            assert t.group(300) is False
+            # And the flag is now the negation of the group until we jump too far again.
+            for row in range(330, t.number_of_rows(), 16):
+                assert t.group(row) is not t.row(row)['flag'].value()
         finally:
             data.close()
 
