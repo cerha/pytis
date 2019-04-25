@@ -143,10 +143,13 @@ class DataTable(object):
             for c in self._columns:
                 cid = c.id
                 value_dict[cid] = self._format(the_row, cid)
-                style_ = c.style
-                if isinstance(style_, collections.Callable):
-                    style_ = style_(the_row)
-                style_dict[cid] = (style_ or self._plain_style) + row_style
+                if cid in self._secret_columns:
+                    field_style = self._plain_style
+                else:
+                    field_style = c.style
+                    if isinstance(field_style, collections.Callable):
+                        field_style = field_style(the_row)
+                style_dict[cid] = (field_style or self._plain_style) + row_style
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if gcol not in value_dict:
@@ -229,11 +232,7 @@ class DataTable(object):
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
             return None
         else:
-            cid = self._columns[col].id
-            if cid in self._secret_columns:
-                return self._plain_style
-            else:
-                return self._cached_value(row, cid, style=True)
+            return self._cached_value(row, self._columns[col].id, style=True)
 
     def rewind(self, position):
         """Move data pointer to given position."""
