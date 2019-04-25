@@ -165,50 +165,6 @@ class DataTable(object):
                 return None
         return current.the_row
 
-    def _group(self, row):
-        # Return true, if given row belongs to a highlighted group.
-        def cached_values(row, cols):
-            return tuple([self._cached_value(row, cid) for cid in cols])
-        grouping = self._grouping
-        if not grouping:
-            return False
-        try:
-            return self._group_cache[row]
-        except KeyError:
-            values = cached_values(row, grouping)
-            try:
-                result = self._group_value_cache[values]
-                self._group_cache[row] = result
-                return result
-            except KeyError:
-                cached = self._group_cache.keys()
-                lower = filter(lambda k: k < row, cached)
-                if len(lower) and (row < 100 or row - max(lower) < 80):
-                    prev_values = cached_values(row - 1, grouping)
-                    prev_group = self._group(row - 1)
-                    if values == prev_values:
-                        result = prev_group
-                    else:
-                        result = not prev_group
-                    self._group_value_cache[values] = result
-                    self._group_cache[row] = result
-                    return result
-                higher = filter(lambda k: k > row, cached)
-                if len(higher) and min(higher) - row < 80:
-                    next_values = cached_values(row + 1, grouping)
-                    next_group = self._group(row + 1)
-                    if values == next_values:
-                        result = next_group
-                    else:
-                        result = not next_group
-                    self._group_cache[row] = result
-                    return result
-                # There is no cached group within nearest rows, so start
-                # again with an empty cache.
-                self._group_cache = {row: False}
-                self._group_value_cache = {values: False}
-                return False
-
     def _format(self, the_row, cid):
         return the_row.format(cid, secure=True)
 
@@ -316,7 +272,13 @@ class DataTable(object):
 
         'row' and 'col' are numbered from 0.
 
-        None is returned when given cell does not exist in the data table
+        None is returned when given cell does not exist in the data table.
+
+        The returned style doesn't take grouping highlighting into account.
+        Grouping highlighting may be queried using the method 'group()' and
+        applied to the cell style afterwards.  This is necessary because
+        grouping is not deterministic while cell style is (it always returns
+        the same values for the same row and col).
 
         """
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
@@ -343,6 +305,58 @@ class DataTable(object):
         elif -1 <= position < self.number_of_rows() - 1:
             # Rely on _retrieve_row() side effect setting self._current_row.
             self._retrieve_row(position, require=True)
+
+    def group(self, row):
+        """Return true, if given row belongs to a highlighted group or False otherwise.
+
+        The returned values are deterministic only for a limited range of most
+        recently queried rows.  Group (True/False) assignment may be be
+        restarted for a more distant range of rows and getting back to a
+        previously queried row may thus return different results next time.
+
+        """
+        # Return true, if given row belongs to a highlighted group.
+        def cached_values(row, cols):
+            return tuple([self._cached_value(row, cid) for cid in cols])
+        grouping = self._grouping
+        if not grouping:
+            return False
+        try:
+            return self._group_cache[row]
+        except KeyError:
+            values = cached_values(row, grouping)
+            try:
+                result = self._group_value_cache[values]
+                self._group_cache[row] = result
+                return result
+            except KeyError:
+                cached = self._group_cache.keys()
+                lower = filter(lambda k: k < row, cached)
+                if len(lower) and (row < 100 or row - max(lower) < 80):
+                    prev_values = cached_values(row - 1, grouping)
+                    prev_group = self.group(row - 1)
+                    if values == prev_values:
+                        result = prev_group
+                    else:
+                        result = not prev_group
+                    self._group_value_cache[values] = result
+                    self._group_cache[row] = result
+                    return result
+                higher = filter(lambda k: k > row, cached)
+                if len(higher) and min(higher) - row < 80:
+                    next_values = cached_values(row + 1, grouping)
+                    next_group = self.group(row + 1)
+                    if values == next_values:
+                        result = next_group
+                    else:
+                        result = not next_group
+                    self._group_cache[row] = result
+                    return result
+                # There is no cached group within nearest rows, so start
+                # again with an empty cache.
+                self._group_cache = {row: False}
+                self._group_value_cache = {values: False}
+                return False
 
     def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
@@ -472,7 +486,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
                     fg, bg, font = self._attr_cache[style]
                 except KeyError:
                     fg, bg, font = self._attr_cache[style] = self._make_attr(style)
-                if self._group(row):
+                if self.group(row):
                     bg = wx.Colour(*[max(0, x - y) for x, y in zip(
                         (bg.Red(), bg.Green(), bg.Blue()),
                         self._group_bg_downgrade,
