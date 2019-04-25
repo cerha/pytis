@@ -323,7 +323,6 @@ class DataTable(object):
         self._presented_row = None
         self._current_row = None
         self._row_style = None
-        self._group_bg_downgrade = None
         self._group_bg_color = None
 
 
@@ -379,6 +378,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
         self._form = None
         self._attr_cache = None
         self._font_cache = None
+        self._group_bg_downgrade = None
         super(GridTable, self).close()
 
     # Mandatory wx grid methods.
