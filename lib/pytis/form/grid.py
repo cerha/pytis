@@ -87,6 +87,7 @@ class DataTable(object):
                                       c.column_label() or '',
                                       c.style())
                          for c in columns]
+        self._is_bool = [c.type.__class__ == pytis.data.Boolean for c in self._columns]
         self._column_count = len(self._columns)
         self._secret_columns = [c.id() for c in columns
                                 if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
@@ -429,7 +430,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
                         attr.SetTextColour(fg)
                         attr.SetBackgroundColour(bg)
                         attr.SetFont(font)
-                        if self._columns[col].type.__class__ == pytis.data.Boolean:
+                        if self._is_bool[col]:
                             attr.SetRenderer(CustomBooleanCellRenderer(self))
                         else:
                             attr.SetRenderer(CustomCellRenderer(self))
