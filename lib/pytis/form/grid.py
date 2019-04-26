@@ -250,38 +250,47 @@ class DataTable(object):
         previously queried row may thus return different results next time.
 
         """
-        def group_values(row):
-            return tuple(self._cached_value(row, cid) for cid in grouping)
         grouping = self._grouping
         if not grouping:
             return False
-        try:
-            return self._group_cache[row]
-        except KeyError:
-            values = group_values(row)
+
+        def group_values(row):
+            return tuple(self._cached_value(row, cid) for cid in grouping)
+
+        def get_group(row, values, nearest=None):
             try:
                 result = self._group_value_cache[values]
-                self._group_cache[row] = result
-                return result
             except KeyError:
-                cached = self._group_cache.keys()
-                if cached:
-                    nearest = min(cached, key=lambda x: abs(x - row))
-                    if abs(nearest - row) <= 80:
-                        neighbour_row = row + 1 if nearest > row else row - 1
-                        neighbour_group = self.group(neighbour_row)
-                        if values == group_values(neighbour_row):
-                            result = neighbour_group
-                        else:
-                            result = not neighbour_group
-                        self._group_value_cache[values] = result
-                        self._group_cache[row] = result
-                        return result
-                # There is no cached group near enough (up to 80 rows away),
-                # so start again with an empty cache.
-                self._group_cache = {row: False}
-                self._group_value_cache = {values: False}
-                return False
+                if nearest is None:
+                    # Find the nearest cached row.
+                    nearest = min(self._group_cache.keys(), key=lambda x: abs(x - row))
+                    # There is no cached group near enough (up to 80 rows away),
+                    # so start again with an empty cache.
+                    if abs(nearest - row) > 80:
+                        self._group_cache = {}
+                        self._group_value_cache = {}
+                        return False
+                # Query the neighbour row in the dirtection to the nearest cached row.
+                neighbour_row = row + 1 if nearest > row else row - 1
+                neighbour_values = group_values(neighbour_row)
+                if neighbour_row == nearest:
+                    # If the neighbour row is the nearerst cached row, return its cached group.
+                    neighbour_group = self.group(neighbour_row)
+                else:
+                    # If we are not yet there, recursively get to the nearest cached row one by one.
+                    neighbour_group = get_group(neighbour_row, neighbour_values, nearest)
+                if values == neighbour_values:
+                    result = neighbour_group
+                else:
+                    result = not neighbour_group
+                self._group_value_cache[values] = result
+            return result
+
+        try:
+            result = self._group_cache[row]
+        except KeyError:
+            result = self._group_cache[row] = get_group(row, group_values(row))
+        return result
 
     def update(self, columns, row_count, sorting, grouping, prefill):
         assert isinstance(grouping, tuple)
