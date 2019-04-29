@@ -125,13 +125,13 @@ class TestDataTable(DBTest):
         try:
             for row in range(0, 200, 16):
                 # The flag matches the group value because the group changes on each flag change...
-                assert t.group(row) is t.row(row)['flag'].value()
+                assert t.group(row) is (t.cell_value(row, 3) == 'T')
             # But if we jump more than 80 rows away, the cache is discarded
             # and we start from False again.
             assert t.group(300) is False
             # And the flag is now the negation of the group until we jump too far again.
             for row in range(330, t.number_of_rows(), 16):
-                assert t.group(row) is not t.row(row)['flag'].value()
+                assert t.group(row) is (t.cell_value(row, 3) == 'F')
         finally:
             data.close()
 
