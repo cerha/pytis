@@ -163,12 +163,6 @@ class DataTable(object):
 
     # Public methods
 
-    def column_id(self, col):
-        return self._columns[col].id
-
-    def column_label(self, col):
-        return self._columns[col].label
-
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
 
