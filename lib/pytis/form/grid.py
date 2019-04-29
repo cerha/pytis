@@ -62,13 +62,6 @@ class DataTable(object):
             self.row = row
             self.the_row = the_row
 
-    class _Column(object):
-        def __init__(self, id_, type_, label, style):
-            self.id = id_
-            self.type = type_
-            self.label = label
-            self.style = style
-
     def __init__(self, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), row_style=None):
         """Arguments:
@@ -114,7 +107,7 @@ class DataTable(object):
     def _format(self, the_row, cid):
         return the_row.format(cid, secure=True)
 
-    def _cached_value(self, row, col_id, style=False):
+    def _cached_value(self, row, col, style=False):
         # Return the cached value for given row and column id.
         #
         # The value returned is the formatted cell value by default or a
@@ -124,7 +117,7 @@ class DataTable(object):
         # inside the 'row()' method.
         #
         try:
-            value_dict, style_dict = self._cache[row]
+            values, styles = self._cache[row]
         except KeyError:
             the_row = self.row(row)
             if the_row is None:
@@ -137,28 +130,22 @@ class DataTable(object):
                     row_style = row_style(protected_row)
                 except protected_row.ProtectionError:
                     row_style = None
-            style_dict = {}
-            value_dict = {}
+            values, styles = [], []
             # Cache the values and styles for all columns at once.
-            for c in self._columns:
-                cid = c.id
-                value_dict[cid] = self._format(the_row, cid)
+            for cid, cstyle in self._columns:
+                values.append(self._format(the_row, cid))
                 if cid in self._secret_columns:
                     field_style = self._plain_style
                 else:
-                    field_style = c.style
+                    field_style = cstyle
                     if isinstance(field_style, collections.Callable):
                         field_style = field_style(the_row)
-                style_dict[cid] = (field_style or self._plain_style) + row_style
-            # Grouping column may not be in self._columns.
-            for gcol in self._grouping:
-                if gcol not in value_dict:
-                    value_dict[gcol] = self._format(the_row, gcol)
-            self._cache[row] = value_dict, style_dict
+                styles.append((field_style or self._plain_style) + row_style)
+            self._cache[row] = values, styles
         if style:
-            return style_dict[col_id]
+            return styles[col]
         else:
-            return value_dict[col_id]
+            return values[col]
 
     # Public methods
 
@@ -179,14 +166,22 @@ class DataTable(object):
         self._current_row = None
         self._row_count = row_count
         self._sorting = sorting
-        self._grouping = grouping
-        self._columns = [self._Column(c.id(),
-                                      self._presented_row.type(c.id()),
-                                      c.column_label() or '',
-                                      c.style())
+        self._columns = [(c.id(), c.style()) for c in columns]
+        # We construct a list of grouping column indexes from given list of column ids.
+        self._grouping = []
+        for cid in grouping:
+            try:
+                i = [cid_ for cid_, style in self._columns].index(cid)
+            except ValueError:
+                # Grouping columns may not be present in 'columns' so we append them,
+                # but need to remember, that self._column_count may not be equal to
+                # len(self._columns).
+                i = len(self._columns)
+                self._columns.append((cid, None))
+            self._grouping.append(i)
+        self._is_bool = [self._presented_row.type(c.id()).__class__ == pytis.data.Boolean
                          for c in columns]
-        self._is_bool = [c.type.__class__ == pytis.data.Boolean for c in self._columns]
-        self._column_count = len(self._columns)
+        self._column_count = len(columns)
         self._secret_columns = [c.id() for c in columns
                                 if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
         # (re)create caches
@@ -237,7 +232,7 @@ class DataTable(object):
 
         """
         if self._data is not None and col < self._column_count:
-            return self._cached_value(row, self._columns[col].id)
+            return self._cached_value(row, col)
         else:
             return None
 
@@ -258,7 +253,7 @@ class DataTable(object):
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
             return None
         else:
-            return self._cached_value(row, self._columns[col].id, style=True)
+            return self._cached_value(row, col, style=True)
 
     def rewind(self, position):
         """Move data pointer to given position."""
@@ -281,7 +276,7 @@ class DataTable(object):
             return False
 
         def group_values(row):
-            return tuple(self._cached_value(row, cid) for cid in grouping)
+            return tuple(self._cached_value(row, col) for col in grouping)
 
         def get_group(row, values, nearest=None):
             try:
