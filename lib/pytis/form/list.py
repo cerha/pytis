@@ -359,8 +359,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._table.update(columns=self._columns,
                                row_count=self._lf_select_count_,
                                sorting=self._lf_sorting,
-                               grouping=self._grouping,
-                               prefill=self._prefill)
+                               grouping=self._grouping)
             old_row_count = g.GetNumberRows()
             self._update_grid_length(g, row_count, original_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
