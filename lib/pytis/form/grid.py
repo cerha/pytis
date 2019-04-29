@@ -71,6 +71,17 @@ class DataTable(object):
 
     def __init__(self, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
+        """Arguments:
+
+          data -- 'pytis.data.Data' instance representing the data object, whose
+            current selection is displayed in the table.  Its 'select()' method
+            must have been called.
+          presented_row -- 'pytis.presentation.PresentedRow' instance
+          columns, row_count, sorting, grouping, prefill -- as descripen in 'update()'
+          row_style -- row style as 'pytis.presentation.Style()' instance,
+            callable returning a Style instance or None
+
+        """
         self._data = data
         self._presented_row = copy.copy(presented_row)
         self._row_style = row_style
@@ -153,6 +164,18 @@ class DataTable(object):
     # Public methods
 
     def update(self, columns, row_count, sorting, grouping, prefill):
+        """Update table parameters.
+
+        Arguments:
+          columns -- sequence of 'pytis.presentation.Field' instances representing
+            table columns.
+          row_count -- row count as returned by 'pytis.data.Data.select()'
+          sorting -- sorting as accepted by 'pytis.data.Data.select()'
+          grouping -- grouping as a sequence of column identifiers used
+            for visual grouping of table rows
+          prefill -- new row prefill as a dictionary
+
+        """
         assert isinstance(grouping, tuple)
         self._data.rewind()
         self._current_row = None
@@ -175,10 +198,10 @@ class DataTable(object):
         self._group_value_cache = {}
 
     def current_row(self):
-        """Vrať číslo aktuálního řádku datového objektu tabulky.
+        """Return the number of the current row of table's data object.
 
-        Řádky jsou číslovány od 0.  Pokud číslo aktuálního řádku není
-        známo, vrať 'None'.
+        Rows are numbered from 0.  If the current row number is not known,
+        return None.
 
         """
         current = self._current_row
