@@ -70,14 +70,14 @@ class DataTable(object):
             self.style = style
 
     def __init__(self, data, presented_row, columns, row_count,
-                 sorting=(), grouping=(), prefill=None, row_style=None):
+                 sorting=(), grouping=(), row_style=None):
         """Arguments:
 
           data -- 'pytis.data.Data' instance representing the data object, whose
             current selection is displayed in the table.  Its 'select()' method
             must have been called.
           presented_row -- 'pytis.presentation.PresentedRow' instance
-          columns, row_count, sorting, grouping, prefill -- as descripen in 'update()'
+          columns, row_count, sorting, grouping -- as descripen in 'update()'
           row_style -- row style as 'pytis.presentation.Style()' instance,
             callable returning a Style instance or None
 
@@ -89,7 +89,6 @@ class DataTable(object):
         self.update(row_count=row_count,
                     sorting=sorting,
                     grouping=grouping,
-                    prefill=prefill,
                     columns=columns)
 
     def _panic(self):
@@ -163,7 +162,7 @@ class DataTable(object):
 
     # Public methods
 
-    def update(self, columns, row_count, sorting, grouping, prefill):
+    def update(self, columns, row_count, sorting, grouping):
         """Update table parameters.
 
         Arguments:
@@ -173,7 +172,6 @@ class DataTable(object):
           sorting -- sorting as accepted by 'pytis.data.Data.select()'
           grouping -- grouping as a sequence of column identifiers used
             for visual grouping of table rows
-          prefill -- new row prefill as a dictionary
 
         """
         assert isinstance(grouping, tuple)
@@ -182,7 +180,6 @@ class DataTable(object):
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
-        self._prefill = prefill
         self._columns = [self._Column(c.id(),
                                       self._presented_row.type(c.id()),
                                       c.column_label() or '',

@@ -283,7 +283,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self, self._data, self._row, self._columns, self._lf_select_count_,
             sorting=self._lf_sorting,
             grouping=self._grouping,
-            prefill=self._prefill,
             row_style=self._view.row_style(),
         )
         g.SetTable(table, True)
