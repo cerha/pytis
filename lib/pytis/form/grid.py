@@ -78,6 +78,7 @@ class DataTable(object):
         self._data = data
         self._presented_row = copy.copy(presented_row)
         self._row_style = row_style
+        self._row_style_callable = isinstance(row_style, collections.Callable)
         self._plain_style = pytis.presentation.Style()
         self.update(row_count=row_count,
                     sorting=sorting,
@@ -124,7 +125,7 @@ class DataTable(object):
                 return None
             # If row_style is defined, lets compute it.
             row_style = self._row_style
-            if isinstance(row_style, collections.Callable):
+            if self._row_style_callable:
                 protected_row = the_row.protected()
                 try:
                     row_style = row_style(protected_row)
