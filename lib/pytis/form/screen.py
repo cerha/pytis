@@ -254,8 +254,9 @@ def hotkey_string(hotkey):
 
 
 def file_menu_items(fields, row, select_arguments):
+
     from .application import Application, decrypted_names
-    data = row.data()
+    data = row.data(init_select=False)
 
     def field_not_null(field_id):
         value = row[field_id]

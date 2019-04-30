@@ -1663,10 +1663,10 @@ class RecordForm(LookupForm):
         def form(self):
             return self._form
 
-        def data(self):
+        def data(self, init_select=True):
             # Return a new instance rather than giving the internally used data object.
             # Moreover this instance will have the select initialized in LookupForm.
-            return self._form.data()
+            return self._form.data(init_select=init_select)
 
     def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
