@@ -81,17 +81,6 @@ class DataTable(object):
                     prefill=prefill,
                     columns=columns)
 
-    def _update_columns(self, columns):
-        self._columns = [self._Column(c.id(),
-                                      self._presented_row.type(c.id()),
-                                      c.column_label() or '',
-                                      c.style())
-                         for c in columns]
-        self._is_bool = [c.type.__class__ == pytis.data.Boolean for c in self._columns]
-        self._column_count = len(self._columns)
-        self._secret_columns = [c.id() for c in columns
-                                if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
-
     def _panic(self):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
@@ -162,6 +151,28 @@ class DataTable(object):
             return value_dict[col_id]
 
     # Public methods
+
+    def update(self, columns, row_count, sorting, grouping, prefill):
+        assert isinstance(grouping, tuple)
+        self._data.rewind()
+        self._current_row = None
+        self._row_count = row_count
+        self._sorting = sorting
+        self._grouping = grouping
+        self._prefill = prefill
+        self._columns = [self._Column(c.id(),
+                                      self._presented_row.type(c.id()),
+                                      c.column_label() or '',
+                                      c.style())
+                         for c in columns]
+        self._is_bool = [c.type.__class__ == pytis.data.Boolean for c in self._columns]
+        self._column_count = len(self._columns)
+        self._secret_columns = [c.id() for c in columns
+                                if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
+        # (re)create caches
+        self._cache = cachetools.LRUCache(maxsize=config.cache_size)
+        self._group_cache = {0: False}
+        self._group_value_cache = {}
 
     def current_row(self):
         """Vrať číslo aktuálního řádku datového objektu tabulky.
@@ -286,20 +297,6 @@ class DataTable(object):
         except KeyError:
             result = self._group_cache[row] = get_group(row, group_values(row))
         return result
-
-    def update(self, columns, row_count, sorting, grouping, prefill):
-        assert isinstance(grouping, tuple)
-        self._data.rewind()
-        self._current_row = None
-        self._row_count = row_count
-        self._sorting = sorting
-        self._grouping = grouping
-        self._prefill = prefill
-        self._update_columns(columns)
-        # (re)create caches
-        self._cache = cachetools.LRUCache(maxsize=config.cache_size)
-        self._group_cache = {0: False}
-        self._group_value_cache = {}
 
     def close(self):
         # This method is necessary because of some wierd wxWidgets behavior,
