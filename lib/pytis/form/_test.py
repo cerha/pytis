@@ -137,7 +137,7 @@ class TestDataTable(DBTest):
         finally:
             data.close()
 
-    def test_big_table_performance(self, spec, data):
+    def test_buffer_fetching(self, spec, data):
         # This test can be used to examine row buffer filling strategy
         # and database performance on bigger jumps.  It is practical to
         # add something like:
@@ -161,5 +161,51 @@ class TestDataTable(DBTest):
                       4444, 0, 2453, 3890, 9499, 99, 140, 98, 30):
                 print n
                 assert t.cell_value(n, 0) == str(n + 1)
+        finally:
+            data.close()
+
+    def emulate_real_grid(self, t):
+        t.cell_style(0, 0)
+        # The faster the user scrolls, the less rows the grid asks for.  If we stop
+        # scrolling (or scroll slow enough) it renders the full page (30 rows in our
+        # example.
+        for (start, count) in ((29, 30), (50, 3), (199, 1), (299, 30), (160, 30),
+                               (120, 5), (80, 3), (40, 2), (29, 30),
+                               (140, 3), (360, 6), (1120, 4), (2453, 8),
+                               (3890, 30), (9499, 30)):
+            # The grid first checks for style and value of each visible cell
+            # from bottom up and from right to left.
+            for row in range(start, start - count, -1):
+                for col in range(3, -1, -1):
+                    t.cell_style(row, col)
+                    t.group(row)
+                    t.cell_value(row, col)
+            if count == 30:
+                # Then if we stop scrolling, the grid checks for the same
+                # styles once again from top to bottom and from right to
+                # left.  Maybe it renders backgrounds and fonts separately?
+                for row in range(start - count + 1, start + 1):
+                    for col in range(0, 4):
+                        t.cell_style(row, col)
+                        t.group(row)
+
+    def test_grid_performance(self, spec, data, benchmark):
+        def rows(count):
+            i = 0
+            while i < count:
+                i += 1
+                yield (i, 'Row number %d' % i, 1.86 * i, i % 3 == 0)
+        self.insert(data, rows(9500))
+        t = self.grid_table(
+            spec, data,
+            sorting=(('name', pd.ASCENDENT),
+                     ('flag', pd.ASCENDENT),
+                     ('price', pd.ASCENDENT),),
+            grouping=('name', 'flag'),
+            row_style=lambda r: pp.Style(background='#ffa') if r['id'].value() % 2 else None,
+            field_style={'price': lambda r: pp.Style(bold=True) if r['flag'].value() else None},
+        )
+        try:
+            benchmark(self.emulate_real_grid, t)
         finally:
             data.close()
