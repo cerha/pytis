@@ -1559,7 +1559,9 @@ class GenericCodebookField(GenericEnumerationField):
         else:
             prefill = {}
         if not self._valid() and self._modified():
-            prefill[value_column] = self._get_value()
+            value, error = self._type.validate(self._get_value(), strict=False)
+            if not error:
+                prefill[value_column] = value
         spec_name = fspec.codebook_insert_spec() or self._cb_name
         result = new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
         if result and value_column in result:
