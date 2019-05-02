@@ -108,6 +108,7 @@ class TestDataTable(DBTest):
             ('Charles', 44, 21), ('Jerry', 21, 34), ('Joe', 25, 14), ('Mike', 67, 21),
             ('Paul', 16, 8), ('Peter', 6, 56), ('Robert', 24, 36), ('Sam', 4, 81), ('Tom', 64, 32),
         )
+
         def rows():
             i = 0
             for name, false_count, true_count in sequence:
@@ -117,6 +118,7 @@ class TestDataTable(DBTest):
                         # Generate some randomly looking price value.
                         price = float(int(i % 8 + 140 * float(i % 6 + count) / (2 + i % 6))) / 100
                         yield (i, name, price, flag)
+
         self.insert(data, rows())
         t = self.grid_table(spec, data, sorting=(('name', pd.ASCENDENT),
                                                  ('flag', pd.ASCENDENT),
