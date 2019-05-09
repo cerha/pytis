@@ -113,20 +113,24 @@ class SimpleEmail(object):
 
     def create_headers(self):
         def get_header(header):
-            if isinstance(header, basestring):
+            if isinstance(header, str):
                 # Not unicode
                 try:
                     test = unicode(header, 'us-ascii')
                     test  # to make flake8 happy
                     make_header = False
-                except Exception:
+                except UnicodeDecodeError:
                     make_header = True
                 charset = self.charset
             else:
                 # Unicode
-                header = header.encode('UTF-8')
-                charset = 'UTF-8'
-                make_header = True
+                try:
+                    header = header.encode('us-ascii')
+                    make_header = False
+                except UnicodeEncodeError:
+                    header = header.encode('UTF-8')
+                    make_header = True
+                    charset = 'UTF-8'
             if make_header:
                 return Header(header, charset)
             else:
