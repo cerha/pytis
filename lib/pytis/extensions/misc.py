@@ -94,7 +94,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
 
 
 # TODO: argument sendmail_command should be removed when all applications reflect this change
-def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
+def send_mail(to, address, subject, msg, html=False, key=None, charset='UTF-8',
               sendmail_command=None):
     """Send an email with the possibility to encrypt it with a GPG/PGP key."""
     assert isinstance(to, basestring), to
