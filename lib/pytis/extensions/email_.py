@@ -48,7 +48,7 @@ class SimpleEmail(object):
     ERR_HELO = _("Error by sending helo")
 
     def __init__(self, to, from_, subject, content, html=False,
-                 bcc=None, replyto=None, smtp='localhost', charset='iso-8859-2'):
+                 bcc=None, replyto=None, smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
         Argumenty:
@@ -56,7 +56,7 @@ class SimpleEmail(object):
           to -- adresa příjemce nebo sekvence příjemců
           from_ -- adresa odesílatele
           subject -- předmět zprávy (může obsahovat buď ascii řetězec
-            nebo unicode řetězec nebo řetězec v kódování iso-8859-2)
+            nebo unicode řetězec nebo řetězec v kódování UTF-8)
           content -- obsah zprávy
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           replyto -- adresa odesilatele pro zaslání odpovědi
@@ -116,16 +116,15 @@ class SimpleEmail(object):
             if isinstance(header, str):
                 # Not unicode
                 try:
-                    test = unicode(header, 'us-ascii')
-                    test  # to make flake8 happy
+                    unicode(header, self.charset).encode('ascii')
                     make_header = False
-                except UnicodeDecodeError:
+                except UnicodeEncodeError:
                     make_header = True
                 charset = self.charset
             else:
                 # Unicode
                 try:
-                    header = header.encode('us-ascii')
+                    header = header.encode('ascii')
                     make_header = False
                 except UnicodeEncodeError:
                     header = header.encode('UTF-8')
@@ -209,7 +208,7 @@ class GPGEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní jednoduchého kryptovaného mailu."""
 
     def __init__(self, to, from_, subject, content, key, html=False,
-                 smtp='localhost', charset='iso-8859-2'):
+                 smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
           to -- adresa příjemce (zatím podporujeme jen jednoho příjemce)
@@ -286,7 +285,7 @@ class ComplexEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní mailu s přílohami."""
 
     def __init__(self, to, from_, subject, content=None, html=False, bcc=None,
-                 replyto=None, smtp='localhost', charset='iso-8859-2'):
+                 replyto=None, smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
         Argumenty:
