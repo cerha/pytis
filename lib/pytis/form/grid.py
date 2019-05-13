@@ -284,14 +284,15 @@ class DataTable(object):
                 result = self._group_value_cache[values]
             except KeyError:
                 if nearest is None:
-                    # Find the nearest cached row.
-                    nearest = min(self._group_cache.keys(), key=lambda x: abs(x - row))
-                    # There is no cached group near enough (up to 80 rows away),
-                    # so start again with an empty cache.
-                    if abs(nearest - row) > 80:
+                    near = filter(lambda x: abs(x - row) < 80, self._group_cache.keys())
+                    if not near:
+                        # There is no cached group near enough (up to 80 rows away),
+                        # so start again with an empty cache.
                         self._group_cache = {}
                         self._group_value_cache = {}
                         return False
+                    # Find the nearest cached row.
+                    nearest = min(near, key=lambda x: abs(x - row))
                 # Query the neighbour row in the dirtection to the nearest cached row.
                 neighbour_row = row + 1 if nearest > row else row - 1
                 neighbour_values = group_values(neighbour_row)
