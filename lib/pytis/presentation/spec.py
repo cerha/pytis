@@ -4720,7 +4720,7 @@ class DbAttachmentStorage(AttachmentStorage):
 
     def _get_row(self, filename, transaction=None):
         self._data.select(condition=self._condition(filename), transaction=transaction)
-        row = self._data.fetch()
+        row = self._data.fetchone()
         self._data.close()
         return row
 
@@ -4787,7 +4787,7 @@ class DbAttachmentStorage(AttachmentStorage):
                    if not isinstance(c.type(), pytis.data.Binary)]
         self._data.select(condition=self._condition(), columns=columns, transaction=transaction)
         while True:
-            row = self._data.fetch()
+            row = self._data.fetchone()
             if row is None:
                 break
             resources.append(self._row_resource(row))

@@ -142,7 +142,7 @@ class BrowsableDBTable(BaseDBTable):
         rows = []
         i = 0
         while True:
-            row = self._data.fetch()
+            row = self._data.fetchone()
             i = i + 1
             if row is None or i >= self._limit or i > self._row_count:
                 self._data.close()

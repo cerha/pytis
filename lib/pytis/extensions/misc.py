@@ -342,7 +342,7 @@ def crypto_admin_key(area, admin_user, connection_data):
                                pytis.data.EQ('name', pytis.data.sval(area)))
     if not data.select(condition):
         return None, None
-    row = data.fetch()
+    row = data.fetchone()
     return row['key_id'], row['key']
 
 

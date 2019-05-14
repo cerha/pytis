@@ -225,12 +225,12 @@ class Data(object_2_5):
     - Metodu pro výběr konkrétního řádku: 'row()'.  Řádek je vybrán podle
       zadaného klíče.
 
-    - Metody pro výběr všech řádků: 'select()', 'fetch()', 'skip()' a
-      'close()'.  Po zavolání metody 'select()' je možno postupně získávat
-      jednotlivé řádky pomocí metody 'fetch()'.  Tento způsob umožňuje
-      předávání i většího množství dat z externích zdrojů bez nutnosti je
-      všechna najednou držet v paměti.  Metoda 'select' umožňuje kdykoliv
-      zpřístupnění dat reinicializovat (\"rewind\").
+    - Metody pro výběr všech řádků: 'select()', 'fetch()', 'fetchone()',
+      'skip()' a 'close()'.  Po zavolání metody 'select()' je možno postupně
+      získávat jednotlivé řádky pomocí metod 'fetch()', resp. 'fetchone()'.
+      Tento způsob umožňuje předávání i většího množství dat z externích zdrojů
+      bez nutnosti je všechna najednou držet v paměti.  Metoda 'select'
+      umožňuje kdykoliv zpřístupnění dat reinicializovat (\"rewind\").
 
     - Metody pro modifikaci dat: 'insert()', 'update()' a 'delete()'.
 
@@ -368,10 +368,10 @@ class Data(object_2_5):
 
         The method itself does not necessarily load any data, the selection is
         only initialized if necessary.  The actual data may be obtained by
-        repetitive calls to 'fetch()' after calling this method.  Rows can
-        also be skipped using the 'skip()' method.  The number of corresponding
-        rows is returned if possible, but None may be returned if this feature
-        is not implemented.
+        repetitive calls to 'fetch()' (or 'fetchone()') after calling this
+        method.  Rows can also be skipped using the 'skip()' method.  The
+        number of corresponding rows is returned if possible, but None may be
+        returned if this feature is not implemented.
 
         Repeated calls to this method may not result in the same data if the
         data source changes in the meanwhile.
@@ -432,7 +432,7 @@ class Data(object_2_5):
         try:
             self.select(transaction=transaction, **kwargs)
             while True:
-                row = self.fetch()
+                row = self.fetchone()
                 if row is None:
                     break
                 result.append(function(row))
@@ -516,7 +516,7 @@ class Data(object_2_5):
                 pass
         return select_result, Row(aggregates)
 
-    def fetch(self, position=FORWARD):
+    def fetch(self, position):
         """Return data row from given position or next in given direction.
 
         Arguments:
@@ -546,9 +546,9 @@ class Data(object_2_5):
         """
         return None
 
-    def fetchone(self, direction=FORWARD, transaction=None):
-        """Depracated.  Use 'fetch()' instead."""
-        return self.fetch(direction)
+    def fetchone(self, transaction=None):
+        """Convenience alias for 'fetch(FORWARD)'."""
+        return self.fetch(FORWARD)
 
     def last_row_number(self):
         """Vrať pořadí řádku posledně vráceného metodou 'fetch()'.
@@ -1074,7 +1074,7 @@ class MemData(Data):
     def close(self):
         self._mem_select = []
 
-    def fetch(self, position=FORWARD):
+    def fetch(self, position):
         data = self._mem_select
         cursor = self._mem_cursor
         size = len(data)

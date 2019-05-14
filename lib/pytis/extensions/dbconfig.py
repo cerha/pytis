@@ -92,7 +92,7 @@ class DBConfig(object):
     def _select(self):
         with Locked(self._data_object_lock):
             self._data.select(condition=self._condition, transaction=self._transaction)
-            self._row = self._data.fetch()
+            self._row = self._data.fetchone()
             self._data.close()
 
     def _on_change(self):

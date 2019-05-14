@@ -66,7 +66,7 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
                 arguments=arguments)
     result = []
     while True:
-        row = data.fetch()
+        row = data.fetchone()
         if row is None:
             data.close()
             break

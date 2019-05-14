@@ -1839,7 +1839,7 @@ class BrowseForm(LayoutForm):
         def generator():
             try:
                 while True:
-                    row = data.fetch()
+                    row = data.fetchone()
                     if row is None:
                         break
                     yield row

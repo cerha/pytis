@@ -185,7 +185,7 @@ class Modules(Specification):
             data.select(condition=pd.EQ('mod_id', record['mod_id']))
             existing_actions = {}
             while True:
-                row = data.fetch()
+                row = data.fetchone()
                 if row is None:
                     break
                 else:

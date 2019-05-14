@@ -740,7 +740,7 @@ class TestData(object):
         assert data.key() == (columns[0],)
         assert data.row(ival(None)) is None
         assert data.select() == 0
-        assert data.fetch() is None
+        assert data.fetchone() is None
         assert data.insert(pd.Row()) == (None, False)
         assert data.update(ival(None), pd.Row()) == (None, False)
         assert data.delete(ival(None)) == 0
@@ -775,7 +775,7 @@ class MemData(unittest.TestCase):
         rows = []
         self._data.select(condition=condition)
         while True:
-            row = self._data.fetch()
+            row = self._data.fetchone()
             if row is None:
                 break
             rows.append(row)
@@ -805,7 +805,7 @@ class MemData(unittest.TestCase):
         self.assertEqual(c, 2)
         rows = []
         while True:
-            row = self._data.fetch()
+            row = self._data.fetchone()
             if row is None:
                 break
             rows.append(row)
@@ -1570,28 +1570,28 @@ class DBDataDefault(_DBTest):
     def test_select_fetch(self, arguments={}):
         self.data.select(arguments=arguments)
         for r in (self.ROW1, self.ROW2):
-            result = self.data.fetch()
+            result = self.data.fetchone()
             self.assertIsNotNone(result, 'missing lines')
             for i in range(len(r)):
                 self.assertEqual(r[i], result[i].value(),
                                  ('invalid value', r[i], result[i].value()))
-        self.assertIsNone(self.data.fetch(), 'too many lines')
-        self.assertIsNone(self.data.fetch(), 'data reincarnation')
+        self.assertIsNone(self.data.fetchone(), 'too many lines')
+        self.assertIsNone(self.data.fetchone(), 'data reincarnation')
         self.data.close()
         self.data.select(arguments=arguments, limit=1)
-        self.assertIsNotNone(self.data.fetch())
-        self.assertIsNone(self.data.fetch())
+        self.assertIsNotNone(self.data.fetchone())
+        self.assertIsNone(self.data.fetchone())
         self.data.close()
 
     def test_limited_select(self):
         self.data.select(columns=('castka', 'stat-nazev',))
         for r in (self.ROW1, self.ROW2):
-            result = self.data.fetch()
+            result = self.data.fetchone()
             self.assertIsNotNone(result, 'missing lines')
             for orig_col, result_col in ((2, 0,), (3, 1,),):
                 self.assertEqual(r[orig_col], result[result_col].value())
-        self.assertIsNone(self.data.fetch(), 'too many lines')
-        self.assertIsNone(self.data.fetch(), 'data reincarnation')
+        self.assertIsNone(self.data.fetchone(), 'too many lines')
+        self.assertIsNone(self.data.fetchone(), 'data reincarnation')
         self.data.close()
         # Search in limited select OK?
         self.dosnova.select(columns=('id', 'synt', 'anal', 'danit',))
@@ -1636,18 +1636,18 @@ class DBDataDefault(_DBTest):
         condition = pd.AND(pd.EQ('cislo', v))
         self.data.select(condition)
         for r in (self.ROW1,):
-            result = self.data.fetch()
+            result = self.data.fetchone()
             self.assertIsNotNone(result, 'missing lines')
             for i in range(len(r)):
                 self.assertEqual(r[i], result[i].value(),
                                  ('invalid value', r[i], result[i].value()))
-        self.assertIsNone(self.data.fetch(), 'too many lines')
-        self.assertIsNone(self.data.fetch(), 'data reincarnation')
+        self.assertIsNone(self.data.fetchone(), 'too many lines')
+        self.assertIsNone(self.data.fetchone(), 'data reincarnation')
         self.data.close()
         self.data.select(pd.GT('castka', 'cislo'))
         rows = []
         while True:
-            row = self.data.fetch()
+            row = self.data.fetchone()
             if row is None:
                 break
             rows.append(row)
@@ -1657,7 +1657,7 @@ class DBDataDefault(_DBTest):
         def nrows_test(condition, nrows):
             self.dcosi.select(condition)
             n = 0
-            while self.dcosi.fetch():
+            while self.dcosi.fetchone():
                 n = n + 1
             self.dcosi.close()
             self.assertEqual(n, nrows)
@@ -1675,7 +1675,7 @@ class DBDataDefault(_DBTest):
             condition = pd.AND(pd.EQ('popis', pd.sval(v)))
             try:
                 d.select(condition)
-                row = d.fetch()
+                row = d.fetchone()
             except ValueError as e:
                 # psycopg2 doesn't allow null bytes since version 2.7.
                 if str(e) != 'A string literal cannot contain NUL (0x00) characters.':
@@ -1696,13 +1696,13 @@ class DBDataDefault(_DBTest):
         for spec, result in TESTS:
             d.select(sort=spec)
             for r in result:
-                row = d.fetch()
+                row = d.fetchone()
                 self.assertIsNotNone(row, 'missing lines')
                 k1, k2 = r
                 synt, anal = row['synt'].value(), row['anal'].value()
                 self.assertEqual(synt, k1, ('bad value', synt, k1, spec))
                 self.assertEqual(anal, k2, ('bad value', anal, k2, spec))
-            self.assertIsNone(d.fetch(), 'too many lines')
+            self.assertIsNone(d.fetchone(), 'too many lines')
 
     def test_select_sorting_limited(self):
         A = pd.ASCENDENT
@@ -1718,13 +1718,13 @@ class DBDataDefault(_DBTest):
         for spec, result in TESTS:
             d.select(sort=spec, columns=limited_columns)
             for r in result:
-                row = d.fetch()
+                row = d.fetchone()
                 self.assertIsNotNone(row, 'missing lines')
                 k1, k2 = r
                 synt, anal = row['synt'].value(), row['anal'].value()
                 self.assertEqual(synt, k1, ('bad value', synt, k1, spec))
                 self.assertEqual(anal, k2, ('bad value', anal, k2, spec))
-            self.assertIsNone(d.fetch(), 'too many lines')
+            self.assertIsNone(d.fetchone(), 'too many lines')
             d.close()
 
     def test_select_distinct_on(self):
@@ -1732,13 +1732,13 @@ class DBDataDefault(_DBTest):
             d.select(condition=condition)
             try:
                 for r in result:
-                    row = d.fetch()
+                    row = d.fetchone()
                     self.assertIsNotNone(row, ('missing lines', condition,))
                     x, y = r
                     self.assertTrue(x == row['x'].value() and y == row['y'].value(),
                                     ('unexpected result', condition, (x, y,),
                                      (row['x'].value(), row['y'].value(),),))
-                self.assertIsNone(d.fetch(), ('extra row', condition,))
+                self.assertIsNone(d.fetchone(), ('extra row', condition,))
             finally:
                 d.close()
         check(self.dist, None, ((1, 1,), (3, 2,), (5, 3,),))
@@ -1797,7 +1797,7 @@ class DBDataDefault(_DBTest):
             d.select(condition=condition)
             try:
                 i = 0
-                while d.fetch() is not None:
+                while d.fetchone() is not None:
                     i = i + 1
                 self.assertEqual(i, n, ('Invalid number of rows in a limited select',
                                         condition, n, i,))
@@ -1817,11 +1817,11 @@ class DBDataDefault(_DBTest):
     def test_async_select(self, arguments={}):
         self.data.select(async_count=True, arguments=arguments)
         for r in (self.ROW1, self.ROW2):
-            result = self.data.fetch()
+            result = self.data.fetchone()
             assert result is not None
             assert tuple(v.value() for v in result.values()) == r
-        assert self.data.fetch() is None
-        assert self.data.fetch() is None
+        assert self.data.fetchone() is None
+        assert self.data.fetchone() is None
         self.data.close()
 
     def test_dummy_select(self):
@@ -1829,11 +1829,11 @@ class DBDataDefault(_DBTest):
         self.test_select_fetch(arguments=UNKNOWN_ARGUMENTS)
         self.test_async_select(arguments=UNKNOWN_ARGUMENTS)
         self.assertEqual(self.funcdata.select(arguments=UNKNOWN_ARGUMENTS), 0)
-        self.assertIsNone(self.funcdata.fetch())
+        self.assertIsNone(self.funcdata.fetchone())
         count = self.funcdata.select(arguments=UNKNOWN_ARGUMENTS, async_count=True)
         result = count.count()
         self.assertEqual(result[0], 0)
-        self.assertIsNone(self.funcdata.fetch())
+        self.assertIsNone(self.funcdata.fetchone())
         self.assertEqual(self.funcdata.select(arguments=UNKNOWN_ARGUMENTS), 0)
         self.assertEqual(self.funcdata.search(None, arguments=UNKNOWN_ARGUMENTS), 0)
 
@@ -1978,9 +1978,9 @@ class DBDataDefault(_DBTest):
         id_value = ival(3)
         try:
             self.assertEqual(self.funcdata.select(arguments=dict(id=id_value)), 2)
-            self.assertIsNotNone(self.funcdata.fetch())
-            self.assertIsNotNone(self.funcdata.fetch())
-            self.assertIsNone(self.funcdata.fetch())
+            self.assertIsNotNone(self.funcdata.fetchone())
+            self.assertIsNotNone(self.funcdata.fetchone())
+            self.assertIsNone(self.funcdata.fetchone())
         finally:
             self.funcdata.close()
         try:
@@ -2037,7 +2037,7 @@ class DBDataDefault(_DBTest):
             self.fulltext.select(condition=condition, sort=('index',))
             result_ids = []
             while True:
-                row = self.fulltext.fetch()
+                row = self.fulltext.fetchone()
                 if row is None:
                     break
                 result_ids.append(row[0].value())
@@ -2049,7 +2049,7 @@ class DBDataDefault(_DBTest):
             self.fulltext1.select(condition=condition, sort=('index',))
             result_samples = []
             while True:
-                row = self.fulltext1.fetch()
+                row = self.fulltext1.fetchone()
                 if row is None:
                     break
                 result_samples.append(row[3].value())
@@ -2134,7 +2134,7 @@ class DBDataDefault(_DBTest):
                 n = data.select(pd.EQ(column, value))
                 try:
                     self.assertEqual(n, 1)
-                    row = data.fetch()
+                    row = data.fetchone()
                 finally:
                     data.close()
         self.assertEqual(row['r'], new_value)
@@ -2225,13 +2225,13 @@ class DBDataDefault(_DBTest):
                                     ('b', new_value_b,),)))
         n = data.select(pd.EQ('a', new_value_a))
         self.assertEqual(n, 1)
-        row = data.fetch()
+        row = data.fetchone()
         data.close()
         self.assertEqual(row['a'], new_value_a)
         self.assertEqual(row['b'], new_value_b)
         n = data.select(pd.EQ('b', new_value_b))
         self.assertEqual(n, 1)
-        row = data.fetch()
+        row = data.fetchone()
         data.close()
         self.assertEqual(row['a'], new_value_a)
         self.assertEqual(row['b'], new_value_b)
@@ -2306,14 +2306,14 @@ class DBDataDefault(_DBTest):
     def test_lock_view(self):
         v = self.view
         v.select()
-        row = v.fetch()
+        row = v.fetchone()
         key = row[0]
-        row3 = v.fetch()
+        row3 = v.fetchone()
         key3 = row3[0]
         v.close()
         v2 = self.rudeview
         v2.select()
-        row2 = v2.fetch()
+        row2 = v2.fetchone()
         key2 = row2[0]
         v2.close()
         transaction = \
@@ -2368,7 +2368,7 @@ class DBDataDefault(_DBTest):
             if isinstance(k, int):
                 d.skip(k)
             else:
-                value = d.fetch()[0].value()
+                value = d.fetchone()[0].value()
                 self.assertEqual(value, k, ('invalid select value', k, value,))
         d.close()
 
@@ -2462,7 +2462,7 @@ class DBMultiData:  # (DBDataDefault): Temporarily disabled
         d = self.mdata
         d.select()
         for r in (self.ROW1, self.ROW2):
-            result = d.fetch()
+            result = d.fetchone()
             self.assertIsNotNone(result, 'missing lines')
             for i in range(len(r)):
                 self.assertEqual(r[i], result[i].value(),
@@ -2475,12 +2475,12 @@ class DBMultiData:  # (DBDataDefault): Temporarily disabled
         condition = pd.AND(pd.EQ('cislo', v))
         d.select(condition)
         for r in (self.ROW1,):
-            result = d.fetch()
+            result = d.fetchone()
             self.assertIsNotNone(result, 'missing lines')
             for i in range(len(r)):
                 self.assertEqual(r[i], result[i].value(),
                                  ('invalid value', r[i], result[i].value()))
-        self.assertIsNone(d.fetch(), 'too many lines')
+        self.assertIsNone(d.fetchone(), 'too many lines')
         d.close()
 
     def test_select_fetch_direction(self):
@@ -2513,20 +2513,20 @@ class DBMultiData:  # (DBDataDefault): Temporarily disabled
         self.assertEqual(res, 1)
         res = d.search(E('popis', sval('foo')))
         self.assertEqual(res, 0)
-        d.fetch()
+        d.fetchone()
         res = d.search(E('popis', sval('efgh')))
         self.assertEqual(res, 2)
         res = d.search(E('popis', sval('abcd')))
         self.assertEqual(res, 0)
         res = d.search(E('popis', sval('foo')))
         self.assertEqual(res, 0)
-        d.fetch()
+        d.fetchone()
         res = d.search(E('popis', sval('abcd')), direction=pd.FORWARD)
         self.assertEqual(res, 0)
         res = d.search(E('popis', sval('abcd')),
                        direction=pd.BACKWARD)
         self.assertEqual(res, 1)
-        while d.fetch() is not None:
+        while d.fetchone() is not None:
             pass
         res = d.search(E('popis', sval('abcd')), direction=pd.FORWARD)
         self.assertEqual(res, 0)
@@ -2686,7 +2686,7 @@ class TestFetchSelect(DBTest):
                 d.skip(count, direction=direction)
             else:
                 raise Exception('Invalid op', op)
-        row = d.fetch()
+        row = d.fetchone()
         if noresult:
             assert row is None
         else:
@@ -2727,9 +2727,9 @@ class TestFetchSelect(DBTest):
         data.select()
         for n in (0, 1, 6, 10, 12):
             for i in range(n):
-                data.fetch()
+                data.fetchone()
             data.rewind()
-            row = data.fetch()
+            row = data.fetchone()
             assert row is not None
             assert row['x'].value() == 0
 
@@ -2739,14 +2739,14 @@ class TestFetchSelect(DBTest):
         data.select()
         data.skip(skip)
         for i in range(3):
-            assert data.fetch() is not None
+            assert data.fetchone() is not None
         data.select(reuse=True)
         data.skip(skip)
-        row = data.fetch()
+        row = data.fetchone()
         assert row is not None
         assert row['x'].value() == skip
         data.select(reuse=True)
-        row = data.fetch()
+        row = data.fetchone()
         assert row is not None
         assert row['x'].value() == 0
 
@@ -2755,16 +2755,16 @@ class TestFetchSelect(DBTest):
         data.select()
         assert data.skip(14) == 11
         assert data.skip(12, pd.BACKWARD) == 11
-        row = data.fetch()
+        row = data.fetchone()
         assert row is not None
         assert row['x'].value() == 0
         assert data.skip(11) == 10
         assert data.skip(10, pd.BACKWARD) == 10
-        row = data.fetch()
+        row = data.fetchone()
         assert row is not None
         assert row['x'].value() == 1
         assert data.skip(2, pd.BACKWARD) == 2
-        row = data.fetch()
+        row = data.fetchone()
         assert row is not None
         assert row['x'].value() == 0
 
@@ -2794,11 +2794,11 @@ class DBDataOrdering(_DBTest):
         key = (ival(3),)
         self.assertTrue(d.insert(row, after=key)[1], 'Insert failed')
         d.select()
-        d.fetch()
-        result = d.fetch()
+        d.fetchone()
+        result = d.fetchone()
         self.assertEqual(result['popis'].value(), 'zvlastni',
                          ('Unexpected value', result['popis'].value()))
-        result = d.fetch()
+        result = d.fetchone()
         self.assertEqual(result['popis'].value(), 'bla bla',
                          ('Unexpected value', result['popis'].value()))
         value = result['id'].value()
@@ -2806,14 +2806,14 @@ class DBDataOrdering(_DBTest):
         self.assertTrue(value > 3 and value < 6, ('Invalid ordering value', value))
         self.assertTrue(d.insert(row, before=key)[1], 'Insert failed')
         d.select()
-        d.fetch()
-        result = d.fetch()
+        d.fetchone()
+        result = d.fetchone()
         self.assertEqual(result['popis'].value(), 'bla bla',
                          ('Unexpected value', result['popis'].value()))
-        result = d.fetch()
+        result = d.fetchone()
         self.assertEqual(result['popis'].value(), 'zvlastni',
                          ('Unexpected value', result['popis'].value()))
-        result = d.fetch()
+        result = d.fetchone()
         self.assertEqual(result['popis'].value(), 'bla bla',
                          ('Unexpected value', result['popis'].value()))
         d.close()
@@ -2864,7 +2864,7 @@ class DBDataAggregated(DBDataDefault):
                 self.assertEqual(count, len(test_result),
                                  ('Unexpected number of aggregate rows', count))
                 for expected_result in test_result:
-                    items = data.fetch().items()
+                    items = data.fetchone().items()
                     items_dict = dict(items)
                     if columns is None:
                         self.assertTrue(len(items) == len(column_groups) + len(operations),
@@ -2875,7 +2875,7 @@ class DBDataAggregated(DBDataDefault):
                     for k, v in expected_result:
                         self.assertEqual(items_dict[k].value(), v,
                                          ('Unexpected result', (k, v, items_dict[k].value(),),))
-                self.assertIsNone(data.fetch(), 'Extra row')
+                self.assertIsNone(data.fetchone(), 'Extra row')
             elif isinstance(operation, tuple):
                 value = data.select_aggregate(operation, condition=condition)
                 self.assertEqual(value.value(), test_result,
@@ -2962,7 +2962,7 @@ class DBDataAggregated(DBDataDefault):
                  column_groups=column_groups,
                  distinct_on=('datum',))
         data.select(columns=('count',), sort=('count',))
-        data.fetch()
+        data.fetchone()
         data.close()
 
     def test_table_function(self):
@@ -3279,7 +3279,7 @@ class DBCrypto(_DBBaseTest):
             try:
                 self.assertEqual(n, len(expected), ('Invalid row count', n,))
                 for e in expected:
-                    row = data.fetch()
+                    row = data.fetchone()
                     if row is None:
                         raise Exception('Missing row')
                     if e is None:
@@ -3376,7 +3376,7 @@ class TutorialTest(_DBBaseTest):
             tab_data.select()
             n = 0
             while 1:
-                row = tab_data.fetch()
+                row = tab_data.fetchone()
                 if not row:
                     break
                 n = n + 1
@@ -3592,7 +3592,7 @@ class OperatorTest(_DBBaseTest):
             result = []
             a.select(condition=condition)
             while 1:
-                row = a.fetch()
+                row = a.fetchone()
                 if not row:
                     break
                 result.append(row['a'].value())

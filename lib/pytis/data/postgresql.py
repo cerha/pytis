@@ -833,7 +833,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                     if not schemas:
                         schemas = 'public'
                     for i in range(n):
-                        s_name = tables.fetch()['table_schema'].value()
+                        s_name = tables.fetchone()['table_schema'].value()
                         for s in schemas.split(','):
                             if s == s_name:
                                 schema_name = s
@@ -3151,7 +3151,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pg_distinct(column, prefix, condition, sort, transaction=transaction,
                                  arguments=arguments)
 
-    def fetch(self, position=FORWARD):
+    def fetch(self, position):
         """Return data row from given position or next in given direction.
 
         Interface is the same as described in parent class.

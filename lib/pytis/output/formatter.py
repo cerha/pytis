@@ -190,7 +190,7 @@ class _DataIterator(lcg.SubstitutionIterator):
 
     def _next(self):
         self._init_select()
-        row = self._data.fetch()
+        row = self._data.fetchone()
         if row is None:
             self._data.close()
             return False

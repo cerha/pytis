@@ -136,7 +136,7 @@ class _ConfigData(pytis.data.RestrictedData):
         self._giveone = True
         return 1
 
-    def fetch(self, position=pytis.data.FORWARD):
+    def fetch(self, position):
         if self._giveone and position in (0, pytis.data.FORWARD):
             self._giveone = False
             row_data = [(o, pytis.data.Value(config.option(o).type(), getattr(config, o)))
@@ -156,7 +156,7 @@ class _ConfigData(pytis.data.RestrictedData):
             setattr(config, option, row[option].value())
         wx.ToolTip.Enable(config.show_tooltips)
         self.select()
-        new_row = self.fetch()
+        new_row = self.fetchone()
         return new_row, True
 
 

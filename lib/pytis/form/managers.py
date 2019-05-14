@@ -81,7 +81,7 @@ class UserSetttingsManager(object):
                 row = None
             else:
                 assert count == 1
-                row = self._data.fetch()
+                row = self._data.fetchone()
         finally:
             try:
                 self._data.close()
@@ -93,7 +93,7 @@ class UserSetttingsManager(object):
         rows = []
         self._data.select(condition=self._condition(**kwargs), transaction=transaction)
         while True:
-            row = self._data.fetch()
+            row = self._data.fetchone()
             if row is None:
                 break
             rows.append(row)
