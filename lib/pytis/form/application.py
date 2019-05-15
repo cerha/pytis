@@ -24,6 +24,7 @@ aplikace a zajišťuje základní služby s ním související.  Modul se týk�
 uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
 
 """
+from __future__ import print_function
 
 import collections
 import copy
@@ -792,7 +793,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             try:
                 log(ACTION, msg, *args)
             except Exception:
-                print msg, args
+                print(msg, args)
         safelog('Application exit called', (pytis.config.dbschemas,))
         try:
             if not self._modals.empty():

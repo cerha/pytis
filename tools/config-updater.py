@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import sys
 import getopt
 import pytis.util
@@ -76,7 +77,7 @@ def run():
                 die("No options set for user '%s'." % username)
             options = sorted(cfg.keys())
         for option in options:
-            print "%s = %s" % (option, cfg[option])
+            print("%s = %s" % (option, cfg[option]))
     else:
         if command == 'unset':
             if option not in cfg:

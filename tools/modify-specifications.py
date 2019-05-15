@@ -52,6 +52,7 @@ future reference and examples or they may be removed sometimes in the future as
 new commands are added.
 
 """
+from __future__ import print_function
 
 import sys
 import ast
@@ -77,7 +78,7 @@ def warn(filename, node, message=None, *args):
         message = unparse(node)
     elif args:
         message %= args
-    print "File %s, line %d\n  %s" % (filename, node.keywords[0].value.lineno, message)
+    print("File %s, line %d\n  %s" % (filename, node.keywords[0].value.lineno, message))
 
 
 def attr(x):
@@ -343,10 +344,10 @@ def cmd_type_kwargs(filename, lines, type_map=None):
         if args and args[-1].end is None and (args[-1] in type_args or
                                               args[-1] == type_arg and type_args):
             # The end of the last argument may not be always obvious!
-            print ("File %s, line %d\n"
+            print(("File %s, line %d\n"
                    "  Can't determine end of '%s' argument when it is the last argument.\n"
                    "  Please reformat the source code.") % \
-                (filename, args[-1].start.ln + 1, args[-1].name)
+                  (filename, args[-1].start.ln + 1, args[-1].name))
             continue
         if type_args and not type_arg:
             argnames = [a.name for a in type_args]
@@ -377,10 +378,9 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                     #           "  Data type %s of field %s taken from type map %s.") % \
                     #        (filename, node.lineno, type_cls, field_id, type_map)
                 if type_cls is None:
-                    print ("File %s, line %d\n"
-                           "  Can't determine type for %s (%s)") % \
-                        (filename, node.lineno, field_id,
-                         ', '.join([unparse(a.kw) for a in type_args]))
+                    print(("File %s, line %d\n  Can't determine type for %s (%s)") %
+                          (filename, node.lineno, field_id,
+                           ', '.join([unparse(a.kw) for a in type_args])))
                     continue
         # Remove all directly passed type kwargs.
         for arg in type_args:
@@ -416,13 +416,13 @@ def cmd_type_kwargs(filename, lines, type_map=None):
                      lines[type_arg.end.ln][:type_arg.end.offset].strip())
             x = x.strip(',').strip()
             if x != unparse(type_arg.kw):
-                print ("File %s, line %d\n"
+                print(("File %s, line %d\n"
                        "  Warning: Can't verify position, please check this change.\n"
-                       "  '%s'\n  '%s'") % \
-                    (filename,
-                     type_arg.start.ln -
-                     len([l for l in lines_to_delete if l < type_arg.start.ln]),
-                     x, unparse(type_arg.kw))
+                       "  '%s'\n  '%s'") %
+                      (filename,
+                       type_arg.start.ln -
+                       len([l for l in lines_to_delete if l < type_arg.start.ln]),
+                       x, unparse(type_arg.kw)))
             ln, offset = type_arg.end.ln, type_arg.end.offset
             if isinstance(type_arg.value, ast.Call):
                 offset -= 1
@@ -460,11 +460,11 @@ def run_commands(commands, filename, no_act=False):
                 ast.parse(new_text)
             except SyntaxError as e:
                 text_lines = new_text.splitlines()  # Resplit to make sure that line numbers match.
-                print "File %s, line %d\n  Invalid syntax after conversion:" % (filename, e.lineno)
-                print ''.join(['  %s%d: %s\n' % ('>' if ln + 1 == e.lineno else ' ',
+                print("File %s, line %d\n  Invalid syntax after conversion:" % (filename, e.lineno))
+                print(''.join(['  %s%d: %s\n' % ('>' if ln + 1 == e.lineno else ' ',
                                                  ln + 1, text_lines[ln])
                                for ln in range(max(0, e.lineno - 6),
-                                               min(e.lineno + 2, len(text_lines) - 1))])
+                                               min(e.lineno + 2, len(text_lines) - 1))]))
                 sys.exit(1)
             else:
                 # print ''.join(['%d: %s' % (ln, lines[ln]) for ln in range(len(lines))])

@@ -35,6 +35,7 @@ defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 'pytis.defs' is in resolver search path).
 
 """
+from __future__ import print_function
 
 import sys
 import os
@@ -104,7 +105,7 @@ class HelpUpdater(object):
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
-            print e
+            print(e)
             return
         description = view_spec.description()
         help_text = (view_spec.help() or '').strip() or None
@@ -164,7 +165,7 @@ class HelpUpdater(object):
         elif kind == 'EXIT':
             content = self._generate_exit_help()
         else:
-            print "Ignoring menu item of unknown type:", (fullname, spec_name)
+            print("Ignoring menu item of unknown type:", (fullname, spec_name))
             return
         self._update(self._menu_help_data, dict(fullname=fullname), content=content)
         if spec_name and kind != 'handle' and spec_name not in ('ui', 'export'):
@@ -175,7 +176,7 @@ class HelpUpdater(object):
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
-            print e
+            print(e)
             title = spec_name
         else:
             title = view_spec.title()
@@ -195,11 +196,11 @@ class HelpUpdater(object):
             try:
                 bspec = resolver.get(mainname, 'binding_spec')
             except pytis.util.ResolverError as e:
-                print e
+                print(e)
                 return None
             if not isinstance(bspec, dict):
-                print "Can't create dual form '%s': %s.binding_spec() is not a dictionary" % \
-                    (spec_name, mainname)
+                print("Can't create dual form '%s': %s.binding_spec() is not a dictionary" % \
+                    (spec_name, mainname))
                 return None
             b = bspec[sidename]
             description = b.help() or b.description()
@@ -208,7 +209,7 @@ class HelpUpdater(object):
                     try:
                         c = resolver.get(name, 'view_spec').field(cid)
                     except pytis.util.ResolverError as e:
-                        print e
+                        print(e)
                         return cid
                     return c.label()
                 description = _("Forms are connected through the equality of values "

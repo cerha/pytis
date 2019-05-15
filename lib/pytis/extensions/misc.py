@@ -24,6 +24,7 @@ společného.  Nepracují přímo s jeho API, jen se zkrátka v defsech mohou n�
 hodit.
 
 """
+from __future__ import print_function
 
 import os
 import re
@@ -89,7 +90,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         s.close()
         return 0
     except Exception:
-        print 'ERROR: e-mail se nepodařilo odeslat'
+        print('ERROR: e-mail se nepodařilo odeslat')
         return 1
 
 

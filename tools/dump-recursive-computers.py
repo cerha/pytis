@@ -25,6 +25,7 @@ or runtime_arguments computer which depend on the field itself are reported to
 STDOUT.
 
 """
+from __future__ import print_function
 
 import sys
 import getopt
@@ -129,7 +130,7 @@ def run():
                     sys.stderr.write("Failed on specification: %s\n\n" % name)
                     sys.exit(1)
                 else:
-                    print 'ERROR: %s: %s: %r' % (name, e.__class__.__name__, e)
+                    print('ERROR: %s: %s: %r' % (name, e.__class__.__name__, e))
                     errors += 1
             processed += 1
     sys.stderr.write("Processed %d specifications with %d errors%s.\n" %

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 
 
 def _usage():
-    print 'usage: genconfig.py file'
+    print('usage: genconfig.py file')
     sys.exit(1)
 
 

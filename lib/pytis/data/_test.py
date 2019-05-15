@@ -18,6 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import print_function
 import copy
 import datetime
 import decimal
@@ -966,7 +967,7 @@ class TestFetchBuffer(object):
             start = position + ord('A')
             end = min(ord('Z') + 1, start + count)
             items = [chr(i) for i in range(start, end)]
-            print '  +', position, count, items
+            print('  +', position, count, items)
             return items
         return pd.FetchBuffer(retrieve, limit=20, initial_fetch_size=10, fetch_size=6)
 
@@ -988,7 +989,7 @@ class TestFetchBuffer(object):
 
     def test_fetch_position(self, buf):
         for position, char in ((0, 'A'), (10, 'K'), (14, 'O'), (25, 'Z'), (26, None), (-1, None)):
-            print position
+            print(position)
             assert buf.fetch(position) == char
 
     def test_skip(self, buf):
@@ -1611,9 +1612,9 @@ class DBDataDefault(_DBTest):
         for d, r in ((B, None), (F, R1), (B, None), (F, R1), (F, R2),
                      (B, R1), (F, R2), (F, None), (F, None), (B, R2), (B, R1),
                      (B, None)):
-            print d, r and r[0]
+            print(d, r and r[0])
             result = self.data.fetch(d)
-            print result and result[0].value()
+            print(result and result[0].value())
             if r:
                 assert result is not None
                 assert r == tuple(v.value() for v in result.values())
@@ -2657,7 +2658,7 @@ class TestFetchSelect(DBTest):
                 pass
 
     def _check_skip_fetch(self, d, spec, noresult=False):
-        print
+        print()
         d.select()
         n = 0
         for op, count in spec:
@@ -2667,7 +2668,7 @@ class TestFetchSelect(DBTest):
             else:
                 direction = pd.BACKWARD
                 count = -count
-            print 'fetch' if op == 'f' else 'skip', count, direction
+            print('fetch' if op == 'f' else 'skip', count, direction)
             if op == 'f':
                 for i in range(count):
                     d.fetch(direction)

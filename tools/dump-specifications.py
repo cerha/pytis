@@ -25,6 +25,7 @@ way, that allows comparing these outputs to detect changes caused by
 modifications of specification files or Pytis API changes (or both).
 
 """
+from __future__ import print_function
 
 import sys
 import re
@@ -123,8 +124,8 @@ def run():
                         ('computer', f.computer()),
                     )
                     attributes = ' '.join('%s=%s' % (k, v) for k, v in attr if v is not None)
-                    print OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes)).encode('utf-8')
-                print
+                    print(OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes)).encode('utf-8'))
+                print()
             except Exception as e:
                 if args.exit_on_error:
                     try:
@@ -137,7 +138,7 @@ def run():
                     sys.stderr.write("Failed on specification: %s\n\n" % name)
                     sys.exit(1)
                 else:
-                    print 'ERROR: %s: %s: %r' % (name, e.__class__.__name__, e)
+                    print('ERROR: %s: %s: %r' % (name, e.__class__.__name__, e))
                     errors += 1
             processed += 1
     sys.stderr.write("Processed %d specifications with %d errors%s.\n" %

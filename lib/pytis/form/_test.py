@@ -18,6 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import print_function
 import pytest
 import pytis.form.grid as grid
 import pytis.presentation as pp
@@ -159,7 +160,7 @@ class TestDataTable(DBTest):
             for n in (30, 29, 28, 27, 26, 9440, 9439, 9438, 9437, 9436,
                       50, 199, 200, 299, 220, 160, 120, 80, 40, 0,
                       4444, 0, 2453, 3890, 9499, 99, 140, 98, 30):
-                print n
+                print(n)
                 assert t.cell_value(n, 0) == str(n + 1)
         finally:
             data.close()

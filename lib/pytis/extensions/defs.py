@@ -17,9 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""Funkce pro načítání, caching, kontrolu a reporty z defsů."""
+from __future__ import print_function
 from __future__ import unicode_literals
 
-"""Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
 import pytis
 import pytis.util
@@ -138,7 +139,7 @@ def _get_default_select(spec):
     data = pytis.util.data_object(spec)
     select_count = init_select(view, data)
     if select_count:
-        print "Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,)
+        print("Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,))
         data.fetchone()
 
 
@@ -197,10 +198,10 @@ class CheckReporter(object):
         pass
 
     def info(self, message):
-        print message
+        print(message)
 
     def error(self, message):
-        print "Error:", message
+        print("Error:", message)
 
 
 class MenuChecker(object):

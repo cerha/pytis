@@ -21,6 +21,7 @@
 
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
+from __future__ import print_function
 
 import os
 import mimetypes
@@ -410,6 +411,6 @@ if __name__ == '__main__':
                     charset='UTF8',
                     smtp=smtp)
     if mail.send():
-        print "Sent ok"
+        print("Sent ok")
     else:
-        print mail.get_error_msg()
+        print(mail.get_error_msg())

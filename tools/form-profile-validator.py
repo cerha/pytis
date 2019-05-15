@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import sys
 import getopt
 import argparse
@@ -94,7 +95,7 @@ def run():
                     data_spec = resolver.get(spec_name, 'data_spec')
                     data_object = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
                 except Exception as e:
-                    print "%s: %s" % (spec_name, e)
+                    print("%s: %s" % (spec_name, e))
                     skipped += 1
                     view_spec, data_object,  error = None, None, e
                 else:
@@ -111,20 +112,20 @@ def run():
                         # Update the 'errors' column in the database table.
                         manager.save_profile(spec_name, form_name, profile)
                         for param, error in profile.errors():
-                            print ':'.join((username, spec_name, form_name, profile.id(),
-                                            ' %s: %s' % (param, error)))
+                            print(':'.join((username, spec_name, form_name, profile.id(),
+                                            ' %s: %s' % (param, error))))
                         if profile.errors():
                             total_invalid += 1
                         else:
                             total_valid += 1
                         total_processed += 1
-    print (u"Total %d profiles processed:\n"
+    print((u"Total %d profiles processed:\n"
            u"  %d valid\n"
-           u"  %d invalid") % (total_processed, total_valid, total_invalid)
+           u"  %d invalid") % (total_processed, total_valid, total_invalid))
     if skipped == 1:
-        print u"  1 specification skipped due to errors"
+        print(u"  1 specification skipped due to errors")
     elif skipped > 1:
-        print u"  %d specifications skipped due to errors" % skipped
+        print(u"  %d specifications skipped due to errors" % skipped)
 
 
 if __name__ == '__main__':
