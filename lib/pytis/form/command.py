@@ -445,7 +445,7 @@ def command_icon(command, args):
     """
     global _command_icons
     if _command_icons is None:
-        from commands_ import COMMAND_ICONS
+        from .commands_ import COMMAND_ICONS
         _command_icons = {}
         for item, icon in COMMAND_ICONS:
             if isinstance(item, tuple):

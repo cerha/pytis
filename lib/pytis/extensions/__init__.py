@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from email_ import SimpleEmail, GPGEmail, ComplexEmail  # noqa: F401
+from .email_ import SimpleEmail, GPGEmail, ComplexEmail  # noqa: F401
 
-from dbconfig import DBConfig, cfg_param  # noqa: F401
+from .dbconfig import DBConfig, cfg_param  # noqa: F401
 
-from dbutils import (  # noqa: F401
+from .dbutils import (  # noqa: F401
     dbselect, dbinsert, dbupdate, row_update, dbupdate_many, dbfunction,
     enum, is_in_groups, load_field, save_field, safe_commit, safe_rollback,
 )
 
-from misc import (  # noqa: F401
+from .misc import (  # noqa: F401
     smssend, emailsend, send_mail, UserDefaultPrinter, set_default_printer,
     cmd_set_default_printer, constraints_email, constraints_email_many,
     session_date, session_date_value, start_date, start_date_value, end_date,
@@ -33,9 +33,9 @@ from misc import (  # noqa: F401
     add_crypto_user,
 )
 
-from deftypes import StringNotNull, Price, _TreeOrder  # noqa: F401
+from .deftypes import StringNotNull, Price, _TreeOrder  # noqa: F401
 
-from spec import (  # noqa: F401
+from .spec import (  # noqa: F401
     ASC, DESC, UPCASE, LOWER, ALPHA, NUMERIC, ALPHANUMERIC, ASCII, FLOAT,
     ALWAYS, ONCE, NEVER, BROWSE_FORM, EDIT_FORM, INSERT_FORM, VIEW_FORM,
     FIELD_STYLE_DEFAULT, FIELD_STYLE_EMPHASIS, FIELD_STYLE_WARNING,
@@ -46,14 +46,14 @@ from spec import (  # noqa: F401
     mime_type_constraint,
 )
 
-from defs import (  # noqa: F401
+from .defs import (  # noqa: F401
     get_form_defs, get_menu_forms, get_menu_defs, _get_default_select,
     check_form, cmd_check_form, CheckReporter, MenuChecker, AppChecker,
     DevelChecker, check_menus_defs, cmd_check_menus_defs,
     check_access_rights, cmd_check_access_rights, cache_spec,
 )
 
-from dmp import (  # noqa: F401
+from .dmp import (  # noqa: F401
     dmp_add_member, dmp_add_action, dmp_change_rights,
     dmp_commit, dmp_import, dmp_ls, dmp_reset_rights,
     dmp_update_form, dmp_delete_menu, dmp_delete_fullname,

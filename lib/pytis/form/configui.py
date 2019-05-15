@@ -33,8 +33,8 @@ import wx
 
 from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec
 import pytis.util
-from form import PopupEditForm
-from screen import MItem
+from .form import PopupEditForm
+from .screen import MItem
 
 _ = pytis.util.translations('pytis-wx')
 

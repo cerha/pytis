@@ -53,7 +53,7 @@ from pytis.util import (
     log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates,
     UNDEFINED, Locked, xtuple,
 )
-import evaction
+from . import evaction
 
 try:
     # WeakSet was introduced in Python 2.7 and we need to support Wiking

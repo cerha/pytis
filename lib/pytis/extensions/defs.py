@@ -44,7 +44,7 @@ def get_form_defs(resolver=None, messages=None):
     """
     assert resolver is None or isinstance(resolver, Resolver), resolver
     assert messages is None or isinstance(messages, list), messages
-    from dmp import DMPMessage, add_message
+    from .dmp import DMPMessage, add_message
     specification_names = []
     if resolver is None:
         resolver = pytis.config.resolver

@@ -715,8 +715,8 @@ class Configuration(object):
         _DEFAULT_STRING = '(log.StreamLogger, (sys.stderr,), {})'
 
         def default(self):
-            import log
-            return (log.StreamLogger, (sys.stderr,), {})
+            from . import StreamLogger
+            return (StreamLogger, (sys.stderr,), {})
 
     class _Option_log_exclude(Option):
         u"""Seznam typů logovacích hlášek, které mají být odfiltrovány.
@@ -731,8 +731,8 @@ class Configuration(object):
             if self._configuration.debug:
                 return []
             else:
-                import log
-                return [log.DEBUG]
+                from . import DEBUG
+                return [DEBUG]
 
     class _Option_log_one_line_preferred(BooleanOption):
         u"""Určuje, zda je preferováno stručné nebo jednotné formátování.

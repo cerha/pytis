@@ -23,8 +23,8 @@ applications to access pytis system data through the user interface.
 
 """
 
-import menu  # noqa: F401
-import printing  # noqa: F401
-import profiles  # noqa: F401
-import statistics  # noqa: F401
-import logging  # noqa: F401
+from . import menu  # noqa: F401
+from . import printing  # noqa: F401
+from . import profiles  # noqa: F401
+from . import statistics  # noqa: F401
+from . import logging  # noqa: F401

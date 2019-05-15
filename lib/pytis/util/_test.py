@@ -23,8 +23,8 @@ import operator
 import StringIO
 import unittest
 
-import util
-import caching
+from . import util
+from . import caching
 
 
 ###########
@@ -452,7 +452,7 @@ class Caching(unittest.TestCase):
 class Resolver(unittest.TestCase):
 
     def test_resolver(self):
-        from resolver import Resolver
+        from .resolver import Resolver
         import pytis.presentation
         r = Resolver(search=('pytis', 'pytis.defs.profiles'))
         view = r.get('cms.Languages', 'view_spec')

@@ -40,9 +40,9 @@ import psycopg2.extras
 import pytis
 from pytis.util import log, translations, Locked, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, Range, RestrictedData
-from dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
+from .dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
                     DBLoginException, DBRetryException, DBSystemException, DBUserException)
-from postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction,
+from .postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction,
                         DBPostgreSQLTransaction, PostgreSQLAccessor, PostgreSQLResult,
                         PostgreSQLNotifier, PostgreSQLUserGroups, PostgreSQLConnector)
 

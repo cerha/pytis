@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from util import (  # noqa: F401
+from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
     FileError, NotImplementedException, Counter, Pipe, Popen, Tmpdir,
     TemporaryDirectory, TemporaryFile, Stack, XStack, Attribute, Structure,
@@ -36,23 +36,23 @@ from util import (  # noqa: F401
     translation_path, translations, translate, on_windows, data_object
 )
 
-from caching import (  # noqa: F401
+from .caching import (  # noqa: F401
     SimpleCache, LimitedCache, RangeCache,
 )
 
-from log import (  # noqa: F401
+from .log import (  # noqa: F401
     OPERATIONAL, ACTION, EVENT, DEBUG, Logger, StreamLogger, SyslogLogger,
     LoggingInterface, log,
 )
 
-from resolver import (  # noqa: F401
+from .resolver import (  # noqa: F401
     ResolverError, Resolver, resolver,
 )
 
-from configuration import (  # noqa: F401
+from .configuration import (  # noqa: F401
     Configuration, set_configuration_file,
 )
 
-from debug import (  # noqa: F401
+from .debug import (  # noqa: F401
     Rdb, rdb,
 )

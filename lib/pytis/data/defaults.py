@@ -24,7 +24,7 @@ the corresponding source file.
 
 """
 
-from dbapi import (  # noqa: F401
+from .dbapi import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,
     default_access_groups, reload_session_variables,
 )

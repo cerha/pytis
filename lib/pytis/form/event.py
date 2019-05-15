@@ -396,7 +396,7 @@ def interrupt_watcher():
         interrupt_init(_watcher_thread_ident_=thread.get_ident())
         lock.release()
         last_event = None
-        import application
+        from . import application
         import time
         while application._application is not None:
             time.sleep(0.1)

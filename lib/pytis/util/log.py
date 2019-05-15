@@ -55,8 +55,8 @@ import string
 import sys
 import time
 
-from util import ProgramError, deepstr, positive_id, some
 import pytis
+from .util import ProgramError, deepstr, positive_id, some
 
 OPERATIONAL = 'OPR'
 """Provozní hláška, související se stavem systému."""

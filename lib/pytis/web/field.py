@@ -246,7 +246,7 @@ class Field(object):
 
     def __init__(self, row, spec, form, uri_provider, multirow=False):
         """Don't use directly - use 'Field.create()'."""
-        from form import ShowForm
+        from .form import ShowForm
         fid = spec.id()
         t = row.type(fid)
         self._html_id = "f%x" % pytis.util.positive_id(self)

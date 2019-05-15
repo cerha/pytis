@@ -48,7 +48,7 @@ import binascii
 import pytis.util
 import pytis.presentation as pp
 import pytis.data as pd
-import cms
+from . import cms
 
 
 class Specification(wiking.Specification):

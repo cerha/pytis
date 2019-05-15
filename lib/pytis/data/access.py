@@ -33,8 +33,8 @@ Access rights violation is signalized exclusively using the
 
 import pytis
 from pytis.util import EVENT, log, remove_duplicates, some, translations, xtuple
-from data import Data, EQ, MemData, Row
-from types_ import sval
+from .data import Data, EQ, MemData, Row
+from .types_ import sval
 
 _ = translations('pytis-data')
 

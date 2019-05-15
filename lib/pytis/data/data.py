@@ -48,7 +48,7 @@ from pytis.util import (
     EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
     compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple,
 )
-from types_ import DateTime, Number, Type, Value, WMValue
+from .types_ import DateTime, Number, Type, Value, WMValue
 
 _ = translations('pytis-data')
 
