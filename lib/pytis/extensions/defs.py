@@ -378,7 +378,7 @@ class MenuChecker(object):
                     # referred from the database.
                     if ((len(e.args) == 3 and
                          isinstance(e.args[2], pd.ValidationError) and
-                         e.args[2][0] == u'Neplatný grafický formát')):
+                         e.args[2][0] == 'Neplatný grafický formát')):
                         row = None
                     else:
                         raise

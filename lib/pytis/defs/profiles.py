@@ -30,7 +30,7 @@ _ = pytis.util.translations('pytis-defs')
 class FormProfiles(Specification):
     public = True
     table = 'ev_pytis_form_profiles'
-    title = _(u"Profily formulářů")
+    title = _("Profily formulářů")
     fields = (
         Field('id', _("Identifier"), width=25, editable=Editable.NEVER),
         Field('title', _("Title"), width=25, editable=Editable.NEVER),
@@ -42,12 +42,12 @@ class FormProfiles(Specification):
               width=50, column_width=30, editable=Editable.NEVER),
         Field('form_name', _("Form Class"),
               width=50, column_width=30, editable=Editable.NEVER),
-        Field('profile_id', _(u"Id profilu"), width=25, editable=Editable.NEVER),
+        Field('profile_id', _("Id profilu"), width=25, editable=Editable.NEVER),
         Field('pickled_filter', editable=Editable.NEVER),
         Field('pickled_params', editable=Editable.NEVER),
         Field('dump', _("Content"), width=80, height=8, editable=Editable.NEVER),
-        Field('errors', _(u"Chyby"), width=80, height=8, editable=Editable.NEVER),
-        Field('invalid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
+        Field('errors', _("Chyby"), width=80, height=8, editable=Editable.NEVER),
+        Field('invalid', _("Neplatný"), type=pd.Boolean, virtual=True, width=1,
               computer=computer(lambda r, errors: errors is not None), editable=Editable.NEVER),
     )
     cb = CodebookSpec(display='title')
@@ -66,13 +66,13 @@ class FormProfiles(Specification):
 class FormSettings(Specification):
     public = True
     table = 'e_pytis_form_settings'
-    title = _(u"Nastavení formulářů")
+    title = _("Nastavení formulářů")
     fields = (
         Field('id', _("Identifier"), width=20, editable=Editable.NEVER),
         Field('username', _("User"), not_null=True, codebook='statistics.FormUserList',
               value_column='login', editable=Editable.NEVER),
         Field('spec_name', _("Specification Name"), width=50, editable=Editable.NEVER),
-        Field('form_name', _(u"Typ formuláře"), width=50, editable=Editable.NEVER),
+        Field('form_name', _("Typ formuláře"), width=50, editable=Editable.NEVER),
         Field('pickle', editable=Editable.NEVER),
         Field('dump', _("Content"), width=40, height=5, editable=Editable.NEVER),
     )

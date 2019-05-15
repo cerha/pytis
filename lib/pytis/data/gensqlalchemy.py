@@ -941,8 +941,8 @@ class Argument(Column):
 
 
 def _error(message, error=True):
-    prefix = (u'Error' if error else u'Warning')
-    sys.stderr.write(u'%s: %s\n' % (prefix, message,))
+    prefix = ('Error' if error else 'Warning')
+    sys.stderr.write('%s: %s\n' % (prefix, message,))
 
 
 def _warn(message):
@@ -1577,7 +1577,7 @@ class SQLObject(object):
         return class_.name
 
     def pytis_exists(self, metadata):
-        _warn(u"Can't check existence of an object of %s type: %s." %
+        _warn("Can't check existence of an object of %s type: %s." %
               (self.pytis_kind() or 'raw', self.name,))
         return True
 
@@ -3481,7 +3481,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         # since this puts argument symbols instead of argument values into the
         # argument list.
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
-        expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
+        expression = '%s(%s)' % (name, string.join(argument_list, ', '),)
         result_type = self.result_type
         if ((isinstance(result_type, Column)
              or isinstance(result_type, pytis.data.Type))):

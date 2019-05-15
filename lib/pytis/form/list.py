@@ -1902,7 +1902,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         export_encoding = pytis.config.export_encoding
         db_encoding = 'utf-8'
         try:
-            u"test".encode(export_encoding)
+            "test".encode(export_encoding)
         except Exception:
             msg = '\n'.join(_("Encoding %s not supported.", export_encoding),
                             _("Exported data will not be recoded."))

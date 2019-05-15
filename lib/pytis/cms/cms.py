@@ -399,7 +399,7 @@ class Menu(Specification):
                     resources = storage.resources()
                 except pp.AttachmentStorage.StorageError as e:
                     from pytis.form import message
-                    message(_(u"Chyba přísutu k úložišti příloh: %s") % e, beep_=True)
+                    message(_("Chyba přísutu k úložišti příloh: %s") % e, beep_=True)
                     resources = ()
             else:
                 resources = ()

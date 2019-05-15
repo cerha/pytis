@@ -23,8 +23,8 @@ class CPytisCryptoNames(Base_LogSQLTable):
     name = 'c_pytis_crypto_names'
     schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('name', pytis.data.String(not_null=False),
-                                label=_(u"Šifrovací oblast")),
-              sql.Column('description', pytis.data.String(not_null=False), label=_(u"Popis")),
+                                label=_("Šifrovací oblast")),
+              sql.Column('description', pytis.data.String(not_null=False), label=_("Popis")),
               )
     inherits = (XChanges,)
     with_oids = True
@@ -37,12 +37,12 @@ class EPytisCryptoKeys(Base_LogSQLTable):
     name = 'e_pytis_crypto_keys'
     schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('key_id', pytis.data.Serial()),
-              sql.Column('name', pytis.data.String(not_null=True), label=_(u"Šifrovací oblast"),
+              sql.Column('name', pytis.data.String(not_null=True), label=_("Šifrovací oblast"),
                          references=sql.a(sql.r.CPytisCryptoNames.name, onupdate='CASCADE')),
-              sql.Column('username', pytis.data.String(not_null=True), label=_(u"Uživatel"),
+              sql.Column('username', pytis.data.String(not_null=True), label=_("Uživatel"),
                          doc="Arbitrary user identifier."),
               sql.Column('key', pytis.data.Binary(not_null=True)),
-              sql.Column('fresh', pytis.data.Boolean(not_null=True), label=_(u"Nový"),
+              sql.Column('fresh', pytis.data.Boolean(not_null=True), label=_("Nový"),
                          doc="Flag indicating the key is encrypted by a non-login password. ",
                          default=False),
               )
