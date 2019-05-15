@@ -35,6 +35,7 @@ import collections
 import copy
 import os
 import re
+import io
 
 import lcg
 from lcg import Unit, UPoint, Color, UPercent
@@ -979,9 +980,7 @@ class Image(_Mark):
                     # (necessary for reportlab in PDFExporter)
                     # but we also need to satisfy assert in the
                     # contructor of lcg.export.pdf.Image
-                    import StringIO
-
-                    class _StringIO(StringIO.StringIO, lcg.Image):
+                    class _StringIO(io.StringIO, lcg.Image):
 
                         def src_file(self):
                             return self

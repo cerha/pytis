@@ -24,7 +24,7 @@ import datetime
 import decimal
 import string
 import time
-import StringIO
+import io
 
 import pytest
 import unittest
@@ -550,7 +550,7 @@ class Image(_TypeCheck):
 
     def test_validation(self):
         self._test_validity(None, self._icon, self._icon)
-        self._test_validity(None, StringIO.StringIO(self._icon), self._icon)
+        self._test_validity(None, io.StringIO(self._icon), self._icon)
         self._test_validity(pd.Image(minsize=(100, 100)), self._icon, None)
         self._test_validity(pd.Image(maxsize=(10, 10)), self._icon, None)
 

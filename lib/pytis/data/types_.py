@@ -41,7 +41,7 @@ import datetime
 import decimal
 import re
 import string
-import cStringIO
+import io
 import thread
 import time
 
@@ -2594,7 +2594,7 @@ class Image(Binary, Big):
             super(Image.Data, self).__init__(*args, **kwargs)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
-            f = cStringIO.StringIO(self)
+            f = io.StringIO(self)
             try:
                 image = PIL.Image.open(f)
             except IOError:

@@ -40,6 +40,7 @@ import re
 import string
 import types
 import weakref
+import io
 
 import pytis.data
 
@@ -4725,20 +4726,18 @@ class DbAttachmentStorage(AttachmentStorage):
 
     def _image(self, filedata):
         import PIL.Image
-        import cStringIO
         try:
-            image = PIL.Image.open(cStringIO.StringIO(filedata))
+            image = PIL.Image.open(io.StringIO(filedata))
         except IOError:
             image = None
         return image
 
     def _computed_row_values(self, image, has_thumbnail=False,
                              image_size=(1024, 800), thumbnail_size=(200, 200), **values):
-        import cStringIO
         row_values = {}
         for size, column in ((image_size, 'resized'), (thumbnail_size, 'thumbnail')):
             if has_thumbnail:
-                stream = cStringIO.StringIO()
+                stream = io.StringIO()
                 resized_image = self._resized_image(image, size)
                 image.save(stream, image.format)
                 buffer_value = buffer(stream.getvalue())
@@ -4806,8 +4805,7 @@ class DbAttachmentStorage(AttachmentStorage):
     def retrieve(self, filename, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
-            import cStringIO
-            return cStringIO.StringIO(row['file'].value())
+            return io.StringIO(row['file'].value())
         else:
             return None
 

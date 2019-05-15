@@ -28,7 +28,7 @@ The actual class representing each field is determined by its specification and 
 """
 
 import collections
-from cStringIO import StringIO
+import io
 import datetime
 import os
 import re
@@ -2133,7 +2133,7 @@ class ImageField(FileField):
             import PIL.Image
             img = self._value.image().copy()
             img.thumbnail((self.width(), self.height()), PIL.Image.ANTIALIAS)
-            stream = StringIO()
+            stream = io.StringIO()
             img.save(stream, 'PNG')
             stream.seek(0)
             return wx.Bitmap(wx.Image(stream, type=wx.BITMAP_TYPE_PNG))

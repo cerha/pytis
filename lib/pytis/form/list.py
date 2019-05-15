@@ -33,7 +33,7 @@ wxWidgets.
 
 import collections
 import copy
-import cStringIO
+import io
 import datetime
 import functools
 import string
@@ -1922,7 +1922,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
             # to prevent numerous rpc calls in case of remote export.
-            csv_buffer = cStringIO.StringIO()
+            csv_buffer = io.StringIO()
             for i, column in enumerate(self._columns):
                 if i > 0:
                     csv_buffer.write('\t')

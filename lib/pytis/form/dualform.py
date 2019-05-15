@@ -28,7 +28,7 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 import copy
 import re
 import wx
-import cStringIO
+import io
 import fitz
 
 import pytis.data
@@ -1041,7 +1041,7 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             content = self._get_content(row)
             if content and not hasattr(content, 'read') and not isinstance(content, fitz.Document):
-                content = cStringIO.StringIO(content)
+                content = io.StringIO(content)
             self.load_file(content)
 
     def _init_attributes(self, main_form, **kwargs):

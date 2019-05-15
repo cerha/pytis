@@ -47,7 +47,7 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 import copy
 import re
 import string
-import StringIO
+import io
 import lcg
 
 from lcg import UMm
@@ -417,7 +417,7 @@ class LCGFormatter(object):
         style, __ = self._resolve(template_id, 'style', default=None)
         if style:
             style_parser = lcg.StyleFile()
-            style_parser.read(StringIO.StringIO(style))  # doesn't work with cStringIO
+            style_parser.read(io.StringIO(style))  # doesn't work with cStringIO
             self._style = style_parser.presentations()
         else:
             self._style = None

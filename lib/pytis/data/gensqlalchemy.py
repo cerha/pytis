@@ -75,7 +75,7 @@ import codecs
 import collections
 from contextlib import contextmanager
 import copy
-import cStringIO
+import io
 import imp
 import inspect
 import os
@@ -4083,7 +4083,7 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         if alembic is None:
             _error("`alembic' package missing, can't perform upgrade.")
             return
-        _output = cStringIO.StringIO()
+        _output = io.StringIO()
     else:
         _output = sys.stdout
         if not hasattr(_output, 'encoding') or _output.encoding is None:
@@ -4428,7 +4428,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
 def capture(function, *args, **kwargs):
     """Capture the output of given gsql function (meant for gsql_module or gsql_file)."""
     stdout = sys.stdout
-    sys.stdout = cStringIO.StringIO()
+    sys.stdout = io.StringIO()
     function(*args, **kwargs)
     result = sys.stdout.getvalue()
     sys.stdout = stdout

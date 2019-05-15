@@ -20,7 +20,7 @@
 
 
 import operator
-import StringIO
+import io
 import unittest
 
 from . import util
@@ -64,7 +64,7 @@ class Pipe(unittest.TestCase):
         self.assertIsNone(r)
 
     def test_cc(self):
-        s = StringIO.StringIO()
+        s = io.StringIO()
         p = util.Pipe(cc=s)
         p.write('foo')
         p.write('bar')
@@ -79,8 +79,8 @@ class Pipe(unittest.TestCase):
         self.assertIsNone(r)
 
     def test_multi_cc(self):
-        s = StringIO.StringIO()
-        s1 = StringIO.StringIO()
+        s = io.StringIO()
+        s1 = io.StringIO()
         p = util.Pipe(cc=[s, s1])
         p.write('foo')
         p.write('bar')
@@ -306,10 +306,10 @@ class CopyStream(unittest.TestCase):
 
     def test_it(self):
         value = 'abc' + 'x' * 10000
-        import StringIO
-        input = StringIO.StringIO(value)
+        import io
+        input = io.StringIO(value)
         input.seek(0)
-        output = StringIO.StringIO(value)
+        output = io.StringIO(value)
         util.copy_stream(input, output)
         self.assertEqual(output.getvalue(), value)
 
