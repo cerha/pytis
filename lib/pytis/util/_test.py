@@ -350,27 +350,6 @@ class FindUtils(unittest.TestCase):
             util.ecase(0, *settings)
 
 
-class NonLocalTransfers(unittest.TestCase):
-
-    def _function(self, arg):
-        if arg == 'foo':
-            return 1
-        elif arg == 'bar':
-            util.throw('foobar', 2)
-        else:
-            util.throw('foobar')
-
-    def test_basic(self):
-        self.assertEqual(util.catch('foobar', self._function, 'foo'), 1)
-        self.assertEqual(util.catch('foobar', self._function, 'bar'), 2)
-        self.assertIsNone(util.catch('foobar', self._function, 'foobar'))
-
-    def test_tags(self):
-        with self.assertRaises(util._Throw):
-            util.catch('foo', self._function, 'foobar')
-        util.catch('foobar', util.catch, 'foo', self._function, 'bar')
-
-
 class DevNullStream(unittest.TestCase):
 
     def test_read(self):
