@@ -726,7 +726,7 @@ class Table(_Mark):
         """
         super(Table, self).__init__()
         assert not some(lambda c: c not in ('vmargin',), kwargs.keys())
-        assert isinstance(columns, (tuple, list,))
+        assert isinstance(columns, (tuple, list))
         vmargin = kwargs.get('vmargin')
         assert vmargin in (None, 0)
         if len(columns) > 26:

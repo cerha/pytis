@@ -358,7 +358,7 @@ class DatabaseResolver(Resolver):
         """
         super(DatabaseResolver, self).__init__()
         assert isinstance(table, basestring), table
-        assert isinstance(result_columns, (tuple, list,)), result_columns
+        assert isinstance(result_columns, (tuple, list)), result_columns
         self._result_columns = result_columns
         self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
                                         pytis.config.dbconnection)
@@ -441,7 +441,7 @@ class OutputResolver(Resolver):
             dávajících po spojení jednoznačný string
 
         """
-        if isinstance(name, (tuple, list,)):
+        if isinstance(name, (tuple, list)):
             name = string.join(name, '/')
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 

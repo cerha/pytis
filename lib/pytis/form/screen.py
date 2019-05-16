@@ -945,7 +945,7 @@ class Menu(_TitledMenuObject):
           allow_autoindex -- allow automatic keyboard access index numbers on this menu
 
         """
-        assert isinstance(items, (tuple, list,))
+        assert isinstance(items, (tuple, list))
         if __debug__:
             for i in items:
                 # Empty tuple is possible for items like 'recent_forms_menu' by generating help
@@ -1088,7 +1088,7 @@ class MItem(_TitledMenuObject):
         """
         if isinstance(command, basestring):
             command, args = pytis.form.custom_command(command)
-        elif isinstance(command, (tuple, list,)):
+        elif isinstance(command, (tuple, list)):
             assert len(command) == 2, command
             assert args is None, args
             command, args = command

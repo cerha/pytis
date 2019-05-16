@@ -533,7 +533,7 @@ class OperationDialog(Message):
                                          title=title, icon=self.ICON_TIP,
                                          buttons=(), default=None)
         assert isinstance(function, collections.Callable)
-        assert isinstance(args, (tuple, list,))
+        assert isinstance(args, (tuple, list))
         assert isinstance(kwargs, dict)
         self._function = function
         self._args = args

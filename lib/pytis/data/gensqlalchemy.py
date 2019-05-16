@@ -214,7 +214,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
         search_path = function.search_path()
         with local_search_path(self._set_search_path(search_path)):
             _rename_replaced_function(self, function, True)
-            if isinstance(function.result_type, (tuple, list,)):
+            if isinstance(function.result_type, (tuple, list)):
                 self.make_type('t_' + function.pytis_name() + suffix, function.result_type)
             query_prefix, query_suffix = \
                 function._pytis_header_footer(result_type=result_type, search_path=search_path,
@@ -243,7 +243,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 body = body.strip()
                 command = query_prefix + body + query_suffix
                 self.connection.execute(command)
-            elif isinstance(body, (tuple, list,)):
+            elif isinstance(body, (tuple, list)):
                 n = len(body)
                 for i in range(n):
                     query = body[i]
@@ -286,7 +286,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_trigger(self, trigger, create_ok=False):
         for search_path in _expand_schemas(trigger):
             with local_search_path(self._set_search_path(search_path)):
-                if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
+                if isinstance(trigger, (SQLPlFunction, SQLPyFunction)):
                     trigger._DB_OBJECT = 'FUNCTION'  # hack for comments
                     try:
                         self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
@@ -763,7 +763,7 @@ class Column(pytis.data.ColumnSpec):
         assert unique is None or isinstance(unique, bool), unique
         assert check is None or isinstance(check, basestring), check
         assert isinstance(primary_key, bool), primary_key
-        assert isinstance(index, (bool, dict,)), index
+        assert isinstance(index, (bool, dict)), index
         assert isinstance(out, bool), out
         assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
             original_column
@@ -830,7 +830,7 @@ class Column(pytis.data.ColumnSpec):
             r_args = references.args()
             kwargs = copy.copy(references.kwargs())
             if isinstance(r_args[0], (ReferenceLookup.Reference, ReferenceLookup.ColumnLookup,
-                                      _Reference,)):
+                                      _Reference)):
                 dereference = r_args[0].get()
                 if dereference is None:
                     kwargs['use_alter'] = True
@@ -860,7 +860,7 @@ class Column(pytis.data.ColumnSpec):
         else:
             index = False
         default = self._default
-        if isinstance(default, (bool, float, int,)):
+        if isinstance(default, (bool, float, int)):
             default = sqlalchemy.text(repr(default))
         autoincrement = isinstance(alchemy_type, (SERIAL, BIGSERIAL))
         column = sqlalchemy.Column(self.id(), alchemy_type, *args,
@@ -954,7 +954,7 @@ _current_search_path = None
 
 @contextmanager
 def local_search_path(search_path):
-    assert isinstance(search_path, (tuple, list,)), search_path
+    assert isinstance(search_path, (tuple, list)), search_path
     global _current_search_path
     orig_search_path = _current_search_path
     _current_search_path = search_path
@@ -2652,7 +2652,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     def _create_triggers(self):
         for t in self.triggers:
-            if not isinstance(t, (tuple, list,)):
+            if not isinstance(t, (tuple, list)):
                 t = (t,)
             trigger = t[0]
 
@@ -2675,7 +2675,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         groups = set([group for right, group in self.access_rights
                       if right.lower() in ('insert', 'all')])
         for c in self.c:
-            if isinstance(c.type, (SERIAL, BIGSERIAL,)) and not c.info.get('inherited'):
+            if isinstance(c.type, (SERIAL, BIGSERIAL)) and not c.info.get('inherited'):
                 for g in groups:
                     cname = c.name
                     command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP %s' %
@@ -2905,7 +2905,7 @@ class _SQLQuery(SQLObject):
             elif isinstance(o, sqlalchemy.sql.ClauseElement):
                 objects += o.get_children()
                 seen.append(o)
-            elif isinstance(o, (tuple, list,)):
+            elif isinstance(o, (tuple, list)):
                 objects += list(o)
             elif not isinstance(o, (RawCondition, basestring,)):
                 raise SQLException("Unknown condition element", o)
@@ -3033,7 +3033,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
         def columns(t):
             if isinstance(t, _SQLTabular):
                 columns = t.c
-            elif isinstance(t, (tuple, list,)):
+            elif isinstance(t, (tuple, list)):
                 columns = t
             else:
                 raise Exception("Program error", t)
@@ -3327,7 +3327,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             elif result_type == cls.RECORD:
                 columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
                                  for c in cls.arguments if c.out()])
-            elif isinstance(result_type, (tuple, list,)):
+            elif isinstance(result_type, (tuple, list)):
                 columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
                                  for c in result_type])
             elif isinstance(result_type, Column):
@@ -3351,7 +3351,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             columns = ()
         elif result_type == class_.RECORD:
             columns = tuple([c for c in class_.arguments if c.out()])
-        elif isinstance(result_type, (tuple, list,)):
+        elif isinstance(result_type, (tuple, list)):
             columns = tuple(result_type)
         elif isinstance(result_type, Column):
             columns = (result_type,)
@@ -3383,7 +3383,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             self.add_is_dependent_on(object_by_class(self.replaces, self._search_path))
         result_type = self.result_type
         if ((result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,)
-             and not isinstance(result_type, (tuple, list, Column, pytis.data.Type,))
+             and not isinstance(result_type, (tuple, list, Column, pytis.data.Type))
              and result_type != SQLFunctional.RECORD)):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
         for a in self.arguments:
@@ -3483,8 +3483,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
         expression = '%s(%s)' % (name, string.join(argument_list, ', '),)
         result_type = self.result_type
-        if ((isinstance(result_type, Column)
-             or isinstance(result_type, pytis.data.Type))):
+        if isinstance(result_type, (Column, pytis.data.Type)):
             return sqlalchemy.sql.expression.literal_column(expression,
                                                             type_=result_type.sqlalchemy_type())
         else:
@@ -3515,7 +3514,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                 result_type = 'RECORD'
             elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
                 result_type = 'trigger'
-            elif isinstance(function_type, (tuple, list,)):
+            elif isinstance(function_type, (tuple, list)):
                 result_type = 't_' + self.pytis_name()
             elif isinstance(function_type, Column):
                 c = function_type.sqlalchemy_column(search_path, None, None, None)

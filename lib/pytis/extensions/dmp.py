@@ -859,7 +859,7 @@ class DMPRights(DMPObject):
                 columns = item[0]
                 if isinstance(columns, basestring):
                     columns = (columns,)
-                if not isinstance(columns, (list, tuple,)):
+                if not isinstance(columns, (list, tuple)):
                     continue
                 columns = [c for c in columns if isinstance(c, basestring)]
                 for groups_permissions in item[1:]:
@@ -868,7 +868,7 @@ class DMPRights(DMPObject):
                             explicit_columns[p] = explicit_columns.get(p, []) + [c]
             for item in access_specification:
                 columns = item[0]
-                if not isinstance(columns, (list, tuple,)):
+                if not isinstance(columns, (list, tuple)):
                     columns = [columns]
                 for groups_permissions in item[1:]:
                     groups = groups_permissions[0]

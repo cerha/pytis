@@ -1864,7 +1864,7 @@ class RecordForm(LookupForm):
                 self._on_closed_connection()
                 return False, None, None
             if result is not None:
-                if isinstance(result, (tuple, list,)):
+                if isinstance(result, (tuple, list)):
                     # ViewSpec.check may return a pair (field_id, message).
                     field_id, msg = result
                 elif result in fields:

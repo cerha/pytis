@@ -617,7 +617,7 @@ class HtmlField(MultilineField):
 
     def _format(self, context):
         exported = self._value().export()
-        escape = not isinstance(exported, (lcg.HtmlEscapedUnicode, lcg.Concatenation,))
+        escape = not isinstance(exported, (lcg.HtmlEscapedUnicode, lcg.Concatenation))
         return lcg.HtmlEscapedUnicode(context.localize(exported), escape=escape)
 
     def _editor(self, context, **kwargs):

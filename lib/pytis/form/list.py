@@ -2909,7 +2909,7 @@ class BrowseForm(FoldableForm):
                 items.append(MItem(x.title(raw=True), command=cmd, help=x.descr()))
             elif isinstance(x, ActionGroup):
                 items.append(Menu(x.title(), self._action_mitems(x.items())))
-            elif isinstance(x, (types.TupleType, types.ListType)):
+            elif isinstance(x, (tuple, list)):
                 if items:
                     items.append(MSeparator())
                 items.extend(self._action_mitems(x))

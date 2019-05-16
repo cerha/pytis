@@ -289,7 +289,7 @@ class ListUtils(unittest.TestCase):
 
     def test_flatten(self):
         def assertEqualListOrTuple(actual, expected):
-            assert isinstance(expected, (list, tuple,)), "Test logic error"
+            assert isinstance(expected, (list, tuple)), "Test logic error"
             self.assertIsInstance(actual, (list, tuple,))
             self.assertSequenceEqual(actual, expected)
         assertEqualListOrTuple(util.flatten([]), [])

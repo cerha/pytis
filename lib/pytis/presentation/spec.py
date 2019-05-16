@@ -1677,7 +1677,7 @@ class ViewSpec(object):
                 singular = title
         else:
             assert isinstance(singular, basestring)
-        assert isinstance(fields, (tuple, list,)), fields
+        assert isinstance(fields, (tuple, list)), fields
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name

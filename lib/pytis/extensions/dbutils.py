@@ -67,12 +67,11 @@ def dbinsert(spec, row, transaction=None):
     Vrací počet vložených řádků.
 
     """
+    assert isinstance(row, (pd.Row, tuple, list)), row
     import pytis.form
-    assert isinstance(row, pd.Row) or isinstance(row, (tuple, list,)), \
-        ("Argument must be a sequence or Row instance.", row)
-    if isinstance(row, (tuple, list,)):
+    if isinstance(row, (tuple, list)):
         for item in row:
-            if not isinstance(item, (tuple, list,)) or len(item) != 2:
+            if not isinstance(item, (tuple, list)) or len(item) != 2:
                 errmsg = 'Column definition must be (ID, VALUE) pair.'
                 raise ProgramError(errmsg)
             k, v = item
@@ -104,7 +103,7 @@ def dbupdate(row, values=(), transaction=None):
     data = row.data()
     updaterow = row.row()
     key = data.key()
-    if isinstance(key, (tuple, list,)):
+    if isinstance(key, (tuple, list)):
         key = key[0]
     for col, val in values:
         updaterow[col] = val

@@ -554,7 +554,7 @@ class SFDialog(SFSDialog):
         v = self._row[col.id()].export()
         if isinstance(col.type(), pytis.data.Range):
             v = ' - '.join(v)
-        elif isinstance(v, (tuple, list,)):
+        elif isinstance(v, (tuple, list)):
             v = v[0]
         wval.SetValue(v)
 

@@ -1114,7 +1114,7 @@ def direct_public_members(obj):
     jejichž název nezačíná podtržítkem.
 
     """
-    if isinstance(obj, (pytypes.ClassType, type,)):
+    if isinstance(obj, (pytypes.ClassType, type)):
         cls = obj
     else:
         cls = obj.__class__

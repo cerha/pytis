@@ -228,7 +228,7 @@ class Type(object):
         assert isinstance(not_null, bool), not_null
         assert isinstance(unique, bool), unique
         assert enumerator is None or isinstance(enumerator, Enumerator), enumerator
-        assert isinstance(constraints, (list, tuple,)), constraints
+        assert isinstance(constraints, (list, tuple)), constraints
         assert validation_messages is None or isinstance(validation_messages, dict), \
             validation_messages
         self._not_null = not_null
@@ -876,7 +876,7 @@ class Range(Type):
     def adjust_value(self, value):
         if value is None:
             return None
-        if not isinstance(value, (Range.Range, tuple, list,)):
+        if not isinstance(value, (Range.Range, tuple, list)):
             raise TypeError("Value not a range", value)
         adjust = self.base_type().adjust_value
         adjusted = [adjust(v) for v in value]
@@ -1555,7 +1555,7 @@ class FullTextIndex(String):
     """
 
     def _init(self, columns=(), **kwargs):
-        assert isinstance(columns, (list, tuple,)), ("Invalid argument type", columns,)
+        assert isinstance(columns, (list, tuple)), ("Invalid argument type", columns,)
         super(FullTextIndex, self)._init(**kwargs)
         self._columns = columns
 
@@ -3451,7 +3451,7 @@ def fval(value, digits=None, precision=None):
         constructor
 
     """
-    assert value is None or isinstance(value, (float, decimal.Decimal,)), value
+    assert value is None or isinstance(value, (float, decimal.Decimal)), value
     if isinstance(value, decimal.Decimal) and digits is None and precision is None:
         precision = max(-value.as_tuple().exponent, 0)
     return Value(Float(digits=digits, precision=precision), value)

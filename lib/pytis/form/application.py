@@ -138,9 +138,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._login_success = False
         keymap = self.keymap = Keymap()
         custom_keymap = self._specification.keymap()
-        assert isinstance(custom_keymap, (tuple, list,)), custom_keymap
+        assert isinstance(custom_keymap, (tuple, list)), custom_keymap
         for key, cmd in pytis.form.DEFAULT_KEYMAP + custom_keymap:
-            if isinstance(cmd, (list, tuple,)):
+            if isinstance(cmd, (list, tuple)):
                 cmd, args = cmd
             else:
                 args = {}

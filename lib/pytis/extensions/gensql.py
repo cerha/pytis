@@ -365,7 +365,7 @@ class Column(pytis.data.ColumnSpec):
                 assert not error, (default, error,)
         assert isinstance(references, (types.NoneType, SQLTable, ColumnInfo, Reference)), references
         assert isinstance(key, bool), key
-        assert isinstance(index, (bool, dict,)), index
+        assert isinstance(index, (bool, dict)), index
         if __debug__:
             if isinstance(index, dict):
                 for k in index.keys():

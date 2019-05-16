@@ -446,7 +446,7 @@ class LCGFormatter(object):
         self._body_parameters = parameters
         if ((not isinstance(body, pytis.output.Document) and
              body and
-             not (isinstance(body, (tuple, list,)) and body and
+             not (isinstance(body, (tuple, list)) and body and
                   isinstance(body[0], pytis.output.Document)))):
             body.lcg()  # to generate parameters
             body = pytis.output.Document(body, **parameters)
@@ -461,7 +461,7 @@ class LCGFormatter(object):
                 body_list = [body]
             else:
                 body_list = body
-            if isinstance(body_list, (tuple, list,)):
+            if isinstance(body_list, (tuple, list)):
                 for document in body_list:
                     for k, v in parameters.items():
                         name = 'arg_' + k
@@ -714,7 +714,7 @@ class PrintSpecification(object):
         self._parameters = dict(parameters)
 
     def _parameter(self, name, default=None):
-        if isinstance(name, (tuple, list,)):
+        if isinstance(name, (tuple, list)):
             name = string.join(name, '/')
         return self._parameters.get(name, default)
 

@@ -962,7 +962,7 @@ class MemData(Data):
             self.insert(row)
 
     def _mem_find_index(self, key):
-        if isinstance(key, (tuple, list,)):
+        if isinstance(key, (tuple, list)):
             key = key[0]
         data = self._mem_data
         k = self.key()[0].id()
@@ -1502,7 +1502,7 @@ def reversed_sorting(sorting):
 
     """
     def revspec(spec):
-        if isinstance(spec, (tuple, list,)):
+        if isinstance(spec, (tuple, list)):
             id, dir = spec
         else:
             id, dir = spec, ASCENDENT
@@ -1612,13 +1612,13 @@ class Row(object):
 
         """
         if __debug__:
-            assert isinstance(data, (tuple, list,)), ("Argument must be a sequence", data)
+            assert isinstance(data, (tuple, list)), data
             for item in data:
-                assert isinstance(item, (tuple, list,)) and len(item) == 2, \
+                assert isinstance(item, (tuple, list)) and len(item) == 2, \
                     ('Column definition must be (ID, VALUE) pair', item,)
                 k, v = item
-                assert isinstance(k, basestring), ('Invalid column id', k,)
-                assert isinstance(v, Value), ('Invalid column value', v,)
+                assert isinstance(k, basestring), k
+                assert isinstance(v, Value), v
         self._set_data(list(data))
 
     def _set_data(self, data):
@@ -2181,7 +2181,7 @@ def dbtable(table, columns, connection_data, arguments=None, connection_name=Non
 
     """
     def binding(spec):
-        if isinstance(spec, (list, tuple,)):
+        if isinstance(spec, (list, tuple)):
             id, type_ = spec
         else:
             id, type_ = spec, None

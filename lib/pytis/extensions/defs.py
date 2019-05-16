@@ -315,7 +315,7 @@ class MenuChecker(object):
                                  )
                     users = dbfunction('pytis_check_codebook_rights', *arguments)
                     if users:
-                        if isinstance(users, (tuple, list,)):
+                        if isinstance(users, (tuple, list)):
                             users = [str(row[0].value()) for row in users]
                             users.sort()
                         else:

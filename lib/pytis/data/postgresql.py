@@ -1208,7 +1208,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
 
     def _pdbb_coalesce(self, ctype, value):
-        if ctype is None or isinstance(ctype, (String, Range,)) or not value:
+        if ctype is None or isinstance(ctype, (String, Range)) or not value:
             cast = ''
         elif isinstance(ctype, Float):
             cast = 'numeric'
@@ -2110,7 +2110,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert colspec, ('Column not found', colid)
             crypto_name = b.crypto_name()
             ctype = colspec.type()
-            if isinstance(ctype, (DateTime, Time,)) and value.value() is not None:
+            if isinstance(ctype, (DateTime, Time)) and value.value() is not None:
                 t = value.type()
                 if ctype.without_timezone():
                     if not t.without_timezone():
@@ -2901,7 +2901,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             type = c.type()
             if isinstance(type, (String, LTree)):
                 typid = 0
-            elif isinstance(type, (Time, DateTime,)):
+            elif isinstance(type, (Time, DateTime)):
                 typid = 2
             elif isinstance(type, TimeInterval):
                 typid = 3
