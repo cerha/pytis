@@ -55,24 +55,6 @@ from pytis.util import (
 )
 from . import evaction
 
-try:
-    # WeakSet was introduced in Python 2.7 and we need to support Wiking
-    # applications on older installations.
-    WeakSet = weakref.WeakSet
-except AttributeError:
-    class WeakSet(weakref.WeakValueDictionary):
-
-        def __init__(self):
-            weakref.WeakValueDictionary.__init__(self)
-            self._pg_counter = pytis.util.Counter()
-
-        def add(self, item):
-            self[self._pg_counter.next()] = item
-
-        def __iter__(self):
-            for v in self.values():
-                yield v
-
 _ = pytis.util.translations('pytis-data')
 
 
@@ -380,7 +362,7 @@ class PostgreSQLAccessor(object_2_5):
     class _postgresql_Connection(object):
         """Spojení do databáze.
         """
-        _connection_set = WeakSet()
+        _connection_set = weakref.WeakSet()
 
         def __init__(self, connection, connection_data):
             """
@@ -3739,7 +3721,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     REPEATABLE_READ = 'repeatable read'
 
-    _watched_transactions = WeakSet()
+    _watched_transactions = weakref.WeakSet()
     _trans_last_check = {}
     _trans_check_interval = None
 
