@@ -1813,10 +1813,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._aggregation_results[(cid, operation)] is not None
 
     def _can_cmd_export(self):
-        number_rows = self._table.number_of_rows()
-        if number_rows == 0:
+        number_of_rows = self._table.number_of_rows()
+        if number_of_rows == 0:
             problem = _("The table has no rows!")
-        elif number_rows > 100000:
+        elif number_of_rows > 100000:
             problem = _("The table has too many rows! Use a filter.")
         elif False in [self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
                        for c in self._columns]:
@@ -1917,7 +1917,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return False
         else:
             export_file = file_
-        number_rows = self._table.number_of_rows()
+        number_of_rows = self._table.number_of_rows()
 
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
@@ -1940,8 +1940,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 msg = _("Some rows are selected. Should only selected rows be exported?")
                 if run_dialog(Question, msg, False):
                     only_selected = True
-            for r in range(0, number_rows):
-                if not update(int(float(r) / number_rows * 100)):
+            for r in range(0, number_of_rows):
+                if not update(int(float(r) / number_of_rows * 100)):
                     break
                 if only_selected and not self._grid.IsInSelection(r, 0):
                     continue
@@ -2034,7 +2034,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                             col_range=None,
                                             col_fmt=_get_format(col_type)))
                 col_position = col_position + 1
-            number_rows = self._table.number_of_rows()
+            number_of_rows = self._table.number_of_rows()
             only_selected = False
             if len(self.selected_rows()) > 0:
                 msg = _("Some rows are selected. Should only selected rows be exported?")
@@ -2058,8 +2058,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     ws.write(0, position, unicode(label), bold)
             r_out = 0
-            for r in range(0, number_rows):
-                if not update(int(float(r) / number_rows * 100)):
+            for r in range(0, number_of_rows):
+                if not update(int(float(r) / number_of_rows * 100)):
                     break
                 if only_selected and not self._grid.IsInSelection(r, 0):
                     continue
