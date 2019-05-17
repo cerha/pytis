@@ -568,9 +568,7 @@ class DataEnumerator(unittest.TestCase):
         B = pd.Boolean()
         data = [pd.Row((('x', sval(x)), ('y', sval(y)), ('z', bval(z))))
                 for x, y, z in (('1', 'a', True), ('2', 'b', True), ('3', 'c', False))]
-        d = pd.DataFactory(pd.MemData,
-                                   (C('x', S), C('y', S), C('z', B)),
-                                   data=data)
+        d = pd.DataFactory(pd.MemData, (C('x', S), C('y', S), C('z', B)), data=data)
         e1 = pd.DataEnumerator(d)
         e2 = pd.DataEnumerator(d, value_column='y')
         e3 = pd.DataEnumerator(d, validity_column='z')
@@ -760,8 +758,7 @@ class MemData(unittest.TestCase):
                    pd.ColumnSpec('b', pd.String()),
                    pd.ColumnSpec('x', pd.Integer()),
                    pd.ColumnSpec('y', pd.Integer()))
-        data = [pd.Row([(c.id(), pd.Value(c.type(), v))
-                                for c, v in zip(columns, values)])
+        data = [pd.Row([(c.id(), pd.Value(c.type(), v)) for c, v in zip(columns, values)])
                 for values in (('a', 'Bob', 1, 10),
                                ('b', 'John', 5, 27),
                                ('c', 'Will', 3, 2),
@@ -818,10 +815,8 @@ class MemData(unittest.TestCase):
 class DataFactory(unittest.TestCase):
 
     def setUp(self):
-        c1 = self._column1 = pd.ColumnSpec('foo',
-                                                   pd.Integer())
-        c2 = self._column2 = pd.ColumnSpec('bar',
-                                                   pd.String())
+        c1 = self._column1 = pd.ColumnSpec('foo', pd.Integer())
+        c2 = self._column2 = pd.ColumnSpec('bar', pd.String())
         self._columns = (c1, c2)
 
     def test_basic(self):
@@ -840,8 +835,7 @@ class DataFactory(unittest.TestCase):
     def test_create(self):
         columns = self._columns
         key = (columns[0],)
-        factory = pd.DataFactory(pd.Data, columns,
-                                         key=(columns[1],))
+        factory = pd.DataFactory(pd.Data, columns, key=(columns[1],))
         data = factory.create(key=key)
         self.assertEqual(data.columns(), columns)
         self.assertEqual(data.key(), key)
@@ -921,8 +915,7 @@ class DBColumnBinding(unittest.TestCase):
         self.assertEqual(b1.column(), 'id')
         self.assertIsNone(b1.related_to(), 'intruding relation')
         self.assertTrue(b1.is_hidden(), 'public column')
-        b2 = pd.DBColumnBinding('foo', 'tabulka', 'sloupec',
-                                        related_to=b1)
+        b2 = pd.DBColumnBinding('foo', 'tabulka', 'sloupec', related_to=b1)
         self.assertEqual(b2.id(), 'foo')
         self.assertEqual(b2.table(), 'tabulka')
         self.assertEqual(b2.column(), 'sloupec')
@@ -1057,13 +1050,13 @@ class TestFetchBuffer(object):
 
     def test_fetch_size(self, buf):
         assert buf.fetch(pd.FORWARD) == 'A'
-        assert len(buf) == 10 # initial_fetch_size
+        assert len(buf) == 10  # initial_fetch_size
         buf.skip(10, pd.FORWARD)
         assert buf.fetch(pd.FORWARD) == 'L'
-        assert len(buf) == 16 # initial_fetch_size + fetch_size
+        assert len(buf) == 16  # initial_fetch_size + fetch_size
         buf.skip(6, pd.FORWARD)
         assert buf.fetch(pd.FORWARD) == 'S'
-        assert len(buf) == 20 # limit
+        assert len(buf) == 20  # limit
 
 
 class _DBBaseTest(unittest.TestCase):
@@ -1658,7 +1651,7 @@ class DBDataDefault(_DBTest):
         nrows_test(pd.GT(pd.OpFunction('pow', 'id', ival(2)), ival(10)), 2)
         # ANY_OF
         nrows_test(pd.ANY_OF('popis', sval('specialni'), sval('zvlastni'),
-                                     sval('podivny'), sval(None)), 3)
+                             sval('podivny'), sval(None)), 3)
 
     def test_select_special_characters(self):
         d = self.dcosi
@@ -2080,17 +2073,17 @@ class DBDataDefault(_DBTest):
             self.assertIsNone(row['ttz'].value())
         self.assertRaises(pd.DBUserException,
                           data.insert, pd.Row((('id', key_val),
-                                                       ('dt', dttz_val), ('dttz', dt_val),
-                                                       ('t', ttz_val), ('ttz', t_val),)))
+                                               ('dt', dttz_val), ('dttz', dt_val),
+                                               ('t', ttz_val), ('ttz', t_val),)))
         data.insert(pd.Row((('id', key_val),
-                                    ('dt', dttz_val), ('dttz', dt_val),
-                                    ('t', ttz_val), ('ttz', pd.tval(None)),)))
+                            ('dt', dttz_val), ('dttz', dt_val),
+                            ('t', ttz_val), ('ttz', pd.tval(None)),)))
         check_row()
         self.assertRaises(pd.DBUserException,
                           data.update, key_val, pd.Row((('dt', dttz_val), ('dttz', dt_val),
-                                                                ('t', ttz_val), ('ttz', t_val),)))
+                                                        ('t', ttz_val), ('ttz', t_val),)))
         data.update(key_val, pd.Row((('dt', dttz_val), ('dttz', dt_val),
-                                             ('t', ttz_val), ('ttz', pd.tval(None)),)))
+                                     ('t', ttz_val), ('ttz', pd.tval(None)),)))
         check_row()
 
     def test_ranges(self):
@@ -2116,10 +2109,10 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(err)
         self.assertEqual(new_value.value(), new_value_2.value())
         rdt_value, err = pd.DateTimeRange(without_timezone=True)\
-                                   .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
+                           .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
         self.assertIsNone(err)
         data.insert(pd.Row((('x', pd.ival(2),), ('r', new_value,),
-                                    ('r2', new_value_2,), ('rdt', rdt_value,),)))
+                            ('r2', new_value_2,), ('rdt', rdt_value,),)))
         for column in ('r', 'r2',):
             for value in (new_value, new_value_2,):
                 n = data.select(pd.EQ(column, value))
@@ -2135,15 +2128,15 @@ class DBDataDefault(_DBTest):
         new_value, err = IR.validate(('40', '50',))
         self.assertIsNone(err)
         rdt_value, err = pd.DateTimeRange(without_timezone=True)\
-                                   .validate(('2014-03-01 00:00:00', '2014-03-01 00:00:02',))
+                           .validate(('2014-03-01 00:00:00', '2014-03-01 00:00:02',))
         self.assertIsNone(err)
         data.update(pd.ival(2), pd.Row((('r', new_value,), ('r2', new_value,),
-                                                        ('rdt', rdt_value,),)))
+                                        ('rdt', rdt_value,),)))
         new_value, err = IR.validate(('', '',))
         self.assertIsNone(err)
         self.assertIsNone(new_value.value())
         data.insert(pd.Row((('x', pd.ival(3),), ('r', new_value,),
-                                    ('r2', new_value,), ('rdt', new_value,),)))
+                            ('r2', new_value,), ('rdt', new_value,),)))
         row = data.row(pd.ival(3))
         self.assertIsNotNone(row)
         value = row[1].value()
@@ -2169,7 +2162,7 @@ class DBDataDefault(_DBTest):
         test_condition(2, pd.RangeOverlap('r', irange(0, 100)))
         test_condition(0, pd.RangeOverlap('r', irange(25, 35)))
         test_condition(1, pd.RangeOverlap('rdt', drange((2014, 2, 1, 0, 0, 0,),
-                                                                (2014, 4, 1, 0, 0, 0,))))
+                                                        (2014, 4, 1, 0, 0, 0,))))
         # Inclusive / non-inclusive bounds
         test_condition(0, pd.RangeOverlap('r', irange(20, 30)))
         test_condition(1, pd.RangeOverlap('r', irange(19, 30)))
@@ -2213,7 +2206,7 @@ class DBDataDefault(_DBTest):
         new_value_b, err = str_array_type.validate(('bye', 'world',))
         self.assertIsNone(err)
         data.insert(pd.Row((('x', pd.ival(2),), ('a', new_value_a,),
-                                    ('b', new_value_b,),)))
+                            ('b', new_value_b,),)))
         n = data.select(pd.EQ('a', new_value_a))
         self.assertEqual(n, 1)
         row = data.fetchone()
@@ -3092,16 +3085,14 @@ class DBFunction(_DBBaseTest):
 
     def test_int(self):
         function = pd.DBFunctionDefault('foo1', self._dconnection)
-        row = pd.Row((('arg1',
-                               pd.Integer().validate('41')[0]),
-                              ))
+        row = pd.Row((('arg1', pd.Integer().validate('41')[0]),))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 42, ('Invalid result', result))
 
     def test_string(self):
         function = pd.DBFunctionDefault('foo2', self._dconnection)
         row = pd.Row((('arg1', pd.String().validate('foo')[0]),
-                              ('arg2', pd.String().validate('bar')[0])))
+                      ('arg2', pd.String().validate('bar')[0])))
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'foobar', ('Invalid result', result))
 
@@ -3180,8 +3171,7 @@ class DBSearchPath(_DBTest):
         connection_data = copy.copy(_connection_data)
         connection_data['schemas'] = schemas
         name = 'schemas_' + string.join((schemas or ['default']), '_')
-        connection = pd.DBConnection(alternatives={name: connection_data},
-                                             **_connection_data)
+        connection = pd.DBConnection(alternatives={name: connection_data}, **_connection_data)
         B = pd.DBColumnBinding
         key = B('stat', 'cstat', 'stat')
         dstat_spec = pd.DataFactory(
@@ -3218,16 +3208,16 @@ class DBCrypto(_DBBaseTest):
         # TODO: We can't initialize DB objects from gensql as outlined below,
         # because it contains plpythonu functions and thus requires admin
         # priveleges.  We don't want to run tests with DB admin privileges...
-        #from pytis.data.gensqlalchemy import gsql_module, capture
-        #db_pytis_crypto = capture(gsql_module, 'pytis.dbdefs.db_pytis_crypto')
-        #db_pytis_crypto = db_pytis_crypto.replace("INT GENERATED BY DEFAULT AS IDENTITY", "SERIAL")
-        #self._sql_command(db_pytis_crypto)
+        # from pytis.data.gensqlalchemy import gsql_module, capture
+        # db_pytis_crypto = capture(gsql_module, 'pytis.dbdefs.db_pytis_crypto')
+        # edb_pytis_crypto = db_pytis_crypto.replace("INT GENERATED BY DEFAULT AS IDENTITY",
+        #                                            "SERIAL")
+        # self._sql_command(db_pytis_crypto)
         for q in ("insert into c_pytis_crypto_names (name) values ('test')",
                   "insert into e_pytis_crypto_keys (name, username, key) "
                   "values ('test', current_user, "
                   "pytis_crypto_store_key('somekey', 'somepassword'))",
-                  "create table cfoo (id serial, x bytea, y bytea, z bytea)",
-        ):
+                  "create table cfoo (id serial, x bytea, y bytea, z bytea)"):
             try:
                 self._sql_command(q)
             except Exception:
@@ -3349,7 +3339,7 @@ class TutorialTest(_DBBaseTest):
                        C('popis', 'cis', 'y'))
         cis_data_spec = pd.DataFactory(D, cis_columns, cis_key)
         cis_enumerator = pd.DataEnumerator(cis_data_spec, value_column='popis',
-                                                   connection_data=connection)
+                                           connection_data=connection)
         cis_data = cis_data_spec.create(connection_data=connection)
         tab_key = C('klic', 'tab', 'a')
         tab_columns = (tab_key,
@@ -3464,7 +3454,7 @@ class AccessRightsTest(_DBBaseTest):
         self.assertTrue(not a.permitted(P.VIEW, ('group4',)), 'Invalid permission')
 
 
-class _ThreadTest(): #_DBBaseTest):
+class _ThreadTest():  # _DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety
 
@@ -3560,12 +3550,10 @@ class OperatorTest(_DBBaseTest):
         _DBBaseTest.tearDown(self)
 
     def test_in(self):
-        a = pd.dbtable('a', ('a', 'b'),
-                               pd.DBConnection(**_connection_data))
+        a = pd.dbtable('a', ('a', 'b'), pd.DBConnection(**_connection_data))
         f = pd.dbtable('f', (('m', pd.Integer()), ('n', pd.Integer())),
-                               pd.DBConnection(**_connection_data),
-                               arguments=(pd.DBColumnBinding('x', '', 'x',
-                                                                     type_=pd.Integer()),))
+                       pd.DBConnection(**_connection_data),
+                       arguments=(pd.DBColumnBinding('x', '', 'x', type_=pd.Integer()),))
         for condition, values in (
             (None, ['A', 'B', 'C', 'D']),
             (pd.GT('b', pd.ival(2)), ['C', 'D']),
