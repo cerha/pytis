@@ -1900,13 +1900,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         export_encoding = pytis.config.export_encoding
-        db_encoding = 'utf-8'
         try:
             "test".encode(export_encoding)
         except Exception:
             msg = '\n'.join(_("Encoding %s not supported.", export_encoding),
-                            _("Exported data will not be recoded."))
-            export_encoding = None
+                            _("Using UTF-8 instead."))
+            export_encoding = 'utf-8'
             run_dialog(Error, msg)
         if isinstance(file_, basestring):
             try:
@@ -1919,22 +1918,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file = file_
         number_of_rows = self._table.number_of_rows()
 
+        def _format_kwargs(ctype):
+            kwargs = dict(secure=True)
+            if isinstance(ctype, pytis.data.Float):
+                kwargs['locale_format'] = False
+            return kwargs
+
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
             # to prevent numerous rpc calls in case of remote export.
-            csv_buffer = io.StringIO()
-            for i, column in enumerate(self._columns):
-                if i > 0:
-                    csv_buffer.write('\t')
-                label = column.column_label()
-                if label is None:
-                    label = column.label()
-                if export_encoding and export_encoding != db_encoding:
-                    if not isinstance(label, unicode):
-                        label = unicode(label, db_encoding)
-                    label = label.encode(export_encoding)
-                csv_buffer.write(label)
-            csv_buffer.write('\n')
+            result = '\t'.join(c.column_label() for c in self._columns) + '\n'
             only_selected = False
             if len(self.selected_rows()) > 0:
                 msg = _("Some rows are selected. Should only selected rows be exported?")
@@ -1945,24 +1938,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     break
                 if only_selected and not self._grid.IsInSelection(r, 0):
                     continue
-                i = 0
-                for cid, ctype in column_list:
-                    if i > 0:
-                        csv_buffer.write('\t')
-                    i += 1
-                    presented_row = self._table.row(r)
-                    if isinstance(ctype, pytis.data.Float):
-                        s = presented_row.format(cid, secure=True, locale_format=False)
-                    else:
-                        s = presented_row.format(cid, secure=True)
-                    field = ';'.join(s.split('\n'))
-                    if export_encoding and export_encoding != db_encoding:
-                        if not isinstance(field, unicode):
-                            field = unicode(field, db_encoding)
-                        field = field.encode(export_encoding)
-                    csv_buffer.write(field)
-                csv_buffer.write('\n')
-            export_file.write(csv_buffer.getvalue())
+                presented_row = self._table.row(r)
+                result += '\t'.join(
+                    ';'.join(presented_row.format(cid, **_format_kwargs(ctype)).splitlines())
+                    for cid, ctype in column_list
+                ) + '\n'
+
+            export_file.write(result.encode(export_encoding))
             export_file.close()
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
