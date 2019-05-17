@@ -2831,48 +2831,42 @@ class DBDataAggregated(DBDataDefault):
         if not group_only:
             for column_id in ('madatisum', 'count'):
                 column = data.find_column(column_id)
-                self.assertIsNotNone(column, ('Aggregation column not found', column_id,))
-                self.assertIsInstance(column.type(), pd.Integer)
+                assert column is not None
+                assert isinstance(column.type(), pd.Integer)
         try:
             if key is not None:
                 row = data.row(key=ival(key), columns=columns)
                 for k, v in test_result:
-                    self.assertIn(k, row, ('Missing column', k,))
-                    self.assertEqual(row[k].value(), v, ('Invalid value', v,))
+                    assert k in row
+                    assert row[k].value() == v
             elif operation is None:
                 count = data.select(columns=columns, condition=condition, sort=sort)
-                self.assertEqual(count, len(test_result),
-                                 ('Unexpected number of aggregate rows', count))
+                assert count == len(test_result)
                 for expected_result in test_result:
                     items = list(data.fetchone().items())
                     items_dict = dict(items)
                     if columns is None:
-                        self.assertTrue(len(items) == len(column_groups) + len(operations),
-                                        ('Invalid number of columns', items,))
+                        assert len(items) == len(column_groups) + len(operations)
                     else:
-                        self.assertEqual(len(items), len(columns),
-                                         ('Invalid number of columns', items,))
+                        assert len(items) == len(columns)
                     for k, v in expected_result:
-                        self.assertEqual(items_dict[k].value(), v,
-                                         ('Unexpected result', (k, v, items_dict[k].value(),),))
-                self.assertIsNone(data.fetchone(), 'Extra row')
+                        assert items_dict[k].value() == v
+                assert data.fetchone() is None
             elif isinstance(operation, tuple):
                 value = data.select_aggregate(operation, condition=condition)
-                self.assertEqual(value.value(), test_result,
-                                 ('Invalid aggregate result', value.value(),))
+                assert value.value() == test_result
             else:
                 count, row = data.select_and_aggregate(operation, condition=condition,
                                                        columns=columns)
-                self.assertEqual(count, test_result[0], ('Invalid aggregate count', count,))
+                assert count == test_result[0]
                 for k, v in row.items():
                     value = v.value()
                     if value is None:
                         continue
                     test_result = test_result[1:]
-                    self.assertTrue(test_result, ('Extra items in aggregate row', k, value,))
-                    self.assertEqual(value, test_result[0], ('Invalid aggregate value', k, value,))
-                self.assertLessEqual(len(test_result), 1,
-                                     ('Missing aggregate row item', test_result,))
+                    assert test_result
+                    assert value == test_result[0]
+                assert len(test_result) <= 1
         finally:
             data.close()
 
