@@ -1899,14 +1899,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
-        export_encoding = pytis.config.export_encoding
-        try:
-            "test".encode(export_encoding)
-        except Exception:
-            msg = '\n'.join(_("Encoding %s not supported.", export_encoding),
-                            _("Using UTF-8 instead."))
-            export_encoding = 'utf-8'
-            run_dialog(Error, msg)
         if isinstance(file_, basestring):
             try:
                 export_file = open(file_, 'w')
@@ -1943,8 +1935,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     ';'.join(presented_row.format(cid, **_format_kwargs(ctype)).splitlines())
                     for cid, ctype in column_list
                 ) + '\n'
-
-            export_file.write(result.encode(export_encoding))
+            try:
+                encoded = result.encode(config.export_encoding)
+            except (LookupError, UnicodeEncodeError) as e:
+                msg = (_("Encoding %s not supported.", config.export_encoding)
+                       if isinstance(e, LookupError) else
+                       _("Unable to encode data to %s.", config.export_encoding))
+                run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
+                encoded = result.encode('utf-8')
+            export_file.write(encoded)
             export_file.close()
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
