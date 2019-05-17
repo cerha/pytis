@@ -119,7 +119,7 @@ class _Container(_Mark):
             self.__dict__['arg_' + k] = v
         if kwargs:
             raise pytis.output.TemplateException(_("Invalid item arguments"),
-                                                 self.__class__, kwargs.keys())
+                                                 self.__class__, tuple(kwargs.keys()))
 
     def contents(self):
         """Vrať obsah odstavce zadaný v konstruktoru."""

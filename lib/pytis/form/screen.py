@@ -634,7 +634,7 @@ class Keymap:
         return None
 
     def keys(self):
-        """Vrať seznam všech platných kláves, jako tuple řetězců."""
+        """Vrať seznam všech platných kláves jako řetězců."""
         return self._keymap.keys()
 
     def __str__(self):

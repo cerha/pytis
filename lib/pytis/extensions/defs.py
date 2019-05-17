@@ -71,7 +71,7 @@ def get_menu_forms():
             head, tail = queue[0], queue[1:]
             found.append(head)
             if isinstance(head, pytis.form.Menu):
-                flatten_menus(head.items(), found, level=level + 1)
+                flatten_menus(list(head.items()), found, level=level + 1)
             result = flatten_menus(tail, found, level=level)
         else:
             result = found

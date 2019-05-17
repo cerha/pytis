@@ -66,7 +66,7 @@ class UserSetttingsManager(object):
 
     def _values(self, **kwargs):
         return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
-                for key, value in [('username', self._username)] + kwargs.items()]
+                for key, value in [('username', self._username)] + list(kwargs.items())]
 
     def _condition(self, **kwargs):
         return pytis.data.AND(*[pytis.data.EQ(key, value)

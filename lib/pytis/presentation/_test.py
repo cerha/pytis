@@ -183,7 +183,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_keys(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertItemsEqual(row.keys(), ['x', 'y'])
+        self.assertItemsEqual(list(row.keys()), ['x', 'y'])
 
     def test_resolver(self):
         row = self._row((pp.Field('x'), pp.Field('y')))

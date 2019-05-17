@@ -389,8 +389,8 @@ class PresentedRow(object):
             column.last_validated_string = None
             column.last_validation_error = None
             column.check_constraints_cache = (None, None)
-            computed_values += filter(bool, (column.editable, column.visible, column.check,
-                                             column.runtime_filter, column.runtime_arguments))
+            computed_values += list(filter(bool, (column.editable, column.visible, column.check,
+                                                  column.runtime_filter, column.runtime_arguments)))
         if prefill:
             raise KeyError(prefill.keys()[0])
         if row:

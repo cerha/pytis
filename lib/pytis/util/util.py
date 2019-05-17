@@ -711,7 +711,7 @@ class Structure (object):
             if member.mutable():
                 setattr(self, 'set_' + name,
                         lambda value, name=name: self._replace_value(name, value))
-        assert not kwargs, ("Extra initialization arguments", kwargs.keys())
+        assert not kwargs, ("Extra initialization arguments", tuple(kwargs.keys()))
 
     def _replace_value(self, name, value):
         setattr(self, name, lambda value=value: value)
@@ -1068,11 +1068,8 @@ def public_attributes(class_):
         return _public_attributes[class_]
     except KeyError:
         pass
-    attrs = map(dir, _mro(class_))
-    att = functools.reduce(operator.add, attrs)
-    public = tuple(filter(lambda s: not s or s[0] != '_', att))
-    result = remove_duplicates(list(public))
-    result = tuple(result)
+    att = functools.reduce(operator.add, map(dir, _mro(class_)))
+    result = tuple(remove_duplicates([s for s in att if not s or s[0] != '_']))
     _public_attributes[class_] = result
     return result
 
@@ -1244,7 +1241,7 @@ def hash_attr(self, attributes):
         if isinstance(obj, list):
             obj = tuple(obj)
         return hash(obj)
-    return functools.reduce(operator.xor, map(lambda a: h(dict[a]), attributes))
+    return functools.reduce(operator.xor, [h(dict[a]) for a in attributes])
 
 
 def is_sequence(x):
@@ -1698,9 +1695,8 @@ def deepstr(obj):
 
     """
     if is_sequence(obj):
-        transformed_list = map(deepstr, obj)
         template = u'(%s,)' if isinstance(obj, tuple) else u'[%s]'
-        transformed = template % (string.join(transformed_list, ', '),)
+        transformed = template % (string.join(map(deepstr, obj), ', '),)
     elif isinstance(obj, unicode):
         transformed = u'"%s"' % (obj.replace('"', '\\"'),)
     elif isinstance(obj, str):

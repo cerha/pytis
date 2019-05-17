@@ -165,8 +165,7 @@ class Logger(object):
             return re.sub(r'[^\x01-\x7F]', '?', text)
         if data is not None:
             printable = deepstr(data)
-            datalines = map(lambda l, prefix=prefix: u'%s%s' % (prefix, l),
-                            string.split(printable, '\n'))
+            datalines = [u'%s%s' % (prefix, l) for l in string.split(printable, '\n')]
             n = len(datalines)
             if n <= 1:
                 if fmessage and fmessage[-1] == ':':
@@ -180,7 +179,7 @@ class Logger(object):
             else:
                 datalines[0] = u'<%s' % datalines[0]
                 datalines[n - 1] = u'>%s' % datalines[n - 1]
-                datalines[1:n - 1] = map(lambda l: u' %s' % l, datalines[1:n - 1])
+                datalines[1:n - 1] = [u' %s' % l for l in datalines[1:n - 1]]
                 data_string = string.join(datalines, '\n')
             try:
                 formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)

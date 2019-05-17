@@ -560,7 +560,7 @@ class DMPMenu(DMPObject):
                 equal = None
             return equal
 
-    _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
+    _DB_TABLES = dict(list(DMPObject._DB_TABLES.items()) +
                       [('e_pytis_menu',
                         ('menuid', 'name', 'title', 'position', 'next_position', 'fullname', 'help',
                          'hotkey', 'locked'),),
@@ -822,7 +822,7 @@ class DMPRights(DMPObject):
                        Attribute('redundant', bool, default=None),
                        )
 
-    _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
+    _DB_TABLES = dict(list(DMPObject._DB_TABLES.items()) +
                       [('e_pytis_action_rights',
                         ('id', 'shortname', 'roleid', 'rightid', 'system',
                          'granted', 'colname', 'status', 'redundant',),)])
@@ -1123,7 +1123,7 @@ class DMPRoles(DMPObject):
                 equal = None
             return equal
 
-    _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
+    _DB_TABLES = dict(list(DMPObject._DB_TABLES.items()) +
                       [('e_pytis_roles', ('name', 'description', 'purposeid',),),
                        ('e_pytis_role_members', ('id', 'roleid', 'member',),),
                        ('pg_roles', ('oid', 'rolname', 'rolcanlogin',),),
@@ -1429,7 +1429,7 @@ class DMPActions(DMPObject):
                 fullname = shortname
             return class_(None, None, fullname=fullname)
 
-    _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
+    _DB_TABLES = dict(list(DMPObject._DB_TABLES.items()) +
                       [('c_pytis_menu_actions',
                         ('fullname', 'shortname', 'action_title', 'description',),)])
 
@@ -1453,9 +1453,9 @@ class DMPActions(DMPObject):
     def _load_specifications(self, dmp_menu=None, dmp_rights=None, actions=None):
         messages = []
         if dmp_menu is not None:
-            self._load_from_menu(dmp_menu.items(), messages)
+            self._load_from_menu(list(dmp_menu.items()), messages)
         if dmp_rights is not None:
-            self._load_from_rights(dmp_rights.items(), messages)
+            self._load_from_rights(list(dmp_rights.items()), messages)
         if actions is not None:
             self._load_from_actions(actions, messages)
         return messages

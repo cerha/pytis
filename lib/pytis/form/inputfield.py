@@ -801,12 +801,12 @@ class TextField(InputField):
                 event.Skip()
                 return True
 
-    NUMBERS = map(str, range(10))
+    NUMBERS = list(map(str, range(10)))
     SIGNS = ['-', '+']
     DECIMAL_POINTS = ['.', ',']
-    FLOAT = map(str, range(10)) + SIGNS + DECIMAL_POINTS
-    ASCII = map(chr, range(127))
-    LETTERS = map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1))
+    FLOAT = list(map(str, range(10))) + SIGNS + DECIMAL_POINTS
+    ASCII = list(map(chr, range(127)))
+    LETTERS = list(map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1)))
 
     FIELD_DISABLED_COLOR = '#f0f0f0'
     """Ineditable input field background color.

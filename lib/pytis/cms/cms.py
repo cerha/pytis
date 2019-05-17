@@ -204,8 +204,8 @@ class Modules(Specification):
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
                                 message=_("Zaškrtněte akce, které chcete zpřístupnit webovým "
                                           "uživatelům:"),
-                                items=zip([a in existing_actions for a in actions],
-                                          actions, descriptions),
+                                items=[(a in existing_actions, a, d)
+                                       for a, d in zip(actions, descriptions)],
                                 columns=(_("Action"), _("Description")))
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.

@@ -1058,7 +1058,6 @@ class GroupSpec(object):
             default is False for legacy reasons.
 
         """
-        assert is_sequence(items), items
         assert label is None or isinstance(label, basestring)
         assert isinstance(gap, int), gap
         assert gap >= 0
@@ -1067,7 +1066,7 @@ class GroupSpec(object):
         assert isinstance(flexible, bool), flexible
         for i, item in enumerate(items):
             if isinstance(item, (tuple, list)):
-                if isinstance(items, tuple):
+                if not isinstance(items, list):
                     items = list(items)
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:

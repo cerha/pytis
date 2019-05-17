@@ -1783,7 +1783,7 @@ class Row(object):
         Pořadí dvojic vráceného seznamu je nedefinováno.
 
         """
-        return map(copy.copy, self._data)
+        return [copy.copy(x) for x in self._data]
 
     def values(self):
         """Vrať seznam hodnot všech sloupců v jejich pořadí.
@@ -2091,7 +2091,7 @@ class DataFactory(object):
             return arg
         self._args = tuple([adjust(a) for a in args])
         self._kwargs = kwargs
-        self._kwargs_hashable = kwargs.items()
+        #self._kwargs_hashable = tuple(kwargs.items())
         if DataFactory._data_object_cache is None and class_.cacheable():
             DataFactory._data_object_cache = LimitedCache(DataFactory._get_data_object)
 

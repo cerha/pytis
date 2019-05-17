@@ -141,13 +141,10 @@ class DBData(Data):
         assert is_sequence(crypto_names), crypto_names
         if __debug__:
             assert all([isinstance(n, basestring) for n in crypto_names]), crypto_names
-        crypto_names = list(crypto_names)
-        for b in bindings:
-            if isinstance(b, DBColumnBinding):
-                n = b.crypto_name()
-                if n is not None and n not in crypto_names:
-                    crypto_names.append(n)
-        self._crypto_names = crypto_names
+        self._crypto_names = list(set(crypto_names).union(
+            b.crypto_name() for b in bindings
+            if isinstance(b, DBColumnBinding) and b.crypto_name() is not None
+        ))
         try:
             del kwargs['key']
         except Exception:
@@ -252,7 +249,7 @@ class DBConnectionPool:
         # problému pozůstalých spojení.  Navíc pro jistotu zamykáme, co
         # kdyby ...
         with Locked(self._lock):
-            for c in flatten(self._pool.values()):
+            for c in flatten(list(self._pool.values())):
                 try:
                     self._connection_closer(c)
                 except Exception:

@@ -173,7 +173,7 @@ class Form(lcg.Content):
             g.form([g.hidden(name, value is True and 'true' or value) for name, value in
                     [('action', action.id()),
                      ('__invoked_from', self.__class__.__name__),
-                     ] + action.kwargs().items()] +
+                     ] + list(action.kwargs().items())] +
                    action.form_content(g, record, enabled) +
                    [g.button((g.span('', cls='icon ' + action.icon()) if action.icon() else '',
                               g.span(action.title(), cls='label')),
