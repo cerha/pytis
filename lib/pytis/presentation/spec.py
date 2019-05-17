@@ -4726,7 +4726,7 @@ class DbAttachmentStorage(AttachmentStorage):
     def _image(self, filedata):
         import PIL.Image
         try:
-            image = PIL.Image.open(io.StringIO(filedata))
+            image = PIL.Image.open(io.BytesIO(filedata))
         except IOError:
             image = None
         return image
@@ -4736,7 +4736,7 @@ class DbAttachmentStorage(AttachmentStorage):
         row_values = {}
         for size, column in ((image_size, 'resized'), (thumbnail_size, 'thumbnail')):
             if has_thumbnail:
-                stream = io.StringIO()
+                stream = io.BytesIO()
                 resized_image = self._resized_image(image, size)
                 image.save(stream, image.format)
                 buffer_value = buffer(stream.getvalue())
@@ -4804,7 +4804,7 @@ class DbAttachmentStorage(AttachmentStorage):
     def retrieve(self, filename, transaction=None):
         row = self._get_row(filename, transaction=transaction)
         if row:
-            return io.StringIO(row['file'].value())
+            return io.BytesIO(row['file'].value())
         else:
             return None
 

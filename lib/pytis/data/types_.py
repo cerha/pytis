@@ -2594,7 +2594,7 @@ class Image(Binary, Big):
             super(Image.Data, self).__init__(*args, **kwargs)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
-            f = io.StringIO(self)
+            f = io.BytesIO(self)
             try:
                 image = PIL.Image.open(f)
             except IOError:

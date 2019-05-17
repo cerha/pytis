@@ -64,7 +64,7 @@ class Pipe(unittest.TestCase):
         self.assertIsNone(r)
 
     def test_cc(self):
-        s = io.StringIO()
+        s = io.BytesIO()
         p = util.Pipe(cc=s)
         p.write('foo')
         p.write('bar')
@@ -79,8 +79,8 @@ class Pipe(unittest.TestCase):
         self.assertIsNone(r)
 
     def test_multi_cc(self):
-        s = io.StringIO()
-        s1 = io.StringIO()
+        s = io.BytesIO()
+        s1 = io.BytesIO()
         p = util.Pipe(cc=[s, s1])
         p.write('foo')
         p.write('bar')

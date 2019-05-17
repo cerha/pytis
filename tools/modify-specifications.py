@@ -56,7 +56,7 @@ from __future__ import print_function
 
 import sys
 import ast
-import cStringIO
+import io
 import os
 from pytis.extensions.ast_unparser import Unparser
 from pytis.util import find
@@ -68,7 +68,7 @@ def die(message, *args):
 
 
 def unparse(node):
-    x = cStringIO.StringIO()
+    x = io.StringIO()
     Unparser(node, x)
     return x.getvalue()
 

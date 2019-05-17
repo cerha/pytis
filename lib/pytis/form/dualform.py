@@ -1041,7 +1041,7 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             content = self._get_content(row)
             if content and not hasattr(content, 'read') and not isinstance(content, fitz.Document):
-                content = io.StringIO(content)
+                content = io.BytesIO(content)
             self.load_file(content)
 
     def _init_attributes(self, main_form, **kwargs):

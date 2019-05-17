@@ -2133,7 +2133,7 @@ class ImageField(FileField):
             import PIL.Image
             img = self._value.image().copy()
             img.thumbnail((self.width(), self.height()), PIL.Image.ANTIALIAS)
-            stream = io.StringIO()
+            stream = io.BytesIO()
             img.save(stream, 'PNG')
             stream.seek(0)
             return wx.Bitmap(wx.Image(stream, type=wx.BITMAP_TYPE_PNG))

@@ -2994,7 +2994,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
             with open(filename + '.svg') as f:
                 data = f.read()
             png = cairosvg.svg2png(data, parent_width=size[0], parent_height=size[1])
-            img = wx.Image(io.StringIO(png), wx.BITMAP_TYPE_PNG)
+            img = wx.Image(io.BytesIO(png), wx.BITMAP_TYPE_PNG)
             img = img.Scale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
         else:
             log(OPERATIONAL, "Could not find icon file:", filename + '.(svg|png)')
@@ -3716,8 +3716,7 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     Arguments:
 
-      data -- the (possibly binary) data as a basestring.  This is the contents
-        of the file to be viewed.
+      data -- the data bytes.  This is the contents of the file to be viewed.
       suffix -- the filename suffix including the leading dot.
       decrypt -- if true then decrypt the file contents before saving.
 
@@ -3731,7 +3730,7 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     """
     if pytis.remote.client_available():
-        _open_remote_file_viewer(io.StringIO(data), suffix=suffix, decrypt=decrypt)
+        _open_remote_file_viewer(io.BytesIO(data), suffix=suffix, decrypt=decrypt)
     else:
         with tempfile.NamedTemporaryFile(suffix=suffix) as f:
             f.write(data)

@@ -980,11 +980,12 @@ class Image(_Mark):
                     # (necessary for reportlab in PDFExporter)
                     # but we also need to satisfy assert in the
                     # contructor of lcg.export.pdf.Image
-                    class _StringIO(io.StringIO, lcg.Image):
+                    class _BytesIO(io.BytesIO, lcg.Image):
 
                         def src_file(self):
                             return self
-                    return _StringIO(self._bytes)
+
+                    return _BytesIO(self._bytes)
             return _Image(self._bytes,
                           width=self._dimension(self._width),
                           height=self._dimension(self._height),
