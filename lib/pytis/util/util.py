@@ -1204,47 +1204,6 @@ class Locked(object):
                 self.__class__._debug_lock.release()
 
 
-def copy_stream(input, output, close=False, in_thread=False, _catch=False):
-    """Zkopíruj data ze streamu 'input' do streamu 'output'.
-
-    Počáteční pozice ve streamech nejsou nijak nastavovány, to je starostí
-    volajícího.  Je-li argument 'close' pravdivý, je stream 'output' po
-    ukončení kopírování uzavřen; v opačném případě není uzavřen žádný stream.
-
-    """
-    if in_thread:
-        return thread.start_new_thread(copy_stream, (input, output),
-                                       {'close': close, '_catch': True})
-    try:
-        try:
-            import pytis.util
-            DEBUG = pytis.util.DEBUG
-            log = pytis.util.log
-            if __debug__:
-                log(DEBUG, 'Kopíruji stream:', (input, output))
-            while True:
-                data = input.read(4096)
-                if not data:
-                    break
-                try:
-                    if output.closed:
-                        return
-                except AttributeError:
-                    pass
-                safe_encoding_write(output, data)
-            if __debug__:
-                log(DEBUG, 'Stream zkopírován:', (input, output))
-        except Exception:
-            if not _catch:
-                raise
-    finally:
-        if close:
-            try:
-                output.close()
-            except Exception:
-                pass
-
-
 def dev_null_stream(mode):
     """Vrať bezdatový stream.
 

@@ -242,18 +242,6 @@ class ListUtils(unittest.TestCase):
         self.assertEqual(util.nreverse([]), [])
 
 
-class CopyStream(unittest.TestCase):
-
-    def test_it(self):
-        value = 'abc' + 'x' * 10000
-        import io
-        input = io.StringIO(value)
-        input.seek(0)
-        output = io.StringIO(value)
-        util.copy_stream(input, output)
-        self.assertEqual(output.getvalue(), value)
-
-
 class FindUtils(unittest.TestCase):
     _ALIST = [(0, 5), (1, 6), (1, 7)]
 

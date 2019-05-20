@@ -27,7 +27,7 @@ from .util import (  # noqa: F401
     public_attr_values, argument_names, direct_public_members, compare_objects,
     less, less_equal, compare_attr, hash_attr, is_sequence, is_dictionary,
     is_string, is_unicode, is_anystring, unormalize, ecase, Locked,
-    copy_stream, dev_null_stream, mktempdir,
+    dev_null_stream, mktempdir,
     format_byte_size, split_camel_case, camel_case_to_lower, nextval,
     rsa_encrypt, load_module, form_view_data, debugger, mem_info, ipython,
     deepstr, format_traceback, exception_info, stack_info, positive_id,
