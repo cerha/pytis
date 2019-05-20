@@ -137,17 +137,6 @@ class Counter:
         self._value = 0
 
 
-_emergency_encoder = codecs.getencoder('utf-8')
-
-
-def safe_encoding_write(stream, string_):
-    try:
-        stream.write(string_)
-    except UnicodeEncodeError:
-        string_, __ = _emergency_encoder(string_, 'replace')
-        stream.write(string_)
-
-
 class Popen:
     """Třída umožňující spouštění programů a komunikaci s nimi.
 

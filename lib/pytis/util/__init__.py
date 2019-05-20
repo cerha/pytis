@@ -21,7 +21,7 @@ from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
     FileError, NotImplementedException, Counter, Popen, Tmpdir,
     TemporaryDirectory, TemporaryFile, Stack, XStack, Attribute, Structure,
-    object_2_5, safe_encoding_write, identity, is_, xor, some, xtuple, xlist,
+    object_2_5, identity, is_, xor, some, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
     nreverse, super_, _mro, next_subclass, sameclass, public_attributes,
     public_attr_values, argument_names, direct_public_members, compare_objects,
