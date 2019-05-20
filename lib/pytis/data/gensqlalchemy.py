@@ -4427,7 +4427,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
 def capture(function, *args, **kwargs):
     """Capture the output of given gsql function (meant for gsql_module or gsql_file)."""
     stdout = sys.stdout
-    sys.stdout = io.StringIO()
+    sys.stdout = io.BytesIO()
     function(*args, **kwargs)
     result = sys.stdout.getvalue()
     sys.stdout = stdout
