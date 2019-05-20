@@ -48,54 +48,6 @@ class Counter(unittest.TestCase):
         self.assertEqual(counter.current(), 2)
 
 
-class Pipe(unittest.TestCase):
-
-    def test_it(self):
-        p = util.Pipe()
-        p.write('foo')
-        p.write('bar')
-        r = p.read(4)
-        self.assertEqual(r, 'foob')
-        p.write('baz')
-        p.close()
-        r = p.read()
-        self.assertEqual(r, 'arbaz')
-        r = p.read()
-        self.assertIsNone(r)
-
-    def test_cc(self):
-        s = io.BytesIO()
-        p = util.Pipe(cc=s)
-        p.write('foo')
-        p.write('bar')
-        r = p.read(4)
-        self.assertEqual(r, 'foob')
-        p.write('baz')
-        self.assertEqual(s.getvalue(), 'foobarbaz')
-        p.close()
-        r = p.read()
-        self.assertEqual(r, 'arbaz')
-        r = p.read()
-        self.assertIsNone(r)
-
-    def test_multi_cc(self):
-        s = io.BytesIO()
-        s1 = io.BytesIO()
-        p = util.Pipe(cc=[s, s1])
-        p.write('foo')
-        p.write('bar')
-        r = p.read(4)
-        self.assertEqual(r, 'foob')
-        p.write('baz')
-        self.assertEqual(s.getvalue(), 'foobarbaz')
-        self.assertEqual(s1.getvalue(), 'foobarbaz')
-        p.close()
-        r = p.read()
-        self.assertEqual(r, 'arbaz')
-        r = p.read()
-        self.assertIsNone(r)
-
-
 class Popen(unittest.TestCase):
     COMMAND = 'tr a b'
     SCOMMAND = ['tr', 'a', 'b']

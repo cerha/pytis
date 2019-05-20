@@ -19,7 +19,7 @@
 
 from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
-    FileError, NotImplementedException, Counter, Pipe, Popen, Tmpdir,
+    FileError, NotImplementedException, Counter, Popen, Tmpdir,
     TemporaryDirectory, TemporaryFile, Stack, XStack, Attribute, Structure,
     object_2_5, safe_encoding_write, identity, is_, xor, some, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
