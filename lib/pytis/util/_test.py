@@ -252,18 +252,6 @@ class MiscFunctions(unittest.TestCase):
         self.assertFalse(util.is_sequence(self), 'non-sequence as sequence')
         self.assertFalse(util.is_sequence({}), 'non-sequence as sequence')
 
-    def test_safedel(self):
-        dictionary = {'alpha': 1, 'beta': 2, 'gamma': 3}
-        list_ = ['alpha', 'beta', 'gamma']
-        self.assertEqual(util.safedel(dictionary, 'delta'), dictionary)
-        self.assertEqual(util.safedel(list_, list_), 3)
-        dx = util.safedel(dictionary, 'alpha')
-        self.assertEqual(dx,  {'beta': 2, 'gamma': 3})
-        lx = util.safedel(list_, 1)
-        self.assertEqual(lx,  ['alpha', 'gamma'])
-        self.assertEqual(util.safedel({}, 'foo'),  {})
-        self.assertEqual(util.safedel([], 2),  [])
-
 
 class ListUtils(unittest.TestCase):
 

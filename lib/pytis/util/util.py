@@ -821,34 +821,6 @@ def xlist(x):
         return [x]
 
 
-def safedel(object, element):
-    """Aplikuj operátor 'del' na 'element' of 'object' bez signalizace chyby.
-
-    Provádí příkaz 'del object[element]', avšak odchytává případnou výjimku
-    'KeyError', resp. 'IndexError', místo ní nedělá nic.
-
-    Argumenty:
-
-      object -- dictionary nebo list, ze kterého má být odstraněn 'element'
-      element -- pro 'object' dictionary libovolný objekt, který je klíčem
-        'object'; pro 'object' list libovolný nezáporný integer
-
-    Vrací: 'object'.
-
-    """
-    if isinstance(object, dict):
-        try:
-            del object[element]
-        except KeyError:
-            pass
-    elif isinstance(object, list):
-        try:
-            del object[element]
-        except IndexError:
-            pass
-    return object
-
-
 def position(element, sequence, key=identity):
     """Vrať pozici 'element' v 'sequence'.
 
