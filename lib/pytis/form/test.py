@@ -23,7 +23,7 @@ import pytest
 import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
-from pytis.data._test import DBTest
+from pytis.data.test import DBTest
 
 
 class TestDataTable(DBTest):
