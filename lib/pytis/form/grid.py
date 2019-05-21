@@ -219,7 +219,7 @@ class DataTable(object):
 
           row -- row number within the *database select*, starting from 0
 
-        Jestliže řádek daného čísla neexistuje, vrať 'None'.
+        None is returned when given row number does not exist in the data table.
 
         """
         return self._retrieve_row(row)
@@ -229,7 +229,7 @@ class DataTable(object):
 
         'row' and 'col' are numbered from 0.
 
-        None is returned when given cell does not exist in the data table
+        None is returned when given cell does not exist in the data table.
 
         """
         if self._data is not None and col < self._column_count:
