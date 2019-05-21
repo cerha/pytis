@@ -211,10 +211,10 @@ class _GsqlSpec(object):
 
     def _set_schemas(self, schemas):
         if schemas is not None:
-            assert isinstance(schemas, (tuple, list,)), ('invalid schema list', schemas,)
+            assert isinstance(schemas, (tuple, list)), schemas
             if __debug__:
                 for s in schemas:
-                    assert isinstance(s, basestring), ('invalid schema', s,)
+                    assert isinstance(s, basestring), s
             self._schemas = schemas
 
     def _grant_command(self, gspec):
@@ -465,7 +465,7 @@ class _GsqlSpec(object):
                 arguments.append('precision=%s' % (ctype.precision(),))
             if ctype.digits() is not None:
                 arguments.append('digits=%s' % (ctype.digits(),))
-        elif ((isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)) and
+        elif ((isinstance(ctype, (pytis.data.DateTime, pytis.data.Time)) and
                not isinstance(ctype, pytis.data.Date))):
             if not ctype.utc():
                 arguments.append('utc=False')
@@ -1952,7 +1952,7 @@ class Select(_GsqlSpec):
                 for c in self._relation_columns[r.relation]:
                     if isinstance(c, basestring):
                         continue
-                    if isinstance(c.name, (tuple, list,)):
+                    if isinstance(c.name, (tuple, list)):
                         continue
                     if c.name.lower() in exclude:
                         continue

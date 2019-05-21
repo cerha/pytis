@@ -1095,7 +1095,7 @@ class MItem(_TitledMenuObject):
         assert isinstance(command, Command), command
         assert args is None or isinstance(args, dict)
         assert help is None or isinstance(help, basestring)
-        assert hotkey is None or isinstance(hotkey, (basestring, tuple, list,))
+        assert hotkey is None or isinstance(hotkey, (basestring, tuple, list))
         assert icon is None or isinstance(icon, basestring)
         self._command = command
         self._args = args or {}

@@ -142,7 +142,7 @@ class _Query(object):
         if __debug__:
             if args is not None:
                 for v in args.values():
-                    assert isinstance(v, (_Query, _PgValue, Value,)), v
+                    assert isinstance(v, (_Query, _PgValue, Value)), v
         self._template = template
         self._args = copy.copy(args) or {}
 

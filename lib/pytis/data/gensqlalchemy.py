@@ -233,7 +233,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                     str_value = 'FROM CURRENT'
                 elif name.lower() == 'time zone':
                     str_value = str(value)
-                elif isinstance(value, (int, long, float, basestring,)):
+                elif isinstance(value, (int, long, float, basestring)):
                     str_value = 'TO %s' % (value,)
                 else:
                     raise Exception("Unrecognized function parameter value", value)
@@ -978,7 +978,7 @@ def _sql_id_escape(identifier):
 def _sql_value_escape(value):
     if value is None:
         result = 'NULL'
-    elif isinstance(value, (int, long, float,)):
+    elif isinstance(value, (int, long, float)):
         result = value
     elif isinstance(value, basestring):
         result = "'%s'" % (value.replace('\\', '\\\\').replace("'", "''"),)
@@ -1059,7 +1059,7 @@ class SQLFlexibleValue(object):
 
         """
         assert isinstance(name, basestring), name
-        assert isinstance(environment, (basestring, types.NoneType,)), environment
+        assert isinstance(environment, (basestring, types.NoneType)), environment
         self._name = name
         self._default = default
         self._environment = environment
@@ -2907,7 +2907,7 @@ class _SQLQuery(SQLObject):
                 seen.append(o)
             elif isinstance(o, (tuple, list)):
                 objects += list(o)
-            elif not isinstance(o, (RawCondition, basestring,)):
+            elif not isinstance(o, (RawCondition, basestring)):
                 raise SQLException("Unknown condition element", o)
         self._pytis_query_dependencies = seen
 

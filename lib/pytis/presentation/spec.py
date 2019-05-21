@@ -3917,7 +3917,7 @@ class Field(object):
         enumerator = self._enumerator
         if enumerator is None:
             enumerator = self._codebook
-        if isinstance(enumerator, (pytis.data.DataFactory, basestring,)):
+        if isinstance(enumerator, (pytis.data.DataFactory, basestring)):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
         if enumerator:
             kwargs['enumerator'] = enumerator
@@ -5483,7 +5483,7 @@ class Specification(SpecificationBase):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable) and len(argument_names(value)) == 0:
                     setattr(self, attr, value())
-        assert isinstance(self.fields, (list, tuple,)), self.fields
+        assert isinstance(self.fields, (list, tuple)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):

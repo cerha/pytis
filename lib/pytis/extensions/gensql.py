@@ -39,7 +39,7 @@ class SQLFlexibleValue(object):
 
     def __init__(self, name, default=None, environment=None):
         assert isinstance(name, basestring), name
-        assert isinstance(environment, (basestring, types.NoneType,)), environment
+        assert isinstance(environment, (basestring, types.NoneType)), environment
         self._name = name
         self._default = default
         self._environment = environment
@@ -95,9 +95,9 @@ class SQLDatabaseSpecification(object):
         assert isinstance(self.name, basestring), self.name
         assert isinstance(self.schemas, tuple), self.schemas
         assert isinstance(self.search_path, tuple), self.search_path
-        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.schemas],
+        assert all([isinstance(x, (basestring, SQLFlexibleValue)) for x in self.schemas],
                    self.schemas)
-        assert all([isinstance(x, (basestring, SQLFlexibleValue,)) for x in self.search_path],
+        assert all([isinstance(x, (basestring, SQLFlexibleValue)) for x in self.search_path],
                    self.search_path)
 
     def sql_create_all(self):
@@ -225,7 +225,7 @@ class SQLProprietary(SQLDocumented):
 
     def __init__(self):
         super(SQLProprietary, self).__init__()
-        assert isinstance(self.owner, (types.NoneType, basestring, SQLFlexibleValue,)), self.owner
+        assert isinstance(self.owner, (types.NoneType, basestring, SQLFlexibleValue)), self.owner
         assert isinstance(self.rights, tuple), self.rights
         if __debug__:
             for right_spec in self.rights:
@@ -234,7 +234,7 @@ class SQLProprietary(SQLDocumented):
                 users = right_spec[1]
                 assert isinstance(users, tuple), right_spec
                 for u in users:
-                    assert isinstance(u, (basestring, SQLFlexibleValue,)), right_spec
+                    assert isinstance(u, (basestring, SQLFlexibleValue)), right_spec
 
     def sql_create(self, schema):
         return (super(SQLProprietary, self).sql_create(schema) +
@@ -294,11 +294,11 @@ class SQLSequence(SQLProprietary):
 
     def __init__(self):
         super(SQLSequence, self).__init__()
-        assert isinstance(self.start, (types.NoneType, int, long,)), self.start
-        assert isinstance(self.minvalue, (types.NoneType, int, long,)), self.minvalue
-        assert isinstance(self.maxvalue, (types.NoneType, int, long,)), self.maxvalue
-        assert isinstance(self.increment, (types.NoneType, int, long,)), self.increment
-        assert isinstance(self.cycle, (types.NoneType, bool,)), self.cycle
+        assert isinstance(self.start, (types.NoneType, int, long)), self.start
+        assert isinstance(self.minvalue, (types.NoneType, int, long)), self.minvalue
+        assert isinstance(self.maxvalue, (types.NoneType, int, long)), self.maxvalue
+        assert isinstance(self.increment, (types.NoneType, int, long)), self.increment
+        assert isinstance(self.cycle, (types.NoneType, bool)), self.cycle
 
     def _sql_create(self, schema):
         command = "CREATE SEQUENCE %s" % (self._sql_name(schema),)
@@ -353,12 +353,12 @@ class Column(pytis.data.ColumnSpec):
     def __init__(self, id, type, doc=None, old_ids=(), name=None, unique=False, check=None,
                  default=None, references=None, key=False, index=False):
         super(Column, self).__init__(id, type)
-        assert isinstance(doc, (types.NoneType, basestring,)), doc
+        assert isinstance(doc, (types.NoneType, basestring)), doc
         assert isinstance(old_ids, tuple), old_ids
-        assert isinstance(name, (types.NoneType, basestring,)), name
+        assert isinstance(name, (types.NoneType, basestring)), name
         assert isinstance(unique, bool), unique
-        assert isinstance(check, (types.NoneType, basestring,)), check
-        assert isinstance(default, (types.NoneType, basestring, SQLFunctional,)), default
+        assert isinstance(check, (types.NoneType, basestring)), check
+        assert isinstance(default, (types.NoneType, basestring, SQLFunctional)), default
         if __debug__:
             if isinstance(default, basestring):
                 _value, error = self.type().validate(default)
@@ -601,13 +601,13 @@ class SQLTable(SQLTabular):
 
     def __init__(self):
         super(SQLTable, self).__init__()
-        assert isinstance(self.tablespace, (types.NoneType, basestring, SQLFlexibleValue,)), \
+        assert isinstance(self.tablespace, (types.NoneType, basestring, SQLFlexibleValue)), \
             self.tablespace
         assert isinstance(self.inherits, tuple)
         if __debug__:
             for i in self.inherits:
                 assert isinstance(i, SQLTable), (self, i,)
-        assert isinstance(self.init_columns, (types.NoneType, tuple,)), self.init_columns
+        assert isinstance(self.init_columns, (types.NoneType, tuple)), self.init_columns
         assert isinstance(self.init_values, tuple), self.init_values
         if __debug__ and self.init_values:
             n = len(self.init_values[0])
@@ -768,7 +768,7 @@ class SQLFunctional(SQLTabular):
         assert (self.return_type is None or
                 issubclass(self.return_type, (pytis.data.Type, SQLType, SQLTable,))), \
             self.return_type
-        assert isinstance(self.arguments, (types.NoneType, tuple,)), self.arguments
+        assert isinstance(self.arguments, (types.NoneType, tuple)), self.arguments
         if __debug__:
             if self.arguments:
                 for a in self.arguments:

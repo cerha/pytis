@@ -89,7 +89,7 @@ class _ProxyDict(dict):
 
     def __getitem__(self, key):
         result = dict.__getitem__(self, key)
-        if ((not isinstance(result, (basestring, lcg.Content, _ProxyDict,)) and
+        if ((not isinstance(result, (basestring, lcg.Content, _ProxyDict)) and
              callable(result))):
             result = self[key] = result()
         return result

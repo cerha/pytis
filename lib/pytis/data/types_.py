@@ -943,7 +943,7 @@ class Integer(Number):
             if value % 1 != 0:
                 raise TypeError("Value not an integer", value)
             value = int(value)
-        elif not isinstance(value, (int, long,)):
+        elif not isinstance(value, (int, long)):
             raise TypeError("Value not an integer", value)
         return value
 
@@ -2972,7 +2972,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """
         super(DataEnumerator, self).__init__()
         from pytis.data import DataFactory
-        assert isinstance(data_factory, (DataFactory, basestring,)), data_factory
+        assert isinstance(data_factory, (DataFactory, basestring)), data_factory
         assert (value_column is None or
                 isinstance(value_column, basestring))
         assert (validity_column is None or
