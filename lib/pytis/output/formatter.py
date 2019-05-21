@@ -567,7 +567,7 @@ class LCGFormatter(object):
                                    presentation=lcg.PresentationSet(self._style or []))
         try:
             pdf = exporter.export(context, global_presentation=presentation)
-        except lcg.SubstitutionIterator.IteratorError, e:
+        except lcg.SubstitutionIterator.IteratorError as e:
             message = _("Invalid use of iterator.\n"
                         "Maybe you refer to an non-existent or inaccessible object in the table?")
             message += "\n" + unicode(e)

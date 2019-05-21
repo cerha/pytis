@@ -4292,7 +4292,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                             if oo not in changed:
                                 changed.add(oo)
                                 queue.append(oo)
-        except sqlalchemy.exc.CircularDependencyError, e:
+        except sqlalchemy.exc.CircularDependencyError as e:
             # The message from SQLAlchemy is not very useful, so we have to
             # find out more exact information ourselves.
             cycle_nodes, edges = e.cycles, e.edges

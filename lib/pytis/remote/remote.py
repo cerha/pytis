@@ -163,7 +163,7 @@ def client_available():
         return False
     try:
         return _request('echo', 'hello') == 'hello'
-    except Exception, e:
+    except Exception as e:
         log(OPERATIONAL, "RPC exception:", e)
         return False
 

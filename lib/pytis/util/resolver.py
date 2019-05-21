@@ -181,7 +181,7 @@ class Resolver(object):
         specification = self._specification_cache[(name, kwargs)]
         try:
             method = getattr(specification, method_name)
-        except AttributeError, e:
+        except AttributeError as e:
             raise ResolverError("Resolver error loading specification '%s.%s': %s" %
                                 (name, method_name, e))
         if pytis.util.argument_names(method):
