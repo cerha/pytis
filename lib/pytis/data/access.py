@@ -235,7 +235,7 @@ class DBAccessRights(AccessRights):
         import pytis.data
         access_rights = []
         bindings = [pytis.data.DBColumnBinding(name, 'pytis.access_rights', name)
-                    for name in 'id', 'object', 'column_', 'group_', 'permission']
+                    for name in ('id', 'object', 'column_', 'group_', 'permission')]
         key = bindings[0]
         data = pytis.data.DBDataDefault(bindings, key,
                                         connection_data=connection_data)
