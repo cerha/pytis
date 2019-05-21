@@ -681,8 +681,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.Sizer.Layout()
         self._grid.SetFocus()
         if not rollback:
-            the_row = self._table.row(self._table.current_row())
-            self._run_callback(self.CALL_SELECTION, the_row)
+            row = self._table.current_row()
+            if row is not None:
+                the_row = self._table.row(row)
+                self._run_callback(self.CALL_SELECTION, the_row)
 
     # Pomocné metody
 
