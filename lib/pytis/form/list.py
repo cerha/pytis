@@ -734,7 +734,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             current_row = g.GetGridCursorRow()
             current_col = g.GetGridCursorCol()
             if row is not None:
-                assert isinstance(row, types.IntType)
+                assert isinstance(row, int)
                 if row >= g.GetNumberRows():
                     row_count = self._table.number_of_rows(min_value=(row + 1))
                     if row < row_count:

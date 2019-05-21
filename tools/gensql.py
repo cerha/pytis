@@ -3844,7 +3844,7 @@ class _GviewsqlRaw(_GsqlSpec):
         return rule
 
     def _output(self):
-        if isinstance(self._columns, types.TupleType):
+        if isinstance(self._columns, tuple):
             self._columns = ', '.join(self._columns)
         body = "SELECT %s\nFROM %s\n" % (self._columns, self._fromitems)
         if self._where:

@@ -651,7 +651,7 @@ class RepeatedOperationDialog(ProgressDialog):
 
         """
         assert (step is None or
-                isinstance(step, types.IntType) and step in range(1, 100))
+                isinstance(step, int) and step in range(1, 100))
 
         def do(update, *args_list):
             total = len(args_list)

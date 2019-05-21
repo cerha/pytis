@@ -1059,7 +1059,7 @@ class SQLFlexibleValue(object):
 
         """
         assert isinstance(name, basestring), name
-        assert isinstance(environment, (basestring, types.NoneType)), environment
+        assert isinstance(environment, (basestring, type(None))), environment
         self._name = name
         self._default = default
         self._environment = environment
@@ -3667,7 +3667,7 @@ class SQLPyFunction(SQLFunctional):
                 obj_type = type(obj)
                 if issubclass(obj_type, types.FunctionType):
                     output_method(n, obj, 12)
-                elif issubclass(obj_type, types.TypeType):
+                elif issubclass(obj_type, type):
                     output_class(n, obj, 12)
                 else:
                     output_attribute(n, obj, 12)

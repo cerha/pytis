@@ -2540,7 +2540,7 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
 
     def __init__(self, parent, pdf_file):
         self.parent = parent
-        if isinstance(pdf_file, types.StringTypes):
+        if isinstance(pdf_file, basestring):
             # a filename/path string, pass the name to fitz.open
             pathname = pdf_file
             self.pdfdoc = fitz.open(pathname)
@@ -2676,7 +2676,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
 
     def LoadFile(self, pdf_file):
         # Override this method use the overriden version of 'mupdfProcessor' (defined above).
-        if isinstance(pdf_file, types.StringTypes):
+        if isinstance(pdf_file, basestring):
             # a filename/path string, save its name
             self.pdfpathname = pdf_file
         else:
