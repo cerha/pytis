@@ -303,7 +303,7 @@ class Mktempdir(unittest.TestCase):
             dir3 = util.mktempdir('foo')
             self.assertNotEqual(dir1, dir3)
             for d in dir1, dir2, dir3:
-                self.assertEqual((os.stat(d)[0] & 0o7777), 0700)
+                self.assertEqual((os.stat(d)[0] & 0o7777), 0o700)
         finally:
             for d in dir1, dir2, dir3:
                 if d:
