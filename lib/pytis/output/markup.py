@@ -42,6 +42,7 @@ from lcg import Unit, UPoint, Color, UPercent
 import pytis.output
 import pytis.util
 from pytis.util import some, super_
+from functools import reduce
 
 _ = pytis.util.translations('pytis-wx')
 

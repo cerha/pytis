@@ -69,6 +69,7 @@ from .search import (
     SearchDialog, FilterDialog, SortingDialog
 )
 
+from functools import reduce
 
 _ = pytis.util.translations('pytis-wx')
 
