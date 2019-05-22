@@ -140,9 +140,8 @@ class Integer(_TypeCheck):
 
     def test_validation(self):
         self._test_validity(None, '1', 1)
-        self._test_validity(None, '-11111111111111111111',
-                            -11111111111111111111L)
-        self._test_validity(None, '+0L', 0L)
+        self._test_validity(None, '-11111111111111111111', -11111111111111111111)
+        self._test_validity(None, '+0L', 0)
         self._test_validity(None, '1.1', None)
         self._test_validity(None, 'foo', None)
         limited = pd.Integer(minimum=5, maximum=8)
