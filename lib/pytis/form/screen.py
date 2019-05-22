@@ -1144,7 +1144,7 @@ class MItem(_TitledMenuObject):
         elif command == 'HANDLED_ACTION':
             handler = args.pop('handler', None)
             if not args and isinstance(handler, types.FunctionType):
-                name = modulify(handler, handler.func_name)
+                name = modulify(handler, handler.__name__)
                 return ('handle/%s/%s' % (name, command_proc,))
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')

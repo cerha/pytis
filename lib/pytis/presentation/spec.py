@@ -3690,7 +3690,7 @@ class Field(object):
                 if isinstance(value, basestring):
                     formatted_value = '"%s"' % (value,)
                 elif isinstance(value, types.FunctionType):
-                    formatted_value = '<function %s>' % (value.func_name,)
+                    formatted_value = '<function %s>' % (value.__name__,)
                 else:
                     formatted_value = value
                 info_string = u'%s=%s' % (name, formatted_value,)
