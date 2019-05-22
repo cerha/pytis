@@ -1619,24 +1619,6 @@ def stack_info(depth=None):
                       for frame in stack])
 
 
-def positive_id(obj):
-    """Return id(obj) as a non-negative integer."""
-    result = id(obj)
-    if result < 0:
-        # This is a puzzle:  there's no way to know the natural width of
-        # addresses on this box (in particular, there's no necessary
-        # relation to sys.maxint).  Try 32 bits first (and on a 32-bit
-        # box, adding 2**32 gives a positive number with the same hex
-        # representation as the original result).
-        result += 1L << 32
-        if result < 0:
-            # Undo that, and try 64 bits.
-            result -= 1L << 32
-            result += 1L << 64
-            assert result >= 0  # else addresses are fatter than 64 bits
-    return result
-
-
 def lcg_node(content, title=None, resource_path=(), resources=()):
     """Return lcg.ContentNode for given content with given resources.
 

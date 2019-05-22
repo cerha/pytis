@@ -29,7 +29,7 @@ import copy
 
 import pytis.data
 from pytis.util import (
-    UNDEFINED, ProgramError, Resolver, argument_names, positive_id,
+    UNDEFINED, ProgramError, Resolver, argument_names,
     remove_duplicates, translations, format_byte_size,
 )
 
@@ -281,7 +281,7 @@ class PresentedRow(object):
                     return unicode(self[column.id].value())
             info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
         else:
-            info = '%x' % positive_id(self)
+            info = '%x' % id(self)
         return "<%s: %s>" % (self.__class__.__name__, info)
 
     def __getitem__(self, key, lazy=False):

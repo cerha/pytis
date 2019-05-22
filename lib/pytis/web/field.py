@@ -249,7 +249,7 @@ class Field(object):
         from .form import ShowForm
         fid = spec.id()
         t = row.type(fid)
-        self._html_id = "f%x" % pytis.util.positive_id(self)
+        self._html_id = "f%x" % id(self)
         self._row = row
         self._showform = isinstance(form, ShowForm)
         self._uri_provider = uri_provider

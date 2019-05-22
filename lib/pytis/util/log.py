@@ -56,7 +56,7 @@ import sys
 import time
 
 import pytis
-from .util import ProgramError, deepstr, positive_id, some
+from .util import ProgramError, deepstr, some
 
 OPERATIONAL = 'OPR'
 """Provozní hláška, související se stavem systému."""
@@ -126,7 +126,7 @@ class Logger(object):
                     class_name = class_.__name__
                 except Exception:
                     pass
-                id_ = '%x' % (positive_id(s),)
+                id_ = '%x' % (id(s),)
         self._module = module
         self._class_ = class_
         self._class_name = class_name
