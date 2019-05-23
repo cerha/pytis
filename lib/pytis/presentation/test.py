@@ -19,6 +19,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import unittest
+import pytest
 
 import pytis.data as pd
 import pytis.presentation as pp
@@ -747,39 +748,45 @@ class PrettyTypes(unittest.TestCase):
 class Style(unittest.TestCase):
 
     def test_colors(self):
-        self.assertRaises(TypeError, lambda: pp.Style(background=20))
-        self.assertRaises(TypeError, lambda: pp.Style(background={}))
-        self.assertRaises(TypeError, lambda: pp.Style(background=('a', 10, 20)))
-        self.assertRaises(ValueError, lambda: pp.Style(background='#1g2h3i'))
-        self.assertRaises(ValueError, lambda: pp.Style(background='fff'))
-        self.assertRaises(ValueError, lambda: pp.Style(background=(300, 10, 20)))
-        self.assertEqual(pp.Style(background='#fff'), pp.Style(background='#FFFFFF'))
-        self.assertEqual(pp.Style(background='#fff'), pp.Style(background=(255, 255, 255)))
-        self.assertEqual(pp.Style(background='#fff'), pp.Style(background=pp.Color.WHITE))
-        self.assertEqual(pp.Style(background='#002e6a'), pp.Style(background=[0, 46, 106]))
-        self.assertEqual(pp.Style(background='#e00020'), pp.Style(background=(0xe0, 0x00, 0x20)))
+        with pytest.raises(TypeError):
+            pp.Style(background=20)
+        with pytest.raises(TypeError):
+            pp.Style(background={})
+        with pytest.raises(TypeError):
+            pp.Style(background=('a', 10, 20))
+        with pytest.raises(ValueError):
+            pp.Style(background='#1g2h3i')
+        with pytest.raises(ValueError):
+            pp.Style(background='fff')
+        with pytest.raises(ValueError):
+            pp.Style(background=(300, 10, 20))
+        assert pp.Style(background='#fff') == pp.Style(background='#FFFFFF')
+        assert pp.Style(background='#fff') == pp.Style(background=(255, 255, 255))
+        assert pp.Style(background='#fff') == pp.Style(background=pp.Color.WHITE)
+        assert pp.Style(background='#002e6a') == pp.Style(background=[0, 46, 106])
+        assert pp.Style(background='#e00020') == pp.Style(background=(0xe0, 0x00, 0x20))
 
     def test_cmp(self):
-        self.assertEqual(pp.Style(), pp.Style())
-        self.assertEqual(pp.Style(slanted=True), pp.Style(slanted=True))
-        self.assertEqual(pp.Style(slanted=True, foreground='#fff'),
-                         pp.Style(slanted=True, foreground='#FFF'))
-        self.assertEqual(pp.Style(slanted=False), pp.Style())
-        self.assertNotEqual(pp.Style(), pp.Orientation())
-        self.assertNotEqual(pp.Orientation(), pp.Style())
-        self.assertNotEqual(pp.Style(slanted=True), pp.Style(foreground='#fff'))
+        assert pp.Style() == pp.Style()
+        assert pp.Style(slanted=True) == pp.Style(slanted=True)
+        assert (pp.Style(slanted=True, foreground='#fff') ==
+                pp.Style(slanted=True, foreground='#FFF'))
+        assert pp.Style(slanted=False) == pp.Style()
+        assert pp.Style() != pp.Orientation()
+        assert pp.Orientation() != pp.Style()
+        assert pp.Style(slanted=True) != pp.Style(foreground='#fff')
 
     def test_add(self):
-        self.assertEqual(pp.Style(), pp.Style() + pp.Style())
-        self.assertEqual(pp.Style(), pp.Style() + None)
-        self.assertEqual(pp.Style(), None + pp.Style())
-        self.assertEqual(pp.Style(bold=True), None + pp.Style(bold=True))
-        self.assertEqual(pp.Style(slanted=True, overstrike=True, foreground='#F00'),
-                         pp.Style(slanted=True) + pp.Style(overstrike=True, foreground='#F00'))
-        self.assertEqual(pp.Style(slanted=True), pp.Style(slanted=True) + pp.Style(slanted=False))
-        self.assertEqual(pp.Style(slanted=False), pp.Style(slanted=False) + pp.Style(slanted=True))
-        self.assertEqual(pp.Style(overstrike=True, foreground='#000'),
-                         pp.Style(foreground='#000') + pp.Style(overstrike=True, foreground='#F00'))
+        assert pp.Style() == pp.Style() + pp.Style()
+        assert pp.Style() == pp.Style() + None
+        assert pp.Style() == None + pp.Style()
+        assert pp.Style(bold=True) == None + pp.Style(bold=True)
+        assert (pp.Style(slanted=True, overstrike=True, foreground='#F00') ==
+                pp.Style(slanted=True) + pp.Style(overstrike=True, foreground='#F00'))
+        assert pp.Style(slanted=True) == pp.Style(slanted=True) + pp.Style(slanted=False)
+        assert pp.Style(slanted=False) == pp.Style(slanted=False) + pp.Style(slanted=True)
+        assert (pp.Style(overstrike=True, foreground='#000') ==
+                pp.Style(foreground='#000') + pp.Style(overstrike=True, foreground='#F00'))
 
     def test_hash(self):
         cache = {
@@ -788,12 +795,12 @@ class Style(unittest.TestCase):
             pp.Style(foreground='#f00', overstrike=True): 'red overstrike',
             pp.Style(foreground='#00f', slanted=True): 'blue slanted',
         }
-        self.assertEqual(cache[pp.Style()], 'default')
-        self.assertEqual(cache[pp.Style(slanted=False)], 'default')
-        self.assertEqual(cache[pp.Style(slanted=False, overstrike=False)], 'default')
-        self.assertEqual(cache[pp.Style(background='#FF4')], 'yellow bg')
-        self.assertEqual(cache[pp.Style(foreground='#F00', overstrike=True)], 'red overstrike')
-        self.assertEqual(cache[pp.Style(foreground='#00F', slanted=True)], 'blue slanted')
+        assert cache[pp.Style()] == 'default'
+        assert cache[pp.Style(slanted=False)] == 'default'
+        assert cache[pp.Style(slanted=False, overstrike=False)] == 'default'
+        assert cache[pp.Style(background='#FF4')] == 'yellow bg'
+        assert cache[pp.Style(foreground='#F00', overstrike=True)] == 'red overstrike'
+        assert cache[pp.Style(foreground='#00F', slanted=True)] == 'blue slanted'
 
 
 class DocTest(unittest.TestCase):
