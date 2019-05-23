@@ -229,7 +229,7 @@ class Style(object):
         return "%s(%s)" % (self.__class__.__name__, ', '.join([
             k[1:] + '=' + repr(v)
             for k, v in self.__dict__.items()
-            if k.startswith('_') and v is not None
+            if v is not None
         ]))
 
     def __repr__(self):
