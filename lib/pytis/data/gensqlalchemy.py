@@ -65,6 +65,7 @@ see all the most important constructs there.
 """
 
 from __future__ import unicode_literals
+from future.utils import with_metaclass
 
 try:
     import alembic.ddl.base
@@ -1726,7 +1727,8 @@ def _alchemy2pytis_type(atype):
 # Database objects
 
 
-class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
+class SQLSchema(with_metaclass(_PytisSimpleMetaclass, sqlalchemy.schema.DDLElement,
+                               sqlalchemy.schema.SchemaItem, SQLObject)):
     """Schema specification.
 
     Properties:
@@ -1734,7 +1736,6 @@ class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLO
       name -- name of the schema; string
 
     """
-    __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'schema'
     _DB_OBJECT = 'SCHEMA'
     name = None
@@ -1768,7 +1769,8 @@ def visit_schema(element, compiler, **kw):
     return _make_sql_command(command)
 
 
-class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
+class SQLSequence(with_metaclass(_PytisSchematicMetaclass,
+                                 sqlalchemy.Sequence, SQLSchematicObject)):
     """Sequence specification.
 
     Properties:
@@ -1781,7 +1783,6 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     columns, you shouldn't define such sequences in specifications.
 
     """
-    __metaclass__ = _PytisSchematicMetaclass
     _DB_OBJECT = 'SEQUENCE'
     name = None
     start = None
@@ -1808,7 +1809,7 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
         self.after_create(_engine)
 
 
-class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
+class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQLSchematicObject)):
     """Base class for all table-like specification objects.
 
     It defines properties common to all specifications of objects which can
@@ -1845,7 +1846,6 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     'on_update_also()', 'on_delete_also()'.
 
     """
-    __metaclass__ = _PytisSchematicMetaclass
     _DB_OBJECT = None
 
     name = None
@@ -2726,7 +2726,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         class_.init_values = class_.init_values + values
 
 
-class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
+class SQLForeignServer(with_metaclass(_PytisSimpleMetaclass,
+                                      sqlalchemy.schema.DDLElement, SQLObject)):
     """Foreign server specification.
 
     Properties:
@@ -2738,7 +2739,6 @@ class SQLForeignServer(sqlalchemy.schema.DDLElement, SQLObject):
       port -- port of the database connection; integer
 
     """
-    __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'foreign_server'
     _DB_OBJECT = 'SERVER'
     name = None
@@ -2812,7 +2812,8 @@ def visit_foreign_table(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
 
-class SQLForeignUser(sqlalchemy.schema.DDLElement, SQLObject):
+class SQLForeignUser(with_metaclass(_PytisSimpleMetaclass,
+                                    sqlalchemy.schema.DDLElement, SQLObject)):
     """Mapping of a user to a foreign server user.
 
     Properties:
@@ -2823,7 +2824,6 @@ class SQLForeignUser(sqlalchemy.schema.DDLElement, SQLObject):
       password -- password of the foreign user; string or 'None'
 
     """
-    __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'foreign_user'
     name = None
     server = None
@@ -3747,7 +3747,7 @@ class SQLEventHandler(SQLFunctional):
     table = None
 
 
-class SQLTrigger(SQLEventHandler):
+class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
     """Trigger definition.
 
     Trigger is defined as a normal function, just note that SQL functions can't
@@ -3766,7 +3766,6 @@ class SQLTrigger(SQLEventHandler):
         values of types accepted by SQLAlchemy for given argument types.
 
     """
-    __metaclass__ = _PytisTriggerMetaclass
     _DB_OBJECT = 'TRIGGER'
 
     events = ('insert', 'update', 'delete',)
@@ -3869,7 +3868,8 @@ class SQLTrigger(SQLEventHandler):
             super(SQLTrigger, self)._create_comments()
 
 
-class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
+class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLElement,
+                            SQLSchematicObject)):
     """Raw SQL definition.
 
     Do not use raw definitions.  If you think you really need one, ask for
@@ -3882,8 +3882,6 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     The raw definition must be returned from class method named 'sql'.
 
     """
-    __metaclass__ = _PytisSchematicMetaclass
-
     name = None
     depends_on = ()
     error_level = 0

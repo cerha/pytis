@@ -30,6 +30,7 @@ All classes of this module are of specificational nature and can be considered
 immutable.  Thus they can be shared as needed.
 
 """
+from future.utils import with_metaclass
 
 import BaseHTTPServer
 import collections
@@ -5086,7 +5087,7 @@ class _SpecificationMetaclass(type):
         Specification.add_specification_by_db_spec_name(db_table.__name__, cls)
 
 
-class Specification(SpecificationBase):
+class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
 
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
@@ -5262,8 +5263,6 @@ class Specification(SpecificationBase):
     must match their types ('TypeError' is raised if not).
 
     """
-
-    __metaclass__ = _SpecificationMetaclass
     _specifications_by_db_spec_name = {}
     _access_rights = None
 

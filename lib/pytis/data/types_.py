@@ -35,6 +35,7 @@ specializovanější základy.  Hodnoty daných typů jsou pak reprezentovány
 instancemi samostatné třídy 'Value'.
 
 """
+from future.utils import with_metaclass
 
 import collections
 import datetime
@@ -82,7 +83,7 @@ class UnsupportedPrimitiveValueConversion(Exception):
         super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
 
 
-class Type(object):
+class Type(with_metaclass(_MType, object)):
     """Abstract base class for all data type specific classes.
 
     All type classes are required to derive from this class.
@@ -113,8 +114,6 @@ class Type(object):
         table
 
     """
-    __metaclass__ = _MType
-
     class _TypeTable(object):
 
         def __init__(self):

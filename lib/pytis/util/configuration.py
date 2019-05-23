@@ -23,6 +23,7 @@ Celá konfigurace je definována instancí třídy 'Configuration', dokumentace
 v této třídě poví více.
 
 """
+from future.utils import with_metaclass
 
 import getopt
 import imp
@@ -50,7 +51,7 @@ class _OrderedDefinitionClass(type):
 class Configuration(object):
     """Definition of configuration and its particular options."""
 
-    class Option(object):
+    class Option(with_metaclass(_OrderedDefinitionClass, object)):
         """Specification of a configuration option (variable).
 
         Definicí potomka této třídy se jménem začínajícím prefixem '_Option_'
@@ -73,7 +74,6 @@ class Configuration(object):
         příkazové řádky přiřazena do 'sys.argv'.
 
         """
-        __metaclass__ = _OrderedDefinitionClass
 
         _DESCR = None
         """Breif one line option description to be displayed in the user interface.

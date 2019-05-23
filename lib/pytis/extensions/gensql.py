@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from future.utils import with_metaclass
 
 import copy
 import inspect
@@ -80,8 +81,7 @@ class _BasicMetaclass(type):
         return class_
 
 
-class SQLDatabaseSpecification(object):
-    __metaclass__ = _BasicMetaclass
+class SQLDatabaseSpecification(with_metaclass(_BasicMetaclass, object)):
 
     name = None
     schemas = (public_schema,)
@@ -449,9 +449,7 @@ class _TabularMetaclass(_BasicMetaclass):
         return class_
 
 
-class SQLTabular(SQLDatabaseSpecification):
-    __metaclass__ = _TabularMetaclass
-
+class SQLTabular(with_metaclass(_TabularMetaclass, SQLDatabaseSpecification)):
     columns = ()
 
     _SQL_CREATE_FILLER = 'AS '
@@ -585,9 +583,7 @@ class _TableMetaclass(_TabularMetaclass):
         return class_
 
 
-class SQLTable(SQLTabular):
-    __metaclass__ = _TableMetaclass
-
+class SQLTable(with_metaclass(_TableMetaclass, SQLTabular)):
     inherits = ()
     tablespace = None
     init_columns = None
@@ -941,9 +937,7 @@ class _TableHookMetaclass(_TabularMetaclass):
         return class_
 
 
-class SQLEventHandler(SQLFunctional):
-    __metaclass__ = _TableHookMetaclass
-
+class SQLEventHandler(with_metaclass(_TableHookMetaclass, SQLFunctional)):
     table = None
 
     def __init__(self):
