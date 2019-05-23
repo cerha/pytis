@@ -26,6 +26,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 """
 
+from builtins import object
 import copy
 import os
 import re
@@ -154,8 +155,6 @@ class _Query(object):
 
     def __bool__(self):
         return not not self._template
-
-    __nonzero__ = __bool__ # Python 2 compatibility
 
     def __add__(self, other):
         args = copy.copy(self._args)
@@ -336,8 +335,6 @@ class PostgreSQLResult(object):
         """Vrať True právě když objekt obsahuje nějaká data.
         """
         return len(self) > 0
-
-    __nonzero__ = __bool__ # Python 2 compatibility
 
     def __len__(self):
         """Vrať počet řádků dat.
