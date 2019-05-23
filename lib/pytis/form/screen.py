@@ -322,7 +322,7 @@ def file_menu_items(fields, row, select_arguments):
 # Utility classes
 
 
-class WxKey:
+class WxKey(object):
     """Práce s reprezentací kláves.
 
     Třída umožňuje porovnat událost s definicí klávesy.  V budoucnu mohou být
@@ -503,7 +503,7 @@ class Color(wx.Colour):
 # Common handlers
 
 
-class Keymap:
+class Keymap(object):
     """Klávesová mapa.
 
     Klávesová mapa umožňuje definovat přiřazení příkazů a případně jejich
@@ -641,7 +641,7 @@ class Keymap:
         return '<Keymap: %s>' % str(self._keymap)
 
 
-class KeyHandler:
+class KeyHandler(object):
     """Třída schopná převádět klávesové události na příkazy.
 
     Třída v konstruktoru registruje pro zpracování kláves metodu
@@ -810,7 +810,7 @@ class KeyHandler:
         return False
 
 
-class CallbackHandler:
+class CallbackHandler(object):
     """Mixin třída pro prvky podporující nastavování a spouštění callbacků.
 
     Třída, která podědí 'CallbackHandler', získá metody 'set_callback()' a

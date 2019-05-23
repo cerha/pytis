@@ -39,7 +39,7 @@ from .types_ import sval
 _ = translations('pytis-data')
 
 
-class Permission:
+class Permission(object):
     """Enumerator of permission constants.
 
     Not all the constants here make sense for all data objects.  For instance,

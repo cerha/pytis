@@ -109,7 +109,7 @@ class NotImplementedException(Exception):
     pass
 
 
-class Counter:
+class Counter(object):
     """Jednoduchý čítač.
 
     Po svém vytvoření je inicializován na hodnotu 0 nebo hodnotu zadanou v konstruktoru
@@ -137,7 +137,7 @@ class Counter:
         self._value = 0
 
 
-class Popen:
+class Popen(object):
     """Třída umožňující spouštění programů a komunikaci s nimi.
 
     Při vytváření instance třídy je vytvořen nový proces, se kterým je možno
@@ -1437,7 +1437,7 @@ def mem_info():
     """
     global _mem_info
     if _mem_info is None:
-        class MemInfo:
+        class MemInfo(object):
 
             def __init__(self):
                 self._length = 0

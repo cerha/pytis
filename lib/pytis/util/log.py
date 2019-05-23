@@ -292,7 +292,7 @@ class SyslogLogger(Logger):
 ###
 
 
-class LoggingInterface:
+class LoggingInterface(object):
     """Rozhraní ke standardnímu logovacímu objektu.
 
     Tato třída není určena k instanciaci mimo modul 'pytis.util.log'.

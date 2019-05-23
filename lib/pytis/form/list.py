@@ -2681,7 +2681,7 @@ class BrowseForm(FoldableForm):
     class _PrintResolver (OutputResolver):
         P_NAME = 'P_NAME'
 
-        class _Spec:
+        class _Spec(object):
             # This class has to emulate a specification module as well as a
             # (new style) specification class.
 

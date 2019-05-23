@@ -195,7 +195,7 @@ class _Completer(wx.PopupWindow):
             listctrl.EnsureVisible(0)
 
 
-class InputField(object, KeyHandler, CommandHandler):
+class InputField(KeyHandler, CommandHandler):
     """Abstract base class for input fields.
 
     Subclasses of this class implement input fields for particular field types
@@ -766,7 +766,7 @@ class InputField(object, KeyHandler, CommandHandler):
         return (self._controls[0][0],)
 
 
-class Unlabeled:
+class Unlabeled(object):
     """Mix-in třída pro políčka .
 
     Některé prvky mají label spojen přímo s controlem, takže label zobrazený
@@ -1381,7 +1381,7 @@ class ListBoxField(EnumerationField):
             self._ctrl.SetFirstItem(selection)
 
 
-class Invocable(object, CommandHandler):
+class Invocable(CommandHandler):
     """Mix-in class for fields capable to invoke a selection.
 
     The selection can be an enumeration (such as codebook selection) or just a dialog with some

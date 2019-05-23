@@ -696,7 +696,7 @@ class InnerForm(Form):
         self._on_menu_button(self._get_print_menu())
 
 
-class Refreshable:
+class Refreshable(object):
     """Abstract class providing the method 'refresh()' with given meaning.
 
     All forms which may be refreshed from their data source should derive from
@@ -752,7 +752,7 @@ class Refreshable:
         pass
 
 
-class PopupForm:
+class PopupForm(object):
     """Formulář nacházející se v samostatném framu.
 
     Tato třída je určena k vložení mezi předky třídy, jejíž instance mají být
@@ -829,7 +829,7 @@ class PopupForm:
         return result
 
 
-class TitledForm:
+class TitledForm(object):
     """Mix-in třída pro formuláře s titulkem.
 
     Lze využít buďto pouze metodu '_create_caption()', která vytváří samotný

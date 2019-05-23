@@ -72,7 +72,7 @@ class Value(unittest.TestCase):
         self.assertNotEqual(v1, v3)
 
 
-class _TypeCheck:  # (unittest.TestCase):  Temporarily disabled
+class _TypeCheck(object):  # (unittest.TestCase):  Temporarily disabled
 
     def _test_validity(self, type_, value, expected_value,
                        check_value=True, check_export=True, kwargs={},
@@ -2417,7 +2417,7 @@ class DBDataDefault(_DBTest):
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
 
 
-class DBMultiData:  # (DBDataDefault): Temporarily disabled
+class DBMultiData(object):  # (DBDataDefault): Temporarily disabled
     ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pd.DateTime.UTC_TZINFO), 1000.0,
             ('100', '007'),
             'U.S.A.', 'specialni')

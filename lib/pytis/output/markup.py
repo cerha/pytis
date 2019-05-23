@@ -675,7 +675,7 @@ class Table(_Mark):
     Pro formátování větších tabulek lze použít značku 'LongTable'.
 
     """
-    class Column:
+    class Column(object):
         """Specifikační třída sloupce tabulky."""
 
         ALIGN_LEFT = 'ALIGN_LEFT'

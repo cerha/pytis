@@ -346,7 +346,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
 
-        class _Spec:
+        class _Spec(object):
             def body(self, resolver):
                 return None
 
@@ -443,7 +443,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
         return "No print data available."
 
 
-class ReusableSpec:
+class ReusableSpec(object):
     def __init__(self, resolver):
         self._resolver = resolver
         self._bindings = self._bindings()

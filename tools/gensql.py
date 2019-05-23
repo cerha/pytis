@@ -4584,7 +4584,7 @@ def include(file_name, globals_=None):
 ###############################################################################
 
 
-class _GsqlConfig:
+class _GsqlConfig(object):
 
     GENDB = _gsql_defs.gensql
     GEALL = _gsql_defs.gensqlall

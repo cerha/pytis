@@ -150,10 +150,10 @@ class XStack(unittest.TestCase):
 
 class Sameclass(unittest.TestCase):
 
-    class A:
+    class A(object):
         pass
 
-    class B:
+    class B(object):
         pass
 
     def test_function(self):
@@ -168,10 +168,10 @@ class Sameclass(unittest.TestCase):
 
 class CompareObjects(unittest.TestCase):
 
-    class A:
+    class A(object):
         pass
 
-    class B:
+    class B(object):
         pass
 
     def test_function(self):
@@ -315,7 +315,7 @@ class Mktempdir(unittest.TestCase):
 
 class Classes(unittest.TestCase):
 
-    class _A:
+    class _A(object):
         x = 1
 
     class _B(_A):

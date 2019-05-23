@@ -115,7 +115,7 @@ class Type(object):
     """
     __metaclass__ = _MType
 
-    class _TypeTable:
+    class _TypeTable(object):
 
         def __init__(self):
             self._id_counter = Counter()

@@ -53,7 +53,7 @@ class DataTable(object):
     currently visible portion of the table).
 
     """
-    class _CurrentRow:
+    class _CurrentRow(object):
         def __init__(self, row, the_row):
             assert isinstance(row, int)
             assert isinstance(the_row, PresentedRow)

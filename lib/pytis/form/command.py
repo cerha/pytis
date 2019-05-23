@@ -30,7 +30,7 @@ import pytis.util
 _ = pytis.util.translations('pytis-wx')
 
 
-class CommandHandler:
+class CommandHandler(object):
     """Mix-in class for objects capable of handling user commands.
 
     This class adds the ability to define user commands and process them.

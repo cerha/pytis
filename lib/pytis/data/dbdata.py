@@ -232,7 +232,7 @@ class DBData(Data):
         return self._crypto_names
 
 
-class DBConnectionPool:
+class DBConnectionPool(object):
 
     def __init__(self, connection_creator, connection_closer):
         if __debug__:
@@ -352,7 +352,7 @@ class DBConnectionPool:
 # Specifikační třídy
 
 
-class DBConnection:
+class DBConnection(object):
     """Database connection parameters specification.
 
     The instance of this class just holds information about database connection
@@ -539,7 +539,7 @@ class DBConnection:
         """
         self._db_key = db_key
 
-class DBBinding:
+class DBBinding(object):
     """Definice napojení dat do databáze.
 
     Tato definice je využívána třídou 'DBData' a jejími potomky.
