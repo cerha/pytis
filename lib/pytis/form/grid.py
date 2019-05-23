@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
-# Copyright (C) 2001-2018 Brailcom, o.p.s.
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 # (starting from zero) as this is what wxWidgets use.  When refering to
 # data rows, we usually use 'the_row' for 'PresentedRow' instances.
 
+from builtins import object
 import collections
 import copy
 import types
@@ -468,12 +469,14 @@ class TableRowIterator(object):
     def __len__(self):
         return len(self._row_numbers)
 
-    def next(self):
+    def __next__(self):
         self._pointer += 1
         if self._pointer >= len(self._row_numbers):
             raise StopIteration
         else:
             return self._table.row(self._row_numbers[self._pointer])
+
+    next = __next__  # for Python 2
 
     def form(self):
         """Return the current form instance.

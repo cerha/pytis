@@ -27,6 +27,7 @@ jednotlivých tříd.
 
 """
 
+from builtins import object
 import collections
 import copy
 import lcg
@@ -2394,12 +2395,15 @@ class RecordForm(LookupForm):
             def __iter__(self):
                 return self
 
-            def next(self):
+            def __next__(self):
                 if self._row_number >= self._table.GetNumberRows():
                     raise StopIteration
                 row = self._table.row(self._row_number)
                 self._row_number += 1
                 return row
+
+            next = __next__  # for Python 2
+
         return Iterator(self._table)
 
 
