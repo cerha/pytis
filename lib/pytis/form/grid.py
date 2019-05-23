@@ -40,7 +40,7 @@ from pytis.util import DEBUG, ProgramError, log
 
 from .application import db_operation
 from .form import Form
-from .screen import Color, get_icon
+from .screen import get_icon
 from .event import top_level_exception
 
 
@@ -371,7 +371,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
             if style.underline():
                 flags |= wx.FONTFLAG_UNDERLINED
             font = self._font_cache[key] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
-        return (Color(fg), Color(bg), font)
+        return (wx.Colour(fg), wx.Colour(bg), font)
 
     def form(self):
         return self._form

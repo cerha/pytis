@@ -485,21 +485,6 @@ class WxKey(object):
         return prefix + key
 
 
-class Color(wx.Colour):
-    """Same as the parent, but defines a reasonable comparison."""
-
-    def __cmp__(self, other):
-        try:
-            result = (cmp(self.Red(), other.Red()) or
-                      cmp(self.Green(), other.Green()) or
-                      cmp(self.Blue(), other.Blue()))
-        except AttributeError:
-            # If `other' is a color, there may be just anything in wxWidgets,
-            # so it is impossible to do some sensible instance class test.
-            result = pytis.util.compare_objects(self, other)
-        return result
-
-
 # Common handlers
 
 
