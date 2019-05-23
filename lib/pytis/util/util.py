@@ -819,45 +819,6 @@ def super_(class_):
     return class_.__bases__[0]
 
 
-def _mro(class_):
-    def dfs(dfs, queue, found):
-        if queue:
-            head = queue[0]
-            if head in found:
-                result = dfs(dfs, queue[1:], found)
-            else:
-                found.append(head)
-                result = dfs(dfs, list(head.__bases__) + queue[1:], found)
-        else:
-            result = found
-        return result
-    return dfs(dfs, [class_], [])
-
-
-def next_subclass(class_, instance):
-    """Vrať potomka následujícího 'class_' v hierarchii dědičnosti 'instance'.
-
-    Pokud má třída 'instance' atribut '__mro__', je použit tento.  V opačném
-    případě je tento atribut třídy vytvořen prohledáváním předků 'instance' do
-    hloubky.  'instance' musí být instancí 'class_'.
-
-    Vrací: Odpovídající třídu; pokud taková není tak 'None'.
-
-    """
-    iclass = instance.__class__
-    try:
-        mro = iclass.__mro__
-    except AttributeError:
-        mro = _mro(iclass)
-        iclass.__mro__ = mro
-    i = position(class_, mro)
-    if i is None or i == len(mro) - 1:
-        result = None
-    else:
-        result = mro[i + 1]
-    return result
-
-
 def sameclass(o1, o2, strict=False):
     """Vrať pravdu, právě když 'o1' a 'o2' jsou instance téže třídy.
 
@@ -878,6 +839,21 @@ def sameclass(o1, o2, strict=False):
             return False
         else:
             return c1.__name__ == c2.__name__ and c1.__module__ == c2.__module__
+
+
+def _mro(class_):
+    def dfs(dfs, queue, found):
+        if queue:
+            head = queue[0]
+            if head in found:
+                result = dfs(dfs, queue[1:], found)
+            else:
+                found.append(head)
+                result = dfs(dfs, list(head.__bases__) + queue[1:], found)
+        else:
+            result = found
+        return result
+    return dfs(dfs, [class_], [])
 
 
 _public_attributes = {}

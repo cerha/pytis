@@ -327,13 +327,6 @@ class Classes(unittest.TestCase):
     class _D(_B, _C):
         pass
 
-    def test_next_subclass(self):
-        x = self._D()
-        self.assertEqual(util.next_subclass(self._D, x), self._B)
-        self.assertEqual(util.next_subclass(self._C, x), None)
-        self.assertEqual(util.next_subclass(self._B, x), self._A)
-        self.assertEqual(util.next_subclass(self._A, x), self._C)
-
     def test_public_attributes(self):
         self.longMessage = True
         self.assertItemsEqual(util.public_attributes(self._B), ['x', 'y'],
@@ -347,7 +340,6 @@ class Classes(unittest.TestCase):
         self.assertItemsEqual(util.direct_public_members(self), ['setUpClass',
                                                                  'tearDownClass',
                                                                  'test_direct_public_members',
-                                                                 'test_next_subclass',
                                                                  'test_public_attributes'])
 
 

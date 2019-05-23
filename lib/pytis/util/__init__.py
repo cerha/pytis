@@ -23,7 +23,7 @@ from .util import (  # noqa: F401
     TemporaryDirectory, TemporaryFile, Stack, XStack, Attribute, Structure,
     object_2_5, identity, is_, xor, some, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
-    nreverse, super_, _mro, next_subclass, sameclass, public_attributes,
+    nreverse, super_, sameclass, public_attributes,
     public_attr_values, argument_names, direct_public_members, compare_objects,
     less, less_equal, compare_attr, hash_attr, is_sequence, is_dictionary,
     is_string, is_unicode, is_anystring, unormalize, ecase, Locked,
