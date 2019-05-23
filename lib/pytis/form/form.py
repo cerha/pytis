@@ -753,13 +753,7 @@ class Refreshable(object):
 
 
 class PopupForm(object):
-    """Formulář nacházející se v samostatném framu.
-
-    Tato třída je určena k vložení mezi předky třídy, jejíž instance mají být
-    vytvářeny v samostatných framech.  Pro získání framu slouží metoda
-    '_popup_frame'.
-
-    """
+    """Mixin class displaying the form in a separate (pop up) frame."""
     def _popup_frame(self, parent):
         """Vrať frame instance.
 
