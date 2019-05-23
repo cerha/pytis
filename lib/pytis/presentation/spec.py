@@ -235,18 +235,21 @@ class Style(object):
     def __repr__(self):
         return self.__str__()
 
-    def _dict(self):
-        return tuple((k, bool(v) if k in ('_bold', '_slanted', '_overstrike', '_underline') else v)
-                     for k, v in self.__dict__.items())
+    def _values(self):
+        return tuple(getattr(self, attr[1:])() for attr in sorted(self.__dict__))
 
     def __hash__(self):
-        return hash(self._dict())
+        return hash(self._values())
 
-    def __cmp__(self, other):
-        if isinstance(other, self.__class__) or isinstance(self, other.__class__):
-            return cmp(self._dict(), other._dict())
+    def __eq__(self, other):
+        if isinstance(other, Style):
+            return self._values() == other._values()
         else:
-            return -1
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __radd__(self, other):
         if other is None:
