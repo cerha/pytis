@@ -299,7 +299,7 @@ class LCGFormatter(object):
                             binding_dictionary[binding_id] = MakeBinding(binding,
                                                                          self._make_binding,
                                                                          current_row)
-                if codebooks:
+                if codebooks and current_row:
                     dictionary['codebook'] = codebook_dictionary = {}
                     form_name = form.name()
                     for field_id, cb_fields, cb in codebooks:
