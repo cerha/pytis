@@ -194,11 +194,7 @@ class Modules(Specification):
                        isinstance(getattr(module, attr), collections.Callable)]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
-
-            def order(a):
-                return a in default_actions and (default_actions.index(a) + 1) or a
-
-            actions.sort(lambda a, b: cmp(order(a), order(b)))
+            actions.sort(key=lambda a: str(default_actions.index(a)) if a in default_actions else a)
             descriptions = [action_descr(module, action) for action in actions]
             from pytis.form import run_dialog, CheckListDialog
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),

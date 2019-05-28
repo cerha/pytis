@@ -1382,9 +1382,7 @@ class Configuration(object):
         """
         options = self._options.values()
         if sort:
-            def _cmp(o1, o2):
-                return cmp(o1._class_definition_order, o2._class_definition_order)
-            options.sort(_cmp)
+            options.sort(key=lambda x: x._class_definition_order)
         return tuple(options)
 
     def option(self, name):
