@@ -37,7 +37,7 @@ import types
 import wx
 import wx.html2
 import SimpleHTTPServer
-import SocketServer
+import socketserver
 import io
 import tempfile
 import threading
@@ -2147,7 +2147,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     CALL_URI_CHANGED = 'CALL_URI_CHANGED'
     """Callback called when the current uri changes (called with the uri as the argument)."""
 
-    class ResourceServer(SocketServer.TCPServer):
+    class ResourceServer(socketserver.TCPServer):
         """HTTP server to handle external resources for the current browser document.
 
         An instance of HTTP server is run for each browser instance.  The
@@ -2169,7 +2169,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """
         def __init__(self, browser_ref):
             self._browser_ref = browser_ref
-            SocketServer.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
+            socketserver.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
 
         def find_resource(self, uri):
             browser = self._browser_ref()
