@@ -25,7 +25,7 @@ from .util import (  # noqa: F401
     position, find, assoc, rassoc, remove_duplicates, flatten,
     nreverse, super_, sameclass, public_attributes,
     public_attr_values, argument_names, direct_public_members,
-    less, less_equal, hash_attr, is_sequence, is_dictionary,
+    hash_attr, is_sequence, is_dictionary,
     is_string, is_unicode, is_anystring, unormalize, ecase, Locked,
     dev_null_stream, mktempdir,
     format_byte_size, split_camel_case, camel_case_to_lower, nextval,
