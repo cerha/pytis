@@ -2107,56 +2107,57 @@ class DBDataDefault(_DBTest):
         # Basic tests
         data = self.ranges
         row = data.row(pd.ival(1))
-        self.assertIsNotNone(row)
+        assert row is not None
         value = row[1].value()
-        self.assertEqual(value[0], 10)
-        self.assertEqual(value[1], 20)
+        assert value[0] == 10
+        assert value[1] == 20
         value = row[2].value()
-        self.assertEqual(value.lower(), 9)
-        self.assertEqual(value.upper(), 19)
+        assert value.lower() == 9
+        assert value.upper() == 19
         new_value, err = IR.validate(('20', '30',))
-        self.assertIsNone(err)
+        assert err is None
         new_value_2, err = IR2.validate(('19', '29',))
-        self.assertIsNone(err)
-        self.assertEqual(new_value.value(), new_value_2.value())
-        rdt_value, err = pd.DateTimeRange(without_timezone=True)\
-                           .validate(('2014-02-01 00:00:00', '2014-02-01 00:00:02',))
-        self.assertIsNone(err)
+        assert err is None
+        assert new_value.value() == new_value_2.value()
+        rdt_value, err = pd.DateTimeRange(without_timezone=True).validate(
+            ('2014-02-01 00:00:00', '2014-02-01 00:00:02',)
+        )
+        assert err is None
         data.insert(pd.Row((('x', pd.ival(2),), ('r', new_value,),
                             ('r2', new_value_2,), ('rdt', rdt_value,),)))
         for column in ('r', 'r2',):
             for value in (new_value, new_value_2,):
                 n = data.select(pd.EQ(column, value))
                 try:
-                    self.assertEqual(n, 1)
+                    assert n == 1
                     row = data.fetchone()
                 finally:
                     data.close()
-        self.assertEqual(row['r'], new_value)
-        self.assertEqual(row['r2'].value(), new_value.value())
-        self.assertEqual(row['r2'].value(), new_value_2.value())
-        self.assertEqual(row['rdt'], rdt_value)
+        assert row['r'] == new_value
+        assert row['r2'].value() == new_value.value()
+        assert row['r2'].value() == new_value_2.value()
+        assert row['rdt'] == rdt_value
         new_value, err = IR.validate(('40', '50',))
-        self.assertIsNone(err)
+        assert err is None
         rdt_value, err = pd.DateTimeRange(without_timezone=True)\
                            .validate(('2014-03-01 00:00:00', '2014-03-01 00:00:02',))
-        self.assertIsNone(err)
+        assert err is None
         data.update(pd.ival(2), pd.Row((('r', new_value,), ('r2', new_value,),
                                         ('rdt', rdt_value,),)))
         new_value, err = IR.validate(('', '',))
-        self.assertIsNone(err)
-        self.assertIsNone(new_value.value())
+        assert err is None
+        assert new_value.value() is None
         data.insert(pd.Row((('x', pd.ival(3),), ('r', new_value,),
                             ('r2', new_value,), ('rdt', new_value,),)))
         row = data.row(pd.ival(3))
-        self.assertIsNotNone(row)
+        assert row is not None
         value = row[1].value()
-        self.assertIsNone(value)
+        assert value is None
 
         # Range operators
         def test_condition(n_rows, condition):
             try:
-                self.assertEqual(n_rows, data.select(condition))
+                assert n_rows == data.select(condition)
             finally:
                 data.close()
 
@@ -2183,24 +2184,25 @@ class DBDataDefault(_DBTest):
         test_condition(1, pd.RangeOverlap('r', irange2(0, 10)))
         # Unbound values
         value, err = IR.validate(('1', '',))
-        self.assertIsNone(err)
-        self.assertEqual(value.value().lower(), 1)
-        self.assertEqual(value.value().upper(), None)
+        assert err is None
+        assert value.value().lower() == 1
+        assert value.value().upper() is None
         test_condition(1, pd.RangeOverlap('r', irange(30, None)))
         test_condition(1, pd.RangeOverlap('r', irange(None, 30)))
         # Other checks
         value, err = IR.validate(('2', '2'))
-        self.assertIsNone(err)
+        assert err is None
         value, err = IR3.validate(('2', '2'))
-        self.assertIsNone(err)
+        assert err is None
         value, err = IR.validate(('2', '1'))
-        self.assertIsNotNone(err)
+        assert err is not None
         value, err = DR.validate(('2015-01-01 12:00:00', '2015-01-01 12:00:00'))
-        self.assertIsNone(err)
+        assert err is None
         value, err = DR.validate(('2015-01-01 12:00:01', '2015-01-01 12:00:00'))
-        self.assertIsNotNone(err)
+        assert err is not None
         pd.Value(IR, IR.Range(1, 1))
-        self.assertRaises(TypeError, pd.Value, IR, IR.Range(1, 0))
+        with pytest.raises(TypeError):
+            pd.Value(IR, IR.Range(1, 0))
 
     def test_arrays(self):
         int_array_type = pd.Array(inner_type=pd.Integer())
