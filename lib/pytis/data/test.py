@@ -63,13 +63,13 @@ class Value(unittest.TestCase):
         self.assertTrue(v1.type() == t and v2.type() == t and v3.type() == t, 'type lost')
         self.assertTrue(v1.value() is None and v2.value() == 1 and v3.value() == t, 'value lost')
 
-    def test_cmp(self):
+    def test_equality(self):
         t = pd.Type()
         v1 = pd.Value(t, 1)
         v2 = pd.Value(t, 1)
         v3 = pd.Value(t, 2)
-        self.assertEqual(v1, v2)
-        self.assertNotEqual(v1, v3)
+        assert v1 == v2
+        assert v1 != v3
 
 
 class _TypeCheck(object):  # (unittest.TestCase):  Temporarily disabled
@@ -100,9 +100,9 @@ class _TypeCheck(object):  # (unittest.TestCase):  Temporarily disabled
         self.assertEqual(v.type(), self._test_instance, ('Invalid type', v.type()))
         return v
 
-    def test_cmp(self):
+    def test_equality(self):
         c = self._test_instance.__class__
-        self.assertEqual(c(), c())
+        assert c() == c()
 
 
 class Type(_TypeCheck):
@@ -111,10 +111,10 @@ class Type(_TypeCheck):
     def test_validation(self):
         self._test_null_validation()
 
-    def test_noncmp(self):
-        self.assertNotEqual(self._test_instance, pd.Integer())
-        self.assertNotEqual(pd.Integer(not_null=True), pd.Integer())
-        self.assertNotEqual(pd.String(maxlen=2), pd.String(maxlen=3))
+    def test_non_equality(self):
+        assert self._test_instance != pd.Integer()
+        assert pd.Integer(not_null=True) != pd.Integer()
+        assert pd.String(maxlen=2) != pd.String(maxlen=3)
 
     def test_cloning(self):
         i1 = pd.Integer()
@@ -224,13 +224,13 @@ class String(_TypeCheck):
         t = pd.String(maxlen=None)
         self._test_validity(t, 'abcdefghi', 'abcdefghi')
 
-    def test_cmp(self):
+    def test_equality(self):
         MAXLEN = 1
-        _TypeCheck.test_cmp(self)
+        _TypeCheck.test_equality(self)
         t = pd.String(maxlen=MAXLEN)
-        self.assertEqual(t, pd.String(maxlen=MAXLEN))
-        self.assertNotEqual(t, self._test_instance)
-        self.assertNotEqual(t, pd.String(maxlen=(MAXLEN + 1)))
+        assert t == pd.String(maxlen=MAXLEN)
+        assert t != self._test_instance
+        assert t != pd.String(maxlen=(MAXLEN + 1))
 
 
 class Password(_TypeCheck):
@@ -292,11 +292,11 @@ class Color(_TypeCheck):
         v, e = self._test_validity(None, '', None, check_value=False)
         self.assertIsNone(v.value(), ('invalid value', v))
 
-    def test_cmp(self):
-        _TypeCheck.test_cmp(self)
+    def test_equality(self):
+        _TypeCheck.test_equality(self)
         t = pd.Color()
-        self.assertNotEqual(t, pd.String())
-        self.assertEqual(t, self._test_instance)
+        assert t != pd.String()
+        assert t == self._test_instance
 
 
 class DateTime(_TypeCheck):
@@ -492,8 +492,8 @@ class Boolean(_TypeCheck):
         self._test_validity(None, 't', None)
         self._test_validity(None, '0', None)
 
-    def test_noncmp(self):
-        self.assertNotEqual(self._test_instance, pd.String())
+    def test_non_equality(self):
+        assert self._test_instance != pd.String()
 
 
 class Array(_TypeCheck):
@@ -506,10 +506,10 @@ class Array(_TypeCheck):
         self.assertEqual(value.export(), ('1', '2', '3'), value.export())
         self.assertEqual(value.primitive_value(), [1, 2, 3], value.primitive_value())
 
-    def test_cmp(self):
+    def test_equality(self):
         cls = self._test_instance.__class__
         inner_type = self._test_instance.inner_type()
-        self.assertEqual(cls(inner_type=inner_type), cls(inner_type=inner_type))
+        assert cls(inner_type=inner_type) == cls(inner_type=inner_type)
 
 
 class Binary(_TypeCheck):
@@ -531,9 +531,9 @@ class Binary(_TypeCheck):
         v = pd.Value(pd.Binary(), '0123456789')
         self.assertEqual(len(v.value()), 10)
 
-    def test_cmp(self):
-        self.assertEqual(pd.Binary(), pd.Binary())
-        self.assertNotEqual(pd.Binary(), pd.Binary(maxlen=3))
+    def test_equality(self):
+        assert pd.Binary() == pd.Binary()
+        assert pd.Binary() != pd.Binary(maxlen=3)
 
 
 class Image(_TypeCheck):
@@ -655,13 +655,13 @@ class ColumnSpec(unittest.TestCase):
         self.assertEqual(ColumnSpec._test_instance.id(), 'foo')
         self.assertEqual(ColumnSpec._test_instance.type(), pd.Integer())
 
-    def test_cmp(self):
+    def test_equality(self):
         x = pd.ColumnSpec('foo', pd.Integer())
         y = pd.ColumnSpec('bar', pd.Integer())
         z = pd.ColumnSpec('foo', pd.String())
-        self.assertEqual(self._test_instance, x)
-        self.assertNotEqual(self._test_instance, y)
-        self.assertNotEqual(self._test_instance, z)
+        assert self._test_instance == x
+        assert self._test_instance != y
+        assert self._test_instance != z
 
 
 class TestRow(object):
@@ -879,9 +879,9 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(c.port(), 1234)
         self.assertEqual(c.database(), 'db')
 
-    def test_cmp(self):
-        self.assertEqual(self._connection, self._connection2)
-        self.assertNotEqual(self._connection, self._connection3)
+    def test_equality(self):
+        assert self._connection == self._connection2
+        assert self._connection != self._connection3
 
     def test_select(self):
         c = self._connection
@@ -3588,8 +3588,8 @@ class OperatorTest(_DBBaseTest):
         d = pd.EQ('d', pd.Value(pd.DateTime(),
                                 pd.DateTime.now().value()))
         e = pd.EQ('d', pd.Value(pd.DateTime(), None))
-        self.assertNotEqual(a, b)
-        self.assertEqual(a, c)
-        self.assertNotEqual(b, c)
-        self.assertNotEqual(a, d)
-        self.assertNotEqual(d, e)
+        assert a != b
+        assert a == c
+        assert b != c
+        assert a != d
+        assert d != e

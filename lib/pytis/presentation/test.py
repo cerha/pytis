@@ -766,7 +766,7 @@ class Style(unittest.TestCase):
         assert pp.Style(background='#002e6a') == pp.Style(background=[0, 46, 106])
         assert pp.Style(background='#e00020') == pp.Style(background=(0xe0, 0x00, 0x20))
 
-    def test_cmp(self):
+    def test_equality(self):
         assert pp.Style() == pp.Style()
         assert pp.Style(slanted=True) == pp.Style(slanted=True)
         assert (pp.Style(slanted=True, foreground='#fff') ==
