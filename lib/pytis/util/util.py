@@ -698,13 +698,7 @@ def position(element, sequence, key=identity):
         return None
 
 
-if hasattr(operator, 'eq'):
-    _eq = operator.eq
-else:
-    _eq = (lambda x, y: x == y)
-
-
-def find(element, sequence, key=identity, test=_eq):
+def find(element, sequence, key=identity, test=operator.eq):
     """Vrať nejlevější prvek 'sequence' rovnající se 'element'.
 
     Pokud se 'element' v 'sequence' nenachází, vrať 'None'.
