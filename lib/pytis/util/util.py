@@ -935,32 +935,6 @@ def direct_public_members(obj):
     return tuple(result)
 
 
-def compare_objects(o1, o2):
-    """Porovnej 'o1' a 'o2' a vrať výsledek.
-
-    Výsledek odpovídá pravidlům pro special metodu '__cmp__'.
-
-    Pro porovnání platí následující pravidla:
-
-    - Jestliže jsou oba objekty 'None', rovnají se.
-
-    - Jestliže oba objekty jsou instance různých tříd, vrátí se výsledek
-      porovnání 'id' jejich tříd.
-
-    - Neplatí-li žádná z předchozích podmínek, vrátí se výsledek volání
-      'cmp(o1, o2)'.
-
-    """
-    c1 = o1.__class__
-    c2 = o2.__class__
-    if c1 == c2:
-        return cmp(o1, o2)
-    elif id(c1) < id(c2):
-        return -1
-    else:
-        return 1
-
-
 def less(o1, o2):
     """Similar to '<' operator but handles 'None' values.
 
@@ -998,36 +972,6 @@ def less_equal(o1, o2):
     if o1 is None:
         return True
     return o1 <= o2
-
-
-def compare_attr(self, other, attributes):
-    """Vrať celkový výsledek porovnání atributů objektů 'self' a 'other'.
-
-    Funkce porovnává třídy objektů 'self' a 'other' a v případě shody pak
-    uvedené atributy.  Návratová hodnota se řídí pravidly pro funkci 'cmp'.
-
-    Argumenty:
-
-      self, other -- instance tříd
-      attributes -- sekvence jmen atributů instancí (strings), které mají být
-        porovnávány
-
-    Funkce je typicky určena k použití v metodě '__cmp__'.
-
-    """
-    if sameclass(self, other):
-        sdict = self.__dict__
-        odict = other.__dict__
-        for a in attributes:
-            s, o = sdict[a], odict[a]
-            if s < o:
-                return -1
-            elif s > o:
-                return 1
-        else:
-            return 0
-    else:
-        return compare_objects(self, other)
 
 
 def hash_attr(self, attributes):

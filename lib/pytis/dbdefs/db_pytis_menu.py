@@ -1013,8 +1013,15 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                             raise Exception('programming error', k)
                         setattr(self, k, v)
 
-            def __cmp__(self, other):
-                return cmp(self.id, other.id)
+            def __eq__(self, other):
+                if pytis.util.sameclass(self, other):
+                    return self.id == other.id
+                else:
+                    return NotImplemented
+
+            def __ne__(self, other):
+                # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+                return not self == other
 
             def strong_redundant(self, other):
                 for attr in Right.properties:

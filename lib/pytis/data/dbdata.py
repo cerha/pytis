@@ -61,7 +61,7 @@ import weakref
 import pytis
 from pytis.data import ColumnSpec, Data, Type
 from pytis.util import (
-    compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt,
+    flatten, hash_attr, is_sequence, log, rsa_encrypt, sameclass,
     super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL,
 )
 
@@ -454,14 +454,15 @@ class DBConnection(object):
         """Return schemas given in the constructor."""
         return self._schemas
 
-    def __cmp__(self, other):
-        """Vrať 0, právě když 'self' a 'other' definují totéž spojení.
+    def __eq__(self, other):
+        if sameclass(self, other):
+            return all(getattr(self, '_' + o) == getattr(other, '_' + o) for o in self._OPTIONS)
+        else:
+            return NotImplemented
 
-        Dvě instance této třídy reprezentují totéž spojení, právě když se
-        rovnají odpovídající si parametry zadané jejich konstruktorům.
-
-        """
-        return compare_attr(self, other, ['_' + option for option in self._OPTIONS])
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __hash__(self):
         return hash_attr(self, ['_' + option for option in self._OPTIONS])
@@ -675,9 +676,16 @@ class DBColumnBinding(DBBinding):
         return ('<DBCB: id=%s, table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>') % \
                (self._id, self._table, self._column, self._related_to, self._type, self._is_hidden)
 
-    def __cmp__(self, other):
-        return compare_attr(self, other,
-                            ('_table', '_column', '_related_to', '_type', '_is_hidden'))
+    def __eq__(self, other):
+        if sameclass(self, other):
+            return all(getattr(self, attr) == getattr(other, attr) for attr in
+                       ('_table', '_column', '_related_to', '_type', '_is_hidden'))
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __hash__(self):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))

@@ -305,16 +305,15 @@ class Command(object):
             message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
             return False
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if pytis.util.sameclass(self, other):
-            if self._id == other._id:
-                return 0
-            elif self._id < other._id:
-                return -1
-            else:
-                return 1
+            return self._id == other._id
         else:
-            return pytis.util.compare_objects(self, other)
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __str__(self):
         return '<Command: %s>' % self._id

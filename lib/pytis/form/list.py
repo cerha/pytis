@@ -55,7 +55,7 @@ from pytis.presentation import (
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL,
     Attribute, ProgramError, ResolverError, SimpleCache, Structure,
-    UNDEFINED, compare_objects, find, form_view_data, log, sameclass,
+    UNDEFINED, find, form_view_data, log,
 )
 
 from pytis.output import (
@@ -2140,11 +2140,15 @@ class FoldableForm(ListForm):
             """
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
 
-        def __cmp__(self, other):
-            if sameclass(self, other):
-                return cmp(self._folding, other._folding)
+        def __eq__(self, other):
+            if pytis.util.sameclass(self, other):
+                return self._folding == other._folding
             else:
-                return compare_objects(self, other)
+                return NotImplemented
+
+        def __ne__(self, other):
+            # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+            return not self == other
 
         def _find_node(self, node):
             state = self._folding

@@ -166,32 +166,6 @@ class Sameclass(unittest.TestCase):
         self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
 
 
-class CompareObjects(unittest.TestCase):
-
-    class A(object):
-        pass
-
-    class B(object):
-        pass
-
-    def test_function(self):
-        o1 = None
-        o2 = 'foo'
-        o3 = 'bar'
-        o4 = CompareObjects.A()
-        o5 = CompareObjects.A()
-        o6 = CompareObjects.B()
-        self.assertEqual(util.compare_objects(o1, o1), 0)
-        self.assertEqual(util.compare_objects(o4, o4), 0)
-        self.assertNotEqual(util.compare_objects(o4, o5), 0)
-        self.assertNotEqual(util.compare_objects(o1, o4), 0)
-        self.assertNotEqual(util.compare_objects(o6, o2), 0)
-        self.assertNotEqual(util.compare_objects(o5, o6), 0)
-        self.assertNotEqual(util.compare_objects(o1, o2), 0)
-        self.assertGreater(util.compare_objects(o2, o3), 0)
-        self.assertLess(util.compare_objects(o3, o2), 0)
-
-
 class MiscFunctions(unittest.TestCase):
 
     def test_is_sequence(self):

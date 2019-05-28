@@ -46,7 +46,7 @@ import pytis.util
 import pytis.data
 from pytis.util import (
     EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
-    compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple,
+    find, log, object_2_5, sameclass, some, translations, xtuple,
 )
 from .types_ import DateTime, Number, Type, Value, WMValue
 
@@ -108,13 +108,32 @@ class Operator(object):
         def __init__(self, value):
             self._value = value
 
-        def __cmp__(self, other):
+        def __eq__(self, other):
             if sameclass(self, other):
-                return cmp(self._value, other._value)
-            elif less(self, other):
-                return -1
+                return self._value == other._value
             else:
-                return 1
+                return NotImplemented
+
+        def __ne__(self, other):
+            # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+            return not self == other
+
+        def __lt__(self, other):
+            if sameclass(self, other):
+                return self._value < other._value
+            elif other is None:
+                return False
+            else:
+                return NotImplemented
+
+        def __le__(self, other):
+            return self < other or self == other
+
+        def __gt__(self, other):
+            return not self == other and not self < other
+
+        def __ge__(self, other):
+            return self > other or self == other
 
         def __hash__(self):
             return hash(self._value)
@@ -166,7 +185,7 @@ class Operator(object):
 
         So the attributes of data type instances don't figure in the result.
         Only their class is taken into account.  This is necessary to avoid the
-        influence of data types attributes on the results of __cmp__ and
+        influence of data types attributes on the results of __eq__ and
         __hash__.
 
         """
@@ -196,13 +215,17 @@ class Operator(object):
         args = [arg(a) for a in self.args()]
         return '%s (%s)' % (self.name(), ', '.join(args))
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if sameclass(self, other):
-            return (cmp(self._name, other._name) or
-                    cmp(self._relaxed_args(), other._relaxed_args()) or
-                    cmp(self._kwargs, other._kwargs))
+            return (self._name == other._name and
+                    self._relaxed_args() == other._relaxed_args() and
+                    self._kwargs == other._kwargs)
         else:
-            return compare_objects(self, other)
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __hash__(self):
         return (hash(self._name) ^
@@ -1550,21 +1573,15 @@ class ColumnSpec(object):
     def __str__(self):
         return '<Column: id=%s, type=%s>' % (self.id(), self.type())
 
-    def __cmp__(self, other):
-        """Vrať 0, právě když 'self' a 'other' jsou shodné.
-
-        'self' a 'other' jsou shodné právě když jsou téže třídy a mají stejné
-        id a typ.
-
-        """
-        if sameclass(self, other):
-            res = compare_objects(self.id(), other.id())
-            if res:
-                return res
-            else:
-                return compare_objects(self.type(), other.type())
+    def __eq__(self, other):
+        if not sameclass(self, other):
+            return NotImplemented
         else:
-            return compare_objects(self, other)
+            return (self._id == other._id and self._type == other._type)
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __hash__(self):
         return hash(self._id)
@@ -1663,35 +1680,19 @@ class Row(object):
             value = value ^ hash(k) ^ hash(v)
         return value
 
-    def __cmp__(self, other):
-        """Vrať 0, právě když 'self' a 'other' obsahují stejné názvy a hodnoty.
-
-        Hodnoty a názvy musí být stejné včetně svého pořadí.
-
-        """
-        if sameclass(self, other):
-            l1 = len(self)
-            l2 = len(other)
-            if l1 < l2:
-                return -1
-            elif l1 > l2:
-                return 1
-            else:
-                data1 = self._data
-                data2 = other._data
-                for i in range(l1):
-                    k1, v1 = data1[i]
-                    k2, v2 = data2[i]
-                    x = cmp(k1, k2)
-                    if x:
-                        return x
-                    y = cmp(v1, v2)
-                    if y:
-                        return y
-                else:
-                    return 0
+    def __eq__(self, other):
+        # Rows are equal if they contain the same keys and values including their order.
+        if not sameclass(self, other):
+            return NotImplemented
+        elif len(self) != len(other):
+            return False
         else:
-            return compare_objects(self, other)
+            return all(k1 == k2 and v1 == v2
+                       for (k1, v1), (k2, v2) in zip(self._data, other._data))
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __len__(self):
         """Vrať počet sloupců v řádku."""
@@ -2157,10 +2158,14 @@ class DataFactory(object):
         return self._kwargs.get('connection_name')
 
     # "Podrobné" porovnávání data factories je příliš náročné na CPU.
-#     def __cmp__(self, other):
-#         return compare_attr(self, other, ('_class_', '_args', '_kwargs'))
-#     def __hash__(self):
-#         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
+    # def __eq__(self, other):
+    #     if sameclass(self, other):
+    #         return all(getattr(self, attr) == getattr(other, attr) for attr in
+    #                    ('_class_', '_args', '_kwargs'))
+    #     else:
+    #         return NotImplemented
+    # def __hash__(self):
+    #     return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
 
 
 def dbtable(table, columns, connection_data, arguments=None, connection_name=None, sql_logger=None):

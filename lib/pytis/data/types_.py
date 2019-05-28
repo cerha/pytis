@@ -48,8 +48,7 @@ import time
 
 from pytis.util import (
     Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError,
-    assoc, compare_objects, format_byte_size, identity, log, rassoc,
-    sameclass, super_, Locked, xtuple,
+    assoc, format_byte_size, identity, log, rassoc, sameclass, super_, Locked, xtuple,
 )
 import pytis.util
 
@@ -249,20 +248,19 @@ class Type(with_metaclass(_MType, object)):
                 self._validation_cache.reset()
             enumerator.add_callback_on_change(callback)
 
-    def __cmp__(self, other):
-        """Vrať 0, právě když 'self' a 'other' reprezentují tentýž typ."""
+    def __eq__(self, other):
         if not sameclass(self, other):
-            result = compare_objects(self, other)
-        elif self._id == other._id:
-            result = 0
-        elif (self._constraints == other._constraints and
-              self._not_null == other._not_null and
-              self._unique == other._unique and
-              cmp(self._enumerator, other._enumerator) == 0):
-            result = 0
+            return NotImplemented
         else:
-            return cmp(id(self), id(other))
-        return result
+            return (self._id == other._id or id(self) == id(other) or
+                    self._comparison_key() == other._comparison_key())
+
+    def _comparison_key(self):
+        return (self._constraints, self._not_null, self._unique, self._enumerator)
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __str__(self):
         name, module = self.__class__.__name__, self.__class__.__module__
@@ -578,14 +576,8 @@ class Number(Type):
         self._maximum = maximum
         super(Number, self)._init(**kwargs)
 
-    def __cmp__(self, other):
-        """Return 0 if 'self' and 'other' are of the same class and constraints."""
-        result = super(Number, self).__cmp__(other)
-        if not result:
-            result = cmp(self.maximum(), other.maximum())
-        if not result:
-            result = cmp(self.minimum(), other.minimum())
-        return result
+    def _comparison_key(self):
+        return super(Number, self)._comparison_key() + (self._minimum, self._maximum)
 
     def minimum(self):
         """Return the minimal value.
@@ -660,14 +652,8 @@ class Limited(Type):
         self._maxlen = maxlen
         super(Limited, self)._init(**kwargs)
 
-    def __cmp__(self, other):
-        """Return 0 if 'self' and 'other' are of the same class and maxlen."""
-        result = super(Limited, self).__cmp__(other)
-        if not result:
-            result = cmp(self.maxlen(), other.maxlen())
-        if not result:
-            result = cmp(self.minlen(), other.minlen())
-        return result
+    def _comparison_key(self):
+        return super(Limited, self)._comparison_key() + (self._minlen, self._maxlen)
 
     def minlen(self):
         """Return the minimal length of the value as an integer or 'None'.
@@ -745,26 +731,20 @@ class Range(Type):
         def upper_inc(self):
             return self._upper_inc
 
-        def __cmp__(self, other):
-            if sameclass(self, other):
-                range_type = self._type
-                if range_type is None:
-                    range_1 = self
-                    range_2 = other
-                else:
-                    range_1 = range_type.adjust_value(self)
-                    range_2 = range_type.adjust_value(other)
-
-                def cmp_(x, y):
-                    if x is None and y is not None:
-                        return -1
-                    elif y is None and x is not None:
-                        return 1
-                    return cmp(x, y)
-                return (cmp_(range_1._lower, range_2._lower) or
-                        cmp_(range_1._upper, range_2._upper))
+        def __eq__(self, other):
+            if not sameclass(self, other):
+                return NotImplemented
             else:
-                return compare_objects(self, other)
+                t = self._type
+                if t:
+                    r1, r2 = t.adjust_value(self), t.adjust_value(other)
+                else:
+                    r1, r2 = self, other
+                return r1._lower == r2._lower and r1._upper == r2._upper
+
+        def __ne__(self, other):
+            # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+            return not self == other
 
         def __len__(self):
             return 2
@@ -797,13 +777,8 @@ class Range(Type):
         self.Range = InstanceRange
         super(Range, self)._init(**kwargs)
 
-    def __cmp__(self, other):
-        result = super(Range, self).__cmp__(other)
-        if not result:
-            result = cmp(self._lower_inc, other._lower_inc)
-        if not result:
-            result = cmp(self._upper_inc, other._upper_inc)
-        return result
+    def _comparison_key(self):
+        return super(Range, self)._comparison_key() + (self._lower_inc, self._upper_inc)
 
     def _validate(self, obj, **kwargs):
         if obj == self._NULL_RANGE_VALUE:
@@ -2625,15 +2600,8 @@ class Image(Binary, Big):
         self._formats = formats and tuple(formats)
         super(Image, self)._init(**kwargs)
 
-    def __cmp__(self, other):
-        result = super(Image, self).__cmp__(other)
-        if not result:
-            result = cmp(self._minsize, other._minsize)
-            if not result:
-                result = cmp(self._maxsize, other._maxsize)
-                if not result:
-                    result = cmp(self._formats, other._formats)
-        return result
+    def _comparison_key(self):
+        return super(Image, self)._comparison_key() + (self._minsize, self._maxsize, self._formats)
 
     def minsize(self):
         """Return the minimal image size in pixels as a pair (WIDTH, HEIGHT).
@@ -3250,34 +3218,24 @@ class _Value(object):
         return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
                                             type, value)
 
-    def __cmp__(self, other):
-        """Vrať 0, právě když 'self' a 'other' jsou shodné.
-
-        'self' a 'other' jsou shodné, právě když se rovnají jejich typy a
-        hodnoty.
-
-        """
-        if sameclass(self, other):
-            t1, t2 = self.type(), other.type()
-            if t1 == t2:
-                res = 0
-            else:
-                res = compare_objects(t1, t2)
-            if res:
-                return res
-            else:
-                # Beware, datetime instances can't be compared with None
-                v1, v2 = self.value(), other.value()
-                if v1 is None and v2 is None:
-                    return 0
-                elif v1 is None:
-                    return -1
-                elif v2 is None:
-                    return 1
-                else:
-                    return cmp(v1, v2)
+    def __eq__(self, other):
+        if not sameclass(self, other):
+            return NotImplemented
+        elif self._type != other._type:
+            return False
         else:
-            return compare_objects(self, other)
+            # Beware, datetime instances can't be compared with None
+            v1, v2 = self._value, other._value
+            if v1 is None and v2 is None:
+                return True
+            elif v1 is None or v2 is None:
+                return False
+            else:
+                return v1 == v2
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
 
     def __hash__(self):
         return hash(self._type) ^ hash(self._value)

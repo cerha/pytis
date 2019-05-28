@@ -710,6 +710,18 @@ class TestRow(object):
         r.update(r2)
         assert r[0] == u1 and r[1] == v2
 
+    def test_compare(self):
+        r1 = pd.Row((('a', pd.ival(1)), ('b', pd.sval('foo'))))
+        r2 = pd.Row((('a', pd.ival(1)), ('b', pd.sval('bar'))))
+        r3 = pd.Row((('x', pd.ival(1)),))
+        r4 = pd.Row((('a', pd.ival(1)), ('b', pd.Value(pd.String(), 'foo'))))
+        r5 = pd.Row((('a', pd.ival(1)), ('b', pd.Value(pd.String(maxlen=4), 'foo'))))
+        assert r1 != r2
+        assert r2 != r3
+        assert r3 != r4
+        assert r4 == r1
+        assert r5 != r4
+
     def test_append(self):
         r = pd.Row((('x', ival(1)), ('y', ival(2))))
         r.append('z', ival(3))
