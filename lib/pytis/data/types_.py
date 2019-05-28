@@ -74,14 +74,6 @@ class _MType(type):
         return self.make(*args, **kwargs)
 
 
-class UnsupportedPrimitiveValueConversion(Exception):
-    """Exception raised for unsupported conversion by 'Type.primitive_value()'."""
-
-    def __init__(self, type):
-        msg = 'Object of type %s can not be converted to a primitive value.' % type
-        super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
-
-
 class Type(with_metaclass(_MType, object)):
     """Abstract base class for all data type specific classes.
 
@@ -509,29 +501,6 @@ class Type(with_metaclass(_MType, object)):
     def secret_export(self):
         """Return string representation of a hidden value."""
         return '***'
-
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        'value' must be a valid internal python value corresponding to the type
-        (obtained for example by validation).
-
-        The basic types include python's 'bool', 'int', 'float', 'str',
-        'unicode', 'list', 'dict' and 'NoneType'.  Most types are represented
-        directly by basic python values, but some types, such as date/time must
-        be converted to a basic value using a custom format (such as date
-        represented by an ISO string).  Other types, such as binary, may not
-        support the conversion at all.  See the derived classes for more
-        information.
-
-        Raises 'UnsupportedPrimitiveValueConversion' if conversion is not
-        supported for given type.
-
-        This method may be useful for all kinds of value serializations, such
-        as JSON conversion.
-
-        """
-        return value
 
     def adjust_value(self, value):
         """Return 'value' in the form to be used as type internal value.
@@ -1942,17 +1911,6 @@ class DateTime(_CommonDateTime):
         diff = dt2.value() - dt1.value()
         return diff.days * 86400 + diff.seconds
 
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        In this particular class, the returned value is an ISO formatted
-        datetime string ('%Y-%m-%d %H:%M:%S').
-
-        """
-        return self.export(value, format='%Y-%m-%d %H:%M:%S', local=False)
-
     @classmethod
     def current_gmtime(class_):
         """Deprecated.  Use 'datetime' method instead.
@@ -2015,16 +1973,6 @@ class ISODateTime(DateTime):
     """
     SQL_FORMAT = True
 
-    def primitive_value(self, value):
-        """Return given value represented as a string.
-
-        I've no idea why this method should return a string, on the contrary to
-        'Time.primitive_value' description.  But it's consistent with the
-        superclass method return value.
-
-        """
-        return self.export(value, format=True, local=False)
-
 
 class Date(DateTime):
     """Date without a time.
@@ -2060,17 +2008,6 @@ class Date(DateTime):
     def _export(self, value, local=None, format=None):
         assert isinstance(value, datetime.date), value
         return self._strftime(value, format or self._format)
-
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        In this particular class, the returned value is an ISO formatted
-        date string ('%Y-%m-%d').
-
-        """
-        return self.export(value, format='%Y-%m-%d', local=False)
 
     @classmethod
     def _datetime(class_, tz):
@@ -2143,17 +2080,6 @@ class Time(_CommonDateTime):
             v = date_time.time() if self._without_timezone else date_time.timetz()
             value = Value(value.type(), v)
         return value, error
-
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        In this particular class, the returned value is an ISO formatted
-        time string ('%H:%M:%S').
-
-        """
-        return self.export(value, format='%H:%M:%S')
 
     def _export(self, value, **kwargs):
         assert isinstance(value, datetime.time), value
@@ -2276,17 +2202,6 @@ class TimeInterval(Type):
                                 replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
         return format_string % dict(hours=(seconds / 3600), minutes=((seconds % 3600) / 60),
                                     seconds=(seconds % 60))
-
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        In this particular class, the returned value is an ISO formatted
-        string ('%H:%M:%S').
-
-        """
-        return self.export(value)
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.timedelta):
@@ -2639,16 +2554,6 @@ class Image(Binary, Big):
                                              format=image.format,
                                              formats=', '.join(self._formats))
 
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        The conversion is not supported for this particular class.
-
-        """
-        raise UnsupportedPrimitiveValueConversion(self)
-
 
 class LTree(Type):
     """Type representing a hierarchical (tree) structure.
@@ -2776,17 +2681,6 @@ class Array(Limited):
 
     def _export(self, value):
         return tuple([val.export() for val in value])
-
-    def primitive_value(self, value):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for generic description of this method.
-
-        In this particular class, the returned value is an array of inner
-        values converted to primitive types.
-
-        """
-        return [val.primitive_value() for val in value]
 
     def inner_type(self):
         return self._inner_type
@@ -3356,14 +3250,6 @@ class Value(_Value):
         else:
             instance = class_(type=value.type(), value=value.true_value())
         return instance
-
-    def primitive_value(self):
-        """Return given value represented by a basic python type.
-
-        See 'Type.primitive_value()' for more information.
-
-        """
-        return self.type().primitive_value(self.value())
 
 
 class WMValue(_Value):

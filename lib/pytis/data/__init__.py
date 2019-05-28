@@ -34,7 +34,7 @@ The module defines:
 """
 
 from .types_ import (  # noqa: F401
-    UnsupportedPrimitiveValueConversion, Type, Number, Big, Large, Limited,
+    Type, Number, Big, Large, Limited,
     Range, Integer, IntegerRange, SmallInteger, LargeInteger, LargeIntegerRange,
     Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name,
     Password, RegexString, Color, Inet, Macaddr, Email, TreeOrderBase, TreeOrder,

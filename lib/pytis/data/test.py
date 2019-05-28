@@ -338,7 +338,6 @@ class DateTime(_TypeCheck):
         val = v.value()
         result = exp(val, **vkwargs)
         self.assertEqual(result, '2100-02-05 01:02:03', ('Invalid date export', result))
-        self.assertEqual(v.primitive_value(), '2100-02-05 01:02:03')
         val2 = datetime.datetime(1841, 7, 2, 1, 2, 3, tzinfo=tzinfo)
         result2 = exp(val2, format='%d.%m.%Y')
         self.assertEqual(result2, '02.07.1841')
@@ -378,7 +377,6 @@ class ISODateTime(_TypeCheck):
         result = exp(val, **vkwargs)
         self.assertEqual(result, '2012-01-23 10:14:39.023104+00:00',
                          ('Invalid date export', result))
-        self.assertEqual(v.primitive_value(), '2012-01-23 10:14:39.023104+00:00')
 
 
 class Date(_TypeCheck):
@@ -457,7 +455,6 @@ class TimeInterval(_TypeCheck):
         value = pd.Value(self._test_instance, datetime.timedelta(1, 3600))
         exported = value.export()
         self.assertEqual(exported, '25:00:00', (value, exported,))
-        self.assertEqual(value.primitive_value(), exported, (value.primitive_value(), exported,))
         exported = value.export(format='%M:%S')
         self.assertEqual(exported, '00:00', (value, exported,))
         exported = value.export(format='%H')
@@ -474,7 +471,6 @@ class TimeInterval2(_TypeCheck):
         value = pd.Value(self._test_instance, datetime.timedelta(1, 3600))
         exported = value.export()
         self.assertEqual(exported, '25:00', (value, exported,))
-        self.assertEqual(value.primitive_value(), exported, (value.primitive_value(), exported,))
         exported = value.export(format='%M:%S')
         self.assertEqual(exported, '00:00', (value, exported,))
         exported = value.export(format='%H')
@@ -504,7 +500,6 @@ class Array(_TypeCheck):
         value, _ = self._test_validity(None, ('1', '2', '3'), None, check_value=False)
         self.assertEqual([v.value() for v in value.value()], [1, 2, 3])
         self.assertEqual(value.export(), ('1', '2', '3'), value.export())
-        self.assertEqual(value.primitive_value(), [1, 2, 3], value.primitive_value())
 
     def test_equality(self):
         cls = self._test_instance.__class__
