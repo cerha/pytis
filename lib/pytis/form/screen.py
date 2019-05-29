@@ -36,7 +36,7 @@ import string
 import types
 import wx
 import wx.html2
-import SimpleHTTPServer
+import http.server
 import socketserver
 import io
 import tempfile
@@ -2178,7 +2178,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             else:
                 return None
 
-    class ResourceHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    class ResourceHandler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
             uri = self.path
             if uri != '/favicon.ico':

@@ -32,7 +32,7 @@ immutable.  Thus they can be shared as needed.
 """
 from future.utils import with_metaclass
 
-import BaseHTTPServer
+import http.server
 import collections
 import copy
 import lcg
@@ -4616,7 +4616,7 @@ class DbAttachmentStorage(AttachmentStorage):
 
     """
 
-    class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    class HTTPHandler(http.server.BaseHTTPRequestHandler):
         """Simple HTTP server to serve attachments to the built-in pytis browser.
 
         It is only intended for serving attachments in pytis wx application.
@@ -4658,7 +4658,7 @@ class DbAttachmentStorage(AttachmentStorage):
         self._ref_column = ref_column
         self._ref_value = ref_value
         self._ref_type = self._data.find_column(ref_column).type()
-        self._server = server = BaseHTTPServer.HTTPServer(("localhost", 0), self.HTTPHandler)
+        self._server = server = http.server.HTTPServer(("localhost", 0), self.HTTPHandler)
         # Avoid circular reference to allow shutting down the server
         # automatically when the storage instance is deleted (see __del__).
         server.storage_weakref = weakref.ref(self)
