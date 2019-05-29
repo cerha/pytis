@@ -40,6 +40,7 @@ import wx
 import wx.html2
 import http.server
 import socketserver
+import functools
 import io
 import tempfile
 import threading
@@ -3301,7 +3302,7 @@ def _wildcards(patterns, pattern):
     patterns = list(patterns) + [(_("All files"), "*.*")]
     if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
         patterns.insert(0, (_("Files of the required type"), pattern))
-    return reduce(
+    return functools.reduce(
         lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
                           ';'.join(xtuple(b[1]))),
         patterns,

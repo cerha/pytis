@@ -70,7 +70,7 @@ from .search import (
     SearchDialog, FilterDialog, SortingDialog
 )
 
-from functools import reduce
+import functools
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -2925,9 +2925,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._mode != self.MODE_VIEW
 
     def _cmd_navigate(self, back=False):
-        widgets = (reduce(lambda w, f: w + (f.tab_navigated_widgets() if f.enabled() else ()),
-                          self._fields, ()) +
-                   tuple(self._tab_navigated_widgets))
+        widgets = (
+            functools.reduce(lambda w, f: w + (f.tab_navigated_widgets() if f.enabled() else ()),
+                             self._fields, ()) +
+            tuple(self._tab_navigated_widgets)
+        )
         order = [w for w in widgets if w.IsEnabled()]
         current = self.FindFocus()
         if current in order:
