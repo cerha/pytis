@@ -30,6 +30,7 @@ All classes of this module are of specificational nature and can be considered
 immutable.  Thus they can be shared as needed.
 
 """
+from future import standard_library
 from future.utils import with_metaclass
 
 import http.server
@@ -50,6 +51,9 @@ from pytis.util import (
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
     log, OPERATIONAL, ProgramError, UNDEFINED,
 )
+
+# Needed for urllib.request, urllib.error (urllib2 in Python 2).
+standard_library.install_aliases()
 
 
 def specification_path(specification_name):
@@ -4482,16 +4486,17 @@ class HttpAttachmentStorage(AttachmentStorage):
             transaction.commit()
 
     def _connect(self, uri, body=None, headers={}):
-        import urllib2
+        import urllib.request
+        import urllib.error
         headers['User-Agent'] = 'Pytis/%s (HttpAttachmentStorage)' % pytis.__version__
         headers['X-Pytis-Attachment-Storage-Username'] = self._username
         headers['X-Pytis-Attachment-Storage-Key'] = self._key
         if body is not None:
             headers['Content-Length'] = len(body)
-        req = urllib2.Request(uri.encode('utf-8'), body, headers)
+        req = urllib.request.Request(uri.encode('utf-8'), body, headers)
         try:
-            return urllib2.urlopen(req)
-        except (urllib2.HTTPError, urllib2.URLError) as e:
+            return urllib.request.urlopen(req)
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
             raise self.StorageError(str(e))
 
     def _resource_uri(self, filename):
@@ -4573,9 +4578,9 @@ class HttpAttachmentStorage(AttachmentStorage):
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
 
     def update(self, filename, values, transaction=None):
-        import urllib
+        import urllib.parse
         import json
-        data = urllib.urlencode(dict(action='update', values=json.dumps(values)))
+        data = urllib.parse.urlencode(dict(action='update', values=json.dumps(values)))
         self._post_data(self._uri + '/' + filename, data)
 
 

@@ -27,6 +27,7 @@ Modul definuje jak třídy sloužící ke specifikaci konkrétních prvků, tak
 i třídy, které tyto specifikace následně zpracovávají.
 
 """
+from future import standard_library
 
 import sys
 import collections
@@ -61,6 +62,9 @@ from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
+
+# Needed for urllib.parse (urlparse in Python 2).
+standard_library.install_aliases()
 
 if pytis.config.http_proxy is not None:
     # On Linux, proxy can be set through webkitgtk library (used by the GTK wx.html2.WebView
@@ -2347,9 +2351,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 v = v[0]
             return v
         if '?' in uri:
-            import urlparse
+            import urllib.parse
             uri, query = uri.split('?', 1)
-            kwargs = dict((k, value(v)) for k, v in urlparse.parse_qs(query).items())
+            kwargs = dict((k, value(v)) for k, v in urllib.parse.parse_qs(query).items())
         else:
             kwargs = {}
         return uri, kwargs

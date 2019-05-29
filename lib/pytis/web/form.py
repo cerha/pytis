@@ -32,6 +32,7 @@ All the content generation is done using the LCG framework.  See
 http://www.freebsoft.org/lcg.
 
 """
+from future import standard_library
 
 import collections
 import lcg
@@ -50,6 +51,9 @@ import pytis.util
 from .field import (
     Field as FormField, DateTimeField, RadioField, UriType, Link, localizable_export,
 )
+
+# Needed for urllib.parse (urlparse in Python 2).
+standard_library.install_aliases()
 
 _ = pytis.util.translations('pytis-web')
 VERTICAL = Orientation.VERTICAL
@@ -921,8 +925,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 order.append(changed_field)
             state = req.param('_pytis_form_state')
             if state:
-                import urlparse
-                field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
+                import urllib.parse
+                field_states = dict((k, v[0]) for k, v in urllib.parse.parse_qs(state).items())
             else:
                 field_states = {}
             fields = {}
