@@ -30,6 +30,7 @@ se vyskytující dialogové operace.
 """
 
 from __future__ import unicode_literals
+from future import standard_library
 
 import wx.adv
 
@@ -49,6 +50,9 @@ from pytis.util import ProgramError, super_
 from .command import CommandHandler
 from .event import wx_callback
 from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view
+
+# Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
+standard_library.install_aliases()
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -844,8 +848,8 @@ class BugReport(GenericDialog):
         sizer.Add(nb, 1, wx.EXPAND | wx.ALL, 6)
 
         if not pytis.config.sender_address:
-            import commands
-            status, domain = commands.getstatusoutput('hostname -f')
+            import subprocess
+            status, domain = subprocess.getstatusoutput('hostname -f')
             if not status and domain != 'localhost':
                 addr = '%s@%s' % (pytis.config.dbconnection.user(), domain)
             else:

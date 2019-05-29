@@ -25,6 +25,7 @@ hodit.
 
 """
 from __future__ import print_function
+from future import standard_library
 
 import os
 import re
@@ -33,11 +34,14 @@ import string
 import pytis.data
 from pytis.util import translations, ProgramError
 
+# Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
+standard_library.install_aliases()
+
 _ = translations('pytis-wx')
 
 
 def smssend(tel, message, server='192.168.1.55'):
-    import commands
+    import subprocess
 
     SERVER = server
     UID = 'sms'
@@ -65,7 +69,7 @@ def smssend(tel, message, server='192.168.1.55'):
     sms_insert = TEMPLATE % (tel, message)
     cmd = ('%s -U %s -D %s -S %s -P %s -C "%s"' %
            (SQSH, UID, DB, SERVER, PWD, sms_insert,))
-    test, msg = commands.getstatusoutput(cmd)
+    test, msg = subprocess.getstatusoutput(cmd)
     if test:
         msg = "SMS se nepodařilo odeslat!\n\n" + msg
         return msg
