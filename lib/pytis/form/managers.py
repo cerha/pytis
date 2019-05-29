@@ -45,8 +45,12 @@ way.
 """
 
 import base64
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
+import sys
 import pytis.data
 import pytis.form
 import pytis.presentation
@@ -100,7 +104,11 @@ class UserSetttingsManager(object):
         return rows
 
     def _pickle(self, value):
-        return base64.b64encode(pickle.dumps(value))
+        result = base64.b64encode(pickle.dumps(value, protocol=2))
+        if sys.version_info[0] > 2:
+            # Remove also protocol=2 above when Python 2 support is not needed.
+            result = str(result, 'ascii')
+        return result
 
     def _unpickle(self, value):
         return pickle.loads(base64.b64decode(value))
@@ -512,7 +520,7 @@ class FormProfileManager(UserSetttingsManager):
             profiles.append(profile)
         # Now load also user defined profiles.
         for row in self._rows(spec_name=spec_name, transaction=transaction):
-            packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
+            packed_filter = self._unpickle(row['pickle'].value())
             filter, filter_errors = self._load_filter(data_object, packed_filter,
                                                       delete_columns=delete_columns,
                                                       rename_columns=rename_columns)
@@ -544,7 +552,7 @@ class FormProfileManager(UserSetttingsManager):
         """
         row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
         if row:
-            packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
+            packed_filter = self._unpickle(row['pickle'].value())
             filter, errors = self._load_filter(data_object, packed_filter)
             if errors:
                 raise Exception("Saved profile %s for %s is invalid!" % (profile_id, spec_name))
