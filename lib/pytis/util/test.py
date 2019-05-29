@@ -181,20 +181,6 @@ class MiscFunctions(unittest.TestCase):
 
 class ListUtils(unittest.TestCase):
 
-    def test_some(self):
-        T = True
-        F = False
-        self.assertFalse(util.some(util.identity, ()))
-        self.assertTrue(util.some(util.identity, (T,)))
-        self.assertFalse(util.some(util.identity, (F,)))
-        self.assertTrue(util.some(util.identity, (F, T)))
-        self.assertTrue(util.some(operator.and_, (T, T), (T, F)))
-
-        def all3(x, y, z):
-            return x and y and z
-
-        self.assertFalse(util.some(all3, (T, T), (T, F), (F, T)))
-
     def test_remove_duplicates(self):
         self.longMessage = True
         self.assertEqual(util.remove_duplicates([]), [], 'empty list failed')

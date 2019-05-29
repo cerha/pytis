@@ -41,7 +41,7 @@ import lcg
 from lcg import Unit, UPoint, Color, UPercent
 import pytis.output
 import pytis.util
-from pytis.util import some, super_
+from pytis.util import super_
 from functools import reduce
 
 _ = pytis.util.translations('pytis-wx')
@@ -726,7 +726,7 @@ class Table(_Mark):
 
         """
         super(Table, self).__init__()
-        assert not some(lambda c: c not in ('vmargin',), kwargs.keys())
+        assert not any(c not in ('vmargin',) for c in kwargs)
         assert isinstance(columns, (tuple, list))
         vmargin = kwargs.get('vmargin')
         assert vmargin in (None, 0)

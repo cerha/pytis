@@ -65,7 +65,7 @@ import os
 import pytis.data
 from pytis.util import (
     UNDEFINED, is_sequence, find, Counter, ProgramError, xtuple, xor,
-    position, sameclass, assoc, rassoc, some,
+    position, sameclass, assoc, rassoc,
 )
 
 imp.reload(sys)
@@ -2760,7 +2760,7 @@ class _GsqlView(_GsqlSpec):
         self._update = update
         self._delete = delete
         self._key_columns = key_columns
-        self._complexp = some(lambda c: is_sequence(c.name) or is_sequence(c.sql), self._columns)
+        self._complexp = any(is_sequence(c.name) or is_sequence(c.sql) for c in self._columns)
         self._simple_columns, self._complex_columns = self._split_columns()
         self._complex_len = self._complex_columns_length()
         self._tables_from, self._tables = self._make_tables()
@@ -3900,7 +3900,7 @@ class _GsqlDefs(UserDict.UserDict):
         self._specifications = []
 
     def _resolvedp(self, spec):
-        missing = some(lambda d: d not in self._resolved, spec.depends())
+        missing = any(d not in self._resolved for d in spec.depends())
         return not missing
 
     def _update_unresolved(self):

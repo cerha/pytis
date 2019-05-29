@@ -46,7 +46,7 @@ import pytis.util
 import pytis.data
 from pytis.util import (
     EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
-    find, log, object_2_5, sameclass, some, translations, xtuple,
+    find, log, object_2_5, sameclass, translations, xtuple,
 )
 from .types_ import DateTime, Number, Type, Value, WMValue
 
@@ -1819,7 +1819,7 @@ class Row(object):
         """
         assert isinstance(key, basestring)
         assert isinstance(value, Value)
-        assert not some(lambda x, k=key: x[0] == k, self._data)
+        assert not any(x[0] == key for x in self._data)
         self._data.append((key, value))
         self._indexes[key] = len(self._data) - 1
 

@@ -56,7 +56,7 @@ import sys
 import time
 
 import pytis
-from .util import ProgramError, deepstr, some
+from .util import ProgramError, deepstr
 
 OPERATIONAL = 'OPR'
 """Provozní hláška, související se stavem systému."""
@@ -142,7 +142,7 @@ class Logger(object):
                 return False
             if ((self._class_filter and
                  (self._class_ is None or
-                  not some(lambda c: issubclass(self._class_, c), self._class_filter)))):
+                  not any(issubclass(self._class_, c) for c in self._class_filter)))):
                 return False
         return True
 

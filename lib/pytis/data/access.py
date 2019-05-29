@@ -32,7 +32,7 @@ Access rights violation is signalized exclusively using the
 """
 
 import pytis
-from pytis.util import EVENT, log, remove_duplicates, some, translations, xtuple
+from pytis.util import EVENT, log, remove_duplicates, translations, xtuple
 from .data import Data, EQ, MemData, Row
 from .types_ import sval
 
@@ -152,7 +152,7 @@ class AccessRights(object):
             # If user groups can't be retrieved, allow it
             return True
         ok_groups = self.permitted_groups(permission, column)
-        return (None in ok_groups) or some(lambda g: g in ok_groups, groups)
+        return (None in ok_groups) or any(g in ok_groups for g in groups)
 
     def permitted(self, permission, groups, column=None):
         """Return true iff any of 'groups' has got 'permission'.
@@ -445,7 +445,7 @@ def is_in_groups(access_groups):
     from pytis.data import default_access_groups
     groups = default_access_groups(pytis.config.dbconnection)
     if ((groups is None or access_groups is None or
-         some(lambda g: g in groups, xtuple(access_groups)))):
+         any(g in groups for g in xtuple(access_groups)))):
         return True
     else:
         return False

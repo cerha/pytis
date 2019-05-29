@@ -637,24 +637,6 @@ def xor(x, y):
     return (x and not y) or (not x and y)
 
 
-def some(predicate, *sequences):
-    """Vrať pravdu, právě když nějaký prvek 'sequences' splňuje 'predicate'.
-
-    Argumenty:
-
-      predicate -- funkce s počtem argumentů rovným počtu prvků 'sequences'
-        vracející pravdu nebo nepravdu
-      sequences -- sekvence vzájemně stejně dlouhých sekvencí, jejichž
-        zazipováním vzniknou sekvence argumentů pro volání funkce 'predicate'
-
-    """
-    for elt in zip(*sequences):
-        if predicate(*elt):
-            return True
-    else:
-        return False
-
-
 def xtuple(x):
     """Vrať 'x' jako tuple.
 
