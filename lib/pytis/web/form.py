@@ -32,6 +32,7 @@ All the content generation is done using the LCG framework.  See
 http://www.freebsoft.org/lcg.
 
 """
+from builtins import range
 from future import standard_library
 
 import collections

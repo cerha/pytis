@@ -46,6 +46,7 @@ Tento modul je doporučeno importovat následujícím způsobem:
 
 """
 
+from builtins import range
 import getpass
 import inspect
 import os

@@ -19,6 +19,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from __future__ import print_function
+from builtins import range
 import copy
 import datetime
 import decimal
@@ -3490,11 +3491,11 @@ class _ThreadTest():  # _DBBaseTest):
         yvalue = t.validate('1')[0]
         nrepeat = 100
         thr = []
-        for i in xrange(10):
+        for i in range(10):
             thr.append(False)
 
         def go1(n, startx, thr=thr):
-            for i in xrange(nrepeat):
+            for i in range(nrepeat):
                 key = t.validate('%d' % (i + startx,))[0]
                 row = pd.Row([('x', key), ('y', yvalue)])
                 d1.insert(row)
@@ -3502,19 +3503,19 @@ class _ThreadTest():  # _DBBaseTest):
             thr[n] = True
 
         def go2(n, startx, thr=thr):
-            for i in xrange(nrepeat):
+            for i in range(nrepeat):
                 key = t.validate('%d' % (i + startx,))[0]
                 row = pd.Row([('x', key), ('y', yvalue)])
                 d2.insert(row)
                 d2.delete(key)
             thr[n] = True
-        for i in xrange(5):
+        for i in range(5):
             _thread.start_new_thread(go1, (i, i * nrepeat,))
-        for i in xrange(5):
+        for i in range(5):
             _thread.start_new_thread(go2, (i + 5, (i + 5) * nrepeat,))
         end = False
         while not end:
-            for i in xrange(10):
+            for i in range(10):
                 if thr[i] is False:
                     break
             else:

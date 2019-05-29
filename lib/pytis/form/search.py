@@ -26,6 +26,7 @@ konkrétní použití.
 
 """
 
+from builtins import range
 import functools
 
 import wx

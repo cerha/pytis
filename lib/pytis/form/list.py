@@ -19,6 +19,7 @@
 
 from __future__ import unicode_literals
 
+from builtins import range
 """Práce s formuláři se seznamovým zobrazením.
 
 Modul jednak interpretuje specifikaci formulářů (viz modul 'spec') pro

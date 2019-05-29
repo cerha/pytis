@@ -30,6 +30,7 @@ se vyskytující dialogové operace.
 """
 
 from __future__ import unicode_literals
+from builtins import range
 from future import standard_library
 
 import wx.adv

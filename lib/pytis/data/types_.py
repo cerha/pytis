@@ -35,6 +35,7 @@ specializovanější základy.  Hodnoty daných typů jsou pak reprezentovány
 instancemi samostatné třídy 'Value'.
 
 """
+from builtins import range
 from future.utils import with_metaclass
 
 import collections

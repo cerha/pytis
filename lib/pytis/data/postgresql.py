@@ -26,6 +26,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 """
 
+from builtins import range
 from builtins import object
 import copy
 import os

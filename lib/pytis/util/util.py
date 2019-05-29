@@ -34,6 +34,7 @@ Tento modul je výjimečný ve dvou směrech:
 
 """
 
+from builtins import range
 import functools
 import cgitb
 import codecs

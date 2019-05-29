@@ -27,6 +27,7 @@ The actual class representing each field is determined by its specification and 
 
 """
 
+from builtins import range
 import collections
 import io
 import datetime
@@ -806,7 +807,8 @@ class TextField(InputField):
     DECIMAL_POINTS = ['.', ',']
     FLOAT = list(map(str, range(10))) + SIGNS + DECIMAL_POINTS
     ASCII = list(map(chr, range(127)))
-    LETTERS = list(map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1)))
+    LETTERS = list(map(chr, (list(range(ord('a'), ord('z') + 1)) +
+                             list(range(ord('A'), ord('Z') + 1)))))
 
     FIELD_DISABLED_COLOR = '#f0f0f0'
     """Ineditable input field background color.

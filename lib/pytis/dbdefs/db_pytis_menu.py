@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+from builtins import range
 import sqlalchemy
 from pytis.data.dbdefs import and_, or_, not_, sval, func
 import pytis.data.gensqlalchemy as sql

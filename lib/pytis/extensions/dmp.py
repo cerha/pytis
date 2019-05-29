@@ -79,6 +79,7 @@ script.
 
 """
 
+from builtins import range
 import copy
 import re
 import string

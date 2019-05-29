@@ -27,6 +27,7 @@ actual use.
 
 """
 
+from builtins import range
 import sys
 import pytis.util
 

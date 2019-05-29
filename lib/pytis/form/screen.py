@@ -27,6 +27,7 @@ Modul definuje jak třídy sloužící ke specifikaci konkrétních prvků, tak
 i třídy, které tyto specifikace následně zpracovávají.
 
 """
+from builtins import range
 from future import standard_library
 
 import sys

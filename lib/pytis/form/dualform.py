@@ -25,6 +25,7 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
 
+from builtins import range
 import copy
 import re
 import wx

@@ -49,6 +49,7 @@ kontroly.
 
 """
 
+from builtins import range
 import copy
 import functools
 import getopt

@@ -28,6 +28,7 @@ Database API implementation.
 
 """
 
+from builtins import range
 import datetime
 import inspect
 import select

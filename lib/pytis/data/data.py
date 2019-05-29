@@ -37,6 +37,7 @@ implementaci.
 
 """
 
+from builtins import range
 import copy
 import datetime
 import functools
