@@ -36,7 +36,6 @@ import wx.adv
 
 import collections
 import datetime
-import types
 import cgitb
 import os
 
