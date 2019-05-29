@@ -46,7 +46,7 @@ import re
 import string
 import sys
 import tempfile
-import thread
+import _thread
 import types as pytypes
 import unicodedata
 import platform
@@ -1019,7 +1019,7 @@ class Locked(object):
 
     """
 
-    _debug_lock = thread.allocate_lock() if __debug__ else None
+    _debug_lock = _thread.allocate_lock() if __debug__ else None
     _active_locks = {} if __debug__ else None
 
     def __init__(self, lock):
@@ -1030,7 +1030,7 @@ class Locked(object):
         if __debug__:
             self.__class__._debug_lock.acquire()
             try:
-                self._thread_id = thread_id = thread.get_ident()
+                self._thread_id = thread_id = _thread.get_ident()
                 locks = self.__class__._active_locks.setdefault(thread_id, [])
                 if lock in locks:
                     raise Exception('Deadlock detected')

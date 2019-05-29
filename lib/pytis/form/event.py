@@ -41,7 +41,7 @@ Aby modul plnil svůj účel, je nutno zajistit následující:
 
 import collections
 import sys
-import thread
+import _thread
 import time
 
 import wx
@@ -148,7 +148,7 @@ def _is_user_event(event):
 
 _system_callback_lock = None
 _system_callback_thread_ident = None
-_system_callback_access_lock = thread.allocate_lock()
+_system_callback_access_lock = _thread.allocate_lock()
 
 
 def wx_callback(event_kind, handler, callback, **kwargs):
@@ -176,7 +176,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             global _system_callback_thread_ident, _system_callback_lock
             _system_callback_access_lock.acquire()
             try:
-                ident = thread.get_ident()
+                ident = _thread.get_ident()
                 if _system_callback_thread_ident == ident:
                     # Jsme uvnitř vlastní slupky, jsme v pohodě
                     state = STATE_CURRENT
@@ -188,7 +188,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                 else:
                     # Máme konkurenci -- vytvoříme si synchronizační zámek pro
                     # oznámení uvolnění cesty
-                    _system_callback_lock = lock = thread.allocate_lock()
+                    _system_callback_lock = lock = _thread.allocate_lock()
                     _system_callback_lock.acquire()
                     state = STATE_BLOCKED
             finally:
@@ -223,7 +223,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                                     # ... a poslat signál případnému čekateli
                                     _system_callback_lock.release()
                                     break
-                                except thread.error:
+                                except _thread.error:
                                     # To je případ, kdy čekatel ještě nestačil
                                     # na svůj zámek zavolat acquire
                                     pass
@@ -240,7 +240,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             if __debug__:
                 log(DEBUG, 'Processing event:', (event, event.__class__))
         try:
-            if thread.get_ident() == _watcher_thread_ident or _current_event:
+            if _thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost během události
                 if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'):  # TODO: ne natvr.
                     _interrupted = True
@@ -297,7 +297,7 @@ def yield_():
 
     """
     global _interrupted
-    if _interrupted and _main_thread_ident == thread.get_ident():
+    if _interrupted and _main_thread_ident == _thread.get_ident():
         _interrupted = False
         raise UserBreakException()
 
@@ -389,11 +389,11 @@ def standard_stop_check_function():
 
 def interrupt_watcher():
     """Spusť vlákno sledující wx události během zpracování jiné wx události."""
-    lock = thread.allocate_lock()
+    lock = _thread.allocate_lock()
     lock.acquire()
 
     def watcher():
-        interrupt_init(_watcher_thread_ident_=thread.get_ident())
+        interrupt_init(_watcher_thread_ident_=_thread.get_ident())
         lock.release()
         last_event = None
         from . import application
@@ -404,13 +404,13 @@ def interrupt_watcher():
                 pytis.form.wx_yield_(full=True)
             else:
                 last_event = _current_event
-    thread.start_new_thread(watcher, ())
+    _thread.start_new_thread(watcher, ())
     # Čekání na dokončení inicializace watcheru
     lock.acquire()
     lock.release()
 
 
-def interrupt_init(_main_thread_ident_=thread.get_ident(),
+def interrupt_init(_main_thread_ident_=_thread.get_ident(),
                    _watcher_thread_ident_=None):
     """Inicializuj zpracování přerušení události pro aktuální thread."""
     global _wx_key, _main_thread_ident, _watcher_thread_ident

@@ -29,7 +29,7 @@ v konfliktu s klíčovým slovem Pythonu.
 """
 
 import os
-import thread
+import _thread
 import time
 
 import wx
@@ -330,7 +330,7 @@ class PrintForm(Form):
         result = None
         try:
             if on_background:
-                result = thread.start_new_thread(self._run_formatter, (stream,))
+                result = _thread.start_new_thread(self._run_formatter, (stream,))
             else:
                 result = self._run_formatter(stream, hook=hook, file_=file_)
         except lcg.SubstitutionIterator.NotStartedError:
@@ -373,5 +373,5 @@ class PrintFormExternal(PrintForm, PopupForm):
         file_ = self._TemporaryFile(suffix='.pdf')
 
         def previewer():
-            thread.start_new_thread(self._run_viewer, (file_,))
+            _thread.start_new_thread(self._run_viewer, (file_,))
         self._run_formatter_process(None, hook=previewer, file_=file_)

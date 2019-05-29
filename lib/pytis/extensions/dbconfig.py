@@ -32,7 +32,7 @@ pythonového kódu ve specifikacích aplikace.
 
 import pytis.util
 
-import thread
+import _thread
 import pytis.data
 
 
@@ -51,7 +51,7 @@ class DBConfig(object):
 
     """
     _data_object_cache = {}
-    _data_object_lock = thread.allocate_lock()
+    _data_object_lock = _thread.allocate_lock()
 
     def __init__(self, name, callback=None, condition=None, transaction=None):
         """Inicializuj instanci.

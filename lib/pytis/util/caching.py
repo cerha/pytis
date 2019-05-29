@@ -23,7 +23,7 @@ Modul nabízí třídy umožňující provádět různé typy cachování.
 
 """
 
-import thread
+import _thread
 import collections
 import UserDict
 
@@ -102,7 +102,7 @@ class LimitedCache(_Cache):
         assert isinstance(limit, int), limit
         self._limit = limit
         self._counter = Counter()
-        self._lock = thread.allocate_lock()
+        self._lock = _thread.allocate_lock()
 
     def __getitem__(self, key):
         result = super(LimitedCache, self).__getitem__(key)

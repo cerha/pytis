@@ -32,7 +32,7 @@ import os
 import re
 import string
 import sys
-import thread
+import _thread
 import threading
 import time
 import weakref
@@ -652,7 +652,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         self._connection_name = connection_name
         self._pg_connection_data_ = connection_data
         self._pg_connections_ = []
-        self._pg_query_lock = thread.allocate_lock()
+        self._pg_query_lock = _thread.allocate_lock()
         self._pg_query_counter = 0
         super(PostgreSQLConnector, self).__init__(connection_data=connection_data, **kwargs)
 
@@ -890,10 +890,10 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 log(DEBUG, 'Notifier creation')
             PostgreSQLConnector.__init__(self, connection_data,
                                          connection_name=connection_name)
-            self._notif_data_lock = thread.allocate_lock()
+            self._notif_data_lock = _thread.allocate_lock()
             self._notif_data_objects = weakref.WeakKeyDictionary()
-            self._notif_connection_lock = thread.allocate_lock()
-            thread.start_new_thread(self._notif_listen, ())
+            self._notif_connection_lock = _thread.allocate_lock()
+            _thread.start_new_thread(self._notif_listen, ())
 
         def _notif_do_registration(self, notification):
             self._pg_query(_Query('listen "%s"' % notification))
@@ -1044,7 +1044,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     _PDBB_CURSOR_NAME = 'selection'
 
     _pdbb_selection_counter = Counter()
-    _pdbb_selection_counter_lock = thread.allocate_lock()
+    _pdbb_selection_counter_lock = _thread.allocate_lock()
 
     _pdbb_table_column_data = {}
 

@@ -32,7 +32,7 @@ import decimal
 import os.path
 import string
 import sys
-import thread
+import _thread
 import time
 import datetime
 import wx
@@ -1419,7 +1419,7 @@ class DBParams(object):
     to the presence of the public methods of the same name.
 
     """
-    _lock = thread.allocate_lock()
+    _lock = _thread.allocate_lock()
 
     def __init__(self, name, condition=None):
         self._name = name
@@ -1498,7 +1498,6 @@ class DBParams(object):
         if not row:
             return None
         return row[cbcolumn].value()
-
 
 
 class DbActionLogger(object):
@@ -2323,7 +2322,7 @@ def wx_yield_(full=False):
         return
     global _yield_lock
     if _yield_lock is None:
-        _yield_lock = thread.allocate_lock()
+        _yield_lock = _thread.allocate_lock()
     if not _yield_lock.acquire(0):
         return
     try:

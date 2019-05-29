@@ -3476,7 +3476,7 @@ class _ThreadTest():  # _DBBaseTest):
         _DBBaseTest.tearDown(self)
 
     def test_it(self):
-        import thread
+        import _thread
         B = pd.DBColumnBinding
         key = B('x', 'tab', 'x')
         d = pd.DataFactory(
@@ -3509,9 +3509,9 @@ class _ThreadTest():  # _DBBaseTest):
                 d2.delete(key)
             thr[n] = True
         for i in xrange(5):
-            thread.start_new_thread(go1, (i, i * nrepeat,))
+            _thread.start_new_thread(go1, (i, i * nrepeat,))
         for i in xrange(5):
-            thread.start_new_thread(go2, (i + 5, (i + 5) * nrepeat,))
+            _thread.start_new_thread(go2, (i + 5, (i + 5) * nrepeat,))
         end = False
         while not end:
             for i in xrange(10):

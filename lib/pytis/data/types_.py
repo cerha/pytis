@@ -43,7 +43,7 @@ import decimal
 import re
 import string
 import io
-import thread
+import _thread
 import time
 
 from pytis.util import (
@@ -2842,7 +2842,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 isinstance(validity_condition, pytis.data.Operator) and
                 validity_column is None)
         self._data_factory = data_factory
-        self._data_lock = thread.allocate_lock()
+        self._data_lock = _thread.allocate_lock()
         self._value_column_ = value_column
         self._validity_column = validity_column
         if validity_column is not None:

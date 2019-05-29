@@ -55,7 +55,7 @@ tabulky.
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
 
 import gc
-import thread
+import _thread
 import weakref
 
 import pytis
@@ -237,7 +237,7 @@ class DBConnectionPool(object):
     def __init__(self, connection_creator, connection_closer):
         if __debug__:
             log(DEBUG, 'Creating a new pool')
-        self._lock = thread.allocate_lock()
+        self._lock = _thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
         self._connection_closer = connection_closer
