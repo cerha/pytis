@@ -3457,7 +3457,7 @@ class AccessRightsTest(_DBBaseTest):
         self.assertTrue(not a.permitted(P.VIEW, ('group4',)), 'Invalid permission')
 
 
-class _ThreadTest():  # _DBBaseTest):
+class _ThreadTest(object):  # _DBBaseTest):
     # This is a non-regular test trying to detect bugs resulting from
     # insufficient thread safety
 
