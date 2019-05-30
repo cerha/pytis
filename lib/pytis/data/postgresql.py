@@ -28,6 +28,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 from builtins import range
 from builtins import object
+from future.utils import raise_
 
 import copy
 import os
@@ -2557,7 +2558,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 except Exception:
                     pass
                 self._pg_select_transaction = None
-                raise cls, e, tb
+                raise_(cls, e, tb)
             if close_select:
                 self.close()
         ti = Integer()
@@ -3007,7 +3008,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None and self._pg_select_transaction is None:
             self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
@@ -3079,7 +3080,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except Exception:
                 pass
             self._pg_select_transaction = None
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if use_cache and isinstance(row_count, int) and row_count == last_number_of_rows:
             self._pg_buffer.rewind()
         else:
@@ -3199,7 +3200,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     except Exception:
                         pass
                 self._pg_select_transaction = None
-                raise cls, e, tb
+                raise_(cls, e, tb)
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.restart()
         else:
@@ -3278,7 +3279,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     except Exception:
                         pass
                 self._pg_select_transaction = None
-                raise cls, e, tb
+                raise_(cls, e, tb)
         if __debug__:
             log(DEBUG, 'Search result:', result)
         return result
@@ -3347,7 +3348,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None:
             self._pg_commit_transaction()
             self._pg_send_notifications()
@@ -3406,7 +3407,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None:
             self._pg_commit_transaction()
             self._pg_send_notifications()
@@ -3437,7 +3438,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None:
             self._pg_commit_transaction()
             self._pg_send_notifications()
@@ -3461,7 +3462,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None:
             self._pg_commit_transaction()
             self._pg_send_notifications()
@@ -3483,7 +3484,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     self._pg_rollback_transaction()
             except Exception:
                 pass
-            raise cls, e, tb
+            raise_(cls, e, tb)
         if transaction is None:
             self._pg_commit_transaction()
             self._pg_send_notifications()
