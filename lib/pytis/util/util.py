@@ -936,8 +936,7 @@ def hash_attr(self, attributes):
 
 def is_sequence(x):
     """Vrať pravdu, právě když 'x' je list nebo tuple."""
-    t = type(x)
-    return t == pytypes.TupleType or t == pytypes.ListType
+    return isinstance(x, (tuple, list))
 
 
 def is_dictionary(x):
