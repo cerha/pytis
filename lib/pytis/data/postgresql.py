@@ -28,6 +28,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 from builtins import range
 from builtins import object
+
 import copy
 import os
 import re
@@ -2307,7 +2308,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                 data._pg_query(query, transaction=transaction)
                             return
                         if data._pg_query_counter > query_counter:
-                            step = max(step / 8, min_step)
+                            step = max(step // 8, min_step)
                         test_count += step
                         args = dict(selection=selection, number=ival(step))
                         query = data._pdbb_command_move_forward.update(args)
@@ -3871,7 +3872,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             if T._trans_max_idle_time is None:
                 T._trans_max_idle_time = 100000000
             T._trans_check_interval = \
-                max(1, min(T._trans_max_time, T._trans_max_idle_time) / 3)
+                max(1, min(T._trans_max_time, T._trans_max_idle_time) // 3)
         now = time.time()
         pid = os.getpid()
         if now - T._trans_last_check.get(pid, 0) >= T._trans_check_interval:

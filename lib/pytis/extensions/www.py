@@ -163,7 +163,7 @@ class BrowsableDBTable(BaseDBTable):
         return ">>|"
 
     def lastpageno(self):
-        return int(self._row_count / self._limit)
+        return int(self._row_count // self._limit)
 
     def first(self):
         return Href(URL(self._uri), self._labelfirst())

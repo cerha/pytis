@@ -542,7 +542,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                                 next_suffix = next_item_position[-1]
                                 suffix += '0' * max(len(next_suffix) - len(suffix), 0)
                                 next_suffix += '0' * max(len(suffix) - len(next_suffix), 0)
-                                new_suffix = str(long((long(suffix) + long(next_suffix)) / 2))
+                                new_suffix = str(long((long(suffix) + long(next_suffix)) // 2))
                                 while len(new_suffix) < len(next_suffix):
                                     new_suffix = '0' + new_suffix
                                 if new_suffix == suffix:
@@ -784,7 +784,7 @@ class PytisFirstPosition(Base_PyFunction):
     def pytis_first_position(position):
         position = args[0]
         start = '1' + '0' * (len(position) - 1)
-        first = str(long((long(start) + long(position)) / 2))
+        first = str(long((long(start) + long(position)) // 2))
         if first == start:
             first += '8'
         return first

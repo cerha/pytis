@@ -859,8 +859,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top.resize()
         if self._logo is not None:
             logo = self._logo.GetBitmap()
-            logo_posx = max((size.GetWidth() - logo.GetWidth()) / 2, 0)
-            logo_posy = max((size.GetHeight() - logo.GetHeight() - 50) / 2, 0)
+            logo_posx = max((size.GetWidth() - logo.GetWidth()) // 2, 0)
+            logo_posy = max((size.GetHeight() - logo.GetHeight() - 50) // 2, 0)
             self._logo.SetPosition((logo_posx, logo_posy))
             if top is None:
                 self._logo.Show(True)

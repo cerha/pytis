@@ -17,9 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from __future__ import unicode_literals
-
-from builtins import range
 """Práce s formuláři se seznamovým zobrazením.
 
 Modul jednak interpretuje specifikaci formulářů (viz modul 'spec') pro
@@ -27,10 +24,12 @@ seznamové zobrazení a jednak zajišťuje práci s ní prostřednictvím objek
 wxWidgets.
 
 """
-
 # Terminologická poznámka: Proměnné s názvem `row' obvykle značí číslo řádku
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
+
+from __future__ import unicode_literals
+from builtins import range
 
 import collections
 import copy
@@ -838,7 +837,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._grid.Refresh()
         x, y, timestamp = self._last_grid_mouse_position
         if timestamp is not None:
-            now = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
+            now = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond // 1000)
             delay = now - timestamp
             if delay > 10:
                 # Adding 10ms delay helps to keep the tooltip close to the current
@@ -1053,7 +1052,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _aggregation_info_by_position(self, y):
         if y > self._label_height and self._aggregations:
             i = max(0, min(len(self._aggregations) - 1,
-                           (y - self._label_height) / self._row_height))
+                           (y - self._label_height) // self._row_height))
             return [x for x in self._AGGREGATIONS if x[0] in self._aggregations][i]
         else:
             return None
@@ -1127,7 +1126,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         x, y = self._grid.CalcUnscrolledPosition(event.GetX(), event.GetY())
         last_x, last_y, last_time = self._last_grid_mouse_position
         if last_x != x or last_y != y:
-            timestamp = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond / 1000)
+            timestamp = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond // 1000)
             self._last_grid_mouse_position = x, y, timestamp
         event.Skip()
 
@@ -1142,7 +1141,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     width = g.GetColSize(col)
                 else:
                     width = 0
-                if pos - lastwidth / 2 <= x <= pos + width / 2:
+                if pos - lastwidth // 2 <= x <= pos + width // 2:
                     return col
                 lastwidth = width
                 pos += width
@@ -1215,8 +1214,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
         def arrow(x, y, r=5, length=4):
             # Return polygon coordinates for an arrow.
-            return ((x, y), (x - r, y - r), (x - r / 2, y - r), (x - r / 2, y - r - length),
-                    (x + r / 2, y - r - length), (x + r / 2, y - r), (x + r, y - r))
+            return ((x, y), (x - r, y - r), (x - r // 2, y - r), (x - r // 2, y - r - length),
+                    (x + r // 2, y - r - length), (x + r // 2, y - r), (x + r, y - r))
 
         def funnel(x, y, r=3, length=8):
             # Return polygon coordinates for a funnel.
@@ -1368,11 +1367,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         linesPer = event.GetLinesPerAction()
         pxx, pxy = g.GetScrollPixelsPerUnit()
         rot = event.GetWheelRotation()
-        lines = rot / delta
+        lines = rot // delta
         if lines != 0:
             vsx, vsy = g.GetViewStart()
             lines = lines * linesPer
-            scrollTo = vsy - pxy / lines
+            scrollTo = vsy - pxy // lines
             g.Scroll(-1, scrollTo)
 
     def _update_list_position(self):
@@ -1752,8 +1751,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 g = self._grid
                 row, col = self._current_cell()
                 rect = g.CellToRect(row, col)
-                pos = (rect.GetX() + rect.GetWidth() / 3,
-                       rect.GetY() + rect.GetHeight() / 2 + g.GetColLabelSize())
+                pos = (rect.GetX() + rect.GetWidth() // 3,
+                       rect.GetY() + rect.GetHeight() // 2 + g.GetColLabelSize())
                 position = self._grid.CalcScrolledPosition(pos)
             self._popup_menu(menu, position=position)
 

@@ -26,8 +26,8 @@ automatically propagated between the PresentedRow instance and the user interfac
 The actual class representing each field is determined by its specification and data type.
 
 """
-
 from builtins import range
+
 import collections
 import io
 import datetime
@@ -654,7 +654,7 @@ class InputField(KeyHandler, CommandHandler):
     def _cmd_context_menu(self):
         for ctrl, set_editable in self._controls:
             size = ctrl.GetSize()
-            self._on_context_menu(ctrl, position=(size.x / 3, size.y / 2))
+            self._on_context_menu(ctrl, position=(size.x // 3, size.y // 2))
 
     # Public methods
 
@@ -2638,7 +2638,7 @@ class StructuredTextField(TextField):
         if resource and resource.size():
             thumbnail = resource.thumbnail()
             if thumbnail and thumbnail.size():
-                resize = thumbnail.size()[0] / resource.size()[0] * 100
+                resize = thumbnail.size()[0] // resource.size()[0] * 100
                 return str(resize) + '%'
             return thumbnail
         return None

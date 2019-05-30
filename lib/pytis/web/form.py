@@ -1869,7 +1869,7 @@ class BrowseForm(LayoutForm):
                 found = True
                 offset = dist - 1
         if limit is not None:
-            page = int(max(0, min(offset, row_count - 1)) / limit)
+            page = int(max(0, min(offset, row_count - 1)) // limit)
             first_record_offset = page * limit
         else:
             page = 0
@@ -2438,7 +2438,7 @@ class ListView(BrowseForm):
             n, mod = divmod(len(rows), columns)
             # Add empty cells to prevent spanning of unfinished grid rows.
             rows.extend(['' for i in range(columns - mod)])
-            rows = g.table([g.tr([g.td(r, width="%d%%" % (100 / columns), valign='top')
+            rows = g.table([g.tr([g.td(r, width="%d%%" % (100 // columns), valign='top')
                                   for r in rows[i * columns:(i + 1) * columns]])
                             for i in range(n + min(mod, 1))], border=0, cls='grid')
         result = g.div(rows, cls='content')

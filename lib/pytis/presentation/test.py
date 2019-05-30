@@ -90,7 +90,7 @@ class PresentedRow(unittest.TestCase):
             pp.Field('half_total', type=pd.Integer(), virtual=True,
                      editable=pp.Editable.NEVER,
                      computer=pp.computer(lambda r, total:
-                                          total / 2 if total is not None else None)),
+                                          total // 2 if total is not None else None)),
             pp.Field('x', type=pd.Integer(), virtual=True, default=88),
             pp.Field('password', type=pd.Password(), virtual=True),
             pp.Field('big', type=BigString(), virtual=True),

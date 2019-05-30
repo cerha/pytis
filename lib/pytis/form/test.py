@@ -19,7 +19,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from __future__ import print_function
+from __future__ import division
 from builtins import range
+
 import pytest
 import pytis.form.grid as grid
 import pytis.presentation as pp
@@ -118,7 +120,7 @@ class TestDataTable(DBTest):
                     for x in range(count):
                         i += 1
                         # Generate some randomly looking price value.
-                        price = float(int(i % 8 + 140 * float(i % 6 + count) / (2 + i % 6))) / 100
+                        price = (i % 8 + 140 * (i % 6 + count) / (2 + i % 6)) / 100
                         yield (i, name, price, flag)
 
         self.insert(data, rows())

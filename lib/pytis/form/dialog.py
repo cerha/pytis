@@ -30,6 +30,7 @@ se vyskytující dialogové operace.
 """
 
 from __future__ import unicode_literals
+from __future__ import division
 from builtins import range
 from future import standard_library
 
@@ -654,15 +655,14 @@ class RepeatedOperationDialog(ProgressDialog):
           Ostatní argumenty jsou shodné jako u rodičovské třídy.
 
         """
-        assert (step is None or
-                isinstance(step, int) and step in range(1, 100))
+        assert step is None or isinstance(step, int) and 1 <= step <= 99, step
 
         def do(update, *args_list):
             total = len(args_list)
             last_status = 0
             for n, arg in enumerate(args_list):
-                status = int(float(n) / total * 100)
-                if step is None or status / step != last_status / step:
+                status = int(n / total * 100)
+                if step is None or status // step != last_status // step:
                     last_status = status
                     try:
                         msg = self._message % arg
@@ -672,8 +672,7 @@ class RepeatedOperationDialog(ProgressDialog):
                         break
                 function(arg)
 
-        super_(RepeatedOperationDialog).__init__(self, parent, do, args=args,
-                                                 **kwargs)
+        super_(RepeatedOperationDialog).__init__(self, parent, do, args=args, **kwargs)
 
 
 class Calendar(GenericDialog):

@@ -31,9 +31,9 @@ class PartitioningTrigger(Base_PyTriggerFunction):
                     key = self._new[key_serial]
                 else:
                     key = self._old[key_serial]
-                count_tables = (key - 1) / step
+                count_tables = (key - 1) // step
                 if key > max_id:
-                    min_id_table = (max_id / step) * step + 1
+                    min_id_table = (max_id // step) * step + 1
                     max_id_table = None
                 if count_tables == 0:
                     min_id_table = None
@@ -908,16 +908,16 @@ class EasterDate(Base_PyFunction):
         """Pro udaný rok (parametr) vrátí datum velikonoční neděle."""
         # Podle Oudionova algoritmu
         rok = args[0]
-        c = int(rok / 100)
-        n = rok - 19 * int(rok / 19)
-        k = int((c - 17) / 25)
-        i1 = c - int(c / 4) - int((c - k) / 3) + 19 * n + 15
-        i2 = i1 - 30 * int(i1 / 30)
-        i3 = i2 - int(i2 / 28) * (1 - int(i2 / 28) * int(29 / (i2 + 1)) * int((21 - n) / 11))
-        a1 = rok + int(rok / 4) + i3 + 2 - c + int(c / 4)
-        a2 = a1 - 7 * int(a1 / 7)
+        c = int(rok // 100)
+        n = rok - 19 * int(rok // 19)
+        k = int((c - 17) // 25)
+        i1 = c - int(c // 4) - int((c - k) // 3) + 19 * n + 15
+        i2 = i1 - 30 * int(i1 // 30)
+        i3 = i2 - int(i2 // 28) * (1 - int(i2 // 28) * int(29 // (i2 + 1)) * int((21 - n) // 11))
+        a1 = rok + int(rok // 4) + i3 + 2 - c + int(c // 4)
+        a2 = a1 - 7 * int(a1 // 7)
         x = i3 - a2
-        m = 3 + int((x + 40) / 44)
-        d = x + 28 - 31 * int(m / 4)
+        m = 3 + int((x + 40) // 44)
+        d = x + 28 - 31 * int(m // 4)
         datum = """%s-%s-%s""" % (rok, m, d)
         return datum

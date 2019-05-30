@@ -24,8 +24,8 @@ jednoduchý formulář, přičemž data horního a dolního formuláře jsou ně
 způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
-
 from builtins import range
+
 import copy
 import re
 import wx
@@ -508,7 +508,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
         return Orientation.HORIZONTAL
 
     def _initial_sash_position(self, size):
-        return size.height / 2
+        return size.height // 2
 
     def _create_main_form(self, parent, **kwargs):
         return AggregationForm(parent, self._resolver, self._name, guardian=self, **kwargs)
@@ -1264,7 +1264,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         return self._main_form.orientation()
 
     def _default_sash_position(self, total_size):
-        return total_size.height / 2
+        return total_size.height // 2
 
     def _create_main_form(self, parent, binding=None, **kwargs):
         self._selected_binding = binding

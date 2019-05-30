@@ -2182,7 +2182,7 @@ class TimeInterval(Type):
         seconds = (int(groups.get('hours') or '0') * 3600 +
                    int(groups.get('minutes') or '0') * 60 +
                    int(groups.get('seconds') or '0'))
-        days += seconds / 86400
+        days += seconds // 86400
         seconds = seconds % 86400
         interval = datetime.timedelta(days, seconds)
         return Value(self, interval), None
@@ -2201,7 +2201,8 @@ class TimeInterval(Type):
                 format = self.DEFAULT_FORMAT
         format_string = sign + (format.replace('%H', '%(hours)d').
                                 replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
-        return format_string % dict(hours=(seconds / 3600), minutes=((seconds % 3600) / 60),
+        return format_string % dict(hours=(seconds // 3600),
+                                    minutes=((seconds % 3600) // 60),
                                     seconds=(seconds % 60))
 
     def adjust_value(self, value):

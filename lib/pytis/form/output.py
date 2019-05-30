@@ -273,11 +273,11 @@ class PostscriptViewer(wx.ScrolledWindow):
                 width = height = 100
             else:
                 width, height = image.GetWidth(), image.GetHeight()
-            hs, vs = width / hsteps, height / vsteps
+            hs, vs = width // hsteps, height // vsteps
             if hs and vs:
                 # TODO: Bráníme se dělení nulou. Neměli bychom však přesto
                 # scrollbary v takovém případě nějak nastravit?
-                self.SetScrollbars(hs, vs, width / hs + 1, height / vs + 1)
+                self.SetScrollbars(hs, vs, width // hs + 1, height // vs + 1)
             self.Refresh()
         if __debug__:
             pytis.util.log(pytis.util.DEBUG, 'Zobrazena stránka:', page_number)
