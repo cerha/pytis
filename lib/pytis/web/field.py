@@ -403,7 +403,7 @@ class Field(object):
             if value:
                 link = self._uri_provider(self._row, UriType.LINK, self.id)
                 if link:
-                    if isinstance(link, collections.Callable):
+                    if callable(link):
                         kwargs = None  # Ignore array item links here
                     elif isinstance(link, basestring):
                         kwargs = dict(href=link)

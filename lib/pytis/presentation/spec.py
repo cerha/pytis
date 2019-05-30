@@ -341,8 +341,8 @@ class Button(object):
         """
         if action is None:
             assert isinstance(label, basestring), label
-            assert isinstance(handler, collections.Callable), handler
-            assert enabled is None or isinstance(enabled, collections.Callable), enabled
+            assert callable(handler), handler
+            assert enabled is None or callable(enabled), enabled
         else:
             assert isinstance(action, basestring), action
             assert label is None or isinstance(label, basestring), label
@@ -507,17 +507,17 @@ class Action(object):
         """
         assert isinstance(title, basestring), title
         assert descr is None or isinstance(descr, basestring), descr
-        assert handler is None or isinstance(handler, collections.Callable), handler
+        assert handler is None or callable(handler), handler
         assert context in public_attributes(ActionContext), context
         assert secondary_context is None or secondary_context in public_attributes(ActionContext), \
             secondary_context
-        assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool), enabled
-        assert isinstance(visible, collections.Callable) or isinstance(visible, bool), visible
+        assert isinstance(enabled, bool) or callable(enabled), enabled
+        assert isinstance(visible, bool) or callable(visible), visible
         assert access_groups is None or isinstance(access_groups, (basestring, tuple, list))
         assert hotkey is None or isinstance(hotkey, (basestring, tuple)), hotkey
         assert icon is None or isinstance(icon, basestring), icon
         assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
-        assert form_content is None or isinstance(form_content, collections.Callable), form_content
+        assert form_content is None or callable(form_content), form_content
         self._id = id
         self._title = title
         self._handler = handler
@@ -620,7 +620,7 @@ class PrintAction(object):
         assert isinstance(id, basestring), id
         assert isinstance(title, basestring), title
         assert isinstance(name, basestring), name
-        assert handler is None or isinstance(handler, collections.Callable), handler
+        assert handler is None or callable(handler), handler
         assert context is None or context in public_attributes(ActionContext), context
         assert context is None or handler is not None, \
             'Context only makes sense when handler is used.'
@@ -1080,8 +1080,8 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert isinstance(item, (GroupSpec, Button, Text, basestring,
-                                         lcg.Content, collections.Callable)), item
+                assert (isinstance(item, (GroupSpec, Button, Text, basestring, lcg.Content)) or
+                        callable(item)), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation
@@ -1294,8 +1294,7 @@ class QueryFields(object):
 
         """
         assert fields and isinstance(fields, (tuple, list)), fields
-        assert (on_main_form_selection is None or
-                isinstance(on_main_form_selection, collections.Callable)), \
+        assert (on_main_form_selection is None or callable(on_main_form_selection)), \
             on_main_form_selection
         if __debug__:
             for f in fields:
@@ -1709,7 +1708,7 @@ class ViewSpec(object):
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_ids, \
                             err("Unknown button action in layout: %s", item.action())
-                    elif isinstance(item, (Text, collections.Callable, lcg.Content)):
+                    elif isinstance(item, (Text, lcg.Content)) or callable(item):
                         pass
                     else:
                         assert item in self._field_dict, err("Unknown field in layout: %r" % item,)
@@ -1822,22 +1821,20 @@ class ViewSpec(object):
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
         assert orientation in public_attributes(Orientation)
-        assert cleanup is None or isinstance(cleanup, collections.Callable)
-        assert on_new_record is None or isinstance(on_new_record, collections.Callable)
-        assert on_copy_record is None or isinstance(on_copy_record, collections.Callable)
-        assert on_edit_record is None or isinstance(on_edit_record, collections.Callable)
-        assert on_delete_record is None or isinstance(on_delete_record, collections.Callable)
-        assert redirect is None or isinstance(redirect, collections.Callable)
-        assert (focus_field is None or
-                isinstance(focus_field, collections.Callable) or
+        assert cleanup is None or callable(cleanup)
+        assert on_new_record is None or callable(on_new_record)
+        assert on_copy_record is None or callable(on_copy_record)
+        assert on_edit_record is None or callable(on_edit_record)
+        assert on_delete_record is None or callable(on_delete_record)
+        assert redirect is None or callable(redirect)
+        assert (focus_field is None or callable(focus_field) or
                 isinstance(focus_field, basestring)), focus_field
-        assert (row_style is None or
-                isinstance(row_style, Style) or
-                isinstance(row_style, collections.Callable)), row_style
+        assert row_style is None or isinstance(row_style, Style) or callable(row_style), \
+            row_style
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
-        assert argument_provider is None or isinstance(argument_provider, collections.Callable)
-        assert condition_provider is None or isinstance(condition_provider, collections.Callable)
+        assert argument_provider is None or callable(argument_provider)
+        assert condition_provider is None or callable(condition_provider)
         if query_fields and isinstance(query_fields, (tuple, list)):
             query_fields = QueryFields(query_fields)
         else:
@@ -2117,7 +2114,7 @@ class BindingSpec(object):
             # Backwards compatibility
             assert condition is None, "Can't use 'append_condition' (deprecated) with 'condition'."
             condition = append_condition
-        assert condition is None or isinstance(condition, collections.Callable), condition
+        assert condition is None or callable(condition), condition
         assert condition is not None or binding_column is not None, \
             "You must specify at least one of 'condition', 'binding_column'."
         assert description is None or isinstance(description, basestring), description
@@ -2276,22 +2273,22 @@ class Binding(object):
         if name is not None:
             assert isinstance(name, basestring), name
             assert binding_column is None or isinstance(binding_column, basestring), binding_column
-            assert condition is None or isinstance(condition, collections.Callable), condition
-            assert arguments is None or isinstance(arguments, collections.Callable), arguments
+            assert condition is None or callable(condition), condition
+            assert arguments is None or callable(arguments), arguments
             assert condition is not None or binding_column is not None or arguments is not None, \
                 "At least one of 'binding_column', 'condition', `arguments' must be used."
             assert isinstance(single, bool), single
-            assert prefill is None or isinstance(prefill, collections.Callable), prefill
+            assert prefill is None or callable(prefill), prefill
             assert content is None, content
         else:
             if uri is not None:
                 assert content is None, content
                 content = uri
                 content_type = 'uri'
-            assert isinstance(content, (basestring, collections.Callable)), content
+            assert isinstance(content, basestring) or callable(content), content
             assert content_type in ('html', 'lcg', 'uri', 'pdf'), content_type
             assert name is binding_column is condition is arguments is prefill is None
-        assert enabled is None or isinstance(enabled, (bool, collections.Callable)), enabled
+        assert enabled is None or isinstance(enabled, bool) or callable(enabled), enabled
         self._id = id
         self._title = title
         self._name = name
@@ -2486,7 +2483,7 @@ class Computer(object):
             the default/initial value).
 
         """
-        assert isinstance(function, collections.Callable), function
+        assert callable(function), function
         assert isinstance(depends, (tuple, list)), depends
         assert isinstance(validate, (bool, tuple, list)), validate
         assert isinstance(novalidate, (tuple, list)), novalidate
@@ -2602,7 +2599,7 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
     elif function is None or isinstance(function, Computer):
         result = function
     else:
-        assert isinstance(function, collections.Callable), function
+        assert callable(function), function
         depends = argument_names(function)[1:]
         if depends:
             original_function = function
@@ -2739,7 +2736,7 @@ class CodebookSpec(object):
         assert sorting is None or is_sequence(sorting)
         assert (display is None or
                 isinstance(display, basestring) or
-                (isinstance(display, collections.Callable) and len(argument_names(display)) == 1))
+                (callable(display) and len(argument_names(display)) == 1))
         assert isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert begin_search is None or isinstance(begin_search, basestring)
@@ -2861,10 +2858,10 @@ class Link(object):
         assert binding is None or isinstance(binding, basestring)
         assert type in public_attributes(FormType)
         assert label is None or isinstance(label, basestring)
-        assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool)
-        assert filter is None or isinstance(filter, collections.Callable), filter
+        assert callable(enabled) or isinstance(enabled, bool)
+        assert filter is None or callable(filter), filter
         assert filter is None or type == FormType.BROWSE, (filter, type)
-        assert arguments is None or isinstance(arguments, collections.Callable), arguments
+        assert arguments is None or callable(arguments), arguments
         assert arguments is None or type == FormType.BROWSE, (arguments, type)
         self._name = name
         self._column = column
@@ -3498,10 +3495,10 @@ class Field(object):
         assert isinstance(compact, bool), compact
         assert isinstance(nocopy, bool), nocopy
         assert computer is None or isinstance(computer, Computer), computer
-        assert formatter is None or isinstance(formatter, collections.Callable), formatter
+        assert formatter is None or callable(formatter), formatter
         assert line_separator is None or isinstance(line_separator, basestring), line_separator
         assert codebook is None or isinstance(codebook, basestring), codebook
-        assert display is None or isinstance(display, (basestring, collections.Callable)), display
+        assert display is None or isinstance(display, basestring) or callable(display), display
         assert (completer is None or
                 isinstance(completer, (basestring, tuple, pytis.data.Enumerator))), completer
         assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
@@ -3510,12 +3507,11 @@ class Field(object):
         assert inline_display is None or isinstance(inline_display, basestring), inline_display
         assert inline_referer is None or isinstance(inline_referer, basestring), inline_referer
         assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
-        assert codebook_insert_spec is None \
-            or isinstance(codebook_insert_spec, basestring), codebook_insert_spec
-        assert codebook_insert_prefill is None \
-            or isinstance(codebook_insert_prefill, collections.Callable), codebook_insert_prefill
-        assert codebook_update_prefill is None \
-            or isinstance(codebook_update_prefill, collections.Callable), \
+        assert codebook_insert_spec is None or isinstance(codebook_insert_spec, basestring), \
+            codebook_insert_spec
+        assert codebook_insert_prefill is None or callable(codebook_insert_prefill), \
+            codebook_insert_prefill
+        assert codebook_update_prefill is None or callable(codebook_update_prefill), \
             codebook_update_prefill
         assert width is None or isinstance(width, int)
         if codebook_runtime_filter is not None:
@@ -3527,20 +3523,18 @@ class Field(object):
         assert (selection_type is None or
                 selection_type in public_attributes(SelectionType)), selection_type
         assert orientation is None or orientation in public_attributes(Orientation), orientation
-        assert post_process is None or isinstance(post_process, collections.Callable) \
+        assert post_process is None or callable(post_process) \
             or post_process in public_attributes(PostProcess), post_process
         assert filter is None or filter in public_attributes(TextFilter), filter
         assert (filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or
                 is_sequence(filter_list)), filter_list
-        assert style is None or isinstance(style, (Style, collections.Callable)), \
+        assert style is None or isinstance(style, Style) or callable(style), \
             err("Invalid 'style' specification: %s", style)
-        assert (filename is None or
-                isinstance(filename, (basestring, collections.Callable))), filename
+        assert filename is None or isinstance(filename, basestring) or callable(filename), filename
         assert isinstance(filename_extensions, (list, tuple)), filename_extensions
         assert text_format in public_attr_values(TextFormat), text_format
-        assert attachment_storage is None or \
-            isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), \
-            attachment_storage
+        assert attachment_storage is None or isinstance(attachment_storage, AttachmentStorage) or \
+            callable(attachment_storage), attachment_storage
         assert isinstance(printable, bool), printable
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
@@ -3665,7 +3659,7 @@ class Field(object):
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
-        if isinstance(style, collections.Callable) and len(argument_names(style)) == 2:
+        if callable(style) and len(argument_names(style)) == 2:
             s_func = style
 
             # For backwards compatibility
@@ -4893,11 +4887,11 @@ class StatusField(object):
         """
         assert isinstance(id, basestring), id
         assert label is None or isinstance(label, basestring), label
-        assert refresh is None or isinstance(refresh, collections.Callable), refresh
+        assert refresh is None or callable(refresh), refresh
         assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
         assert width is None or isinstance(width, int) and width > 0
         assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
-        assert on_click is None or isinstance(on_click, collections.Callable), on_click
+        assert on_click is None or callable(on_click), on_click
         self._id = id
         self._label = label
         self._refresh = refresh
@@ -5489,7 +5483,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                      'folding', 'initial_folding', 'query_fields', 'ro_select',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
-                if isinstance(value, collections.Callable) and len(argument_names(value)) == 0:
+                if callable(value) and len(argument_names(value)) == 0:
                     setattr(self, attr, value())
         assert isinstance(self.fields, (list, tuple)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
@@ -5511,7 +5505,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             assert isinstance(self.bindings, dict)
         table = self.table
         fields = self.fields
-        if isinstance(fields, collections.Callable):
+        if callable(fields):
             fields = fields()
         if table is not None and not isinstance(table, basestring):
             fields = self._init_from_db_fields(table, fields)
@@ -5542,7 +5536,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                 value = self._view_spec_kwargs[arg]
             except Exception:
                 continue
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 self._view_spec_kwargs[arg] = value()
         # if self.__class__.__doc__:
         #     parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
@@ -5743,7 +5737,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         fields = super(cls, self).fields
         if fields is None or fields == ():
             fields = self._db_fields()
-        elif isinstance(fields, collections.Callable):
+        elif callable(fields):
             fields = fields()
         if not isinstance(fields, self._Fields):
             fields = self._Fields(fields)
@@ -5786,7 +5780,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     def print_spec(self):
         """Vrať sekvenci specifikací tiskových náhledů."""
         prints = self.prints or ()
-        if isinstance(prints, collections.Callable):
+        if callable(prints):
             prints = prints()
         return [p if isinstance(p, PrintAction) else
                 PrintAction('__print_action_%d' % (i,), p[0], p[1])
@@ -5859,7 +5853,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         class Spec(class_):
             pass
         for key, value in kwargs.items():
-            if key != 'data_cls' and isinstance(value, collections.Callable):
+            if key != 'data_cls' and callable(value):
                 # This is necessary to avoid calling functions (such as 'check'
                 # or 'row_style') as methods.
                 function = value

@@ -2345,7 +2345,7 @@ class Binary(Limited):
         def __new__(cls, data, **kwargs):
             if isinstance(data, (str, bytes, buffer)):
                 pass
-            elif hasattr(data, 'read') and isinstance(data.read, collections.Callable):
+            elif hasattr(data, 'read') and callable(data.read):
                 # TODO: Make sure the file was opened in binary mode?  Make a conversion if not?
                 data = data.read()
             else:

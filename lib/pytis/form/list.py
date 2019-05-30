@@ -2943,7 +2943,7 @@ class BrowseForm(FoldableForm):
                                                    select_row={link.column(): row[f.id()]},
                                                    **kwargs)
                 icon = 'link'
-            if isinstance(enabled, collections.Callable):
+            if callable(enabled):
                 enabled = enabled(row)
             if not enabled:
                 cmd = Application.COMMAND_NOTHING(enabled=False)

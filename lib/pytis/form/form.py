@@ -1060,7 +1060,7 @@ class LookupForm(InnerForm):
                 v = values[f.id()]
             except KeyError:
                 v = f.default()
-                if isinstance(v, collections.Callable):
+                if callable(v):
                     v = v()
             return pytis.data.Value(t, v)
         return pytis.data.Row([(f.id(), value(f)) for f in self._view.query_fields().fields()])
@@ -1999,7 +1999,7 @@ class RecordForm(LookupForm):
             codebook = field.codebook()
             if codebook and not has_access(codebook) and field.computer() is None:
                 editable = field.editable()
-                if isinstance(editable, collections.Callable):
+                if callable(editable):
                     editable = editable(self._row)
                 if not editable:
                     continue
@@ -2111,7 +2111,7 @@ class RecordForm(LookupForm):
         if not pytis.data.is_in_groups(access_groups):
             return False
         enabled = action.enabled()
-        if isinstance(enabled, collections.Callable):
+        if callable(enabled):
             args = self._context_action_args(action)
             kwargs = action.kwargs()
             return enabled(*args, **kwargs)
@@ -2514,7 +2514,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _set_focus_field(self, event=None):
         field = None
         if self._focus_field:
-            if isinstance(self._focus_field, collections.Callable):
+            if callable(self._focus_field):
                 field_id = self._focus_field(self._row)
                 assert field_id is None or isinstance(field_id, basestring), \
                     "Invalid result of focus_field() function: %s" % field_id
@@ -2775,7 +2775,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         type_ = self._row.type(fid)
                         default = fspec.default()
                         if default is not None:
-                            if isinstance(default, collections.Callable):
+                            if callable(default):
                                 default = default()
                             value = pytis.data.Value(type_, default)
                         else:

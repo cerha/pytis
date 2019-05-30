@@ -49,7 +49,7 @@ class _Cache(collections.UserDict):
 
         """
         collections.UserDict.__init__(self)
-        assert isinstance(provider, collections.Callable)
+        assert callable(provider)
         self._provider = provider
         self._validator = validator
 

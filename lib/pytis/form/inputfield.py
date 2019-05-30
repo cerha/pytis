@@ -918,7 +918,7 @@ class TextField(InputField):
             return self._stored_post_process_func
         except Exception:
             pp_spec = self.spec().post_process()
-            if isinstance(pp_spec, collections.Callable):
+            if callable(pp_spec):
                 self._stored_post_process_func = pp_spec
             else:
                 mapping = {

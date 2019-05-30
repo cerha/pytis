@@ -834,9 +834,8 @@ class CallbackHandler(object):
             její dokumentace.
 
         """
-        assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or isinstance(function, collections.Callable), \
-            ('Invalid callback function', function,)
+        assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
+        assert function is None or callable(function), function
         self._callbacks[kind] = function
         if __debug__:
             log(DEBUG, 'Callback registered:', (kind, function))
@@ -1140,10 +1139,7 @@ class MItem(_TitledMenuObject):
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
-            if (not args or
-                (len(args) == 1 and
-                 'enabled' in args and
-                 not isinstance(args['enabled'], collections.Callable))):
+            if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
                 return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
         if args and not command_proc:
             return None
@@ -1266,7 +1262,7 @@ class CheckItem(MItem):
           Všechny ostatní arguemnty jsou sthodné jako v konstruktoru předka.
 
         """
-        assert isinstance(state, collections.Callable)
+        assert callable(state)
         self._state = state
         super(CheckItem, self).__init__(title, command, **kwargs)
 
@@ -1390,7 +1386,7 @@ class ToolTip(supertooltip.SuperToolTip):
         # for the same field.  Thus we know that the content has changed
         # (we are above a different field) and thus we need to hide the
         # old content (if shown) and restart timers.
-        assert isinstance(content, collections.Callable), content
+        assert callable(content), content
         self._label = label
         self._content = content
         if self.GetTipWindow():
@@ -1428,7 +1424,7 @@ class StatusBar(object):
 
         def tooltip(self):
             tooltip = self._tooltip
-            if isinstance(tooltip, collections.Callable):
+            if callable(tooltip):
                 tooltip = self._tooltip = tooltip()
             return tooltip
 

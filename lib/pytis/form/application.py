@@ -964,7 +964,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Dokumentace viz funkce run_form().
         result = None
         try:
-            if isinstance(name, collections.Callable):
+            if callable(name):
                 name = name()
                 if name is None:
                     return None

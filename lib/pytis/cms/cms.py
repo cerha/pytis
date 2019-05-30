@@ -190,8 +190,7 @@ class Modules(Specification):
                     existing_actions[row['name'].value()] = row['action_id']
             data.close()
             actions = [attr[7:] for attr in dir(module)
-                       if attr.startswith('action_') and
-                       isinstance(getattr(module, attr), collections.Callable)]
+                       if attr.startswith('action_') and callable(getattr(module, attr))]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
             actions.sort(key=lambda a: str(default_actions.index(a)) if a in default_actions else a)

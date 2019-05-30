@@ -537,7 +537,7 @@ class OperationDialog(Message):
         super_(OperationDialog).__init__(self, parent, message=message,
                                          title=title, icon=self.ICON_TIP,
                                          buttons=(), default=None)
-        assert isinstance(function, collections.Callable)
+        assert callable(function)
         assert isinstance(args, (tuple, list))
         assert isinstance(kwargs, dict)
         self._function = function

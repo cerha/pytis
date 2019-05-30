@@ -152,7 +152,7 @@ class Form(lcg.Content):
         assert isinstance(row, PresentedRow), row
         assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
-        assert actions is None or isinstance(actions, (tuple, list, collections.Callable)), actions
+        assert actions is None or isinstance(actions, (tuple, list)) or callable(actions), actions
         self._view = view
         self._req = req
         self._row = row
@@ -192,7 +192,7 @@ class Form(lcg.Content):
             return []
 
     def _call_if_callable(self, value, *args, **kwargs):
-        if isinstance(value, collections.Callable):
+        if callable(value):
             value = value(*args, **kwargs)
         return value
 
@@ -1379,7 +1379,7 @@ class BrowseForm(LayoutForm):
         super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
         assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
         assert isinstance(permanent_text_search, bool), permanent_text_search
-        assert transform_sorting is None or isinstance(transform_sorting, collections.Callable), \
+        assert transform_sorting is None or callable(transform_sorting), \
             transform_sorting
         data = self._row.data()
 
@@ -2395,7 +2395,7 @@ class ListView(BrowseForm):
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
         for item in layout.content():
-            if isinstance(item, collections.Callable):
+            if callable(item):
                 content = item(row)
                 if content is None:
                     continue
@@ -2481,8 +2481,8 @@ class ItemizedView(BrowseForm):
             columns = (view.columns()[0],)  # Include just the first column by default.
         super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
-        assert (template is None or
-                isinstance(template, (lcg.TranslatableText, collections.Callable)))
+        assert (template is None or isinstance(template, lcg.TranslatableText) or
+                callable(template)), template
         self._separator = separator
         self._template = template
 
@@ -2592,7 +2592,7 @@ class EditableBrowseForm(BrowseForm):
 
         """
         assert isinstance(editable_columns, (list, tuple)), editable_columns
-        assert set_row_callback is None or isinstance(set_row_callback, collections.Callable), \
+        assert set_row_callback is None or callable(set_row_callback), \
             set_row_callback
         self._editable_columns = editable_columns
         self._set_row_callback = set_row_callback
@@ -2643,7 +2643,7 @@ class EditableBrowseForm(BrowseForm):
                     default = field.spec.default()
                     # Exclude serial fields to avoid wasting sequences here.
                     if default is not None and not isinstance(field.type, pd.Serial):
-                        if isinstance(default, collections.Callable):
+                        if callable(default):
                             try:
                                 default = default(transaction=self._row.transaction())
                             except TypeError:

@@ -861,7 +861,7 @@ class LongTable(Table):
 
         """
         super(LongTable, self).__init__(columns)
-        assert isinstance(row_generator, collections.Callable), row_generator
+        assert callable(row_generator), row_generator
         assert row_generator_init is None or callable(row_generator_init), row_generator_init
         assert isinstance(separator_height, (float, int, long, Unit)), separator_height
         assert isinstance(line_separator_height, (float, int, long, Unit)), line_separator_height

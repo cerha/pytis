@@ -367,7 +367,7 @@ class PresentedRow(object):
                 value = row[key].retype(column.type)
             elif self._new and column.default is not None:
                 default = column.default
-                if isinstance(default, collections.Callable):
+                if callable(default):
                     try:
                         default = default(transaction=self._transaction)
                     except TypeError:
@@ -902,7 +902,7 @@ class PresentedRow(object):
 
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
-        assert function is None or isinstance(function, collections.Callable), function
+        assert function is None or callable(function), function
         try:
             callbacks = self._callbacks[kind]
         except KeyError:
@@ -1193,7 +1193,7 @@ class PresentedRow(object):
         """
         column = self._coldict[key]
         storage = column.attachment_storage
-        if isinstance(storage, collections.Callable):
+        if callable(storage):
             storage = storage(self)
         return storage
 
@@ -1212,7 +1212,7 @@ class PresentedRow(object):
         column = self._coldict[key]
         filename_spec = column.filename
         if filename_spec:
-            if isinstance(filename_spec, collections.Callable):
+            if callable(filename_spec):
                 return filename_spec(self)
             else:
                 return self[filename_spec].export()

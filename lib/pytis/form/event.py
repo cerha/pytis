@@ -163,7 +163,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
       wx_callback(EVT_BUTTON, button, self.on_button)
 
     """
-    assert isinstance(callback, collections.Callable)
+    assert callable(callback)
 
     def process_event(event, callback=callback):
         def system_callback():

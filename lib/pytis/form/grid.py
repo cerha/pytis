@@ -77,7 +77,7 @@ class DataTable(object):
         self._data = data
         self._presented_row = copy.copy(presented_row)
         self._row_style = row_style
-        self._row_style_callable = isinstance(row_style, collections.Callable)
+        self._row_style_callable = callable(row_style)
         self._plain_style = pytis.presentation.Style()
         self.update(row_count=row_count,
                     sorting=sorting,
@@ -138,7 +138,7 @@ class DataTable(object):
                     field_style = self._plain_style
                 else:
                     field_style = cstyle
-                    if isinstance(field_style, collections.Callable):
+                    if callable(field_style):
                         field_style = field_style(the_row)
                 styles.append((field_style or self._plain_style) + row_style)
             self._cache[row] = values, styles

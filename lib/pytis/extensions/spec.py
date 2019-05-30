@@ -100,7 +100,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     if groups is not None:
         assert isinstance(groups, (tuple, list))
-        assert enabled is None or isinstance(enabled, collections.Callable)
+        assert enabled is None or callable(enabled)
         enabled_ = enabled
 
         def enabled(**kwargs_):
