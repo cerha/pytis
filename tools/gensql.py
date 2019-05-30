@@ -48,18 +48,18 @@ objekty zadané přímo prostřednictvím SQL příkazů nejsou aplikovány žá
 kontroly.
 
 """
-
 from builtins import range
+from future import standard_library
+
 import copy
 import functools
+import collections
 import getopt
 import inspect
 import operator
 import re
 import string
 import sys
-import UserDict
-import types
 import imp
 import os
 
@@ -68,6 +68,8 @@ from pytis.util import (
     UNDEFINED, is_sequence, find, Counter, ProgramError, xtuple, xor,
     position, sameclass, assoc, rassoc,
 )
+
+standard_library.install_aliases()  # to get collections.UserDict
 
 imp.reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -3890,10 +3892,10 @@ class _GviewsqlRaw(_GsqlSpec):
         return result
 
 
-class _GsqlDefs(UserDict.UserDict):
+class _GsqlDefs(collections.UserDict):
 
     def __init__(self):
-        UserDict.UserDict.__init__(self)
+        collections.UserDict.__init__(self)
         self._resolved = []
         self._unresolved = []
         self._table_keys = {}

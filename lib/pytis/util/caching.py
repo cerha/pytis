@@ -22,15 +22,17 @@
 Modul nabízí třídy umožňující provádět různé typy cachování.
 
 """
+from future import standard_library
 
 import _thread
 import collections
-import UserDict
 
 from pytis.util import Locked, Counter
 
+standard_library.install_aliases()  # to get collections.UserDict
 
-class _Cache(object, UserDict.UserDict):
+
+class _Cache(collections.UserDict):
     """Bázový objekt pro všechny cache."""
 
     def __init__(self, provider, validator=None):
@@ -46,7 +48,7 @@ class _Cache(object, UserDict.UserDict):
             považovány za platné
 
         """
-        UserDict.UserDict.__init__(self)
+        collections.UserDict.__init__(self)
         assert isinstance(provider, collections.Callable)
         self._provider = provider
         self._validator = validator
