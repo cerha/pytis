@@ -293,13 +293,13 @@ class Type(with_metaclass(_MType, object)):
         kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
         return other.__class__(**kwargs)
 
-    def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
+    def validate(self, obj, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
-        """Validate the 'object' and return a 'Value' instance and an error.
+        """Validate the 'obj' and return a 'Value' instance and an error.
 
         Arguments:
 
-          object -- an object to be converted to a value.  This is typically a
+          obj -- an object to be converted to a value.  This is typically a
             string representation of the value from user input.  See below for
             more details.
           strict -- when True (by default), the input object is first converted
@@ -315,17 +315,17 @@ class Type(with_metaclass(_MType, object)):
           kwargs -- type specific keyword arguments
 
         Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
-        valid 'object') or 'None' (for an invalid 'object').  ERROR is 'None'
-        for a valid 'object' and a 'ValidationError' instance for an invalid
-        'object'.
+        valid 'obj') or 'None' (for an invalid 'obj').  ERROR is 'None'
+        for a valid 'obj' and a 'ValidationError' instance for an invalid
+        'obj'.
 
-        Most types require the 'object' to be a string, most often representing
+        Most types require the 'obj' to be a string, most often representing
         user input or a value loaded from a file or process.  Certain more
-        sophisticated types, however, may accept or require an 'object' of a
+        sophisticated types, however, may accept or require an 'obj' of a
         different type.  All types should, if possible, accept a string and if
         not (eg. for excessive complications), they should accept an object,
         which may be simply constructed from data picked up from the user
-        interface.  If the 'object' is not a string or another type explicitely
+        interface.  If the 'obj' is not a string or another type explicitely
         allowed in the documentation of the corresponding type class, the
         behavior of this method is undefined.
 
@@ -348,7 +348,7 @@ class Type(with_metaclass(_MType, object)):
         # argumentem 'strict'.
         if arguments:
             arguments = tuple(arguments.items())
-        key = (object, strict, transaction, condition, arguments, tuple(kwargs.items()))
+        key = (obj, strict, transaction, condition, arguments, tuple(kwargs.items()))
         try:
             result = self._validation_cache[key], None
         except ValidationError as e:
@@ -356,14 +356,14 @@ class Type(with_metaclass(_MType, object)):
         return result
 
     def _validating_provider(self, key):
-        object, strict, transaction, condition, arguments, kwargs_items = key
-        special = rassoc(object, self._SPECIAL_VALUES)
+        obj, strict, transaction, condition, arguments, kwargs_items = key
+        special = rassoc(obj, self._SPECIAL_VALUES)
         if special:
             value = Value(self, special[0])
-        elif object is None:
+        elif obj is None:
             value = Value(self, None)
         else:
-            value, error = self._validate(object, **dict(kwargs_items))
+            value, error = self._validate(obj, **dict(kwargs_items))
             if error:
                 raise error
         if strict:
@@ -373,17 +373,17 @@ class Type(with_metaclass(_MType, object)):
                                     arguments=arguments)
         return value
 
-    def _validate(self, object, **kwargs):
+    def _validate(self, obj, **kwargs):
         return Value(self, None), None
 
-    def wm_validate(self, object):
-        """Validate object for wildcard matching.
+    def wm_validate(self, obj):
+        """Validate input object for wildcard matching.
 
         Arguments:
 
-          object -- validated object, string
+          obj -- validated object, string
 
-        Returns: pair (VALUE, ERROR).  When given 'object' is valid and can be
+        Returns: pair (VALUE, ERROR).  When given 'obj' is valid and can be
         used for wildcard matching, VALUE is a 'WMValue' instance () and ERROR
         is 'None'.  In the other case VALUE is None and ERROR is a
         'ValidationError' instance containing error description.
@@ -849,28 +849,27 @@ class Integer(Number):
     # Translators: User input validation error message.
     _VM_NONINTEGER_MSG = _(u"Not an integer")
 
-    def _validate(self, string):
-        """Pokus se převést 'string' na plain nebo long integer.
+    def _validate(self, obj):
+        """Attempt to convert given 'obj' integer.
 
-        Pokud je 'string' možno převést na plain integer, je správný a vrácená
-        instance třídy 'Value' obsahuje odpovídající hodnotu jako plain
-        integer.  V jiném případě platí analogické pravidlo pro long integers.
-        Pokud 'string' není možno převést na plain ani long integer, 'string'
-        není správný a je vrácena chyba.
+        Pokud je 'obj' možno převést integer, je správný a vrácená instance
+        třídy 'Value' obsahuje odpovídající hodnotu jako integer.  Pokud
+        'obj' není možno převést na integer, 'obj' není správný a je
+        vrácena chyba.
 
         Metoda validuje všechny zápisy integers akceptované Pythonem, zejména
         tedy i long integers ve tvaru '1L'.
 
         """
-        assert isinstance(string, basestring), ('Not a string', string)
+        assert isinstance(obj, basestring), obj
         try:
-            value = int(string)
+            value = int(obj)
         except Exception:
             # Dokumentace Pythonu 1.5.2 neříká, že by `int' mohlo metat metat
-            # nějakou výjimkou, ale evidentně by mělo, pokud `string' nelze
+            # nějakou výjimkou, ale evidentně by mělo, pokud `obj' nelze
             # na obyčejný integer převést.
             try:
-                value = long(string)
+                value = long(obj)
             except Exception:
                 # Podobně jako `int' i `long' by mělo v případě nemožnosti
                 # převodu metat výjimku.
@@ -1021,12 +1020,12 @@ class Float(Number):
         """Return number of digits given in the constructor."""
         return self._digits
 
-    def _validate(self, string_, precision=None, rounding=None, locale_format=True):
-        """Pokus se převést 'string_' na float.
+    def _validate(self, obj, precision=None, rounding=None, locale_format=True):
+        """Pokus se převést 'obj' na float.
 
-        Pokud je 'string_' možno převést na float, je správný a vrácená instance
+        Pokud je 'obj' možno převést na float, je správný a vrácená instance
         třídy 'Value' obsahuje odpovídající hodnotu jako plain integer.  Pokud
-        'string' převést možno není, 'string' není správný a je vrácena chyba.
+        'obj' převést možno není, 'obj' není správný a je vrácena chyba.
 
         Metoda validuje všechny zápisy floats akceptované Pythonem.
 
@@ -1041,19 +1040,19 @@ class Float(Number):
             dolů (pozor na záporná čísla, platí to pro ně také přesně takto!)
 
         """
-        assert isinstance(string_, basestring), ('Not a string', string_)
+        assert isinstance(obj, basestring), ('Not a string', obj)
         assert (precision is None or isinstance(precision, int) and precision >= 0), \
                ('Invalid precision', precision)
         try:
             if locale_format:
                 import locale
-                if isinstance(string_, unicode):
+                if isinstance(obj, unicode):
                     encoding = locale.getpreferredencoding()
                     if encoding:
-                        string_ = string_.encode(encoding)
-                value = locale.atof(string_)
+                        obj = obj.encode(encoding)
+                value = locale.atof(obj)
             else:
-                value = decimal.Decimal(string_)
+                value = decimal.Decimal(obj)
         except Exception:
             value = None
         if value is not None:
@@ -1192,15 +1191,15 @@ class String(Limited):
     _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _validate(self, string):
-        """Vrať instanci třídy 'Value' s hodnotou 'string'.
+    def _validate(self, obj):
+        """Vrať instanci třídy 'Value' s hodnotou 'obj'.
 
-        Pokud byla v konstruktoru specifikována maximální délka, 'string' je
+        Pokud byla v konstruktoru specifikována maximální délka, 'obj' je
         správný právě tehdy, není-li delší než tato délka.
 
         """
-        assert isinstance(string, basestring), ('Not a string', string)
-        return Value(self, unicode(string)), None
+        assert isinstance(obj, basestring), ('Not a string', obj)
+        return Value(self, unicode(obj)), None
 
     def _export(self, value):
         # Pozor, na triviální funkci této metody se spoléhá Value.__init__ --
@@ -1208,9 +1207,9 @@ class String(Limited):
         assert isinstance(value, basestring), ('Value not a string', value)
         return isinstance(value, unicode) and value or unicode(value)
 
-    def wm_validate(self, object):
-        assert isinstance(object, basestring)
-        return WMValue(self, object), None
+    def wm_validate(self, obj):
+        assert isinstance(obj, basestring)
+        return WMValue(self, obj), None
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, basestring):
@@ -1317,9 +1316,9 @@ class Password(String):
         """Return true if verification of user input is required."""
         return self._verify
 
-    def _check_strength(self, string_):
+    def _check_strength(self, obj):
         letters = non_letters = False
-        for char in string_:
+        for char in obj:
             if char in string.ascii_letters:
                 letters = True
             else:
@@ -1327,33 +1326,33 @@ class Password(String):
         if not letters or not non_letters:
             return self._VM_MIX_CHARACTERS_MSG
 
-    def _validate(self, string, verify=None, **kwargs):
+    def _validate(self, obj, verify=None, **kwargs):
         if verify is not None:
             if not verify:
                 return None, self._validation_error(self.VM_PASSWORD)
-            if string != verify:
+            if obj != verify:
                 return None, self._validation_error(self.VM_PASSWORD_VERIFY)
         if self._strength is not None:
-            error = self._strength(string)
+            error = self._strength(obj)
             if error is not None:
                 raise ValidationError(error)
-        return super(Password, self)._validate(string, **kwargs)
+        return super(Password, self)._validate(obj, **kwargs)
 
-    def validate(self, object, verify=None, **kwargs):
+    def validate(self, obj, verify=None, **kwargs):
         if self._md5 and verify is None:
             # Strict checking applies to the original value.  Here we are validating the md5 sum,
             # so strict checking is forced to False.
             kwargs['strict'] = False
-        value, error = super(Password, self).validate(object, verify=verify, **kwargs)
+        value, error = super(Password, self).validate(obj, verify=verify, **kwargs)
         if self._md5 and value and value.value() is not None:
-            string = value.value()
-            if isinstance(string, unicode):
-                string = string.encode('utf-8')
+            obj = value.value()
+            if isinstance(obj, unicode):
+                obj = obj.encode('utf-8')
             if verify is not None:
                 # User input was valid, so let's turn it into its md5 hash.
                 from hashlib import md5
-                value = Value(value.type(), md5(string).hexdigest())
-            elif len(string) != 32 or not string.isalnum():
+                value = Value(value.type(), md5(obj).hexdigest())
+            elif len(obj) != 32 or not obj.isalnum():
                 return None, self._validation_error(self.VM_INVALID_MD5)
         return value, error
 
@@ -1404,16 +1403,16 @@ class Inet(String):
 
     _INET4_FORMAT = re.compile(r'(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
-    def _validate(self, string, *args, **kwargs):
+    def _validate(self, obj, *args, **kwargs):
         # TODO: Doplnit i validaci pro IPv6 formát
-        if not self._INET4_FORMAT.match(string):
+        if not self._INET4_FORMAT.match(obj):
             raise self._validation_error(self.VM_INET_FORMAT)
-        if string.find('/') != -1:
-            addr, mask = string.split('/')
+        if obj.find('/') != -1:
+            addr, mask = obj.split('/')
             if int(mask) > 32:
                 raise self._validation_error(self.VM_INET_MASK, mask=mask)
         else:
-            addr, mask = string, '32'
+            addr, mask = obj, '32'
         numbers = addr.split('.')
         for n in numbers:
             if n and int(n) > 255:
@@ -1436,10 +1435,10 @@ class Macaddr(String):
 
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
 
-    def _validate(self, string, *args, **kwargs):
-        if not self._MACADDR_FORMAT.match(string):
+    def _validate(self, obj, *args, **kwargs):
+        if not self._MACADDR_FORMAT.match(obj):
             raise self._validation_error(self.VM_MACADDR_FORMAT)
-        macaddr = string.replace(':', '').replace('-', '')
+        macaddr = obj.replace(':', '').replace('-', '')
         value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
         return Value(self, unicode(value)), None
 
@@ -1460,10 +1459,10 @@ class Email(String):
                                r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
                                r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-    def _validate(self, string, *args, **kwargs):
-        if not self._EMAIL_FORMAT.match(string):
+    def _validate(self, obj, *args, **kwargs):
+        if not self._EMAIL_FORMAT.match(obj):
             raise self._validation_error(self.VM_EMAIL_FORMAT)
-        return Value(self, unicode(string)), None
+        return Value(self, unicode(obj)), None
 
 
 class TreeOrderBase(Type):
@@ -1611,7 +1610,7 @@ class _CommonDateTime(Type):
         self._without_timezone = without_timezone
         super(_CommonDateTime, self)._init(**kwargs)
 
-    def _check_format(self, format, string):
+    def _check_format(self, format, obj):
         try:
             matcher = self._check_matcher[format]
         except KeyError:
@@ -1625,7 +1624,7 @@ class _CommonDateTime(Type):
                     return m.startswith('%') and r'\d?\d' or re.escape(m)
             regexp = re.sub(r'(\%[a-zA-Z]|.|\s+)', subst, format)
             self._check_matcher[format] = matcher = re.compile(regexp)
-        return matcher.match(string)
+        return matcher.match(obj)
 
     def format(self):
         """Return format given in the constructor, basestring."""
@@ -1643,20 +1642,20 @@ class _CommonDateTime(Type):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
 
-    def _validate(self, string, format=None, local=None):
+    def _validate(self, obj, format=None, local=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Argumenty:
 
-          string -- stejné jako v předkovi
-          format -- požadovaný formát hodnoty 'string', ve tvaru požadovaném
+          obj -- stejné jako v předkovi
+          format -- požadovaný formát hodnoty 'obj', ve tvaru požadovaném
             metodou '_init()'
           local -- if true, handle the given value as a local time value; if
             false, handle it as a UTC value; if 'None' handle it according to
             utc flag of the type
 
         """
-        assert isinstance(string, basestring), string
+        assert isinstance(obj, basestring), obj
         if format is None:
             format = self._format
         if local is None:
@@ -1665,12 +1664,12 @@ class _CommonDateTime(Type):
         # dostatečně tolerantní vůči nadbytečným mezerám atd., takže by jeho
         # použitím neměl vzniknout problém, pokud nehodláme software provozovat
         # na ne-GNU systémech, které `strptime' řádně nepodporují.
-        string = string.strip()
+        obj = obj.strip()
         dt = None
         try:
-            if not self._check_format(format, string):
+            if not self._check_format(format, obj):
                 raise ValidationError(self.VM_DT_FORMAT)
-            dt = datetime.datetime.strptime(string, format)
+            dt = datetime.datetime.strptime(obj, format)
             if local:
                 dt = dt.replace(tzinfo=self.LOCAL_TZINFO)
             elif dt.tzinfo is None:
@@ -1785,11 +1784,11 @@ class DateTime(_CommonDateTime):
         else:
             self._maxdate = None
 
-    def _validate(self, string_, format=None, **kwargs):
+    def _validate(self, obj, format=None, **kwargs):
         if format is True:
-            value, error = self._validate_iso(string_, **kwargs)
+            value, error = self._validate_iso(obj, **kwargs)
         else:
-            value, error = super(DateTime, self)._validate(string_, format=format, **kwargs)
+            value, error = super(DateTime, self)._validate(obj, format=format, **kwargs)
         if value is not None:
             dt = value.value()
             if (((self._mindate and dt < self._mindate) or
@@ -1797,11 +1796,11 @@ class DateTime(_CommonDateTime):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
 
-    def _validate_iso(self, string_, local=None, **kwargs):
-        common_string, shift_string = string_[:-6], string_[-6:]
+    def _validate_iso(self, obj, local=None, **kwargs):
+        common_string, shift_string = obj[:-6], obj[-6:]
         match = self._ISO_TZ_MATCHER.match(shift_string)
         if match is None:
-            common_string = string_
+            common_string = obj
             if local or (local is None and not self._utc):
                 tzinfo = self.LOCAL_TZINFO
             else:
@@ -1950,10 +1949,10 @@ class LocalDateTime(DateTime):
             local = True
         return super(LocalDateTime, self)._export(value, local=local, format=format)
 
-    def _validate(self, string, format=None, local=None):
+    def _validate(self, obj, format=None, local=None):
         if local is None:
             local = True
-        return super(LocalDateTime, self)._validate(string, format=format, local=local)
+        return super(LocalDateTime, self)._validate(obj, format=format, local=local)
 
 
 class DateTimeRange(Range, DateTime):
@@ -2122,10 +2121,10 @@ class LocalTime(Time):
             local = True
         return super(LocalTime, self)._export(value, local=local, format=format)
 
-    def _validate(self, string, format=None, local=None):
+    def _validate(self, obj, format=None, local=None):
         if local is None:
             local = True
-        return super(LocalTime, self)._validate(string, format=format, local=local)
+        return super(LocalTime, self)._validate(obj, format=format, local=local)
 
 
 class TimeInterval(Type):
@@ -2167,15 +2166,15 @@ class TimeInterval(Type):
                           replace('%M', re_minutes).replace('%S', re_seconds))
         return re.compile(matcher_string)
 
-    def _validate(self, string_, format=None, **kwargs):
-        assert isinstance(string_, basestring)
+    def _validate(self, obj, format=None, **kwargs):
+        assert isinstance(obj, basestring)
         if format is None:
             matcher = self._matcher
         elif format is True:
             matcher = self._MATCHER
         else:
             matcher = self._make_matcher(format)
-        match = matcher.match(string_)
+        match = matcher.match(obj)
         if not match:
             return None, self._validation_error(self.VM_TI_FORMAT)
         groups = match.groupdict()
@@ -2270,7 +2269,7 @@ class Boolean(Type):
     nepravdy.
 
     Validační argument 'extended' umožňuje liberálnější kontrolu vstupu.  Je-li pravdivý, jsou
-    kromě \"oficiálních\" hodnot 'object' zvalidovány i následující stringové hodnoty:
+    kromě \"oficiálních\" hodnot 'obj' zvalidovány i následující stringové hodnoty:
 
     \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
     \'f\', \'0\' -- jako reprezentace nepravdivé hodnoty
@@ -2284,11 +2283,11 @@ class Boolean(Type):
         e = FixedEnumerator((True, False))
         super(Boolean, self)._init(enumerator=e, not_null=not_null)
 
-    def _validate(self, object, extended=False):
+    def _validate(self, obj, extended=False):
         if extended:
-            if object in ('t', '1'):
+            if obj in ('t', '1'):
                 return Value(self, True), None
-            elif object in ('f', '0'):
+            elif obj in ('f', '0'):
                 return Value(self, False), None
         # Valid values are found in _SPECIAL_VALUES before _validate is called.
         return None, ValidationError(_(u"Invalid boolean type input value"))
@@ -2411,9 +2410,9 @@ class Binary(Limited):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self)._init(**kwargs)
 
-    def _validate(self, object, filename=None, mime_type=None, **kwargs):
+    def _validate(self, obj, filename=None, mime_type=None, **kwargs):
         try:
-            value = self.Data(object, filename=filename, mime_type=mime_type)
+            value = self.Data(obj, filename=filename, mime_type=mime_type)
         except ValueError as e:
             raise ValidationError(*e.args)
         return Value(self, value), None
@@ -2602,9 +2601,9 @@ class LTree(Type):
         """Return value of 'text' constructor argument."""
         return self._text
 
-    def _validate(self, string):
-        assert isinstance(string, basestring), ('Not a string', string)
-        items = string.split('.')
+    def _validate(self, obj):
+        assert isinstance(obj, basestring), ('Not a string', obj)
+        items = obj.split('.')
         error = None
         for item in items:
             if not item:
@@ -2616,7 +2615,7 @@ class LTree(Type):
             if error is not None:
                 break
         if error is None:
-            result = Value(self, unicode(string)), None
+            result = Value(self, unicode(obj)), None
         else:
             result = None, self._validation_error(error)
         return result
@@ -2625,9 +2624,9 @@ class LTree(Type):
         assert isinstance(value, basestring), ('Value not a string', value)
         return value
 
-    def wm_validate(self, object):
-        assert isinstance(object, basestring)
-        return WMValue(self, object), None
+    def wm_validate(self, obj):
+        assert isinstance(obj, basestring)
+        return WMValue(self, obj), None
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, basestring):
@@ -2657,7 +2656,7 @@ class Array(Limited):
         self._inner_type = inner_type
         super(Array, self)._init(**kwargs)
 
-    def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
+    def validate(self, obj, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
         # We override `validate()' instead of `_validate()' here, which is
         # discouraged in `validate()' method docstring.  The reason is that we
@@ -2665,7 +2664,7 @@ class Array(Limited):
         # the validation of inner values.  We also don't want to cache
         # validation results as it should be enough to cache the inner values.
         values = []
-        for item in object:
+        for item in obj:
             value, error = self._inner_type.validate(item, strict=strict, transaction=transaction,
                                                      condition=condition, arguments=arguments,
                                                      **kwargs)
@@ -3184,9 +3183,9 @@ class Value(_Value):
           value -- hodnota samotná, libovolný objekt
 
         """
-        #print '---', type_, type(value), repr(value)
+        # print '---', type_, type(value), repr(value)
         value = type_.adjust_value(value)
-        #print '-->', type(value), repr(value)
+        # print '-->', type(value), repr(value)
         _Value.__init__(self, type_, value)
         self._init()
 
