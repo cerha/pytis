@@ -945,21 +945,6 @@ def is_dictionary(x):
     return type(x) == pytypes.DictionaryType
 
 
-def unormalize(unicode_):
-    """Return a normalized version of 'unicode_'.
-
-    This useful when comparing or sorting unicode's received from external
-    sources (e.g. from a Web browser) which may be canonically equivalent but
-    represented in different ways.
-
-    Arguments:
-
-      unicode_ -- unicode to normalize
-
-    """
-    return unicodedata.normalize('NFC', unicode_)
-
-
 def ecase(value, *settings):
     """Vrať hodnotu ze 'settings' odpovídající 'value'.
 
