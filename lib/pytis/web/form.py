@@ -666,7 +666,7 @@ class _SubmittableForm(Form):
         for check in self._view.check():
             result = check(self._row)
             if result:
-                if isinstance(result, (str, unicode)):
+                if isinstance(result, basestring):
                     result = (result, _("Integrity check failed."))
                 else:
                     assert isinstance(result, tuple) and len(result) == 2, \

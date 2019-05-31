@@ -1046,7 +1046,7 @@ class ChecklistField(ArrayField):
             if uri_provider:
                 uri = uri_provider(value)
                 if uri:
-                    if type(uri) in (str, unicode):
+                    if isinstance(uri, basestring):
                         link = g.a(exported_value, href=uri)
                     else:
                         link = g.a(exported_value, href=uri.uri(), title=uri.title(),

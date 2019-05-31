@@ -480,7 +480,7 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
 
 
 def select_directory(directory=None):
-    assert directory is None or isinstance(directory, (str, unicode)), directory
+    assert directory is None or isinstance(directory, basestring), directory
     try:
         return _request('select_directory', directory=directory)
     except Exception as e:
@@ -491,7 +491,7 @@ def select_directory(directory=None):
 def select_file(filename=None, directory=None, patterns=(), pattern=None, template=None,
                 multi=False):
     assert filename is None or isinstance(filename, basestring), filename
-    assert directory is None or isinstance(directory, (str, unicode)), directory
+    assert directory is None or isinstance(directory, basestring), directory
     assert isinstance(patterns, (tuple, list)), patterns
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert isinstance(multi, bool), multi
