@@ -93,6 +93,8 @@ import types
 import pytis.data
 import pytis.util
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 # SQLAlchemy extensions
 
 G_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
@@ -984,7 +986,7 @@ def _sql_value_escape(value):
     elif isinstance(value, basestring):
         result = "'%s'" % (value.replace('\\', '\\\\').replace("'", "''"),)
     else:
-        result = unicode(value)
+        result = unistr(value)
     return result
 
 
@@ -2756,7 +2758,7 @@ def visit_foreign_server(element, compiler, **kw):
     options = []
 
     def add_option(name, value):
-        options.append("%s %s" % (name, _sql_value_escape(unicode(value)),))
+        options.append("%s %s" % (name, _sql_value_escape(unistr(value)),))
     for p, o in (('host', 'host'), ('database', 'dbname'), ('port', 'port'),):
         if getattr(element, p) is not None:
             add_option(o, getattr(element, p))
@@ -3435,7 +3437,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             with local_search_path(self.search_path()):
                 body = self.body()
             if not isinstance(body, basestring):
-                body = unicode(body)
+                body = unistr(body)
             marker = '$function$'
             header, footer = self._pytis_header_footer(search_path=self.search_path(),
                                                        marker=marker)
@@ -3480,7 +3482,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
         # since this puts argument symbols instead of argument values into the
         # argument list.
-        argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
+        argument_list = [unistr(_sql_value_escape(a)) for a in arguments]
         expression = '%s(%s)' % (name, ', '.join(argument_list),)
         result_type = self.result_type
         if isinstance(result_type, (Column, pytis.data.Type)):
@@ -3703,7 +3705,7 @@ class SQLPyFunction(SQLFunctional):
         else:
             def reindent(line):
                 return line[-indentation:]
-        lines = [unicode(l.rstrip(), 'utf-8') for l in lines]
+        lines = [unistr(l.rstrip(), 'utf-8') for l in lines]
         return [reindent(l) for l in lines if l.strip()]
 
 
@@ -3990,8 +3992,8 @@ _engine = None
 
 def _make_sql_command(sql, *multiparams, **params):
     if isinstance(sql, str):
-        output = unicode(sql)
-    elif isinstance(sql, unicode):
+        output = unistr(sql)
+    elif isinstance(sql, unistr):
         output = sql
     else:
         compiled = sql.compile(dialect=_engine.dialect)
@@ -4018,11 +4020,11 @@ def _make_sql_command(sql, *multiparams, **params):
                                               column.name,))
             for k, v in sql_parameters.items():
                 parameters[k] = _sql_value_escape(v)
-            output = unicode(compiled) % parameters
+            output = unistr(compiled) % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
-            output = unicode(compiled) % compiled.params
+            output = unistr(compiled) % compiled.params
         else:
-            output = unicode(compiled)
+            output = unistr(compiled)
         if hasattr(sql, 'pytis_prefix'):
             output = sql.pytis_prefix + output
         if hasattr(sql, 'pytis_suffix'):

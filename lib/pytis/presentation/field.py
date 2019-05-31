@@ -39,6 +39,8 @@ from .types_ import PrettyType
 
 _ = translations('pytis-data')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class PresentedRow(object):
     """A record of presented data.
@@ -279,7 +281,7 @@ class PresentedRow(object):
                     return '<%s %s>' % (column.type.__class__.__name__,
                                         format_byte_size(len(self[column.id].value())))
                 else:
-                    return unicode(self[column.id].value())
+                    return unistr(self[column.id].value())
             info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
         else:
             info = '%x' % id(self)

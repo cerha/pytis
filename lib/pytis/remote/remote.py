@@ -36,6 +36,7 @@ from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
 
 _ = translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
 
 _ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 _ipv6_regexp = r'.*:.*:.*'
@@ -297,8 +298,8 @@ def _request(request, *args, **kwargs):
             return [retype(a) for a in arg]
         elif isinstance(arg, dict):
             return dict((retype(k), retype(v)) for k, v in arg.items())
-        elif isinstance(arg, unicode) and type(arg).__name__ == 'TranslatableText':
-            return unicode(arg)
+        elif isinstance(arg, unistr) and type(arg).__name__ == 'TranslatableText':
+            return unistr(arg)
         else:
             return arg
     if RPCInfo.connection is None:
@@ -389,7 +390,7 @@ def get_clipboard_text():
 
 
 def set_clipboard_text(text):
-    assert isinstance(text, unicode), text
+    assert isinstance(text, unistr), text
     text = text.replace('\n', '\r\n')
     try:
         _request('set_clipboard_text', text)

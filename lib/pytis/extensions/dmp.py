@@ -96,6 +96,8 @@ from pytis.presentation import Binding, specification_path
 
 from pytis.extensions import run_form_mitem, run_procedure_mitem, get_form_defs
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class DMPMessage(Structure):
     """Message about DMP operation to be presented to the user.
@@ -138,7 +140,7 @@ def add_message(messages, kind, message, arguments=()):
     """
     if messages is None:
         return
-    m = DMPMessage(kind=kind, message=message, arguments=tuple([unicode(a) for a in arguments]))
+    m = DMPMessage(kind=kind, message=message, arguments=tuple([unistr(a) for a in arguments]))
     formatted = m.format()
     if not formatted or formatted[-1] != '\n':
         formatted += '\n'
@@ -542,14 +544,14 @@ class DMPMenu(DMPObject):
         _attributes = (Attribute('id', int),
                        Attribute('name', basestring),
                        Attribute('kind', basestring),
-                       Attribute('title', unicode),
+                       Attribute('title', unistr),
                        Attribute('parent', mutable=True),
                        Attribute('children', list, mutable=True),
                        Attribute('action', basestring),
                        Attribute('position', basestring, mutable=True),
                        Attribute('next_position', basestring, default=None),
                        Attribute('hotkey', basestring),
-                       Attribute('help', unicode),
+                       Attribute('help', unistr),
                        Attribute('locked', bool, mutable=True),
                        )
 
@@ -585,9 +587,9 @@ class DMPMenu(DMPObject):
                  help=None):
         id_ = self._counter.next()
         if title is not None:
-            title = unicode(title)
+            title = unistr(title)
         if help is not None:
-            help = unicode(help)
+            help = unistr(help)
         if parent is None and position is not None:
             pos = position.rfind('.')
             if pos >= 0:
@@ -1578,8 +1580,8 @@ class DMPActions(DMPObject):
             row = pd.Row((
                 ('fullname', S(action.fullname()),),
                 ('shortname', S(action.shortname()),),
-                ('action_title', S(unicode(action.title() or '')),),
-                ('description', S(unicode(action.description() or '')),),
+                ('action_title', S(unistr(action.title() or '')),),
+                ('description', S(unistr(action.description() or '')),),
             ))
             data.insert(row, transaction=transaction)
         return True

@@ -56,6 +56,7 @@ from .field import (
 
 # Needed for urllib.parse (urlparse in Python 2).
 standard_library.install_aliases()
+unistr = type(u'')  # Python 2/3 transition hack.
 
 _ = pytis.util.translations('pytis-web')
 VERTICAL = Orientation.VERTICAL
@@ -1494,7 +1495,7 @@ class BrowseForm(LayoutForm):
         # Determine the current text search condition.
         if allow_text_search or allow_text_search is None:
             if req.param('list-form-controls-submitted'):
-                text_search_string = param('query', unicode)
+                text_search_string = param('query', unistr)
             else:
                 text_search_string = None
             if permanent_text_search:
@@ -2188,7 +2189,7 @@ class BrowseForm(LayoutForm):
                         data.update(key, pytis.data.Row(rowdata))
                     except pd.DBException as e:
                         if e.exception():
-                            error = (None, unicode(e.exception()).strip())
+                            error = (None, unistr(e.exception()).strip())
                         else:
                             error = (None, e.message())
                     else:

@@ -56,6 +56,8 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-data')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 try:
     import sqlalchemy
 except Exception as e:
@@ -1046,7 +1048,7 @@ class Float(Number):
         try:
             if locale_format:
                 import locale
-                if isinstance(obj, unicode):
+                if isinstance(obj, unistr):
                     encoding = locale.getpreferredencoding()
                     if encoding:
                         obj = obj.encode(encoding)
@@ -1121,7 +1123,7 @@ class Float(Number):
             encoding = locale.getpreferredencoding() or 'UTF-8'
             return locale.format(self._format_string, value, 1).decode(encoding)
         else:
-            return unicode(self._format_string % value)
+            return unistr(self._format_string % value)
 
     def adjust_value(self, value):
         if value is None:
@@ -1199,13 +1201,13 @@ class String(Limited):
 
         """
         assert isinstance(obj, basestring), ('Not a string', obj)
-        return Value(self, unicode(obj)), None
+        return Value(self, unistr(obj)), None
 
     def _export(self, value):
         # Pozor, na triviální funkci této metody se spoléhá Value.__init__ --
         # při změně zde je nutná změna i tam.
         assert isinstance(value, basestring), ('Value not a string', value)
-        return isinstance(value, unicode) and value or unicode(value)
+        return value if isinstance(value, unistr) else unistr(value)
 
     def wm_validate(self, obj):
         assert isinstance(obj, basestring)
@@ -1346,7 +1348,7 @@ class Password(String):
         value, error = super(Password, self).validate(obj, verify=verify, **kwargs)
         if self._md5 and value and value.value() is not None:
             obj = value.value()
-            if isinstance(obj, unicode):
+            if isinstance(obj, unistr):
                 obj = obj.encode('utf-8')
             if verify is not None:
                 # User input was valid, so let's turn it into its md5 hash.
@@ -1420,7 +1422,7 @@ class Inet(String):
         for i in range(len(numbers), 4):
             numbers.append('0')
         value = '%s/%s' % ('.'.join(numbers), mask)
-        return Value(self, unicode(value)), None
+        return Value(self, unistr(value)), None
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.INET()
@@ -1440,7 +1442,7 @@ class Macaddr(String):
             raise self._validation_error(self.VM_MACADDR_FORMAT)
         macaddr = obj.replace(':', '').replace('-', '')
         value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
-        return Value(self, unicode(value)), None
+        return Value(self, unistr(value)), None
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.MACADDR()
@@ -1462,7 +1464,7 @@ class Email(String):
     def _validate(self, obj, *args, **kwargs):
         if not self._EMAIL_FORMAT.match(obj):
             raise self._validation_error(self.VM_EMAIL_FORMAT)
-        return Value(self, unicode(obj)), None
+        return Value(self, unistr(obj)), None
 
 
 class TreeOrderBase(Type):
@@ -2615,7 +2617,7 @@ class LTree(Type):
             if error is not None:
                 break
         if error is None:
-            result = Value(self, unicode(obj)), None
+            result = Value(self, unistr(obj)), None
         else:
             result = None, self._validation_error(error)
         return result
@@ -3108,7 +3110,7 @@ class _Value(object):
 
     def __unicode__(self):
         type = self.type()
-        value = unicode(self.value())
+        value = unistr(self.value())
         if isinstance(type, Big) and len(value) > 40:
             value = '%s...<<big value>>...' % (value[:10],)
         return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
@@ -3196,7 +3198,7 @@ class Value(_Value):
     def _init(self):
         if self._type.__class__ == String:    # pozor, nebezpečná věc!
             e = self._value or ''
-            self._exported = isinstance(e, unicode) and e or unicode(e)
+            self._exported = e if isinstance(e, unistr) else unistr(e)
         else:
             self._exported = self._VOID
 

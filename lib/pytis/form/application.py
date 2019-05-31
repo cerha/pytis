@@ -66,6 +66,7 @@ from .dialog import (
 _ = pytis.util.translations('pytis-wx')
 
 _application = None
+unistr = type(u'')  # Python 2/3 transition hack.
 
 
 class Application(wx.App, KeyHandler, CommandHandler):
@@ -764,7 +765,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             base_char = unicodedata.lookup(base_name)
             return base_char.isalnum() and base_char or '-'
         name = pytis.config.application_name.lower()
-        return str(re.sub("[^a-zA-Z0-9-]", safe_char, unicode(name)))
+        return str(re.sub("[^a-zA-Z0-9-]", safe_char, unistr(name)))
 
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
         try:
@@ -2093,7 +2094,7 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
         class Timer(wx.Timer):
             def Notify(self):
                 self.Stop()
-                if sb.get_status_text('message') == unicode(message):
+                if sb.get_status_text('message') == unistr(message):
                     sb.set_status('message', '')
         Timer().Start(1000 * timeout)
     return sb.set_status('message', message)

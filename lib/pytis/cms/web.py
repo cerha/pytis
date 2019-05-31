@@ -50,6 +50,8 @@ import pytis.presentation as pp
 import pytis.data as pd
 from . import cms
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class Specification(wiking.Specification):
     access_rights = None
@@ -497,7 +499,7 @@ class Application(wiking.Application):
             hash_value = user_password
             encode = 'hex'
         h = hashlib.new(hash_alg)
-        if isinstance(password, unicode):
+        if isinstance(password, unistr):
             # Passwords in the database are explicitly encoded to utf-8 by the
             # pytis.data.Password type (on validation).
             password = password.encode('utf-8')

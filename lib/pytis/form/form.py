@@ -75,6 +75,8 @@ import functools
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
@@ -3210,7 +3212,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def set_status(self, field, message):
         if field in self._status_fields:
-            self._status_fields[field].SetLabel(unicode(message or ''))
+            self._status_fields[field].SetLabel(unistr(message or ''))
             return True
         else:
             return False

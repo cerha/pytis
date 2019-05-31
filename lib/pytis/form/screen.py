@@ -68,6 +68,7 @@ from .managers import FormProfileManager
 
 # Needed for urllib.parse (urlparse in Python 2).
 standard_library.install_aliases()
+unistr = type(u'')  # Python 2/3 transition hack.
 
 if pytis.config.http_proxy is not None:
     # On Linux, proxy can be set through webkitgtk library (used by the GTK wx.html2.WebView
@@ -1534,7 +1535,7 @@ class StatusBar(object):
         bitmap.SetPosition((x, rect.y + 4))
 
     def _set_status(self, i, text, icon, tooltip):
-        text = unicode(text or '')
+        text = unistr(text or '')
         current_state = self._state[i]
         self._state[i] = self.State(text, icon, tooltip)
         sb = self._sb
@@ -3204,7 +3205,7 @@ def wx_spin_ctrl(parent, value=None, **kwargs):
 def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     checkbox = wx.CheckBox(parent, -1, label=label)
     if tooltip is not None:
-        checkbox.SetToolTip(unicode(tooltip))
+        checkbox.SetToolTip(unistr(tooltip))
     checkbox.SetValue(checked)
     return checkbox
 
@@ -3259,7 +3260,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             node = pytis.util.parse_lcg_text(content, resources=resources)
             browser.load_content(node)
         elif format == TextFormat.HTML:
-            if isinstance(content, unicode):
+            if isinstance(content, unistr):
                 content = content.encode('utf-8')
             if '<html' not in content[:100].lower():
                 content = ('<html>'

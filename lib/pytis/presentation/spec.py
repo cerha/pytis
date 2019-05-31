@@ -56,6 +56,7 @@ from pytis.util import (
 
 # Needed for urllib.request, urllib.error (urllib2 in Python 2).
 standard_library.install_aliases()
+unistr = type(u'')  # Python 2/3 transition hack.
 
 
 def specification_path(specification_name):
@@ -3697,7 +3698,7 @@ class Field(object):
         return u"<Field '%s': %s>" % (self._id, ', '.join(formatted),)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return unistr(self).encode('utf-8')
 
     def clone(self, field):
         """Clone this field by another field and return the cloned instance.

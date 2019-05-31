@@ -91,6 +91,7 @@ from .grid import TableRowIterator, GridTable
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
 
 # Forms
 
@@ -2035,10 +2036,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     skip_next = False
                     continue
                 if col_attrs['col_range'] is not None:
-                    ws.merge_range(0, position, 0, position + 1, unicode(label), merge_bold)
+                    ws.merge_range(0, position, 0, position + 1, unistr(label), merge_bold)
                     skip_next = True
                 else:
-                    ws.write(0, position, unicode(label), bold)
+                    ws.write(0, position, unistr(label), bold)
             r_out = 0
             for r in range(0, number_of_rows):
                 if not update(int(float(r) / number_of_rows * 100)):

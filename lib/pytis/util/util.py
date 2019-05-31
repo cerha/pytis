@@ -38,20 +38,20 @@ from builtins import range
 
 import functools
 import cgitb
-import codecs
 import copy
 import gc
 import inspect
 import operator
 import os
 import re
-import string
 import sys
 import tempfile
 import _thread
 import types as pytypes
 import unicodedata
 import platform
+
+unistr = type(u'')  # Python 2/3 transition hack.
 
 
 # Classes
@@ -1331,19 +1331,19 @@ def deepstr(obj):
     if is_sequence(obj):
         template = u'(%s,)' if isinstance(obj, tuple) else u'[%s]'
         transformed = template % (', '.join(map(deepstr, obj)),)
-    elif isinstance(obj, unicode):
+    elif isinstance(obj, unistr):
         transformed = u'"%s"' % (obj.replace('"', '\\"'),)
     elif isinstance(obj, str):
         transformed = '"%s"' % (obj.replace('"', '\\"'),)
     else:
         transformed = obj
     try:
-        result = unicode(transformed)
+        result = unistr(transformed)
     except UnicodeEncodeError:
         result = transformed.encode('unicode_escape')
     except Exception:
         try:
-            result = unicode(repr(transformed))
+            result = unistr(repr(transformed))
         except Exception:
             result = '<<unicode conversion error>>'
     return result

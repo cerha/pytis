@@ -15,6 +15,8 @@ import ast
 # We unparse those infinities to INFSTR.
 INFSTR = "1e" + repr(sys.float_info.max_10_exp + 1)
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 def interleave(inter, f, seq):
     """Call f on each item in seq, calling inter() in between."""
@@ -326,7 +328,7 @@ class Unparser(object):
             self.write(repr(tree.s))
         elif isinstance(tree.s, str):
             self.write("b" + repr(tree.s))
-        elif isinstance(tree.s, unicode):
+        elif isinstance(tree.s, unistr):
             self.write(repr(tree.s).lstrip("u"))
         else:
             assert False, "shouldn't get here"

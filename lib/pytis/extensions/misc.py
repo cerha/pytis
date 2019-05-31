@@ -41,6 +41,8 @@ standard_library.install_aliases()
 
 _ = translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 def smssend(tel, message, server='192.168.1.55'):
     import subprocess
@@ -112,7 +114,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='UTF-8',
     def get_utf8_argument(arg):
         if isinstance(arg, str):
             try:
-                arg = unicode(arg, charset)
+                arg = unistr(arg, charset)
             except Exception:
                 raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset,))
         return arg.encode('UTF-8')

@@ -57,6 +57,8 @@ standard_library.install_aliases()
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class Dialog(KeyHandler, CommandHandler, object):
     """Abstraktní třída, která je základem všech dialogů.
@@ -144,7 +146,7 @@ class GenericDialog(Dialog):
         assert report_format in pytis.util.public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
-        self._title = unicode(title)
+        self._title = unistr(title)
         self._button_labels = buttons
         self._default = default
         self._report = report
@@ -377,7 +379,7 @@ class Message(GenericDialog):
                                  default=default, **kwargs)
         assert icon in self._icons + (None,)
         if message:
-            self._message = unicode(message)
+            self._message = unistr(message)
         else:
             self._message = None
         self._icon = icon
@@ -609,7 +611,7 @@ class ProgressDialog(OperationDialog):
         self._style = style
 
     def _create_dialog(self):
-        self._dialog = wx.ProgressDialog(self._title, unicode(self._message),
+        self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
                                          maximum=100, parent=self._parent,
                                          style=self._style)
 
@@ -907,7 +909,7 @@ class BugReport(GenericDialog):
         def header(value):
             if isinstance(value, basestring):
                 try:
-                    unicode(value, 'us-ascii')
+                    unistr(value, 'us-ascii')
                 except Exception:
                     pass
                 else:
@@ -932,7 +934,7 @@ class BugReport(GenericDialog):
                 except Exception:
                     pass
         except Exception as e:
-            pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unicode(e))
+            pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unistr(e))
         else:
             self._dialog.FindWindowByName('feedback').SetLabel(
                 _("The report has been sent succesfully.")
@@ -1282,7 +1284,7 @@ class FileDialog(Dialog):
                      (FileDialog.SAVE, True): _("Save files")}[(mode, multi)]
         assert dir is None or isinstance(dir, basestring)
         assert file is None or isinstance(file, basestring)
-        self._title = unicode(title)
+        self._title = unistr(title)
         self._dir = dir
         self._file = file
         self._mode = mode
@@ -1344,7 +1346,7 @@ class DirDialog(Dialog):
         super_(FileDialog).__init__(self, parent)
         assert isinstance(title, basestring)
         assert path is None or isinstance(path, basestring)
-        self._title = unicode(title)
+        self._title = unistr(title)
         self._path = path
 
     def run(self):

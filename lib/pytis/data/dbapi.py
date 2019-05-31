@@ -51,6 +51,8 @@ from .postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunc
 
 _ = translations('pytis-data')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 
@@ -297,7 +299,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                         col = Range.Range(col.lower, col.upper,
                                           lower_inc=col.lower_inc, upper_inc=col.upper_inc)
                     elif isinstance(col, str):
-                        col = unicode(col, 'utf-8')
+                        col = unistr(col, 'utf-8')
                     row_data.append(col)
                 data.append(row_data)
         else:

@@ -40,6 +40,7 @@ from .screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl, field_size
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
 
 class SFSColumn(object):
     """Column specification for dialog selectors."""
@@ -285,7 +286,7 @@ class SFDialog(SFSDialog):
         else:
             arg1, arg2 = operator.args()
             if isinstance(arg2, (pytis.data.Value, pytis.data.WMValue)):
-                if isinstance(arg2.value(), unicode):
+                if isinstance(arg2.value(), unistr):
                     # Avoid the initial u for unicode strings...
                     arg2 = repr(arg2.value())[1:]
                 else:

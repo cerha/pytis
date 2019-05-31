@@ -38,6 +38,8 @@ from email.Header import Header
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class SimpleEmail(object):
     """Třída pro vytvoření a odeslaní jednoduchého mailu."""
@@ -118,7 +120,7 @@ class SimpleEmail(object):
             if isinstance(header, str):
                 # Not unicode
                 try:
-                    unicode(header, self.charset).encode('ascii')
+                    unistr(header, self.charset).encode('ascii')
                     make_header = False
                 except UnicodeEncodeError:
                     make_header = True

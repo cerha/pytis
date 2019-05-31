@@ -48,6 +48,8 @@ from pytis.util import log, OPERATIONAL, translations, ProgramError
 
 _ = translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 
 class HelpUpdater(object):
     """Create/update initial help texts in the database according to specifications.
@@ -540,7 +542,7 @@ class SpecHelpGenerator(HelpGenerator):
             return content
         return lcg.Container((
             lcg.p(_("Runs the command %s with the following arguments:", command.id())),
-            lcg.fieldset([(k, unicode(v)) for k, v in args.items()])
+            lcg.fieldset([(k, unistr(v)) for k, v in args.items()])
         ))
 
 

@@ -26,6 +26,8 @@ import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 ############
 # field.py #
 ############
@@ -154,13 +156,13 @@ class PresentedRow(unittest.TestCase):
             pp.Field('passwd', type=pd.Password()),
             pp.Field('data', type=BigString()),
         ), new=True, prefill=dict(x=1, y=3, passwd='secret', data=1024 * 'x'))
-        self.assertEqual(unicode(row), ('<PresentedRow: x=1, y=3, '
-                                        'passwd=***, data=<BigString 1 kB>>'))
+        self.assertEqual(unistr(row), ('<PresentedRow: x=1, y=3, '
+                                       'passwd=***, data=<BigString 1 kB>>'))
 
     def test_unicode_uninitialized(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
         delattr(row, '_row')
-        self.assertRegexpMatches(unicode(row), r'<PresentedRow: [0-9a-h]+>')
+        self.assertRegexpMatches(unistr(row), r'<PresentedRow: [0-9a-h]+>')
 
     def test_prefill(self):
         row = self._mega_row(new=True, a=1, b=pd.ival(3), d=77)

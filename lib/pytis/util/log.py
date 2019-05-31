@@ -60,6 +60,8 @@ import time
 import pytis
 from .util import ProgramError, deepstr
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 OPERATIONAL = 'OPR'
 """Provozní hláška, související se stavem systému."""
 ACTION = 'ACT'
@@ -285,7 +287,7 @@ class SyslogLogger(Logger):
             priority = priority | self._facility
         while formatted:
             msg = formatted[:self._MAX_MESSAGE_LENGTH]
-            if isinstance(msg, unicode):
+            if isinstance(msg, unistr):
                 msg = msg.encode('utf-8')
             syslog.syslog(priority, msg)
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]

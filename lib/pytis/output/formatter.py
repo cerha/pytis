@@ -60,6 +60,8 @@ from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, form_view_d
 
 _ = pytis.util.translations('pytis-wx')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 PAGE_WIDTH = 'pwidth'
 """Šířka stránky, instance třídy 'Unit'."""
 PAGE_HEIGHT = 'pheight'
@@ -570,7 +572,7 @@ class LCGFormatter(object):
         except lcg.SubstitutionIterator.IteratorError as e:
             message = _("Invalid use of iterator.\n"
                         "Maybe you refer to an non-existent or inaccessible object in the table?")
-            message += "\n" + unicode(e)
+            message += "\n" + unistr(e)
             pytis.form.run_dialog(pytis.form.Error, message)
             return ''
         show_time = pytis.data.DateTime.now()

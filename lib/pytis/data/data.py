@@ -54,6 +54,8 @@ from .types_ import DateTime, Number, Type, Value, WMValue
 
 _ = translations('pytis-data')
 
+unistr = type(u'')  # Python 2/3 transition hack.
+
 FORWARD = 'FORWARD'
 """Konstanta pro dopředný posun v 'Data.fetch'."""
 BACKWARD = 'BACKWARD'
@@ -1672,7 +1674,7 @@ class Row(object):
         self._set_data(state)
 
     def __unicode__(self):
-        items = [self._data[i][0] + '==' + unicode(item)
+        items = [self._data[i][0] + '==' + unistr(item)
                  for i, item in enumerate(self)]
         return '<Row: %s>' % ', '.join(items)
 
