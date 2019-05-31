@@ -940,11 +940,6 @@ def is_sequence(x):
     return isinstance(x, (tuple, list))
 
 
-def is_dictionary(x):
-    """Vrať pravdu, právě když 'x' je dictionary."""
-    return type(x) == pytypes.DictionaryType
-
-
 def ecase(value, *settings):
     """Vrať hodnotu ze 'settings' odpovídající 'value'.
 
