@@ -143,6 +143,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='UTF-8',
 # Additional handled actions for DMP
 
 class UserDefaultPrinter(object):
+
     def __init__(self):
         try:
             lpoptions = os.environ["HOME"]

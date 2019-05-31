@@ -97,7 +97,7 @@ def run():
                 except Exception as e:
                     print("%s: %s" % (spec_name, e))
                     skipped += 1
-                    view_spec, data_object,  error = None, None, e
+                    view_spec, data_object, error = None, None, e
                 else:
                     error = None
                 cache[spec_name] = view_spec, data_object, error

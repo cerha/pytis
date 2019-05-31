@@ -1021,7 +1021,7 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                     return NotImplemented
 
             def __ne__(self, other):
-                # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+                # Implied automatically in Python 3; Can be removed when dropping Python 2 support.
                 return not self == other
 
             def strong_redundant(self, other):

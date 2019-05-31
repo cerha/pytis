@@ -993,6 +993,7 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
 
     class TabbedShowForm(TabbedForm, ShowForm):
+
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
             self._sbcol = main_form.data(init_select=False).find_column(bcol).type().\
@@ -1003,6 +1004,7 @@ class MultiSideForm(MultiForm):
             self.select_row({self._sbcol: row[self._bcol]})
 
     class TabbedContentForm(TabbedForm):
+
         def _init_attributes(self, binding, main_form, **kwargs):
             self._binding_content = binding.content()
             self._content_type = binding.content_type()
@@ -1024,6 +1026,7 @@ class MultiSideForm(MultiForm):
             return content
 
     class TabbedWebForm(TabbedContentForm, WebForm):
+
         def on_selection(self, row):
             content = self._get_content(row)
             content_type = self._content_type
@@ -1040,6 +1043,7 @@ class MultiSideForm(MultiForm):
                 self._browser.load_content(content)
 
     class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
+
         def on_selection(self, row):
             content = self._get_content(row)
             if content and not hasattr(content, 'read') and not isinstance(content, fitz.Document):

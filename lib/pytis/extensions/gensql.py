@@ -71,6 +71,7 @@ _name_mapping = {}
 
 
 class _BasicMetaclass(type):
+
     def __new__(metaclass_, name, bases, dict_):
         class_ = type.__new__(metaclass_, name, bases, dict_)
         name = class_.name
@@ -435,6 +436,7 @@ class PrimaryColumn(Column):
 
 
 class _AttributeDictionary(dict):
+
     def __getattr__(self, name):
         try:
             return self[name]
@@ -443,6 +445,7 @@ class _AttributeDictionary(dict):
 
 
 class _TabularMetaclass(_BasicMetaclass):
+
     def __new__(metaclass_, name, bases, dict_):
         class_ = _BasicMetaclass.__new__(metaclass_, name, bases, dict_)
         columns = [(c.id(), ColumnInfo(id=c, table=class_),) for c in class_.columns]
@@ -525,17 +528,17 @@ class SQLTabular(with_metaclass(_TabularMetaclass, SQLDatabaseSpecification)):
             else:
                 result = 'numeric'
         else:
-            MAPPING = {pytis.data.Integer:   'int',
-                       pytis.data.Serial:    'serial',
-                       pytis.data.Oid:       'oid',
-                       pytis.data.Boolean:   'bool',
+            MAPPING = {pytis.data.Integer: 'int',
+                       pytis.data.Serial: 'serial',
+                       pytis.data.Oid: 'oid',
+                       pytis.data.Boolean: 'bool',
                        pytis.data.DateTime: 'timestamp(0)',
-                       pytis.data.Date:      'date',
-                       pytis.data.Time:      'time',
-                       pytis.data.Binary:    'bytea',
-                       pytis.data.Image:     'bytea',
-                       pytis.data.Color:     'varchar(7)',
-                       pytis.data.LTree:    'ltree',
+                       pytis.data.Date: 'date',
+                       pytis.data.Time: 'time',
+                       pytis.data.Binary: 'bytea',
+                       pytis.data.Image: 'bytea',
+                       pytis.data.Color: 'varchar(7)',
+                       pytis.data.LTree: 'ltree',
                        }
             try:
                 result = MAPPING[type_.__class__]
@@ -913,7 +916,7 @@ class SQLPyFunction(SQLPredefined, SQLFunctional):
                 return line
         elif indentation > 0:
             def reindent(line):
-                return ' '*indentation + line
+                return ' ' * indentation + line
         else:
             def reindent(line):
                 return line[-indentation:]
@@ -980,7 +983,7 @@ class SQLTrigger(SQLEventHandler):
                 assert e in ('insert', 'update', 'deleted', 'truncate',), e
 
     def _trigger_name(self, schema):
-        return self._sql_name(schema, name=self._name+'__trigger')
+        return self._sql_name(schema, name=self._name + '__trigger')
 
     def _sql_create_trigger(self, schema):
         trigger_name = self._trigger_name(schema)

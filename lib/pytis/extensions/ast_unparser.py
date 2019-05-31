@@ -49,7 +49,7 @@ class Unparser(object):
 
     def fill(self, text=""):
         "Indent a piece of text, according to the current indentation level"
-        self.f.write("\n"+"    "*self._indent + text)
+        self.f.write("\n" + "    " * self._indent + text)
 
     def write(self, text):
         "Append a piece of text to the current line."
@@ -70,7 +70,7 @@ class Unparser(object):
             for t in tree:
                 self.dispatch(t)
             return
-        meth = getattr(self, "_"+tree.__class__.__name__)
+        meth = getattr(self, "_" + tree.__class__.__name__)
         meth(tree)
 
     # Unparsing methods:
@@ -114,7 +114,7 @@ class Unparser(object):
     def _AugAssign(self, t):
         self.fill()
         self.dispatch(t.target)
-        self.write(" "+self.binop[t.op.__class__.__name__]+"= ")
+        self.write(" " + self.binop[t.op.__class__.__name__] + "= ")
         self.dispatch(t.value)
 
     def _Return(self, t):
@@ -238,7 +238,7 @@ class Unparser(object):
         for deco in t.decorator_list:
             self.fill("@")
             self.dispatch(deco)
-        self.fill("class "+t.name)
+        self.fill("class " + t.name)
         if t.bases:
             self.write("(")
             for a in t.bases:
@@ -254,7 +254,7 @@ class Unparser(object):
         for deco in t.decorator_list:
             self.fill("@")
             self.dispatch(deco)
-        self.fill("def "+t.name + "(")
+        self.fill("def " + t.name + "(")
         self.dispatch(t.args)
         self.write(")")
         self.enter()
@@ -578,7 +578,7 @@ class Unparser(object):
                 first = False
             else:
                 self.write(", ")
-            self.write("**"+t.kwarg)
+            self.write("**" + t.kwarg)
 
     def _keyword(self, t):
         self.write(t.arg)
@@ -596,4 +596,4 @@ class Unparser(object):
     def _alias(self, t):
         self.write(t.name)
         if t.asname:
-            self.write(" as "+t.asname)
+            self.write(" as " + t.asname)

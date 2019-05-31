@@ -447,6 +447,7 @@ class Error(Message):
 
 class MultiQuestion(Message):
     """Dialog vyžadující odpověď na otázku výběrem z tlačítek."""
+
     def __init__(self, parent, message, buttons, default=None,
                  title=_("Question"), icon=Message.ICON_QUESTION, **kwargs):
         super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,

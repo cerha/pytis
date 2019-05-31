@@ -235,6 +235,7 @@ class DMPObject(object):
 
     class Logger(object):
         """Class for SQL commands logging."""
+
         def __init__(self):
             self._messages = []
             self._active = True

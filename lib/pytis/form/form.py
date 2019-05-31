@@ -80,6 +80,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
+
     def __init__(self, *args, **kwargs):
         log(OPERATIONAL, "%s instantiated:" % self.__class__.__name__, (args, kwargs))
 
@@ -758,6 +759,7 @@ class Refreshable(object):
 
 class PopupForm(object):
     """Mixin class displaying the form in a separate (pop up) frame."""
+
     def _popup_frame(self, parent):
         """Vrať frame instance.
 
@@ -1666,6 +1668,7 @@ class RecordForm(LookupForm):
         # Experimental PresentedRow extension aware of its parent form.  This might allow
         # application specific procedures more reliable access to the current form, from which the
         # row comes.
+
         def __init__(self, form, *args, **kwargs):
             self._form = form
             super(RecordForm.Record, self).__init__(*args, **kwargs)
@@ -1949,6 +1952,7 @@ class RecordForm(LookupForm):
             if len(result) == 0:
                 class CurrentRowIterator(object):
                     """See '_grid.TableRowIterator' for documentation."""
+
                     def __init__(self, form):
                         self._form = form
 
@@ -2391,6 +2395,7 @@ class RecordForm(LookupForm):
     def presented_rows(self):
         """Return an iterator over all rows currently contained in the form."""
         class Iterator(object):
+
             def __init__(self, table):
                 self._table = table
                 self._row_number = 0
@@ -2409,7 +2414,7 @@ class RecordForm(LookupForm):
 
         return Iterator(self._table)
 
-
+
 # Editační formulář
 
 

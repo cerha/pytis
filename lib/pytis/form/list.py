@@ -1845,7 +1845,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         default_filename = 'export_%s.txt' % username
         if len(fileformats) > 1:
             msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
-                              _("Choose the desired format.")))
+                               _("Choose the desired format.")))
             fileformat = run_dialog(MultiQuestion, msg, fileformats, default='CSV')
             if not fileformat:
                 return
@@ -2105,7 +2105,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         super(ListForm, self).defocus()
         self._grid.Refresh()
 
-
+
 class FoldableForm(ListForm):
     """Form able to expand or collapse sets of rows.
 

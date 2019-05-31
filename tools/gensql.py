@@ -130,17 +130,17 @@ def _gsql_format_type(type_):
         else:
             result = 'timestamp (0) with time zone'
     else:
-        MAPPING = {pytis.data.Integer:   'int',
-                   pytis.data.Serial:    'serial',
-                   pytis.data.Oid:       'oid',
-                   pytis.data.Float:     'numeric',
-                   pytis.data.Boolean:   'bool',
-                   pytis.data.Date:      'date',
-                   pytis.data.Time:      'time',
-                   pytis.data.Binary:    'bytea',
-                   pytis.data.Image:     'bytea',
-                   pytis.data.Color:     'varchar(7)',
-                   pytis.data.LTree:    'ltree',
+        MAPPING = {pytis.data.Integer: 'int',
+                   pytis.data.Serial: 'serial',
+                   pytis.data.Oid: 'oid',
+                   pytis.data.Float: 'numeric',
+                   pytis.data.Boolean: 'bool',
+                   pytis.data.Date: 'date',
+                   pytis.data.Time: 'time',
+                   pytis.data.Binary: 'bytea',
+                   pytis.data.Image: 'bytea',
+                   pytis.data.Color: 'varchar(7)',
+                   pytis.data.LTree: 'ltree',
                    }
         try:
             result = MAPPING[type_.__class__]
@@ -4217,7 +4217,7 @@ from db_pytis_base import *
                         _GsqlConfig.convert_cms_users_table,
                         repr(_GsqlConfig.convert_cms_schemas),
                         application, application, application,
-                    )
+                )
                 init_preamble += """
 sql.clear()
 

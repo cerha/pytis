@@ -42,6 +42,7 @@ _ = pytis.util.translations('pytis-wx')
 
 unistr = type(u'')  # Python 2/3 transition hack.
 
+
 class SFSColumn(object):
     """Column specification for dialog selectors."""
 
@@ -255,6 +256,7 @@ class SFDialog(SFSDialog):
                            '* ' + _("value") + ' *')
 
     class SFConditionError(Exception):
+
         def __init__(self, i, ctrl, msg):
             msg = _("Error in condition no. %d: %s", i + 1, msg)
             pytis.form.run_dialog(Error, msg)

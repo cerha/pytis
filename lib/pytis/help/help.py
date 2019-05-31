@@ -201,8 +201,8 @@ class HelpUpdater(object):
                 print(e)
                 return None
             if not isinstance(bspec, dict):
-                print("Can't create dual form '%s': %s.binding_spec() is not a dictionary" % \
-                    (spec_name, mainname))
+                print("Can't create dual form '%s': %s.binding_spec() is not a dictionary" %
+                      (spec_name, mainname))
                 return None
             b = bspec[sidename]
             description = b.help() or b.description()

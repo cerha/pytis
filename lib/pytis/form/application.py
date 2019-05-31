@@ -1528,7 +1528,7 @@ class DbActionLogger(object):
         if not success:
             raise pytis.data.DBException(result)
 
-
+
 # Funkce odpovídající příkazům aplikace.
 
 def run_form(form_class, name=None, **kwargs):
@@ -1940,7 +1940,6 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
 
 def input_date(title, label, default=None, not_null=True, descr=None,
                avoid_initial_selection=True):
-
     """Display a form for entering a date and return this value.
 
     Arguments:

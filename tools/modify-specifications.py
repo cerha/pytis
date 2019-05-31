@@ -347,7 +347,7 @@ def cmd_type_kwargs(filename, lines, type_map=None):
             # The end of the last argument may not be always obvious!
             print(("File %s, line %d\n"
                    "  Can't determine end of '%s' argument when it is the last argument.\n"
-                   "  Please reformat the source code.") % \
+                   "  Please reformat the source code.") %
                   (filename, args[-1].start.ln + 1, args[-1].name))
             continue
         if type_args and not type_arg:

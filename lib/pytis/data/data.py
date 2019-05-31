@@ -2096,7 +2096,7 @@ class DataFactory(object):
             return arg
         self._args = tuple([adjust(a) for a in args])
         self._kwargs = kwargs
-        #self._kwargs_hashable = tuple(kwargs.items())
+        # self._kwargs_hashable = tuple(kwargs.items())
         if DataFactory._data_object_cache is None and class_.cacheable():
             DataFactory._data_object_cache = LimitedCache(DataFactory._get_data_object)
 

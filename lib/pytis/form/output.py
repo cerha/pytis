@@ -50,6 +50,7 @@ _ = pytis.util.translations('pytis-wx')
 
 class PostscriptException(Exception):
     """Výjimka vyvolávaná při jakékoliv chybě interpretace PS dat."""
+
     def __init__(self, *args):
         pytis.util.log(pytis.util.EVENT, 'Chyba interpretace PostScriptu')
         super(PostscriptException, self).__init__(*args)
@@ -346,6 +347,7 @@ class PrintForm(Form):
 class PrintFormExternal(PrintForm, PopupForm):
 
     class _TemporaryFile(pytis.util.TemporaryFile):
+
         def __del__(self):
             pass
 

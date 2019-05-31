@@ -56,6 +56,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 # Classes
 
+
 class ProgramError(Exception):
     """Výjimka signalizující programovou chybu.
 

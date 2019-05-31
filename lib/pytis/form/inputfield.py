@@ -783,6 +783,7 @@ class TextField(InputField):
     """Textové vstupní políčko."""
 
     class TextValidator(wx.Validator):
+
         def __init__(self, control, filter):
             wx.Validator.__init__(self)
             self._control = control
@@ -1156,6 +1157,7 @@ class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
     class ReadOnlyValidator(wx.Validator):
+
         def __init__(self):
             wx.Validator.__init__(self)
             # Eat all interaction events without calling e.Skip()
@@ -2157,7 +2159,9 @@ class ImageField(FileField):
 
 
 class StructuredTextField(TextField):
+
     class AttachmentEnumerator(pytis.data.Enumerator, pytis.data.TransactionalEnumerator):
+
         def __init__(self, storage, images=True):
             self._storage = storage
             self._images = images

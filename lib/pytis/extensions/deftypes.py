@@ -25,6 +25,7 @@ from pytis.presentation import PrettyTreeOrder
 
 
 class Price(pytis.data.Float):
+
     def _init(self, not_null=True, precision=2, **kwargs):
         super(Price, self)._init(precision=precision, not_null=not_null, **kwargs)
 
@@ -36,6 +37,7 @@ class Price(pytis.data.Float):
 
 
 class StringNotNull(pytis.data.String):
+
     def _init(self, **kwargs):
         kwargs['not_null'] = True
         super(StringNotNull, self)._init(**kwargs)

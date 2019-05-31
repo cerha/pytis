@@ -326,7 +326,7 @@ def file_menu_items(fields, row, select_arguments):
                                 help=_('Open the value of field "%s" as a file.', f.label())))
     return mitems
 
-
+
 # Utility classes
 
 
@@ -2183,6 +2183,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 return None
 
     class ResourceHandler(http.server.SimpleHTTPRequestHandler):
+
         def do_GET(self):
             uri = self.path
             if uri != '/favicon.ico':
