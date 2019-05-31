@@ -25,7 +25,6 @@ not its concrete representation (input widget).
 """
 from past.builtins import basestring
 
-import collections
 import copy
 
 import pytis.data

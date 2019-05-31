@@ -32,7 +32,6 @@ elementy ke spojení dohromady.
 """
 from past.builtins import basestring
 
-import collections
 import copy
 import os
 import re

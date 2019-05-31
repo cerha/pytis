@@ -28,7 +28,6 @@ from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 
-import collections
 import copy
 import decimal
 import os.path

@@ -39,7 +39,6 @@ from past.builtins import basestring
 from builtins import range
 from future.utils import with_metaclass
 
-import collections
 import datetime
 import decimal
 import re

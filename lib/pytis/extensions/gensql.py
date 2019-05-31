@@ -25,9 +25,7 @@ import copy
 import inspect
 import os
 import re
-import string
 import sys
-import types
 
 import pytis.data
 import pytis.util

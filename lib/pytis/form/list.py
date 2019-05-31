@@ -32,14 +32,10 @@ from __future__ import unicode_literals
 from past.builtins import basestring
 from builtins import range
 
-import collections
 import copy
-import io
 import datetime
 import functools
-import string
 import time
-import types
 
 import wx
 import wx.grid
@@ -77,14 +73,14 @@ from .form import (
 )
 from .output import print_form
 from .screen import (
-    CheckItem, KeyHandler, Menu, MItem, MSeparator, WxKey, busy_cursor,
+    CheckItem, KeyHandler, Menu, MItem, MSeparator, busy_cursor,
     copy_to_clipboard, dlg2px, file_menu_items, get_icon, is_busy_cursor,
     microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
 )
 from .search import sfs_columns
 from .application import (
     Application, aggregated_views_manager, block_refresh, current_form,
-    db_operation, message, refresh, run_dialog, run_form,
+    message, refresh, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
 

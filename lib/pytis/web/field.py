@@ -19,7 +19,6 @@
 from past.builtins import basestring
 from builtins import range
 
-import collections
 import lcg
 import pytis.data as pd
 import pytis.util

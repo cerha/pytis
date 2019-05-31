@@ -467,7 +467,6 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                          new_position[len(old_position)] == '.')):
                         raise Exception('error', "Can't move menu item to itself")
                 components = new_position.split('.')
-                import string
                 parent = '.'.join(components[:-1])
                 if (parent and
                     not plpy.execute("select menuid from e_pytis_menu where position='%s'" %
@@ -524,7 +523,6 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                         if position_stamp not in sequences:
                             sequences[position_stamp] = []
                         sequences[position_stamp].append((position, next_position,))
-                    import string
 
                     def update_next_position(position, next_position):
                         plpy.execute(("update e_pytis_menu set next_position='%s' "
@@ -1473,7 +1471,6 @@ class PytisComputeSummaryRights(Base_PyFunction):
                                      compress_arg):
         shortname_arg, role_arg, new_arg, multirights_arg, compress_arg = args
         import copy
-        import string
         pg_escape = PytisComputeSummaryRights.Util.pg_escape
         # Retrieve roles
         roles = {}
@@ -1780,7 +1777,6 @@ class PytisUpdateActionsStructure(Base_PyFunction):
             lock_id = row['lock_id']
         plpy.execute("select pg_advisory_lock(%s)" % (lock_id,))
         try:
-            import string
             pg_escape = PytisUpdateActionsStructure.Util.pg_escape
             plpy.execute("delete from a_pytis_actions_structure")
             subactions = {}

@@ -36,7 +36,6 @@ from future import standard_library
 from future.utils import with_metaclass
 
 import http.server
-import collections
 import copy
 import lcg
 import os

@@ -29,7 +29,6 @@ The actual class representing each field is determined by its specification and 
 from past.builtins import basestring
 from builtins import range
 
-import collections
 import io
 import datetime
 import os

@@ -1590,8 +1590,6 @@ class _GsqlTable(_GsqlSpec):
         for c in columns:
             result = result + ('ALTER TABLE %s ADD COLUMN %s;\n' %
                                (name, self._format_column(c)))
-        # Triggers
-        pass
         # Raw SQL
         if self._sql is not None:
             result = (result + _gsql_warning('SQL statements present, not checked in %s' % name))

@@ -32,7 +32,6 @@ from builtins import range, str
 from future import standard_library
 
 import sys
-import collections
 import copy
 import os
 import string
@@ -1284,7 +1283,6 @@ class RadioItem(CheckItem):
     # wx.ITEM_RADIO způsobuje SEGFAULT.  CheckItem se však, zdá se, chová úplně
     # stejně, takže to vlastně vůbec nevadí...
     # _WX_KIND = wx.ITEM_RADIO
-    pass
 
 
 class MenuBar(wx.MenuBar):
@@ -1981,7 +1979,6 @@ class FormStateToolbarControl(wx.BitmapButton):
 
     def _current_icon_index(self, form):
         """Implement this method to return the index of the active icon in _ICONS."""
-        pass
 
 
 class KeyboardSwitcher(wx.BitmapButton):

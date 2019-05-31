@@ -24,9 +24,7 @@
 # data rows, we usually use 'the_row' for 'PresentedRow' instances.
 
 from builtins import object
-import collections
 import copy
-import types
 import cachetools
 
 import wx
@@ -36,7 +34,7 @@ import pytis.data
 import pytis.output
 import pytis.presentation
 from pytis.presentation import PresentedRow
-from pytis.util import DEBUG, ProgramError, log
+from pytis.util import DEBUG, log
 
 from .application import db_operation
 from .form import Form

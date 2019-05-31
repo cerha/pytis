@@ -48,7 +48,6 @@ import sys
 import tempfile
 import _thread
 import types as pytypes
-import unicodedata
 import platform
 
 unistr = type(u'')  # Python 2/3 transition hack.

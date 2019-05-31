@@ -36,7 +36,6 @@ from future import standard_library
 
 import wx.adv
 
-import collections
 import datetime
 import cgitb
 import os

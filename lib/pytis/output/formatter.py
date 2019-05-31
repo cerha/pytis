@@ -46,7 +46,6 @@ from past.builtins import basestring
 
 import copy
 import re
-import string
 import io
 import lcg
 

@@ -36,7 +36,6 @@ from past.builtins import basestring
 from builtins import range
 from future import standard_library
 
-import collections
 import lcg
 import copy
 import re

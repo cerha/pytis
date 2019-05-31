@@ -31,7 +31,6 @@ from future import standard_library
 
 import os
 import re
-import string
 
 import pytis.data
 from pytis.util import translations, ProgramError

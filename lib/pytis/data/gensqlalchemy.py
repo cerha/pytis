@@ -83,7 +83,6 @@ import imp
 import inspect
 import os
 import re
-import string
 import sqlalchemy
 import sqlalchemy.dialects.postgresql
 from sqlalchemy.ext.compiler import compiles

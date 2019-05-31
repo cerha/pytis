@@ -83,7 +83,6 @@ from builtins import range
 
 import copy
 import re
-import string
 import sys
 
 import pytis

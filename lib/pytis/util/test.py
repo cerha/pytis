@@ -20,7 +20,6 @@
 
 
 import operator
-import io
 import unittest
 
 from . import util

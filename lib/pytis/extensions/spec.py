@@ -27,7 +27,6 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 """
 from past.builtins import basestring
 
-import collections
 import os
 import time
 import tempfile

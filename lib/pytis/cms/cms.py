@@ -27,7 +27,6 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 """
 
-import collections
 import os
 import socket
 

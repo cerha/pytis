@@ -39,7 +39,6 @@ Aby modul plnil svůj účel, je nutno zajistit následující:
 
 """
 
-import collections
 import sys
 import _thread
 import time

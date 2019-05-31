@@ -29,7 +29,6 @@ from past.builtins import basestring
 import codecs
 import imp
 import os
-import string
 
 import pytis.util
 from pytis.util import SimpleCache, identity, super_, xlist

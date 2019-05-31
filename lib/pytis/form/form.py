@@ -29,7 +29,6 @@ jednotlivých tříd.
 from past.builtins import basestring
 from builtins import object
 
-import collections
 import copy
 import lcg
 import time
