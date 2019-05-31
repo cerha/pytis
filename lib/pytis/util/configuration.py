@@ -23,6 +23,7 @@ Celá konfigurace je definována instancí třídy 'Configuration', dokumentace
 v této třídě poví více.
 
 """
+from past.builtins import basestring
 from future.utils import with_metaclass
 
 import getopt

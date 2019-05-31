@@ -48,6 +48,7 @@ objekty zadané přímo prostřednictvím SQL příkazů nejsou aplikovány žá
 kontroly.
 
 """
+from past.builtins import basestring
 from builtins import range
 from future import standard_library
 

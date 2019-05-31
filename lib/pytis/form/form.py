@@ -26,8 +26,9 @@ jsou v oddělených modulech 'list' a 'dualform'.  Blíže viz dokumentace
 jednotlivých tříd.
 
 """
-
+from past.builtins import basestring
 from builtins import object
+
 import collections
 import copy
 import lcg

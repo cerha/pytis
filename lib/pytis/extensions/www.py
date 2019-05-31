@@ -19,6 +19,7 @@
 
 """Nástroje pro generování HTML na základě dat z pytisu."""
 
+from past.builtins import basestring
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
 
 import pytis.data

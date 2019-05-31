@@ -45,14 +45,14 @@ obzvláštní pozornost, pomocí nich se definují nejdůležitější věci tý
 tabulky.
 
 """
-
-
 # TODO: V implementaci se počítá s tím, že z databáze nedostaneme nesmysly
 # (z důvodu jiného než programátorské chyby).  Tyto situace sice obecně
 # ošetřujeme metáním DBException, to ale nestačí, protože taková situace může
 # vzniknout i nějakým problémem na DB serveru.  Je tedy v budoucnu
 # bezpodmínečně nutno tyto situace řádně ošetřovat a prošetřovat.  Nejprve je
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
+
+from past.builtins import basestring
 
 import gc
 import _thread

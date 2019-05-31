@@ -30,6 +30,7 @@ All classes of this module are of specificational nature and can be considered
 immutable.  Thus they can be shared as needed.
 
 """
+from past.builtins import basestring
 from builtins import range
 from future import standard_library
 from future.utils import with_metaclass

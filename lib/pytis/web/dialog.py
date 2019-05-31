@@ -22,6 +22,7 @@ This module implements web-based dialogs.
 
 """
 
+from past.builtins import basestring
 import lcg
 import pytis.util
 

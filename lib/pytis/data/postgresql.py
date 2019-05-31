@@ -25,7 +25,7 @@ tvoří jen obecné rozhraní skládající například SQL příkazy.  Fyzický
 k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových souborech.
 
 """
-
+from past.builtins import basestring
 from builtins import range
 from builtins import object
 from future.utils import raise_

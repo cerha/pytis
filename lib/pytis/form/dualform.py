@@ -24,6 +24,7 @@ jednoduchý formulář, přičemž data horního a dolního formuláře jsou ně
 způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
+from past.builtins import basestring
 from builtins import range
 
 import copy

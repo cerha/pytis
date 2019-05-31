@@ -25,6 +25,7 @@ hodit.
 
 """
 from __future__ import print_function
+from past.builtins import basestring
 from builtins import range
 from future import standard_library
 

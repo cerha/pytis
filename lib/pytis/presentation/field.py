@@ -23,6 +23,7 @@ A _field_ in this context refers to a logical element of the user intercace,
 not its concrete representation (input widget).
 
 """
+from past.builtins import basestring
 
 import collections
 import copy

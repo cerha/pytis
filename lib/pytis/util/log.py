@@ -45,8 +45,9 @@ Tento modul je doporučeno importovat následujícím způsobem:
   from pytis.util import *
 
 """
-
+from past.builtins import basestring
 from builtins import range
+
 import getpass
 import inspect
 import os

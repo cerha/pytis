@@ -44,12 +44,14 @@ way.
 
 """
 
-import base64
+from past.builtins import basestring
+
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
+import base64
 import sys
 import pytis.data
 import pytis.form

@@ -25,6 +25,7 @@ modulu 'commands_'.
 
 """
 
+from past.builtins import basestring
 import pytis.util
 
 _ = pytis.util.translations('pytis-wx')

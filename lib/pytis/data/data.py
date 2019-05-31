@@ -36,8 +36,9 @@ volitelné, konkrétní databázový backend nemusí nabízet žádnou jejich ko
 implementaci.
 
 """
-
+from past.builtins import basestring
 from builtins import range
+
 import copy
 import datetime
 import functools

@@ -27,8 +27,9 @@ implementation specific and has to be implemented separately for each supported
 Database API implementation.
 
 """
-
+from past.builtins import basestring
 from builtins import range
+
 import datetime
 import inspect
 import select

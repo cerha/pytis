@@ -20,6 +20,8 @@
 
 "Miscellaneous utilities for gensqlalchemy specifications."
 
+from past.builtins import basestring
+
 import sqlalchemy
 
 # Simple shorthands

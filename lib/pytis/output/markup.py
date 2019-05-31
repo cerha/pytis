@@ -30,6 +30,7 @@ budou vloženy tak, jak jsou, včetně mezer a odřádkování, a sekvence obsa
 elementy ke spojení dohromady.
 
 """
+from past.builtins import basestring
 
 import collections
 import copy

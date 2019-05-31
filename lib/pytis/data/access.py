@@ -30,6 +30,7 @@ Access rights violation is signalized exclusively using the
 'DataAccessException' class.
 
 """
+from past.builtins import basestring
 
 import pytis
 from pytis.util import EVENT, log, remove_duplicates, translations, xtuple

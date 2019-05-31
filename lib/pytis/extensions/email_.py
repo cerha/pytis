@@ -23,6 +23,7 @@ Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
 from __future__ import print_function
 
+from past.builtins import basestring
 import os
 import mimetypes
 import email

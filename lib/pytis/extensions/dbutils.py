@@ -19,6 +19,8 @@
 
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
+from past.builtins import basestring
+
 import pytis
 import pytis.util
 import pytis.data as pd

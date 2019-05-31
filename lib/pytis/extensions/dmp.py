@@ -78,8 +78,9 @@ functions defined and exported here, serving mostly as an interface for 'dmp'
 script.
 
 """
-
+from past.builtins import basestring
 from builtins import range
+
 import copy
 import re
 import string

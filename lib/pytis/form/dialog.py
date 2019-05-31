@@ -28,9 +28,9 @@ Modul dále obsahuje několik pomocných funkcí využívajících dialogy pro v
 se vyskytující dialogové operace.
 
 """
-
 from __future__ import unicode_literals
 from __future__ import division
+from past.builtins import basestring
 from builtins import range
 from future import standard_library
 

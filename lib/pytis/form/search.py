@@ -25,10 +25,10 @@ je míněna jako abstraktní.  Z ní jsou pak odvozeny dialogové třídy pro
 konkrétní použití.
 
 """
-
+from past.builtins import basestring
 from builtins import range
-import functools
 
+import functools
 import wx
 
 import pytis.data

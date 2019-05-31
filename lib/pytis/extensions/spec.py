@@ -25,6 +25,7 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 často opakuje, je možné ji parametrizovaně vytvořit automaticky.
 
 """
+from past.builtins import basestring
 
 import collections
 import os

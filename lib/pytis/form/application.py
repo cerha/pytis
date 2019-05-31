@@ -25,6 +25,7 @@ uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
 
 """
 from __future__ import print_function
+from past.builtins import basestring
 from builtins import range
 
 import collections

@@ -33,8 +33,9 @@ Tento modul je výjimečný ve dvou směrech:
      from util import *
 
 """
-
+from past.builtins import basestring
 from builtins import range
+
 import functools
 import cgitb
 import codecs
