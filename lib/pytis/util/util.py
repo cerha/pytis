@@ -945,21 +945,6 @@ def is_dictionary(x):
     return type(x) == pytypes.DictionaryType
 
 
-def is_string(x):
-    """Vrať pravdu, právě když 'x' je běžný řetězec."""
-    return isinstance(x, str)
-
-
-def is_unicode(x):
-    """Vrať pravdu, právě když 'x' je unicode řetězec."""
-    return isinstance(x, unicode)
-
-
-def is_anystring(x):
-    """Vrať pravdu, právě když 'x' je unicode řetězec nebo běžný řetězec."""
-    return isinstance(x, basestring)
-
-
 def unormalize(unicode_):
     """Return a normalized version of 'unicode_'.
 

@@ -53,7 +53,7 @@ from pytis.data import (
 )
 import pytis.util
 from pytis.util import (
-    ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_sequence,
+    ACTION, Counter, DEBUG, ecase, EVENT, is_sequence,
     log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates,
     UNDEFINED, Locked, xtuple,
 )
@@ -3554,7 +3554,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
           kwargs -- passed to 'PostgreSQLConnector' constructor.
 
         """
-        assert is_anystring(name)
+        assert isinstance(name, basestring)
         PostgreSQLConnector.__init__(self, connection_data, **kwargs)
         self._name = name
         self._query = _Query("select nextval('%s')" % name)

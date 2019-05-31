@@ -49,7 +49,7 @@ import io
 import pytis.data
 
 from pytis.util import (
-    argument_names, camel_case_to_lower, find, is_anystring, is_sequence,
+    argument_names, camel_case_to_lower, find, is_sequence,
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
     log, OPERATIONAL, ProgramError, UNDEFINED,
 )
@@ -1230,15 +1230,10 @@ class LayoutSpec(object):
         """
         assert caption is None or isinstance(caption, basestring)
         assert isinstance(group, GroupSpec)
-        assert order is None or is_sequence(order)
+        assert order is None or all(isinstance(f, basestring) for f in order), order
         self._caption = caption
         self._group = group
-        if order is None:
-            order = group.order()
-        elif __debug__:
-            for id in order:
-                assert is_anystring(id)
-        self._order = tuple(order)
+        self._order = tuple(order if order is not None else group.order())
 
     def caption(self):
         """Vrať nadpis pro editační formulář jednoho záznamu."""

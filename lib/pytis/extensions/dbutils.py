@@ -24,7 +24,7 @@ from past.builtins import basestring
 import pytis
 import pytis.util
 import pytis.data as pd
-from pytis.util import ProgramError, translations, is_anystring, xtuple
+from pytis.util import ProgramError, translations, xtuple
 
 _ = translations('pytis-wx')
 
@@ -77,7 +77,7 @@ def dbinsert(spec, row, transaction=None):
                 errmsg = 'Column definition must be (ID, VALUE) pair.'
                 raise ProgramError(errmsg)
             k, v = item
-            if not is_anystring(k):
+            if not isinstance(k, basestring):
                 errmsg = 'Invalid column id %s' % k
                 raise ProgramError(errmsg)
             if not isinstance(v, pd.Value):

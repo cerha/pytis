@@ -28,7 +28,7 @@ i třídy, které tyto specifikace následně zpracovávají.
 
 """
 from past.builtins import basestring
-from builtins import range
+from builtins import range, str
 from future import standard_library
 
 import sys
