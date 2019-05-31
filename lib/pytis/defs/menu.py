@@ -489,7 +489,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
             if missing_columns:
                 message = (_(u"Ve specifikaci chybí tyto sloupce práv: %s.\n"
                              u"Chcete práva přesto zkopírovat?") %
-                           (string.join(list(missing_columns), ', '),))
+                           (', '.join(list(missing_columns)),))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
                     return
         pytis.extensions.dbfunction('pytis_copy_rights',

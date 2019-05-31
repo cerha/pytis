@@ -715,7 +715,7 @@ class PrintSpecification(object):
 
     def _parameter(self, name, default=None):
         if isinstance(name, (tuple, list)):
-            name = string.join(name, '/')
+            name = '/'.join(name)
         return self._parameters.get(name, default)
 
     def _add_parameter(self, name, value):

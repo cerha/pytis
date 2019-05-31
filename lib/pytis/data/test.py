@@ -1988,11 +1988,11 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(error, ('Null Binary validation failed', error,))
         self.assertIsNone(null_data.value(), ('Invalid null binary value', null_data.value()))
         data = [chr(i) for i in range(256)]
-        data1, error = t.validate(buffer(string.join(data, '')))
+        data1, error = t.validate(buffer(''.join(data)))
         self.assertIsNone(error, ('Binary validation failed', error,))
         self.assertIsInstance(data1.value(), pd.Binary.Buffer,
                               ('Invalid binary value', data1.value(),))
-        self.assertEqual(str(data1.value()), string.join(data, ''),
+        self.assertEqual(str(data1.value()), ''.join(data),
                          ('Invalid binary value', data1.value(),))
         data.reverse()
         key = pd.ival(1)
@@ -2003,7 +2003,7 @@ class DBDataDefault(_DBTest):
                          ('Invalid inserted binary data', str(result[1].value())))
         result = str(self.dbin.row(key)[1].value())
         self.assertEqual(result, str(data1.value()), ('Invalid binary data', result,))
-        data2, error = t.validate(buffer(string.join(data, '')))
+        data2, error = t.validate(buffer(''.join(data)))
         self.assertIsNone(error, ('Binary validation failed', error,))
         self.assertIsInstance(data2.value(), pd.Binary.Buffer,
                               ('Invalid binary value', data2.value(),))
@@ -3173,7 +3173,7 @@ class DBSearchPath(_DBTest):
     def _retrieve(self, schemas):
         connection_data = copy.copy(_connection_data)
         connection_data['schemas'] = schemas
-        name = 'schemas_' + string.join((schemas or ['default']), '_')
+        name = 'schemas_' + '_'.join((schemas or ['default']))
         connection = pd.DBConnection(alternatives={name: connection_data}, **_connection_data)
         B = pd.DBColumnBinding
         key = B('stat', 'cstat', 'stat')

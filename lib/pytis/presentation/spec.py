@@ -3698,7 +3698,7 @@ class Field(object):
                     formatted_value = value
                 info_string = u'%s=%s' % (name, formatted_value,)
                 formatted.append(info_string)
-        return u"<Field '%s': %s>" % (self._id, string.join(formatted, ', '),)
+        return u"<Field '%s': %s>" % (self._id, ', '.join(formatted),)
 
     def __str__(self):
         return unicode(self).encode('utf-8')

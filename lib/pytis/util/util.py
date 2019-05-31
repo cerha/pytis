@@ -1344,7 +1344,7 @@ def deepstr(obj):
     """
     if is_sequence(obj):
         template = u'(%s,)' if isinstance(obj, tuple) else u'[%s]'
-        transformed = template % (string.join(map(deepstr, obj), ', '),)
+        transformed = template % (', '.join(map(deepstr, obj)),)
     elif isinstance(obj, unicode):
         transformed = u'"%s"' % (obj.replace('"', '\\"'),)
     elif isinstance(obj, str):
@@ -1368,7 +1368,7 @@ def format_traceback():
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
     tblist = traceback.format_exception(*einfo)
-    tbstring = string.join(tblist, '')
+    tbstring = ''.join(tblist)
     return tbstring
 
 
@@ -1445,16 +1445,15 @@ def exception_info(einfo=None):
             else:
                 dump.append(name + ' undefined')
         rows.append(', '.join(dump))
-        frames.append(string.join(rows) + '\n')
+        frames.append(' '.join(rows) + '\n')
     exception = ['%s: %s' % (str(etype), str(evalue))]
     if not inspect.isclass(evalue):
         for name in dir(evalue):
             value = deepstr(getattr(evalue, name))
             exception.append('\n%s%s =\n%s' % (indent, name, value))
-    return (head + '\n' +
-            string.join(traceback.format_exception(etype, evalue, etb)) +
-            '\n' + string.join(frames) +
-            '\n' + string.join(exception))
+    return (head + '\n' + ' '.join(traceback.format_exception(etype, evalue, etb)) +
+            '\n' + ' '.join(frames) +
+            '\n' + ' '.join(exception))
 
 
 def stack_info(depth=None):

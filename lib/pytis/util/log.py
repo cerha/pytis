@@ -181,7 +181,7 @@ class Logger(object):
                 datalines[0] = u'<%s' % datalines[0]
                 datalines[n - 1] = u'>%s' % datalines[n - 1]
                 datalines[1:n - 1] = [u' %s' % l for l in datalines[1:n - 1]]
-                data_string = string.join(datalines, '\n')
+                data_string = '\n'.join(datalines)
             try:
                 formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
             except UnicodeDecodeError:

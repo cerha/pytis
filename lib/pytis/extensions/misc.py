@@ -411,7 +411,7 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
             if gpg_key is None:
                 return "crypto contact not found for user: %s" % (user,)
             characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
-            user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
+            user_password = ''.join([characters[ord(c) % 64] for c in os.urandom(32)])
             send_password = True
         else:
             send_password = False

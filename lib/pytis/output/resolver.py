@@ -265,7 +265,7 @@ class FileResolver(Resolver):
                 if file is not None:
                     file.close()
         if len(name_list) > 1:
-            module = self._get_module(string.join(name_list[1:], '/'), path=module.__path__)
+            module = self._get_module('/'.join(name_list[1:]), path=module.__path__)
         return module
 
 
@@ -442,7 +442,7 @@ class OutputResolver(Resolver):
 
         """
         if isinstance(name, (tuple, list)):
-            name = string.join(name, '/')
+            name = '/'.join(name)
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 
     p = output_parameter

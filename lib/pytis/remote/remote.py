@@ -68,10 +68,10 @@ class Connector(object):
 
     def _challenge(self):
         r = random.SystemRandom()
-        return string.join([r.choice('0123456789abcdef') for i in range(len(self._password))], '')
+        return ''.join([r.choice('0123456789abcdef') for i in range(len(self._password))])
 
     def _password_hash(self, challenge):
-        token = string.join([chr(ord(x) ^ ord(y)) for x, y in zip(self._password, challenge)], '')
+        token = ''.join([chr(ord(x) ^ ord(y)) for x, y in zip(self._password, challenge)])
         return hashlib.sha256(token).hexdigest()
 
     def connect(self, host, port):

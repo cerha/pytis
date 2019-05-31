@@ -468,7 +468,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                         raise Exception('error', "Can't move menu item to itself")
                 components = new_position.split('.')
                 import string
-                parent = string.join(components[:-1], '.')
+                parent = '.'.join(components[:-1])
                 if (parent and
                     not plpy.execute("select menuid from e_pytis_menu where position='%s'" %
                                      (parent,))):
@@ -529,7 +529,7 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                     def update_next_position(position, next_position):
                         plpy.execute(("update e_pytis_menu set next_position='%s' "
                                       "where position='%s'") %
-                                     (string.join(next_position, '.'), string.join(position, '.'),))
+                                     ('.'.join(next_position), '.'.join(position),))
                     for position_list in sequences.values():
                         position_list_len = len(position_list)
                         for i in range(position_list_len - 1):
@@ -1370,7 +1370,7 @@ class PytisActionRightsFoldable(Base_PyFunction):
                 if c not in string.ascii_letters and c not in string.digits:
                     c = '_'
                 safe_value.append(c)
-            return string.join(safe_value, '')
+            return ''.join(safe_value)
         for column_value, rows in tree.items():
             def maybe_label(target_column):
                 if target_column == column:
@@ -1510,7 +1510,7 @@ class PytisComputeSummaryRights(Base_PyFunction):
                                        for row in plpy.execute(q)]
             if not related_shortnames_list:
                 return []
-            related_shortnames = string.join(related_shortnames_list, ', ')
+            related_shortnames = ', '.join(related_shortnames_list)
             condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
         rights_query = ("select rightid, granted, roleid, shortname, colname, system "
                         "from e_pytis_action_rights "
@@ -1658,7 +1658,7 @@ class PytisComputeSummaryRights(Base_PyFunction):
                     if r not in rights:
                         rights.append(r)
                 rights.sort()
-                rights_string = string.join(rights, ' ')
+                rights_string = ' '.join(rights)
                 result.append((shortname, roleid, rights_string, ''))
             else:
                 rights = all_rights.total
@@ -1681,18 +1681,18 @@ class PytisComputeSummaryRights(Base_PyFunction):
                                                    if (r, column) not in all_rights.forbidden]
                     crights_list = list(set(crights_list))  # remove duplicates
                     crights_list.sort()
-                    rights_string = string.join(crights_list, ' ')
+                    rights_string = ' '.join(crights_list)
                     summarized_rights[rights_string] = (summarized_rights.get(rights_string, []) +
                                                         [column])
                 general_rights = list(general_rights)
                 general_rights.sort()
-                summarized_rights[string.join(general_rights, ' ')] = None
+                summarized_rights[' '.join(general_rights)] = None
                 for rights_string, columns in summarized_rights.items():
                     if columns is None:
                         columns_string = ''
                     else:
                         columns.sort()
-                        columns_string = string.join(columns, ' ')
+                        columns_string = ' '.join(columns)
                     result.append((shortname, roleid, rights_string, columns_string,))
         return result
 
@@ -1863,8 +1863,8 @@ class PytisUpdateActionsStructure(Base_PyFunction):
                     continue
                 add_row(fullname, shortname, None, position)
                 position_components = position.split('.')
-                position = string.join(position_components[:-1] +
-                                       ['%04d' % (int(position_components[-1]) + 1)], '.')
+                position = '.'.join(position_components[:-1] +
+                                    ['%04d' % (int(position_components[-1]) + 1)])
         finally:
             plpy.execute("select pg_advisory_unlock(%s)" % (lock_id,))
 

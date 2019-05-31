@@ -355,13 +355,13 @@ class _GsqlSpec(object):
             return None
         lines = text.split('\n')
         lines = [' ' * level + l for l in lines]
-        return string.join(lines, '\n')
+        return '\n'.join(lines)
 
     def _convert_name(self, name=None, new=False, short=False):
         if name is None:
             name = self._name
         components = [(c.capitalize() if c else 'X') for c in name.split('_')]
-        converted = string.join(components, '').replace('í', 'ii').replace('@', 'X')
+        converted = ''.join(components).replace('í', 'ii').replace('@', 'X')
         if new:
             _convert_local_names.append(converted)
         elif not short and converted not in _convert_local_names:
@@ -381,7 +381,7 @@ class _GsqlSpec(object):
             return None
         doc = doc.replace('\\', '\\\\')
         doc = doc.replace('"', '\\"')
-        doc = string.join([line.strip() for line in doc.split('\n')], '\n')
+        doc = '\n'.join([line.strip() for line in doc.split('\n')])
         return '"""%s"""' % (doc,)
 
     def _convert_literal(self, literal):
@@ -478,7 +478,7 @@ class _GsqlSpec(object):
                 arguments.append('not_null=True')
         else:
             arguments.append('not_null=False')
-        return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)
+        return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, ', '.join(arguments),)
 
     def _convert_column(self, column):
         name = column.name
@@ -619,7 +619,7 @@ class _GsqlSpec(object):
                 return "sql.object_by_name('%s')" % (dependency,)
             else:
                 return self._convert_name(dependency)
-        depends_string = string.join([convert(d) for d in self._conversion_depends], ', ')
+        depends_string = ', '.join([convert(d) for d in self._conversion_depends])
         if depends_string:
             depends_string += ','
         return '    depends_on = (%s)' % (depends_string,)
@@ -635,7 +635,7 @@ class _GsqlSpec(object):
             raw = raw[match.end():].lstrip()
             identifier = match.group(2)
             if identifier.endswith('_seq'):
-                identifier = string.join(string.split('_')[:-2], '_')
+                identifier = '_'.join(string.split('_')[:-2])
             ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror',
                                'generate_series', 'dblink', 'date_trunc', 'diff', 'avg',
                                'case', 'current_date', 'insert', 'update', 'delete',
@@ -954,7 +954,7 @@ class _GsqlType(_GsqlSpec):
 
     def _output(self):
         columns = [self._format_column(c) for c in self._columns]
-        columns = string.join(columns, ',\n        ')
+        columns = ',\n        '.join(columns)
         result = ('CREATE TYPE %s AS (\n%s);\n' %
                   (self._name, columns))
         return result
@@ -983,7 +983,7 @@ class _GsqlType(_GsqlSpec):
         items.append('             )')
         items.append(self._convert_depends())
         items.append(self._convert_grant())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -1061,7 +1061,7 @@ class _GsqlSchema(_GsqlSpec):
             items.append('    owner = %s' % (repr(self._owner),))
         items.append(self._convert_depends())
         items.append(self._convert_grant())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -1204,7 +1204,7 @@ class _GsqlTable(_GsqlSpec):
             cconstraints = ('PRIMARY KEY',) + cconstraints
         if column.references is not None:
             cconstraints = ('REFERENCES %s' % column.references,) + cconstraints
-        constraints = string.join(cconstraints, ' ')
+        constraints = ' '.join(cconstraints)
         if column.default:
             default = ' DEFAULT %s' % column.default
         else:
@@ -1225,8 +1225,8 @@ class _GsqlTable(_GsqlSpec):
         def strip(name):
             return name.split('.')[-1]
         columns = [strip(c) for c in columns]
-        columns_string = string.join(columns, ', ')
-        columns_name = string.join(columns, '_')
+        columns_string = ', '.join(columns)
+        columns_name = '_'.join(columns)
         name = '%s__%s__index' % (self._name, columns_name,)
         method_spec = (isinstance(options, dict) and options.get('method'))
         if method_spec:
@@ -1247,10 +1247,10 @@ class _GsqlTable(_GsqlSpec):
 
     def _format_init_values(self, init_values):
         insert_string = 'INSERT INTO %s (%s) VALUES (%%s);\n' % \
-                        (self._name, string.join(self._init_columns, ','))
-        init_inserts = [insert_string % string.join(v, ',')
+                        (self._name, ','.join(self._init_columns))
+        init_inserts = [insert_string % ','.join(v)
                         for v in init_values]
-        return string.join(init_inserts)
+        return ' '.join(init_inserts)
 
     def name(self):
         """Vrať jméno tabulky zadané v konstruktoru."""
@@ -1286,12 +1286,12 @@ class _GsqlTable(_GsqlSpec):
     def _output(self, _re=False, _all=False):
         if not _re:
             columns = map(self._format_column, self._columns)
-            columns = string.join(columns, ',\n        ')
+            columns = ',\n        '.join(columns)
             if self._sql:
                 columns = columns + ',\n        %s' % self._sql
             columns = '        %s\n' % columns
             if self._inherits:
-                inherits = ' INHERITS (%s)' % string.join(self._inherits, ',')
+                inherits = ' INHERITS (%s)' % ','.join(self._inherits)
             else:
                 inherits = ''
             if self._with_oids:
@@ -1607,7 +1607,7 @@ class _GsqlTable(_GsqlSpec):
                     spec.append('%s is %s' % (col, value,))
                 else:
                     spec.append('%s=%s' % (col, value,))
-            specstring = string.join(spec, ' AND ')
+            specstring = ' AND '.join(spec)
             query = "SELECT COUNT(*) FROM %s WHERE %s" % (name, specstring)
             data = connection.query(query)
             if data.getvalue(0, 0) == 0:
@@ -1635,7 +1635,7 @@ class _GsqlTable(_GsqlSpec):
             items.append(self._convert_indent(self._convert_column(column), 14) + ',')
         items.append('             )')
         inherits = [self._convert_name(name) for name in (self._inherits or ())]
-        inherits_string = string.join(inherits, ', ')
+        inherits_string = ', '.join(inherits)
         if inherits_string:
             inherits_string += ','
             items.append('    inherits = (%s)' % (inherits_string,))
@@ -1650,7 +1650,7 @@ class _GsqlTable(_GsqlSpec):
             items.append('    init_values = (')
             for row in init_values:
                 if row:
-                    row_values = string.join([self._convert_value(v) for v in row], ', ')
+                    row_values = ', '.join([self._convert_value(v) for v in row])
                     items.append('                   (%s,),' % (row_values,))
             items.append('                  )')
         items.append('    with_oids = %s' % (repr(self._with_oids),))
@@ -1685,7 +1685,7 @@ class _GsqlTable(_GsqlSpec):
             if action == 'unique':
                 components = sql[start + 1:end].split(',')
                 components = ["'%s'" % (c.strip(),) for c in components]
-                unique += "(%s,)," % (string.join(components, ', '),)
+                unique += "(%s,)," % (', '.join(components),)
                 sql = trim(sql)
             elif action == 'check':
                 check.append(sql[start + 1:end])
@@ -1697,7 +1697,7 @@ class _GsqlTable(_GsqlSpec):
         if unique:
             items.append('    unique = (%s)' % (unique,))
         if check:
-            check_string = string.join([repr(c) for c in check], ', ') + ','
+            check_string = ', '.join([repr(c) for c in check]) + ','
             items.append('    check = (%s)' % (check_string,))
         if sql:
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
@@ -1711,7 +1711,7 @@ class _GsqlTable(_GsqlSpec):
         add_rule('insert', self._on_insert)
         add_rule('update', self._on_update)
         add_rule('delete', self._on_delete)
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -1918,7 +1918,7 @@ class Select(_GsqlSpec):
     def _convert_raw_columns(self, columns):
         string_columns = ["'%s'" % (c.strip().replace('\\', '\\\\').replace(
             "'", "\\'").replace('\n', '\\n'),) for c in columns.split(',')]
-        return string.join(string_columns, ', ')
+        return ', '.join(string_columns)
 
     def _convert_raw_condition(self, condition, as_object=False):
         if not condition:
@@ -1973,20 +1973,20 @@ class Select(_GsqlSpec):
                         if c.alias != plain_name:
                             aliases.append((plain_name, c.alias,))
                 if subspec:
-                    column_spec.append("[%s]" % (string.join(subspec, ', '),))
+                    column_spec.append("[%s]" % (', '.join(subspec),))
             if exclude or aliases:
                 if '*' in exclude:
                     continue
-                colist = string.join(["'%s'" % (c,) for c in exclude], ', ')
+                colist = ', '.join(["'%s'" % (c,) for c in exclude])
                 if exclude:
                     spec = 'cls._exclude(%s, %s)' % (relname, colist,)
                 else:
                     spec = '%s.c' % (relname,)
                 if aliases:
-                    alias_spec = string.join(['%s=%s.c.%s' % (self._convert_local_name(alias),
-                                                              relname, name,)
-                                              for name, alias in aliases],
-                                             ', ')
+                    alias_spec = ', '.join([
+                        '%s=%s.c.%s' % (self._convert_local_name(alias), relname, name)
+                        for name, alias in aliases
+                    ])
                     spec = 'cls._alias(%s, %s)' % (spec, alias_spec,)
                 column_spec.append(spec)
             else:
@@ -1998,8 +1998,8 @@ class Select(_GsqlSpec):
                                 r.relation.find('(') == -1]
             included = [self._convert_select_column(c, simple_relations)
                         for c in self._include_columns]
-            column_spec.append('[%s]' % (string.join(included, ',\n    '),))
-        result = string.join(column_spec, ' +\n    ')
+            column_spec.append('[%s]' % (',\n    '.join(included),))
+        result = ' +\n    '.join(column_spec)
         if column_ordering is not None:
             result = 'sql.reorder_columns(%s, %s)' % (result, column_ordering,)
         return result
@@ -2037,13 +2037,13 @@ class Select(_GsqlSpec):
         c = cname.split()
         if len(c) >= 3 and c[-2] == 'AS':
             alias = c[-1].lower()
-            cname = string.join(c[:-2])
+            cname = ' '.join(c[:-2])
         return cname, alias
 
     def _convert_add_definition(self, definitions, d, level, split=False):
         indentation = '    ' * level
         if split:
-            indented = string.join([indentation + dd for dd in d.split('\n')], '\n')
+            indented = '\n'.join([indentation + dd for dd in d.split('\n')])
         else:
             indented = indentation + d
         definitions.append(indented)
@@ -2306,7 +2306,7 @@ class Select(_GsqlSpec):
                     in_list += 1
                 if c.rstrip(' +').endswith(']'):
                     in_list -= 1
-            columns = string.join(split_columns, '\n')
+            columns = '\n'.join(split_columns)
             whereclause = ',\n        whereclause=%s' % (
                 where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(\n    %s,\n        from_obj=[%s]%s\n        )' %
@@ -2574,15 +2574,14 @@ class _GsqlViewNG(Select):
                 all([d and d[0] == ' ' for d in definitions[1:]])):
             new_definitions = []
             for d in definitions[1:]:
-                new_definitions.append(string.join([dd[4:] for dd in d.split('\n')], '\n'))
+                new_definitions.append('\n'.join([dd[4:] for dd in d.split('\n')]))
             definitions = new_definitions
             condition = None
         definition_lines = []
         for d in definitions:
-            definition_lines.append(string.join(['        %s\n' % (dd,)
-                                                 for dd in d.split('\n')], ''))
+            definition_lines.append(''.join(['        %s\n' % (dd,) for dd in d.split('\n')]))
         items.append('    @classmethod\n    def query(cls):\n%s' %
-                     (string.join(definition_lines, ''),))
+                     (''.join(definition_lines),))
         if condition is not None:
             items[-1] += '        return %s' % (condition,)
         if self._name == 'ev_pytis_menu_structure':
@@ -2660,20 +2659,18 @@ class _GsqlViewNG(Select):
                     if o.find('.') >= 0:
                         prefix = '#XXX:'
                         break
-                order_string = string.join([self._convert_name(o.lower())
-                                            for o in real_order_relations], ', ')
+                order_string = ', '.join([self._convert_name(o.lower())
+                                          for o in real_order_relations])
                 if order_string:
                     order_string += ','
                 items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
                 if no_update_columns:
-                    column_string = string.join(["'%s'" % (c,)
-                                                 for c in no_update_columns], ', ') + ','
+                    column_string = ', '.join(["'%s'" % (c,) for c in no_update_columns]) + ','
                     items.append('    no_%s_columns = (%s)' % (kind, column_string,))
                 if special_update_columns:
-                    column_string = string.join([repr(c)
-                                                 for c in special_update_columns], ', ') + ','
+                    column_string = ', '.join([repr(c) for c in special_update_columns]) + ','
                     items.append('    special_%s_columns = (%s)' % (kind, column_string,))
-                command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
+                command_string = ', '.join(['"%s"' % (quote(c),) for c in command])
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
                     items.append('        return (%s,)' % (command_string,))
@@ -2682,7 +2679,7 @@ class _GsqlViewNG(Select):
         add_rule('delete', self._delete, self._delete_order)
         items.append(self._convert_depends())
         items.append(self._convert_grant())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -2893,7 +2890,7 @@ class _GsqlView(_GsqlSpec):
         COLSEP = ',\n        '
 
         def format_simple_columns(columns):
-            return string.join(map(self._format_column, columns), COLSEP)
+            return columns.join(map(self._format_column), COLSEP)
         if self._complexp:
             result_base = format_simple_columns(self._simple_columns)
             result = []
@@ -2917,7 +2914,7 @@ class _GsqlView(_GsqlSpec):
                     else:
                         spec = self._format_column(c, i)
                     colspecs.append(spec)
-                result_complex = string.join(colspecs, COLSEP)
+                result_complex = COLSEP.join(colspecs)
                 if result_base != '':
                     result_base = result_base + COLSEP
                 result.append(result_base + result_complex)
@@ -2957,7 +2954,7 @@ class _GsqlView(_GsqlSpec):
                         body.append('INSERT INTO %s (\n      %s)\n     VALUES (\n      %s)' %
                                     (t, columns, values))
             action = self._insert
-            body = string.join(body, ';\n    ')
+            body = ';\n    '.join(body)
         elif kind is self._UPDATE:
             command = 'UPDATE'
             suffix = 'upd'
@@ -2978,12 +2975,12 @@ class _GsqlView(_GsqlSpec):
                     rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
                             for c in self._key_columns
                             if _gsql_column_table_column(c)[0] == t]
-                    condition = string.join(rels, ' AND ')
+                    condition = ' AND '.join(rels)
                     if column_names:
                         body.append('UPDATE %s SET\n      %s \n    WHERE %s' %
                                     (t, settings, condition))
             action = self._update
-            body = string.join(body, ';\n    ')
+            body = ';\n    '.join(body)
         elif kind is self._DELETE:
             command = 'DELETE'
             suffix = 'del'
@@ -2993,16 +2990,16 @@ class _GsqlView(_GsqlSpec):
                     rels = ['%s = old.%s' % (c, _gsql_column_table_column(c)[1])
                             for c in self._key_columns
                             if _gsql_column_table_column(c)[0] == t]
-                    condition = string.join(rels, ' AND ')
+                    condition = ' AND '.join(rels)
                     body.append('DELETE FROM %s \n    WHERE %s' % (t, condition))
             action = self._delete
-            body = string.join(body, ';\n    ')
+            body = ';\n    '.join(body)
         else:
             raise ProgramError('Invalid rule specifier', kind)
         if action is None:
             body = 'NOTHING'
         elif is_sequence(action):
-            body = '(%s;\n    %s)' % (body, string.join(action, ';\n    '))
+            body = '(%s;\n    %s)' % (body, ';\n    '.join(action))
         else:
             body = action
         return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' +
@@ -3036,7 +3033,7 @@ class _GsqlView(_GsqlSpec):
                     join = spec
                 else:
                     rels = ['%s = %s' % r for r in spec]
-                    join = string.join(rels, ' AND ')
+                    join = ' AND '.join(rels)
                 where = where + join
                 return where
             if is_sequence(columns):
@@ -3044,13 +3041,13 @@ class _GsqlView(_GsqlSpec):
             else:
                 where = gen_where(self._join)
         if is_union:
-            tables = map(lambda t: string.join(t, ', '), self._tables_from)
+            tables = map(lambda t: ', '.join(t), self._tables_from)
             selections = [' SELECT\n\t%s\n FROM %s\n%s' % (c, t, w)
                           for t, c, w in zip(tables,
                                              columns, where)]
-            body = string.join(selections, ' UNION ALL\n')
+            body = ' UNION ALL\n'.join(selections)
         else:
-            tables = string.join(self._tables_from, ', ')
+            tables = ', '.join(self._tables_from)
             body = ' SELECT\n\t%s\n FROM %s\n%s' % (columns, tables, where)
         result = 'CREATE OR REPLACE VIEW %s AS\n%s;\n\n' % \
                  (self._name, body)
@@ -3104,7 +3101,7 @@ class _GsqlView(_GsqlSpec):
         COLSEP = ',\n        '
 
         def format_simple_columns(columns):
-            return string.join(map(self._convert_column, columns), COLSEP)
+            return columns.join(map(self._convert_column), COLSEP)
         if self._complexp:
             result_base = format_simple_columns(self._simple_columns)
             result = []
@@ -3118,7 +3115,7 @@ class _GsqlView(_GsqlSpec):
                     else:
                         spec = self._convert_column(c, i)
                     colspecs.append(spec)
-                result_complex = string.join(colspecs, COLSEP)
+                result_complex = COLSEP.join(colspecs)
                 if result_base != '':
                     result_base = result_base + COLSEP
                 result.append(result_base + result_complex)
@@ -3152,7 +3149,7 @@ class _GsqlView(_GsqlSpec):
                     join = spec
                 else:
                     rels = ['%s = %s' % r for r in spec]
-                    join = string.join(rels, ' AND ')
+                    join = ' AND '.join(rels)
                 where = where + join
                 return where
             if is_sequence(columns):
@@ -3178,14 +3175,14 @@ class _GsqlView(_GsqlSpec):
                 items.append('        %s = %s' % (alias, accessor,))
                 return alias
             tables_from = [[transform_table(t) for t in tt] for tt in self._tables_from]
-            tables = [string.join(t, ', ') for t in tables_from]
+            tables = [', '.join(t) for t in tables_from]
             selections = []
             for t, c, w in zip(tables, columns, where):
                 selections.append(
                     'sqlalchemy.select(\n    [\n%s],\n    from_obj=[%s],\n    whereclause=%s)' %
                     (c, t, repr(w),)
                 )
-            condition = string.join(selections, '.union_all(')
+            condition = '.union_all('.join(selections)
             condition += ')' * (len(selections) - 1)
         else:
             tables = self._tables_from
@@ -3219,11 +3216,11 @@ class _GsqlView(_GsqlSpec):
                     in_list += 1
                 if c.rstrip().endswith(']'):
                     in_list -= 1
-            columns = string.join(split_columns, '\n')
+            columns = '\n'.join(split_columns)
             condition = ('sqlalchemy.select(\n            [%s],\n'
                          '            from_obj=[%s],\n'
                          '            whereclause=%s)' %
-                         (columns, string.join(from_obj, ', '), repr(where),))
+                         (columns, ', '.join(from_obj), repr(where),))
         items.append('        return %s' % (condition,))
         # Rules
 
@@ -3258,11 +3255,11 @@ class _GsqlView(_GsqlSpec):
                                 if tname == table_alias and cname != 'oid':
                                     order_tables.append(t)
                                     break
-                order_string = string.join([self._convert_name(o) for o in order_tables], ', ')
+                order_string = ', '.join([self._convert_name(o) for o in order_tables])
                 if order_string:
                     order_string += ','
                 items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
-                command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
+                command_string = ', '.join(['"%s"' % (quote(c),) for c in command])
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
                     items.append('        return (%s,)' % (command_string,))
@@ -3282,18 +3279,18 @@ class _GsqlView(_GsqlSpec):
                         (self._convert_name(self._tables[0]), cc_orig_name,
                          u_value.replace('\n', ' '),))
             if no_update_columns:
-                column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
+                column_string = ', '.join(["'%s'" % (c,) for c in no_update_columns]) + ','
                 items.append('    no_%s_columns = (%s)' % (kind, column_string,))
             if special_update_columns:
-                column_string = string.join(
-                    ['(%s, "%s", "%s")' % c for c in special_update_columns], ', ') + ','
+                column_string = ', '.join(['(%s, "%s", "%s")' % c
+                                           for c in special_update_columns]) + ','
                 items.append('    special_%s_columns = (%s)' % (kind, column_string,))
         add_rule('insert', self._insert)
         add_rule('update', self._update)
         add_rule('delete', self._delete)
         items.append(self._convert_depends())
         items.append(self._convert_grant())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -3381,10 +3378,10 @@ class _GsqlFunction(_GsqlSpec):
                 if f.__doc__ is not None:
                     skip = skip + len(string.split(f.__doc__, '\n'))
                 lines = [l for l in lines if l.strip() != '']
-                return _gsql_escape(string.join(lines[skip:], ''))
+                return _gsql_escape(''.join(lines[skip:]))
             source_list = map(get_source, tuple(self._use_functions) + (body,))
             # plpython nemá rád prázdné řádky
-            source_text = string.join(source_list, '')
+            source_text = ''.join(source_list)
             result = "'%s' LANGUAGE plpythonu" % source_text
         return result
 
@@ -3456,7 +3453,7 @@ class _GsqlFunction(_GsqlSpec):
             return ""
 
     def _output(self):
-        # input_types = string.join(map(_gsql_format_type, self._input_types),
+        # input_types = self._input_types.join(map(_gsql_format_type),
         #                          ',')
         # output_type = _gsql_format_type(self._output_type)
         arguments = self._format_arguments()
@@ -3504,7 +3501,7 @@ class _GsqlFunction(_GsqlSpec):
         arguments = [repr(name), type_]
         if out:
             arguments.append('out=True')
-        return 'sql.Column(%s)' % (string.join(arguments, ', '),)
+        return 'sql.Column(%s)' % (', '.join(arguments),)
 
     def convert(self):
         name = self._name
@@ -3533,9 +3530,8 @@ class _GsqlFunction(_GsqlSpec):
         argument_list = ([self._convert_column(a) for a in self._ins] +
                          [self._convert_column(a, out=True) for a in self._outs])
         if argument_list:
-            arguments = string.join([argument_list[0] + ','] +
-                                    ['                 ' + a + ',' for a in argument_list[1:]],
-                                    '\n')
+            arguments = '\n'.join([argument_list[0] + ','] +
+                                  ['                 ' + a + ',' for a in argument_list[1:]])
         else:
             arguments = ''
         items.append('    arguments = (%s)' % (arguments,))
@@ -3565,7 +3561,7 @@ class _GsqlFunction(_GsqlSpec):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         items.append('')
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         if python:
             intro_lines = []
 
@@ -3642,10 +3638,10 @@ class _GsqlFunction(_GsqlSpec):
                 elif indentation > required_indentation:
                     cut = indentation - required_indentation
                     lines = [l[cut:] for l in lines]
-                return string.join(lines, '') + '\n' if lines else ''
+                return ''.join(lines) + '\n' if lines else ''
             source_list = ([get_source(f, False) for f in self._use_functions] +
                            [get_source(body, True)])
-            result += string.join(source_list, '')
+            result += ''.join(source_list)
             result += '\n'
         else:
             self._convert_add_raw_dependencies(self._body)
@@ -3725,7 +3721,7 @@ class _GsqlSequence(_GsqlSpec):
             items.append('    #XXX: maxvalue = %s' % (self._maxvalue,))
         items.append(self._convert_depends())
         items.append(self._convert_grant())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         return result
 
 
@@ -3793,7 +3789,7 @@ class _GsqlRaw(_GsqlSpec):
         items.append('        return """%s"""' %
                      (self._sql.replace("\\'", "'").replace('\\', '\\\\'),))
         items.append(self._convert_depends())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         self._convert_add_raw_dependencies(self._sql)
         return result
 
@@ -3838,7 +3834,7 @@ class _GviewsqlRaw(_GsqlSpec):
         if action is None:
             body = 'NOTHING'
         elif is_sequence(action):
-            body = '(%s;\n    %s)' % (body, string.join(action, ';\n    '))
+            body = '(%s;\n    %s)' % (body, ';\n    '.join(action))
         else:
             body = action
         rule = ("CREATE OR REPLACE RULE %s_%s\n"
@@ -3887,7 +3883,7 @@ class _GviewsqlRaw(_GsqlSpec):
         items.append('    def sql(class_):')
         items.append('        return """%s"""' % (sql_string.replace('\\', '\\\\'),))
         items.append(self._convert_depends())
-        result = string.join(items, '\n') + '\n'
+        result = '\n'.join(items) + '\n'
         self._convert_add_raw_dependencies(sql_string)
         return result
 
@@ -4463,8 +4459,7 @@ class Base_LogSQLTable(sql.SQLTable):
                         output = open(file_name, 'a')
             converted = dbobj.convert()
             if not dbobj._convert:
-                converted = string.join(['#' + line for line in ['XXX:'] +
-                                         string.split(converted, '\n')], '\n')
+                converted = '\n'.join(['#' + line for line in ['XXX:'] + converted.split('\n')])
             converted = converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY')
             if local_file:
                 output.write(converted)

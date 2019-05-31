@@ -145,7 +145,7 @@ class SQLDatabaseSpecification(with_metaclass(_BasicMetaclass, object)):
 
     def _sql_search_path(self, schema):
         path_list = [self._sql_id_escape(s) for s in (self._schema,) + self.search_path if s]
-        path = string.join(path_list, ',')
+        path = ','.join(path_list)
         return ('SET SEARCH_PATH TO %s' % (path,),)
 
     def _sql_identification(self, schema):
@@ -342,7 +342,7 @@ class SQLIndex(SQLDocumented):
         name = self._sql_name(schema)
         table = self.columns[0].table()
         method = self.method or 'btree'
-        columns = string.join([c.id() for c in self.columns], ', ')
+        columns = ', '.join([c.id() for c in self.columns])
         command = ("CREATE INDEX %s ON %s USING %s (%s)" %
                    (name, table, method, columns,))
         return command
@@ -485,7 +485,7 @@ class SQLTabular(with_metaclass(_TabularMetaclass, SQLDatabaseSpecification)):
         formatted = [self._sql_def_format_column(c) for c in columns]
         formatted += self._sql_def_extra_columns()
         separator = ',\n' if long else ', '
-        return "(%s)" % (string.join(formatted, separator),)
+        return "(%s)" % (separator.join(formatted),)
 
     def _sql_def_extra_columns(self):
         return []
@@ -652,7 +652,7 @@ class SQLTable(with_metaclass(_TableMetaclass, SQLTabular)):
                 commands.append("COMMENT ON COLUMN %s IS %s" % (sql_column, sql_comment,))
         if self.init_values:
             table_name = self._sql_name(schema)
-            columns = string.join([self._sql_id_escape(c) for c in self.init_columns], ', ')
+            columns = ', '.join([self._sql_id_escape(c) for c in self.init_columns])
             for row in self.init_values:
                 values = [self._sql_value(c.type(), v)
                           for c, v in zip(self.init_columns, self.init_values,)]
@@ -664,7 +664,7 @@ class SQLTable(with_metaclass(_TableMetaclass, SQLTabular)):
         outro = "%s OIDS" % ("WITH" if self.with_oids else "WITHOUT",)
         if self.inherits:
             # how to handle `schema' here?
-            table_list = string.join([t._sql_name(None) for t in self.inherits], ', ')
+            table_list = ', '.join([t._sql_name(None) for t in self.inherits])
             outro += "\nINHERITS(%s)" % (table_list,)
         if self.tablespace:
             outro += "\nTABLESPACE %s" % (self._sql_id_escape(self.tablespace),)
@@ -697,7 +697,7 @@ class SQLTable(with_metaclass(_TableMetaclass, SQLTabular)):
     def _sql_def_extra_columns(self):
         extra = []
         for unique in self.unique:
-            extra.append("UNIQUE (%s)" % (string.join(unique, ', '),))
+            extra.append("UNIQUE (%s)" % (', '.join(unique),))
         for check in self.check:
             extra.append("CHECK (%s)" % (check,))
         return extra
@@ -793,7 +793,7 @@ class SQLFunctional(SQLTabular):
         else:
             values = [str(a) if isinstance(a, basestring) else self._sql_value_escape(a)
                       for a in arguments]
-            argument_list = '(%s)' % (string.join(values, ', '),)
+            argument_list = '(%s)' % (', '.join(values),)
         return "%s%s" % (self._sql_name(schema), argument_list,)
 
     def sql_create(self, schema):
@@ -880,7 +880,7 @@ class SQLPyFunction(SQLPredefined, SQLFunctional):
         return not self.name
 
     def _sql_body(self):
-        arglist = string.join([c.id() for c in self.arguments], ', ')
+        arglist = ', '.join([c.id() for c in self.arguments])
         lines = ['def %s(%s):' % (self.name, arglist,),
                  '    %s = args' % (arglist,)]  # hard-wired indentation
         main_lines = self._method_source_lines(self.name, 0)
@@ -895,7 +895,7 @@ class SQLPyFunction(SQLPredefined, SQLFunctional):
                 function_lines[0] = first_line[:i] + first_line[j:]
                 lines += function_lines
         lines += main_lines
-        return string.join(lines, '\n')
+        return '\n'.join(lines)
 
     def _method_source_lines(self, name, indentation):
         method = getattr(self, name)
@@ -953,7 +953,7 @@ class SQLEventHandler(with_metaclass(_TableHookMetaclass, SQLFunctional)):
         return dependencies
 
     def _sql_events(self):
-        return string.join(self.events, ' or ')
+        return ' or '.join(self.events)
 
 
 class Trigger(pytis.data.Type):

@@ -246,7 +246,7 @@ class _Query(object):
             else:
                 templates.append(q.template())
                 args.update(q.args())
-        return _Query(string.join(templates, separator), args)
+        return _Query(separator.join(templates), args)
 
     @classmethod
     def next_arg(class_, value):
@@ -534,7 +534,7 @@ class PostgreSQLAccessor(object_2_5):
 
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:
-            search_path = string.join(schemas, ',')
+            search_path = ','.join(schemas)
             if connection.connection_info('search_path') != search_path:
                 query = _Query("set search_path to " + search_path)
                 self._postgresql_query(connection, query, False)
@@ -1706,7 +1706,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 real_key = None
             if real_key:
                 key_table_name, key_column_name = real_key
-                lock_tables_string = string.join(lock_tables, ', ')
+                lock_tables_string = ', '.join(lock_tables)
                 limit_clause = '(%s.%s=%%(key)s)' % (key_table_name, key_column_name,)
                 # Stupid and incorrect, but how to make it better?
                 t = lock_query.template()
@@ -1875,7 +1875,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         update_from_tables = [t for t in table_names if t != main_table]
         if update_from_tables:
             update_from_clause = (' from ' +
-                                  string.join(update_from_tables, ', '))
+                                  ', '.join(update_from_tables))
         else:
             update_from_clause = ''
         args = dict(relation=relation)
@@ -3624,15 +3624,14 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             arg_query = _Query("select proargtypes from pg_proc where proname=%(name)s",
                                dict(name=sval(name)))
             data = self._pg_query(arg_query, outside_transaction=True)
-            arguments = string.join(['%%(__farg%d)s' % (i,)
-                                     for i in range(len(string.split(data[0][0])))], ', ')
+            arguments = ', '.join(['%%(__farg%d)s' % (i,)
+                                   for i in range(len(string.split(data[0][0])))])
         else:
             def arg_spec(arg):
                 return '%%s' if isinstance(arg, Binary) else '%s'
-            arguments = string.join(['%%(__farg%d)s' % (i,)
-                                     for i in range(len(self._pdbb_db_spec.arguments))
-                                     if not self._pdbb_db_spec.arguments[i].out()],
-                                    ', ')
+            arguments = ', '.join(['%%(__farg%d)s' % (i,)
+                                   for i in range(len(self._pdbb_db_spec.arguments))
+                                   if not self._pdbb_db_spec.arguments[i].out()])
         self._pdbb_function_call = 'select * from %s(%s)' % (self._name, arguments)
 
     def _db_bindings_to_column_spec(self, __bindings):

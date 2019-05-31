@@ -114,7 +114,7 @@ def _function_arguments_seq(function, types_only=False):
 
 
 def _function_arguments(function, types_only=False):
-    return string.join(_function_arguments_seq(function, types_only=types_only), ', ')
+    return ', '.join(_function_arguments_seq(function, types_only=types_only))
 
 
 def _rename_replaced_function(generator, function, create):
@@ -155,7 +155,7 @@ class _PytisSchemaHandler(object):
 
     def _set_search_path(self, search_path):
         path_list = [_sql_id_escape(s) for s in search_path]
-        path = string.join(path_list, ',')
+        path = ','.join(path_list)
         command = 'SET SEARCH_PATH TO %s' % (path,)
         self.connection.execute(command)
         return search_path
@@ -189,7 +189,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 # Any better way to reach the column compiler?
                 cc = sqlalchemy.sql.ddl.CreateColumn(c)
                 return cc.compile().visit_create_column(cc)
-            column_string = string.join(['\t' + compile(c) for c in sqlalchemy_columns], ',\n')
+            column_string = ',\n'.join(['\t' + compile(c) for c in sqlalchemy_columns])
             server = table.server.pytis_name(real=True)
             command = ('CREATE %s "%s"."%s" (\n%s\n) SERVER %s\n' %
                        (table._DB_OBJECT, table.schema, table.name, column_string, server,))
@@ -206,9 +206,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
         def ctype(c):
             return c.type.compile(_engine.dialect)
-        column_string = string.join(['%s %s' % (self.preparer.format_column(c), ctype(c),)
-                                     for c in sqlalchemy_columns],
-                                    ', ')
+        column_string = ', '.join(['%s %s' % (self.preparer.format_column(c), ctype(c))
+                                   for c in sqlalchemy_columns])
         command = 'CREATE TYPE %s AS\n(%s)' % (type_name, column_string,)
         self.connection.execute(command)
 
@@ -279,8 +278,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 settings.append('initcond=%s' % (init_value,))
             command = (('CREATE AGGREGATE "%s"."%s" (%s) (\n'
                         '%s\n)') %
-                       (aggregate.schema, name, string.join(arguments[1:], ', '),
-                        string.join(settings, ', '),))
+                       (aggregate.schema, name, ', '.join(arguments[1:]), ', '.join(settings),))
             self.connection.execute(command)
             aggregate.dispatch.after_create(aggregate, self.connection, checkfirst=self.checkfirst,
                                             _ddl_runner=self)
@@ -295,7 +293,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                     finally:
                         trigger._DB_OBJECT = 'TRIGGER'
                 if trigger.table is not None and trigger.events:
-                    events = string.join(trigger.events, ' OR ')
+                    events = ' OR '.join(trigger.events)
                     table = object_by_path(trigger.table.name, trigger.search_path())
                     row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
                     trigger_call = trigger(*trigger.arguments)
@@ -466,7 +464,7 @@ def visit_rule(element, compiler, **kw):
         if len(sql_commands) == 1:
             sql = sql_commands[0]
         else:
-            sql = '(%s)' % (string.join(sql_commands, '; '),)
+            sql = '(%s)' % ('; '.join(sql_commands),)
     else:
         sql = 'NOTHING'
     table = element.table
@@ -507,7 +505,7 @@ def visit_insert_from_select(element, compiler, **kwargs):
     column_list = ['"%s"' % (c.name,) for c in element.select.c]
     return "INSERT INTO %s (%s) (%s)" % (
         compiler.process(element.table, asfrom=True),
-        string.join(column_list, ', '),
+        ', '.join(column_list),
         compiler.process(element.select)
     )
 
@@ -646,7 +644,7 @@ def visit_create_table(element, compiler, **kwargs):
     result = compiler.visit_create_table(element, **kwargs)
     if table.inherits:
         inherited = [table._table_name(t) for t in table.inherits]
-        result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), string.join(inherited, ', '),)
+        result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), ', '.join(inherited),)
     return result
 
 
@@ -2207,7 +2205,7 @@ class _SQLIndexable(SQLObject):
                 else:
                     columns.append(c)
                     colnames.append(str(i))
-            index_name = string.join(colnames, '_')
+            index_name = '_'.join(colnames)
             if method:
                 index_name += '_' + method
             index_name = ('%s_%s' % (self.name, index_name,))[:59]
@@ -2221,7 +2219,7 @@ class _SQLIndexable(SQLObject):
     def _pytis_unique_indexes(self):
         indexes = set()
         for unique in self.unique:
-            name = (self.pytis_name(real=True) + '_' + string.join(unique, '_'))[:59] + '_key'
+            name = (self.pytis_name(real=True) + '_' + '_'.join(unique))[:59] + '_key'
             columns = [getattr(self.c, c) for c in unique]
             indexes.add(sqlalchemy.Index(name, *columns, unique=True))
         return indexes
@@ -2532,7 +2530,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                     name = e.target_fullname
                     # Strip schema as it may not be present in the introspected table
                     components = name.split('.')
-                    name = string.join(components[-2:], '.')
+                    name = '.'.join(components[-2:])
                     targets.append(name)
                 targets.sort()
                 s = (tuple(columns), tuple(targets), (constraint.onupdate, constraint.ondelete,))
@@ -2695,7 +2693,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     def _set_search_path(self, bind):
         search_path = self.search_path()
         path_list = [_sql_id_escape(s) for s in search_path]
-        path = string.join(path_list, ',')
+        path = ','.join(path_list)
         command = 'SET SEARCH_PATH TO %s' % (path,)
         bind.execute(command)
         return search_path
@@ -2762,7 +2760,7 @@ def visit_foreign_server(element, compiler, **kw):
         if getattr(element, p) is not None:
             add_option(o, getattr(element, p))
     return ("CREATE SERVER \"%s\" FOREIGN DATA WRAPPER \"%s\" OPTIONS (%s)" %
-            (element.name, element.wrapper, string.join(options, ', '),))
+            (element.name, element.wrapper, ', '.join(options),))
 
 
 class SQLForeignTable(_SQLTabular):
@@ -2843,7 +2841,7 @@ def visit_foreign_user(element, compiler, **kw):
     if element.password is not None:
         options.append("password %s" % (_sql_value_escape(element.password),))
     if options:
-        options_string = ' OPTIONS (%s)' % (string.join(options, ', '),)
+        options_string = ' OPTIONS (%s)' % (', '.join(options),)
     else:
         options_string = ''
     return ('CREATE USER MAPPING FOR "%s" SERVER "%s"%s' %
@@ -3482,7 +3480,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         # since this puts argument symbols instead of argument values into the
         # argument list.
         argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
-        expression = '%s(%s)' % (name, string.join(argument_list, ', '),)
+        expression = '%s(%s)' % (name, ', '.join(argument_list),)
         result_type = self.result_type
         if isinstance(result_type, (Column, pytis.data.Type)):
             return sqlalchemy.sql.expression.literal_column(expression,
@@ -3619,7 +3617,7 @@ class SQLPyFunction(SQLFunctional):
         # The method itself
         main_method_name = self.name
         arguments = inspect.getargspec(getattr(self, main_method_name)).args
-        arglist = string.join(arguments, ', ')
+        arglist = ', '.join(arguments)
         lines = ['#def %s(%s):' % (self.name, arglist,)]
         if arglist:
             line = '    %s = args' % (arglist,)  # hard-wired indentation
@@ -3683,7 +3681,7 @@ class SQLPyFunction(SQLFunctional):
                 output_class(name, getattr(self, name), 4, prefix=prefix)
         # Final result
         lines += main_lines
-        return string.join(lines, '\n')
+        return '\n'.join(lines)
 
     def _method_source_lines(self, name, method, indentation):
         try:
@@ -3781,7 +3779,7 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
             if cls.table is None:
                 raise SQLException("Table not set in anonymous trigger", cls)
             name = cls.table.pytis_name(real=True) + '__'
-            name += string.join([e[:3] for e in cls.events], '_')
+            name += '_'.join([e[:3] for e in cls.events])
             name += '__' + cls.position
             cls.name = name
         return SQLEventHandler.__new__(cls, metadata, search_path)
@@ -4163,7 +4161,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                 if isinstance(c, basestring):
                     return c
                 return '%s::%s' % (c.id(), c.type().sqlalchemy_type(),)
-            arguments = string.join([colstr(c) for c in obj.arguments], ',')
+            arguments = ','.join([colstr(c) for c in obj.arguments])
             name = '%s(%s)' % (name, arguments,)
         if _enforced_schema:
             schematic_names = ['%s.%s' % (_enforced_schema, name,)]
@@ -4318,11 +4316,11 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             while nodes:
                 path = [nodes[0]]
                 search(path)
-                c_info += '* %s\n' % (string.join(path, ' -> ').replace('"', ''),)
+                c_info += '* %s\n' % (' -> '.join(path).replace('"', ''),)
                 nodes = list(set(nodes).difference(path))
             c_info += 'Object origins:\n'
             for n, e in node_edges.items():
-                c_info += ('- %s: %s\n' % (n, string.join(list(e), ', '))).replace('"', '')
+                c_info += ('- %s: %s\n' % (n, ', '.join(list(e)))).replace('"', '')
             _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (c_info,))
         drop.reverse()
         for name in drop:

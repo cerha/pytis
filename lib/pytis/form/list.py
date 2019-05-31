@@ -2254,7 +2254,7 @@ class FoldableForm(ListForm):
                     if path:
                         queries.append(path[:-1])
                     if state_level != 0:
-                        q = path + '!' + string.join(subnodes.keys(), '|') + '.*'
+                        q = path + '!' + '|'.join(subnodes.keys()) + '.*'
                         if state_level is not None:
                             q = '%s{0,%d}' % (q, state_level - 1,)
                         queries.append(q)
@@ -2749,10 +2749,10 @@ class BrowseForm(FoldableForm):
             if module_parts[0] == 'output':
                 del module_parts[0]
             if len(module_parts) > 1:
-                module_name = string.join(module_parts[:-1], '/')
+                module_name = '/'.join(module_parts[:-1])
                 last_spec_name = module_parts[-1]
             else:
-                module_name = string.join(module_parts, '/')
+                module_name = '/'.join(module_parts)
                 last_spec_name = ''
             result = pytis.output.DatabaseResolver.get(self, module_name, last_spec_name,
                                                        **kwargs)[result_index]

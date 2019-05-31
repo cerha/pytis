@@ -460,7 +460,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 parents.append((position or '', menu_template,))
                 current_template = menu_template
             else:
-                parent = string.join(position.split('.')[:-1], '.')
+                parent = '.'.join(position.split('.')[:-1])
                 parent_index = len(parents) - 1
                 while parent_index >= 0 and parent != parents[parent_index][0]:
                     parent_index -= 1

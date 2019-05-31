@@ -1126,7 +1126,7 @@ class MItem(_TitledMenuObject):
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
                 return ('form/%s/%s/%s/%s' %
-                        (class_name, form_name, string.join(extra, '&'), command_proc,))
+                        (class_name, form_name, '&'.join(extra), command_proc,))
         elif command == 'NEW_RECORD' and args:
             form_name = args.pop('name', '')
             if form_name is not None and not args:

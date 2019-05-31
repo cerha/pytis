@@ -117,7 +117,7 @@ class DMPMessage(Structure):
         """Return formatted message for the output as a basestring."""
         formatted = '%s: %s' % (self.kind(), self.message(),)
         if self.arguments():
-            formatted = '%s: %s' % (formatted, string.join(self.arguments(), ', '),)
+            formatted = '%s: %s' % (formatted, ', '.join(self.arguments()),)
         return formatted
 
 
@@ -650,9 +650,7 @@ class DMPMenu(DMPObject):
                                 "Special menu item action, define command specification",
                                 (menu.title(),))
                     return
-                hotkey_spec = string.join([(key or '').replace(' ', 'SPC')
-                                           for key in menu.hotkey()],
-                                          ' ')
+                hotkey_spec = ' '.join([(key or '').replace(' ', 'SPC') for key in menu.hotkey()])
                 self.add_item(self.MenuItem.ACTION_ITEM, parent, title=menu.title(),
                               action=action_id, help=menu.help(), hotkey=hotkey_spec)
             elif isinstance(menu, tuple):
@@ -1335,7 +1333,7 @@ class DMPActions(DMPObject):
                     self._alternate_fullname = fullname
             elif components[0] == 'sub' and components[2] == 'RUN_FORM':
                 subaction = self.__class__(resolver, messages,
-                                           fullname=string.join(components[2:], '/'))
+                                           fullname='/'.join(components[2:]))
                 self._alternate_fullname = '%s/%s/%s' % (components[0], components[1],
                                                          subaction._alternate_fullname)
             else:
@@ -1413,7 +1411,7 @@ class DMPActions(DMPObject):
                 spec_name = full_components[-1]
             elif full_components[0] == 'sub':
                 spec_name = full_components[4]
-                fullname = string.join(full_components[2:], '/')
+                fullname = '/'.join(full_components[2:])
             else:
                 spec_name = short_components[-1]
             for s in specifications:
