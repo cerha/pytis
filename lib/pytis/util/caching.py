@@ -27,7 +27,7 @@ from future import standard_library
 import _thread
 import collections
 
-from pytis.util import Locked, Counter
+from pytis.util import Locked, Counter, super_
 
 standard_library.install_aliases()  # to get collections.UserDict
 
@@ -62,7 +62,7 @@ class _Cache(collections.UserDict):
 
         """
         try:
-            result = super(_Cache, self).__getitem__(key)
+            result = super_(_Cache).__getitem__(self, key)
             if self._validator is not None and not self._validator(key):
                 raise KeyError()
         except KeyError:
@@ -71,7 +71,7 @@ class _Cache(collections.UserDict):
 
     def __setitem__(self, key, value):
         """Ulož 'value' s 'key' do cache."""
-        super(_Cache, self).__setitem__(key, value)
+        super_(_Cache).__setitem__(self, key, value)
 
     def reset(self):
         """Kompletně zruš aktuální obsah cache."""
@@ -100,14 +100,14 @@ class LimitedCache(_Cache):
             cache
 
         """
-        super(LimitedCache, self).__init__(provider)
+        super_(LimitedCache).__init__(self, provider)
         assert isinstance(limit, int), limit
         self._limit = limit
         self._counter = Counter()
         self._lock = _thread.allocate_lock()
 
     def __getitem__(self, key):
-        result = super(LimitedCache, self).__getitem__(key)
+        result = super_(LimitedCache).__getitem__(self, key)
         return result
 
     def __setitem__(self, key, value):
@@ -115,10 +115,10 @@ class LimitedCache(_Cache):
             with Locked(self._lock):
                 if self._counter.next() > self._limit:
                     self._collect()
-                super(LimitedCache, self).__setitem__(key, value)
+                super_(LimitedCache).__setitem__(self, key, value)
 
     def reset(self):
-        super(LimitedCache, self).reset()
+        super_(LimitedCache).reset(self)
         self._counter.reset()
 
     def _collect(self):
@@ -142,6 +142,6 @@ class RangeCache(_Cache):
           size -- nezáporný integer, maximální velikost cachovaného úseku dat
 
         """
-        super(RangeCache, self).__init__(self, provider)
+        _Cache.__init__(self, provider)
         assert isinstance(size, int), size
         self._size = size
