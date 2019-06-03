@@ -47,10 +47,13 @@ import re
 import sys
 import tempfile
 import _thread
-import types as pytypes
 import platform
 
 unistr = type(u'')  # Python 2/3 transition hack.
+try:
+    from types import ClassType
+except ImportError:
+    ClassType = type  # ClassType is gone in Python 3.  Remove when dropping Python 2 support.
 
 
 # Classes
@@ -897,7 +900,7 @@ def direct_public_members(obj):
     jejichž název nezačíná podtržítkem.
 
     """
-    if isinstance(obj, (pytypes.ClassType, type)):
+    if isinstance(obj, (ClassType, type)):
         cls = obj
     else:
         cls = obj.__class__
