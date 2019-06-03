@@ -782,8 +782,8 @@ class Style(unittest.TestCase):
     def test_add(self):
         assert pp.Style() == pp.Style() + pp.Style()
         assert pp.Style() == pp.Style() + None
-        assert pp.Style() == None + pp.Style()
-        assert pp.Style(bold=True) == None + pp.Style(bold=True)
+        assert pp.Style() == (None + pp.Style())
+        assert pp.Style(bold=True) == (None + pp.Style(bold=True))
         assert (pp.Style(slanted=True, overstrike=True, foreground='#F00') ==
                 pp.Style(slanted=True) + pp.Style(overstrike=True, foreground='#F00'))
         assert pp.Style(slanted=True) == pp.Style(slanted=True) + pp.Style(slanted=False)
