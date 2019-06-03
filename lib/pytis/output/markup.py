@@ -30,8 +30,7 @@ budou vloženy tak, jak jsou, včetně mezer a odřádkování, a sekvence obsa
 elementy ke spojení dohromady.
 
 """
-from past.builtins import basestring
-from builtins import int
+from past.builtins import basestring, long
 
 import copy
 import os
@@ -864,10 +863,10 @@ class LongTable(Table):
         super(LongTable, self).__init__(columns)
         assert callable(row_generator), row_generator
         assert row_generator_init is None or callable(row_generator_init), row_generator_init
-        assert isinstance(separator_height, (float, int, Unit)), separator_height
-        assert isinstance(line_separator_height, (float, int, Unit)), line_separator_height
-        assert isinstance(separator_margin, (float, int, Unit)), separator_margin
-        assert isinstance(line_separator_margin, (float, int, Unit)), line_separator_margin
+        assert isinstance(separator_height, (float, int, long, Unit)), separator_height
+        assert isinstance(line_separator_height, (float, int, long, Unit)), line_separator_height
+        assert isinstance(separator_margin, (float, int, long, Unit)), separator_margin
+        assert isinstance(line_separator_margin, (float, int, long, Unit)), line_separator_margin
         self._row_generator = row_generator
         self._row_generator_init = row_generator_init
 

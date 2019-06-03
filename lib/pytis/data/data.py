@@ -36,8 +36,8 @@ volitelné, konkrétní databázový backend nemusí nabízet žádnou jejich ko
 implementaci.
 
 """
-from past.builtins import basestring
-from builtins import range, int
+from past.builtins import basestring, long
+from builtins import range
 
 import copy
 import datetime
@@ -1649,7 +1649,7 @@ class Row(object):
     def _index(self, key):
         if isinstance(key, basestring):
             return self._indexes[key]
-        elif isinstance(key, int):
+        elif isinstance(key, (int, long)):
             if key < 0:
                 result = len(self) + key
                 if result < 0:

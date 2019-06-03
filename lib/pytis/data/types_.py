@@ -35,8 +35,8 @@ specializovanější základy.  Hodnoty daných typů jsou pak reprezentovány
 instancemi samostatné třídy 'Value'.
 
 """
-from past.builtins import basestring
-from builtins import range, int
+from past.builtins import basestring, long
+from builtins import range
 from future.utils import with_metaclass
 
 import datetime
@@ -870,7 +870,7 @@ class Integer(Number):
             # nějakou výjimkou, ale evidentně by mělo, pokud `obj' nelze
             # na obyčejný integer převést.
             try:
-                value = int(obj)
+                value = long(obj)
             except Exception:
                 # Podobně jako `int' i `long' by mělo v případě nemožnosti
                 # převodu metat výjimku.
@@ -888,7 +888,7 @@ class Integer(Number):
             if value % 1 != 0:
                 raise TypeError("Value not an integer", value)
             value = int(value)
-        elif not isinstance(value, int):
+        elif not isinstance(value, (int, long)):
             raise TypeError("Value not an integer", value)
         return value
 

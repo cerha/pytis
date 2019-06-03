@@ -25,8 +25,8 @@ tvoří jen obecné rozhraní skládající například SQL příkazy.  Fyzický
 k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových souborech.
 
 """
-from past.builtins import basestring
-from builtins import range, object, int
+from past.builtins import basestring, long
+from builtins import range, object
 from future.utils import raise_
 
 import copy
@@ -3224,7 +3224,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def skip(self, count, direction=FORWARD):
         if __debug__:
             log(DEBUG, 'Skipping rows:', (direction, count))
-        assert isinstance(count, int) and count >= 0, count
+        assert isinstance(count, (int, long)) and count >= 0, count
         assert direction in (FORWARD, BACKWARD), direction
         self._pg_maybe_restore_select()
         buf = self._pg_buffer
