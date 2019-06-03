@@ -331,17 +331,15 @@ class Resolver(unittest.TestCase):
     def test_resolver(self):
         from .resolver import Resolver
         import pytis.presentation
-        r = Resolver(search=('pytis', 'pytis.defs.profiles'))
-        view = r.get('cms.Languages', 'view_spec')
-        self.assertIsInstance(view, pytis.presentation.ViewSpec)
-        spec = r.specification('cms.Languages')
-        self.assertIsInstance(spec, pytis.presentation.Specification)
+        r = Resolver(search=('pytis.defs', 'pytis.defs.profiles'))
+        view = r.get('help.Help', 'view_spec')
+        assert isinstance(view, pytis.presentation.ViewSpec)
         # Test top level specification name (from pytis.defs.profiles).
         spec2 = r.specification('FormProfiles')
-        self.assertIsInstance(spec2, pytis.presentation.Specification)
+        assert isinstance(spec2, pytis.presentation.Specification)
         specifications = [spec_ for name, spec_ in r.walk()]
-        from pytis.cms import Languages
-        self.assertIn(Languages, specifications)
+        from pytis.defs.help import Help
+        assert Help in specifications
 
 
 if __name__ == '__main__':  # pragma: no cover
