@@ -28,13 +28,13 @@ import os
 import mimetypes
 import email
 import pytis.util
-from email.Message import Message
-from email.MIMEAudio import MIMEAudio
-from email.MIMEBase import MIMEBase
-from email.MIMEImage import MIMEImage
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
-from email.Header import Header
+from email.message import Message
+from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.header import Header
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -141,7 +141,7 @@ class SimpleEmail(object):
         from_ = get_header(self.from_)
         to = get_header(self._flatten_for_header(self.to))
         subject = get_header(self.subject)
-        date = email.Utils.formatdate(localtime=1)
+        date = email.utils.formatdate(localtime=1)
         self.msg['From'] = from_
         self.msg['To'] = to
         self.msg['Subject'] = subject
@@ -262,7 +262,7 @@ class GPGEmail(SimpleEmail):
 
     def create_content(self):
         # Part 1
-        firstSubMsg = email.Message.Message()
+        firstSubMsg = email.message.Message()
         firstSubMsg["Content-Type"] = "application/pgp-encrypted"
         firstSubMsg["Content-Description"] = "PGP/MIME version identification"
         firstSubMsg.set_payload("Version: 1\n")
@@ -272,7 +272,7 @@ class GPGEmail(SimpleEmail):
         else:
             filename = 'content.txt.pgp'
         encrypted = self._gpg_encrypt_content()
-        secondSubMsg = email.Message.Message()
+        secondSubMsg = email.message.Message()
         secondSubMsg.add_header("Content-Type", "application/octet-stream",
                                 name=filename)
         secondSubMsg.add_header("Content-Description",
@@ -348,7 +348,7 @@ class ComplexEmail(SimpleEmail):
         else:
             content = MIMEBase(maintype, subtype)
             content.set_payload(data)
-            email.Encoders.encode_base64(content)
+            email.encoders.encode_base64(content)
         return content
 
     def add_content_text(self, data, html=False, charset=None):
