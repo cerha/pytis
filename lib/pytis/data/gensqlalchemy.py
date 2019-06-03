@@ -66,7 +66,7 @@ see all the most important constructs there.
 
 from __future__ import unicode_literals
 from past.builtins import basestring
-from builtins import range
+from builtins import range, int
 from future.utils import with_metaclass
 
 try:
@@ -236,7 +236,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                     str_value = 'FROM CURRENT'
                 elif name.lower() == 'time zone':
                     str_value = str(value)
-                elif isinstance(value, (int, long, float, basestring)):
+                elif isinstance(value, (int, float, basestring)):
                     str_value = 'TO %s' % (value,)
                 else:
                     raise Exception("Unrecognized function parameter value", value)
@@ -980,7 +980,7 @@ def _sql_id_escape(identifier):
 def _sql_value_escape(value):
     if value is None:
         result = 'NULL'
-    elif isinstance(value, (int, long, float)):
+    elif isinstance(value, (int, float)):
         result = value
     elif isinstance(value, basestring):
         result = "'%s'" % (value.replace('\\', '\\\\').replace("'", "''"),)

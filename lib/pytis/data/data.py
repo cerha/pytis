@@ -37,7 +37,7 @@ implementaci.
 
 """
 from past.builtins import basestring
-from builtins import range
+from builtins import range, int
 
 import copy
 import datetime
@@ -1649,7 +1649,7 @@ class Row(object):
     def _index(self, key):
         if isinstance(key, basestring):
             return self._indexes[key]
-        elif isinstance(key, (int, long)):
+        elif isinstance(key, int):
             if key < 0:
                 result = len(self) + key
                 if result < 0:

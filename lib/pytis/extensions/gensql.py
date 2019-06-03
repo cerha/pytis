@@ -20,6 +20,7 @@
 
 from past.builtins import basestring
 from future.utils import with_metaclass
+from builtins import int
 
 import copy
 import inspect
@@ -294,10 +295,10 @@ class SQLSequence(SQLProprietary):
 
     def __init__(self):
         super(SQLSequence, self).__init__()
-        assert isinstance(self.start, (type(None), int, long)), self.start
-        assert isinstance(self.minvalue, (type(None), int, long)), self.minvalue
-        assert isinstance(self.maxvalue, (type(None), int, long)), self.maxvalue
-        assert isinstance(self.increment, (type(None), int, long)), self.increment
+        assert isinstance(self.start, (type(None), int)), self.start
+        assert isinstance(self.minvalue, (type(None), int)), self.minvalue
+        assert isinstance(self.maxvalue, (type(None), int)), self.maxvalue
+        assert isinstance(self.increment, (type(None), int)), self.increment
         assert isinstance(self.cycle, (type(None), bool)), self.cycle
 
     def _sql_create(self, schema):

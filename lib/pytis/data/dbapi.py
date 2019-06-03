@@ -28,7 +28,7 @@ Database API implementation.
 
 """
 from past.builtins import basestring
-from builtins import range
+from builtins import range, int
 
 import datetime
 import inspect
@@ -128,7 +128,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 lower = arg.lower()
                 upper = arg.upper()
                 test_value = upper if lower is None else lower
-                if isinstance(test_value, (int, long, float)):
+                if isinstance(test_value, (int, float)):
                     c = psycopg2.extras.NumericRange
                 elif isinstance(test_value, datetime.datetime):
                     if test_value.tzinfo is None:
