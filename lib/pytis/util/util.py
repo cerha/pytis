@@ -43,6 +43,7 @@ import gc
 import inspect
 import operator
 import os
+import io
 import re
 import sys
 import tempfile
@@ -177,16 +178,21 @@ class Popen(object):
             v aktuálním adresáři
 
         """
+        # Temporary hack for Python 2/3 compatibility.
+        try:
+            file_types = (file, io.IOBase)
+        except NameError: # 'file' not defined in Python 3.
+            file_types = (io.IOBase,)
         if to_child is None:
             r_to_child, w_to_child = os.pipe()
         else:
-            if isinstance(to_child, file):
+            if isinstance(to_child, file_types):
                 to_child = to_child.fileno()
             r_to_child, w_to_child = to_child, None
         if from_child is None:
             r_from_child, w_from_child = os.pipe()
         else:
-            if isinstance(from_child, file):
+            if isinstance(from_child, file_types):
                 from_child = from_child.fileno()
             r_from_child, w_from_child = None, from_child
         pid = os.fork()
