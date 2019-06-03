@@ -182,23 +182,22 @@ class ListUtils(unittest.TestCase):
 
     def test_remove_duplicates(self):
         self.longMessage = True
-        self.assertEqual(util.remove_duplicates([]), [], 'empty list failed')
-        self.assertEqual(util.remove_duplicates([1, 1]), [1])
-        self.assertItemsEqual(util.remove_duplicates([2, 2, 1, 3, 1, 2]), [1, 2, 3])
+        assert util.remove_duplicates([]) == []
+        assert util.remove_duplicates([1, 1]) == [1]
+        assert sorted(util.remove_duplicates([2, 2, 1, 3, 1, 2])) == [1, 2, 3]
 
     def test_flatten(self):
         def assertEqualListOrTuple(actual, expected):
             assert isinstance(expected, (list, tuple)), "Test logic error"
-            self.assertIsInstance(actual, (list, tuple,))
-            self.assertSequenceEqual(actual, expected)
-        assertEqualListOrTuple(util.flatten([]), [])
-        assertEqualListOrTuple(util.flatten([[([])]]), [])
-        assertEqualListOrTuple(util.flatten([[1, 2], 3, [[4]], [(5, [6, 7], 8)]]),
-                               [1, 2, 3, 4, 5, 6, 7, 8])
+            assert isinstance(actual, (list, tuple,))
+            assert actual == expected
+        assert util.flatten([]) == []
+        assert util.flatten([[([])]]) == []
+        assert util.flatten([[1, 2], 3, [[4]], [(5, [6, 7], 8)]]) == [1, 2, 3, 4, 5, 6, 7, 8]
 
     def test_nreverse(self):
-        self.assertEqual(util.nreverse([1, 2, 3]), [3, 2, 1])
-        self.assertEqual(util.nreverse([]), [])
+        assert util.nreverse([1, 2, 3]) == [3, 2, 1]
+        assert util.nreverse([]) == []
 
 
 class FindUtils(unittest.TestCase):
@@ -241,8 +240,8 @@ class DevNullStream(unittest.TestCase):
 
     def test_read(self):
         f = util.dev_null_stream('r')
-        self.assertEqual(f.read(), '')
-        self.assertEqual(f.read(), '')
+        assert f.read() == ''
+        assert f.read() == ''
 
     def test_write(self):
         f = util.dev_null_stream('w')
@@ -262,7 +261,7 @@ class Mktempdir(unittest.TestCase):
             dir3 = util.mktempdir('foo')
             self.assertNotEqual(dir1, dir3)
             for d in dir1, dir2, dir3:
-                self.assertEqual((os.stat(d)[0] & 0o7777), 0o700)
+                assert (os.stat(d)[0] & 0o7777) == 0o700
         finally:
             for d in dir1, dir2, dir3:
                 if d:
@@ -288,18 +287,17 @@ class Classes(unittest.TestCase):
 
     def test_public_attributes(self):
         self.longMessage = True
-        self.assertItemsEqual(util.public_attributes(self._B), ['x', 'y'],
-                              'Invalid public attributes')
+        assert sorted(util.public_attributes(self._B)) == ['x', 'y']
 
     def test_direct_public_members(self):
-        self.assertEqual(util.direct_public_members(self._A), ('x',))
-        self.assertEqual(util.direct_public_members(self._B), ('y',))
-        self.assertEqual(util.direct_public_members(self._C), ())
-        self.assertEqual(util.direct_public_members(self._D), ())
-        self.assertItemsEqual(util.direct_public_members(self), ['setUpClass',
-                                                                 'tearDownClass',
-                                                                 'test_direct_public_members',
-                                                                 'test_public_attributes'])
+        assert util.direct_public_members(self._A) == ('x',)
+        assert util.direct_public_members(self._B) == ('y',)
+        assert util.direct_public_members(self._C) == ()
+        assert util.direct_public_members(self._D) == ()
+        assert sorted(util.direct_public_members(self)) == ['setUpClass',
+                                                            'tearDownClass',
+                                                            'test_direct_public_members',
+                                                            'test_public_attributes']
 
 
 class Caching(unittest.TestCase):
