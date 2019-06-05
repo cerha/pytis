@@ -112,14 +112,8 @@ class _PgValue(object):
     def _convert_value(self, value):
         v = value.value()
         t = value.type()
-        if v is None:
-            result = None
-        elif isinstance(t, Array):
+        if isinstance(t, Array) and v is not None:
             result = [vv.value() for vv in v]
-        elif isinstance(t, Binary):
-            result = buffer(v)
-            if not str(result):
-                result = None
         else:
             result = v
         return result
