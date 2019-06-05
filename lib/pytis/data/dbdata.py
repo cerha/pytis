@@ -117,19 +117,14 @@ class DBData(Data):
         bindings, která mají jako id prázdný řetězec.
 
         """
-        assert is_sequence(bindings), ('Invalid binding type', bindings)
+        assert all(isinstance(b, DBBinding) for b in bindings), bindings
+        assert arguments is None or all(isinstance(b, DBBinding) for b in arguments), arguments
+        assert all([isinstance(n, basestring) for n in crypto_names]), crypto_names
         self._bindings = tuple(bindings)
-        assert not filter(lambda b: not isinstance(b, DBBinding),
-                          bindings), \
-            ('Invalid binding type', bindings)
-        assert arguments is None or is_sequence(arguments), ('Invalid binding type', arguments)
         if arguments is None:
             self._arguments = None
         else:
             self._arguments = tuple(arguments)
-            assert not filter(lambda b: not isinstance(b, DBBinding),
-                              arguments), \
-                ('Invalid "argument" type', arguments)
         if __debug__:
             log(DEBUG, 'Database instance bindings:', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
@@ -138,9 +133,6 @@ class DBData(Data):
         if __debug__:
             log(DEBUG, 'Database instance key:', key)
         self._distinct_on = distinct_on
-        assert is_sequence(crypto_names), crypto_names
-        if __debug__:
-            assert all([isinstance(n, basestring) for n in crypto_names]), crypto_names
         self._crypto_names = list(set(crypto_names).union(
             b.crypto_name() for b in bindings
             if isinstance(b, DBColumnBinding) and b.crypto_name() is not None
