@@ -1985,36 +1985,30 @@ class DBDataDefault(_DBTest):
     def test_binary(self):
         t = pd.Binary()
         null_data, error = t.validate(None)
-        self.assertIsNone(error, ('Null Binary validation failed', error,))
-        self.assertIsNone(null_data.value(), ('Invalid null binary value', null_data.value()))
-        data = [chr(i) for i in range(256)]
-        data1, error = t.validate(buffer(''.join(data)))
-        self.assertIsNone(error, ('Binary validation failed', error,))
-        self.assertIsInstance(data1.value(), pd.Binary.Buffer,
-                              ('Invalid binary value', data1.value(),))
-        self.assertEqual(str(data1.value()), ''.join(data),
-                         ('Invalid binary value', data1.value(),))
-        data.reverse()
+        assert error is None
+        assert null_data.value() is None
+        data = bytes(range(256))
+        data1, error = t.validate(data)
+        assert error is None
+        assert isinstance(data1.value(), pd.Binary.Buffer)
+        assert data1.value() == data
+        revdata = reversed(data)
         key = pd.ival(1)
         row1 = pd.Row([('id', key,), ('data', data1,)])
         result, success = self.dbin.insert(row1)
-        self.assertTrue(success, 'Binary insertion failed')
-        self.assertEqual(str(result[1].value()), str(data1.value()),
-                         ('Invalid inserted binary data', str(result[1].value())))
-        result = str(self.dbin.row(key)[1].value())
-        self.assertEqual(result, str(data1.value()), ('Invalid binary data', result,))
-        data2, error = t.validate(buffer(''.join(data)))
-        self.assertIsNone(error, ('Binary validation failed', error,))
-        self.assertIsInstance(data2.value(), pd.Binary.Buffer,
-                              ('Invalid binary value', data2.value(),))
+        assert success
+        assert str(result[1].value()) == str(data1.value())
+        assert str(self.dbin.row(key)[1].value()) == str(data1.value())
+        data2, error = t.validate(buffer(''.join(revdata)))
+        assert error is None
+        assert isinstance(data2.value(), pd.Binary.Buffer)
         row2 = pd.Row([('id', key,), ('data', data2,)])
         result, succes = self.dbin.update(key, row2)
-        self.assertTrue(success, 'Binary update failed')
-        self.assertEqual(str(result[1].value()), str(data2.value()),
-                         ('Invalid updated binary data', str(result[1].value()),))
+        assert success
+        assert str(result[1].value()) == str(data2.value())
         result = str(self.dbin.row(key)[1].value())
-        self.assertEqual(result, str(data2.value()), ('Invalid binary data', result,))
-        self.assertEqual(self.dbin.delete(key), 1, 'Binary deletion failed')
+        assert str(result) == str(data2.value())
+        assert self.dbin.delete(key) == 1
 
     def test_full_text_select(self):
         ts_config = self._sql_command("select get_current_ts_config()")[0][0]
