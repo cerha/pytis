@@ -265,7 +265,7 @@ class _QFunction(_Query):
         if arguments is None:
             t, a = self.next_arg(None)
             q = _Query(t)
-            self._values_arg = a.keys()[0]
+            self._values_arg = list(a.keys())[0]
         else:
             q = self.__class__.join(arguments)
         q = q.wrap(name)
@@ -2979,7 +2979,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return
         assert self._arguments is not None, ("Arguments passed to a non-function", arguments,)
         argument_names = [b.id() for b in self._arguments]
-        for k in arguments.keys():
+        for k in arguments:
             assert k in argument_names, ("Invalid function argument", k,)
 
     # Veřejné metody a jimi přímo volané abstraktní metody
