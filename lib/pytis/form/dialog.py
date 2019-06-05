@@ -881,8 +881,8 @@ class BugReport(GenericDialog):
         self._want_focus = button
 
     def _on_send_bug_report(self, event):
-        import email.header
-        import email.message
+        from email.header import Header
+        from email.message import Message
         import email.utils
         import smtplib
 
@@ -905,24 +905,12 @@ class BugReport(GenericDialog):
         if message:
             message = message.strip() + "\n\n"
         message += pytis.util.exception_info(self._einfo)
-
-        def header(value):
-            if sys.version_info[0] == 2 and isinstance(value, basestring):
-                try:
-                    unistr(value, 'us-ascii')
-                except Exception:
-                    pass
-                else:
-                    return value
-            return email.header.Header(value, 'utf-8')
-
-        msgid = email.utils.make_msgid('pytis_bugs')
-        msg = email.message.Message()
-        msg['From'] = header(addr)
-        msg['To'] = header(to)
-        msg['Subject'] = header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
+        msg = Message()
+        msg['From'] = Header(addr)
+        msg['To'] = Header(to)
+        msg['Subject'] = Header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
         msg['Date'] = email.utils.formatdate()
-        msg['Message-ID'] = msgid
+        msg['Message-ID'] = email.utils.make_msgid('pytis_bugs')
         msg.set_payload(message, 'utf-8')
         try:
             try:
