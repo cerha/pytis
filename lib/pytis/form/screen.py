@@ -3531,11 +3531,13 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(),
     f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
                            patterns=patterns, pattern=pattern, context=context)
     if f:
-        if isinstance(data, bytes):
+        if sys.version_info[0] == 2 and isinstance(data, bytes):
             # TODO: The older version of P2Go's pytisproc.py currently distributed
             # between users doesn't handle text encoding quite well.  It attempts
             # to encode everything which is not a 'buffer'.  We can remove this
-            # hack once all clients have a newer P2Go version.
+            # hack once all clients have a newer P2Go version.  As this doesn't
+            # even work in Python 3 (which doesn't have buffer) old clients will
+            # not work with Python3 at all.
             data = buffer(data)
         try:
             f.write(data)
