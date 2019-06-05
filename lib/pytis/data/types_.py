@@ -1047,10 +1047,6 @@ class Float(Number):
         try:
             if locale_format:
                 import locale
-                if isinstance(obj, unistr):
-                    encoding = locale.getpreferredencoding()
-                    if encoding:
-                        obj = obj.encode(encoding)
                 value = locale.atof(obj)
             else:
                 value = decimal.Decimal(obj)
