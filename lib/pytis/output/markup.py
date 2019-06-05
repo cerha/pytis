@@ -36,6 +36,7 @@ import copy
 import os
 import re
 import io
+import sys
 
 import lcg
 from lcg import Unit, UPoint, Color, UPercent
@@ -934,8 +935,8 @@ class Image(_Mark):
         """Arguments:
 
           file_or_data -- image file name relative to the directory given by
-            configuration option 'print_spec_dir' or image as a memory data
-            (bytes, buffer or bytearray).
+            configuration option 'print_spec_dir' or image as memory data
+            (bytes).
           width -- explicit output image width as lcg.Unit subclass instance.
             If only one of width/height is specified (not None), the other
             dimension is computed to maintain the original image proportions.
@@ -948,49 +949,51 @@ class Image(_Mark):
             resized automatically to fit inside the current context.
 
         """
-        assert isinstance(file_or_data, (basestring, bytearray, buffer,
-                                         pytis.data.Binary.Data)), type(file_or_data)
+        if sys.version_info[0] == 2:
+            assert isinstance(file_or_data, (basestring, buffer, bytes)), type(file_or_data)
+        else:
+            assert isinstance(file_or_data, str, bytes), type(file_or_data)
         super(Image, self).__init__()
         self._standalone = standalone
         self._width = width
         self._height = height
-        if isinstance(file_or_data, (pytis.data.Binary.Data, buffer)):
+        if sys.version_info[0] == 2 and isinstance(file_or_data, buffer):
             self._file_name = '_mem_image'
-            self._bytes = bytearray(file_or_data)
-        elif isinstance(file_or_data, basestring):
+            self._data = bytes(file_or_data)
+        elif (sys.version_info[0] == 2 and isinstance(file_or_data, unicode) or
+              sys.version_info[0] > 2 and isinstance(file_or_data, str)):
             self._file_name = file_or_data
-            self._bytes = None
+            self._data = None
         else:
             self._file_name = '_mem_image'
-            self._bytes = file_or_data
+            self._data = file_or_data
 
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
         return self._file_name
 
     def _lcg(self):
-        if self._bytes:
-            class _Image(lcg.InlineImage):
+        if self._data:
+            class InlineImage(lcg.InlineImage):
 
-                def __init__(self, bytes, **kwargs):
-                    self._bytes = bytes
-                    super(_Image, self).__init__("_mem_image", **kwargs)
+                def __init__(self, data, **kwargs):
+                    self._data = data
+                    super(InlineImage, self).__init__("_mem_image", **kwargs)
 
                 def image(self, context):
-                    # We need to return the image as a stream object
-                    # (necessary for reportlab in PDFExporter)
-                    # but we also need to satisfy assert in the
-                    # contructor of lcg.export.pdf.Image
-                    class _BytesIO(io.BytesIO, lcg.Image):
+                    # We need to return the image as a stream object (necessary
+                    # for reportlab in PDFExporter) but we also need to satisfy
+                    # the assertion in the contructor of 'lcg.export.pdf.Image'.
+                    class Image(io.BytesIO, lcg.Image):
 
                         def src_file(self):
                             return self
 
-                    return _BytesIO(self._bytes)
-            return _Image(self._bytes,
-                          width=self._dimension(self._width),
-                          height=self._dimension(self._height),
-                          standalone=self._standalone)
+                    return Image(self._data)
+            return InlineImage(self._data,
+                               width=self._dimension(self._width),
+                               height=self._dimension(self._height),
+                               standalone=self._standalone)
         else:
             file_name = os.path.join(pytis.config.print_spec_dir, self._file_name)
             return lcg.InlineImage(lcg.Image(file_name, src_file=file_name),
