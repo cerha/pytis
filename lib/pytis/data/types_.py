@@ -1050,7 +1050,7 @@ class Float(Number):
                 value = locale.atof(obj)
             else:
                 value = decimal.Decimal(obj)
-        except Exception:
+        except (ValueError, decimal.InvalidOperation):
             value = None
         if value is not None:
             if precision is None:
