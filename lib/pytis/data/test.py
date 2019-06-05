@@ -2254,30 +2254,26 @@ class DBDataDefault(_DBTest):
             row_data.append((c.id(), v))
         row = pd.Row(row_data)
         result, success = data.insert(row)
-        self.assertTrue(success)
-        self.assertEqual(result[1].value(), backslash,
-                         ('invalid inserted value', result[1].value(), backslash,))
-        self.assertEqual(data.delete(row[0]), 1, 'row not deleted')
+        assert success
+        assert result[1].value() == backslash
+        assert data.delete(row[0]) ==  1
 
     def test_lock(self):
         us = pd.String().validate('us')[0]
         cz = pd.String().validate('cz')[0]
         t1, t2 = self.dstat, self.dstat1
-        transaction_1 = \
-            pd.DBTransactionDefault(connection_data=self._dconnection)
-        transaction_2 = \
-            pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction_1 = pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
         try:
-            self.assertIsNone(t1.lock_row(us, transaction_1), 'lock failed')
-            result = t2.lock_row(us, transaction_2)
-            self.assertIsInstance(result, str, 'unlocked record locked')
-            self.assertIsNone(t2.lock_row(cz, transaction_2), 'lock failed')
+            assert t1.lock_row(us, transaction_1) is None
+            assert isinstance(t2.lock_row(us, transaction_2), basestring)
+            assert t2.lock_row(cz, transaction_2) is None
             transaction_2.rollback()
             transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
-            self.assertIsInstance(t2.lock_row(us, transaction_2), str, 'unlocked record locked')
+            assert isinstance(t2.lock_row(us, transaction_2), basestring)
             transaction_1.commit()
             transaction_1 = pd.DBTransactionDefault(connection_data=self._dconnection)
-            self.assertIsNone(t2.lock_row(us, transaction_2), 'lock failed')
+            assert t2.lock_row(us, transaction_2) is None
             transaction_1.rollback()
             transaction_2.commit()
         finally:
@@ -2303,21 +2299,14 @@ class DBDataDefault(_DBTest):
         row2 = v2.fetchone()
         key2 = row2[0]
         v2.close()
-        transaction = \
-            pd.DBTransactionDefault(connection_data=self._dconnection)
-        transaction_2 = \
-            pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction = pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
         try:
-            result = v.lock_row(key, transaction=transaction)
-            self.assertIsNone(result, 'lock failed')
-            result = v.lock_row(key, transaction=transaction_2)
-            self.assertIsInstance(result, str, 'locked record locked')
-            result = v.lock_row(key3, transaction=transaction_2)
-            self.assertIsNone(result, 'additional row locking failed')
-            result = v2.lock_row(key2, transaction=transaction)
-            self.assertIsNone(result, 'lock failed')
-            result = v2.lock_row(key2, transaction=transaction_2)
-            self.assertIsNone(result, 'unlockable view locked')
+            assert v.lock_row(key, transaction=transaction) is None
+            assert isinstance(v.lock_row(key, transaction=transaction_2), basestring)
+            assert v.lock_row(key3, transaction=transaction_2) is None
+            assert v2.lock_row(key2, transaction=transaction) is None
+            assert v2.lock_row(key2, transaction=transaction_2) is None
         finally:
             for t in transaction, transaction_2:
                 try:
