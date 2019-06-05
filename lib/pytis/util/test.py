@@ -184,6 +184,7 @@ class ListUtils(unittest.TestCase):
         self.longMessage = True
         assert util.remove_duplicates([]) == []
         assert util.remove_duplicates([1, 1]) == [1]
+        assert set(util.remove_duplicates(['a', 1, None, 'a'])) == set(['a', 1, None])
         assert sorted(util.remove_duplicates([2, 2, 1, 3, 1, 2])) == [1, 2, 3]
 
     def test_flatten(self):
