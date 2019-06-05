@@ -4739,7 +4739,7 @@ class DbAttachmentStorage(AttachmentStorage):
                 stream = io.BytesIO()
                 resized_image = self._resized_image(image, size)
                 image.save(stream, image.format)
-                buffer_value = buffer(stream.getvalue())
+                buffer_value = stream.getvalue()
                 width, height = resized_image.size
             else:
                 buffer_value, width, height = None, None, None

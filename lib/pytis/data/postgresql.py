@@ -217,9 +217,11 @@ class _Query(object):
     def format(self):
         query, args = self.query()
         for k, v in args.items():
-            if isinstance(v, basestring):
+            if ((sys.version_info[0] == 2 and isinstance(v, basestring) or
+                 sys.version_info[0] > 2 and isinstance(v, str))):
                 args[k] = "'" + v + "'"
-            elif isinstance(v, buffer):
+            elif (sys.version_info[0] == 2 and isinstance(v, buffer) or
+                  sys.version_info[0] > 2 and isinstance(v, bytes)):
                 args[k] = '<binary_data>'
         return query % args
 

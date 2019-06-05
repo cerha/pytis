@@ -46,6 +46,7 @@ import string
 import io
 import _thread
 import time
+import sys
 
 from pytis.util import (
     Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError,
@@ -2340,7 +2341,8 @@ class Binary(Limited):
         """
 
         def __new__(cls, data, **kwargs):
-            if isinstance(data, (str, bytes, buffer)):
+            if ((sys.version_info[0] == 2 and isinstance(data, (str, bytes, buffer)) or
+                 sys.version_info[0] > 2 and isinstance(data, (bytes, memoryview)))):
                 pass
             elif hasattr(data, 'read') and callable(data.read):
                 # TODO: Make sure the file was opened in binary mode?  Make a conversion if not?
@@ -2389,7 +2391,7 @@ class Binary(Limited):
                 return super(Binary.Data, self).__repr__()
 
         def buffer(self):
-            """Return the binary data as a Python bytes instance."""
+            """Deprecated! The instance itself is a bytes instance now."""
             return buffer(self)
 
         def filename(self):

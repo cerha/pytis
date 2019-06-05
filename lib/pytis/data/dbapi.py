@@ -161,11 +161,13 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if hasattr(self, '_sql_logger') and self._sql_logger is not None:
                 if query_args:
                     def escape(arg):
-                        if isinstance(arg, basestring):
+                        if ((sys.version_info[0] == 2 and isinstance(arg, basestring) or
+                             sys.version_info[0] > 2 and isinstance(arg, str))):
                             result = "'%s'" % (arg.replace('\x00', '\\0').replace("'", "''"),)
                             if not standard_strings:
                                 result = result.replace('\\', '\\\\')
-                        elif isinstance(arg, buffer):
+                        elif (sys.version_info[0] == 2 and isinstance(arg, buffer) or
+                              sys.version_info[0] > 2 and isinstance(arg, bytes)):
                             result = '<binary_data>'
                         else:
                             result = arg
