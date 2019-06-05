@@ -3704,7 +3704,8 @@ class SQLPyFunction(SQLFunctional):
         else:
             def reindent(line):
                 return line[-indentation:]
-        lines = [unistr(l.rstrip(), 'utf-8') for l in lines]
+        if sys.version_info[0] == 2:
+            lines = [unistr(l.rstrip(), 'utf-8') for l in lines]
         return [reindent(l) for l in lines if l.strip()]
 
 

@@ -34,6 +34,7 @@ import datetime
 import inspect
 import select
 import time
+import sys
 
 import psycopg2 as dbapi
 import psycopg2.extensions
@@ -298,7 +299,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     if isinstance(col, psycopg2.extras.Range):
                         col = Range.Range(col.lower, col.upper,
                                           lower_inc=col.lower_inc, upper_inc=col.upper_inc)
-                    elif isinstance(col, str):
+                    elif sys.version_info[0] == 2 and isinstance(col, str):
                         col = unistr(col, 'utf-8')
                     row_data.append(col)
                 data.append(row_data)

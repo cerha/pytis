@@ -39,6 +39,7 @@ import wx.adv
 import datetime
 import cgitb
 import os
+import sys
 
 import pytis.data
 import pytis.form
@@ -906,7 +907,7 @@ class BugReport(GenericDialog):
         message += pytis.util.exception_info(self._einfo)
 
         def header(value):
-            if isinstance(value, basestring):
+            if sys.version_info[0] == 2 and isinstance(value, basestring):
                 try:
                     unistr(value, 'us-ascii')
                 except Exception:

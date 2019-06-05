@@ -117,7 +117,7 @@ class SimpleEmail(object):
 
     def create_headers(self):
         def get_header(header):
-            if isinstance(header, str):
+            if sys.version_info[0] == 2 and isinstance(header, str):
                 # Not unicode
                 try:
                     unistr(header, self.charset).encode('ascii')

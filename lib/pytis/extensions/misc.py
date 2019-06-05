@@ -31,6 +31,7 @@ from future import standard_library
 
 import os
 import re
+import sys
 
 import pytis.data
 from pytis.util import translations, ProgramError
@@ -111,7 +112,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='UTF-8',
     assert isinstance(msg, basestring), msg
 
     def get_utf8_argument(arg):
-        if isinstance(arg, str):
+        if sys.version_info[0] == 2 and isinstance(arg, str):
             try:
                 arg = unistr(arg, charset)
             except Exception:
