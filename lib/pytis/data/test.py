@@ -27,6 +27,7 @@ import datetime
 import decimal
 import time
 import io
+import sys
 
 import pytest
 import unittest
@@ -513,13 +514,16 @@ class Binary(_TypeCheck):
     _test_instance = pd.Binary()
 
     def test_validation(self):
-        self._test_validity(None, '', '')
-        self._test_validity(None, '0123456789', '0123456789')
-        self._test_validity(None, buffer('abc'), 'abc')
+        self._test_validity(None, b'', b'')
+        self._test_validity(None, b'0123456789', b'0123456789')
+        if sys.version_info[0] == 2:
+            self._test_validity(None, buffer('abc'), 'abc')
+        else:
+            self._test_validity(None, memoryview(b'abc'), b'abc')
         self._test_validity(None, open(__file__), open(__file__).read())
         self._test_validity(pd.Binary(maxlen=300), open(__file__), None)
-        self._test_validity(pd.Binary(maxlen=300), 400 * 'x', None)
-        self._test_validity(pd.Binary(maxlen=300), 300 * 'x', bytes(300 * 'x'))
+        self._test_validity(pd.Binary(maxlen=300), 400 * b'x', None)
+        self._test_validity(pd.Binary(maxlen=300), 300 * b'x', 300 * b'x')
 
     def test_typeerror(self):
         self.assertRaises(TypeError, lambda: pd.Value(pd.Binary(), u'abc'))
@@ -1992,22 +1996,22 @@ class DBDataDefault(_DBTest):
         assert error is None
         assert isinstance(data1.value(), pd.Binary.Buffer)
         assert data1.value() == data
-        revdata = reversed(data)
+        revdata = bytes(reversed(range(256)))
         key = pd.ival(1)
         row1 = pd.Row([('id', key,), ('data', data1,)])
         result, success = self.dbin.insert(row1)
         assert success
-        assert str(result[1].value()) == str(data1.value())
-        assert str(self.dbin.row(key)[1].value()) == str(data1.value())
-        data2, error = t.validate(buffer(''.join(revdata)))
+        assert result[1].value() == data1.value()
+        assert self.dbin.row(key)[1].value() == data1.value()
+        data2, error = t.validate(revdata)
         assert error is None
         assert isinstance(data2.value(), pd.Binary.Buffer)
         row2 = pd.Row([('id', key,), ('data', data2,)])
         result, succes = self.dbin.update(key, row2)
         assert success
-        assert str(result[1].value()) == str(data2.value())
-        result = str(self.dbin.row(key)[1].value())
-        assert str(result) == str(data2.value())
+        assert result[1].value() == data2.value()
+        result = self.dbin.row(key)[1].value()
+        assert result == data2.value()
         assert self.dbin.delete(key) == 1
 
     def test_full_text_select(self):
