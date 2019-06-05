@@ -1520,10 +1520,9 @@ class DBDataDefault(_DBTest):
         # row data
         row = []
         for c, v in zip(self.data.columns(), self.NEWROW):
-            v, e = c.type().validate(v)
-            if e is not None:
-                raise e
-            row.append((c.id(), v))
+            value, error = c.type().validate(v)
+            assert error is None, (c.id(), c.type(), v, error)
+            row.append((c.id(), value))
         self.newrow = pd.Row(row)
 
     def tearDown(self):
