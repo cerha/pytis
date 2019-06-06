@@ -2856,6 +2856,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         self._validity_condition = validity_condition
         self._change_callbacks = []
         self._connection_data = connection_data
+        self._completed = False
 
     def __str__(self):
         factory = self._data_factory
@@ -2863,7 +2864,12 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
              isinstance(factory._args[0], (tuple, list)) and
              isinstance(factory._args[0][0], pytis.data.DBColumnBinding))):
             factory = factory._args[0][0].table()
-        return '<%s %s %s>' % (self.__class__.__name__, factory, self._value_column,)
+        # Avoid calling _complete() just because of stringification, such as in logging.
+        if self._completed:
+            value_column = self._value_column
+        else:
+            value_column = self._value_column_
+        return '<%s %s %s>' % (self.__class__.__name__, factory, value_column)
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -2898,6 +2904,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 c = data.find_column(self._validity_column)
                 assert c, ('Non-existent validity column', self._validity_column)
                 assert isinstance(c.type(), Boolean), ('Invalid validity column type', c)
+        self._completed = True
 
     def _condition(self, condition=None):
         if self._validity_condition is not None:
