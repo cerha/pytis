@@ -1754,10 +1754,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
             if e.exception():
-                try:
-                    message += '\n' + str(e.exception())
-                except UnicodeDecodeError:
-                    message += '\n' + str(e.exception()).decode('iso-8859-2')
+                message += '\n' + str(e.exception())
             if quiet:
                 return FAILURE
             if in_transaction:
