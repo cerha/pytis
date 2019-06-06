@@ -2489,6 +2489,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             provider.
 
         """
+        if sys.version_info[0] == 2 and isinstance(html, unistr):
+            html = html.encode('utf-8')
         self._resource_provider = resource_provider
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
@@ -2518,8 +2520,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)
-        self.load_html(html.encode('utf-8'), base_uri=base_uri,
-                       resource_provider=node.resource_provider())
+        self.load_html(html, base_uri=base_uri, resource_provider=node.resource_provider())
 
 
 class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
@@ -3258,8 +3259,6 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             node = pytis.util.parse_lcg_text(content, resources=resources)
             browser.load_content(node)
         elif format == TextFormat.HTML:
-            if isinstance(content, unistr):
-                content = content.encode('utf-8')
             if '<html' not in content[:100].lower():
                 content = ('<html>'
                            '<head>'

@@ -111,26 +111,25 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='UTF-8',
     assert isinstance(subject, basestring), subject
     assert isinstance(msg, basestring), msg
 
-    def get_utf8_argument(arg):
+    if key is not None:
+        # We will create GPG encrypted email
+        from pytis.extensions.email_ import GPGEmail as Email
+        kwargs = dict(key=key)
+    else:
+        # We will create simple text/html email
+        from pytis.extensions.email_ import SimpleEmail as Email
+        kwargs = dict()
+
+    def x(arg):
         if sys.version_info[0] == 2 and isinstance(arg, str):
             try:
                 arg = unistr(arg, charset)
             except Exception:
                 raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset,))
-        return arg.encode('UTF-8')
-    # Převedení na UTF-8
-    to = get_utf8_argument(to)
-    address = get_utf8_argument(address)
-    subject = get_utf8_argument(subject)
-    msg = get_utf8_argument(msg)
-    if key is not None:
-        # We will create GPG encrypted email
-        from pytis.extensions.email_ import GPGEmail
-        mail = GPGEmail(to, address, subject, msg, html=html, key=key, charset='UTF-8')
-    else:
-        # We will create simple text/html email
-        from pytis.extensions.email_ import SimpleEmail
-        mail = SimpleEmail(to, address, subject, msg, html=html, charset='UTF-8')
+            arg = arg.encode('UTF-8')
+        return arg
+
+    mail = Email(x(to), x(address), x(subject), x(msg), html=html, charset='UTF-8', **kwargs)
     result = mail.send()
     if not result:
         # Sending email failed -- return an error message

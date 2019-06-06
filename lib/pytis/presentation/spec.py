@@ -4555,17 +4555,22 @@ class HttpAttachmentStorage(AttachmentStorage):
         import mimetools
         import json
         boundary = mimetools.choose_boundary()
-        body = ['--' + boundary,
-                'MIME-Version: 1.0',
-                'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
-                'Content-Transfer-Encoding: base64',
-                'Content-Type: application/octet-stream',
-                '',
-                data.read()]
-        body.extend(['--' + boundary,
-                     'Content-Disposition: form-data; name="values"', '', json.dumps(values)])
-        body.extend(('--' + boundary + '--', ''))
-        self._post_data(self._uri, '\r\n'.join(body),
+        body = [
+            b'--' + boundary,
+            b'MIME-Version: 1.0',
+            b'Content-Disposition: file; name="data"; filename="' + filename.encode('utf-8') + b'"',
+            b'Content-Transfer-Encoding: base64',
+            b'Content-Type: application/octet-stream',
+            b'',
+            data.read(),
+            b'--' + boundary,
+            b'Content-Disposition: form-data; name="values"',
+            b'',
+            json.dumps(values).encode('utf-8'),
+            b'--' + boundary + b'--',
+            '',
+        ]
+        self._post_data(self._uri, b'\r\n'.join(body),
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
 
     def update(self, filename, values, transaction=None):

@@ -499,9 +499,10 @@ class Application(wiking.Application):
             hash_value = user_password
             encode = 'hex'
         h = hashlib.new(hash_alg)
-        if isinstance(password, unistr):
+        if isinstance(password, unistr):  # Just change to 'str' when Python 2 not needed.
             # Passwords in the database are explicitly encoded to utf-8 by the
             # pytis.data.Password type (on validation).
+            # Note that h.update() only accepts bytes in Python 3, but str and unicode in Python 2.
             password = password.encode('utf-8')
         h.update(password)
         if encode == "base64":

@@ -906,9 +906,28 @@ class BugReport(GenericDialog):
             message = message.strip() + "\n\n"
         message += pytis.util.exception_info(self._einfo)
         msg = Message()
-        msg['From'] = Header(addr)
-        msg['To'] = Header(to)
-        msg['Subject'] = Header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
+
+        def header(value):
+            # TODO: This duplicates the code in pytis.extensions.email_.  We should
+            # use the same class here (probably moving it to util or so...).
+            if ((sys.version_info[0] == 2 and isinstance(value, str) or
+                 sys.version_info[0] > 2 and isinstance(value, bytes))):
+                charset = self.charset
+                if sys.version_info[0] == 2:
+                    value = unicode(value, charset)
+                else:
+                    value = str(value, charset)
+            else:
+                charset = 'utf-8'
+            try:
+                return value.encode('ascii')
+            except UnicodeEncodeError:
+                return Header(value.encode(charset), charset)
+
+
+        msg['From'] = header(addr)
+        msg['To'] = header(to)
+        msg['Subject'] = header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
         msg['Date'] = email.utils.formatdate()
         msg['Message-ID'] = email.utils.make_msgid('pytis_bugs')
         msg.set_payload(message, 'utf-8')

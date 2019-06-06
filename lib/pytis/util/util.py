@@ -1282,9 +1282,9 @@ def ipython():
 
 
 def deepstr(obj):
-    """Return unicode form of 'obj'.
+    """Return a string form of 'obj'.
 
-    If 'obj' is a sequence, apply the function on it recursively.
+    If 'obj' is a sequence, apply the function on it recursively.  As opposed to Python's str(), this function applies
 
     The function is intended to be primarily used in logging, for various
     purposes.
@@ -1299,15 +1299,18 @@ def deepstr(obj):
         transformed = '"%s"' % (obj.replace('"', '\\"'),)
     else:
         transformed = obj
-    try:
-        result = unistr(transformed)
-    except UnicodeEncodeError:
-        result = transformed.encode('unicode_escape')
-    except Exception:
+    if sys.version_info[0] == 2:
         try:
-            result = unistr(repr(transformed))
+            result = unistr(transformed)
+        except UnicodeEncodeError:
+            result = transformed.encode('unicode_escape')
         except Exception:
-            result = '<<unicode conversion error>>'
+            try:
+                result = unistr(repr(transformed))
+            except Exception:
+                result = '<<unicode conversion error>>'
+    else:
+        result = str(transformed)
     return result
 
 
@@ -1504,7 +1507,9 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     exporter = Exporter(inlinestyles=True)
     context = exporter.context(node, None)
     html = exporter.export(context)
-    return html.encode('utf-8')
+    if sys.version_info[0] == 2:
+        html = html.encode('utf-8')
+    return html
 
 
 def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=3):

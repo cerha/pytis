@@ -124,7 +124,7 @@ def run():
                         ('computer', f.computer()),
                     )
                     attributes = ' '.join('%s=%s' % (k, v) for k, v in attr if v is not None)
-                    print(OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes)).encode('utf-8'))
+                    print(OBJID_REGEX.sub('', '%s.%s %s' % (name, fid, attributes)))
                 print()
             except Exception as e:
                 if args.exit_on_error:

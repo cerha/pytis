@@ -116,40 +116,28 @@ class SimpleEmail(object):
             return to + bcc
 
     def create_headers(self):
-        def get_header(header):
-            if sys.version_info[0] == 2 and isinstance(header, str):
-                # Not unicode
-                try:
-                    unistr(header, self.charset).encode('ascii')
-                    make_header = False
-                except UnicodeEncodeError:
-                    make_header = True
+        def header(value):
+            if ((sys.version_info[0] == 2 and isinstance(value, str) or
+                 sys.version_info[0] > 2 and isinstance(value, bytes))):
                 charset = self.charset
+                if sys.version_info[0] == 2:
+                    value = unicode(value, charset)
+                else:
+                    value = str(value, charset)
             else:
-                # Unicode
-                try:
-                    header = header.encode('ascii')
-                    make_header = False
-                except UnicodeEncodeError:
-                    header = header.encode('UTF-8')
-                    make_header = True
-                    charset = 'UTF-8'
-            if make_header:
-                return Header(header, charset)
-            else:
-                return header
-        from_ = get_header(self.from_)
-        to = get_header(self._flatten_for_header(self.to))
-        subject = get_header(self.subject)
-        date = email.utils.formatdate(localtime=1)
-        self.msg['From'] = from_
-        self.msg['To'] = to
-        self.msg['Subject'] = subject
-        self.msg['Date'] = date
+                charset = 'utf-8'
+            try:
+                return value.encode('ascii')
+            except UnicodeEncodeError:
+                return Header(value.encode(charset), charset)
+
+        self.msg['From'] = header(self.from_)
+        self.msg['To'] = header(self._flatten_for_header(self.to))
+        self.msg['Subject'] = header(self.subject)
+        self.msg['Date'] = email.utils.formatdate(localtime=1)
         if self.replyto:
-            self.msg['Reply-to'] = get_header(self.replyto)
-            # replyto = get_header(self.replyto)
-            # self.msg.add_header('reply-to', replyto)
+            self.msg['Reply-to'] = header(self.replyto)
+            # self.msg.add_header('reply-to', header(self.replyto))
 
     def get_content_text(self, data, html=False, charset=None):
         if not charset:

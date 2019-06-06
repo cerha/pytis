@@ -287,7 +287,7 @@ class SyslogLogger(Logger):
             priority = priority | self._facility
         while formatted:
             msg = formatted[:self._MAX_MESSAGE_LENGTH]
-            if isinstance(msg, unistr):
+            if sys.version_info[0] == 2 and isinstance(msg, unistr):
                 msg = msg.encode('utf-8')
             syslog.syslog(priority, msg)
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
