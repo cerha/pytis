@@ -1063,7 +1063,8 @@ class Float(Number):
             if digits is not None:
                 with decimal.localcontext() as context:
                     context.prec = len(str(value)) if digits is True else digits
-                    context.rounding = rounding
+                    if rounding:
+                        context.rounding = rounding
                     if isinstance(value, float):
                         # Round the value -- any better way?
                         str_value = ('%%.%dg' % (context.prec,)) % (value,)
@@ -1104,7 +1105,8 @@ class Float(Number):
                 else:
                     with decimal.localcontext() as context:
                         context.prec = 100
-                        context.rounding = rounding
+                        if rounding:
+                            context.rounding = rounding
                         quantizer = decimal.Decimal('1.' + '0' * precision)
                         value = decimal.Decimal(value).quantize(quantizer)
             if self._digits is None and self._precision is None:
