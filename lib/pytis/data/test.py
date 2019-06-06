@@ -3413,21 +3413,17 @@ class AccessRightsTest(_DBBaseTest):
                 pass
         _DBBaseTest.tearDown(self)
 
+    def _permitted_groups(self, permission, column):
+        return sorted(self._access_rights.permitted_groups(permission, column))
+
     def test_permitted_groups(self):
         P = pd.Permission
-        a = self._access_rights
-        groups = a.permitted_groups(P.VIEW, 'column1')
-        self.assertEqual(groups, ['group1', 'group2'], ('Invalid groups', groups,))
-        groups = a.permitted_groups(P.INSERT, 'column2')
-        self.assertEqual(groups, [], ('Invalid groups', groups,))
-        groups = a.permitted_groups(P.INSERT, 'column2')
-        self.assertEqual(groups, [], ('Invalid groups', groups,))
-        groups = a.permitted_groups(P.UPDATE, 'column1')
-        self.assertEqual(groups, ['group1', 'group3'], ('Invalid groups', groups,))
-        groups = a.permitted_groups(P.UPDATE, None)
-        self.assertEqual(groups, ['group1', 'group2', 'group3'], ('Invalid groups', groups,))
-        groups = a.permitted_groups(P.INSERT, 'column4')
-        self.assertEqual(groups, ['group1', 'group2'], ('Invalid groups', groups,))
+        assert self._permitted_groups(P.VIEW, 'column1') == ['group1', 'group2']
+        assert self._permitted_groups(P.INSERT, 'column2') == []
+        assert self._permitted_groups(P.INSERT, 'column2') == []
+        assert self._permitted_groups(P.UPDATE, 'column1') == ['group1', 'group3']
+        assert self._permitted_groups(P.UPDATE, None) == ['group1', 'group2', 'group3']
+        assert self._permitted_groups(P.INSERT, 'column4') == ['group1', 'group2']
 
     def test_permitted(self):
         P = pd.Permission
