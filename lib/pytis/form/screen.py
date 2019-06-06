@@ -409,10 +409,10 @@ class WxKey(object):
             return self._cache[key]
         except KeyError:
             pass
-        if string.find(key, 'Alt-') == 0:
+        if key.find('Alt-') == 0:
             modifier = self._M_ALT
             skey = key[len('Alt-'):]
-        elif string.find(key, 'Ctrl-') == 0:
+        elif key.find('Ctrl-') == 0:
             modifier = self._M_CTRL
             skey = key[len('Ctrl-'):]
         else:
@@ -421,7 +421,7 @@ class WxKey(object):
         try:
             code = self._TRANS_TABLE[skey]
         except KeyError:
-            code = ord(string.upper(skey))
+            code = ord(skey.upper())
         if modifier == self._M_CTRL:
             if len(skey) == 1 and skey in string.letters:
                 code = 1 + (code - ord('A'))
@@ -1180,7 +1180,7 @@ class MItem(_TitledMenuObject):
             class_name, form_name = components[1], components[2]
             arguments = dict(form_class=find_symbol(class_name), name=form_name)
             if components[3]:
-                for extra in string.split(components[3], '&'):
+                for extra in components[3].split('&'):
                     if extra[:len('binding=')] == 'binding=':
                         arguments['binding'] = extra[len('binding='):]
                         break

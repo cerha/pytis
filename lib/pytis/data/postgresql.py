@@ -1976,7 +1976,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for old, new in (('*', '%'), ('?', '_')):
                 i = -1
                 while True:
-                    i = string.find(spec, old, i + 1)
+                    i = spec.find(old, i + 1)
                     if i < 0:
                         break
                     j = i - 1
@@ -3619,8 +3619,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             arg_query = _Query("select proargtypes from pg_proc where proname=%(name)s",
                                dict(name=sval(name)))
             data = self._pg_query(arg_query, outside_transaction=True)
-            arguments = ', '.join(['%%(__farg%d)s' % (i,)
-                                   for i in range(len(string.split(data[0][0])))])
+            arguments = ', '.join(['%%(__farg%d)s' % (i,) for i in range(len(data[0][0].split()))])
         else:
             def arg_spec(arg):
                 return '%%s' if isinstance(arg, Binary) else '%s'

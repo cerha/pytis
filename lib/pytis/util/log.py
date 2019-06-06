@@ -53,7 +53,6 @@ import inspect
 import os
 import re
 import socket
-import string
 import sys
 import time
 
@@ -97,7 +96,7 @@ class Logger(object):
             for i in range(len(class_)):
                 c = class_[i]
                 if isinstance(c, basestring):
-                    pos = string.rfind(c, '.')
+                    pos = c.rfind('.')
                     if pos:
                         mod, cls = c[:pos], c[pos + 1:]
                         imp = __import__(mod, None, None, [cls])
@@ -169,7 +168,7 @@ class Logger(object):
             return re.sub(r'[^\x01-\x7F]', '?', text)
         if data is not None:
             printable = deepstr(data)
-            datalines = [u'%s%s' % (prefix, l) for l in string.split(printable, '\n')]
+            datalines = [u'%s%s' % (prefix, l) for l in printable.split('\n')]
             n = len(datalines)
             if n <= 1:
                 if fmessage and fmessage[-1] == ':':

@@ -2206,7 +2206,7 @@ def init_access_rights(connection_data):
     def process(row):
         shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
         if columns_string:
-            columns = string.split(columns_string, ' ')
+            columns = columns_string.split(' ')
         else:
             columns = [None]
         rights = [r.upper() for r in rights_string.split(' ') if r != 'show']

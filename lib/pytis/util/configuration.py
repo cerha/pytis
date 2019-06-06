@@ -30,7 +30,6 @@ import getopt
 import imp
 import os
 import stat
-import string
 import sys
 import time
 
@@ -1370,7 +1369,7 @@ class Configuration(object):
                 doc = option.documentation()
                 if doc:
                     for line in wrap(doc, 77):
-                        stream.write('# %s\n' % string.strip(line))
+                        stream.write('# %s\n' % line.strip())
                 value = option.default_string()
                 indent = ' ' * (len(option.name()) + 3)
                 stream.write('#%s = %s\n\n' % (option.name(), value.replace("\n", "\n#" + indent)))

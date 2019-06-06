@@ -59,7 +59,6 @@ import getopt
 import inspect
 import operator
 import re
-import string
 import sys
 import imp
 import os
@@ -636,7 +635,7 @@ class _GsqlSpec(object):
             raw = raw[match.end():].lstrip()
             identifier = match.group(2)
             if identifier.endswith('_seq'):
-                identifier = '_'.join(string.split('_')[:-2])
+                identifier = '_'.join(identifier.split('_')[:-2])
             ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror',
                                'generate_series', 'dblink', 'date_trunc', 'diff', 'avg',
                                'case', 'current_date', 'insert', 'update', 'delete',
@@ -1237,7 +1236,7 @@ class _GsqlTable(_GsqlSpec):
         return "CREATE INDEX %s ON %s%s (%s);\n" % (name, self._name, method, columns_string,)
 
     def _format_rule(self, action):
-        laction = string.lower(action)
+        laction = action.lower()
         body = self.__dict__['_on_' + laction]
         if body is None:
             result = ''
@@ -1453,15 +1452,11 @@ class _GsqlTable(_GsqlSpec):
         columns = list(copy.copy(self._columns))
 
         def column_changed(column, dbcolumn):
-            def normalize(s):
-                s = string.lower(string.strip(s))
-                s = re.sub('  +', ' ', s)
-                return s
             cname = column.name
             primaryp = isinstance(column, PrimaryColumn)
             # type
             default = column.default
-            constraints = map(normalize, column.constraints)
+            constraints = [re.sub('  +', ' ', s.strip().lower()) for s in column.constraints]
             ct = column.type
             if isinstance(ct, basestring):
                 TYPE_ALIASES = {'int2': 'smallint'}
@@ -3375,7 +3370,7 @@ class _GsqlFunction(_GsqlSpec):
                         (f, self._name))
                 skip = 1
                 if f.__doc__ is not None:
-                    skip = skip + len(string.split(f.__doc__, '\n'))
+                    skip = skip + len(f.__doc__.split('\n'))
                 lines = [l for l in lines if l.strip() != '']
                 return _gsql_escape(''.join(lines[skip:]))
             source_list = map(get_source, tuple(self._use_functions) + (body,))
@@ -3570,7 +3565,7 @@ class _GsqlFunction(_GsqlSpec):
                 required_indentation = 4
                 skip = 1
                 if f.__doc__ is not None:
-                    skip = skip + len(string.split(f.__doc__, '\n'))
+                    skip = skip + len(f.__doc__.split('\n'))
                 if main:
                     match = re.match('( *)def ( *)([^(]*)', lines[0])
                 else:
@@ -4017,7 +4012,7 @@ class _GsqlDefs(collections.UserDict):
             try:
                 connection = libpq.PQconnectdb(connection_string)
             except libpq.DatabaseError as e:
-                if string.find(e.args[0], 'password') >= 0:
+                if e.args[0].find('password') >= 0:
                     import getpass
                     stdout = sys.stdout
                     sys.stdout = sys.stderr
@@ -4187,7 +4182,7 @@ import pytis.data.gensqlalchemy as sql
             if _GsqlConfig.convert_schemas:
                 init_preamble += '\n'
                 for name, s_tuple in _GsqlConfig.convert_schemas:
-                    converted_s_tuple = tuple([tuple(string.split(s, ',')) for s in s_tuple])
+                    converted_s_tuple = tuple([tuple(s.split(',')) for s in s_tuple])
                     init_preamble += '%s = %s\n' % (name, repr(converted_s_tuple),)
             if application == 'pytis':
                 init_preamble += """
@@ -4646,7 +4641,7 @@ def _go(argv=None):
 
     def extract_option(odef):
         option = odef[0]
-        option = string.strip(option)
+        option = option.strip()
         pos = option.find('=')
         if pos >= 0:
             option = option[:pos + 1]

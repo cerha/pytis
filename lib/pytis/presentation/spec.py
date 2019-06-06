@@ -5429,7 +5429,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             shortname, rights_string, columns_string = \
                 row[0].value(), row[1].value(), row[2].value()
             if columns_string:
-                columns = string.split(columns_string, ' ')
+                columns = columns_string.split(' ')
             else:
                 # This trick sets default permissions without adding them to
                 # column specific permissions in AccessRights

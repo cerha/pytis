@@ -5,9 +5,12 @@ from past.builtins import long
 from builtins import range
 
 import sqlalchemy
-from pytis.data.dbdefs import and_, or_, not_, sval, func
+import string
+
 import pytis.data.gensqlalchemy as sql
+from pytis.data.dbdefs import and_, or_, not_, sval, func
 import pytis.data
+
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
     default_access_rights, dmp_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
@@ -1341,7 +1344,6 @@ class PytisActionRightsFoldable(Base_PyFunction):
         shortname, column = args
         if column is None:
             column = 'roleid'
-        import string
         tree = {}
         if shortname:
             condition = "shortname='%s'" % (shortname,)
