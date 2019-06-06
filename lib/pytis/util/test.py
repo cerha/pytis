@@ -177,6 +177,17 @@ class MiscFunctions(unittest.TestCase):
         self.assertFalse(util.is_sequence(self), 'non-sequence as sequence')
         self.assertFalse(util.is_sequence({}), 'non-sequence as sequence')
 
+    def test_deepstr(self):
+        class X(object):
+            def __str__(self):
+                return '<instance of "%s">' % self.__class__.__name__
+        assert util.deepstr(123) == '123'
+        assert util.deepstr('"čuně"') == '"\\"čuně\\""'
+        assert util.deepstr((2, 1)) == '(2, 1,)'
+        assert util.deepstr([2, 'čuně']) == '[2, "čuně"]'
+        assert util.deepstr(X()) == '<instance of "X">'
+        assert util.deepstr([1, X(), None]) == '[1, <instance of "X">, None]'
+
 
 class ListUtils(unittest.TestCase):
 
