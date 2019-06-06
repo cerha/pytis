@@ -24,6 +24,7 @@ definice všech dostupných příkazů aplikace je potom soustředěna centráln
 modulu 'commands_'.
 
 """
+from future.utils import python_2_unicode_compatible
 
 from past.builtins import basestring
 import pytis.util
@@ -187,6 +188,7 @@ class CommandHandler(object):
         return CommandHandler._command_running, CommandHandler._command_counter.current()
 
 
+@python_2_unicode_compatible
 class Command(object):
     """Reprezentace obecného příkazu uživatelského rozhraní.
 
@@ -249,6 +251,19 @@ class Command(object):
         setattr(handler, 'COMMAND_' + name, self)
         Command._commands[name] = self
 
+    def __str__(self):
+        return '<Command: %s>' % (self._id,)
+
+    def __eq__(self, other):
+        if pytis.util.sameclass(self, other):
+            return self._id == other._id
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
+
     def __call__(self, **kwargs):
         """Umožňuje pohodlně vytvořit definici příkazu a jeho argumentů.
 
@@ -305,20 +320,6 @@ class Command(object):
             from .application import message
             message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
             return False
-
-    def __eq__(self, other):
-        if pytis.util.sameclass(self, other):
-            return self._id == other._id
-        else:
-            return NotImplemented
-
-    def __ne__(self, other):
-        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
-        return not self == other
-
-    def __str__(self):
-        return '<Command: %s>' % self._id
-
 
 class UICommand(object):
     """User interface command specification.

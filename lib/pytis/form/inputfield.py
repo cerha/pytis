@@ -28,6 +28,7 @@ The actual class representing each field is determined by its specification and 
 """
 from past.builtins import basestring
 from builtins import range
+from future.utils import python_2_unicode_compatible
 
 import io
 import datetime
@@ -196,6 +197,7 @@ class _Completer(wx.PopupWindow):
             listctrl.EnsureVisible(0)
 
 
+@python_2_unicode_compatible
 class InputField(KeyHandler, CommandHandler):
     """Abstract base class for input fields.
 
@@ -370,6 +372,12 @@ class InputField(KeyHandler, CommandHandler):
         self._set_value(value)
         self._call_on_idle.append(self._update_field_state)
 
+    def __str__(self):
+        try:
+            return "<%s id='%s'>" % (self.__class__.__name__, self.id())
+        except AttributeError:
+            return "<%s (uninitialized)>" % self.__class__.__name__
+
     def _init_attributes(self):
         pass
 
@@ -378,12 +386,6 @@ class InputField(KeyHandler, CommandHandler):
         wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, lambda e: self._on_context_menu(ctrl))
         wx_callback(wx.EVT_NAVIGATION_KEY, ctrl, self._on_navigation(ctrl))
-
-    def __str__(self):
-        try:
-            return "<%s id='%s'>" % (self.__class__.__name__, self.id())
-        except AttributeError:
-            return "<%s (uninitialized)>" % self.__class__.__name__
 
     def _on_navigation(self, widget, skip=False):
         def cb(e):

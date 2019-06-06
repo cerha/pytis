@@ -38,6 +38,7 @@ implementaci.
 """
 from past.builtins import basestring, long
 from builtins import range
+from future.utils import python_2_unicode_compatible
 
 import copy
 import datetime
@@ -86,6 +87,7 @@ DESCENDANT = 'DESCENDANT'
 # Data classes
 
 
+@python_2_unicode_compatible
 class Operator(object):
     """Conditional operator for the 'select()' method.
 
@@ -159,54 +161,6 @@ class Operator(object):
         self._args = args
         self._kwargs = kwargs
 
-    def name(self):
-        """Vrať jméno operátoru zadané v konstruktoru."""
-        return self._name
-
-    def translation(self):
-        """Vrať překlad operátoru zadaný v konstruktoru."""
-        return self._translation
-
-    def args(self):
-        """Vrať tuple argumentů operátoru zadaných v konstruktoru."""
-        return self._args
-
-    def kwargs(self):
-        """Vrať dictionary klíčových argumentů zadaných v konstruktoru."""
-        return self._kwargs
-
-    def logical(self):
-        """Vrať pravdu, právě když se jedná o logický operátor.
-
-        Logické operátory jsou 'AND', 'OR' a 'NOT'.  Ostatní operátory jsou
-        relační.
-
-        """
-        return self._name in ('AND', 'OR', 'NOT')
-
-    def _relaxed_args(self):
-        """Return self._args, with Value instances transformed to ignore their type attributes.
-
-        So the attributes of data type instances don't figure in the result.
-        Only their class is taken into account.  This is necessary to avoid the
-        influence of data types attributes on the results of __eq__ and
-        __hash__.
-
-        """
-        def relax(arg):
-            if isinstance(arg, (Value, WMValue)):
-                cls, value = arg.type().__class__, arg.value()
-                if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
-                    # datetime values can not be compared to None, so we use
-                    # this wrapper class for simplicity.
-                    value = self.ComparableDateTime(value)
-                return (cls, value)
-            elif isinstance(arg, dict):
-                return tuple((k, relax(v)) for k, v in arg.items())
-            else:
-                return arg
-        return [relax(arg) for arg in self._args]
-
     def __str__(self):
         def arg(arg):
             if isinstance(arg, (Value, WMValue)):
@@ -235,6 +189,54 @@ class Operator(object):
         return (hash(self._name) ^
                 hash(tuple(self._relaxed_args())) ^
                 hash(tuple(self._kwargs.items())))
+
+    def _relaxed_args(self):
+        """Return self._args, with Value instances transformed to ignore their type attributes.
+
+        So the attributes of data type instances don't figure in the result.
+        Only their class is taken into account.  This is necessary to avoid the
+        influence of data types attributes on the results of __eq__ and
+        __hash__.
+
+        """
+        def relax(arg):
+            if isinstance(arg, (Value, WMValue)):
+                cls, value = arg.type().__class__, arg.value()
+                if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+                    # datetime values can not be compared to None, so we use
+                    # this wrapper class for simplicity.
+                    value = self.ComparableDateTime(value)
+                return (cls, value)
+            elif isinstance(arg, dict):
+                return tuple((k, relax(v)) for k, v in arg.items())
+            else:
+                return arg
+        return [relax(arg) for arg in self._args]
+
+    def name(self):
+        """Vrať jméno operátoru zadané v konstruktoru."""
+        return self._name
+
+    def translation(self):
+        """Vrať překlad operátoru zadaný v konstruktoru."""
+        return self._translation
+
+    def args(self):
+        """Vrať tuple argumentů operátoru zadaných v konstruktoru."""
+        return self._args
+
+    def kwargs(self):
+        """Vrať dictionary klíčových argumentů zadaných v konstruktoru."""
+        return self._kwargs
+
+    def logical(self):
+        """Vrať pravdu, právě když se jedná o logický operátor.
+
+        Logické operátory jsou 'AND', 'OR' a 'NOT'.  Ostatní operátory jsou
+        relační.
+
+        """
+        return self._name in ('AND', 'OR', 'NOT')
 
 
 class Data(object_2_5):
@@ -1547,6 +1549,7 @@ def reversed_sorting(sorting):
 # Pomocné třídy
 
 
+@python_2_unicode_compatible
 class ColumnSpec(object):
     """Specifikace sloupce tabulkových dat.
 
@@ -1599,6 +1602,7 @@ class ColumnSpec(object):
         return self._type
 
 
+@python_2_unicode_compatible
 class Row(object):
     """Reprezentace jednoho řádku řádkových dat.
 
@@ -1673,9 +1677,8 @@ class Row(object):
                 raise InvalidAccessError('Invalid row value', v)
         self._set_data(state)
 
-    def __unicode__(self):
-        items = [self._data[i][0] + '==' + unistr(item)
-                 for i, item in enumerate(self)]
+    def __str__(self):
+        items = [self._data[i][0] + '=' + unistr(item) for i, item in enumerate(self)]
         return '<Row: %s>' % ', '.join(items)
 
     def __hash__(self):
@@ -1845,6 +1848,7 @@ class Row(object):
                 self[k] = dict[k]
 
 
+@python_2_unicode_compatible
 class FetchBuffer(object):
     """Buffer-cache optimizing data object reads.
 
@@ -1890,6 +1894,29 @@ class FetchBuffer(object):
         self.reset()
         if __debug__:
             log(DEBUG, 'New buffer')
+
+    def __str__(self):
+        buf = self._buffer
+        pointer = self._pointer
+        size = len(buf)
+        if size <= 2:
+            items = buf
+        elif pointer <= 0 or pointer > size:
+            items = (buf[0], '...', buf[-1])
+        elif size == 3:
+            items = buf
+        elif pointer == 1:
+            items = (buf[0], buf[pointer], '...', buf[-1])
+        elif pointer == size - 2:
+            items = (buf[0], '...', buf[pointer], buf[-1])
+        else:
+            items = (buf[0], '...', buf[pointer], '...', buf[-1])
+        return '<FetchBuffer: limit=%d, size=%d, start=%d, pointer=%d%s>' % \
+            (self._limit, len(buf), self._start, self._pointer,
+             ('\n' if items else '') + '\n'.join(items))
+
+    def __len__(self):
+        return len(self._buffer)
 
     def reset(self):
         """Completely reset the buffer."""
@@ -2038,30 +2065,8 @@ class FetchBuffer(object):
         self._pointer = pointer
         return result
 
-    def __len__(self):
-        return len(self._buffer)
 
-    def __str__(self):
-        buf = self._buffer
-        pointer = self._pointer
-        size = len(buf)
-        if size <= 2:
-            items = buf
-        elif pointer <= 0 or pointer > size:
-            items = (buf[0], '...', buf[-1])
-        elif size == 3:
-            items = buf
-        elif pointer == 1:
-            items = (buf[0], buf[pointer], '...', buf[-1])
-        elif pointer == size - 2:
-            items = (buf[0], '...', buf[pointer], buf[-1])
-        else:
-            items = (buf[0], '...', buf[pointer], '...', buf[-1])
-        return '<FetchBuffer: limit=%d, size=%d, start=%d, pointer=%d%s>' % \
-            (self._limit, len(buf), self._start, self._pointer,
-             ('\n' if items else '') + '\n'.join(items))
-
-
+@python_2_unicode_compatible
 class DataFactory(object):
     """Factory na tvorbu datových objektů dle zadané specifikace.
 
@@ -2074,6 +2079,13 @@ class DataFactory(object):
 
     """
     _data_object_cache = None
+
+    @staticmethod
+    def _get_data_object(key):
+        class_, args, kwargs = key
+        kwargs = dict(kwargs)
+        kwargs['full_init'] = False
+        return class_(*args, **kwargs)
 
     def __init__(self, class_, *args, **kwargs):
         """Inicializuj instanci
@@ -2099,6 +2111,9 @@ class DataFactory(object):
         # self._kwargs_hashable = tuple(kwargs.items())
         if DataFactory._data_object_cache is None and class_.cacheable():
             DataFactory._data_object_cache = LimitedCache(DataFactory._get_data_object)
+
+    def __str__(self):
+        return '<%s>' % (self.__class__.__name__,)
 
     def class_(self):
         """Vrať třídu datového objektu."""
@@ -2144,16 +2159,6 @@ class DataFactory(object):
         else:
             result = self._class_(*self._args, **_kwargs)
         return result
-
-    def __str__(self):
-        return '<%s>' % (self.__class__.__name__,)
-
-    def _get_data_object(key):
-        class_, args, kwargs = key
-        kwargs = dict(kwargs)
-        kwargs['full_init'] = False
-        return class_(*args, **kwargs)
-    _get_data_object = staticmethod(_get_data_object)
 
     def access_rights(self):
         return self._kwargs.get('access_rights')

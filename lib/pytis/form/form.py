@@ -28,6 +28,7 @@ jednotlivých tříd.
 """
 from past.builtins import basestring
 from builtins import object
+from future.utils import python_2_unicode_compatible
 
 import copy
 import lcg
@@ -88,6 +89,7 @@ class FormSettings(FormProfile):
     pass
 
 
+@python_2_unicode_compatible
 class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
 
@@ -211,6 +213,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         if full_init:
             self.full_init()
 
+    def __str__(self):
+        return '<%s for "%s">' % (self.__class__.__name__, self._name)
+
+    def __repr__(self):
+        return str(self)
+
     def _full_init(self, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
         import pytis.extensions
@@ -333,12 +341,6 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
                 uicmd.create_toolbar_ctrl(toolbar)
         toolbar.Realize()
         return toolbar
-
-    def __str__(self):
-        return '<%s for "%s">' % (self.__class__.__name__, self._name)
-
-    def __repr__(self):
-        return str(self)
 
     def _form_name(self):
         cls = self.__class__

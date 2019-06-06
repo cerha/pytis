@@ -53,6 +53,7 @@ tabulky.
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
 
 from past.builtins import basestring
+from future.utils import python_2_unicode_compatible
 
 import gc
 import _thread
@@ -344,6 +345,7 @@ class DBConnectionPool(object):
 # Specifikační třídy
 
 
+@python_2_unicode_compatible
 class DBConnection(object):
     """Database connection parameters specification.
 
@@ -410,14 +412,14 @@ class DBConnection(object):
         # Save db communication key to avoid unnecessary db queries
         self._db_key = None
 
+    def __str__(self):
+        options = ["%s='%s'" % item for item in self._options(exclude=('password',)).items()]
+        return "<%s %s>" % (self.__class__.__name__, ", ".join(options))
+
     def _options(self, exclude=()):
         return dict([(option, self.__dict__['_' + option])
                      for option in self._OPTIONS
                      if option not in exclude and self.__dict__['_' + option] is not None])
-
-    def __str__(self):
-        options = ["%s='%s'" % item for item in self._options(exclude=('password',)).items()]
-        return "<%s %s>" % (self.__class__.__name__, ", ".join(options))
 
     def user(self):
         """Vrať databázového uživatele jako string nebo 'None'."""
@@ -562,6 +564,7 @@ class DBBinding(object):
         return self._id
 
 
+@python_2_unicode_compatible
 class DBColumnBinding(DBBinding):
     """Vazba 1-1 tabulkového sloupce na databázový sloupec.
 
@@ -632,6 +635,24 @@ class DBColumnBinding(DBBinding):
         self._kwargs = kwargs
         self._is_hidden = not id
 
+    def __str__(self):
+        return '<DBCB: id=%s, table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>' % \
+            (self._id, self._table, self._column, self._related_to, self._type, self._is_hidden)
+
+    def __eq__(self, other):
+        if sameclass(self, other):
+            return all(getattr(self, attr) == getattr(other, attr) for attr in
+                       ('_table', '_column', '_related_to', '_type', '_is_hidden'))
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+        return not self == other
+
+    def __hash__(self):
+        return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
+
     def table(self):
         """Vrať jméno napojené databázové tabulky jako string."""
         return self._table
@@ -663,24 +684,6 @@ class DBColumnBinding(DBBinding):
     def is_hidden(self):
         """Vrať pravdu, právě když sloupec není přítomen v datové tabulce."""
         return self._is_hidden
-
-    def __str__(self):
-        return ('<DBCB: id=%s, table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>') % \
-               (self._id, self._table, self._column, self._related_to, self._type, self._is_hidden)
-
-    def __eq__(self, other):
-        if sameclass(self, other):
-            return all(getattr(self, attr) == getattr(other, attr) for attr in
-                       ('_table', '_column', '_related_to', '_type', '_is_hidden'))
-        else:
-            return NotImplemented
-
-    def __ne__(self, other):
-        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
-        return not self == other
-
-    def __hash__(self):
-        return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
 
 # Databázové výjimky

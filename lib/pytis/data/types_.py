@@ -37,7 +37,7 @@ instancemi samostatné třídy 'Value'.
 """
 from past.builtins import basestring, long
 from builtins import range
-from future.utils import with_metaclass
+from future.utils import with_metaclass, python_2_unicode_compatible
 
 import datetime
 import decimal
@@ -78,6 +78,7 @@ class _MType(type):
         return self.make(*args, **kwargs)
 
 
+@python_2_unicode_compatible
 class Type(with_metaclass(_MType, object)):
     """Abstract base class for all data type specific classes.
 
@@ -2705,6 +2706,7 @@ class Array(Limited):
 
 # Pomocné třídy
 
+@python_2_unicode_compatible
 class Enumerator(object):
     """Generic interface for enumerations of data type values for integrity constraints.
 
@@ -2765,6 +2767,7 @@ class TransactionalEnumerator(object):
     """
 
 
+@python_2_unicode_compatible
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration passed to the constructor.
 
@@ -2792,6 +2795,7 @@ class FixedEnumerator(Enumerator):
         return self._enumeration
 
 
+@python_2_unicode_compatible
 class DataEnumerator(Enumerator, TransactionalEnumerator):
     """Enumerator retrieving the enumeration values from a data object.
 
@@ -2852,6 +2856,14 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         self._validity_condition = validity_condition
         self._change_callbacks = []
         self._connection_data = connection_data
+
+    def __str__(self):
+        factory = self._data_factory
+        if ((isinstance(factory, pytis.data.DataFactory) and
+             isinstance(factory._args[0], (tuple, list)) and
+             isinstance(factory._args[0][0], pytis.data.DBColumnBinding))):
+            factory = factory._args[0][0].table()
+        return '<%s %s %s>' % (self.__class__.__name__, factory, self._value_column,)
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -2920,14 +2932,6 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                 except Exception:
                     pass
             return row
-
-    def __str__(self):
-        factory = self._data_factory
-        if ((isinstance(factory, pytis.data.DataFactory) and
-             isinstance(factory._args[0], (tuple, list)) and
-             isinstance(factory._args[0][0], pytis.data.DBColumnBinding))):
-            factory = factory._args[0][0].table()
-        return '<%s %s %s>' % (self.__class__.__name__, factory, self._value_column,)
 
     # Enumerator interface
 
@@ -3046,6 +3050,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             return True
 
 
+@python_2_unicode_compatible
 class ValidationError(Exception):
     """Popis chyby při neúspěchu validace v 'Type.validate'.
 
@@ -3073,6 +3078,7 @@ class ValidationError(Exception):
         return self._message
 
 
+@python_2_unicode_compatible
 class _Value(object):
     """Obecná reprezentace hodnoty daného typu.
 
@@ -3105,13 +3111,12 @@ class _Value(object):
         self._type = type
         self._value = state['_value']
 
-    def __unicode__(self):
-        type = self.type()
+    def __str__(self):
+        t = self.type()
         value = unistr(self.value())
-        if isinstance(type, Big) and len(value) > 40:
+        if isinstance(t, Big) and len(value) > 40:
             value = '%s...<<big value>>...' % (value[:10],)
-        return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
-                                            type, value)
+        return '<%s type=%s, value=%s>' % (self.__class__.__name__, t, value)
 
     def __eq__(self, other):
         if not sameclass(self, other):

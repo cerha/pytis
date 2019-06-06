@@ -30,6 +30,7 @@ i třídy, které tyto specifikace následně zpracovávají.
 from past.builtins import basestring
 from builtins import range, str
 from future import standard_library
+from future.utils import python_2_unicode_compatible
 
 import sys
 import copy
@@ -495,6 +496,7 @@ class WxKey(object):
 # Common handlers
 
 
+@python_2_unicode_compatible
 class Keymap(object):
     """Klávesová mapa.
 
@@ -519,6 +521,9 @@ class Keymap(object):
             keymap = dict([(key, copy.copy(keydef))
                            for key, keydef in parent._keymap.items()])
         self._keymap = keymap
+
+    def __str__(self):
+        return '<Keymap: %s>' % (self._keymap,)
 
     def _define_key(self, key, command, args):
         prefix, rest = key[0], key[1:]
@@ -628,9 +633,6 @@ class Keymap(object):
     def keys(self):
         """Vrať seznam všech platných kláves jako řetězců."""
         return self._keymap.keys()
-
-    def __str__(self):
-        return '<Keymap: %s>' % str(self._keymap)
 
 
 class KeyHandler(object):

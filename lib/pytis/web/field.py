@@ -18,6 +18,7 @@
 
 from past.builtins import basestring
 from builtins import range
+from future.utils import python_2_unicode_compatible
 
 import lcg
 import pytis.data as pd
@@ -26,6 +27,8 @@ import pytis.util
 from pytis.presentation import SelectionType, TextFormat, Orientation
 
 _ = pytis.util.translations('pytis-web')
+
+unistr = type(u'')  # Python 2/3 transition hack.
 
 
 class UriType(object):
@@ -589,6 +592,7 @@ class ContentField(MultilineField):
 class HtmlField(MultilineField):
     _HANDLER = 'pytis.HtmlField'
 
+    @python_2_unicode_compatible
     class AcfRule(object):
         """A single ACF rule for CKEditor"""
 
@@ -601,13 +605,14 @@ class HtmlField(MultilineField):
         def __str__(self):
             res = " ".join(self.elements)
             if (self.attributes):
-                res += " [" + ",".join(map(str, self.attributes)) + "]"
+                res += " [" + ",".join(map(unistr, self.attributes)) + "]"
             if (self.styles):
                 res += " {" + ", ".join(self.styles) + "}"
             if (self.classes):
                 res += " (" + ", ".join(self.classes) + ")"
             return res
 
+    @python_2_unicode_compatible
     class AcfRequiredAttribute(object):
         """Required attribute in ACF rule for CKEditor"""
 

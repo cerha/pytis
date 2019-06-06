@@ -24,6 +24,7 @@ not its concrete representation (input widget).
 
 """
 from past.builtins import basestring
+from future.utils import python_2_unicode_compatible
 
 import copy
 
@@ -41,6 +42,7 @@ _ = translations('pytis-data')
 unistr = type(u'')  # Python 2/3 transition hack.
 
 
+@python_2_unicode_compatible
 class PresentedRow(object):
     """A record of presented data.
 
@@ -89,6 +91,7 @@ class PresentedRow(object):
     class ProtectionError(Exception):
         """Exception raised on column protection violations."""
 
+    @python_2_unicode_compatible
     class _Column(object):
 
         class ComputedValue(object):
@@ -270,7 +273,7 @@ class PresentedRow(object):
                 add_secret(column)
         self._set_row(row, reset=True, prefill=prefill)
 
-    def __unicode__(self):
+    def __str__(self):
         if hasattr(self, '_row'):
             def strval(column):
                 if isinstance(column.type, pytis.data.Password):

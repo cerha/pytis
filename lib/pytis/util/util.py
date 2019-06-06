@@ -35,6 +35,7 @@ Tento modul je výjimečný ve dvou směrech:
 """
 from past.builtins import basestring
 from builtins import range
+from future.utils import iteritems, python_2_unicode_compatible
 
 import functools
 import cgitb
@@ -344,6 +345,7 @@ class TemporaryFile(object):
                 pass
 
 
+@python_2_unicode_compatible
 class Stack(object):
     """Obecný zásobník.
 
@@ -546,6 +548,7 @@ class Attribute(object):
         return self._mutable
 
 
+@python_2_unicode_compatible
 class Structure (object):
     """Simple data structures.
 
@@ -557,6 +560,14 @@ class Structure (object):
 
     def __init__(self, _template=None, **kwargs):
         self._init(kwargs, template=_template)
+
+    def __str__(self):
+        result = '<%s:' % (self.__class__.__name__,)
+        for member in self._attributes:
+            name = member.name()
+            result = result + (' %s=%s;' % (name, getattr(self, name)()))
+        result = result + '>'
+        return result
 
     def _init(self, kwargs, nodefault=False, template=None):
         for member in self._attributes:
@@ -586,14 +597,6 @@ class Structure (object):
 
     def _replace_value(self, name, value):
         setattr(self, name, lambda value=value: value)
-
-    def __str__(self):
-        result = '<%s:' % (self.__class__.__name__,)
-        for member in self._attributes:
-            name = member.name()
-            result = result + (' %s=%s;' % (name, str(getattr(self, name)()),))
-        result = result + '>'
-        return result
 
     def copy(self, **kwargs):
         result = copy.copy(self)

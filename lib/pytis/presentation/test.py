@@ -147,7 +147,7 @@ class PresentedRow(unittest.TestCase):
         row = self._mega_row(row=data_row)
         self._check_values(row, a=4, b=100, c=77, d=18, x=None, total=177)
 
-    def test_unicode(self):
+    def test_str(self):
         class BigString(pd.String, pd.Big):
             pass
         row = self._row((
@@ -159,7 +159,7 @@ class PresentedRow(unittest.TestCase):
         self.assertEqual(unistr(row), ('<PresentedRow: x=1, y=3, '
                                        'passwd=***, data=<BigString 1 kB>>'))
 
-    def test_unicode_uninitialized(self):
+    def test_str_uninitialized(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
         delattr(row, '_row')
         self.assertRegexpMatches(unistr(row), r'<PresentedRow: [0-9a-h]+>')

@@ -22,8 +22,9 @@
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
 from __future__ import print_function
-
 from past.builtins import basestring
+from future.utils import python_2_unicode_compatible
+
 import os
 import mimetypes
 import email
@@ -41,6 +42,7 @@ _ = pytis.util.translations('pytis-wx')
 unistr = type(u'')  # Python 2/3 transition hack.
 
 
+@python_2_unicode_compatible
 class SimpleEmail(object):
     """Třída pro vytvoření a odeslaní jednoduchého mailu."""
 
@@ -81,6 +83,10 @@ class SimpleEmail(object):
         self.html = html
         self.charset = charset
         self._error_msg = None
+
+    def __str__(self):
+        self.create_message()
+        return self.msg.as_string()
 
     def create_message(self):
         self._create_message()
@@ -156,10 +162,6 @@ class SimpleEmail(object):
     def get_message(self):
         self.create_message()
         return self.msg
-
-    def __str__(self):
-        self.create_message()
-        return self.msg.as_string()
 
     def send(self):
         import smtplib

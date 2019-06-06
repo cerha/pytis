@@ -33,7 +33,7 @@ immutable.  Thus they can be shared as needed.
 from past.builtins import basestring
 from builtins import range
 from future import standard_library
-from future.utils import with_metaclass
+from future.utils import with_metaclass, python_2_unicode_compatible
 
 import http.server
 import copy
@@ -142,6 +142,7 @@ class Color(object):
     LIGHTSALMON = (255, 160, 122)
 
 
+@python_2_unicode_compatible
 class Style(object):
     """Text style specification.
 
@@ -210,27 +211,6 @@ class Style(object):
         self._underline = underline
         self._name = name
 
-    def foreground(self):
-        return self._foreground
-
-    def background(self):
-        return self._background
-
-    def bold(self):
-        return bool(self._bold)
-
-    def slanted(self):
-        return bool(self._slanted)
-
-    def overstrike(self):
-        return bool(self._overstrike)
-
-    def underline(self):
-        return bool(self._underline)
-
-    def name(self):
-        return self._name
-
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, ', '.join([
             k[1:] + '=' + repr(v)
@@ -239,7 +219,7 @@ class Style(object):
         ]))
 
     def __repr__(self):
-        return self.__str__()
+        return str(self)
 
     def _values(self):
         return tuple(getattr(self, attr[1:])() for attr in sorted(self.__dict__))
@@ -276,6 +256,27 @@ class Style(object):
                          overstrike=coalesce(self._overstrike, other._overstrike),
                          underline=coalesce(self._underline, other._underline),
                          name=coalesce(self._name, other._name))
+
+    def foreground(self):
+        return self._foreground
+
+    def background(self):
+        return self._background
+
+    def bold(self):
+        return bool(self._bold)
+
+    def slanted(self):
+        return bool(self._slanted)
+
+    def overstrike(self):
+        return bool(self._overstrike)
+
+    def underline(self):
+        return bool(self._underline)
+
+    def name(self):
+        return self._name
 
 
 class Orientation(object):
@@ -734,6 +735,7 @@ class ActionGroup(_TitledGroup):
     _ALLOW_SUBSEQUENCES = True
 
 
+@python_2_unicode_compatible
 class Profile(object):
     """Predefined form profile specification.
 
@@ -2405,6 +2407,7 @@ class TextFilter(object):
     """
 
 
+@python_2_unicode_compatible
 class Computer(object):
     """Specification of a function computing a value based on row values.
 
@@ -2801,6 +2804,7 @@ class FormType(object):
     """Otevření editačního formuláře pro vložení nového záznamu."""
 
 
+@python_2_unicode_compatible
 class Link(object):
     """Specification of a link from field to a different view.
 
@@ -3072,6 +3076,7 @@ class Enumeration(object):
     """
 
 
+@python_2_unicode_compatible
 class Field(object):
     """Specification of a generic form field representing a data value.
 
@@ -3673,10 +3678,7 @@ class Field(object):
         self._crypto_name = crypto_name
         self._encrypt_empty = encrypt_empty
 
-    def __repr__(self):
-        return "<Field '%s'>" % self.id()
-
-    def __unicode__(self):
+    def __str__(self):
         properties = self._kwargs
         formatted = []
         beg_names = ['label', 'type']
@@ -3696,8 +3698,8 @@ class Field(object):
                 formatted.append(info_string)
         return u"<Field '%s': %s>" % (self._id, ', '.join(formatted),)
 
-    def __str__(self):
-        return unistr(self).encode('utf-8')
+    def __repr__(self):
+        return "<Field '%s'>" % self.id()
 
     def clone(self, field):
         """Clone this field by another field and return the cloned instance.
