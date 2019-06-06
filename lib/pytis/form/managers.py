@@ -327,7 +327,8 @@ class FormProfileManager(UserSetttingsManager):
                                 repr(packed_args))
             if isinstance(packed_args[1], list):
                 column, val = find_column(packed_args[0]), packed_args[1][0]
-                if isinstance(val, str):
+                if isinstance(val, str if sys.version_info[0] == 2 else bytes):
+                    # TODO: This is probably completely redundant in Python 3...
                     try:
                         val = val.decode('utf-8')
                     except UnicodeDecodeError:
