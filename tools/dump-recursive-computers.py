@@ -115,9 +115,9 @@ def run():
                         if computer:
                             for dep in computer.depends():
                                 if f.id() in all_deps(dep) and dep not in computer.novalidate():
-                                    print ("%s.%s: Cyclic dependency in '%s' specification. "
-                                           "Add '%s' to 'novalidate' to avoid recursion." %
-                                           (name, f.id(), attr, dep)).encode('utf-8')
+                                    print("%s.%s: Cyclic dependency in '%s' specification. "
+                                          "Add '%s' to 'novalidate' to avoid recursion." %
+                                          (name, f.id(), attr, dep))
             except Exception as e:
                 if args.exit_on_error:
                     try:
