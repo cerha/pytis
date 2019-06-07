@@ -189,7 +189,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_keys(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertItemsEqual(list(row.keys()), ['x', 'y'])
+        assert sorted(row.keys()) == ['x', 'y']
 
     def test_resolver(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
@@ -620,20 +620,19 @@ class PresentedRow(unittest.TestCase):
                                                 if a == 1 else None)),
         )
         row = self._row(fields, new=True)
-        self.assertFalse(row.has_completer('a'))
-        self.assertTrue(row.has_completer('x0'))
-        self.assertTrue(row.has_completer('x1', static=True))
-        self.assertTrue(row.has_completer('x2'))
-        self.assertFalse(row.has_completer('x2', static=True))
-        self.assertEqual(row.completions('a'), [])
-        self.assertEqual(row.completions('x0'), ['a', 'b', 'c'])
-        self.assertEquals(row.completions('x1'), ['maybe', 'no', 'yes'])
-        self.assertEquals(row.completions('x1', prefix='y'), ['yes'])
-        self.assertEquals(row.completions('x2'), ('Apple', 'Bananas', 'Basil', 'Bacardi',
-                                                  'Cinamon'))
-        self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil', 'Bacardi'))
+        assert not row.has_completer('a')
+        assert row.has_completer('x0')
+        assert row.has_completer('x1', static=True)
+        assert row.has_completer('x2')
+        assert not row.has_completer('x2', static=True)
+        assert row.completions('a') == []
+        assert row.completions('x0') == ['a', 'b', 'c']
+        assert row.completions('x1') == ['maybe', 'no', 'yes']
+        assert row.completions('x1', prefix='y') == ['yes']
+        assert row.completions('x2') == ('Apple', 'Bananas', 'Basil', 'Bacardi', 'Cinamon')
+        assert row.completions('x2', prefix='ba') == ('Bananas', 'Basil', 'Bacardi')
         row['a'] = 1
-        self.assertEquals(row.completions('x2', prefix='ba'), ('Bananas', 'Basil'))
+        assert row.completions('x2', prefix='ba') == ('Bananas', 'Basil')
 
     def test_unique(self):
         data = pd.MemData(
@@ -651,9 +650,9 @@ class PresentedRow(unittest.TestCase):
             pp.Field('b', type=pd.String(), attachment_storage=storage),
             pp.Field('c', type=pd.String(), attachment_storage=lambda row: storage),
         ))
-        self.assertIsNone(row.attachment_storage('a'))
-        self.assertEquals(row.attachment_storage('b'), storage)
-        self.assertEquals(row.attachment_storage('c'), storage)
+        assert row.attachment_storage('a') is None
+        assert row.attachment_storage('b') == storage
+        assert row.attachment_storage('c') == storage
 
     # Tests for previously existing bugs.  These tests help fixing the bugs
     # and prevent their future re-appearance.
