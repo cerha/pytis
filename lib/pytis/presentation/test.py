@@ -81,7 +81,7 @@ class PresentedRow(unittest.TestCase):
                      runtime_arguments=pp.computer(lambda r, a: dict(a=a))),
             pp.Field('c', type=pd.Integer(not_null=True), default=lambda: 5),
             pp.Field('d', type=pd.Integer(),
-                     editable=pp.computer(lambda r, total: total > 5),
+                     editable=pp.computer(lambda r, total: total > 5 if total else False),
                      computer=pp.computer(lambda r, c: c * 2, validate=True)),
             pp.Field('fruit', type=pd.String(), codebook='Fruits', display='title',
                      null_display='none'),
