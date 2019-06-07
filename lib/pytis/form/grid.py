@@ -282,7 +282,7 @@ class DataTable(object):
                 result = self._group_value_cache[values]
             except KeyError:
                 if nearest is None:
-                    near = filter(lambda x: abs(x - row) < 80, self._group_cache.keys())
+                    near = list(filter(lambda x: abs(x - row) < 80, self._group_cache.keys()))
                     if not near:
                         # There is no cached group near enough (up to 80 rows away),
                         # so start again with an empty cache.
