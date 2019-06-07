@@ -19,8 +19,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from builtins import range
+
 import unittest
 import pytest
+import re
 
 import pytis.data as pd
 import pytis.presentation as pp
@@ -162,7 +164,7 @@ class PresentedRow(unittest.TestCase):
     def test_str_uninitialized(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
         delattr(row, '_row')
-        self.assertRegexpMatches(unistr(row), r'<PresentedRow: [0-9a-h]+>')
+        assert re.match(r'<PresentedRow: [0-9a-h]+>', unistr(row))
 
     def test_prefill(self):
         row = self._mega_row(new=True, a=1, b=pd.ival(3), d=77)
