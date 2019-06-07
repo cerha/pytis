@@ -689,6 +689,12 @@ class TestRow(object):
         row[0] = row['popis'] = v3
         assert row['poradi'] == row[1] == v3
         row[0:2] = (v2, v1)
+        with pytest.raises(IndexError):
+            row[0:2] = (v2, v1, v3)
+        with pytest.raises(IndexError):
+            row[0:2] = (v3,)
+        with pytest.raises(TypeError):
+            row[0:2] = v1
         assert row[0] == v2 and row[1] == v1
         x1, x2 = row[0:2]
         assert x1 == v2 and x2 == v1

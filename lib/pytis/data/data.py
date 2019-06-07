@@ -1706,55 +1706,56 @@ class Row(object):
         return len(self._data)
 
     def __getitem__(self, key):
-        """Vrať sloupec dle 'key'.
+        """Return the value(s) of column(s) given by 'key'.
 
-        Jestliže 'key' je string odpovídající názvu existujícího sloupce, vrať
-        hodnotu daného sloupce.
-        Jestliže 'key' je integer odpovídající sloupci analogicky jako
-        u sekvencí, vrať hodnotu daného sloupce.
-        Jinak vyvolej výjimku.
+        Arguments:
+
+          key -- must be an existing key (column id as a string or column index
+            as integer) or a slice instance to get multiple column values at
+            once.
+
+        Returns the column value as a 'Value' instance if 'key' is a string or
+        integer or a 'Row' instance containing given subset of values if 'key'is a slice.
+
+        Exception is raised if key refers to unknown column(s).
 
         """
-        index = self._index(key)
-        return self._data[index][1]
+        if isinstance(key, slice):
+            return self.__class__(self._data[key])
+        else:
+            return self._data[self._index(key)][1]
 
     def __setitem__(self, key, value):
-        """Nastav hodnotu existujícího sloupce 'key' na 'value'.
+        """Set the value of given column 'key' to given 'value'.
 
-        Argumenty:
+        Arguments:
 
-          key -- musí být existující klíč, ať už string jako název sloupce
-            nebo integer jako pořadí sloupce
-          value -- nová hodnota sloupce, instance třídy 'types_.Value'
+          key -- must be an existing key (column id as a string or column index
+            as integer) or a slice instance to set multiple columns at once.
 
-        Jestliže sloupec identifikovaný 'key' neexistuje, je chování metody
-        nedefinováno.
+          value -- new column value as a 'types_.Value' instance or a sequence
+            of such values when 'key' is a slice.
 
-        Změna sloupce se nepropaguje do instancí, jež jsou kopiemi této
+        The behavior is undefined if column/columns given by 'key' do not exist.
+
+        The change does not propagate to instances which are copies of this
         instance.
 
         """
-        index = self._index(key)
-        self._data = data = copy.copy(self._data)
-        data[index] = (data[index][0], value)
-
-    def __getslice__(self, i, j):
-        """Vrať požadovaný slice jako instanci této třídy."""
-        return self.__class__(self._data[i:j])
-
-    def __setslice__(self, i, j, data):
-        """Nastav požadovaný slice na 'data'.
-
-        'data' je ve stejném formátu jako argument metody '__init__()'.
-        'data' musí mít stejnou délku jako původní 'slice', jinak je
-        vyvolána výjimka.
-
-        """
-        n = len(data)
-        if n != j - i:
-            raise IndexError("Sequence length doesn't match")
-        for k in range(n):
-            self[i + k] = data[k]
+        self._data = data = self._data[:]
+        if isinstance(key, slice):
+            sliced = data[key]
+            # Cast value to list before passing to len to get more a appropriate
+            # "TypeError: ... object is not iterable" rather than
+            # "TypeError: object of type ... has no len()".
+            if len(list(value)) != len(sliced):
+                raise IndexError("Sequence length doesn't match the slice.")
+            for (k, old_value), new_value in zip(sliced, value):
+                index = self._index(k)
+                data[index] = (k, new_value)
+        else:
+            index = self._index(key)
+            data[index] = (data[index][0], value)
 
     def __contains__(self, key):
         """Vrať pravdu, právě když řádek obsahuje sloupec jména 'key'."""
