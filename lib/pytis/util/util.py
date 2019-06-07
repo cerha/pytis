@@ -868,7 +868,10 @@ def argument_names(callable):
     account, so any `*' and `**' arguments are ignored.
 
     """
-    args, __, __, __ = inspect.getargspec(callable)
+    if sys.version_info[0] == 2:
+        args = tuple(inspect.getargspec(callable)[0])
+    else:
+        args = tuple(inspect.signature(callable).parameters)
     if args and args[0] == 'self':
         args = args[1:]
     return tuple(args)
