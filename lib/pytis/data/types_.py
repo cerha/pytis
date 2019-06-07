@@ -1119,10 +1119,13 @@ class Float(Number):
     def _export(self, value, locale_format=True):
         if locale_format:
             import locale
-            encoding = locale.getpreferredencoding() or 'UTF-8'
-            return locale.format(self._format_string, value, 1).decode(encoding)
+            result = locale.format_string(self._format_string, value, 1)
+            if sys.version_info[0] == 2:
+                encoding = locale.getpreferredencoding() or 'UTF-8'
+                result = result.decode(encoding)
         else:
-            return unistr(self._format_string % value)
+            result = unistr(self._format_string % value)
+        return result
 
     def adjust_value(self, value):
         if value is None:
