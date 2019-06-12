@@ -29,10 +29,11 @@ import pytis
 # Make Python respect users locale settings (https://docs.python.org/2/library/locale.html).
 locale.setlocale(locale.LC_ALL, '')
 
-# Ošklivý hack kvůli ošetření výchozího kódování protože site.py metodu `setdefaultencoding()' z
-# modulu `sys' vymaže.
-imp.reload(sys)
-sys.setdefaultencoding('utf-8')
+if sys.version_info[0] == 2:
+    # Ošklivý hack kvůli ošetření výchozího kódování protože site.py metodu
+    # `setdefaultencoding()' z modulu `sys' vymaže.
+    imp.reload(sys)
+    sys.setdefaultencoding('utf-8')
 
 _EXIT_OK = 0
 _EXIT_USAGE = 1
