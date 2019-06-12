@@ -254,6 +254,9 @@ class Command(object):
     def __str__(self):
         return '<Command: %s>' % (self._id,)
 
+    def __hash__(self):
+        return hash(self._id)
+
     def __eq__(self, other):
         if pytis.util.sameclass(self, other):
             return self._id == other._id
