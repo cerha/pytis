@@ -1015,6 +1015,9 @@ class Float(Number):
         self._precision = precision
         self._digits = digits
 
+    def _comparison_key(self):
+        return super(Float, self)._comparison_key() + (self._precision, self._digits)
+
     def precision(self):
         """Vrať přesnost čísla zadanou v konstruktoru jako integer."""
         return self._precision
@@ -1316,6 +1319,9 @@ class Password(String):
         else:
             self._strength = strength
 
+    def _comparison_key(self):
+        return super(Password, self)._comparison_key() + (self._verify, self._strength)
+
     def verify(self):
         """Return true if verification of user input is required."""
         return self._verify
@@ -1374,6 +1380,9 @@ class RegexString(String):
             self._regex = self._REGEX
         else:
             self._regex = re.compile(regex)
+
+    def _comparison_key(self):
+        return super(RegexString, self)._comparison_key() + (self._regex,)
 
     def _check_constraints(self, value, **kwargs):
         super(RegexString, self)._check_constraints(value, **kwargs)
@@ -1507,6 +1516,9 @@ class FullTextIndex(String):
         super(FullTextIndex, self)._init(**kwargs)
         self._columns = columns
 
+    def _comparison_key(self):
+        return super(FullTextIndex, self)._comparison_key() + (self._columns,)
+
     def columns(self):
         """Return sequence of column ids given in constructor."""
         return self._columns
@@ -1613,6 +1625,10 @@ class _CommonDateTime(Type):
         self._check_matcher = {}
         self._without_timezone = without_timezone
         super(_CommonDateTime, self)._init(**kwargs)
+
+    def _comparison_key(self):
+        return super(_CommonDateTime, self)._comparison_key() + (self._format, self._utc,
+                                                                 self._without_timezone)
 
     def _check_format(self, format, obj):
         try:
@@ -1787,6 +1803,9 @@ class DateTime(_CommonDateTime):
                 raise ProgramError('Bad value for maxdate', maxdate)
         else:
             self._maxdate = None
+
+    def _comparison_key(self):
+        return super(DateTime, self)._comparison_key() + (self._mindate, self._maxdate)
 
     def _validate(self, obj, format=None, **kwargs):
         if format is True:
@@ -2161,6 +2180,9 @@ class TimeInterval(Type):
             self._matcher = self._MATCHER
         else:
             self._matcher = self._make_matcher(format)
+
+    def _comparison_key(self):
+        return super(TimeInterval, self)._comparison_key() + (self._format,)
 
     def _make_matcher(self, format):
         re_hours = '(?P<hours>[0-9]+)'
@@ -2602,6 +2624,9 @@ class LTree(Type):
         super(LTree, self)._init(**kwargs)
         self._text = text
 
+    def _comparison_key(self):
+        return super(LTree, self)._comparison_key() + (self._text,)
+
     def text(self):
         """Return value of 'text' constructor argument."""
         return self._text
@@ -2660,6 +2685,9 @@ class Array(Limited):
         assert isinstance(inner_type, Type)
         self._inner_type = inner_type
         super(Array, self)._init(**kwargs)
+
+    def _comparison_key(self):
+        return super(Array, self)._comparison_key() + (self._inner_type,)
 
     def validate(self, obj, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
