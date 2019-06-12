@@ -865,7 +865,7 @@ class TextField(InputField):
 
     def _text_ctrl_style(self):
         style = wx.TE_PROCESS_ENTER
-        if self.height() > 1:
+        if self.height() and self.height() > 1:
             style |= wx.TE_MULTILINE
         return style
 
@@ -874,7 +874,7 @@ class TextField(InputField):
         return None
 
     def _on_enter_key(self, event):
-        if self.height() > 1:
+        if self.height() and self.height() > 1:
             event.Skip()
         else:
             event.GetEventObject().Navigate()
@@ -998,7 +998,7 @@ class TextField(InputField):
 
     def _cmd_copy(self):
         ctrl = self._current_ctrl()
-        if self.height() > 1:
+        if self.height() and self.height() > 1:
             # Calling Copy on a multiline field raises: "wxAssertionError:
             # C++ assertion "IsSingleLine()" failed at
             # .../wxWidgets/src/gtk/textctrl.cpp(853)
