@@ -1868,7 +1868,10 @@ class DateTime(_CommonDateTime):
         if not self._without_timezone:
             value = value.astimezone(tzinfo)
         if format is True:
-            exported = value.isoformat(' ')
+            if sys.version_info[0] == 2:
+                exported = value.isoformat(b' ')
+            else:
+                exported = value.isoformat(' ')
         else:
             exported = self._strftime(value, format or self._format)
         return exported
