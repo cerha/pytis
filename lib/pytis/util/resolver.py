@@ -93,13 +93,16 @@ class Resolver(object):
         try:
             module = __import__(name)
         except ImportError as e:
+            if sys.version_info[0] == 2:
+                template = "No module named %s"
+            else:
+                template = "No module named '%s'"
             for i in range(len(components) + 1):
-                if str(e) == 'No module named %s' % '.'.join(components[i:]):
+                if str(e) == template % '.'.join(components[i:]):
                     # Raise resolver error only if the import error actually
                     # related to importing the named module itself and not to some
                     # nested import within this module.
-                    raise ResolverError("Resolver error loading specification '%s': %s" %
-                                        (name, e))
+                    raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
             # The error inside the imported module (typically the imported
             # module attempts to import a python module which is not
             # installed) must raise the original exception so that we can
