@@ -2973,7 +2973,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     """
     if icon_id is None:
         bitmap = None
-    elif icon_id.startswith('wx'):
+    elif (sys.version_info[0] == 2 and icon_id.startswith('wx') or
+          sys.version_info[0] > 2 and isinstance(icon_id, bytes)):
         bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
         filename = os.path.join(pytis.config.icon_dir, icon_id)
