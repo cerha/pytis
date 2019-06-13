@@ -344,9 +344,7 @@ class Type(with_metaclass(_MType, object)):
         elif obj is None:
             value = Value(self, None)
         else:
-            value, error = self._validate(obj, **dict(kwargs_items))
-            if error:
-                raise error
+            value = self._validate(obj, **dict(kwargs_items))
         if strict:
             if arguments:
                 arguments = dict(arguments)
@@ -355,7 +353,7 @@ class Type(with_metaclass(_MType, object)):
         return value
 
     def _validate(self, obj, **kwargs):
-        return Value(self, None), None
+        return Value(self, None)
 
     def wm_validate(self, obj):
         """Validate input object for wildcard matching.
@@ -722,27 +720,23 @@ class Range(Type):
 
     def _validate(self, obj, **kwargs):
         if obj == self._NULL_RANGE_VALUE:
-            return Value(self, None), None
+            return Value(self, None)
+        if not len(obj) == 2:
+            raise ValueError("need a sequence of 2 values to validate")
         base_type = self.base_type()
-        o1, o2 = obj
-        v1, e1 = base_type.validate(o1, **kwargs)
-        if e1 is not None:
-            return v1, e1
-        v2, e2 = base_type.validate(o2, **kwargs)
-        if e2 is not None:
-            return v2, e2
-        if v1 is None and v2 is None:
-            value = None
-        else:
-            assert v1 is not None and v2 is not None, obj
-            v1_value = v1.value()
-            v2_value = v2.value()
-            if v1_value is not None and v2_value is not None and v1_value > v2_value:
-                # PostgreSQL accepts values under the opposite condition
-                # regardless of bound kinds.
-                raise ValidationError(_(u"Lower range bound higher than the upper one"))
-            value = self.Range(v1_value, v2_value,)
-        return Value(self, value), None
+        values = []
+        for o in obj:
+            v, e = base_type.validate(o, **kwargs)
+            if e is not None:
+                raise e
+            else:
+                assert v is not None
+                values.append(v)
+        v1, v2 = [v.value() for v in values]
+        if v1 is not None and v2 is not None and v1 > v2:
+            # PostgreSQL accepts values under the opposite condition regardless of bound kinds.
+            raise ValidationError(_("Lower range bound higher than the upper one"))
+        return Value(self, self.Range(v1, v2))
 
     def export(self, value, *args, **kwargs):
         if value is None:
@@ -828,21 +822,14 @@ class Integer(Number):
         try:
             value = int(obj)
         except Exception:
-            # Dokumentace Pythonu 1.5.2 neříká, že by `int' mohlo metat metat
-            # nějakou výjimkou, ale evidentně by mělo, pokud `obj' nelze
-            # na obyčejný integer převést.
             try:
                 value = long(obj)
             except Exception:
-                # Podobně jako `int' i `long' by mělo v případě nemožnosti
-                # převodu metat výjimku.
                 value = None
-        if value is not None:
-            result = Value(self, value), None
-        else:
+        if value is None:
             # Translators: User input validation error message.
-            result = None, ValidationError(_(u"Not an integer"))
-        return result
+            raise ValidationError(_(u"Not an integer"))
+        return Value(self, value)
 
     def adjust_value(self, value):
         if value is None:
@@ -1013,69 +1000,64 @@ class Float(Number):
             else:
                 value = decimal.Decimal(obj)
         except (ValueError, decimal.InvalidOperation):
-            value = None
-        if value is not None:
-            if precision is None:
-                precision = self._precision
-            digits = self._digits
-            # We have to handle floats (as produced by 'locale.atof') very
-            # carefully.
-            if digits is not None:
-                with decimal.localcontext() as context:
-                    context.prec = len(str(value)) if digits is True else digits
-                    if rounding:
-                        context.rounding = rounding
-                    if isinstance(value, float):
-                        # Round the value -- any better way?
-                        str_value = ('%%.%dg' % (context.prec,)) % (value,)
-                        rvalue = float(str_value)
-                        correction = 0
-                        if rounding:
-                            if rounding == self.CEILING:
-                                if rvalue < value:
-                                    correction = 1
-                            elif rounding == self.FLOOR:
-                                if rvalue > value:
-                                    correction = -1
-                            else:
-                                raise ProgramError('Invalid rounding argument', rounding)
-                        if precision is None:
-                            format_ = '%%.%dg' % (context.prec,)
-                        else:
-                            format_ = '%%.%df' % (precision,)
-                        value = decimal.Decimal(format_ % (rvalue,))
-                        if correction:
-                            rvalue = rvalue + correction * (10 ** -value.as_tuple().exponent)
-                            value = decimal.Decimal(format_ % (rvalue,))
-                    else:
-                        value = +decimal.Decimal(value)
-            if precision is not None:
+            raise ValidationError(_(u"Invalid number"))
+        if precision is None:
+            precision = self._precision
+        digits = self._digits
+        # We have to handle floats (as produced by 'locale.atof') very
+        # carefully.
+        if digits is not None:
+            with decimal.localcontext() as context:
+                context.prec = len(str(value)) if digits is True else digits
+                if rounding:
+                    context.rounding = rounding
                 if isinstance(value, float):
-                    rvalue = round(value, precision)
+                    # Round the value -- any better way?
+                    str_value = ('%%.%dg' % (context.prec,)) % (value,)
+                    rvalue = float(str_value)
+                    correction = 0
                     if rounding:
                         if rounding == self.CEILING:
                             if rvalue < value:
-                                rvalue = rvalue + 10 ** -precision
+                                correction = 1
                         elif rounding == self.FLOOR:
                             if rvalue > value:
-                                rvalue = rvalue - 10 ** -precision
+                                correction = -1
                         else:
                             raise ProgramError('Invalid rounding argument', rounding)
-                    value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+                    if precision is None:
+                        format_ = '%%.%dg' % (context.prec,)
+                    else:
+                        format_ = '%%.%df' % (precision,)
+                    value = decimal.Decimal(format_ % (rvalue,))
+                    if correction:
+                        rvalue = rvalue + correction * (10 ** -value.as_tuple().exponent)
+                        value = decimal.Decimal(format_ % (rvalue,))
                 else:
-                    with decimal.localcontext() as context:
-                        context.prec = 100
-                        if rounding:
-                            context.rounding = rounding
-                        quantizer = decimal.Decimal('1.' + '0' * precision)
-                        value = decimal.Decimal(value).quantize(quantizer)
-            if self._digits is None and self._precision is None:
-                value = float(value)
-            result = Value(self, value), None
-        else:
-            # Translators: User input validation error message.
-            result = None, ValidationError(_(u"Invalid number"))
-        return result
+                    value = +decimal.Decimal(value)
+        if precision is not None:
+            if isinstance(value, float):
+                rvalue = round(value, precision)
+                if rounding:
+                    if rounding == self.CEILING:
+                        if rvalue < value:
+                            rvalue = rvalue + 10 ** -precision
+                    elif rounding == self.FLOOR:
+                        if rvalue > value:
+                            rvalue = rvalue - 10 ** -precision
+                    else:
+                        raise ProgramError('Invalid rounding argument', rounding)
+                value = decimal.Decimal(('%%.%df' % (precision,)) % (rvalue,))
+            else:
+                with decimal.localcontext() as context:
+                    context.prec = 100
+                    if rounding:
+                        context.rounding = rounding
+                    quantizer = decimal.Decimal('1.' + '0' * precision)
+                    value = decimal.Decimal(value).quantize(quantizer)
+        if self._digits is None and self._precision is None:
+            value = float(value)
+        return Value(self, value)
 
     def _export(self, value, locale_format=True):
         if locale_format:
@@ -1163,7 +1145,7 @@ class String(Limited):
 
         """
         assert isinstance(obj, basestring), ('Not a string', obj)
-        return Value(self, unistr(obj)), None
+        return Value(self, unistr(obj))
 
     def _export(self, value):
         # Pozor, na triviální funkci této metody se spoléhá Value.__init__ --
@@ -1285,10 +1267,10 @@ class Password(String):
         if verify is not None:
             if not verify:
                 # Translators: User input validation error message.
-                return None, ValidationError(_(u"Enter the password twice to eliminate typos"))
+                raise ValidationError(_(u"Enter the password twice to eliminate typos"))
             if obj != verify:
                 # Translators: User input validation error message.
-                return None, ValidationError(_(u"Passwords don't match"))
+                raise ValidationError(_(u"Passwords don't match"))
         if self._strength is not None:
             error = self._strength(obj)
             if error is not None:
@@ -1372,7 +1354,7 @@ class Inet(String):
         for i in range(len(numbers), 4):
             numbers.append('0')
         value = '%s/%s' % ('.'.join(numbers), mask)
-        return Value(self, unistr(value)), None
+        return Value(self, unistr(value))
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.INET()
@@ -1390,7 +1372,7 @@ class Macaddr(String):
             raise ValidationError(_(u"Invalid format"))
         macaddr = obj.replace(':', '').replace('-', '')
         value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
-        return Value(self, unistr(value)), None
+        return Value(self, unistr(value))
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.MACADDR()
@@ -1408,7 +1390,7 @@ class Email(String):
         if not self._EMAIL_FORMAT.match(obj):
             # Translators: User input validation error message.
             raise ValidationError(_(u"Invalid format"))
-        return Value(self, unistr(obj)), None
+        return Value(self, unistr(obj))
 
 
 class TreeOrderBase(Type):
@@ -1612,9 +1594,9 @@ class _CommonDateTime(Type):
         # na ne-GNU systémech, které `strptime' řádně nepodporují.
         obj = obj.strip()
         dt = None
+        if not self._check_format(format, obj):
+            raise ValidationError(self._MSG_INVALID_DT_FORMAT)
         try:
-            if not self._check_format(format, obj):
-                raise ValidationError(self._MSG_INVALID_DT_FORMAT)
             dt = datetime.datetime.strptime(obj, format)
             if local:
                 dt = dt.replace(tzinfo=self.LOCAL_TZINFO)
@@ -1622,10 +1604,9 @@ class _CommonDateTime(Type):
                 dt = dt.replace(tzinfo=self.UTC_TZINFO)
             if self._utc:
                 dt = dt.astimezone(self.UTC_TZINFO)
-            result = Value(self, dt), None
         except Exception:
-            result = None, ValidationError(self._MSG_INVALID_DT_FORMAT)
-        return result
+            raise ValidationError(self._MSG_INVALID_DT_FORMAT)
+        return Value(self, dt)
 
     def _export(self, value, local=None, format=None):
         return value.strftime(format or self._format)
@@ -1735,15 +1716,15 @@ class DateTime(_CommonDateTime):
 
     def _validate(self, obj, format=None, **kwargs):
         if format is True:
-            value, error = self._validate_iso(obj, **kwargs)
+            value = self._validate_iso(obj, **kwargs)
         else:
-            value, error = super(DateTime, self)._validate(obj, format=format, **kwargs)
+            value = super(DateTime, self)._validate(obj, format=format, **kwargs)
         if value is not None:
             dt = value.value()
             if (((self._mindate and dt < self._mindate) or
                  (self._maxdate and dt > self._maxdate))):
-                value, error = None, ValidationError(_(u"Date outside the allowed range"))
-        return value, error
+                raise ValidationError(_(u"Date outside the allowed range"))
+        return value
 
     def _validate_iso(self, obj, local=None, **kwargs):
         common_string, shift_string = obj[:-6], obj[-6:]
@@ -1768,11 +1749,11 @@ class DateTime(_CommonDateTime):
         try:
             value = datetime.datetime.strptime(common_string, format_)
         except Exception:
-            return None, ValidationError(self._MSG_INVALID_DT_FORMAT)
+            raise ValidationError(self._MSG_INVALID_DT_FORMAT)
         value = value - datetime.timedelta(seconds=shift)
         value = datetime.datetime(value.year, value.month, value.day, value.hour, value.minute,
                                   value.second, value.microsecond, tzinfo)
-        return Value(self, value), None
+        return Value(self, value)
 
     def _export(self, value, local=None, format=None):
         """Stejné jako v předkovi až na klíčované argumenty.
@@ -1953,10 +1934,8 @@ class Date(DateTime):
         super(Date, self)._init(format=format, utc=False, **kwargs)
 
     def _validate(self, *args, **kwargs):
-        value, error = super(Date, self)._validate(*args, **kwargs)
-        if value is not None:
-            value = Value(value.type(), value.value().date())
-        return value, error
+        value = super(Date, self)._validate(*args, **kwargs)
+        return Value(value.type(), value.value().date())
 
     def _export(self, value, local=None, format=None):
         assert isinstance(value, datetime.date), value
@@ -2027,12 +2006,13 @@ class Time(_CommonDateTime):
         super(Time, self)._init(format=format, **kwargs)
 
     def _validate(self, *args, **kwargs):
-        value, error = super(Time, self)._validate(*args, **kwargs)
-        if value:
-            date_time = value.value()
-            v = date_time.time() if self._without_timezone else date_time.timetz()
-            value = Value(value.type(), v)
-        return value, error
+        value = super(Time, self)._validate(*args, **kwargs)
+        dt = value.value()
+        if self._without_timezone:
+            v = dt.time()
+        else:
+            v = dt.timetz()
+        return Value(value.type(), v)
 
     def _export(self, value, **kwargs):
         assert isinstance(value, datetime.time), value
@@ -2128,7 +2108,7 @@ class TimeInterval(Type):
             matcher = self._make_matcher(format)
         match = matcher.match(obj)
         if not match:
-            return None, ValidationError(_(u"Invalid format"))
+            raise ValidationError(_(u"Invalid format"))
         groups = match.groupdict()
         days = int(groups.get('days') or '0')
         seconds = (int(groups.get('hours') or '0') * 3600 +
@@ -2137,7 +2117,7 @@ class TimeInterval(Type):
         days += seconds // 86400
         seconds = seconds % 86400
         interval = datetime.timedelta(days, seconds)
-        return Value(self, interval), None
+        return Value(self, interval)
 
     def _export(self, value, format=None, **kwargs):
         assert isinstance(value, datetime.timedelta), value
@@ -2238,11 +2218,11 @@ class Boolean(Type):
     def _validate(self, obj, extended=False):
         if extended:
             if obj in ('t', '1'):
-                return Value(self, True), None
+                return Value(self, True)
             elif obj in ('f', '0'):
-                return Value(self, False), None
+                return Value(self, False)
         # Valid values are found in _SPECIAL_VALUES before _validate is called.
-        return None, ValidationError(_(u"Invalid boolean type input value"))
+        raise ValidationError(_(u"Invalid boolean type input value"))
 
     def default_value(self):
         return Value(self, False)
@@ -2367,7 +2347,7 @@ class Binary(Limited):
             value = self.Data(obj, filename=filename, mime_type=mime_type)
         except ValueError as e:
             raise ValidationError(*e.args)
-        return Value(self, value), None
+        return Value(self, value)
 
     def _export(self, value):
         return value
@@ -2543,21 +2523,15 @@ class LTree(Type):
     def _validate(self, obj):
         assert isinstance(obj, basestring), ('Not a string', obj)
         items = obj.split('.')
-        error = None
         for item in items:
             if not item:
-                error = _(u"Invalid hierarchical value format")
+                raise ValidationError(_(u"Invalid hierarchical value format"))
             elif len(item) > 255:
-                error = _(u"One of hierarchical value items is too long")
+                raise ValidationError(_(u"One of hierarchical value items is too long"))
             elif self._REGEX.match(item) is None:
-                error = _(u"One of hierarchical value items contains invalid characters")
-            if error is not None:
-                break
-        if error is None:
-            result = Value(self, unistr(obj)), None
-        else:
-            result = None, ValidationError(error)
-        return result
+                raise ValidationError(_(u"One of hierarchical value items contains invalid "
+                                        u"characters"))
+        return Value(self, unistr(obj))
 
     def _export(self, value):
         assert isinstance(value, basestring), ('Value not a string', value)
