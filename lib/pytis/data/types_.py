@@ -100,12 +100,6 @@ class Type(with_metaclass(_MType, object)):
         jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
         hodnotu musí vrátit buď 'None', je-li hodnota správná, nebo chybovou
         hlášku jako string v opačném případě.
-      validation_messages -- dictionary identifikátorů a validačních hlášek.
-        Klíče jsou identifikátory validačních hlášek definované konstantami
-        třídy s názvy začínajícími prefixem 'VM_' a hodnoty jsou hlášky coby
-        řetězce.  Hlášky z tohoto argumentu, jsou-li pro daný identifikátor
-        definovány, mají přednost před implicitními hláškami definovanými
-        typem.
       unique -- flag saying the value must be unique within its column in a
         table
 
@@ -154,15 +148,7 @@ class Type(with_metaclass(_MType, object)):
 
     _type_table = _TypeTable()
 
-    VM_NULL_VALUE = 'VM_NULL_VALUE'
-    VM_INVALID_VALUE = 'VM_INVALID_VALUE'
-    # Translators: User input validation error message.
-    _VM_NULL_VALUE_MSG = _(u"Empty value")
-    # Translators: User input validation error message.
-    _VM_INVALID_VALUE_MSG = _(u"Invalid value")
-
     _SPECIAL_VALUES = ()
-
     _VALIDATION_CACHE_LIMIT = 1000
 
     def _make(class_, *args, **kwargs):
@@ -209,8 +195,7 @@ class Type(with_metaclass(_MType, object)):
         self._init(**kwargs)
         super(Type, self).__init__()
 
-    def _init(self, not_null=False, enumerator=None, constraints=(),
-              validation_messages=None, unique=False):
+    def _init(self, not_null=False, enumerator=None, constraints=(), unique=False):
         """Initialize the instance.
 
         Defines constructor arguments and their default values.  You typically
@@ -224,17 +209,10 @@ class Type(with_metaclass(_MType, object)):
         assert isinstance(unique, bool), unique
         assert enumerator is None or isinstance(enumerator, Enumerator), enumerator
         assert isinstance(constraints, (list, tuple)), constraints
-        assert validation_messages is None or isinstance(validation_messages, dict), \
-            validation_messages
         self._not_null = not_null
         self._unique = unique
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
-        vm = [(getattr(self, attr), getattr(self, '_' + attr + '_MSG'))
-              for attr in dir(self) if attr.startswith('VM_')]
-        self._validation_messages = dict(vm)
-        if validation_messages is not None:
-            self._validation_messages.update(validation_messages)
         # Cachujeme na úrovni instancí, protože ty jsou stejně sdílené, viz
         # `__new__'.
         self._validation_cache = LimitedCache(self._validating_provider,
@@ -395,16 +373,11 @@ class Type(with_metaclass(_MType, object)):
         msg = _(u"Wildcard matching not supported for values of type '%s'.")
         return None, ValidationError(msg % self.__class__.__name__)
 
-    def _validation_error(self, id, **kwargs):
-        message = self._validation_messages[id]
-        if kwargs:
-            message %= kwargs
-        return ValidationError(message)
-
     def _check_constraints(self, value, transaction=None, condition=None, arguments=None):
         if value is None:
             if self._not_null:
-                raise self._validation_error(self.VM_NULL_VALUE)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Empty value"))
             else:
                 return True
         for c in self._constraints:
@@ -419,7 +392,8 @@ class Type(with_metaclass(_MType, object)):
             if isinstance(self._enumerator, TransactionalEnumerator):
                 kwargs['transaction'] = transaction
             if not self._enumerator.check(value, **kwargs):
-                raise self._validation_error(self.VM_INVALID_VALUE)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Invalid value"))
 
     def check_constraints(self, value, transaction=None, condition=None, arguments=None):
         """Check if 'value' matches all constraints defined by this type instance.
@@ -538,13 +512,6 @@ class Number(Type):
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    VM_MINIMUM = 'VM_MINIMUM'
-    # Translators: User input validation error message.
-    _VM_MINIMUM_MSG = _(u"Minimal value is %(minimum)s")
-    VM_MAXIMUM = 'VM_MAXIMUM'
-    # Translators: User input validation error message.
-    _VM_MAXIMUM_MSG = _(u"Maximal value is %(maximum)s")
-
     def _init(self, minimum=None, maximum=None, **kwargs):
         self._minimum = minimum
         self._maximum = maximum
@@ -573,9 +540,11 @@ class Number(Type):
         super(Number, self)._check_constraints(value, **kwargs)
         if value is not None:
             if self._minimum is not None and value < self._minimum:
-                raise self._validation_error(self.VM_MINIMUM, minimum=self._minimum)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Minimal value is %(minimum)s", minimum=self._minimum))
             if self._maximum is not None and value > self._maximum:
-                raise self._validation_error(self.VM_MAXIMUM, maximum=self._maximum)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Maximal value is %(maximum)s", maximum=self._maximum))
 
 
 class Big(Type):
@@ -614,12 +583,10 @@ class Limited(Type):
 
     """
 
-    VM_MINLEN = 'VM_MINLEN'
     # Translators: User input validation error message.
-    _VM_MINLEN_MSG = _(u"Minimal size %(minlen)s not satisfied")
-    VM_MAXLEN = 'VM_MAXLEN'
+    _MSG_MINLEN = _(u"Minimal size %(minlen)s not satisfied")
     # Translators: User input validation error message.
-    _VM_MAXLEN_MSG = _(u"Maximal length %(maxlen)s characters exceeded")
+    _MSG_MAXLEN = _(u"Maximal size %(maxlen)s exceeded")
 
     def _init(self, minlen=None, maxlen=None, **kwargs):
         self._minlen = minlen
@@ -650,16 +617,18 @@ class Limited(Type):
 
     def _check_constraints(self, value, **kwargs):
         super(Limited, self)._check_constraints(value, **kwargs)
-        self._check_maxlen(value)
+        self._check_limits(value)
 
-    def _check_maxlen(self, value):
+    def _check_limits(self, value):
         if value is not None:
             if self._minlen is not None and len(value) < self._minlen:
-                raise self._validation_error(self.VM_MINLEN,
-                                             minlen=self._format_length(self._minlen))
+                # Translators: User input validation error message.
+                raise ValidationError(self._MSG_MINLEN %
+                                      dict(minlen=self._format_length(self._minlen)))
             if self._maxlen is not None and len(value) > self._maxlen:
-                raise self._validation_error(self.VM_MAXLEN,
-                                             maxlen=self._format_length(self._maxlen))
+                # Translators: User input validation error message.
+                raise ValidationError(self._MSG_MAXLEN %
+                                      dict(maxlen=self._format_length(self._maxlen)))
 
 
 class Range(Type):
@@ -674,9 +643,6 @@ class Range(Type):
     'Range.Range' instance of empty strings on validation.
 
     """
-    VM_REVERSE_RANGE = 'VM_REVERSE_RANGE'
-    _VM_REVERSE_RANGE_MSG = _(u"Lower range bound higher than the upper one")
-
     class Range(object):
 
         _type = None
@@ -771,12 +737,10 @@ class Range(Type):
             assert v1 is not None and v2 is not None, obj
             v1_value = v1.value()
             v2_value = v2.value()
-            if v1_value is not None and v2_value is not None:
-                if v1_value > v2_value:
-                    # PostgreSQL accepts values under the opposite condition
-                    # regardless of bound kinds.
-                    raise self._validation_error(self.VM_REVERSE_RANGE,
-                                                 lower=v1_value, upper=v2_value)
+            if v1_value is not None and v2_value is not None and v1_value > v2_value:
+                # PostgreSQL accepts values under the opposite condition
+                # regardless of bound kinds.
+                raise ValidationError(_(u"Lower range bound higher than the upper one"))
             value = self.Range(v1_value, v2_value,)
         return Value(self, value), None
 
@@ -848,10 +812,6 @@ class Range(Type):
 class Integer(Number):
     """Libovolný integer."""
 
-    VM_NONINTEGER = 'VM_NONINTEGER'
-    # Translators: User input validation error message.
-    _VM_NONINTEGER_MSG = _(u"Not an integer")
-
     def _validate(self, obj):
         """Attempt to convert given 'obj' integer.
 
@@ -880,7 +840,8 @@ class Integer(Number):
         if value is not None:
             result = Value(self, value), None
         else:
-            result = None, self._validation_error(self.VM_NONINTEGER)
+            # Translators: User input validation error message.
+            result = None, ValidationError(_(u"Not an integer"))
         return result
 
     def adjust_value(self, value):
@@ -999,10 +960,6 @@ class Float(Number):
     FLOOR = decimal.ROUND_FLOOR
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
 
-    VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
-    # Translators: User input validation error message.
-    _VM_INVALID_NUMBER_MSG = _(u"Invalid number")
-
     def _init(self, precision=None, digits=None, **kwargs):
         super(Float, self)._init(**kwargs)
         assert precision is None or precision >= 0, ('Invalid precision', precision,)
@@ -1116,7 +1073,8 @@ class Float(Number):
                 value = float(value)
             result = Value(self, value), None
         else:
-            result = None, self._validation_error(self.VM_INVALID_NUMBER)
+            # Translators: User input validation error message.
+            result = None, ValidationError(_(u"Invalid number"))
         return result
 
     def _export(self, value, locale_format=True):
@@ -1191,12 +1149,11 @@ class String(Limited):
     metody '_init' a 'maxlen'.
 
     """
-
-    # Translators: User input validation error message.
-    _VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
-    # Translators: User input validation error message.
-    _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    # Translators: User input validation error message.
+    _MSG_MINLEN = _(u"Minimal length %(minlen)s characters not satisfied")
+    # Translators: User input validation error message.
+    _MSG_MAXLEN = _(u"Maximal length %(maxlen)s characters exceeded")
 
     def _validate(self, obj):
         """Vrať instanci třídy 'Value' s hodnotou 'obj'.
@@ -1295,19 +1252,6 @@ class Password(String):
     argument).
 
     """
-    VM_PASSWORD = 'VM_PASSWORD'
-    # Translators: User input validation error message.
-    _VM_PASSWORD_MSG = _(u"Repeat the password for verification")
-    VM_PASSWORD_VERIFY = 'VM_PASSWORD_VERIFY'
-    # Translators: User input validation error message.
-    _VM_PASSWORD_VERIFY_MSG = _(u"Passwords don't match")
-    VM_INVALID_MD5 = 'VM_INVALID_MD5'
-    # Translators: User input validation error message.
-    _VM_INVALID_MD5_MSG = _(u"Invalid MD5 hash")
-    VM_MIX_CHARACTERS = 'VM_MIX_CHARACTERS'
-    # Translators: User input validation error message.
-    _VM_MIX_CHARACTERS_MSG = _(u"Please use mix of letters and non-letters in your password")
-
     def _init(self, md5=False, verify=True, strength=None, **kwargs):
         super(Password, self)._init(**kwargs)
         assert isinstance(md5, bool)
@@ -1334,14 +1278,17 @@ class Password(String):
             else:
                 non_letters = True
         if not letters or not non_letters:
-            return self._VM_MIX_CHARACTERS_MSG
+            # Translators: User input validation error message.
+            return _(u"Please use mix of letters and non-letters in your password")
 
     def _validate(self, obj, verify=None, **kwargs):
         if verify is not None:
             if not verify:
-                return None, self._validation_error(self.VM_PASSWORD)
+                # Translators: User input validation error message.
+                return None, ValidationError(_(u"Enter the password twice to eliminate typos"))
             if obj != verify:
-                return None, self._validation_error(self.VM_PASSWORD_VERIFY)
+                # Translators: User input validation error message.
+                return None, ValidationError(_(u"Passwords don't match"))
         if self._strength is not None:
             error = self._strength(obj)
             if error is not None:
@@ -1363,15 +1310,15 @@ class Password(String):
                 from hashlib import md5
                 value = Value(value.type(), md5(obj).hexdigest())
             elif len(obj) != 32 or not obj.isalnum():
-                return None, self._validation_error(self.VM_INVALID_MD5)
+                # Translators: User input validation error message.
+                return None, self._validation_error(_(u"Invalid MD5 hash"))
         return value, error
 
 
 class RegexString(String):
 
-    VM_FORMAT = 'VM_FORMAT'
     # Translators: User input validation error message.
-    _VM_FORMAT_MSG = _(u"Invalid format")
+    _MSG_INVALID_FORMAT = _(u"Invalid format")
     _REGEX = None
 
     def _init(self, regex=None, **kwargs):
@@ -1387,14 +1334,14 @@ class RegexString(String):
     def _check_constraints(self, value, **kwargs):
         super(RegexString, self)._check_constraints(value, **kwargs)
         if value is not None and not self._regex.match(value):
-            raise self._validation_error(self.VM_FORMAT)
+            raise ValidationError(self._MSG_INVALID_FORMAT)
 
 
 class Color(RegexString):
     """Barva reprezentovaná řetězcem '#RRGGBB'."""
 
     # Translators: User input validation error message.
-    _VM_FORMAT_MSG = _(u"Invalid color format ('#RGB' or '#RRGGBB')")
+    _MSG_INVALID_FORMAT = _(u"Invalid color format ('#RGB' or '#RRGGBB')")
     _REGEX = re.compile(r'^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def sqlalchemy_type(self):
@@ -1403,33 +1350,25 @@ class Color(RegexString):
 
 class Inet(String):
     """IPv4 nebo IPv6 adresa."""
-
-    VM_INET_FORMAT = 'VM_INET_FORMAT'
-    VM_INET_MASK = 'VM_INET_MASK'
-    VM_INET_ADDR = 'VM_INET_ADDR'
-    # Translators: User input validation error message.
-    _VM_INET_FORMAT_MSG = _(u"Invalid format")
-    # Translators: User input validation error message.
-    _VM_INET_MASK_MSG = _(u"Invalid inet address mask: %(mask)s")
-    # Translators: User input validation error message.
-    _VM_INET_ADDR_MSG = _(u"Invalid inet address value %(addr)s")
-
     _INET4_FORMAT = re.compile(r'(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
     def _validate(self, obj, *args, **kwargs):
         # TODO: Doplnit i validaci pro IPv6 formát
         if not self._INET4_FORMAT.match(obj):
-            raise self._validation_error(self.VM_INET_FORMAT)
+            # Translators: User input validation error message.
+            raise ValidationError(_(u"Invalid format"))
         if obj.find('/') != -1:
             addr, mask = obj.split('/')
             if int(mask) > 32:
-                raise self._validation_error(self.VM_INET_MASK, mask=mask)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Invalid inet address mask: %(mask)s", mask=mask))
         else:
             addr, mask = obj, '32'
         numbers = addr.split('.')
         for n in numbers:
             if n and int(n) > 255:
-                raise self._validation_error(self.VM_INET_ADDR, addr=addr)
+                # Translators: User input validation error message.
+                raise ValidationError(_(u"Invalid inet address value %(addr)s", addr=addr))
         for i in range(len(numbers), 4):
             numbers.append('0')
         value = '%s/%s' % ('.'.join(numbers), mask)
@@ -1442,15 +1381,13 @@ class Inet(String):
 class Macaddr(String):
     """MAC adresa."""
 
-    VM_MACADDR_FORMAT = 'VM_MACADDR_FORMAT'
-    # Translators: User input validation error message.
-    _VM_MACADDR_FORMAT_MSG = _(u"Invalid format")
 
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
 
     def _validate(self, obj, *args, **kwargs):
         if not self._MACADDR_FORMAT.match(obj):
-            raise self._validation_error(self.VM_MACADDR_FORMAT)
+            # Translators: User input validation error message.
+            raise ValidationError(_(u"Invalid format"))
         macaddr = obj.replace(':', '').replace('-', '')
         value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
         return Value(self, unistr(value)), None
@@ -1461,11 +1398,6 @@ class Macaddr(String):
 
 class Email(String):
     """E-mail address."""
-
-    VM_EMAIL_FORMAT = 'VM_EMAIL_FORMAT'
-    # Translators: User input validation error message.
-    _VM_EMAIL_FORMAT_MSG = _(u"Invalid format")
-
     # Taken from HTML5.  Not compliant with RFC 5322 but it should be good
     # enough for practical purposes.
     _EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@"
@@ -1474,7 +1406,8 @@ class Email(String):
 
     def _validate(self, obj, *args, **kwargs):
         if not self._EMAIL_FORMAT.match(obj):
-            raise self._validation_error(self.VM_EMAIL_FORMAT)
+            # Translators: User input validation error message.
+            raise ValidationError(_(u"Invalid format"))
         return Value(self, unistr(obj)), None
 
 
@@ -1600,15 +1533,8 @@ class _CommonDateTime(Type):
         database objects should be created WITH TIMEZONE.
 
     """
-
-    VM_DT_FORMAT = 'VM_DT_FORMAT'
-    VM_DT_VALUE = 'VM_DT_VALUE'
-    VM_DT_AGE = 'VM_DT_AGE'
-    _VM_DT_FORMAT_MSG = _(u"Invalid date or time format")
-    _VM_DT_VALUE_MSG = _(u"Invalid date or time")
-    _VM_DT_AGE_MSG = _(u"Date outside the allowed range")
-
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    _MSG_INVALID_DT_FORMAT = _(u"Invalid date or time format")
 
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
@@ -1688,7 +1614,7 @@ class _CommonDateTime(Type):
         dt = None
         try:
             if not self._check_format(format, obj):
-                raise ValidationError(self.VM_DT_FORMAT)
+                raise ValidationError(self._MSG_INVALID_DT_FORMAT)
             dt = datetime.datetime.strptime(obj, format)
             if local:
                 dt = dt.replace(tzinfo=self.LOCAL_TZINFO)
@@ -1698,7 +1624,7 @@ class _CommonDateTime(Type):
                 dt = dt.astimezone(self.UTC_TZINFO)
             result = Value(self, dt), None
         except Exception:
-            result = None, self._validation_error(self.VM_DT_FORMAT)
+            result = None, ValidationError(self._MSG_INVALID_DT_FORMAT)
         return result
 
     def _export(self, value, local=None, format=None):
@@ -1816,7 +1742,7 @@ class DateTime(_CommonDateTime):
             dt = value.value()
             if (((self._mindate and dt < self._mindate) or
                  (self._maxdate and dt > self._maxdate))):
-                value, error = None, self._validation_error(self.VM_DT_AGE)
+                value, error = None, ValidationError(_(u"Date outside the allowed range"))
         return value, error
 
     def _validate_iso(self, obj, local=None, **kwargs):
@@ -1842,7 +1768,7 @@ class DateTime(_CommonDateTime):
         try:
             value = datetime.datetime.strptime(common_string, format_)
         except Exception:
-            return None, self._validation_error(self.VM_DT_FORMAT)
+            return None, ValidationError(self._MSG_INVALID_DT_FORMAT)
         value = value - datetime.timedelta(seconds=shift)
         value = datetime.datetime(value.year, value.month, value.day, value.hour, value.minute,
                                   value.second, value.microsecond, tzinfo)
@@ -2164,9 +2090,6 @@ class TimeInterval(Type):
 
     """
 
-    VM_TI_FORMAT = 'VM_TI_INVALID_FORMAT'
-    _VM_TI_FORMAT_MSG = _(u"Invalid format")
-
     _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?'
                           '(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
 
@@ -2205,7 +2128,7 @@ class TimeInterval(Type):
             matcher = self._make_matcher(format)
         match = matcher.match(obj)
         if not match:
-            return None, self._validation_error(self.VM_TI_FORMAT)
+            return None, ValidationError(_(u"Invalid format"))
         groups = match.groupdict()
         days = int(groups.get('days') or '0')
         seconds = (int(groups.get('hours') or '0') * 3600 +
@@ -2359,7 +2282,6 @@ class Binary(Limited):
     """
 
     _VALIDATION_CACHE_LIMIT = 0
-    _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
 
     class Data(bytes):
         """Internal representation of binary values.
@@ -2496,14 +2418,6 @@ class Image(Binary, Big):
     Other arguments are passed to the parent constructor.
 
     """
-
-    VM_MAXSIZE = 'VM_MAXSIZE'
-    _VM_MAXSIZE_MSG = _(u"Maximal pixel size %(maxsize)s exceeded")
-    VM_MINSIZE = 'VM_MINSIZE'
-    _VM_MINSIZE_MSG = _(u"Minimal pixel size %(minsize)s exceeded")
-    VM_FORMAT = 'VM_FORMAT'
-    _VM_FORMAT_MSG = _(u"Unsupported format %(format)s; valid formats: %(formats)s")
-
     class Data(Binary.Data):
         """A bufer for internal representation of bitmap image data.
 
@@ -2576,15 +2490,15 @@ class Image(Binary, Big):
             image = value.image()
             for min, max, size in zip(self._minsize, self._maxsize, image.size):
                 if min is not None and size < min:
-                    raise self._validation_error(self.VM_MINSIZE,
-                                                 minsize='%sx%s' % self._minsize)
+                    raise ValidationError(_("Minimal pixel size %(minsize)s exceeded",
+                                            minsize=('%sx%s' % self._minsize)))
                 if max is not None and size > max:
-                    raise self._validation_error(self.VM_MAXSIZE,
-                                                 maxsize='%sx%s' % self._maxsize)
+                    raise ValidationError(_("Maximal pixel size %(maxsize)s exceeded",
+                                            maxsize=('%sx%s' % self._maxsize)))
             if self._formats is not None and image.format not in self._formats:
-                raise self._validation_error(self.VM_FORMAT,
-                                             format=image.format,
-                                             formats=', '.join(self._formats))
+                raise ValidationError(_("Unsupported format %(format)s; valid formats: %(formats)s",
+                                        format=image.format,
+                                        formats=', '.join(self._formats)))
 
 
 class LTree(Type):
@@ -2612,15 +2526,7 @@ class LTree(Type):
         order to get the expected results with textual sorting.
 
     """
-    VM_TREE_FORMAT = 'VM_TREE_FORMAT'
-    _VM_TREE_FORMAT_MSG = _(u"Invalid hierarchical value format")
-    VM_LONG_ITEM = 'VM_LONG_ITEM'
-    _VM_LONG_ITEM_MSG = _(u"One of hierarchical value items is too long")
-    VM_INVALID_ITEM = 'VM_INVALID_ITEM'
-    _VM_INVALID_ITEM_MSG = _(u"One of hierarchical value items contains invalid characters")
-
     _REGEX = re.compile(r'^\w+$', re.UNICODE)
-
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     def _init(self, text=False, **kwargs):
@@ -2640,17 +2546,17 @@ class LTree(Type):
         error = None
         for item in items:
             if not item:
-                error = self.VM_TREE_FORMAT
+                error = _(u"Invalid hierarchical value format")
             elif len(item) > 255:
-                error = self.VM_LONG_ITEM
+                error = _(u"One of hierarchical value items is too long")
             elif self._REGEX.match(item) is None:
-                error = self.VM_INVALID_ITEM
+                error = _(u"One of hierarchical value items contains invalid characters")
             if error is not None:
                 break
         if error is None:
             result = Value(self, unistr(obj)), None
         else:
-            result = None, self._validation_error(error)
+            result = None, ValidationError(error)
         return result
 
     def _export(self, value):

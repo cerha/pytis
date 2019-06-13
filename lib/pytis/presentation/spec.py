@@ -3587,9 +3587,8 @@ class Field(object):
             for k in kwargs.keys():
                 assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                              'minimum', 'maximum', 'encrypted', 'precision', 'format',
-                             'mindate', 'maxdate', 'utc', 'validation_messages',
-                             'inner_type', 'minsize', 'maxsize', 'formats',
-                             'strength', 'md5', 'verify', 'text',), \
+                             'mindate', 'maxdate', 'utc', 'inner_type', 'minsize',
+                             'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',), \
                     err("Invalid argument: %r", k)
             # Temporary: We won't even log the old way of passing type
             # arguments in the first step.  We will uncomment it when we decide

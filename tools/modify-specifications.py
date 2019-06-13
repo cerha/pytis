@@ -330,9 +330,8 @@ def cmd_type_kwargs(filename, lines, type_map=None):
     lines_to_delete = []
     type_kwargs = ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                    'minimum', 'maximum', 'encrypted', 'precision', 'format',
-                   'mindate', 'maxdate', 'utc', 'validation_messages',
-                   'inner_type', 'minsize', 'maxsize', 'formats',
-                   'strength', 'md5', 'verify', 'text',)
+                   'mindate', 'maxdate', 'utc', 'inner_type', 'minsize',
+                   'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',)
     if type_map:
         type_dict = make_type_map(type_map)
     else:
