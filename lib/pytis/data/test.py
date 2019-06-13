@@ -75,47 +75,43 @@ class Value(unittest.TestCase):
         assert v1 != v3
 
 
-class _TypeCheck(object):  # (unittest.TestCase):  Temporarily disabled
+class _TestType(object):
 
-    def _test_validity(self, type_, value, expected_value,
-                       check_value=True, check_export=True, kwargs={},
-                       ekwargs={}):
-        if type_ is None:
-            type_ = self._test_instance
-        v, e = type_.validate(value, **kwargs)
-        if check_value and expected_value is None:
-            self.assertIsNone(v, ('value returned on error', str(v)))
-            self.assertIsInstance(e, pd.ValidationError), ('invalid error instance', e)
-        else:
-            self.assertIsNone(e, ('proper value generated error', value, e,))
-            self.assertIsInstance(v.type(), type_.__class__, ('invalid value type', v.type()))
-            if check_value:
-                self.assertEqual(v.value(), expected_value)
-        if check_export and e is None:
-            result, error = type_.validate(type_.export(v.value(), **ekwargs), **kwargs)
-            self.assertEqual(result, v, ('export failed', str(v), str(result)))
-        return v, e
+    _type = pd.Type
 
-    def _test_null_validation(self):
-        v, e = self._test_instance.validate('')
-        self.assertIsNone(e, ('Null validation failed', e,))
-        self.assertIsNone(v.value(), ('Non-empty value', v.value(),))
-        self.assertEqual(v.type(), self._test_instance, ('Invalid type', v.type()))
-        return v
+    def _validate(self, t, value, check_export=True, **kwargs):
+        v, e = t.validate(value, **kwargs)
+        assert isinstance(v, pd.Value)
+        assert v.type() == t
+        assert e is None
+        if check_export:
+            # Check that validating the exported value produces the same result.
+            # Only works in simple cases.  When export needs extra arguments,
+            # pass check_export=False and check manually...
+            v2, e2 = t.validate(t.export(v.value()), **kwargs)
+            assert v2 == v
+        return v.value()
+
+    def _check_not_valid(self, t, value, **kwargs):
+        v, e = t.validate(value, **kwargs)
+        assert v is None
+        assert isinstance(e, pd.ValidationError)
+
+    def test_null_validation(self):
+        t1 = self._type(not_null=False)
+        assert self._validate(t1, '') is None
+        t2 = self._type(not_null=True)
+        self._check_not_valid(t2, '')
 
     def test_equality(self):
-        c = self._test_instance.__class__
-        assert c() == c()
+        assert self._type() == self._type()
+        assert self._type(not_null=True) != self._type(not_null=False)
 
 
-class Type(_TypeCheck):
-    _test_instance = pd.Type()
-
-    def test_validation(self):
-        self._test_null_validation()
+class TestType(_TestType):
 
     def test_non_equality(self):
-        assert self._test_instance != pd.Integer()
+        assert pd.Type() != pd.Integer()
         assert pd.Integer(not_null=True) != pd.Integer()
         assert pd.String(maxlen=2) != pd.String(maxlen=3)
 
@@ -123,441 +119,435 @@ class Type(_TypeCheck):
         i1 = pd.Integer()
         i2 = pd.Integer(not_null=True)
         i12 = i1.clone(i2)
-        self.assertTrue(i1.not_null() is False and i12.not_null() is True)
+        assert not i1.not_null()
+        assert i12.not_null()
         i21 = i2.clone(i1)
-        self.assertTrue(i21.not_null())
+        assert i21.not_null()
         i3 = pd.Integer(not_null=False)
         i23 = i2.clone(i3)
-        self.assertFalse(i23.not_null())
+        assert not i23.not_null()
         i31 = i3.clone(i1)
-        self.assertFalse(i31.not_null())
+        assert not i31.not_null()
         s1 = pd.String(maxlen=4)
         s2 = pd.RegexString(regex=r'\d-\d+')
         s12 = s1.clone(s2)
-        self.assertIsInstance(s12, pd.RegexString)
-        self.assertEqual(s12.maxlen(), 4)
+        assert isinstance(s12, pd.RegexString)
+        assert s12.maxlen() == 4
 
 
-class Integer(_TypeCheck):
-    _test_instance = pd.Integer()
-
-    def test_validation(self):
-        self._test_validity(None, '1', 1)
-        self._test_validity(None, '-11111111111111111111', -11111111111111111111)
-        self._test_validity(None, '+0L', 0)
-        self._test_validity(None, '1.1', None)
-        self._test_validity(None, 'foo', None)
-        limited = pd.Integer(minimum=5, maximum=8)
-        self._test_validity(limited, '3', None)
-        self._test_validity(limited, '5', 5)
-        self._test_validity(limited, '10', None)
-
-
-class Float(_TypeCheck):
-    _test_instance = pd.Float()
+class TestInteger(_TestType):
+    _type = pd.Integer
 
     def test_validation(self):
-        self._test_validity(None, '3', 3.0)
-        self._test_validity(None, '3.14', 3.14)
-        self._test_validity(None, '-3.14', -3.14)
-        self._test_validity(None, '0.0', 0.0)
-        self._test_validity(None, 'foo', None)
+        t = pd.Integer()
+        assert self._validate(t, '1') ==  1
+        assert self._validate(t, '-11111111111111111111') == -11111111111111111111
+        assert self._validate(t, '+0') == 0
+        self._check_not_valid(t, '1.1')
+        self._check_not_valid(t, 'foo')
+
+    def test_limits(self):
+        t = pd.Integer(minimum=5, maximum=8)
+        self._check_not_valid(t, '3')
+        assert self._validate(t, '5') == 5
+        self._check_not_valid(t, '10')
+
+    def test_equality(self):
+        assert pd.Integer() == pd.Integer()
+
+
+class TestFloat(_TestType):
+    _type = pd.Float
+
+    def test_validation(self):
+        t = pd.Float()
+        assert self._validate(t, '3') == 3.0
+        assert self._validate(t, '3.14') == 3.14
+        assert self._validate(t, '-3.14') == -3.14
+        assert self._validate(t, '0.0') == 0.0
+        self._check_not_valid(t, 'foo')
 
     def test_precision(self):
-        PRECISION = 3
-        t = pd.Float(precision=PRECISION)
-        d = decimal.Decimal
-        v, _ = self._test_validity(t, '3.14159265', d('3.142'),
-                                   check_export=False)
-        self.assertEqual(v.type().precision(), PRECISION)
-        self.assertEqual(v.export(), '3.142')
+        t = pd.Float(precision=3)
+        assert self._validate(t, '3.14159265') == decimal.Decimal('3.142')
+
+    def test_export(self):
+        t = pd.Float(precision=3)
+        assert t.export(decimal.Decimal('3.142')) == '3.142'
 
     def test_rounding(self):
-        self._test_validity(None, '3.1415', 3.14, kwargs={'precision': 2})
-        self._test_validity(None, '3.1415', 3.142, kwargs={'precision': 3})
-        self._test_validity(None, '2.71', 3, kwargs={'precision': 0})
+        t = pd.Float()
         F = pd.Float.FLOOR
         C = pd.Float.CEILING
-        self._test_validity(None, '3.14159', 3.141, kwargs={'precision': 3,
-                                                            'rounding': F})
-        self._test_validity(None, '3.14159', 3.15, kwargs={'precision': 2,
-                                                           'rounding': C})
-        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
-                                                        'rounding': F})
-        self._test_validity(None, '3.14', 3.14, kwargs={'precision': 2,
-                                                        'rounding': C})
+        assert self._validate(t, '3.1415', precision=2) == 3.14
+        assert self._validate(t, '3.1415', precision=3) == 3.142
+        assert self._validate(t, '2.71', precision=0)== 3
+        assert self._validate(t, '3.14159', precision=3, rounding=F) == 3.141
+        assert self._validate(t, '3.14159', precision=2, rounding=C) == 3.15
+        assert self._validate(t, '3.14', precision=2, rounding=F) == 3.14
+        assert self._validate(t, '3.14', precision=2, rounding=C) == 3.14
 
     def test_value(self):
         f = 3.14
         d = decimal.Decimal('3.14')
-        T = pd.Float()
-        self.assertIsInstance(pd.Value(T, f).value(), float)
-        self.assertIsInstance(pd.Value(T, d).value(), float)
-        T = pd.Float(precision=2)
-        self.assertIsInstance(pd.Value(T, f).value(), decimal.Decimal)
-        self.assertIsInstance(pd.Value(T, d).value(), decimal.Decimal)
-        T = pd.Float(digits=8)
-        self.assertIsInstance(pd.Value(T, f).value(), decimal.Decimal)
-        self.assertIsInstance(pd.Value(T, d).value(), decimal.Decimal)
+        t1 = pd.Float()
+        assert isinstance(pd.Value(t1, f).value(), float)
+        assert isinstance(pd.Value(t1, d).value(), float)
+        t2 = pd.Float(precision=2)
+        assert isinstance(pd.Value(t2, f).value(), decimal.Decimal)
+        assert isinstance(pd.Value(t2, d).value(), decimal.Decimal)
+        t3 = pd.Float(digits=8)
+        assert isinstance(pd.Value(t3, f).value(), decimal.Decimal)
+        assert isinstance(pd.Value(t3, d).value(), decimal.Decimal)
 
     def test_fval(self):
-        self.assertIsInstance(fval(decimal.Decimal('3.14')).value(), decimal.Decimal)
-        self.assertIsInstance(fval(3.14, precision=2).value(), decimal.Decimal)
-        self.assertIsInstance(fval(3.14).value(), float)
-
-
-class String(_TypeCheck):
-    _test_instance = pd.String()
-
-    def test_validation_limited(self):
-        MINLEN = 3
-        MAXLEN = 5
-        t = pd.String(minlen=MINLEN, maxlen=MAXLEN)
-        v, _ = self._test_validity(t, 'abcde', 'abcde')
-        self.assertEqual(v.type().minlen(), MINLEN)
-        self.assertEqual(v.type().maxlen(), MAXLEN)
-        self._test_validity(t, 'ab', None)
-        self._test_validity(t, 'abcdef', None)
-        self._test_validity(t, 'abcd', 'abcd')
-
-    def test_validation_unlimited(self):
-        v = self._test_null_validation()
-        self.assertIsNone(v.type().maxlen())
-        self._test_validity(None, 'abcdefghi', 'abcdefghi')
-        t = pd.String(maxlen=None)
-        self._test_validity(t, 'abcdefghi', 'abcdefghi')
+        assert isinstance(fval(decimal.Decimal('3.14')).value(), decimal.Decimal)
+        assert isinstance(fval(3.14, precision=2).value(), decimal.Decimal)
+        assert isinstance(fval(3.14).value(), float)
 
     def test_equality(self):
-        MAXLEN = 1
-        _TypeCheck.test_equality(self)
-        t = pd.String(maxlen=MAXLEN)
-        assert t == pd.String(maxlen=MAXLEN)
-        assert t != self._test_instance
-        assert t != pd.String(maxlen=(MAXLEN + 1))
+        assert pd.Float() == pd.Float()
+        assert pd.Float(precision=5) != pd.Float()
+        assert pd.Float(precision=3) != pd.Float(precision=2)
 
 
-class Password(_TypeCheck):
-    _test_instance = pd.Password(minlen=4)
+class TestString(_TestType):
+    _type = pd.String
 
     def test_validation(self):
-        self._test_validity(None, 'abcdef', 'abcdef')
-        self._test_validity(None, 'abcdef', 'abcdef', kwargs={'verify': 'abcdef'})
-        self._test_validity(None, 'abcdef', None, kwargs={'verify': ''})
-        self._test_validity(None, 'abcdef', None, kwargs={'verify': 'abcef'})
-        self._test_validity(None, 'abc', None)
-        v, e = self._test_validity(None, '', None, check_value=False)
-        self.assertTrue(v and v.value() is None, v)
-        v, e = self._test_validity(None, '', None, check_value=False, kwargs={'verify': ''})
-        self.assertTrue(v and v.value() is None, v)
+        assert self._validate(pd.String(), 'abcdefghi') == 'abcdefghi'
+        assert self._validate(pd.String(maxlen=None), 'abcdefghi') == 'abcdefghi'
+
+    def test_limits(self):
+        t = pd.String(minlen=3, maxlen=5)
+        assert self._validate(t, 'abcde') == 'abcde'
+        self._check_not_valid(t, 'ab')
+        self._check_not_valid(t, 'abcdef')
+        assert self._validate(t, 'abcd') == 'abcd'
+
+    def test_null_validation(self):
+        super(TestString, self).test_null_validation()
+        assert pd.String().validate('')[0].type().maxlen() is None
+
+    def test_equality(self):
+        super(TestString, self).test_equality()
+        assert pd.String(maxlen=2) == pd.String(maxlen=2)
+        assert pd.String(maxlen=2) != pd.String(maxlen=3)
+        assert pd.String(minlen=3) != pd.String(minlen=5)
+
+    def test_non_equality(self):
+        assert pd.String(maxlen=2) != pd.String()
+        assert pd.String(maxlen=2) != pd.String(maxlen=3)
+
+
+class TestPassword(_TestType):
+    _type = pd.Password
+
+    def test_validation(self):
+        t1 = pd.Password(minlen=4)
+        assert self._validate(t1, 'abcdef') == 'abcdef'
+        assert self._validate(t1, 'abcdef', verify='abcdef') == 'abcdef'
+        self._check_not_valid(t1, 'abcdef', verify='')
+        self._check_not_valid(t1, 'abcdef', verify='abcef')
+        self._check_not_valid(t1, 'abc')
+        assert self._validate(t1, '', verify='') is None
         t2 = pd.Password(not_null=True)
-        self._test_validity(t2, '', None)
-        self._test_validity(t2, None, None)
-        self._test_validity(t2, 'x', 'x')
-        self._test_validity(t2, '', None, kwargs={'verify': ''})
-        t3 = pd.Password(md5=True, minlen=4)
-        from hashlib import md5
-        hashed = md5(u'abcčdef'.encode('utf-8')).hexdigest()
-        self._test_validity(t3, hashed, hashed)
-        self._test_validity(t3, 'xxx', None)
-        self._test_validity(t3, hashed, None, kwargs={'verify': ''})
-        self._test_validity(t3, 'abc', None, kwargs={'verify': 'abc'})
-        self._test_validity(t3, u'abcčdef', hashed, kwargs={'verify': u'abcčdef'},
-                            check_export=False)
-        t4 = pd.Password(md5=True, minlen=4, not_null=True)
-        self._test_validity(t4, 'xxx', None)
-        self._test_validity(t4, '', None, kwargs={'verify': ''})
-        hashed = md5('abcd').hexdigest()
-        self._test_validity(t4, 'abcd', hashed, kwargs={'verify': 'abcd'}, check_export=False)
-        t5 = pd.Password(strength=None)
-        self._test_validity(t5, 'x', 'x')
-        t6 = pd.Password(strength=True)
-        self._test_validity(t6, 'x', None)
-        self._test_validity(t6, 'abcABC', None)
-        self._test_validity(t6, '123456', None)
-        self._test_validity(t6, 'abc123', 'abc123')
-        self._test_validity(t6, 'abc abc', 'abc abc')
+        self._check_not_valid(t2, '')
+        self._check_not_valid(t2, None)
+        self._check_not_valid(t2, '', verify='')
+        assert self._validate(t2, 'x') == 'x'
+        t3 = pd.Password(minlen=4, not_null=True)
+        self._check_not_valid(t3, 'xxx')
+        self._check_not_valid(t3, '', verify='')
+        assert self._validate(t3, 'abcd', verify='abcd') == 'abcd'
+
+    def test_strength(self):
+        t1 = pd.Password(strength=None)
+        assert self._validate(t1, 'x') == 'x'
+        t2 = pd.Password(strength=True)
+        self._check_not_valid(t2, 'x')
+        self._check_not_valid(t2, 'abcABC')
+        self._check_not_valid(t2, '123456')
+        assert self._validate(t2, 'abc123') == 'abc123'
+        assert self._validate(t2, 'abc abc') == 'abc abc'
 
         def strength(password):
             if password and password[0] != 'X':
                 return "Not an eXtreme password!"
-        t7 = pd.Password(strength=strength)
-        self._test_validity(t7, 'abc', None)
-        self._test_validity(t7, 'Xabc', 'Xabc')
+
+        t3 = pd.Password(strength=strength)
+        self._check_not_valid(t3, 'abc')
+        assert self._validate(t3, 'Xabc') == 'Xabc'
 
 
-class Color(_TypeCheck):
-    _test_instance = pd.Color()
+
+class TestColor(_TestType):
+    _type = pd.Color
 
     def test_validation(self):
-        self._test_validity(None, '#0030ab', '#0030ab')
-        self._test_validity(None, '0030ab', None)
-        self._test_validity(None, '#h030ab', None)
-        v, e = self._test_validity(None, '', None, check_value=False)
-        self.assertIsNone(v.value(), ('invalid value', v))
-
-    def test_equality(self):
-        _TypeCheck.test_equality(self)
         t = pd.Color()
-        assert t != pd.String()
-        assert t == self._test_instance
-
-
-class DateTime(_TypeCheck):
-    _test_instance = pd.DateTime(format='%Y-%m-%d %H:%M:%S')
-
-    def test_validation(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = {'local': False}
-        self._test_validity(None, '2001-02-28 12:14:59',
-                            datetime.datetime(2001, 2, 28, 12, 14, 59, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2999-12-31 0:0:0',
-                            datetime.datetime(2999, 12, 31, 0, 0, 0, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '  1999-01-01    23:59:59    ',
-                            datetime.datetime(1999, 1, 1, 23, 59, 59, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '1999-01-01 23:59', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '1999-01-01 23:59:00 +0200', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '99-01-01 0:0:0', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2000-13-01 0:0:0', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2001-02-29 0:0:0', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2001-02-28 24:00:00', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-
-    def test_export(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = {'local': False}
-        v, e = self._test_validity(None, '2100-02-05 01:02:03',
-                                   datetime.datetime(2100, 2, 5, 1, 2, 3, tzinfo=tzinfo),
-                                   kwargs=vkwargs, ekwargs=vkwargs,
-                                   check_export=False)
-        exp = v.type().export
-        val = v.value()
-        result = exp(val, **vkwargs)
-        self.assertEqual(result, '2100-02-05 01:02:03', ('Invalid date export', result))
-        val2 = datetime.datetime(1841, 7, 2, 1, 2, 3, tzinfo=tzinfo)
-        result2 = exp(val2, format='%d.%m.%Y')
-        self.assertEqual(result2, '02.07.1841')
-
-
-class ISODateTime(_TypeCheck):
-    _test_instance = pd.ISODateTime()
-
-    def test_validation(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = dict(local=False, format=pd.ISODateTime.SQL_FORMAT)
-        self._test_validity(None, '2012-01-23 11:14:39.23104+01:00',
-                            datetime.datetime(2012, 1, 23, 10, 14, 39, 231040, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2012-01-23 11:14:39+01:00',
-                            datetime.datetime(2012, 1, 23, 10, 14, 39, 0, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2999-12-31 00:00:00.124',
-                            datetime.datetime(2999, 12, 31, 0, 0, 0, 124000, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2999-12-31 0:0:0',
-                            datetime.datetime(2999, 12, 31, 0, 0, 0, 0, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2999-12-31 25:0:0', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-
-    def test_export(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = dict(local=False, format=pd.ISODateTime.SQL_FORMAT)
-        v, e = self._test_validity(None, '2012-01-23 11:14:39.023104+01:00',
-                                   datetime.datetime(2012, 1, 23, 10, 14, 39,
-                                                     23104, tzinfo=tzinfo),
-                                   kwargs=vkwargs, ekwargs=vkwargs,
-                                   check_export=False)
-        exp = v.type().export
-        val = v.value()
-        result = exp(val, **vkwargs)
-        self.assertEqual(result, '2012-01-23 10:14:39.023104+00:00',
-                         ('Invalid date export', result))
-
-
-class Date(_TypeCheck):
-    _test_instance = pd.Date(format=pd.Date.DEFAULT_FORMAT)
-
-    def test_validation(self):
-        self._test_validity(None, '2001-02-28', datetime.date(2001, 2, 28))
-        self._test_validity(None, '2999-12-31', datetime.date(2999, 12, 31))
-        self._test_validity(None, '  1999-01-01    ', datetime.date(1999, 1, 1))
-        self._test_validity(None, '1999-01-01', datetime.date(1999, 1, 1))
-        self._test_validity(None, '1841-07-02', datetime.date(1841, 7, 2))
-        self._test_validity(None, '1999-01-01 23:59', None)
-        self._test_validity(None, '1999-01-01 23:59:00', None)
-        self._test_validity(None, '01-02-29', None)
-        self._test_validity(None, '2000-13-01', None)
-        self._test_validity(None, '2001-02-29', None)
-
-    def test_date_and_time(self):
-        date_value = pd.Value(self._test_instance, datetime.date(2001, 2, 3))
-        time_value = pd.Value(pd.Time(utc=True), datetime.time(12, 34, 56))
-        value = pd.date_and_time(date_value, time_value)
-        self.assertEqual(value, datetime.datetime(2001, 2, 3, 12, 34, 56,
-                                                  tzinfo=pd.DateTime.UTC_TZINFO))
-        time_value = pd.Value(pd.Time(utc=False), datetime.time(2, 4, 6))
-        value = pd.date_and_time(date_value, time_value)
-        self.assertEqual(value, datetime.datetime(2001, 2, 3, 2, 4, 6,
-                                                  tzinfo=pd.DateTime.LOCAL_TZINFO))
-
-
-class Time(_TypeCheck):
-    _test_instance = pd.Time(format='%H:%M:%S')
-
-    def test_validation(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = {'local': False}
-        self._test_validity(None, '12:14:59',
-                            datetime.time(12, 14, 59, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '0:0:0',
-                            datetime.time(0, 0, 0, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '    23:59:59    ',
-                            datetime.time(23, 59, 59, tzinfo=tzinfo),
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '23:59', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '23:59:00 +0200', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '24:00:00', None,
-                            kwargs=vkwargs, ekwargs=vkwargs)
-
-    def test_export(self):
-        tzinfo = pd.DateTime.UTC_TZINFO
-        vkwargs = {'local': False}
-        v, e = self._test_validity(None, '01:02:03',
-                                   datetime.time(1, 2, 3, tzinfo=tzinfo),
-                                   kwargs=vkwargs, ekwargs=vkwargs,
-                                   check_export=False)
-        exp = v.type().export
-        val = v.value()
-        result = exp(val, **vkwargs)
-        self.assertEqual(result, '01:02:03', ('Invalid time export', result))
-
-
-class TimeInterval(_TypeCheck):
-    _test_instance = pd.TimeInterval()
-
-    def test_validation(self):
-        self._test_validity(None, '0:15:01', datetime.timedelta(0, 901))
-        self._test_validity(None, '24:00:00', datetime.timedelta(1, 0))
-        self._test_validity(None, '1 day 1:00:00', datetime.timedelta(1, 3600), check_export=False)
-        self._test_validity(None, '1000 days 1:00:00', datetime.timedelta(1000, 3600),
-                            check_export=False)
-
-    def test_export(self):
-        value = pd.Value(self._test_instance, datetime.timedelta(1, 3600))
-        exported = value.export()
-        self.assertEqual(exported, '25:00:00', (value, exported,))
-        exported = value.export(format='%M:%S')
-        self.assertEqual(exported, '00:00', (value, exported,))
-        exported = value.export(format='%H')
-        self.assertEqual(exported, '25', (value, exported,))
-
-
-class TimeInterval2(_TypeCheck):
-    _test_instance = pd.TimeInterval(format='%H:%M')
-
-    def test_validation(self):
-        self._test_validity(None, '01:02', datetime.timedelta(0, 3720))
-
-    def test_export(self):
-        value = pd.Value(self._test_instance, datetime.timedelta(1, 3600))
-        exported = value.export()
-        self.assertEqual(exported, '25:00', (value, exported,))
-        exported = value.export(format='%M:%S')
-        self.assertEqual(exported, '00:00', (value, exported,))
-        exported = value.export(format='%H')
-        self.assertEqual(exported, '25', (value, exported,))
-
-
-class Boolean(_TypeCheck):
-    _test_instance = pd.Boolean()
-
-    def test_validation(self):
-        v, _ = self._test_validity(None, 'T', None, check_value=False)
-        self.assertTrue(v.value(), 'T not mapped to true')
-        v, _ = self._test_validity(None, 'F', None, check_value=False)
-        self.assertFalse(v.value(), 'F not mapped to false')
-        self._test_validity(None, 't', None)
-        self._test_validity(None, '0', None)
+        assert self._validate(t, '#0030ab') == '#0030ab'
+        self._check_not_valid(t, '0030ab')
+        self._check_not_valid(t, '#h030ab')
 
     def test_non_equality(self):
-        assert self._test_instance != pd.String()
+        assert pd.Color() != pd.String()
 
 
-class Array(_TypeCheck):
-    _test_instance = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+class TestBoolean(_TestType):
+    _type = pd.Boolean
 
     def test_validation(self):
-        self._test_validity(None, (), ())
-        value, _ = self._test_validity(None, ('1', '2', '3'), None, check_value=False)
-        self.assertEqual([v.value() for v in value.value()], [1, 2, 3])
-        self.assertEqual(value.export(), ('1', '2', '3'), value.export())
+        t = pd.Boolean()
+        assert self._validate(t, 'T') is True
+        assert self._validate(t, 'F') is False
+        self._check_not_valid(t, 't')
+        self._check_not_valid(t, '0')
+
+    def test_non_equality(self):
+        assert pd.Boolean() != pd.String()
+
+
+class TestDateTime(_TestType):
+    _type = pd.DateTime
+
+    def test_validation(self):
+        t = pd.DateTime(format='%Y-%m-%d %H:%M:%S')
+        tzinfo = pd.DateTime.UTC_TZINFO
+        assert self._validate(t, '2001-02-28 12:14:59', local=False) == \
+            datetime.datetime(2001, 2, 28, 12, 14, 59, tzinfo=tzinfo)
+        assert self._validate(t, '2999-12-31 0:0:0', local=False) == \
+            datetime.datetime(2999, 12, 31, 0, 0, 0, tzinfo=tzinfo)
+        assert self._validate(t, '  1999-01-01    23:59:59    ', local=False) == \
+            datetime.datetime(1999, 1, 1, 23, 59, 59, tzinfo=tzinfo)
+        self._check_not_valid(t, '1999-01-01 23:59', local=False)
+        self._check_not_valid(t, '1999-01-01 23:59:00 +0200', local=False)
+        self._check_not_valid(t, '99-01-01 0:0:0', local=False)
+        self._check_not_valid(t, '2000-13-01 0:0:0', local=False)
+        self._check_not_valid(t, '2001-02-29 0:0:0', local=False)
+        self._check_not_valid(t, '2001-02-28 24:00:00', local=False)
+
+    def test_export(self):
+        t = pd.DateTime(format='%Y-%m-%d %H:%M:%S')
+        tzinfo = pd.DateTime.UTC_TZINFO
+        dt1 = datetime.datetime(2100, 2, 5, 1, 2, 3, tzinfo=tzinfo)
+        assert t.export(dt1, local=False) == '2100-02-05 01:02:03'
+        dt2 = datetime.datetime(1841, 7, 2, 1, 2, 3, tzinfo=tzinfo)
+        assert t.export(dt2, format='%d.%m.%Y') == '02.07.1841'
+
+
+
+class TestISODateTime(_TestType):
+    _type = pd.ISODateTime
+
+    def test_validation(self):
+        t = pd.ISODateTime()
+        tzinfo = pd.DateTime.UTC_TZINFO
+        kwargs = dict(local=False, format=pd.ISODateTime.SQL_FORMAT)
+        v = self._validate(t, '2012-01-23 11:14:39.23104+01:00', check_export=False, **kwargs)
+        assert v == datetime.datetime(2012, 1, 23, 10, 14, 39, 231040, tzinfo=tzinfo)
+        assert t.validate(t.export(v, **kwargs), **kwargs)[0].value() == v
+        v = self._validate(t, '2012-01-23 11:14:39+01:00', **kwargs)
+        assert v == datetime.datetime(2012, 1, 23, 10, 14, 39, 0, tzinfo=tzinfo)
+        v = self._validate(t, '2999-12-31 00:00:00.124', check_export=False, **kwargs)
+        assert v == datetime.datetime(2999, 12, 31, 0, 0, 0, 124000, tzinfo=tzinfo)
+        assert t.validate(t.export(v, **kwargs), **kwargs)[0].value() == v
+        v = self._validate(t, '2999-12-31 0:0:0', **kwargs)
+        assert v == datetime.datetime(2999, 12, 31, 0, 0, 0, 0, tzinfo=tzinfo)
+        self._check_not_valid(t, '2999-12-31 25:0:0', **kwargs)
+
+    def test_export(self):
+        t = pd.ISODateTime()
+        tzinfo = pd.DateTime.UTC_TZINFO
+        dt = datetime.datetime(2012, 1, 23, 10, 14, 39, 23104, tzinfo=tzinfo)
+        result = t.export(dt, local=False, format=pd.ISODateTime.SQL_FORMAT)
+        assert result == '2012-01-23 10:14:39.023104+00:00'
+
+
+class TestDate(_TestType):
+    _type = pd.Date
+
+    def test_validation(self):
+        t = pd.Date(format=pd.Date.DEFAULT_FORMAT)
+        assert self._validate(t, '2001-02-28') == datetime.date(2001, 2, 28)
+        assert self._validate(t, '2999-12-31') == datetime.date(2999, 12, 31)
+        assert self._validate(t, '  1999-01-01    ') == datetime.date(1999, 1, 1)
+        assert self._validate(t, '1999-01-01') == datetime.date(1999, 1, 1)
+        assert self._validate(t, '1841-07-02') == datetime.date(1841, 7, 2)
+        self._check_not_valid(t, '1999-01-01 23:59')
+        self._check_not_valid(t, '1999-01-01 23:59:00')
+        self._check_not_valid(t, '01-02-29')
+        self._check_not_valid(t, '2000-13-01')
+        self._check_not_valid(t, '2001-02-29')
+
+    def test_date_and_time(self):
+        t = pd.Date(format=pd.Date.DEFAULT_FORMAT)
+        date_value = pd.Value(t, datetime.date(2001, 2, 3))
+        time_value = pd.Value(pd.Time(utc=True), datetime.time(12, 34, 56))
+        value = pd.date_and_time(date_value, time_value)
+        assert value == datetime.datetime(2001, 2, 3, 12, 34, 56, tzinfo=pd.DateTime.UTC_TZINFO)
+        time_value = pd.Value(pd.Time(utc=False), datetime.time(2, 4, 6))
+        value = pd.date_and_time(date_value, time_value)
+        assert value == datetime.datetime(2001, 2, 3, 2, 4, 6, tzinfo=pd.DateTime.LOCAL_TZINFO)
+
+
+class TestTime(_TestType):
+
+    _type = pd.Time
+
+    def test_validation(self):
+        t = pd.Time(format='%H:%M:%S')
+        tzinfo = pd.DateTime.UTC_TZINFO
+        kwargs = {'local': False}
+        assert self._validate(t, '12:14:59', **kwargs) == \
+            datetime.time(12, 14, 59, tzinfo=tzinfo)
+        assert self._validate(t, '0:0:0', **kwargs) == \
+            datetime.time(0, 0, 0, tzinfo=tzinfo)
+        assert self._validate(t, '    23:59:59    ', **kwargs) == \
+            datetime.time(23, 59, 59, tzinfo=tzinfo)
+        self._check_not_valid(t, '23:59', **kwargs)
+        self._check_not_valid(t, '23:59:00 +0200', **kwargs)
+        self._check_not_valid(t, '24:00:00', **kwargs)
+
+    def test_export(self):
+        t = pd.Time(format='%H:%M:%S')
+        tzinfo = pd.DateTime.UTC_TZINFO
+        assert t.export(datetime.time(1, 2, 3, tzinfo=tzinfo), local=False) == '01:02:03'
+
+
+class TestTimeInterval(_TestType):
+    _type = pd.TimeInterval
+
+    def test_validation(self):
+        t = pd.TimeInterval()
+        assert self._validate(t, '0:15:01') == datetime.timedelta(0, 901)
+        assert self._validate(t, '24:00:00') == datetime.timedelta(1, 0)
+        assert self._validate(t, '1 day 1:00:00') == datetime.timedelta(1, 3600)
+        assert self._validate(t, '1000 days 1:00:00') == datetime.timedelta(1000, 3600)
+        self._check_not_valid(t, '0:15')
+
+    def test_validation_with_format(self):
+        t = pd.TimeInterval(format='%H:%M')
+        assert self._validate(t, '01:02') == datetime.timedelta(0, 3720)
+
+    def test_export(self):
+        value = pd.Value(pd.TimeInterval(), datetime.timedelta(1, 3600))
+        assert value.export() == '25:00:00'
+        assert value.export(format='%M:%S') == '00:00'
+        assert value.export(format='%H') == '25'
+
+
+    def test_export(self):
+        t = pd.TimeInterval(format='%H:%M')
+        value = pd.Value(t, datetime.timedelta(1, 3600))
+        assert value.export() == '25:00'
+        assert value.export(format='%M:%S') == '00:00'
+        assert value.export(format='%H') == '25'
+
+    def test_non_equality(self):
+        assert pd.TimeInterval() != pd.TimeInterval(format='%H:%M')
+
+
+
+class TestArray(_TestType):
+    _type = pd.Array
+
+    def test_validation(self):
+        t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+        assert self._validate(t, ()) == ()
+        assert self._validate(t, ('1', '2', '3')) == \
+            tuple([pd.Value(t.inner_type(), x) for x in (1, 2, 3)])
+
+    def test_export(self):
+        t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+        assert t.export([pd.ival(x) for x in (1, 2, 3)]) == ('1', '2', '3')
 
     def test_equality(self):
-        cls = self._test_instance.__class__
-        inner_type = self._test_instance.inner_type()
-        assert cls(inner_type=inner_type) == cls(inner_type=inner_type)
+        t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+        assert t == pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+
+    def test_non_equality(self):
+        t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3)
+        assert t != pd.Array(inner_type=pd.String())
+        assert t != pd.Array(inner_type=pd.Integer(not_null=True))
+        assert t != pd.Array(inner_type=pd.Integer(), maxlen=3)
+
+    def test_null_validation(self):
+        t1 = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3, not_null=False)
+        v, e = t1.validate('')
+        assert e is None
+        assert v.type() == t1
+        # Well, the status quo is that it returns () in this class, but is this really correct?
+        assert v.value() == ()
+        # Also with not_null=True it validates '' ok, which seems, well, not ok.
+        # t2 = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3, not_null=True)
+        # v, e = t2.validate('')
+        # assert v is None
+        # assert e is not None
 
 
-class Binary(_TypeCheck):
-    _test_instance = pd.Binary()
+class TestBinary(_TestType):
+    _type = pd.Binary
 
     def test_validation(self):
-        self._test_validity(None, b'', b'')
-        self._test_validity(None, b'0123456789', b'0123456789')
+        t = pd.Binary()
+        assert self._validate(t, b'') == b''
+        assert self._validate(t, b'0123456789') == b'0123456789'
         if sys.version_info[0] == 2:
-            self._test_validity(None, buffer('abc'), 'abc')
+            assert self._validate(t, buffer(b'abc')) == b'abc'
         else:
-            self._test_validity(None, memoryview(b'abc'), b'abc')
-        self._test_validity(None, open(__file__), open(__file__).read())
-        self._test_validity(pd.Binary(maxlen=300), open(__file__), None)
-        self._test_validity(pd.Binary(maxlen=300), 400 * b'x', None)
-        self._test_validity(pd.Binary(maxlen=300), 300 * b'x', 300 * b'x')
+            assert self._validate(t, memoryview(b'abc')) == b'abc'
+        assert self._validate(t, open(__file__, 'rb')) == open(__file__, 'rb').read()
+
+    def test_maxlen(self):
+        t = pd.Binary(maxlen=300)
+        self._check_not_valid(t, open(__file__, 'rb'))
+        self._check_not_valid(t, 400 * b'x')
+        assert self._validate(t, 300 * b'x') == 300 * b'x'
 
     def test_typeerror(self):
-        self.assertRaises(TypeError, lambda: pd.Value(pd.Binary(), u'abc'))
+        with pytest.raises(TypeError):
+            pd.Value(pd.Binary(), u'abc')
 
     def test_len(self):
-        v = pd.Value(pd.Binary(), '0123456789')
-        self.assertEqual(len(v.value()), 10)
+        v = pd.Value(pd.Binary(), b'0123456789')
+        assert len(v.value()) == 10
 
-    def test_equality(self):
-        assert pd.Binary() == pd.Binary()
+    def test_non_equality(self):
         assert pd.Binary() != pd.Binary(maxlen=3)
 
+    def test_null_validation(self):
+        t1 = pd.Binary(not_null=False)
+        v, e = t1.validate(b'')
+        assert e is None
+        assert v.type() == t1
+        assert v.value() == b''
 
-class Image(_TypeCheck):
-    _test_instance = pd.Image()
-    _icon = ('\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x0c\x00\x00\x00\x05\x04'
-             '\x03\x00\x00\x00\x83T\x10\x1c\x00\x00\x00\x12PLTE\xef\xef\xef366rttSUU'
-             '\x91\x92\x92\xff\xff\xff\xa6\xcc.k\x00\x00\x00\x01tRNS\x00@\xe6\xd8f'
-             '\x00\x00\x00\x01bKGD\x00\x88\x05\x1dH\x00\x00\x00\tpHYs\x00\x00\x0b'
-             '\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdd'
-             '\x04\x1a\r\x13:\x07k\xbf\x19\x00\x00\x00\x1fIDAT\x08\xd7c`\x10d\x00!'
-             '\x06A\x01F\x10\xc5(((\xc0\x00\xe2\x828@.\x90\x03\x00\x0e:\x00\xbc\xe3'
-             '\xfd\xe4\x96\x00\x00\x00\x00IEND\xaeB`\x82')
+
+class TestImage(_TestType):
+    _icon = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x0c\x00\x00\x00\x05\x04'
+             b'\x03\x00\x00\x00\x83T\x10\x1c\x00\x00\x00\x12PLTE\xef\xef\xef366rttSUU'
+             b'\x91\x92\x92\xff\xff\xff\xa6\xcc.k\x00\x00\x00\x01tRNS\x00@\xe6\xd8f'
+             b'\x00\x00\x00\x01bKGD\x00\x88\x05\x1dH\x00\x00\x00\tpHYs\x00\x00\x0b'
+             b'\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdd'
+             b'\x04\x1a\r\x13:\x07k\xbf\x19\x00\x00\x00\x1fIDAT\x08\xd7c`\x10d\x00!'
+             b'\x06A\x01F\x10\xc5(((\xc0\x00\xe2\x828@.\x90\x03\x00\x0e:\x00\xbc\xe3'
+             b'\xfd\xe4\x96\x00\x00\x00\x00IEND\xaeB`\x82')
 
     def test_validation(self):
-        self._test_validity(None, self._icon, self._icon)
-        self._test_validity(None, io.BytesIO(self._icon), self._icon)
-        self._test_validity(pd.Image(minsize=(100, 100)), self._icon, None)
-        self._test_validity(pd.Image(maxsize=(10, 10)), self._icon, None)
+        assert self._validate(pd.Image(), self._icon) == self._icon
+        assert self._validate(pd.Image(), io.BytesIO(self._icon)) == self._icon
+
+    def test_minsize(self):
+        self._check_not_valid(pd.Image(minsize=(100, 100)), self._icon)
+
+    def test_maxsize(self):
+        self._check_not_valid(pd.Image(maxsize=(10, 10)), self._icon)
 
     def test_image(self):
-        value = pd.Value(self._test_instance, self._icon)
+        value = pd.Value(pd.Image(), self._icon)
         image = value.value().image()
-        self.assertEqual(image.size, (12, 5))
+        assert image.size == (12, 5)
 
 
 class DataEnumerator(unittest.TestCase):
@@ -965,9 +955,9 @@ class DBData(unittest.TestCase):
         b2 = pd.DBBinding('bar')
         bindings = (b1, b2)
         d = pd.DBData(bindings)
-        self.assertEqual(map(lambda c: c.id(), d.columns()), ['foo', 'bar'])
-        self.assertEqual(len(d.key()), 1, ('invalid number of keys', d.key()))
-        self.assertEqual(d.key()[0].id(), 'foo', ('invalid key', d.key()[0]))
+        assert [c.id() for c in d.columns()] == ['foo', 'bar']
+        assert len(d.key()) == 1
+        assert d.key()[0].id() == 'foo'
 
 
 class TestFetchBuffer(object):
@@ -2980,30 +2970,30 @@ class DBDataNotification(DBDataDefault):
         self._ddn_3 = True
 
     def _ddn_check_result(self):
-        time.sleep(1)                   # hmm
-        self.assertTrue(self._ddn_1, 'failure of callback 1')
-        self.assertFalse(self._ddn_2, 'failure of callback 2')
-        self.assertTrue(self._ddn_3, 'failure of callback 3')
+        time.sleep(1)
+        assert self._ddn_1
+        assert not self._ddn_2
+        assert self._ddn_3
 
     def test_notification(self):
         d = self.data
-        self.assertEqual(d.change_number(), 0)
+        assert d.change_number() == 0
         d.insert(self.newrow)
         self._ddn_check_result()
-        self.assertEqual(d.change_number(), 1)
+        assert d.change_number() == 1
 
     def test_side_notification(self):
         d = self.dstat
         cnumber_1 = d.change_number()
         cnumber_2 = self.data.change_number()
-        self.assertGreaterEqual(cnumber_1, 0)
-        d.insert(pd.Row(
-            (('stat', d.columns()[0].type().validate('at')[0]),
-             ('nazev', d.columns()[1].type().validate('Austria')[0]))))
+        assert cnumber_1 >= 0
+        d.insert(pd.Row((
+            ('stat', d.columns()[0].type().validate('at')[0]),
+            ('nazev', d.columns()[1].type().validate('Austria')[0]),
+        )))
         self._ddn_check_result()
-        self.assertEqual(d.change_number(), cnumber_1 + 1, (cnumber_1, d.change_number(),))
-        self.assertEqual(self.data.change_number(), cnumber_2 + 1,
-                         (cnumber_2, self.data.change_number(),))
+        assert d.change_number() == cnumber_1 + 1
+        assert self.data.change_number() == cnumber_2 + 1
 
 
 class DBCounter(_DBBaseTest):
@@ -3096,11 +3086,11 @@ class DBFunction(_DBBaseTest):
         function = pd.DBFunctionDefault('foo8', self._dconnection)
         row = pd.Row(())
         result = function.call(row)[0][0].value()
-        self.assertIsInstance(result, decimal.Decimal)
+        assert isinstance(result, decimal.Decimal)
         function = pd.DBFunctionDefault('foo9', self._dconnection)
         row = pd.Row(())
         result = function.call(row)[0][0].value()
-        self.assertIsInstance(result, float)
+        assert isinstance(result, float)
 
     def test_empty(self):
         function = pd.DBFunctionDefault('foo3', self._dconnection)
