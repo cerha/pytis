@@ -2718,7 +2718,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 if not suppress_label:
                     label = item.label() or wx.StaticText(parent, -1, '')
-                    if item.height() > 1:
+                    if item.height() and item.height() > 1:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_TOP | wx.TOP
                     else:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
