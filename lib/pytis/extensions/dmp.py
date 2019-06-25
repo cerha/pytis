@@ -358,6 +358,7 @@ class DMPObject(object):
         import config
         config.initial_fetch_size = max(config.initial_fetch_size, 100000)
         config.fetch_size = max(config.fetch_size, 100000)
+        config.cache_size = max(config.cache_size, config.fetch_size + 1, config.initial_fetch_size + 1)
         self._reset()
         self._retrieve_data(transaction=transaction)
 
