@@ -68,7 +68,7 @@ def _something_to_lcg(something):
 def _color(color):
     if isinstance(color, (tuple, list)):
         color = lcg.Color(*color)
-    if isinstance(color, basestring):
+    elif isinstance(color, basestring):
         color = lcg.Color(color)
     return color
 
@@ -475,6 +475,8 @@ class _Group(_Container):
         balance=None,
         halign=LEFT,
         valign=TOP,
+        color=None,
+        background=None,
     )
 
     def _orientation(self):
@@ -495,16 +497,19 @@ class _Group(_Container):
                                         self.arg_padding_bottom,
                                         self.arg_padding_left),
                                        padding)]
+        presentation = dict(
+            font_color=_color(self.arg_color),
+            background_color=_color(self.arg_background),
+        )
         if self.arg_boxed:
-            presentation = lcg.Presentation(
+            presentation.update(
                 boxed=True,
                 box_margin=self._dimension(self.arg_box_margin),
                 box_radius=self._dimension(self.arg_box_radius),
                 box_width=self._dimension(self.arg_box_width),
                 box_color=_color(self.arg_box_color),
-                box_mask=self.arg_box_mask)
-        else:
-            presentation = lcg.Presentation()
+                box_mask=self.arg_box_mask,
+            )
         contents = self._lcg_contents()
         orientation = self._orientation()
         if self.arg_spacing:
@@ -517,7 +522,7 @@ class _Group(_Container):
                              width=self._dimension(self.arg_width),
                              height=self._dimension(self.arg_height),
                              padding=padding,
-                             presentation=presentation,
+                             presentation=lcg.Presentation(**presentation),
                              halign=self.arg_halign,
                              valign=self.arg_valign)
 
@@ -568,6 +573,11 @@ class HGroup(_Group):
         podporován.
       halign -- horizontal alignment of group items.  One of LEFT, RIGHT, CENTER.
       valign -- vertical alignment of group items.  One of TOP, BOTTOM, MIDDLE.
+      color -- text color as a 'Color' instance.  May be also passed directly
+        as HTML string or a tuple of ints or floats which will be automatically
+        converted to 'Color' instance with given constructor argument(s).
+      background -- background color as a 'Color' instance, string or tuple (as
+        for 'color').
 
     All argumentrs which accept a Unit instance may be also given directly as
     int or float which will be automatically converted to Umm (given dimension
