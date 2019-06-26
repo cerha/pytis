@@ -37,6 +37,7 @@ from markup import (  # noqa: F401
     VSpace, HSpace, HLine, Paragraph, List, NewPage, PageNumber, Bold,
     Italic, Roman, FontSize, FontFamily, HGroup, VGroup, Group, Document,
     Table, LongTable, Image, StructuredText,
+    LEFT, RIGHT, CENTER, TOP, BOTTOM, MIDDLE,
 )
 
 from flibdata import (  # noqa: F401

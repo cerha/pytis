@@ -44,13 +44,20 @@ from pytis.util import some, super_
 
 _ = pytis.util.translations('pytis-wx')
 
+LEFT = lcg.HorizontalAlignment.LEFT
+RIGHT = lcg.HorizontalAlignment.RIGHT
+CENTER = lcg.HorizontalAlignment.CENTER
+TOP = lcg.VerticalAlignment.TOP
+BOTTOM = lcg.VerticalAlignment.BOTTOM
+MIDDLE = lcg.VerticalAlignment.CENTER
+HORIZONTAL = lcg.Orientation.HORIZONTAL
+VERTICAL = lcg.Orientation.VERTICAL
 
 def _something_to_lcg(something):
     if isinstance(something, basestring):
         result = lcg.TextContent(something)
-    elif isinstance(something, (list, tuple,)):
-        result = lcg.Container([_something_to_lcg(s) for s in something],
-                               orientation=lcg.Orientation.HORIZONTAL)
+    elif isinstance(something, (list, tuple)):
+        result = lcg.Container([_something_to_lcg(s) for s in something], orientation=HORIZONTAL)
     elif isinstance(something, lcg.Content):
         result = something
     else:
@@ -121,7 +128,7 @@ class _Container(_Mark):
         return [_something_to_lcg(c) for c in self._contents]
 
     def _lcg(self):
-        return lcg.Container(self._lcg_contents(), orientation=lcg.Orientation.HORIZONTAL)
+        return lcg.Container(self._lcg_contents(), orientation=HORIZONTAL)
 
 
 class Null(_Mark):
@@ -166,38 +173,37 @@ class _HAlignContainer(_Container):
     def _lcg(self):
         contents = self._lcg_contents()
         if len(contents) > 1:
-            contents = [lcg.Container(contents, orientation=lcg.Orientation.HORIZONTAL)]
-        return lcg.Container(contents, halign=self._ALIGNMENT, orientation=lcg.Orientation.VERTICAL)
+            contents = [lcg.Container(contents, orientation=HORIZONTAL)]
+        return lcg.Container(contents, halign=self._ALIGNMENT, orientation=VERTICAL)
 
 
 class Center(_HAlignContainer):
     """Značka horizontálního vycentrování svého obsahu."""
-    _ALIGNMENT = lcg.HorizontalAlignment.CENTER
+    _ALIGNMENT = CENTER
 
 
 class AlignLeft(_HAlignContainer):
     """Značka zarovnání svého obsahu vlevo."""
-    _ALIGNMENT = lcg.HorizontalAlignment.LEFT
+    _ALIGNMENT = LEFT
 
 
 class AlignRight(_HAlignContainer):
     """Značka zarovnání svého obsahu vpravo."""
-    _ALIGNMENT = lcg.HorizontalAlignment.RIGHT
+    _ALIGNMENT = RIGHT
 
 
 class VCenter(_Container):
     """Značka vertikálního vycentrování svého obsahu."""
 
     def _lcg(self):
-        return lcg.Container(self._lcg_contents(),
-                             valign=lcg.VerticalAlignment.CENTER,
-                             orientation=lcg.Orientation.HORIZONTAL)
+        return lcg.Container(self._lcg_contents(), valign=MIDDLE, orientation=HORIZONTAL)
 
 
 class _Space(_Mark):
 
-    VERTICAL = 'VERTICAL'
-    HORIZONTAL = 'HORIZONTAL'
+    # For backwards compatibility.  Use global constants directly.
+    VERTICAL = VERTICAL
+    HORIZONTAL = HORIZONTAL
 
     def __init__(self, size, orientation):
         super(_Space, self).__init__()
@@ -211,9 +217,9 @@ class _Space(_Mark):
         return self._orientation
 
     def _lcg(self):
-        if self._orientation == self.VERTICAL:
+        if self._orientation == VERTICAL:
             mark = lcg.VSpace
-        elif self._orientation == self.HORIZONTAL:
+        elif self._orientation == HORIZONTAL:
             mark = lcg.HSpace
         else:
             raise Exception('Unexpected orientation', self._orientation)
@@ -236,7 +242,7 @@ class VSpace(_Space):
             exaktně definována
 
         """
-        super(VSpace, self).__init__(height, self.VERTICAL)
+        super(VSpace, self).__init__(height, VERTICAL)
 
 
 class HSpace(_Space):
@@ -254,7 +260,7 @@ class HSpace(_Space):
             exaktně definována
 
         """
-        super(HSpace, self).__init__(width, self.HORIZONTAL)
+        super(HSpace, self).__init__(width, HORIZONTAL)
 
 
 class HLine(_Mark):
@@ -451,21 +457,25 @@ class FontFamily(_Container):
 
 
 class _Group(_Container):
-    KWARGS = dict(boxed=False,
-                  box_margin=None,
-                  box_radius=None,
-                  box_width=None,
-                  box_color=None,
-                  box_mask=None,
-                  padding=None,
-                  padding_top=None,
-                  padding_bottom=None,
-                  padding_left=None,
-                  padding_right=None,
-                  spacing=None,
-                  width=None,
-                  height=None,
-                  balance=None)
+    KWARGS = dict(
+        boxed=False,
+        box_margin=None,
+        box_radius=None,
+        box_width=None,
+        box_color=None,
+        box_mask=None,
+        padding=None,
+        padding_top=None,
+        padding_bottom=None,
+        padding_left=None,
+        padding_right=None,
+        spacing=None,
+        width=None,
+        height=None,
+        balance=None,
+        halign=LEFT,
+        valign=TOP,
+    )
 
     def _orientation(self):
         pass
@@ -498,7 +508,7 @@ class _Group(_Container):
         contents = self._lcg_contents()
         orientation = self._orientation()
         if self.arg_spacing:
-            if orientation == lcg.Orientation.VERTICAL:
+            if orientation == VERTICAL:
                 space = [VSpace(self.arg_spacing).lcg()]
             else:
                 space = [HSpace(self.arg_spacing).lcg()]
@@ -508,8 +518,8 @@ class _Group(_Container):
                              height=self._dimension(self.arg_height),
                              padding=padding,
                              presentation=presentation,
-                             halign=lcg.HorizontalAlignment.LEFT,
-                             valign=lcg.VerticalAlignment.TOP)
+                             halign=self.arg_halign,
+                             valign=self.arg_valign)
 
 
 class HGroup(_Group):
@@ -522,9 +532,9 @@ class HGroup(_Group):
       box_margin -- space between the box and the content as 'Unit' instance or None
       box_width -- box line width as 'Unit' instance or None
       box_color -- box line color as 'Color' instance.  May be also passed
-          directly as HTML string or a tuple of ints or floats which will be
-          automatically converted to 'Color' instance with given constructor
-          argument(s).
+        directly as HTML string or a tuple of ints or floats which will be
+        automatically converted to 'Color' instance with given constructor
+        argument(s).
       box_radius -- if not None and not 0, box corners will be rounded
         with given radius as 'Unit' instance
       box_mask -- Mask of visible box sides as a sequence of 4 bools (top,
@@ -556,6 +566,8 @@ class HGroup(_Group):
         (horizontální nebo vertikální) bude patřičně upravena, velikost prvků
         s udaným poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument
         podporován.
+      halign -- horizontal alignment of group items.  One of LEFT, RIGHT, CENTER.
+      valign -- vertical alignment of group items.  One of TOP, BOTTOM, MIDDLE.
 
     All argumentrs which accept a Unit instance may be also given directly as
     int or float which will be automatically converted to Umm (given dimension
@@ -564,7 +576,7 @@ class HGroup(_Group):
     """
 
     def _orientation(self):
-        return lcg.Orientation.HORIZONTAL
+        return HORIZONTAL
 
 
 class VGroup(_Group):
@@ -576,7 +588,7 @@ class VGroup(_Group):
     """
 
     def _orientation(self):
-        return lcg.Orientation.VERTICAL
+        return VERTICAL
 
 
 class Group(_Group):
@@ -585,7 +597,7 @@ class Group(_Group):
     KWARGS = dict(_Group.KWARGS, vertical=False)
 
     def _orientation(self):
-        return lcg.Orientation.VERTICAL if self.arg_vertical else lcg.Orientation.HORIZONTAL
+        return VERTICAL if self.arg_vertical else HORIZONTAL
 
 
 class Document(_Container):
@@ -737,8 +749,7 @@ class Table(_Mark):
 
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths,
-                         presentation=self._lcg_presentation(),
-                         halign=lcg.HorizontalAlignment.LEFT)
+                         presentation=self._lcg_presentation(), halign=LEFT)
 
     def _lcg(self):
         table_rows = []
@@ -747,11 +758,11 @@ class Table(_Mark):
             for column in self._columns:
                 label = _something_to_lcg(column.label)
                 if column.label_alignment == column.ALIGN_LEFT:
-                    alignment = lcg.HorizontalAlignment.LEFT
+                    alignment = LEFT
                 elif column.label_alignment == column.ALIGN_CENTER:
-                    alignment = lcg.HorizontalAlignment.CENTER
+                    alignment = CENTER
                 elif column.label_alignment == column.ALIGN_RIGHT:
-                    alignment = lcg.HorizontalAlignment.RIGHT
+                    alignment = RIGHT
                 else:
                     raise Exception('Unknown label alignment', column.label_alignment)
                 cells.append(lcg.TableHeading(label, align=alignment))
@@ -901,8 +912,7 @@ class LongTable(Table):
 
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths, long=True,
-                         presentation=self._lcg_presentation(),
-                         halign=lcg.HorizontalAlignment.LEFT)
+                         presentation=self._lcg_presentation(), halign=LEFT)
 
 
 class Image(_Mark):
