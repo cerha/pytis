@@ -951,7 +951,7 @@ class Image(_Mark):
         if sys.version_info[0] == 2:
             assert isinstance(file_or_data, (basestring, buffer, bytes)), type(file_or_data)
         else:
-            assert isinstance(file_or_data, str, bytes), type(file_or_data)
+            assert isinstance(file_or_data, (str, bytes)), type(file_or_data)
         super(Image, self).__init__()
         self._standalone = standalone
         self._width = width
