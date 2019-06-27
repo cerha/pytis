@@ -1681,6 +1681,9 @@ def translations(domain, origin='en'):
 
             def __init__(self, domain, path):
                 self._gettext = gettext.translation(domain, path[0], fallback=True)
+                if sys.version_info[0] == 2:
+                    self._gettext.gettext = self._gettext.ugettext
+                    self._gettext.ngettext = self._gettext.ungettext
 
             def _interpolate(self, text, *args, **kwargs):
                 values = args or kwargs
@@ -1689,14 +1692,14 @@ def translations(domain, origin='en'):
                 return text
 
             def __call__(self, text, *args, **kwargs):
-                return self._interpolate(self._gettext.ugettext(text), *args, **kwargs)
+                return self._interpolate(self._gettext.gettext(text), *args, **kwargs)
 
             def ngettext(self, singular, plural, *args, **kwargs):
                 if args:
                     n = args[0]
                 else:
                     n = kwargs['n']
-                return self._interpolate(self._gettext.ungettext(singular, plural, n),
+                return self._interpolate(self._gettext.ngettext(singular, plural, n),
                                          *args, **kwargs)
 
             def pgettext(self, context, text, *args, **kwargs):
