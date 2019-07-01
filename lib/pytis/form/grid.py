@@ -42,8 +42,6 @@ from .form import Form
 from .screen import Color, get_icon
 from .event import top_level_exception
 
-import config
-
 
 class DataTable(object):
     """Access database table as a grid of numbered rows and columns.
@@ -186,7 +184,7 @@ class DataTable(object):
         self._secret_columns = [c.id() for c in columns
                                 if not self._data.permitted(c.id(), pytis.data.Permission.VIEW)]
         # (re)create caches
-        self._cache = cachetools.LRUCache(maxsize=config.cache_size)
+        self._cache = cachetools.LRUCache(maxsize=pytis.config.cache_size)
         self._group_cache = {0: False}
         self._group_value_cache = {}
 
@@ -379,7 +377,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
 
     def update(self, *args, **kwargs):
         super(GridTable, self).update(*args, **kwargs)
-        c = wx.Colour(config.grouping_background_downgrade)
+        c = wx.Colour(pytis.config.grouping_background_downgrade)
         self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
 
     def close(self):
@@ -523,12 +521,12 @@ class CustomCellRenderer(wx.grid.GridCellRenderer):
             if grid.GetGridCursorRow() == row:
                 original_pen = dc.GetPen()
                 try:
-                    border_width = config.row_highlight_width
+                    border_width = pytis.config.row_highlight_width
                     if border_width != 0:
                         if grid.GetParent() is not Form.focused_form():
-                            color = config.row_highlight_unfocused_color
+                            color = pytis.config.row_highlight_unfocused_color
                         else:
-                            color = config.row_highlight_color
+                            color = pytis.config.row_highlight_color
                         dc.SetPen(wx.Pen(color, border_width, wx.PENSTYLE_SOLID))
                         r, mod = divmod(border_width, 2)
                         x, y, width, height = rect

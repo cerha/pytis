@@ -68,7 +68,6 @@ from .search import (
     SearchDialog, FilterDialog, SortingDialog
 )
 
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -235,7 +234,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
             self._cleanup()
             raise
         show_time = pytis.data.DateTime.now(without_timezone=True)
-        if self._LOG_STATISTICS and config.form_statistics:
+        if self._LOG_STATISTICS and pytis.config.form_statistics:
             pytis.extensions.dbfunction('pytis_log_form',
                                         ('form', pytis.data.Value(pytis.data.String(), name),),
                                         ('class', pytis.data.Value(pytis.data.String(),
@@ -651,7 +650,7 @@ class InnerForm(Form):
             try:
                 data = pytis.data.dbtable('e_pytis_help_spec',
                                           ('spec_name', 'description', 'help'),
-                                          config.dbconnection)
+                                          pytis.config.dbconnection)
             except pytis.data.DBException:
                 description = self._view.description()
             else:
@@ -2442,7 +2441,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         super_(EditForm)._init_attributes(self, _new=new, **kwargs)
         self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
-        self._edit_form_timeout = None if self._transaction is None else config.edit_form_timeout
+        self._edit_form_timeout = (None if self._transaction is None
+                                   else pytis.config.edit_form_timeout)
         # Other attributes
         self._fields = []
         self._tab_navigated_widgets = []
@@ -3000,10 +3000,11 @@ class PopupEditForm(PopupForm, EditForm):
         if isinstance(self._data, pytis.data.MemData):
             return None
         try:
-            connection_name = config.resolver.get(self._name, 'data_spec').connection_name()
+            connection_name = pytis.config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
             connection_name = None
-        return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name,
+        return pytis.data.DBTransactionDefault(pytis.config.dbconnection,
+                                               connection_name=connection_name,
                                                ok_rollback_closed=True)
 
     def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
@@ -3186,7 +3187,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def set_row(self, row):
         if self._transaction is None:
-            self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+            self._transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
         super(PopupEditForm, self).set_row(row)
 
 

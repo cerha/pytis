@@ -37,6 +37,7 @@ import psycopg2 as dbapi
 import psycopg2.extensions
 import psycopg2.extras
 
+import pytis
 from pytis.util import log, translations, Locked, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, Range, RestrictedData
 from dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
@@ -497,8 +498,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
         # je _pg_add_notifications voláno předčasně, přičemž pořadí volání
         # konstruktorů nelze změnit.  Pro nápravu je potřeba ještě předělat
         # třídy týkající se notifikací.
-        import config
-        if config.dblisten:
+        if pytis.config.dblisten:
             self._pg_add_notifications()
 
 

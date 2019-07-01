@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import config
-
 import pytis.data
 import pytis.extensions
 from pytis.presentation import Specification, Field, Binding
@@ -73,8 +71,7 @@ class CryptoAreas(Specification):
             return
         db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
                                              ('key_name_', pytis.data.sval('pytis'),))
-        import config
-        connection_data = config.dbconnection
+        connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
         if not key_id or not key:
             pytis.form.run_dialog(pytis.form.Error,
@@ -202,13 +199,13 @@ class Users(Specification):
         admin_address = record['admin_address'].value()
         transaction = transaction
         if not transaction:
-            transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+            transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
         error = pytis.extensions.add_crypto_user(area,
                                                  username,
-                                                 config.dbuser,
+                                                 pytis.config.dbuser,
                                                  crypto_password,
                                                  admin_address,
-                                                 config.dbconnection,
+                                                 pytis.config.dbconnection,
                                                  transaction=transaction,
                                                  user_password=user_password)
         if error:
@@ -221,9 +218,8 @@ class Users(Specification):
         area = row['name'].value()
         if not area or area not in pytis.form.decrypted_names():
             return
-        import config
-        connection_data = config.dbconnection
-        key_id, key = pytis.extensions.crypto_admin_key(area, config.dbuser, connection_data)
+        connection_data = pytis.config.dbconnection
+        key_id, key = pytis.extensions.crypto_admin_key(area, pytis.config.dbuser, connection_data)
         if not key_id or not key:
             pytis.form.run_dialog(pytis.form.Error,
                                   _(u"Nebyl nalezen klíč pro tuto oblast"))

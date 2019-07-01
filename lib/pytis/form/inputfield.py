@@ -63,7 +63,6 @@ from .application import (
     global_keymap, message, new_record, run_dialog, run_form,
 )
 
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -1513,7 +1512,7 @@ class GenericCodebookField(GenericEnumerationField):
         cb_name = self._row.codebook(self._id)
         assert cb_name is not None
         try:
-            cb_spec = config.resolver.get(cb_name, 'cb_spec')
+            cb_spec = pytis.config.resolver.get(cb_name, 'cb_spec')
         except ResolverError:
             cb_spec = CodebookSpec()
         self._cb_name = cb_name
@@ -1683,7 +1682,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         style = wx.LC_REPORT | wx.LC_SINGLE_SEL
         self._list = listctrl = wx.ListCtrl(parent, -1, style=style)
         # Set up column headings according to specification.
-        view_spec = config.resolver.get(self._cb_name, 'view_spec')
+        view_spec = pytis.config.resolver.get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         total_width = 0
         for i, cid in enumerate(columns):
@@ -1765,7 +1764,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         value_column = enumerator.value_column()
         sorting = self._cb_spec.sorting()
         if sorting is None:
-            sorting = config.resolver.get(self._cb_name, 'view_spec').sorting()
+            sorting = pytis.config.resolver.get(self._cb_name, 'view_spec').sorting()
         rows = enumerator.rows(condition=self._row.runtime_filter(self._id),
                                transaction=self._row.transaction(), sort=sorting or (),
                                arguments=self._codebook_arguments())
@@ -1856,7 +1855,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                 )
 
     def _current_row(self):
-        view = config.resolver.get(self._cb_name, 'view_spec')
+        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
         row = self._type.enumerator().row(self._row[self._id].value(),
                                           transaction=self._row.transaction())
@@ -1886,7 +1885,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         return self.enabled() and self._selected_item is not None
 
     def _cmd_edit_selected(self):
-        view = config.resolver.get(self._cb_name, 'view_spec')
+        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
         on_edit_record = view.on_edit_record()
         prefill_function = self.spec().codebook_update_prefill()
         transaction = self._row.transaction()
@@ -1914,7 +1913,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         return self.enabled() and self._selected_item is not None
 
     def _cmd_delete_selected(self):
-        view = config.resolver.get(self._cb_name, 'view_spec')
+        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
         transaction = self._row.transaction()
         row = self._current_row()

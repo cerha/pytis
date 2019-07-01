@@ -28,14 +28,12 @@ actual use.
 """
 
 import sys
-
-from pytis.util import SimpleCache, argument_names
+import pytis.util
 
 
 def resolver():
     """Deprecated: Use config.resolver instead."""
-    import config
-    return config.resolver
+    return pytis.config.resolver
 
 
 def _issubclass(c1, c2):
@@ -86,8 +84,8 @@ class Resolver(object):
 
         """
         self._search = search
-        self._specification_cache = SimpleCache(self._get_specification)
-        self._method_result_cache = SimpleCache(self._get_method_result)
+        self._specification_cache = pytis.util.SimpleCache(self._get_specification)
+        self._method_result_cache = pytis.util.SimpleCache(self._get_method_result)
 
     def _import_module(self, name):
         components = name.split('.')
@@ -168,7 +166,7 @@ class Resolver(object):
             raise ResolverError(("Resolver error loading specification '%s': %s is not a "
                                  "pytis.presentation.Specification subclass.") %
                                 (name, specification,))
-        if argument_names(specification.__init__):
+        if pytis.util.argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
             # applications may override the constructor and expect the resolver
@@ -186,7 +184,7 @@ class Resolver(object):
         except AttributeError, e:
             raise ResolverError("Resolver error loading specification '%s.%s': %s" %
                                 (name, method_name, e))
-        if argument_names(method):
+        if pytis.util.argument_names(method):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specification
             # methods are defined by applications (basic methods, such as

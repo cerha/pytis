@@ -59,7 +59,6 @@ from .dialog import (
     Message, Question, Error, CheckListDialog, ProgressDialog,
 )
 
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -102,17 +101,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def OnInit(self):
         import pytis.extensions
-        self._specification = config.resolver.specification('Application')
+        self._specification = pytis.config.resolver.specification('Application')
         # Create the main application frame.
-        frame = self._frame = wx.Frame(None, -1, self._frame_title(config.application_name),
+        frame = self._frame = wx.Frame(None, -1, self._frame_title(pytis.config.application_name),
                                        pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
         KeyHandler.__init__(self, self._panel)
-        wx.ToolTip('').Enable(config.show_tooltips)
+        wx.ToolTip('').Enable(pytis.config.show_tooltips)
         self._logo = None
-        logo_file = config.logo
+        logo_file = pytis.config.logo
         if logo_file is not None:
             if os.access(logo_file, os.R_OK):
                 logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)
@@ -150,7 +149,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id)
                         for id in ('tablename',)]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-            factory.create(connection_data=config.dbconnection)
+            factory.create(connection_data=pytis.config.dbconnection)
         db_operation(test)
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
@@ -162,17 +161,19 @@ class Application(wx.App, KeyHandler, CommandHandler):
                          for x in self._specification.status_fields()]
         self._statusbar = StatusBar(frame, status_fields)
         self._initial_config = [
-            (o, copy.copy(getattr(config, o)))
+            (o, copy.copy(getattr(pytis.config, o)))
             for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
         self._saved_state = {}
         # Initialize all needed user settings managers.
-        self._application_config_manager = pytis.form.ApplicationConfigManager(config.dbconnection)
-        self._form_settings_manager = pytis.form.FormSettingsManager(config.dbconnection)
-        self._profile_manager = pytis.form.FormProfileManager(config.dbconnection)
-        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(config.dbconnection)
+        self._application_config_manager = pytis.form.ApplicationConfigManager(
+            pytis.config.dbconnection)
+        self._form_settings_manager = pytis.form.FormSettingsManager(pytis.config.dbconnection)
+        self._profile_manager = pytis.form.FormProfileManager(pytis.config.dbconnection)
+        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
+            pytis.config.dbconnection)
         # Initialize user action logger.
         try:
-            self._logger = DbActionLogger(config.dbconnection, config.dbuser)
+            self._logger = DbActionLogger(pytis.config.dbconnection, pytis.config.dbuser)
         except pytis.data.DBException as e:
             # Logging is optional.  The application may choose not to include
             # the logging table in the database schema and this will simply
@@ -181,19 +182,19 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._logger = None
         # Read the stored configuration.
         for option, value in self._application_config_manager.load():
-            if hasattr(config, option):
-                setattr(config, option, value)
+            if hasattr(pytis.config, option):
+                setattr(pytis.config, option, value)
             else:
                 self._saved_state[option] = value
         # Read in access rights.
-        init_access_rights(config.dbconnection)
+        init_access_rights(pytis.config.dbconnection)
         # Unlock crypto keys
-        crypto_password = config.dbconnection.crypto_password()
+        crypto_password = pytis.config.dbconnection.crypto_password()
         count = 0
         try:
             data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
                                       ('key_id', 'name', 'fresh',),
-                                      config.dbconnection)
+                                      pytis.config.dbconnection)
             rows = data.select_map(identity)
             data.close()
             count = len(rows)
@@ -230,7 +231,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if crypto_password:
                     pytis.data.DBFunctionDefault(
                         'pytis_crypto_unlock_current_user_passwords',
-                        lambda: config.dbconnection
+                        lambda: pytis.config.dbconnection
                     ).reset_crypto_password(crypto_password)
         decrypted_names = set()
         if count > 0 and crypto_password and data is not None:
@@ -358,16 +359,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
             elif not isinstance(item, pytis.form.MSeparator):
                 enabled = item.command().enabled(**item.args())
                 if __debug__:
-                    if config.debug:
+                    if pytis.config.debug:
                         log(DEBUG, 'Menu item:', (item.title(), enabled))
 
     def _spec_title(self, name):
         if name.find('::') != -1:
             names = name.split('::')
-            return (config.resolver.get(names[0], 'binding_spec')[names[1]].title() or
+            return (pytis.config.resolver.get(names[0], 'binding_spec')[names[1]].title() or
                     ' / '.join([self._spec_title(n) for n in names]))
         else:
-            return config.resolver.get(name, 'view_spec').title()
+            return pytis.config.resolver.get(name, 'view_spec').title()
 
     def _init(self):
         # Check RPC client version
@@ -378,8 +379,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
         # (Re)open the startup forms saved on last exit.
         startup_forms = []
-        if config.startup_forms:
-            for name in config.startup_forms.split(','):
+        if pytis.config.startup_forms:
+            for name in pytis.config.startup_forms.split(','):
                 if name.find('/') != -1:
                     cls_name, name = name.split('/')
                     try:
@@ -447,7 +448,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._raise_form(mru_windows[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
-        self._frame.SetTitle(self._frame_title(config.application_name))
+        self._frame.SetTitle(self._frame_title(pytis.config.application_name))
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
@@ -463,7 +464,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             side_name = None
         try:
-            config.resolver.get(name, 'view_spec')
+            pytis.config.resolver.get(name, 'view_spec')
         except ResolverError:
             return False
         else:
@@ -471,7 +472,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if not self._is_valid_spec(side_name):
                     return False
                 try:
-                    bindings = config.resolver.get(name, 'binding_spec')
+                    bindings = pytis.config.resolver.get(name, 'binding_spec')
                 except ResolverError:
                     return False
                 if not isinstance(bindings, dict) or side_name not in bindings:
@@ -480,7 +481,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _public_spec(self, name):
         try:
-            spec_class = config.resolver.specification(name)
+            spec_class = pytis.config.resolver.specification(name)
         except Exception:
             return True
         else:
@@ -600,7 +601,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _create_menubar(self):
         self._recent_forms_menu = None
-        menu = self._menu = self._build_menu(self._specification.menu(), config.dbconnection)
+        menu = self._menu = self._build_menu(self._specification.menu(), pytis.config.dbconnection)
         menu.append(Menu(self._WINDOW_MENU_TITLE,
                          (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
                                 help=_("Switch to the previous window in the window list order.")),
@@ -739,7 +740,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             base_name = re.sub(" WITH .*", '', unicodedata.name(match.group(0)))
             base_char = unicodedata.lookup(base_name)
             return base_char.isalnum() and base_char or '-'
-        name = config.application_name.lower()
+        name = pytis.config.application_name.lower()
         return str(re.sub("[^a-zA-Z0-9-]", safe_char, unicode(name)))
 
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
@@ -772,7 +773,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(ACTION, msg, *args)
             except Exception:
                 print msg, args
-        safelog('Application exit called', (config.dbschemas,))
+        safelog('Application exit called', (pytis.config.dbschemas,))
         try:
             if not self._modals.empty():
                 log(EVENT, "Couldn't close application with modal windows:",
@@ -804,7 +805,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             options = list(self._saved_state.items())
             for option, initial_value in self._initial_config:
-                current_value = getattr(config, option)
+                current_value = getattr(pytis.config, option)
                 if current_value != initial_value:
                     options.append((option, current_value))
             self._application_config_manager.save(options)
@@ -902,7 +903,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 w.refresh(interactive=interactive)
 
     def _cmd_reload_specifications(self):
-        config.resolver.reload()
+        pytis.config.resolver.reload()
         self._cache_menu_enabled(self._menu)
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
@@ -916,7 +917,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         try:
             if has_access(name):
                 if binding is not None or issubclass(form_class, pytis.form.MultiBrowseDualForm):
-                    spec = config.resolver.get(name, 'view_spec')
+                    spec = pytis.config.resolver.get(name, 'view_spec')
                     if binding is None:
                         for b in spec.bindings():
                             binding_name = b.name()
@@ -979,7 +980,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 # assert self._modals.empty()
                 parent = self._frame
                 kwargs['guardian'] = self
-            args = (parent, config.resolver, name)
+            args = (parent, pytis.config.resolver, name)
             try:
                 form = form_class(*args, **kwargs)
             except pytis.form.Form.InitError:
@@ -1043,7 +1044,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         block_on_new_record=False, transaction=None, spec_kwargs={},
                         copied_row=None, set_values=None):
         # See new_record() for documentation.
-        view = config.resolver.get(name, 'view_spec', **spec_kwargs)
+        view = pytis.config.resolver.get(name, 'view_spec', **spec_kwargs)
         kwargs = dict(prefill=prefill)
         if copied_row and view.on_copy_record():
             on_new_record = view.on_copy_record()
@@ -1090,10 +1091,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             focused = wx_focused_window()
             wx_yield_()
             try:
-                proc = config.resolver.get_object(spec_name, proc_name)
+                proc = pytis.config.resolver.get_object(spec_name, proc_name)
             except ResolverError:
                 # Legacy procedure definitions
-                spec = config.resolver.get(spec_name, 'proc_spec')
+                spec = pytis.config.resolver.get(spec_name, 'proc_spec')
                 assert isinstance(spec, dict), spec
                 assert proc_name in spec, (proc_name, spec)
                 proc = spec[proc_name]
@@ -1132,14 +1133,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         browser.load_uri('help:' + topic)
 
     def _cmd_reload_rights(self):
-        init_access_rights(config.dbconnection)
+        init_access_rights(pytis.config.dbconnection)
         self._create_menubar()
         self._update_window_menu()
         self._cache_menu_enabled(self._menu)
 
     def _cmd_custom_debug(self):
         if __debug__:
-            config.custom_debug()
+            pytis.config.custom_debug()
 
     def _cmd_inspect(self):
         import wx.lib.inspection
@@ -1324,7 +1325,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             method = getattr(self._specification, 'cmd_' + name)
         except AttributeError:
             try:
-                return config.resolver.get('app_commands', name)
+                return pytis.config.resolver.get('app_commands', name)
             except ResolverError:
                 return None
         command, args = method()
@@ -1358,8 +1359,8 @@ class DbActionLogger(object):
     """Log user actions into the database."""
 
     def __init__(self, dbconnection, username):
-        factory = config.resolver.get('pytis.defs.logging.FormActionLog', 'data_spec')
-        self._data = factory.create(connection_data=config.dbconnection)
+        factory = pytis.config.resolver.get('pytis.defs.logging.FormActionLog', 'data_spec')
+        self._data = factory.create(connection_data=pytis.config.dbconnection)
         self._username = username
 
     def _values(self, **kwargs):
@@ -1556,7 +1557,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             result = operation(*args, **kwargs)
             if _application:
                 if _application._log_login:
-                    log(ACTION, "Login action:", (config.dbschemas, 'True'))
+                    log(ACTION, "Login action:", (pytis.config.dbschemas, 'True'))
                     _application._log_login = False
                 _application.login_hook(success=True)
             return True, result
@@ -1564,24 +1565,24 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             run_dialog(Error, _("Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
-            if config.dbconnection.password() is not None and _application:
-                log(ACTION, "Login action:", (config.dbschemas, 'False'))
+            if pytis.config.dbconnection.password() is not None and _application:
+                log(ACTION, "Login action:", (pytis.config.dbschemas, 'False'))
                 _application.login_hook(success=False)
-            if config.login_selection:
+            if pytis.config.login_selection:
                 logins = [x[0] if isinstance(x, tuple) else x
-                          for x in config.login_selection]
-                passwords = dict([x for x in config.login_selection
+                          for x in pytis.config.login_selection]
+                passwords = dict([x for x in pytis.config.login_selection
                                   if isinstance(x, tuple)])
                 login_enumerator = pytis.data.FixedEnumerator(logins)
                 password_computer = computer(lambda r, login: passwords.get(login))
                 password_editable = computer(lambda r, login: login not in passwords)
-                default_login = config.dbuser if config.dbuser in logins else None
+                default_login = pytis.config.dbuser if pytis.config.dbuser in logins else None
                 default_password = None
             else:
                 login_enumerator = None
                 password_computer = None
                 password_editable = None
-                default_login = config.dbuser
+                default_login = pytis.config.dbuser
                 if pytis.remote.client_available():
                     default_password = pytis.remote.session_password()
                 else:
@@ -1597,10 +1598,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             )
             if not login_result:
                 return FAILURE
-            config.dbconnection.update_login_data(user=login_result['login'].value(),
-                                                  password=login_result['password'].value())
-            config.dbconnection = config.dbconnection  # mark as changed
-            config.dbuser = config.dbconnection.user()
+            pytis.config.dbconnection.update_login_data(user=login_result['login'].value(),
+                                                        password=login_result['password'].value())
+            pytis.config.dbconnection = pytis.config.dbconnection  # mark as changed
+            pytis.config.dbuser = pytis.config.dbconnection.user()
         except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
@@ -1965,10 +1966,10 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
     Raises 'ResolverError' or 'ProgramError' if data object creation fails.
 
     """
-    factory = config.resolver.get(name, 'data_spec', **spec_kwargs)
+    factory = pytis.config.resolver.get(name, 'data_spec', **spec_kwargs)
     assert isinstance(factory, pytis.data.DataFactory)
     if issubclass(factory.class_(), pytis.data.DBData):
-        kwargs = dict(kwargs, connection_data=config.dbconnection)
+        kwargs = dict(kwargs, connection_data=pytis.config.dbconnection)
     t = time.time()
     success, data_object = db_operation(factory.create, **kwargs)
     if not success:
@@ -2006,7 +2007,7 @@ def _dump_rights():
         registered_shortnames = registered_shortnames.union(_access_rights.keys())
     if Specification._access_rights not in (None, 'nonuser'):
         registered_shortnames = registered_shortnames.union(Specification._access_rights.keys())
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     output = sys.stderr
     output.write("--- BEGIN list of registered rights ---\n")
     output.write("# source shortname right column permitted\n")
@@ -2058,8 +2059,7 @@ def init_access_rights(connection_data):
     """
     global _access_rights, _user_roles, _access_dbconnection
     _access_dbconnection = connection_data
-    import config
-    if not config.use_dmp_roles:
+    if not pytis.config.use_dmp_roles:
         return
     try:
         roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
@@ -2070,7 +2070,7 @@ def init_access_rights(connection_data):
         _access_rights = 'nonuser'
         return
     _user_roles = roles
-    if not config.use_dmp_rights:
+    if not pytis.config.use_dmp_rights:
         return
     S = pytis.data.String()
     _access_rights = {}
@@ -2107,8 +2107,8 @@ def init_access_rights(connection_data):
                     relaxed_action_rights.append(r)
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
-    config.resolver.clear()
-    if config.debug:
+    pytis.config.resolver.clear()
+    if pytis.config.debug:
         _dump_rights()
 
 
@@ -2140,12 +2140,12 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         return has_access(main, perm=perm) and has_access(side, perm=perm)
     else:
         try:
-            rights = config.resolver.get(name, 'data_spec').access_rights()
+            rights = pytis.config.resolver.get(name, 'data_spec').access_rights()
         except ResolverError:
             rights = None
         if rights:
             if _access_dbconnection is None:
-                init_access_rights(config.dbconnection)
+                init_access_rights(pytis.config.dbconnection)
             groups = pytis.data.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
@@ -2299,10 +2299,10 @@ def built_in_status_fields():
         return (status, icon, tooltip)
 
     def _refresh_user_config():
-        tooltip = "\n".join((_("Username: %s", config.dbuser),
-                             _("Database name: %s", config.dbname),
-                             _("Database host: %s", config.dbhost or 'localhost')))
-        return (config.dbuser, 'user-icon', tooltip)
+        tooltip = "\n".join((_("Username: %s", pytis.config.dbuser),
+                             _("Database name: %s", pytis.config.dbname),
+                             _("Database host: %s", pytis.config.dbhost or 'localhost')))
+        return (pytis.config.dbuser, 'user-icon', tooltip)
 
     return (
         StatusField('message', width=None),

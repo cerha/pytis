@@ -991,8 +991,7 @@ class Image(_Mark):
                           height=self._dimension(self._height),
                           standalone=self._standalone)
         else:
-            import config
-            file_name = os.path.join(config.print_spec_dir, self._file_name)
+            file_name = os.path.join(pytis.config.print_spec_dir, self._file_name)
             return lcg.InlineImage(lcg.Image(file_name, src_file=file_name),
                                    width=self._dimension(self._width),
                                    height=self._dimension(self._height),

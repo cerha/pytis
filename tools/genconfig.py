@@ -15,8 +15,7 @@ def go():
     sys.argv = sys.argv[:1]
     import pytis.util  # noqa: F401 (importing for the side effect of 'config' module init)
     f = open(outfile, 'w')
-    import config
-    config.dump_config_template(f)
+    pytis.config.dump_config_template(f)
     f.close()
 
 

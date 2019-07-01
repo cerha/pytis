@@ -58,6 +58,7 @@ import gc
 import thread
 import weakref
 
+import pytis
 from pytis.data import ColumnSpec, Data, Type
 from pytis.util import (
     compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt,
@@ -265,7 +266,6 @@ class DBConnectionPool:
         return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode(), schemas,)
 
     def get(self, connection_spec):
-        import config
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
         with Locked(self._lock):
@@ -292,8 +292,8 @@ class DBConnectionPool:
             if c is None or broken_connections_present:
                 gc.collect()
             if c is None:
-                if ((config.connection_limit is not None and
-                     len(allocated_connections) >= config.connection_limit)):
+                if ((pytis.config.connection_limit is not None and
+                     len(allocated_connections) >= pytis.config.connection_limit)):
                     if __debug__:
                         log(EVENT, "Connections summary:")
                         for c in allocated_connections.keys():
@@ -316,9 +316,8 @@ class DBConnectionPool:
                 connections = pool[spec_id]
             except KeyError:
                 pool[spec_id] = connections = []
-            import config
-            if ((config.max_pool_connections is None or
-                 len(connections) < config.max_pool_connections)):
+            if ((pytis.config.max_pool_connections is None or
+                 len(connections) < pytis.config.max_pool_connections)):
                 connections.append(connection)
         if __debug__:
             log(DEBUG, 'Connection returned to pool:', connection)

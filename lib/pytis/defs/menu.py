@@ -483,8 +483,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
             from_columns = set([r[0] for r in rows])
             components = to_shortname.value().split('/')
             spec_name = components[1]
-            import config
-            view_spec = config.resolver.get(spec_name, 'view_spec')
+            view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
             to_columns = set([f.id() for f in view_spec.fields()])
             missing_columns = from_columns - to_columns
             if missing_columns:
@@ -570,8 +569,7 @@ class ColnameEnumerator(pytis.data.Enumerator):
     def values(self, argument=None):
         if argument is None:
             return ()
-        import config
-        resolver = config.resolver
+        resolver = pytis.config.resolver
         try:
             specification = resolver.specification(argument)
         except pytis.util.ResolverError:
@@ -594,8 +592,7 @@ class ColnameData(pytis.data.RestrictedMemData):
         if argument is None:
             self._mem_data = []
             return
-        import config
-        resolver = config.resolver
+        resolver = pytis.config.resolver
         try:
             specification = resolver.specification(argument)
         except pytis.util.ResolverError:

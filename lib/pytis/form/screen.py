@@ -60,9 +60,8 @@ from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
-import config
 
-if config.http_proxy is not None:
+if pytis.config.http_proxy is not None:
     # On Linux, proxy can be set through webkitgtk library (used by the GTK wx.html2.WebView
     # implementation).  Setting up http_proxy will currently fail on other platforms.
     import ctypes
@@ -74,7 +73,7 @@ if config.http_proxy is not None:
         raise ProgramError("HTTP proxy is only supported on Linux with specific libraries. "
                            "Install the missing libraries or unset http_proxy: %s" % e)
     else:
-        proxy_uri = libsoup.soup_uri_new(config.http_proxy)
+        proxy_uri = libsoup.soup_uri_new(pytis.config.http_proxy)
         session = libwebkitgtk.webkit_get_default_session()
         libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
@@ -1008,7 +1007,7 @@ class Menu(_TitledMenuObject):
                 menu.AppendSeparator()
             else:
                 title, wx_title = item.title(), item.title(raw=True)
-                if self._allow_autoindex and config.auto_menu_accel:
+                if self._allow_autoindex and pytis.config.auto_menu_accel:
                     prefix = acceskey_prefix(i)
                     wx_title = prefix + title
                     title = prefix[1:] + title
@@ -2005,7 +2004,7 @@ class KeyboardSwitcher(wx.BitmapButton):
 
     def __init__(self, parent, uicmd):
         self._toolbar = parent
-        layouts = config.keyboard_layouts
+        layouts = pytis.config.keyboard_layouts
         self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
                                get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
                               for title, icon, command in layouts])
@@ -2016,7 +2015,7 @@ class KeyboardSwitcher(wx.BitmapButton):
                                 icon=icon,
                             ))
                       for title, icon, system_command in layouts]
-        layout = find(config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
+        layout = find(pytis.config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
         icon, system_command = layout[1:]
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
@@ -2028,7 +2027,7 @@ class KeyboardSwitcher(wx.BitmapButton):
 
     def _switch_layout(self, system_command, icon):
         os.system(system_command)
-        config.initial_keyboard_layout = system_command
+        pytis.config.initial_keyboard_layout = system_command
         self.SetBitmapLabel(self._bitmaps[icon])
         self._toolbar.Realize()
 
@@ -2324,7 +2323,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self.load_content(help_page(uri), base_uri=uri, exporter_class=HelpExporter)
 
     def _form_handler(self, uri, name, **kwargs):
-        view_spec = config.resolver.get(name, 'view_spec')
+        view_spec = pytis.config.resolver.get(name, 'view_spec')
         if view_spec.bindings():
             cls = pytis.form.MultiBrowseDualForm
         else:
@@ -2764,10 +2763,10 @@ class IN(pytis.data.Operator):
         self._spec_name = spec_name
         self._table_column_id = table_column_id
         self._profile_id = profile_id
-        resolver = config.resolver
+        resolver = pytis.config.resolver
         view_spec = resolver.get(spec_name, 'view_spec')
         data_factory = resolver.get(spec_name, 'data_spec')
-        data_object = data_factory.create(connection_data=config.dbconnection)
+        data_object = data_factory.create(connection_data=pytis.config.dbconnection)
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 manager = pytis.form.profile_manager()
@@ -2938,7 +2937,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
         constants or a filename.  The icons returned for wx constants should
         honour the pre-defined symbol in the current user interface theme.
         Identifiers not corresponding to wx constants are used as icon file
-        names within the 'config.icon_dir'.  The '.png' suffix is added
+        names within the 'pytis.config.icon_dir'.  The '.png' suffix is added
         automatically, so the identifier consists just of a base name.
       type, size -- only relevant when icon_id as a 'wx.ART_*' constant.
 
@@ -2950,7 +2949,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     elif icon_id.startswith('wx'):
         bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
-        filename = os.path.join(config.icon_dir, icon_id)
+        filename = os.path.join(pytis.config.icon_dir, icon_id)
         if os.path.exists(filename + '.png'):
             img = wx.Image(filename + '.png', type=wx.BITMAP_TYPE_PNG)
         elif os.path.exists(filename + '.svg'):
@@ -3618,13 +3617,12 @@ def _open_remote_file_viewer(f, suffix, decrypt=False):
 
 
 def _open_local_file_viewer(filename):
-    import config
     import mimetypes
     import subprocess
     mime_type = mimetypes.guess_type(filename)[0]
-    if mime_type == 'application/pdf' and config.postscript_viewer:
+    if mime_type == 'application/pdf' and pytis.config.postscript_viewer:
         # Open a local PDF viewer if this is a PDF file and a specific PDF viewer is configured.
-        command = (config.postscript_viewer, filename)
+        command = (pytis.config.postscript_viewer, filename)
         shell = False
     elif mime_type:
         # Find the viewer through mailcap.

@@ -84,6 +84,7 @@ import re
 import string
 import sys
 
+import pytis
 import pytis.data as pd
 from pytis.util import (
     Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure,
@@ -157,7 +158,6 @@ class DMPConfiguration(object):
             connection parameters
 
         """
-        import config
         set_configuration_file(configuration_file)
         arguments_options = (('schemas', 'dbschemas'),
                              ('database', 'dbname'),
@@ -168,12 +168,12 @@ class DMPConfiguration(object):
                              ('sslmode', 'dbsslm'),)
         for argument, option in arguments_options:
             if locals()[argument] is not None:
-                setattr(config, option, locals()[argument])
+                setattr(pytis.config, option, locals()[argument])
         if configuration_file is None:
             self._resolver = None
         else:
-            self._resolver = config.resolver
-        self._connection_data = config.dbconnection
+            self._resolver = pytis.config.resolver
+        self._connection_data = pytis.config.dbconnection
 
     def resolver(self):
         """Return specifications resolver instance."""
@@ -355,10 +355,10 @@ class DMPObject(object):
 
     def retrieve_data(self, transaction=None):
         """Load DMP data from the database."""
-        import config
-        config.initial_fetch_size = max(config.initial_fetch_size, 100000)
-        config.fetch_size = max(config.fetch_size, 100000)
-        config.cache_size = max(config.cache_size, config.fetch_size + 1, config.initial_fetch_size + 1)
+        pytis.config.initial_fetch_size = max(pytis.config.initial_fetch_size, 100000)
+        pytis.config.fetch_size = max(pytis.config.fetch_size, 100000)
+        pytis.config.cache_size = max(pytis.config.cache_size, pytis.config.fetch_size + 1,
+                                      pytis.config.initial_fetch_size + 1)
         self._reset()
         self._retrieve_data(transaction=transaction)
 

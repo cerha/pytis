@@ -23,7 +23,6 @@ import sys
 import getopt
 import pytis.util
 import pytis.data
-import config
 from pytis.form import DBConfigurationStorage
 
 
@@ -49,7 +48,7 @@ def usage(msg=None):
 def run():
     # Process command line options and init configuration.
     try:
-        config.add_command_line_options(sys.argv)
+        pytis.config.add_command_line_options(sys.argv)
         command, username = sys.argv[1:3]
         option = len(sys.argv) > 3 and sys.argv[3] or None
         value = len(sys.argv) > 4 and sys.argv[4] or None
@@ -65,7 +64,7 @@ def run():
         usage("Value must be specified for command '%s'" % command)
     if command != 'set' and value is not None:
         usage("Value makes no sense for command '%s'" % command)
-    storage = DBConfigurationStorage(config.dbconnection, username=username)
+    storage = DBConfigurationStorage(pytis.config.dbconnection, username=username)
     cfg = dict(storage.read())
     if command == 'get':
         if option is not None:
@@ -87,8 +86,8 @@ def run():
         else:  # command == 'set'
             cfg[option] = value
         # Avoid pytis logging during the update.
-        config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
-                              pytis.util.DEBUG, pytis.util.OPERATIONAL]
+        pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                                    pytis.util.DEBUG, pytis.util.OPERATIONAL]
         # Update the saved configuration.
         storage.write(cfg.items())
 

@@ -1823,8 +1823,7 @@ class DateTime(_CommonDateTime):
         assert mindate is None or isinstance(mindate, basestring)
         assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
-            import config
-            format = config.date_time_format
+            format = pytis.config.date_time_format
         super(DateTime, self)._init(format=format, utc=utc, **kwargs)
         if mindate:
             try:
@@ -2061,7 +2060,7 @@ class Date(DateTime):
       format -- specification of both input and output format of date
         and/or time in the form accepted by `time.strftime()'.
          May be also None in which case the configuration option
-        'config.date_time_format' is used.  The class defines '*_FORMAT'
+        'pytis.config.date_time_format' is used.  The class defines '*_FORMAT'
          constants which may be used as a value of this argument.
 
     """
@@ -2075,8 +2074,7 @@ class Date(DateTime):
 
     def _init(self, format=None, **kwargs):
         if format is None:
-            import config
-            format = config.date_format
+            format = pytis.config.date_format
         super(Date, self)._init(format=format, utc=False, **kwargs)
 
     def _validate(self, *args, **kwargs):
@@ -2147,7 +2145,7 @@ class Time(_CommonDateTime):
       format -- specification of both input and output format of date
         and/or time in the form accepted by `time.strftime()'.
         May be also None in which case the configuration option
-        'config.date_time_format' is used.  The class defines '*_FORMAT'
+        'pytis.config.date_time_format' is used.  The class defines '*_FORMAT'
         constants which may be used as a value of this argument.
 
     """
@@ -2161,8 +2159,7 @@ class Time(_CommonDateTime):
 
     def _init(self, format=None, **kwargs):
         if format is None:
-            import config
-            format = config.time_format
+            format = pytis.config.time_format
         super(Time, self)._init(format=format, **kwargs)
 
     def _validate(self, *args, **kwargs):
@@ -3004,13 +3001,11 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     def _complete(self):
         # Finish the instance by data object creation.
         if self._connection_data is None:
-            import config
-            connection_data = config.dbconnection
+            connection_data = pytis.config.dbconnection
         else:
             connection_data = self._connection_data
         if isinstance(self._data_factory, basestring):
-            import config
-            self._data_factory = config.resolver.get(self._data_factory, 'data_spec')
+            self._data_factory = pytis.config.resolver.get(self._data_factory, 'data_spec')
         self._data = data = self._data_factory.create(connection_data=connection_data)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()

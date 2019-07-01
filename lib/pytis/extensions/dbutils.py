@@ -19,10 +19,10 @@
 
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
+import pytis
 import pytis.data as pd
 from pytis.util import ProgramError, translations, resolver, is_anystring, xtuple
 
-import config
 
 _ = translations('pytis-wx')
 
@@ -39,7 +39,7 @@ def data_object(spec):
         spec = resolver().get(spec, 'data_spec')
 
     def conn_spec():
-        return config.dbconnection
+        return pytis.config.dbconnection
     success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
     return data
 
@@ -192,7 +192,7 @@ def dbfunction(name, *args, **kwargs):
                 return None
 
     def conn_spec():
-        return config.dbconnection
+        return pytis.config.dbconnection
     success, function = pytis.form.db_operation(pd.DBFunctionDefault, name, conn_spec)
     success, result = pytis.form.db_operation(function.call, pd.Row(args),
                                               transaction=transaction)
@@ -221,7 +221,7 @@ def is_in_groups(groups):
         groups = xtuple(groups)
 
     def conn_spec():
-        return config.dbconnection
+        return pytis.config.dbconnection
     dbgroups = pd.default_access_groups(conn_spec)
     if set(groups) & set(dbgroups) == set([]):
         return False

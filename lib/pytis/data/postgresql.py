@@ -516,8 +516,7 @@ class PostgreSQLAccessor(object_2_5):
             self._pg_encoding = coding
 
     def _postgresql_initialize_crypto(self, connection):
-        import config
-        password = config.dbconnection.crypto_password()
+        password = pytis.config.dbconnection.crypto_password()
         if not password:
             return
         self._postgresql_query(connection, _Query("savepoint __pytis_init_crypto"), False)
@@ -529,7 +528,7 @@ class PostgreSQLAccessor(object_2_5):
             self._postgresql_query(connection, _Query("rollback to __pytis_init_crypto"), False)
             # Prevent logging pytis_crypto_unlock_current_user_passwords
             # failures all the time:
-            config.dbconnection.set_crypto_password(None)
+            pytis.config.dbconnection.set_crypto_password(None)
 
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:
@@ -540,10 +539,9 @@ class PostgreSQLAccessor(object_2_5):
                 connection.set_connection_info('search_path', search_path)
 
     def _postgresql_initialize_session_variables(self, connection):
-        import config
-        for k in config.session_variables:
+        for k in pytis.config.session_variables:
             if len(k.split('.')) == 2:
-                v = config.session_variables[k]
+                v = pytis.config.session_variables[k]
                 if isinstance(v, basestring):
                     query = _Query("select set_config('{}', '{}', False)".format(k, v))
                     self._postgresql_query(connection, query, False)
@@ -633,11 +631,10 @@ class PostgreSQLConnector(PostgreSQLAccessor):
           kwargs -- propagated to superclass constructors
 
         """
-        import config
         self._pg_encoding = None
         # Logování
-        if config.dblogtable:
-            self._pdbb_logging_command = _QInsert(config.dblogtable, ('command',))
+        if pytis.config.dblogtable:
+            self._pdbb_logging_command = _QInsert(pytis.config.dblogtable, ('command',))
         else:
             self._pdbb_logging_command = None
         # Connection management
@@ -755,9 +752,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
           password -- new crypto password; basestring
 
         """
-        import config
-        config.dbconnection.set_crypto_password(password)
-        config.dbconnection = config.dbconnection  # mark as changed
+        pytis.config.dbconnection.set_crypto_password(password)
+        pytis.config.dbconnection = pytis.config.dbconnection  # mark as changed
         self._pg_flush_connections()
 
 
@@ -817,8 +813,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         connection_data = self._pg_connection_data()
         if PostgreSQLUserGroups._logical_access_groups is UNDEFINED:
             PostgreSQLUserGroups._logical_access_groups = None
-            import config
-            if config.use_dmp_roles:
+            if pytis.config.use_dmp_roles:
                 # Check for ev_pytis_user_roles presence first, to prevent logging
                 # error messages in non-DMP applications
                 tables = dbtable('information_schema.tables', ('table_name', 'table_schema'),
@@ -829,7 +824,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                                                    Value(String(),
                                                          PostgreSQLUserGroups.DMP_GROUPS_TABLE)))
                     schema_name = None
-                    schemas = config.dbschemas
+                    schemas = pytis.config.dbschemas
                     if not schemas:
                         schemas = 'public'
                     for i in range(n):
@@ -988,8 +983,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         super(PostgreSQLNotifier, self).after_init()
         # Attention, notifications may be registered only after or other
         # initializations are performed.  Be careful about class successors!
-        import config
-        if config.dblisten:
+        if pytis.config.dblisten:
             self._pg_add_notifications()
 
     def _call_on_change_callbacks(self):
@@ -2811,7 +2805,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           kwargs -- předá se předkovi
 
         """
-        import config
         if __debug__:
             log(DEBUG, 'Creating data table')
         if is_sequence(key):
@@ -2824,9 +2817,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             **kwargs)
         self._pg_dbpointer = -1  # DB cursor position starting from zero
         self._pg_buffer = pytis.data.FetchBuffer(self._pg_load_buffer,
-                                                 limit=config.cache_size,
-                                                 initial_fetch_size=config.initial_fetch_size,
-                                                 fetch_size=config.fetch_size)
+                                                 limit=pytis.config.cache_size,
+                                                 initial_fetch_size=pytis.config.initial_fetch_size,
+                                                 fetch_size=pytis.config.fetch_size)
         self._pg_number_of_rows = None
         self._pg_ro_select = ro_select
         # TODO: Ugly, fix this!
@@ -3752,8 +3745,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             bindings=(), key=(), connection_data=connection_data,
             **kwargs)
         if timeout_callback is None:
-            import config
-            if config.debug:
+            if pytis.config.debug:
                 def timeout_callback(self=self):
                     log(DEBUG, "Unhandled transaction timeout",
                         self._trans_connection().connection_info('transaction_commands'))
@@ -3872,11 +3864,10 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """
         T = DBPostgreSQLTransaction
         if T._trans_check_interval is None:
-            import config
-            T._trans_max_time = config.max_transaction_time
+            T._trans_max_time = pytis.config.max_transaction_time
             if T._trans_max_time is None:
                 T._trans_max_time = 100000000
-            T._trans_max_idle_time = config.max_transaction_idle_time
+            T._trans_max_idle_time = pytis.config.max_transaction_idle_time
             if T._trans_max_idle_time is None:
                 T._trans_max_idle_time = 100000000
             T._trans_check_interval = \

@@ -818,7 +818,6 @@ class BugReport(GenericDialog):
         self._einfo = einfo
 
     def _create_content(self, sizer):
-        import config
         dialog = self._dialog
         label = wx.StaticText(dialog, -1, _("Program Error"))
         label.SetFont(wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
@@ -844,11 +843,11 @@ class BugReport(GenericDialog):
                    _("Your message (optional)"))
         sizer.Add(nb, 1, wx.EXPAND | wx.ALL, 6)
 
-        if not config.sender_address:
+        if not pytis.config.sender_address:
             import commands
             status, domain = commands.getstatusoutput('hostname -f')
             if not status and domain != 'localhost':
-                addr = '%s@%s' % (config.dbconnection.user(), domain)
+                addr = '%s@%s' % (pytis.config.dbconnection.user(), domain)
             else:
                 addr = ''
             email_ctrl = wx.TextCtrl(dialog, value=addr or '', name='from')  # size=(740, 30),
@@ -862,7 +861,7 @@ class BugReport(GenericDialog):
         button = wx.Button(dialog, -1, label=_("Send error report"))
         button.Bind(wx.EVT_BUTTON, self._on_send_bug_report)
         button.Bind(wx.EVT_UPDATE_UI, lambda e: e.Enable(bool(
-            not self._sent and (config.sender_address or
+            not self._sent and (pytis.config.sender_address or
                                 dialog.FindWindowByName('from').GetValue() != '')
         )))
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -881,15 +880,14 @@ class BugReport(GenericDialog):
 
         import email.Utils
         import smtplib
-        import config
 
-        to = config.bug_report_address
+        to = pytis.config.bug_report_address
         if not to:
             pytis.form.run_dialog(pytis.form.Message,
                                   _("Destination address not known. The configuration option "
                                     "`bug_report_address' must be set."))
             return
-        addr = config.sender_address
+        addr = pytis.config.sender_address
         if not addr:
             addr = self._dialog.FindWindowByName('from').GetValue()
         message = self._dialog.FindWindowByName('message').GetValue()
@@ -917,13 +915,13 @@ class BugReport(GenericDialog):
         msg = email.Message.Message()
         msg['From'] = header(addr)
         msg['To'] = header(to)
-        msg['Subject'] = header('%s: %s' % (config.bug_report_subject or _("Error"), buginfo))
+        msg['Subject'] = header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
         msg['Date'] = email.Utils.formatdate()
         msg['Message-ID'] = msgid
         msg.set_payload(message, 'utf-8')
         try:
             try:
-                server = smtplib.SMTP(config.smtp_server)
+                server = smtplib.SMTP(pytis.config.smtp_server)
                 server.sendmail(addr, to, msg.as_string())
             finally:
                 try:

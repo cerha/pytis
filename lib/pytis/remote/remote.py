@@ -28,8 +28,8 @@ import socket
 import hashlib
 import getpass
 import subprocess
+import pytis
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
-import config
 
 _ = translations('pytis-wx')
 
@@ -148,7 +148,7 @@ def client_ip():
     If pytis is not run from an x2go or nx client, return 'None'.
 
     """
-    if config.session_id:
+    if pytis.config.session_id:
         ip = '127.0.0.1'
     else:
         ip = x2go_ip() or nx_ip()
@@ -157,8 +157,8 @@ def client_ip():
 
 def client_available():
     """Return true, iff remote client is available."""
-    if not config.rpc_communication_enabled or client_ip() is None:
-        level = OPERATIONAL if config.rpc_communication_enabled else DEBUG
+    if not pytis.config.rpc_communication_enabled or client_ip() is None:
+        level = OPERATIONAL if pytis.config.rpc_communication_enabled else DEBUG
         log(level, "RPC unavailable")
         return False
     try:
@@ -169,8 +169,8 @@ def client_available():
 
 
 def x2go_session_id(fake=False):
-    if config.session_id is not None:
-        return config.session_id
+    if pytis.config.session_id is not None:
+        return pytis.config.session_id
     session_id = os.getenv('X2GO_SESSION')
     if fake:
         session_id += 'ssh'
@@ -253,7 +253,7 @@ def read_x2go_info_file(rename=False, use_defaults=True):
                 os.remove(pytis_x2go_file)
             break
     elif use_defaults:
-        access_data = dict(port=config.rpc_local_port, password=None)
+        access_data = dict(port=pytis.config.rpc_local_port, password=None)
     else:
         access_data = None
     return access_data

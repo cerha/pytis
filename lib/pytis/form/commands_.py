@@ -57,7 +57,6 @@ from .screen import (
     KeyboardSwitcher,
 )
 from .application import Application
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -626,7 +625,7 @@ TOOLBAR_COMMANDS = ((
     UICommands.HELP,
     UICommands.DESCRIBE,
 ), (
-    (UICommands.SWITCH_KEYBOARD_LAYOUT,) if config.keyboard_layouts else ()) + (
+    (UICommands.SWITCH_KEYBOARD_LAYOUT,) if pytis.config.keyboard_layouts else ()) + (
     UICommands.LEAVE_FORM,
 ))
 

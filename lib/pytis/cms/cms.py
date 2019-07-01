@@ -32,11 +32,11 @@ import os
 import socket
 
 import lcg
+import pytis
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util as pu
 from pytis.presentation import Field, VGroup, Binding, Action, CodebookSpec, computer
-import config
 
 _ = pu.translations('pytis-defs')
 
@@ -49,7 +49,7 @@ NEVER = pp.Editable.NEVER
 
 def nextval(seq):
     def conn_spec():
-        return config.dbconnection
+        return pytis.config.dbconnection
     counter = pd.DBCounterDefault(seq, conn_spec)
     return lambda transaction=None: counter.next(transaction=transaction)
 

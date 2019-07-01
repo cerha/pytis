@@ -31,8 +31,6 @@ import os
 
 import pytis.data as pd
 
-import config
-
 from pytis.util import (
     ResolverError, TemporaryFile, log, find, translations, EVENT
 )
@@ -270,7 +268,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 def make_presented_row(specname, prefill={}):
     import pytis.form
     data = data_create(specname)
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     spec = resolver.get(specname, 'view_spec')
     prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
     return prow
@@ -286,7 +284,7 @@ def run_any_form():
         ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
         ("CodebookForm", pytis.form.CodebookForm),
     )
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     all_defs = []
     for d in get_form_defs(resolver):
         all_defs.append(specification_path(d)[1])
@@ -378,11 +376,11 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     parameters = {(spec + '/' + pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
     parameters.update(kwargs)
-    print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
+    print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
     print_resolver = P(print_file_resolver, resolver)
     resolvers = (print_resolver,)
     try:
-        formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec,
+        formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, print_spec,
                                            parameters=parameters, language=language,
                                            translations=translations, spec_kwargs=spec_kwargs)
     except pytis.output.AbortOutput:
@@ -397,7 +395,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
-    """Tiskni specifikaci pomocí příkazu config.printing_command nebo ulož do output_file.
+    """Tiskni specifikaci pomocí příkazu pytis.config.printing_command nebo ulož do output_file.
 
     Argumenty:
 

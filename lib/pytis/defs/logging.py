@@ -21,7 +21,6 @@ from __future__ import unicode_literals
 
 import datetime
 
-import config
 import pytis.data as pd
 import pytis.util
 from pytis.presentation import Specification, Field, Editable, \
@@ -72,7 +71,7 @@ class ChangesLog(Specification):
     sorting = (('id', pd.DESCENDANT),)
 
     def _df_search_path_(self):
-        return config.dbschemas
+        return pytis.config.dbschemas
 
     def arguments(self):
         return (Field('date_from', _("From"), type=pd.Date, not_null=True,
@@ -146,7 +145,7 @@ def proc_spec():
         arguments = {"date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
                      "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
                      "key_value_": pd.sval(key_value.export()),
-                     "search_path_": pd.sval(config.dbschemas)}
+                     "search_path_": pd.sval(pytis.config.dbschemas)}
         if tablename is not None:
             arguments["tablename_"] = pd.sval(tablename)
         return run_form(BrowseForm, CHANGE_LOG_SPEC, arguments=arguments)

@@ -59,7 +59,6 @@ import pytis.util
 from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, form_view_data, log, xtuple
 from pytis.form import UserBreakException
 
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -178,7 +177,7 @@ class _DataIterator(lcg.SubstitutionIterator):
         if self._select_kwargs is not None:
             count = self._data.select(**self._select_kwargs)
             self._select_kwargs = None
-            if count > config.output_row_limit:
+            if count > pytis.config.output_row_limit:
                 import pytis.form
                 message = (_("Going to format a table with many rows (%d).", count) + "\n" +
                            _("Do you want to continue printing anyway?"))
@@ -522,7 +521,7 @@ class LCGFormatter(object):
     def _pdf(self):
         start_time = pytis.data.DateTime.now()
         T = pytis.data.DBTransactionDefault
-        transaction = T(connection_data=config.dbconnection, isolation=T.REPEATABLE_READ)
+        transaction = T(connection_data=pytis.config.dbconnection, isolation=T.REPEATABLE_READ)
         template_nodes = []
         if self._form is not None and self._row_template is not None:
             i = 1
@@ -621,7 +620,7 @@ class LCGFormatter(object):
 
     def printdirect(self):
         """Send the document as PDF to the standard input of 'printing_command'."""
-        process = Popen(config.printing_command, from_child=dev_null_stream('w'))
+        process = Popen(pytis.config.printing_command, from_child=dev_null_stream('w'))
         stream = process.to_child()
         self.printout(stream)
 

@@ -47,7 +47,6 @@ way.
 import base64
 import cPickle as pickle
 
-import config
 import pytis.data
 import pytis.form
 import pytis.presentation
@@ -62,7 +61,7 @@ class UserSetttingsManager(object):
 
     def __init__(self, dbconnection, username=None):
         self._dbconnection = dbconnection
-        self._username = username or config.dbuser
+        self._username = username or pytis.config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
     def _values(self, **kwargs):

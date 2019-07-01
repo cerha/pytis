@@ -56,7 +56,7 @@ import sys
 import time
 
 from util import ProgramError, deepstr, positive_id, some
-
+import pytis
 
 OPERATIONAL = 'OPR'
 """Provozní hláška, související se stavem systému."""
@@ -85,13 +85,11 @@ class Logger(object):
 
     def __init__(self):
         """Inicializuj logger."""
-        import config
-        globals()['config'] = locals()['config']
         self._host = socket.gethostname()
-        self._database = config.dbname
-        self._module_filter = config.log_module_filter
+        self._database = pytis.config.dbname
+        self._module_filter = pytis.config.log_module_filter
         try:
-            class_ = list(config.log_class_filter)
+            class_ = list(pytis.config.log_class_filter)
             for i in range(len(class_)):
                 c = class_[i]
                 if isinstance(c, basestring):
@@ -137,8 +135,7 @@ class Logger(object):
     def _is_accepted(self, kind, message, data):
         if not __debug__ and kind == DEBUG:
             return False
-        import config
-        if kind in config.log_exclude:
+        if kind in pytis.config.log_exclude:
             return False
         if kind == DEBUG:
             if self._module_filter and not self._module.startswith(self._module_filter):
@@ -173,8 +170,7 @@ class Logger(object):
             n = len(datalines)
             if n <= 1:
                 if fmessage and fmessage[-1] == ':':
-                    import config
-                    if config.log_one_line_preferred:
+                    if pytis.config.log_one_line_preferred:
                         try:
                             formatted = u'*%s%s %s' % (prefix, fmessage, printable)
                         except UnicodeDecodeError:
@@ -324,9 +320,8 @@ class LoggingInterface:
         if __debug__ or kind is not DEBUG:  # optimalizační záležitost
             logger = self._logger
             if not logger:
-                import config
                 try:
-                    cls, args, kwargs = config.log_logger
+                    cls, args, kwargs = pytis.config.log_logger
                 except AttributeError:
                     cls, args, kwargs = (StreamLogger, (sys.stderr,), {})
                 logger = self._logger = cls(*args, **kwargs)

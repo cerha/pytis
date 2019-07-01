@@ -121,8 +121,7 @@ class DirectUserOutputTemplates(UserOutputTemplates):
                 return pytis.data.Value(pytis.data.String(), value)
             data_spec = self.data_spec()
             view_spec = self.view_spec()
-            import config
-            data = data_spec.create(dbconnection_spec=config.dbconnection)
+            data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
             condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                        pytis.data.EQ('specification', s(specification)))
             if not data.select(condition):

@@ -67,22 +67,21 @@ def parse_options():
 
 
 def update_config(options):
-    import config
     pytis.util.set_configuration_file(options.config_file)
     if options.host is not None:
-        config.dbhost = options.host
+        pytis.config.dbhost = options.host
     if options.port is not None:
-        config.dbport = options.port
+        pytis.config.dbport = options.port
     if options.database is not None:
-        config.dbname = options.database
+        pytis.config.dbname = options.database
     if options.user is not None:
-        config.dbuser = options.user
+        pytis.config.dbuser = options.user
     if options.password is not None:
-        config.dbpass = options.password
+        pytis.config.dbpass = options.password
     else:
         password = os.getenv('PGPASSWORD')
         if password is not None:
-            config.dbpass = password
+            pytis.config.dbpass = password
 
 
 def run():

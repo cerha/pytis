@@ -87,7 +87,6 @@ from .application import (
 )
 from .grid import TableRowIterator, GridTable
 
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -453,7 +452,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
             self._query_fields_form = form = QueryFieldsForm(
-                panel, config.resolver, None,
+                panel, pytis.config.resolver, None,
                 query_fields=query_fields,
                 callback=self._apply_query_fields,
                 prefill=self._query_field_values,
@@ -1191,7 +1190,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._remember_column_width(event.GetRowOrCol())
         self._grid.FitInside()
         # Mohli bychom rozšířit poslední sloupec, ale jak ho potom zase zúžit?
-        # if config.stretch_tables:
+        # if pytis.config.stretch_tables:
         #     g = self._grid
         #     n = g.GetNumberCols()
         #     w = functools.reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
@@ -1246,8 +1245,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 dx = 0
             else:
                 dx = 1
-            if self._lf_filter is not None and config.filter_color:
-                dc.SetBrush(wx.Brush(config.filter_color, wx.BRUSHSTYLE_SOLID))
+            if self._lf_filter is not None and pytis.config.filter_color:
+                dc.SetBrush(wx.Brush(pytis.config.filter_color, wx.BRUSHSTYLE_SOLID))
             else:
                 dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
             # Draw the rectangle around.
@@ -1436,10 +1435,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Wx only supports highlighting of the current cell, not the current
         # row.  Thus we highlight the current row ourselves in
         # CustomCellRenderer (defined in _grid.py).
-        if config.cell_highlight_color is not None:
-            self._grid.SetCellHighlightColour(config.cell_highlight_color)
-        if config.grid_line_color is not None:
-            self._grid.SetGridLineColour(config.grid_line_color)
+        if pytis.config.cell_highlight_color is not None:
+            self._grid.SetCellHighlightColour(pytis.config.cell_highlight_color)
+        if pytis.config.grid_line_color is not None:
+            self._grid.SetGridLineColour(pytis.config.grid_line_color)
 
     def _resize_columns(self, size=None):
         # Recompute column widths to fit the current form size.
@@ -1451,7 +1450,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         flexible_width = 0
         for i, column in enumerate(self._columns):
             column_width = self._ideal_column_width(column)
-            if not column.fixed() and config.stretch_tables:
+            if not column.fixed() and pytis.config.stretch_tables:
                 flexible_columns.append((i, column_width))
                 flexible_width += column_width
             else:
@@ -1838,7 +1837,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             fileformats.insert(0, 'XLSX')
         wildcards = [_("Files %s", "TXT (*.txt)"), "*.txt",
                      _("Files %s", "CSV (*.csv)"), "*.csv"]
-        username = config.dbconnection.user()
+        username = pytis.config.dbconnection.user()
         if username is None:
             username = ''
         default_filename = 'export_%s.txt' % username
@@ -1867,7 +1866,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             log(EVENT, 'RPC communication not available')
         if not export_file:
-            export_dir = config.export_directory
+            export_dir = pytis.config.export_directory
             filename = pytis.form.run_dialog(FileDialog, title=_("Export to file"),
                                              dir=export_dir, file=default_filename, mode='SAVE',
                                              wildcards=tuple(wildcards))
@@ -1887,7 +1886,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_function = self._cmd_export_xlsx
         else:
             export_function = self._cmd_export_csv
-        log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
+        log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file):
             exported_filename = export_file.name
@@ -1900,7 +1899,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_export_csv(self, file_):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
-        export_encoding = config.export_encoding
+        export_encoding = pytis.config.export_encoding
         db_encoding = 'utf-8'
         try:
             u"test".encode(export_encoding)
@@ -2709,7 +2708,7 @@ class BrowseForm(FoldableForm):
                 self._resolver = resolver
 
             def body(self, resolver=None, variant=None, **kwargs):
-                if config.fallback_table_print:
+                if pytis.config.fallback_table_print:
                     table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
                     view, data = form_view_data(self._resolver, table_id)
                     result = pytis.output.data_table(view, data)
@@ -2828,16 +2827,16 @@ class BrowseForm(FoldableForm):
         def spec_title(name, binding=None):
             if name.find('::') != -1:
                 name1, name2 = name.split('::')
-                title = config.resolver.get(name1, 'binding_spec')[name2].title() or \
-                    ' / '.join((config.resolver.get(name1, 'view_spec').title(),
-                                config.resolver.get(name2, 'view_spec').title()))
+                title = pytis.config.resolver.get(name1, 'binding_spec')[name2].title() or \
+                    ' / '.join((pytis.config.resolver.get(name1, 'view_spec').title(),
+                                pytis.config.resolver.get(name2, 'view_spec').title()))
             else:
-                spec = config.resolver.get(name, 'view_spec')
+                spec = pytis.config.resolver.get(name, 'view_spec')
                 title = spec.title()
                 if binding is not None:
                     b = find(binding, spec.bindings(), key=lambda b: b.id())
                     assert b is not None, "Unknown binding for %s: %s" % (name, binding)
-                    title += ' / ' + config.resolver.get(b.name(), 'view_spec').title()
+                    title += ' / ' + pytis.config.resolver.get(b.name(), 'view_spec').title()
             return title
 
         def link_label(title, type=FormType.BROWSE):
@@ -2870,7 +2869,7 @@ class BrowseForm(FoldableForm):
                 if codebook in automatic_links:
                     links = automatic_links[codebook][1]
                 else:
-                    bindings = config.resolver.get(codebook, 'view_spec').bindings()
+                    bindings = pytis.config.resolver.get(codebook, 'view_spec').bindings()
                     binding = bindings[0].id() if bindings else None
                     links = []
                     automatic_links[codebook] = (binding, links)
@@ -3084,13 +3083,14 @@ class BrowseForm(FoldableForm):
             return handler(*args)
         parameters = self._formatter_parameters()
         parameters.update({self._PrintResolver.P_NAME: name})
-        print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
+        print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
         print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
-        wiki_template_resolver = self._PlainPrintResolver(config.print_spec_dir, extension='text')
+        wiki_template_resolver = self._PlainPrintResolver(pytis.config.print_spec_dir,
+                                                          extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
         resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
         try:
-            formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec_path,
+            formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, print_spec_path,
                                                form=self, parameters=parameters,
                                                language=language or pytis.util.current_language(),
                                                translations=pytis.util.translation_path())

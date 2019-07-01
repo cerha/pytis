@@ -23,7 +23,6 @@ import getopt
 import pytis.util
 import pytis.data
 import pytis.help
-import config
 
 
 def usage(msg=None):
@@ -41,26 +40,26 @@ def run():
     if '--help' in sys.argv:
         usage()
     try:
-        config.add_command_line_options(sys.argv)
+        pytis.config.add_command_line_options(sys.argv)
     except getopt.GetoptError as e:
         usage(e.msg)
     if len(sys.argv) != 1:
         usage()
     # Disable pytis logging and notification thread (may cause troubles when
     # creating data objects for profile validation).
-    config.dblisten = False
+    pytis.config.dblisten = False
     # Disable pytis logging of data operations etc.
-    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
-                          pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                                pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
             updater = pytis.help.HelpUpdater()
         except pytis.data.DBLoginException as e:
-            if config.dbconnection.password() is None:
+            if pytis.config.dbconnection.password() is None:
                 import getpass
-                login = config.dbuser
+                login = pytis.config.dbuser
                 password = getpass.getpass("Enter database password for %s: " % login)
-                config.dbconnection.update_login_data(user=login, password=password)
+                pytis.config.dbconnection.update_login_data(user=login, password=password)
             else:
                 sys.stderr.write(e.message())
                 sys.exit(1)

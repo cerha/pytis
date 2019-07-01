@@ -21,7 +21,11 @@ __version__ = "1.2.1"
 import util  # noqa: F401
 import data  # noqa: F401
 
-import sys
 config = util.Configuration()
+
+# Backwards compatibility hack for applications importing config.  Pytis
+# internally now never uses the 'config' module, but always refers to
+# 'pytis.config' directly.
+import sys
 sys.modules['config'] = config
 del sys

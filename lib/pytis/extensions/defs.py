@@ -21,8 +21,8 @@ from __future__ import unicode_literals
 
 """Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
+import pytis
 import pytis.data as pd
-import config
 
 from pytis.presentation import PresentedRow
 from pytis.util import (
@@ -76,14 +76,14 @@ def get_menu_forms():
             result = found
         return result
     try:
-        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
+        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname',), pytis.config.dbconnection)
     except Exception:
         data = None
     if data is None:
         try:
-            appl = config.resolver.specification('Application')
+            appl = pytis.config.resolver.specification('Application')
         except ResolverError:
-            menus = config.resolver.get('application', 'menu')
+            menus = pytis.config.resolver.get('application', 'menu')
         else:
             menus = appl.menu()
         forms = [(item.args()['form_class'], item.args()['name'])
@@ -124,7 +124,7 @@ def _get_default_select(spec):
             log(EVENT, 'Selhání databázové operace')
             return None
         return select_count
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     try:
         view = resolver.get(spec, 'view_spec')
     except Exception:
@@ -147,7 +147,7 @@ def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
     import pytis.form
 
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     result = pytis.form.run_form(pytis.form.InputForm, title="Kontrola specifikace", fields=(
         pytis.presentation.Field('spec', "Specifikace", not_null=True, width=30),
     ))
@@ -160,7 +160,7 @@ def check_form():
             msg = 'Specifikace nenalezena.'
             pytis.form.run_dialog(pytis.form.Warning, msg)
             return
-        data = data_spec.create(dbconnection_spec=config.dbconnection)
+        data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
         # Title
         obsah = "Title: %s\n" % (view_spec.title())
         # Název tabulky
@@ -217,10 +217,11 @@ class MenuChecker(object):
 
         """
         import pytis.output
-        print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
-        self._output_resolver = pytis.output.OutputResolver(print_file_resolver, config.resolver)
-        self._dbconn = config.dbconnection
-        connection_data = config.dbconnection
+        print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
+        self._output_resolver = pytis.output.OutputResolver(print_file_resolver,
+                                                            pytis.config.resolver)
+        self._dbconn = pytis.config.dbconnection
+        connection_data = pytis.config.dbconnection
         data = pd.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
         condition = pd.NE('purposeid', pd.Value(pd.String(), 'user'))
         self._application_roles = [row[0].value()
@@ -246,8 +247,8 @@ class MenuChecker(object):
         pos = spec_name.rfind('.')
         if pos >= 0:
             try:
-                spec = config.resolver.specification(spec_name)
-                print_spec = config.resolver.get(spec_name, 'print_spec')
+                spec = pytis.config.resolver.specification(spec_name)
+                print_spec = pytis.config.resolver.get(spec_name, 'print_spec')
             except ResolverError as e:
                 return errors + [str(e)]
             if not spec.public:
@@ -272,7 +273,7 @@ class MenuChecker(object):
     def check_bindings(self, main, side):
         errors = []
         try:
-            bindings = config.resolver.get(main, 'binding_spec')
+            bindings = pytis.config.resolver.get(main, 'binding_spec')
         except ResolverError as e:
             return errors + [str(e)]
         if isinstance(bindings, dict):
@@ -293,7 +294,7 @@ class MenuChecker(object):
         try:
             if field is None:
                 try:
-                    view_spec = config.resolver.get(spec_name, 'view_spec')
+                    view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
                 except Exception:
                     if no_spec_error:
                         return []
@@ -337,7 +338,7 @@ class MenuChecker(object):
             form_users = {}
             for name in self._specification_names():
                 try:
-                    view_spec = config.resolver.get(name, 'view_spec')
+                    view_spec = pytis.config.resolver.get(name, 'view_spec')
                 except Exception:
                     continue
                 fields = view_spec.fields()
@@ -357,7 +358,7 @@ class MenuChecker(object):
     def check_data(self, spec_name):
         import pytis.form
         errors = []
-        resolver = config.resolver
+        resolver = pytis.config.resolver
         try:
             data_spec = resolver.get(spec_name, 'data_spec')
         except ResolverError as e:
@@ -497,7 +498,7 @@ class AppChecker(MenuChecker):
 
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
-        form_specs = get_form_defs(config.resolver, errors)
+        form_specs = get_form_defs(pytis.config.resolver, errors)
         return remove_duplicates(menu_specs + form_specs)
 
 
@@ -543,7 +544,7 @@ def cmd_check_access_rights():
 
 def cache_spec(*args, **kwargs):
     import pytis.form
-    resolver = config.resolver
+    resolver = pytis.config.resolver
 
     def do(update, specs):
         def cache(name):

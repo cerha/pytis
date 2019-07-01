@@ -42,7 +42,6 @@ import lcg
 import pytis.data as pd
 import pytis.form
 import pytis.util
-import config
 
 from pytis.util import log, OPERATIONAL, translations, ProgramError
 
@@ -66,17 +65,17 @@ class HelpUpdater(object):
         self._menu_help_data = pd.dbtable(
             'e_pytis_help_menu',
             ('fullname', 'content', 'changed', 'removed'),
-            config.dbconnection,
+            pytis.config.dbconnection,
         )
         self._spec_help_data = pd.dbtable(
             'e_pytis_help_spec',
             ('spec_name', 'description', 'help', 'changed', 'removed'),
-            config.dbconnection,
+            pytis.config.dbconnection,
         )
         self._spec_help_items_data = pd.dbtable(
             'e_pytis_help_spec_items',
             ('item_id', 'spec_name', 'kind', 'identifier', 'content', 'changed', 'removed'),
-            config.dbconnection,
+            pytis.config.dbconnection,
         )
         self._done = {}
 
@@ -265,7 +264,7 @@ class HelpUpdater(object):
     def update(self):
         """(Re)generate help for all menu items."""
         data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'),
-                          config.dbconnection)
+                          pytis.config.dbconnection)
         data.select(sort=(('position', pd.ASCENDENT),))
         while True:
             row = data.fetchone()
@@ -321,7 +320,7 @@ class HelpGenerator(object):
         pass
 
     def __init__(self):
-        resource_dirs = [os.path.join(config.help_dir, 'img')] + [
+        resource_dirs = [os.path.join(pytis.config.help_dir, 'img')] + [
             d[:-3] + 'resources' for d in sys.path
             if d.endswith('/pytis/lib') or d.endswith('/lcg/lib')
         ]
@@ -346,7 +345,7 @@ class HelpGenerator(object):
                 resource_provider=self._resource_provider,
                 foldable=True,
             )
-        directory = os.path.join(config.help_dir, 'src')
+        directory = os.path.join(pytis.config.help_dir, 'src')
         reader = lcg.reader(directory, 'pytis', ext='txt',
                             resource_provider=self._resource_provider)
         try:
@@ -443,7 +442,7 @@ class HelpGenerator(object):
         else:
             node = self.ContentNode('help:', content=lcg.Content(), hidden=True, children=(
                 self.ContentNode('help:application',
-                                 title=_("%s application help") % config.application_name,
+                                 title=_("%s application help") % pytis.config.application_name,
                                  content=lcg.NodeIndex(),
                                  foldable=True,
                                  resource_provider=self._resource_provider,
@@ -553,7 +552,7 @@ class DmpHelpGenerator(HelpGenerator):
                 'ev_pytis_user_help',
                 ('help_id', 'fullname', 'spec_name', 'page_id', 'position',
                  'title', 'description', 'menu_help', 'content',),
-                config.dbconnection,
+                pytis.config.dbconnection,
             )
         except pd.DBException:
             log(OPERATIONAL, "Not using DMP help: DMP help tables not found in database.")
@@ -570,7 +569,7 @@ class DmpHelpGenerator(HelpGenerator):
     def _load_descriptions(self, spec_name):
         data = pytis.data.dbtable('e_pytis_help_spec_items',
                                   ('spec_name', 'kind', 'identifier', 'content'),
-                                  config.dbconnection)
+                                  pytis.config.dbconnection)
         data.select(condition=pytis.data.EQ('spec_name', pytis.data.sval(spec_name)))
         descriptions = dict([(x, {}) for x in
                              ('help', 'description', 'field', 'action', 'binding', 'profile')])
@@ -583,7 +582,7 @@ class DmpHelpGenerator(HelpGenerator):
                 descriptions[row['kind'].value()][row['identifier'].value()] = content
         data.close()
         data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
-                                  config.dbconnection)
+                                  pytis.config.ydbconnection)
         row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
         if row:
             for kind in ('help', 'description'):

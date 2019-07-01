@@ -360,9 +360,8 @@ class DatabaseResolver(Resolver):
         assert isinstance(table, basestring), table
         assert isinstance(result_columns, (tuple, list,)), result_columns
         self._result_columns = result_columns
-        import config
         self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
-                                        config.dbconnection)
+                                        pytis.config.dbconnection)
 
     def _get_module(self, name):
         return name

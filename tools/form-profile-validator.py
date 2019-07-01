@@ -45,9 +45,8 @@ def run():
     parser.add_argument('--config', required=True, metavar='PATH',
                         help="Configuration file path")
     args, argv = parser.parse_known_args()
-    import config
     try:
-        config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
+        pytis.config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
         delete_columns = {}
         for spec_name, column in [x.split(':') for x in args.delete_column]:
             delete_columns.setdefault(spec_name, []).append(column)
@@ -59,20 +58,20 @@ def run():
         sys.exit(1)
     # Disable pytis logging and notification thread (may cause troubles when
     # creating data objects for profile validation).
-    config.dblisten = False
+    pytis.config.dblisten = False
     # Disable pytis logging of data operations etc.
-    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
-                          pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                                pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
             data = pytis.data.dbtable('e_pytis_form_profile_base', ('id', 'username'),
-                                      config.dbconnection)
+                                      pytis.config.dbconnection)
         except pytis.data.DBLoginException as e:
-            if config.dbconnection.password() is None:
+            if pytis.config.dbconnection.password() is None:
                 import getpass
-                login = config.dbuser
+                login = pytis.config.dbuser
                 password = getpass.getpass("Enter database password for %s: " % login)
-                config.dbconnection.update_login_data(user=login, password=password)
+                pytis.config.dbconnection.update_login_data(user=login, password=password)
             else:
                 sys.stderr.write(e.message())
                 sys.exit(1)
@@ -85,7 +84,7 @@ def run():
     usernames = [v.value() for v in data.distinct('username')]
     resolver = pytis.util.resolver()
     for username in usernames:
-        manager = FormProfileManager(config.dbconnection, username=username)
+        manager = FormProfileManager(pytis.config.dbconnection, username=username)
         for spec_name in manager.list_spec_names():
             try:
                 view_spec, data_object, error = cache[spec_name]
@@ -93,7 +92,7 @@ def run():
                 try:
                     view_spec = resolver.get(spec_name, 'view_spec')
                     data_spec = resolver.get(spec_name, 'data_spec')
-                    data_object = data_spec.create(dbconnection_spec=config.dbconnection)
+                    data_object = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
                 except Exception as e:
                     print "%s: %s" % (spec_name, e)
                     skipped += 1

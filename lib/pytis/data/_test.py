@@ -28,15 +28,15 @@ import StringIO
 import pytest
 import unittest
 
+import pytis
 from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT
 import pytis.data as pd
 from pytis.data import bval, fval, ival, sval
 
-import config
 
 _connection_data = {'database': 'test'}
 
-config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
+pytis.config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
 
 #############
@@ -2605,8 +2605,7 @@ class DBSessionVariables(_DBBaseTest):
 
     def setUp(self):
         _DBBaseTest.setUp(self)
-        import config
-        config.session_variables = {'myvar.test': 'value'}
+        pytis.config.session_variables = {'myvar.test': 'value'}
         # Session variables are only initialized when a new connection is
         # created.  When other tests run before this on, connections are
         # already initialized in the pool and session variables don't get
@@ -2627,7 +2626,7 @@ class DBSessionVariables(_DBBaseTest):
         result = function.call(row)[0][0].value()
         self.assertEqual(result, 'value', 'session variable not set properly')
         try:
-            pd.reload_session_variables(config.dbconnection)
+            pd.reload_session_variables(pytis.config.dbconnection)
         except Exception:
             self.tearDown()
             raise
@@ -2695,27 +2694,25 @@ class TestFetchSelect(DBTest):
 
     @pytest.fixture
     def rows(self, data):
-        import config
-        table_size = config.initial_fetch_size + config.fetch_size + 10
+        table_size = pytis.config.initial_fetch_size + pytis.config.fetch_size + 10
         self.insert(data, ((i,) for i in range(table_size)))
         return table_size
 
     def test_skip_fetch(self, data, rows):
-        import config
+        fetch_size, initial_fetch_size = pytis.config.fetch_size, pytis.config.initial_fetch_size
         self._check_skip_fetch(data, (('f', 1),))
         self._check_skip_fetch(data, (('f', 12), ('s', 42)))
         self._check_skip_fetch(data, (('f', 12), ('s', 42), ('f', 10)))
         self._check_skip_fetch(data, (('f', 1), ('s', rows - 1),
                                       ('f', 1), ('s', -2), ('f', -1)))
-        self._check_skip_fetch(data, (('f', 12), ('s', config.initial_fetch_size)))
-        self._check_skip_fetch(data, (('f', 12), ('s', config.initial_fetch_size + 1), ('f', 5)))
+        self._check_skip_fetch(data, (('f', 12), ('s', initial_fetch_size)))
+        self._check_skip_fetch(data, (('f', 12), ('s', initial_fetch_size + 1), ('f', 5)))
         self._check_skip_fetch(data, (('f', 12), ('s', -6), ('f', 2)))
-        self._check_skip_fetch(data, (('f', config.initial_fetch_size + 10), ('s', -16)))
-        self._check_skip_fetch(data, (('f', config.initial_fetch_size + 10), ('s', -16), ('s', 20),
+        self._check_skip_fetch(data, (('f', initial_fetch_size + 10), ('s', -16)))
+        self._check_skip_fetch(data, (('f', initial_fetch_size + 10), ('s', -16), ('s', 20),
                                       ('f', -10), ('f', 15)))
-        self._check_skip_fetch(data, (('s', config.initial_fetch_size + config.fetch_size + 3),))
-        self._check_skip_fetch(data, (('s', 10 * config.initial_fetch_size + config.fetch_size),),
-                               noresult=True)
+        self._check_skip_fetch(data, (('s', initial_fetch_size + fetch_size + 3),))
+        self._check_skip_fetch(data, (('s', 10 * initial_fetch_size + fetch_size),), noresult=True)
 
     def test_small_table_skip_fetch(self, data):
         self.insert(data, ((i,) for i in range(4)))
@@ -2734,8 +2731,7 @@ class TestFetchSelect(DBTest):
             assert row['x'].value() == 0
 
     def test_reuse_select(self, data, rows):
-        import config
-        skip = config.initial_fetch_size
+        skip = pytis.config.initial_fetch_size
         data.select()
         data.skip(skip)
         for i in range(3):
@@ -3246,8 +3242,7 @@ class DBCrypto(_DBBaseTest):
             except Exception:
                 self.tearDown()
                 raise
-        import config
-        config.dbconnection.set_crypto_password('somepassword')
+        pytis.config.dbconnection.set_crypto_password('somepassword')
         B = pd.DBColumnBinding
         key = B('id', 'cfoo', 'id')
         spec = pd.DataFactory(

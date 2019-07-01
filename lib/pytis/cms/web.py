@@ -766,10 +766,9 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
 
     def __init__(self, *args, **kwargs):
         super(HttpAttachmentStorageBackend, self).__init__(*args, **kwargs)
-        import config
         self._data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
                                         ('key_id', 'username', 'uri', 'readonly', 'key'),
-                                        config.dbconnection.select(None))
+                                        pytis.config.dbconnection.select(None))
 
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')

@@ -65,22 +65,21 @@ def run():
                         help="Configuration file path")
 
     args, argv = parser.parse_known_args()
-    import config
     try:
-        config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
+        pytis.config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
     except getopt.GetoptError as e:
         parser.print_help()
         sys.exit(1)
-    config.log_logger = (NullLogger, (), {})
+    pytis.config.log_logger = (NullLogger, (), {})
     import lcg
     lcg.log = lambda *args, **kwargs: None
     if args.wiking:
         import wiking
-        wiking.cfg.user_config_file = config.config_file
-        config.resolver = wiking.cfg.resolver = wiking.WikingResolver(wiking.cfg.modules)
-        config.dbconnections = wiking.cfg.connections
-        config.dbconnection = config.option('dbconnection').default()
-    resolver = config.resolver
+        wiking.cfg.user_config_file = pytis.config.config_file
+        pytis.config.resolver = wiking.cfg.resolver = wiking.WikingResolver(wiking.cfg.modules)
+        pytis.config.dbconnections = wiking.cfg.connections
+        pytis.config.dbconnection = pytis.config.option('dbconnection').default()
+    resolver = pytis.config.resolver
     processed, errors = 0, 0
     if args.include:
         names = args.include
@@ -105,7 +104,7 @@ def run():
                     if not spec.public:
                         continue
                     data_spec = spec.data_spec()
-                    data = data_spec.create(dbconnection_spec=config.dbconnection)
+                    data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
                 # print ' ', spec.table
                 view_spec = spec.view_spec()
                 record = pytis.presentation.PresentedRow(view_spec.fields(), data, None)

@@ -51,6 +51,8 @@ import types as pytypes
 import unicodedata
 import platform
 
+import pytis
+
 
 # Classes
 
@@ -1505,12 +1507,10 @@ def mktempdir(prefix='pytis'):
     threads, protože funkce není thread-safe.
 
     """
-    import config
     global _mktempdir_counter
     if _mktempdir_counter is None:
         _mktempdir_counter = Counter()
-    pattern = os.path.join(config.tmp_dir,
-                           '%s%d.%%d' % (prefix, os.getpid()))
+    pattern = os.path.join(pytis.config.tmp_dir, '%s%d.%%d' % (prefix, os.getpid()))
     oldumask = os.umask(0o077)
     try:
         for i in range(1000):
@@ -1566,8 +1566,7 @@ def nextval(seq, connection_name=None):
     import pytis.data
 
     def conn_spec():
-        import config
-        return config.dbconnection
+        return pytis.config.dbconnection
     counter = pytis.data.DBCounterDefault(seq, conn_spec, connection_name=connection_name)
     return lambda transaction=None: counter.next(transaction=transaction)
 
@@ -1630,8 +1629,7 @@ def form_view_data(resolver, name, dbconnection_spec=None):
     assert isinstance(resolver, pytis.util.Resolver), resolver
     assert isinstance(name, basestring), name
     if dbconnection_spec is None:
-        import config
-        dbconnection_spec = config.dbconnection
+        dbconnection_spec = pytis.config.dbconnection
     view = resolver.get(name, 'view_spec')
     data_spec = resolver.get(name, 'data_spec')
     data = data_spec.create(dbconnection_spec=dbconnection_spec)

@@ -35,7 +35,6 @@ from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec
 import pytis.util
 from form import PopupEditForm
 from screen import MItem
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -139,7 +138,8 @@ class _ConfigData(pytis.data.RestrictedData):
     def fetch(self, position):
         if self._giveone and position in (0, pytis.data.FORWARD):
             self._giveone = False
-            row_data = [(o, pytis.data.Value(config.option(o).type(), getattr(config, o)))
+            row_data = [(o, pytis.data.Value(pytis.config.option(o).type(),
+                                             getattr(pytis.config, o)))
                         for o in [c.id() for c in self.columns()]]
             return pytis.data.Row(row_data)
         else:
@@ -153,8 +153,8 @@ class _ConfigData(pytis.data.RestrictedData):
 
     def update(self, key, row, transaction=None):
         for option in row.keys():
-            setattr(config, option, row[option].value())
-        wx.ToolTip.Enable(config.show_tooltips)
+            setattr(pytis.config, option, row[option].value())
+        wx.ToolTip.Enable(pytis.config.show_tooltips)
         self.select()
         new_row = self.fetchone()
         return new_row, True
@@ -181,7 +181,7 @@ class ConfigForm(PopupEditForm):
 
     def _create_view_spec(self):
         def descr(name):
-            option = config.option(name)
+            option = pytis.config.option(name)
             descr = option.description()
             doc = option.documentation()
             if doc:
@@ -194,7 +194,7 @@ class ConfigForm(PopupEditForm):
                         fields, layout=self._layout(), **self._spec_kwargs)
 
     def _create_data_object(self):
-        columns = [pytis.data.ColumnSpec(option, config.option(option).type())
+        columns = [pytis.data.ColumnSpec(option, pytis.config.option(option).type())
                    for option in self._layout().order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()
 

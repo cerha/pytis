@@ -31,6 +31,7 @@ Access rights violation is signalized exclusively using the
 
 """
 
+import pytis
 from pytis.util import EVENT, log, remove_duplicates, some, translations, xtuple
 from data import Data, EQ, MemData, Row
 from types_ import sval
@@ -426,9 +427,8 @@ class DataAccessException(Exception):
             'None'
 
         """
-        import config
         log(EVENT, 'Access violation attempt',
-            (config.dbconnection.user(), permission, table, column))
+            (pytis.config.dbconnection.user(), permission, table, column))
         Exception.__init__(self, _(u"Access denied"), permission, table, column)
 
 
@@ -442,9 +442,8 @@ def is_in_groups(access_groups):
         unconditionally.
 
     """
-    import config
     from pytis.data import default_access_groups
-    groups = default_access_groups(config.dbconnection)
+    groups = default_access_groups(pytis.config.dbconnection)
     if ((groups is None or access_groups is None or
          some(lambda g: g in groups, xtuple(access_groups)))):
         return True

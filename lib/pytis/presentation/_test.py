@@ -23,7 +23,6 @@ import unittest
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
-import config
 
 ############
 # field.py #
@@ -119,7 +118,7 @@ class PresentedRow(unittest.TestCase):
                 except KeyError:
                     return super(TestResolver, self)._get_object_by_name(name)
 
-        config.resolver = TestResolver()
+        pytis.config.resolver = TestResolver()
         return self._row(fields, row=row, new=new, singleline=singleline, prefill=prefill)
 
     def _data_row(self, row, **values):
@@ -188,7 +187,7 @@ class PresentedRow(unittest.TestCase):
 
     def test_resolver(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertEqual(row.resolver(), config.resolver)
+        self.assertEqual(row.resolver(), pytis.config.resolver)
 
     def test_data(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
@@ -201,7 +200,7 @@ class PresentedRow(unittest.TestCase):
         # so we can't create a real transaction here.  Using 'x' is invalid for
         # real use but it stil verifies that set_transaction works as long as
         # set_transaction doesn't validate its argument.
-        transaction = 'x'  # pd.DBTransactionDefault(config.dbconnection)
+        transaction = 'x'  # pd.DBTransactionDefault(pytis.config.dbconnection)
         row.set_transaction(transaction)
         self.assertEqual(row.transaction(), transaction)
 

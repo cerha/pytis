@@ -54,7 +54,7 @@ def specification_path(specification_name):
     """Return specification path and the relative specification name.
 
     Given the fully qualified specification name, return pair (PATH, NAME)
-    where PATH is the search path (one of 'config.search_modules' members) of
+    where PATH is the search path (one of 'pytis.config.search_modules' members) of
     the specification name and NAME is the specification name without the path.
     If no path is identified then PATH is empty and NAME is
     'specification_name'.
@@ -64,9 +64,8 @@ def specification_path(specification_name):
       specification_name -- name of the specification; basestring
 
     """
-    import config
     path = ''
-    for prefix in config.search_modules:
+    for prefix in pytis.config.search_modules:
         prefix = prefix + '.'
         if specification_name.startswith(prefix) and len(specification_name) > len(prefix):
             n = len(prefix)
@@ -3924,8 +3923,7 @@ class Field(object):
         completer = self._completer
         if isinstance(completer, basestring):
             # Completer was defined as a specification name.
-            import config
-            data_spec = config.resolver.get(completer, 'data_spec')
+            data_spec = pytis.config.resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
         return completer
 
@@ -4469,13 +4467,12 @@ class HttpAttachmentStorage(AttachmentStorage):
 
         """
         import random
-        import config
         assert isinstance(uri, basestring) \
             and (uri.startswith('http://') or uri.startswith('https://'))
         self._uri = uri.rstrip('/')
-        self._username = username = config.dbconnection.user()
+        self._username = username = pytis.config.dbconnection.user()
         self._key = key = ''.join(random.sample(string.digits + string.ascii_letters, 40))
-        dbconnection = config.dbconnection.select(None)
+        dbconnection = pytis.config.dbconnection.select(None)
         data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
                                   ('key_id', 'username', 'uri', 'readonly', 'key'),
                                   dbconnection)
@@ -4668,13 +4665,12 @@ class DbAttachmentStorage(AttachmentStorage):
           base_uri -- Unused; Kept only for backwards compatibility.
 
         """
-        import config
         self._data = pytis.data.dbtable(table,
                                         ('file_id', ref_column, 'file_name', 'byte_size',
                                          'width', 'height', 'resized_width', 'resized_height',
                                          'thumbnail_width', 'thumbnail_height',
                                          'file', 'resized', 'thumbnail'),
-                                        config.dbconnection)
+                                        pytis.config.dbconnection)
         self._ref_column = ref_column
         self._ref_value = ref_value
         self._ref_type = self._data.find_column(ref_column).type()

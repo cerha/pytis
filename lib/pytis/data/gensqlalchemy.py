@@ -4141,12 +4141,11 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     _enforced_schema_objects = set()
     if upgrade:
         upgrade_metadata = sqlalchemy.MetaData()
-        import config
-        connection_data = dict(user=config.dbuser,
-                               password=(':' + config.dbpass if config.dbpass else ''),
-                               host=(config.dbhost or ''),
-                               port=(':' + str(config.dbport) if config.dbport else ''),
-                               dbname=config.dbname)
+        connection_data = dict(user=pytis.config.dbuser,
+                               password=(':' + pytis.config.dbpass if pytis.config.dbpass else ''),
+                               host=(pytis.config.dbhost or ''),
+                               port=(':' + str(pytis.config.dbport) if pytis.config.dbport else ''),
+                               dbname=pytis.config.dbname)
         connection_string = ('postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' %
                              connection_data)
         upgrade_metadata.pytis_engine = sqlalchemy.create_engine(connection_string)

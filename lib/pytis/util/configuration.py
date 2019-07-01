@@ -32,6 +32,7 @@ import string
 import sys
 import time
 
+import pytis
 from pytis.util import Resolver, translations
 # The translation domain is pytis-wx because it is only needed with wx applications.
 _ = translations('pytis-wx')
@@ -1435,9 +1436,8 @@ def set_configuration_file(configuration_file):
         'None' (in which case nothing happens)
 
     """
-    import config
     if configuration_file is not None:
-        for o in config.options():
+        for o in pytis.config.options():
             o.reset()
-        config.config_file = configuration_file
-        config.read_configuration_file(configuration_file)
+        pytis.config.config_file = configuration_file
+        pytis.config.read_configuration_file(configuration_file)

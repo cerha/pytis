@@ -23,7 +23,6 @@ import rpyc
 import rpyc.utils.server
 
 import pytis.util
-import config
 
 logging_level = logging.INFO
 
@@ -40,13 +39,13 @@ class ProxyService(rpyc.Service):
 
     def _new_pytis_connection(self, ip, port):
         pytis.util.log(pytis.util.EVENT, 'New remote connection requested:', (ip, port,))
-        connection = rpyc.ssl_connect(ip, port, keyfile=config.rpc_key_file,
-                                      certfile=config.rpc_certificate_file)
+        connection = rpyc.ssl_connect(ip, port, keyfile=pytis.config.rpc_key_file,
+                                      certfile=pytis.config.rpc_certificate_file)
         pytis.util.log(pytis.util.EVENT, 'New remote connection created:', (ip, port,))
         return connection
 
     def exposed_request(self, target_ip, user_name, request, *args, **kwargs):
-        master_port = config.rpc_remote_port
+        master_port = pytis.config.rpc_remote_port
         master_connection = self._connections.get(target_ip, master_port)
         if user_name is None:
             connection = master_connection
@@ -80,6 +79,7 @@ class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
 
 
 def run_proxy():
-    t = ProxyThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port,
+    t = ProxyThreadedServer(ProxyService, hostname='localhost',
+                            port=pytis.config.rpc_local_port,
                             auto_register=False)
     t.start()

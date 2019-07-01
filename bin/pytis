@@ -24,6 +24,7 @@ import imp
 import os
 import sys
 import locale
+import pytis
 
 # Make Python respect users locale settings (https://docs.python.org/2/library/locale.html).
 locale.setlocale(locale.LC_ALL, '')
@@ -69,30 +70,26 @@ def go():
     if not os.getenv('DISPLAY'):
         sys.stderr.write("X11 not available.\n")
         return
-    import config
     try:
-        config.add_command_line_options(sys.argv)
+        pytis.config.add_command_line_options(sys.argv)
     except getopt.GetoptError as e:
         _usage(e)
-    import config
-    import pytis.util
-    if config.help:
+    if pytis.config.help:
         _usage()
-    if config.debug_memory:
+    if pytis.config.debug_memory:
         gc.set_debug(gc.DEBUG_COLLECTABLE | gc.DEBUG_UNCOLLECTABLE |
                      gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
         pytis.util.log.add_hook(pytis.util.mem_info)
     queries = []
-    if config.dump_queries:
+    if pytis.config.dump_queries:
         def query_callback(query, start_time, end_time):
             queries.append((end_time - start_time, query))
-        import pytis.data
         pytis.data.DBDataDefault.set_query_callback(query_callback)
     try:
-        if config.profile:
+        if pytis.config.profile:
             import cProfile
-            cProfile.run('run_application()', _PROFILE)
             import pstats
+            cProfile.run('run_application()', _PROFILE)
             with open(_PROFILE_RESULTS, 'w') as stream:
                 stats = pstats.Stats(_PROFILE, stream=stream)
                 stats.sort_stats('cumulative')
@@ -112,11 +109,11 @@ def go():
             sys.stderr.write("Unable to generate detailed traceback: " + str(e) + "\n")
             import traceback
             traceback.print_exception(*einfo)
-    if config.debug_memory:
+    if pytis.config.debug_memory:
         sys.stderr.write('Final pending data: %s\n' % gc.garbage)
-    if config.dump_queries:
-        sys.stderr.write('Dumping top %s DB queries:\n' % config.dump_queries)
-        for time, query in sorted(queries, reverse=True)[:int(config.dump_queries)]:
+    if pytis.config.dump_queries:
+        sys.stderr.write('Dumping top %s DB queries:\n' % pytis.config.dump_queries)
+        for time, query in sorted(queries, reverse=True)[:int(pytis.config.dump_queries)]:
             sys.stderr.write('   %0.3f %s\n' % (time, query))
     sys.stderr.flush()
 
@@ -130,8 +127,8 @@ def gg():
 
 
 def run_application():
-    gc.enable()  # pro jistotu
-    import pytis.form  # musí být až za zpracováním voleb
+    gc.enable()  # just to be sure...
+    import pytis.form  # must be after processing command line options
     pytis.form.Application().run()
 
 

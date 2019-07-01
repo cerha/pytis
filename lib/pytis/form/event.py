@@ -49,7 +49,6 @@ import wx.aui
 
 import pytis.form
 from pytis.util import DEBUG, OPERATIONAL, format_traceback, log, translations
-import config
 
 
 _ = translations('pytis-wx')
@@ -97,7 +96,7 @@ def top_level_exception(einfo=None):
             log(OPERATIONAL, 'Top-level exception caught', tbstring)
             if pytis.form.run_dialog(pytis.form.BugReport, einfo):
                 sys.exit()
-            if config.debug_on_error:
+            if pytis.config.debug_on_error:
                 import pdb
                 pdb.post_mortem(sys.exc_info()[2])
         finally:
@@ -345,8 +344,7 @@ def _stop_check(start_time, confirmed, command_number):
     running, number = CommandHandler.command_running()
     if not running or number != command_number:
         return False
-    import config
-    if not confirmed and time.time() > start_time + config.run_form_timeout:
+    if not confirmed and time.time() > start_time + pytis.config.run_form_timeout:
         # We must block idle events before running the question dialog.  This
         # prevents recursive stop check dialog invocation from an idle method,
         # followed by a traceback.  Additionally stop check is typically
