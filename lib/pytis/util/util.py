@@ -1528,11 +1528,6 @@ def mktempdir(prefix='pytis'):
     return the_dir
 
 
-def in_x():
-    """Vrať pravdu, právě když je k dispozici prostředí X Window."""
-    return os.getenv('DISPLAY')
-
-
 def format_byte_size(size):
     """Return a human readable string representing given int bytesize."""
     size = float(size)
