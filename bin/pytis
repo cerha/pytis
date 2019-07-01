@@ -132,14 +132,6 @@ def gg():
 def run_application():
     gc.enable()  # pro jistotu
     import pytis.form  # musí být až za zpracováním voleb
-    # Ošetření chyby Pythonu způsobující chybné parsování reálných čísel ve
-    # zdrojových textech po importu wxWindows.
-    # ??? Možná je to již opraveno, zdá se, že se tato chyba již neprojevuje.
-    import config
-    try:
-        locale.setlocale(locale.LC_NUMERIC, config.lc_numeric)
-    except locale.Error:
-        locale.setlocale(locale.LC_NUMERIC, 'C')
     pytis.form.Application().run()
 
 
