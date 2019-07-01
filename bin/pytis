@@ -144,5 +144,4 @@ def run_application():
 
 
 if __name__ == '__main__':
-    sys.argv[0] = 'pytis'               # kvůli zpracování voleb příkazové řádky
     go()
