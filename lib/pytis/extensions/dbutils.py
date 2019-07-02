@@ -44,10 +44,6 @@ def data_object(spec):
     return data
 
 
-# Alias
-data_create = data_object
-
-
 def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
     """Vrať řádky dané db tabulky jako sekvenci.
 

@@ -40,7 +40,7 @@ from pytis.presentation import (
 )
 
 from .email_ import ComplexEmail
-from .dbutils import data_create
+from .dbutils import data_object
 from .defs import get_form_defs
 
 _ = translations('pytis-wx')
@@ -267,7 +267,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 
 def make_presented_row(specname, prefill={}):
     import pytis.form
-    data = data_create(specname)
+    data = data_object(specname)
     resolver = pytis.config.resolver
     spec = resolver.get(specname, 'view_spec')
     prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
