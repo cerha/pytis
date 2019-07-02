@@ -52,10 +52,10 @@ import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
 import pytis.form
+import pytis.util
 import pytis.presentation
 from pytis.presentation import Orientation, TextFormat, StatusField
-from pytis.util import DEBUG, EVENT, OPERATIONAL, \
-    ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
+from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
@@ -495,7 +495,7 @@ class Color(wx.Colour):
         except AttributeError:
             # If `other' is a color, there may be just anything in wxWidgets,
             # so it is impossible to do some sensible instance class test.
-            result = compare_objects(self, other)
+            result = pytis.util.compare_objects(self, other)
         return result
 
 
@@ -690,7 +690,7 @@ class KeyHandler:
         # Nemůžeme `_commands' inicializovat hned v konstruktoru, protože
         # tou dobou ještě nemusí být všechny příkazy ve třídě definovány.
         commands = []
-        for attrname in public_attributes(self.__class__):
+        for attrname in pytis.util.public_attributes(self.__class__):
             if attrname.startswith('COMMAND_'):
                 command = getattr(self.__class__, attrname)
                 if isinstance(command, Command):
@@ -2763,10 +2763,8 @@ class IN(pytis.data.Operator):
         self._spec_name = spec_name
         self._table_column_id = table_column_id
         self._profile_id = profile_id
-        resolver = pytis.config.resolver
-        view_spec = resolver.get(spec_name, 'view_spec')
-        data_factory = resolver.get(spec_name, 'data_spec')
-        data_object = data_factory.create(connection_data=pytis.config.dbconnection)
+        view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
+        data_object = pytis.util.data_object(spec_name)
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 manager = pytis.form.profile_manager()
@@ -3231,7 +3229,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
     else:
         browser = Browser(parent)
         if format == TextFormat.LCG:
-            node = parse_lcg_text(content, resources=resources)
+            node = pytis.util.parse_lcg_text(content, resources=resources)
             browser.load_content(node)
         elif format == TextFormat.HTML:
             if isinstance(content, unicode):

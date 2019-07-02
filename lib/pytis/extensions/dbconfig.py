@@ -30,7 +30,7 @@ pythonového kódu ve specifikacích aplikace.
 
 """
 
-from pytis.util import Locked
+import pytis.util
 
 import thread
 import pytis.data
@@ -76,8 +76,7 @@ class DBConfig(object):
         try:
             data = DBConfig._data_object_cache[name]
         except KeyError:
-            from pytis.extensions import data_object
-            data = data_object(name)
+            data = pytis.util.data_object(name)
             if data is not None:
                 DBConfig._data_object_cache[name] = data
         self._data = data
@@ -90,7 +89,7 @@ class DBConfig(object):
             self._data.add_callback_on_change(self._on_change)
 
     def _select(self):
-        with Locked(self._data_object_lock):
+        with pytis.util.Locked(self._data_object_lock):
             self._data.select(condition=self._condition, transaction=self._transaction)
             self._row = self._data.fetchone()
             self._data.close()

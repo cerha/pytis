@@ -863,7 +863,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         if not pytis.form.run_dialog(pytis.form.Question,
                                      _(u"Opravdu chcete záznam zcela vymazat?")):
             return None
-        data = pytis.extensions.data_object('menu.ApplicationMenuRights')
+        data = pytis.util.data_object('menu.ApplicationMenuRights')
         result = data.delete((row['id'],))
         if result:
             self._after_edit_checks()

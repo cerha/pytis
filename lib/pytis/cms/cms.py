@@ -147,8 +147,7 @@ class Modules(Specification):
         return (Action('reload', _("Přenačíst dostupné akce"), self._reload_actions),)
 
     def on_delete_record(self, record):
-        import pytis.form
-        data = pytis.form.create_data_object(self._spec_name('Menu'))
+        data = pu.data_object(self._spec_name('Menu'))
         count = data.select(condition=pd.EQ('mod_id', record['mod_id']))
         data.close()
         if count:
@@ -180,8 +179,7 @@ class Modules(Specification):
                 return docstring and docstring.splitlines()[0] or _("Neuvedeno")
         module = wiking.module(record['modname'].value())
         if module:
-            from pytis.form import run_dialog, CheckListDialog, create_data_object
-            data = create_data_object(self._spec_name('Actions'))
+            data = pu.data_object(self._spec_name('Actions'))
             data.select(condition=pd.EQ('mod_id', record['mod_id']))
             existing_actions = {}
             while True:
@@ -202,6 +200,7 @@ class Modules(Specification):
 
             actions.sort(lambda a, b: cmp(order(a), order(b)))
             descriptions = [action_descr(module, action) for action in actions]
+            from pytis.form import run_dialog, CheckListDialog
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
                                 message=_("Zaškrtněte akce, které chcete zpřístupnit webovým "
                                           "uživatelům:"),

@@ -36,6 +36,7 @@ import wx
 import pytis.data
 import pytis.form
 import pytis.output
+import pytis.util
 
 from pytis.presentation import (
     ActionContext, Button, Computer, Editable, Field, GroupSpec,
@@ -57,7 +58,7 @@ from .screen import (
 )
 from .application import (
     Application, action_has_access, block_refresh, block_yield,
-    create_data_object, current_form, db_op, db_operation, decrypted_names,
+    current_form, db_op, db_operation, decrypted_names,
     delete_record, form_settings_manager, has_access, message, new_record,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
@@ -275,8 +276,8 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return spec
 
     def _create_data_object(self):
-        return create_data_object(self._name, spec_kwargs=self._spec_kwargs,
-                                  kwargs=self._data_kwargs)
+        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs,
+                                      kwargs=self._data_kwargs)
 
     def _create_form(self):
         # Build the form from parts
@@ -3471,7 +3472,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
             # last saved.  If the current value in database doesn't match the
             # value before editation, someone else probably changed it.  The
             # resolution is left up to the user.
-            data = create_data_object(self._name)
+            data = pytis.util.data_object(self._name)
             success, db_row = db_operation(data.row, self._current_key(),
                                            columns=self._select_columns(),
                                            arguments=self._current_arguments())

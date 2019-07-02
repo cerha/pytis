@@ -22,8 +22,8 @@
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
 
 import pytis.data
-from pytis.util import xtuple
-from pytis.extensions import dbselect, data_object
+import pytis.util
+from pytis.extensions import dbselect
 
 
 class BaseDBTable(object):
@@ -54,7 +54,7 @@ class BaseDBTable(object):
         self._condition = condition
         self._sort = sort
         self._view = pytis.util.resolver().get(self._spec, 'view_spec')
-        self._data = data_object(self._spec)
+        self._data = pytis.util.data_object(self._spec)
         self._fields = self._get_fields()
         self._klass = klass
         self._table = TABLE(**attrs)
@@ -206,7 +206,7 @@ def browsable_db_table(*args, **kwargs):
 
 def form_validate(spec, prefill):
     # Sestavíme datový objekt
-    data = data_object(spec)
+    data = pytis.util.data_object(spec)
     if not data:
         return None, None
     failed = []
@@ -252,7 +252,7 @@ def PopupCB(spec, name, column, returned_column,
                for r in dbrows]
     if selected:
         if isinstance(selected, basestring):
-            selected = xtuple(selected)
+            selected = pytis.util.xtuple(selected)
         if len(selected) > 1:
             attrs['multiple'] = 1
     else:

@@ -1612,6 +1612,49 @@ def load_module(module_name):
     return module
 
 
+def data_object(spec, spec_kwargs=None, kwargs=None):
+    """Create a data object for given specification.
+
+    Arguments:
+
+      spec -- specification name as a string or a 'pytis.data.DataFactory'
+        instance.
+      spec_kwargs -- a dictionary of keyword arguments passed to the
+        specification.
+      kwargs -- a dictionary of keyword arguments passed to the data object
+        constructor.  The argument 'connection_data' is added automatically
+        if the data class is derived from 'pytis.data.DBData'.
+
+    Raises 'ResolverError' or 'ProgramError' if data object creation fails.
+
+    """
+    import pytis
+    import pytis.data
+    if isinstance(spec, basestring):
+        if spec_kwargs is None:
+            spec_kwargs = {}
+        factory = pytis.config.resolver.get(spec, 'data_spec', **spec_kwargs)
+    else:
+        factory = spec
+    assert isinstance(factory, pytis.data.DataFactory)
+
+    if kwargs is None:
+        kwargs = {}
+    if issubclass(factory.class_(), pytis.data.DBData):
+        kwargs = dict(kwargs, connection_data=pytis.config.dbconnection)
+
+    try:
+        import pytis.form
+    except Exception:
+        return factory.create(**kwargs)
+    else:
+        success, data = pytis.form.db_operation(factory.create, **kwargs)
+        if success:
+            return data
+        else:
+            raise ProgramError("Unable to create data object:", spec)
+
+
 def form_view_data(resolver, name, dbconnection_spec=None):
     """Return pair of specification objects (VIEW, DATA) for specification 'name'.
 

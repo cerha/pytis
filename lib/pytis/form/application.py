@@ -1951,33 +1951,6 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
     return sb.set_status('message', message)
 
 
-def create_data_object(name, spec_kwargs={}, kwargs={}):
-    """Create a data object for given specification.
-
-    Arguments:
-
-      name -- specification name for resolver as a string.
-      spec_kwargs -- a dictionary of keyword arguments passed to the
-        specification.
-      kwargs -- a dictionary of keyword arguments passed to the data object
-        constructor.  The argument 'connection_data' is added automatically
-        if the data class is derived from 'pytis.data.DBData'.
-
-    Raises 'ResolverError' or 'ProgramError' if data object creation fails.
-
-    """
-    factory = pytis.config.resolver.get(name, 'data_spec', **spec_kwargs)
-    assert isinstance(factory, pytis.data.DataFactory)
-    if issubclass(factory.class_(), pytis.data.DBData):
-        kwargs = dict(kwargs, connection_data=pytis.config.dbconnection)
-    t = time.time()
-    success, data_object = db_operation(factory.create, **kwargs)
-    if not success:
-        raise ProgramError("Unable to create data object:", name)
-    log(EVENT, 'Data object created in %.3fs:' % (time.time() - t), data_object)
-    return data_object
-
-
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
     try:

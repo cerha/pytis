@@ -100,7 +100,7 @@ from .application import (  # noqa: F401
     recent_forms_menu, wx_frame, profile_manager, form_settings_manager,
     aggregated_views_manager, decrypted_names, log_user_action,
     frame_title, close_forms, set_status, refresh_status, message,
-    create_data_object, global_keymap, block_refresh, _dump_rights,
+    global_keymap, block_refresh, _dump_rights,
     init_access_rights, has_access, action_has_access, wx_yield_,
     block_yield, password_dialog, custom_command,
     built_in_status_fields, remote_connection_initially_available,
@@ -121,3 +121,6 @@ from .managers import (  # noqa: F401
     FormSettingsManager, FormProfileManager,
     FormProfileParamsManager, AggregatedViewsManager,
 )
+
+# Backwards compatibility alias.  Remove after updating apps.
+from pytis.util import data_object as create_data_object

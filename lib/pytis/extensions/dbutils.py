@@ -20,28 +20,15 @@
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
 import pytis
+import pytis.util
 import pytis.data as pd
-from pytis.util import ProgramError, translations, resolver, is_anystring, xtuple
+from pytis.util import ProgramError, translations, is_anystring, xtuple
 
+# Just for backwards compatibility.  When all apps start using
+# pytis.util.data_object() directly, this can be removed.
+from pytis.util import data_object
 
 _ = translations('pytis-wx')
-
-
-def data_object(spec):
-    """Vrať sestavený datový objekt na základě názvu specifikace.
-
-    Argumentem je název specifikace datového objektu nebo přímo instance třídy
-    'pd.DataFactory'
-
-    """
-    import pytis.form
-    if isinstance(spec, basestring):
-        spec = resolver().get(spec, 'data_spec')
-
-    def conn_spec():
-        return pytis.config.dbconnection
-    success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
-    return data
 
 
 def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
@@ -57,7 +44,7 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
     Vrací všechny řádky vrácené z databáze jako list.
 
     """
-    data = data_object(spec)
+    data = pytis.util.data_object(spec)
     data.select(condition=condition, sort=sort, transaction=transaction,
                 arguments=arguments)
     result = []
@@ -100,7 +87,7 @@ def dbinsert(spec, row, transaction=None):
                 errmsg = 'Invalid column value %s' % v
                 raise ProgramError(errmsg)
         row = pd.Row(row)
-    data = data_object(spec)
+    data = pytis.util.data_object(spec)
     success, result = pytis.form.db_operation(data.insert, row, transaction=transaction)
     return result
 
@@ -153,7 +140,7 @@ def dbupdate_many(spec, condition=None, update_row=None,
     if not isinstance(update_row, pd.Row):
         errmsg = "Nebyl předán řádek pro update_many."
         raise ProgramError(errmsg)
-    data = data_object(spec)
+    data = pytis.util.data_object(spec)
     return data.update_many(condition, update_row, transaction=transaction)
 
 
@@ -279,7 +266,7 @@ def save_field(field, spec_name, column, condition):
         if len(rows) == 1:
             row = rows[0]
             row[column] = pd.Value(row[column].type(), query_fields_row[field].value())
-            data = data_object(spec_name)
+            data = pytis.util.data_object(spec_name)
             data.update_many(condition, row)
     return save
 

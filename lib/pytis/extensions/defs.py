@@ -22,13 +22,11 @@ from __future__ import unicode_literals
 """Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
 import pytis
+import pytis.util
 import pytis.data as pd
 
 from pytis.presentation import PresentedRow
-from pytis.util import (
-    Resolver, ResolverError, remove_duplicates, identity,
-    log, EVENT, OPERATIONAL,
-)
+from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
 
 from .dbutils import dbfunction
@@ -110,7 +108,7 @@ def get_menu_defs():
     """Return sequence of names of all specifications present in application menu.
     """
     forms = get_menu_forms()
-    return remove_duplicates([f[1] for f in forms])
+    return pytis.util.remove_duplicates([f[1] for f in forms])
 
 
 def _get_default_select(spec):
@@ -132,13 +130,12 @@ def _get_default_select(spec):
     except Exception:
         log(OPERATIONAL, "Nepodařilo se vytvořit view_spec")
         return None
-    from pytis.extensions import data_object
     try:
-        data = data_object(spec)
+        data = pytis.util.data_object(spec)
     except Exception:
         log(OPERATIONAL, "Nepodařilo se vytvořit datový objekt")
         return None
-    data = data_object(spec)
+    data = pytis.util.data_object(spec)
     select_count = init_select(view, data)
     if select_count:
         print "Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,)
@@ -438,7 +435,7 @@ class MenuChecker(object):
                               message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
         if errors:
-            errors = remove_duplicates(errors)
+            errors = pytis.util.remove_duplicates(errors)
             pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacích",
                                   report="\n".join(errors))
 
@@ -491,7 +488,7 @@ class MenuChecker(object):
                               message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
         if errors:
-            errors = remove_duplicates(errors)
+            errors = pytis.util.remove_duplicates(errors)
             pytis.form.run_dialog(pytis.form.Message, "Chyby v přístupových právech",
                                   report="\n".join(errors))
 
@@ -501,7 +498,7 @@ class AppChecker(MenuChecker):
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
         form_specs = get_form_defs(messages=errors)
-        return remove_duplicates(menu_specs + form_specs)
+        return pytis.util.remove_duplicates(menu_specs + form_specs)
 
 
 class DevelChecker(MenuChecker):

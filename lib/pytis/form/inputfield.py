@@ -39,6 +39,7 @@ import wx.lib.colourselect
 import lcg
 import pytis.data
 import pytis.form
+import pytis.util
 from pytis.presentation import (
     AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
     Field, HGroup, Orientation, PostProcess, PresentedRow,
@@ -59,7 +60,7 @@ from .screen import (
     copy_to_clipboard, field_size
 )
 from .application import (
-    Application, create_data_object, decrypted_names, delete_record,
+    Application, decrypted_names, delete_record,
     global_keymap, message, new_record, run_dialog, run_form,
 )
 
@@ -1856,7 +1857,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _current_row(self):
         view = pytis.config.resolver.get(self._cb_name, 'view_spec')
-        data = create_data_object(self._cb_name)
+        data = pytis.util.data_object(self._cb_name)
         row = self._type.enumerator().row(self._row[self._id].value(),
                                           transaction=self._row.transaction())
         return PresentedRow(view.fields(), data, row, transaction=self._row.transaction())
@@ -1914,7 +1915,7 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     def _cmd_delete_selected(self):
         view = pytis.config.resolver.get(self._cb_name, 'view_spec')
-        data = create_data_object(self._cb_name)
+        data = pytis.util.data_object(self._cb_name)
         transaction = self._row.transaction()
         row = self._current_row()
         question = _("Really remove the item %s from the codebook permanently?",

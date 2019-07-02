@@ -33,7 +33,7 @@ from util import (  # noqa: F401
     deepstr, format_traceback, exception_info, stack_info, positive_id,
     parse_lcg_text, lcg_to_html, html_diff, current_language,
     set_current_language, environment_language, translation_status,
-    translation_path, translations, translate, on_windows,
+    translation_path, translations, translate, on_windows, data_object
 )
 
 from caching import (  # noqa: F401
