@@ -34,7 +34,7 @@ from pytis.util import (
 from .dbutils import dbfunction
 
 
-def get_form_defs(resolver, messages=None):
+def get_form_defs(resolver=None, messages=None):
     """Return sequence of names of all public form specifications in the application.
 
     Arguments:
@@ -44,10 +44,12 @@ def get_form_defs(resolver, messages=None):
         specification lookup; or 'None'
 
     """
-    assert isinstance(resolver, Resolver), resolver
+    assert resolver is None or isinstance(resolver, Resolver), resolver
     assert messages is None or isinstance(messages, list), messages
     from dmp import DMPMessage, add_message
     specification_names = []
+    if resolver is None:
+        resolver = pytis.config.resolver
     for name, spec in resolver.walk():
         if spec.public:
             if spec.__name__.startswith('_'):
@@ -498,7 +500,7 @@ class AppChecker(MenuChecker):
 
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
-        form_specs = get_form_defs(pytis.config.resolver, errors)
+        form_specs = get_form_defs(messages=errors)
         return remove_duplicates(menu_specs + form_specs)
 
 

@@ -2034,7 +2034,7 @@ def _dump_rights():
             for c in columns:
                 permitted = action_has_access(shortname, permission, c)
                 output.write('actions %s %s %s %s\n' % (shortname, permission, c, permitted,))
-    specification_names = pytis.extensions.get_form_defs(resolver)
+    specification_names = pytis.extensions.get_form_defs()
     for spec_name in specification_names:
         columns = find_columns(spec_name)
         for permission in all_permissions:

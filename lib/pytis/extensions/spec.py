@@ -284,9 +284,8 @@ def run_any_form():
         ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
         ("CodebookForm", pytis.form.CodebookForm),
     )
-    resolver = pytis.config.resolver
     all_defs = []
-    for d in get_form_defs(resolver):
+    for d in get_form_defs():
         all_defs.append(specification_path(d)[1])
     all_defs.sort()
 
