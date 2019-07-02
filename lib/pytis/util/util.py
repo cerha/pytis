@@ -51,8 +51,6 @@ import types as pytypes
 import unicodedata
 import platform
 
-import pytis
-
 
 # Classes
 
@@ -1507,6 +1505,7 @@ def mktempdir(prefix='pytis'):
     threads, protože funkce není thread-safe.
 
     """
+    import pytis
     global _mktempdir_counter
     if _mktempdir_counter is None:
         _mktempdir_counter = Counter()
@@ -1563,6 +1562,7 @@ def nextval(seq, connection_name=None):
     constructor, such as default=nextval('my_table_id_seq').
 
     """
+    import pytis
     import pytis.data
 
     def conn_spec():
@@ -1625,6 +1625,7 @@ def form_view_data(resolver, name, dbconnection_spec=None):
       name -- name of the specification; basestring
 
     """
+    import pytis
     import pytis.util
     assert isinstance(resolver, pytis.util.Resolver), resolver
     assert isinstance(name, basestring), name
