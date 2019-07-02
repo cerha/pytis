@@ -57,7 +57,7 @@ class Field(unittest.TestCase):
 
             def dst(self, dt):
                 return self._ZERO_DIFF
-        exporter = lcg.Html5Exporter()
+        exporter = lcg.Html5Exporter(sorted_attributes=True)
         node = lcg.ContentNode('test')
         return exporter.context(node, lang=lang, timezone=Timezone())
 
@@ -95,10 +95,11 @@ class Field(unittest.TestCase):
         ):
             field = pu.find(fid, fields, key=lambda f: f.id)
             row[fid] = pd.Value(row.type(fid), value)
-            self.assertEqual(context.localize(field.hidden(context)),
-                             ''.join('<input type="hidden" name="%s" value=%s/>' %
-                                     (fid, saxutils.quoteattr(v))
-                                     for v in pu.xtuple(exported)))
+            html = ''.join('<input name="%s" type="hidden" value=%s/>' %
+                           (fid, saxutils.quoteattr(v))
+                           for v in pu.xtuple(exported))
+            assert context.localize(field.hidden(context)) == html
+
             error = field.validate(self.Request(params={fid: exported}), context.locale_data())
             self.assertIs(error, None, "%s: %s" % (error and error.message(), exported))
             self.assertEqual(row[fid].value(), value)
