@@ -1917,12 +1917,12 @@ def positive_id(obj):
     return result
 
 
-def parse_lcg_text(text, resource_path=(), resources=()):
-    """Return lcg.ContentNode created by parsing given LCG Structured Text.
+def lcg_node(content, title=None, resource_path=(), resources=()):
+    """Return lcg.ContentNode for given content with given resources.
 
     Arguments:
 
-      text -- The source text in LCG structured text format.
+      content -- 'lcg.Content' instance or a sequence of such instances.
       resource_path -- sequence of filesystem directory names where resource
         files refered from the document (images, style sheets, scripts) are
         searched.  If empty, the LCG's source directory is searched by default.
@@ -1939,8 +1939,23 @@ def parse_lcg_text(text, resource_path=(), resources=()):
         lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
         resource_path = (os.path.join(lcg_dir, 'resources'),)
     resource_provider = lcg.ResourceProvider(dirs=resource_path, resources=resources)
-    content = lcg.Container(lcg.Parser().parse(text))
-    return lcg.ContentNode('', content=content, resource_provider=resource_provider)
+    return lcg.ContentNode('', title=title, content=content, resource_provider=resource_provider)
+
+
+def parse_lcg_text(text, resource_path=(), resources=()):
+    """Return lcg.ContentNode created by parsing given LCG Structured Text.
+
+    Arguments:
+
+      text -- The source text in LCG structured text format.
+      resource_path, resources -- as in 'lcg_node()' above.
+
+    The content is returned as an 'lcg.ContentNode' instance.
+
+    """
+    import lcg
+    content = lcg.Parser().parse(text)
+    return lcg_node(content=content, resource_path=resource_path, resources=resources)
 
 
 def lcg_to_html(text, styles=('default.css',), resource_path=()):

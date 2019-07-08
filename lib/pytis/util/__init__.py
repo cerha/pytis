@@ -31,7 +31,7 @@ from util import (  # noqa: F401
     format_byte_size, split_camel_case, camel_case_to_lower, nextval,
     rsa_encrypt, load_module, form_view_data, debugger, mem_info, ipython,
     deepstr, format_traceback, exception_info, stack_info, positive_id,
-    parse_lcg_text, lcg_to_html, html_diff, current_language,
+    lcg_node, parse_lcg_text, lcg_to_html, html_diff, current_language,
     set_current_language, environment_language, translation_status,
     translation_path, translations, translate, on_windows, data_object
 )
