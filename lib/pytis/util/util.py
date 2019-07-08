@@ -1924,21 +1924,31 @@ def lcg_node(content, title=None, resource_path=(), resources=()):
 
       content -- 'lcg.Content' instance or a sequence of such instances.
       resource_path -- sequence of filesystem directory names where resource
-        files refered from the document (images, style sheets, scripts) are
-        searched.  If empty, the LCG's source directory is searched by default.
-      resources -- list of statically defined 'lcg.Resource' instances.  These
-        resources will be passed to the resource provider and recognized in
-        addition with resources searched within the resource path.
+        files referred from the document (images, style sheets, scripts) are
+        searched.  The LCG's resource directory is appended automatically.  The
+        arrangement of files in resource directories must follow the standard
+        expected by 'lcg.ResourceProvider'.
+      resources -- list 'lcg.Resource' instances or string resource file names.
+        The 'lcg.Resource' instances will be passed to the resource provider as
+        statically defined resources.  The string names will be allocated
+        through the resource provider (searched within 'resource_path').
 
     The content is returned as an 'lcg.ContentNode' instance.
 
     """
     import lcg
     import os
-    if not resource_path:
-        lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
-        resource_path = (os.path.join(lcg_dir, 'resources'),)
-    resource_provider = lcg.ResourceProvider(dirs=resource_path, resources=resources)
+    lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
+    resource_path = list(resource_path)
+    resource_path.append(os.path.join(lcg_dir, 'resources'))
+    resource_provider = lcg.ResourceProvider(
+        dirs=resource_path,
+        resources=[r for r in resources if isinstance(r, lcg.Resource)],
+    )
+    for r in resources:
+        if not isinstance(r, lcg.Resource):
+            assert isinstance(r, basestring)
+            resource_provider.resource(r)
     return lcg.ContentNode('', title=title, content=content, resource_provider=resource_provider)
 
 
@@ -1959,19 +1969,19 @@ def parse_lcg_text(text, resource_path=(), resources=()):
 
 
 def lcg_to_html(text, styles=('default.css',), resource_path=()):
-    """Return given LCG structured text converted into HTML.
+    """Return given LCG structured text converted to HTML.
 
     Arguments:
 
       text -- The source text in LCG structured text format.
       styles -- sequence of style sheet file names to be embedded as inline
         styles in the final document.  These files must be located in resource
-        directories specified by 'resource_path'.  The arrangement of files in
-        resource directories must follow the standard expected by
-        'lcg.ResourceProvider'.
+        directories specified by 'resource_path'.
       resource_path -- sequence of filesystem directory names where resource
-        files (style sheets) are searched.  If empty, the LCG's source
-        directory is searched by default.
+        files (style sheets) are searched.  The LCG's resource directory is
+        appended automatically.  The arrangement of files in resource
+        directories must follow the standard expected by
+        'lcg.ResourceProvider'.
 
     The exported HTML is returned as UTF-8 encoded string.
 
@@ -1981,8 +1991,8 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
         pass
 
-    node = parse_lcg_text(text, resource_path=resource_path)
-    exporter = Exporter(styles=styles, inlinestyles=True)
+    node = parse_lcg_text(text, resource_path=resource_path, resources=styles)
+    exporter = Exporter(inlinestyles=True)
     context = exporter.context(node, None)
     html = exporter.export(context)
     return html.encode('utf-8')
