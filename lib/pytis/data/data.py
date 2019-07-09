@@ -43,6 +43,7 @@ import functools
 import operator
 
 import pytis.util
+import pytis.data
 from pytis.util import (
     EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
     compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple,
@@ -2190,3 +2191,14 @@ def dbtable(table, columns, connection_data, arguments=None, connection_name=Non
                                      arguments=arguments, sql_logger=sql_logger)
     data = factory.create(connection_data=connection_data, connection_name=connection_name)
     return data
+
+
+def transaction():
+    """Create a new database transaction for current connection and return it.
+
+    Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
+    transaction creation in applications and avoid the need to access
+    pytis.config (requiring importing it).
+
+    """
+    return pytis.data.DBTransactionDefault(pytis.config.dbconnection)
