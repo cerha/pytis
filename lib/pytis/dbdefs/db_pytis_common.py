@@ -350,8 +350,7 @@ class VInserts(sql.SQLView):
              _inserts.c.vytvoreno.label('vytvoreno'),
              _inserts.c.tabulka.label('tabulka'),
              _inserts.c.klic.label('klic')],
-            from_obj=[_inserts],
-            whereclause='')
+            from_obj=[_inserts])
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
 
@@ -374,7 +373,8 @@ class VInsertsUser(sql.SQLView):
              _inserts.c.tabulka.label('tabulka'),
              _inserts.c.klic.label('klic')],
             from_obj=[_inserts],
-            whereclause='vytvoril = current_user')
+            whereclause=_inserts.c.vytvoril == sqlalchemy.text('current_user'),
+        )
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
 
@@ -398,7 +398,7 @@ class VUpdates(sql.SQLView):
              _updates.c.klic.label('klic'),
              _updates.c.zmeny.label('zmeny')],
             from_obj=[_updates],
-            whereclause='')
+        )
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
 
@@ -422,7 +422,8 @@ class VUpdatesUser(sql.SQLView):
              _updates.c.klic.label('klic'),
              _updates.c.zmeny.label('zmeny')],
             from_obj=[_updates],
-            whereclause='zmenil = current_user')
+            whereclause=_updates.c.zmenil == sqlalchemy.text('current_user'),
+        )
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
 
@@ -445,7 +446,7 @@ class VDeletes(sql.SQLView):
              _deletes.c.tabulka.label('tabulka'),
              _deletes.c.klic.label('klic')],
             from_obj=[_deletes],
-            whereclause='')
+        )
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
 
@@ -468,7 +469,8 @@ class VDeletesUser(sql.SQLView):
              _deletes.c.tabulka.label('tabulka'),
              _deletes.c.klic.label('klic')],
             from_obj=[_deletes],
-            whereclause='smazal = current_user')
+            whereclause=_deletes.c.smazal == sqlalchemy.text('current_user'),
+        )
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
 

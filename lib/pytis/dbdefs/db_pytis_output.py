@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
+from pytis.data.dbdefs import and_, or_, not_
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
@@ -41,7 +42,7 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(templates),
             from_obj=[templates],
-            whereclause='username is null'
+            whereclause=templates.c.username.is_(None),
         )
 
     insert_order = (EPytisOutputTemplates,)
@@ -58,14 +59,27 @@ class EvPytisUserOutputTemplates(sql.SQLView):
     @classmethod
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
+        templates2 = sql.t.EPytisOutputTemplates.alias('templates2')
         return sqlalchemy.select(
             cls._exclude(templates),
             from_obj=[templates],
-            whereclause=('username=current_user or '
-                         '(username is null and (module, specification) not in '
-                         '(select module, specification from e_pytis_output_templates '
-                         'where templates.module=module and templates.specification=specification '
-                         'and username=current_user))')
+            whereclause=or_(
+                templates.c.username == sqlalchemy.text('current_user'),
+                and_(
+                    templates.c.username.is_(None),
+                    not_(sqlalchemy.tuple_(templates.c.module, templates.c.specification).in_(
+                        sqlalchemy.select(
+                            [templates2.c.module, templates2.c.specification],
+                            from_obj=[templates2],
+                            whereclause=and_(
+                                templates2.c.module, == templates.c.module,
+                                templates2.c.specification, == templates.c.specification,
+                                templates2.c.username == sqlalchemy.text('current_user')
+                            ),
+                        ),
+                    )),
+                ),
+            ),
         )
 
     def on_insert(self):

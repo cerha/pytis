@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import sqlalchemy
+from pytis.data.dbdefs import and_, or_, not_, sval, func
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
@@ -86,7 +87,7 @@ class EvPytisValidRoles(sql.SQLView):
             cls._exclude(main) +
             cls._exclude(codebook, 'purposeid'),
             from_obj=[main.join(codebook, main.c.purposeid == codebook.c.purposeid)],
-            whereclause='main.deleted is null or main.deleted > now()'
+            whereclause=or_(main.c.deleted.is_(None), main.c.deleted > func.now()),
         )
 
     insert_order = (EPytisRoles,)
@@ -809,7 +810,7 @@ class EvPytisMenuAllPositions(sql.SQLView):
                 sql.reorder_columns([sql.gL("next_position").label('position'),
                                      sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu2],
-                whereclause='position != \'\''
+                whereclause=menu2.c.position != sval(''),
             )
         set_1 = sqlalchemy.union(select_1(), select_2())
 
@@ -823,7 +824,7 @@ class EvPytisMenuAllPositions(sql.SQLView):
                            " -1)::text)::ltree").label('position'),
                     sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu3],
-                whereclause='name is NULL and title is not NULL'
+                whereclause=and_(menu3.c.name.is_(None), not_(menu3.c.title.is_(None))),
             )
         return sqlalchemy.union(set_1, select_3())
     insert_order = ()
@@ -1277,7 +1278,7 @@ class EvPytisActionRights(sql.SQLView):
             cls._exclude(purposes, 'purposeid'),
             from_obj=[rights.outerjoin(roles, rights.c.roleid == roles.c.name).
                       outerjoin(purposes, roles.c.purposeid == purposes.c.purposeid)],
-            whereclause='rights.status>=0'
+            whereclause=rights.c.status >= 0,
         )
 
     insert_order = (EPytisActionRights,)
@@ -2147,7 +2148,7 @@ class EvPytisUserRoles(sql.SQLView):
             cls._exclude(members, 'member'),
             from_obj=[members.join(roles, sql.gR('members.member = roles.name and '
                                                  'roles.purposeid = \'user\''))],
-            whereclause='members.member = pytis_user()'
+            whereclause=members.c.member == func.pytis_user(),
         )
 
     depends_on = (EPytisRoles, APytisValidRoleMembers, PytisUser,)
@@ -2161,11 +2162,14 @@ class EvPytisUserSystemRights(sql.SQLView):
     @classmethod
     def query(cls):
         rights = sql.t.EPytisActionRights.alias('rights')
+        roles = sql.t.EvPytisUserRoles.alias('roles')
         return sqlalchemy.select(
             cls._exclude(rights),
             from_obj=[rights],
-            whereclause=("rights.system = 'T' and roleid = '*' or "
-                         "roleid in (select roleid from ev_pytis_user_roles)"))
+            whereclause=or_(and_(rights.c.system.is_(True), rights.c.roleid == sval('*')),
+                            rights.c.roleid.in_(sqlalchemy.select([roles.c.roleid],
+                                                                  from_obj=[roles]))),
+        )
 
     insert_order = (EPytisActionRights,)
     update_order = (EPytisActionRights,)

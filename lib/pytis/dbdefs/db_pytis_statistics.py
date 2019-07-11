@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
+from pytis.data.dbdefs import func, between
 from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
 
@@ -161,7 +162,9 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
              sql.gL("max(t_start)").label('last_used'),
              sql.gL("'form/'||form").label('shortname')],
             from_obj=[log],
-            whereclause='log.t_start between f_user_cfg_datum_od() and f_user_cfg_datum_do()'
+            whereclause=between(log.c.t_start,
+                                func.f_user_cfg_datum_od(),
+                                func.f_user_cfg_datum_do())
         ).group_by('form', 'class', 'login')
 
     depends_on = (EPytisFormLog, FUserCfg,)

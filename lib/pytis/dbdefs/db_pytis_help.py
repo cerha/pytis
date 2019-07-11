@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
+from pytis.data.dbdefs import func, ival
 from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, default_access_rights
 from pytis.dbdefs.db_pytis_common import XChanges
 from pytis.dbdefs.db_pytis_menu import EPytisMenu, PytisViewUserMenu
@@ -146,11 +147,13 @@ class EvPytisHelp(sql.SQLView):
                 from_obj=[m.join(a_, a_.c.fullname == m.c.fullname).
                           outerjoin(mh, mh.c.fullname == a_.c.fullname).
                           outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
-                whereclause='nlevel(position) >= 2'
+                whereclause=func.nlevel(m.c.position) >= ival(2),
             )
 
         def select_2():
-            series = sqlalchemy.select(["*"], from_obj=["generate_series(0, 0)"]).alias('series')
+            series = sqlalchemy.select(["*"], from_obj=[
+                sqlalchemy.text("generate_series(0, 0)")
+            ]).alias('series')
             return sqlalchemy.select(
                 sql.reorder_columns(
                     [sql.gL("'menu/'").label('help_id'),
@@ -255,7 +258,9 @@ class EvPytisUserHelp(sql.SQLView):
     def query(cls):
         def select_1():
             h = sql.t.EvPytisHelp.alias('h')
-            u = sqlalchemy.select(["*"], from_obj=["pytis_view_user_menu()"]).alias('u')
+            u = sqlalchemy.select(["*"], from_obj=[
+                sqlalchemy.text("pytis_view_user_menu()")
+            ]).alias('u')
             return sqlalchemy.select(
                 sql.reorder_columns(cls._exclude(h),
                                     ['help_id', 'menuid', 'fullname', 'title', 'description',
@@ -274,7 +279,7 @@ class EvPytisUserHelp(sql.SQLView):
                                      'page_id', 'parent', 'ord', 'content', 'position',
                                      'position_nsub', 'changed', 'removed']),
                 from_obj=[h],
-                whereclause='h.menuid is null'
+                whereclause=h.c.menuid.is_(None),
             )
         return sqlalchemy.union(select_1(), select_2())
     depends_on = (EvPytisHelp, PytisViewUserMenu,)
