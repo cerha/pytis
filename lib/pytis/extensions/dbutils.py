@@ -194,7 +194,7 @@ def enum(name, **kwargs):
     specifikace, ze které bude získán datový objekt enumerátoru.
 
     """
-    data_spec = resolver().get(name, 'data_spec')
+    data_spec = pytis.util.resolver().get(name, 'data_spec')
     return pd.DataEnumerator(data_spec, **kwargs)
 
 
