@@ -588,7 +588,7 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
     class _PytisAlias(sqlalchemy.sql.Alias):
 
         def __init__(self, selectable, name, c):
-            sqlalchemy.sql.Alias.__init__(self, selectable, name)
+            self._init(selectable, name)
             self._pytis_c = c
 
         def _pytis_column(self):
