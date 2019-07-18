@@ -72,9 +72,9 @@ class EvPytisUserOutputTemplates(sql.SQLView):
                             [templates2.c.module, templates2.c.specification],
                             from_obj=[templates2],
                             whereclause=and_(
-                                templates2.c.module, == templates.c.module,
-                                templates2.c.specification, == templates.c.specification,
-                                templates2.c.username == sqlalchemy.text('current_user')
+                                templates2.c.module == templates.c.module,
+                                templates2.c.specification == templates.c.specification,
+                                templates2.c.username == sqlalchemy.text('current_user'),
                             ),
                         ),
                     )),
