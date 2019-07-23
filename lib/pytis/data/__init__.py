@@ -50,7 +50,7 @@ from data import (  # noqa: F401
     DataFactory, EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
     LTreeMatch, LTreeAncestor, LTreeDescendant, RangeContains, RangeContained,
     RangeOverlap, FunctionCondition, OpFunction,
-    reversed_sorting, opposite_direction, dbtable,
+    reversed_sorting, opposite_direction, dbtable, transaction
 )
 from access import (  # noqa: F401
     Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
