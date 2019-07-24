@@ -1147,8 +1147,8 @@ class FieldSet(GroupSpec):
 
     """
 
-    def __init__(self, label, items):
-        super(FieldSet, self).__init__(items, label=label, orientation=Orientation.VERTICAL)
+    def __init__(self, label, items, orientation=Orientation.VERTICAL):
+        super(FieldSet, self).__init__(items, label=label, orientation=orientation)
 
 
 class TabGroup(GroupSpec):
