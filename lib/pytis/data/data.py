@@ -547,7 +547,7 @@ class Data(object_2_5):
         """
         return None
 
-    def fetchone(self, transaction=None):
+    def fetchone(self):
         """Convenience alias for 'fetch(FORWARD)'."""
         return self.fetch(FORWARD)
 
