@@ -121,6 +121,3 @@ from .managers import (  # noqa: F401
     FormSettingsManager, FormProfileManager,
     FormProfileParamsManager, AggregatedViewsManager,
 )
-
-# Backwards compatibility alias.  Remove after updating apps.
-from pytis.util import data_object as create_data_object

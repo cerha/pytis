@@ -21,9 +21,8 @@ from email_ import SimpleEmail, GPGEmail, ComplexEmail  # noqa: F401
 from dbconfig import DBConfig, cfg_param  # noqa: F401
 
 from dbutils import (  # noqa: F401
-    data_object, dbselect, dbinsert, dbupdate, row_update,
-    dbupdate_many, dbfunction, enum, is_in_groups, load_field, save_field,
-    safe_commit, safe_rollback,
+    dbselect, dbinsert, dbupdate, row_update, dbupdate_many, dbfunction,
+    enum, is_in_groups, load_field, save_field, safe_commit, safe_rollback,
 )
 
 from misc import (  # noqa: F401

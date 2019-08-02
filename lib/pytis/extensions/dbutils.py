@@ -24,10 +24,6 @@ import pytis.util
 import pytis.data as pd
 from pytis.util import ProgramError, translations, is_anystring, xtuple
 
-# Just for backwards compatibility.  When all apps start using
-# pytis.util.data_object() directly, this can be removed.
-from pytis.util import data_object
-
 _ = translations('pytis-wx')
 
 
