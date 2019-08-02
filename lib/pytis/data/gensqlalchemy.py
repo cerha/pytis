@@ -1257,7 +1257,11 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
             def init_function(cls=cls, may_alter_schema=False, schemas=schemas):
                 for search_path in schemas:
                     if _debug:
-                        sys.stderr.write('*** %s\n' % (cls.__name__,))
+                        name = cls.__name__
+                        # Triggers __name__ is always 'T', which is not very useful.
+                        if name == 'T':
+                            name = cls.table.__name__ + '.' + cls.name
+                        sys.stderr.write('*** %s\n' % (name,))
                     with local_search_path(search_path):
                         if may_alter_schema and _enforced_schema:
                             search_path = [_enforced_schema] + search_path
