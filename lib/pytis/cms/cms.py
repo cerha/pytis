@@ -35,10 +35,10 @@ import lcg
 import pytis
 import pytis.data as pd
 import pytis.presentation as pp
-import pytis.util as pu
+import pytis.util
 from pytis.presentation import Field, VGroup, Binding, Action, CodebookSpec, computer
 
-_ = pu.translations('pytis-defs')
+_ = pytis.util.translations('pytis-defs')
 
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT
@@ -147,7 +147,7 @@ class Modules(Specification):
         return (Action('reload', _("Přenačíst dostupné akce"), self._reload_actions),)
 
     def on_delete_record(self, record):
-        data = pu.data_object(self._spec_name('Menu'))
+        data = pytis.util.data_object(self._spec_name('Menu'))
         count = data.select(condition=pd.EQ('mod_id', record['mod_id']))
         data.close()
         if count:
@@ -179,7 +179,7 @@ class Modules(Specification):
                 return docstring and docstring.splitlines()[0] or _("Neuvedeno")
         module = wiking.module(record['modname'].value())
         if module:
-            data = pu.data_object(self._spec_name('Actions'))
+            data = pytis.util.data_object(self._spec_name('Actions'))
             data.select(condition=pd.EQ('mod_id', record['mod_id']))
             existing_actions = {}
             while True:
@@ -403,7 +403,7 @@ class Menu(Specification):
                     resources = ()
             else:
                 resources = ()
-            return pu.parse_lcg_text(text, resources=resources)
+            return pytis.util.parse_lcg_text(text, resources=resources)
         else:
             return ''
 

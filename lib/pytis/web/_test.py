@@ -21,7 +21,7 @@ import unittest
 
 import pytis.data as pd
 import pytis.presentation as pp
-import pytis.util as pu
+import pytis.util
 import pytis.web as pw
 import lcg
 import datetime
@@ -93,11 +93,11 @@ class Field(unittest.TestCase):
                 ('choice', 5, '5'),
                 ('radio', 5, '5'),
         ):
-            field = pu.find(fid, fields, key=lambda f: f.id)
+            field = pytis.util.find(fid, fields, key=lambda f: f.id)
             row[fid] = pd.Value(row.type(fid), value)
             html = ''.join('<input name="%s" type="hidden" value=%s/>' %
                            (fid, saxutils.quoteattr(v))
-                           for v in pu.xtuple(exported))
+                           for v in pytis.util.xtuple(exported))
             assert context.localize(field.hidden(context)) == html
 
             error = field.validate(self.Request(params={fid: exported}), context.locale_data())
