@@ -1801,6 +1801,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._selected_item = i
         if i is not None:
             # Select the new item.
+            assert i >= 0
             fgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
             bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
             list.SetItemTextColour(i, fgcolor)
@@ -1863,7 +1864,11 @@ class ListField(GenericCodebookField, CallbackHandler):
         return PresentedRow(view.fields(), data, row, transaction=self._row.transaction())
 
     def _selected_item_index(self):
-        return self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
+        i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
+        if i == -1:
+            return None
+        else:
+            return i
 
     # Command handling
 
@@ -1871,7 +1876,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         if not self.enabled():
             return False
         else:
-            return self._selected_item_index() != -1
+            return self._selected_item_index() is not None
 
     def _cmd_select(self):
         self._set_selection(self._selected_item_index())
