@@ -1989,7 +1989,10 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     import lcg
 
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
-        pass
+        def _head(self, context):
+            g = self._generator
+            return super(Exporter, self)._head(context) + \
+                [g.meta(http_equiv='Content-Type', content='text/html; charset=utf-8')]
 
     node = parse_lcg_text(text, resource_path=resource_path, resources=styles)
     exporter = Exporter(inlinestyles=True)
