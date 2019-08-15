@@ -45,6 +45,7 @@ import time
 import mimetypes
 import weakref
 import fitz
+import io
 
 import lcg
 
@@ -2198,18 +2199,20 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             if uri != '/favicon.ico':
                 resource = self.server.find_resource(uri[1:])
                 if resource:
+                    mime_type, encoding = mimetypes.guess_type(uri)
                     path = resource.src_file()
                     if path:
-                        self._send_file(path)
-                        return
+                        return self._send_data(mime_type, open(path))
+                    content = resource.get()
+                    if content:
+                        return self._send_data(mime_type, io.BytesIO(content))
             self.send_error(404, 'Not found: %s' % uri)
 
-        def _send_file(self, path):
-            mime_type, encoding = mimetypes.guess_type(path)
-            self.send_response(200)
-            self.send_header("Content-type", mime_type or 'application/octet-stream')
-            self.end_headers()
-            with open(path) as f:
+        def _send_data(self, mime_type, f):
+            with f:
+                self.send_response(200)
+                self.send_header("Content-type", mime_type or 'application/octet-stream')
+                self.end_headers()
                 while True:
                     # Read the file in 0.5MB chunks.
                     data = f.read(524288)
