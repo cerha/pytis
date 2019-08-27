@@ -35,7 +35,7 @@ import pytis.util
 from pytis.util import log, find, EVENT, ResolverError
 from pytis.presentation import (
     Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
-    Computer, SelectionType, specification_path,
+    Computer, SelectionType, PresentedRow, specification_path,
 )
 
 from .email_ import ComplexEmail
@@ -268,7 +268,7 @@ def make_presented_row(specname, prefill={}):
     data = pytis.util.data_object(specname)
     resolver = pytis.config.resolver
     spec = resolver.get(specname, 'view_spec')
-    prow = pytis.form.PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
+    prow = PresentedRow(spec.fields(), data, None, prefill=prefill, new=True)
     return prow
 
 
