@@ -392,37 +392,60 @@ class Session(RestrictedPytisModule, wiking.Session):
         table = 'cms_session'
         fields = [pp.Field(_id) for _id in ('session_id', 'uid', 'session_key', 'last_access')]
 
-    def init(self, req, user, session_key):
-        data = self._data
-        # Delete all expired records first...
-        now = pd.DateTime.datetime()
+    def _split_key(self, key):
+        try:
+            session_id, session_key = key.split(':')
+            return int(session_id), session_key
+        except (AttributeError, ValueError):
+            return None, None
+
+    def _is_expired(self, row):
         expiration = datetime.timedelta(hours=wiking.cfg.session_expiration)
-        data.delete_many(pd.LE('last_access', pd.Value(pd.DateTime(), now - expiration)))
-        # Create new data row for this session.
-        row, success = data.insert(data.make_row(uid=user.uid(),
-                                                 session_key=session_key,
-                                                 last_access=now))
-        # Log session start for login history tracking.
-        wiking.module.SessionLog.log(req, now, row['session_id'].value(), user.uid(), user.login())
+        return row['last_access'].value() < pd.DateTime.datetime(False) - expiration
 
-    def failure(self, req, user, login):
-        wiking.module.SessionLog.log(req, pd.DateTime.datetime(), None, user and user.uid(), login)
+    def _update_last_access(self, row):
+        self._data.update((row['session_id'],),
+                          self._data.make_row(last_access=pd.DateTime.datetime(False)))
 
-    def check(self, req, user, session_key):
-        row = self._data.get_row(uid=user.uid(), session_key=session_key)
-        if row:
-            now = pd.DateTime.datetime()
-            expiration = datetime.timedelta(hours=wiking.cfg.session_expiration)
-            if row['last_access'].value() > now - expiration:
-                self._data.update((row['session_id'],), self._data.make_row(last_access=now))
-                return True
-        return False
+    def _new_session(self, uid, session_key):
+        data = self._data
+        expiration = datetime.timedelta(hours=wiking.cfg.session_expiration)
+        # Delete all expired records first (can't do in trigger due to the configuration option).
+        data.delete_many(pd.LE('last_access',
+                               pd.Value(pd.DateTime(),
+                                        pd.DateTime.datetime(False) - expiration)))
+        return data.insert(data.make_row(
+            session_key=session_key,
+            uid=uid,
+            last_access=pd.DateTime.datetime(False))
+        )[0]
 
-    def close(self, req, user, session_key):
-        # This deletion will lead to end_time in cms_session_log_data being set to last_access
-        # value of the deleted row.  Use delete_many() because we don't know session_id.
-        self._data.delete_many(pd.AND(pd.EQ('uid', pd.Value(pd.Integer(), user.uid())),
-                                      pd.EQ('session_key', pd.Value(pd.DateTime(), session_key))))
+    def init(self, req, user, auth_type, reuse=False):
+        if reuse:
+            row = self._data.get_row(uid=user.uid())
+            if row and not self._is_expired(row):
+                self._update_last_access(row)
+                return None
+        row = self._new_session(user.uid(), wiking.generate_random_string(64))
+        return row['session_id'].export() + ':' + row['session_key'].value()
+
+    def check(self, req, session_key):
+        session_id, session_key = self._split_key(session_key)
+        row = self._data.row(pd.ival(session_id))
+        if row and row['session_key'].value() == session_key and not self._is_expired(row):
+            self._update_last_access(row)
+            return wiking.module.Users.user(req, uid=row['uid'].value())
+        else:
+            return None
+
+    def close(self, req, session_key):
+        session_id, session_key = self._split_key(session_key)
+        # We don't verify session_key here, because we know that
+        # 'CookieAuthenticationProvider.authenticate()' only calls
+        # 'close()' after 'check()' or 'init()', but this is not
+        # required by definition.  Thus it should be either
+        # documented somewhere or not relied upon.
+        self._data.delete(pd.ival(session_id))
 
 
 class SessionLog(RestrictedPytisModule):
