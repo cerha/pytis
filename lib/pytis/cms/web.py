@@ -502,7 +502,7 @@ class Application(wiking.Application):
         h = hashlib.new(hash_alg)
         if isinstance(password, unistr):  # Just change to 'str' when Python 2 not needed.
             # Passwords in the database are explicitly encoded to utf-8 by the
-            # pytis.data.Password type (on validation).
+            # pd.Password type (on validation).
             # Note that h.update() only accepts bytes in Python 3, but str and unicode in Python 2.
             password = password.encode('utf-8')
         h.update(password)
@@ -770,9 +770,9 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
 
     def __init__(self, *args, **kwargs):
         super(HttpAttachmentStorageBackend, self).__init__(*args, **kwargs)
-        self._data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
-                                        ('key_id', 'username', 'uri', 'readonly', 'key'),
-                                        pytis.config.dbconnection.select(None))
+        self._data = pd.dbtable('e_pytis_http_attachment_storage_keys',
+                                ('key_id', 'username', 'uri', 'readonly', 'key'),
+                                pytis.config.dbconnection.select(None))
 
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
