@@ -409,6 +409,8 @@ class DBConnection:
         self._alternatives = alternatives
         # Passing this private argument avoids unnecessay duplication of instances in `select()'.
         self._name = _name
+        # Save db communication key to avoid unnecessary db queries
+        self._db_key = None
 
     def _options(self, exclude=()):
         return dict([(option, self.__dict__['_' + option])
@@ -505,10 +507,10 @@ class DBConnection:
         # initiate new password dialog and will invoke this method recursively.
         # In such a case we must not set the wrong password here.
         self._crypto_password = None
-        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                             ('key_name_', pytis.data.sval('pytis'),))
-        if self._crypto_password is None and db_key:
-            self._crypto_password = rsa_encrypt(db_key, password)
+        if self._db_key is None:
+            self._db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                                       ('key_name_', pytis.data.sval('pytis'),))
+        self._crypto_password = rsa_encrypt(self._db_key, password)
 
     def crypto_password(self):
         """Return crypto password, string.
@@ -529,6 +531,19 @@ class DBConnection:
         """
         self._crypto_password = password
 
+    def db_key(self):
+        """Return db communication key, string."""
+        return self._db_key
+
+    def set_db_key(self, db_key):
+        """Set instance db key.
+
+        Arguments:
+
+          db_key -- the database communication key
+
+        """
+        self._db_key = db_key
 
 class DBBinding:
     """Definice napojení dat do databáze.
