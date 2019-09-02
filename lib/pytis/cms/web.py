@@ -359,23 +359,29 @@ class Users(RestrictedPytisModule):
     class Spec(Specification, cms.Users):
         pass
 
-    def _user_row(self, req, login):
+    def _user_row(self, req, **kwargs):
         """Override this method to customize the user search condition."""
-        return self._data.get_row(login=login)
+        return self._data.get_row(**kwargs)
 
     def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
         return dict(uid=uid,
+                    login=row['login'].value(),
                     name=row['fullname'].value(),
                     password=row['passwd'].value(),
                     roles=[wiking.Roles.AUTHENTICATED] + wiking.module.UserRoles.roles(uid),
                     data=row)
 
-    def user(self, req, login):
-        row = self._user_row(req, login)
+    def user(self, req, login=None, uid=None):
+        if login:
+            row = self._user_row(req, login=login)
+        elif uid:
+            row = self._user_row(req, uid=uid)
+        else:
+            raise ProgramError("Invalid arguments")
         if row:
-            return wiking.User(login, **self._user_args(req, row))
+            return wiking.User(**self._user_args(req, row))
         else:
             return None
 
@@ -469,38 +475,28 @@ class Application(wiking.Application):
     def user(self, req, login):
         return wiking.module.Users.user(req, login)
 
-    def verify_password(self, user, password):
-        user_password = user.password()
-        if user_password is None:
-            return False
-        else:
-            user_password = user_password.strip()
-        if user_password.startswith('{'):
-            # We have a LDAP style password
-            s = re.match('{(.*)}(.*)', user_password)
-            if s and len(s.groups()) == 2:
-                hash_alg = s.group(1)
-                hash_value = s.group(2)
-                encode = 'base64'
-            else:
-                return False
-        else:
-            # We suppose to have a hexencoded md5 style password
-            hash_alg = 'MD5'
-            hash_value = user_password
-            encode = 'hex'
-        h = hashlib.new(hash_alg)
-        if isinstance(password, unistr):  # Just change to 'str' when Python 2 not needed.
-            # Passwords in the database are explicitly encoded to utf-8 by the
-            # pd.Password type (on validation).
-            # Note that h.update() only accepts bytes in Python 3, but str and unicode in Python 2.
-            password = password.encode('utf-8')
-        h.update(password)
-        if encode == "base64":
-            encoded = binascii.b2a_base64(h.digest()).strip()
-        else:
-            encoded = binascii.b2a_hex(h.digest()).strip()
-        return hash_value == encoded
+    def authenticate(self, req, login, password, auth_type):
+        user = self.user(req, login)
+        if user:
+            stored_password = user.password()
+            if stored_password:
+                stored_password = stored_password.strip()
+                match = re.match('{(.*)}(.*)', stored_password)
+                if match and len(match.groups()) == 2:
+                    # We have a LDAP style password
+                    hash_alg, hash_value = match.groups()
+                    encode = binascii.b2a_base64
+                else:
+                    # We suppose to have a hexencoded md5 style password
+                    hash_alg, hash_value = 'MD5', stored_password
+                    encode = binascii.b2a_hex
+                h = hashlib.new(hash_alg)
+                # Note: h.update() accepts bytes in Python 3, but str and unicode in Python 2.
+                h.update(password.encode('utf-8'))
+                encoded = encode(h.digest()).strip()
+                if hash_value.encode('ascii') == encoded:
+                    return user
+        return None
 
     def authorized_roles(self, req, module, action=None, record=None):
         try:
