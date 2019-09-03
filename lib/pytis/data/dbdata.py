@@ -369,7 +369,8 @@ class DBConnection:
     _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode', 'schemas',)
 
     def __init__(self, user=None, password=None, host=None, port=None,
-                 database=None, sslmode='allow', schemas=None, alternatives={}, _name=None):
+                 database=None, sslmode='allow', schemas=None, alternatives={},
+                 crypto_password=None, _name=None):
         """Initialize connection specification instance.
 
         Arguments:
@@ -383,6 +384,7 @@ class DBConnection:
           schemas -- non-empty sequence of schema identifiers (strings) to use
             in the database in the order of preference or 'None' (use default
             schemas)
+          crypto_password -- rsa encrypted password for database encrypted areas
           alternatives -- dictionary of alternative connection parameters.  Alternative
             database connections are identified by name and data object specifications may refer
             to these names to use connect to alternative data sources (thus the number and names
@@ -396,7 +398,7 @@ class DBConnection:
         """
         self._user = user
         self._password = password
-        self._crypto_password = password
+        self._crypto_password = crypto_password
         self._host = host
         self._port = port
         self._database = database
