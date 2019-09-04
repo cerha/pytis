@@ -321,3 +321,38 @@ omezeními příslušných políček.
 >>> record.values()
 (2, 4, 6)
 
+
+== Formátování čísel a locales ==
+
+Čísla typu Float (a odvozených typů) podlénají formátování závislému na
+aktuálních locales.  V aplikaci se použijí locales dle aktuálního nastavení
+proměnných prostředí při jejím spuštění.  Programově lze locales přenastavovat
+i za běhu dle následujícího ilustračního příkladu.
+
+>>> import locale
+>>> record = Record(Field('x', type=pd.Float()),
+...                 Field('y', type=pd.Integer()))
+
+>>> locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+'en_US.UTF-8'
+
+>>> record['x'] = pd.fval(1234567.4321)
+>>> record.format('x')
+'1,234,567.432100'
+
+Integer locale formátování nepodléhá.
+
+>>> record['y'] = pd.ival(23142)
+>>> record.format('y')
+'23142'
+
+>>> locale.setlocale(locale.LC_ALL, 'cs_CZ.UTF-8')
+'cs_CZ.UTF-8'
+
+Po případné změně locales (v aplikaci se neděje) musíme obejít cache
+zformátovaných hodnot např. tím, že hodnotu přenastavíme.
+
+>>> record['x'] = pd.fval(1234.1234)
+>>> record.format('x')
+'1 234,123400'
+
