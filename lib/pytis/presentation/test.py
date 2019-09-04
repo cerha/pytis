@@ -807,12 +807,5 @@ class Style(unittest.TestCase):
         assert cache[pp.Style(foreground='#00F', slanted=True)] == 'blue slanted'
 
 
-class DocTest(unittest.TestCase):
-
-    def test_field_computations(self):
-        import doctest
-        doctest.testfile('../../../doc/tutorials/Fields.txt')
-
-
 if __name__ == '__main__':
     unittest.main()
