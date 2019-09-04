@@ -397,7 +397,7 @@ class PresentedRow(object):
             computed_values += [c for c in (column.editable, column.visible, column.check,
                                             column.runtime_filter, column.runtime_arguments) if c]
         if prefill:
-            raise KeyError(prefill.keys()[0])
+            raise KeyError(list(prefill.keys())[0])
         if row:
             # Preserve any extra row columns - they may include inline_display values.
             keys = [x[0] for x in row_data]
