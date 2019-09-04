@@ -20,8 +20,8 @@
 
 from builtins import range
 
-import unittest
 import pytest
+import doctest
 import re
 
 import pytis.data as pd
@@ -35,7 +35,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 ############
 
 
-class PresentedRow(unittest.TestCase):
+class TestPresentedRow:
 
     def setUp(self):
         self.longMessage = True
@@ -136,7 +136,7 @@ class PresentedRow(unittest.TestCase):
             rvalue = row[key].value()
             if isinstance(row[key].type(), pd.Range) and rvalue is not None:
                 rvalue = tuple(rvalue)
-            self.assertEqual(rvalue, value, key)
+            assert rvalue == value
 
     def test_init(self):
         row = self._mega_row(new=True)
@@ -158,8 +158,7 @@ class PresentedRow(unittest.TestCase):
             pp.Field('passwd', type=pd.Password()),
             pp.Field('data', type=BigString()),
         ), new=True, prefill=dict(x=1, y=3, passwd='secret', data=1024 * 'x'))
-        self.assertEqual(unistr(row), ('<PresentedRow: x=1, y=3, '
-                                       'passwd=***, data=<BigString 1 kB>>'))
+        assert unistr(row) == '<PresentedRow: x=1, y=3, passwd=***, data=<BigString 1 kB>>'
 
     def test_str_uninitialized(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
@@ -172,20 +171,20 @@ class PresentedRow(unittest.TestCase):
 
     def test_new(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertFalse(row.new())
+        assert not row.new()
         row = self._row((pp.Field('x'), pp.Field('y')), new=True)
-        self.assertTrue(row.new())
+        assert row.new()
 
     def test_key(self):
         row = self._row((pp.Field('x', type=pd.Integer(not_null=True)), pp.Field('y')))
-        self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), None),))
+        assert row.key() == (pd.Value(pd.Integer(not_null=True), None),)
         row['x'] = 1
-        self.assertEqual(row.key(), (pd.Value(pd.Integer(not_null=True), 1),))
+        assert row.key() == (pd.Value(pd.Integer(not_null=True), 1),)
 
     def test_fields(self):
         fields = (pp.Field('x'), pp.Field('y'))
         row = self._row(fields)
-        self.assertEqual(row.fields(), fields)
+        assert row.fields() == fields
 
     def test_keys(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
@@ -193,22 +192,22 @@ class PresentedRow(unittest.TestCase):
 
     def test_resolver(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertEqual(row.resolver(), pytis.config.resolver)
+        assert row.resolver() == pytis.config.resolver
 
     def test_data(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertTrue(isinstance(row.data(), pd.MemData))
+        assert isinstance(row.data(), pd.MemData)
 
     def test_set_transaction(self):
         row = self._row((pp.Field('x'), pp.Field('y')))
-        self.assertEqual(row.transaction(), None)
+        assert row.transaction() == None
         # TODO: This whole test file tries to avoid using a real database connection,
         # so we can't create a real transaction here.  Using 'x' is invalid for
         # real use but it stil verifies that set_transaction works as long as
         # set_transaction doesn't validate its argument.
         transaction = 'x'  # pd.DBTransactionDefault(pytis.config.dbconnection)
         row.set_transaction(transaction)
-        self.assertEqual(row.transaction(), transaction)
+        assert row.transaction() == transaction
 
     def test_original_row(self):
         r = pd.Row([(k, pd.Value(pd.Integer(), v)) for k, v in
@@ -237,29 +236,23 @@ class PresentedRow(unittest.TestCase):
         row['total'] = 3
         self._check_values(row, a=5, b=10, c=20, d=30, total=3)
         row['array'] = ('apl', 'str')
-        self.assertEqual([v.value() for v in row['array'].value()], ['apl', 'str'])
-
-        def assign_invalid():
+        assert [v.value() for v in row['array'].value()] == ['apl', 'str']
+        with pytest.raises(TypeError):
             row['c'] = 'x'
-        self.assertRaises(TypeError, assign_invalid)
-
-        def assign_invalid_value():
+        with pytest.raises(TypeError):
             row['c'] = pd.sval('x')
-        self.assertRaises(TypeError, assign_invalid_value)
-
-        def assign_invalid_array():
+        with pytest.raises(TypeError):
             row['array'] = (1, 2)
-        self.assertRaises(TypeError, assign_invalid_array)
 
     def test_get(self):
         row = self._mega_row(new=True, a=4)
-        self.assertEqual(row.get('a').value(), 4)
-        self.assertIsNone(row.get('aaa'))
-        self.assertEqual(row.get('aaa', default=10), 10)
+        assert row.get('a').value() == 4
+        assert row.get('aaa') is None
+        assert row.get('aaa', default=10) == 10
 
     def test_computer(self):
         row = self._mega_row(new=True, b=3)
-        self.assertIsNone(row.get('total', lazy=True).value())
+        assert row.get('total', lazy=True).value() is None
         self._check_values(row, d=10, total=8, half_total=4)
         row['c'] = 100
         self._check_values(row, d=200, total=103, half_total=51)
@@ -267,7 +260,7 @@ class PresentedRow(unittest.TestCase):
         row['b'] = 100
         row['c'] = 88
         row['range'] = (8, 9)
-        self.assertEqual(row.get('total', lazy=True).value(), 103)
+        assert row.get('total', lazy=True).value() == 103
         self._check_values(row, a=4, b=100, c=88, total=188)
         row['b'] = None
         self._check_values(row, total=0, d=176)
@@ -303,13 +296,15 @@ class PresentedRow(unittest.TestCase):
         )
         # The computer for 'a' is called to compute the initial value and will lead to recursion
         # because it requires validation of 'b' which needs the value of 'a'...
-        self.assertRaises(RuntimeError, lambda: self._row(fields, new=True))
+        with pytest.raises(RuntimeError):
+            self._row(fields, new=True)
 
         class Specification(pp.Specification):
             pass
         Specification.fields = fields
         # ViewSpec initialization should detect the cyclic dependency.
-        self.assertRaises(AssertionError, lambda: Specification().view_spec())
+        with pytest.raises(AssertionError):
+            Specification().view_spec()
 
         class Specification2(Specification):
 
@@ -318,12 +313,13 @@ class PresentedRow(unittest.TestCase):
                                                               validate=True, novalidate=('a',)))
         row = self._row(Specification2().view_spec().fields(), new=True)
         # 'a' is None so runtime_filter will try to compute x % None (because 'a' is not validated).
-        self.assertRaises(TypeError, lambda: row.enumerate('b'))
+        with pytest.raises(TypeError):
+            row.enumerate('b')
 
     def test_cb_computer(self):
         row = self._mega_row(new=True, fruit='str')
-        self.assertTrue(isinstance(row.type('fruit_code'), pytis.data.Integer))
-        self.assertEqual(row['fruit_code'].value(), 234)
+        assert isinstance(row.type('fruit_code'), pytis.data.Integer)
+        assert row['fruit_code'].value() == 234
 
     def test_prefill_computer(self):
         row = self._mega_row(new=True, b=2, c=2, total=88)
@@ -331,20 +327,20 @@ class PresentedRow(unittest.TestCase):
 
     def test_validation(self):
         row = self._mega_row()
-        self.assertIsNone(row.validate('a', '2'))
-        self.assertIsNotNone(row.validate('b', '2.3'))
-        self.assertIsNone(row.validate('c', '8'))
-        self.assertIsNone(row.validate('d', '12'))
+        assert row.validate('a', '2') is None
+        assert row.validate('b', '2.3') is not None
+        assert row.validate('c', '8') is None
+        assert row.validate('d', '12') is None
         self._check_values(row, a=2, b=None, c=8, d=12, total=0)
-        self.assertIsNone(row.invalid_string('a'))
-        self.assertEqual(row.invalid_string('b'), '2.3')
-        self.assertIsNone(row.validate('b', '12'))
-        self.assertIsNone(row.invalid_string('b'))
-        self.assertIsNone(row.validate('range', ('2', '12')))
+        assert row.invalid_string('a') is None
+        assert row.invalid_string('b') == '2.3'
+        assert row.validate('b', '12') is None
+        assert row.invalid_string('b') is None
+        assert row.validate('range', ('2', '12')) is None
         self._check_values(row, b=12, c=8, total=20, range=(2, 12))
-        self.assertIsNotNone(row.validate('range', ('2', 'x12')))
+        assert row.validate('range', ('2', 'x12')) is not None
         self._check_values(row, range=(2, 12))
-        self.assertEqual(row.invalid_string('range'), ('2', 'x12'))
+        assert row.invalid_string('range') == ('2', 'x12')
 
     def test_set_row(self):
         row = self._mega_row(new=True)
@@ -362,17 +358,17 @@ class PresentedRow(unittest.TestCase):
 
     def test_editable(self):
         row = self._mega_row(b=2, c=1)
-        self.assertTrue(row.editable('a'))
-        self.assertFalse(row.editable('d'))
+        assert row.editable('a')
+        assert not row.editable('d')
         row['b'] = 5
-        self.assertTrue(row.editable('d'))
+        assert row.editable('d')
 
     def test_visible(self):
         row = self._mega_row(a=0, new=True)
-        self.assertTrue(row.visible('a'))
-        self.assertFalse(row.visible('range'))
+        assert row.visible('a')
+        assert not row.visible('range')
         row['a'] = 1
-        self.assertTrue(row.visible('range'))
+        assert row.visible('range')
 
     def test_callback(self):
         row = self._mega_row(new=True, b=3)
@@ -390,17 +386,17 @@ class PresentedRow(unittest.TestCase):
         # del changed[0:len(changed)]
         row['c'] = 100
         # self._check_values(row, d=200, total=103, half_total=51.5)
-        self.assertIn('d', changed)
-        self.assertIn('total', changed)
-        self.assertIn('half_total', changed)
+        assert 'd' in changed
+        assert 'total' in changed
+        assert 'half_total' in changed
         del changed[0:len(changed)]
         row.set_row(self._data_row(row, a=1, b=10, c=20, d=30))
-        self.assertIn('a', changed)
-        self.assertIn('b', changed)
-        self.assertIn('c', changed)
-        self.assertIn('d', changed)
-        self.assertIn('total', changed)
-        self.assertIn('half_total', changed)
+        assert 'a' in changed
+        assert 'b' in changed
+        assert 'c' in changed
+        assert 'd' in changed
+        assert 'total' in changed
+        assert 'half_total' in changed
 
     def test_editability_callbacks(self):
         enabled = [None]  # we need a mutable object...
@@ -409,36 +405,34 @@ class PresentedRow(unittest.TestCase):
         def callback():
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
-        self.assertRaises(
-            pytis.util.ProgramError,
-            lambda: row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', lambda: None),
-        )
-        self.assertIsNone(enabled[0])
+        with pytest.raises(pytis.util.ProgramError):
+            row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', lambda: None)
+        assert enabled[0] is None
         row['a'] = 8
-        self.assertIsNone(enabled[0])
+        assert enabled[0] is None
         row['c'] = 3
-        self.assertFalse(enabled[0])
+        assert not enabled[0]
         row['b'] = 2
-        self.assertFalse(enabled[0])
+        assert not enabled[0]
         row['b'] = 3
-        self.assertEqual(row['total'].value(), 6)
-        self.assertTrue(enabled[0])
+        assert row['total'].value() == 6
+        assert enabled[0]
         row['c'] = 2
-        self.assertEqual(row['total'].value(), 5)
-        self.assertFalse(enabled[0])
+        assert row['total'].value() == 5
+        assert not enabled[0]
 
     def test_runtime_filter(self):
         def enum(row, key):
             return tuple(x for x, display in row.enumerate('b'))
         row = self._mega_row(a=20, b=0, c=5)
-        self.assertEqual(enum(row, 'b'), (0, 20, 40, 60, 80, 100))
+        assert enum(row, 'b') == (0, 20, 40, 60, 80, 100)
 
     def test_enumerate(self):
         row = self._mega_row()
         enum = [('apl', u'Apple'), ('ban', u'Banana'), ('str', u'Strawberry'), ('org', u'Orange')]
-        self.assertEqual(row.enumerate('fruit'), enum)
-        self.assertEqual(row.enumerate('c'), None)
-        self.assertEqual(row.enumerate('array'), enum)
+        assert row.enumerate('fruit') == enum
+        assert row.enumerate('c') == None
+        assert row.enumerate('array') == enum
 
     def test_enumeration_callbacks(self):
         called = []
@@ -448,68 +442,68 @@ class PresentedRow(unittest.TestCase):
         row = self._mega_row(a=0)
         row.register_callback(row.CALL_ENUMERATION_CHANGE, 'b', callback)
         row['a'] = 5
-        self.assertEqual(len(called), 1)
+        assert len(called) == 1
 
     def test_has_key(self):
         row = self._mega_row()
-        self.assertIn('a', row)
-        self.assertIn('half_total', row)
-        self.assertNotIn('blabla', row)
+        assert 'a' in row
+        assert 'half_total' in row
+        assert 'blabla' not in row
 
     def test_changed(self):
         row = self._mega_row()
-        self.assertFalse(row.changed())
+        assert not row.changed()
         row['b'] = 333
-        self.assertTrue(row.changed())
+        assert row.changed()
 
     def test_field_changed(self):
         row = self._mega_row(b=3, c=8)
-        self.assertFalse(row.field_changed('a'))
-        self.assertFalse(row.field_changed('b'))
-        self.assertFalse(row.field_changed('c'))
+        assert not row.field_changed('a')
+        assert not row.field_changed('b')
+        assert not row.field_changed('c')
         row['b'] = 7
-        self.assertFalse(row.field_changed('a'))
-        self.assertTrue(row.field_changed('b'))
-        self.assertFalse(row.field_changed('c'))
-        self.assertIsNotNone(row.validate('a', '3.4'))
-        self.assertTrue(row.field_changed('a'))
-        self.assertIsNotNone(row.validate('a', ''))
-        self.assertFalse(row.field_changed('a'))
+        assert not row.field_changed('a')
+        assert row.field_changed('b')
+        assert not row.field_changed('c')
+        assert row.validate('a', '3.4') is not None
+        assert row.field_changed('a')
+        assert row.validate('a', '') is not None
+        assert not row.field_changed('a')
 
     def test_format(self):
         row = self._mega_row(singleline=True, range=(8, 9))
         r1 = row.format('range')
         r2 = row.format('range', single=False)
-        self.assertEqual(r1, u'8 — 9')
-        self.assertEqual(r2, ('8', '9'))
+        assert r1 == u'8 — 9'
+        assert r2 == ('8', '9')
 
     def test_codebook(self):
         row = self._mega_row()
-        self.assertIsNone(row.codebook('a'))
-        self.assertIsNone(row.codebook('b'))
-        self.assertEqual(row.codebook('fruit'), 'Fruits')
+        assert row.codebook('a') is None
+        assert row.codebook('b') is None
+        assert row.codebook('fruit') == 'Fruits'
 
     def test_cb_value(self):
         row = self._mega_row(fruit='apl')
-        self.assertEqual(row.cb_value('fruit', 'title').value(), 'Apple')
-        self.assertEqual(row.cb_value('fruit', 'code').value(), 123)
+        assert row.cb_value('fruit', 'title').value() == 'Apple'
+        assert row.cb_value('fruit', 'code').value() == 123
         row['fruit'] = 'ban'
-        self.assertEqual(row.cb_value('fruit', 'title').value(), 'Banana')
+        assert row.cb_value('fruit', 'title').value() == 'Banana'
 
     def test_display(self):
         row = self._mega_row(fruit='str')
-        self.assertEqual(row.display('a'), '')
-        self.assertEqual(row.display('fruit'), 'Strawberry')
+        assert row.display('a') == ''
+        assert row.display('fruit') == 'Strawberry'
         row['fruit'] = 'apl'
-        self.assertEqual(row.display('fruit'), 'Apple')
+        assert row.display('fruit') == 'Apple'
         row['fruit'] = None
-        self.assertEqual(row.display('fruit'), 'none')
+        assert row.display('fruit') == 'none'
         row['array'] = ('apl', 'str')
-        self.assertEqual(row.display('array'), 'Apple, Strawberry')
+        assert row.display('array') == 'Apple, Strawberry'
 
     def test_prefer_display(self):
         row = self._mega_row()
-        self.assertFalse(row.prefer_display('a'))
+        assert not row.prefer_display('a')
 
     def test_display_functions(self):
         enumerator = self._enumerator(('id', 'title', 'letter'),
@@ -522,8 +516,8 @@ class PresentedRow(unittest.TestCase):
                      display=lambda row: row['title'].value().lower()),
         )
         row = self._row(fields, None, new=True, prefill=dict(b='1', c='2'))
-        self.assertEqual(row.display('b'), '-1-')
-        self.assertEqual(row.display('c'), 'second')
+        assert row.display('b') == '-1-'
+        assert row.display('c') == 'second'
 
     def test_inline_display(self):
         enumerator = self._enumerator(('id', 'title', 'letter'),
@@ -534,26 +528,26 @@ class PresentedRow(unittest.TestCase):
             pp.Field('b', type=pd.String()),
         )
         row = self._row(fields, new=True, prefill=dict(a='1', b='FIRST'))
-        self.assertEqual(row.display('a'), 'FIRST')
-        self.assertEqual(row.display('a', export=lambda x: x.value().lower()), 'first')
+        assert row.display('a') == 'FIRST'
+        assert row.display('a', export=lambda x: x.value().lower()) == 'first'
         row['b'] = None
-        self.assertEqual(row.display('a'), '-')
+        assert row.display('a') == '-'
 
     def test_depends(self):
         row = self._mega_row()
-        self.assertFalse(row.depends('a', (x for x in row.keys() if x != 'b')))
-        self.assertFalse(row.depends('b', ('a', 'b', 'c')))
-        self.assertFalse(row.depends('c', ('b',)))
-        self.assertFalse(row.depends('b', ('c',)))
-        self.assertTrue(row.depends('b', ('d',)))
-        self.assertTrue(row.depends('b', ('a', 'b', 'c', 'd')))
-        self.assertTrue(row.depends('c', ('d',)))
-        self.assertFalse(row.depends('d', row.keys()))
-        self.assertFalse(row.depends('x', row.keys()))
-        self.assertTrue(row.depends('total', ('half_total', 'd')))
-        self.assertFalse(row.depends('total', ('a', 'b', 'c', 'x', 'total')))
-        self.assertFalse(row.depends('half_total', any))
-        self.assertTrue(row.depends('fruit', ('fruit_code',)))
+        assert not row.depends('a', (x for x in row.keys() if x != 'b'))
+        assert not row.depends('b', ('a', 'b', 'c'))
+        assert not row.depends('c', ('b',))
+        assert not row.depends('b', ('c',))
+        assert row.depends('b', ('d',))
+        assert row.depends('b', ('a', 'b', 'c', 'd'))
+        assert row.depends('c', ('d',))
+        assert not row.depends('d', row.keys())
+        assert not row.depends('x', row.keys())
+        assert row.depends('total', ('half_total', 'd'))
+        assert not row.depends('total', ('a', 'b', 'c', 'x', 'total'))
+        assert not row.depends('half_total', any)
+        assert row.depends('fruit', ('fruit_code',))
 
     def test_filename(self):
         row = self._row((
@@ -561,21 +555,21 @@ class PresentedRow(unittest.TestCase):
             pp.Field('y', filename='x'),
             pp.Field('z', filename=lambda r: 'file_%s.pdf' % r['x'].value()),
         ), new=True)
-        self.assertEqual(row.filename('x'), None)
-        self.assertEqual(row.filename('y'), 'aaa')
-        self.assertEqual(row.filename('z'), 'file_aaa.pdf')
+        assert row.filename('x') == None
+        assert row.filename('y') == 'aaa'
+        assert row.filename('z') == 'file_aaa.pdf'
 
     def test_virtual_field_type_class(self):
         row = self._row((
             pp.Field('a', type=pytis.data.Integer),
         ))
-        self.assertTrue(isinstance(row.type('a'), pytis.data.Integer))
+        assert isinstance(row.type('a'), pytis.data.Integer)
 
     def test_invalid_codebook_field_type(self):
         row = self._row((
             pp.Field('a', codebook='InvalidName'),
         ))
-        self.assertTrue(isinstance(row.type('a'), pytis.data.String))
+        assert isinstance(row.type('a'), pytis.data.String)
 
     def test_permissions(self):
         data = pd.RestrictedMemData(
@@ -591,19 +585,21 @@ class PresentedRow(unittest.TestCase):
             pp.Field('z'),
             pp.Field('zz', virtual=True, computer=pp.computer(lambda r, z: '-' + z + '-')),
         ), data, None, new=True)
-        self.assertTrue(row.permitted('x', pd.Permission.VIEW))
-        self.assertTrue(row.permitted('x', True))
-        self.assertTrue(row.permitted('y', pd.Permission.VIEW))
-        self.assertFalse(row.permitted('y', pd.Permission.UPDATE))
-        self.assertFalse(row.permitted('z', pd.Permission.VIEW))
+        assert row.permitted('x', pd.Permission.VIEW)
+        assert row.permitted('x', True)
+        assert row.permitted('y', pd.Permission.VIEW)
+        assert not row.permitted('y', pd.Permission.UPDATE)
+        assert not row.permitted('z', pd.Permission.VIEW)
         protected_row = row.protected()
-        self.assertRaises(protected_row.ProtectionError, lambda: protected_row['z'].value())
-        self.assertRaises(protected_row.ProtectionError, lambda: protected_row['zz'].value())
+        with pytest.raises(protected_row.ProtectionError):
+            protected_row['z'].value()
+        with pytest.raises(protected_row.ProtectionError):
+            protected_row['zz'].value()
         # Cover special cases for a non-permitted field in various methods.
-        self.assertIsNone(row.get('z', secure=True))
-        self.assertEqual(row.display('z'), '')
-        self.assertEqual(row.enumerate('z'), [])
-        self.assertFalse(row.editable('z'))
+        assert row.get('z', secure=True) is None
+        assert row.display('z') == ''
+        assert row.enumerate('z') == []
+        assert not row.editable('z')
 
     def test_completer(self):
         completer = self._enumerator(
@@ -640,8 +636,8 @@ class PresentedRow(unittest.TestCase):
             data=(('1',), ('2',), ('3',)),
         )
         row = pp.PresentedRow((pp.Field('a'),), data, None, new=True)
-        self.assertTrue(row.validate('a', '1') is not None)
-        self.assertTrue(row.validate('a', '4') is None)
+        assert row.validate('a', '1') is not None
+        assert row.validate('a', '4') is None
 
     def test_attachment_storage(self):
         storage = pytis.presentation.AttachmentStorage()
@@ -669,8 +665,8 @@ class PresentedRow(unittest.TestCase):
         )
         row = self._row(fields, new=True)
         row.validate('a', 'foo')
-        self.assertEqual(row['b'].value(), 'F')
-        self.assertEqual(row['c'].value(), '0')
+        assert row['b'].value() == 'F'
+        assert row['c'].value() == '0'
         # Set 'b' to an invalid value (violates maxlen=1).
         row.validate('b', 'xxx')
 
@@ -678,7 +674,7 @@ class PresentedRow(unittest.TestCase):
             # This used to fail when the computer for 'c' was not called
             # due to invalid value of 'b' (when 'b' validity was not refreshed
             # correctly).
-            self.assertEqual(row['c'].value(), '6')
+            assert row['c'].value() == '6'
         row.register_callback(row.CALL_CHANGE, 'c', cb)
         row.validate('a', 'bar')
 
@@ -688,10 +684,10 @@ class PresentedRow(unittest.TestCase):
         row = self._row((
             pp.Field('a', type=pd.String(not_null=True, enumerator=enumerator)),
         ))
-        self.assertFalse(row.validate('a', '3') is None)
+        assert not row.validate('a', '3') is None
         data = enumerator._data  # There is currently no need to make this public elsewhere.
         data.insert(pd.Row((('id', pd.sval('3')), ('title', pd.sval('Third')))))
-        self.assertEqual(row.validate('a', '3'), None)
+        assert row.validate('a', '3') == None
 
     def test_cbcomputer_display(self):
         enumerator = self._enumerator(('id', 'title'), data=(('1', 'First'), ('2', 'Second')))
@@ -701,8 +697,8 @@ class PresentedRow(unittest.TestCase):
         )
         row = self._row(fields)
         row['a'] = '1'
-        self.assertEqual(row.display('a'), 'First')
-        self.assertEqual(row.display('b'), '')
+        assert row.display('a') == 'First'
+        assert row.display('b') == ''
 
     def test_editable_always_bool(self):
         row = self._row((
@@ -722,7 +718,7 @@ class PresentedRow(unittest.TestCase):
         ):
             row['a'] = a
             row['b'] = b
-            self.assertIs(row.editable('c'), editable, (a, b))
+            assert row.editable('c') is editable
 
     def test_prefill_untouched(self):
         row = self._row((
@@ -731,25 +727,25 @@ class PresentedRow(unittest.TestCase):
         ))
         prefill = dict(a=5, b=8)
         row.set_row(None, reset=True, prefill=prefill)
-        self.assertEqual(prefill, dict(a=5, b=8))
+        assert prefill == dict(a=5, b=8)
 
 
-class PrettyTypes(unittest.TestCase):
+class TestPrettyTypes:
 
     class CustomFoldable(pp.PrettyFoldable, pd.String):
 
         def _init(self, **kwargs):
-            super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
-                                                          subcount_column_id='tree_nsub',
-                                                          **kwargs)
+            super(TestPrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
+                                                              subcount_column_id='tree_nsub',
+                                                              **kwargs)
 
     def test_instance(self):
-        t = PrettyTypes.CustomFoldable(maxlen=5)
-        self.assertEqual(t.maxlen(), 5)
-        self.assertEqual(t.tree_column_id(), 'tree_order')
+        t = TestPrettyTypes.CustomFoldable(maxlen=5)
+        assert t.maxlen() == 5
+        assert t.tree_column_id() == 'tree_order'
 
 
-class Style(unittest.TestCase):
+class TestStyle:
 
     def test_colors(self):
         with pytest.raises(TypeError):
@@ -805,7 +801,3 @@ class Style(unittest.TestCase):
         assert cache[pp.Style(background='#FF4')] == 'yellow bg'
         assert cache[pp.Style(foreground='#F00', overstrike=True)] == 'red overstrike'
         assert cache[pp.Style(foreground='#00F', slanted=True)] == 'blue slanted'
-
-
-if __name__ == '__main__':
-    unittest.main()
