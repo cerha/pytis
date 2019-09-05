@@ -29,10 +29,6 @@
 # objektu.
 #fetch_size = 100
 
-# Numeric locale. Hodnota musí být string reprezentující locale pro formátování
-# číselných položek.
-#lc_numeric = 'C'
-
 # Jméno tabulky, do které mají být logovány DML SQL příkazy.
 #dblogtable = ''
 

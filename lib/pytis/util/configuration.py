@@ -891,15 +891,6 @@ class Configuration(object):
             import pytis.data
             return pytis.data.Time.DEFAULT_FORMAT
 
-    class _Option_lc_numeric(StringOption):
-        """Locale for formatting numeric values.
-
-        The value must be a string representing a valid locale for formatting
-        numeric values.
-
-        """
-        _DEFAULT = 'C'
-
     class _Option_export_directory(StringOption):
         """Target directory for exports.
 
