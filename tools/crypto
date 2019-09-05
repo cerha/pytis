@@ -39,14 +39,14 @@ class Configuration(object):
     def __init__(self, configuration_file=None, schemas=None,
                  database=None, host=None, port=None, user=None, password=None, sslmode=None):
         self._raw_connection_data = raw_config = {}
-        import config
+        import pytis
         if configuration_file is not None:
-            for o in config.options():
+            for o in pytis.config.options():
                 o.reset()
-            config.config_file = configuration_file
-            config.read_configuration_file(configuration_file)
+            pytis.config.config_file = configuration_file
+            pytis.config.read_configuration_file(configuration_file)
         parameters = ('database', 'host', 'port', 'user', 'password', 'sslmode',)
-        dbconnection = config.dbconnection
+        dbconnection = pytis.config.dbconnection
         for p in parameters:
             value = getattr(dbconnection, p, lambda: None)()
             if value is not None:
