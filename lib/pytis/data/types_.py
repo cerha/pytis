@@ -1346,7 +1346,7 @@ class Password(String):
     """
     VM_PASSWORD = 'VM_PASSWORD'
     # Translators: User input validation error message.
-    _VM_PASSWORD_MSG = _(u"Enter the password twice to eliminate typos")
+    _VM_PASSWORD_MSG = _(u"Repeat the password for verification")
     VM_PASSWORD_VERIFY = 'VM_PASSWORD_VERIFY'
     # Translators: User input validation error message.
     _VM_PASSWORD_VERIFY_MSG = _(u"Passwords don't match")
