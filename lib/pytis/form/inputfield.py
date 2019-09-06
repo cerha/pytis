@@ -392,15 +392,21 @@ class InputField(object, KeyHandler, CommandHandler):
                 wx.CallAfter(lambda: widget.Navigate(flag))
         return cb
 
-    def _hbox(self, *content):
+    def _box(self, orientation, content):
         # Helper function to group wx widgets into a horizontal box (sizer).
-        hbox = wx.BoxSizer()
+        box = wx.BoxSizer(orientation)
         for x in content:
             if isinstance(x, tuple):
-                hbox.Add(*x)
+                box.Add(*x)
             else:
-                hbox.Add(x, 0, wx.FIXED_MINSIZE)
-        return hbox
+                box.Add(x, 0, wx.FIXED_MINSIZE)
+        return box
+
+    def _hbox(self, *content):
+        return self._box(wx.HORIZONTAL, content)
+
+    def _vbox(self, *content):
+        return self._box(wx.VERTICAL, content)
 
     def _create_label(self, parent):
         # Return field label as 'wx.StaticText' instance.
@@ -1039,7 +1045,7 @@ class PasswordField(StringField):
         if self._type.verify():
             self._ctrl2 = ctrl2 = self._create_ctrl(parent)
             self._controls.append((ctrl2, self._set_ctrl_editable))
-            widget = self._hbox(widget, ctrl2)
+            widget = self._vbox(widget, ctrl2)
         else:
             self._ctrl2 = None
         return widget
