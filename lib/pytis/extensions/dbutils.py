@@ -161,9 +161,11 @@ def dbfunction(name, *args, **kwargs):
       transaction -- instance pd.DBTransactionDefault
 
     """
+    # TODO PY3: define keyword arguments in function definition.
     import pytis.form
-    proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
-    transaction = kwargs.get('transaction')
+    proceed_with_empty_values = kwargs.pop('proceed_with_empty_values', False)
+    transaction = kwargs.pop('transaction', None)
+    assert not kwargs
     if not proceed_with_empty_values:
         for id, v in args:
             value = v.value()
