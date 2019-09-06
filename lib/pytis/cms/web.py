@@ -68,8 +68,7 @@ class RestrictedPytisModule(wiking.PytisModule):
     """wiking.PytisModule which passes authorization requests to Application.authorize()."""
 
     def _authorized(self, req, action, record=None, **kwargs):
-        roles = wiking.module('Application').authorized_roles(req, self, action=action,
-                                                              record=record)
+        roles = wiking.module.Application.authorized_roles(req, self, action=action, record=record)
         if req.check_roles(roles):
             return True
         elif wiking.Roles.OWNER in roles:
@@ -367,11 +366,11 @@ class Users(RestrictedPytisModule):
     def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
-        roles = [wiking.Roles.AUTHENTICATED] + wiking.module.UserRoles.roles(uid)
         return dict(uid=uid,
                     name=row['fullname'].value(),
                     password=row['passwd'].value(),
-                    roles=roles, data=row)
+                    roles=[wiking.Roles.AUTHENTICATED] + wiking.module.UserRoles.roles(uid),
+                    data=row)
 
     def user(self, req, login):
         row = self._user_row(req, login)
