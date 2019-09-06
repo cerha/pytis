@@ -102,7 +102,7 @@ from .application import (  # noqa: F401
     frame_title, close_forms, set_status, refresh_status, message,
     global_keymap, block_refresh, _dump_rights,
     init_access_rights, has_access, action_has_access, wx_yield_,
-    block_yield, password_dialog, custom_command,
+    block_yield, custom_command,
     built_in_status_fields, remote_connection_initially_available,
     get_recent_directory, set_recent_directory, menu,
 )
