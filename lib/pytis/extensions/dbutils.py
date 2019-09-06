@@ -166,11 +166,8 @@ def dbfunction(name, *args, **kwargs):
     proceed_with_empty_values = kwargs.pop('proceed_with_empty_values', False)
     transaction = kwargs.pop('transaction', None)
     assert not kwargs
-    if not proceed_with_empty_values:
-        for id, v in args:
-            value = v.value()
-            if value is None or value == '':
-                return None
+    if not proceed_with_empty_values and all(v.value() in (None, '') for k, v in args):
+        return None
 
     def conn_spec():
         return pytis.config.dbconnection
