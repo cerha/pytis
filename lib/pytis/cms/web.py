@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -328,19 +328,10 @@ class UserRoles(RestrictedPytisModule):
     class Spec(Specification, cms.UserRoles):
         pass
 
-    # Backwards compatibility hack -- may be removed when all databases are
-    # converted to use new system role ids.
-    _OLD_SYSTEM_ROLE_MAPPING = {'USER': 'authenticated',
-                                'ANYONE': 'anyone',
-                                'OWNER': 'owner'}
-
     @classmethod
     def role(cls, numeric_role_id, system_role, name):
         if system_role:
-            try:
-                role_id = cls._OLD_SYSTEM_ROLE_MAPPING[system_role]
-            except KeyError:
-                role_id = system_role
+            role_id = system_role
         else:
             role_id = 'cms-role-%d' % numeric_role_id
         return wiking.Role(role_id, name)
