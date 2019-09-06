@@ -71,8 +71,6 @@ class RestrictedPytisModule(wiking.PytisModule):
         roles = wiking.module.Application.authorized_roles(req, self, action=action, record=record)
         if req.check_roles(roles):
             return True
-        elif wiking.Roles.OWNER in roles:
-            return self._check_owner(req, action, record=record)
         else:
             return False
 
