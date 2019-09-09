@@ -356,14 +356,18 @@ class DBConnectionPool:
 
 
 class DBConnection:
-    """Specifikace parametrů pro připojení do databáze.
+    """Database connection parameters specification.
 
-    Jedná se čistě o specifikaci, třída sama žádné operace týkající se napojení
-    do databáze neprovádí ani neudržuje skutečný objekt spojení.  Pro popis
-    parametrů spojení viz metoda '__init__'.
+    The instance of this class just holds information about database connection
+    parameters.  It doesn't perform any operations related to database
+    connections and doesn't even hold any acual connection objects.
 
-    Tato třída je míněna jako immutable a tudíž může být libovolně sdílena.
-    Pro malé úpravy specifikace lze využít metodu 'modified()'.
+    The parameters are described in the '__init__' docstring.
+
+    This connection parameters are mostly immutable, except for login
+    credentials (username, password and encryption passwords), which may be
+    updated within an existing instance when the application obtains them from
+    the user in runtime.
 
     """
     _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode', 'schemas',)
@@ -384,16 +388,19 @@ class DBConnection:
           schemas -- non-empty sequence of schema identifiers (strings) to use
             in the database in the order of preference or 'None' (use default
             schemas)
-          crypto_password -- rsa encrypted password for database encrypted areas
-          alternatives -- dictionary of alternative connection parameters.  Alternative
-            database connections are identified by name and data object specifications may refer
-            to these names to use connect to alternative data sources (thus the number and names
-            of alternative connections is application specific).  The dictionary keys are
-            connection names and the values are dictionaries of connection options ('user',
-            'password', 'host', 'database', ...) with the same meaning as the corresponding
-            arguments.
+          crypto_password -- rsa encrypted password for database encrypted
+            areas
+          alternatives -- dictionary of alternative connection parameters.
+            Alternative database connections are identified by name and data
+            object specifications may refer to these names to use connect to
+            alternative data sources (thus the number and names of alternative
+            connections is application specific).  The dictionary keys are
+            connection names and the values are dictionaries of connection
+            options ('user', 'password', 'host', 'database', ...) with the same
+            meaning as the corresponding arguments.
 
-        Arguments with the value 'None' will be ignored when connecting to the database.
+        Arguments with the value 'None' will be ignored when connecting to the
+        database.
 
         """
         self._user = user
@@ -479,19 +486,6 @@ class DBConnection:
                     connection_options[key] = getattr(self, attr)
             options = dict(connection_options, alternatives=self._alternatives, _name=name)
             return self.__class__(**options)
-
-    def modified(self, **kwargs):
-        """Return the new specification instance updated by given arguments.
-
-        The new instance is the same as 'self', except for the values of passed keyword arguments.
-
-        Arguments:
-
-          kwargs -- keyword arguments same as in constructor.
-
-        """
-        options = dict(self._options(), alternatives=self._alternatives, **kwargs)
-        return self.__class__(**options)
 
     def update_login_data(self, user, password):
         """Set given login parameters in the instance.

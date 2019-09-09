@@ -877,16 +877,6 @@ class DBConnection(unittest.TestCase):
         self.assertEqual(self._connection, self._connection2)
         self.assertNotEqual(self._connection, self._connection3)
 
-    def test_modified(self):
-        c = self._connection
-        cc = c.modified(host='remotehost')
-        self.assertEqual(c.user(), cc.user())
-        self.assertEqual(c.password(), cc.password())
-        self.assertEqual(c.port(), cc.port())
-        self.assertEqual(c.database(), cc.database())
-        self.assertEqual(c.host(), 'localhost')
-        self.assertEqual(cc.host(), 'remotehost')
-
     def test_select(self):
         c = self._connection
         c1 = c.select('remote')
