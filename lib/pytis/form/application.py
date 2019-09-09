@@ -189,99 +189,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Read in access rights.
         init_access_rights(pytis.config.dbconnection)
         # Unlock crypto keys
-        crypto_password = pytis.config.dbconnection.crypto_password()
-        count = 0
-        try:
-            data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
-                                      ('key_id', 'name', 'fresh',),
-                                      pytis.config.dbconnection)
-            rows = data.select_map(identity)
-            data.close()
-            count = len(rows)
-        except pytis.data.DBException:
-            data = None
-        bad_names = set()
-        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                             ('key_name_', pytis.data.sval('pytis'),))
-        if count > 0:
-            if crypto_password is None:
-                condition = pytis.data.EQ('fresh', pytis.data.bval(False))
-                established_names = data.select_map(identity, condition=condition)
-                while True:
-                    message = _("Enter your login password for encryption keys management")
-                    crypto_password = password_dialog(message=message)
-                    if not crypto_password:
-                        break
-                    if not established_names:
-                        message = _("Enter your login password once more for verification")
-                        crypto_password_repeated = password_dialog(message=message)
-                        if crypto_password == crypto_password_repeated:
-                            crypto_password = rsa_encrypt(db_key, crypto_password)
-                            break
-                        else:
-                            run_dialog(Error, _("The passwords don't match"))
-                    else:
-                        crypto_password = rsa_encrypt(db_key, crypto_password)
-                        if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                                       ('password_',
-                                                        pytis.data.sval(crypto_password),)):
-                            break
-                        else:
-                            run_dialog(Error, _("Invalid password"))
-                if crypto_password:
-                    pytis.data.DBFunctionDefault(
-                        'pytis_crypto_unlock_current_user_passwords',
-                        lambda: pytis.config.dbconnection
-                    ).reset_crypto_password(crypto_password)
-        decrypted_names = set()
-        if count > 0 and crypto_password and data is not None:
-            crypto_password_value = pytis.data.sval(crypto_password)
-            while True:
-                established_names = set()
-                fresh_names = set()
-
-                def process(row):
-                    name = row['name'].value()
-                    (fresh_names if row['fresh'].value() else established_names).add(name)
-                data.select_map(process)
-                ok_names = pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                                       ('password_', crypto_password_value,))
-                if isinstance(ok_names, list):
-                    ok_names = set([row[0].value() for row in ok_names])
-                else:
-                    ok_names = set([ok_names])
-                decrypted_names = decrypted_names.union(ok_names)
-                bad_names = established_names.difference(ok_names)
-                if fresh_names:
-                    name = list(fresh_names)[0]
-                    bad = False
-                elif bad_names:
-                    name = list(bad_names)[0]
-                    bad = True
-                else:
-                    break
-                message = _("Enter the password to unlock the encryption area %s.", name)
-                if bad:
-                    message += "\n(" + _("This is probably your old login password.") + ")"
-                password = password_dialog(_("Encryption key password"), message=message)
-                if not password:
-                    break
-                password = rsa_encrypt(db_key, password)
-                password_value = pytis.data.sval(password)
-                for r in rows:
-                    r_name = r['name'].value()
-                    if r_name == name or (bad and r_name in bad_names):
-                        try:
-                            pytis.extensions.dbfunction('pytis_crypto_change_password',
-                                                        ('id_', r['key_id'],),
-                                                        ('old_psw', password_value,),
-                                                        ('new_psw', crypto_password_value,))
-                        except pytis.data.DBException:
-                            pass
-            data.close()
-            pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                        ('password_', crypto_password_value,))
-        self._decrypted_names = decrypted_names
+        self._unlock_crypto_keys()
         # Init the recent forms list.
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
@@ -627,6 +535,105 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
         assert self._window_menu is not None
         return mb
+
+    def _unlock_crypto_keys(self):
+        def password_dialog(title, message, verify=False, check=None):
+            result = run_form(
+                pytis.form.InputForm, title=title,
+                fields=(Field('password', _("Password"),
+                              type=pytis.data.Password, verify=verify,
+                              width=40, not_null=True),),
+                layout=(Text(message), 'password'),
+                check=check,
+            )
+            if result:
+                return rsa_encrypt(db_key, result['password'].value())
+            else:
+                return None
+
+        self._decrypted_names = decrypted_names = set()
+
+        crypto_password = pytis.config.dbconnection.crypto_password()
+        try:
+            data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
+                                      ('key_id', 'name', 'fresh',),
+                                      pytis.config.dbconnection)
+            rows = data.select_map(identity)
+        except pytis.data.DBException:
+            return
+        finally:
+            data.close()
+        if not rows:
+            return
+
+        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                             ('key_name_', pytis.data.sval('pytis'),))
+        if not crypto_password:
+            established_names = [r for r in rows if not row['fresh'].value()]
+            crypto_password = password_dialog(
+                _("Enter your password"),
+                _("Enter your login password for encryption keys management"),
+                verify=not established_names,
+                check=(lambda r: ('password', _("Invalid password"))
+                       if established_names and not pytis.extensions.dbfunction(
+                               'pytis_crypto_unlock_current_user_passwords',
+                               ('password_',
+                                pytis.data.sval(rsa_encrypt(db_key, r['password'].value())),))
+                       else None),
+            )
+            if not crypto_password:
+                return
+            # Set this password for all DB connections (closes all current connections!).
+            pytis.data.DBFunctionDefault(
+                'pytis_crypto_unlock_current_user_passwords',
+                lambda: pytis.config.dbconnection
+            ).reset_crypto_password(crypto_password)
+
+        crypto_password_value = pytis.data.sval(crypto_password)
+        while True:
+            established_names = set()
+            fresh_names = set()
+            for row in data.select_map(identity):
+                name = row['name'].value()
+                if row['fresh'].value():
+                    fresh_names.add(name)
+                else:
+                    established_names.add(name)
+            ok_names = pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                                   ('password_', crypto_password_value,))
+            if isinstance(ok_names, list):
+                ok_names = set([row[0].value() for row in ok_names])
+            else:
+                ok_names = set([ok_names])
+            decrypted_names.update(ok_names)
+            bad_names = established_names.difference(ok_names)
+            if fresh_names:
+                name = list(fresh_names)[0]
+                bad = False
+            elif bad_names:
+                name = list(bad_names)[0]
+                bad = True
+            else:
+                break
+            message = _("Enter the password to unlock the encryption area %s.", name)
+            if bad:
+                message += "\n(" + _("This is probably your old login password.") + ")"
+            password = password_dialog(_("Encryption key password"), message)
+            if not password:
+                break
+            for r in rows:
+                r_name = r['name'].value()
+                if r_name == name or (bad and r_name in bad_names):
+                    try:
+                        pytis.extensions.dbfunction('pytis_crypto_change_password',
+                                                    ('id_', r['key_id']),
+                                                    ('old_psw', pytis.data.sval(password)),
+                                                    ('new_psw', crypto_password_value))
+                    except pytis.data.DBException:
+                        pass
+        data.close()
+        pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                    ('password_', crypto_password_value,))
 
 # Ostatní metody
 
@@ -2202,22 +2209,6 @@ def block_yield(block=False):
     """
     global _yield_blocked
     _yield_blocked = block
-
-
-def password_dialog(title=_("Enter your password"), message=None):
-    if message:
-        layout = (Text(message), 'password')
-    else:
-        layout = ('password',)
-    result = run_form(pytis.form.InputForm, title=title,
-                      fields=(Field('password', _("Password"),
-                                    type=pytis.data.Password, verify=False,
-                                    width=40, not_null=True),),
-                      layout=layout)
-    if result:
-        return result['password'].value()
-    else:
-        return None
 
 
 def custom_command(name):
