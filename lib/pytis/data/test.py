@@ -134,6 +134,23 @@ class TestType(_TestType):
         assert isinstance(s12, pd.RegexString)
         assert s12.maxlen() == 4
 
+    def test_str(self):
+        class String(pd.String):
+            pass
+        t1 = pd.String(minlen=3, not_null=True)
+        t2 = pd.String(maxlen=3, not_null=False)
+        t3 = pd.String(maxlen=3)
+        t4 = String(maxlen=3, not_null=False)
+        assert str(t1) == '<String minlen=3 not_null=True>'
+        assert str(t2) == '<String maxlen=3 not_null=False>'
+        assert str(t3) == '<String maxlen=3>'
+        assert str(t4) == '<pytis.data.test.String maxlen=3 not_null=False>'
+        assert str(t1) == repr(t1)
+        assert str(t2) == repr(t2)
+        assert str(t3) == repr(t3)
+        assert str(t4) == repr(t4)
+
+
 
 class TestInteger(_TestType):
     _type = pd.Integer
