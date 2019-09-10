@@ -356,3 +356,8 @@ zformátovaných hodnot např. tím, že hodnotu přenastavíme.
 >>> record.format('x')
 '1 234,123400'
 
+Nastav locales zpět na en_US, které jsou očekávané v ostatních testech, které
+mohou být spouštěny po tomto.
+
+>>> locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+'en_US.UTF-8'
