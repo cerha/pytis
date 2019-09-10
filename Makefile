@@ -1,4 +1,4 @@
-.PHONY: translations doc
+.PHONY: translations doc test
 
 all: compile translations
 
@@ -14,3 +14,10 @@ translations:
 	make -C translations
 extract:
 	make -C translations extract
+
+test:
+	pytest doc lib
+
+coverage:
+	PYTHONPATH="./lib:${PYTHONPATH}" coverage run --source lib/pytis -m pytest doc lib
+	coverage report
