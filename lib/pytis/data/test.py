@@ -150,6 +150,12 @@ class TestType(_TestType):
         assert str(t3) == repr(t3)
         assert str(t4) == repr(t4)
 
+    def test_constraints(self):
+        t = pd.String(minlen=3, constraints=(lambda v: None if v.startswith('x') else "Must start with x",))
+        value, error = t.validate('xaf')
+        assert not error
+        value, error = t.validate('uaf')
+        assert error
 
 
 class TestInteger(_TestType):
@@ -165,6 +171,8 @@ class TestInteger(_TestType):
 
     def test_limits(self):
         t = pd.Integer(minimum=5, maximum=8)
+        assert t.minimum() == 5
+        assert t.maximum() == 8
         self._check_not_valid(t, '3')
         assert self._validate(t, '5') == 5
         self._check_not_valid(t, '10')
@@ -237,6 +245,8 @@ class TestString(_TestType):
 
     def test_limits(self):
         t = pd.String(minlen=3, maxlen=5)
+        assert t.minlen() == 3
+        assert t.maxlen() == 5
         assert self._validate(t, 'abcde') == 'abcde'
         self._check_not_valid(t, 'ab')
         self._check_not_valid(t, 'abcdef')
@@ -607,6 +617,8 @@ class TestRange(_TestType):
         assert err is None
         value, err = t.validate(('2', '1'))
         assert err is not None
+        value, err = t.validate(('x', 'y'))
+        assert err is not None
 
         value, err = t.validate('22')
         assert err is None
@@ -627,6 +639,33 @@ class TestRange(_TestType):
             ('2015-01-01 12:00:01', '2015-01-01 12:00:00')
         )
         assert err is not None
+
+    def test_export(self):
+        t =  pd.IntegerRange()
+        v = t.adjust_value((1, 8))
+        assert t.export(v) == ('1', '8')
+        assert t.export(None) == ('', '')
+
+    def test_eq(self):
+        assert pd.IntegerRange() != pd.DateTimeRange()
+        assert pd.DateTimeRange(without_timezone=True) != pd.DateTimeRange(without_timezone=False)
+
+        r = pd.IntegerRange().adjust_value((1, 5))
+        assert r != 1
+
+    def test_base_type(self):
+        assert pd.IntegerRange().base_type() == pd.Integer()
+        assert pd.DateTimeRange().base_type() == pd.DateTime()
+
+    def test_adjust_value(self):
+        t = pd.IntegerRange()
+        with pytest.raises(TypeError):
+            t.adjust_value(20)
+        with pytest.raises(TypeError):
+            t.adjust_value((30, 20))
+        t2 = pd.IntegerRange(lower_inc=False, upper_inc=True)
+        v2 = t2.adjust_value((1, 5))
+        assert t.adjust_value(v2) == t2.adjust_value((1, 5))
 
 
 class DataEnumerator(unittest.TestCase):
