@@ -1686,16 +1686,17 @@ class ViewSpec(object):
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name
-        for action in ActionGroup.unnest(actions):
-            rights = Specification.data_access_rights('action/%s/%s' %
-                                                      (action.id(), self._spec_name,))
-            if rights is None:
-                groups = None
-            else:
-                groups = rights.permitted_groups(pytis.data.Permission.CALL, None)
-                if None in groups:
+        if config.use_dmp_rights:
+            for action in ActionGroup.unnest(actions):
+                rights = Specification.data_access_rights('action/%s/%s' %
+                                                          (action.id(), self._spec_name,))
+                if rights is None:
                     groups = None
-            action.set_access_groups(groups)
+                else:
+                    groups = rights.permitted_groups(pytis.data.Permission.CALL, None)
+                    if None in groups:
+                        groups = None
+                action.set_access_groups(groups)
         # Initialize the layout
         if layout is None:
             layout = LayoutSpec(singular, GroupSpec([f.id() for f in self._fields],
