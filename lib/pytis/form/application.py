@@ -537,7 +537,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return mb
 
     def _unlock_crypto_keys(self):
-        def password_dialog(title, message, verify=False, check=None):
+        def password_dialog(title, message, verify=False, check=()):
             result = run_form(
                 pytis.form.InputForm, title=title,
                 fields=(Field('password', _("Password"),
@@ -569,17 +569,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
         db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
                                              ('key_name_', pytis.data.sval('pytis'),))
         if not crypto_password:
-            established_names = [r for r in rows if not row['fresh'].value()]
+            established_names = [r for r in rows if not r['fresh'].value()]
             crypto_password = password_dialog(
                 _("Enter your password"),
                 _("Enter your login password for encryption keys management"),
                 verify=not established_names,
-                check=(lambda r: ('password', _("Invalid password"))
-                       if established_names and not pytis.extensions.dbfunction(
-                               'pytis_crypto_unlock_current_user_passwords',
-                               ('password_',
-                                pytis.data.sval(rsa_encrypt(db_key, r['password'].value())),))
-                       else None),
+                check=(
+                    lambda r: ('password', _("Invalid password"))
+                    if established_names and not pytis.extensions.dbfunction(
+                        'pytis_crypto_unlock_current_user_passwords',
+                        ('password_', pytis.data.sval(
+                            rsa_encrypt(db_key, r['password'].value())),))
+                    else None),
             )
             if not crypto_password:
                 return
