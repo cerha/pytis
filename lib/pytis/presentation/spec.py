@@ -1686,7 +1686,7 @@ class ViewSpec(object):
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name
-        if config.use_dmp_rights:
+        if pytis.config.use_dmp_rights:
             for action in ActionGroup.unnest(actions):
                 rights = Specification.data_access_rights('action/%s/%s' %
                                                           (action.id(), self._spec_name,))
