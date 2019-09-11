@@ -472,12 +472,10 @@ class Action(object):
             interface.  See 'enabled' for making the action inactive, but still
             visible.  Note: Visibility is currently not implemented in wx
             forms, so the argument only has effect in web applications.
-          access_groups -- Depracated: DMP now implements full dynamic action
-            access management.  The original docstring was: seznam
-            uživatelských skupin, které mají právo akci vyvolat.  Akce se pro
-            ostatní uživatele stane automaticky neaktivní.  Teprve pokud
-            uživatel patří do jedné z vyjmenovaných skupin, je dostupnost akce
-            zjištěna pomocí funkce 'enabled' (pouze wx formuláře).
+          access_groups -- sequence of authorized DB user group names.  If not
+            None, only users who belong to given DB groups (roles) will be able
+            to invoke the action.  Ignored when DMP rights are active (when
+            pytis.config.use_dmp_rights is set to True).
           kwargs -- dictionary of additional keyword arguments passed to the
             action handler (and 'enabled' and 'visible' functions if defined
             dynamically) in runtime.  In Wiking web applications these
@@ -554,10 +552,6 @@ class Action(object):
 
     def access_groups(self):
         return self._access_groups
-
-    def set_access_groups(self, access_groups):
-        assert access_groups is None or is_sequence(access_groups)
-        self._access_groups = access_groups
 
     def descr(self):
         return self._descr
@@ -1686,17 +1680,6 @@ class ViewSpec(object):
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name
-        if pytis.config.use_dmp_rights:
-            for action in ActionGroup.unnest(actions):
-                rights = Specification.data_access_rights('action/%s/%s' %
-                                                          (action.id(), self._spec_name,))
-                if rights is None:
-                    groups = None
-                else:
-                    groups = rights.permitted_groups(pytis.data.Permission.CALL, None)
-                    if None in groups:
-                        groups = None
-                action.set_access_groups(groups)
         # Initialize the layout
         if layout is None:
             layout = LayoutSpec(singular, GroupSpec([f.id() for f in self._fields],

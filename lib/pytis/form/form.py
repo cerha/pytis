@@ -1685,6 +1685,7 @@ class RecordForm(LookupForm):
         self._prefill = prefill
         self._select_row_argument = select_row
         self._initial_select_row_called = False
+        self._action_access_groups_cache = {}
         super_(RecordForm)._init_attributes(self, **kwargs)
         self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
 
@@ -2085,7 +2086,22 @@ class RecordForm(LookupForm):
         self.refresh()
 
     def _can_context_action(self, action):
-        if not pytis.data.is_in_groups(action.access_groups()):
+        if pytis.config.use_dmp_rights:
+            try:
+                access_groups = self._action_access_groups_cache[action.id()]
+            except KeyError:
+                rights = Specification.data_access_rights('action/%s/%s' % (action.id(),
+                                                                            self._name))
+                if rights is None:
+                    access_groups = None
+                else:
+                    access_groups = rights.permitted_groups(pytis.data.Permission.CALL, None)
+                    if None in access_groups:
+                        access_groups = None
+                self._action_access_groups_cache[action.id()] = access_groups
+        else:
+            access_groups = action.access_groups()
+        if not pytis.data.is_in_groups(access_groups):
             return False
         enabled = action.enabled()
         if isinstance(enabled, collections.Callable):
