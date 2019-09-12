@@ -166,7 +166,7 @@ def dbfunction(name, *args, **kwargs):
     proceed_with_empty_values = kwargs.pop('proceed_with_empty_values', False)
     transaction = kwargs.pop('transaction', None)
     assert not kwargs
-    if not proceed_with_empty_values and all(v.value() in (None, '') for k, v in args):
+    if not proceed_with_empty_values and args and all(v.value() in (None, '') for k, v in args):
         return None
 
     def conn_spec():
