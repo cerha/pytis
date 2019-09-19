@@ -1380,10 +1380,10 @@ class Configuration(object):
         If 'sort' is true, the options will be returned in the order of their definition.
 
         """
-        options = self._options.values()
+        options = tuple(self._options.values())
         if sort:
-            options.sort(key=lambda x: x._class_definition_order)
-        return tuple(options)
+            options = sorted(options, key=lambda x: x._class_definition_order)
+        return options
 
     def option(self, name):
         """Return the 'Configuration.Option' instance for the option of given 'name'.
