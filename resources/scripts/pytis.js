@@ -1,11 +1,11 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009-2017 Brailcom, o.p.s.
+ * Copyright (C) 2009-2017 OUI Technology Ltd.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -93,7 +93,7 @@ var pytis = {
             }
         };
     }
-    
+
 };
 
 pytis.Form = Class.create({
@@ -578,7 +578,7 @@ pytis.BrowseForm = Class.create(pytis.Form, {
             }
         }.bind(this));
     },
-    
+
     _insert_inline_action_content: function (element, target, content) {
         // Insert the content returned by an inline action into a proper place
         // in the DOM.  The "proper place" depends on the form type and the
@@ -704,7 +704,7 @@ pytis.ListView = Class.create(pytis.BrowseForm, {
         content.remove();
         parent.childElements().each(function (x) { x.slideDown({duration: 0.25}); });
     }
-    
+
 });
 
 
@@ -898,7 +898,7 @@ pytis.EditForm = Class.create(pytis.Form, {
                 return false;
             }
         }
-        return true;       
+        return true;
     }
 
 });
@@ -1291,7 +1291,7 @@ pytis.Calendar.MONTH_NAMES = new Array(
 );
 
 pytis.Calendar.SHORT_MONTH_NAMES = new Array(
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' 
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 );
 pytis.Calendar.TODAY = 'Today';
 pytis.Calendar.FIRST_WEEK_DAY = 0;
@@ -1322,7 +1322,7 @@ pytis.Calendar._checkCalendar = function(event) {
 // Event Handlers
 //------------------------------------------------------------------------------
 
-pytis.Calendar.handleMouseDownEvent = function(event) { 
+pytis.Calendar.handleMouseDownEvent = function(event) {
     Event.observe(document, 'mouseup', pytis.Calendar.handleMouseUpEvent);
     Event.stop(event);
 };
@@ -1339,11 +1339,11 @@ pytis.Calendar.handleMouseUpEvent = function(event) {
     var el = Event.element(event);
     var calendar = el.calendar;
     var isNewDate = false;
-    
+
     // If the element that was clicked on does not have an associated Calendar
     // object, return as we have nothing to do.
     if (!calendar) return false;
-    
+
     // Clicked on a day
     if (typeof el.navAction == 'undefined') {
         if (calendar.currentDateElement) {
@@ -1357,25 +1357,25 @@ pytis.Calendar.handleMouseUpEvent = function(event) {
         calendar.shouldClose = !el.hasClassName('otherDay');
         var isOtherMonth     = !calendar.shouldClose;
         if (isOtherMonth) calendar.update(calendar.date);
-    
+
     // Clicked on an action button
     } else {
         var date = new Date(calendar.date);
-        
+
         if (el.navAction == pytis.Calendar.NAV_TODAY) {
             date.setDateOnly(new Date());
         }
         var year = date.getFullYear();
         var mon = date.getMonth();
         switch (el.navAction) {
-            
+
             // Previous Year
         case pytis.Calendar.NAV_PREVIOUS_YEAR:
             if (year > calendar.minYear) {
                 date.setFullYear(year - 1);
             }
             break;
-            
+
             // Previous Month
         case pytis.Calendar.NAV_PREVIOUS_MONTH:
             if (mon > 0) {
@@ -1386,11 +1386,11 @@ pytis.Calendar.handleMouseUpEvent = function(event) {
                 setMonth(date, 11);
             }
             break;
-            
+
             // Today
         case pytis.Calendar.NAV_TODAY:
             break;
-            
+
             // Next Month
         case pytis.Calendar.NAV_NEXT_MONTH:
             if (mon < 11) {
@@ -1401,15 +1401,15 @@ pytis.Calendar.handleMouseUpEvent = function(event) {
                 setMonth(date, 0);
             }
             break;
-            
+
             // Next Year
         case pytis.Calendar.NAV_NEXT_YEAR:
             if (year < calendar.maxYear)
                 date.setFullYear(year + 1);
             break;
-            
+
         }
-        
+
         if (!date.equalsTo(calendar.date)) {
             calendar.setDate(date);
             isNewDate = true;
@@ -1417,25 +1417,25 @@ pytis.Calendar.handleMouseUpEvent = function(event) {
             isNewDate = (calendar.shouldClose = true);
         }
     }
-    
+
     if (isNewDate) event && calendar.callSelectHandler();
     if (calendar.shouldClose) event && calendar.callCloseHandler();
-    
+
     Event.stopObserving(document, 'mouseup', pytis.Calendar.handleMouseUpEvent);
-    
+
     return Event.stop(event);
 };
 
 pytis.Calendar.defaultSelectHandler = function(calendar) {
     if (!calendar.dateField) return false;
-    
+
     // Update dateField value
     if (calendar.dateField.tagName == 'DIV') {
         Element.update(calendar.dateField, calendar.date.print(calendar.dateFormat));
     } else if (calendar.dateField.tagName == 'INPUT') {
         calendar.dateField.value = calendar.date.print(calendar.dateFormat);
     }
-    
+
     // Trigger the onchange callback on the dateField, if one has been defined
     if (typeof calendar.dateField.onchange == 'function') {
         calendar.dateField.onchange();
@@ -1456,17 +1456,17 @@ pytis.Calendar.defaultCloseHandler = function(calendar) {
 //------------------------------------------------------------------------------
 
 pytis.Calendar.setup = function(params) {
-    
+
     function param_default(name, def) {
         if (!params[name]) params[name] = def;
     }
-    
+
     param_default('dateField', null);
     param_default('triggerElement', null);
     param_default('parentElement', null);
     param_default('selectHandler',  null);
     param_default('closeHandler', null);
-    
+
     // In-Page Calendar
     if (params.parentElement) {
         var calendar = new pytis.Calendar(params.parentElement);
@@ -1481,7 +1481,7 @@ pytis.Calendar.setup = function(params) {
         calendar.show();
         return calendar;
     }
-    
+
     // Popup Calendars
     //
     // XXX There is significant optimization to be had here by creating the
@@ -1519,30 +1519,30 @@ pytis.Calendar.prototype = {
 
     // The HTML Container Element
     container: null,
-    
+
     // Callbacks
     selectHandler: null,
     closeHandler: null,
-    
+
     // Configuration
     minYear: 1900,
     maxYear: 2100,
     dateFormat: '%Y-%m-%d',
-    
+
     // Dates
     date: new Date(),
     currentDateElement: null,
-    
+
     // Status
     shouldClose: false,
     isPopup: true,
-    
+
     dateField: null,
-    
+
     //----------------------------------------------------------------------------
     // Initialize
     //----------------------------------------------------------------------------
-    
+
     initialize: function(parent) {
         if (parent) {
             this.create($(parent));
@@ -1550,11 +1550,11 @@ pytis.Calendar.prototype = {
             this.create();
         }
     },
-    
+
     //----------------------------------------------------------------------------
     // Update / (Re)initialize Calendar
     //----------------------------------------------------------------------------
-    
+
     update: function(date) {
         var calendar = this;
         var today = new Date();
@@ -1563,7 +1563,7 @@ pytis.Calendar.prototype = {
         var thisDay = today.getDate();
         var month = date.getMonth();
         var dayOfMonth = date.getDate();
-        
+
         // Ensure date is within the defined range
         if (date.getFullYear() < this.minYear) {
             date.setFullYear(this.minYear);
@@ -1571,12 +1571,12 @@ pytis.Calendar.prototype = {
             date.setFullYear(this.maxYear);
         }
         this.date = new Date(date);
-        
+
         date.setDate(1);
         // Calculate the first day to display (including the previous month)
         var offset = (date.getDay() >= pytis.Calendar.FIRST_WEEK_DAY ? +1 : -6);
         date.setDate(-date.getDay() + offset + pytis.Calendar.FIRST_WEEK_DAY);
-        
+
         // Fill in the days of the month
         Element.getElementsBySelector(this.container, 'tbody tr').each(function(row, i) {
             var rowHasDays = false;
@@ -1584,12 +1584,12 @@ pytis.Calendar.prototype = {
                 var day = date.getDate();
                 var dayOfWeek = date.getDay();
                 var isCurrentMonth = (date.getMonth() == month);
-                
+
                 // Reset classes on the cell
                 cell.className = '';
                 cell.date = new Date(date);
                 cell.update(day);
-                
+
                 // Account for days of the month other than the current month
                 if (!isCurrentMonth) {
                     cell.addClassName('otherDay');
@@ -1601,12 +1601,12 @@ pytis.Calendar.prototype = {
                     cell.addClassName('selected');
                     calendar.currentDateElement = cell;
                 }
-                
+
                 // Today
                 if (date.getFullYear() == thisYear && date.getMonth() == thisMonth && day == thisDay) {
                     cell.addClassName('today');
                 }
-                
+
                 // Weekend
                 if ([0, 6].indexOf(dayOfWeek) != -1) {
                     cell.addClassName('weekend');
@@ -1617,18 +1617,18 @@ pytis.Calendar.prototype = {
             // Hide the extra row if it contains only days from another month
             !rowHasDays ? row.hide() : row.show();
         });
-            
+
         this.container.getElementsBySelector('td.title')[0].update(
             pytis.Calendar.MONTH_NAMES[month] + ' ' + this.date.getFullYear()
         );
     },
-    
+
     //----------------------------------------------------------------------------
     // Create/Draw the Calendar HTML Elements
     //----------------------------------------------------------------------------
-    
+
     create: function(parent) {
-        
+
         // If no parent was specified, assume that we are creating a popup calendar.
         if (!parent) {
             parent = document.getElementsByTagName('body')[0];
@@ -1636,21 +1636,21 @@ pytis.Calendar.prototype = {
         } else {
             this.isPopup = false;
         }
-        
+
         // Calendar Table
         var table = new Element('table');
-        
+
         // Calendar Header
         var thead = new Element('thead');
         table.appendChild(thead);
-        
+
         // Title Placeholder
         var row  = new Element('tr');
         var cell = new Element('td', { colSpan: 7 } );
         cell.addClassName('title');
         row.appendChild(cell);
         thead.appendChild(row);
-        
+
         // Calendar Navigation
         row = new Element('tr');
         this._drawButtonCell(row, '&#x00ab;', 1, pytis.Calendar.NAV_PREVIOUS_YEAR);
@@ -1659,7 +1659,7 @@ pytis.Calendar.prototype = {
         this._drawButtonCell(row, '&#x203a;', 1, pytis.Calendar.NAV_NEXT_MONTH);
         this._drawButtonCell(row, '&#x00bb;', 1, pytis.Calendar.NAV_NEXT_YEAR);
         thead.appendChild(row);
-        
+
         // Day Names
         row = new Element('tr');
         for (var i = 0; i < 7; ++i) {
@@ -1672,7 +1672,7 @@ pytis.Calendar.prototype = {
             row.appendChild(cell);
         }
         thead.appendChild(row);
-        
+
         // Calendar Days
         var tbody = table.appendChild(new Element('tbody'));
         for (i = 6; i > 0; --i) {
@@ -1683,7 +1683,7 @@ pytis.Calendar.prototype = {
                 cell.calendar = this;
             }
         }
-        
+
         // Calendar Container (div)
         this.container = new Element('div');
         this.container.addClassName('pytis-calendar');
@@ -1692,18 +1692,18 @@ pytis.Calendar.prototype = {
             this.container.addClassName('popup');
         }
         this.container.appendChild(table);
-        
+
         // Initialize Calendar
         this.update(this.date);
-        
+
         // Observe the container for mousedown events
         Event.observe(this.container, 'mousedown', pytis.Calendar.handleMouseDownEvent);
-        
+
         // Append to parent element
         parent.appendChild(this.container);
-        
+
     },
-    
+
     _drawButtonCell: function(parent, text, colSpan, navAction) {
         var cell = new Element('td');
         if (colSpan > 1) cell.colSpan = colSpan;
@@ -1715,29 +1715,29 @@ pytis.Calendar.prototype = {
         parent.appendChild(cell);
         return cell;
     },
-    
+
     //------------------------------------------------------------------------------
     // Callbacks
     //------------------------------------------------------------------------------
-    
+
     // Calls the Select Handler (if defined)
     callSelectHandler: function() {
         if (this.selectHandler) {
             this.selectHandler(this, this.date.print(this.dateFormat));
         }
     },
-    
+
     // Calls the Close Handler (if defined)
     callCloseHandler: function() {
         if (this.closeHandler) {
             this.closeHandler(this);
         }
     },
-    
+
     //------------------------------------------------------------------------------
     // Calendar Display Functions
     //------------------------------------------------------------------------------
-    
+
     // Shows the Calendar
     show: function() {
         this.container.show();
@@ -1746,19 +1746,19 @@ pytis.Calendar.prototype = {
             Event.observe(document, 'mousedown', pytis.Calendar._checkCalendar);
         }
     },
-    
+
     // Shows the calendar at the given absolute position
     showAt: function (x, y) {
         this.container.setStyle({left: Math.max(x-40, 0) + 'px', top: Math.max(y-80, 0) + 'px'});
         this.show();
     },
-    
+
     // Shows the Calendar at the coordinates of the provided element
     showAtElement: function(element) {
         var pos = Position.cumulativeOffset(element);
         this.showAt(pos[0], pos[1]);
     },
-    
+
     // Hides the Calendar
     hide: function() {
         if (this.isPopup) {
@@ -1766,11 +1766,11 @@ pytis.Calendar.prototype = {
         }
         this.container.hide();
     },
-    
+
     //------------------------------------------------------------------------------
     // Miscellaneous
     //------------------------------------------------------------------------------
-    
+
     // Tries to identify the date represented in a string.  If successful it also
     // calls this.setDate which moves the calendar to the given date.
     parseDate: function(str, format) {
@@ -1779,29 +1779,29 @@ pytis.Calendar.prototype = {
         }
         this.setDate(Date.parseDate(str, format));
     },
-    
+
     //------------------------------------------------------------------------------
     // Getters/Setters
     //------------------------------------------------------------------------------
-    
+
     setSelectHandler: function(selectHandler) {
         this.selectHandler = selectHandler;
     },
-    
+
     setCloseHandler: function(closeHandler) {
         this.closeHandler = closeHandler;
     },
-    
+
     setDate: function(date) {
         if (!date.equalsTo(this.date)) {
             this.update(date);
         }
     },
-    
+
     setDateFormat: function(format) {
         this.dateFormat = format;
     },
-    
+
     setDateField: function(field) {
         this.dateField = $(field);
     },
@@ -1810,7 +1810,7 @@ pytis.Calendar.prototype = {
         this.minYear = minYear;
         this.maxYear = maxYear;
     }
-    
+
 };
 
 // global object that remembers the calendar
@@ -1845,7 +1845,7 @@ Date.parseDate = function(str, fmt) {
     var i = 0, j = 0;
     var hr = 0;
     var min = 0;
-    
+
     for (i = 0; i < a.length; ++i) {
         if (!a[i]) {
             continue;

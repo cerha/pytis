@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013 Brailcom, o.p.s.
-#
-# COPYRIGHT NOTICE
+# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

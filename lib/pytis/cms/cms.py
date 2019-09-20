@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017 Brailcom, o.p.s.
+
+# Copyright (C) 2009-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

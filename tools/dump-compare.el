@@ -1,6 +1,6 @@
 ;;; dump-compare.el --- compare PostgreSQL dumps
 
-;; Copyright (C) 2012, 2013 Brailcom, o.p.s.
+;; Copyright (C) 2012, 2013 OUI Technology Ltd.
 
 ;; COPYRIGHT NOTICE
 ;;

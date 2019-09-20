@@ -1,12 +1,10 @@
 ;;; specinfo.el --- specinfo Emacs utilities
 
-;; Copyright (C) 2013 Brailcom, o.p.s.
-
-;; COPYRIGHT NOTICE
+;; Copyright (C) 2013 OUI Technology Ltd.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3 of the License, or
+;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -49,8 +47,8 @@ If nil then try to find the configuration file automatically or ask the user.")
   (interactive)
   (setq pytis-config-file
         (expand-file-name
-         (read-file-name "Configuration file: " pytis-config-directory))))  
-  
+         (read-file-name "Configuration file: " pytis-config-directory))))
+
 (defun pytis-config-file ()
   (cond
    (pytis-config-file

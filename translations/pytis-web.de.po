@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2007-2011 Brailcom, o.p.s.
+# Copyright (C) 2007-2011 OUI Technology Ltd.
 # This file is distributed under the same license as the Pytis package.
 #
 msgid ""

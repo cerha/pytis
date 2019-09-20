@@ -1,5 +1,6 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2006, 2011 Brailcom, o.p.s.
+# Copyright (c) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2006, 2011 OUI Technology Ltd.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
