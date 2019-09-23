@@ -1115,10 +1115,12 @@ def rsa_encrypt(key, text):
 
     """
     if key:
+        if isinstance(text, unistr):
+            text = text.encode('ascii')
         import Crypto.PublicKey.RSA
         import base64
         rsa = Crypto.PublicKey.RSA.importKey(key)
-        encrypted = rsa.encrypt(str(text), None)[0]
+        encrypted = rsa.encrypt(text, None)[0]
         return base64.encodestring(encrypted)
     else:
         return text
