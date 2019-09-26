@@ -693,9 +693,17 @@ class MultiForm(Form, Refreshable):
     def _create_data_object(self):
         return None
 
-    def _create_forms(self, parent):
-        # To be overridden in derived classes.
-        pass
+    def _create_subforms(self, parent):
+        # Return a sequence of pairs (title, form) to display as notebook tabs.
+        raise NotImplemented()  # Override in derived class.
+
+    def _subform(self, i):
+        # Returns subform at given index.
+        return self._notebook.GetPage(i)
+
+    def _subforms(self):
+        # Returns a list of all subforms in the order of their tabs.
+        return [self._subform(i) for i in range(self._notebook.GetPageCount())]
 
     def _create_form(self):
         import wx.aui
@@ -703,26 +711,10 @@ class MultiForm(Form, Refreshable):
                                                               wx.aui.AUI_NB_TAB_MOVE |
                                                               wx.aui.AUI_NB_SCROLL_BUTTONS |
                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON))
-        self._forms = forms = []
-        for title, form in self._create_forms(nb):
-            forms.append(form)
-            if form is None:
-                form = wx.Panel(nb)
+        for title, form in self._create_subforms(nb):
             nb.AddPage(form, title)
-        # Select the first available form.
         self._last_selection = None
-        for i, form in enumerate(forms):
-            if form:
-                self._set_notebook_selection(i)
-                break
-        # Keep a list of tab indexes corresponding to their visual order in the
-        # notebook tab list.  This order is updated on each tab move.  This
-        # gives us information about the order of tabs, because the indexes
-        # used by wx.aui.AuiNotebook don't change when the tabs are moved
-        # around by dragging.  The list includes notebook page indexes (which
-        # are also self._forms indexes) in the order of visual appearance of
-        # the corresponding notebook tabs.
-        self._tab_order = range(len(forms))
+        self._select_subform(0)
         for child in nb.Children:
             if isinstance(child, wx.aui.AuiTabCtrl):
                 wx_callback(wx.EVT_LEFT_DOWN, child, self._on_mouse_left)
@@ -744,30 +736,31 @@ class MultiForm(Form, Refreshable):
         self._run_callback(self.CALL_USER_INTERACTION)
         event.Skip()
 
-    def _init_subform(self, form):
-        if form.initialized():
-            return
-        busy = is_busy_cursor()
-        if not busy:
-            busy_cursor(True)
-        try:
-            if form.initialized():
-                # This check is not redundant!  Even when the form is reported
-                # as unitialized in the first call, it may be already
-                # initialized here.  Don't ask me why, I suspect busy_cursor
-                # may invoke some event that causes form initialization, but
-                # who knows...
-                return
-            form.full_init()
-            form._release_data()
-            for kind, function in self._form_callbacks_args:
-                if hasattr(form, kind):
-                    form.set_callback(kind, function)
-        finally:
+    def _init_subform(self, i):
+        form = self._subform(i)
+        if form and not form.initialized():
+            busy = is_busy_cursor()
             if not busy:
-                busy_cursor(False)
+                busy_cursor(True)
+            try:
+                if form.initialized():
+                    # This check is not redundant!  Even when the form is reported
+                    # as unitialized in the first call, it may be already
+                    # initialized here.  Don't ask me why, I suspect busy_cursor
+                    # may invoke some event that causes form initialization, but
+                    # who knows...
+                    return form
+                form.full_init()
+                form._release_data()
+                for kind, function in self._form_callbacks_args:
+                    if hasattr(form, kind):
+                        form.set_callback(kind, function)
+            finally:
+                if not busy:
+                    busy_cursor(False)
+        return form
 
-    def _set_notebook_selection(self, i):
+    def _select_subform(self, i):
         self._old_notebook_selection = self._notebook.GetSelection()
         self._notebook.SetSelection(i)
         if self._old_notebook_selection != self._notebook.GetSelection():
@@ -786,42 +779,26 @@ class MultiForm(Form, Refreshable):
         else:
             selection = self._notebook.GetSelection()
             old_selection = self._old_notebook_selection
-        # The check "selection < len(self._forms)" is necessary to avoid traceback
-        # when a hiden side form is re-added into the notebook in _cmd_toggle_sideform,
-        # because the call to nb.AddPage() results in EVT_AUINOTEBOOK_PAGE_CHANGING
-        # at the time when self._forms is not yet updated in _cmd_toggle_sideform.
-        if selection != -1 and selection < len(self._forms):
-            form = self._forms[selection]
-            if form:
-                # The SetSelection call below is necessary here to make
-                # WebForm work in sideforms, as they need the panel to be shown
-                # before the webkit widget can be embedded into it.  And the
-                # embedding is done within _init_subform(), so we must ensure
-                # the page is changed before.
-                self._block_on_page_change = True
-                try:
-                    self._notebook.SetSelection(selection)
-                finally:
-                    self._block_on_page_change = False
-                self._init_subform(form)
-                row = self._last_selection
-                if row is not None:
-                    form.on_selection(row)
-                form.focus()
-                if old_selection != -1:
-                    old_form = self._forms[old_selection]
-                    if old_form and old_form is not form and old_form.initialized():
-                        old_form._release_data()
-            elif event:
-                message(_("Form disabled"), beep_=True)
-                event.Veto()
-                old_selection = event.GetOldSelection()
-                if old_selection != -1:
-                    form = self._forms[old_selection]
-                    if form:
-                        form._init_subform(form)
-                        form.focus()
-                        form.SetFocus()
+        if 0 <= selection < self._notebook.GetPageCount():
+            # The SetSelection call below is necessary here to make
+            # WebForm work in sideforms, as they need the panel to be shown
+            # before the webkit widget can be embedded into it.  And the
+            # embedding is done within _init_subform(), so we must ensure
+            # the page is changed before.
+            self._block_on_page_change = True
+            try:
+                self._notebook.SetSelection(selection)
+            finally:
+                self._block_on_page_change = False
+            form = self._init_subform(selection)
+            row = self._last_selection
+            if row is not None:
+                form.on_selection(row)
+            form.focus()
+            if old_selection != -1:
+                old_form = self._subform(old_selection)
+                if old_form and old_form is not form and old_form.initialized():
+                    old_form._release_data()
 
     def _on_tab_move_started(self, event):
         self._moved_notebook_tab = event.GetSelection()
@@ -836,14 +813,11 @@ class MultiForm(Form, Refreshable):
         event.Skip()
 
     def _on_tab_move(self, old_position, new_position):
-        tab_order = self._tab_order
-        index = tab_order[old_position]
-        del tab_order[old_position]
-        tab_order.insert(new_position, index)
+        pass
 
     def _exit_check(self):
-        for form in self._forms:
-            if form and form.initialized() and not form._exit_check():
+        for form in self._subforms():
+            if form.initialized() and not form._exit_check():
                 return False
         return True
 
@@ -854,8 +828,9 @@ class MultiForm(Form, Refreshable):
             nb.Show(False)
         except Exception:
             pass
-        for form in self._forms:
-            if form and form.initialized():
+        while nb.GetPageCount() > 0:
+            form = nb.GetPage(0)
+            if form.initialized():
                 form.Reparent(self)
                 try:
                     nb.RemovePage(0)
@@ -867,7 +842,6 @@ class MultiForm(Form, Refreshable):
                     nb.DeletePage(0)
                 except Exception:
                     pass
-        self._forms = None
         try:
             nb.Close()
             nb.Destroy()
@@ -886,23 +860,21 @@ class MultiForm(Form, Refreshable):
         self._notebook.SetSize(size)
 
     def _cmd_next_form(self, back=False):
-        d = back and -1 or 1
-        old_order = self._tab_order.index(self._notebook.GetSelection())
-        new_order = (old_order + d) % len(self._tab_order)
-        i = self._tab_order[new_order]
-        self._init_subform(self._forms[i])
-        self._set_notebook_selection(i)
+        self._notebook.AdvanceSelection(forward=not back)
+        i = self._notebook.GetSelection()
+        self._init_subform(i)
+        self._select_subform(i)
 
     def forms(self):
-        return self._forms
+        return self._subforms()
 
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
         self.Enable(True)
         self.Show(True)
         active = self.active_form()
-        for form in self._forms:
-            if form and form.initialized():
+        for form in self._subforms():
+            if form.initialized():
                 form.show()
                 form._release_data()
                 if form is not active:
@@ -914,8 +886,8 @@ class MultiForm(Form, Refreshable):
         orig_hide_form_requested = self._hide_form_requested
         self._hide_form_requested = True
         try:
-            for form in self._forms:
-                if form and form.initialized():
+            for form in self._subforms():
+                if form.initialized():
                     form.hide()
                     form._release_data()
             self._notebook.Show(False)
@@ -929,18 +901,19 @@ class MultiForm(Form, Refreshable):
         if kind != ListForm.CALL_MODIFICATION:
             super(MultiForm, self).set_callback(kind, function)
         self._form_callbacks_args.append((kind, function,))
-        for form in self._forms:
-            if form and hasattr(form, kind) and form.initialized():
+        for form in self._subforms():
+            if hasattr(form, kind) and form.initialized():
                 form.set_callback(kind, function)
 
     def active_form(self):
         """Return the currently active form of this form group."""
         selection = self._notebook.GetSelection()
-        if selection != -1:
-            form = self._forms[selection]
-            self._init_subform(form)
-        else:
+        if selection == -1:
             form = None
+        else:
+            form = self._init_subform(selection)
+        if selection != getattr(DualForm, 'sel', None):
+            DualForm.sel = selection
         return form
 
     def on_selection(self, row):
@@ -950,16 +923,19 @@ class MultiForm(Form, Refreshable):
             active.on_selection(row)
 
     def save(self):
-        self._saved_active_form = active = self.active_form()
-        if active:
-            active.save()
+        form = self.active_form()
+        if form:
+            form.save()
+            self._saved_active_form_index = self._notebook.GetPageIndex(form)
+        else:
+            self._saved_active_form_index = None
 
     def restore(self):
-        active = self._saved_active_form
-        if active:
-            self._init_subform(active)
-            self._set_notebook_selection(self._forms.index(active))
-            active.restore()
+        i = self._saved_active_form_index
+        if i is not None:
+            form = self._init_subform(i)
+            self._select_subform(i)
+            form.restore()
 
     def focus(self):
         active = self.active_form()
@@ -978,6 +954,7 @@ class MultiForm(Form, Refreshable):
 
 
 class MultiSideForm(MultiForm):
+    """Multiform which creates tabbed forms according to main form bindings."""
     CALL_BINDING_SELECTED = 'CALL_BINDING_SELECTED'
 
     class TabbedForm(object):
@@ -1077,23 +1054,22 @@ class MultiSideForm(MultiForm):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
         if binding.single():
-            form = self.TabbedShowForm
+            form_class = self.TabbedShowForm
         elif binding.name():
-            form = self.TabbedBrowseForm
+            form_class = self.TabbedBrowseForm
         elif binding.content_type() == 'pdf':
-            form = self.TabbedFileViewerForm
+            form_class = self.TabbedFileViewerForm
         else:
-            form = self.TabbedWebForm
-        form_instance = form(parent, self._resolver, binding.name(), full_init=False, **kwargs)
-        return form_instance
+            form_class = self.TabbedWebForm
+        return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
-    def _create_forms(self, parent):
+    def _create_subforms(self, parent):
+        # TODO: Remove this filter to include inactive tabs in a multi form.
+        # The originaly used 'wx.Notebook' did not support inactive tabs
+        # so we simply filtered out the inactive bindings here, but now we
+        # are using 'wx.aui.AuiNotebook', where inactive tabs might work.
         bindings = [binding for binding in self._main_form.bindings()
-                    # TODO: Remove this condition to include inactive tabs in multi form.
-                    # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
-                    # work correctly, so we rather exclude disabled tabs here for now.
-                    # binding.name() is None for web forms.
-                    # UPDATE: inactive tabs might work now with AuiNotebook.
+                    # Note: binding.name() is None for web forms.
                     if binding.name() is None or has_access(binding.name())]
         saved_order = self._get_saved_setting('binding_order')
         if saved_order:
@@ -1102,19 +1078,21 @@ class MultiSideForm(MultiForm):
         return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
 
     def _displayed_forms_menu(self):
+        bindings = [f.binding().id() for f in self._subforms()]
         return Menu(_("Available forms"),
                     [CheckItem(b.title(), help='',
                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
                                                                     _command_handler=self),
-                               state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])
+                               state=lambda b=b: b.id() in bindings)
                      for b in sorted(self._main_form.bindings(), key=lambda b: b.title())
                      if b.name() is None or has_access(b.name())])
 
     def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()
         menu = (MItem(_("Close this form"), help=_("Close this form"),
-                      command=self.COMMAND_TOGGLE_SIDEFORM(binding=self._forms[selection].binding(),
-                                                           _command_handler=self)),
+                      command=self.COMMAND_TOGGLE_SIDEFORM(
+                          binding=self._subform(selection).binding(), _command_handler=self,
+                      )),
                 MItem(_("Filter the main form for non-empty side form"),
                       help=_("Show only those rows of the main form, which have "
                              "at least one row in this side form in its current profile."),
@@ -1138,21 +1116,21 @@ class MultiSideForm(MultiForm):
         if self._block_on_page_change or not self.IsShown():
             return
         super(MultiSideForm, self)._on_page_change(event=event)
-        binding = self._forms[self._notebook.GetSelection()].binding()
+        binding = self._subform(self._notebook.GetSelection()).binding()
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
 
-    def _save_binding_order(self):
-        binding_order = [self._forms[i].binding().id() for i in self._tab_order]
-        self._set_saved_setting('binding_order', tuple(binding_order))
+    def _save_tab_order(self):
+        binding_order = tuple(form.binding().id() for form in self._subforms())
+        self._set_saved_setting('binding_order', binding_order)
 
     def _on_tab_move(self, old_position, new_position):
         super(MultiSideForm, self)._on_tab_move(old_position, new_position)
-        self._save_binding_order()
+        self._save_tab_order()
 
     def _cmd_toggle_sideform(self, binding):
         nb = self._notebook
         try:
-            index = [f.binding().id() for f in self._forms].index(binding.id())
+            index = [f.binding().id() for f in self._subforms()].index(binding.id())
         except ValueError:
             # Add form to the last position.  Note, that attempts to insert a
             # page to a given position using nb.InsertPage() failed as the page
@@ -1160,8 +1138,6 @@ class MultiSideForm(MultiForm):
             form = self._create_subform(nb, binding)
             form.full_init()
             nb.AddPage(form, binding.title(), select=True)
-            self._forms = [nb.GetPage(i) for i in range(nb.GetPageCount())]
-            self._tab_order.append(self._forms.index(form))
             form.show()
             row = self._last_selection
             if row is not None:
@@ -1169,29 +1145,23 @@ class MultiSideForm(MultiForm):
             form.focus()
         else:
             # Remove form of given 'index'.
-            form = self._forms[index]
-            order = self._tab_order.index(index)
+            form = self._subform(index)
             if index != nb.GetPageIndex(form):
                 return
-            if index == self._notebook.GetSelection():
-                self._cmd_next_form(back=(order != 0))
+            if index == nb.GetSelection():
+                self._cmd_next_form(back=(index != 0))
             if form.initialized():
                 form.hide()
                 form._release_data()
-            del self._forms[index]
-            del self._tab_order[order]
-            for i, j in enumerate(self._tab_order):
-                if j > index:
-                    self._tab_order[i] -= 1
             nb.DeletePage(index)
-        self._save_binding_order()
+        self._save_tab_order()
 
     def _can_filter_by_sideform(self, index, not_in=False):
-        form = self._forms[index]
+        form = self._subform(index)
         return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
 
     def _cmd_filter_by_sideform(self, index, not_in=False):
-        form = self._forms[index]
+        form = self._subform(index)
         if form.COMMAND_UPDATE_PROFILE.enabled():
             msg = _("Can't filter when the current profile is not saved!")
             bsave, bquit = _("Save"), _("Cancel")
@@ -1213,10 +1183,10 @@ class MultiSideForm(MultiForm):
         raised and 'True' is returned.
 
         """
-        for i, form in enumerate(self._forms):
-            if form and form.binding().id() == id:
-                self._init_subform(form)
-                self._set_notebook_selection(i)
+        for i, form in enumerate(self._subforms()):
+            if form.binding().id() == id:
+                self._init_subform(i)
+                self._select_subform(i)
                 return True
         message(_("The requested side form is not available."), beep_=True)
         return False
