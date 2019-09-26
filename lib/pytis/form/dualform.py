@@ -1049,6 +1049,16 @@ class MultiSideForm(MultiForm):
         self._main_form = main_form
         super(MultiSideForm, self)._init_attributes(**kwargs)
 
+    def _subform_bindings(self):
+        # TODO: Remove the filtering below to include inactive tabs in the
+        # multi form.  The originaly used 'wx.Notebook' did not support
+        # inactive tabs so we simply filtered out the inactive bindings
+        # here, but now we are using 'wx.aui.AuiNotebook', where inactive
+        # tabs might work.
+        return [binding for binding in self._main_form.bindings()
+                # Note: binding.name() is None for web forms.
+                if binding.name() is None or has_access(binding.name())]
+
     def _create_subform(self, parent, binding):
         if binding.name() and not has_access(binding.name()):
             return None
@@ -1064,17 +1074,20 @@ class MultiSideForm(MultiForm):
         return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
     def _create_subforms(self, parent):
-        # TODO: Remove this filter to include inactive tabs in a multi form.
-        # The originaly used 'wx.Notebook' did not support inactive tabs
-        # so we simply filtered out the inactive bindings here, but now we
-        # are using 'wx.aui.AuiNotebook', where inactive tabs might work.
-        bindings = [binding for binding in self._main_form.bindings()
-                    # Note: binding.name() is None for web forms.
-                    if binding.name() is None or has_access(binding.name())]
+        bindings = all_bindings = self._subform_bindings()
         saved_order = self._get_saved_setting('binding_order')
+        hidden_bindings = self._get_saved_setting('hidden_bindings')
         if saved_order:
-            bdict = dict([(b.id(), b) for b in bindings])
+            bdict = {b.id(): b for b in bindings}
             bindings = [bdict[binding_id] for binding_id in saved_order if binding_id in bdict]
+            # Saving hidden bindings was previously not implemented, so if the
+            # user has saved binding_order and hidden_bindings is None (instead
+            # of ()), we don't attempt to add new forms because we can not
+            # determine which of them are new...
+            if hidden_bindings is not None:
+                # Add bindings, which were newly added to the specification.
+                bindings += [b for b in all_bindings
+                             if b.id() not in (saved_order + hidden_bindings)]
         return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
 
     def _displayed_forms_menu(self):
@@ -1084,7 +1097,7 @@ class MultiSideForm(MultiForm):
                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
                                                                     _command_handler=self),
                                state=lambda b=b: b.id() in bindings)
-                     for b in sorted(self._main_form.bindings(), key=lambda b: b.title())
+                     for b in sorted(self._subform_bindings(), key=lambda b: b.title())
                      if b.name() is None or has_access(b.name())])
 
     def _on_tab_mouse_right(self, event):
@@ -1120,8 +1133,13 @@ class MultiSideForm(MultiForm):
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
 
     def _save_tab_order(self):
+        # Remember also hidden bindings in order to be able to recognize bindings
+        # newly added to the specification in future run (see _create_subforms()).
+        all_bindings = [binding.id() for binding in self._subform_bindings()]
         binding_order = tuple(form.binding().id() for form in self._subforms())
+        hidden_bindings = tuple(set(all_bindings) - set(binding_order))
         self._set_saved_setting('binding_order', binding_order)
+        self._set_saved_setting('hidden_bindings', hidden_bindings)
 
     def _on_tab_move(self, old_position, new_position):
         super(MultiSideForm, self)._on_tab_move(old_position, new_position)
