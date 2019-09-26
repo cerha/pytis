@@ -1145,6 +1145,9 @@ class MultiSideForm(MultiForm):
             form.focus()
         else:
             # Remove form of given 'index'.
+            if nb.GetPageCount() <= 1:
+                message(_("Unable to close the last form."), beep_=True)
+                return
             form = self._subform(index)
             if index != nb.GetPageIndex(form):
                 return
