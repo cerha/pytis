@@ -1119,7 +1119,6 @@ class MultiSideForm(MultiForm):
                 self._displayed_forms_menu(),
                 )
         popup_menu(self._notebook, menu, self._get_keymap())
-        event.Skip()
 
     def _on_notebook_mouse_right(self, event):
         popup_menu(self._notebook, (self._displayed_forms_menu(),), self._get_keymap())
