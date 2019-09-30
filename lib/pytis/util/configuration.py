@@ -1072,6 +1072,17 @@ class Configuration(object):
         u"""Seznam formulářů, které mají být otevřeny po spuštění aplikace."""
         _DEFAULT = None
 
+    class _Option_autostart_saved_forms(BooleanOption):
+        """Dont' ask whether to start forms saved on last exit.
+        """
+        _DOC = _("Start form saved on last exit without asking.")
+        _DOC = _("If true, the forms saved on last exit will be automatically "
+                 "loaded on application startup without asking.  If False (the "
+                 "default), a dialog asking for confirmation of saved forms to "
+                 "start will be displayed.")
+        _CMDLINE = True
+        _DEFAULT = False
+
     class _Option_keyboard_layouts(Option):
         """Sequence of keyboard layout specifications for built-in layout swither.
 

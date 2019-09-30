@@ -313,13 +313,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         if saved_forms:
-            checked = self.run_dialog(CheckListDialog,
-                                      title=_("Restore forms"),
-                                      message=_("Restore these forms saved on last exit?"),
-                                      items=[(True, self._spec_title(name) + ' (' + f.descr() + ')')
-                                             for f, name in saved_forms])
-            if checked:
-                startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))
+            if pytis.config.autostart_saved_forms:
+                startup_forms.extend(reversed(saved_forms))
+            else:
+                checked = self.run_dialog(
+                    CheckListDialog,
+                    title=_("Restore forms"),
+                    message=_("Restore these forms saved on last exit?"),
+                    items=[(True, '%s (%s)' % (self._spec_title(name), f.descr()))
+                           for f, name in saved_forms]
+                )
+                if checked:
+                    startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))
 
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
