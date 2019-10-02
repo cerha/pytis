@@ -562,10 +562,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
                                       ('key_id', 'name', 'fresh',),
                                       pytis.config.dbconnection)
-            rows = data.select_map(identity)
         except pytis.data.DBException:
             return
-        finally:
+        else:
+            rows = data.select_map(identity)
             data.close()
         if not rows:
             return
