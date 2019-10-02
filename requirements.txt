@@ -1,7 +1,6 @@
 # These reqirements apply to Pytis wx applications.
 # Use Wiking's requirements.txt for Wiking web apps
 cachetools
-fitz
 future
 gnupg
 psycopg2
