@@ -558,7 +558,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         self._decrypted_names = decrypted_names = set()
 
-        crypto_password = pytis.config.dbconnection.crypto_password()
         try:
             data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
                                       ('key_id', 'name', 'fresh',),
@@ -573,6 +572,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
                                              ('key_name_', pytis.data.sval('pytis'),))
+        crypto_password = pytis.config.dbconnection.crypto_password()
         if not crypto_password:
             established_names = [r for r in rows if not r['fresh'].value()]
             crypto_password = password_dialog(

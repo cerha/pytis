@@ -506,7 +506,8 @@ class DBConnection:
         if self._db_key is None:
             self._db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
                                                        ('key_name_', pytis.data.sval('pytis'),))
-        self._crypto_password = rsa_encrypt(self._db_key, password)
+        if self._crypto_password is None and self._db_key:
+            self._crypto_password = rsa_encrypt(self._db_key, password)
 
     def crypto_password(self):
         """Return crypto password, string.
