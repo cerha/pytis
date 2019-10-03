@@ -522,7 +522,6 @@ class PostgreSQLAccessor(object_2_5):
             if not password:
                 return
             db_key = pytis.config.dbconnection.db_key()
-            self._postgresql_query(connection, _Query("savepoint __pytis_init_crypto"), False)
             if not db_key:
                 t, a = _Query.next_arg(sval('pytis'))
                 query = _Query("select pytis_crypto_db_key(%s)" % (t,), a)
@@ -530,14 +529,13 @@ class PostgreSQLAccessor(object_2_5):
                     result = self._postgresql_query(connection, query, False)
                     db_key = result[0].result().fetchone()[0]
                 except DBUserException:
-                    self._postgresql_query(connection, _Query("rollback to __pytis_init_crypto"),
-                                           False)
                     return
                 pytis.config.dbconnection.set_db_key(db_key)
                 crypto_password = pytis.util.rsa_encrypt(db_key, password)
                 pytis.config.dbconnection.set_crypto_password(crypto_password)
             else:
                 return
+        self._postgresql_query(connection, _Query("savepoint __pytis_init_crypto"), False)
         t, a = _Query.next_arg(sval(crypto_password))
         query = _Query("select pytis_crypto_unlock_current_user_passwords(%s)" % (t,), a)
         try:
