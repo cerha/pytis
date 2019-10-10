@@ -100,7 +100,8 @@ def go():
         else:
             run_application()
     except SystemExit:
-        pass
+        # Re-raise to see the (possible) error message, but prevent printing the traceback below.
+        raise
     except Exception:
         einfo = sys.exc_info()
         try:
