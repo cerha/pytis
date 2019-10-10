@@ -48,7 +48,7 @@ import io
 import pytis.data
 
 from pytis.util import (
-    argument_names, camel_case_to_lower, find, is_sequence,
+    argument_names, camel_case_to_lower, find, is_sequence, sameclass,
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
     log, OPERATIONAL, ProgramError, UNDEFINED,
 )
@@ -3699,6 +3699,12 @@ class Field(object):
 
     def __repr__(self):
         return "<Field '%s'>" % self.id()
+
+    def __lt__(self, other):
+        if sameclass(self, other):
+            return self._id < other._id
+        else:
+            return NotImplemented
 
     def clone(self, field):
         """Clone this field by another field and return the cloned instance.
