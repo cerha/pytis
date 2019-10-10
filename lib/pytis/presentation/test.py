@@ -34,6 +34,18 @@ unistr = type(u'')  # Python 2/3 transition hack.
 # field.py #
 ############
 
+class TestField:
+
+    def test_sorting(self):
+        fields = (
+            pp.Field('a', 'Field A'),
+            pp.Field('b', 'Field B'),
+            pp.Field('c', 'Field C'),
+            pp.Field('d', 'Field D'),
+        )
+        unsorted = (fields[2], fields[0], fields[1], fields[3])
+        assert tuple(sorted(unsorted)) == fields
+
 
 class TestPresentedRow:
 
