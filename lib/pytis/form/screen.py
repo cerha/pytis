@@ -2498,13 +2498,15 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
 
-    def load_content(self, node, base_uri='', exporter_class=None):
+    def load_content(self, content, base_uri='', exporter_class=None):
         """Load browser content from 'lcg.ContentNode' instance.
 
         Arguments:
-          node -- 'lcg.ContentNode' instance representing the document to be
+
+          content -- 'lcg.ContentNode' instance representing the document to be
             loaded into the browser.  The node content will be exported into
-            HTML and displayed.
+            HTML and displayed.  Can also be 'lcg.Content' which will be
+            automatically wrapped by untitled 'lcg.ContentNode'.
           base_uri -- base uri of the document.  Relative URIs within the
             document are relative to this URI.  Browser policies may also
             restrict loading further resources according to this URI.
@@ -2514,6 +2516,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             customize the export.
 
         """
+        if isinstance(content, lcg.ContentNode):
+            node = content
+        else:
+            node = lcg.ContentNode('content', content=content, title='')
         exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)

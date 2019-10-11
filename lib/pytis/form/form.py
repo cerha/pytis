@@ -2592,7 +2592,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _create_lcg_content(self, parent, content):
         browser = Browser(parent)
-        browser.load_content(lcg.ContentNode('', content=content))
+        browser.load_content(content)
         browser.SetMinSize(char2px(parent, 72, 18))
         return browser
 
