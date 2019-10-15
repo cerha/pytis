@@ -2274,6 +2274,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             exporter = self._exporter_instance[exporter_class]
         except KeyError:
             exporter = exporter_class(get_resource_uri=self._resource_uri,
+                                      # SVG plots don't display well in the embedded browser.
+                                      # LinePlot doesn't display grid and constant plot lines,
+                                      # even though the same SVG displays well in ordinary
+                                      # browsers.  Thus we rather convert SVG to PNG.
+                                      allow_svg=False,
                                       translations=pytis.util.translation_path())
             self._exporter_instance[exporter_class] = exporter
         return exporter
