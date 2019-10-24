@@ -2561,6 +2561,11 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         self.zoom_error = False     # set if memory errors during render
 
     def RenderPage(self, gc, pageno, scale=1.0):
+        # The change in PyMuPDF=1.14.17 ("Changed methods Page.getPixmap,
+        # Document.getPagePixmap to now use alpha=False as default"),
+        # broke the rendering method of the page in wx.lib.pdfviewer.
+        # So we have to override also this method and specify the keyword
+        # argument "alpha" explicitly.
         """Render the set of pagedrawings into gc for specified page """
         page = self.pdfdoc.loadPage(pageno)
         matrix = fitz.Matrix(scale, scale)
