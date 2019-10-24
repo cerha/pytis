@@ -2560,6 +2560,23 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         self.page_rect = page.bound()
         self.zoom_error = False     # set if memory errors during render
 
+    def RenderPage(self, gc, pageno, scale=1.0):
+        """Render the set of pagedrawings into gc for specified page """
+        page = self.pdfdoc.loadPage(pageno)
+        matrix = fitz.Matrix(scale, scale)
+        try:
+            pix = page.getPixmap(matrix=matrix, alpha=True)   # MUST be keyword arg(s)
+            bmp = wx.Bitmap.FromBufferRGBA(pix.width, pix.height, pix.samples)
+            gc.DrawBitmap(bmp, 0, 0, pix.width, pix.height)
+            self.zoom_error = False
+        except (RuntimeError, MemoryError):
+            if not self.zoom_error:     # report once only
+                self.zoom_error = True
+                dlg = wx.MessageDialog(self.parent, 'Out of memory. Zoom level too high?',
+                                       'pdf viewer' , wx.OK |wx.ICON_EXCLAMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+
 
 class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
     """Button panel for FileViewer"""
