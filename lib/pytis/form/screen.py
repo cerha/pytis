@@ -49,7 +49,6 @@ import time
 import mimetypes
 import weakref
 import fitz
-import io
 
 import lcg
 
