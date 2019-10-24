@@ -3507,6 +3507,18 @@ def tval(value, without_timezone=False):
     return Value(Time(without_timezone=without_timezone), value)
 
 
+def binval(value):
+    """Return 'Value' instance of type 'Binary' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Value' instance as 'bytes' or an open
+        stream (a file-like object).
+
+    """
+    return Value(Binary(), value)
+
+
 def wmval(value):
     """Return 'VMValue' instance of type 'String' with given value.
 
