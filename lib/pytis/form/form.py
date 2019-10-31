@@ -481,6 +481,14 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """
         return self._full_init_called
 
+    def can_command(self, command, **kwargs):
+        # This was introduced to prevent tracebacks on Update UI events in uninitialized
+        # side forms.  It seems, however, to make sense generally so it hopefuly is not
+        # such a big hack...
+        if not self.initialized():
+            return False
+        return super(Form, self).can_command(command, **kwargs)
+
     def save(self):
         """Save form state to be able to restore it later when 'restore()' is called."""
         self._release_data()
