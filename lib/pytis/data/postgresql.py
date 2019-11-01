@@ -1897,7 +1897,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_command_isolation = _Query('set transaction isolation level %(isolation)s'
                                               '%(read_only)s')
         self._pdbb_command_notify = _Query('notify "__modif_%s"' % (main_table.lower(),))
-        self._pg_notifications = map(lambda t: '__modif_%s' % (t.lower(),), table_names)
+        self._pg_notifications = ['__modif_%s' % (t.lower(),) for t in table_names]
 
     def _pdbb_condition2sql(self, condition):
         if condition is None:
@@ -1995,10 +1995,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if not op_args:
                 expression = _Query('true' if op_name == 'AND' else 'false')
             else:
-                assert not filter(lambda a: a and not isinstance(a, Operator),
-                                  op_args), \
+                assert not any(a and not isinstance(a, Operator) for a in op_args), \
                     ('Invalid suboperator', op_args)
-                exps = map(self._pdbb_condition2sql, op_args)
+                exps = [self._pdbb_condition2sql(a) for a in op_args]
                 sqlop = (' and ' if op_name == 'AND' else ' or ')
                 expression = _Query.join(exps, sqlop)
         elif op_name == 'IN':
@@ -2192,8 +2191,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sdirection = ecase(direction,
                                (FORWARD, ASCENDENT),
                                (BACKWARD, DESCENDANT))
-            sorting = (tuple(sorting) +
-                       tuple(map(lambda c: (c.id(), sdirection), self.key())))
+            sorting = (tuple(sorting) + tuple((c.id(), sdirection) for c in self.key()))
             processed = []
             conditions = []
             for cid, dir in sorting:
@@ -2927,10 +2925,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             log(DEBUG, 'Creating condition from key:', key)
         key = xtuple(key)
-        keycols = map(lambda b: b.id(), self._key_binding)
-        assert len(keycols) == len(key), ('Invalid key length', key, keycols)
-        ands = map(EQ, keycols, key)
-        condition = AND(*ands)
+        assert len(key) == len(self._key_binding), ('Invalid key length', key, self._key_binding)
+        condition = AND(*[EQ(b.id(), v) for b, v in zip(self._key_binding, key)])
         if __debug__:
             log(DEBUG, 'Key condition created:', condition)
         return condition
@@ -3370,7 +3366,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                             row[id] = origrow[id]
                         except KeyError:
                             row.append(id, origrow[id])
-                keys = map(ColumnSpec.id, self.key())
+                keys = [c.id() for c in self.key()]
                 new_key = []
                 for i in range(len(keys)):
                     try:

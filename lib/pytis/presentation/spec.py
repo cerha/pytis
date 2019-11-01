@@ -1775,7 +1775,7 @@ class ViewSpec(object):
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
-        check = tuple(map(computer, xtuple(check)))
+        check = tuple(computer(c) for c in xtuple(check))
         if __debug__:
             for c in check:
                 if isinstance(c, Computer):

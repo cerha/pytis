@@ -358,7 +358,7 @@ class Stack(object):
 
     def __str__(self):
         classname = str(self.__class__).split('.')[-1]
-        contents = ', '.join(map(str, self._list))
+        contents = ', '.join(str(x) for x in self._list)
         return '<%s contents=%s>' % (classname, contents)
 
     def push(self, item):
@@ -757,7 +757,7 @@ def flatten(list):
     """
     result = []
     if is_sequence(list):
-        result = result + functools.reduce(operator.add, map(flatten, list), [])
+        result += functools.reduce(operator.add, [flatten(x) for x in list], [])
     else:
         result.append(list)
     return result
@@ -839,7 +839,7 @@ def public_attributes(class_):
         return _public_attributes[class_]
     except KeyError:
         pass
-    att = functools.reduce(operator.add, map(dir, _mro(class_)))
+    att = functools.reduce(operator.add, [dir(c) for c in _mro(class_)])
     result = tuple(remove_duplicates([s for s in att if not s or s[0] != '_']))
     _public_attributes[class_] = result
     return result
@@ -1296,7 +1296,7 @@ def deepstr(obj):
     """
     if is_sequence(obj):
         template = u'(%s,)' if isinstance(obj, tuple) else u'[%s]'
-        transformed = template % (', '.join(map(deepstr, obj)),)
+        transformed = template % (', '.join(deepstr(x) for x in obj),)
     elif isinstance(obj, unistr):
         transformed = u'"%s"' % (obj.replace('"', '\\"'),)
     elif isinstance(obj, str):

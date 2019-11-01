@@ -670,8 +670,7 @@ class Data(object_2_5):
           direction -- stejné jako v 'search()'
 
         """
-        eqs = map(lambda c, k: EQ(c.id(), k), self.key(), key)
-        condition = AND(*eqs)
+        condition = AND(*[EQ(c.id(), v) for c, v in zip(self.key(), key)])
         return self.search(condition, direction=direction)
 
     def close(self):
@@ -1358,7 +1357,7 @@ def OR(*args):
     other operators.
 
     """
-    t = NOT(AND(*map(NOT, args)))
+    t = NOT(AND(*[NOT(a) for a in args]))
     return Operator('OR', *args, **{'translation': t})
 
 
@@ -1542,8 +1541,7 @@ def reversed_sorting(sorting):
         else:
             raise ProgramError('Invalid sorting direction', dir)
         return id, result
-    reversed = map(revspec, sorting)
-    return tuple(reversed)
+    return tuple([revspec(x) for x in sorting])
 
 
 # Pomocné třídy

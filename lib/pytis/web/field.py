@@ -606,7 +606,7 @@ class HtmlField(MultilineField):
         def __str__(self):
             res = " ".join(self.elements)
             if (self.attributes):
-                res += " [" + ",".join(map(unistr, self.attributes)) + "]"
+                res += " [" + ",".join(unistr(a) for a in self.attributes) + "]"
             if (self.styles):
                 res += " {" + ", ".join(self.styles) + "}"
             if (self.classes):
@@ -715,7 +715,7 @@ class HtmlField(MultilineField):
                 entities_greek=False,
                 entities_latin=False,
                 entities_processNumerical=False,
-                allowedContent="; ".join(map(str, acf_rules)),
+                allowedContent="; ".join(str(x) for x in acf_rules),
             )
             html_id = self.html_id()
             if self._row.attachment_storage(self.id) is not None:

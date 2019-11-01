@@ -157,7 +157,7 @@ class DBData(Data):
         k předefinování v potomcích třídy.
 
         """
-        columns = map(lambda b: ColumnSpec(b.id(), Type()), bindings)
+        columns = [ColumnSpec(b.id(), Type()) for b in bindings]
         if columns:
             key = columns[0]
         else:

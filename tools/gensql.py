@@ -227,7 +227,7 @@ class _GsqlSpec(object):
     def _revoke_command(self):
         groups = _GsqlSpec._groups
         if groups is None:
-            groups = ', '.join(map(lambda x: "GROUP %s" % x, _GsqlSpec._group_list))
+            groups = ', '.join(["GROUP %s" % x for x in _GsqlSpec._group_list])
             if groups:
                 groups = ', %s' % groups
             _GsqlSpec._groups = groups
@@ -1134,7 +1134,7 @@ class _GsqlTable(_GsqlSpec):
         self._columns = columns
         self._inherits = inherits or ()
         self._set_schemas(schemas)
-        self._views = map(self._make_view, xtuple(view or ()))
+        self._views = [self._make_view(v) for v in xtuple(view or ())]
         self._with_oids = with_oids
         self._sql = sql
         self._on_insert, self._on_update, self._on_delete = \
@@ -1175,9 +1175,8 @@ class _GsqlTable(_GsqlSpec):
             kwargs = view.kwargs
             if 'key_columns' not in kwargs:
                 kwargs['key_columns'] = None
-            vcolumns = map(self._full_column_name, vcolumns)
-            vcolumns = filter(lambda x: self._column_column(x) not in
-                              view.exclude, vcolumns)
+            vcolumns = [self._full_column_name(c) for c in vcolumns]
+            vcolumns = [c for c in vcolumns if self._column_column(c) not in view.exclude]
             # Remove also columns specified like table.name
             vcolumns = filter(lambda x: x.name not in view.exclude, vcolumns)
             args = (view.name or self, vcolumns)
@@ -1283,7 +1282,7 @@ class _GsqlTable(_GsqlSpec):
 
     def _output(self, _re=False, _all=False):
         if not _re:
-            columns = map(self._format_column, self._columns)
+            columns = [self._format_column(c) for c in self._columns]
             columns = ',\n        '.join(columns)
             if self._sql:
                 columns = columns + ',\n        %s' % self._sql
@@ -2882,7 +2881,7 @@ class _GsqlView(_GsqlSpec):
         COLSEP = ',\n        '
 
         def format_simple_columns(columns):
-            return columns.join(map(self._format_column), COLSEP)
+            return columns.join(self._format_column(c) for c in COLSEP)
         if self._complexp:
             result_base = format_simple_columns(self._simple_columns)
             result = []
@@ -3029,11 +3028,11 @@ class _GsqlView(_GsqlSpec):
                 where = where + join
                 return where
             if is_sequence(columns):
-                where = map(gen_where, self._join)
+                where = [gen_where(c) for c in self._join]
             else:
                 where = gen_where(self._join)
         if is_union:
-            tables = map(lambda t: ', '.join(t), self._tables_from)
+            tables = [', '.join(t) for t in self._tables_from]
             selections = [' SELECT\n\t%s\n FROM %s\n%s' % (c, t, w)
                           for t, c, w in zip(tables,
                                              columns, where)]
@@ -3093,7 +3092,7 @@ class _GsqlView(_GsqlSpec):
         COLSEP = ',\n        '
 
         def format_simple_columns(columns):
-            return columns.join(map(self._convert_column), COLSEP)
+            return columns.join(self._convert_column(c) for c in COLSEP)
         if self._complexp:
             result_base = format_simple_columns(self._simple_columns)
             result = []
@@ -3145,7 +3144,7 @@ class _GsqlView(_GsqlSpec):
                 where = where + join
                 return where
             if is_sequence(columns):
-                where = map(gen_where, self._join)
+                where = [gen_where(c) for c in self._join]
             else:
                 where = gen_where(self._join)
         items.append('    @classmethod\n    def query(cls):')
@@ -3371,7 +3370,7 @@ class _GsqlFunction(_GsqlSpec):
                     skip = skip + len(f.__doc__.split('\n'))
                 lines = [l for l in lines if l.strip() != '']
                 return _gsql_escape(''.join(lines[skip:]))
-            source_list = map(get_source, tuple(self._use_functions) + (body,))
+            source_list = [get_source(x) for x in tuple(self._use_functions) + (body,)]
             # plpython nemá rád prázdné řádky
             source_text = ''.join(source_list)
             result = "'%s' LANGUAGE plpythonu" % source_text
@@ -3445,7 +3444,7 @@ class _GsqlFunction(_GsqlSpec):
             return ""
 
     def _output(self):
-        # input_types = self._input_types.join(map(_gsql_format_type),
+        # input_types = self._input_types.join(_gsql_format_type(t) for t in
         #                          ',')
         # output_type = _gsql_format_type(self._output_type)
         arguments = self._format_arguments()
@@ -4645,8 +4644,7 @@ def _go(argv=None):
             option = option[:pos + 1]
         return option
     try:
-        opts, args = getopt.getopt(argv, '',
-                                   map(extract_option, _GSQL_OPTIONS))
+        opts, args = getopt.getopt(argv, '', [extract_option(o) for o in _GSQL_OPTIONS])
     except getopt.GetoptError as e:
         _usage(e)
     for o, v in opts:
