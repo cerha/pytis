@@ -948,15 +948,13 @@ class _GsqlType(_GsqlSpec):
         return _gsql_column_table_column(column.name)[1]
 
     def _format_column(self, column):
-        result = '%s %s' % (self._column_column(column),
-                            _gsql_format_type(column.type))
+        result = '%s %s' % (self._column_column(column), _gsql_format_type(column.type))
         return result
 
     def _output(self):
         columns = [self._format_column(c) for c in self._columns]
         columns = ',\n        '.join(columns)
-        result = ('CREATE TYPE %s AS (\n%s);\n' %
-                  (self._name, columns))
+        result = ('CREATE TYPE %s AS (\n%s);\n' % (self._name, columns))
         return result
 
     def _convert_column(self, column):
