@@ -4164,7 +4164,8 @@ database dumps if you want to be sure about your schema.
     def _convert(self):
         customization_file = 'convert.py'
         if os.path.exists(customization_file):
-            execfile(customization_file, globals())
+            with open(customization_file, 'rb') as f:
+                exec(compile(f.read(), customization_file, 'exec'), globals())
         application = _GsqlConfig.application
         coding_header = '# -*- coding: utf-8\n'
         local_preamble = '''
@@ -4554,7 +4555,7 @@ def sql_raw_include(file_name, depends=(), **kwargs):
 def include(file_name, globals_=None):
     """Zpracuj pythonový soubor 'file_name'.
 
-    Soubor je zpracován prostřednictvím volání 'execfile()'.
+    Soubor je zpracován prostřednictvím volání 'exec()'.
 
     Argumenty:
 
@@ -4567,7 +4568,8 @@ def include(file_name, globals_=None):
     gensql_file = file_name
     if globals_ is None:
         globals_ = copy.copy(globals())
-    execfile(file_name, globals_)
+    with open(file_name, 'rb') as f:
+        exec(compile(f.read(), file_name, 'exec'), globals_)
     gensql_file = orig_gensql_file
 
 
@@ -4692,7 +4694,8 @@ def _go(argv=None):
         _usage()
     global gensql_file
     gensql_file = args[0]
-    execfile(gensql_file, copy.copy(globals()))
+    with open(gensql_file, 'rb') as f:
+        exec(compile(f.read(), gensql_file, 'exec'), copy.copy(globals())))
     _GsqlConfig.request()
 
 

@@ -4064,7 +4064,8 @@ def include(file_name, globals_=None):
     if globals_ is None:
         globals_ = globals()
     file_, pathname, description = imp.find_module(file_name)
-    execfile(pathname, globals_)
+    with open(pathname, 'rb') as f:
+        exec(compile(f.read(), pathname, 'exec'), globals_)
 
 
 _output = None
@@ -4387,7 +4388,8 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
 
     """
     def loader(file_name=file_name):
-        execfile(file_name, copy.copy(globals()))
+        with open(file_name, 'rb') as f:
+            exec(compile(f.read(), file_name, 'exec'), copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade, debug, None)
 
