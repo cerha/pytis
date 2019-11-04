@@ -3581,7 +3581,7 @@ class Field(object):
             # assertion would break older applications, so we just log for now.
             if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
                 log_("'enumerator' defined as instance and '%s' passed.",
-                     enumerator_kwargs.keys()[0])
+                     list(enumerator_kwargs.keys())[0])
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():

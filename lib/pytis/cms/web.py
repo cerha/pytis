@@ -227,7 +227,7 @@ class Menu(RestrictedPytisModule):
             hidden = not req.check_roles(rights.permitted_roles(menu_item_id, 'show'))
             active = req.check_roles(rights.permitted_roles(menu_item_id, 'visit'))
             return wiking.MenuItem(identifier, title, descr=descr, hidden=hidden, active=active,
-                                   variants=titles.keys(), submenu=submenu,)
+                                   variants=tuple(titles.keys()), submenu=submenu,)
         # First process all rows and build a dictionary of descendants for each item and
         # translations of titles and descriptions.  Then construct the menu structure.
         for row in self._menu_item_rows(req, published=True, sorting=self._sorting):

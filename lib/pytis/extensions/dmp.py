@@ -641,7 +641,7 @@ class DMPMenu(DMPObject):
             if isinstance(menu, pytis.form.Menu):
                 item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=parent,
                                      title=menu.title())
-                load(menu.items(), item)
+                load(tuple(menu.items()), item)
             elif isinstance(menu, pytis.form.MSeparator):
                 self.add_item(kind=self.MenuItem.SEPARATOR_ITEM, parent=parent)
             elif isinstance(menu, pytis.form.MItem):

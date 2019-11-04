@@ -1073,7 +1073,8 @@ class QueryFieldsForm(VirtualForm):
             )
             if 'profile' not in layout.order():
                 if layout.orientation() == HORIZONTAL:
-                    layout = HGroup(*(('profile',) + layout.items()), flexible=layout.flexible())
+                    layout = HGroup(*(('profile',) + tuple(layout.items())),
+                                    flexible=layout.flexible())
                 else:
                     layout = HGroup('profile', layout, flexible=layout.flexible())
         super(QueryFieldsForm, self).__init__(req, resolver,

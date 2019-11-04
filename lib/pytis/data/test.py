@@ -715,7 +715,7 @@ class DataEnumerator(unittest.TestCase):
         self._test_export(self.cb2, None, '')
 
     def test_values(self):
-        v = self.cb1.enumerator().values()
+        v = tuple(self.cb1.enumerator().values())
         self.assertEqual(v, ('1', '2', '3'))
 
     def test_get(self):
@@ -738,7 +738,7 @@ class FixedEnumerator(unittest.TestCase):
         self.assertFalse(e.check('1'))
 
     def test_values(self):
-        self.assertEqual(self._enumerator.values(), self._values)
+        self.assertEqual(tuple(self._enumerator.values()), self._values)
 
 
 ###########

@@ -226,7 +226,7 @@ def set_default_printer():
         fields=(
             Field('printer', "", width=40, not_null=True,
                   type=pytis.data.String,
-                  enumerator=pytis.data.FixedEnumerator(printers.keys()),
+                  enumerator=pytis.data.FixedEnumerator(list(printers.keys())),
                   default=default_printer),
         ),
         layout=(Text(_("Choose the default printer:")), 'printer'),

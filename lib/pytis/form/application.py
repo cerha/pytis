@@ -269,7 +269,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # to open a menu.
         for item in menu:
             if isinstance(item, Menu):
-                self._cache_menu_enabled(item.items())
+                self._cache_menu_enabled(list(item.items()))
             elif not isinstance(item, pytis.form.MSeparator):
                 enabled = item.command().enabled(**item.args())
                 if __debug__:
@@ -1513,7 +1513,7 @@ class DbActionLogger(object):
 
     def _values(self, **kwargs):
         return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
-                for key, value in [('username', self._username)] + kwargs.items()]
+                for key, value in [('username', self._username)] + list(kwargs.items())]
 
     def log(self, spec_name, form_name, action, info=None):
         rdata = (('timestamp', pytis.data.dtval(pytis.data.DateTime.datetime())),

@@ -2551,7 +2551,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if len(item.items()) == 1 and isinstance(item.items()[0], GroupSpec):
                     group = item.items()[0]
                 else:
-                    group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
+                    group = GroupSpec(list(item.items()), orientation=Orientation.VERTICAL)
                 panel = self._create_group_panel(window, group)
                 panel.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
                 window.AddPage(panel, item.label())
