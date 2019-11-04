@@ -470,7 +470,7 @@ class ReusableSpec(object):
         if len(args) == 0:
             return self._fields
         else:
-            return filter(lambda f: f.id() in args, self._fields)
+            return [f for f in self._fields if f.id() in args]
 
     def bindings(self, *args):
         """Vrať seznam specifikací sloupců vyjmenovaných sloupců.
@@ -482,7 +482,7 @@ class ReusableSpec(object):
         if len(args) == 0:
             return self._bindings
         else:
-            return filter(lambda b: b.id() in args, self._bindings)
+            return [b for b in self._bindings if b.id() in args]
 
     def fields_complement(self, *args):
         """Vrať seznam specifikací sloupců, které nejsou vyjmenovány.
@@ -494,7 +494,7 @@ class ReusableSpec(object):
         if len(args) == 0:
             return self._fields
         else:
-            return filter(lambda f: f.id() not in args, self._fields)
+            return [f for f in self._fields if f.id() not in args]
 
 
 def mime_type_constraint(*allowed_mime_types):

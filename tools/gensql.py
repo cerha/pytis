@@ -1176,9 +1176,10 @@ class _GsqlTable(_GsqlSpec):
             if 'key_columns' not in kwargs:
                 kwargs['key_columns'] = None
             vcolumns = [self._full_column_name(c) for c in vcolumns]
-            vcolumns = [c for c in vcolumns if self._column_column(c) not in view.exclude]
-            # Remove also columns specified like table.name
-            vcolumns = filter(lambda x: x.name not in view.exclude, vcolumns)
+            vcolumns = [c for c in vcolumns if
+                        self._column_column(c) not in view.exclude
+                        # Remove also columns specified like table.name
+                        and c.name not in view.exclude]
             args = (view.name or self, vcolumns)
 
             if 'doc' not in kwargs:

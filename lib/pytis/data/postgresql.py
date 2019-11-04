@@ -2076,8 +2076,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     # Metody související s exportovanými metodami DB operací
 
     def _pdbb_table_row_lists(self, row):
-        table_bindings = filter(lambda b, t=self._key_binding[0].table(): b.table() == t,
-                                self._bindings)
+        table = self._key_binding[0].table()
+        table_bindings = [b for b in self._bindings if b.table() == table]
         columns = []
         values = []
         for b in table_bindings:
