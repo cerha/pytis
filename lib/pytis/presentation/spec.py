@@ -695,7 +695,7 @@ class _TitledGroup(object):
                 else:
                     assert isinstance(item, (self.__class__, self._ITEM_TYPE)), item
         self._title = title
-        self._items = items
+        self._items = tuple(items)
 
     def title(self):
         return self._title
@@ -1095,7 +1095,7 @@ class GroupSpec(object):
 
     def items(self):
         """Return the group contents as a tuple."""
-        return tuple(self._items)
+        return self._items
 
     def order(self):
         """Return the identifiers of all fields in this group and all subgroups."""
