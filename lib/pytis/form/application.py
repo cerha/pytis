@@ -595,7 +595,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         'pytis_crypto_unlock_current_user_passwords',
                         ('password_', pytis.data.sval(
                             rsa_encrypt(db_key, r['password'].value())),))
-                    else None),
+                    else None,),
             )
             if not crypto_password:
                 return
