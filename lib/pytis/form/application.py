@@ -562,7 +562,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 check=check,
             )
             if result:
-                return rsa_encrypt(db_key, result['password'].value())
+                return rsa_encrypt(db_key, result['password'].value()).decode('ascii')
             else:
                 return None
 
@@ -594,7 +594,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     if established_names and not pytis.extensions.dbfunction(
                         'pytis_crypto_unlock_current_user_passwords',
                         ('password_', pytis.data.sval(
-                            rsa_encrypt(db_key, r['password'].value())),))
+                            rsa_encrypt(db_key, r['password'].value()).decode('ascii')),))
                     else None,),
             )
             if not crypto_password:
