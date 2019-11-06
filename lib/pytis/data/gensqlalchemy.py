@@ -1141,7 +1141,12 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     _class_mapping = {}
 
     def __init__(cls, clsname, bases, clsdict):
-        cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
+        gsql = os.path.basename(sys.argv[0]) == 'gsql.py'
+        if gsql:
+            # Work around: inspect.stack() causes a serious delay on application
+            # startup.  It is less serious on Python 2 but one call may take even
+            # a second on Python 3.
+            cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             name_specs = _PytisBaseMetaclass._name_mapping.get(name)
@@ -1149,10 +1154,12 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
                 name_specs = _PytisBaseMetaclass._name_mapping[name] = set([cls])
             elif cls not in name_specs:
                 cls_schemas = set(cls.object_schemas())
-                for spec in name_specs:
-                    if set(spec.object_schemas()).intersection(cls_schemas):
-                        raise SQLException("Duplicate object name",
-                                           (cls, _PytisBaseMetaclass._name_mapping[name],))
+                if gsql:
+                    # This also seems useless on application startup.
+                    for spec in name_specs:
+                        if set(spec.object_schemas()).intersection(cls_schemas):
+                            raise SQLException("Duplicate object name",
+                                               (cls, _PytisBaseMetaclass._name_mapping[name],))
                 name_specs.add(cls)
             _PytisBaseMetaclass._class_mapping[cls.__name__] = cls
             cls.name = name
