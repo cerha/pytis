@@ -1146,7 +1146,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
             # Work around: inspect.stack() causes a serious delay on application
             # startup.  It is less serious on Python 2 but one call may take even
             # a second on Python 3.
-            cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
+            cls._gsql_file, cls._gsql_line = inspect.stack(0)[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             name_specs = _PytisBaseMetaclass._name_mapping.get(name)
