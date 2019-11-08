@@ -1491,6 +1491,15 @@ class TimeField(TextField, SpinnableField):
     """
     _SPIN_STEP = datetime.timedelta(hours=1)
 
+    def _spin(self, value, up=True):
+        if value is None:
+            return None
+        date = datetime.date.today()
+        # datetime.time doesn't support addition/subtraction of datetime.timedelta, so
+        # we need to convert it to a datetime first and extract the time part afterwards.
+        dt = super(TimeField, self)._spin(datetime.datetime.combine(date, value), up=up)
+        return dt.time() if dt.date() == date else value
+
 
 class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
