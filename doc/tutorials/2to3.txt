@@ -1,0 +1,300 @@
+= Přechod na Python 3 =
+
+Stručný souhrn nových pravidel, které je potřeba ve veškerém našem kódu
+zohlednit pro umožnění přechodu na Python 3.  Mnohé z těchto změn již byly
+jednorázově aplikovány i v kódu aplikací, ale je potřeba je dodržovat také v
+nově vznikajícím kódu (a to ideálně i tam, kde ještě jednorázový převod
+proveden nebyl).
+
+Protože změny aplikujeme postupně a mezitím potřebujeme aplikace provozovat
+stále i na Pythonu 2, je u každé změny uvedeno i jak zařídit, aby byl zápis
+funkční i na Pythonu 2.
+
+@TOC@
+
+
+== Print ==
+
+Print v Pythonu 3 není klíčové slovo, ale funkce.  Zapisuje se tedy např.:
+
+----
+print("něco", x)
+----
+
+Pro kompatibilitu s Pythonem 2 je třeba do hlavičky souboru uvést:
+
+----
+from __future__ import print_function
+----
+
+Při přidání tohoto importu je ovšem nutné na novou syntaxi převést všechny
+výskyty print v daném souboru.
+
+
+== Importy ==
+
+V Pythonu 3 jsou všechny importy implicitně absolutní.  To znamená, že import
+foo se nikdy nepokouší importovat soubor foo.py ve stejném adresáři (jako v
+Pythonu 2), ale vždy top level modul z PYTHONPATH.  Pro import lokálního
+souboru je třeba vždy explicitně zapsat import jako relativní:
+
+----
+from . import foo
+----
+
+nebo:
+
+----
+from .foo import cosi
+----
+
+Aby měl stejný zápis stejný význam v Pythonu 2 i 3, je třeba na začátek souboru
+přidat:
+
+----
+from __future__ import absolute_import
+----
+
+Přitom je ovšem opět potřeba všechny stávající importy v daném souboru projít a
+v případě potřeby upravit.
+
+
+== Dělení ==
+
+V Pythonu 3 je lomítko používáno vždy pro skutečné dělení.  Neplatí zde
+pravidlo, že jsou-li oba operandy celočíselné, jde o celočíselné dělení, jako v
+Pythonu 2.  To znamená, že 5 / 2 = 2.5, 4 / 2 = 2.0  Výsledkem je vždy float.
+Naproti tomu pro celočíselné dělení je samostatný operátor //, jehož výsledkem
+je vždy int.
+
+Pro zavedení stejných pravidel i v Pythonu 2 je do každého souboru, kde se
+používá operátor dělení, potřeba přidat import:
+
+----
+from __future__ import division
+----
+
+Všechna použití dělení v daném souboru je při přidání tohoto importu nutno
+projít a tam, kde je potřeba celočíselný výsledek je převést na celočíselné
+dělení zdvojením lomítka.
+
+
+== Metody dict.keys(), dict.values() a dict.items() ==
+
+Slovníkové metody keys(), values() a items() v Pythonu 3 nevrací list, ale
+iterátor.  To často ničemu nevadí, typicky se používají ve for cyklu nebo list
+comprehension, kde je iterátor často efektivnější a žádné změny nejsou potřeba.
+Pokud se ale výsledek někam předává, může to způsobit problémy např. pokud
+dochází ke kontrole typu isinstance(x, (tuple, list)).  V takových případech
+může být potřeba obalit výsledek voláním list(), nebo logiku kontroly typu
+přepracovat.
+
+
+== Metoda dict.iteritems() ==
+
+Slovníková metoda iteritems() byla v Pythonu 3 zrušena.  Metoda items() vrací
+iterátor, takže stačí používat tu.
+
+
+== Funkce map() a filter() ==
+
+Funkce map() a filter() v Pythonu 3 nevrací list, ale iterátor.  To v mnoha
+případech nevyžaduje žádnou změnu, ale pokud se výsledek předá někam, kde je
+např. assert isinstance(x, (tuple, list)), způsobí to problém.
+
+Ve většině případů je nejjednodušší přepsat použití map a filter na list
+comprehension.  Tj. např.:
+
+----
+labels = map(lambda x: x.label(), items)
+labels = [x.label() for x in items]
+
+orphans = filter(lambda x: x.parent() is None, items)
+orphans = [x for x in items if x.parent() is None]
+----
+
+Tento zápis je většinou i stručnější a přehlednější.
+
+
+== Funkce reduce() ==
+
+Pythonu 3 není reduce() built-in funkce, ale je třeba ji importovat z
+functools.  Tento import funguje i v Pythonu 2.7, takže jej stačí přidat všude,
+kde reduce potřebujeme.
+
+
+== Funkce apply() ==
+
+Funkce apply() v Pythonu 3 již není.  Namísto apply(foo, [arg1, arg2]) píšeme
+rovnou foo(arg1, arg2).
+
+== Funkce open() vs. file() ==
+
+Funkce file() již v Pythonu 3 není, takže pro otevření souboru používáme vždy
+open().  Je vhodné navíc používat otevřený soubor jako kontext manager:
+
+----
+with open(filename, 'rb') as f:
+    data = f.read()
+----
+
+
+== New/old style třídy ==
+
+V Pythonu 3 jsou všechny třídy new-style.  Není nutno dědit object a třída se
+bude chovat jako new-style třída v Pythonu 2.  Aby byl kód kompatibilní, je
+tedy třeba všechny třídy definovat s poděděním object, které je ve verzi 3 sice
+zbytečné, ale nevadí.
+
+Pokud byla třída předtím v Pythonu 2 definována jako old-style, je potřeba
+domyslet a případně otestovat, zda to nezpůsobí nějaké změny chování.
+New-style a old-style třídy se v Pythonu 2 liší například v pořadí vyhodnocení
+metod při vícenásobné dědičnosti, při použití metatříd, v chování speciálních
+metod pro aritmetické operace jako __add__/__radd__ apod.  V našich aplikacích
+se však tyto odlišnosti většinou neprojeví.
+
+
+== Řetězce / bajty ==
+
+Největší změna v Pythonu 3 se týká řetězců.  Ta bude mít i pro naše aplikace
+patrně nejdalekosáhlejší důsledky.  Řetězec v Pythonu 3 odpovídá zhruba typu
+unicode v Pythonu 2, ale jmenuje se str.  To, co se v Pythonu 2 jmenovalo str
+se v Pythonu 3 jmenuje bytes, ale není to to samé.  Nepoužívá se již pro
+řetězce znaků, ale obecně pro řetězce bajtů.  Největší změna spočívá v tom, že
+str a bytes v Pythonu 3 nelze vzájemně kombinovat.  Takže i kdybychom vše
+důsledně přetypovali unicode -> str, str -> bytes, fungovat to nebude.  Je
+třeba vždy rozlišovat, kde má být řetězec a kde bytes.  To je v důsledku velice
+prospěšné a správné.  V mnoha situacích i tak bude předchozí kód fungovat bez
+úprav, ale je třeba ostražitosti.
+
+Tato změna má několik aspektů, které dále probereme samostatně.
+
+
+=== Unicode literals ===
+
+Řetězce, které se vyskytují ve zdrojovém kódu (řětězcové literály), jsou téměř
+vždy skutečné řetězce.  Jen ve velmi speciálních případech budeme mít ve
+zdrojácích binární data, která je potřeba reprezentovat pomocí bytes.  V
+Pythonu 2 bychom tyto řetězce měli označit jako unicode pomocí prefixu
+u"řetězec", aby byl jejich význam v Pythonu 3 stejný (prefix u je platný v
+Pythonu 2 i 3).  Abychom si tuto poměrně rozsáhlou změnu ušetřili (a abychom na
+to nezapomínali i při budoucích úpravách), je vhodné ve všech zdrojových
+souborech mít import:
+
+----
+from __future__ import unicode_literals
+----
+
+Tím jsou všechny řetězcové literály v Pythonu 2 chápány jako unicode, takže
+budou mít stejné chování jako v Pythonu 3 (kde již tento import nebude potřeba,
+protože Python 3 implicitně chápe řetězcové literály jako skutečné řetězce).
+
+Pokud se někde vyskytují bajtové literály, je třeba je explicitně označit
+prefixem b"", který funguje obdobně v Pythonu 2 i 3.
+
+
+=== Funkce unicode() ===
+
+Funkce (resp. typ) 'unicode()' v Pythonu 3 neexistuje.  Nahrazuje ji 'str()',
+ale ta má v Pythonu 2 jiný význam.  Nejlepší způsob zajištění kompatibility
+mezi oběma verzemi je se jejímu použití zcela vyhnout.
+
+Volání unicode() jako funkce se v Pythonu 2 obvykle vyskytuje za účelem převodu
+jiného typu na řetězec.  Pokud jde o převod zakódovaného str, bývá argumentem
+kódování, což lze nahradit voláním metody .decode().  Pokud jde o převod jiného
+typu, lze obvykle nahradit pomocí str(), což bude fungovat obdobně v obou
+verzích Pythonu.
+
+Použití unicode v typové kontrole je možné nahradit např. tak, že definujeme na
+začátku souboru:
+
+----
+unistr = type(u'')
+----
+
+A potom 'unicode' nahradíme 'unistr'.  Po přechodu na Python 3 (úplném opuštění
+Pythonu 2) bude možné tuto definici smazat a 'unistr' nahradit pomocí 'str'.
+
+Hack s 'unistr' je na první pohled možné použít i namísto volání unicode() jako
+funkce, ale většinou je mnohem jednoznačnější nahrazení metodou decode() či
+jiné jednoznačnější rozlišení konverze o kterou v daném případě jde.
+
+
+
+=== Typ basestring ===
+
+Typ basestring se v Pythonu 2 používá pro rozlišení řetězcových typů (str a
+unicode).  V naprosté většině se používá v souvislosti s typovou kontrolou
+isinstance(x, basestring).  V Pythonu 3 je řetězcový typ jen jeden - str.
+Správně by tedy bylo v Pythonu 3 nahradit tuto typovou kontrolu kontrolou
+isinstance(x, str).  Jak to ale zapsat tak, aby to fungovalo správně v obou
+verzích?
+
+Jedna možnost je využít knihovny 'future' (kterou je třeba v obou verzích
+Pythonu doinstalovat) a přidat pouze import:
+
+----
+from past.builtins import basestring
+----
+
+Je ale potřeba počítat s tím, že tím nám kontrola propustí i hodnoty typu
+bytes, což v Pythonu 3 nemusí být správně.  Vyhodnocení ale vyžaduje revizi
+celého souvisejícího kódu.
+
+Alternativou, která v Pythonu 3 nepropustí bytes je přidání následujícího kódu
+na začátek souboru:
+
+----
+try:
+    basestring
+except NameError:
+    basestring = str
+----
+
+
+=== Textové / binární soubory ===
+
+Funkce open() v Pythonu 3 otevírá soubor implicitně v textovém režimu a dekóduje
+obsah výchozím systémovým kódováním (možno změnit argumentem encoding, který
+ovšem není v Pythonu 2 podporován).  Hodnoty přečtené ze souboru jsou díky tomu
+řetězce.  Abychom získali stejné chování v obou verzích, máme více možností.
+
+Většina stávajících volání open() pracuje s daty souboru jako s řetězci bajtů,
+tj. po přečtění je dekóduje (je-li to potřeba).  V takovém případě většinou
+stačí přidat příznak otevření souboru v binárním režimu - open(filename, 'rb')
+- a takový kód bude fungovat bez úprav.
+
+O trochu pracnější řešení, které ale většinou kód zjednoduší a bude lépe
+odpovídat uvažování Pythonu 3 je soubor otevřít v textovém režimu s předáním
+kódování.  To lze i v Pythonu 2 při použití funkce io.open(), která má i
+argument encoding, stejně jako built-in funkce open z Pythonu 3.  Funkce
+io.open() je definována i v Pythonu 3, takže kód bude univerzální.  Potom již
+je třeba počítat s tím, že veškerá data zapsaná nebo přečtená z/do souboru jsou
+automaticky kódována/dekódována a hodnoty předávané do write() nebo získané
+metodami read() nebo readlines() jsou unicode řetězce, takže je jež nemusíme
+(ani nemůžeme) kódovat/dekódovat.  Tomu je potřeba přizpůsobit kód.
+
+
+=== StringIO ===
+
+V Pythonu 3 již nejsou moduly StringIO ani cStringIO.  Třída StringIO má jen
+jedinou implementaci (cStringIO již není potřeba) a nachází se nově v modulu
+'io'.  Protože ale Python 3 rozlišuje bajtové a skutečné (unicodové) řetězce,
+jsou zde třídy dvě - io.BytesIO a io.StringIO.
+
+BytesIO pracuje s bajty.  Jako argument akceptuje výhradně typ bytes a navenek
+se chová jako soubor otevřený v binárním režimu - open(filename, 'rb').
+
+StringIO pracuje se skutečnými řetězci.  Jako argument akceptuje pouze typ str
+a navenek se chová jako soubor otevřený v textovém režimu - open(filename,
+'rt').
+
+V Pythonu 2 existují backportované verze pod stejným názvem.  Pro kompatibilitu
+je tedy třeba StringIO.StringIO resp. cStringIO.StringIO nahradit buďto pomocí
+io.StringIO nebo io.BytesIO podle toho s jakým typem řetězců se pracuje.  Pro
+typ unicode je to StringIO, pro str je to BytesIO.  Obvykle to bývá BytesIO,
+protože Python 2 neznal práci se soubory v textovém režimu (vyjma použití
+modulu codecs).  Je ale třeba dát pozor na to, že již nejsou prováděny
+implicitní konverze (kódování/dekódování) mezi str a unicode a pokus zapsat
+unicode do BytesIO nebo str do StringIO skončí chybou.
+
