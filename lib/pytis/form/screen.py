@@ -40,7 +40,7 @@ import SimpleHTTPServer
 import SocketServer
 from cStringIO import StringIO
 import tempfile
-import thread
+import threading
 import time
 import mimetypes
 import weakref
@@ -2261,13 +2261,16 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, self._on_loaded)
         wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, self._on_error)
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, self._on_title_changed)
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
-        thread.start_new_thread(httpd.serve_forever, ())
+        threading.Thread(target=httpd.serve_forever).start()
         self._resource_base_uri = 'http://localhost:%d/' % httpd.socket.getsockname()[1]
 
-    def __del__(self):
+    def _on_destroy(self, event):
         self._httpd.shutdown()
+        self._httpd.socket.close()
+        event.Skip()
 
     def _exporter(self, exporter_class):
         try:
