@@ -3627,6 +3627,12 @@ def write_file(data, filename, mode='w'):
       mode -- mode for opening the file
 
     """
+    if isinstance(data, bytes):
+        # Maybe the same problem as described in write_selected_file() may apply
+        # here?  Morover RPyC doesn't seem to pass pd.Binary.Data correctly
+        # and leads to "TypeError: argument 1 must be convertible to a buffer,
+        # not Data" on remote write attempt.  See issue #2.
+        data = buffer(data)
     f = open_file(filename, mode=str(mode))
     try:
         f.write(data)
