@@ -385,36 +385,15 @@ class Configuration(object):
         _LONG_OPTION = 'config='
         _ENVIRONMENT = ('PYTISCONFIG',)
 
-        def default(self):
-            for filename in ('./config.py', '/etc/pytis/config.py'):
-                if os.access(filename, os.F_OK):
-                    result = filename
-                    break
-            else:
-                result = None
-            return result
-
     class _Option_user_config_file(StringOption, HiddenOption):
         """User specific configuration file location.
 
         This file, if exists, is loaded in addition to the main configuratiuon
         file (given by the 'config_file' option) and the options defined there
-        have higher precedence than the options in the main configuration file
+        have higher precedence than the options in the main configuration file.
 
         """
-
-        def default(self):
-            config_file = self._configuration.config_file
-            if config_file:
-                dir, file = os.path.split(config_file)
-                user_config_file = os.path.join(dir, '_' + file)
-                if os.path.exists(user_config_file):
-                    result = user_config_file
-                else:
-                    result = None
-            else:
-                result = None
-            return result
+        pass
 
     # Volby užitečné hlavně pro ladění
 
