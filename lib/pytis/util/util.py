@@ -1290,10 +1290,8 @@ def ipython():
 def deepstr(obj):
     """Return a string form of 'obj'.
 
-    If 'obj' is a sequence, apply the function on it recursively.  As opposed to Python's str(), this function applies
-
-    The function is intended to be primarily used in logging, for various
-    purposes.
+    If 'obj' is a sequence, apply the function on it recursively.  The function
+    is intended to be primarily used in logging, for various purposes.
 
     """
     if is_sequence(obj):
