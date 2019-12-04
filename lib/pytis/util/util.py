@@ -35,7 +35,7 @@ Tento modul je výjimečný ve dvou směrech:
 """
 from past.builtins import basestring
 from builtins import range
-from future.utils import iteritems, python_2_unicode_compatible
+from future.utils import python_2_unicode_compatible
 
 import functools
 import cgitb
