@@ -182,7 +182,7 @@ class Popen(object):
         # Temporary hack for Python 2/3 compatibility.
         try:
             file_types = (file, io.IOBase)
-        except NameError: # 'file' not defined in Python 3.
+        except NameError:  # 'file' not defined in Python 3.
             file_types = (io.IOBase,)
         if to_child is None:
             r_to_child, w_to_child = os.pipe()
