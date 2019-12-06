@@ -21,14 +21,14 @@ Pro kompatibilitu s Pythonem 2 je třeba do hlavičky souboru uvést:
 
 ~from __future__ import print_function~
 
-Při přidání tohoto importu je ovšem nutné na novou syntaxi převést všechny
-výskyty print v daném souboru.
+Je tedy nutné vždy používat tuto novou syntaxi a v případě potřeby přidat
+uvedený import, pokud daném souboru doposud nebyl uveden.
 
 
 ** Importy
 
-V Pythonu 3 jsou všechny importy implicitně absolutní.  To znamená, že import
-foo se nikdy nepokouší importovat soubor foo.py ve stejném adresáři (jako v
+V Pythonu 3 jsou všechny importy implicitně absolutní.  To znamená, že ~import
+foo~ se nikdy nepokouší importovat soubor foo.py ve stejném adresáři (jako v
 Pythonu 2), ale vždy top level modul z ~PYTHONPATH~.  Pro import lokálního
 souboru je třeba vždy explicitně zapsat import jako relativní:
 
@@ -38,13 +38,16 @@ nebo:
 
 ~from .foo import cosi~
 
-Aby měl stejný zápis stejný význam v Pythonu 2 i 3, je třeba na začátek souboru
-přidat:
+Relativní importy fungují stejně v obou verzích Pythonu.  Aby při přechodu
+nenastaly problémy, je nutné se pouze vyhnout importu z lokálních souborů bez
+explicitně relativního zápisu.  To lze vynutit přidáním následujícího importu:
 
 ~from __future__ import absolute_import~
 
-Přitom je ovšem opět potřeba všechny stávající importy v daném souboru projít a
-v případě potřeby upravit.
+Poté jsou i v Pythonu 2 všechny importy zpracovány stejně jako v Pythonu 3.
+Tento future import je nyní pro jistotu přítomen ve všech souborech, kde se
+vyskytovaly lokální importy (které byly zároveň převedeny na relativní).  Může
+být vhodné jej přidat i do dalších souborů, kde hrozí nejednoznačnost.
 
 
 ** Dělení
@@ -55,14 +58,14 @@ Pythonu 2.  To znamená, že ~5 / 2 = 2.5~, ~4 / 2 = 2.0~ Výsledkem je vždy
 ~float~.  Naproti tomu pro celočíselné dělení je samostatný operátor ~//~,
 jehož výsledkem je vždy ~int~.
 
-Pro zavedení stejných pravidel i v Pythonu 2 je do každého souboru, kde se
-používá operátor dělení, potřeba přidat import:
+Pro zavedení stejných pravidel i v Pythonu 2 byl do každého souboru, kde se
+používá operátor dělení, přidán import:
 
 ~from __future__ import division~
 
-Všechna použití dělení v daném souboru je při přidání tohoto importu nutno
-projít a tam, kde je potřeba celočíselný výsledek je převést na celočíselné
-dělení zdvojením lomítka.
+Tento import je vhodné přidat do jakéhokoliv dalšího souboru, kde ještě není a
+kam se dělení přidává a používat vždy již nová pravidla, tj. pro celočíselné
+dělení použít zdvojené lomítko.
 
 
 ** Metody dict.keys(), dict.values() a dict.items()
@@ -128,7 +131,7 @@ open().  Je vhodné navíc používat otevřený soubor jako kontext manager:
 
 V Pythonu 3 jsou všechny třídy new-style.  Není nutno dědit ~object~ a třída se
 bude chovat jako new-style třída v Pythonu 2.  Aby byl kód kompatibilní, je
-tedy třeba všechny třídy definovat s poděděním ~object~, které je ve verzi 3
+tedy vhodné všechny třídy definovat s poděděním ~object~, které je ve verzi 3
 sice zbytečné, ale nevadí.
 
 Pokud byla třída předtím v Pythonu 2 definována jako old-style, je potřeba
@@ -183,23 +186,36 @@ ale ta má v Pythonu 2 jiný význam.  Nejlepší způsob zajištění kompatibi
 mezi oběma verzemi je se jejímu použití zcela vyhnout.
 
 Volání ~unicode()~ jako funkce se v Pythonu 2 obvykle vyskytuje za účelem
-převodu jiného typu na řetězec.  Pokud jde o převod zakódovaného ~str~, bývá
-argumentem kódování, což lze nahradit voláním metody .decode().  Pokud jde o
-převod jiného typu, lze obvykle nahradit pomocí ~str()~, což bude fungovat
-obdobně v obou verzích Pythonu.
+převodu jiného typu na řetězec.  Pokud je prvním argumentem ~str~, funkce
+provádí dekódování bajtů na unicode znaky.  V tom případě bývá druhým
+argumentem kódování.  Kde kódování chybí, je použito výchozí kódování ASCII.
+Funkci unicode lze v tomto případě nahradit voláním metody ~.decode()~.
 
-Použití unicode v typové kontrole je možné nahradit např. tak, že definujeme na
-začátku souboru:
+~unicode(argument_typu_str, 'utf-8')~ => ~argument_typu_str.decode('utf-8')~
+~unicode(argument_typu_str)~ => ~argument_typu_str.decode('ascii')~
 
-~unistr = type(u'')~
+Pokud jde o převod jiného typu (např. ~int~), lze nahradit pomocí ~str()~, což
+bude fungovat obdobně v obou verzích Pythonu.
 
-A potom '~unicode~' nahradíme '~unistr~'.  Po přechodu na Python 3 (úplném opuštění
-Pythonu 2) bude možné tuto definici smazat a '~unistr~' nahradit pomocí '~str~'.
+~unicode(argument_typu_int)~ => ~str(argument_typu_int)~
 
-Hack s ~unistr~ je na první pohled možné použít i namísto volání ~unicode()~
-jako funkce, ale většinou je mnohem jednoznačnější nahrazení metodou ~decode()~
-či jiné jednoznačnější rozlišení konverze o kterou v daném případě jde.
+Zde ale velmi záleží na typu argumentu.  Pokud bychom v Pythonu 3 volali
+~str()~ na argument typu ~bytes~, např. ~str(b'x')~, bude výsledkem řetězec
+~"b'x'"~ tj. reprezentace argumentu včetně uvozovek a prefixu b, zatímco v
+Pythonu 2 volání ~str~ i ~unicode~ na řetězec vrací zase jen daný řetězec pouze
+převedený na příslušný typ.
 
+Použití ~unicode~ k typové kontrole je možné prozatím ponechat při použití
+importu: 
+
+~from past.builtins import unicode~
+
+Po úplném opuštění Pythonu 2 bude možné import smazat a '~unicode~' nahradit
+pomocí '~str~'.
+
+Pozor: Takto importovaný ~unicode~ však nesmíme používat jako funkci, protože s
+argumentem typu ~str~ dává v Pythonu 3 jiné výsledky než v Pythonu 2 (viz
+výše).
 
 
 *** Typ basestring
