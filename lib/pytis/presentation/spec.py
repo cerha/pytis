@@ -3450,7 +3450,7 @@ class Field(object):
         self._init(**kwargs)
 
     def _init(self, id, label=None, column_label=None, descr=None, virtual=False,
-              dbcolumn=None, type=None, type_=None, width=None, column_width=None,
+              dbcolumn=None, type=None, width=None, column_width=None,
               disable_column=False, fixed=False, height=None,
               editable=Editable.ALWAYS, visible=True, compact=False, nocopy=False,
               default=None, computer=None, formatter=None, line_separator=';',
@@ -3476,10 +3476,6 @@ class Field(object):
             log(OPERATIONAL, "%s, line %s: %s" % (filename, line, msg % args))
         assert isinstance(id, basestring)
         assert dbcolumn is None or isinstance(dbcolumn, basestring), dbcolumn
-        if type_ is not None:
-            # type_ is deprecated!
-            assert type is None
-            type = type_
         assert label is None or isinstance(label, basestring), label
         assert column_label is None or isinstance(column_label, basestring), column_label
         assert descr is None or isinstance(descr, basestring), descr
