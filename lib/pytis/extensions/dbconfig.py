@@ -99,15 +99,15 @@ class DBConfig(object):
         self._callback(self)
 
     def value(self, key):
-        """Vrať hodnotu 'key' jako instanci 'pytis.data.Value'."""
+        """Return the value of the option 'key' as a 'pytis.data.Value' instance."""
         return self._row[key]
 
     def __getitem__(self, key):
-        """Vrať hodnotu 'key' jako Pythonovou hodnotu."""
+        """Return the Python value of the option 'key'."""
         return self._row[key].value()
 
     def __setitem__(self, key, value):
-        """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
+        """Set the option 'key' to given Python value."""
         self._row[key] = pytis.data.Value(self._row[key].type(), value)
         with pytis.util.Locked(self._data_object_lock):
             self._data.update(self._key, self._row, transaction=self._transaction)
