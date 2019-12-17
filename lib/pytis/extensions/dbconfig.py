@@ -108,9 +108,9 @@ class DBConfig(object):
 
     def __setitem__(self, key, value):
         """Nastav hodnotu 'key' jako Pythonovou hodnotu."""
-        type = self._row[key].type()
-        self._row[key] = pytis.data.Value(type, value)
-        self._data.update(self._key, self._row, transaction=self._transaction)
+        self._row[key] = pytis.data.Value(self._row[key].type(), value)
+        with pytis.util.Locked(self._data_object_lock):
+            self._data.update(self._key, self._row, transaction=self._transaction)
 
     def __contains__(self, key):
         return key in self._row
