@@ -88,6 +88,19 @@ class DBConfig(object):
             self._callback = callback
             self._data.add_callback_on_change(self._on_change)
 
+    def __getitem__(self, key):
+        """Return the Python value of the option 'key'."""
+        return self._row[key].value()
+
+    def __setitem__(self, key, value):
+        """Set the option 'key' to given Python value."""
+        self._row[key] = pytis.data.Value(self._row[key].type(), value)
+        with pytis.util.Locked(self._data_object_lock):
+            self._data.update(self._key, self._row, transaction=self._transaction)
+
+    def __contains__(self, key):
+        return key in self._row
+
     def _select(self):
         with pytis.util.Locked(self._data_object_lock):
             self._data.select(condition=self._condition, transaction=self._transaction)
@@ -101,19 +114,6 @@ class DBConfig(object):
     def value(self, key):
         """Return the value of the option 'key' as a 'pytis.data.Value' instance."""
         return self._row[key]
-
-    def __getitem__(self, key):
-        """Return the Python value of the option 'key'."""
-        return self._row[key].value()
-
-    def __setitem__(self, key, value):
-        """Set the option 'key' to given Python value."""
-        self._row[key] = pytis.data.Value(self._row[key].type(), value)
-        with pytis.util.Locked(self._data_object_lock):
-            self._data.update(self._key, self._row, transaction=self._transaction)
-
-    def __contains__(self, key):
-        return key in self._row
 
 
 def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, condition=None,
