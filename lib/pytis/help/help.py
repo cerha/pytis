@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -634,7 +634,7 @@ class DmpHelpGenerator(HelpGenerator):
                 storage = pytis.presentation.DbAttachmentStorage(
                     'e_pytis_help_pages_attachments', 'page_id', row['page_id'].value(),
                 )
-                return lcg.Container(lcg.Parser().parse(row['content'].value()),
+                return lcg.Container(lcg.Parser().parse(row['content'].value() or ''),
                                      resources=storage.resources())
             if row['menu_help'].value():
                 return lcg.Parser().parse(row['menu_help'].value())
