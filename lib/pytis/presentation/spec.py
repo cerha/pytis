@@ -4984,7 +4984,7 @@ class Application(SpecificationBase):
     def keymap(self):
         """Return the sequence of custom keyboard shortcuts as (KEY, COMMAND) pairs.
 
-        Se the docstring of 'pytis.form.Keymap.define_key()' for description of
+        See the docstring of 'pytis.form.Keymap.define_key()' for description of
         the items of the squence.  COMMAND may be a tuple (COMMAND, ARGS) when
         arguments need to be passed.
 
