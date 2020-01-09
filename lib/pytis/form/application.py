@@ -1441,10 +1441,10 @@ class DBParams(object):
 
     def __setattr__(self, name, value):
         if not name.startswith('_') and name in self._row:
-            self._row[name] = pytis.data.Value(self._row[name].type(), value)
+            row = pytis.data.Row(((name, pytis.data.Value(self._row[name].type(), value)),))
             key = [self._row[c.id()] for c in self._data.key()]
             with pytis.util.Locked(self._lock):
-                self._data.update(key, self._row)
+                self._row = self._data.update(key, row)[0]
         else:
             super(DBParams, self).__setattr__(name, value)
 
