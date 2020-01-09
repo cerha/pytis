@@ -1479,7 +1479,11 @@ class DBParams(object):
         self._callbacks.setdefault(name, []).append(callback)
 
     def value(self, name):
-        """Return the value of the option 'name' as a 'pytis.data.Value' instance."""
+        """Return the value of the option 'name' as a 'pytis.data.Value' instance.
+
+        Raises KeyError if 'name' does not exist.
+
+        """
         return self._row[name]
 
 
