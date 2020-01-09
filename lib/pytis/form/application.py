@@ -1423,18 +1423,21 @@ class DBParams(object):
     _lock = thread.allocate_lock()
 
     def __init__(self, name, condition=None):
-        self._data = pytis.util.data_object(name)
-        self._data.add_callback_on_change(self._on_change)
+        self._name = name
         self._condition = condition
         self._callbacks = {}
-        self._select()
 
     def __getattr__(self, name):
-        if name in self._row:
+        if name in ('_row', '_data'):
+            self._data = pytis.util.data_object(self._name)
+            self._data.add_callback_on_change(self._on_change)
+            self._select()
+            return self.__dict__[name]
+        elif name in self._row:
             return self._row[name].value()
         else:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
+            raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
+                                 (self.__class__.__name__, self._name, name))
 
     def __setattr__(self, name, value):
         if not name.startswith('_') and name in self._row:
