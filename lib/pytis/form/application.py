@@ -1459,13 +1459,11 @@ class DBParams(object):
             data.close()
 
     def _on_change(self):
-        old_values = tuple(self._row.items())
+        old_values = dict(self._row.items())
         self._select()
-        for name, old_value in old_values:
-            new_value = self._row[name].value()
-            if new_value != old_value:
-                changed = True
-                for callback in self._callbacks.get(name, ()):
+        for name, callbacks in self._callbacks.items():
+            if self._row[name].value() != old_values[name].value():
+                for callback in callbacks:
                     callback()
 
     def add_callback(self, name, callback):
