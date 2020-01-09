@@ -1459,10 +1459,10 @@ class DBParams(object):
             data.close()
 
     def _on_change(self):
-        old_values = dict(self._row.items())
+        orig_row = self._row
         self._select()
         for name, callbacks in self._callbacks.items():
-            if self._row[name].value() != old_values[name].value():
+            if self._row[name].value() != orig_row[name].value():
                 for callback in callbacks:
                     callback()
 
