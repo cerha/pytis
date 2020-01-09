@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ from .output import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
+    Application, ApplicationProxy, DbActionLogger, InputDialog, InputNumeric, InputDate,
     run_form, run_dialog, run_procedure, input_text, input_number, input_date,
     new_record, delete_record, refresh, exit, db_operation, db_op,
     delete_record_question, current_form, top_window,
@@ -121,3 +121,5 @@ from .managers import (  # noqa: F401
     FormSettingsManager, FormProfileManager,
     FormProfileParamsManager, AggregatedViewsManager,
 )
+
+app = ApplicationProxy()

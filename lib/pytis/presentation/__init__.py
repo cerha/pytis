@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -36,7 +37,7 @@ from spec import (  # noqa: F401
     TextFilter, Computer, computer, CbComputer, CodebookSpec, FormType,
     Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
     FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
-    StatusField, SpecificationBase, Application, Specification,
+    SharedParams, StatusField, SpecificationBase, Application, Specification,
     specification_path,
 )
 

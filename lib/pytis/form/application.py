@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     volání její metody 'run()'.
 
     """
+    class NameSpace:
+        pass
+
     _menubar_forms = {}
     _log_login = True
     _recent_directories = {}
@@ -281,6 +284,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _init(self):
         # Check RPC client version
         self._check_x2goclient()
+        # Create DBParams instances for all SharedParams specifications.
+        self.param = self.NameSpace()
+        for item in self._specification.params():
+            setattr(self.param, item.name(), DBParams(item.spec_name(), item.condition()))
         # Run application specific initialization.
         self._specification.init()
         if self._windows.empty():
@@ -1365,6 +1372,114 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         version)
                 if pytis.form.run_dialog(Question, msg):
                     self.COMMAND_EXIT.invoke()
+
+
+class ApplicationProxy(object):
+    """Proxy to access the public API of the current wx application instance.
+
+    An instance of this class is available as 'pytis.form.app'.  The instance
+    exists at the module level even if no actual application is running (yet).
+
+    The recommended usage is importing app to the application code as:
+
+    from pytis.form import app
+
+    Then you can access the public 'Application' API methods and attributes
+    through the 'app' object.
+
+    """
+    # TODO: Define the public methods and attributes using a decorator.
+    _PUBLIC_API = ('param',)
+
+    def __getattr__(self, name):
+        if name not in self._PUBLIC_API:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+        return getattr(_application, name)
+
+
+class DBParams(object):
+    """Provides access to shared parameters.
+
+    Shared parameters provide a way to share global and user specific values
+    between the database and the application code.  Each
+    'pytis.presentation.SharedParams' instance defined in
+    'Application.params()' leads to creation of one 'DBParams' instance as
+    'app.param.name', where 'app' is the current 'Application' instance and
+    'name' corresponds to the name defined by the 'SharedParams' instance.
+
+    The 'DBParams' instance provides access to the parameter values through its
+    public attributes.  Their names correspond to the names of the columns
+    present in the data object represented by the instance.  When read, the
+    attributes return the internal Python value of the column, when assigned,
+    they update the value in the database.  If you need the
+    'pytis.data.Value()' instance, use the method 'value()' instead of direct
+    attribute access.
+
+    The two public methods 'add_callback()' and 'value()' make it impossible to
+    use parameters of the same names.
+
+    """
+    _lock = thread.allocate_lock()
+
+    def __init__(self, name, condition=None):
+        self._data = pytis.util.data_object(name)
+        self._data.add_callback_on_change(self._on_change)
+        self._condition = condition
+        self._callbacks = {}
+        self._select()
+
+    def __getattr__(self, name):
+        if name in self._row:
+            return self._row[name].value()
+        else:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+
+    def __setattr__(self, name, value):
+        if not name.startswith('_') and name in self._row:
+            self._row[name] = pytis.data.Value(self._row[name].type(), value)
+            key = [self._row[c.id()] for c in self._data.key()]
+            with pytis.util.Locked(self._lock):
+                self._data.update(key, self._row)
+        else:
+            super(DBParams, self).__setattr__(name, value)
+
+    def __contains__(self, key):
+        return key in self._row
+
+    def _select(self):
+        data = self._data
+        with pytis.util.Locked(self._lock):
+            data.select(condition=self._condition)
+            self._row = data.fetchone()
+            data.close()
+
+    def _on_change(self):
+        old_values = tuple(self._row.items())
+        self._select()
+        for name, old_value in old_values:
+            new_value = self._row[name].value()
+            if new_value != old_value:
+                changed = True
+                for callback in self._callbacks.get(name, ()):
+                    callback()
+
+    def add_callback(self, name, callback):
+        """Add callback whenever the value of given parameter changes.
+
+        When 'name' is None, call the callback on change of any parameter
+        within the data object.
+
+        The callback is called without arguments.
+
+        """
+        assert name is None or name in self._row
+        self._callbacks.setdefault(name, []).append(callback)
+
+    def value(self, name):
+        """Return the value of the option 'name' as a 'pytis.data.Value' instance."""
+        return self._row[name]
 
 
 class DbActionLogger(object):

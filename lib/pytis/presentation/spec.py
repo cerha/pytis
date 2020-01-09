@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -4977,6 +4977,21 @@ class Application(SpecificationBase):
 
         """
 
+    def params(self):
+        """Return a sequence 'pytis.presentation.SharedParams' instances.
+
+        Shared parameters provide a way to share global and user specific
+        values between the database and the application code.  Once defined
+        here, they may be accessed through
+        'pytis.form.app.param.namespace.parameter'.
+
+        Each 'pytis.presentation.SharedParams' instance defines one namespace
+        of application specific shared parameters.  See its docstring for more
+        info.
+
+        """
+        return ()
+
     def menu(self):
         """Return the application's main menu as a sequence of 'pytis.form.Menu' instances."""
         return ()
@@ -5002,6 +5017,60 @@ class Application(SpecificationBase):
         """
         import pytis.form
         return pytis.form.built_in_status_fields()
+
+
+class SharedParams(object):
+    """Specification of a set of shared parameters accessed through a data object.
+
+    Shared parameters provide a way to share global and user specific values
+    between the database and the application code.  Once defined in
+    'Application.params()', they may be accessed through
+    'app.param.name.parameter', where 'app' is imported from 'pytis.form',
+    'name' corresponds to the first constructor argument of this class and
+    'parameter' is the column name present in the data object defined by
+    'spec_name' constructor argument.
+
+    So one SharedParams instance defines one data object from which the shared
+    parameters are read and to which they may be written.  It is assumed, that
+    this data object always returns just one row.
+
+    Setting a value (assigning to it) automatically propagates the change into
+    the database and also database changes should be reflected in the
+    application through automatic update on DB change notificationss.
+
+    """
+    def __init__(self, name, spec_name, condition=None):
+        """Arguments:
+
+          name -- name used to access this set of shared parameters under
+            'app.param' as 'app.param.name'.  Must be a valid python
+            identifier.  See the class docstring for more details.
+
+          spec_name -- the resolver name of the specification defining the data
+            object holding the configuration parameter values in its columns.
+
+          condition -- Additional condition restricting the selection of the
+           configuration table row as a 'pytis.data.Operator' instance or None
+           if no additional condition is necessary.  The configuration data
+           object must return exactly one row when its 'select()' is called
+           with given condition (even if None).
+
+        """
+        self._name = name
+        self._spec_name = spec_name
+        self._condition = condition
+
+    def name(self):
+        """Return 'name' given to the constructor."""
+        return self._name
+
+    def spec_name(self):
+        """Return 'spec_name' given to the constructor."""
+        return self._spec_name
+
+    def condition(self):
+        """Return 'condition' given to the constructor."""
+        return self._condition
 
 
 class _SpecificationMetaclass(type):
