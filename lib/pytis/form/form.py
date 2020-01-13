@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1412,7 +1412,9 @@ class LookupForm(InnerForm):
         profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
                                        self._current_profile.id())
         self._profiles.remove(self._current_profile)
-        self._apply_profile(self._profiles[0])
+        profile_id = self._get_saved_setting('initial_profile') or self._view.profiles().default()
+        profile = find(profile_id, self._profiles, key=lambda p: p.id()) or self._profiles[0]
+        self._apply_profile(profile)
 
     def _can_reload_profile(self):
         return self._current_profile_changed()
