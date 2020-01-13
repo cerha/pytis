@@ -1412,12 +1412,10 @@ class DBParams(object):
     public attributes.  Their names correspond to the names of the columns
     present in the data object represented by the instance.  When read, the
     attributes return the internal Python value of the column, when assigned,
-    they update the value in the database.  If you need the
-    'pytis.data.Value()' instance, use the method 'value()' instead of direct
-    attribute access.
+    they update the value in the database.
 
-    The two public methods 'add_callback()' and 'value()' make it impossible to
-    use parameters of the same names.
+    It is not possible to us a parameter named 'add_callback' due to the
+    presence of the public method of the same name.
 
     """
     _lock = thread.allocate_lock()
@@ -1477,14 +1475,6 @@ class DBParams(object):
         """
         assert name is None or name in self._row
         self._callbacks.setdefault(name, []).append(callback)
-
-    def value(self, name):
-        """Return the value of the option 'name' as a 'pytis.data.Value' instance.
-
-        Raises KeyError if 'name' does not exist.
-
-        """
-        return self._row[name]
 
 
 class DbActionLogger(object):
