@@ -198,14 +198,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """
         wx.Panel.__init__(self, parent, -1)
         self.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
-        self._hide_form_requested = False
         self._name = name
+        self._hide_form_requested = False
+        self._full_init_started = False
+        self._full_init_finished = False
+        self._full_init_kwargs = dict(kwargs, resolver=resolver, name=name)
         if full_init:
-            self._full_init_called = True
-            self._full_init(resolver, name, **kwargs)
-        else:
-            self._full_init_called = False
-            self._full_init_kwargs = dict(kwargs, resolver=resolver, name=name)
+            self.full_init()
 
     def _full_init(self, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
@@ -467,10 +466,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         otherwise nor may be called more than once.
 
         """
-        assert not self._full_init_called, "Form initialization called more than once"
-        self._full_init_called = True
-        self._full_init(**self._full_init_kwargs)
+        assert not self._full_init_started, "Form initialization called more than once"
+        self._full_init_started = True
+        kwargs = self._full_init_kwargs
         self._full_init_kwargs = None
+        self._full_init(**kwargs)
+        self._full_init_finished = True
 
     def initialized(self):
         """Return true iff full form initialization was attempted.
@@ -479,13 +480,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         use the form.
 
         """
-        return self._full_init_called
+        return self._full_init_started
 
     def can_command(self, command, **kwargs):
         # This was introduced to prevent tracebacks on Update UI events in uninitialized
         # side forms.  It seems, however, to make sense generally so it hopefuly is not
         # such a big hack...
-        if not self.initialized():
+        if not self._full_init_finished:
             return False
         return super(Form, self).can_command(command, **kwargs)
 
