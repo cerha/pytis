@@ -1414,8 +1414,8 @@ class DBParams(object):
     attributes return the internal Python value of the column, when assigned,
     they update the value in the database.
 
-    It is not possible to us a parameter named 'add_callback' due to the
-    presence of the public method of the same name.
+    It is not possible to us a parameter named 'add_callback' and 'cbvalue' due
+    to the presence of the public methods of the same name.
 
     """
     _lock = thread.allocate_lock()
@@ -1465,16 +1465,39 @@ class DBParams(object):
                     callback()
 
     def add_callback(self, name, callback):
-        """Add callback whenever the value of given parameter changes.
+        """Registger a callback called on given parameter change.
 
-        When 'name' is None, call the callback on change of any parameter
-        within the data object.
-
-        The callback is called without arguments.
+        The callback function is called without arguments whenever the value of
+        given parameter changes.
 
         """
         assert name is None or name in self._row
         self._callbacks.setdefault(name, []).append(callback)
+
+    def cbvalue(self, name, cbcolumn):
+        """Return the value of given codebook column for given parameter.
+
+        Arguments:
+
+          name -- name of the parameter with a codebook (enumerator).
+          cbcolumn -- codebook column name
+
+        ValueError is raised if given column has no enunerator in the
+        underlying data object.
+
+        None is returned if the codebook doesn't include the record for the
+        current value of parameter 'name'.
+
+        """
+        value = self._row[name]
+        enumerator = value.type().enumerator()
+        if not enumerator:
+            raise ValueError("Column '%s' has no enumerator!" % name)
+        row = enumerator.row(value.value())
+        if not row:
+            return None
+        return row[cbcolumn].value()
+
 
 
 class DbActionLogger(object):
