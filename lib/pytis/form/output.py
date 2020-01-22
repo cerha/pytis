@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018, 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -356,7 +356,8 @@ class PrintFormExternal(PrintForm, PopupForm):
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:
             file_ = self._TemporaryFile(suffix='.pdf')
-        self._formatter.printout(file_, hook=hook)
+        with file_:
+            self._formatter.printout(file_, hook=hook)
         return file_
 
     def _run_viewer(self, file_):

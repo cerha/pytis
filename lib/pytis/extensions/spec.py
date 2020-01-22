@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -385,13 +385,14 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     except pytis.output.AbortOutput:
         return False
     if output_file:
-        formatter.printout(output_file)
+        with output_file:
+            formatter.printout(output_file)
     else:
-        with tempfile.NamedTemporaryFile(prefix='tmppytis', suffix='.pdf') as file_:
-            formatter.printout(file_, close=False)
-            file_.flush()
-            os.fsync(file_)
-            pytis.form.launch_file(file_.name)
+        with tempfile.NamedTemporaryFile(prefix='tmppytis', suffix='.pdf') as output_file:
+            formatter.printout(output_file)
+            output_file.flush()
+            os.fsync(output_file)
+            pytis.form.launch_file(output_file.name)
             # Give the viewer some time to read the file as it will be
             # removed when the "with" statement is left.
             time.sleep(1)

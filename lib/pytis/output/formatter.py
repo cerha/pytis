@@ -598,22 +598,19 @@ class LCGFormatter(object):
 
         """
 
-    def printout(self, stream, close=True, hook=None):
+    def printout(self, stream, hook=None):
         """Send the document as PDF to 'stream'.
 
         Arguments:
 
           stream -- stream open for writing, providing 'write' method.
-          close -- close stream after writing of formatted output
           hook -- function of no arguments to be called after formatting but
             before cleanup
 
-        'stream' gets closed by this method after its writing is finished.
+        Closing the 'stream' is left up to the caller.
 
         """
         stream.write(self._pdf())
-        if close:
-            stream.close()
         if hook is not None:
             hook()
         self._resolve(self._template_id, 'cleanup')
@@ -621,8 +618,8 @@ class LCGFormatter(object):
     def printdirect(self):
         """Send the document as PDF to the standard input of 'printing_command'."""
         process = Popen(pytis.config.printing_command, from_child=dev_null_stream('w'))
-        stream = process.to_child()
-        self.printout(stream)
+        with process.to_child() as stream:
+            self.printout(stream)
 
     def close(self):
         """Obsolete, no need to call this method anymore."""
