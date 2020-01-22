@@ -598,12 +598,13 @@ class LCGFormatter(object):
 
         """
 
-    def printout(self, stream, hook=None):
+    def printout(self, stream, close=True, hook=None):
         """Send the document as PDF to 'stream'.
 
         Arguments:
 
           stream -- stream open for writing, providing 'write' method.
+          close -- close stream after writing of formatted output
           hook -- function of no arguments to be called after formatting but
             before cleanup
 
@@ -611,7 +612,8 @@ class LCGFormatter(object):
 
         """
         stream.write(self._pdf())
-        stream.close()
+        if close:
+            stream.close()
         if hook is not None:
             hook()
         self._resolve(self._template_id, 'cleanup')

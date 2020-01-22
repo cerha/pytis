@@ -28,6 +28,8 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 
 import collections
 import os
+import time
+import tempfile
 
 import pytis.data as pd
 import pytis.util
@@ -385,8 +387,14 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     if output_file:
         formatter.printout(output_file)
     else:
-        file_ = pytis.util.TemporaryFile(suffix='.pdf')
-        formatter.printout(file_, hook=lambda: pytis.form.launch_file(file_.name))
+        with tempfile.NamedTemporaryFile(prefix='tmppytis', suffix='.pdf') as file_:
+            formatter.printout(file_, close=False)
+            file_.flush()
+            os.fsync(file_)
+            pytis.form.launch_file(file_.name)
+            # Give the viewer some time to read the file as it will be
+            # removed when the "with" statement is left.
+            time.sleep(1)
     return True
 
 
