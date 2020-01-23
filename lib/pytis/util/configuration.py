@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018, 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -767,14 +767,6 @@ class Configuration(object):
         _DEFAULT_STRING = "('pytis.data.DBDefaultClass',)"
 
     # Externí programy
-
-    class _Option_printing_command(StringOption):
-        u"""Shellový příkaz pro provedení tisku, včetně argumentů.
-
-        Příkaz musí být schopen převzít tisková data ze standardního vstupu.
-
-        """
-        _DEFAULT = 'lpr'
 
     class _Option_postscript_viewer(StringOption):
         """Shell command to be used for displaying print preview PDF files.

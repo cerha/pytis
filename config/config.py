@@ -162,10 +162,6 @@
 # Roztahovat sloupce tabulek, aby využily celou šířku okna.
 #stretch_tables = True
 
-# Shellový příkaz pro provedení tisku, včetně argumentů. Příkaz musí být
-# schopen převzít tisková data ze standardního vstupu.
-#printing_command = 'lpr'
-
 # Jméno databázového serveru.
 #dbhost = 'localhost'
 

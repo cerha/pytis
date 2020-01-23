@@ -402,7 +402,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
-    """Tiskni specifikaci pomocí příkazu pytis.config.printing_command nebo ulož do output_file.
+    """Tiskni specifikaci a odešli jako přílohu e-mailu.
 
     Argumenty:
 
