@@ -611,12 +611,6 @@ class LCGFormatter(object):
         stream.write(self._pdf())
         self._resolve(self._template_id, 'cleanup')
 
-    def printdirect(self):
-        """Send the document as PDF to the standard input of 'printing_command'."""
-        process = Popen(pytis.config.printing_command, from_child=dev_null_stream('w'))
-        with process.to_child() as stream:
-            self.printout(stream)
-
     def close(self):
         """Obsolete, no need to call this method anymore."""
         pass
