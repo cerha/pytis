@@ -509,57 +509,6 @@ def visit_insert_from_select(element, compiler, **kwargs):
         compiler.process(element.select)
     )
 
-
-# Based on PGDialect.get_columns which unfortunately doesn't handle types:
-def _get_columns(dialect, connection, relation_name, schema):
-    # This is a hack, but we don't want to parse type column types ourselves.
-    SQL_COLS = """
-        SELECT a.attname,
-          pg_catalog.format_type(a.atttypid, a.atttypmod),
-          (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid)
-            for 128)
-            FROM pg_catalog.pg_attrdef d
-           WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum
-           AND a.atthasdef)
-          AS DEFAULT,
-          a.attnotnull, a.attnum, a.attrelid as table_oid
-        FROM pg_catalog.pg_attribute a
-        JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
-        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-        WHERE c.relname = :relation_name AND n.nspname = :schema
-        AND a.attnum > 0 AND NOT a.attisdropped
-        ORDER BY a.attnum
-    """
-    if getattr(dialect, '_pytis_extra_types_initialized', False) is False:
-        for name, class_ in (('ltree', LTreeType),
-                             ('oid', OID),
-                             ('int4range', INT4RANGE),
-                             ('int8range', INT8RANGE),
-                             ('numrange', NUMRANGE),
-                             ('tsrange', TSRANGE),
-                             ('tstzrange', TSTZRANGE),
-                             ('daterange', DATERANGE),
-                             ('bpchar', sqlalchemy.String),  # == char()
-                             ):
-            if name not in dialect.ischema_names:
-                dialect.ischema_names[name] = class_
-        dialect._pytis_extra_types_initialized = True
-    s = sqlalchemy.text(SQL_COLS,
-                        bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.String),
-                                    sqlalchemy.bindparam('schema', type_=sqlalchemy.String)],
-                        typemap={'attname': sqlalchemy.Unicode, 'default': sqlalchemy.Unicode})
-    c = connection.execute(s, relation_name=relation_name, schema=schema)
-    rows = c.fetchall()
-    domains = dialect._load_domains(connection)
-    enums = dialect._load_enums(connection)
-    columns = []
-    for name, format_type, default, notnull, attnum, table_oid in rows:
-        column_info = dialect._get_column_info(name, format_type, default, notnull,
-                                               domains, enums, schema)
-        columns.append(column_info)
-    return columns
-
-
 class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
     def __init__(self, name):
@@ -1984,7 +1933,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         schema = self.schema
         dialect = metadata.pytis_engine.dialect
         with _metadata_connection(metadata) as connection:
-            columns = _get_columns(dialect, connection, name, schema)
+            columns = dialect.get_columns(connection, name, schema=schema)
         if len(columns) != len(self.c):
             def_columns = [c for c in self.c]
             if len(def_columns) != 1:
