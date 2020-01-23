@@ -357,7 +357,9 @@ class PrintFormExternal(PrintForm, PopupForm):
         if file_ is None:
             file_ = self._TemporaryFile(suffix='.pdf')
         with file_:
-            self._formatter.printout(file_, hook=hook)
+            self._formatter.printout(file_)
+        if hook:
+            hook()
         return file_
 
     def _run_viewer(self, file_):
