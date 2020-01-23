@@ -396,6 +396,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
             # Give the viewer some time to read the file as it will be
             # removed when the "with" statement is left.
             time.sleep(1)
+    formatter.cleanup()
     return True
 
 

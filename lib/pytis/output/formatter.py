@@ -609,6 +609,14 @@ class LCGFormatter(object):
 
         """
         stream.write(self._pdf())
+
+    def cleanup(self):
+        """Call the cleanup method from the print specification.
+
+        This method should be called after displaying the result of
+        'printout()' to the user.
+
+        """
         self._resolve(self._template_id, 'cleanup')
 
     def close(self):

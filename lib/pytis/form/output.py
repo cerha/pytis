@@ -360,6 +360,7 @@ class PrintFormExternal(PrintForm, PopupForm):
             self._formatter.printout(file_)
         if hook:
             hook()
+        self._formatter.cleanup()
         return file_
 
     def _run_viewer(self, file_):
