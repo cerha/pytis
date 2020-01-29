@@ -558,6 +558,7 @@ class TestBinary(_TestType):
 
 
 class TestImage(_TestType):
+    _type = pd.Image
     _icon = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x0c\x00\x00\x00\x05\x04'
              b'\x03\x00\x00\x00\x83T\x10\x1c\x00\x00\x00\x12PLTE\xef\xef\xef366rttSUU'
              b'\x91\x92\x92\xff\xff\xff\xa6\xcc.k\x00\x00\x00\x01tRNS\x00@\xe6\xd8f'
@@ -581,6 +582,10 @@ class TestImage(_TestType):
         value = pd.Value(pd.Image(), self._icon)
         image = value.value().image()
         assert image.size == (12, 5)
+
+    def test_null_validation(self):
+        t = pd.Image(not_null=False)
+        assert self._validate(t, None) is None
 
 
 class TestRange(_TestType):
