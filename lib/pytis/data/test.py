@@ -157,7 +157,8 @@ class TestType(_TestType):
         assert str(t4) == repr(t4)
 
     def test_constraints(self):
-        t = pd.String(minlen=3, constraints=(lambda v: None if v.startswith('x') else "Must start with x",))
+        t = pd.String(minlen=3, constraints=(lambda v: None if v.startswith('x')
+                                             else "Must start with x",))
         value, error = t.validate('xaf')
         assert not error
         value, error = t.validate('uaf')
@@ -169,7 +170,7 @@ class TestInteger(_TestType):
 
     def test_validation(self):
         t = pd.Integer()
-        assert self._validate(t, '1') ==  1
+        assert self._validate(t, '1') == 1
         assert self._validate(t, '-11111111111111111111') == -11111111111111111111
         assert self._validate(t, '+0') == 0
         self._check_not_valid(t, '1.1')
@@ -212,7 +213,7 @@ class TestFloat(_TestType):
         C = pd.Float.CEILING
         assert self._validate(t, '3.1415', precision=2) == 3.14
         assert self._validate(t, '3.1415', precision=3) == 3.142
-        assert self._validate(t, '2.71', precision=0)== 3
+        assert self._validate(t, '2.71', precision=0) == 3
         assert self._validate(t, '3.14159', precision=3, rounding=F) == 3.141
         assert self._validate(t, '3.14159', precision=2, rounding=C) == 3.15
         assert self._validate(t, '3.14', precision=2, rounding=F) == 3.14
@@ -313,7 +314,6 @@ class TestPassword(_TestType):
         assert self._validate(t3, 'Xabc') == 'Xabc'
 
 
-
 class TestColor(_TestType):
     _type = pd.Color
 
@@ -367,7 +367,6 @@ class TestDateTime(_TestType):
         assert t.export(dt1, local=False) == '2100-02-05 01:02:03'
         dt2 = datetime.datetime(1841, 7, 2, 1, 2, 3, tzinfo=tzinfo)
         assert t.export(dt2, format='%d.%m.%Y') == '02.07.1841'
-
 
 
 class TestISODateTime(_TestType):
@@ -481,7 +480,6 @@ class TestTimeInterval(_TestType):
         assert pd.TimeInterval() != pd.TimeInterval(format='%H:%M')
 
 
-
 class TestArray(_TestType):
     _type = pd.Array
 
@@ -521,6 +519,7 @@ class TestArray(_TestType):
     def test_str(self):
         t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3, not_null=False)
         assert str(t) == '<Array inner_type=<Integer not_null=True> maxlen=3 not_null=False>'
+
 
 class TestBinary(_TestType):
     _type = pd.Binary
@@ -650,7 +649,7 @@ class TestRange(_TestType):
         assert err is not None
 
     def test_export(self):
-        t =  pd.IntegerRange()
+        t = pd.IntegerRange()
         v = t.adjust_value((1, 8))
         assert t.export(v) == ('1', '8')
         assert t.export(None) == ('', '')
@@ -2258,7 +2257,8 @@ class DBDataDefault(_DBTest):
         assert row['rdt'] == v3
         data.update(pd.ival(2), pd.Row((('r', irange(40, 50)),
                                         ('r2', irange(40, 50)),
-                                        ('rdt', drange((2014, 2, 1, 0, 0, 0), (2014, 3, 1, 0, 0, 2))))))
+                                        ('rdt', drange((2014, 2, 1, 0, 0, 0),
+                                                       (2014, 3, 1, 0, 0, 2))))))
         data.insert(pd.Row((('x', pd.ival(3),),
                             ('r', pd.Value(pd.IntegerRange(), None)),
                             ('r2', pd.Value(pd.IntegerRange(), None)),
@@ -2354,7 +2354,7 @@ class DBDataDefault(_DBTest):
         result, success = data.insert(row)
         assert success
         assert result[1].value() == backslash
-        assert data.delete(row[0]) ==  1
+        assert data.delete(row[0]) == 1
 
     def test_lock(self):
         us = pd.String().validate('us')[0]
