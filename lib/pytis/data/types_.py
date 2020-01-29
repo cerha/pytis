@@ -3026,11 +3026,10 @@ class _Value(object):
                 '_value': self._value}
 
     def __setstate__(self, state):
-        type = state['_type']
-        if not isinstance(type, Type):
-            raise InvalidAccessError('Invalid argument type', '_Value.type',
-                                     type)
-        self._type = type
+        t = state['_type']
+        if not isinstance(t, Type):
+            raise InvalidAccessError('Invalid argument type', '_Value.type', t)
+        self._type = t
         self._value = state['_value']
 
     def __str__(self):
