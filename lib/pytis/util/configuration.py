@@ -1046,7 +1046,7 @@ class Configuration(object):
     class _Option_autostart_saved_forms(BooleanOption):
         """Dont' ask whether to start forms saved on last exit.
         """
-        _DOC = _("Start form saved on last exit without asking.")
+        _DOC = _("Start forms saved on last exit without asking.")
         _DOC = _("If true, the forms saved on last exit will be automatically "
                  "loaded on application startup without asking.  If False (the "
                  "default), a dialog asking for confirmation of saved forms to "
