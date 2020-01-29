@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1362,7 +1362,6 @@ class Inet(String):
 
 class Macaddr(String):
     """MAC adresa."""
-
 
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
 
@@ -3035,11 +3034,9 @@ class _Value(object):
         self._value = state['_value']
 
     def __str__(self):
-        t = self.type()
-        value = unistr(self.value())
-        if isinstance(t, Big) and len(value) > 40:
-            value = '%s...<<big value>>...' % (value[:10],)
-        return '<%s type=%s, value=%s>' % (self.__class__.__name__, t, value)
+        # Note: %r is important here in order to get (possibly long) binary values represented
+        # reasonably (see Binary.Data.__repr__()).
+        return '<%s type=%s, value=%r>' % (self.__class__.__name__, self.type(), self.value())
 
     def __eq__(self, other):
         if not sameclass(self, other):
