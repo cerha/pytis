@@ -463,16 +463,14 @@ class TestTimeInterval(_TestType):
         assert self._validate(t, '01:02') == datetime.timedelta(0, 3720)
 
     def test_export(self):
-        value = pd.Value(pd.TimeInterval(), datetime.timedelta(1, 3600))
-        assert value.export() == '25:00:00'
-        assert value.export(format='%M:%S') == '00:00'
-        assert value.export(format='%H') == '25'
-
-
-    def test_export(self):
         t = pd.TimeInterval(format='%H:%M')
         value = pd.Value(t, datetime.timedelta(1, 3600))
         assert value.export() == '25:00'
+        assert value.export(format='%M:%S') == '00:00'
+        assert value.export(format='%H') == '25'
+        t2 = pd.TimeInterval()
+        value = pd.Value(t2, datetime.timedelta(1, 3600))
+        assert value.export() == '25:00:00'
         assert value.export(format='%M:%S') == '00:00'
         assert value.export(format='%H') == '25'
 
