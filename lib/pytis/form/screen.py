@@ -2572,7 +2572,7 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
             if not self.zoom_error:     # report once only
                 self.zoom_error = True
                 dlg = wx.MessageDialog(self.parent, 'Out of memory. Zoom level too high?',
-                                       'pdf viewer' , wx.OK |wx.ICON_EXCLAMATION)
+                                       'pdf viewer', wx.OK | wx.ICON_EXCLAMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
 
