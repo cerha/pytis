@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,12 @@ class _TestType(object):
     def test_equality(self):
         assert self._type() == self._type()
         assert self._type(not_null=True) != self._type(not_null=False)
+
+    def test_str(self):
+        t = self._type(not_null=True)
+        assert t.__class__.__name__ in str(t)
+        assert ' not_null=True' in str(t)
+        assert str(t) == repr(t)
 
 
 class TestType(_TestType):
@@ -512,6 +518,9 @@ class TestArray(_TestType):
         # assert v is None
         # assert e is not None
 
+    def test_str(self):
+        t = pd.Array(inner_type=pd.Integer(not_null=True), maxlen=3, not_null=False)
+        assert str(t) == '<Array inner_type=<Integer not_null=True> maxlen=3 not_null=False>'
 
 class TestBinary(_TestType):
     _type = pd.Binary
