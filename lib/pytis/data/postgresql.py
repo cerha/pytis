@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -114,6 +114,11 @@ class _PgValue(object):
         t = value.type()
         if isinstance(t, Array) and v is not None:
             result = [vv.value() for vv in v]
+        elif isinstance(t, Binary) and v is not None:
+            # TODO: This is actually only necessary in Python 2.  Psycopg2 seems
+            # to accept bytes in Python 3 without problems so this may not be
+            # necessary.
+            result = memoryview(v)
         else:
             result = v
         return result
