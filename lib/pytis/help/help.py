@@ -585,7 +585,7 @@ class DmpHelpGenerator(HelpGenerator):
                 descriptions[row['kind'].value()][row['identifier'].value()] = content
         data.close()
         data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
-                                  pytis.config.ydbconnection)
+                                  pytis.config.dbconnection)
         row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
         if row:
             for kind in ('help', 'description'):
