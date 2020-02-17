@@ -3142,6 +3142,7 @@ class DBFunction(_DBBaseTest):
                       "foo7(int, out int, out int) as 'select $1, $1+2'",
                       "foo8() returns numeric(3,2) as 'select 3.14'",
                       "foo9() returns float as 'select 3.14::float'",
+                      "foo10(bytea) returns int as 'select length($1)'",
                       ):
                 self._sql_command("create function %s language sql " % q)
         except Exception:
@@ -3158,6 +3159,7 @@ class DBFunction(_DBBaseTest):
                   "foo7(int, out int, out int)",
                   "foo8()",
                   "foo9()",
+                  "foo10(bytea)",
                   ):
             try:
                 self._sql_command("drop function %s" % q)
@@ -3233,6 +3235,16 @@ class DBFunction(_DBBaseTest):
         row = pd.Row((('arg1', pd.Integer().validate('10')[0]),))
         result = [col.value() for col in function.call(row)[0]]
         self.assertEqual(result, [10, 12], ('Invalid result', result))
+
+    def test_binary(self):
+        function = pd.DBFunctionDefault('foo10', self._dconnection)
+        result = function.call(pd.Row((('arg1', pd.Value(pd.Binary(), b'abc')),)))
+        assert len(result) == 1
+        assert result[0][0].value() == 3
+        result = function.call(pd.Row((('arg1', pd.Value(pd.Binary(),
+                                                         bytes(bytearray(range(255))))),)))
+        assert len(result) == 1
+        assert result[0][0].value() == 255
 
 
 class DBSearchPath(_DBTest):
