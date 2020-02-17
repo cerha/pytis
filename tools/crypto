@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2018 OUI Technology Ltd.
 #
 # COPYRIGHT NOTICE
@@ -18,6 +18,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import division
+from __future__ import print_function
+from builtins import object
 
 import getpass
 import optparse
@@ -103,7 +107,7 @@ def admin_key(area, connection_data):
 
 def command_new_key(configuration, args):
     if not args:
-        print "Error: encryption area not specified"
+        print("Error: encryption area not specified")
         return
     area = args.pop(0)
     if args:
@@ -111,15 +115,15 @@ def command_new_key(configuration, args):
         try:
             bits = int(bits_string)
         except ValueError:
-            print "Error: invalid bits number:", bits_string
+            print("Error: invalid bits number:", bits_string)
     else:
         bits = 1024
     if args:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     connection_data = configuration.connection_data()
     if not check_area(connection_data, area):
-        print "Error: no such encryption area:", area
+        print("Error: no such encryption area:", area)
         return
     data = key_table(connection_data)
     condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(admin_user)),
@@ -127,64 +131,64 @@ def command_new_key(configuration, args):
     present = (data.select(condition=condition) > 0)
     data.close()
     if present:
-        print "Error: key for the encryption area already present"
+        print("Error: key for the encryption area already present")
         return
     password, encrypted_password = read_password(True, prompt="Key password: ")
     if password is None:
-        print "Error: passwords do not match"
+        print("Error: passwords do not match")
         return
-    bytes = (bits + 7) / 8
-    key = string.join(['%02x' % (ord(b),) for b in os.urandom(bytes)], '')
+    key = string.join(['%02x' % (ord(b),) for b in os.urandom((bits + 7) // 8)], '')
     function = pytis.data.DBFunctionDefault('pytis_crypto_insert_key', connection_data)
-    row = pytis.data.Row((('name_', pytis.data.sval(area),),
-                          ('user_', pytis.data.sval(admin_user),),
-                          ('key_', pytis.data.sval(key),),
-                          ('password', pytis.data.sval(password),),
-                          ))
+    row = pytis.data.Row((
+        ('name_', pytis.data.sval(area),),
+        ('user_', pytis.data.sval(admin_user),),
+        ('key_', pytis.data.sval(key),),
+        ('password', pytis.data.sval(password),),
+    ))
     result = function.call(row)[0][0].value()
     if not result:
-        print "Error: key not inserted (unknown error)"
+        print("Error: key not inserted (unknown error)")
         return
-    print "New admin key for encryption area %s inserted" % (area,)
+    print("New admin key for encryption area %s inserted" % (area,))
 
 
 def command_password(configuration, args):
     if not args:
-        print "Error: encryption area not specified"
+        print("Error: encryption area not specified")
         return
     area = args.pop(0)
     if args:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     connection_data = configuration.connection_data()
     key_id, key = admin_key(area, connection_data)
     if key_id is None:
-        print "Error: admin key not found for the area:", area
+        print("Error: admin key not found for the area:", area)
         return
     old_password, encrypted_old_password = read_password(prompt="Current password: ")
     if not check_password(key, old_password, connection_data):
-        print "Error: invalid password"
+        print("Error: invalid password")
         return
     new_password, encrypted_new_password = read_password(True, prompt="New password: ")
     if new_password is None:
-        print "Error: passwords do not match"
+        print("Error: passwords do not match")
         return
     function = pytis.data.DBFunctionDefault('pytis_crypto_change_password', connection_data)
     row = pytis.data.Row((('id_', key_id,),
                           ('old_psw', pytis.data.sval(encrypted_old_password),),
                           ('new_psw', pytis.data.sval(encrypted_new_password),),))
     if not function.call(row)[0][0].value():
-        print "Error: password change failed"
+        print("Error: password change failed")
         return
-    print "Password for encryption area %s changed" % (area,)
+    print("Password for encryption area %s changed" % (area,))
 
 
 def command_add_user(configuration, args):
     if len(args) < 3:
-        print "Error: not enough arguments"
+        print("Error: not enough arguments")
         return
     if len(args) > 3:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     area, user, sender = args
     connection_data = configuration.connection_data()
@@ -195,15 +199,15 @@ def command_add_user(configuration, args):
         error = pytis.extensions.add_crypto_user(area, user, admin_user, admin_password,
                                                  sender, connection_data)
     if error:
-        print "Error: %s" % (error,)
+        print("Error: %s" % (error,))
 
 
 def command_add_user_password(configuration, args):
     if len(args) < 3:
-        print "Error: not enough arguments"
+        print("Error: not enough arguments")
         return
     if len(args) > 3:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     area, user, password = args
     connection_data = configuration.connection_data()
@@ -214,38 +218,38 @@ def command_add_user_password(configuration, args):
         error = pytis.extensions.add_crypto_user(area, user, admin_user, admin_password,
                                                  None, connection_data, user_password=password)
     if error:
-        print "Error: %s" % (error,)
+        print("Error: %s" % (error,))
 
 
 def command_delete_user(configuration, args):
     if len(args) < 2:
-        print "Error: not enough arguments"
+        print("Error: not enough arguments")
         return
     area = args.pop(0)
     user = args.pop(0)
     if args:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     connection_data = configuration.connection_data()
     data = key_table(connection_data)
     condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(user)),
                                pytis.data.EQ('name', pytis.data.sval(area)))
     if not data.select(condition):
-        print "Error: no key for given area and user present"
+        print("Error: no key for given area and user present")
         return
     result = data.delete_many(condition)
     if not result:
-        print "Error: delete error"
+        print("Error: delete error")
         return
-    print "Key of %s user for area %s deleted" % (user, area,)
+    print("Key of %s user for area %s deleted" % (user, area,))
 
 
 def command_encrypt(configuration, args):
     if len(args) < 3:
-        print "Error: not enough arguments"
+        print("Error: not enough arguments")
         return
     if len(args) > 3:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     area, table, column = args
     connection_data = configuration.connection_data()
@@ -266,7 +270,7 @@ def command_encrypt(configuration, args):
                    (schema_name, table_name, column,))
     row = cursor.fetchone()
     if row is None:
-        print "Error: column not found: %s.%s.%s" % (schema_name, table_name, column,)
+        print("Error: column not found: %s.%s.%s" % (schema_name, table_name, column,))
         return
     type_ = row[0]
     mapping = {'bpchar': 'text',
@@ -286,20 +290,20 @@ def command_encrypt(configuration, args):
                }
     column_type = mapping.get(type_)
     if column_type is None:
-        print "Error: unsupported column type:", type_
+        print("Error: unsupported column type:", type_)
         return
     key_id, key = admin_key(area, connection_data)
     if key_id is None:
-        print "Error: admin key not found for the area:", area
+        print("Error: admin key not found for the area:", area)
         return
     password, encrypted_password = read_password()
     if not check_password(key, password, connection_data):
-        print "Error: invalid admin password for area:", area
+        print("Error: invalid admin password for area:", area)
         return
     cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)",
                    (admin_user, encrypted_password,))
     if not cursor.fetchone():
-        print "Error: password not accepted"
+        print("Error: password not accepted")
         return
     cursor.execute("alter table %s rename column %s to _tmp_%s" % (table, column, column,))
     cursor.execute("alter table %s add column %s bytea" % (table, column,))
@@ -315,21 +319,21 @@ def command_encrypt(configuration, args):
 
 def command_new_communication_key(configuration, args):
     if len(args) < 1:
-        print "Error: not enough arguments"
+        print("Error: not enough arguments")
         return
     if len(args) > 1:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     bits = int(args[0])
     if bits < 1024:
-        print "Error: BITS must be at least 1024"
+        print("Error: BITS must be at least 1024")
         return
     n = bits
     while n > 1:
         if n % 2 != 0:
-            print "Error: BITS must be power of 2"
+            print("Error: BITS must be power of 2")
             return
-        n = n / 2
+        n = n // 2
     connection = configuration.connect()
     cursor = connection.cursor()
     cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
