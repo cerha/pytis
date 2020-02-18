@@ -68,11 +68,14 @@ class Connector(object):
 
     def _challenge(self):
         r = random.SystemRandom()
-        return ''.join([r.choice('0123456789abcdef') for i in range(len(self._password))])
+        return bytes(bytearray([r.choice(b'0123456789abcdef') for i in range(len(self._password))]))
 
     def _password_hash(self, challenge):
-        token = ''.join([chr(ord(x) ^ ord(y)) for x, y in zip(self._password, challenge)])
-        return hashlib.sha256(token).hexdigest()
+        if not isinstance(challenge, str):
+            # Convert to str in python 3, leave alone in Python 2.
+            challenge = str(challenge)
+        token = bytes(bytearray([ord(x) ^ ord(y) for x, y in zip(self._password, challenge)]))
+        return hashlib.sha256(token).hexdigest().encode('ascii')
 
     def connect(self, host, port):
         client_challenge = self._challenge()
@@ -85,7 +88,6 @@ class Connector(object):
             # the original hidden socket.
             sock = connection._channel.stream.sock
         sock.send(client_challenge + self._password_hash(client_challenge))
-
         server_challenge = self._challenge()
         server_hash = connection.root.authenticate_server(server_challenge)
         if server_hash != self._password_hash(server_challenge):
