@@ -533,7 +533,7 @@ class Configuration(object):
         package.
 
         """
-        _ENVIRONMENT = ('PYTISHELPDIR',)
+        _ENVIRONMENT = ('PYTIS_HELP_DIR', 'PYTISHELPDIR',)
 
         def _search_default(self):
             from os.path import dirname
