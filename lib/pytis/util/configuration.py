@@ -23,6 +23,8 @@ Celá konfigurace je definována instancí třídy 'Configuration', dokumentace
 v této třídě poví více.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from future.utils import with_metaclass
 
@@ -366,8 +368,11 @@ class Configuration(object):
 
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
-            if not os.path.isabs(value):
+            if value and not os.path.isabs(value):
                 value = os.path.join(os.getcwd(), value)
+            if value and not os.path.exists(value):
+                print("Configuration option '{}' contains invalid path: {}"
+                      .format(self.name(), value), file=sys.stderr)
             return value
 
     class HiddenOption(Option):
