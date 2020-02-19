@@ -375,6 +375,17 @@ class Configuration(object):
                       .format(self.name(), value), file=sys.stderr)
             return value
 
+        def _search_default(self):
+            return None
+
+        def default(self):
+            search = self._search_default()
+            if search is not None:
+                for d in search:
+                    if os.path.exists(d):
+                        return d
+            return super(Configuration.FileOption, self).default()
+
     class HiddenOption(Option):
         """Mix-in třída pro skryté volby."""
         _VISIBLE = False
@@ -508,7 +519,11 @@ class Configuration(object):
 
         """
         _ENVIRONMENT = ('PYTISHELPDIR',)
-        _DEFAULT = './help'
+
+        def _search_default(self):
+            from os.path import dirname
+            return [os.path.join(d, 'help')
+                    for d in (dirname(dirname(dirname(pytis.__file__))), os.getcwd())]
 
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.
