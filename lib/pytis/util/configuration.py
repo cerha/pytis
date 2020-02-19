@@ -496,9 +496,10 @@ class Configuration(object):
             return Resolver(search=self._configuration.search_modules)
 
     class _Option_help_dir(FileOption, CommandlineOption):
-        u"""Adresář obsahující soubory s nápovědou.
+        u"""Directory containing Pytis help files.
 
-        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
+        Full path to the directory 'help' found in the root of the pytis
+        package.
 
         """
         _ENVIRONMENT = ('PYTISHELPDIR',)
