@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1647,12 +1647,15 @@ def translation_path():
     source directory.
 
     """
+    # Note: We can't make this a configuration option, because we need the value
+    # sooner than the configuration options are initialized as translations() are
+    # typically called at the top of each source file.
     path_env = os.getenv('PYTIS_TRANSLATION_PATH')
     if path_env:
         path = path_env.split(':')
     else:
-        base_dir = os.path.normpath(os.path.dirname(__file__) + '/../../..')
-        path = (os.path.join(base_dir, 'translations'),)
+        from os.path import dirname
+        path = (os.path.join(dirname(dirname(dirname(dirname(__file__)))), 'translations'),)
     return path
 
 
