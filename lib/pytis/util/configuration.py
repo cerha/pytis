@@ -350,7 +350,7 @@ class Configuration(object):
             return pytis.data.Boolean()
 
     class ColorOption(Option):
-        """Třída pro volby typu barva."""
+        """Option defining an RGB color."""
         _DOC = "Barva je reprezentována řetězcem '#RRGGBB'."
 
         def _type(self):
@@ -358,13 +358,14 @@ class Configuration(object):
             return pytis.data.Color()
 
     class NumericOption(Option):
-        """Třída pro volby celočíselného typu."""
+        """Integer option."""
 
         def _type(self):
             import pytis.data
             return pytis.data.Integer()
 
     class FileOption(StringOption):
+        """Option defining a single file or directory path name."""
 
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
