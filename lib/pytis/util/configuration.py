@@ -386,6 +386,20 @@ class Configuration(object):
                         return d
             return super(Configuration.FileOption, self).default()
 
+    class PathOption(Option):
+        """Option defining a sequence of file or directory path names."""
+        _DEFAULT = ()
+
+        def _compute_init_value(self, *args, **kwargs):
+            value = super(Configuration.PathOption, self)._compute_init_value(*args, **kwargs)
+            if isinstance(value, basestring):
+                value = value.split(':')
+            for d in value:
+                if not os.path.exists(d):
+                    print("Configuration option '{}' contains invalid path: {}"
+                          .format(self.name(), d), file=sys.stderr)
+            return list(value)
+
     class HiddenOption(Option):
         """Mix-in třída pro skryté volby."""
         _VISIBLE = False
@@ -524,6 +538,26 @@ class Configuration(object):
             from os.path import dirname
             return [os.path.join(d, 'help')
                     for d in (dirname(dirname(dirname(pytis.__file__))), os.getcwd())]
+
+    class _Option_resource_path(PathOption):
+        """Sequence of directory names containing browser resources.
+
+        The sequence should contain a full path at least to the 'resources'
+        subdirectories found in the root of Pytis and LCG packages (these
+        resources such as images and CSS are needed by the Pytis help
+        system). Additionally it may contain application specific resource
+        directories if application refers to its own resources within the
+        contents displayed through the built in browser.
+
+        """
+        _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
+
+        def default(self):
+            import lcg
+            from os.path import dirname
+            return ([os.path.join(self._configuration.help_dir, 'img')] +
+                    [os.path.join(dirname(dirname(dirname(m.__file__))), 'resources')
+                     for m in (pytis, lcg)])
 
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.

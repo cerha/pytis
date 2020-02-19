@@ -323,11 +323,7 @@ class HelpGenerator(object):
         pass
 
     def __init__(self):
-        resource_dirs = [os.path.join(pytis.config.help_dir, 'img')] + [
-            d[:-3] + 'resources' for d in sys.path
-            if d.endswith('/pytis/lib') or d.endswith('/lcg/lib')
-        ]
-        self._resource_provider = lcg.ResourceProvider(dirs=resource_dirs)
+        self._resource_provider = lcg.ResourceProvider(dirs=pytis.config.resource_path)
         self._root_node = None
 
     def _application_help_nodes(self):
