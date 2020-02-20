@@ -203,7 +203,7 @@ class Configuration(object):
                 self._value = value
 
         def value(self):
-            """Vrať aktuální hodnotu konfigurační volby."""
+            """Return the current configuration option value."""
             # Hodnotu nenastavujeme hned v konstruktoru, protože v té době
             # ještě nemusí být inicializovány jiné volby, na kterých tato volba
             # případně závisí.
@@ -212,7 +212,7 @@ class Configuration(object):
             return self._value
 
         def set_value(self, value, initialization=False):
-            """Nastav hodnotu konfigurační volby na 'value'."""
+            """Set the configuration option to given value."""
             if not initialization:
                 self._changed = True
             self._value = value
