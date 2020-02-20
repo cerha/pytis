@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -4082,6 +4082,11 @@ def _gsql_output(output):
 _debug = False
 _pretty = 0
 
+def _encoded_output(output):
+    if not hasattr(output, 'encoding') or output.encoding is None:
+        output = codecs.getwriter('UTF-8')(output)
+    return output
+
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade, debug, module_name):
@@ -4092,9 +4097,7 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
             return
         _output = io.StringIO()
     else:
-        _output = sys.stdout
-        if not hasattr(_output, 'encoding') or _output.encoding is None:
-            _output = codecs.getwriter('UTF-8')(_output)
+        _output = _encoded_output(sys.stdout)
     global _debug
     _debug = debug
     global _pretty
@@ -4275,9 +4278,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
     if upgrade_metadata is not None and not names_only:
         global _output
         str_output = _output.getvalue()
-        _output = sys.stdout
-        if not hasattr(_output, 'encoding') or _output.encoding is None:
-            _output = codecs.getwriter('UTF-8')(_output)
+        _output = _encoded_output(sys.stdout)
         dependencies = _db_dependencies(upgrade_metadata)
         all_items = set()
         dep_dict = {}
@@ -4345,7 +4346,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                 if o is not None and not isinstance(o, SQLTable):
                     o.pytis_drop()
         # Emit update commands
-        sys.stdout.write(str_output)
+        _encoded_output(sys.stdout).write(str_output)
         # Recreate all dropped objects
         drop.reverse()
         for name in drop:
