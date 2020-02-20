@@ -371,7 +371,7 @@ class Configuration(object):
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
             if value and not os.path.isabs(value):
-                value = os.path.join(os.getcwd(), value)
+                value = os.path.normpath(os.path.join(os.getcwd(), value))
             return value
 
         def _search_default(self):
