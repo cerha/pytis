@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ def parse_options():
                       help="create all objects in that schema")
     parser.add_option("--names", action="store_true", dest="names_only",
                       help="print only kinds and names of the database objects")
-    parser.add_option("--pretty", action="store", type="int", dest="pretty",
+    parser.add_option("--pretty", action="store", type="int", dest="pretty", default=0,
                       help="more visually pleasant and possibly less correct output")
     parser.add_option("--source", action="store_true", dest="source",
                       help="print source info")
