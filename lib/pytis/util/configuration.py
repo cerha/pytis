@@ -366,14 +366,12 @@ class Configuration(object):
 
     class FileOption(StringOption):
         """Option defining a single file or directory path name."""
+        _check_path = True
 
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
             if value and not os.path.isabs(value):
                 value = os.path.join(os.getcwd(), value)
-            if value and not os.path.exists(value):
-                print("Configuration option '{}' contains invalid path: {}"
-                      .format(self.name(), value), file=sys.stderr)
             return value
 
         def _search_default(self):
@@ -387,19 +385,34 @@ class Configuration(object):
                         return d
             return super(Configuration.FileOption, self).default()
 
+        def value(self):
+            value = super(Configuration.FileOption, self).value()
+            if self._check_path and not os.path.exists(value):
+                print("Configuration option '{}' contains invalid path: {}"
+                      .format(self.name(), value), file=sys.stderr)
+                self._check_path = False
+            return value
+
     class PathOption(Option):
         """Option defining a sequence of file or directory path names."""
         _DEFAULT = ()
+        _check_path = True
 
         def _compute_init_value(self, *args, **kwargs):
             value = super(Configuration.PathOption, self)._compute_init_value(*args, **kwargs)
             if isinstance(value, basestring):
                 value = value.split(':')
-            for d in value:
-                if not os.path.exists(d):
-                    print("Configuration option '{}' contains invalid path: {}"
-                          .format(self.name(), d), file=sys.stderr)
             return list(value)
+
+        def value(self):
+            value = super(Configuration.PathOption, self).value()
+            if self._check_path:
+                for d in value:
+                    if not os.path.exists(d):
+                        print("Configuration option '{}' contains invalid path: {}"
+                              .format(self.name(), d), file=sys.stderr)
+                self._check_path = False
+            return value
 
     class HiddenOption(Option):
         """Mix-in třída pro skryté volby."""
