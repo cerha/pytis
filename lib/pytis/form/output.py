@@ -358,8 +358,8 @@ class PrintFormExternal(PrintForm, PopupForm):
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:
             file_ = self._TemporaryFile(suffix='.pdf')
-        with file_:
-            self._formatter.printout(file_)
+        self._formatter.printout(file_)
+        file_.close()
         if hook:
             hook()
         self._formatter.cleanup()
