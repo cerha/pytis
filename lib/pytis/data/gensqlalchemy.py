@@ -3905,7 +3905,8 @@ class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLEleme
         self._search_path = search_path
         self._add_dependencies()
         self.schema = search_path[0]  # required by metadata in certain situations
-        metadata._add_table(self.pytis_name(), search_path[0], self)
+        self.key = key =  self.pytis_name()
+        metadata._add_table(key, search_path[0], self)
 
     def search_path(self):
         return self._search_path
