@@ -3494,14 +3494,14 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.make_selected_file(filename=filename, directory=directory,
-                                                 mode=str(mode), encoding=encoding,
+                                                 mode=mode, encoding=encoding,
                                                  patterns=patterns, pattern=pattern)
     elif cmode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, dir=directory,
                                      mode=pytis.form.FileDialog.SAVE,
                                      wildcards=_wildcards(patterns, pattern))
         if path:
-            result = open(path, str(mode))
+            result = open(path, mode)
         else:
             result = None
     else:
@@ -3530,7 +3530,7 @@ def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(),
       context -- see 'pyts.form.select_file()'
 
     """
-    f = make_selected_file(filename=filename, mode=str(mode), encoding=encoding,
+    f = make_selected_file(filename=filename, mode=mode, encoding=encoding,
                            patterns=patterns, pattern=pattern, context=context)
     if f:
         if sys.version_info[0] == 2 and isinstance(data, bytes):
@@ -3602,9 +3602,9 @@ def open_file(filename, mode='w'):
 
     """
     if pytis.remote.client_available():
-        f = pytis.remote.open_file(filename, mode=str(mode))
+        f = pytis.remote.open_file(filename, mode=mode)
     else:
-        f = open(filename, str(mode))
+        f = open(filename, mode)
     return f
 
 
@@ -3624,7 +3624,7 @@ def write_file(data, filename, mode='w'):
         # and leads to "TypeError: argument 1 must be convertible to a buffer,
         # not Data" on remote write attempt.  See issue #2.
         data = buffer(data)
-    f = open_file(filename, mode=str(mode))
+    f = open_file(filename, mode=mode)
     try:
         f.write(data)
     finally:

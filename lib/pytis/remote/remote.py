@@ -418,7 +418,7 @@ def launch_url(url):
 
 def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
     assert isinstance(filename, basestring), filename
-    assert isinstance(mode, str), mode
+    assert isinstance(mode, basestring), mode
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert encrypt is None or isinstance(encrypt, list), encrypt
     assert isinstance(decrypt, bool), decrypt
