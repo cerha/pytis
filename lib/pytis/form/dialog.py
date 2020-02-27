@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -909,22 +909,22 @@ class BugReport(GenericDialog):
         msg = Message()
 
         def header(value):
-            # TODO: This duplicates the code in pytis.extensions.email_.  We should
+            # TODO: This duplicates similar code in pytis.extensions.email_.  We should
             # use the same class here (probably moving it to util or so...).
-            if ((sys.version_info[0] == 2 and isinstance(value, str) or
-                 sys.version_info[0] > 2 and isinstance(value, bytes))):
-                charset = self.charset
-                if sys.version_info[0] == 2:
-                    value = unicode(value, charset)
-                else:
-                    value = str(value, charset)
-            else:
-                charset = 'utf-8'
-            try:
-                return value.encode('ascii')
-            except UnicodeEncodeError:
-                return Header(value.encode(charset), charset)
-
+            if sys.version_info[0] == 2:
+                if isinstance(value, str):
+                    try:
+                        value.decode('us-ascii')
+                    except UnicodeDecodeError:
+                        pass
+                    else:
+                        return value
+                elif isinstance(value, unistr):
+                    if value.encode('us-ascii', 'replace') == value.encode('utf-8'):
+                        return value
+            elif value.encode('us-ascii', 'replace') == value.encode('utf-8'):
+                return value
+            return Header(value, 'utf-8')
 
         msg['From'] = header(addr)
         msg['To'] = header(to)
