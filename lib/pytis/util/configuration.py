@@ -387,7 +387,7 @@ class Configuration(object):
 
         def value(self):
             value = super(Configuration.FileOption, self).value()
-            if self._check_path and not os.path.exists(value):
+            if self._check_path and value and not os.path.exists(value):
                 print("Configuration option '{}' contains invalid path: {}"
                       .format(self.name(), value), file=sys.stderr)
                 self._check_path = False
@@ -569,9 +569,11 @@ class Configuration(object):
         def default(self):
             import lcg
             from os.path import dirname
-            return ([os.path.join(self._configuration.help_dir, 'img')] +
-                    [os.path.join(dirname(dirname(dirname(m.__file__))), 'resources')
-                     for m in (pytis, lcg)])
+            path = [os.path.join(dirname(dirname(dirname(m.__file__))), 'resources')
+                    for m in (pytis, lcg)]
+            if self._configuration.help_dir:
+                path.append(os.path.join(self._configuration.help_dir, 'img'))
+            return path
 
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.
