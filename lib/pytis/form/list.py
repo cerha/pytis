@@ -1881,12 +1881,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 run_dialog(Error, msg)
                 return
         if fileformat == 'XLSX':
-            export_function = self._cmd_export_xlsx
+            export_method = self._export_xlsx
         else:
-            export_function = self._cmd_export_csv
+            export_method = self._export_csv
         log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
-        if export_function(export_file):
+        if export_method(export_file):
             exported_filename = export_file.name
             export_file.close()
             if remote:
@@ -1894,7 +1894,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 pytis.form.launch_file(exported_filename)
 
-    def _cmd_export_csv(self, file_):
+    def _export_csv(self, file_):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         if isinstance(file_, basestring):
@@ -1946,7 +1946,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
-    def _cmd_export_xlsx(self, file_):
+    def _export_xlsx(self, file_):
         log(EVENT, 'Called XLSX export')
         MINIMAL_COLUMN_WIDTH = 12
         import xlsxwriter
