@@ -3672,12 +3672,6 @@ def _open_local_file_viewer(filename):
     log(OPERATIONAL, "Launching local file viewer:", command)
     proc = subprocess.Popen(command, shell=shell)
     proc.wait()
-    try:
-        os.remove(filename)
-    except Exception:
-        pass
-    # This doesn't seem to be necessary.
-    # threading.Thread(target=process.communicate)
 
 
 def launch_file(filename):
