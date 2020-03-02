@@ -416,7 +416,8 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
       msg -- tělo emailu
       filename -- název pro soubor s přílohou; pokud je None, bude vygenerován
 
-      Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
+    Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
+
     """
     import tempfile
     fd, fname = tempfile.mkstemp(suffix='.pdf')
