@@ -88,8 +88,7 @@ from .dualform import (  # noqa: F401
 )
 
 from .output import (  # noqa: F401
-    PostscriptException, PostscriptViewer, print_form, PrintForm,
-    PrintFormExternal,
+    PostscriptException, PostscriptViewer, PrintForm, PrintFormExternal,
 )
 
 from .application import (  # noqa: F401
