@@ -49,11 +49,6 @@ from .application import run_dialog
 _ = pytis.util.translations('pytis-wx')
 
 
-def print_form():
-    """Return proper print preview class."""
-    return PrintFormExternal
-
-
 class PrintForm(Form, PopupForm):
 
     def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):

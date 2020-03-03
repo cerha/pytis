@@ -71,7 +71,6 @@ from .form import (
     QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
     InputForm,
 )
-from .output import print_form
 from .screen import (
     CheckItem, KeyHandler, Menu, MItem, MSeparator, busy_cursor,
     copy_to_clipboard, dlg2px, file_menu_items, get_icon, is_busy_cursor,
@@ -3079,7 +3078,7 @@ class BrowseForm(FoldableForm):
                                                translations=pytis.util.translation_path())
         except pytis.output.AbortOutput:
             return
-        run_form(print_form(), name, formatter=formatter)
+        run_form(pytis.form.PrintForm, name, formatter=formatter)
 
 
 class SideBrowseForm(BrowseForm):
