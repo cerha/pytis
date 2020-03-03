@@ -54,8 +54,11 @@ def print_form():
     return PrintFormExternal
 
 
-class PrintForm(Form):
-    """Common ancestor of both internal and external print previewers."""
+class PrintForm(Form, PopupForm):
+
+    def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
+        super(PrintForm, self).__init__(parent, resolver, name, guardian=guardian)
+        self._formatter = formatter
 
     def _run_formatter_process(self, stream, on_background=False, hook=None, file_=None):
         result = None
@@ -72,13 +75,6 @@ class PrintForm(Form):
         except UserBreakException:
             pass
         return result
-
-
-class PrintFormExternal(PrintForm, PopupForm):
-
-    def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
-        super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
-        self._formatter = formatter
 
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:

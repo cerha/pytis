@@ -88,7 +88,7 @@ from .dualform import (  # noqa: F401
 )
 
 from .output import (  # noqa: F401
-    PrintForm, PrintFormExternal,
+    PrintForm,
 )
 
 from .application import (  # noqa: F401
