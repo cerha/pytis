@@ -53,9 +53,8 @@ class PrintForm(Form, PopupForm):
         self._formatter = formatter
 
     def _run_formatter_process(self, stream, hook, output_file):
-        result = None
         try:
-            result = self._run_formatter(stream, hook, output_file)
+            self._run_formatter(stream, hook, output_file)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
@@ -63,14 +62,12 @@ class PrintForm(Form, PopupForm):
                                 "Maybe use `current_row' instead?"))
         except UserBreakException:
             pass
-        return result
 
     def _run_formatter(self, stream, hook, output_file):
         self._formatter.printout(output_file)
         output_file.close()
         hook()
         self._formatter.cleanup()
-        return output_file
 
     def _run_viewer(self, output_file):
         launch_file(output_file.name)
