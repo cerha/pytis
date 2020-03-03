@@ -28,6 +28,7 @@ v konfliktu s klíčovým slovem Pythonu.
 
 """
 
+import os
 import threading
 import tempfile
 
@@ -57,7 +58,13 @@ class PrintForm(Form, PopupForm):
 
     def run(self, *args, **kwargs):
         def run_viewer(filename):
-            launch_file(filename)
+            try:
+                launch_file(filename)
+            finally:
+                try:
+                    os.remove(filename)
+                except OSError as e:
+                    pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
         output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
         try:
             self._formatter.printout(output_file)
