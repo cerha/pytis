@@ -69,6 +69,7 @@ class PrintForm(Form, PopupForm):
             return
         except UserBreakException:
             return
-        output_file.close()
+        finally:
+            output_file.close()
         _thread.start_new_thread(run_viewer, (output_file.name,))
         self._formatter.cleanup()
