@@ -325,7 +325,7 @@ class TemporaryFile(object):
     """Just like 'tempfile.NamedTemporaryFile' but with different delete rules.
 
     The file is by default not deleted as soon as it is closed but only after
-    instance of this class is destroyed and only the process of the same pid
+    instance of this class is destroyed and only in the process of the same pid
     as the one that created the instance.
 
     """
