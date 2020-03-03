@@ -72,9 +72,6 @@ class PrintForm(Form, PopupForm):
         self._formatter.cleanup()
         return output_file
 
-    def _tempfile(self, delete=False):
-        return tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=delete)
-
     def _run_viewer(self, output_file):
         launch_file(output_file.name)
 
@@ -82,7 +79,7 @@ class PrintForm(Form, PopupForm):
         pass
 
     def run(self, *args, **kwargs):
-        output_file = self._tempfile()
+        output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
 
         def previewer():
             _thread.start_new_thread(self._run_viewer, (output_file,))
