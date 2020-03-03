@@ -52,13 +52,10 @@ class PrintForm(Form, PopupForm):
         super(PrintForm, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter_process(self, stream, on_background=False, hook=None, file_=None):
+    def _run_formatter_process(self, stream, hook=None, file_=None):
         result = None
         try:
-            if on_background:
-                result = _thread.start_new_thread(self._run_formatter, (stream,))
-            else:
-                result = self._run_formatter(stream, hook=hook, file_=file_)
+            result = self._run_formatter(stream, hook=hook, file_=file_)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
