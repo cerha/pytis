@@ -1933,11 +1933,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     for cid, ctype in column_list
                 ) + '\n'
             try:
-                encoded = result.encode(config.export_encoding)
+                encoded = result.encode(pytis.config.export_encoding)
             except (LookupError, UnicodeEncodeError) as e:
-                msg = (_("Encoding %s not supported.", config.export_encoding)
+                msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
                        if isinstance(e, LookupError) else
-                       _("Unable to encode data to %s.", config.export_encoding))
+                       _("Unable to encode data to %s.", pytis.config.export_encoding))
                 run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
                 encoded = result.encode('utf-8')
             export_file.write(encoded)
