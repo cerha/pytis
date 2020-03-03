@@ -31,6 +31,7 @@ v konfliktu s klíčovým slovem Pythonu.
 import os
 import _thread
 import time
+import tempfile
 
 import wx
 
@@ -346,24 +347,22 @@ class PrintForm(Form):
 
 class PrintFormExternal(PrintForm, PopupForm):
 
-    class _TemporaryFile(pytis.util.TemporaryFile):
-
-        def __del__(self):
-            pass
-
     def __init__(self, parent, resolver, name, formatter, guardian=None, **kwargs):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
     def _run_formatter(self, stream, hook=None, file_=None):
         if file_ is None:
-            file_ = self._TemporaryFile(suffix='.pdf')
+            file_ = self._tempfile()
         self._formatter.printout(file_)
         file_.close()
         if hook:
             hook()
         self._formatter.cleanup()
         return file_
+
+    def _tempfile(self, delete=False):
+        return tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=delete)
 
     def _run_viewer(self, file_):
         launch_file(file_.name)
@@ -372,8 +371,8 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
 
     def run(self, *args, **kwargs):
-        file_ = self._TemporaryFile(suffix='.pdf')
+        output_file = self._tempfile()
 
         def previewer():
-            _thread.start_new_thread(self._run_viewer, (file_,))
-        self._run_formatter_process(None, hook=previewer, file_=file_)
+            _thread.start_new_thread(self._run_viewer, (output_file,))
+        self._run_formatter_process(None, hook=previewer, file_=output_file)
