@@ -62,13 +62,14 @@ class PrintForm(Form, PopupForm):
         output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
         try:
             self._formatter.printout(output_file)
-            output_file.close()
-            _thread.start_new_thread(self._run_viewer, (output_file,))
-            self._formatter.cleanup()
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
             run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
                                 "Maybe use `current_row' instead?"))
+            return
         except UserBreakException:
-            pass
+            return
+        output_file.close()
+        _thread.start_new_thread(self._run_viewer, (output_file,))
+        self._formatter.cleanup()
