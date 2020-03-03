@@ -805,8 +805,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._set_state_param(self._STATE_STARTUP_FORMS, tuple(
                 (f.__class__, f.name())
                 for f in self._windows.items()
-                if not isinstance(f, (pytis.form.PrintForm,
-                                      pytis.form.AggregationForm,
+                if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
             ))
             self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
@@ -1044,7 +1043,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
-                    if not isinstance(form, (pytis.form.PrintForm, pytis.form.WebForm)):
+                    if not isinstance(form, pytis.form.WebForm):
                         item = (self._form_menu_item_title(form),
                                 dict(form_class=form_class, name=name))
                         self._update_recent_forms(item)

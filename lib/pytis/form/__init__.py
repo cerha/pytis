@@ -87,10 +87,6 @@ from .dualform import (  # noqa: F401
     MultiSideForm, MultiBrowseDualForm,
 )
 
-from .output import (  # noqa: F401
-    PrintForm,
-)
-
 from .application import (  # noqa: F401
     Application, ApplicationProxy, DbActionLogger, InputDialog, InputNumeric, InputDate,
     run_form, run_dialog, run_procedure, input_text, input_number, input_date,

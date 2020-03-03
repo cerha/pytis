@@ -35,11 +35,15 @@ from builtins import range
 import copy
 import datetime
 import functools
+import os
+import tempfile
 import time
+import threading
 
 import wx
 import wx.grid
 
+import lcg
 import pytis.data
 import pytis.form
 import pytis.output
@@ -3078,7 +3082,32 @@ class BrowseForm(FoldableForm):
                                                translations=pytis.util.translation_path())
         except pytis.output.AbortOutput:
             return
-        run_form(pytis.form.PrintForm, name, formatter=formatter)
+
+        def run_viewer(filename):
+            try:
+                pytis.form.launch_file(filename)
+            finally:
+                try:
+                    os.remove(filename)
+                except OSError as e:
+                    pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
+
+        output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
+        try:
+            formatter.printout(output_file)
+        except lcg.SubstitutionIterator.NotStartedError:
+            # TODO: Shouldn't this rather be handled in printout()?
+            tbstring = pytis.util.format_traceback()
+            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+            run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
+                                "Maybe use `current_row' instead?"))
+            return
+        except UserBreakException:
+            return
+        finally:
+            output_file.close()
+        threading.Thread(target=run_viewer, args=(output_file.name,)).start()
+        formatter.cleanup()
 
 
 class SideBrowseForm(BrowseForm):
