@@ -62,6 +62,7 @@ class PrintForm(Form, PopupForm):
         try:
             self._formatter.printout(output_file)
         except lcg.SubstitutionIterator.NotStartedError:
+            # TODO: Shouldn't this rather be handled in printout()?
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
             run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
