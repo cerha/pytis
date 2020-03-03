@@ -52,13 +52,12 @@ class PrintForm(Form, PopupForm):
         super(PrintForm, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_viewer(self, output_file):
-        launch_file(output_file.name)
-
     def show(self):
         pass
 
     def run(self, *args, **kwargs):
+        def run_viewer(filename):
+            launch_file(filename)
         output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
         try:
             self._formatter.printout(output_file)
@@ -71,5 +70,5 @@ class PrintForm(Form, PopupForm):
         except UserBreakException:
             return
         output_file.close()
-        _thread.start_new_thread(self._run_viewer, (output_file,))
+        _thread.start_new_thread(run_viewer, (output_file.name,))
         self._formatter.cleanup()
