@@ -52,10 +52,10 @@ class PrintForm(Form, PopupForm):
         super(PrintForm, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter_process(self, stream, hook, file_):
+    def _run_formatter_process(self, stream, hook, output_file):
         result = None
         try:
-            result = self._run_formatter(stream, hook, file_)
+            result = self._run_formatter(stream, hook, output_file)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
@@ -65,18 +65,18 @@ class PrintForm(Form, PopupForm):
             pass
         return result
 
-    def _run_formatter(self, stream, hook, file_):
-        self._formatter.printout(file_)
-        file_.close()
+    def _run_formatter(self, stream, hook, output_file):
+        self._formatter.printout(output_file)
+        output_file.close()
         hook()
         self._formatter.cleanup()
-        return file_
+        return output_file
 
     def _tempfile(self, delete=False):
         return tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=delete)
 
-    def _run_viewer(self, file_):
-        launch_file(file_.name)
+    def _run_viewer(self, output_file):
+        launch_file(output_file.name)
 
     def show(self):
         pass
