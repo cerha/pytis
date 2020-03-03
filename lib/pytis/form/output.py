@@ -28,22 +28,19 @@ v konfliktu s klíčovým slovem Pythonu.
 
 """
 
-import os
 import _thread
-import time
 import tempfile
 
-import wx
 
 import lcg
 import pytis.output
 import pytis.util
 import pytis.remote
 
-from .event import UserBreakException, wx_callback
+from .event import UserBreakException
 from .dialog import Error
 from .form import Form, PopupForm
-from .screen import microsleep, launch_file
+from .screen import launch_file
 from .application import run_dialog
 
 _ = pytis.util.translations('pytis-wx')
