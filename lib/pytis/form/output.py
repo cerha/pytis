@@ -52,17 +52,6 @@ class PrintForm(Form, PopupForm):
         super(PrintForm, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter_process(self, stream, hook, output_file):
-        try:
-            self._run_formatter(stream, hook, output_file)
-        except lcg.SubstitutionIterator.NotStartedError:
-            tbstring = pytis.util.format_traceback()
-            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
-            run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
-                                "Maybe use `current_row' instead?"))
-        except UserBreakException:
-            pass
-
     def _run_formatter(self, stream, hook, output_file):
         self._formatter.printout(output_file)
         output_file.close()
@@ -80,4 +69,13 @@ class PrintForm(Form, PopupForm):
 
         def previewer():
             _thread.start_new_thread(self._run_viewer, (output_file,))
-        self._run_formatter_process(None, previewer, output_file)
+
+        try:
+            self._run_formatter(None, previewer, output_file)
+        except lcg.SubstitutionIterator.NotStartedError:
+            tbstring = pytis.util.format_traceback()
+            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+            run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
+                                "Maybe use `current_row' instead?"))
+        except UserBreakException:
+            pass
