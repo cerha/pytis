@@ -28,7 +28,7 @@ v konfliktu s klíčovým slovem Pythonu.
 
 """
 
-import _thread
+import threading
 import tempfile
 
 
@@ -71,5 +71,5 @@ class PrintForm(Form, PopupForm):
             return
         finally:
             output_file.close()
-        _thread.start_new_thread(run_viewer, (output_file.name,))
+        threading.Thread(target=run_viewer, args=(output_file.name,)).start()
         self._formatter.cleanup()
