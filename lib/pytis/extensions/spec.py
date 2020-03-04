@@ -386,8 +386,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
     except pytis.output.AbortOutput:
         return False
     if output_file:
-        with output_file:
-            formatter.printout(output_file)
+        formatter.printout(output_file)
     else:
         with tempfile.NamedTemporaryFile(prefix='tmppytis', suffix='.pdf') as output_file:
             formatter.printout(output_file)
