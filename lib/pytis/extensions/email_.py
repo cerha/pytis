@@ -25,10 +25,11 @@ from __future__ import print_function
 from past.builtins import basestring
 from future.utils import python_2_unicode_compatible
 
-import os
-import mimetypes
 import email
-import pytis.util
+import mimetypes
+import os
+import sys
+
 from email.message import Message
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
@@ -36,6 +37,8 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import Header
+
+import pytis.util
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -391,7 +394,6 @@ class ComplexEmail(SimpleEmail):
 
 
 if __name__ == '__main__':
-    import sys
     try:
         sender, recipient, subject, text, key_filename, smtp = sys.argv[1:]
     except ValueError:
