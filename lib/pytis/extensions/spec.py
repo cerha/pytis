@@ -27,6 +27,7 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 """
 from past.builtins import basestring
 
+import io
 import os
 import time
 import tempfile
@@ -413,24 +414,16 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
       from_ -- adresa odesílatele
       subject -- subject emailu
       msg -- tělo emailu
-      filename -- název pro soubor s přílohou; pokud je None, bude vygenerován
+      filename -- název pro soubor s přílohou;
 
     Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
 
     """
-    import tempfile
-    fd, fname = tempfile.mkstemp(suffix='.pdf')
-    handle = os.fdopen(fd, 'wb')
-    printdirect(resolver, spec, print_spec, row, output_file=handle, **kwargs)
-    document = None
-    with open(fname, 'rb') as f:
-        document = f.read()
-    if os.path.exists(fname):
-        os.remove(fname)
+    assert filename, filename
+    output = io.BytesIO()
+    printdirect(resolver, spec, print_spec, row, output_file=output, **kwargs)
+    document = output.getvalue()
     if document:
-        if not filename:
-            filename = os.path.basename(fname)
-
         mail = ComplexEmail(to, from_, subject, msg, charset=charset)
         mail.add_content_data(document, filename)
         result = mail.send()

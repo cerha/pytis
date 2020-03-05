@@ -35,6 +35,7 @@ from builtins import range
 import copy
 import datetime
 import functools
+import io
 import os
 import tempfile
 import time
@@ -1957,9 +1958,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         def _process_table(update):
             column_list = []
             col_position = 0
-            tmp_file = pytis.util.TemporaryFile()
-            tmp_file_name = tmp_file.name
-            w = xlsxwriter.Workbook(tmp_file, {'remove_timezone': True})
+            output = io.BytesIO()
+            w = xlsxwriter.Workbook(output, {'remove_timezone': True})
             ws = w.add_worksheet('Export')
 
             def _get_format(ctype):
@@ -2071,8 +2071,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
                             ws.write_string(r_out + 1, position, s)
             w.close()
-            with open(tmp_file_name, 'rb') as f:
-                file_.write(f.read())
+            file_.write(output.getvalue())
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
