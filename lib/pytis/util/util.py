@@ -321,30 +321,6 @@ class TemporaryDirectory(object):
                 pass
 
 
-class TemporaryFile(object):
-    """Just like 'tempfile.NamedTemporaryFile' but with different delete rules.
-
-    The file is by default not deleted as soon as it is closed but only after
-    instance of this class is destroyed and only in the process of the same pid
-    as the one that created the instance.
-
-    """
-
-    def __init__(self, delete=False, **kwargs):
-        self._file = tempfile.NamedTemporaryFile(delete=delete, prefix='tmppytis', **kwargs)
-        self._pid = os.getpid()
-
-    def __getattr__(self, name):
-        return getattr(self._file, name)
-
-    def __del__(self):
-        if not self._file.delete and os.getpid() == self._pid:
-            try:
-                os.remove(self._file.name)
-            except Exception:
-                pass
-
-
 @python_2_unicode_compatible
 class Stack(object):
     """Obecný zásobník.

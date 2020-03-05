@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
     FileError, NotImplementedException, Counter, Popen, Tmpdir,
-    TemporaryDirectory, TemporaryFile, Stack, XStack, Attribute, Structure,
+    TemporaryDirectory, Stack, XStack, Attribute, Structure,
     object_2_5, identity, is_, xor, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
     nreverse, super_, sameclass, public_attributes,
