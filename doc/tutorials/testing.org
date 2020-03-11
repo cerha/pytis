@@ -1,0 +1,49 @@
+* Testování
+
+Pro testování nyní používáme pytest a všechny nové testy píšeme v pytest stylu,
+tj. přímo jednoduché asserty.  Mnoho stávajících testů je napsáno ještě ve
+stylu unittest, tj. self.assertEqual & spol.  Je dobré testy příležitostně
+přepsat na přehlednějšíí pytest zápis, ale daleko užitečnější je napsat nové
+testy zvyšující pokrytí.
+
+
+** Zprovoznění testovacího prostředí
+
+pip3 install pytest
+pip3 install pytest-benchmark
+
+createdb test
+echo "create extension tsearch;" | psql test
+echo "create extension pgcrypto;" | psql test
+PYTHONPATH=lib ./tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql test
+
+Možná je potřeba také:
+echo "ALTER DATABASE test SET default_text_search_config to 'simple'" | psql test
+
+make test
+
+
+** Pokrytí
+
+Pokrytí kódu testy lze sledovat pomocí coverage.  Vegenerování (aktualizaci) coverage
+statistik lze jednoduše spustit pomocí:
+
+make coverage
+
+nebo ručně dle příkladu z Makefile
+
+
+V Emacsu je pro lepší přehled o pokrytí kódu testy možné použít
+pycoverage-mode:
+
+Stáhnout https://github.com/mattharrison/pycoverage.el
+
+V adresáři cov2emacs spustit:
+
+pip install .
+
+Elisp potom stačí nainstalovat přes MELPA:
+
+package-install pycoverage
+pycoverage-mode
+
