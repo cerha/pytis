@@ -3047,25 +3047,22 @@ class BrowseForm(FoldableForm):
                            icon='link'))
         return menu
 
-    def _cmd_print(self, print_spec_path=None, language=None, handler=None,
-                   context=ActionContext.RECORD):
-        log(EVENT, 'Print form invocation:', print_spec_path)
-        if not print_spec_path:
+    def _cmd_print(self, spec=None):
+        log(EVENT, 'Print invocation:', spec and spec.name())
+        if not spec:
+            # Handle Ctrl-p which invokes COMMAND_PRINT without arguments for
+            # the default print (the first print specification) if defined.
             try:
                 prints = self._resolver.get(self._name, 'print_spec')
             except ResolverError:
                 prints = ()
-            if prints:
-                # Let's use the first print action as default if print_spec_path not given.
-                spec = prints[0]
-                print_spec_path = spec.name()
-                handler = spec.handler()
-                context = spec.context()
-                language = spec.language()
-            else:
-                print_spec_path = self._name
-        if handler:
-            args = self._context_action_args(Action('x', '-', context=context))
+            if not prints:
+                log(EVENT, 'No print specification for:', self._name)
+                return
+            spec = prints[0]
+        if spec.handler():
+            handler = spec.handler()
+            args = self._context_action_args(Action('x', '-', context=spec.context()))
             return handler(*args)
         else:
             parameters = self._formatter_parameters()
@@ -3077,12 +3074,12 @@ class BrowseForm(FoldableForm):
                                                               extension='text')
             db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
 
-            pytis.form.printout(print_spec_path, parameters,
+            pytis.form.printout(spec.name(), parameters,
                                 resolvers=(db_template_resolver,
                                            wiki_template_resolver,
                                            print_resolver),
                                 form=self,
-                                language=language)
+                                language=spec.language())
 
 
 class SideBrowseForm(BrowseForm):

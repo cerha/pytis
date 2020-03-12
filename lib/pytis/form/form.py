@@ -625,11 +625,7 @@ class InnerForm(Form):
             db_print_spec.append((name, template_name,))
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
-        menu = [MItem(p.title(),
-                      command=pytis.form.BrowseForm.COMMAND_PRINT(print_spec_path=p.name(),
-                                                                  language=p.language(),
-                                                                  handler=p.handler(),
-                                                                  context=p.context()))
+        menu = [MItem(p.title(), command=pytis.form.BrowseForm.COMMAND_PRINT(spec=p))
                 for p in print_spec
                 if action_has_access('print/%s' % (p.dmp_name(),),
                                      perm=pytis.data.Permission.PRINT)]
