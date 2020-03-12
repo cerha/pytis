@@ -60,7 +60,7 @@ import pytis.util
 import pytis.presentation
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
-from .event import wx_callback, top_level_exception
+from .event import wx_callback, top_level_exception, UserBreakException
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
@@ -3746,3 +3746,53 @@ def launch_url(url):
     else:
         import webbrowser
         webbrowser.open(url)
+
+
+def printout(template_id, parameters, resolvers, form=None, language=None):
+    """Print given template to PDF and display the result in a viewer.
+
+    Arguments:
+      template_id -- id of the output template, string
+      parameters -- dictionary of form parameters
+      resolvers -- resolver of template names and data objects; may
+        also be a non-empty sequence of resolvers, in such a case the first
+        resolver not throwing 'ResolverError' when accessing the template
+        will be used
+      form -- current form; 'Form' instance or 'None'
+      language -- language code to pass to the exporter context
+
+    """
+    try:
+        formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
+                                           form=form, parameters=parameters,
+                                           language=language or pytis.util.current_language(),
+                                           translations=pytis.util.translation_path())
+    except pytis.output.AbortOutput:
+        return
+
+    def run_viewer(filename):
+        try:
+            pytis.form.launch_file(filename)
+        finally:
+            try:
+                os.remove(filename)
+            except OSError as e:
+                pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
+
+    output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
+    try:
+        formatter.printout(output_file)
+    except lcg.SubstitutionIterator.NotStartedError:
+        # TODO: Shouldn't this rather be handled in printout()?
+        tbstring = pytis.util.format_traceback()
+        pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Invalid use of identifier `data' in print specification.\n"
+                                "Maybe use `current_row' instead?"))
+        return
+    except UserBreakException:
+        return
+    finally:
+        output_file.close()
+    threading.Thread(target=run_viewer, args=(output_file.name,)).start()
+    formatter.cleanup()

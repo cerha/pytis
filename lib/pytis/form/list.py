@@ -3050,63 +3050,39 @@ class BrowseForm(FoldableForm):
     def _cmd_print(self, print_spec_path=None, language=None, handler=None,
                    context=ActionContext.RECORD):
         log(EVENT, 'Print form invocation:', print_spec_path)
-        name = self._name
         if not print_spec_path:
             try:
-                spec = self._resolver.get(name, 'print_spec')
+                prints = self._resolver.get(self._name, 'print_spec')
             except ResolverError:
-                spec = None
-            if spec:
-                print_spec_path = spec[0].name()
-                language = spec[0].language()
-                handler = spec[0].handler()
-                context = spec[0].context()
+                prints = ()
+            if prints:
+                # Let's use the first print action as default if print_spec_path not given.
+                spec = prints[0]
+                print_spec_path = spec.name()
+                handler = spec.handler()
+                context = spec.context()
+                language = spec.language()
             else:
-                print_spec_path = name
+                print_spec_path = self._name
         if handler:
             args = self._context_action_args(Action('x', '-', context=context))
             return handler(*args)
-        parameters = self._formatter_parameters()
-        parameters.update({self._PrintResolver.P_NAME: name})
-        print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
-        print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
-        wiki_template_resolver = self._PlainPrintResolver(pytis.config.print_spec_dir,
-                                                          extension='text')
-        db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
-        resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
-        try:
-            formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, print_spec_path,
-                                               form=self, parameters=parameters,
-                                               language=language or pytis.util.current_language(),
-                                               translations=pytis.util.translation_path())
-        except pytis.output.AbortOutput:
-            return
+        else:
+            parameters = self._formatter_parameters()
+            parameters.update({self._PrintResolver.P_NAME: self._name})
 
-        def run_viewer(filename):
-            try:
-                pytis.form.launch_file(filename)
-            finally:
-                try:
-                    os.remove(filename)
-                except OSError as e:
-                    pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
+            print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
+            print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
+            wiki_template_resolver = self._PlainPrintResolver(pytis.config.print_spec_dir,
+                                                              extension='text')
+            db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
 
-        output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
-        try:
-            formatter.printout(output_file)
-        except lcg.SubstitutionIterator.NotStartedError:
-            # TODO: Shouldn't this rather be handled in printout()?
-            tbstring = pytis.util.format_traceback()
-            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
-            run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
-                                "Maybe use `current_row' instead?"))
-            return
-        except UserBreakException:
-            return
-        finally:
-            output_file.close()
-        threading.Thread(target=run_viewer, args=(output_file.name,)).start()
-        formatter.cleanup()
+            pytis.form.printout(print_spec_path, parameters,
+                                resolvers=(db_template_resolver,
+                                           wiki_template_resolver,
+                                           print_resolver),
+                                form=self,
+                                language=language)
 
 
 class SideBrowseForm(BrowseForm):
