@@ -3779,20 +3779,18 @@ def printout(template_id, parameters, resolvers, form=None, language=None):
             except OSError as e:
                 pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
 
-    output_file = tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False)
-    try:
-        formatter.printout(output_file)
-    except lcg.SubstitutionIterator.NotStartedError:
-        # TODO: Shouldn't this rather be handled in printout()?
-        tbstring = pytis.util.format_traceback()
-        pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Invalid use of identifier `data' in print specification.\n"
-                                "Maybe use `current_row' instead?"))
-        return
-    except UserBreakException:
-        return
-    finally:
-        output_file.close()
+    with tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False) as output_file:
+        try:
+            formatter.printout(output_file)
+        except lcg.SubstitutionIterator.NotStartedError:
+            # TODO: Shouldn't this rather be handled in printout()?
+            tbstring = pytis.util.format_traceback()
+            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+            pytis.form.run_dialog(pytis.form.Error,
+                                  _("Invalid use of identifier `data' in print specification.\n"
+                                    "Maybe use `current_row' instead?"))
+            return
+        except UserBreakException:
+            return
     threading.Thread(target=run_viewer, args=(output_file.name,)).start()
     formatter.cleanup()
