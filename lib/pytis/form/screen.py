@@ -56,8 +56,9 @@ import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
 import pytis.form
-import pytis.util
+import pytis.output
 import pytis.presentation
+import pytis.util
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception, UserBreakException
@@ -3748,41 +3749,13 @@ def launch_url(url):
         webbrowser.open(url)
 
 
-class _DefaultPrintResolver (pytis.output.OutputResolver):
-    """Default print resolver used internally by 'printout()'."""
-    P_NAME = 'P_NAME'
-
-    class _Spec(object):
-
-        def body(self, resolver):
-            return None
-
-        def doc_header(self, resolver):
-            return None
-
-        def doc_footer(self, resolver):
-            return None
-
-    def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
-        pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
-                                             **kwargs)
-        self._old = old
-
-    def _get_module(self, module_name):
-        if self._old:
-            module_name = os.path.join('output', module_name)
-        try:
-            result = pytis.output.OutputResolver._get_module(self, module_name)
-        except pytis.util.ResolverError:
-            result = self._Spec()
-        return result
-
 
 def printout(spec_name, template_id, parameters=None, resolvers=None, output_file=None,
              form=None, row=None, language=None, spec_kwargs=None):
     """Print given template to PDF and display the result in a viewer.
 
     Arguments:
+      spec_name -- name of the specification for print resolver
       template_id -- id of the output template, string
       parameters -- dictionary of form parameters
       resolvers -- resolver of template names and data objects; may
@@ -3791,12 +3764,18 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
         will be used
       output_file -- file to write output PDF data to, open file-like object; if
         'None' then show the output in an external PDF viewer
-      form -- current form; 'Form' instance or 'None'
+      form -- current form; 'Form' instance or None
+      row -- current row data for print resolver as 'pytis.data.Row' instance or None
       language -- language code to pass to the exporter context
       spec_kwargs -- dictionary of keyword arguments to pass to the print
         specification constructor
 
     """
+    if parameters is None:
+        parameters = {}
+    parameters[pytis.output.P_NAME] = spec_name
+    parameters[spec_name + '/' + pytis.output.P_ROW] = row
+
     try:
         formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
                                            form=form, parameters=parameters,

@@ -319,15 +319,15 @@ def cmd_run_any_form():
     return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
-def printdirect(resolver, spec, print_spec, row, output_file=None,
+def printdirect(resolver, spec_name, template_id, row, output_file=None,
                 language=None, translations=(), spec_kwargs=None, **kwargs):
     """Print specification to an output file or show it in a PDF viewer.
 
     Arguments:
 
       resolver -- resolver for standard specification resolving
-      spec -- name of the specification for print resolver
-      print_spec -- name of the print specification for 'pytis.output.Formatter'
+      spec_name -- name of the specification for print resolver
+      template_id -- name of the print specification for 'pytis.output.Formatter'
       row -- row data for print resolver
       output_file -- file to write output PDF data to, open file-like object; if
         'None' then show the output in an external PDF viewer
@@ -372,16 +372,12 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
                 result = self._Spec()
             return result
 
-    parameters = {
-        (spec + '/' + pytis.output.P_ROW): row,
-        _PrintResolver.P_NAME: spec,
-    }
-    parameters.update(kwargs)
     print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
     print_resolver = _PrintResolver(print_file_resolver, resolver)
     resolvers = (print_resolver,)
-    pytis.form.printout(print_spec, parameters, resolvers, output_file=output_file,
-                        language=language, spec_kwargs=spec_kwargs)
+    pytis.form.printout(spec_name, template_id, parameters=kwargs, resolvers=resolvers,
+                        output_file=output_file, row=row, language=language,
+                        spec_kwargs=spec_kwargs)
 
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,

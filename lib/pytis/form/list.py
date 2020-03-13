@@ -2883,7 +2883,6 @@ class BrowseForm(FoldableForm):
                 (prefix + pytis.output.P_ARGUMENTS): self._arguments,
                 (prefix + pytis.output.P_SORTING): self._lf_sorting,
                 (prefix + pytis.output.P_KEY): self._current_key(),
-                (prefix + pytis.output.P_ROW): copy.copy(self._table.row(self._current_cell()[0])),
                 (prefix + pytis.output.P_DATA): copy.copy(self._data)}
 
     def _action_mitems(self, spec):
@@ -3065,19 +3064,18 @@ class BrowseForm(FoldableForm):
             args = self._context_action_args(Action('x', '-', context=spec.context()))
             return handler(*args)
         else:
-            parameters = self._formatter_parameters()
-            parameters.update({self._PrintResolver.P_NAME: self._name})
-
             print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
             print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
             wiki_template_resolver = self._PlainPrintResolver(pytis.config.print_spec_dir,
                                                               extension='text')
             db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
 
-            pytis.form.printout(spec.name(), parameters,
+            pytis.form.printout(self._name, spec.name(),
+                                parameters=self._formatter_parameters(),
                                 resolvers=(db_template_resolver,
                                            wiki_template_resolver,
                                            print_resolver),
+                                row=copy.copy(self._table.row(self._current_cell()[0])),
                                 form=self,
                                 language=spec.language())
 
