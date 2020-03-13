@@ -3748,7 +3748,38 @@ def launch_url(url):
         webbrowser.open(url)
 
 
-def printout(template_id, parameters, resolvers, form=None, language=None):
+class _DefaultPrintResolver (pytis.output.OutputResolver):
+    """Default print resolver used internally by 'printout()'."""
+    P_NAME = 'P_NAME'
+
+    class _Spec(object):
+
+        def body(self, resolver):
+            return None
+
+        def doc_header(self, resolver):
+            return None
+
+        def doc_footer(self, resolver):
+            return None
+
+    def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
+        pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
+                                             **kwargs)
+        self._old = old
+
+    def _get_module(self, module_name):
+        if self._old:
+            module_name = os.path.join('output', module_name)
+        try:
+            result = pytis.output.OutputResolver._get_module(self, module_name)
+        except pytis.util.ResolverError:
+            result = self._Spec()
+        return result
+
+
+def printout(spec_name, template_id, parameters=None, resolvers=None, output_file=None,
+             form=None, row=None, language=None, spec_kwargs=None):
     """Print given template to PDF and display the result in a viewer.
 
     Arguments:
@@ -3758,13 +3789,18 @@ def printout(template_id, parameters, resolvers, form=None, language=None):
         also be a non-empty sequence of resolvers, in such a case the first
         resolver not throwing 'ResolverError' when accessing the template
         will be used
+      output_file -- file to write output PDF data to, open file-like object; if
+        'None' then show the output in an external PDF viewer
       form -- current form; 'Form' instance or 'None'
       language -- language code to pass to the exporter context
+      spec_kwargs -- dictionary of keyword arguments to pass to the print
+        specification constructor
 
     """
     try:
         formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
                                            form=form, parameters=parameters,
+                                           spec_kwargs=spec_kwargs,
                                            language=language or pytis.util.current_language(),
                                            translations=pytis.util.translation_path())
     except pytis.output.AbortOutput:
@@ -3779,18 +3815,24 @@ def printout(template_id, parameters, resolvers, form=None, language=None):
             except OSError as e:
                 pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
 
-    with tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False) as output_file:
+    def do_printout(outfile):
         try:
-            formatter.printout(output_file)
+            formatter.printout(outfile)
         except lcg.SubstitutionIterator.NotStartedError:
-            # TODO: Shouldn't this rather be handled in printout()?
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
             pytis.form.run_dialog(pytis.form.Error,
                                   _("Invalid use of identifier `data' in print specification.\n"
                                     "Maybe use `current_row' instead?"))
-            return
-        except UserBreakException:
-            return
-    threading.Thread(target=run_viewer, args=(output_file.name,)).start()
-    formatter.cleanup()
+            raise UserBreakException()
+
+    try:
+        if output_file:
+            do_printout(output_file)
+        else:
+            with tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False) as f:
+                do_printout(f)
+            threading.Thread(target=run_viewer, args=(f.name,)).start()
+        formatter.cleanup()
+    except UserBreakException:
+        pass

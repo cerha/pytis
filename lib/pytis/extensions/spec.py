@@ -372,33 +372,16 @@ def printdirect(resolver, spec, print_spec, row, output_file=None,
                 result = self._Spec()
             return result
 
-    log(EVENT, 'Vyvolání tiskového formuláře')
-    P = _PrintResolver
-    parameters = {(spec + '/' + pytis.output.P_ROW): row}
-    parameters.update({P.P_NAME: spec})
+    parameters = {
+        (spec + '/' + pytis.output.P_ROW): row,
+        _PrintResolver.P_NAME: spec,
+    }
     parameters.update(kwargs)
     print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
-    print_resolver = P(print_file_resolver, resolver)
+    print_resolver = _PrintResolver(print_file_resolver, resolver)
     resolvers = (print_resolver,)
-    try:
-        formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, print_spec,
-                                           parameters=parameters, language=language,
-                                           translations=translations, spec_kwargs=spec_kwargs)
-    except pytis.output.AbortOutput:
-        return False
-    if output_file:
-        formatter.printout(output_file)
-    else:
-        with tempfile.NamedTemporaryFile(prefix='tmppytis', suffix='.pdf') as output_file:
-            formatter.printout(output_file)
-            output_file.flush()
-            os.fsync(output_file)
-            pytis.form.launch_file(output_file.name)
-            # Give the viewer some time to read the file as it will be
-            # removed when the "with" statement is left.
-            time.sleep(1)
-    formatter.cleanup()
-    return True
+    pytis.form.printout(print_spec, parameters, resolvers, output_file=output_file,
+                        language=language, spec_kwargs=spec_kwargs)
 
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
