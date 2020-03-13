@@ -321,40 +321,20 @@ def cmd_run_any_form():
 
 def printdirect(resolver, spec_name, template_id, row, output_file=None,
                 language=None, translations=(), spec_kwargs=None, **kwargs):
-    """Print specification to an output file or show it in a PDF viewer.
-
-    Arguments:
-
-      resolver -- resolver for standard specification resolving
-      spec_name -- name of the specification for print resolver
-      template_id -- name of the print specification for 'pytis.output.Formatter'
-      row -- row data for print resolver
-      output_file -- file to write output PDF data to, open file-like object; if
-        'None' then show the output in an external PDF viewer
-      language -- language code to pass to the exporter context
-      translations -- translations to pass to PDFExporter
-      spec_kwargs -- dictionary of keyword arguments to pass to the print
-        specification constructor
-      kwargs -- passed to the print resolver as parameters for use in the print
-        procedure
-
-    Return True if the document was printed or displayed; return False if the
-    action was aborted.
-
-    """
+    """Deprecated.  Use 'pytis.form.printout()' instead."""
     pytis.form.printout(spec_name, template_id, parameters=kwargs,
                         output_file=output_file, row=row, language=language,
                         spec_kwargs=spec_kwargs)
 
 
-def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
+def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
     """Tiskni specifikaci a odešli jako přílohu e-mailu.
 
     Argumenty:
 
-      spec -- název specifikace pro PrintResolver
-      print_spec -- název tiskové specifikace pro pytis.output.Formatter
+      spec_name -- název specifikace pro PrintResolver
+      template_id -- název tiskové specifikace pro pytis.output.Formatter
       row -- řádek s daty pro PrintResolver
       to -- adresát
       from_ -- adresa odesílatele
@@ -367,7 +347,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
     """
     assert filename, filename
     output = io.BytesIO()
-    printdirect(resolver, spec, print_spec, row, output_file=output, **kwargs)
+    pytis.form.printout(spec_name, template_id, output_file=output, parameters=kwargs, row=row)
     document = output.getvalue()
     if document:
         mail = ComplexEmail(to, from_, subject, msg, charset=charset)
