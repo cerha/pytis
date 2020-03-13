@@ -3786,7 +3786,9 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
     Arguments:
       spec_name -- name of the specification for print resolver
       template_id -- id of the output template, string
-      parameters -- dictionary of form parameters
+      parameters -- dictionary of extra user-defined parameters passed
+        to the print specification (available in the print specification
+        through self._parameter(key))
       resolvers -- resolver of template names and data objects; may
         also be a non-empty sequence of resolvers, in such a case the first
         resolver not throwing 'ResolverError' when accessing the template
@@ -3797,7 +3799,8 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
       row -- current row data for print resolver as 'pytis.data.Row' instance or None
       language -- language code to pass to the exporter context
       spec_kwargs -- dictionary of keyword arguments to pass to the print
-        specification constructor
+        specification constructor (deprecated - use 'parameters' to pass extra
+        parameters).
 
     """
     if parameters is None:
