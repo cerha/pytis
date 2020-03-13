@@ -342,40 +342,7 @@ def printdirect(resolver, spec_name, template_id, row, output_file=None,
     action was aborted.
 
     """
-    import pytis.output
-
-    class _PrintResolver (pytis.output.OutputResolver):
-        P_NAME = 'P_NAME'
-
-        class _Spec(object):
-
-            def body(self, resolver):
-                return None
-
-            def doc_header(self, resolver):
-                return None
-
-            def doc_footer(self, resolver):
-                return None
-
-        def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
-            pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
-                                                 **kwargs)
-            self._old = old
-
-        def _get_module(self, module_name):
-            if self._old:
-                module_name = os.path.join('output', module_name)
-            try:
-                result = pytis.output.OutputResolver._get_module(self, module_name)
-            except ResolverError:
-                result = self._Spec()
-            return result
-
-    print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
-    print_resolver = _PrintResolver(print_file_resolver, resolver)
-    resolvers = (print_resolver,)
-    pytis.form.printout(spec_name, template_id, parameters=kwargs, resolvers=resolvers,
+    pytis.form.printout(spec_name, template_id, parameters=kwargs,
                         output_file=output_file, row=row, language=language,
                         spec_kwargs=spec_kwargs)
 

@@ -3749,6 +3749,35 @@ def launch_url(url):
         webbrowser.open(url)
 
 
+class _DefaultPrintResolver (pytis.output.OutputResolver):
+    """Default print resolver used internally by 'printout()'."""
+    P_NAME = 'P_NAME'
+
+    class _Spec(object):
+
+        def body(self, resolver):
+            return None
+
+        def doc_header(self, resolver):
+            return None
+
+        def doc_footer(self, resolver):
+            return None
+
+    def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
+        pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
+                                             **kwargs)
+        self._old = old
+
+    def _get_module(self, module_name):
+        if self._old:
+            module_name = os.path.join('output', module_name)
+        try:
+            result = pytis.output.OutputResolver._get_module(self, module_name)
+        except pytis.util.ResolverError:
+            result = self._Spec()
+        return result
+
 
 def printout(spec_name, template_id, parameters=None, resolvers=None, output_file=None,
              form=None, row=None, language=None, spec_kwargs=None):
@@ -3775,7 +3804,11 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
         parameters = {}
     parameters[pytis.output.P_NAME] = spec_name
     parameters[spec_name + '/' + pytis.output.P_ROW] = row
-
+    if resolvers is None:
+        resolvers = (
+            _DefaultPrintResolver(pytis.output.FileResolver(pytis.config.print_spec_dir),
+                                  pytis.config.resolver),
+        )
     try:
         formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
                                            form=form, parameters=parameters,
