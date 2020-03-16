@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -429,11 +429,16 @@ class HelpGenerator(object):
                      [(self._spec_link(b.name(), b.title()),
                        self._description('binding', spec_name, b.id(), b.descr()))
                       for b in view_spec.bindings() if b.name()]),
+                    (_("Access Rights"), lcg.dl,
+                     self._access_rights(spec_name)),
                 ) if content
             ],
             resources=self._spec_help_resources(spec_name)
         )
         return view_spec.title(), content
+
+    def _access_rights(self, view_spec):
+        return None
 
     def _root(self):
         if self._root_node:
@@ -540,6 +545,22 @@ class SpecHelpGenerator(HelpGenerator):
             lcg.p(_("Runs the command %s with the following arguments:", command.id())),
             lcg.fieldset([(k, unistr(v)) for k, v in args.items()])
         ))
+
+    def _access_rights(self, spec_name):
+        access_rights = pytis.config.resolver.get(spec_name, 'access_spec')
+        if access_rights:
+            return [(label, ', '.join(groups)) for label, groups in
+                    [(label, access_rights.permitted_groups(permission, None))
+                     for label, permission in ((_("View"), pd.Permission.VIEW),
+                                               (_("Insert"), pd.Permission.INSERT),
+                                               (_("Update"), pd.Permission.UPDATE),
+                                               (_("Delete"), pd.Permission.DELETE),
+                                               (_("Call"), pd.Permission.CALL),
+                                               (_("Export"), pd.Permission.EXPORT),
+                                               (_("Print"), pd.Permission.PRINT))]
+                    if groups]
+        else:
+            return None
 
 
 class DmpHelpGenerator(HelpGenerator):
