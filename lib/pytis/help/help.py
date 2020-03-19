@@ -430,14 +430,14 @@ class HelpGenerator(object):
                        self._description('binding', spec_name, b.id(), b.descr()))
                       for b in view_spec.bindings() if b.name()]),
                     (_("Access Rights"), lcg.dl,
-                     self._access_rights(spec_name)),
+                     self._access_rights(spec_name, view_spec)),
                 ) if content
             ],
             resources=self._spec_help_resources(spec_name)
         )
         return view_spec.title(), content
 
-    def _access_rights(self, view_spec):
+    def _access_rights(self, spec_name, view_spec):
         return None
 
     def _root(self):
@@ -546,21 +546,33 @@ class SpecHelpGenerator(HelpGenerator):
             lcg.fieldset([(k, unistr(v)) for k, v in args.items()])
         ))
 
-    def _access_rights(self, spec_name):
+    def _access_rights(self, spec_name, view_spec):
         access_rights = pytis.config.resolver.get(spec_name, 'access_spec')
-        if access_rights:
-            return [(label, ', '.join(groups)) for label, groups in
-                    [(label, access_rights.permitted_groups(permission, None))
-                     for label, permission in ((_("View"), pd.Permission.VIEW),
-                                               (_("Insert"), pd.Permission.INSERT),
-                                               (_("Update"), pd.Permission.UPDATE),
-                                               (_("Delete"), pd.Permission.DELETE),
-                                               (_("Call"), pd.Permission.CALL),
-                                               (_("Export"), pd.Permission.EXPORT),
-                                               (_("Print"), pd.Permission.PRINT))]
-                    if groups]
-        else:
+        if not access_rights:
             return None
+        permissions = (
+            (_("View"), pd.Permission.VIEW),
+            (_("Insert"), pd.Permission.INSERT),
+            (_("Update"), pd.Permission.UPDATE),
+            (_("Delete"), pd.Permission.DELETE),
+            (_("Call"), pd.Permission.CALL),
+            (_("Export"), pd.Permission.EXPORT),
+            (_("Print"), pd.Permission.PRINT),
+        )
+        result = []
+        for label, permission in permissions:
+            groups = tuple(access_rights.permitted_groups(permission, None))
+            if groups:
+                result.append((label, ', '.join(groups)))
+            field_access = {}
+            for field in view_spec.fields():
+                field_groups = tuple(access_rights.permitted_groups(permission, field.id()))
+                if field_groups != groups:
+                    field_access.setdefault(field_groups, []).append(field)
+            for groups, fields in field_access.items():
+                result.append(((label, ' (', ', '.join(f.label() for f in fields), ')'),
+                               ', '.join(groups)))
+        return result
 
 
 class DmpHelpGenerator(HelpGenerator):
