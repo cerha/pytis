@@ -423,7 +423,9 @@ class HelpGenerator(object):
                      [(p.title(), self._description('profile', spec_name, p.id(), p.descr()))
                       for p in view_spec.profiles().unnest()]),
                     (_("Context menu actions"), lcg.dl,
-                     [(a.title(), self._description('action', spec_name, a.id(), a.descr()))
+                     [(a.title(), (self._description('action', spec_name, a.id(), a.descr()),
+                                   (' ', _("Access Rights"), ': ', ', '.join(a.access_groups()))
+                                   if a.access_groups() else ''))
                       for a in view_spec.actions(unnest=True)]),
                     (_("Side forms"), lcg.dl,
                      [(self._spec_link(b.name(), b.title()),
