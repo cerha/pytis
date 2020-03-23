@@ -30,7 +30,7 @@ from .exception import (  # noqa: F401
 
 from .resolver import (  # noqa: F401
     ResolverModuleError, ResolverFileError, ResolverSpecError, Resolver,
-    FileResolver, PlainFileResolver, DatabaseResolver, OutputResolver,
+    FileResolver, DatabaseResolver, OutputResolver,
 )
 
 from .markup import (  # noqa: F401

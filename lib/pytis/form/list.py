@@ -61,7 +61,7 @@ from pytis.util import (
 )
 
 from pytis.output import (
-    OutputResolver, PlainFileResolver, DatabaseResolver
+    OutputResolver, DatabaseResolver
 )
 
 import pytis.remote
@@ -2723,14 +2723,6 @@ class BrowseForm(FoldableForm):
                 x = self._Spec(self)
             return x
 
-    class _PlainPrintResolver(PlainFileResolver):
-
-        def get(self, *args, **kwargs):
-            result = PlainFileResolver.get(self, *args, **kwargs)
-            if result and isinstance(result, basestring):
-                result = pytis.output.StructuredText(result)
-            return result
-
     class _DBPrintResolver(DatabaseResolver):
 
         def __init__(self, db_table):
@@ -3066,15 +3058,11 @@ class BrowseForm(FoldableForm):
         else:
             print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
             print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
-            wiki_template_resolver = self._PlainPrintResolver(pytis.config.print_spec_dir,
-                                                              extension='text')
             db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
 
             pytis.form.printout(self._name, spec.name(),
                                 parameters=self._formatter_parameters(),
-                                resolvers=(db_template_resolver,
-                                           wiki_template_resolver,
-                                           print_resolver),
+                                resolvers=(db_template_resolver, print_resolver),
                                 row=copy.copy(self._table.row(self._current_cell()[0])),
                                 form=self,
                                 language=spec.language())

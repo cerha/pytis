@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -266,63 +266,6 @@ class FileResolver(Resolver):
         if len(name_list) > 1:
             module = self._get_module('/'.join(name_list[1:]), path=module.__path__)
         return module
-
-
-class PlainFileResolver(Resolver):
-    """Resolver returning content of a file.
-
-    It returns the content of the file named MODULE-SPEC.EXTENSION, where
-    MODULE is the requested module name, SPEC name of the requested
-    specification and EXTENSION contingent extension given in the constructor.
-    The file content is assumed to be text-like and in UTF-8 encoding.
-
-    If the resulting file can't be read, 'None' is returned (so you can safely
-    test for presence of the resolved file).
-
-    Files are looked for in the directory or directories given in the
-    resolver's constructor.
-
-    """
-
-    def __init__(self, path, extension=None):
-        """
-        Arguments:
-
-          path -- path to the specification files; string or sequence of strings
-          extension -- if not 'None', it is a string to apppend to the
-            constructed final file name together with a preceding dot
-
-        """
-        super(PlainFileResolver, self).__init__()
-        self._path = xlist(path)
-        self._extension = extension
-
-    def _get_module(self, name):
-        return [os.path.join(path, name) for path in self._path]
-
-    def _get_object(self, key):
-        module_name, spec_name = key
-        modules = self._module_cache[module_name]
-        for module in modules:
-            file_name = module + '-' + spec_name
-            if self._extension:
-                file_name = file_name + '.' + self._extension
-            if not os.access(file_name, os.F_OK):
-                continue
-            try:
-                obj = codecs.open(file_name, 'r', 'utf-8').read()
-                break
-            except Exception:
-                raise ResolverSpecError(module_name, spec_name)
-        else:
-            raise ResolverSpecError(module_name, spec_name)
-        return obj
-
-    def _get_spec(self, key):
-        return self._get_object(key[:2])
-
-    def _get_instance(self, key):
-        return self._get_object(key[:2])
 
 
 class DatabaseResolver(Resolver):
