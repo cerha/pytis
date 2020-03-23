@@ -388,18 +388,3 @@ class OutputResolver(Resolver):
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 
     p = output_parameter
-
-    def add_output_parameters(self, parameters):
-        """Add parameters to the output parameters of the resolver.
-
-        Arguments:
-
-          parameters -- dictionary of output parameters to be added, keys must
-            be non-empty strings, values may be arbitrary objects
-
-        """
-        p = self._parameters
-        for k, v in parameters.items():
-            if k in p:
-                raise Exception("Key already present in output parameters", k)
-            p[k] = v
