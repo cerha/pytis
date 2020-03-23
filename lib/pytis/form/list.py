@@ -2683,7 +2683,6 @@ class BrowseForm(FoldableForm):
     """Formulář pro prohlížení dat s možností editace."""
 
     class _PrintResolver (OutputResolver):
-        P_NAME = 'P_NAME'
 
         class _Spec(object):
             # This class has to emulate a specification module as well as a
@@ -2694,7 +2693,7 @@ class BrowseForm(FoldableForm):
 
             def body(self, resolver=None, variant=None, **kwargs):
                 if pytis.config.fallback_table_print:
-                    table_id = self._resolver.output_parameter(BrowseForm._PrintResolver.P_NAME)
+                    table_id = self._resolver.output_parameter(pytis.output.P_NAME)
                     view, data = form_view_data(self._resolver, table_id)
                     result = pytis.output.data_table(view, data)
                     return result

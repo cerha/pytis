@@ -3751,7 +3751,6 @@ def launch_url(url):
 
 class _DefaultPrintResolver (pytis.output.OutputResolver):
     """Default print resolver used internally by 'printout()'."""
-    P_NAME = 'P_NAME'
 
     class _Spec(object):
 
