@@ -319,14 +319,6 @@ def cmd_run_any_form():
     return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
-def printdirect(resolver, spec_name, template_id, row, output_file=None,
-                language=None, translations=(), spec_kwargs=None, **kwargs):
-    """Deprecated.  Use 'pytis.form.printout()' instead."""
-    pytis.form.printout(spec_name, template_id, parameters=kwargs,
-                        output_file=output_file, row=row, language=language,
-                        spec_kwargs=spec_kwargs)
-
-
 def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
     """Tiskni specifikaci a odešli jako přílohu e-mailu.
