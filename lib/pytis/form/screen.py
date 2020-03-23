@@ -3764,14 +3764,7 @@ class _DefaultPrintResolver (pytis.output.OutputResolver):
         def doc_footer(self, resolver):
             return None
 
-    def __init__(self, print_resolver, specification_resolver, old=False, **kwargs):
-        pytis.output.OutputResolver.__init__(self, print_resolver, specification_resolver,
-                                             **kwargs)
-        self._old = old
-
     def _get_module(self, module_name):
-        if self._old:
-            module_name = os.path.join('output', module_name)
         try:
             result = pytis.output.OutputResolver._get_module(self, module_name)
         except pytis.util.ResolverError:
