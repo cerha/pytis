@@ -330,9 +330,9 @@ class DatabaseResolver(Resolver):
 class OutputResolver(Resolver):
     """Resolver předávaný specifikacím výstupu.
 
-    Tento resolver jednak poskytuje standardní specifikace, jednak tiskové specifikace a jednak
-    zpřístupňuje šablonám parametry, prostřednictvím metody
-    'output_parameter()' nebo jejího aliasu 'p()'.
+    Tento resolver jednak poskytuje standardní specifikace, jednak tiskové
+    specifikace a jednak zpřístupňuje šablonám parametry, prostřednictvím
+    metody 'output_parameter()'.
 
     """
     OUTPUT_PARAMETERS = 'output-parameters'
@@ -386,5 +386,3 @@ class OutputResolver(Resolver):
         if isinstance(name, (tuple, list)):
             name = '/'.join(name)
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
-
-    p = output_parameter

@@ -2694,7 +2694,7 @@ class BrowseForm(FoldableForm):
 
             def body(self, resolver=None, variant=None, **kwargs):
                 if pytis.config.fallback_table_print:
-                    table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
+                    table_id = self._resolver.output_parameter(BrowseForm._PrintResolver.P_NAME)
                     view, data = form_view_data(self._resolver, table_id)
                     result = pytis.output.data_table(view, data)
                     return result
