@@ -328,61 +328,28 @@ class DatabaseResolver(Resolver):
 
 
 class OutputResolver(Resolver):
-    """Resolver předávaný specifikacím výstupu.
+    """Resolver passed to print output specifications.
 
-    Tento resolver jednak poskytuje standardní specifikace, jednak tiskové
-    specifikace a jednak zpřístupňuje šablonám parametry, prostřednictvím
-    metody 'output_parameter()'.
+    Resolves both standard specifications and print specifications.
 
     """
-    OUTPUT_PARAMETERS = 'output-parameters'
-    """Jméno modulu parametrů výstupu."""
-
-    def __init__(self, print_resolver, specification_resolver, parameters={}):
+    def __init__(self, print_resolver, specification_resolver):
         """
         Arguments:
 
           print_resolver -- instance 'pytis.output.FileResolver'
           specification_resolver -- instance 'pytis.util.Resolver'
-          parameters -- dictionary of output parameters, keys must be non-empty
-            strings, values may be arbitrary objects
 
         """
         super(OutputResolver, self).__init__()
-
-        class P(dict):
-
-            def __getattr__(self, name):
-                try:
-                    p = self[name]
-                except KeyError:
-                    raise AttributeError(name)
-                return lambda resolver: p
         self._print_resolver = print_resolver
         self._specification_resolver = specification_resolver
-        self._parameters = P(parameters)
 
     def _get_module(self, module_name):
-        if module_name == self.OUTPUT_PARAMETERS:
-            return self._parameters
-        else:
-            return self._print_resolver._get_module(module_name)
+        return self._print_resolver._get_module(module_name)
 
     def get(self, module_name, spec_name, **kwargs):
         try:
             return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
         except pytis.util.ResolverError:
             return self._specification_resolver.get(module_name, spec_name, **kwargs)
-
-    def output_parameter(self, name, **kwargs):
-        """Vrať hodnotu parametru výstupu 'name'.
-
-        Argumenty:
-
-          name -- identifikátor parametru, neprázdný string nebo tuple strings
-            dávajících po spojení jednoznačný string
-
-        """
-        if isinstance(name, (tuple, list)):
-            name = '/'.join(name)
-        return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
