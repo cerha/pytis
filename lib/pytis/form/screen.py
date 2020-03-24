@@ -3749,29 +3749,68 @@ def launch_url(url):
         webbrowser.open(url)
 
 
-class _DefaultPrintResolver (pytis.output.OutputResolver):
+class _PrintResolver(pytis.output.OutputResolver):
     """Default print resolver used internally by 'printout()'."""
 
     class _Spec(object):
+        # This class has to emulate a specification module as well as a
+        # (new style) specification class.
 
-        def body(self, resolver):
+        def body(self, resolver=None, **kwargs):
+            pytis.form.run_dialog(pytis.form.Error, _("Print specification not found!"))
+
+        def doc_header(self, resolver=None, **kwargs):
             return None
 
-        def doc_header(self, resolver):
+        def doc_footer(self, resolver=None, **kwargs):
             return None
 
-        def doc_footer(self, resolver):
-            return None
-
-    def _get_module(self, module_name):
+    def _get_module(self, name):
+        # Supply a default specification module (old style spec).
         try:
-            result = pytis.output.OutputResolver._get_module(self, module_name)
+            return super(_PrintResolver, self)._get_module(name)
         except pytis.util.ResolverError:
-            result = self._Spec()
+            return self._Spec()
+
+    def _get_instance(self, key):
+        # Supply a default specification class (new style spec).
+        try:
+            return super(_PrintResolver, self)._get_instance(key)
+        except pytis.util.ResolverError:
+            return self._Spec()
+
+
+class _DBPrintResolver(pytis.output.DatabaseResolver):
+
+    def __init__(self, db_table):
+        pytis.output.DatabaseResolver.__init__(self, db_table,
+                                               ('template', 'rowtemplate', 'header',
+                                                'first_page_header', 'footer', 'style',))
+
+    def get(self, module_name, spec_name, **kwargs):
+        specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
+        plain_specs = ('style',)
+        try:
+            result_index = (specs + plain_specs).index(spec_name)
+        except ValueError:
+            raise pytis.util.ResolverError(module_name, spec_name)
+        module_parts = module_name.split('/')
+        if module_parts[0] == 'output':
+            del module_parts[0]
+        if len(module_parts) > 1:
+            module_name = '/'.join(module_parts[:-1])
+            last_spec_name = module_parts[-1]
+        else:
+            module_name = '/'.join(module_parts)
+            last_spec_name = ''
+        result = pytis.output.DatabaseResolver.get(self, module_name, last_spec_name,
+                                                   **kwargs)[result_index]
+        if result and isinstance(result, basestring) and spec_name in specs:
+            result = pytis.output.StructuredText(result)
         return result
 
 
-def printout(spec_name, template_id, parameters=None, resolvers=None, output_file=None,
+def printout(spec_name, template_id, parameters=None, output_file=None,
              form=None, row=None, language=None, spec_kwargs=None):
     """Print given template to PDF and display the result in a viewer.
 
@@ -3781,10 +3820,6 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
       parameters -- dictionary of extra user-defined parameters passed
         to the print specification (available in the print specification
         through self._parameter(key))
-      resolvers -- resolver of template names and data objects; may
-        also be a non-empty sequence of resolvers, in such a case the first
-        resolver not throwing 'ResolverError' when accessing the template
-        will be used
       output_file -- file to write output PDF data to, open file-like object; if
         'None' then show the output in an external PDF viewer
       form -- current form; 'Form' instance or None
@@ -3799,11 +3834,11 @@ def printout(spec_name, template_id, parameters=None, resolvers=None, output_fil
         parameters = {}
     parameters[pytis.output.P_NAME] = spec_name
     parameters[spec_name + '/' + pytis.output.P_ROW] = row
-    if resolvers is None:
-        resolvers = (
-            _DefaultPrintResolver(pytis.output.FileResolver(pytis.config.print_spec_dir),
-                                  pytis.config.resolver),
-        )
+    resolvers = (
+        _DBPrintResolver('ev_pytis_user_output_templates'),
+        _PrintResolver(pytis.output.FileResolver(pytis.config.print_spec_dir),
+                       pytis.config.resolver),
+    )
     try:
         formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
                                            form=form, parameters=parameters,

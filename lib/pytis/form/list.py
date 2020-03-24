@@ -60,10 +60,6 @@ from pytis.util import (
     UNDEFINED, find, form_view_data, log,
 )
 
-from pytis.output import (
-    OutputResolver, DatabaseResolver
-)
-
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
@@ -2681,70 +2677,6 @@ class SelectRowsForm(CodebookForm):
 
 class BrowseForm(FoldableForm):
     """Formulář pro prohlížení dat s možností editace."""
-
-    class _PrintResolver (OutputResolver):
-
-        class _Spec(object):
-            # This class has to emulate a specification module as well as a
-            # (new style) specification class.
-
-            def __init__(self, resolver):
-                self._resolver = resolver
-
-            def body(self, resolver=None, variant=None, **kwargs):
-                run_dialog(Error, _("Print specification not found!"))
-
-            def doc_header(self, resolver=None, variant=None, **kwargs):
-                return None
-
-            def doc_footer(self, resolver=None, variant=None, **kwargs):
-                return None
-
-        def _get_module(self, name):
-            # Supply a default specification module (old style spec).
-            try:
-                x = super(BrowseForm._PrintResolver, self)._get_module(name)
-            except ResolverError:
-                x = self._Spec(self)
-            return x
-
-        def _get_instance(self, key):
-            # Supply a default specification class (new style spec).
-            try:
-                x = super(BrowseForm._PrintResolver, self)._get_instance(key)
-            except ResolverError:
-                x = self._Spec(self)
-            return x
-
-    class _DBPrintResolver(DatabaseResolver):
-
-        def __init__(self, db_table):
-            DatabaseResolver.__init__(self, db_table,
-                                      ('template', 'rowtemplate', 'header',
-                                       'first_page_header', 'footer', 'style',))
-
-        def get(self, module_name, spec_name, **kwargs):
-            specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
-            plain_specs = ('style',)
-            try:
-                result_index = (specs + plain_specs).index(spec_name)
-            except ValueError:
-                raise ResolverError(module_name, spec_name)
-            module_parts = module_name.split('/')
-            if module_parts[0] == 'output':
-                del module_parts[0]
-            if len(module_parts) > 1:
-                module_name = '/'.join(module_parts[:-1])
-                last_spec_name = module_parts[-1]
-            else:
-                module_name = '/'.join(module_parts)
-                last_spec_name = ''
-            result = pytis.output.DatabaseResolver.get(self, module_name, last_spec_name,
-                                                       **kwargs)[result_index]
-            if result and isinstance(result, basestring) and spec_name in specs:
-                result = pytis.output.StructuredText(result)
-            return result
-
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
@@ -3049,13 +2981,8 @@ class BrowseForm(FoldableForm):
             args = self._context_action_args(Action('x', '-', context=spec.context()))
             return handler(*args)
         else:
-            print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
-            print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
-            db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
-
             pytis.form.printout(self._name, spec.name(),
                                 parameters=self._formatter_parameters(),
-                                resolvers=(db_template_resolver, print_resolver),
                                 row=copy.copy(self._table.row(self._current_cell()[0])),
                                 form=self,
                                 language=spec.language())
