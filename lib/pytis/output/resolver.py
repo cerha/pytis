@@ -290,20 +290,27 @@ class DatabaseResolver(Resolver):
 
     """
 
-    def __init__(self, table, result_columns=('data',)):
+    def __init__(self, table, columns=('data',), specs=('body',)):
         """
         Arguments:
 
           table -- name of the database table storing the resolved data
-          result_columns -- sequence of column names to include in the result
+          columns -- sequence of column names to include in the result
+          specs -- sequence of specification names in the order matching
+            the order of 'columns'.  Possible specification names are
+            'body', 'row', 'page_header', 'first_page_header', 'page_footer'
+            and 'style'.
+
 
         """
         super(DatabaseResolver, self).__init__()
         assert isinstance(table, basestring), table
-        assert isinstance(result_columns, (tuple, list)), result_columns
-        self._result_columns = result_columns
-        self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
+        assert isinstance(columns, (tuple, list)), columns
+        assert isinstance(specs, (tuple, list)), specs
+        self._columns = columns
+        self._data = pytis.data.dbtable(table, ('module', 'specification') + columns,
                                         pytis.config.dbconnection)
+        self._specs = specs
 
     def _get_module(self, name):
         return name
@@ -315,16 +322,33 @@ class DatabaseResolver(Resolver):
         rows = self._data.select_map(identity, condition=condition)
         if not rows:
             raise ResolverSpecError(module_name, spec_name)
-        obj = [rows[0][c].value() for c in self._result_columns]
-        if len(obj) == 1:
-            obj = obj[0]
-        return obj
+        return [rows[0][c].value() for c in self._columns]
 
     def _get_spec(self, key):
         return self._get_object(key[:2])
 
     def _get_instance(self, key):
         return self._get_object(key[:2])
+
+    def get(self, module_name, spec_name, **kwargs):
+        try:
+            result_index = self._specs.index(spec_name)
+        except ValueError:
+            raise pytis.util.ResolverError(module_name, spec_name)
+        module_parts = module_name.split('/')
+        if module_parts[0] == 'output':
+            del module_parts[0]
+        if len(module_parts) > 1:
+            module_name = '/'.join(module_parts[:-1])
+            last_spec_name = module_parts[-1]
+        else:
+            module_name = '/'.join(module_parts)
+            last_spec_name = ''
+        result = super(DatabaseResolver, self).get(module_name, last_spec_name,
+                                                   **kwargs)[result_index]
+        if result and isinstance(result, basestring) and spec_name != 'style':
+            result = pytis.output.StructuredText(result)
+        return result
 
 
 class OutputResolver(Resolver):

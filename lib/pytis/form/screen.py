@@ -3780,36 +3780,6 @@ class _PrintResolver(pytis.output.OutputResolver):
             return self._Spec()
 
 
-class _DBPrintResolver(pytis.output.DatabaseResolver):
-
-    def __init__(self, db_table):
-        pytis.output.DatabaseResolver.__init__(self, db_table,
-                                               ('template', 'rowtemplate', 'header',
-                                                'first_page_header', 'footer', 'style',))
-
-    def get(self, module_name, spec_name, **kwargs):
-        specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
-        plain_specs = ('style',)
-        try:
-            result_index = (specs + plain_specs).index(spec_name)
-        except ValueError:
-            raise pytis.util.ResolverError(module_name, spec_name)
-        module_parts = module_name.split('/')
-        if module_parts[0] == 'output':
-            del module_parts[0]
-        if len(module_parts) > 1:
-            module_name = '/'.join(module_parts[:-1])
-            last_spec_name = module_parts[-1]
-        else:
-            module_name = '/'.join(module_parts)
-            last_spec_name = ''
-        result = pytis.output.DatabaseResolver.get(self, module_name, last_spec_name,
-                                                   **kwargs)[result_index]
-        if result and isinstance(result, basestring) and spec_name in specs:
-            result = pytis.output.StructuredText(result)
-        return result
-
-
 def printout(spec_name, template_id, parameters=None, output_file=None,
              form=None, row=None, language=None, spec_kwargs=None):
     """Print given template to PDF and display the result in a viewer.
@@ -3835,7 +3805,11 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
     parameters[pytis.output.P_NAME] = spec_name
     parameters[spec_name + '/' + pytis.output.P_ROW] = row
     resolvers = (
-        _DBPrintResolver('ev_pytis_user_output_templates'),
+        pytis.output.DatabaseResolver('ev_pytis_user_output_templates',
+                                      ('template', 'rowtemplate', 'header',
+                                       'first_page_header', 'footer', 'style'),
+                                      ('body', 'row', 'page_header',
+                                       'first_page_header', 'page_footer', 'style')),
         _PrintResolver(pytis.config.print_spec_dir, pytis.config.resolver),
     )
     try:
