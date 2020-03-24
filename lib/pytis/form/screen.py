@@ -3836,8 +3836,7 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
     parameters[spec_name + '/' + pytis.output.P_ROW] = row
     resolvers = (
         _DBPrintResolver('ev_pytis_user_output_templates'),
-        _PrintResolver(pytis.output.FileResolver(pytis.config.print_spec_dir),
-                       pytis.config.resolver),
+        _PrintResolver(pytis.config.print_spec_dir, pytis.config.resolver),
     )
     try:
         formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,

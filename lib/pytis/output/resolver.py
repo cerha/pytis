@@ -333,16 +333,16 @@ class OutputResolver(Resolver):
     Resolves both standard specifications and print specifications.
 
     """
-    def __init__(self, print_resolver, specification_resolver):
+    def __init__(self, print_spec_dir, specification_resolver):
         """
         Arguments:
 
-          print_resolver -- instance 'pytis.output.FileResolver'
-          specification_resolver -- instance 'pytis.util.Resolver'
+          print_spec_dir -- print specification directory for 'pytis.output.FileResolver'.
+          specification_resolver -- instance 'pytis.util.Resolver'.
 
         """
         super(OutputResolver, self).__init__()
-        self._print_resolver = print_resolver
+        self._print_resolver = FileResolver(print_spec_dir)
         self._specification_resolver = specification_resolver
 
     def _get_module(self, module_name):

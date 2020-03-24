@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -217,8 +217,7 @@ class MenuChecker(object):
 
         """
         import pytis.output
-        print_file_resolver = pytis.output.FileResolver(pytis.config.print_spec_dir)
-        self._output_resolver = pytis.output.OutputResolver(print_file_resolver,
+        self._output_resolver = pytis.output.OutputResolver(pytis.config.print_spec_dir,
                                                             pytis.config.resolver)
         self._dbconn = pytis.config.dbconnection
         connection_data = pytis.config.dbconnection
