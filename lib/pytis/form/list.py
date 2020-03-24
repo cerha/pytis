@@ -2692,13 +2692,7 @@ class BrowseForm(FoldableForm):
                 self._resolver = resolver
 
             def body(self, resolver=None, variant=None, **kwargs):
-                if pytis.config.fallback_table_print:
-                    table_id = self._resolver.output_parameter(pytis.output.P_NAME)
-                    view, data = form_view_data(self._resolver, table_id)
-                    result = pytis.output.data_table(view, data)
-                    return result
-                else:
-                    run_dialog(Error, _("Print specification not found!"))
+                run_dialog(Error, _("Print specification not found!"))
 
             def doc_header(self, resolver=None, variant=None, **kwargs):
                 return None

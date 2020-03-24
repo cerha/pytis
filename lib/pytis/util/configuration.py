@@ -995,16 +995,6 @@ class Configuration(object):
         """
         _DEFAULT = None
 
-    class _Option_fallback_table_print(BooleanOption):
-        u"""Flag povolující výchozí tisk formuláře.
-
-        Flag určující, zda se má při tisku vytisknout prostá tabulka formuláře,
-        pokud není aplikovatelný žádný specifičtější tisk.  Není-li nastaveno,
-        nevytiskne se v takovém případě nic.
-
-        """
-        _DEFAULT = False
-
     class _Option_run_form_timeout(NumericOption):
         u"""Časový limit pro přerušení zdlouhavého otevírání formuláře.
 
