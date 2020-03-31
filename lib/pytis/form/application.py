@@ -157,6 +157,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             factory.create(connection_data=pytis.config.dbconnection)
         db_operation(test)
+
+        # Create DBParams instances for all SharedParams specifications.
+        self.param = self.NameSpace()
+        for item in self._specification.params():
+            setattr(self.param, item.name(), DBParams(item.spec_name(), item.condition()))
+
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
         # specifications.  It should be removed when all applications are updated.
@@ -287,10 +293,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _init(self):
         # Check RPC client version
         self._check_x2goclient()
-        # Create DBParams instances for all SharedParams specifications.
-        self.param = self.NameSpace()
-        for item in self._specification.params():
-            setattr(self.param, item.name(), DBParams(item.spec_name(), item.condition()))
         # Run application specific initialization.
         self._specification.init()
         if self._windows.empty():
