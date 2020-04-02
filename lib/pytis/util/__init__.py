@@ -32,7 +32,7 @@ from .util import (  # noqa: F401
     parse_lcg_text, lcg_to_html, html_diff, current_language,
     set_current_language, environment_language, translation_status,
     translation_path, translations, translate, on_windows, data_object,
-    less, less_equal
+    less, less_equal, run_as_script
 )
 
 from .caching import (  # noqa: F401

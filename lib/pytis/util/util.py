@@ -41,6 +41,7 @@ import functools
 import cgitb
 import copy
 import gc
+import getopt
 import inspect
 import operator
 import os
@@ -1684,3 +1685,60 @@ def translate(text):
 def on_windows():
     """Return True iff we are currently running on Windows."""
     return platform.system() == 'Windows'
+
+
+def run_as_script(function):
+    """Run given function as a script in Pytis application context.
+
+    Process command line options, initialize configuration, connect to the
+    database and run given function with positional arguments matching the
+    command line options which remain after processing all known pytis options.
+
+    Returns the value returned by the function.
+
+    The first line of function's docstring is used in the usage information
+    page when --help is passed or if invalid command line options are found.
+
+    """
+    def usage(msg=None):
+        descr = function.__doc__.splitlines()[0]
+        sys.stderr.write("%s\nUsage: %s [options] %s\n%s\n" % (
+            descr,
+            os.path.split(sys.argv[0])[-1],
+            ' '.join(argument_names(function)),
+            "Options are Pytis command line options, such as --config or --dbhost and --dbname."
+        ))
+        if msg:
+            sys.stderr.write(msg)
+            sys.stderr.write('\n')
+        sys.exit(1)
+
+    import pytis
+    import pytis.data
+    if '--help' in sys.argv:
+        usage()
+    try:
+        pytis.config.add_command_line_options(sys.argv)
+    except getopt.GetoptError as e:
+        usage(e.msg)
+    args = sys.argv[1:]
+    if len(args) != len(argument_names(function)):
+        usage()
+
+    # Disable pytis logging and notification thread (may cause troubles when creating data objects).
+    pytis.config.dblisten = False
+    # Disable pytis logging of data operations etc.
+    pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                                pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    while True:
+        try:
+            return function(*args)
+        except pytis.data.DBLoginException as e:
+            if pytis.config.dbconnection.password() is None:
+                import getpass
+                login = pytis.config.dbuser
+                password = getpass.getpass("Enter database password for %s: " % login)
+                pytis.config.dbconnection.update_login_data(user=login, password=password)
+            else:
+                sys.stderr.write(e.message())
+                sys.exit(1)
