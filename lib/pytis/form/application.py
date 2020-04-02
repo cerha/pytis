@@ -1334,29 +1334,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
-    def custom_command(self, name):
-        """Return the custom application command referred by 'name' as a pair (CMD, ARGS).
-
-        The current application specification must define a method named 'cmd_'
-        + name, which returns the command and its arguments as a tuple of two
-        items -- (CMD, ARGS), where CMD is a 'pytis.form.Command' instance and
-        ARGS is a dictionaty of its arguments.  This pair is then returned as
-        the result of this method.  None is returned if no such command is
-        defined by the current application.
-
-        """
-        try:
-            method = getattr(self._specification, 'cmd_' + name)
-        except AttributeError:
-            try:
-                return pytis.config.resolver.get('app_commands', name)
-            except ResolverError:
-                return None
-        command, args = method()
-        assert isinstance(command, pytis.form.Command), command
-        assert isinstance(args, dict), args
-        return command, args
-
     def _check_x2goclient(self):
         if pytis.remote.client_available():
             version_template = '%Y-%m-%d %H:%M'
@@ -2347,10 +2324,6 @@ def block_yield(block=False):
     """
     global _yield_blocked
     _yield_blocked = block
-
-
-def custom_command(name):
-    return _application.custom_command(name)
 
 
 def built_in_status_fields():
