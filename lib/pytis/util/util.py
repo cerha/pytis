@@ -47,7 +47,6 @@ import os
 import io
 import re
 import sys
-import tempfile
 import _thread
 import platform
 
