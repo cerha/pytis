@@ -36,6 +36,7 @@ defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 
 """
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import sys
 import os
