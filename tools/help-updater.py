@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,55 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import getopt
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import pytis.util
-import pytis.data
 import pytis.help
 
 
-def usage(msg=None):
-    sys.stderr.write("""Update DB help texts for a Pytis application
-Usage: %s [options]
-   Options are pytis command line options, such as --config or --dbhost and --dbname.
-""" % sys.argv[0])
-    if msg:
-        sys.stderr.write(msg)
-        sys.stderr.write('\n')
-    sys.exit(1)
-
-
-def run():
-    if '--help' in sys.argv:
-        usage()
-    try:
-        pytis.config.add_command_line_options(sys.argv)
-    except getopt.GetoptError as e:
-        usage(e.msg)
-    if len(sys.argv) != 1:
-        usage()
-    # Disable pytis logging and notification thread (may cause troubles when
-    # creating data objects for profile validation).
-    pytis.config.dblisten = False
-    # Disable pytis logging of data operations etc.
-    pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
-                                pytis.util.DEBUG, pytis.util.OPERATIONAL]
-    while True:
-        try:
-            updater = pytis.help.HelpUpdater()
-        except pytis.data.DBLoginException as e:
-            if pytis.config.dbconnection.password() is None:
-                import getpass
-                login = pytis.config.dbuser
-                password = getpass.getpass("Enter database password for %s: " % login)
-                pytis.config.dbconnection.update_login_data(user=login, password=password)
-            else:
-                sys.stderr.write(e.message())
-                sys.exit(1)
-        else:
-            break
+def main():
+    updater = pytis.help.HelpUpdater()
     updater.update()
 
 
 if __name__ == '__main__':
-    run()
+    pytis.util.run_as_script(main)
