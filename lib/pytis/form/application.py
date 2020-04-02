@@ -1970,7 +1970,7 @@ def recent_forms_menu():
         return _application.recent_forms_menu()
     else:
         # This may happen when generating help.
-        return ()
+        return Menu(_("Recently opened forms"), ())
 
 
 def wx_frame():
