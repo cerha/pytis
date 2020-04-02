@@ -2410,8 +2410,3 @@ def get_recent_directory(key):
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
     _application._recent_directories[key] = directory
-
-
-def menu():
-    """Return the application menu structure as a sequence of 'Menu' instances."""
-    return _application._menu

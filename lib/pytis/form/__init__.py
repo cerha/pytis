@@ -98,7 +98,7 @@ from .application import (  # noqa: F401
     global_keymap, block_refresh, _dump_rights,
     init_access_rights, has_access, action_has_access, wx_yield_,
     block_yield, built_in_status_fields, remote_connection_initially_available,
-    get_recent_directory, set_recent_directory, menu,
+    get_recent_directory, set_recent_directory,
 )
 
 from .configui import (  # noqa: F401

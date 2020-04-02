@@ -380,8 +380,7 @@ class HelpGenerator(object):
         return ()
 
     def _spec_help_content(self, spec_name):
-        from pytis.form import has_access
-        if not has_access(spec_name):
+        if not pytis.form.has_access(spec_name):
             return (_("Access Denied"),
                     lcg.p(_("You don't have permissions for specification „%s“.") % spec_name))
         resolver = pytis.util.resolver()
@@ -506,6 +505,7 @@ class SpecHelpGenerator(HelpGenerator):
 
     def _application_help_nodes(self):
         counter = pytis.util.Counter()
+        app = pytis.config.resolver.specification('Application')
 
         def node(item):
             if isinstance(item, pytis.form.Menu):
@@ -522,11 +522,10 @@ class SpecHelpGenerator(HelpGenerator):
                 content=content, children=children, foldable=True, globals=globs,
                 resource_provider=self._resource_provider,
             )
-        menu = pytis.form.application.menu()
         return [
             self.ContentNode('help:application/menu', title=_("Application menu"),
                              content=lcg.NodeIndex(), foldable=True,
-                             children=[node(item) for item in menu],
+                             children=[node(item) for item in app.menu()],
                              resource_provider=self._resource_provider),
             # TODO: Read the static part of application help from the filesystem?
         ]
