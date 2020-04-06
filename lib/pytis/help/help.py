@@ -572,8 +572,9 @@ class SpecHelpGenerator(HelpGenerator):
                 if field_groups != groups:
                     field_access.setdefault(field_groups, []).append(field)
             for groups, fields in field_access.items():
-                result.append(((label, ' (', ', '.join(f.label() for f in fields), ')'),
-                               ', '.join(groups)))
+                result.append((label,
+                               (', '.join(groups),
+                                ' (', ', '.join(f.label() for f in fields), ')')))
         return result
 
 
