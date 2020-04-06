@@ -574,7 +574,7 @@ class SpecHelpGenerator(HelpGenerator):
                         field_access.setdefault(field_groups, []).append(field)
             for groups, fields in field_access.items():
                 result.append((label,
-                               (', '.join(groups),
+                               (', '.join(groups) or lcg.em(_("no access")),
                                 ' (', ', '.join(f.label() or f.id() for f in fields), ')')))
         return result
 
