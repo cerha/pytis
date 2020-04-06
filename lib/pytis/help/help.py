@@ -568,9 +568,10 @@ class SpecHelpGenerator(HelpGenerator):
                 result.append((label, ', '.join(groups)))
             field_access = {}
             for field in view_spec.fields():
-                field_groups = tuple(access_rights.permitted_groups(permission, field.id()))
-                if field_groups != groups:
-                    field_access.setdefault(field_groups, []).append(field)
+                if not field.virtual():
+                    field_groups = tuple(access_rights.permitted_groups(permission, field.id()))
+                    if field_groups != groups:
+                        field_access.setdefault(field_groups, []).append(field)
             for groups, fields in field_access.items():
                 result.append((label,
                                (', '.join(groups),
