@@ -575,7 +575,7 @@ class SpecHelpGenerator(HelpGenerator):
             for groups, fields in field_access.items():
                 result.append((label,
                                (', '.join(groups),
-                                ' (', ', '.join(f.label() for f in fields), ')')))
+                                ' (', ', '.join(f.label() or f.id() for f in fields), ')')))
         return result
 
 
