@@ -1662,6 +1662,9 @@ class ViewSpec(object):
         self._kwargs = dict(kwargs, title=title, fields=fields)
         self._init(**self._kwargs)
 
+    # Note, the list of available arguments is also duplicated in Specification.__init__,
+    # so any changes here must be reflected there!
+
     def _init(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
               actions=(), sorting=None, grouping=None, group_heading=None, check=(), cleanup=None,
               on_new_record=None, on_copy_record=None, on_edit_record=None, on_delete_record=None,
@@ -5139,11 +5142,10 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     variant náhledů s využitím dědičnosti.
 
     Význam atributů: Některé atrubuty jsou definovány přímo touto třídou --
-    jejich význam je zdokumentován v rámci jejich dokumentačních řetězců.
-    Všechny ostatní veřejné atributy, které odvozená třída definuje budou
-    předány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.  Výchozí
-    hodnotou argumentu 'help' pro 'ViewSpec' je dokumentační řetězec
-    specifikační třídy.
+    jejich význam je zdokumentován v rámci jejich dokumentačních řetězců.  Dále
+    může třída definovat také atributy, které odpovídají argumentům
+    konstruktoru třídy 'ViewSpec'.  Výchozí hodnotou argumentu 'help' pro
+    'ViewSpec' je dokumentační řetězec specifikační třídy.
 
     Set 'public' attribute to True in specifications intended to serve for
     making forms or running procedures in the user interface.
@@ -5524,15 +5526,21 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         assert isinstance(self.fields, (list, tuple)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
-        for attr in dir(self):
-            if ((not attr.startswith('_') and not attr.endswith('_spec') and
-                 attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
-                              'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                              'data_access_rights', 'crypto_names',
-                              'add_specification_by_db_spec_name', 'create_from_kwargs',
-                              'ro_select', 'oid', 'data',  # for backwards compatibility
-                              ))):
-                self._view_spec_kwargs[attr] = getattr(self, attr)
+        for attr in ('title', 'singular', 'layout', 'list_layout', 'columns',
+                     'actions', 'sorting', 'grouping', 'group_heading', 'check', 'cleanup',
+                     'on_new_record', 'on_copy_record', 'on_edit_record', 'on_delete_record',
+                     'redirect', 'focus_field', 'description', 'help', 'row_style',
+                     'profiles', 'filters', 'default_filter',
+                     'aggregations', 'grouping_functions', 'aggregated_views',
+                     'orientation', 'folding', 'initial_folding',
+                     'arguments', 'argument_provider', 'condition_provider',
+                     'query_fields', 'referer', 'spec_name', 'public'):
+            if hasattr(self, attr):
+                value = getattr(self, attr)
+                if callable(value) and attr in ('layout', 'list_layout', 'actions',
+                                                'columns', 'grouping'):
+                    value = value()
+                self._view_spec_kwargs[attr] = value
         if isinstance(self.bindings, (tuple, list)):
             # Only pass new style bindings to ViewSpec, old style bindings are accessed through the
             # 'binding_spec' resolver function.
@@ -5567,13 +5575,6 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                         field.set_type(ftype.clone(ftype.__class__(**kwargs)))
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
-        for arg in ('layout', 'list_layout', 'actions', 'columns', 'grouping'):
-            try:
-                value = self._view_spec_kwargs[arg]
-            except Exception:
-                continue
-            if callable(value):
-                self._view_spec_kwargs[arg] = value()
         # if self.__class__.__doc__:
         #     parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
         #     if 'description' not in self._view_spec_kwargs:
