@@ -2615,6 +2615,20 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
     return result
 
 
+def procedure(function):
+    """Decorator to mark procedures to be invoked through 'pytis.form.run_procedure()'.
+
+    Currently only used to mark procedures just for the information that a
+    function or method actually is a "pytis procedure".
+
+    It may be used in future to impose restrictions (only allow marked
+    procedures to be run through run_procedure) or add any other functionality.
+
+    """
+    return function
+
+
+
 class CbComputer(Computer):
     """Specializovaný computer, který získává hodnotu z číselníku.
 
