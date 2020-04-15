@@ -565,17 +565,22 @@ class SpecHelpGenerator(HelpGenerator):
         for label, permission in permissions:
             groups = tuple(access_rights.permitted_groups(permission, None))
             if groups:
-                result.append((label, ', '.join(groups)))
-            field_access = {}
-            for field in view_spec.fields():
-                if not field.virtual():
-                    field_groups = tuple(access_rights.permitted_groups(permission, field.id()))
-                    if field_groups != groups:
-                        field_access.setdefault(field_groups, []).append(field)
-            for groups, fields in field_access.items():
-                result.append((label,
-                               (', '.join(groups) or lcg.em(_("no access")),
-                                ' (', ', '.join(f.label() or f.id() for f in fields), ')')))
+                content = [', '.join(groups)]
+                field_access = {}
+                for field in view_spec.fields():
+                    if not field.virtual():
+                        field_groups = tuple(access_rights.permitted_groups(permission, field.id()))
+                        if field_groups != groups:
+                            field_access.setdefault(field_groups, []).append(field)
+                if field_access:
+                    content.extend((
+                        lcg.p(_("Column restrictions:")),
+                        lcg.ul((
+                            lcg.strong(', '.join(f.label() or f.id() for f in fields)), lcg.br(),
+                            ', '.join(groups) or lcg.em(_("no access"))
+                        ) for groups, fields in field_access.items()),
+                    ))
+                result.append((label, content))
         return result
 
 
