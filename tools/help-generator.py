@@ -36,7 +36,8 @@ def main(spec_name):
     """
     node = pytis.help.help_page('help:spec/' + spec_name)
 
-    exporter = HelpExporter(get_resource_uri=lambda r, absolute=True: r.uri() or r.filename())
+    exporter = HelpExporter(get_resource_uri=lambda r, absolute=True: r.uri() or r.filename(),
+                            translations=pytis.util.translation_path())
     context = exporter.context(node, pytis.util.environment_language())
 
     print(exporter.export(context).encode('utf-8'))
