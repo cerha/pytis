@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-01-29 22:40+0100\n"
+"POT-Creation-Date: 2020-04-15 16:17+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pawel Loba <ploba@rogers.com>\n"
 "Language-Team: Polish <wiking@lists.freebsoft.org>\n"
@@ -67,12 +67,12 @@ msgstr ""
 msgid "Invalid user name or password"
 msgstr "Niewłaściwy format daty lub czasu"
 
-#: ../lib/pytis/data/postgresql.py:453 ../lib/pytis/data/postgresql.py:563
-#: ../lib/pytis/data/postgresql.py:575
+#: ../lib/pytis/data/postgresql.py:458 ../lib/pytis/data/postgresql.py:568
+#: ../lib/pytis/data/postgresql.py:580
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3558
+#: ../lib/pytis/data/postgresql.py:3563
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Niewłaściwy format daty lub czasu"
