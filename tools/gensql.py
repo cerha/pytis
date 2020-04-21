@@ -4695,7 +4695,7 @@ def _go(argv=None):
     global gensql_file
     gensql_file = args[0]
     with open(gensql_file, 'rb') as f:
-        exec(compile(f.read(), gensql_file, 'exec'), copy.copy(globals())))
+        exec(compile(f.read(), gensql_file, 'exec'), copy.copy(globals()))
     _GsqlConfig.request()
 
 
