@@ -157,6 +157,9 @@ class _Query(object):
     def __bool__(self):
         return not not self._template
 
+    # Just for Python 2 compatibility.
+    __nonzero__ = __bool__
+
     def __add__(self, other):
         args = copy.copy(self._args)
         if isinstance(other, basestring):
@@ -335,9 +338,11 @@ class PostgreSQLResult(object):
         return self._data[row]
 
     def __bool__(self):
-        """Vrať True právě když objekt obsahuje nějaká data.
-        """
+        """Vrať True právě když objekt obsahuje nějaká data."""
         return len(self) > 0
+
+    # Just for Python 2 compatibility.
+    __nonzero__ = __bool__
 
     def __len__(self):
         """Vrať počet řádků dat.
