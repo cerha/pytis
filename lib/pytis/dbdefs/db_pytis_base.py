@@ -160,7 +160,6 @@ class XInserts(sql.SQLTable):
         sql.Column('tabulka', pytis.data.String(not_null=False)),
         sql.Column('klic', pytis.data.String(not_null=False)),
     )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -178,7 +177,6 @@ class XUpdates(sql.SQLTable):
         sql.Column('klic', pytis.data.String(not_null=False)),
         sql.Column('zmeny', pytis.data.String(not_null=False)),
     )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -195,7 +193,6 @@ class XDeletes(sql.SQLTable):
         sql.Column('tabulka', pytis.data.String(not_null=False)),
         sql.Column('klic', pytis.data.String(not_null=False)),
     )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 

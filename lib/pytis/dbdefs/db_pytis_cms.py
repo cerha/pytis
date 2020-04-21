@@ -16,7 +16,6 @@ class CmsLanguages(sql.SQLTable):
         sql.PrimaryColumn('lang_id', pytis.data.Serial()),
         sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), unique=True),
     )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
 
@@ -29,7 +28,6 @@ class CmsModules(sql.SQLTable):
         sql.PrimaryColumn('mod_id', pytis.data.Serial()),
         sql.Column('modname', pytis.data.String(maxlen=64, not_null=True), unique=True),
     )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
 
@@ -51,7 +49,6 @@ class CmsMenuStructure(sql.SQLTable):
         # ('ord', sqlalchemy.literal_column('coalesce(parent, 0)'),),
         ('parent', 'ord',),
     )
-    with_oids = True
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
 
@@ -93,7 +90,6 @@ class CmsMenuTexts(sql.SQLTable):
               sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('content', pytis.data.String(not_null=False)),
               )
-    with_oids = True
     depends_on = (CmsMenuStructure, CmsLanguages,)
     access_rights = cms_rights.value(globals())
 
@@ -181,7 +177,6 @@ class CmsRoles(sql.SQLTable):
               sql.Column('system_role', pytis.data.String(not_null=False), unique=True),
               sql.Column('description', pytis.data.String(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
 
@@ -199,7 +194,6 @@ class CmsActions(sql.SQLTable):
               sql.Column('name', pytis.data.String(maxlen=16, not_null=True)),
               sql.Column('description', pytis.data.String(not_null=True)),
               )
-    with_oids = True
     unique = (('mod_id', 'name',),)
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
@@ -217,7 +211,6 @@ class CmsRightsAssignment(sql.SQLTable):
               sql.Column('action_id', pytis.data.Integer(not_null=True),
                          references=sql.gA('cms_actions', ondelete='CASCADE')),
               )
-    with_oids = True
     unique = (('menu_item_id', 'role_id', 'action_id',),)
     depends_on = (CmsMenuStructure, CmsRoles, CmsActions,)
     access_rights = cms_rights.value(globals())
@@ -289,7 +282,6 @@ class CmsThemes(sql.SQLTable):
               sql.Column('highlight_bg', pytis.data.Color(not_null=False)),
               sql.Column('inactive_folder', pytis.data.Color(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights.value(globals())
 
@@ -298,7 +290,6 @@ class CmsUsersTable(sql.SQLTable):
     name = 'cms_users_table'
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),)
-    with_oids = True
     depends_on = ()
     access_rights = ()
 
@@ -313,7 +304,6 @@ class CmsUserRoleAssignment(sql.SQLTable):
               sql.Column('role_id', pytis.data.Integer(not_null=True),
                          references=sql.gA('cms_roles', ondelete='CASCADE')),
               )
-    with_oids = True
     unique = (('uid', 'role_id',),)
     depends_on = (CmsRoles,)
     access_rights = cms_rights.value(globals())
@@ -329,7 +319,6 @@ class CmsSession(sql.SQLTable):
               sql.Column('session_key', pytis.data.String(not_null=True)),
               sql.Column('last_access', pytis.data.DateTime(not_null=True)),
               )
-    with_oids = True
     unique = (('uid', 'session_key',),)
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
@@ -352,7 +341,6 @@ class CmsSessionLogData(sql.SQLTable):
               sql.Column('user_agent', pytis.data.String(not_null=False)),
               sql.Column('referer', pytis.data.String(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
 
@@ -372,7 +360,6 @@ class CmsAccessLogData(sql.SQLTable):
               sql.Column('user_agent', pytis.data.String(not_null=False)),
               sql.Column('referer', pytis.data.String(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = cms_rights_rw.value(globals())
 
@@ -397,7 +384,6 @@ class CmsUsers(sql.SQLTable):
               sql.Column('fullname', pytis.data.String(not_null=True)),
               sql.Column('passwd', pytis.data.String(not_null=True)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = ()
 

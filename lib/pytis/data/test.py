@@ -1390,11 +1390,11 @@ class _DBTest(_DBBaseTest):
                   "create view viewtest3 as select * from viewtest1",
                   "create rule viewtest3_insert as on insert to viewtest3 "
                   "do instead insert into viewtest2 values (new.x)",
-                  "create table viewtest0 (x int, y int) with oids",
+                  "create table viewtest0 (x int, y int) without oids",
                   "create view viewtest4 as select * from viewtest0",
                   "create rule viewtest4_insert as on insert to viewtest4 "
                   "do instead insert into viewtest0 values (new.x)",
-                  "create view viewtest7 as select *, oid from viewtest0",
+                  "create view viewtest7 as select * from viewtest0",
                   "create rule viewtest7_insert as on insert to viewtest7 "
                   "do instead insert into viewtest0 (y) values (new.y)",
                   "create table viewtest6 (x serial primary key, y int)",

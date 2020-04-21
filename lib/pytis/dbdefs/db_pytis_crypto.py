@@ -27,7 +27,6 @@ class CPytisCryptoNames(Base_LogSQLTable):
               sql.Column('description', pytis.data.String(not_null=False), label=_("Popis")),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -47,7 +46,6 @@ class EPytisCryptoKeys(Base_LogSQLTable):
                          default=False),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('name', 'username',),)
     depends_on = (CPytisCryptoNames,)
     access_rights = default_access_rights.value(globals())
@@ -198,7 +196,6 @@ class PytisCryptoDbKeys(sql.SQLTable):
               sql.Column('public', pytis.data.String(not_null=False)),
               sql.Column('private', pytis.data.String(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = crypto_select_rights.value(globals())
 

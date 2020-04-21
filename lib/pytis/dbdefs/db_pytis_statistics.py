@@ -65,7 +65,6 @@ class EPytisFormLog(sql.SQLTable):
               sql.Column('t_show', pytis.data.DateTime(not_null=True, without_timezone=True)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 

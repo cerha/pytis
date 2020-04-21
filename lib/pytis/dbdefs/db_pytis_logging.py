@@ -21,6 +21,5 @@ class EPytisActionLog(sql.SQLTable):
               sql.Column('info', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())

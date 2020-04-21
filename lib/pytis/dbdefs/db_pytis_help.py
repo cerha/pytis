@@ -24,7 +24,6 @@ class EPytisHelpPages(Base_LogSQLTable):
               sql.Column('content', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -62,7 +61,6 @@ class EPytisHelpSpec(Base_LogSQLTable):
                          doc="False when the specification still exists.", default=False),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -84,7 +82,6 @@ class EPytisHelpSpecItems(Base_LogSQLTable):
                          doc="False when the item still exists in specification.", default=False),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('spec_name', 'kind', 'identifier',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -103,7 +100,6 @@ class EPytisHelpMenu(Base_LogSQLTable):
                          doc="False when the item still exists in menu.", default=False),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = (EPytisMenu,)
     access_rights = default_access_rights.value(globals())
 
@@ -306,7 +302,6 @@ class EPytisHelpSpecAttachments(Base_LogSQLTable):
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('spec_name', 'file_name',),)
     depends_on = (EPytisHelpSpec,)
     access_rights = default_access_rights.value(globals())
@@ -331,7 +326,6 @@ class EPytisHelpPagesAttachments(Base_LogSQLTable):
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('page_id', 'file_name',),)
     depends_on = (EPytisHelpPages,)
     access_rights = default_access_rights.value(globals())

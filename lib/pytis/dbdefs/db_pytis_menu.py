@@ -29,7 +29,6 @@ class EPytisDisabledDmpTriggers(sql.SQLTable):
     schemas = dmp_schemas.value(globals())
     fields = (sql.PrimaryColumn('id', pytis.data.Name()),)
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -52,7 +51,6 @@ class CPytisRolePurposes(sql.SQLTable):
                    ('user', 'Uživatelská',),
                    ('appl', 'Aplikační',),
                    )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -75,7 +73,6 @@ class EPytisRoles(Base_LogSQLTable):
                    ('admin', 'Administrátor rolí a menu', 'admn', None,),
                    ('__pytis', 'Zástupná role pro číselník sloupců', 'admn', None,),
                    )
-    with_oids = True
     depends_on = (CPytisRolePurposes,)
     access_rights = default_access_rights.value(globals())
 
@@ -140,7 +137,6 @@ class EPytisRoleMembers(Base_LogSQLTable):
     init_values = ((-1, 'admin_roles', 'admin',),
                    (-2, 'admin_menu', 'admin',),
                    )
-    with_oids = True
     depends_on = (EPytisRoles,)
     access_rights = default_access_rights.value(globals())
 
@@ -185,7 +181,6 @@ class APytisValidRoleMembers(sql.SQLTable):
                                           onupdate='CASCADE', ondelete='CASCADE')),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = (EPytisRoles,)
     access_rights = default_access_rights.value(globals())
 
@@ -332,7 +327,6 @@ class CPytisActionTypes(sql.SQLTable):
                    ('actf', 'Akce formuláře',),
                    ('prnt', 'Tisk',),
                    )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -349,7 +343,6 @@ class CPytisMenuActions(sql.SQLTable):
               sql.Column('spec_name', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -425,7 +418,6 @@ class EPytisMenu(Base_LogSQLTable):
                          doc="Iff true, this item may not be edited."),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = (CPytisMenuActions,)
     access_rights = default_access_rights.value(globals())
 
@@ -657,7 +649,6 @@ class CPytisMenuLanguages(sql.SQLTable):
     inherits = (XChanges,)
     init_columns = ('language', 'description')
     init_values = (('cs', 'čeština',),)
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -676,7 +667,6 @@ class EPytisMenuTranslations(sql.SQLTable):
               sql.Column('dirty', pytis.data.Boolean(not_null=True)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = (EPytisMenu,)
     access_rights = default_access_rights.value(globals())
 
@@ -877,7 +867,6 @@ class CPytisAccessRights(sql.SQLTable):
                    ('export', 'Exporty',),
                    ('call', 'Spouštění aplikačních procedur',),
                    )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -926,7 +915,6 @@ class EPytisActionRights(Base_LogSQLTable):
                               "global rights update)."), default=1),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('shortname', 'roleid', 'rightid', 'colname', 'system', 'granted', 'status',),)
     depends_on = (CPytisMenuActions, EPytisRoles, CPytisAccessRights,)
     access_rights = default_access_rights.value(globals())
@@ -1724,7 +1712,6 @@ class APytisActionsStructure(sql.SQLTable):
               sql.Column('summaryid', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     depends_on = (CPytisActionTypes,)
     access_rights = default_access_rights.value(globals())
 

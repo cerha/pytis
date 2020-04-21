@@ -19,7 +19,6 @@ class EPytisConfig(sql.SQLTable):
               sql.Column('value', pytis.data.String(not_null=True)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('username', 'option',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -37,7 +36,6 @@ class EPytisFormSettings(sql.SQLTable):
               sql.Column('dump', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('username', 'spec_name', 'form_name',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -57,7 +55,6 @@ class EPytisFormProfileBase(sql.SQLTable):
               sql.Column('errors', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('username', 'spec_name', 'profile_id',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -77,7 +74,6 @@ class EPytisFormProfileParams(sql.SQLTable):
               sql.Column('errors', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('username', 'spec_name', 'form_name', 'profile_id',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -145,7 +141,6 @@ class EPytisAggregatedViews(sql.SQLTable):
               sql.Column('pickle', pytis.data.String(not_null=True)),
               )
     inherits = (XChanges,)
-    with_oids = True
     unique = (('username', 'spec_name', 'aggregated_view_id',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())

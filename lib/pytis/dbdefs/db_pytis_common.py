@@ -216,7 +216,6 @@ class Log(sql.SQLTable):
               sql.Column('timestamp', pytis.data.DateTime(not_null=True),
                          default=sqlalchemy.text('now()')),
               )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -308,7 +307,6 @@ class XChanges(sql.SQLTable):
               sql.Column('zmeneno', pytis.data.DateTime(not_null=True),
                          default=sqlalchemy.text('now()')),
               )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -344,7 +342,6 @@ class VInserts(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
-             sql.gL("_inserts.oid").label('oid'),
              _inserts.c.id.label('id'),
              _inserts.c.vytvoril.label('vytvoril'),
              _inserts.c.vytvoreno.label('vytvoreno'),
@@ -366,7 +363,6 @@ class VInsertsUser(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
-             sql.gL("_inserts.oid").label('oid'),
              _inserts.c.id.label('id'),
              _inserts.c.vytvoril.label('vytvoril'),
              _inserts.c.vytvoreno.label('vytvoreno'),
@@ -390,7 +386,6 @@ class VUpdates(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
-             sql.gL("_updates.oid").label('oid'),
              _updates.c.id.label('id'),
              _updates.c.zmenil.label('zmenil'),
              _updates.c.zmeneno.label('zmeneno'),
@@ -414,7 +409,6 @@ class VUpdatesUser(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
-             sql.gL("_updates.oid").label('oid'),
              _updates.c.id.label('id'),
              _updates.c.zmenil.label('zmenil'),
              _updates.c.zmeneno.label('zmeneno'),
@@ -439,7 +433,6 @@ class VDeletes(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
-             sql.gL("_deletes.oid").label('oid'),
              _deletes.c.id.label('id'),
              _deletes.c.smazal.label('smazal'),
              _deletes.c.smazano.label('smazano'),
@@ -462,7 +455,6 @@ class VDeletesUser(sql.SQLView):
         return sqlalchemy.select(
             [sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
-             sql.gL("_deletes.oid").label('oid'),
              _deletes.c.id.label('id'),
              _deletes.c.smazal.label('smazal'),
              _deletes.c.smazano.label('smazano'),
@@ -486,7 +478,6 @@ class XChangesStatistic(sql.SQLTable):
               sql.Column('updates', pytis.data.Integer(not_null=False)),
               sql.Column('deletes', pytis.data.Integer(not_null=False)),
               )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -623,7 +614,6 @@ class TChanges(sql.SQLTable):
               sql.Column('key_column', pytis.data.String(not_null=True)),
               sql.Column('key_value', pytis.data.String(not_null=True), index=True),
               )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
@@ -637,7 +627,6 @@ class TChangesDetail(sql.SQLTable):
                                           ondelete='CASCADE')),
               sql.Column('detail', pytis.data.String(not_null=True)),
               )
-    with_oids = True
     depends_on = (TChanges,)
     access_rights = default_access_rights.value(globals())
 
@@ -887,7 +876,6 @@ class CTypFormular(Base_LogSQLTable):
     init_values = (('BF', 'Jednoduchý náhled',),
                    ('DF', 'Duální náhled',),
                    )
-    with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 

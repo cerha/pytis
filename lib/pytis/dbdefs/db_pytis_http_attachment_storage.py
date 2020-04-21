@@ -20,7 +20,6 @@ class EPytisHttpAttachmentStorageKeys(sql.SQLTable):
               sql.Column('readonly', pytis.data.Boolean(not_null=True), default=True),
               sql.Column('key', pytis.data.String(not_null=True)),
               )
-    with_oids = True
     unique = (('username', 'uri',),)
     depends_on = ()
     access_rights = http_attachment_storage_rights.value(globals())
