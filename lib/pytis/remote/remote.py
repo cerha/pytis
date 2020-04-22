@@ -26,7 +26,6 @@ import time
 import random
 import socket
 import hashlib
-import getpass
 import subprocess
 import pytis
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
@@ -45,7 +44,6 @@ _x2go_ip = None
 class RPCInfo(object):
     """Container for RPC communication data."""
     connection = None
-    direct_connection = False
     access_data = None
     remote_client_version = None
     remote_status_info = (False, time.time())
@@ -250,7 +248,7 @@ def read_x2go_info_file(rename=False, use_defaults=True):
             if rename:
                 try:
                     os.rename(pytis_x2go_file, pytis_x2go_info_file(x2go_session_id(fake=True)))
-                except Exception as e:
+                except Exception:
                     return
             else:
                 os.remove(pytis_x2go_file)
@@ -273,14 +271,8 @@ def _connect():
         return None
     port = access_data.get('port')
     password = access_data.get('password')
-    if password is None:
-        rpc_info.direct_connection = False
-        import rpyc
-        connection = rpyc.connect('localhost', port)
-    else:
-        rpc_info.direct_connection = True
-        connector = Connector(password)
-        connection = connector.connect('localhost', port)
+    connector = Connector(password)
+    connection = connector.connect('localhost', port)
     return connection
 
 
@@ -302,24 +294,13 @@ def _request(request, *args, **kwargs):
         else:
             return arg
     if RPCInfo.connection is None:
-        # Make sure direct_connection is initialized before first use
         RPCInfo.connection = _connect()
-    if RPCInfo.direct_connection:
-        try:
-            RPCInfo.connection.root.echo
-        except Exception:
-            RPCInfo.connection = _connect()
-        r = getattr(RPCInfo.connection.root, request)
-    else:
-        target_ip = client_ip()
-        user_name = getpass.getuser()
-        try:
-            r = RPCInfo.connection.root.request
-        except Exception:
-            RPCInfo.connection = _connect()
-            r = RPCInfo.connection.root.request
-        args = (target_ip, user_name, request,) + args
-    return r(*retype(args), **retype(kwargs))
+    try:
+        RPCInfo.connection.root.echo
+    except Exception:
+        RPCInfo.connection = _connect()
+    method = getattr(RPCInfo.connection.root, request)
+    return method(*retype(args), **retype(kwargs))
 
 
 def version():
