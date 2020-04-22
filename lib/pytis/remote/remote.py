@@ -19,14 +19,16 @@
 from past.builtins import basestring
 from builtins import range
 
+import datetime
+import hashlib
 import os
+import random
 import re
 import rpyc
-import time
-import random
 import socket
-import hashlib
 import subprocess
+import time
+
 import pytis
 from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
 
@@ -275,6 +277,16 @@ def _connect():
     connection = connector.connect('localhost', port)
     rpc_info.remote_client_version = version = connection.root.x2goclient_version()
     log(OPERATIONAL, "Client connection established with version:", version)
+    version_date = datetime.datetime.strptime(version, '%Y-%m-%d %H:%M')
+    if version_date >= datetime.datetime(2020, 4, 22, 22):
+        # TODO: Only push if the service was not already extended (we are just reconnecting).
+        with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
+            clientapi = f.read()
+        error = connection.root.extend(clientapi, 'PytisClientAPIService')
+        if error:
+            log(OPERATIONAL, "Client API push failed:", error)
+        else:
+            log(OPERATIONAL, "Client API pushed successfully.")
     return connection
 
 
