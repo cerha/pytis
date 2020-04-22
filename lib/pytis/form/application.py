@@ -291,8 +291,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return pytis.config.resolver.get(name, 'view_spec').title()
 
     def _init(self):
-        # Check RPC client version
-        self._check_x2goclient()
         # Run application specific initialization.
         self._specification.init()
         if self._windows.empty():
@@ -1333,26 +1331,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._logger.log(spec_name, form_name, action, info=info)
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
-
-    def _check_x2goclient(self):
-        if pytis.remote.client_available():
-            version_template = '%Y-%m-%d %H:%M'
-            version = pytis.remote.x2goclient_version()
-            try:
-                version_date = datetime.datetime.strptime(version, version_template)
-                required_version = pytis.x2goclient.X2GOCLIENT_REQUIRED_VERSION
-            except Exception:
-                return
-            required_date = datetime.datetime.strptime(required_version, version_template)
-            if version_date < required_date:
-                msg = _("BEWARE!\n\n"
-                        "You are running an incompatible version of Pytis2go (%s).\n"
-                        "Some functionality may not be available and errors may occur.\n\n"
-                        "Please perform Pytis2go update during application startup.\n\n"
-                        "Shall the application be terminated now to allow Pytis2go update?",
-                        version)
-                if pytis.form.run_dialog(Question, msg):
-                    self.COMMAND_EXIT.invoke()
 
 
 class ApplicationProxy(object):
