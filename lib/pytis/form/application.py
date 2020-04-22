@@ -247,17 +247,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top_level_exception()
 
         wx.CallAfter(init)
+        client_available = pytis.remote.client_available()
         rpc_info = pytis.remote.RPCInfo
-        rpc_info.remote_connection_initially_available = pytis.remote.client_available()
-        if rpc_info.remote_connection_initially_available:
-            rpc_info.remote_status_info = (True, time.time())
-            try:
-                rpc_info.remote_client_version = version = pytis.remote.x2goclient_version()
-            except Exception:
-                version = 'unknown'
-            log(OPERATIONAL, "RPC communication available. Version:", version)
+        rpc_info.remote_connection_initially_available = client_available
+        rpc_info.remote_status_info = (client_available, time.time())
+        if client_available:
+            log(OPERATIONAL, "RPC communication available. Version:", rpc_info.remote_client_version)
         else:
-            rpc_info.remote_status_info = (False, time.time())
             log(OPERATIONAL, "RPC communication unavailable")
         return True
 
@@ -2329,14 +2325,7 @@ def built_in_status_fields():
             if not last_status:
                 last_time = time.time()
                 rpc_info.remote_status_info = (True, last_time)
-            if rpc_info.remote_client_version:
-                version = rpc_info.remote_client_version
-            else:
-                try:
-                    version = pytis.remote.x2goclient_version()
-                    rpc_info.remote_client_version = version
-                except Exception:
-                    version = _("Not available")
+            version = rpc_info.remote_client_version or _("Not available")
             status = _("Ok")
             icon = 'status-online'
             tooltip = _("Connected.") + "\n" + _("Client version: %s", version)

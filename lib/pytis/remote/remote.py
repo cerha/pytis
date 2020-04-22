@@ -273,6 +273,8 @@ def _connect():
     password = access_data.get('password')
     connector = Connector(password)
     connection = connector.connect('localhost', port)
+    rpc_info.remote_client_version = version = connection.root.x2goclient_version()
+    log(OPERATIONAL, "Client connection established with version:", version)
     return connection
 
 
