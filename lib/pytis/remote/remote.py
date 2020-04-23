@@ -19,7 +19,6 @@
 from past.builtins import basestring
 from builtins import range
 
-import datetime
 import hashlib
 import os
 import random
@@ -277,8 +276,15 @@ def _connect():
     connection = connector.connect('localhost', port)
     rpc_info.remote_client_version = version = connection.root.x2goclient_version()
     log(OPERATIONAL, "Client connection established with version:", version)
-    version_date = datetime.datetime.strptime(version, '%Y-%m-%d %H:%M')
-    if version_date >= datetime.datetime(2020, 4, 22, 22):
+    try:
+        connection.root.extend
+    except AttributeError:
+        # This is an older client versinon, which doesn't support API push, but
+        # contains a fixed API.  Pushing is not necessary in this case as long
+        # as we do not rely on newer API features.  Once we get rid of all
+        # "fixed API" clients, we can start relying on all API features.
+        pass
+    else:
         # TODO: Only push if the service was not already extended (we are just reconnecting).
         with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
             clientapi = f.read()
