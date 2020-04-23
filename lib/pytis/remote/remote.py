@@ -285,14 +285,15 @@ def _connect():
         # "fixed API" clients, we can start relying on all API features.
         pass
     else:
-        # TODO: Only push if the service was not already extended (we are just reconnecting).
-        with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
-            clientapi = f.read()
-        error = connection.root.extend(clientapi, 'PytisClientAPIService')
-        if error:
-            log(OPERATIONAL, "Client API push failed:", error)
-        else:
-            log(OPERATIONAL, "Client API pushed successfully.")
+        # We may be just reconnecting to a previously extended service instance.
+        if 'PytisClientAPIService' not in connection.root.extensions():
+            with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
+                clientapi = f.read()
+            error = connection.root.extend(clientapi, 'PytisClientAPIService')
+            if error:
+                log(OPERATIONAL, "Client API push failed:", error)
+            else:
+                log(OPERATIONAL, "Client API pushed successfully.")
     return connection
 
 
