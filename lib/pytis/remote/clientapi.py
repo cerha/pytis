@@ -16,6 +16,27 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""This module defines the Client RPyC service API.
+
+The service providing this API runs on the client which runs pytis application
+remotely through X2Go using Pytis2Go client.  The service allows the Pytis
+application running on the server to perform certain tasks on the client
+machine, such as open local file through a GUI file dialog and pass that file
+to the server.  It simply attempts to transparently provide the functionality
+which is not directly available due to the fact that the application is running
+on a remote server.
+
+This module is actually not part of Pytis.  It is not imported (executed) by
+Pytis on the server.  It is only read as a file and pushed to the Pytis2Go
+client which executes this code.  It comes with Pytis, because it defines the
+functionality consumed by Pytis.  The remote functions defined in remote.py
+rely on the API defined here so it belongs here to keep the API in sync with
+the consumer expectations.  This also means that the dependencies of this
+module don't need to be installed on the application server, but on the client
+machine running Pytis2Go.
+
+"""
+
 from future import standard_library
 from builtins import str
 from builtins import zip
@@ -24,17 +45,20 @@ from builtins import object
 from past.builtins import basestring
 from past.builtins import execfile
 
-import io
+# Beware: These dependencies (and the others imported in this file later in runtime)
+# do not need to be installed on the application server, but on the client machine
+# running Pytis2go where this code is (only) executed (see module docstring).
+
 import hashlib
+import io
 import os
 import random
+import rpyc
 import socket
 import subprocess
 import sys
 import tempfile
 import threading
-
-import rpyc
 
 
 standard_library.install_aliases()
