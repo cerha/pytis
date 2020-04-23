@@ -314,7 +314,7 @@ class WxUIBackend(ClientUIBackend):
 
     def __init__(self):
         super(WxUIBackend, self).__init__()
-        if os.path.basename(sys.argv[0]) == '_test.py':
+        if os.path.basename(sys.argv[0]) == 'pytest':
             # TODO: This is now only run in tests because x2goclient.py creates a 'wx.App'
             # already at startup and this application stays running during the whole
             # Pytis run.  Starting another here would cause conflicts and might crash
