@@ -21,35 +21,45 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-import unittest
-from . import clientapi
-import tempfile
-import cStringIO as StringIO
+import io
 import os
+import pytest
+import tempfile
+import unittest
+
+import pytis.remote
+from . import clientapi
 
 
-class ClientUIBackend(object):
+class ClientUIBackendTest(object):
+    """Tests locally just the UI backend itself without remote communication.
+
+    Derived class must set the _BACKEND attribute to test a particular backend
+    subclass.
+
+    """
+
     _BACKEND = None
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls._backend = cls._BACKEND()
 
     def _confirm(self, text):
         answer = self._backend.select_option(title="Confirm test result",
                                              label=text, columns=('Confirm',),
                                              data=(('Yes',), ('No',)))
-        self.assertEqual(answer, 'Yes')
+        assert answer == 'Yes'
 
     def test_00_clipboard(self):
         for text in (b'foo', 'foo', 'Žluťoučký kůň!'):
             self._backend.set_clipboard_text(text)
-            self.assertEqual(self._backend.get_clipboard_text(), text)
+            assert self._backend.get_clipboard_text() == text
 
     def test_01_enter_password(self):
         text = self._backend.enter_text(title="Password dialog test",
                                         label='Enter password "foo":', password=True)
-        self.assertEqual(text, 'foo')
+        assert text == 'foo'
 
     def test_02_select_option(self):
         answer = self._backend.select_option(title="Selection dialog test",
@@ -58,7 +68,7 @@ class ClientUIBackend(object):
                                              data=(('001', 'First option'),
                                                    ('002', 'Second option'),
                                                    ('003', 'Third Option')))
-        self.assertEqual(answer, '002')
+        assert answer == '002'
 
     def test_03_select_file(self):
         filename = self._backend.select_file(patterns=(('Image files',
@@ -81,31 +91,32 @@ class ClientUIBackend(object):
 def skip_unless_enabled(name):
     envvar = 'PYTIS_TEST_UI_BACKENDS'
     backends = os.getenv(envvar) or ''
-    return unittest.skipUnless(backends == 'all' or name in backends.split(','),
-                               "Backend '%s' not in %s" % (name, envvar))
+    return pytest.mark.skipif(backends != 'all' and name not in backends.split(','),
+                              reason="Backend '%s' not in %s" % (name, envvar))
 
 
 @skip_unless_enabled('wx')
-class WxUIBackend(ClientUIBackend, unittest.TestCase):
+class WxUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.WxUIBackend
 
 
 @skip_unless_enabled('tk')
-class TkUIBackend(ClientUIBackend, unittest.TestCase):
+class TkUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.TkUIBackend
 
 
 @skip_unless_enabled('zenity')
-class ZenityUIBackend(ClientUIBackend, unittest.TestCase):
+class ZenityUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.ZenityUIBackend
 
 
 @skip_unless_enabled('win32')
-class Win32UIBackend(ClientUIBackend, unittest.TestCase):
+class Win32UIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.Win32UIBackend
 
 
-class FileWrapper(unittest.TestCase):
+class FileWrapperTest(unittest.TestCase):
+    """Tests locally just the FileWrapper class itself without remote communication."""
 
     def _encrypt(self, f):
         return f.read().encode('base64')
@@ -121,12 +132,12 @@ class FileWrapper(unittest.TestCase):
         if 'encrypt' in kwargs:
             data2 = self._decrypt(data2)
         wrapper.exposed_close()
-        self.assertEqual(data2, data)
+        assert data2 == data
 
     def _test_write(self, filename, data, mode='w', **kwargs):
         wrapper = clientapi.ExposedFileWrapper(filename, mode=mode, **kwargs)
         if 'decrypt' in kwargs:
-            data_to_write = self._encrypt((StringIO.StringIO(data)))
+            data_to_write = self._encrypt((io.StringIO(data)))
         else:
             data_to_write = data
         wrapper.exposed_write(data_to_write)
@@ -134,7 +145,7 @@ class FileWrapper(unittest.TestCase):
         wrapper.exposed_close()
         with open(filename) as f:
             data2 = f.read()
-        self.assertEqual(data2, data)
+        assert data2 == data
 
     def test_read(self):
         fd, filename = tempfile.mkstemp(prefix='pytistmp', suffix='.txt')
