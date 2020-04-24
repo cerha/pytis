@@ -233,7 +233,7 @@ def parse_x2go_info_file(filename):
     return access_data
 
 
-def read_x2go_info_file(rename=False, use_defaults=True):
+def read_x2go_info_file():
     pytis_x2go_file = pytis_x2go_info_file()
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
@@ -246,18 +246,10 @@ def read_x2go_info_file(rename=False, use_defaults=True):
             except X2GoInfoHardException as e:
                 log(OPERATIONAL, *e.args)
                 return None
-            if rename:
-                try:
-                    os.rename(pytis_x2go_file, pytis_x2go_info_file(x2go_session_id(fake=True)))
-                except Exception:
-                    return
-            else:
-                os.remove(pytis_x2go_file)
+            os.remove(pytis_x2go_file)
             break
-    elif use_defaults:
-        access_data = dict(port=pytis.config.rpc_local_port, password=None)
     else:
-        access_data = None
+        access_data = dict(port=pytis.config.rpc_local_port, password=None)
     return access_data
 
 
