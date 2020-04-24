@@ -192,3 +192,91 @@ class FileWrapperTest(unittest.TestCase):
         finally:
             os.close(fd)
             os.remove(filename)
+
+
+@pytest.mark.skipif(not pytis.remote.client_available(), reason="Client connection not available")
+class RemoteTest(unittest.TestCase):
+    """Test functions in 'pytis.remote' in remote mode.
+
+    This test must be run through Pytis2go.  Launch a terminal through Pytis2go
+    client and run the test inside the terminal.
+
+    This test is only run if the remote environment exists.  Particularly if
+    the environment variable 'X2GO_SESSION' exists and the session file in
+    ~/.x2go/ssh contains connection data.
+
+    """
+
+    def test_clipboard(self):
+        pytis.remote.set_clipboard_text('foo')
+        assert pytis.remote.get_clipboard_text() == 'foo'
+
+    def test_version(self):
+        assert pytis.remote.version() == 'library: 2015-06-10 11:00'
+
+    def test_x2goclient_version(self):
+        assert pytis.remote.x2goclient_version() == '2020-04-22 22:00'
+
+    def test_library_version(self):
+        assert pytis.remote.library_version() == '2015-06-10 11:00'
+
+    def test_basic_file_operations(self):
+        with pytis.remote.open_file('test.txt', mode='wb') as f:
+            f.write(b'abc')
+            f.flush()  # Just to test that the call does not fail...
+        with pytis.remote.open_file('test.txt', mode='rb') as f:
+            assert f.read() == b'abc'
+            #f.seek(0)
+            #assert f.read(1) == b'a'
+
+    def test_encoded_file_operations(self):
+        with pytis.remote.make_temporary_file(suffix='.txt', mode='w', encoding='utf-8') as f:
+            f.write("Žluťoučký\nkůň\n")
+            fname = f.name
+        with pytis.remote.open_file(fname, mode='r', encoding='utf-8') as f:
+            assert f.read() == "Žluťoučký\nkůň\n"
+            f.seek(0)
+            assert f.readline() == "Žluťoučký\n"
+            f.seek(0)
+            assert tuple(f.readlines()) == ("Žluťoučký\n", "kůň\n")
+        with pytis.remote.open_file(fname, mode='rb') as f:
+            assert f.read() == b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\nk\xc5\xaf\xc5\x88\n'
+            f.seek(0)
+            assert f.readline() == b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\n'
+            f.seek(0)
+            assert tuple(f.readlines()) == (b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\n',
+                                            b'k\xc5\xaf\xc5\x88\n')
+
+
+    # def test_run_python(script):
+    #     # run_python is only implemented on Windows...
+    #     with pytis.remote.make_temporary_file(suffix='.txt', mode='w') as f:
+    #         fname = f.name
+    #     pytis.remote.run_python("with open('{}', 'w') as f: f.write('abc')".formt(fname))
+    #     with pytis.remote.open_file(fname, mode='r') as f:
+    #         assert f.read() == b'abc'
+    #
+    # def test_session_password(self):
+    #     # session_password is currently not implemented in clientapi.py
+    #     assert pytis.remote.session_password() == ''
+    #
+    # def _test_launch_file(self):
+    #     pytis.remote.launch_file(path)
+    #
+    # def _test_launch_url(self):
+    #     pytis.remote.launch_url(url)
+    #
+    # def _test_open_selected_file(self):
+    #     pytis.remote.open_selected_file(directory=None, patterns=(), pattern=None,
+    #                                     template=None, encrypt=None)
+    #
+    # def _test_make_selected_file(self):
+    #     pytis.remote.make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
+    #                                     template=None, encoding=None, mode='wb', decrypt=False)
+    #
+    # def _test_select_directory(self):
+    #     pytis.remote.select_directory(directory=None)
+    #
+    # def _test_select_file(self):
+    #     pytis.remote.select_file(filename=None, directory=None, patterns=(), pattern=None,
+    #                              template=None, multi=False)
