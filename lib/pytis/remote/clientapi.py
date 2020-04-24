@@ -750,8 +750,8 @@ class ExposedFileWrapper(object):
         filename -- name of the underlying file on client's filesystem.
         handle -- file descriptor; If None, the file is opened by filename.
         mode -- mode for opening the file.
-        encoding -- file content output encoding, string or None.  Applicable
-          only for output modes.
+        encoding -- file content output encoding, string or None.  Not
+          applicable in binary modes.
         encrypt -- function performing data encryption.  The function must
           accept a file like object as argument and return its encrypted
           contents as a string.  If 'None' then don't encrypt the file;
@@ -762,6 +762,7 @@ class ExposedFileWrapper(object):
           output modes
 
         """
+        assert encoding is None or 'b' not in mode, (encoding, mode)
         if handle is None:
             f = open(filename, mode)
         else:
@@ -786,18 +787,27 @@ class ExposedFileWrapper(object):
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.exposed_close()
 
+    def _decode(self, data):
+        # TODO: Remove when Python 2 support not needed and pass encoding to open().
+        if self._encoding is not None:
+            data = data.decode(self._encoding)
+        return data
+
     @property
     def exposed_name(self):
         return self._filename
 
     def exposed_read(self):
-        return self._f.read()
+        return self._decode(self._f.read())
 
     def exposed_readline(self):
-        return self._f.readline()
+        return self._decode(self._f.readline())
 
     def exposed_readlines(self):
-        return self._f.readlines()
+        lines = self._f.readlines()
+        if self._encoding is not None:
+            lines = [self._decode(l) for l in lines]
+        return lines
 
     def exposed_write(self, data):
         if sys.version_info[0] == 2 and isinstance(data, buffer):
