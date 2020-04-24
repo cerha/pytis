@@ -780,6 +780,12 @@ class ExposedFileWrapper(object):
         self._encoding = encoding
         self._decrypt = decrypt
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.exposed_close()
+
     @property
     def exposed_name(self):
         return self._filename
