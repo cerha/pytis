@@ -233,7 +233,7 @@ def parse_x2go_info_file(filename):
     return access_data
 
 
-def read_x2go_info_file():
+def _read_x2go_info_file():
     pytis_x2go_file = pytis_x2go_info_file()
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
@@ -254,7 +254,7 @@ def read_x2go_info_file():
 
 
 def _connect():
-    access_data = read_x2go_info_file()
+    access_data = _read_x2go_info_file()
     rpc_info = RPCInfo
     if access_data is None:
         access_data = rpc_info.access_data
