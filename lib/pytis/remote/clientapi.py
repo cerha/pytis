@@ -799,9 +799,6 @@ class ExposedFileWrapper(object):
     def exposed_readlines(self):
         return self._f.readlines()
 
-    def exposed_xreadlines(self):
-        return self._f
-
     def exposed_write(self, data):
         if sys.version_info[0] == 2 and isinstance(data, buffer):
             data = data[:]
