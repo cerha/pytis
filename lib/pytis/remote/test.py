@@ -226,8 +226,9 @@ class RemoteTest(unittest.TestCase):
             f.flush()  # Just to test that the call does not fail...
         with pytis.remote.open_file('test.txt', mode='rb') as f:
             assert f.read() == b'abc'
-            #f.seek(0)
-            #assert f.read(1) == b'a'
+            f.seek(0)
+            assert f.read(1) == b'a'
+            assert f.read(10) == b'bc'
 
     def test_encoded_file_operations(self):
         with pytis.remote.make_temporary_file(suffix='.txt', mode='w', encoding='utf-8') as f:

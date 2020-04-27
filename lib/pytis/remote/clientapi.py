@@ -797,8 +797,8 @@ class ExposedFileWrapper(object):
     def exposed_name(self):
         return self._filename
 
-    def exposed_read(self):
-        return self._decode(self._f.read())
+    def exposed_read(self, *args, **kwargs):
+        return self._decode(self._f.read(*args, **kwargs))
 
     def exposed_readline(self):
         return self._decode(self._f.readline())
