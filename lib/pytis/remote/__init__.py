@@ -23,7 +23,7 @@ except ImportError as e:
         raise e
 
 from .remote import (  # noqa!
-    client_ip, x2go_ip, client_available,
+    client_ip, client_available,
     version, library_version, x2goclient_version,
     session_password, get_clipboard_text, set_clipboard_text,
     launch_file, launch_url, make_selected_file, make_temporary_file,

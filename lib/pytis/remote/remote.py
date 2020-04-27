@@ -93,39 +93,29 @@ class Connector(object):
         return connection
 
 
-def x2go_ip():
-    """Return IP address of the x2go client, as a string.
+def client_ip():
+    """Return IP address of the x2go client as a string.
 
     If pytis is not run from an x2go client, return 'None'.
-
-    """
-    global _x2go_ip
-    if _x2go_ip is not None:
-        return _x2go_ip
-    _x2go_agent_pid = os.getenv('X2GO_AGENT_PID')
-    if _x2go_agent_pid is not None:
-        p = subprocess.Popen('x2golistsessions', stdout=subprocess.PIPE, shell=True)
-        output, __ = p.communicate()
-        for line in output.splitlines():
-            items = line.split('|')
-            if items[0] == _x2go_agent_pid:
-                maybe_ip = items[7]
-                if _ip_matcher.match(maybe_ip):
-                    _x2go_ip = maybe_ip
-                    break
-    return _x2go_ip
-
-
-def client_ip():
-    """Return IP address of the x2go client or nx client, as a string.
-
-    If pytis is not run from an x2go or nx client, return 'None'.
 
     """
     if pytis.config.session_id:
         ip = '127.0.0.1'
     else:
-        ip = x2go_ip()
+        global _x2go_ip
+        if _x2go_ip is None:
+            x2go_agent_pid = os.getenv('X2GO_AGENT_PID')
+            if x2go_agent_pid is not None:
+                p = subprocess.Popen('x2golistsessions', stdout=subprocess.PIPE, shell=True)
+                output, __ = p.communicate()
+                for line in output.splitlines():
+                    items = line.split('|')
+                    if items[0] == x2go_agent_pid:
+                        maybe_ip = items[7]
+                        if _ip_matcher.match(maybe_ip):
+                            _x2go_ip = maybe_ip
+                            break
+        ip = _x2go_ip
     return ip
 
 
