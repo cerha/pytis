@@ -944,7 +944,7 @@ class PytisClientAPIService(rpyc.Service):
 
         """
         assert isinstance(path, basestring), path
-        if self._pytis_on_windows():
+        if sys.platform == 'win32':
             os.startfile(path)
         else:
             subprocess.Popen(['xdg-open', path])
