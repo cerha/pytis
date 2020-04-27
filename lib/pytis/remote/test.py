@@ -194,7 +194,6 @@ class FileWrapperTest(unittest.TestCase):
             os.remove(filename)
 
 
-@pytest.mark.skipif(not pytis.remote.client_available(), reason="Client connection not available")
 class RemoteTest(unittest.TestCase):
     """Test functions in 'pytis.remote' in remote mode.
 
@@ -206,6 +205,13 @@ class RemoteTest(unittest.TestCase):
     ~/.x2go/ssh contains connection data.
 
     """
+
+    @classmethod
+    def setup_class():
+        # Avoid removing the info file for tests (to allow running tests multiple times).
+        pytis.remote.read_x2go_info_file(remove=False)
+        if not pytis.remote.client_available():
+            pytest.skip("Client connection not available")
 
     def test_clipboard(self):
         pytis.remote.set_clipboard_text('foo')

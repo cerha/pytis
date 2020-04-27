@@ -185,16 +185,14 @@ def parse_x2go_info_file(filename):
         raise X2GoInfoSoftException("Incomplete or invalid X2Go file")
     if items[0] != '0':
         raise X2GoInfoHardException("Unknown pytis X2Go format")
-    access_data = {}
     try:
-        access_data['port'] = int(items[1])
+        port = int(items[1])
     except ValueError:
         raise X2GoInfoHardException("Invalid port number in X2Go file", items[1])
-    access_data['password'] = items[2]
-    return access_data
+    return dict(port=port, password=items[2])
 
 
-def _read_x2go_info_file():
+def read_x2go_info_file(remove=True):
     pytis_x2go_file = pytis_x2go_info_file()
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
@@ -208,25 +206,22 @@ def _read_x2go_info_file():
                 log(OPERATIONAL, *e.args)
                 return None
             else:
-                os.remove(pytis_x2go_file)
+                RPCInfo.access_data = access_data
+                if remove:
+                    os.remove(pytis_x2go_file)
                 return access_data
     return None
 
 
 def _connect():
-    access_data = _read_x2go_info_file()
-    rpc_info = RPCInfo
-    if access_data is None:
-        access_data = rpc_info.access_data
-    else:
-        rpc_info.access_data = access_data
-    if access_data is None:
+    access_data = RPCInfo.access_data or read_x2go_info_file()
+    if not access_data:
         return None
     port = access_data.get('port')
     password = access_data.get('password')
     connector = Connector(password)
     connection = connector.connect('localhost', port)
-    rpc_info.remote_client_version = version = connection.root.x2goclient_version()
+    RPCInfo.remote_client_version = version = connection.root.x2goclient_version()
     log(OPERATIONAL, "Client connection established with version:", version)
     try:
         connection.root.extend
