@@ -221,39 +221,29 @@ def paste_from_clipboard(ctrl):
 
     """
     assert isinstance(ctrl, wx.TextCtrl)
-    if pytis.remote.client_available() and not pytis.remote.x2go_ip():
-        nx_ip = pytis.remote.nx_ip()
-        log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
-        text = pytis.remote.get_clipboard_text()
-    else:
-        log(EVENT, 'Paste from clipboard')
-        if not wx.TheClipboard.IsOpened():  # may crash, otherwise
-            do = wx.TextDataObject()
-            wx.TheClipboard.Open()
-            success = wx.TheClipboard.GetData(do)
-            wx.TheClipboard.Close()
-            if success:
-                text = do.GetText()
+    log(EVENT, 'Paste from clipboard')
+    if not wx.TheClipboard.IsOpened():  # may crash, otherwise
+        do = wx.TextDataObject()
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.GetData(do)
+        wx.TheClipboard.Close()
+        if success:
+            text = do.GetText()
+            text_length = len(text)
+            orig_text = ctrl.GetValue()
+            if orig_text:
+                from_, to_ = ctrl.GetSelection()
+                if from_ != to_:
+                    text = orig_text[:from_] + text + orig_text[to_:]
+                    point = from_ + text_length
+                else:
+                    point = ctrl.GetInsertionPoint()
+                    text = orig_text[:point] + text + orig_text[point:]
+                    point = point + text_length
             else:
-                text = None
-        else:
-            text = None
-    if text:
-        text_length = len(text)
-        orig_text = ctrl.GetValue()
-        if orig_text:
-            from_, to_ = ctrl.GetSelection()
-            if from_ != to_:
-                text = orig_text[:from_] + text + orig_text[to_:]
-                point = from_ + text_length
-            else:
-                point = ctrl.GetInsertionPoint()
-                text = orig_text[:point] + text + orig_text[point:]
-                point = point + text_length
-        else:
-            point = text_length
-        ctrl.ChangeValue(text)
-        ctrl.SetInsertionPoint(point)
+                point = text_length
+            ctrl.ChangeValue(text)
+            ctrl.SetInsertionPoint(point)
 
 
 def hotkey_string(hotkey):

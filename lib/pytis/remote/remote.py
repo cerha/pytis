@@ -38,7 +38,6 @@ unistr = type(u'')  # Python 2/3 transition hack.
 _ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 _ipv6_regexp = r'.*:.*:.*'
 _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
-_nx_ip = UNDEFINED
 _x2go_ip = None
 
 
@@ -94,33 +93,6 @@ class Connector(object):
         return connection
 
 
-def nx_ip():
-    """Return IP address of the nx client, as a string.
-
-    If pytis is not run from an nx client, return 'None'.
-
-    """
-    global _nx_ip
-    if _nx_ip is not UNDEFINED:
-        return _nx_ip
-    _nx_ip = os.getenv('NXUSERIP')
-    if _nx_ip is not None:
-        return _nx_ip
-    nxsessionid = os.getenv('NXSESSIONID')
-    if nxsessionid is not None:
-        session_id = ':' + nxsessionid.split('-')[1]
-        p = subprocess.Popen('who', stdout=subprocess.PIPE, shell=True)
-        output, __ = p.communicate()
-        for line in output.splitlines():
-            items = line.split()
-            if items[1] == session_id:
-                maybe_ip = items[4][1:-1]
-                if _ip_matcher.match(maybe_ip):
-                    _nx_ip = maybe_ip
-                    break
-    return _nx_ip
-
-
 def x2go_ip():
     """Return IP address of the x2go client, as a string.
 
@@ -153,7 +125,7 @@ def client_ip():
     if pytis.config.session_id:
         ip = '127.0.0.1'
     else:
-        ip = x2go_ip() or nx_ip()
+        ip = x2go_ip()
     return ip
 
 
