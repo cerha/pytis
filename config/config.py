@@ -180,18 +180,6 @@
 # Příznak zobrazování bublinové nápovědy.
 #show_tooltips = True
 
-# Lokální komunikační port pro naslouchání pytisovým aplikacím.
-#rpc_local_port = 17984
-
-# Vzdálený komunikační port na klientských stanicích.
-#rpc_remote_port = 17984
-
-# Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi.
-#rpc_key_file = 'linux.key'
-
-# Soubor s certifikátem pro komunikaci s klientskými stanicemi.
-#rpc_certificate_file = 'linux.crt'
-
 # Jméno aplikace. Jméno může být libovolné, používá se např. jako titulek okna
 # nebo při logování.  Od něho je také odvozeno jméno výchozího souboru pro
 # ukládání uživatelských změn v konfiguraci (po vypuštění speciálních znaků a

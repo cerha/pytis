@@ -159,9 +159,8 @@ def client_ip():
 
 def client_available():
     """Return true, iff remote client is available."""
-    if not pytis.config.rpc_communication_enabled or client_ip() is None:
-        level = OPERATIONAL if pytis.config.rpc_communication_enabled else DEBUG
-        log(level, "RPC unavailable")
+    if client_ip() is None:
+        log(OPERATIONAL, "RPC unavailable")
         return False
     try:
         return _request('echo', 'hello') == 'hello'
@@ -246,11 +245,10 @@ def _read_x2go_info_file():
             except X2GoInfoHardException as e:
                 log(OPERATIONAL, *e.args)
                 return None
-            os.remove(pytis_x2go_file)
-            break
-    else:
-        access_data = dict(port=pytis.config.rpc_local_port, password=None)
-    return access_data
+            else:
+                os.remove(pytis_x2go_file)
+                return access_data
+    return None
 
 
 def _connect():

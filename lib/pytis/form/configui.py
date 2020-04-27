@@ -57,7 +57,6 @@ _LAYOUT = (
                 'auto_menu_accel',
                 'show_splash',
                 'cache_spec_onstart',
-                'rpc_communication_enabled',
                 ),
         LVGroup(_("Other"),
                 'sender_address'),
@@ -82,7 +81,6 @@ _LABELS = {
     'sender_address': _("E-mail address"),
     'export_directory': _("Default directory"),
     'export_encoding': _("Character encoding"),
-    'rpc_communication_enabled': _("Communication with remote workstation"),
 }
 
 _FIELDSPEC_KWARGS = {

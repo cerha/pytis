@@ -858,27 +858,6 @@ class Configuration(object):
 
     # Komunikace s klientskými stanicemi
 
-    class _Option_rpc_local_port(NumericOption):
-        u"""Lokální komunikační port pro naslouchání pytisovým aplikacím."""
-        _DEFAULT = 17984
-
-    class _Option_rpc_remote_port(NumericOption):
-        u"""Vzdálený komunikační port na klientských stanicích."""
-        _DEFAULT = 17984
-
-    class _Option_rpc_key_file(FileOption):
-        u"""Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi."""
-        _DEFAULT = 'linux.key'
-
-    class _Option_rpc_certificate_file(FileOption):
-        u"""Soubor s certifikátem pro komunikaci s klientskými stanicemi."""
-        _DEFAULT = 'linux.crt'
-
-    class _Option_rpc_communication_enabled(BooleanOption):
-        """Enable RPC communication with client machines."""
-        _DESCR = _("Enable RPC communication with client machines.")
-        _DEFAULT = True
-
     class _Option_session_id(StringOption, CommandlineOption):
         """X2Go session id."""
         _DESCR = _("For internal use only.")
