@@ -254,15 +254,14 @@ class RemoteTest(unittest.TestCase):
             assert tuple(f.readlines()) == (b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\n',
                                             b'k\xc5\xaf\xc5\x88\n')
 
+    def test_run_python(script):
+        with pytis.remote.make_temporary_file(suffix='.txt', mode='w') as f:
+            f.write('a')
+            fname = f.name
+        pytis.remote.run_python("with open('{}', 'a') as f: f.write('bc')".format(fname))
+        with pytis.remote.open_file(fname, mode='r') as f:
+            assert f.read() == b'abc'
 
-    # def test_run_python(script):
-    #     # run_python is only implemented on Windows...
-    #     with pytis.remote.make_temporary_file(suffix='.txt', mode='w') as f:
-    #         fname = f.name
-    #     pytis.remote.run_python("with open('{}', 'w') as f: f.write('abc')".formt(fname))
-    #     with pytis.remote.open_file(fname, mode='r') as f:
-    #         assert f.read() == b'abc'
-    #
     # def test_session_password(self):
     #     # session_password is currently not implemented in clientapi.py
     #     assert pytis.remote.session_password() == ''
