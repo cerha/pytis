@@ -1040,8 +1040,8 @@ class PytisClientAPIService(rpyc.Service):
     def exposed_select_directory(self, directory=None):
         return self._client().select_directory(directory=directory)
 
-    def exposed_select_file(self, filename=None, directory=None, patterns=(), pattern=None,
-                            multi=False):
+    def exposed_select_file(self, filename=None, directory=None, title=None,
+                            patterns=(), pattern=None, save=False, multi=False):
         """Return a list of filenames selected by user in GUI dialog.
 
         The filenames are selected by the user using a GUI dialog.  If the user
@@ -1051,19 +1051,26 @@ class PytisClientAPIService(rpyc.Service):
 
           filename -- default filename or None
           directory -- initial directory of the GUI dialog
+          title -- dialog title.  The default is "Select file" or "Select files"
+            (if 'multi') or "Save file" if 'save' is True.
           patterns -- a sequence of pairs (label, pattern) for file filtering
             as described in 'pytis.remote.ClientUIBackend.select_file()'.
           pattern -- a string defining the required file name pattern, or 'None'
+          save -- iff True, the file is to be open for saving (overwrite warning
+            is displayed when selecting an existing file).
           multi -- iff true, allow selecting multiple files
 
         """
         assert filename is None or isinstance(filename, basestring), filename
         assert directory is None or isinstance(directory, basestring), directory
+        assert title is None or isinstance(title, basestring), title
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
         assert isinstance(multi, bool), multi
-        return self._client().select_file(filename=filename, directory=directory,
-                                          patterns=patterns, pattern=pattern, multi=multi)
+        assert isinstance(save, bool), save
+        return self._client().select_file(filename=filename, directory=directory, title=title,
+                                          patterns=patterns, pattern=pattern,
+                                          save=save, multi=multi)
 
 
 class PasswordAuthenticator(object):

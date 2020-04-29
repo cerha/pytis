@@ -222,6 +222,7 @@ def _connect():
     connector = Connector(password)
     connection = connector.connect('localhost', port)
     RPCInfo.remote_client_version = version = connection.root.x2goclient_version()
+    RPCInfo.client_api_pushed = False
     log(OPERATIONAL, "Client connection established with version:", version)
     try:
         connection.root.extend
@@ -241,6 +242,7 @@ def _connect():
                 log(OPERATIONAL, "Client API push failed:", error)
             else:
                 log(OPERATIONAL, "Client API pushed successfully.")
+                RPCInfo.client_api_pushed = True
     return connection
 
 
@@ -437,21 +439,33 @@ def select_directory(directory=None):
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
 
 
-def select_file(filename=None, directory=None, patterns=(), pattern=None, template=None,
-                multi=False):
+def select_file(filename=None, directory=None, title=None,
+                patterns=(), pattern=None, template=None, save=False, multi=False):
     assert filename is None or isinstance(filename, basestring), filename
     assert directory is None or isinstance(directory, basestring), directory
+    assert title is None or isinstance(title, basestring), title
     assert isinstance(patterns, (tuple, list)), patterns
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
+    assert isinstance(save, bool), save
+    assert not save, "Save can not be relied upon as long as there are old clients."
     assert isinstance(multi, bool), multi
     if template:
         # TODO: template is just for backwards compatibility. REMOVE THIS
         assert isinstance(template, basestring), template
         assert not pattern, (template, pattern)
         pattern = template
+    if title is None:
+        if save:
+            title = _("Uložit soubor")
+        elif multi:
+            title = _("Výběr souborů")
+        else:
+            title = _("Výběr souboru")
+    # Older clients don't support these arguments...
+    kwargs = dict(title=title, save=save) if RPCInfo.client_api_pushed else dict()
     try:
         return _request('select_file', filename=filename, directory=directory,
-                        patterns=patterns, pattern=pattern, multi=multi)
+                        patterns=patterns, pattern=pattern, multi=multi, **kwargs)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))
