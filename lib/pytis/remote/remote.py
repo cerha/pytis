@@ -31,7 +31,7 @@ import subprocess
 import time
 
 import pytis
-from pytis.util import DEBUG, OPERATIONAL, UNDEFINED, log, translations
+from pytis.util import OPERATIONAL, log, translations
 
 _ = translations('pytis-wx')
 
