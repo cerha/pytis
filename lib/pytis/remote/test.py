@@ -207,7 +207,7 @@ class RemoteTest(unittest.TestCase):
     """
 
     @classmethod
-    def setup_class():
+    def setup_class(cls):
         # Avoid removing the info file for tests (to allow running tests multiple times).
         pytis.remote.read_x2go_info_file(remove=False)
         if not pytis.remote.client_available():
