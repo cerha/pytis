@@ -430,10 +430,12 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
                     decrypt=decrypt)
 
 
-def select_directory(directory=None):
+def select_directory(directory=None, title=_("Výběr adresáře")):
     assert directory is None or isinstance(directory, basestring), directory
+    # Older clients don't support this argument...
+    kwargs = dict(title=title) if RPCInfo.client_api_pushed else dict()
     try:
-        return _request('select_directory', directory=directory)
+        return _request('select_directory', directory=directory, **kwargs)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))

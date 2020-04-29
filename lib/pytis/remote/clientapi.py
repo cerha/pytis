@@ -1037,8 +1037,8 @@ class PytisClientAPIService(rpyc.Service):
         return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
                                   decrypt=self._decrypt(decrypt))
 
-    def exposed_select_directory(self, directory=None):
-        return self._client().select_directory(directory=directory)
+    def exposed_select_directory(self, directory=None, title=u"Výběr adresáře"):
+        return self._client().select_directory(directory=directory, title=title)
 
     def exposed_select_file(self, filename=None, directory=None, title=None,
                             patterns=(), pattern=None, save=False, multi=False):
