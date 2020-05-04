@@ -36,6 +36,13 @@ def interactive(test):
     return pytest.mark.skipif(not os.getenv(envvar), reason="{} not set.".format(envvar))(test)
 
 
+def backend(name):
+    envvar = 'PYTIS_TEST_UI_BACKENDS'
+    backends = os.getenv(envvar) or ''
+    return pytest.mark.skipif(backends != 'all' and name not in backends.split(','),
+                              reason="Backend '{}' not in {}".format(name, envvar))
+
+
 class ClientUIBackendTest(object):
     """Tests locally just the UI backend itself without remote communication.
 
@@ -93,29 +100,22 @@ class ClientUIBackendTest(object):
         self._confirm('You selected "%s"' % directory)
 
 
-def skip_unless_enabled(name):
-    envvar = 'PYTIS_TEST_UI_BACKENDS'
-    backends = os.getenv(envvar) or ''
-    return pytest.mark.skipif(backends != 'all' and name not in backends.split(','),
-                              reason="Backend '%s' not in %s" % (name, envvar))
-
-
-@skip_unless_enabled('wx')
+@backend('wx')
 class WxUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.WxUIBackend
 
 
-@skip_unless_enabled('tk')
+@backend('tk')
 class TkUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.TkUIBackend
 
 
-@skip_unless_enabled('zenity')
+@backend('zenity')
 class ZenityUIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.ZenityUIBackend
 
 
-@skip_unless_enabled('win32')
+@backend('win32')
 class Win32UIBackendTest(ClientUIBackendTest, unittest.TestCase):
     _BACKEND = clientapi.Win32UIBackend
 
