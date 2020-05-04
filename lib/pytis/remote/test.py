@@ -266,6 +266,7 @@ class RemoteTest(unittest.TestCase):
         pytis.remote.run_python("with open('{}', 'a') as f: f.write('bc')".format(fname))
         with pytis.remote.open_file(fname, mode='r') as f:
             assert f.read() == b'abc'
+        pytis.remote.run_python("import os; os.remove('{}')".format(fname))
 
     @interactive
     def test_file_dialogs(self):
