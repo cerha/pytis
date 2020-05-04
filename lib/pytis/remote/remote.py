@@ -194,7 +194,26 @@ def parse_x2go_info_file(filename):
     return dict(port=port, password=items[2])
 
 
-def read_x2go_info_file(remove=True):
+_remove_x2go_info_file = True
+
+
+def keep_x2go_info_file():
+    """Prevent removing the info file after it is read.
+
+    The info file (containing the connection port and password) is normally
+    removed after it is read succesfully because it contains sensitive data and
+    is normally not neeeded any more.  This, however, makes it impossible to
+    run pytis twice within one pytis2go session.  This may be a problem in
+    tests, which we want to be able to run multiple times within one session.
+    Call this function before any other method in this module in order to
+    prevent info file removal.
+
+    """
+    global _remove_x2go_info_file
+    _remove_x2go_info_file = False
+
+
+def _read_x2go_info_file():
     pytis_x2go_file = pytis_x2go_info_file()
     if os.path.exists(pytis_x2go_file):
         for i in range(3):
@@ -208,21 +227,20 @@ def read_x2go_info_file(remove=True):
                 log(OPERATIONAL, *e.args)
                 return None
             else:
-                RPCInfo.access_data = access_data
-                if remove:
+                global _remove_x2go_info_file
+                if _remove_x2go_info_file:
                     os.remove(pytis_x2go_file)
                 return access_data
     return None
 
 
 def _connect():
-    access_data = RPCInfo.access_data or read_x2go_info_file()
+    access_data = _read_x2go_info_file() or RPCInfo.access_data
     if not access_data:
         return None
-    port = access_data.get('port')
-    password = access_data.get('password')
-    connector = Connector(password)
-    connection = connector.connect('localhost', port)
+    connector = Connector(access_data.get('password'))
+    RPCInfo.access_data = access_data
+    RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
     RPCInfo.remote_client_version = version = connection.root.x2goclient_version()
     RPCInfo.client_api_pushed = False
     log(OPERATIONAL, "Client connection established with version:", version)
@@ -266,11 +284,11 @@ def _request(request, *args, **kwargs):
         else:
             return arg
     if RPCInfo.connection is None:
-        RPCInfo.connection = _connect()
+        _connect()
     try:
         RPCInfo.connection.root.echo
     except Exception:
-        RPCInfo.connection = _connect()
+        _connect()
     method = getattr(RPCInfo.connection.root, request)
     return method(*retype(args), **retype(kwargs))
 
