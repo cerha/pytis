@@ -31,6 +31,11 @@ import pytis.remote
 from . import clientapi
 
 
+def interactive(test):
+    envvar = 'PYTIS_TEST_INTERACTIVE'
+    return pytest.mark.skipif(not os.getenv(envvar), reason="{} not set.".format(envvar))(test)
+
+
 class ClientUIBackendTest(object):
     """Tests locally just the UI backend itself without remote communication.
 
@@ -262,27 +267,13 @@ class RemoteTest(unittest.TestCase):
         with pytis.remote.open_file(fname, mode='r') as f:
             assert f.read() == b'abc'
 
-    # def test_session_password(self):
-    #     # session_password is currently not implemented in clientapi.py
-    #     assert pytis.remote.session_password() == ''
-    #
-    # def _test_launch_file(self):
-    #     pytis.remote.launch_file(path)
-    #
-    # def _test_launch_url(self):
-    #     pytis.remote.launch_url(url)
-    #
-    # def _test_open_selected_file(self):
-    #     pytis.remote.open_selected_file(directory=None, patterns=(), pattern=None,
-    #                                     template=None, encrypt=None)
-    #
-    # def _test_make_selected_file(self):
-    #     pytis.remote.make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
-    #                                     template=None, encoding=None, mode='wb', decrypt=False)
-    #
-    # def _test_select_directory(self):
-    #     pytis.remote.select_directory(directory=None)
-    #
-    # def _test_select_file(self):
-    #     pytis.remote.select_file(filename=None, directory=None, patterns=(), pattern=None,
-    #                              template=None, multi=False)
+    @interactive
+    def test_file_dialogs(self):
+        directory = pytis.remote.select_directory(title=("Select a directory"))
+        assert directory is not None
+        path = pytis.remote.select_file(directory=directory, pattern='*.pdf',
+                                            title="Select a PDF file in this directory")
+        assert path and path.startswith(directory)
+        with pytis.remote.open_file(path, mode='r') as f:
+            assert f.read(4) == b'%PDF'
+        pytis.remote.launch_file(path)
