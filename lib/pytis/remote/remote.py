@@ -42,6 +42,8 @@ _ipv6_regexp = r'.*:.*:.*'
 _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _x2go_ip = None
 
+_remove_x2go_info_file = True
+
 
 class RPCInfo(object):
     """Container for RPC communication data."""
@@ -50,6 +52,8 @@ class RPCInfo(object):
     remote_client_version = None
     remote_status_info = (False, time.time())
     remote_connection_initially_available = False
+    connection_order = 0
+    access_data_version = 0
 
 
 class Connector(object):
@@ -194,9 +198,6 @@ def parse_x2go_info_file(filename):
     return dict(port=port, password=items[2])
 
 
-_remove_x2go_info_file = True
-
-
 def keep_x2go_info_file():
     """Prevent removing the info file after it is read.
 
@@ -239,11 +240,18 @@ def _connect():
     if not access_data:
         return None
     connector = Connector(access_data.get('password'))
-    RPCInfo.access_data = access_data
+    if access_data != RPCInfo.access_data:
+        RPCInfo.access_data = access_data
+        RPCInfo.access_data_version += 1
     RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
+    RPCInfo.connection_order += 1
     RPCInfo.remote_client_version = version = connection.root.x2goclient_version()
     RPCInfo.client_api_pushed = False
-    log(OPERATIONAL, "Client connection established with version:", version)
+    log(OPERATIONAL, "Client connection {} ({}) established with version: {}".format(
+        RPCInfo.connection_order,
+        RPCInfo.access_data_version,
+        version
+    ))
     try:
         connection.root.extend
     except AttributeError:
