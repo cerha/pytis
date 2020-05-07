@@ -1000,7 +1000,7 @@ class Menu(_TitledMenuObject):
                 width = parent.GetTextExtent(title)[0] + 20
                 if isinstance(item, MItem):
                     wxitem = item.create(parent, menu)
-                    wxitem.SetText(wx_title)
+                    wxitem.SetItemLabel(wx_title)
                     menu.Append(wxitem)
                     if isinstance(item, (RadioItem, CheckItem)):
                         wxitem.Check(item.state())
@@ -1019,7 +1019,7 @@ class Menu(_TitledMenuObject):
             fill_width = max_label_width - width - max_hotkey_width
             n = round(float(fill_width) / float(space_width))
             fill = "%%%ds" % n % ''
-            wxitem.SetText(wx_title + fill + hotkey_str[i])
+            wxitem.SetItemLabel(wx_title + fill + hotkey_str[i])
         return menu
 
     def wx_menu(self):
