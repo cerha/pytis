@@ -212,10 +212,10 @@ class TestRemote:
 
     @classmethod
     def setup_class(cls):
+        if not os.getenv('X2GO_SESSION'):
+            pytest.skip("Not within an X2Go session.")
         # Avoid removing the info file (to allow running tests multiple times).
         pytis.remote.keep_x2go_info_file()
-        if not pytis.remote.client_available():
-            pytest.skip("Client connection not available")
 
     def test_clipboard(self):
         pytis.remote.set_clipboard_text('foo')
