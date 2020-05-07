@@ -25,7 +25,6 @@ import io
 import os
 import pytest
 import tempfile
-import unittest
 
 import pytis.remote
 from . import clientapi
@@ -101,26 +100,26 @@ class ClientUIBackendTest(object):
 
 
 @backend('wx')
-class WxUIBackendTest(ClientUIBackendTest, unittest.TestCase):
+class TestWxUIBackend(ClientUIBackendTest):
     _BACKEND = clientapi.WxUIBackend
 
 
 @backend('tk')
-class TkUIBackendTest(ClientUIBackendTest, unittest.TestCase):
+class TestTkUIBackend(ClientUIBackendTest):
     _BACKEND = clientapi.TkUIBackend
 
 
 @backend('zenity')
-class ZenityUIBackendTest(ClientUIBackendTest, unittest.TestCase):
+class TestZenityUIBackend(ClientUIBackendTest):
     _BACKEND = clientapi.ZenityUIBackend
 
 
 @backend('win32')
-class Win32UIBackendTest(ClientUIBackendTest, unittest.TestCase):
+class TestWin32UIBackend(ClientUIBackendTest):
     _BACKEND = clientapi.Win32UIBackend
 
 
-class FileWrapperTest(unittest.TestCase):
+class TestFileWrapper:
     """Tests locally just the FileWrapper class itself without remote communication."""
 
     def _encrypt(self, f):
@@ -199,7 +198,7 @@ class FileWrapperTest(unittest.TestCase):
             os.remove(filename)
 
 
-class RemoteTest(unittest.TestCase):
+class TestRemote:
     """Test functions in 'pytis.remote' in remote mode.
 
     This test must be run through Pytis2go.  Launch a terminal through Pytis2go
