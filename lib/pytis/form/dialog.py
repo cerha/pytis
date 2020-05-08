@@ -842,7 +842,11 @@ class BugReport(GenericDialog):
         )), 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
 
         nb = wx.Notebook(dialog)
-        nb.AddPage(wx_text_view(nb, "<html>" + cgitb.html(self._einfo) + "</html>",
+        html = cgitb.html(self._einfo)
+        if isinstance(html, bytes):
+            # Python 2 hack to avoid ASCII decoding error in unicode concatenation on next line.
+            html = html.decode('utf-8')
+        nb.AddPage(wx_text_view(nb, "<html>" + html + "</html>",
                                 format=TextFormat.HTML, width=74, height=14),
                    _("Exception details"))
         nb.AddPage(wx.TextCtrl(nb, value='', name='message', size=(740, 200),
