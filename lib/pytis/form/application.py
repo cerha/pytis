@@ -105,6 +105,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         global _application
         return _application
 
+    def __init__(self, hidden=False):
+        """Arguments:
+
+          hidden -- Run the application without showing any windows/frames.
+            Experimantal mode for running tests which require the application
+            environment, but no user interaction.  Sample tests in Pytis Demo.
+
+        """
+        self._hidden = hidden
+        super(Application, self).__init__()
+
     def OnInit(self):
         import pytis.extensions
         self._specification = pytis.config.resolver.specification('Application')
@@ -230,7 +241,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
-        frame.Show(True)
+        if not self._hidden:
+            frame.Show(True)
         # Initialize the toolbar.
         self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER | wx.TB_DOCKABLE)
         for group in pytis.form.TOOLBAR_COMMANDS:
@@ -318,7 +330,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 saved_forms.append((cls, name))
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
-        if saved_forms:
+        if saved_forms and not self._hidden:
             if pytis.config.autostart_saved_forms:
                 startup_forms.extend(reversed(saved_forms))
             else:
