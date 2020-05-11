@@ -1,0 +1,16 @@
+Vítáme vás v evidenci kontinentů aplikace pytis-demo!
+
+Váš aktuálně prohlížený kontinent je *$current_row.name*.
+
+Na tomto kontinentu se nachází následující země:
+
+${Binding.all_countries.table}
+
+Kompletní přehled všech kontinentů zobrazených ve formuláři naleznete na
+následujících stranách.  Již zde vám však přinášíme stručný seznam všech námi
+evidovaných kontinentů:
+
+$table
+
+A nakonec zde ještě na ukázku vložení aplikací předdefinovaných tiskových
+proměnných s libovolným LCG obsahem: ${app.love}, ${app.war}!

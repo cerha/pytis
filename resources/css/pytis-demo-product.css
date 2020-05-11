@@ -1,0 +1,11 @@
+.notes {
+    border: dotted 1px #666;
+    border-radius: 6px;
+    padding: 0 1em;
+    background: #ffe;
+    display: inline-block;
+}
+.notes h2 {
+    margin-top: 0.6em;
+    font-size: 1.2em;
+}

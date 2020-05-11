@@ -1,0 +1,5 @@
+*$current_row.name*
+
+Na kontinentu $current_row.name se nachází tyto země:
+
+${Binding.all_countries.table}

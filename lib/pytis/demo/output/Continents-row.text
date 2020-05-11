@@ -1,0 +1,3 @@
+*$current_row.name*
+
+Kontinent ${current_row.name} má identifikátor ${current_row.id}.
