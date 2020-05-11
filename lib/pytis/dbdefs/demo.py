@@ -62,12 +62,11 @@ class CmsUsers(sql.SQLTable):
 
 class Continents(sql.SQLTable):
     name = 'continents'
-    fields = (sql.PrimaryColumn('id', pytis.data.String(minlen=2, maxlen=2, not_null=False),
-                                "Code"),
-              sql.Column('name', pytis.data.String(not_null=True), "Continent name",
-                         unique=True),
-              sql.Column('smallest', pytis.data.String(), "Smallest country"),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.String(minlen=2, maxlen=2, not_null=False), "Code"),
+        sql.Column('name', pytis.data.String(not_null=True), "Continent name", unique=True),
+        sql.Column('smallest', pytis.data.String(), "Smallest country"),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -86,19 +85,19 @@ class Continents(sql.SQLTable):
 
 class Countries(sql.SQLTable):
     name = 'countries'
-    fields = (sql.PrimaryColumn('id', pytis.data.String(minlen=2, maxlen=2, not_null=False),
-                                "Alpha-2 code", "Uppercase ISO 3166 alpha-2 country code."),
-              sql.Column('id3', pytis.data.String(minlen=3, maxlen=3, not_null=True),
-                         "Alpha-3 code", "Uppercase ISO 3166 alpha-3 country code.", unique=True),
-              sql.Column('num', pytis.data.String(minlen=3, maxlen=3, not_null=True),
-                         "Numeric code", "ISO 3166 country number.", unique=True),
-              sql.Column('continent', pytis.data.String(minlen=2, maxlen=2, not_null=True),
-                         "Continent", "Uppercase alpha-2 continent code.",
-                         references=sql.r.Continents),
-              sql.Column('name', pytis.data.String(not_null=True),
-                         "Short name", unique=True),
-              sql.Column('fullname', pytis.data.String(not_null=True), "Full name", unique=True),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.String(minlen=2, maxlen=2, not_null=False),
+                          "Alpha-2 code", "Uppercase ISO 3166 alpha-2 country code."),
+        sql.Column('id3', pytis.data.String(minlen=3, maxlen=3, not_null=True),
+                   "Alpha-3 code", "Uppercase ISO 3166 alpha-3 country code.", unique=True),
+        sql.Column('num', pytis.data.String(minlen=3, maxlen=3, not_null=True),
+                   "Numeric code", "ISO 3166 country number.", unique=True),
+        sql.Column('continent', pytis.data.String(minlen=2, maxlen=2, not_null=True),
+                   "Continent", "Uppercase alpha-2 continent code.", references=sql.r.Continents),
+        sql.Column('name', pytis.data.String(not_null=True),
+                   "Short name", unique=True),
+        sql.Column('fullname', pytis.data.String(not_null=True), "Full name", unique=True),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -359,9 +358,10 @@ class Countries(sql.SQLTable):
 
 class Longtable(sql.SQLTable):
     name = 'longtable'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), _("ID")),
-              sql.Column('value', pytis.data.String(maxlen=6, not_null=False), _("Value")),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial(), _("ID")),
+        sql.Column('value', pytis.data.String(maxlen=6, not_null=False), _("Value")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = ()
@@ -390,9 +390,10 @@ class Fastlongtable(sql.SQLMaterializedView, Slowlongtable):
 
 class TypeInsuranceFee(sql.SQLType):
     name = 'type_insurance_fee'
-    fields = (sql.Column('fee', pytis.data.Integer(not_null=False), "Fee %"),
-              sql.Column('risk', pytis.data.String(maxlen=8, not_null=False), "Risk"),
-              )
+    fields = (
+        sql.Column('fee', pytis.data.Integer(not_null=False), "Fee %"),
+        sql.Column('risk', pytis.data.String(maxlen=8, not_null=False), "Risk"),
+    )
     depends_on = ()
     access_rights = ()
 
@@ -423,12 +424,12 @@ class InsuranceFees(Base_PyFunction):
 
 class Insurance(sql.SQLTable):
     name = 'insurance'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), "Id"),
-              sql.Column('description', pytis.data.String(maxlen=32, not_null=False),
-                         "Description"),
-              sql.Column('value', pytis.data.Integer(not_null=False), "Value"),
-              sql.Column('fee', pytis.data.Integer(not_null=True), "Fee %"),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial(), "Id"),
+        sql.Column('description', pytis.data.String(maxlen=32, not_null=False), "Description"),
+        sql.Column('value', pytis.data.Integer(not_null=False), "Value"),
+        sql.Column('fee', pytis.data.Integer(not_null=True), "Fee %"),
+    )
     with_oids = True
     depends_on = ()
     access_rights = ()
@@ -438,16 +439,18 @@ class Insurance(sql.SQLTable):
         ('lost diamond', 100000, 3),
     )
 
+
 class Products(sql.SQLTable):
     name = 'products'
-    fields = (sql.PrimaryColumn('product_id', pytis.data.Serial(), _("ID")),
-              sql.Column('product', pytis.data.String(not_null=True), _("Product")),
-              sql.Column('count', pytis.data.Integer(not_null=True), _("Count")),
-              sql.Column('price', pytis.data.Float(precision=2, not_null=True), _("Price")),
-              sql.Column('since', pytis.data.DateTime(not_null=True), _("Available since")),
-              sql.Column('marked', pytis.data.Boolean(not_null=True), _("Marked"), default=False),
-              sql.Column('notes', pytis.data.String(not_null=False), _("Notes")),
-              )
+    fields = (
+        sql.PrimaryColumn('product_id', pytis.data.Serial(), _("ID")),
+        sql.Column('product', pytis.data.String(not_null=True), _("Product")),
+        sql.Column('count', pytis.data.Integer(not_null=True), _("Count")),
+        sql.Column('price', pytis.data.Float(precision=2, not_null=True), _("Price")),
+        sql.Column('since', pytis.data.DateTime(not_null=True), _("Available since")),
+        sql.Column('marked', pytis.data.Boolean(not_null=True), _("Marked"), default=False),
+        sql.Column('notes', pytis.data.String(not_null=False), _("Notes")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -463,13 +466,15 @@ class Products(sql.SQLTable):
         ('HP DeskJet 24D', 9, 249.99, True, '2007-10-11 11:07:00', None),
     )
 
+
 class RangeTypes(sql.SQLTable):
     name = 'range_types'
-    fields = (sql.PrimaryColumn('range_id', pytis.data.Serial(), _("ID")),
-              sql.Column('date_range', pytis.data.DateRange(not_null=True), _("Date")),
-              sql.Column('datetime_range', pytis.data.DateTimeRange(not_null=True), _("DateTime")),
-              sql.Column('int_range', pytis.data.IntegerRange(not_null=True), _("Integer")),
-              )
+    fields = (
+        sql.PrimaryColumn('range_id', pytis.data.Serial(), _("ID")),
+        sql.Column('date_range', pytis.data.DateRange(not_null=True), _("Date")),
+        sql.Column('datetime_range', pytis.data.DateTimeRange(not_null=True), _("DateTime")),
+        sql.Column('int_range', pytis.data.IntegerRange(not_null=True), _("Integer")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -477,14 +482,14 @@ class RangeTypes(sql.SQLTable):
 
 class RuntimeFilterDemo(sql.SQLTable):
     name = 'runtime_filter_demo'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
-              sql.Column('product_id', pytis.data.Integer(not_null=True),
-                         references=sql.r.Products),
-              sql.Column('country', pytis.data.String(minlen=2, maxlen=2, not_null=True),
-                         references=sql.r.Countries),
-              sql.Column('continent', pytis.data.String(minlen=2, maxlen=2, not_null=True),
-                         references=sql.r.Continents),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial()),
+        sql.Column('product_id', pytis.data.Integer(not_null=True), references=sql.r.Products),
+        sql.Column('country', pytis.data.String(minlen=2, maxlen=2, not_null=True),
+                   references=sql.r.Countries),
+        sql.Column('continent', pytis.data.String(minlen=2, maxlen=2, not_null=True),
+                   references=sql.r.Continents),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -492,10 +497,11 @@ class RuntimeFilterDemo(sql.SQLTable):
 
 class Passwords(sql.SQLTable):
     name = 'passwords'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
-              sql.Column('name', pytis.data.String(not_null=True), _("Name"), unique=True),
-              sql.Column('passwd', pytis.data.String(not_null=True), _("Password")),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial()),
+        sql.Column('name', pytis.data.String(not_null=True), _("Name"), unique=True),
+        sql.Column('passwd', pytis.data.String(not_null=True), _("Password")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -503,11 +509,12 @@ class Passwords(sql.SQLTable):
 
 class BinaryData(sql.SQLTable):
     name = 'binary_data'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), _("Id")),
-              sql.Column('data', pytis.data.Binary(not_null=True), _("File")),
-              sql.Column('descr', pytis.data.String(not_null=True), _("Description")),
-              sql.Column('filename', pytis.data.String(not_null=True), _("File name")),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial(), _("Id")),
+        sql.Column('data', pytis.data.Binary(not_null=True), _("File")),
+        sql.Column('descr', pytis.data.String(not_null=True), _("Description")),
+        sql.Column('filename', pytis.data.String(not_null=True), _("File name")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -515,13 +522,14 @@ class BinaryData(sql.SQLTable):
 
 class Images(sql.SQLTable):
     name = 'images'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), _("Id")),
-              sql.Column('filename', pytis.data.String(not_null=True), _("Image")),
-              sql.Column('data', pytis.data.Binary(not_null=True), _("Filename")),
-              sql.Column('title', pytis.data.String(not_null=False), _("Title")),
-              sql.Column('descr', pytis.data.String(not_null=False), _("Description")),
-              sql.Column('size', pytis.data.String(not_null=True), _("Size")),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial(), _("Id")),
+        sql.Column('filename', pytis.data.String(not_null=True), _("Image")),
+        sql.Column('data', pytis.data.Binary(not_null=True), _("Filename")),
+        sql.Column('title', pytis.data.String(not_null=False), _("Title")),
+        sql.Column('descr', pytis.data.String(not_null=False), _("Description")),
+        sql.Column('size', pytis.data.String(not_null=True), _("Size")),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -529,11 +537,12 @@ class Images(sql.SQLTable):
 
 class XTree(sql.SQLTable):
     name = '_tree'
-    fields = (sql.PrimaryColumn('id', pytis.data.LTree(not_null=False)),
-              sql.Column('name', pytis.data.Name()),
-              sql.Column('amount', pytis.data.Integer(not_null=False)),
-              sql.Column('description', pytis.data.String(not_null=False)),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.LTree(not_null=False)),
+        sql.Column('name', pytis.data.Name()),
+        sql.Column('amount', pytis.data.Integer(not_null=False)),
+        sql.Column('description', pytis.data.String(not_null=False)),
+    )
     with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -575,10 +584,11 @@ class Tree(sql.SQLView):
 
 class Files(sql.SQLTable):
     name = 'files'
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), _("ID")),
-              sql.Column('file', pytis.data.String(not_null=False), _("File")),
-              sql.Column('url', pytis.data.String(not_null=False), _("URL")),
-              )
+    fields = (
+        sql.PrimaryColumn('id', pytis.data.Serial(), _("ID")),
+        sql.Column('file', pytis.data.String(not_null=False), _("File")),
+        sql.Column('url', pytis.data.String(not_null=False), _("URL")),
+    )
     init_columns = ('id', 'file', 'url')
     init_values = ((0, '/Python26/README.txt', 'http://www.python.org',),)
     with_oids = True
@@ -588,9 +598,10 @@ class Files(sql.SQLTable):
 
 class TypeRandomNumbers(sql.SQLType):
     name = 'type_random_numbers'
-    fields = (sql.Column('id', pytis.data.Integer(not_null=False), _("Id")),
-              sql.Column('random', pytis.data.Integer(not_null=False), _("Random Number")),
-              )
+    fields = (
+        sql.Column('id', pytis.data.Integer(not_null=False), _("Id")),
+        sql.Column('random', pytis.data.Integer(not_null=False), _("Random Number")),
+    )
     depends_on = ()
     access_rights = ()
 
