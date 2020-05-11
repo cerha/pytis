@@ -179,6 +179,11 @@ class CmsRoles(sql.SQLTable):
               )
     depends_on = ()
     access_rights = cms_rights.value(globals())
+    init_columns = ('system_role', 'name')
+    init_values = (
+        ('ANYONE', 'Anyone'),
+        ('USER', 'Logged user'),
+    )
 
 
 class CmsActions(sql.SQLTable):
@@ -197,6 +202,11 @@ class CmsActions(sql.SQLTable):
     unique = (('mod_id', 'name',),)
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
+    init_columns = ('name', 'description')
+    init_values = (
+        ('visit', 'Display the item content'),
+        ('show', 'See the item in the menu'),
+    )
 
 
 class CmsRightsAssignment(sql.SQLTable):
