@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,17 +23,16 @@
 from __future__ import unicode_literals
 
 import copy
-import unittest
-
 import psycopg2 as dbapi
 
+import pytis
 import pytis.data
 import pytis.extensions
 import pytis.form
 import pytis.presentation
 import pytis.util
 
-_configuration_file = '../config.py'
+_configuration_file = 'pytis-demo-config.py'
 _connection_data = {'database': 'pytis-demo'}
 _parameters = copy.copy(_connection_data)
 _parameters.update(dict(configuration_file=_configuration_file))
@@ -41,11 +40,10 @@ _dmp_config = pytis.extensions.DMPConfiguration(configuration_file=_configuratio
 _resolver = _dmp_config.resolver()
 
 
-class _TestBase(unittest.TestCase):
+class _TestBase:
     _BACKUP_TABLES = ('c_pytis_menu_actions', 'e_pytis_action_rights', 'e_pytis_menu',)
 
-    def setUp(self):
-        unittest.TestCase.setUp(self)
+    def setup(self):
         self._resolver = _resolver
         self._orig_rights = self._read_rights()
         self._orig_menu = self._read_menu()
@@ -56,7 +54,7 @@ class _TestBase(unittest.TestCase):
                 pass
             self._query("create table x%s as select * from %s" % (table, table,))
 
-    def tearDown(self):
+    def teardown(self):
         pytis.data.DBDataDefault._pg_connection_pool_.flush(
             pytis.data.DBDataDefault._postgresql_close_connection
         )
@@ -178,14 +176,14 @@ class _TestBase(unittest.TestCase):
         assert all([not c for c in changes])
 
 
-class Basic(_TestBase):
+class TestBasic(_TestBase):
 
     def test_commit(self):
         pytis.extensions.dmp_commit(_parameters, False)
         self._check_no_change()
 
 
-class Menu(_TestBase):
+class TestMenu(_TestBase):
 
     def test_add(self):
         pytis.extensions.dmp_add_action(_parameters, False,
@@ -214,14 +212,14 @@ class Menu(_TestBase):
         self._check_no_change()
 
 
-class Forms(_TestBase):
+class TestForms(_TestBase):
     pass
 
 
-class Rights(_TestBase):
+class TestRights(_TestBase):
 
     def test_reset(self):
-        dbuser = config.dbuser
+        dbuser = pytis.config.dbuser
         pytis.extensions.dmp_change_rights(_parameters, False,
                                            (('form/misc.Products', dbuser, 'update',
                                              False, None, False,),
@@ -244,7 +242,7 @@ class Rights(_TestBase):
                            "where not system and shortname='form/misc.Products'")[0][0] > 0
 
 
-class Mix(_TestBase):
+class TestMix(_TestBase):
     # The idea is to perform a lot of dmp operations randomly selected from a
     # predefined list.  Each operation should be performed reversely sooner or
     # later.  The test should finish in the same state as it started (and
@@ -261,7 +259,3 @@ class Mix(_TestBase):
 # def dmp_delete_shortname(parameters, fake, shortname):
 # def dmp_change_rights(parameters, fake, requests):
 # def dmp_copy_rights(parameters, fake, from_shortname, to_shortname):
-
-
-if __name__ == '__main__':
-    unittest.main()
