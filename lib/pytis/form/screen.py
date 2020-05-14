@@ -944,11 +944,10 @@ class Menu(_TitledMenuObject):
         return self._items
 
     def _on_highlight_item(self, menu, event):
-        if event.GetMenuId() == -1:
-            msg = ""
-        else:
-            msg = menu.FindItemById(event.GetMenuId()).GetHelp()
-        pytis.form.message(msg, log_=False)
+        if event.GetMenuId() != -1:
+            item = menu.FindItemById(event.GetMenuId())
+            if item:
+                pytis.form.message(item.GetHelp(), log_=False)
         event.Skip()
 
     def create(self, parent, keymap=None):
