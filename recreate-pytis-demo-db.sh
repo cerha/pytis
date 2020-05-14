@@ -14,15 +14,17 @@ else
 fi
 
 # Vytvoření DB Pytis Demo:
-sudo -u $user dropdb pytis-demo
+
+sudo -u $user dropdb pytis-demo --if-exists
+
 sudo -u $user createdb pytis-demo
 echo "create extension if not exists ltree ;" | sudo -u $user psql pytis-demo
 echo "create extension if not exists plpythonu ;" | sudo -u $user psql pytis-demo
 
-for role in demo pytis demowebuser pytiswebuser
+for role in pytis demo pytis-demo demowebuser pytiswebuser www-data
 do
    psql pytis-demo -tAc "SELECT 1 FROM pg_user WHERE usename = '$role';" | grep -q 1 || \
-      sudo -u $user createuser $role && sudo -u $user psql pytis-demo -c "grant $role to $USER"
+      sudo -u $user createuser $role && sudo -u $user psql pytis-demo -c "grant \"$role\" to $USER"
 done
 
 $dir/pytis/tools/gsql.py pytis.dbdefs.demo > pytis-demo.sql
