@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-15 16:17+0200\n"
+"POT-Creation-Date: 2020-05-13 14:37+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -64,12 +64,12 @@ msgstr ""
 msgid "Invalid user name or password"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:458 ../lib/pytis/data/postgresql.py:568
-#: ../lib/pytis/data/postgresql.py:580
+#: ../lib/pytis/data/postgresql.py:463 ../lib/pytis/data/postgresql.py:573
+#: ../lib/pytis/data/postgresql.py:585
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3563
+#: ../lib/pytis/data/postgresql.py:3568
 msgid "Invalid database counter value"
 msgstr ""
 
