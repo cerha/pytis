@@ -349,6 +349,7 @@ class InputField(KeyHandler, CommandHandler):
         self._had_focus = False
         self._init_attributes()
         self._call_on_idle = []
+        self._status_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('field-ok'))
         self._ctrl = ctrl = self._create_ctrl(parent)
         self._controls = [(ctrl, self._set_ctrl_editable)]
         self._init_ctrl(ctrl)
@@ -431,7 +432,6 @@ class InputField(KeyHandler, CommandHandler):
         return ctrl
 
     def _add_icons(self, parent, widget):
-        self._status_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('field-ok'))
         content = (widget, (self._status_icon, 0, wx.LEFT, 4))
         descr = self._spec.descr()
         if descr:
