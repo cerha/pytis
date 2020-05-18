@@ -119,6 +119,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def OnInit(self):
         import pytis.extensions
         self._specification = pytis.config.resolver.specification('Application')
+        wx.Log.SetActiveTarget(wx.LogStderr())
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(pytis.config.application_name),
                                        pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
