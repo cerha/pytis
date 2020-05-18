@@ -1623,6 +1623,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         cb_spec = self._cb_spec
         if cb_spec.display() is None and not spec.allow_codebook_insert():
             return widget
+        added_controls = []
         if cb_spec.display():
             display_size = spec.display_size()
             if display_size is None:
@@ -1634,13 +1635,17 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
                 self._controls.append((display, lambda c, e: None))
+                added_controls.append(display)
         if spec.allow_codebook_insert():
             button = wx_button(parent, label='+', icon='new-record', size=self._button_size(parent),
                                tooltip=_("Insert a new codebook value."),
                                callback=lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))
             self._controls.append((button, lambda b, e: b.Enable(e)))
-        return self._hbox(*[x[0] for x in self._controls])
+            added_controls.append(button)
+        if added_controls:
+            widget = self._hbox(widget, *added_controls)
+        return widget
 
     def _menu(self):
         return super(CodebookField, self)._menu() + \
