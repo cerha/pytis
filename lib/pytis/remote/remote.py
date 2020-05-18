@@ -128,7 +128,6 @@ def client_ip():
 def client_available():
     """Return true, iff remote client is available."""
     if client_ip() is None:
-        log(OPERATIONAL, "RPC unavailable")
         return False
     try:
         return _request('echo', 'hello') == 'hello'

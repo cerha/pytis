@@ -2338,6 +2338,7 @@ def built_in_status_fields():
             if not last_status:
                 last_time = time.time()
                 rpc_info.remote_status_info = (True, last_time)
+                log(OPERATIONAL, "RPC connection established.")
             version = rpc_info.remote_client_version or _("Not available")
             status = _("Ok")
             icon = 'status-online'
@@ -2346,6 +2347,7 @@ def built_in_status_fields():
             if last_status:
                 last_time = time.time()
                 rpc_info.remote_status_info = (False, time.time())
+                log(OPERATIONAL, "RPC connection lost.")
             tooltip = _("Not available.")
             status = _("N/A")
             icon = 'status-error'
