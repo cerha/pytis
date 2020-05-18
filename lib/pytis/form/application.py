@@ -261,13 +261,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
         wx.CallAfter(init)
         client_available = pytis.remote.client_available()
-        rpc_info = pytis.remote.RPCInfo
-        rpc_info.remote_connection_initially_available = client_available
-        rpc_info.remote_status_info = (client_available, time.time())
-        if client_available:
-            log(OPERATIONAL, "RPC communication available. Version:", rpc_info.remote_client_version)
-        else:
-            log(OPERATIONAL, "RPC communication unavailable")
+        pytis.remote.RPCInfo.remote_connection_initially_available = client_available
+        pytis.remote.RPCInfo.remote_status_info = (client_available, time.time())
         return True
 
     def _frame_title(self, title):
