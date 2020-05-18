@@ -392,7 +392,7 @@ class Message(GenericDialog):
         if icon is not None:
             content = wx.BoxSizer()
             content.Add(icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-            content.Add(message, 1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL, 12)
+            content.Add(message, 1, wx.EXPAND | wx.ALL, 12)
         else:
             content = message
         sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
