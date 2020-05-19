@@ -459,16 +459,9 @@ class PostgreSQLAccessor(object_2_5):
         pass
 
     def _postgresql_initialize_coding(self, connection):
-        # This queries are intentionally run without _pg_query_lock to avoid
+        # This query isg intentionally run without _pg_query_lock to avoid
         # deadlock on connection reopening in dbapi.py.
-        query = _Query('set client_encoding to "utf-8"')
-        self._postgresql_query(connection, query, False)
-        query = _Query("select pg_encoding_to_char(encoding) "
-                       "from pg_database where datname = current_database()")
-        result = self._postgresql_query(connection, query, False)
-        coding = result[0].result().fetchone()[0]
-        if coding != 'UTF8':
-            self._pg_encoding = coding
+        self._postgresql_query(connection, _Query('set client_encoding to "utf-8"'), False)
 
     def _postgresql_initialize_crypto(self, connection):
         crypto_password = pytis.config.dbconnection.crypto_password()
@@ -602,7 +595,6 @@ class PostgreSQLConnector(PostgreSQLAccessor):
           kwargs -- propagated to superclass constructors
 
         """
-        self._pg_encoding = None
         # Logování
         if pytis.config.dblogtable:
             self._pdbb_logging_command = _QInsert(pytis.config.dblogtable, ('command',))
