@@ -65,42 +65,6 @@ _ = pytis.util.translations('pytis-data')
 # je jméno modifikované tabulky.
 
 
-def pg_encoding(enc):
-    ENCODING_MAPPING = {'utf-8': 'unicode',
-                        'iso-8859-1': 'latin1',
-                        'iso-8859-2': 'latin2',
-                        'iso-8859-3': 'latin3',
-                        'iso-8859-4': 'latin4',
-                        'iso-8859-9': 'latin5',
-                        'iso-8859-10': 'latin6',
-                        'iso-8859-13': 'latin7',
-                        'iso-8859-14': 'latin8',
-                        'iso-8859-15': 'latin9',
-                        'iso-8859-16': 'latin10',
-                        'iso-8859-5': 'iso_8859_5',
-                        'iso-8859-6': 'iso_8859_6',
-                        'iso-8859-7': 'iso_8859_7',
-                        'iso-8859-8': 'iso_8859_8',
-                        'iso8859-1': 'latin1',
-                        'iso8859-2': 'latin2',
-                        'iso8859-3': 'latin3',
-                        'iso8859-4': 'latin4',
-                        'iso8859-9': 'latin5',
-                        'iso8859-10': 'latin6',
-                        'iso8859-13': 'latin7',
-                        'iso8859-14': 'latin8',
-                        'iso8859-15': 'latin9',
-                        'iso8859-16': 'latin10',
-                        'iso8859-5': 'iso_8859_5',
-                        'iso8859-6': 'iso_8859_6',
-                        'iso8859-7': 'iso_8859_7',
-                        'iso8859-8': 'iso_8859_8',
-                        'ascii': 'sql_ascii',
-                        }
-    enc = enc.lower().strip()
-    return ENCODING_MAPPING.get(enc, enc)
-
-
 class _PgValue(object):
 
     def __init__(self, value):
