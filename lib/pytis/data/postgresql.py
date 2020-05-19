@@ -32,7 +32,6 @@ from future.utils import raise_
 import copy
 import os
 import re
-import string
 import sys
 import _thread
 import threading
@@ -1938,7 +1937,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         elif op_name in ('WM', 'NW'):
             cid, spec = op_args[0], op_args[1].value()
             for old, new in (('%', '\\%'), ('_', '\\_')):
-                spec = string.replace(spec, old, new)
+                spec = spec.replace(old, new)
             for old, new in (('*', '%'), ('?', '_')):
                 i = -1
                 while True:
