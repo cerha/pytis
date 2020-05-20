@@ -288,7 +288,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.SetMargins(0, 0)
         g.DisableDragGridSize()
         g.DisableDragRowSize()
-        g.SetSelectionMode(wx.grid.Grid.GridSelectionModes.GridSelectRows)
+        if hasattr(wx.grid.Grid, 'wxGridSelectRows'):
+            mode = wx.grid.Grid.wxGridSelectRows  # for wxPython 4.0.4
+        else:
+            mode = wx.grid.Grid.GridSelectionModes.GridSelectRows  # for wxPython 4.1.0
+        g.SetSelectionMode(mode)
         g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         g.SetLabelFont(g.GetFont())  # Use standard font instead of bold.
         self._row_height = row_height = dlg2px(g, 0, 10)[1]
