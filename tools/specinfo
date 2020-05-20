@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,9 +33,9 @@ import subprocess
 import sys
 import types
 
+import pytis
 import pytis.presentation
 import pytis.util
-import config
 
 output = sys.stdout
 
@@ -46,7 +46,7 @@ def error(message):
 
 
 def find_specification(spec_name):
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     try:
         spec = resolver.specification(spec_name)
     except pytis.util.ResolverError:
@@ -241,13 +241,13 @@ def parse_options():
 def run():
     options, args = parse_options()
     pytis.util.set_configuration_file(options.config_file)
-    config.dblisten = False
-    config.debug = False
-    config.log_exclude = [pytis.util.OPERATIONAL, pytis.util.ACTION, pytis.util.EVENT,
+    pytis.config.dblisten = False
+    pytis.config.debug = False
+    pytis.config.log_exclude = [pytis.util.OPERATIONAL, pytis.util.ACTION, pytis.util.EVENT,
                           pytis.util.DEBUG]
     # Set resolver search paths (they are not yet set in configuration when the
     # resolver is initially initialized.
-    config.resolver = pytis.util.Resolver(search=config.search_modules)
+    pytis.config.resolver = pytis.util.Resolver(search=pytis.config.search_modules)
     if options.diff:
         module_diff(options.directory, options.diff, *args)
     else:

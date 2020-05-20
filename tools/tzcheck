@@ -9,6 +9,7 @@ import tempfile
 
 import psycopg2 as dbapi
 
+import pytis
 import pytis.data.gensqlalchemy as sql
 import pytis.util
 
@@ -19,13 +20,12 @@ def connect():
     global db_connection
     if db_connection is None:
         kwargs = {}
-        import config
-        for option, value in (('user', config.dbuser),
-                              ('password', config.dbpass),
-                              ('database', config.dbname),
-                              ('host', config.dbhost),
-                              ('port', config.dbport),
-                              ('sslmode', config.dbsslm),
+        for option, value in (('user', pytis.config.dbuser),
+                              ('password', pytis.config.dbpass),
+                              ('database', pytis.config.dbname),
+                              ('host', pytis.config.dbhost),
+                              ('port', pytis.config.dbport),
+                              ('sslmode', pytis.config.dbsslm),
                               ):
             if value is not None:
                 kwargs[option] = value

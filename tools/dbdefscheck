@@ -6,6 +6,7 @@ import re
 import string
 import sys
 
+import pytis
 import pytis.data
 import pytis.data.gensqlalchemy as sql
 import pytis.util
@@ -14,8 +15,7 @@ _wiking_resolver = None
 
 
 def check():
-    import config
-    resolver = config.resolver
+    resolver = pytis.config.resolver
     errors = []
 
     def error(message, data=None):
@@ -78,7 +78,7 @@ def check():
             functions.add(match.group(1))
             source = source[match.end():]
     # Read in database specifications
-    for m in config.search_modules:
+    for m in pytis.config.search_modules:
         if m.endswith('.defs'):
             pytis.util.load_module(m[:-4] + 'dbdefs')
     dbdefs = sql.specification_instances()
