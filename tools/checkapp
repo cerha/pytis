@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2010-2018 OUI Technology Ltd.
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
 #
 # COPYRIGHT NOTICE
 #
@@ -29,6 +29,7 @@ pytislib = os.path.normpath(os.path.join(sys.path[0], '..', 'lib'))
 if os.path.isdir(pytislib) and pytislib not in sys.path:
     sys.path.append(pytislib)
 
+import pytis
 import pytis.extensions
 import pytis.util
 
@@ -96,9 +97,8 @@ def run():
     else:
         checker_class = pytis.extensions.AppChecker
     verbose = checkopt(argv, '--verbose')
-    import config
     try:
-        config.add_command_line_options(argv)
+        pytis.config.add_command_line_options(argv)
     except getopt.GetoptError as e:
         usage(e)
     spec_name_prefix = None
@@ -108,7 +108,7 @@ def run():
             usage()
         spec_name_prefix = args[0]
     if not verbose:
-        config.log_logger = (NullLogger, (), {})
+        pytis.config.log_logger = (NullLogger, (), {})
     reporter = CheckReporterExt()
     checker_class(spec_name_prefix=spec_name_prefix).batch_check(reporter)
 
