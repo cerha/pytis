@@ -487,8 +487,9 @@ class InputField(KeyHandler, CommandHandler):
 
     def _do_validation(self, do_validation, do_check):
         transaction = self._row.transaction()
-        if transaction and not transaction.open():
-            # Don't validate when the transaction is already closed.
+        if transaction and not transaction.open() or not all(x[0] for x in self._controls):
+            # Don't validate when the transaction is already closed.  Also abort if the C++
+            # controls are already destroyed (as we may get called later due to wx.CallAfter).
             return
         if do_validation:
             try:
