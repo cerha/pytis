@@ -3330,6 +3330,7 @@ class QueryFieldsForm(_VirtualEditForm):
         self._unapplied_query_field_changes_after_restore = False
         self._initialized = autoinit
         self._save = query_fields.save()
+        self._on_apply = query_fields.on_apply()
         load = query_fields.load()
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
@@ -3409,6 +3410,8 @@ class QueryFieldsForm(_VirtualEditForm):
             self._initialized = True
             if self._save:
                 self._save(row)
+            if self._on_apply:
+                self._on_apply(row)
             self._query_fields_apply_callback(row)
             self._unapplied_query_field_changes = False
 
