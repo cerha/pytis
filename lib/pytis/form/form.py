@@ -1080,9 +1080,11 @@ class LookupForm(InnerForm):
                 # query fields are not initialized yet and autoinit is off.
                 # This happens during form initialization.  In this case we
                 # want to display an empty form without calling the provider
-                # functions at all.  We actually want to show empty form
-                # even if condition_provider/argument_provider is not
-                # defined.
+                # functions at all.
+                # Note that we want to show empty form even if neither
+                # condition_provider nor argument_provider is defined as
+                # the application may solely rely on on_apply or use query
+                # fields in side form conditions, row styles etc.
                 # UNKNOWN_ARGUMENTS result in an empty dummy select without
                 # calling the underlying database function.
                 self._arguments = self._data.UNKNOWN_ARGUMENTS
