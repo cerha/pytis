@@ -3048,8 +3048,10 @@ class SideBrowseForm(BrowseForm):
             return super(SideBrowseForm, self)._get_aggregation_result(key)
 
     def _provider_kwargs(self):
-        return dict(super(SideBrowseForm, self)._provider_kwargs(),
-                    main_form_row=self._main_form_row)
+        kwargs = super(SideBrowseForm, self)._provider_kwargs()
+        if kwargs:
+            kwargs['main_form_row'] = self._main_form_row
+        return kwargs
 
     def on_selection(self, row):
         """Update form after main form selection.
