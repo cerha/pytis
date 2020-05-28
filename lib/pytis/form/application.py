@@ -105,15 +105,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
         global _application
         return _application
 
-    def __init__(self, hidden=False):
+    def __init__(self, headless=False):
         """Arguments:
 
-          hidden -- Run the application without showing any windows/frames.
+          headless -- Run the application without showing any windows/frames.
             Experimantal mode for running tests which require the application
             environment, but no user interaction.  Sample tests in Pytis Demo.
 
         """
-        self._hidden = hidden
+        self._headless = headless
         super(Application, self).__init__()
 
     def OnInit(self):
@@ -183,7 +183,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         status_fields = [default_fields.get(x[0], StatusField(x[0], width=x[1]))
                          if isinstance(x, tuple) else x
                          for x in self._specification.status_fields()]
-        self._statusbar = StatusBar(frame, status_fields)
+        if not self._headless:
+            self._statusbar = StatusBar(frame, status_fields)
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
             for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
@@ -242,7 +243,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
-        if not self._hidden:
+        if not self._headless:
             frame.Show(True)
         # Initialize the toolbar.
         self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER | wx.TB_DOCKABLE)
@@ -326,7 +327,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 saved_forms.append((cls, name))
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
-        if saved_forms and not self._hidden:
+        if saved_forms and not self._headless:
             if pytis.config.autostart_saved_forms:
                 startup_forms.extend(reversed(saved_forms))
             else:

@@ -193,16 +193,16 @@ class Application(pytis.presentation.Application):
 class TestApplication(object):
     """Experimantal test running inside wx Application environment.
 
-    This test starts a wx application in a separate thread in a hidden mode and
-    runs test cases within its environment.  It may be useful for testing
-    fetures which require the wx Application to exist.
+    This test starts a headless wx application in a separate thread and runs
+    test cases within its environment.  It may be useful for testing fetures
+    which require the wx Application to exist.
 
     """
 
     def setup_class(cls):
         import threading
         pytis.util.set_configuration_file('/home/cerha/work/pytis/demo/config.py')
-        threading.Thread(target=pytis.form.Application(show_frame=False).run).start()
+        threading.Thread(target=pytis.form.Application(headless=True).run).start()
 
     def teardown_class(cls):
         pytis.form.Application.COMMAND_EXIT.invoke()
