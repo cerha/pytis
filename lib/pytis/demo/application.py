@@ -201,7 +201,13 @@ class TestApplication(object):
 
     def setup_class(cls):
         import threading
-        pytis.util.set_configuration_file('/home/cerha/work/pytis/demo/config.py')
+        directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        # Try pytis-demo-config-local.py to allow local modified version outside git control.
+        for filename in ('pytis-demo-config-local.py', 'pytis-demo-config.py'):
+            path = os.path.join(directory, 'pytis-demo-config.py')
+            if os.path.isfile(path):
+                pytis.util.set_configuration_file(path)
+                break
         threading.Thread(target=pytis.form.Application(headless=True).run).start()
 
     def teardown_class(cls):
