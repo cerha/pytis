@@ -33,6 +33,7 @@ import pytis.extensions
 import pytis.form
 import lcg
 
+from pytis.api import app
 from pytis.util import nextval, translations
 from pytis.presentation import (
     Specification, Field, FieldSet, HGroup, PostProcess,
@@ -437,8 +438,10 @@ class Products(Specification):
         )
 
     def bindings(self):
-        return (Binding('webform', _("Product Info"), content=self._content,
-                        descr=_("Shows web page generated from LCG structured text.")),)
+        return (
+            Binding('webform', _("Product Info"), content=self._content,
+                    descr=_("Shows web page generated from LCG structured text.")),
+        )
 
     def actions(self):
         return (Action('toggle', _("Mark/unmark"), self._mark, hotkey='m'),
@@ -452,7 +455,25 @@ class Products(Specification):
                 )
 
     def row_style(self, row):
-        return row['marked'].value() and pp.Style(background='#ffd') or None
+        if app.form:
+            # TODO: App.form returns None during form initialization, because
+            # the application knows about it only after it is initialized and
+            # put onto the stack.  This should be fixed within app.form.
+            min_count = app.form.query_fields.row['min_count'].value()
+        else:
+            min_count = 10
+        if row['count'].value() <= min_count:
+            return pp.Style(background='#fdd')
+        elif row['marked'].value():
+            return pp.Style(background='#ffd')
+        else:
+            return None
+
+    query_fields = QueryFields(
+        (Field('min_count', _("Highlight low count"),
+               type=pytis.data.Integer(not_null=True), default=10),),
+        autoinit=True,
+    )
 
     def _mark(self, row, mark_all=False, mark=True):
         if mark_all:
