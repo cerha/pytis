@@ -35,6 +35,7 @@ import lcg
 import time
 import wx
 
+import pytis.api
 import pytis.data
 import pytis.form
 import pytis.output
@@ -90,7 +91,7 @@ class FormSettings(FormProfile):
 
 
 @python_2_unicode_compatible
-class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
+class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler, pytis.api.Form):
     """Společná nadtřída formulářů.
 
     Formulář si podle jména specifikace předaného konstruktoru vyžádá od
@@ -1653,6 +1654,23 @@ class LookupForm(InnerForm):
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
         return self._current_profile
+
+    # Public API accessed through 'pytis.api.app' by Pytis applications.
+
+    @pytis.api.Form.property
+    def query_fields(self):
+        class QueryFields(pytis.api.QueryFields):
+            def __init__(self, row):
+                self._row = row
+
+            @pytis.api.QueryFields.property
+            def row(self):
+                return self._row
+
+        if self._view.query_fields():
+            return QueryFields(self._query_fields_row())
+        else:
+            return None
 
 
 class RecordForm(LookupForm):

@@ -39,6 +39,7 @@ import datetime
 import wx
 import wx.html
 
+import pytis.api
 import pytis.data
 import pytis.form
 from pytis.presentation import Field, Specification, StatusField, computer, Text
@@ -68,7 +69,7 @@ _application = None
 unistr = type(u'')  # Python 2/3 transition hack.
 
 
-class Application(wx.App, KeyHandler, CommandHandler):
+class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
 
     """Aplikace systému Pytis.
 
@@ -86,9 +87,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     volání její metody 'run()'.
 
     """
-    class NameSpace:
-        pass
-
     _menubar_forms = {}
     _log_login = True
     _recent_directories = {}
@@ -161,6 +159,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
+        pytis.api.app.wrap(self)
 
         # Initialize login and password.
         def test():
@@ -170,10 +169,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory.create(connection_data=pytis.config.dbconnection)
         db_operation(test)
 
+        class Param:  # Access access items as attributes.
+            def __init__(self, items):
+                self.__dict__ = dict(items)
         # Create DBParams instances for all SharedParams specifications.
-        self.param = self.NameSpace()
-        for item in self._specification.params():
-            setattr(self.param, item.name(), DBParams(item.spec_name(), item.condition()))
+        self._param = Param(
+            (item.name(), DBParams(item.spec_name(), item.condition()))
+            for item in self._specification.params()
+        )
 
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
@@ -1337,29 +1340,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
+    # Public API accessed through 'pytis.api.app' by Pytis applications.
 
-class ApplicationProxy(object):
-    """Proxy to access the public API of the current wx application instance.
+    @pytis.api.Application.property
+    def param(self):
+        return self._param
 
-    An instance of this class is available as 'pytis.form.app'.  The instance
-    exists at the module level even if no actual application is running (yet).
-
-    The recommended usage is importing app to the application code as:
-
-    from pytis.form import app
-
-    Then you can access the public 'Application' API methods and attributes
-    through the 'app' object.
-
-    """
-    # TODO: Define the public methods and attributes using a decorator.
-    _PUBLIC_API = ('param',)
-
-    def __getattr__(self, name):
-        if name not in self._PUBLIC_API:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
-        return getattr(_application, name)
+    @pytis.api.Application.property
+    def form(self):
+        form = self.current_form(inner=True)
+        return self.Proxy(form) if form else None
 
 
 class DBParams(object):

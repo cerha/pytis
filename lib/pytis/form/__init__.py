@@ -88,7 +88,7 @@ from .dualform import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, ApplicationProxy, DbActionLogger, InputDialog, InputNumeric, InputDate,
+    Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
     run_form, run_dialog, run_procedure, input_text, input_number, input_date,
     new_record, delete_record, refresh, exit, db_operation, db_op,
     delete_record_question, current_form, top_window,
@@ -116,4 +116,3 @@ from .managers import (  # noqa: F401
     FormProfileParamsManager, AggregatedViewsManager,
 )
 
-app = ApplicationProxy()

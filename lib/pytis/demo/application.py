@@ -30,7 +30,8 @@ import pytis.util
 import pytis.data as pd
 from pytis.presentation import StatusField, SharedParams
 from pytis.extensions import mf, bf, nr
-from pytis.form import Menu, MItem, app
+from pytis.form import Menu, MItem
+from pytis.api import app
 _ = pytis.util.translations('pytis-demo')
 ____ = pytis.form.MSeparator()
 
