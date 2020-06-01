@@ -1351,6 +1351,10 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         form = self.current_form(inner=True)
         return self.Proxy(form) if form else None
 
+    @pytis.api.Application.method
+    def message(self, message, kind):
+        pass
+
 
 class DBParams(object):
     """Provides access to shared parameters.
