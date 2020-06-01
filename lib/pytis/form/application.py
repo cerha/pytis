@@ -1113,7 +1113,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            message(_("Running procedure..."), root=True, timeout=2)
+            message(_("Running procedure..."), root=True)
             log(ACTION, 'Running procedure:',
                 (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
@@ -2005,9 +2005,8 @@ def refresh_status(id=None):
     return _application._statusbar.refresh(id)
 
 
-def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
-            root=False, log_=True):
-    """Display a non-interactive message in the status bar 'message' field.
+def message(message, kind=EVENT, data=None, beep_=False, root=False, log_=True):
+    """Display a non-interactive message in the status bar.
 
     Arguments:
 
@@ -2017,7 +2016,6 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
       log_ -- iff true, the text will be also logged.
       kind -- logging kind; one of 'log' module constants.
       data -- additional data to be logged (same as in 'log.log').
-      timeout -- optional timeout after which the message disappears.
       root -- iff true, the message is displayed always in the main
         application frame's status bar.  Otherwise the message will
         appear in the current modal window's status bar if there is
@@ -2040,13 +2038,6 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
     sb = _application._statusbar
     if not sb:
         return
-    if timeout:
-        class Timer(wx.Timer):
-            def Notify(self):
-                self.Stop()
-                if sb.get_status_text('message') == unistr(message):
-                    sb.set_status('message', '')
-        Timer().Start(1000 * timeout)
     return sb.set_status('message', message)
 
 
