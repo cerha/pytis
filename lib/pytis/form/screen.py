@@ -947,7 +947,7 @@ class Menu(_TitledMenuObject):
         if event.GetMenuId() != -1:
             item = menu.FindItemById(event.GetMenuId())
             if item:
-                pytis.form.message(item.GetHelp(), log_=False)
+                pytis.form.message(item.GetHelp())
         event.Skip()
 
     def create(self, parent, keymap=None):
@@ -2268,12 +2268,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
     def _on_loaded(self, event):
         busy_cursor(False)
-        pytis.form.message(_("Document loaded."), log_=False)
+        pytis.form.message(_("Document loaded."))
 
     def _on_error(self, event):
         busy_cursor(False)
         log(OPERATIONAL, "Failed loading '%s':" % event.GetURL(), event.GetString())
-        pytis.form.message(_("Loading document failed."), log_=False)
+        pytis.form.message(_("Loading document failed."))
 
     def _on_title_changed(self, event):
         self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())

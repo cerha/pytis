@@ -2005,7 +2005,7 @@ def refresh_status(id=None):
     return _application._statusbar.refresh(id)
 
 
-def message(message, kind=EVENT, data=None, beep_=False, root=False, log_=True):
+def message(message, kind=EVENT, data=None, beep_=False, root=False):
     """Display a non-interactive message in the status bar.
 
     Arguments:
@@ -2013,7 +2013,6 @@ def message(message, kind=EVENT, data=None, beep_=False, root=False, log_=True):
       message -- the text to be displayed; if the text ends with a colon,
         it will be stripped.
       beep_ -- iff true, the message will be accompanied by a beep.
-      log_ -- iff true, the text will be also logged.
       kind -- logging kind; one of 'log' module constants.
       data -- additional data to be logged (same as in 'log.log').
       root -- iff true, the message is displayed always in the main
@@ -2025,7 +2024,7 @@ def message(message, kind=EVENT, data=None, beep_=False, root=False, log_=True):
     """
     if beep_:
         beep()
-    if log_ and (message or data):
+    if message or data:
         log(kind, message, data=data)
     if not _application:
         return
