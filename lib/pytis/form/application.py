@@ -2005,16 +2005,13 @@ def refresh_status(id=None):
     return _application._statusbar.refresh(id)
 
 
-def message(message, kind=EVENT, data=None, beep_=False, root=False):
+def message(message, beep_=False, root=False):
     """Display a non-interactive message in the status bar.
 
     Arguments:
 
-      message -- the text to be displayed; if the text ends with a colon,
-        it will be stripped.
+      message -- the text to be displayed.
       beep_ -- iff true, the message will be accompanied by a beep.
-      kind -- logging kind; one of 'log' module constants.
-      data -- additional data to be logged (same as in 'log.log').
       root -- iff true, the message is displayed always in the main
         application frame's status bar.  Otherwise the message will
         appear in the current modal window's status bar if there is
@@ -2024,8 +2021,8 @@ def message(message, kind=EVENT, data=None, beep_=False, root=False):
     """
     if beep_:
         beep()
-    if message or data:
-        log(kind, message, data=data)
+    if message:
+        log(EVENT, message)
     if not _application:
         return
     if message and message[-1] == ':':
