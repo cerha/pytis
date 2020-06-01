@@ -152,7 +152,7 @@ class Application(API):
     form = property()
     """The current form API as 'pytis.api.Form' instance."""
 
-    def message(self, message):
+    def message(self, message, kind='info'):
         """Display a non-interactive message to the user.
 
         Arguments:
@@ -190,7 +190,7 @@ def test_api_definition():
             return self.Proxy(MyForm())
 
         @pytis.api.Application.method
-        def message(self, message):
+        def message(self, message, kind='info'):
             return 'Message: {}'.format(message)
 
     app.wrap(MyApp())

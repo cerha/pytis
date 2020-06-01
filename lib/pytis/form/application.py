@@ -1352,7 +1352,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         return self.Proxy(form) if form else None
 
     @pytis.api.Application.method
-    def message(self, message, kind):
+    def message(self, message, kind='info'):
         pass
 
 
