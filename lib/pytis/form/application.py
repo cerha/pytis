@@ -1211,7 +1211,11 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
     def _cmd_nothing(self, enabled=True):
         pass
 
-    # Veřejné metody
+    # Veřejné atributy a metody
+
+    @property
+    def headless(self):
+        return self._headless
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog určené třídy s hlavním oknem aplikace jako rodičem.

@@ -1113,7 +1113,7 @@ class LookupForm(InnerForm):
 
     def _on_idle(self, event):
         super(LookupForm, self)._on_idle(event)
-        if not self._transaction_close_scheduled:
+        if not self._transaction_close_scheduled and not pytis.form.app.headless:
             self._on_idle_close_transactions()
             self._transaction_close_scheduled = True
 
