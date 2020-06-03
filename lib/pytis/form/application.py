@@ -1268,24 +1268,25 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         ukončen.
 
         """
-        COMPLETELY_BROKEN = False
-        THREADING_BROKEN = False
-        if COMPLETELY_BROKEN or THREADING_BROKEN:
-            interrupt_init()
-        else:
-            interrupt_watcher()
-        TIME_SLICE = 0.2
-        timeout = [time.time() + TIME_SLICE]
-        pid = os.getpid()
+        if not self._headless:
+            COMPLETELY_BROKEN = False
+            THREADING_BROKEN = False
+            if COMPLETELY_BROKEN or THREADING_BROKEN:
+                interrupt_init()
+            else:
+                interrupt_watcher()
+            TIME_SLICE = 0.2
+            timeout = [time.time() + TIME_SLICE]
+            pid = os.getpid()
 
-        def log_wrapper():
-            if THREADING_BROKEN:
-                if pid == os.getpid() and time.time() > timeout[0]:
-                    wx.Yield()
-                    timeout[0] = time.time() + TIME_SLICE
-            yield_()
-        if not COMPLETELY_BROKEN:
-            log.add_hook(log_wrapper)
+            def log_wrapper():
+                if THREADING_BROKEN:
+                    if pid == os.getpid() and time.time() > timeout[0]:
+                        wx.Yield()
+                        timeout[0] = time.time() + TIME_SLICE
+                yield_()
+            if not COMPLETELY_BROKEN:
+                log.add_hook(log_wrapper)
         self.MainLoop()
 
     def top_window(self, allow_modal=True):
