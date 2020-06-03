@@ -116,7 +116,3 @@ from .managers import (  # noqa: F401
     FormProfileParamsManager, AggregatedViewsManager,
 )
 
-# Temporary backwards compatibility hack.  Some applications already access
-# app.param through pytis.form.app.  The new location is pytis.api.app.
-# We can remove this as soon ass all apps start using pytis.api.
-from pytis.api import app
