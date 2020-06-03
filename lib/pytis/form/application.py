@@ -2021,11 +2021,10 @@ def close_forms():
 # Ostatní funkce.
 
 
-def set_status(id, text, log_=True, **kwargs):
+def set_status(id, text, **kwargs):
     """Set status bar field 'id' to display given 'text'."""
     if __debug__:
-        if log_:
-            log(DEBUG, u"Status text updated:", (id, text))
+        log(DEBUG, u"Status text updated:", (id, text))
     return _application._statusbar.set_status(id, text, **kwargs)
 
 
