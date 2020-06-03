@@ -116,3 +116,11 @@ from .managers import (  # noqa: F401
     FormProfileParamsManager, AggregatedViewsManager,
 )
 
+app = None
+"""Current wx application instance for internal usage inside Pytis.
+
+As opposed to pytis.api.app, this variable points directly to the wx
+application instance and thus should only be used internally from Pytis code to
+access its public methods and attributes.
+
+"""

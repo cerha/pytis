@@ -65,7 +65,6 @@ from .dialog import (
 
 _ = pytis.util.translations('pytis-wx')
 
-_application = None
 unistr = type(u'')  # Python 2/3 transition hack.
 
 
@@ -100,8 +99,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
 
     @classmethod
     def _get_command_handler_instance(cls):
-        global _application
-        return _application
+        return pytis.form.app
 
     def __init__(self, headless=False):
         """Arguments:
@@ -157,8 +155,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
             else:
                 args = {}
             keymap.define_key(key, cmd, args)
-        global _application
-        _application = self
+        pytis.form.app = self
         pytis.api.app.wrap(self)
 
         # Initialize login and password.
@@ -856,8 +853,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
             event.Veto()
         else:
             event.Skip()
-            global _application
-            _application = None
+            pytis.form.app = None
 
     def _on_frame_size(self, event):
         size = event.GetSize()
@@ -904,7 +900,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         if message:
             log(EVENT, message)
         if not root:
-            form = _application._modals.top()
+            form = self._modals.top()
             if isinstance(form, pytis.form.Form) and form.set_status('message', message):
                 return
         if self._statusbar:
@@ -1686,19 +1682,19 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
     while True:
         try:
             result = operation(*args, **kwargs)
-            if _application:
-                if _application._log_login:
+            if pytis.form.app:
+                if pytis.form.app._log_login:
                     log(ACTION, "Login action:", (pytis.config.dbschemas, 'True'))
-                    _application._log_login = False
-                _application.login_hook(success=True)
+                    pytis.form.app._log_login = False
+                pytis.form.app.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
             run_dialog(Error, _("Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
-            if pytis.config.dbconnection.password() is not None and _application:
+            if pytis.config.dbconnection.password() is not None and pytis.form.app:
                 log(ACTION, "Login action:", (pytis.config.dbschemas, 'False'))
-                _application.login_hook(success=False)
+                pytis.form.app.login_hook(success=False)
             if pytis.config.login_selection:
                 logins = [x[0] if isinstance(x, tuple) else x
                           for x in pytis.config.login_selection]
@@ -1772,7 +1768,7 @@ def delete_record_question(msg=None):
 
 def run_dialog(arg1, *args, **kwargs):
     """Zobraz dialog v okně aplikace (viz 'Application.run_dialog()')."""
-    if _application is None:
+    if pytis.form.app is None:
         log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
     elif arg1 == InputDialog:
         return input_text(title=kwargs.get('message'),
@@ -1812,7 +1808,7 @@ def run_dialog(arg1, *args, **kwargs):
                            default=value)
         return pytis.data.Value(pytis.data.Date(), value)
     else:
-        return _application.run_dialog(arg1, *args, **kwargs)
+        return pytis.form.app.run_dialog(arg1, *args, **kwargs)
 
 
 class InputDialog(object):
@@ -1953,14 +1949,14 @@ def input_date(title, label, default=None, not_null=True, descr=None,
 
 def current_form(**kwargs):
     """Vrať právě aktivní formulář (viz 'Application.current_form()')."""
-    if _application is not None:
-        return _application.current_form(**kwargs)
+    if pytis.form.app is not None:
+        return pytis.form.app.current_form(**kwargs)
 
 
 def top_window(**kwargs):
     """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
-    if _application is not None:
-        return _application.top_window(**kwargs)
+    if pytis.form.app is not None:
+        return pytis.form.app.top_window(**kwargs)
 
 
 def recent_forms_menu():
@@ -1971,8 +1967,8 @@ def recent_forms_menu():
     obhospodařovat.  Toto menu lze do hlavního menu umístit pouze jednou.
 
     """
-    if _application:
-        return _application.recent_forms_menu()
+    if pytis.form.app:
+        return pytis.form.app.recent_forms_menu()
     else:
         # This may happen when generating help.
         return Menu(_("Recently opened forms"), ())
@@ -1980,42 +1976,42 @@ def recent_forms_menu():
 
 def wx_frame():
     """Vrať instanci 'wx.Frame' hlavního okna aplikace."""
-    return _application.wx_frame()
+    return pytis.form.app.wx_frame()
 
 
 def profile_manager():
     """Return 'Application.profile_manager()' of the current application instance."""
-    return _application.profile_manager()
+    return pytis.form.app.profile_manager()
 
 
 def form_settings_manager():
     """Return 'Application.form_settings_manager()' of the current application instance."""
-    return _application.form_settings_manager()
+    return pytis.form.app.form_settings_manager()
 
 
 def aggregated_views_manager():
     """Return 'Application.aggregated_views_manager()' of the current application instance."""
-    return _application.aggregated_views_manager()
+    return pytis.form.app.aggregated_views_manager()
 
 
 def decrypted_names():
     """Return set of encryption names the user has access to."""
-    return _application.decrypted_names()
+    return pytis.form.app.decrypted_names()
 
 
 def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
-    return _application.log(spec_name, form_name, action, info=info)
+    return pytis.form.app.log(spec_name, form_name, action, info=info)
 
 
 def frame_title(title):
     """Set title of the main application frame"""
-    _application._frame.SetTitle(_application._frame_title(title))
+    pytis.form.app._frame.SetTitle(pytis.form.app._frame_title(title))
 
 
 def close_forms():
     """Close all currently opened forms."""
-    return _application._close_forms()
+    return pytis.form.app._close_forms()
 
 
 # Ostatní funkce.
@@ -2025,23 +2021,23 @@ def set_status(id, text, **kwargs):
     """Set status bar field 'id' to display given 'text'."""
     if __debug__:
         log(DEBUG, u"Status text updated:", (id, text))
-    return _application._statusbar.set_status(id, text, **kwargs)
+    return pytis.form.app._statusbar.set_status(id, text, **kwargs)
 
 
 def refresh_status(id=None):
     """Refresh given status bar field or all fields if 'id' is None."""
-    return _application._statusbar.refresh(id)
+    return pytis.form.app._statusbar.refresh(id)
 
 
 def message(message, beep_=False):
     """Deprecated.  Use 'pytis.api.app.message()'."""
-    if _application:
-        _application.message(message, kind='error' if beep_ else 'info')
+    if pytis.form.app:
+        pytis.form.app.message(message, kind='error' if beep_ else 'info')
 
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
     try:
-        return _application.keymap
+        return pytis.form.app.keymap
     except AttributeError:
         return Keymap()
 
@@ -2268,8 +2264,8 @@ def wx_yield_(full=False):
         return
     try:
         if full:
-            if _application is not None:
-                _application.Yield()
+            if pytis.form.app is not None:
+                pytis.form.app.Yield()
         else:
             wx.SafeYield()
     finally:
@@ -2364,9 +2360,9 @@ def remote_connection_initially_available():
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""
-    return _application._recent_directories.get(key)
+    return pytis.form.app._recent_directories.get(key)
 
 
 def set_recent_directory(key, directory):
     """Remember given 'directory' for given 'key'."""
-    _application._recent_directories[key] = directory
+    pytis.form.app._recent_directories[key] = directory
