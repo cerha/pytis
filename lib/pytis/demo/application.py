@@ -214,6 +214,17 @@ class TestApplication(object):
     def teardown_class(cls):
         pytis.form.Application.COMMAND_EXIT.invoke()
 
+    def test_api_form(self):
+        import time
+        assert app.form is None
+        pytis.form.Application.COMMAND_RUN_FORM.invoke(name='misc.RandomNumbers',
+                                                       form_class=pytis.form.BrowseForm)
+        assert app.form is not None
+        assert app.form.query_fields is not None
+        assert app.form.query_fields.row is not None
+        #time.sleep(.4)
+        #assert app.form.query_fields.row['count'].value() == 10
+
     def test_shared_params(self):
         assert app.param.country.continent == 'EU'
         with pytest.raises(AttributeError):
