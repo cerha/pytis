@@ -158,6 +158,9 @@ class Application(API):
         Arguments:
 
           message -- the text to be displayed.
+          kind -- message kind as a string.  One of 'info', 'warning', 'error'.
+            The message kind may be indicated in the UI using colors, icons or
+            sounds (beeping for 'warning' and 'error' etc.).
 
         """
         pass

@@ -882,6 +882,34 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         self._update_window_menu()
         self.restore()
 
+    def _message(self, message, kind='info', root=False):
+        """Display a non-interactive message in the status bar.
+
+        Arguments:
+
+          message -- the text to be displayed.
+          kind -- message kind.  One of 'info', 'warning', 'error'.  If 'error'
+            or 'warning', the message will be accompanied by a beep.  Icons may
+            be used in future to indicate the kind in the UI.
+          root -- iff true, the message is displayed always in the main
+            application frame.  Otherwise (by default), the the current modal
+            form is tried first (if it exists) with the main application frame
+            as a fallback.  This requires a modal form to exist and have a
+            status bar containing the 'message' field.
+
+        """
+        assert kind in ('info', 'warning', 'error')
+        if kind in ('warning', 'error'):
+            beep()
+        if message:
+            log(EVENT, message)
+        if not root:
+            form = _application._modals.top()
+            if isinstance(form, pytis.form.Form) and form.set_status('message', message):
+                return
+        if self._statusbar:
+            self._statusbar.set_status('message', message)
+
     def on_key_down(self, event, dont_skip=False):
         # Toto je záchranný odchytávač.  Věřte tomu nebo ne, ale pokud tady ta
         # metoda není, wxWidgets se při více příležitostech po stisku klávesy
@@ -977,7 +1005,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                 if name is None:
                     return None
             log(ACTION, 'Running form:', (form_class, name, kwargs))
-            message(_("Opening form..."), root=True)
+            self._message(_("Opening form..."), root=True)
             assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring)  # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
@@ -1022,7 +1050,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    message('', root=True)
+                    self._message('', root=True)
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1047,7 +1075,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    message('', root=True)
+                    self._message('', root=True)
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1113,7 +1141,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            message(_("Running procedure..."), root=True)
+            self._message(_("Running procedure..."), root=True)
             log(ACTION, 'Running procedure:',
                 (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
@@ -1353,7 +1381,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
 
     @pytis.api.Application.method
     def message(self, message, kind='info'):
-        pass
+        self._message(message, kind=kind)
 
 
 class DBParams(object):
@@ -1989,6 +2017,7 @@ def close_forms():
     """Close all currently opened forms."""
     return _application._close_forms()
 
+
 # Ostatní funkce.
 
 
@@ -2005,37 +2034,10 @@ def refresh_status(id=None):
     return _application._statusbar.refresh(id)
 
 
-def message(message, beep_=False, root=False):
-    """Display a non-interactive message in the status bar.
-
-    Arguments:
-
-      message -- the text to be displayed.
-      beep_ -- iff true, the message will be accompanied by a beep.
-      root -- iff true, the message is displayed always in the main
-        application frame's status bar.  Otherwise the message will
-        appear in the current modal window's status bar if there is
-        a modal window, it has a status bar and the status bar
-        contains the 'message' field.
-
-    """
-    if beep_:
-        beep()
-    if message:
-        log(EVENT, message)
-    if not _application:
-        return
-    if message and message[-1] == ':':
-        message = message[:-1]
-    if not root:
-        modal = _application._modals.top()
-        if isinstance(modal, pytis.form.Form) and modal.set_status('message', message):
-            return
-    sb = _application._statusbar
-    if not sb:
-        return
-    return sb.set_status('message', message)
-
+def message(message, beep_=False):
+    """Deprecated.  Use 'pytis.api.app.message()'."""
+    if _application:
+        _application.message(message, kind='error' if beep_ else 'info')
 
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
