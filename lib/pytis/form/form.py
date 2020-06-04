@@ -1685,17 +1685,27 @@ class RecordForm(LookupForm):
     'RecordForm.Record'.
 
     """
-    class Record(PresentedRow):
-        # Experimental PresentedRow extension aware of its parent form.  This might allow
-        # application specific procedures more reliable access to the current form, from which the
-        # row comes.
+    class Proxy(pytis.api.API.Proxy):
+        """Like pytis.api.API.Proxy, but returns the wrapped form instance when called.
 
+        Backwards compatibility hack to make old access to 'Record.form()' work
+        with the new public API definition.
+
+        """
+        def __call__(self):
+            """Deprecated: Don't use Pytis APIs directly!"""
+            return self._instance
+
+    class Record(PresentedRow):
+        """PresentedRow extension allowing access to public form API from application code."""
         def __init__(self, form, *args, **kwargs):
             self._form = form
             super(RecordForm.Record, self).__init__(*args, **kwargs)
 
+        @property
         def form(self):
-            return self._form
+            """Returns pytis.api.Form representation of the form from which the row comes."""
+            return RecordForm.Proxy(self._form)
 
         def data(self, init_select=True):
             # Return a new instance rather than giving the internally used data object.
