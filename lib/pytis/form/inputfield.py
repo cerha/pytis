@@ -74,7 +74,7 @@ class _Completer(wx.PopupWindow):
     """Autocompletion selection control."""
 
     def __init__(self, ctrl):
-        """Initialize the selectrol for given `wx.TextCtrl' instance."""
+        """Initialize the selection control for given `wx.TextCtrl' instance."""
         super(_Completer, self).__init__(ctrl.GetParent())
         self._ctrl = ctrl
         self._last_insertion_point = 0
@@ -328,6 +328,7 @@ class InputField(KeyHandler, CommandHandler):
         self._guardian = guardian
         self._id = id = spec.id()
         self._want_focus = False
+        self._initial_focus = False
         self._last_focused_ctrl = None
         self._connection_closed = False
         if row.new():
@@ -730,9 +731,16 @@ class InputField(KeyHandler, CommandHandler):
         """
         return self._valid() and self._last_check_result is None
 
-    def set_focus(self, reset=False):
-        """Make the field active for user input."""
+    def set_focus(self, initial=False):
+        """Make the field active for user input.
+
+        Passing initial=True will suppress showing completer popup which is not
+        desired when the field is initially autofocused on form creation.
+
+        """
         self._want_focus = True
+        self._initial_focus = initial
+
 
     def enabled(self):
         """Return true if the field is editable by the user.
@@ -889,11 +897,14 @@ class TextField(InputField):
         super(TextField, self)._on_idle(event)
         text = self._update_completions
         if text is not None:
+            initial = self._initial_focus
             self._update_completions = None
+            self._initial_focus = False
             # If the field has no focus, the change is *most likely* not originated by the
             # user, so we we don't popup the selection (the second argument to update()).
             self._completer.update(self._row.completions(self.id(), prefix=text),
-                                   self._enabled and wx_focused_window() == self._ctrl)
+                                   self._enabled and wx_focused_window() == self._ctrl
+                                   and not initial)
 
     def _on_change(self, event=None):
         value = self._get_value()

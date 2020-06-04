@@ -2555,7 +2555,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     log(OPERATIONAL, "Unknown field returned by focus_field:", field_id)
         if field is None:
             field = find(True, self._fields, key=lambda f: f.enabled()) or self._fields[0]
-        field.set_focus()
+        field.set_focus(initial=True)
 
     def _create_form_parts(self):
         # Create all parts and add them to top-level sizer.
