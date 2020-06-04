@@ -48,7 +48,7 @@ applications to use this API.
 """
 
 from .api import (
-    API, Application, Form, QueryFields,
+    implements, APIProvider, Application, Form, QueryFields,
 )
 
-app = API.Proxy()
+app = APIProvider()

@@ -67,8 +67,8 @@ _ = pytis.util.translations('pytis-wx')
 
 unistr = type(u'')  # Python 2/3 transition hack.
 
-
-class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
+@pytis.api.implements(pytis.api.Application)
+class Application(wx.App, KeyHandler, CommandHandler):
 
     """Aplikace systému Pytis.
 
@@ -156,7 +156,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                 args = {}
             keymap.define_key(key, cmd, args)
         pytis.form.app = self
-        pytis.api.app.wrap(self)
+        pytis.api.app.provide(self)
 
         # Initialize login and password.
         def test():
@@ -878,34 +878,6 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         self._update_window_menu()
         self.restore()
 
-    def _message(self, message, kind='info', root=False):
-        """Display a non-interactive message in the status bar.
-
-        Arguments:
-
-          message -- the text to be displayed.
-          kind -- message kind.  One of 'info', 'warning', 'error'.  If 'error'
-            or 'warning', the message will be accompanied by a beep.  Icons may
-            be used in future to indicate the kind in the UI.
-          root -- iff true, the message is displayed always in the main
-            application frame.  Otherwise (by default), the the current modal
-            form is tried first (if it exists) with the main application frame
-            as a fallback.  This requires a modal form to exist and have a
-            status bar containing the 'message' field.
-
-        """
-        assert kind in ('info', 'warning', 'error')
-        if kind in ('warning', 'error'):
-            beep()
-        if message:
-            log(EVENT, message)
-        if not root:
-            form = self._modals.top()
-            if isinstance(form, pytis.form.Form) and form.set_status('message', message):
-                return
-        if self._statusbar:
-            self._statusbar.set_status('message', message)
-
     def on_key_down(self, event, dont_skip=False):
         # Toto je záchranný odchytávač.  Věřte tomu nebo ne, ale pokud tady ta
         # metoda není, wxWidgets se při více příležitostech po stisku klávesy
@@ -1001,7 +973,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                 if name is None:
                     return None
             log(ACTION, 'Running form:', (form_class, name, kwargs))
-            self._message(_("Opening form..."), root=True)
+            self.message(_("Opening form..."), root=True)
             assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring)  # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
@@ -1046,7 +1018,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    self._message('', root=True)
+                    self.message('', root=True)
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1071,7 +1043,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    self._message('', root=True)
+                    self.message('', root=True)
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1137,7 +1109,7 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            self._message(_("Running procedure..."), root=True)
+            self.message(_("Running procedure..."), root=True)
             log(ACTION, 'Running procedure:',
                 (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
@@ -1369,20 +1341,47 @@ class Application(wx.App, KeyHandler, CommandHandler, pytis.api.Application):
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
+    def message(self, message, kind='info', root=False):
+        """Display a non-interactive message in the status bar.
+
+        Arguments:
+
+          message -- the text to be displayed.
+          kind -- message kind.  One of 'info', 'warning', 'error'.  If 'error'
+            or 'warning', the message will be accompanied by a beep.  Icons may
+            be used in future to indicate the kind in the UI.
+          root -- iff true, the message is displayed always in the main
+            application frame.  Otherwise (by default), the the current modal
+            form is tried first (if it exists) with the main application frame
+            as a fallback.  This requires a modal form to exist and have a
+            status bar containing the 'message' field.
+
+        """
+        assert kind in ('info', 'warning', 'error')
+        if kind in ('warning', 'error'):
+            beep()
+        if message:
+            log(EVENT, message)
+        if not root:
+            form = self._modals.top()
+            if isinstance(form, pytis.form.Form) and form.set_status('message', message):
+                return
+        if self._statusbar:
+            self._statusbar.set_status('message', message)
+
     # Public API accessed through 'pytis.api.app' by Pytis applications.
 
-    @pytis.api.Application.property
-    def param(self):
+    @property
+    def api_param(self):
         return self._param
 
-    @pytis.api.Application.property
-    def form(self):
+    @property
+    def api_form(self):
         form = self.current_form(inner=True)
-        return self.Proxy(form) if form else None
+        return form.provider() if form else None
 
-    @pytis.api.Application.method
-    def message(self, message, kind='info'):
-        self._message(message, kind=kind)
+    def api_message(self, message, kind='info'):
+        self.message(message, kind=kind)
 
 
 class DBParams(object):

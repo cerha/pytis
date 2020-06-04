@@ -26,94 +26,100 @@ from __future__ import absolute_import
 import inspect
 
 
-class API:
-    """Common base class for classes providing public API methods and attributes.
+def implements(api_class):
+    """Decorator for marking a class which implements a particular API.
 
-    This common base class provides just the common infrastructure.  Classes
-    derived from this class define the public API (API definition classes) and
-    classes derived from the API definition classes implement this API.
+    The argument is the API definition class.  Particular API definition
+    classes are defined below.  The implementing class then must define all
+    public methods and properties defined by the definition class.
 
     """
-    class Proxy:
-        """Wrapper class proxying access to the public API of the wrapped instance.
+    def provider(self):
+        if not hasattr(self, '_api_provider'):
+            self._api_provider = APIProvider(self)
+        return self._api_provider
 
-        This class checks for correct API implementation of the wrapped
-        instance and restricts access to its attributes to only those which
-        belong to the public API.
-
-        """
-        def __init__(self, instance=None):
-            self._instance = instance
-            self._api_attributes = ()
-            if instance:
-                self.wrap(instance)
-
-        def wrap(self, instance):
-            def find_api_class(cls):
-                api_bases = [c for c in cls.__bases__ if issubclass(c, API)]
-                if api_bases:
-                    base_class = api_bases[0]
-                    if base_class.__bases__ == (API,):
-                        return base_class
-                    else:
-                        return find_api_class(base_class)
-            api_class = find_api_class(instance.__class__)
-            if not api_class:
-                raise TypeError("{} is not a {} subclass".format(instance.__class__, API))
-            api_attributes = [name for name in dir(api_class)
-                              if not name.startswith('_') and name not in dir(API)]
-            for name in api_attributes:
-                if getattr(api_class, name) is getattr(instance.__class__, name):
-                    raise TypeError("{} does not implement '{}.{}'"
-                                    .format(instance.__class__.__name__, api_class.__name__, name))
-            self._instance = instance
-            self._api_attributes = api_attributes
-
-        def __str__(self):
-            return '<pytis.api.API.Proxy for {}>'.format(self._instance)
-
-        def __repr__(self):
-            return str(self)
-
-        def __getattr__(self, name):
-            if name not in self._api_attributes:
-                raise AttributeError("'{}' object has no public API member '{}'"
-                                     .format(self._instance.__class__.__name__, name))
-            return getattr(self._instance, name)
-
-    @classmethod
-    def _definition(cls, name):
-        try:
-            return getattr(cls, name)
-        except AttributeError:
-            raise AttributeError("'{}' does not define public API member '{}'"
-                                 .format(cls.__name__, name))
-
-    @classmethod
-    def property(cls, f, *args):
-        """Decorator marking a property accessed through the public API."""
-        if not isinstance(cls._definition(f.__name__), property):
-            raise TypeError("'{}.{}' is not defined as a property".format(cls.__name__, f.__name__))
-        return property(f, *args)
-
-    @classmethod
-    def method(cls, f):
-        """Decorator marking a method accessed through the public API."""
-        definition = cls._definition(f.__name__)
-        if not callable(cls._definition(f.__name__)):
-            raise TypeError("'{}.{}' is not defined as a method".format(cls.__name__, f.__name__))
+    def wrapper(cls):
         signature = inspect.signature if hasattr(inspect, 'signature') else inspect.getargspec
-        if signature(f) != signature(definition):
-            raise TypeError("Signature does not match the definition of '{}.{}'"
-                            .format(cls.__name__, f.__name__))
-        return f
+        for name in dir(cls):
+            if name.startswith('api_'):
+                implementation = getattr(cls, name)
+                name = name[4:]
+                try:
+                    definition = getattr(api_class, name)
+                except AttributeError:
+                    raise AttributeError("'{}' does not define public API member '{}'"
+                                         .format(api_class, name))
+                if callable(definition) and not callable(implementation):
+                    raise TypeError("'{}.{}' is defined (but not implemented) as a method"
+                                    .format(api_class.__name__, name))
+                elif callable(definition) and signature(implementation) != signature(definition):
+                    raise TypeError("Method signature does not match the definition of '{}.{}'"
+                                    .format(api_class.__name__, name))
+                elif isinstance(definition, property) and not isinstance(implementation, property):
+                    raise TypeError("'{}.{}' is defined (but not implemented) as a property"
+                                    .format(api_class.__name__, name))
+        cls._api_attributes = [name for name in dir(api_class) if not name.startswith('_')]
+        for name in cls._api_attributes:
+            if not hasattr(cls, 'api_' + name):
+                raise TypeError("{} does not implement '{}.{}'"
+                                .format(cls.__name__, api_class.__name__, name))
+        cls.provider = provider
+        return cls
+    return wrapper
+
+
+class APIProvider:
+    """Public API provider proxying access to the public API of the wrapped instance.
+
+    This class checks for correct API implementation of the wrapped instance
+    and restricts access to its attributes to only those which belong to the
+    public API.
+
+    Marking a class by the 'pytis.api.implements()' decorator adds a new public
+    method 'provider()' which returnes a (cached) 'APIProvider' instance for
+    the implementation class instance on which it is called.
+
+    """
+    def __init__(self, instance=None):
+        self._instance = instance
+        if instance:
+            self.provide(instance)
+
+    def provide(self, instance):
+        if not hasattr(instance, '_api_attributes'):
+            raise TypeError("{} does not implement API (use pytis.api.implements decorator)"
+                            .format(instance.__class__))
+        self._instance = instance
+
+    def __str__(self):
+        return '<pytis.api.APIProvider for {}>'.format(self._instance)
+
+    def __repr__(self):
+        return str(self)
+
+    def __getattr__(self, name):
+        if name not in self._instance._api_attributes:
+            raise AttributeError("'{}' object has no public API member '{}'"
+                                 .format(self._instance.__class__.__name__, name))
+        return getattr(self._instance, 'api_' + name)
+
+
+class API:
+    """Common base class for definition of public API methods and attributes.
+
+    API definition classes are derived from this base class.  Classes
+    implementing a particular API are decorated using 'implements()'.
+
+    """
+    pass
 
 
 class Form(API):
     """Public API representation of the current form."""
 
     query_fields = property()
-    """The forms query fields panel API as 'pytis.api.QueryFields' instance.
+    """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
     Returns None if the form has no query fields panel.
 
@@ -169,39 +175,45 @@ class Application(API):
 def test_api_definition():
     import pytest
     import pytis.api
-    from pytis.api import app
 
-    class MyForm(Form):
+    @implements(pytis.api.Form)
+    class MyForm:
 
-        @pytis.api.Form.property
-        def query_fields(self):
+        #def api_field(self):
+        #    return 'API field access'
+
+        @property
+        def api_query_fields(self):
             return 'the query fields'
 
-        def non_api_method(self):
-            pass
-
-    class MyApp(Application):
+    @implements(pytis.api.Application)
+    class MyApp:
 
         non_api_attribute = 'non-API attribute'
 
-        @pytis.api.Application.property
-        def param(self):
+        @property
+        def api_param(self):
             return 'the param attribute'
 
-        @pytis.api.Application.property
-        def form(self):
-            return self.Proxy(MyForm())
+        @property
+        def api_form(self):
+            return MyForm().provider()
 
-        @pytis.api.Application.method
-        def message(self, message, kind='info'):
+        def api_message(self, message, kind='info'):
+            return self.message('-' + message + '-')
+
+        def message(self, message):
             return 'Message: {}'.format(message)
 
-    app.wrap(MyApp())
+    app_instance = MyApp()
+    app = app_instance.provider()
 
     assert app.param == 'the param attribute'
-    assert isinstance(app.form, API.Proxy)
+    assert isinstance(app.form, APIProvider)
     assert app.form.query_fields == 'the query fields'
-    assert app.message('foo') == 'Message: foo'
+    assert app.message('foo') == 'Message: -foo-'
+
+    app_instance.non_api_attribute == 'non-API attribute'
     with pytest.raises(AttributeError) as e:
         app.non_api_attribute
     assert str(e.value) == "'MyApp' object has no public API member 'non_api_attribute'"
@@ -209,30 +221,31 @@ def test_api_definition():
 
 def test_api_definition_errors():
     import pytest
-    import pytis.api
-    with pytest.raises(TypeError) as e:
-        class DefinePropertyAsMethod(Form):
-            @pytis.api.Form.method
-            def query_fields(self):
-                pass
-    assert str(e.value) == "'Form.query_fields' is not defined as a method"
 
     with pytest.raises(TypeError) as e:
-        class DefineMethodAsProperty(Application):
-            @pytis.api.Application.property
-            def message(self, condition):
+        @implements(Form)
+        class DefinePropertyAsMethod:
+            def api_query_fields(self):
                 pass
-    assert str(e.value) == "'Application.message' is not defined as a property"
+    assert str(e.value) == "'Form.query_fields' is defined (but not implemented) as a property"
 
     with pytest.raises(TypeError) as e:
-        class InvalidMethodSignature(Form):
-            @pytis.api.Application.method
-            def message(self, massage):
+        @implements(Application)
+        class DefineMethodAsProperty:
+            @property
+            def api_message(self, condition):
                 pass
-    assert str(e.value) == "Signature does not match the definition of 'Application.message'"
+    assert str(e.value) == "'Application.message' is defined (but not implemented) as a method"
 
-    class IncompleteApplication(Application):
-        pass
     with pytest.raises(TypeError) as e:
-        API.Proxy(IncompleteApplication())
+        @implements(Application)
+        class InvalidMethodSignature:
+            def api_message(self, massage):
+                pass
+    assert str(e.value) == "Method signature does not match the definition of 'Application.message'"
+
+    with pytest.raises(TypeError) as e:
+        @implements(Application)
+        class IncompleteApplication:
+            pass
     assert str(e.value).startswith("IncompleteApplication does not implement 'Application.")

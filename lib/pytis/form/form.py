@@ -89,9 +89,9 @@ class FormProfile(object):
 class FormSettings(FormProfile):
     pass
 
-
+@pytis.api.implements(pytis.api.Form)
 @python_2_unicode_compatible
-class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler, pytis.api.Form):
+class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
 
     Formulář si podle jména specifikace předaného konstruktoru vyžádá od
@@ -569,6 +569,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler, pytis.api.Form
         """Defocus this form."""
         if Form._focused_form is self:
             Form._focused_form = None
+
+    # Implementation of Public API 'pytis.api.Form'.
+
+    @property
+    def api_query_fields(self):
+        return None
 
 
 class InnerForm(Form):
@@ -1655,20 +1661,21 @@ class LookupForm(InnerForm):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
         return self._current_profile
 
-    # Public API accessed through 'pytis.api.app' by Pytis applications.
+    # Implementation of Public API 'pytis.api.Form'.
 
-    @pytis.api.Form.property
-    def query_fields(self):
-        class QueryFields(pytis.api.QueryFields):
+    @property
+    def api_query_fields(self):
+        @pytis.api.implements(pytis.api.QueryFields)
+        class QueryFields:
             def __init__(self, row):
                 self._row = row
 
-            @pytis.api.QueryFields.property
-            def row(self):
+            @property
+            def api_row(self):
                 return self._row
-
+        # TODO: Probably makes sense to keep one QueryFields instance for form life.
         if self._view.query_fields():
-            return QueryFields(self._query_fields_row())
+            return QueryFields(self._query_fields_row()).provider()
         else:
             return None
 
@@ -1685,19 +1692,20 @@ class RecordForm(LookupForm):
     'RecordForm.Record'.
 
     """
-    class Proxy(pytis.api.API.Proxy):
-        """Like pytis.api.API.Proxy, but returns the wrapped form instance when called.
-
-        Backwards compatibility hack to make old access to 'Record.form()' work
-        with the new public API definition.
-
-        """
-        def __call__(self):
-            """Deprecated: Don't use Pytis APIs directly!"""
-            return self._instance
-
     class Record(PresentedRow):
         """PresentedRow extension allowing access to public form API from application code."""
+
+        class APIProvider(pytis.api.APIProvider):
+            """Like pytis.api.API.Proxy, but returns the wrapped form instance when called.
+
+            Backwards compatibility hack to make old access to 'Record.form()' work
+            with the new public API definition.
+
+            """
+            def __call__(self):
+                """Deprecated: Don't use Pytis APIs directly!"""
+                return self._instance
+
         def __init__(self, form, *args, **kwargs):
             self._form = form
             super(RecordForm.Record, self).__init__(*args, **kwargs)
@@ -1705,7 +1713,8 @@ class RecordForm(LookupForm):
         @property
         def form(self):
             """Returns pytis.api.Form representation of the form from which the row comes."""
-            return RecordForm.Proxy(self._form)
+            # return self._form.provider()
+            return self.APIProvider(self._form)
 
         def data(self, init_select=True):
             # Return a new instance rather than giving the internally used data object.
