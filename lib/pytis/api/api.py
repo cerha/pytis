@@ -118,6 +118,13 @@ class API:
 class Form(API):
     """Public API representation of the current form."""
 
+    name = property()
+    """The specification name as a string.
+
+    Returns None if the form is not bound to any specification (web form).
+
+    """
+
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
@@ -179,8 +186,9 @@ def test_api_definition():
     @implements(pytis.api.Form)
     class MyForm:
 
-        #def api_field(self):
-        #    return 'API field access'
+        @property
+        def api_name(self):
+            return 'form name'
 
         @property
         def api_query_fields(self):
@@ -210,6 +218,7 @@ def test_api_definition():
 
     assert app.param == 'the param attribute'
     assert isinstance(app.form, APIProvider)
+    assert app.form.name == 'form name'
     assert app.form.query_fields == 'the query fields'
     assert app.message('foo') == 'Message: -foo-'
 

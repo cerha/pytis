@@ -573,6 +573,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     # Implementation of Public API 'pytis.api.Form'.
 
     @property
+    def api_name(self):
+        return self._name
+
+    @property
     def api_query_fields(self):
         return None
 
