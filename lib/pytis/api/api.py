@@ -132,6 +132,10 @@ class Form(API):
 
     """
 
+    def clear_selection(self):
+        """Unselect all rows that are currently selected (if any)."""
+        pass
+
 
 class QueryFields(API):
     """Public API representation of the form's query fields panel."""
@@ -193,6 +197,9 @@ def test_api_definition():
         @property
         def api_query_fields(self):
             return 'the query fields'
+
+        def api_clear_selection(self):
+            return 'rows unselected'
 
     @implements(pytis.api.Application)
     class MyApp:

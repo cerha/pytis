@@ -580,6 +580,9 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_query_fields(self):
         return None
 
+    def api_clear_selection(self):
+        pass
+
 
 class InnerForm(Form):
     """Formulář, který zpracuje příkazy samostatně i unvitř duálního formuláře.
@@ -2458,6 +2461,10 @@ class RecordForm(LookupForm):
 
         return Iterator(self._table)
 
+    # Implementation of Public API 'pytis.api.Form'.
+
+    def api_clear_selection(self):
+        self.unselect_selected_rows()
 
 # Editační formulář
 
