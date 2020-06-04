@@ -125,6 +125,19 @@ class Form(API):
 
     """
 
+    field = property()
+    """Access to input fields through the attributes of this object.
+
+    Has one attribute named by field id for each field present in the form.
+    Each field attribute represents a 'pytis.api.Field' API.  Is None in forms
+    which have no input fields (such as browse forms).
+
+    May also be called passing the field id as a string.  Thus
+    'form.field.field_id' or 'form.field("field_id")' should both
+    give the same result.
+
+    """
+
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
@@ -135,6 +148,13 @@ class Form(API):
     def clear_selection(self):
         """Unselect all rows that are currently selected (if any)."""
         pass
+
+
+class Field(API):
+    """Public API representation of a form input field."""
+
+    def refresh(self):
+        """Refresh field UI, typically reload enumeration if applicable."""
 
 
 class QueryFields(API):
@@ -193,6 +213,10 @@ def test_api_definition():
         @property
         def api_name(self):
             return 'form name'
+
+        @property
+        def api_field(self):
+            return None
 
         @property
         def api_query_fields(self):

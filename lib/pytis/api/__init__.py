@@ -48,7 +48,7 @@ applications to use this API.
 """
 
 from .api import (
-    implements, APIProvider, Application, Form, QueryFields,
+    implements, APIProvider, Application, Form, Field, QueryFields,
 )
 
 app = APIProvider()

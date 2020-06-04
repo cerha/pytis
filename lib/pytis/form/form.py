@@ -577,6 +577,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return self._name
 
     @property
+    def api_field(self):
+        return None
+
+    @property
     def api_query_fields(self):
         return None
 
@@ -3021,6 +3025,25 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def readonly(self):
         """Return true iff the form is read only."""
         return self._mode == self.MODE_VIEW
+
+    # Implementation of Public API 'pytis.api.Form'.
+
+    @property
+    def api_field(self):
+        fields = self._fields
+
+        class Field:
+            def __getattr__(self, name):
+                f = find(name, fields, key=lambda f: f.id())
+                if f:
+                    return f.provider()
+                else:
+                    raise AttributeError("Form has no field '{}'".format(name))
+
+            def __call__(self, name):
+                return self.__getattr__(name)
+
+        return Field()
 
 
 class PopupEditForm(PopupForm, EditForm):

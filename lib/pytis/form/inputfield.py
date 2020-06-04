@@ -197,6 +197,7 @@ class _Completer(wx.PopupWindow):
             listctrl.EnsureVisible(0)
 
 
+@pytis.api.implements(pytis.api.Field)
 @python_2_unicode_compatible
 class InputField(KeyHandler, CommandHandler):
     """Abstract base class for input fields.
@@ -741,7 +742,6 @@ class InputField(KeyHandler, CommandHandler):
         self._want_focus = True
         self._initial_focus = initial
 
-
     def enabled(self):
         """Return true if the field is editable by the user.
 
@@ -776,6 +776,11 @@ class InputField(KeyHandler, CommandHandler):
     def tab_navigated_widgets(self):
         """Return a tuple of 'wx.Window' subclasses present in form tab navigation."""
         return (self._controls[0][0],)
+
+    # Implementation of Public API 'pytis.api.Field'.
+
+    def api_refresh(self):
+        pass
 
 
 class Unlabeled(object):
@@ -1236,6 +1241,14 @@ class GenericEnumerationField(InputField):
 
         """
         self._reload_enumeration()
+
+    # Implementation of Public API 'pytis.api.Field'.
+
+    def api_refresh(self):
+        try:
+            self._reload_enumeration()
+        except ProgramError:
+            pass
 
 
 class RadioBoxField(Unlabeled, GenericEnumerationField):
