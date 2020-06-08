@@ -2630,7 +2630,7 @@ class StructuredTextField(TextField):
                                  transaction=self._row.transaction())
             finally:
                 fh.close()
-            row.form().field('filename').reload_enumeration()
+            row.form.field.filename.refresh()
             row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
     def _image_preview_computer(self, row, filename):
