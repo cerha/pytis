@@ -138,6 +138,9 @@ class Form(API):
 
     """
 
+    condition = property()
+    """Current filtering condition as a pytis.data.Operator instance or None."""
+
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
@@ -216,6 +219,10 @@ def test_api_definition():
 
         @property
         def api_field(self):
+            return None
+
+        @property
+        def api_condition(self):
             return None
 
         @property

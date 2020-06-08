@@ -581,6 +581,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return None
 
     @property
+    def api_condition(self):
+        return None
+
+    @property
     def api_query_fields(self):
         return None
 
@@ -1673,6 +1677,10 @@ class LookupForm(InnerForm):
         return self._current_profile
 
     # Implementation of Public API 'pytis.api.Form'.
+
+    @property
+    def api_condition(self):
+        return self._current_condition()
 
     @property
     def api_query_fields(self):
