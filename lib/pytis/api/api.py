@@ -158,6 +158,11 @@ class Field(API):
 
     def refresh(self):
         """Refresh field UI, typically reload enumeration if applicable."""
+        pass
+
+    def write(self, text):
+        """Insert given text into the field in the current cursor position."""
+        pass
 
 
 class QueryFields(API):

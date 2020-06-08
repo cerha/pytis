@@ -782,6 +782,10 @@ class InputField(KeyHandler, CommandHandler):
     def api_refresh(self):
         pass
 
+    def api_write(self, text):
+        self._controls[0][0].WriteText(text)
+
+
 
 class Unlabeled(object):
     """Mix-in třída pro políčka .
