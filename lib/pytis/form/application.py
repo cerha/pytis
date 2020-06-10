@@ -1400,8 +1400,8 @@ class DBParams(object):
     attributes return the internal Python value of the column, when assigned,
     they update the value in the database.
 
-    It is not possible to us a parameter named 'add_callback' and 'cbvalue' due
-    to the presence of the public methods of the same name.
+    It is not possible to us a parameter named 'add_callback', 'cbvalue' and
+    'reload' due to the presence of the public methods of the same name.
 
     """
     _lock = _thread.allocate_lock()
@@ -1483,6 +1483,16 @@ class DBParams(object):
         if not row:
             return None
         return row[cbcolumn].value()
+
+    def reload(self):
+        """Explicitly reload parameter values.
+
+        Values normally reload automatically thanks to DB notifications.
+        However it may be practical in certain situations to make sure you are
+        working with up-to-date values.
+
+        """
+        self._on_change()
 
 
 class DbActionLogger(object):
