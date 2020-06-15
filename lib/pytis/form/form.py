@@ -1096,37 +1096,36 @@ class LookupForm(InnerForm):
 
     def _apply_providers(self, initial=False):
         kwargs = self._provider_kwargs()
-        if kwargs:
-            if kwargs['query_fields'] is None:
-                # If _query_fields_row() returns None, it means that the
-                # query fields are not initialized yet and autoinit is off.
-                # This happens during form initialization.  In this case we
-                # want to display an empty form without calling the provider
-                # functions at all.
-                # Note that we want to show empty form even if neither
-                # condition_provider nor argument_provider is defined as
-                # the application may solely rely on on_apply or use query
-                # fields in side form conditions, row styles etc.
-                # UNKNOWN_ARGUMENTS result in an empty dummy select without
-                # calling the underlying database function.
-                self._arguments = self._data.UNKNOWN_ARGUMENTS
-                # We use an empty OR() condition (always false) to make the
-                # select return no data.  It might seem better to have
-                # something like self._data.UNKNOWN_CONDITION, but it doesn't
-                # really make much difference in case of tables/views.
-                self._lf_provider_condition = pytis.data.OR()
+        if 'query_fields' in kwargs and kwargs['query_fields'] is None:
+            # If _query_fields_row() returns None, it means that the
+            # query fields are not initialized yet and autoinit is off.
+            # This happens during form initialization.  In this case we
+            # want to display an empty form without calling the provider
+            # functions at all.
+            # Note that we want to show empty form even if neither
+            # condition_provider nor argument_provider is defined as
+            # the application may solely rely on on_apply or use query
+            # fields in side form conditions, row styles etc.
+            # UNKNOWN_ARGUMENTS result in an empty dummy select without
+            # calling the underlying database function.
+            self._arguments = self._data.UNKNOWN_ARGUMENTS
+            # We use an empty OR() condition (always false) to make the
+            # select return no data.  It might seem better to have
+            # something like self._data.UNKNOWN_CONDITION, but it doesn't
+            # really make much difference in case of tables/views.
+            self._lf_provider_condition = pytis.data.OR()
+        else:
+            argument_provider = self._view.argument_provider()
+            if argument_provider:
+                self._arguments = argument_provider(**kwargs)
+                if initial and self._arguments is None:
+                    raise Form.InitError()
+            condition_provider = self._view.condition_provider()
+            if condition_provider:
+                self._lf_provider_condition = condition_provider(**kwargs)
             else:
-                argument_provider = self._view.argument_provider()
-                if argument_provider:
-                    self._arguments = argument_provider(**kwargs)
-                    if initial and self._arguments is None:
-                        raise Form.InitError()
-                condition_provider = self._view.condition_provider()
-                if condition_provider:
-                    self._lf_provider_condition = condition_provider(**kwargs)
-                else:
-                    # Make sure to unset pytis.data.OR() set above.
-                    self._lf_provider_condition = None
+                # Make sure to unset pytis.data.OR() set above.
+                self._lf_provider_condition = None
 
     def _load_profiles(self):
         return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
