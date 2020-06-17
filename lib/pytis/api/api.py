@@ -70,7 +70,7 @@ def implements(api_class, partial=False):
     return wrapper
 
 
-class APIProvider:
+class APIProvider(object):
     """Public API provider proxying access to the public API of the wrapped instance.
 
     This class checks for correct API implementation of the wrapped instance
@@ -112,28 +112,27 @@ class ApplicationAPIProvider(APIProvider):
     instance will be initialized as soon as the real Application API
     implementing instance is ready.
 
-    Morover we want to allow initialization of a limited application in scripts
-    where a real application does not actually run.  This may be done by
-    calling 'app.init()' without arguments in such scripts.  This will
-    automatically create a 'BaseApplication' instance and initialize the 'app'
-    with it.  'BaseApplication' only implements access to shared parameters
-    through 'app.param'.
+    Morover we want initialize a limited application in scripts where a real
+    application does not actually run.  When 'app.param' is accessed when
+    'init()' has not been called (yet), 'BaseApplication' instance is created
+    automatically.
 
     """
     def __init__(self):
         pass
 
-    def init(self, instance=None):
-        """Start providing the API implemented by given application instance.
+    def __getattr__(self, name):
+        if name == 'param' and self._instance is None:
+            BaseApplication()  # Will call app.init() automatically.
+        return super(ApplicationAPIProvider, self).__getattr__(name)
 
-        When called without arguments, create a basic application instance
-        allowing access at least to shared parameters in scripts.
+    def init(self, instance):
+        """Start providing the API implemented by given application instance."""
+        self._init(instance)
 
-        """
-        if instance is None:
-            BaseApplication()  # Will call app.init(self) automatically.
-        else:
-            self._init(instance)
+    def release(self):
+        """Stop providing the API implemented by the current application instance."""
+        self._instance = None
 
 
 class API:

@@ -213,6 +213,9 @@ class TestApplication(object):
 
     def teardown_class(cls):
         pytis.form.Application.COMMAND_EXIT.invoke()
+        # Release the pytis.form.Application instance from pytis.api.app to make sure
+        # the tests outside this class don't use the previously created instance.
+        app.release()
 
     def test_api_form(self):
         import time
@@ -226,7 +229,7 @@ class TestApplication(object):
         #assert app.form.query_fields.row['count'].value() == 10
 
     def test_shared_params(self):
-        _test_shared_params()
+        test_shared_params()
 
     def test_shared_param_callbacks(self):
         import time
@@ -249,17 +252,12 @@ class TestApplication(object):
             app.param.country.name = name
 
 
-def _test_shared_params():
+def test_shared_params():
+    # Shared params must work with the pytis.form.Application instance
+    # (called from TestApplication.test_shared_params) as well as without
+    # it (with automatically created pytis.api.BaseApplication).
     assert app.param.country.continent == 'EU'
     with pytest.raises(AttributeError):
         app.param.user.xy
     with pytest.raises(AttributeError):
         app.param.user.xy = 1
-
-
-def test_script_access():
-    app.init()
-    _test_shared_params()
-    # Make sure app is a BaseApplication instance and not the pytis.form.Application used before.
-    with pytest.raises(AttributeError):
-        app.form
