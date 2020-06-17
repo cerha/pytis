@@ -26,7 +26,7 @@ from __future__ import absolute_import
 import inspect
 
 
-def implements(api_class):
+def implements(api_class, partial=False):
     """Decorator for marking a class which implements a particular API.
 
     The argument is the API definition class.  Particular API definition
@@ -60,10 +60,11 @@ def implements(api_class):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a property"
                                     .format(api_class.__name__, name))
         cls._api_attributes = [name for name in dir(api_class) if not name.startswith('_')]
-        for name in cls._api_attributes:
-            if not hasattr(cls, 'api_' + name):
-                raise TypeError("{} does not implement '{}.{}'"
-                                .format(cls.__name__, api_class.__name__, name))
+        if not partial:
+            for name in cls._api_attributes:
+                if not hasattr(cls, 'api_' + name):
+                    raise TypeError("{} does not implement '{}.{}'"
+                                    .format(cls.__name__, api_class.__name__, name))
         cls.provider = provider
         return cls
     return wrapper
@@ -82,11 +83,9 @@ class APIProvider:
 
     """
     def __init__(self, instance=None):
-        self._instance = instance
-        if instance:
-            self.provide(instance)
+        self._init(instance)
 
-    def provide(self, instance):
+    def _init(self, instance):
         if not hasattr(instance, '_api_attributes'):
             raise TypeError("{} does not implement API (use pytis.api.implements decorator)"
                             .format(instance.__class__))
@@ -103,6 +102,38 @@ class APIProvider:
             raise AttributeError("'{}' object has no public API member '{}'"
                                  .format(self._instance.__class__.__name__, name))
         return getattr(self._instance, 'api_' + name)
+
+
+class ApplicationAPIProvider(APIProvider):
+    """Special case of API provider for the top level 'pytis.api.app' instance.
+
+    We need an initially uninitialized instance in 'pytis.api.app' to allow
+    'from pytis.api import app' in the top level of application modules.  This
+    instance will be initialized as soon as the real Application API
+    implementing instance is ready.
+
+    Morover we want to allow initialization of a limited application in scripts
+    where a real application does not actually run.  This may be done by
+    calling 'app.init()' without arguments in such scripts.  This will
+    automatically create a 'BaseApplication' instance and initialize the 'app'
+    with it.  'BaseApplication' only implements access to shared parameters
+    through 'app.param'.
+
+    """
+    def __init__(self):
+        pass
+
+    def init(self, instance=None):
+        """Start providing the API implemented by given application instance.
+
+        When called without arguments, create a basic application instance
+        allowing access at least to shared parameters in scripts.
+
+        """
+        if instance is None:
+            BaseApplication()  # Will call app.init(self) automatically.
+        else:
+            self._init(instance)
 
 
 class API:
@@ -209,6 +240,37 @@ class Application(API):
 
         """
         pass
+
+
+@implements(Application, partial=True)
+class BaseApplication(object):
+    """Base class for classes implementing the 'Application' API.
+
+    This class only implements access to shared parameters using 'app.param'.
+    It may be used as a base class for other classes implementing the
+    'Application' API or directly in scripts which don't need anything else
+    than 'app.param'.
+
+    """
+    class _Param:  # Access items as attributes.
+        def __init__(self, items):
+            self.__dict__ = dict(items)
+
+    def __init__(self):
+        import pytis
+        import pytis.api
+        self._specification = pytis.config.resolver.specification('Application')
+        # Create DBParams instances for all SharedParams specifications.
+        self._param = self._Param(
+            (item.name(), pytis.util.DBParams(item.spec_name(), item.condition()))
+            for item in self._specification.params()
+        )
+        pytis.api.app.init(self)
+        super(BaseApplication, self).__init__()
+
+    @property
+    def api_param(self):
+        return self._param
 
 
 def test_api_definition():

@@ -47,8 +47,9 @@ applications to use this API.
 
 """
 
-from .api import (
-    implements, APIProvider, Application, Form, Field, QueryFields,
+from .api import (  # noqa: F401
+    implements, APIProvider, ApplicationAPIProvider, BaseApplication,
+    Application, Form, Field, QueryFields,
 )
 
-app = APIProvider()
+app = ApplicationAPIProvider()

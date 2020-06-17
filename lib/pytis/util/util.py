@@ -527,6 +527,117 @@ class Structure (object):
     __hash__ = None
 
 
+class DBParams(object):
+    """Provides access to shared parameters.
+
+    Shared parameters provide a way to share global and user specific values
+    between the database and application code.  They are defined by
+    'Application.params()' and accessed through 'pytis.api.app'.
+    'app.param.foo' is a 'DBParams' instance for the 'SharedParams'
+    specification named 'foo'.
+
+    The 'DBParams' instance provides access to the parameter values through its
+    public attributes.  Their names correspond to the names of the columns
+    present in the data object represented by the instance.  When read, the
+    attributes return the internal Python value of the column, when assigned,
+    they update the value in the database.
+
+    It is not possible to use a parameter named 'add_callback', 'cbvalue' and
+    'reload' due to the presence of the public methods of the same name.
+
+    """
+    _lock = _thread.allocate_lock()
+
+    def __init__(self, name, condition=None):
+        self._name = name
+        self._condition = condition
+        self._callbacks = {}
+
+    def __getattr__(self, name):
+        if name in ('_row', '_data'):
+            self._data = data_object(self._name)
+            self._data.add_callback_on_change(self._on_change)
+            self._select()
+            return self.__dict__[name]
+        elif name in self._row:
+            return self._row[name].value()
+        else:
+            raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
+                                 (self.__class__.__name__, self._name, name))
+
+    def __setattr__(self, name, value):
+        if not name.startswith('_') and name in self._row:
+            import pytis.data
+            row = pytis.data.Row(((name, pytis.data.Value(self._row[name].type(), value)),))
+            key = [self._row[c.id()] for c in self._data.key()]
+            with Locked(self._lock):
+                self._row = self._data.update(key, row)[0]
+        else:
+            super(DBParams, self).__setattr__(name, value)
+
+    def __contains__(self, key):
+        return key in self._row
+
+    def _select(self):
+        data = self._data
+        with Locked(self._lock):
+            data.select(condition=self._condition)
+            self._row = data.fetchone()
+            data.close()
+
+    def _on_change(self):
+        orig_row = self._row
+        self._select()
+        for name, callbacks in self._callbacks.items():
+            if self._row[name].value() != orig_row[name].value():
+                for callback in callbacks:
+                    callback()
+
+    def add_callback(self, name, callback):
+        """Registger a callback called on given parameter change.
+
+        The callback function is called without arguments whenever the value of
+        given parameter changes.
+
+        """
+        assert name is None or name in self._row
+        self._callbacks.setdefault(name, []).append(callback)
+
+    def cbvalue(self, name, cbcolumn):
+        """Return the value of given codebook column for given parameter.
+
+        Arguments:
+
+          name -- name of the parameter with a codebook (enumerator).
+          cbcolumn -- codebook column name
+
+        ValueError is raised if given column has no enunerator in the
+        underlying data object.
+
+        None is returned if the codebook doesn't include the record for the
+        current value of parameter 'name'.
+
+        """
+        value = self._row[name]
+        enumerator = value.type().enumerator()
+        if not enumerator:
+            raise ValueError("Column '%s' has no enumerator!" % name)
+        row = enumerator.row(value.value())
+        if not row:
+            return None
+        return row[cbcolumn].value()
+
+    def reload(self):
+        """Explicitly reload parameter values.
+
+        Values normally reload automatically thanks to DB notifications.
+        However it may be practical in certain situations to make sure you are
+        working with up-to-date values.
+
+        """
+        self._on_change()
+
+
 class object_2_5(object):
     """Base class emulating Python 2.5 'object' class.
 

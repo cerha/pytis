@@ -68,8 +68,7 @@ _ = pytis.util.translations('pytis-wx')
 unistr = type(u'')  # Python 2/3 transition hack.
 
 @pytis.api.implements(pytis.api.Application)
-class Application(wx.App, KeyHandler, CommandHandler):
-
+class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler):
     """Aplikace systému Pytis.
 
     Pro každou aplikaci systému Pytis existuje po celou dobu jejího běhu jedno
@@ -114,7 +113,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def OnInit(self):
         import pytis.extensions
-        self._specification = pytis.config.resolver.specification('Application')
         wx.Log.SetActiveTarget(wx.LogStderr())
         # Create the main application frame.
         frame = self._frame = wx.Frame(None, -1, self._frame_title(pytis.config.application_name),
@@ -156,7 +154,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 args = {}
             keymap.define_key(key, cmd, args)
         pytis.form.app = self
-        pytis.api.app.provide(self)
 
         # Initialize login and password.
         def test():
@@ -165,15 +162,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             factory.create(connection_data=pytis.config.dbconnection)
         db_operation(test)
-
-        class Param:  # Access access items as attributes.
-            def __init__(self, items):
-                self.__dict__ = dict(items)
-        # Create DBParams instances for all SharedParams specifications.
-        self._param = Param(
-            (item.name(), DBParams(item.spec_name(), item.condition()))
-            for item in self._specification.params()
-        )
 
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
@@ -1372,10 +1360,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     # Public API accessed through 'pytis.api.app' by Pytis applications.
 
     @property
-    def api_param(self):
-        return self._param
-
-    @property
     def api_form(self):
         form = self.current_form(inner=True)
         return form.provider() if form else None
@@ -1384,119 +1368,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self.message(message, kind=kind)
 
 
-class DBParams(object):
-    """Provides access to shared parameters.
-
-    Shared parameters provide a way to share global and user specific values
-    between the database and the application code.  Each
-    'pytis.presentation.SharedParams' instance defined in
-    'Application.params()' leads to creation of one 'DBParams' instance as
-    'app.param.name', where 'app' is the current 'Application' instance and
-    'name' corresponds to the name defined by the 'SharedParams' instance.
-
-    The 'DBParams' instance provides access to the parameter values through its
-    public attributes.  Their names correspond to the names of the columns
-    present in the data object represented by the instance.  When read, the
-    attributes return the internal Python value of the column, when assigned,
-    they update the value in the database.
-
-    It is not possible to us a parameter named 'add_callback', 'cbvalue' and
-    'reload' due to the presence of the public methods of the same name.
-
-    """
-    _lock = _thread.allocate_lock()
-
-    def __init__(self, name, condition=None):
-        self._name = name
-        self._condition = condition
-        self._callbacks = {}
-
-    def __getattr__(self, name):
-        if name in ('_row', '_data'):
-            self._data = pytis.util.data_object(self._name)
-            self._data.add_callback_on_change(self._on_change)
-            self._select()
-            return self.__dict__[name]
-        elif name in self._row:
-            return self._row[name].value()
-        else:
-            raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
-                                 (self.__class__.__name__, self._name, name))
-
-    def __setattr__(self, name, value):
-        if not name.startswith('_') and name in self._row:
-            row = pytis.data.Row(((name, pytis.data.Value(self._row[name].type(), value)),))
-            key = [self._row[c.id()] for c in self._data.key()]
-            with pytis.util.Locked(self._lock):
-                self._row = self._data.update(key, row)[0]
-        else:
-            super(DBParams, self).__setattr__(name, value)
-
-    def __contains__(self, key):
-        return key in self._row
-
-    def _select(self):
-        data = self._data
-        with pytis.util.Locked(self._lock):
-            data.select(condition=self._condition)
-            self._row = data.fetchone()
-            data.close()
-
-    def _on_change(self):
-        orig_row = self._row
-        self._select()
-        for name, callbacks in self._callbacks.items():
-            if self._row[name].value() != orig_row[name].value():
-                for callback in callbacks:
-                    callback()
-
-    def add_callback(self, name, callback):
-        """Registger a callback called on given parameter change.
-
-        The callback function is called without arguments whenever the value of
-        given parameter changes.
-
-        """
-        assert name is None or name in self._row
-        self._callbacks.setdefault(name, []).append(callback)
-
-    def cbvalue(self, name, cbcolumn):
-        """Return the value of given codebook column for given parameter.
-
-        Arguments:
-
-          name -- name of the parameter with a codebook (enumerator).
-          cbcolumn -- codebook column name
-
-        ValueError is raised if given column has no enunerator in the
-        underlying data object.
-
-        None is returned if the codebook doesn't include the record for the
-        current value of parameter 'name'.
-
-        """
-        value = self._row[name]
-        enumerator = value.type().enumerator()
-        if not enumerator:
-            raise ValueError("Column '%s' has no enumerator!" % name)
-        row = enumerator.row(value.value())
-        if not row:
-            return None
-        return row[cbcolumn].value()
-
-    def reload(self):
-        """Explicitly reload parameter values.
-
-        Values normally reload automatically thanks to DB notifications.
-        However it may be practical in certain situations to make sure you are
-        working with up-to-date values.
-
-        """
-        self._on_change()
-
-
 class DbActionLogger(object):
-
     """Log user actions into the database."""
 
     def __init__(self, dbconnection, username):

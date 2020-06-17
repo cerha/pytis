@@ -226,11 +226,7 @@ class TestApplication(object):
         #assert app.form.query_fields.row['count'].value() == 10
 
     def test_shared_params(self):
-        assert app.param.country.continent == 'EU'
-        with pytest.raises(AttributeError):
-            app.param.user.xy
-        with pytest.raises(AttributeError):
-            app.param.user.xy = 1
+        _test_shared_params()
 
     def test_shared_param_callbacks(self):
         import time
@@ -251,3 +247,19 @@ class TestApplication(object):
             assert names == ['x', 'y']
         finally:
             app.param.country.name = name
+
+
+def _test_shared_params():
+    assert app.param.country.continent == 'EU'
+    with pytest.raises(AttributeError):
+        app.param.user.xy
+    with pytest.raises(AttributeError):
+        app.param.user.xy = 1
+
+
+def test_script_access():
+    app.init()
+    _test_shared_params()
+    # Make sure app is a BaseApplication instance and not the pytis.form.Application used before.
+    with pytest.raises(AttributeError):
+        app.form
