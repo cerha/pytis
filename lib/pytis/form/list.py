@@ -3049,8 +3049,7 @@ class SideBrowseForm(BrowseForm):
 
     def _provider_kwargs(self):
         kwargs = super(SideBrowseForm, self)._provider_kwargs()
-        if kwargs:
-            kwargs['main_form_row'] = self._main_form_row
+        kwargs['main_form_row'] = self._main_form_row
         return kwargs
 
     def on_selection(self, row):
