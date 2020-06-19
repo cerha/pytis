@@ -1874,9 +1874,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             try:
                 export_file = open(filename, mode)
                 export_file.write('')
-            except Exception:
-                msg = _("Unable to open the file for writing!")
-                run_dialog(Error, msg)
+            except (IOError, OSError):
+                run_dialog(Error, _("Unable to open the file for writing!"))
                 return
         if fileformat == 'XLSX':
             export_method = self._export_xlsx
