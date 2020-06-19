@@ -1830,26 +1830,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if problem:
             run_dialog(Warning, problem + '\n' + _("Export aborted."))
             return
-        fileformats = ['CSV']
         import pkgutil
-        found = pkgutil.find_loader('xlsxwriter') is not None
-        if found:
-            fileformats.insert(0, 'XLSX')
-        wildcards = [_("Files %s", "TXT (*.txt)"), "*.txt",
-                     _("Files %s", "CSV (*.csv)"), "*.csv"]
-        username = pytis.config.dbconnection.user()
-        if username is None:
-            username = ''
-        default_filename = 'export_%s.txt' % username
-        if len(fileformats) > 1:
-            msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
-                               _("Choose the desired format.")))
-            fileformat = run_dialog(MultiQuestion, msg, fileformats, default='CSV')
+        if pkgutil.find_loader('xlsxwriter') is not None:
+            fileformat = run_dialog(
+                MultiQuestion, "\n\n".join((
+                    _("Data may be exported into one of the following file formats."),
+                    _("Choose the desired format."))
+                ), ('XLSX', 'CSV'), default='CSV',
+            )
             if not fileformat:
                 return
-            if fileformat == 'XLSX':
-                wildcards = [_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"]
-                default_filename = 'export_%s.xlsx' % username
         else:
             fileformat = 'CSV'
         export_file = None
@@ -1866,15 +1856,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             log(EVENT, 'RPC communication not available')
         if not export_file:
-            export_dir = pytis.config.export_directory
+            if fileformat == 'XLSX':
+                wildcards = (_("Files %s", "XLSX (*.xlsx)"), "*.xlsx")
+                ext = 'xlsx'
+            else:
+                wildcards = (_("Files %s", "TXT (*.txt)"), "*.txt",
+                             _("Files %s", "CSV (*.csv)"), "*.csv")
+                ext = 'txt'
+            username = pytis.config.dbconnection.user() or ''
             filename = pytis.form.run_dialog(FileDialog, title=_("Export to file"),
-                                             dir=export_dir, file=default_filename, mode='SAVE',
-                                             wildcards=tuple(wildcards))
+                                             dir=pytis.config.export_directory,
+                                             file='export_{}.{}%'.format(username, ext),
+                                             mode='SAVE', wildcards=tuple(wildcards))
             if not filename:
                 return
-            mode = 'w'
-            if fileformat.startswith('XLS'):
-                mode += 'b'
+            mode = 'wb' if fileformat == 'XLSX' else 'w'
             try:
                 export_file = open(filename, mode)
                 export_file.write('')
