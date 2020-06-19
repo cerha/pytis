@@ -1814,23 +1814,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None
 
-    def _can_cmd_export(self):
-        number_of_rows = self._table.number_of_rows()
-        if number_of_rows == 0:
-            problem = _("The table has no rows!")
-        elif number_of_rows > 100000:
-            problem = _("The table has too many rows! Use a filter.")
-        elif False in [self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
-                       for c in self._columns]:
-            problem = _("You don't have permissions to export this table.")
-        else:
-            return True
-        run_dialog(Warning, problem + '\n' + _("Export aborted."))
-        return False
-
     def _cmd_export_file(self):
         log(EVENT, 'Called export to file')
-        if not self._can_cmd_export():
+        if not all(self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
+                   for c in self._columns):
+            problem = _("You don't have permissions to export this table.")
+        else:
+            number_of_rows = self._table.number_of_rows()
+            if number_of_rows == 0:
+                problem = _("The table has no rows!")
+            elif number_of_rows > 100000:
+                problem = _("The table has too many rows! Use a filter.")
+            else:
+                problem = None
+        if problem:
+            run_dialog(Warning, problem + '\n' + _("Export aborted."))
             return
         fileformats = ['CSV']
         import pkgutil
