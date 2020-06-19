@@ -1842,20 +1842,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
         else:
             fileformat = 'CSV'
-        export_file = None
-        remote = False
         if pytis.remote.client_available():
-            client_ip = pytis.remote.client_ip()
-            log(EVENT, 'RPC communication on %s available' % client_ip)
-            try:
-                export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
-            except Exception:
-                pass
-            else:
-                remote = True
+            log(EVENT, 'RPC communication on %s available' % pytis.remote.client_ip())
+            export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
+            remote = True
         else:
             log(EVENT, 'RPC communication not available')
-        if not export_file:
             if fileformat == 'XLSX':
                 wildcards = (_("Files %s", "XLSX (*.xlsx)"), "*.xlsx")
                 ext = 'xlsx'
@@ -1877,6 +1869,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             except (IOError, OSError):
                 run_dialog(Error, _("Unable to open the file for writing!"))
                 return
+            remote = False
         if fileformat == 'XLSX':
             export_method = self._export_xlsx
         else:
