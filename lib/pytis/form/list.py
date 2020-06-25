@@ -1936,7 +1936,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
-    def _export_xlsx(self, file_):
+    def _export_xlsx(self, export_file):
         log(EVENT, 'Called XLSX export')
         MINIMAL_COLUMN_WIDTH = 12
         import xlsxwriter
@@ -1945,8 +1945,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             column_list = []
             col_position = 0
             output = io.BytesIO()
-            w = xlsxwriter.Workbook(output, {'remove_timezone': True})
-            ws = w.add_worksheet('Export')
+            writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
+            ws = writer.add_worksheet('Export')
 
             def _get_format(ctype):
                 if isinstance(ctype, pytis.data.Float):
@@ -1970,7 +1970,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     fmt = {'num_format': datetime_format_str, 'align': 'left'}
                 else:
                     return None
-                return w.add_format(fmt)
+                return writer.add_format(fmt)
             for c in self._columns:
                 col_id = c.id()
                 col_type = self._row.type(c.id())
@@ -2009,8 +2009,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if run_dialog(Question, msg, False):
                     only_selected = True
             # Worksheet column settings
-            bold = w.add_format({'bold': True})
-            merge_bold = w.add_format({'align': 'center', 'bold': True})
+            bold = writer.add_format({'bold': True})
+            merge_bold = writer.add_format({'align': 'center', 'bold': True})
             skip_next = False
             for col_attrs in column_list:
                 position = col_attrs['col_position']
@@ -2056,8 +2056,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         else:
                             s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
                             ws.write_string(r_out + 1, position, s)
-            w.close()
-            file_.write(output.getvalue())
+            writer.close()
+            export_file.write(output.getvalue())
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
