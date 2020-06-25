@@ -1884,18 +1884,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 pytis.form.launch_file(exported_filename)
 
-    def _export_csv(self, file_):
+    def _export_csv(self, export_file):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
-        if isinstance(file_, basestring):
-            try:
-                export_file = open(file_, 'w')
-            except Exception:
-                msg = _("Unable to open the file for writing!")
-                run_dialog(Error, msg)
-                return False
-        else:
-            export_file = file_
         number_of_rows = self._table.number_of_rows()
 
         def _format_kwargs(ctype):
