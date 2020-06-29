@@ -1903,14 +1903,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file.close()
 
     def _export_csv(self, export_file, only_selected=False):
-        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
+        columns = [(c.id(), (dict(locale_format=False)
+                             if isinstance(self._row.type(c.id()), pytis.data.Float)
+                             else dict()))
+                   for c in self._columns]
         number_of_rows = self._table.number_of_rows()
-
-        def _format_kwargs(ctype):
-            kwargs = dict(secure=True)
-            if isinstance(ctype, pytis.data.Float):
-                kwargs['locale_format'] = False
-            return kwargs
 
         def _process_table(update):
             # We buffer exported data before writing them to the file in order
@@ -1923,8 +1920,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     continue
                 presented_row = self._table.row(r)
                 result += '\t'.join(
-                    ';'.join(presented_row.format(cid, **_format_kwargs(ctype)).splitlines())
-                    for cid, ctype in column_list
+                    ';'.join(presented_row.format(cid, secure=True, **kwargs).splitlines())
+                    for cid, kwargs in columns
                 ) + '\n'
             try:
                 encoded = result.encode(pytis.config.export_encoding)
@@ -1936,7 +1933,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 encoded = result.encode('utf-8')
             export_file.write(encoded)
         pytis.form.run_dialog(ProgressDialog, _process_table)
-        return True
 
     def _export_xlsx(self, export_file, only_selected=False):
         MINIMAL_COLUMN_WIDTH = 12
