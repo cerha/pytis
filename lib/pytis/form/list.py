@@ -51,7 +51,7 @@ import pytis.output
 
 from pytis.presentation import (
     Action, ActionGroup, AggregatedView, CodebookSpec, Field,
-    FormType, Link, TextFormat, ViewSpec, ActionContext,
+    FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
     PrettyFoldable,
 )
 from pytis.util import (
@@ -1831,58 +1831,66 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Warning, problem + '\n' + _("Export aborted."))
             return
         import pkgutil
-        if pkgutil.find_loader('xlsxwriter') is not None:
-            fileformat = run_dialog(
-                MultiQuestion, "\n\n".join((
-                    _("Data may be exported into one of the following file formats."),
-                    _("Choose the desired format."))
-                ), ('XLSX', 'CSV'), default='CSV',
-            )
-            if not fileformat:
-                return
-        else:
-            fileformat = 'CSV'
-        if pytis.remote.client_available():
-            log(EVENT, 'RPC communication on %s available' % pytis.remote.client_ip())
-            export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
-            remote = True
-        else:
-            log(EVENT, 'RPC communication not available')
+        xls_available = pkgutil.find_loader('xlsxwriter') is not None
+        answers = run_form(
+            InputForm, title=_("Export options"), fields=(
+                Field('format', _("File format"), enumerator=('XLSX', 'CSV'),
+                      default='CSV', not_null=True, selection_type=SelectionType.RADIO,
+                      descr=_("Choose the export file format")),
+                Field('action', _("Action"), enumerator=('save', 'launch'),
+                      default='save', not_null=True, selection_type=SelectionType.RADIO,
+                      display=lambda x: (_("Save to disk") if x == 'save' else
+                                         _("Open in spreadsheet")),
+                      descr=_("Select what to do with the exported file")),
+            ),
+            check=(lambda r: _("XLSX support not installed.  Ask your administrator.")
+                   if r['format'].value() == 'XLSX' and not xls_available else None),
+        )
+        if not answers:
+            return
+        fileformat, action = answers['format'].value(), answers['action'].value()
+
+        log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
+                                       "Filter: %s\n" % str(self._lf_filter)))
+        suffix = '.' + fileformat.lower()
+        if action == 'save':
             if fileformat == 'XLSX':
-                wildcards = (_("Files %s", "XLSX (*.xlsx)"), "*.xlsx")
-                ext = 'xlsx'
+                patterns = ((_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"),)
             else:
-                wildcards = (_("Files %s", "TXT (*.txt)"), "*.txt",
-                             _("Files %s", "CSV (*.csv)"), "*.csv")
-                ext = 'txt'
-            username = pytis.config.dbconnection.user() or ''
-            filename = pytis.form.run_dialog(FileDialog, title=_("Export to file"),
-                                             dir=pytis.config.export_directory,
-                                             file='export_{}.{}%'.format(username, ext),
-                                             mode='SAVE', wildcards=tuple(wildcards))
-            if not filename:
-                return
-            mode = 'wb' if fileformat == 'XLSX' else 'w'
+                patterns = ((_("Files %s", "TXT (*.txt)"), "*.txt"),
+                            (_("Files %s", "CSV (*.csv)"), "*.csv"))
+                suffix = '.txt'
+            filename = 'export'
+            if not pytis.remote.client_available():
+                filename += '-' + pytis.config.dbconnection.user()
             try:
-                export_file = open(filename, mode)
-                export_file.write('')
+                export_file = pytis.form.make_selected_file(filename=filename + suffix, mode='wb',
+                                                            patterns=patterns, context='export')
+                if not export_file:
+                    return
             except (IOError, OSError):
                 run_dialog(Error, _("Unable to open the file for writing!"))
                 return
-            remote = False
+            after_export = None
+        else:
+            if pytis.remote.client_available():
+                log(EVENT, 'RPC communication on %s available' % pytis.remote.client_ip())
+                export_file = pytis.remote.make_temporary_file(mode='wb', suffix=suffix)
+                after_export = pytis.remote.launch_file
+            else:
+                log(EVENT, 'RPC communication not available')
+                export_file = tempfile.NamedTemporaryFile(mode='wb', suffix=suffix)
+                after_export = pytis.form.launch_file
         if fileformat == 'XLSX':
             export_method = self._export_xlsx
         else:
             export_method = self._export_csv
-        log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
-                                       "Filter: %s\n" % str(self._lf_filter)))
-        if export_method(export_file):
-            exported_filename = export_file.name
+        try:
+            export_method(export_file)
+            if after_export:
+                after_export(export_file.name)
+        finally:
             export_file.close()
-            if remote:
-                pytis.remote.launch_file(exported_filename)
-            else:
-                pytis.form.launch_file(exported_filename)
 
     def _export_csv(self, export_file):
         log(EVENT, 'Called CSV export')
@@ -1923,7 +1931,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
                 encoded = result.encode('utf-8')
             export_file.write(encoded)
-            export_file.close()
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
