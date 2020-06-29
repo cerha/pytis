@@ -1898,6 +1898,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         try:
             export_method(export_file, only_selected=(scope == 'selection'))
             if after_export:
+                export_file.flush()
                 after_export(export_file.name)
         finally:
             export_file.close()
