@@ -50,7 +50,7 @@ import pytis.form
 import pytis.output
 
 from pytis.presentation import (
-    Action, ActionGroup, AggregatedView, CodebookSpec, Field,
+    Action, ActionGroup, AggregatedView, CodebookSpec, Field, Editable,
     FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
     PrettyFoldable,
 )
@@ -1832,8 +1832,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return
         import pkgutil
         xls_available = pkgutil.find_loader('xlsxwriter') is not None
+        selection_active = len(self.selected_rows()) > 0
         answers = run_form(
             InputForm, title=_("Export options"), fields=(
+                Field('scope', _("Scope"), enumerator=('all', 'selection'),
+                      default='selection' if selection_active else 'all',
+                      not_null=True, selection_type=SelectionType.RADIO,
+                      editable=Editable.ALWAYS if selection_active else Editable.NEVER,
+                      display=lambda x: (_("All rows") if x == 'all' else
+                                         _("Selected rows only")),
+                      descr=_("Select the extent of rows to be exported.")),
                 Field('format', _("File format"), enumerator=('XLSX', 'CSV'),
                       default='CSV', not_null=True, selection_type=SelectionType.RADIO,
                       descr=_("Choose the export file format")),
@@ -1848,7 +1856,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         )
         if not answers:
             return
-        fileformat, action = answers['format'].value(), answers['action'].value()
+        scope, fileformat, action = (answers['scope'].value(), answers['format'].value(),
+                                     answers['action'].value())
 
         log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
@@ -1886,13 +1895,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             export_method = self._export_csv
         try:
-            export_method(export_file)
+            export_method(export_file, only_selected=(scope == 'selection'))
             if after_export:
                 after_export(export_file.name)
         finally:
             export_file.close()
 
-    def _export_csv(self, export_file):
+    def _export_csv(self, export_file, only_selected=False):
         log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         number_of_rows = self._table.number_of_rows()
@@ -1907,11 +1916,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # We buffer exported data before writing them to the file in order
             # to prevent numerous rpc calls in case of remote export.
             result = '\t'.join(c.column_label() for c in self._columns) + '\n'
-            only_selected = False
-            if len(self.selected_rows()) > 0:
-                msg = _("Some rows are selected. Should only selected rows be exported?")
-                if run_dialog(Question, msg, False):
-                    only_selected = True
             for r in range(0, number_of_rows):
                 if not update(int(float(r) / number_of_rows * 100)):
                     break
@@ -1934,7 +1938,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         pytis.form.run_dialog(ProgressDialog, _process_table)
         return True
 
-    def _export_xlsx(self, export_file):
+    def _export_xlsx(self, export_file, only_selected=False):
         log(EVENT, 'Called XLSX export')
         MINIMAL_COLUMN_WIDTH = 12
         import xlsxwriter
@@ -2001,11 +2005,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                             col_fmt=_get_format(col_type)))
                 col_position = col_position + 1
             number_of_rows = self._table.number_of_rows()
-            only_selected = False
-            if len(self.selected_rows()) > 0:
-                msg = _("Some rows are selected. Should only selected rows be exported?")
-                if run_dialog(Question, msg, False):
-                    only_selected = True
             # Worksheet column settings
             bold = writer.add_format({'bold': True})
             merge_bold = writer.add_format({'align': 'center', 'bold': True})
