@@ -3463,7 +3463,7 @@ def select_directory(context='default'):
     return result
 
 
-def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
+def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=None,
                        context='default'):
     """Return a write-only 'file' like object of a user selected file.
 
@@ -3483,6 +3483,9 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
     """
     cmode = _client_mode()
     directory = _get_recent_directory(cmode, context)
+    if encoding is None and 'b' not in mode:
+        # Supply default encoding only for text modes.
+        encoding = 'utf-8'
     if cmode == 'remote':
         result = pytis.remote.make_selected_file(filename=filename, directory=directory,
                                                  mode=mode, encoding=encoding,
@@ -3502,7 +3505,7 @@ def make_selected_file(filename, mode='w', encoding='utf-8', patterns=(), patter
     return result
 
 
-def write_selected_file(data, filename, mode='w', encoding='utf-8', patterns=(), pattern=None,
+def write_selected_file(data, filename, mode='w', encoding=None, patterns=(), pattern=None,
                         context='default'):
     """Write 'data' to a file selected by the user using a GUI dialog.
 
