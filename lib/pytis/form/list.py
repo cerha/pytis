@@ -1936,36 +1936,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _export_xlsx(self, update, only_selected=False):
         class Column(object):
-            def __init__(self, position, col, ctype, crange=None):
+            def __init__(self, position, cid, ctype, crange=None):
+                self.position = position
+                self.id = cid
+                self.type = ctype
+                self.range = crange
                 if isinstance(ctype, pytis.data.Float):
                     precision = ctype.precision()
                     if precision and precision > 0:
                         num_format = '0.' + '0' * precision
                     else:
                         num_format = 'General'
-                    fmt = {'num_format': num_format}
+                    self.fmt = writer.add_format({'num_format': num_format})
                 elif isinstance(ctype, pytis.data.Integer):
                     num_format = '0'
-                    fmt = {'num_format': num_format}
+                    self.fmt = writer.add_format({'num_format': num_format})
                 elif isinstance(ctype, pytis.data.Date):
                     date_format_str = 'dd/mm/yyyy'
-                    fmt = {'num_format': date_format_str, 'align': 'left'}
+                    self.fmt = writer.add_format({'num_format': date_format_str, 'align': 'left'})
                 elif isinstance(ctype, pytis.data.Time):
                     time_format_str = 'hh:mm:ss'
-                    fmt = {'num_format': time_format_str, 'align': 'left'}
+                    self.fmt = writer.add_format({'num_format': time_format_str, 'align': 'left'})
                 elif isinstance(ctype, pytis.data.DateTime):
                     datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
-                    fmt = {'num_format': datetime_format_str, 'align': 'left'}
-                else:
-                    fmt = None
-                self.position = position
-                self.id= col.id()
-                self.type= ctype
-                self.label = col.column_label() or col.label()
-                self.width = max(col.width(), len(self.label), MINIMAL_COLUMN_WIDTH)
-                self.range = crange
-                if fmt:
-                    self.fmt = writer.add_format(fmt)
+                    self.fmt = writer.add_format({'num_format': datetime_format_str,
+                                                  'align': 'left'})
                 else:
                     self.fmt = None
 
@@ -1975,33 +1970,27 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         output = io.BytesIO()
         writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
         worksheet = writer.add_worksheet('Export')
-
+        # Setup columns
+        bold = writer.add_format({'bold': True})
+        bold_centered = writer.add_format({'align': 'center', 'bold': True})
         for col in self._columns:
+            cid = col.id()
             position = len(columns)
-            ctype = self._row.type(col.id())
+            ctype = self._row.type(cid)
+            label = unistr(col.column_label() or col.label())
+            width = max(col.width(), len(label), MINIMAL_COLUMN_WIDTH)
             if isinstance(ctype, pytis.data.Range):
                 ctype = ctype.base_type()
-                columns.append(Column(position, col, ctype, 'lower'))
-                columns.append(Column(position + 1, col, ctype, 'upper'))
+                columns.append(Column(position, cid, ctype, 'lower'))
+                columns.append(Column(position + 1, cid, ctype, 'upper'))
+                worksheet.merge_range(0, position, 0, position + 1, label, bold_centered)
+                worksheet.set_column(position, position + 1, width)
             else:
-                columns.append(Column(position, col, ctype))
+                columns.append(Column(position, cid, ctype))
+                worksheet.write(0, position, label, bold)
+                worksheet.set_column(position, position, width)
+        # Process rows
         number_of_rows = self._table.number_of_rows()
-        # Worksheet column settings
-        bold = writer.add_format({'bold': True})
-        merge_bold = writer.add_format({'align': 'center', 'bold': True})
-        skip_next = False
-        for col in columns:
-            position = col.position
-            worksheet.set_column(position, position, col.width)
-            if skip_next:
-                skip_next = False
-                continue
-            if col.range:
-                worksheet.merge_range(0, position, 0, position + 1,
-                                      unistr(col.label), merge_bold)
-                skip_next = True
-            else:
-                worksheet.write(0, position, unistr(col.label), bold)
         output_row_number = 2  # Actually start at third row (one for headings, one empty).
         for r in range(0, number_of_rows):
             if not update(int(float(r) / number_of_rows * 100)):
