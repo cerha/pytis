@@ -1896,163 +1896,159 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             export_method = self._export_csv
         try:
-            export_method(export_file, only_selected=(scope == 'selection'))
+            # We prefer exporting all data into memory and write to the file in the
+            # end in order to prevent numerous rpc calls in case of remote export.
+            data = pytis.form.run_dialog(ProgressDialog, export_method,
+                                         kwargs=dict(only_selected=(scope == 'selection')))
+            export_file.write(data)
             if after_export:
                 export_file.flush()
                 after_export(export_file.name)
         finally:
             export_file.close()
 
-    def _export_csv(self, export_file, only_selected=False):
+    def _export_csv(self, update, only_selected=False):
         columns = [(c.id(), (dict(locale_format=False)
                              if isinstance(self._row.type(c.id()), pytis.data.Float)
                              else dict()))
                    for c in self._columns]
         number_of_rows = self._table.number_of_rows()
+        result = '\t'.join(c.column_label() for c in self._columns) + '\n'
+        for r in range(0, number_of_rows):
+            if not update(int(float(r) / number_of_rows * 100)):
+                break
+            if only_selected and not self._grid.IsInSelection(r, 0):
+                continue
+            presented_row = self._table.row(r)
+            result += '\t'.join(
+                ';'.join(presented_row.format(cid, secure=True, **kwargs).splitlines())
+                for cid, kwargs in columns
+            ) + '\n'
+        try:
+            encoded = result.encode(pytis.config.export_encoding)
+        except (LookupError, UnicodeEncodeError) as e:
+            msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
+                   if isinstance(e, LookupError) else
+                   _("Unable to encode data to %s.", pytis.config.export_encoding))
+            run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
+            encoded = result.encode('utf-8')
+        return encoded
 
-        def _process_table(update):
-            # We buffer exported data before writing them to the file in order
-            # to prevent numerous rpc calls in case of remote export.
-            result = '\t'.join(c.column_label() for c in self._columns) + '\n'
-            for r in range(0, number_of_rows):
-                if not update(int(float(r) / number_of_rows * 100)):
-                    break
-                if only_selected and not self._grid.IsInSelection(r, 0):
-                    continue
-                presented_row = self._table.row(r)
-                result += '\t'.join(
-                    ';'.join(presented_row.format(cid, secure=True, **kwargs).splitlines())
-                    for cid, kwargs in columns
-                ) + '\n'
-            try:
-                encoded = result.encode(pytis.config.export_encoding)
-            except (LookupError, UnicodeEncodeError) as e:
-                msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
-                       if isinstance(e, LookupError) else
-                       _("Unable to encode data to %s.", pytis.config.export_encoding))
-                run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
-                encoded = result.encode('utf-8')
-            export_file.write(encoded)
-        pytis.form.run_dialog(ProgressDialog, _process_table)
-
-    def _export_xlsx(self, export_file, only_selected=False):
-        MINIMAL_COLUMN_WIDTH = 12
+    def _export_xlsx(self, update, only_selected=False):
         import xlsxwriter
+        MINIMAL_COLUMN_WIDTH = 12
+        column_list = []
+        col_position = 0
+        output = io.BytesIO()
+        writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
+        ws = writer.add_worksheet('Export')
 
-        def _process_table(update):
-            column_list = []
-            col_position = 0
-            output = io.BytesIO()
-            writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
-            ws = writer.add_worksheet('Export')
+        def _get_format(ctype):
+            if isinstance(ctype, pytis.data.Float):
+                precision = ctype.precision()
+                if precision and precision > 0:
+                    num_format = '0.' + '0' * precision
+                else:
+                    num_format = 'General'
+                fmt = {'num_format': num_format}
+            elif isinstance(ctype, pytis.data.Integer):
+                num_format = '0'
+                fmt = {'num_format': num_format}
+            elif isinstance(ctype, pytis.data.Date):
+                date_format_str = 'dd/mm/yyyy'
+                fmt = {'num_format': date_format_str, 'align': 'left'}
+            elif isinstance(ctype, pytis.data.Time):
+                time_format_str = 'hh:mm:ss'
+                fmt = {'num_format': time_format_str, 'align': 'left'}
+            elif isinstance(ctype, pytis.data.DateTime):
+                datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
+                fmt = {'num_format': datetime_format_str, 'align': 'left'}
+            else:
+                return None
+            return writer.add_format(fmt)
 
-            def _get_format(ctype):
-                if isinstance(ctype, pytis.data.Float):
-                    precision = ctype.precision()
-                    if precision and precision > 0:
-                        num_format = '0.' + '0' * precision
-                    else:
-                        num_format = 'General'
-                    fmt = {'num_format': num_format}
-                elif isinstance(ctype, pytis.data.Integer):
-                    num_format = '0'
-                    fmt = {'num_format': num_format}
-                elif isinstance(ctype, pytis.data.Date):
-                    date_format_str = 'dd/mm/yyyy'
-                    fmt = {'num_format': date_format_str, 'align': 'left'}
-                elif isinstance(ctype, pytis.data.Time):
-                    time_format_str = 'hh:mm:ss'
-                    fmt = {'num_format': time_format_str, 'align': 'left'}
-                elif isinstance(ctype, pytis.data.DateTime):
-                    datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
-                    fmt = {'num_format': datetime_format_str, 'align': 'left'}
-                else:
-                    return None
-                return writer.add_format(fmt)
-            for c in self._columns:
-                col_id = c.id()
-                col_type = self._row.type(c.id())
-                col_label = c.column_label() or c.label()
-                col_width = max(c.width(), len(col_label), MINIMAL_COLUMN_WIDTH)
-                if isinstance(col_type, pytis.data.Range):
-                    base_type = col_type.base_type()
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=base_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range='lower',
-                                            col_fmt=_get_format(base_type)))
-                    col_position = col_position + 1
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=base_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range='upper',
-                                            col_fmt=_get_format(base_type)))
-                else:
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=col_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range=None,
-                                            col_fmt=_get_format(col_type)))
+        for c in self._columns:
+            col_id = c.id()
+            col_type = self._row.type(c.id())
+            col_label = c.column_label() or c.label()
+            col_width = max(c.width(), len(col_label), MINIMAL_COLUMN_WIDTH)
+            if isinstance(col_type, pytis.data.Range):
+                base_type = col_type.base_type()
+                column_list.append(dict(col_position=col_position,
+                                        col_id=col_id,
+                                        col_type=base_type,
+                                        col_label=col_label,
+                                        col_width=col_width,
+                                        col_range='lower',
+                                        col_fmt=_get_format(base_type)))
                 col_position = col_position + 1
-            number_of_rows = self._table.number_of_rows()
-            # Worksheet column settings
-            bold = writer.add_format({'bold': True})
-            merge_bold = writer.add_format({'align': 'center', 'bold': True})
-            skip_next = False
-            for col_attrs in column_list:
-                position = col_attrs['col_position']
-                label = col_attrs['col_label']
-                width = col_attrs['col_width']
-                ws.set_column(position, position, width)
-                if skip_next:
-                    skip_next = False
-                    continue
-                if col_attrs['col_range'] is not None:
-                    ws.merge_range(0, position, 0, position + 1, unistr(label), merge_bold)
-                    skip_next = True
-                else:
-                    ws.write(0, position, unistr(label), bold)
-            r_out = 0
-            for r in range(0, number_of_rows):
-                if not update(int(float(r) / number_of_rows * 100)):
-                    break
-                if only_selected and not self._grid.IsInSelection(r, 0):
-                    continue
-                r_out = r_out + 1
-                presented_row = self._table.row(r)
-                for col in column_list:
-                    cid = col['col_id']
-                    ctype = col['col_type']
-                    col_range = col['col_range']
-                    position = col['col_position']
-                    fmt = col['col_fmt']
-                    value = presented_row.get(cid, secure=True)
-                    if value and value.value() is not None:
-                        v = value.value()
-                        if col_range == 'lower':
-                            v = v.lower()
-                        elif col_range == 'upper':
-                            v = v.upper()
-                        if isinstance(ctype, pytis.data.Float) or isinstance(ctype,
-                                                                             pytis.data.Integer):
-                            ws.write_number(r_out + 1, position, v, fmt)
-                        elif isinstance(ctype, pytis.data.DateTime):
-                            ws.write_datetime(r_out + 1, position, v, fmt)
-                        elif col_range is not None and isinstance(ctype, pytis.data.String):
-                            ws.write(r_out + 1, position, v)
-                        else:
-                            s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
-                            ws.write_string(r_out + 1, position, s)
-            writer.close()
-            export_file.write(output.getvalue())
-        pytis.form.run_dialog(ProgressDialog, _process_table)
-        return True
+                column_list.append(dict(col_position=col_position,
+                                        col_id=col_id,
+                                        col_type=base_type,
+                                        col_label=col_label,
+                                        col_width=col_width,
+                                        col_range='upper',
+                                        col_fmt=_get_format(base_type)))
+            else:
+                column_list.append(dict(col_position=col_position,
+                                        col_id=col_id,
+                                        col_type=col_type,
+                                        col_label=col_label,
+                                        col_width=col_width,
+                                        col_range=None,
+                                        col_fmt=_get_format(col_type)))
+            col_position = col_position + 1
+        number_of_rows = self._table.number_of_rows()
+        # Worksheet column settings
+        bold = writer.add_format({'bold': True})
+        merge_bold = writer.add_format({'align': 'center', 'bold': True})
+        skip_next = False
+        for col_attrs in column_list:
+            position = col_attrs['col_position']
+            label = col_attrs['col_label']
+            width = col_attrs['col_width']
+            ws.set_column(position, position, width)
+            if skip_next:
+                skip_next = False
+                continue
+            if col_attrs['col_range'] is not None:
+                ws.merge_range(0, position, 0, position + 1, unistr(label), merge_bold)
+                skip_next = True
+            else:
+                ws.write(0, position, unistr(label), bold)
+        r_out = 0
+        for r in range(0, number_of_rows):
+            if not update(int(float(r) / number_of_rows * 100)):
+                break
+            if only_selected and not self._grid.IsInSelection(r, 0):
+                continue
+            r_out = r_out + 1
+            presented_row = self._table.row(r)
+            for col in column_list:
+                cid = col['col_id']
+                ctype = col['col_type']
+                col_range = col['col_range']
+                position = col['col_position']
+                fmt = col['col_fmt']
+                value = presented_row.get(cid, secure=True)
+                if value and value.value() is not None:
+                    v = value.value()
+                    if col_range == 'lower':
+                        v = v.lower()
+                    elif col_range == 'upper':
+                        v = v.upper()
+                    if isinstance(ctype, pytis.data.Float) or isinstance(ctype,
+                                                                         pytis.data.Integer):
+                        ws.write_number(r_out + 1, position, v, fmt)
+                    elif isinstance(ctype, pytis.data.DateTime):
+                        ws.write_datetime(r_out + 1, position, v, fmt)
+                    elif col_range is not None and isinstance(ctype, pytis.data.String):
+                        ws.write(r_out + 1, position, v)
+                    else:
+                        s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
+                        ws.write_string(r_out + 1, position, s)
+        writer.close()
+        return output.getvalue()
 
     def _can_clear_selection(self):
         return len(self.selected_rows()) > 0
