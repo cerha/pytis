@@ -1860,7 +1860,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                      answers['action'].value())
 
         log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
-                                       "Filter: %s\n" % str(self._lf_filter)))
+                                       "Filter: %s" % str(self._lf_filter),
+                                       scope, fileformat, action))
         suffix = '.' + fileformat.lower()
         if action == 'save':
             if fileformat == 'XLSX':
@@ -1902,7 +1903,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file.close()
 
     def _export_csv(self, export_file, only_selected=False):
-        log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         number_of_rows = self._table.number_of_rows()
 
@@ -1939,7 +1939,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return True
 
     def _export_xlsx(self, export_file, only_selected=False):
-        log(EVENT, 'Called XLSX export')
         MINIMAL_COLUMN_WIDTH = 12
         import xlsxwriter
 
