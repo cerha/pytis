@@ -912,16 +912,6 @@ class Configuration(object):
             import pytis.data
             return pytis.data.Time.DEFAULT_FORMAT
 
-    class _Option_export_directory(StringOption):
-        """Target directory for exports.
-
-        The exported files in CSV or XLS format will be saved into this
-        directory.  Must be a valid filesystem path.
-
-        """
-        _DESCR = _("Target directory for saving exported files.")
-        _DEFAULT = '/tmp'
-
     class _Option_export_encoding(StringOption):
         """Exported data encoding.
 
