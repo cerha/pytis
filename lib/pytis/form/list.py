@@ -1935,34 +1935,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return encoded
 
     def _export_xlsx(self, update, only_selected=False):
-        class Column(object):
-            def __init__(self, position, cid, ctype, crange=None):
-                self.position = position
-                self.id = cid
-                self.type = ctype
-                self.range = crange
-                if isinstance(ctype, pytis.data.Float):
-                    precision = ctype.precision()
-                    if precision and precision > 0:
-                        num_format = '0.' + '0' * precision
-                    else:
-                        num_format = 'General'
-                    self.fmt = writer.add_format({'num_format': num_format})
-                elif isinstance(ctype, pytis.data.Integer):
-                    num_format = '0'
-                    self.fmt = writer.add_format({'num_format': num_format})
-                elif isinstance(ctype, pytis.data.Date):
-                    date_format_str = 'dd/mm/yyyy'
-                    self.fmt = writer.add_format({'num_format': date_format_str, 'align': 'left'})
-                elif isinstance(ctype, pytis.data.Time):
-                    time_format_str = 'hh:mm:ss'
-                    self.fmt = writer.add_format({'num_format': time_format_str, 'align': 'left'})
-                elif isinstance(ctype, pytis.data.DateTime):
-                    datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
-                    self.fmt = writer.add_format({'num_format': datetime_format_str,
-                                                  'align': 'left'})
+        def fmt(ctype):
+            if isinstance(ctype, pytis.data.Float):
+                precision = ctype.precision()
+                if precision and precision > 0:
+                    num_format = '0.' + '0' * precision
                 else:
-                    self.fmt = None
+                    num_format = 'General'
+                f = {'num_format': num_format}
+            elif isinstance(ctype, pytis.data.Integer):
+                f = {'num_format': '0'}
+            elif isinstance(ctype, pytis.data.Date):
+                f = {'num_format': 'dd/mm/yyyy', 'align': 'left'}
+            elif isinstance(ctype, pytis.data.Time):
+                f = {'num_format': 'hh:mm:ss', 'align': 'left'}
+            elif isinstance(ctype, pytis.data.DateTime):
+                f = {'num_format': 'dd/mm/yyyy hh:mm:ss', 'align': 'left'}
+            else:
+                return None
+            return writer.add_format(f)
 
         import xlsxwriter
         MINIMAL_COLUMN_WIDTH = 12
@@ -1981,12 +1972,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(col.width(), len(label), MINIMAL_COLUMN_WIDTH)
             if isinstance(ctype, pytis.data.Range):
                 ctype = ctype.base_type()
-                columns.append(Column(position, cid, ctype, 'lower'))
-                columns.append(Column(position + 1, cid, ctype, 'upper'))
+                columns.append((position, cid, ctype, fmt(ctype), 'lower'))
+                columns.append((position + 1, cid, ctype, fmt(ctype), 'upper'))
                 worksheet.merge_range(0, position, 0, position + 1, label, bold_centered)
                 worksheet.set_column(position, position + 1, width)
             else:
-                columns.append(Column(position, cid, ctype))
+                columns.append((position, cid, ctype, fmt(ctype), None))
                 worksheet.write(0, position, label, bold)
                 worksheet.set_column(position, position, width)
         # Process rows
@@ -1998,23 +1989,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if only_selected and not self._grid.IsInSelection(r, 0):
                 continue
             presented_row = self._table.row(r)
-            for col in columns:
-                value = presented_row.get(col.id, secure=True)
+            for position, cid, ctype, cfmt, crange in columns:
+                value = presented_row.get(cid, secure=True)
                 if value and value.value() is not None:
                     v = value.value()
-                    if col.range == 'lower':
+                    if crange == 'lower':
                         v = v.lower()
-                    elif col.range == 'upper':
+                    elif crange == 'upper':
                         v = v.upper()
-                    if isinstance(col.type, (pytis.data.Float, pytis.data.Integer)):
-                        worksheet.write_number(output_row_number, col.position, v, col.fmt)
-                    elif isinstance(col.type, pytis.data.DateTime):
-                        worksheet.write_datetime(output_row_number, col.position, v, col.fmt)
-                    elif col.range and isinstance(col.type, pytis.data.String):
-                        worksheet.write(output_row_number, col.position, v)
+                    if isinstance(ctype, (pytis.data.Float, pytis.data.Integer)):
+                        worksheet.write_number(output_row_number, position, v, cfmt)
+                    elif isinstance(ctype, pytis.data.DateTime):
+                        worksheet.write_datetime(output_row_number, position, v, cfmt)
+                    elif crange and isinstance(ctype, pytis.data.String):
+                        worksheet.write(output_row_number, position, v)
                     else:
-                        v = ';'.join(presented_row.format(col.id, secure=True).split('\n'))
-                        worksheet.write_string(output_row_number, col.position, v)
+                        v = ';'.join(presented_row.format(cid, secure=True).split('\n'))
+                        worksheet.write_string(output_row_number, position, v)
             output_row_number += 1
         writer.close()
         return output.getvalue()
