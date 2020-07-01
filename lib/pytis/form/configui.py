@@ -62,7 +62,7 @@ _LAYOUT = (
                 'sender_address'),
     ))),
     ('export', LayoutSpec(_("Export settings"),
-                          VGroup('export_directory', 'export_encoding')),
+                          VGroup('export_encoding')),
      ))
 
 _LABELS = {
@@ -79,12 +79,10 @@ _LABELS = {
     'stretch_tables': _("Automatically stretch tables to full window width"),
     'cache_spec_onstart': _("Cache specification files on startup"),
     'sender_address': _("E-mail address"),
-    'export_directory': _("Default directory"),
     'export_encoding': _("Character encoding"),
 }
 
 _FIELDSPEC_KWARGS = {
-    'export_directory': dict(width=45),
     'sender_address': dict(width=45),
     'row_highlight_width': dict(width=2, slider=True),
 }

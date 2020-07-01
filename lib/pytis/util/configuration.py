@@ -912,26 +912,16 @@ class Configuration(object):
             import pytis.data
             return pytis.data.Time.DEFAULT_FORMAT
 
-    class _Option_export_directory(StringOption):
-        """Target directory for exports.
-
-        The exported files in CSV or XLS format will be saved into this
-        directory.  Must be a valid filesystem path.
-
-        """
-        _DESCR = _("Target directory for saving exported files.")
-        _DEFAULT = '/tmp'
-
     class _Option_export_encoding(StringOption):
         """Exported data encoding.
 
-        The exported files in CSV or XLS format will be saved using this
+        The exported files in CSV format will be saved using this
         encoding.  Must be one of Pyhon supported encodings.
 
         """
         _DESCR = _("Exported data encoding.")
         _DOC = _("Must be one of Pyhon supported encodings.")
-        _DEFAULT = 'iso8859-2'
+        _DEFAULT = 'utf-8'
 
     class _Option_cache_size(NumericOption):
         """Maximal total number of rows cached for a data object selection."""

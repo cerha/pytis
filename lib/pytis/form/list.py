@@ -50,8 +50,8 @@ import pytis.form
 import pytis.output
 
 from pytis.presentation import (
-    Action, ActionGroup, AggregatedView, CodebookSpec, Field,
-    FormType, Link, TextFormat, ViewSpec, ActionContext,
+    Action, ActionGroup, AggregatedView, CodebookSpec, Field, Editable,
+    FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
     PrettyFoldable,
 )
 from pytis.util import (
@@ -1814,266 +1814,209 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None
 
-    def _can_cmd_export(self):
-        number_of_rows = self._table.number_of_rows()
-        if number_of_rows == 0:
-            problem = _("The table has no rows!")
-        elif number_of_rows > 100000:
-            problem = _("The table has too many rows! Use a filter.")
-        elif False in [self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
-                       for c in self._columns]:
-            problem = _("You don't have permissions to export this table.")
-        else:
-            return True
-        run_dialog(Warning, problem + '\n' + _("Export aborted."))
-        return False
-
     def _cmd_export_file(self):
         log(EVENT, 'Called export to file')
-        if not self._can_cmd_export():
-            return
-        fileformats = ['CSV']
-        import pkgutil
-        found = pkgutil.find_loader('xlsxwriter') is not None
-        if found:
-            fileformats.insert(0, 'XLSX')
-        wildcards = [_("Files %s", "TXT (*.txt)"), "*.txt",
-                     _("Files %s", "CSV (*.csv)"), "*.csv"]
-        username = pytis.config.dbconnection.user()
-        if username is None:
-            username = ''
-        default_filename = 'export_%s.txt' % username
-        if len(fileformats) > 1:
-            msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
-                               _("Choose the desired format.")))
-            fileformat = run_dialog(MultiQuestion, msg, fileformats, default='CSV')
-            if not fileformat:
-                return
-            if fileformat == 'XLSX':
-                wildcards = [_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"]
-                default_filename = 'export_%s.xlsx' % username
+        if not all(self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
+                   for c in self._columns):
+            problem = _("You don't have permissions to export this table.")
         else:
-            fileformat = 'CSV'
-        export_file = None
-        remote = False
-        if pytis.remote.client_available():
-            client_ip = pytis.remote.client_ip()
-            log(EVENT, 'RPC communication on %s available' % client_ip)
-            try:
-                export_file = pytis.remote.make_temporary_file(suffix=('.' + fileformat.lower()))
-            except Exception:
-                pass
+            number_of_rows = self._table.number_of_rows()
+            if number_of_rows == 0:
+                problem = _("The table has no rows!")
+            elif number_of_rows > 100000:
+                problem = _("The table has too many rows! Use a filter.")
             else:
-                remote = True
-        else:
-            log(EVENT, 'RPC communication not available')
-        if not export_file:
-            export_dir = pytis.config.export_directory
-            filename = pytis.form.run_dialog(FileDialog, title=_("Export to file"),
-                                             dir=export_dir, file=default_filename, mode='SAVE',
-                                             wildcards=tuple(wildcards))
-            if not filename:
-                return
-            mode = 'w'
-            if fileformat.startswith('XLS'):
-                mode += 'b'
+                problem = None
+        if problem:
+            run_dialog(Warning, problem + '\n' + _("Export aborted."))
+            return
+        import pkgutil
+        xls_available = pkgutil.find_loader('xlsxwriter') is not None
+        selection_active = len(self.selected_rows()) > 0
+        answers = run_form(
+            InputForm, title=_("Export options"), fields=(
+                Field('scope', _("Scope"), enumerator=('all', 'selection'),
+                      default='selection' if selection_active else 'all',
+                      not_null=True, selection_type=SelectionType.RADIO,
+                      editable=Editable.ALWAYS if selection_active else Editable.NEVER,
+                      display=lambda x: (_("All rows") if x == 'all' else
+                                         _("Selected rows only")),
+                      descr=_("Select the extent of rows to be exported.")),
+                Field('format', _("File format"), enumerator=('XLSX', 'CSV'),
+                      default='CSV', not_null=True, selection_type=SelectionType.RADIO,
+                      descr=_("Choose the export file format")),
+                Field('action', _("Action"), enumerator=('save', 'launch'),
+                      default='save', not_null=True, selection_type=SelectionType.RADIO,
+                      display=lambda x: (_("Save to disk") if x == 'save' else
+                                         _("Open in spreadsheet")),
+                      descr=_("Select what to do with the exported file")),
+            ),
+            check=(lambda r: _("XLSX support not installed.  Ask your administrator.")
+                   if r['format'].value() == 'XLSX' and not xls_available else None),
+        )
+        if not answers:
+            return
+        scope, fileformat, action = (answers['scope'].value(), answers['format'].value(),
+                                     answers['action'].value())
+
+        log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
+                                       "Filter: %s" % str(self._lf_filter),
+                                       scope, fileformat, action))
+        suffix = '.' + fileformat.lower()
+        if action == 'save':
+            if fileformat == 'XLSX':
+                patterns = ((_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"),)
+            else:
+                patterns = ((_("Files %s", "TXT (*.txt)"), "*.txt"),
+                            (_("Files %s", "CSV (*.csv)"), "*.csv"))
+                suffix = '.txt'
+            filename = 'export'
+            if not pytis.remote.client_available():
+                filename += '-' + pytis.config.dbconnection.user()
             try:
-                export_file = open(filename, mode)
-                export_file.write('')
-            except Exception:
-                msg = _("Unable to open the file for writing!")
-                run_dialog(Error, msg)
+                export_file = pytis.form.make_selected_file(filename=filename + suffix, mode='wb',
+                                                            patterns=patterns, context='export')
+                if not export_file:
+                    return
+            except (IOError, OSError):
+                run_dialog(Error, _("Unable to open the file for writing!"))
                 return
+            after_export = None
+        else:
+            if pytis.remote.client_available():
+                log(EVENT, 'RPC communication on %s available' % pytis.remote.client_ip())
+                export_file = pytis.remote.make_temporary_file(mode='wb', suffix=suffix)
+                after_export = pytis.remote.launch_file
+            else:
+                log(EVENT, 'RPC communication not available')
+                export_file = tempfile.NamedTemporaryFile(mode='wb', suffix=suffix)
+                after_export = pytis.form.launch_file
         if fileformat == 'XLSX':
             export_method = self._export_xlsx
         else:
             export_method = self._export_csv
-        log(ACTION, "Export action:", (self.name(), self._form_name(), pytis.config.dbschemas,
-                                       "Filter: %s\n" % str(self._lf_filter)))
-        if export_method(export_file):
-            exported_filename = export_file.name
+        try:
+            # We prefer exporting all data into memory and write to the file in the
+            # end in order to prevent numerous rpc calls in case of remote export.
+            data = pytis.form.run_dialog(ProgressDialog, export_method,
+                                         kwargs=dict(only_selected=(scope == 'selection')))
+            export_file.write(data)
+            if after_export:
+                export_file.flush()
+                after_export(export_file.name)
+        finally:
             export_file.close()
-            if remote:
-                pytis.remote.launch_file(exported_filename)
-            else:
-                pytis.form.launch_file(exported_filename)
 
-    def _export_csv(self, file_):
-        log(EVENT, 'Called CSV export')
-        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
-        if isinstance(file_, basestring):
-            try:
-                export_file = open(file_, 'w')
-            except Exception:
-                msg = _("Unable to open the file for writing!")
-                run_dialog(Error, msg)
-                return False
-        else:
-            export_file = file_
+    def _export_csv(self, update, only_selected=False):
+        columns = [(c.id(), (dict(locale_format=False)
+                             if isinstance(self._row.type(c.id()), pytis.data.Float)
+                             else dict()))
+                   for c in self._columns]
         number_of_rows = self._table.number_of_rows()
+        result = '\t'.join(c.column_label() for c in self._columns) + '\n'
+        for r in range(0, number_of_rows):
+            if not update(int(float(r) / number_of_rows * 100)):
+                break
+            if only_selected and not self._grid.IsInSelection(r, 0):
+                continue
+            presented_row = self._table.row(r)
+            result += '\t'.join(
+                ';'.join(presented_row.format(cid, secure=True, **kwargs).splitlines())
+                for cid, kwargs in columns
+            ) + '\n'
+        try:
+            encoded = result.encode(pytis.config.export_encoding)
+        except (LookupError, UnicodeEncodeError) as e:
+            msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
+                   if isinstance(e, LookupError) else
+                   _("Unable to encode data to %s.", pytis.config.export_encoding))
+            run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
+            encoded = result.encode('utf-8')
+        return encoded
 
-        def _format_kwargs(ctype):
-            kwargs = dict(secure=True)
-            if isinstance(ctype, pytis.data.Float):
-                kwargs['locale_format'] = False
-            return kwargs
+    def _export_xlsx(self, update, only_selected=False):
+        def writefunc(cid, ctype, vfunc=pytis.util.identity):
+            """Return a closure writing formatted value of given column to the spreadcheet.
 
-        def _process_table(update):
-            # We buffer exported data before writing them to the file in order
-            # to prevent numerous rpc calls in case of remote export.
-            result = '\t'.join(c.column_label() for c in self._columns) + '\n'
-            only_selected = False
-            if len(self.selected_rows()) > 0:
-                msg = _("Some rows are selected. Should only selected rows be exported?")
-                if run_dialog(Question, msg, False):
-                    only_selected = True
-            for r in range(0, number_of_rows):
-                if not update(int(float(r) / number_of_rows * 100)):
-                    break
-                if only_selected and not self._grid.IsInSelection(r, 0):
-                    continue
-                presented_row = self._table.row(r)
-                result += '\t'.join(
-                    ';'.join(presented_row.format(cid, **_format_kwargs(ctype)).splitlines())
-                    for cid, ctype in column_list
-                ) + '\n'
-            try:
-                encoded = result.encode(pytis.config.export_encoding)
-            except (LookupError, UnicodeEncodeError) as e:
-                msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
-                       if isinstance(e, LookupError) else
-                       _("Unable to encode data to %s.", pytis.config.export_encoding))
-                run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
-                encoded = result.encode('utf-8')
-            export_file.write(encoded)
-            export_file.close()
-        pytis.form.run_dialog(ProgressDialog, _process_table)
-        return True
+            Returns a function of arguments (x, y, r, v), where:
+              x -- worksheet column number
+              y -- worksheet row number
+              r -- PresentedRow instance representing the current row
+              v -- internal Python value of the worksheet cell
 
-    def _export_xlsx(self, file_):
-        log(EVENT, 'Called XLSX export')
-        MINIMAL_COLUMN_WIDTH = 12
-        import xlsxwriter
+            This function allows to perform all decision making once and reuse the created
+            closure repeatedly during export for all rows.  One closure is created for each
+            spreadsheet column according to its data type.
 
-        def _process_table(update):
-            column_list = []
-            col_position = 0
-            output = io.BytesIO()
-            w = xlsxwriter.Workbook(output, {'remove_timezone': True})
-            ws = w.add_worksheet('Export')
-
-            def _get_format(ctype):
-                if isinstance(ctype, pytis.data.Float):
+            """
+            if isinstance(ctype, (pytis.data.Float, pytis.data.Integer)):
+                if isinstance(ctype, pytis.data.Integer):
+                    num_format = '0'
+                else:
                     precision = ctype.precision()
                     if precision and precision > 0:
                         num_format = '0.' + '0' * precision
                     else:
                         num_format = 'General'
-                    fmt = {'num_format': num_format}
-                elif isinstance(ctype, pytis.data.Integer):
-                    num_format = '0'
-                    fmt = {'num_format': num_format}
-                elif isinstance(ctype, pytis.data.Date):
-                    date_format_str = 'dd/mm/yyyy'
-                    fmt = {'num_format': date_format_str, 'align': 'left'}
+                fmt = writer.add_format({'num_format': num_format})
+                return lambda x, y, r, v: worksheet.write_number(x, y, vfunc(v), fmt)
+            elif isinstance(ctype, pytis.data.DateTime):
+                if isinstance(ctype, pytis.data.Date):
+                    num_format = 'dd/mm/yyyy'
                 elif isinstance(ctype, pytis.data.Time):
-                    time_format_str = 'hh:mm:ss'
-                    fmt = {'num_format': time_format_str, 'align': 'left'}
-                elif isinstance(ctype, pytis.data.DateTime):
-                    datetime_format_str = 'dd/mm/yyyy hh:mm:ss'
-                    fmt = {'num_format': datetime_format_str, 'align': 'left'}
+                    num_format = 'hh:mm:ss'
                 else:
-                    return None
-                return w.add_format(fmt)
-            for c in self._columns:
-                col_id = c.id()
-                col_type = self._row.type(c.id())
-                col_label = c.column_label() or c.label()
-                col_width = max(c.width(), len(col_label), MINIMAL_COLUMN_WIDTH)
-                if isinstance(col_type, pytis.data.Range):
-                    base_type = col_type.base_type()
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=base_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range='lower',
-                                            col_fmt=_get_format(base_type)))
-                    col_position = col_position + 1
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=base_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range='upper',
-                                            col_fmt=_get_format(base_type)))
-                else:
-                    column_list.append(dict(col_position=col_position,
-                                            col_id=col_id,
-                                            col_type=col_type,
-                                            col_label=col_label,
-                                            col_width=col_width,
-                                            col_range=None,
-                                            col_fmt=_get_format(col_type)))
-                col_position = col_position + 1
-            number_of_rows = self._table.number_of_rows()
-            only_selected = False
-            if len(self.selected_rows()) > 0:
-                msg = _("Some rows are selected. Should only selected rows be exported?")
-                if run_dialog(Question, msg, False):
-                    only_selected = True
-            # Worksheet column settings
-            bold = w.add_format({'bold': True})
-            merge_bold = w.add_format({'align': 'center', 'bold': True})
-            skip_next = False
-            for col_attrs in column_list:
-                position = col_attrs['col_position']
-                label = col_attrs['col_label']
-                width = col_attrs['col_width']
-                ws.set_column(position, position, width)
-                if skip_next:
-                    skip_next = False
-                    continue
-                if col_attrs['col_range'] is not None:
-                    ws.merge_range(0, position, 0, position + 1, unistr(label), merge_bold)
-                    skip_next = True
-                else:
-                    ws.write(0, position, unistr(label), bold)
-            r_out = 0
-            for r in range(0, number_of_rows):
-                if not update(int(float(r) / number_of_rows * 100)):
-                    break
-                if only_selected and not self._grid.IsInSelection(r, 0):
-                    continue
-                r_out = r_out + 1
-                presented_row = self._table.row(r)
-                for col in column_list:
-                    cid = col['col_id']
-                    ctype = col['col_type']
-                    col_range = col['col_range']
-                    position = col['col_position']
-                    fmt = col['col_fmt']
-                    value = presented_row.get(cid, secure=True)
-                    if value and value.value() is not None:
-                        v = value.value()
-                        if col_range == 'lower':
-                            v = v.lower()
-                        elif col_range == 'upper':
-                            v = v.upper()
-                        if isinstance(ctype, pytis.data.Float) or isinstance(ctype,
-                                                                             pytis.data.Integer):
-                            ws.write_number(r_out + 1, position, v, fmt)
-                        elif isinstance(ctype, pytis.data.DateTime):
-                            ws.write_datetime(r_out + 1, position, v, fmt)
-                        elif col_range is not None and isinstance(ctype, pytis.data.String):
-                            ws.write(r_out + 1, position, v)
-                        else:
-                            s = ';'.join(presented_row.format(cid, secure=True).split('\n'))
-                            ws.write_string(r_out + 1, position, s)
-            w.close()
-            file_.write(output.getvalue())
-        pytis.form.run_dialog(ProgressDialog, _process_table)
-        return True
+                    num_format = 'dd/mm/yyyy hh:mm:ss'
+                fmt = writer.add_format({'num_format': num_format, 'align': 'left'})
+                return lambda x, y, r, v: worksheet.write_datetime(x, y, vfunc(v), fmt)
+            elif vfunc != pytis.util.identity and isinstance(ctype, pytis.data.String):
+                # Special case for String range fields (does that ever happen?).
+                return lambda x, y, r, v: worksheet.write(x, y, vfunc(v))
+            else:
+                return lambda x, y, r, v: \
+                    worksheet.write_string(x, y, ';'.join(r.format(cid, secure=True).split('\n')))
+
+        import xlsxwriter
+        MINIMAL_COLUMN_WIDTH = 12
+        columns = []
+        output = io.BytesIO()
+        writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
+        worksheet = writer.add_worksheet('Export')
+        # Setup columns
+        bold = writer.add_format({'bold': True})
+        bold_centered = writer.add_format({'align': 'center', 'bold': True})
+        for col in self._columns:
+            cid = col.id()
+            position = len(columns)
+            ctype = self._row.type(cid)
+            label = unistr(col.column_label() or col.label())
+            width = max(col.width(), len(label), MINIMAL_COLUMN_WIDTH)
+            if isinstance(ctype, pytis.data.Range):
+                ctype = ctype.base_type()
+                columns.append((position, cid, writefunc(cid, ctype, lambda v: v.lower())))
+                columns.append((position + 1, cid, writefunc(cid, ctype, lambda v: v.upper())))
+                worksheet.merge_range(0, position, 0, position + 1, label, bold_centered)
+                worksheet.set_column(position, position + 1, width)
+            else:
+                columns.append((position, cid, writefunc(cid, ctype)))
+                worksheet.write(0, position, label, bold)
+                worksheet.set_column(position, position, width)
+        # Process rows
+        number_of_rows = self._table.number_of_rows()
+        output_row_number = 2  # Actually start at third row (one for headings, one empty).
+        for r in range(0, number_of_rows):
+            if not update(int(float(r) / number_of_rows * 100)):
+                break
+            if only_selected and not self._grid.IsInSelection(r, 0):
+                continue
+            presented_row = self._table.row(r)
+            for position, cid, write in columns:
+                value = presented_row.get(cid, secure=True)
+                if value and value.value() is not None:
+                    write(output_row_number, position, presented_row, value.value())
+            output_row_number += 1
+        writer.close()
+        return output.getvalue()
 
     def _can_clear_selection(self):
         return len(self.selected_rows()) > 0

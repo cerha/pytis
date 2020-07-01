@@ -183,8 +183,6 @@ Command(ListForm, 'DELETE_AGGREGATED_VIEW',
         "Delete an aggregated view (arg. 'aggregated_view_id').")
 Command(ListForm, 'COPY_AGGREGATION_RESULT',
         "Zkopírování výsledku agreganí funkce do schránky (arg. 'operation', 'cid')")
-Command(ListForm, 'EXPORT_CSV',
-        "Export řádkového formuláře do csv souboru")
 Command(ListForm, 'EXPORT_FILE',
         "Export řádkového formuláře do souboru")
 Command(ListForm, 'SET_GROUPING_COLUMN',

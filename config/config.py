@@ -101,10 +101,6 @@
 # a StreamLogger.  Více o nich lze nalézt v jejich dokumentaci.
 #log_logger = (log.StreamLogger, (sys.stderr,), {})
 
-# Adresář pro export do CSV souborů. Hodnota udává cestu k adresáři, kde se
-# budou ukládat textové CSV soubory.
-#export_directory = '/tmp'
-
 # Heslo pro přihlášení k databázi.
 #dbpass = None
 
