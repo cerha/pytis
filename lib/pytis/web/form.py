@@ -1915,10 +1915,12 @@ class BrowseForm(LayoutForm):
                 break
         count_on_page = current_row_number
         data.close()
+        g = context.generator()
         if count_on_page == 0 and not self._EXPORT_EMPTY_TABLE:
-            body = None
+            # Translators: Used in empty list forms.  "Records" refers to
+            # database records in the most generic senese possible.
+            body = g.div(_("No records."), cls='no-records')
         else:
-            g = context.generator()
             body = g.div((
                 self._wrap_exported_rows(context, exported_rows, page, pages),
                 self._export_summary(context, limit, first_record_offset, count_on_page),
@@ -2053,10 +2055,6 @@ class BrowseForm(LayoutForm):
             msg = _.ngettext("Found %d record matching the search expression.",
                              "Found %d records matching the search expression.",
                              self._row_count)
-        elif self._row_count == 0 and not self._EXPORT_EMPTY_TABLE:
-            # Translators: Used in empty list forms.  "Records" refers to
-            # database records in the most generic senese possible.
-            msg = _("No records.")
         else:
             msg = None
         if msg:

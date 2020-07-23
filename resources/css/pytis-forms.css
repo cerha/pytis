@@ -86,7 +86,7 @@
 @media print {
     .pytis-form .group {
 	/* Make the border all around, not just top and bottom, when printing. */
-	border-width: 1px !important; 
+	border-width: 1px !important;
     }
 }
 
@@ -196,10 +196,10 @@
 }
 
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading,
-.pytis-form.browse-form table.data-table tr.group-heading th { 
+.pytis-form.browse-form table.data-table tr.group-heading th {
     background-color: #eee;
 }
-.pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column { 
+.pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column {
     cursor: pointer;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th span.sort-indicator {
@@ -334,7 +334,8 @@
 .pytis-form.browse-form #found-record {
     background-color: #fc8;
 }
-.pytis-form.browse-form .results {
+.pytis-form.browse-form .results,
+.pytis-form.browse-form .no-records {
     font-weight: bold;
 }
 
@@ -379,7 +380,7 @@
 .pytis-form.list-view table.grid h3 {
     margin-top: 0;
 }
-.pytis-form .field-label { 
+.pytis-form .field-label {
     white-space: nowrap;
     font-weight: bold;
     position: relative;
@@ -432,24 +433,24 @@
     line-height: 2.1em;
 }
 
-.pytis-form.show-form a.print-field-link { 
+.pytis-form.show-form a.print-field-link {
     float: right;
     display: block;
 }
 
-.pytis-form .group span.color-display { 
+.pytis-form .group span.color-display {
     padding: 0 0.5em;
     border: 1px solid #bbb;
 }
-.pytis-form .group span.color-value { 
+.pytis-form .group span.color-value {
     float: left;
     width: 6em;
 }
-.pytis-form.show-form, .pytis-form.edit-form { 
+.pytis-form.show-form, .pytis-form.edit-form {
     margin: 0;
     padding: 0;
 }
-.pytis-form.edit-form div.help { 
+.pytis-form.edit-form div.help {
     color: #444;
     margin-bottom: 0.4em;
 }
@@ -462,7 +463,7 @@
 }
 .pytis-form.edit-form input.text-field:disabled,
 .pytis-form.edit-form textarea:disabled,
-.pytis-form.edit-form select:disabled { 
+.pytis-form.edit-form select:disabled {
     background-color: #e8e8e8;
 }
 .pytis-form textarea.fullsize {
@@ -477,7 +478,7 @@
 }
 
 @media print {
-    .pytis-form .field div.multiline.scrolled { 
+    .pytis-form .field div.multiline.scrolled {
 	height: auto !important;
 	border: none;
     }
@@ -510,10 +511,10 @@
     background-color: #fdb;
 }*/
 
-.actions { 
+.actions {
     margin: 1em 0;
 }
-.actions form { 
+.actions form {
     display: inline;
     margin: 0;
     padding: 0;
