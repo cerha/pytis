@@ -65,7 +65,7 @@ class Specification(wiking.Specification):
 
 
 class RestrictedPytisModule(wiking.PytisModule):
-    """wiking.PytisModule which passes authorization requests to Application.authorize()."""
+    """wiking.PytisModule which passes authorization requests to Application.authorized_roles()."""
 
     def _authorized(self, req, action, record=None, **kwargs):
         roles = wiking.module.Application.authorized_roles(req, self, action=action, record=record)
