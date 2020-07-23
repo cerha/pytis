@@ -1774,7 +1774,7 @@ class BrowseForm(LayoutForm):
                                self._sorting.index(sorting) + 1))
             else:
                 return ''
-        return [g.th(f.column_label + sorting_indicator(f),
+        return [g.th(g.escape(f.column_label) + sorting_indicator(f),
                      cls='column-heading column-id-%s' % f.id
                      + (not f.virtual and ' sortable-column' or ''))
                 for f in self._column_fields]
