@@ -119,7 +119,7 @@ class ApplicationAPIProvider(APIProvider):
 
     """
     def __init__(self):
-        pass
+        self._instance = None
 
     def __getattr__(self, name):
         if name == 'param' and self._instance is None:
