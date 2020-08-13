@@ -18,8 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import unittest
-
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
@@ -29,9 +27,9 @@ import datetime
 from xml.sax import saxutils
 
 
-class Field(unittest.TestCase):
+class TestField:
 
-    class Request(object):
+    class Request:
         """Minimal request representation for testing purposes."""
 
         def __init__(self, params=None):
@@ -102,9 +100,5 @@ class Field(unittest.TestCase):
             assert context.localize(field.hidden(context)) == html
 
             error = field.validate(self.Request(params={fid: exported}), context.locale_data())
-            self.assertIs(error, None, "%s: %s" % (error and error.message(), exported))
-            self.assertEqual(row[fid].value(), value)
-
-
-if __name__ == '__main__':
-    unittest.main()
+            assert error is None
+            assert row[fid].value() == value
