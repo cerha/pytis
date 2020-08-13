@@ -461,7 +461,7 @@ class TextField(Field):
         return None
 
     def html_id(self):
-        html_id = super(TextField, self).html_id()
+        html_id = super().html_id()
         if self.id == 'login':
             # HACK: This makes the Safari's password suggestion work in forms, which
             # call the login name field 'login' instead of 'username' (Wiking).
@@ -469,7 +469,7 @@ class TextField(Field):
         return html_id
 
     def _editor_kwargs(self, context):
-        kwargs = super(TextField, self)._editor_kwargs(context)
+        kwargs = super()._editor_kwargs(context)
         maxlen = self._maxlen()
         return dict(
             kwargs,
@@ -498,7 +498,7 @@ class NumericField(TextField):
                 value = value.replace(thousands_sep, '')
             if decimal_point != '.':
                 value = value.replace(decimal_point, '.')
-        return super(NumericField, self)._validate(value, locale_data, **kwargs)
+        return super()._validate(value, locale_data, **kwargs)
 
 
 class StringField(TextField):
@@ -516,13 +516,13 @@ class PasswordField(StringField):
                 value, kwargs['verify'] = value
             else:
                 kwargs['verify'] = ''
-        return super(PasswordField, self)._validate(value, locale_data, **kwargs)
+        return super()._validate(value, locale_data, **kwargs)
 
     def _format(self, context):
         if self._showform:
             return None
         else:
-            return super(PasswordField, self)._format(context)
+            return super()._format(context)
 
     def _editor(self, context, **kwargs):
         g = context.generator()
@@ -542,13 +542,13 @@ class PasswordField(StringField):
 class EmailField(StringField):
 
     def _editor_kwargs(self, context):
-        return dict(super(EmailField, self)._editor_kwargs(context), type='email')
+        return dict(super()._editor_kwargs(context), type='email')
 
 
 class MultilineField(Field):
 
     def _editor_kwargs(self, context):
-        kwargs = super(MultilineField, self)._editor_kwargs(context)
+        kwargs = super()._editor_kwargs(context)
         width = self.spec.width()
         return dict(
             kwargs,
@@ -566,7 +566,7 @@ class StructuredTextField(MultilineField):
 
     def __init__(self, *args, **kwargs):
         self._parser = lcg.Parser()
-        super(StructuredTextField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _format(self, context):
         blocks = self._parser.parse(context.localize(self._value().export()))
@@ -621,7 +621,7 @@ class HtmlField(MultilineField):
         return lcg.HtmlEscapedUnicode(context.localize(exported), escape=escape)
 
     def _editor(self, context, **kwargs):
-        content = super(HtmlField, self)._editor(context, **kwargs)
+        content = super()._editor(context, **kwargs)
         if context.resource('ckeditor/ckeditor.js'):
             g = context.generator()
             context.resource('pytis-ckeditor.js')
@@ -749,7 +749,7 @@ class DateTimeField(TextField):
         g = context.generator()
         locale_data = context.locale_data()
         return (
-            super(DateTimeField, self)._editor(context, **kwargs) +
+            super()._editor(context, **kwargs) +
             g.button('...', id='%s-button' % kwargs['id'], type='button',
                      cls='selection-invocation calendar-invocation',
                      disabled=kwargs['disabled']) +
@@ -774,9 +774,8 @@ class DateTimeField(TextField):
         )
 
     def _validate(self, value, locale_data, **kwargs):
-        return super(DateTimeField, self)._validate(value, locale_data,
-                                                    format=self.datetime_format(locale_data),
-                                                    **kwargs)
+        return super()._validate(value, locale_data,
+                                 format=self.datetime_format(locale_data), **kwargs)
 
 
 class DateField(DateTimeField):
@@ -817,7 +816,7 @@ class CheckboxField(Field):
     def _validate(self, value, locale_data, **kwargs):
         if value is None:
             value = 'F'
-        return super(CheckboxField, self)._validate(value, locale_data, **kwargs)
+        return super()._validate(value, locale_data, **kwargs)
 
     def indicate_not_null(self):
         return False
@@ -846,7 +845,7 @@ class FileUploadField(Field):
                               maxlen=pytis.util.format_byte_size(self.type.maxlen()))
                     return pd.ValidationError(error)
                 return None
-        return super(FileUploadField, self).validate(req, locale_data)
+        return super().validate(req, locale_data)
 
     def _validate(self, value, locale_data, **kwargs):
         if value is not None:
@@ -856,7 +855,7 @@ class FileUploadField(Field):
             # The original file is kept if no file is uploaded to replace it,
             # so empty field is ok.
             return None
-        return super(FileUploadField, self)._validate(value, locale_data, **kwargs)
+        return super()._validate(value, locale_data, **kwargs)
 
     def _format(self, context):
         buf = self._value().value()
@@ -983,7 +982,7 @@ class ArrayField(EnumerationField):
             value = pytis.util.xtuple(value)
         else:
             value = ()
-        return super(ArrayField, self)._validate(value, locale_data, **kwargs)
+        return super()._validate(value, locale_data, **kwargs)
 
     def _format(self, context):
         g = context.generator()
@@ -1014,7 +1013,7 @@ class ChecklistField(ArrayField):
         if self._showform:
             return self._editor(context, id=self.html_id(), readonly=True)
         else:
-            return super(ChecklistField, self)._format(context)
+            return super()._format(context)
 
     def _editor(self, context, id, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()

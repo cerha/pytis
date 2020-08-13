@@ -72,7 +72,7 @@ class Exporter(lcg.Content):
 
     def __init__(self, exporter, **kwargs):
         self._exporter = exporter
-        super(Exporter, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def export(self, context):
         return self._exporter(context)
@@ -143,7 +143,7 @@ class Form(lcg.Content):
             (None) means to use the actions as defined in the specification.
 
         """
-        super(Form, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
         assert isinstance(row, PresentedRow), row
         assert isinstance(handler, str), handler
@@ -272,7 +272,7 @@ class FieldForm(Form):
     """Form with formattable fields."""
 
     def __init__(self, *args, **kwargs):
-        super(FieldForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
 
     def _field(self, id, multirow=False):
@@ -404,7 +404,7 @@ class LayoutForm(FieldForm):
             layout = GroupSpec(layout, orientation=VERTICAL)
         assert isinstance(layout, GroupSpec)
         self._layout = layout
-        super(LayoutForm, self).__init__(view, req, row, **kwargs)
+        super().__init__(view, req, row, **kwargs)
 
     def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
@@ -549,7 +549,7 @@ class _SingleRecordForm(LayoutForm):
 
     def __init__(self, view, req, row, layout=None, **kwargs):
         layout = layout or view.layout().group()
-        super(_SingleRecordForm, self).__init__(view, req, row, layout=layout, **kwargs)
+        super().__init__(view, req, row, layout=layout, **kwargs)
 
     def _export_body(self, context):
         return [self._export_group(context, self._layout)]
@@ -618,12 +618,11 @@ class _SubmittableForm(Form):
         self._show_reset_button = show_reset_button
         self._enctype = None
         self._last_validation_errors = []
-        super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
+        super().__init__(view, req, row, **kwargs)
 
     def _export_form(self, context):
         g = context.generator()
-        return [g.form((super(_SubmittableForm, self)._export_form(context) +
-                        self._export_submit(context)),
+        return [g.form((super()._export_form(context) + self._export_submit(context)),
                        action=g.uri(self._handler), method=self._HTTP_METHOD,
                        enctype=self._enctype)]
 
@@ -721,8 +720,7 @@ class ShowForm(_SingleRecordForm):
 
     def _export_form(self, context):
         uri = self._req.make_uri(self._req.uri())
-        return (super(ShowForm, self)._export_form(context) +
-                self._export_actions(context, self._row, uri))
+        return (super()._export_form(context) + self._export_actions(context, self._row, uri))
 
 
 class DeletionForm(_SingleRecordForm, _SubmittableForm):
@@ -733,13 +731,13 @@ class DeletionForm(_SingleRecordForm, _SubmittableForm):
     def __init__(self, view, req, row, prompt=_("Confirm record deletion:"),
                  show_reset_button=False, submit_buttons=None, **kwargs):
         submit_buttons = submit_buttons or ((None, _("Confirm Deletion")),)
-        super(DeletionForm, self).__init__(view, req, row, submit_buttons=submit_buttons,
-                                           show_reset_button=show_reset_button, **kwargs)
+        super().__init__(view, req, row, submit_buttons=submit_buttons,
+                         show_reset_button=show_reset_button, **kwargs)
         self._prompt = prompt
 
     def _export_form(self, context):
         return (self._export_prompt(context) +
-                super(DeletionForm, self)._export_form(context))
+                super()._export_form(context))
 
     def _export_prompt(self, context):
         prompt = self._prompt
@@ -769,7 +767,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(EditForm, self).__init__(view, req, row, **kwargs)
+        super().__init__(view, req, row, **kwargs)
         key = self._key
         order = tuple(self._layout.order())
         if not self._row.new() and key not in order + tuple([k for k, v in self._hidden]):
@@ -796,7 +794,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _export_form(self, context):
         return (self._export_errors(context) +
-                super(EditForm, self)._export_form(context) +
+                super()._export_form(context) +
                 self._export_footer(context))
 
     def _export_error(self, context, fid, message):
@@ -901,8 +899,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return None
 
     def is_ajax_request(self, req):
-        return (req.param('_pytis_form_update_request') is not None or
-                super(EditForm, self).is_ajax_request(req))
+        return (req.param('_pytis_form_update_request') is not None or super().is_ajax_request(req))
 
     def ajax_response(self, req):
         if req.param('_pytis_attachment_storage_request'):
@@ -989,7 +986,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     fields[fid]['error'] = localize(error)
             return dict(request_number=request_number, fields=fields)
         else:
-            return super(EditForm, self).ajax_response(req)
+            return super().ajax_response(req)
 
     def set_error(self, field_id, error):
         """Arguments:
@@ -1019,7 +1016,7 @@ class VirtualForm(EditForm):
 
         def __init__(self, req, *args, **kwargs):
             self._req = req
-            super(VirtualForm.FormRecord, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def req(self):
             return self._req
@@ -1033,8 +1030,7 @@ class VirtualForm(EditForm):
         view = specification.view_spec()
         data = specification.data_spec().create()
         row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super(VirtualForm, self).__init__(view, req, row, show_reset_button=show_reset_button,
-                                          **kwargs)
+        super().__init__(view, req, row, show_reset_button=show_reset_button, **kwargs)
 
 
 class QueryFieldsForm(VirtualForm):
@@ -1069,9 +1065,8 @@ class QueryFieldsForm(VirtualForm):
                                     flexible=layout.flexible())
                 else:
                     layout = HGroup('profile', layout, flexible=layout.flexible())
-        super(QueryFieldsForm, self).__init__(req, resolver,
-                                              dict(fields=fields, layout=layout, **spec_kwargs),
-                                              name=name)
+        super().__init__(req, resolver, dict(fields=fields, layout=layout, **spec_kwargs),
+                         name=name)
         row = self._row
         self._immediate_filters = (immediate_filters and
                                    all(row.type(f).enumerator() is not None
@@ -1115,7 +1110,7 @@ class QueryFieldsForm(VirtualForm):
         return [g.div(submit_button, cls='submit-buttons')]
 
     def _export_javascript(self, context):
-        script = super(QueryFieldsForm, self)._export_javascript(context)
+        script = super()._export_javascript(context)
         if self._immediate_filters and not self._async_load:
             # When the form is loaded asynchronously, the change handlers are assigned
             # in pytis.js (bind_controls)!
@@ -1132,8 +1127,7 @@ class InlineEditForm(EditForm):
     """Special form for representation of browse form inline edit fields (for internal use only)."""
 
     def __init__(self, view_spec, req, row, uri, field_id):
-        super(InlineEditForm, self).__init__(view_spec, req, row, layout=GroupSpec((field_id,)),
-                                             handler=uri)
+        super().__init__(view_spec, req, row, layout=GroupSpec((field_id,)), handler=uri)
 
     def _export_body(self, context):
         field = self._fields[self._layout.order()[0]]
@@ -1159,7 +1153,7 @@ class FilterForm(EditForm):
         view = ViewSpec(_("Filter"), fields)
         kwargs['reset'] = kwargs.get('reset')  # Default to None in this class.
         kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
-        super(FilterForm, self).__init__(view, req, row, **kwargs)
+        super().__init__(view, req, row, **kwargs)
 
     def _export_footer(self, context):
         return []
@@ -1374,7 +1368,7 @@ class BrowseForm(LayoutForm):
                 return uri_provider(row, kind, target)
         else:
             uri_provider_ = None
-        super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
+        super().__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
         assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
         assert isinstance(permanent_text_search, bool), permanent_text_search
         assert transform_sorting is None or callable(transform_sorting), \
@@ -2211,7 +2205,7 @@ class BrowseForm(LayoutForm):
         if self._async_load and self._req.param('_pytis_async_load_request'):
             return lcg.concat(self._export_table(context))
         else:
-            return super(BrowseForm, self).export(context)
+            return super().export(context)
 
     def heading_info(self):
         # TODO: This was implemented for filter sets only (now removed).  It would
@@ -2332,10 +2326,10 @@ class ListView(BrowseForm):
         if list_layout is None:
             list_layout = view.list_layout()
         layout = list_layout and list_layout.layout() or None
-        super(ListView, self).__init__(view, req, row, layout=layout, **kwargs)
+        super().__init__(view, req, row, layout=layout, **kwargs)
         self._list_layout = list_layout
         if list_layout is None:
-            super_ = super(ListView, self)
+            super_ = super()
             self._CSS_CLS = super_._CSS_CLS
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
@@ -2358,7 +2352,7 @@ class ListView(BrowseForm):
 
     def export(self, context):
         self._exported_row_index = []
-        return super(ListView, self).export(context)
+        return super().export(context)
 
     def _export_row(self, context, row, n, row_id):
         layout = self._list_layout
@@ -2478,7 +2472,7 @@ class ItemizedView(BrowseForm):
         """
         if not columns:
             columns = (view.columns()[0],)  # Include just the first column by default.
-        super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
+        super().__init__(view, req, row, columns=columns, **kwargs)
         assert isinstance(separator, str)
         assert (template is None or isinstance(template, lcg.TranslatableText) or
                 callable(template)), template
@@ -2535,7 +2529,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(view, req, row, limits=limits, limit=limit, **kwargs)
+        super().__init__(view, req, row, limits=limits, limit=limit, **kwargs)
         assert check_columns is None or isinstance(check_columns, (list, tuple)), check_columns
         if check_columns is None:
             check_columns = tuple([field.id for field in self._column_fields
@@ -2551,8 +2545,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
             return context.generator().checkbox(name=field.id, value=self._row.format(self._key),
                                                 checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(context, row, n, field,
-                                                           editable=editable)
+            return super()._export_cell(context, row, n, field, editable=editable)
 
 
 class EditableBrowseForm(BrowseForm):
@@ -2599,8 +2592,7 @@ class EditableBrowseForm(BrowseForm):
         self._removed_rows = []
         self._allow_insertion = allow_insertion
         self._extra_rows = extra_rows
-        super(EditableBrowseForm, self).__init__(view, req, row,
-                                                 **dict(kwargs, limits=(), limit=None))
+        super().__init__(view, req, row, **dict(kwargs, limits=(), limit=None))
         if __debug__:
             for cid in editable_columns:
                 assert cid in self._row, cid
@@ -2608,8 +2600,7 @@ class EditableBrowseForm(BrowseForm):
     def _export_cell(self, context, row, n, field, editable=False):
         if field.id in self._editable_columns:
             editable = True
-        result = super(EditableBrowseForm, self)._export_cell(context, row, n, field,
-                                                              editable=editable)
+        result = super()._export_cell(context, row, n, field, editable=editable)
         if field.id == self._column_fields[0].id:
             g = context.generator()
             icon = context.resource('delete-record.png')
@@ -2620,7 +2611,7 @@ class EditableBrowseForm(BrowseForm):
         return result
 
     def _row_attr(self, row, n):
-        attr = super(EditableBrowseForm, self)._row_attr(row, n)
+        attr = super()._row_attr(row, n)
         if row[self._key].value() is not None:
             key = row[self._key].export()
         else:
@@ -2629,7 +2620,7 @@ class EditableBrowseForm(BrowseForm):
         return attr
 
     def _set_row(self, row):
-        super(EditableBrowseForm, self)._set_row(row)
+        super()._set_row(row)
         if row is None and not self._row.new():
             # Apply default values manually here.  This hack is needed, because
             # the internal PresentedRow instance is not set as new and thus it
@@ -2665,10 +2656,10 @@ class EditableBrowseForm(BrowseForm):
     def _field(self, id, multirow=False):
         if id in self._editable_columns:
             multirow = True
-        return super(EditableBrowseForm, self)._field(id, multirow=multirow)
+        return super()._field(id, multirow=multirow)
 
     def _export_field(self, context, field, editable=False):
-        result = super(EditableBrowseForm, self)._export_field(context, field, editable=editable)
+        result = super()._export_field(context, field, editable=editable)
         if editable:
             error = self._row.validation_error(field.id)
             if error:
@@ -2676,7 +2667,7 @@ class EditableBrowseForm(BrowseForm):
         return result
 
     def _javascript_args(self, context):
-        return super(EditableBrowseForm, self)._javascript_args(context) + (self._allow_insertion,)
+        return super()._javascript_args(context) + (self._allow_insertion,)
 
     def _removed_keys(self):
         param = '_pytis_removed_row_key_' + self._name
@@ -2687,7 +2678,7 @@ class EditableBrowseForm(BrowseForm):
         return removed_keys
 
     def _table_rows(self):
-        rows = super(EditableBrowseForm, self)._table_rows()
+        rows = super()._table_rows()
         self._row.inserted_row_number = None
         removed_keys = self._removed_keys()
         self._removed_rows = []
@@ -2709,14 +2700,13 @@ class EditableBrowseForm(BrowseForm):
         hidden = g.hidden('_pytis_inserted_rows_' + self._name, self._extra_rows)
         for row_key in self._removed_keys():
             hidden += g.hidden('_pytis_removed_row_key_' + self._name, row_key)
-        return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows,
-                                                                   page, pages) + hidden
+        return super()._wrap_exported_rows(context, rows, page, pages) + hidden
 
     def _export_summary(self, *args, **kwargs):
         if self._allow_insertion:
             return ''
         else:
-            return super(EditableBrowseForm, self)._export_summary(*args, **kwargs)
+            return super()._export_summary(*args, **kwargs)
 
     def ajax_response(self, req):
         """Return the AJAX request response as a JSON encoded data structure.
