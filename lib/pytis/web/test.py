@@ -27,78 +27,83 @@ import datetime
 from xml.sax import saxutils
 
 
-class TestField:
+class Request:
+    """Minimal request representation for testing purposes."""
 
-    class Request:
-        """Minimal request representation for testing purposes."""
+    def __init__(self, params=None):
+        self._params = params or {}
 
-        def __init__(self, params=None):
-            self._params = params or {}
+    def param(self, name, default=None):
+        return self._params.get(name, default)
 
-        def param(self, name, default=None):
-            return self._params.get(name, default)
 
-    def _fields(self, fields):
-        columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields]
-        data = pd.Data(columns, columns[0])
-        row = pp.PresentedRow(fields, data, None, new=True)
-        return row, [pw.Field.create(row, f, None, None) for f in fields]
+def make_fields(fields):
+    columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields]
+    data = pd.Data(columns, columns[0])
+    row = pp.PresentedRow(fields, data, None, new=True)
+    return row, [pw.Field.create(row, f, None, None) for f in fields]
 
-    def _export_context(self, lang):
-        class Timezone(datetime.tzinfo):
-            _ZERO_DIFF = datetime.timedelta(0)
 
-            def utcoffset(self, dt):
-                return self._ZERO_DIFF
+def export_context(lang):
+    class Timezone(datetime.tzinfo):
+        _ZERO_DIFF = datetime.timedelta(0)
 
-            def tzname(self, dt):
-                return "XXX"
+        def utcoffset(self, dt):
+            return self._ZERO_DIFF
 
-            def dst(self, dt):
-                return self._ZERO_DIFF
-        exporter = lcg.Html5Exporter(sorted_attributes=True)
-        node = lcg.ContentNode('test')
-        return exporter.context(node, lang=lang, timezone=Timezone())
+        def tzname(self, dt):
+            return "XXX"
 
-    def test_hidden(self):
-        row, fields = self._fields((
-            pp.Field('numeric', type=pd.Integer()),
-            pp.Field('string', type=pd.String()),
-            pp.Field('multiline', type=pd.String(), height=4),
-            pp.Field('date', type=pd.Date()),
-            pp.Field('datetime', type=pd.DateTime()),
-            pp.Field('boolean', type=pd.Boolean()),
-            pp.Field('checklist', type=pd.Array(inner_type=pd.Integer()),
-                     enumerator=pd.FixedEnumerator(range(10)),
-                     selection_type=pp.SelectionType.CHECKLIST),
-            pp.Field('choice', type=pd.Integer(),
-                     enumerator=pd.FixedEnumerator(range(10)),
-                     selection_type=pp.SelectionType.CHOICE),
-            pp.Field('radio', type=pd.Integer(),
-                     enumerator=pd.FixedEnumerator(range(10)),
-                     selection_type=pp.SelectionType.RADIO),
-        ))
-        context = self._export_context('cs')
-        for fid, value, exported in (
-                ('numeric', 5, '5'),
-                ('string', 'x', 'x'),
-                ('multiline', 'xxx\nxxx', 'xxx\nxxx'),
-                ('date', datetime.date(2016, 8, 30), '30.08.2016'),
-                ('datetime', datetime.datetime(2016, 8, 30, 12, 40, tzinfo=context.timezone()),
-                 '30.08.2016 12:40:00'),
-                ('boolean', True, 'T'),
-                ('boolean', False, 'F'),
-                ('checklist', (pd.ival(1), pd.ival(4)), ('1', '4')),
-                ('choice', 5, '5'),
-                ('radio', 5, '5'),
-        ):
-            field = pytis.util.find(fid, fields, key=lambda f: f.id)
-            row[fid] = pd.Value(row.type(fid), value)
-            html = ''.join('<input name="%s" type="hidden" value=%s/>' %
-                           (fid, saxutils.quoteattr(v))
-                           for v in pytis.util.xtuple(exported))
-            assert context.localize(field.hidden(context)) == html
+        def dst(self, dt):
+            return self._ZERO_DIFF
+    exporter = lcg.Html5Exporter(sorted_attributes=True)
+    node = lcg.ContentNode('test')
+    return exporter.context(node, lang=lang, timezone=Timezone())
 
-            error = field.validate(self.Request(params={fid: exported}), context.locale_data())
-            assert error is None
-            assert row[fid].value() == value
+
+fieldspec = (
+    pp.Field('numeric', type=pd.Integer()),
+    pp.Field('string', type=pd.String()),
+    pp.Field('multiline', type=pd.String(), height=4),
+    pp.Field('date', type=pd.Date()),
+    pp.Field('datetime', type=pd.DateTime()),
+    pp.Field('boolean', type=pd.Boolean()),
+    pp.Field('checklist', type=pd.Array(inner_type=pd.Integer()),
+             enumerator=pd.FixedEnumerator(range(10)),
+             selection_type=pp.SelectionType.CHECKLIST),
+    pp.Field('choice', type=pd.Integer(),
+             enumerator=pd.FixedEnumerator(range(10)),
+             selection_type=pp.SelectionType.CHOICE),
+    pp.Field('radio', type=pd.Integer(),
+             enumerator=pd.FixedEnumerator(range(10)),
+             selection_type=pp.SelectionType.RADIO),
+)
+
+
+def test_hidden():
+    row, fields = make_fields(fieldspec)
+    context = export_context('cs')
+    tests = (
+        ('numeric', 5, '5'),
+        ('string', 'x', 'x'),
+        ('multiline', 'xxx\nxxx', 'xxx\nxxx'),
+        ('date', datetime.date(2016, 8, 30), '30.08.2016'),
+        ('datetime', datetime.datetime(2016, 8, 30, 12, 40, tzinfo=context.timezone()),
+         '30.08.2016 12:40:00'),
+        ('boolean', True, 'T'),
+        ('boolean', False, 'F'),
+        ('checklist', (pd.ival(1), pd.ival(4)), ('1', '4')),
+        ('choice', 5, '5'),
+        ('radio', 5, '5'),
+    )
+    for fid, value, exported in tests:
+        field = pytis.util.find(fid, fields, key=lambda f: f.id)
+        row[fid] = pd.Value(row.type(fid), value)
+        html = ''.join('<input name="%s" type="hidden" value=%s/>' %
+                       (fid, saxutils.quoteattr(v))
+                       for v in pytis.util.xtuple(exported))
+        assert context.localize(field.hidden(context)) == html
+
+        error = field.validate(Request(params={fid: exported}), context.locale_data())
+        assert error is None
+        assert row[fid].value() == value
