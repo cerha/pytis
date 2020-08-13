@@ -22,7 +22,7 @@ from pytis.util import ProgramError
 """Abstract specification of APIs used by pytis web components to access the HTTP request data."""
 
 
-class FileUpload(object):
+class FileUpload:
     """Abstract definition of file upload API.
 
     Instances of 'FileUpload' class should be used to represent file uploads within the request
@@ -43,7 +43,7 @@ class FileUpload(object):
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
 
 
-class Request(object):
+class Request:
     """Abstract definition of an HTTP request API.
 
     Pytis web components may need to access some information from the HTTP request.  This class

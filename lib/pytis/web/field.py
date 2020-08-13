@@ -17,10 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from past.builtins import basestring
-from builtins import range
-from future.utils import python_2_unicode_compatible
-
 import lcg
 import pytis.data as pd
 import pytis.util
@@ -29,10 +25,8 @@ from pytis.presentation import SelectionType, TextFormat, Orientation
 
 _ = pytis.util.translations('pytis-web')
 
-unistr = type(u'')  # Python 2/3 transition hack.
 
-
-class UriType(object):
+class UriType:
     """URI type for 'uri_provider' 'kind' argument.
 
     URI provider is a function passed to the form constructor (and from there
@@ -91,7 +85,7 @@ class UriType(object):
     """
 
 
-class Link(object):
+class Link:
     """Link representation for 'uri_provider' returned value.
 
     The value returned by URI provider (function passed to the form constructor)
@@ -168,7 +162,7 @@ class Content(pd.Type):
     pass
 
 
-class Field(object):
+class Field:
     """Field value exporter for both read-only and editable field representations.
 
     An instance of this class represents a pytis form field an all kinds of
@@ -410,7 +404,7 @@ class Field(object):
                 if link:
                     if callable(link):
                         kwargs = None  # Ignore array item links here
-                    elif isinstance(link, basestring):
+                    elif isinstance(link, str):
                         kwargs = dict(href=link)
                     else:
                         kwargs = dict(href=link.uri(), title=link.title(), target=link.target())
@@ -593,8 +587,7 @@ class ContentField(MultilineField):
 class HtmlField(MultilineField):
     _HANDLER = 'pytis.HtmlField'
 
-    @python_2_unicode_compatible
-    class AcfRule(object):
+    class AcfRule:
         """A single ACF rule for CKEditor"""
 
         def __init__(self, elements, attributes=(), styles=(), classes=()):
@@ -606,15 +599,14 @@ class HtmlField(MultilineField):
         def __str__(self):
             res = " ".join(self.elements)
             if (self.attributes):
-                res += " [" + ",".join(unistr(a) for a in self.attributes) + "]"
+                res += " [" + ",".join(str(a) for a in self.attributes) + "]"
             if (self.styles):
                 res += " {" + ", ".join(self.styles) + "}"
             if (self.classes):
                 res += " (" + ", ".join(self.classes) + ")"
             return res
 
-    @python_2_unicode_compatible
-    class AcfRequiredAttribute(object):
+    class AcfRequiredAttribute:
         """Required attribute in ACF rule for CKEditor"""
 
         def __init__(self, attribute):
@@ -1051,7 +1043,7 @@ class ChecklistField(ArrayField):
             if uri_provider:
                 uri = uri_provider(value)
                 if uri:
-                    if isinstance(uri, basestring):
+                    if isinstance(uri, str):
                         link = g.a(exported_value, href=uri)
                     else:
                         link = g.a(exported_value, href=uri.uri(), title=uri.title(),

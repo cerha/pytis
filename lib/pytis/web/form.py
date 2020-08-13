@@ -33,13 +33,11 @@ All the content generation is done using the LCG framework.  See
 http://www.freebsoft.org/lcg.
 
 """
-from past.builtins import basestring
-from builtins import range
-from future import standard_library
 
 import lcg
 import copy
 import re
+import urllib.parse
 
 import pytis.data as pd
 
@@ -53,10 +51,6 @@ import pytis.util
 from .field import (
     Field as FormField, DateTimeField, RadioField, UriType, Link, localizable_export,
 )
-
-# Needed for urllib.parse (urlparse in Python 2).
-standard_library.install_aliases()
-unistr = type(u'')  # Python 2/3 transition hack.
 
 _ = pytis.util.translations('pytis-web')
 VERTICAL = Orientation.VERTICAL
@@ -105,7 +99,7 @@ class Form(lcg.Content):
         src, action link etc.).
       target -- the target for which the URI is requested.  This is the
         'Action' instance for 'UriType.ACTION'.  For other kinds this is
-        either a field identifier (basestring) or None when requesting an
+        either a field identifier (str) or None when requesting an
         URI for the whole record.
 
     The return value may be:
@@ -152,7 +146,7 @@ class Form(lcg.Content):
         super(Form, self).__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
         assert isinstance(row, PresentedRow), row
-        assert isinstance(handler, basestring), handler
+        assert isinstance(handler, str), handler
         assert isinstance(hidden, (tuple, list)), hidden
         assert actions is None or isinstance(actions, (tuple, list)) or callable(actions), actions
         self._view = view
@@ -263,10 +257,10 @@ class Form(lcg.Content):
         return result
 
     def heading_info(self):
-        """Return basestring to be possibly put into a document heading.
+        """Return string to be possibly put into a document heading.
 
-        If the return value is 'None' or an empty basestring, nothing is added
-        to the document heading.  Otherwise the returned basestring may or may
+        If the return value is 'None' or an empty string, nothing is added
+        to the document heading.  Otherwise the returned string may or may
         not be added to some document heading, based on decision of the code
         making the final document.
 
@@ -333,14 +327,14 @@ class LayoutForm(FieldForm):
     _ALLOW_NOT_NULL_INDICATORS = True
     _EDITABLE = False
 
-    class _GroupContent(object):
+    class _GroupContent:
         """Export helper class.
 
         This class tries to encapsulate some of the group export logic to make
         the '_export_group()' method more readable.
 
         """
-        class Item(object):
+        class Item:
 
             def __init__(self, label, content, fullsize, right_aligned, cls):
                 self.label = label
@@ -419,7 +413,7 @@ class LayoutForm(FieldForm):
         orientation = group.orientation()
         for i, item in enumerate(group.items()):
             item = self._call_if_callable(item, self._row)
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 if self._row.visible(item):
                     field = self._fields[item]
                     if omit_first_field_label and i == 0:
@@ -448,7 +442,7 @@ class LayoutForm(FieldForm):
                 label = None
                 if orientation == VERTICAL and item.orientation() == HORIZONTAL:
                     items = copy.copy(list(item.items()))
-                    while items and isinstance(items[0], basestring):
+                    while items and isinstance(items[0], str):
                         fid = items.pop(0)
                         if self._row.visible(fid):
                             field = self._fields[fid]
@@ -667,11 +661,10 @@ class _SubmittableForm(Form):
         for check in self._view.check():
             result = check(self._row)
             if result:
-                if isinstance(result, basestring):
+                if isinstance(result, str):
                     result = (result, _("Integrity check failed."))
                 else:
-                    assert isinstance(result, tuple) and len(result) == 2, \
-                        ('Invalid check() result:', result)
+                    assert isinstance(result, tuple) and len(result) == 2, result
                 errors.append(result)
         return errors
 
@@ -928,7 +921,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 order.append(changed_field)
             state = req.param('_pytis_form_state')
             if state:
-                import urllib.parse
                 field_states = dict((k, v[0]) for k, v in urllib.parse.parse_qs(state).items())
             else:
                 field_states = {}
@@ -1462,7 +1454,7 @@ class BrowseForm(LayoutForm):
         limit_ = param('limit', int)
         if limit_ is None:
             cookie = req.cookie('pytis-form-limit')
-            if cookie and isinstance(cookie, basestring) and cookie.isdigit():
+            if cookie and isinstance(cookie, str) and cookie.isdigit():
                 limit_ = int(cookie)
         else:
             req.set_cookie('pytis-form-limit', limit_)
@@ -1499,7 +1491,7 @@ class BrowseForm(LayoutForm):
         # Determine the current text search condition.
         if allow_text_search or allow_text_search is None:
             if req.param('list-form-controls-submitted'):
-                text_search_string = param('query', unistr)
+                text_search_string = param('query', str)
             else:
                 text_search_string = None
             if permanent_text_search:
@@ -2194,7 +2186,7 @@ class BrowseForm(LayoutForm):
                         data.update(key, pytis.data.Row(rowdata))
                     except pd.DBException as e:
                         if e.exception():
-                            error = (None, unistr(e.exception()).strip())
+                            error = (None, str(e.exception()).strip())
                         else:
                             error = (None, e.message())
                     else:
@@ -2328,7 +2320,7 @@ class ListView(BrowseForm):
     """
     _CSS_CLS = 'list-view'
 
-    class _Interpolator(object):
+    class _Interpolator:
 
         def __init__(self, func):
             self._func = func
@@ -2487,7 +2479,7 @@ class ItemizedView(BrowseForm):
         if not columns:
             columns = (view.columns()[0],)  # Include just the first column by default.
         super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
-        assert isinstance(separator, basestring)
+        assert isinstance(separator, str)
         assert (template is None or isinstance(template, lcg.TranslatableText) or
                 callable(template)), template
         self._separator = separator
