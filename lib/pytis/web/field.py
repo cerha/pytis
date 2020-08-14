@@ -132,11 +132,13 @@ def localizable_export(value, **kwargs):
     """
     if value.value() is not None:
         type_cls = value.type().__class__
-        if type_cls is pd.DateTime:
-            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d %H:%M:%S'),
-                                           utc=value.type().utc())
+        if issubclass(type_cls, pd.Range):
+            return tuple(localizable_export(pd.Value(value.type().base_type(), v))
+                         for v in (value.value().lower(), value.value().upper()))
+        elif type_cls is pd.DateTime:
+            return lcg.LocalizableDateTime(value.value(), utc=value.type().utc())
         elif type_cls is pd.Date:
-            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d'))
+            return lcg.LocalizableDateTime(value.value())
         elif type_cls is pd.Time:
             return lcg.LocalizableTime(value.value().strftime('%H:%M:%S'))
         elif type_cls is pd.Monetary:
@@ -204,6 +206,8 @@ class Field:
             cls = ColorField
         elif isinstance(data_type, pd.Binary):
             cls = FileUploadField
+        elif isinstance(data_type, pd.DateRange):
+            cls = DateRangeField
         elif isinstance(data_type, pd.Date):
             cls = DateField
         elif isinstance(data_type, pd.DateTime):
@@ -786,6 +790,26 @@ class DateField(DateTimeField):
     def _maxlen(self):
         # TODO: Respect date format!
         return 10
+
+
+class RangeField(Field):
+
+    def _editor(self, context, value, id, **kwargs):
+        g = context.generator()
+        return lcg.concat([super(RangeField, self)._editor(context, value=v, id=id_, **kwargs)
+                           for v, id_ in zip(value or ('', ''), (id, id + '-upper'))],
+                           separator=g.span('–', cls='range-field-separator'))
+
+    def hidden(self, context):
+        g = context.generator()
+        return lcg.concat([
+            g.hidden(name=self.name(), value=v)
+            for v in localizable_export(self._value())
+        ])
+
+
+class DateRangeField(RangeField, DateField):
+    pass
 
 
 class TimeField(DateTimeField):

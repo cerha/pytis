@@ -442,7 +442,16 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         var parameters = (params !== undefined ? params : {});
         ctrl.up('form').getElements().each(function (x) {
             if (x.tagName !== 'BUTTON') {
-                parameters[x.name] = x.value;
+                if (parameters.hasOwnProperty(x.name)) {
+                    var value = parameters[x.name];
+                    if (Array.isArray(value)) {
+                        value[value.length] = x.value;
+                    } else {
+                        parameters[x.name] = [value, x.value];
+                    }
+                } else {
+                    parameters[x.name] = x.value;
+                }
             }
         });
         if (ctrl.name) {

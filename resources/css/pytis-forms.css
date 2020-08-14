@@ -397,6 +397,9 @@
     top: -.3em;
     right: -.2em;
 }
+.pytis-form .range-field-separator {
+    padding: 0 3px;
+}
 .pytis-form .field-label.disabled { color: #444; }
 .pytis-form .field-label.disabled .not-null-indicator { display: none; }
 
