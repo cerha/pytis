@@ -1091,7 +1091,10 @@ class QueryFieldsForm(VirtualForm):
                     if saved_value is not None:
                         if saved_value == self._SAVED_EMPTY_VALUE:
                             saved_value = ''
-                        row.validate(field.id, saved_value)
+                        try:
+                            row.validate(field.id, saved_value)
+                        except Exception:
+                            pass
 
     def _export_form(self, context):
         g = context.generator()
