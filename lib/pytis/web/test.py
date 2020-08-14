@@ -18,13 +18,56 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import datetime
+import lcg
+import pytest
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
 import pytis.web as pw
-import lcg
-import datetime
 from xml.sax import saxutils
+
+
+class Timezone(datetime.tzinfo):
+    _ZERO_DIFF = datetime.timedelta(0)
+
+    def utcoffset(self, dt):
+        return self._ZERO_DIFF
+
+    def tzname(self, dt):
+        return "XXX"
+
+    def dst(self, dt):
+        return self._ZERO_DIFF
+
+
+tests = (
+    (pp.Field('numeric', type=pd.Integer()),
+     (5, '5')),
+    (pp.Field('string', type=pd.String()),
+     ('x', 'x')),
+    (pp.Field('multiline', type=pd.String(), height=4),
+     ('xxx\nxxx', 'xxx\nxxx')),
+    (pp.Field('date', type=pd.Date()),
+     (datetime.date(2016, 8, 30), '30.08.2016')),
+    (pp.Field('datetime', type=pd.DateTime()),
+     (datetime.datetime(2016, 8, 30, 12, 40, tzinfo=Timezone()), '30.08.2016 12:40:00')),
+    (pp.Field('boolean', type=pd.Boolean()),
+     (True, 'T'),
+     (False, 'F')),
+    (pp.Field('checklist', type=pd.Array(inner_type=pd.Integer()),
+              enumerator=pd.FixedEnumerator(range(10)),
+              selection_type=pp.SelectionType.CHECKLIST),
+     ((pd.ival(1), pd.ival(4)), ('1', '4'))),
+    (pp.Field('choice', type=pd.Integer(),
+              enumerator=pd.FixedEnumerator(range(10)),
+              selection_type=pp.SelectionType.CHOICE),
+     (5, '5')),
+    (pp.Field('radio', type=pd.Integer(),
+              enumerator=pd.FixedEnumerator(range(10)),
+              selection_type=pp.SelectionType.RADIO),
+     (5, '5')),
+)
 
 
 class Request:
@@ -37,73 +80,45 @@ class Request:
         return self._params.get(name, default)
 
 
-def make_fields(fields):
-    columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields]
-    data = pd.Data(columns, columns[0])
-    row = pp.PresentedRow(fields, data, None, new=True)
-    return row, [pw.Field.create(row, f, None, None) for f in fields]
-
-
 def export_context(lang):
-    class Timezone(datetime.tzinfo):
-        _ZERO_DIFF = datetime.timedelta(0)
-
-        def utcoffset(self, dt):
-            return self._ZERO_DIFF
-
-        def tzname(self, dt):
-            return "XXX"
-
-        def dst(self, dt):
-            return self._ZERO_DIFF
     exporter = lcg.Html5Exporter(sorted_attributes=True)
     node = lcg.ContentNode('test')
     return exporter.context(node, lang=lang, timezone=Timezone())
 
 
-fieldspec = (
-    pp.Field('numeric', type=pd.Integer()),
-    pp.Field('string', type=pd.String()),
-    pp.Field('multiline', type=pd.String(), height=4),
-    pp.Field('date', type=pd.Date()),
-    pp.Field('datetime', type=pd.DateTime()),
-    pp.Field('boolean', type=pd.Boolean()),
-    pp.Field('checklist', type=pd.Array(inner_type=pd.Integer()),
-             enumerator=pd.FixedEnumerator(range(10)),
-             selection_type=pp.SelectionType.CHECKLIST),
-    pp.Field('choice', type=pd.Integer(),
-             enumerator=pd.FixedEnumerator(range(10)),
-             selection_type=pp.SelectionType.CHOICE),
-    pp.Field('radio', type=pd.Integer(),
-             enumerator=pd.FixedEnumerator(range(10)),
-             selection_type=pp.SelectionType.RADIO),
-)
-
-
-def test_hidden():
-    row, fields = make_fields(fieldspec)
+@pytest.fixture(params=tests)
+def field_params(request):
+    fspec, *values = request.param
+    columns = [pd.ColumnSpec(fspec.id(), fspec.type())]
+    data = pd.Data(columns, columns[0])
+    row = pp.PresentedRow((fspec,), data, None, new=True)
+    field = pw.Field.create(row, fspec, None, None)
     context = export_context('cs')
-    tests = (
-        ('numeric', 5, '5'),
-        ('string', 'x', 'x'),
-        ('multiline', 'xxx\nxxx', 'xxx\nxxx'),
-        ('date', datetime.date(2016, 8, 30), '30.08.2016'),
-        ('datetime', datetime.datetime(2016, 8, 30, 12, 40, tzinfo=context.timezone()),
-         '30.08.2016 12:40:00'),
-        ('boolean', True, 'T'),
-        ('boolean', False, 'F'),
-        ('checklist', (pd.ival(1), pd.ival(4)), ('1', '4')),
-        ('choice', 5, '5'),
-        ('radio', 5, '5'),
-    )
-    for fid, value, exported in tests:
-        field = pytis.util.find(fid, fields, key=lambda f: f.id)
-        row[fid] = pd.Value(row.type(fid), value)
-        html = ''.join('<input name="%s" type="hidden" value=%s/>' %
-                       (fid, saxutils.quoteattr(v))
-                       for v in pytis.util.xtuple(exported))
-        assert context.localize(field.hidden(context)) == html
+    return row, field, context, values
 
-        error = field.validate(Request(params={fid: exported}), context.locale_data())
-        assert error is None
-        assert row[fid].value() == value
+
+def field_test(f):
+    """Decorator running given test func for all fields defined in 'tests' and their test data."""
+    def x(field_params):
+        row, field, context, values = field_params
+        for value, exported in values:
+            f(row, field, context, value, exported)
+    return x
+
+
+@field_test
+def test_validation(row, field, context, value, exported):
+    req = Request(params={field.id: exported})
+    assert field.validate(req, context.locale_data()) is None
+    assert row[field.id].value() == value
+
+
+@field_test
+def test_hidden(row, field, context, value, exported):
+    row[field.id] = pd.Value(field.type, value)
+    result = context.localize(field.hidden(context))
+    expected = ''.join(
+        '<input name="{}" type="hidden" value={}/>'.format(field.id, saxutils.quoteattr(v))
+        for v in pytis.util.xtuple(exported)
+    )
+    assert result == expected
