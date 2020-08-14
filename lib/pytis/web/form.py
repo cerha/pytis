@@ -1763,7 +1763,9 @@ class BrowseForm(LayoutForm):
                                self._sorting.index(sorting) + 1))
             else:
                 return ''
-        return [g.th(g.escape(f.column_label) + sorting_indicator(f),
+        # Adding g.escape('') below to prevent coercing sorting indicator to
+        # string when column label is a plain string (not lcg.Localizable).
+        return [g.th(g.escape('') + f.column_label + sorting_indicator(f),
                      cls='column-heading column-id-%s' % f.id
                      + (not f.virtual and ' sortable-column' or ''))
                 for f in self._column_fields]
