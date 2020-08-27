@@ -47,7 +47,7 @@ API reprezentace běžící aplikace
 API reprezentace obecného formuláře
 
 - name :: název specifikace (řetězec)
-    field :: přístup k políčkům formuláře jako 'form.field.field_id' (instance
+- field :: přístup k políčkům formuláře jako 'form.field.field_id' (instance
       'pytis.api.Field')
 - condition :: aktuální filtrační podmínka (instance 'pytis.data.Operator')
 - query_fields :: lišta políček dotazu (instance 'pytis.api.QueryFields')
@@ -65,3 +65,77 @@ API reprezentace vstupního políčka
 API reprezentace lišty políček dotazu
 - row :: aktuální hodnoty políček dotazu (instance
          'pytis.presentation.PresentedRow')
+
+
+** Příklady použití
+
+*** Přístup ke sdíleným parametrům
+
+Sdílené parametry slouží pro sdílení hodnot mezi aplikačním kódem a databází.
+
+V application.py nejprve definujeme které specifikace obsahují sdílené
+parametry:
+
+#+begin_src python
+class Application(pytis.presentation.Application):
+
+    def params(self):
+        return (
+            pytis.presentation.SharedParams('main', 'Nastaveni.BvCfg'),
+        )
+#+end_src
+
+Ve spefifikacích náhledů potom přistupujeme k hodnotám sloupců z příslušné DB
+tabulky:
+
+#+begin_src python
+from pytis.api import app
+
+...
+
+    # Parametry v 'default' vždy přes lambda, aby se parametr načetl až
+    # ve chvíli vytvoření nového záznamu, ne při načtení specifikace.
+    Field('zeme', _("Stát"), default=lambda: app.param.main.zeme,
+          codebook='Cb.CZeme', ...)
+
+...
+
+    # Vrácena je vnitřní hodnota, takže instanci Value je v případě
+    # potřeby nutno vytvořit.
+    condition = pd.EQ('jurisdikce', pd.sval(app.param.main.jurisdikce))
+
+#+end_src
+
+
+*** Přístup k hodnotám lišty dotazu
+
+Zohlednění hodnot v liště pro obarvení řádků tabulky:
+ 
+#+begin_src python
+    def row_style(self, row):
+        if row['cena'].value() > row.form.query_fields.row['limit'].value():
+            return pp.Style(background='#fdd')
+        else:
+            return None
+#+end_src
+
+Určení podmínky vedlejšího formuláře podle políček lišty hlavního formuláře:
+
+#+begin_src python
+    Binding('pohyby', _("Pohyby"), "UctoDenik.UcetniDenikSaldo",
+            condition=lambda row: pd.EQ('obdobi', row.form.query_fields.row['obdobi']))
+#+end_src
+
+
+*** Přenačtení výběru výčtového políčka ve formuláři
+
+Políčka umožňující výběr položek, jako např. SelectionType.CHOICE nebo
+SelectionType.LIST mohou po nějaké změně dat (typicky např. po akci na tlačítko
+ve formuláři) obsahovat neaktuální hodnoty výběru.  V takových situacích se
+může hodit je explicitně obnovit voláním metody 'refresh()'.
+
+#+begin_src python
+    def _akce_tlačítka(self, row):
+        ...
+        row.form.field.kontakty.refresh()
+#+end_src
