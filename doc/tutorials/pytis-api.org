@@ -1,0 +1,67 @@
+* Pytis API
+
+Aplikační programové rozhraní (API) pytisových aplikací slouží pro přístup k
+interním funkcím a objektům Pytisu z aplikačního programového kódu.  Nejde tedy
+o rozhraní mezi pytisovými objekty navzájem, ale o rozhraní mezi specifikacemi
+aplikace a Pytisem.  Protože se přístup k tomuto API může vyskytovat v kódu
+aplikací, je nutné toto API rozšiřovat a měnit velice konzervativně a i proto
+je toto API zatím poměrně minimalistické a pokrývá pouze skutečné potřeby.
+
+** Přístupové body
+
+K API je aktuálně možné přistupovat skrze dva hlavní přístupové body:
+
+1. 'pytis.api.app' je globální instance 'pytis.api.Application' poskytující
+   přístup běžící pytisové aplikaci.  Tato instance je k dispozici již v době
+   importu modulu, takže ji lze importovat např. způsobem 'from pytis.api
+   import app' (pro jednotnost doporučováno vždy takto).
+
+   Ve skriptech (které běží bez spuštěné aplikace) lze instanci 'pytis.api.app'
+   používat s tím, že zde je použití omezeno na přístup ke sdíleným parametrům
+   pomocí atributu 'app.param'.
+
+2. Ve všech specifikačních funkcích pracujících s aktuálním řádkem formuláře
+   (specifikace 'computer', 'editable', 'row_style' atd, atd), lze použít
+   atribut 'row.form'.  Ten reprezentuje aktuální formulář (instance
+   'pytis.api.Form'), ze kterého pochází řádek 'row'.
+
+** Přehled tříd
+
+Následuje zjednodušený přehled tříd Pytis API a jejich metod a atributů.  Pro
+detailněnší informace je nutné konzultovat přímo dokumentační řetězce
+příslušných tříd.
+
+*** pytis.api.Application
+
+API reprezentace běžící aplikace
+
+- param :: přístup ke sdíleným parametrům formou 'app.param.<name>.<param>',
+           kde <name> odpovídá názvu v definici 'SharedParams' ve specifikaci
+           aplikace a <param> odpovídá názvu sloupečku v příslušné DB tabulce.
+- form :: aktuální formulář (instance 'pytis.api.Form').
+- message(message, kind='info') :: zobraz danou zprávu daného typu ('info',
+     'warning', 'error').
+
+*** pytis.api.Form
+
+API reprezentace obecného formuláře
+
+- name :: název specifikace (řetězec)
+    field :: přístup k políčkům formuláře jako 'form.field.field_id' (instance
+      'pytis.api.Field')
+- condition :: aktuální filtrační podmínka (instance 'pytis.data.Operator')
+- query_fields :: lišta políček dotazu (instance 'pytis.api.QueryFields')
+- clear_selection() :: zruš výběr řádků, pokud nějaký existuje.
+
+*** pytis.api.Field
+
+API reprezentace vstupního políčka
+
+- refresh() :: obnov zobrazení políčka (přenačti číselníky)
+- write(text) :: zapiš daný text na aktuální pozici kurzoru.
+
+*** pytis.api.QueryFields
+
+API reprezentace lišty políček dotazu
+- row :: aktuální hodnoty políček dotazu (instance
+         'pytis.presentation.PresentedRow')
