@@ -1364,7 +1364,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         form = self.current_form(inner=True)
         return form.provider() if form else None
 
-    def api_message(self, message, kind='info'):
+    def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
 
 
@@ -1916,7 +1916,7 @@ def refresh_status(id=None):
 
 
 def message(message, beep_=False):
-    """Deprecated.  Use 'pytis.api.app.message()'."""
+    """Deprecated.  Use 'pytis.api.app.echo()'."""
     if pytis.form.app:
         pytis.form.app.message(message, kind='error' if beep_ else 'info')
 

@@ -230,7 +230,7 @@ class Application(API):
     form = property()
     """The current form API as 'pytis.api.Form' instance."""
 
-    def message(self, message, kind='info'):
+    def echo(self, message, kind='info'):
         """Display a non-interactive message to the user.
 
         Arguments:
@@ -318,11 +318,11 @@ def test_api_definition():
         def api_form(self):
             return MyForm().provider()
 
-        def api_message(self, message, kind='info'):
-            return self.message('-' + message + '-')
+        def api_echo(self, message, kind='info'):
+            return ':{}: {}'.format(kind, message)
 
-        def message(self, message):
-            return 'Message: {}'.format(message)
+        def echo(self, message):
+            return 'echo: {}'.format(message)
 
     app_instance = MyApp()
     app = app_instance.provider()
@@ -332,7 +332,7 @@ def test_api_definition():
     assert app.form.name == 'form name'
     assert app.form.arguments['a'] == 'A'
     assert app.form.query_fields == 'the query fields'
-    assert app.message('foo') == 'Message: -foo-'
+    assert app.echo('foo') == ':info: foo'
 
     app_instance.non_api_attribute == 'non-API attribute'
     with pytest.raises(AttributeError) as e:
@@ -354,16 +354,16 @@ def test_api_definition_errors():
         @implements(Application)
         class DefineMethodAsProperty:
             @property
-            def api_message(self, condition):
+            def api_echo(self, message):
                 pass
-    assert str(e.value) == "'Application.message' is defined (but not implemented) as a method"
+    assert str(e.value) == "'Application.echo' is defined (but not implemented) as a method"
 
     with pytest.raises(TypeError) as e:
         @implements(Application)
         class InvalidMethodSignature:
-            def api_message(self, massage):
+            def api_echo(self, massage):
                 pass
-    assert str(e.value) == "Method signature does not match the definition of 'Application.message'"
+    assert str(e.value) == "Method signature does not match the definition of 'Application.echo'"
 
     with pytest.raises(TypeError) as e:
         @implements(Application)
