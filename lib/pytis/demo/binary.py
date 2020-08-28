@@ -71,10 +71,9 @@ class BinaryData(Specification):
         return (Binding('viewer', _("Viewer"), content=self._pdf, content_type='pdf'),)
 
     def _pdf(self, row):
-        main_form = pytis.form.top_window().main_form()
-        data = main_form.data()
-        row = data.row(row[data.key()[0].id()], arguments=main_form._current_arguments())
-        return row['data'].value()
+        # The row argument doesn't contain 'pytis.data.Big' columns.
+        full_row = row.data().row(row['id'])
+        return full_row['data'].value()
 
     def _select_encryption_keys(self):
         dbconnection = pytis.config.dbconnection
