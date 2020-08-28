@@ -23,6 +23,7 @@ import pytis.data as pd
 import pytis.output
 import pytis.form
 
+from pytis.api import app
 from pytis.presentation import (
     Binding, computer, CbComputer, CodebookSpec, Field, Editable,
     PostProcess, PrintAction, Specification, TextFilter,
@@ -185,7 +186,7 @@ class InsuranceFee(Specification):
 class PrintContinentCountries(pytis.output.PrintSpecification):
 
     def init(self):
-        if not pytis.form.run_dialog(pytis.form.Question, _("Really print?")):
+        if not app.question(_("Really print?")):
             return None
         result = pytis.form.run_form(pytis.form.InputForm, title=_("Document title"), fields=(
             Field('title', _("Title"), not_null=True),
@@ -198,7 +199,7 @@ class PrintContinentCountries(pytis.output.PrintSpecification):
 
     def cleanup(self):
         self._data.close()
-        pytis.form.run_dialog(pytis.form.Message, message=_("Printed!"))
+        app.message(_("Printed!"))
 
     def page_layout(self):
         return {pytis.output.PAGE_WIDTH: lcg.UMm(210),
@@ -282,7 +283,7 @@ class PrintContinentCountries(pytis.output.PrintSpecification):
 class PrintOverflow(pytis.output.PrintSpecification):
 
     def cleanup(self):
-        pytis.form.run_dialog(pytis.form.Message, message=_("Printed!"))
+        app.message(_("Printed!"))
 
     def body(self):
         content_1 = lcg.coerce('xxx')

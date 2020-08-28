@@ -28,10 +28,11 @@ import pytis.presentation
 import pytis.form
 import pytis.util
 import pytis.data as pd
+
+from pytis.api import app
 from pytis.presentation import StatusField, SharedParams
 from pytis.extensions import mf, bf, nr
 from pytis.form import Menu, MItem
-from pytis.api import app
 _ = pytis.util.translations('pytis-demo')
 ____ = pytis.form.MSeparator()
 
@@ -137,11 +138,11 @@ class Application(pytis.presentation.Application):
         return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=self._dialog_test,)
 
     def _dialog_test(self):
-        NOTHING = object()
-
-        def dialog(type, *args, **kwargs):
-            expect = kwargs.pop('expect', NOTHING)
-            return type, args, kwargs, expect
+        app.message("A series of dialogs will follow.\nAnswer the questions as they come.")
+        app.question("The default answer shold be `No'.\nCorrect?", default=False)
+        app.question("The default answer shold be `Yes'.\nCorrect?", default=True)
+        if app.question("Do you want to exit now?\nAnswer `No' if you want the test to continue."):
+            return
 
         def xx(update=None):
             print("xx() starting...")
@@ -155,40 +156,8 @@ class Application(pytis.presentation.Application):
             print("xx() finished...")
             return "xxxx"
 
-        dialogs = (
-            dialog(pytis.form.Message,
-                   "A series of dialogs will follow.\n"
-                   "New dialogs will appear as long as you\n"
-                   "answer the questions as suggested."),
-            dialog(pytis.form.Question,
-                   "The default answer shold be `No'.\nCorrect?",
-                   default=False, expect=True),
-            dialog(pytis.form.Question,
-                   "The default answer shold be `Yes'.\nCorrect?",
-                   default=True, expect=True),
-            dialog(pytis.form.Question,
-                   "Do you want to exit now?\nAnswer `No' if you want the test to continue.",
-                   default=False, expect=False),
-            dialog(pytis.form.Question,
-                   "Plese, exit this dialog by pressing Escape.",
-                   default=False, expect=False),
-            dialog(pytis.form.Calendar, pd.DateTime.now().value()),
-            dialog(pytis.form.ColorSelector),
-            dialog(pytis.form.OperationDialog, xx),
-            dialog(pytis.form.ProgressDialog, xx),
-        )
-
-        for type, args, kwargs, expect in dialogs:
-            print("***", type.__name__, args, kwargs, expect)
-            result = pytis.form.run_dialog(type, *args, **kwargs)
-            if expect is not NOTHING and result != expect:
-                pytis.form.run_dialog(
-                    pytis.form.Warning,
-                    "Your the returned value was %r, but %r was expected.\n"
-                    "You either didn't answer as suggested or there is a bug!\n" %
-                    (result, expect)
-                )
-                break
+        pytis.form.run_dialog(pytis.form.OperationDialog, xx)
+        pytis.form.run_dialog(pytis.form.ProgressDialog, xx)
 
 
 class TestApplication(object):

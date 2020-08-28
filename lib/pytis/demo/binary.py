@@ -99,16 +99,16 @@ class BinaryData(Specification):
 
     def _upload_encrypted(self, row):
         if not pytis.remote.client_available():
-            pytis.form.run_dialog(pytis.form.Error, _("Remote connection not available."))
+            app.error(_("Remote connection not available."))
             return
         keys = self._select_encryption_keys()
         # Or use keys = [] to let the user select keys from the client machine keyring.
         if keys is None:
-            pytis.form.run_dialog(pytis.form.Error, _("No key selected."))
+            app.error(_("No key selected."))
             return
         f = pytis.remote.open_selected_file(encrypt=keys)
         if f is None:
-            pytis.form.run_dialog(pytis.form.Error, _("No file selected."))
+            app.error(_("No file selected."))
             return
         try:
             fname = f.name
@@ -127,7 +127,7 @@ class BinaryData(Specification):
         finally:
             f.close()
         if not data:
-            pytis.form.run_dialog(pytis.form.Error, _("Encryption error."))
+            app.error(_("Encryption error."))
             return
         filename = p.split(fname)[-1]
         type_ = row['data'].type()
@@ -144,11 +144,11 @@ class BinaryData(Specification):
 
     def _download_decrypted(self, row):
         if not pytis.remote.client_available():
-            pytis.form.run_dialog(pytis.form.Error, _("Remote connection not available."))
+            app.error(_("Remote connection not available."))
             return
         data = row.data().row(row['id'])['data'].value()
         if data is None:
-            pytis.form.run_dialog(pytis.form.Message, _("No data in this row. %s"))
+            app.message(_("No data in this row. %s"))
             return
         f = pytis.remote.make_selected_file(filename=row['filename'].value(), decrypt=True)
         if f is None:

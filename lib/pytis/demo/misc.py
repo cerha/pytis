@@ -496,8 +496,7 @@ class Products(Specification):
                 if not pytis.form.run_form(pytis.form.PopupEditForm, 'misc.Products',
                                            select_row=product_id,
                                            transaction=transaction):
-                    pytis.form.run_dialog(pytis.form.Message, "Transaction aborted",
-                                          title="Error", icon=pytis.form.Message.ICON_ERROR)
+                    app.error("Transaction aborted")
                     transaction.rollback()
                     return
         except Exception:
