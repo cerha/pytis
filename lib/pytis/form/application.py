@@ -58,14 +58,13 @@ from .screen import (
     Browser, CheckItem, KeyHandler, Keymap, Menu, MenuBar, MItem, MSeparator, StatusBar,
     acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
 )
-from .dialog import (
-    Message, Question, Error, CheckListDialog, ProgressDialog,
-)
+from . import dialog
 
 
 _ = pytis.util.translations('pytis-wx')
 
 unistr = type(u'')  # Python 2/3 transition hack.
+
 
 @pytis.api.implements(pytis.api.Application)
 class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler):
@@ -299,7 +298,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(Error, _("Invalid form class in 'startup_forms':") +
+                        self.run_dialog(dialog.Error, _("Invalid form class in 'startup_forms':") +
                                         ' ' + cls_name)
                         continue
                 else:
@@ -320,7 +319,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 startup_forms.extend(reversed(saved_forms))
             else:
                 checked = self.run_dialog(
-                    CheckListDialog,
+                    dialog.CheckListDialog,
                     title=_("Restore forms"),
                     message=_("Restore these forms saved on last exit?"),
                     items=[(True, '%s (%s)' % (self._spec_title(name), f.descr()))
@@ -350,9 +349,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         break
             startup_forms = filtered_forms
         if len(startup_forms) > 1:
-            run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
-                       title=_("Opening saved forms"),
-                       message=_("Opening form") + ' ' * 40)  # , can_abort=True)
+            self.run_dialog(dialog.ProgressDialog, run_startup_forms, args=(startup_forms,),
+                            title=_("Opening saved forms"),
+                            message=_("Opening form") + ' ' * 40)  # , can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
             # lines raise the previous form and then back the top form, which
             # fixes the problem.  Running a Message dialog instead also helps,
@@ -1001,7 +1000,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(Error, _("Form creation failed: %s", name))
+                self.run_dialog(dialog.Error, _("Form creation failed: %s", name))
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
@@ -1367,6 +1366,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
 
+    def api_message(self, message):
+        return self.run_dialog(dialog.Message, message)
+
+    def api_warning(self, message):
+        return self.run_dialog(dialog.Warning, message)
+
+    def api_error(self, message):
+        return self.run_dialog(dialog.Error, message)
+
+    def api_question(self, message, default=True):
+        return self.run_dialog(dialog.Question, message, default=default)
+
 
 class DbActionLogger(object):
     """Log user actions into the database."""
@@ -1499,7 +1510,7 @@ def delete_record(view, data, transaction, record,
         elif result == 1:
             return True
         elif isinstance(result, basestring):
-            run_dialog(Error, result)
+            run_dialog(dialog.Error, result)
             return False
         elif isinstance(result, pytis.data.Operator):
             ask = False
@@ -1511,7 +1522,7 @@ def delete_record(view, data, transaction, record,
             message(_("This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
-    if ask and not run_dialog(Question, question):
+    if ask and not run_dialog(dialog.Question, question):
         return False
     log(EVENT, 'Deleting record:', arg)
     success, result = db_operation(op, arg, transaction=transaction)
@@ -1575,7 +1586,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 pytis.form.app.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
-            run_dialog(Error, _("Access denied"))
+            run_dialog(dialog.Error, _("Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
             if pytis.config.dbconnection.password() is not None and pytis.form.app:
@@ -1623,13 +1634,12 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(Message, message, title=_("Database error"),
-                           icon=pytis.form.Message.ICON_ERROR)
+                run_dialog(dialog.Error, message, title=_("Database error"))
                 return FAILURE
             else:
                 message += '\n' + _("Try again?")
-                if not run_dialog(Question, message, title=_("Database error"),
-                                  icon=pytis.form.Question.ICON_ERROR):
+                if not run_dialog(dialog.Question, message, title=_("Database error"),
+                                  icon=dialog.Question.ICON_ERROR):
                     return FAILURE
 
 
@@ -1642,7 +1652,7 @@ def delete_record_question(msg=None):
     log(EVENT, 'Record deletion dialog')
     if msg is None:
         msg = _("Are you sure to delete the record permanently?")
-    if not run_dialog(Question, msg):
+    if not run_dialog(dialog.Question, msg):
         log(EVENT, 'Record deletion refused by user')
         return False
     log(EVENT, u'Record deletion confirmed by user')

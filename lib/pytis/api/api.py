@@ -243,9 +243,61 @@ class Application(API):
         """
         pass
 
+    def message(self, message):
+        """Display given message in an interactive dialog.
+
+        The user needs to confirm the dialog before continuing.
+
+        Arguments:
+
+          message -- the text to be displayed.
+
+        """
+        pass
+
+    def warning(self, message):
+        """Display warning in an interactive dialog.
+
+        The user needs to confirm the dialog before continuing.
+
+        Arguments:
+
+          message -- the warning text to be displayed.
+
+        """
+        pass
+
+    def error(self, message):
+        """Display given error message in an interactive dialog.
+
+        The user needs to confirm the dialog before continuing.
+
+        Arguments:
+
+          message -- the error text to be displayed.
+
+        """
+        pass
+
+    def question(self, message, default=True):
+        """Display given question in an interactive dialog.
+
+        The user needs to answer Yes or No to given question before continuing.
+        Returns True when Yes was selected, False when No and None when
+        canceled otherwise.
+
+        Arguments:
+
+          message -- the question to be displayed.
+          default -- the default selected answer ('Yes' when True, 'No' when False).
+
+        """
+        pass
+
 
 @implements(Application, partial=True)
 class BaseApplication(object):
+
     """Base class for classes implementing the 'Application' API.
 
     This class only implements access to shared parameters using 'app.param'.
@@ -323,6 +375,18 @@ def test_api_definition():
 
         def echo(self, message):
             return 'echo: {}'.format(message)
+
+        def api_message(self, message):
+            pass
+
+        def api_warning(self, message):
+            pass
+
+        def api_error(self, message):
+            pass
+
+        def api_question(self, message, default=True):
+            pass
 
     app_instance = MyApp()
     app = app_instance.provider()
