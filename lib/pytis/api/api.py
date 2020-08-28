@@ -26,7 +26,7 @@ from __future__ import absolute_import
 import inspect
 
 
-def implements(api_class, partial=False):
+def implements(api_class, incomplete=False):
     """Decorator for marking a class which implements a particular API.
 
     The argument is the API definition class.  Particular API definition
@@ -60,7 +60,7 @@ def implements(api_class, partial=False):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a property"
                                     .format(api_class.__name__, name))
         cls._api_attributes = [name for name in dir(api_class) if not name.startswith('_')]
-        if not partial:
+        if not incomplete:
             for name in cls._api_attributes:
                 if not hasattr(cls, 'api_' + name):
                     raise TypeError("{} does not implement '{}.{}'"
@@ -295,7 +295,7 @@ class Application(API):
         pass
 
 
-@implements(Application, partial=True)
+@implements(Application, incomplete=True)
 class BaseApplication(object):
 
     """Base class for classes implementing the 'Application' API.
@@ -357,7 +357,7 @@ def test_api_definition():
         def api_clear_selection(self):
             return 'rows unselected'
 
-    @implements(pytis.api.Application)
+    @implements(pytis.api.Application, incomplete=True)
     class MyApp:
 
         non_api_attribute = 'non-API attribute'
@@ -375,18 +375,6 @@ def test_api_definition():
 
         def echo(self, message):
             return 'echo: {}'.format(message)
-
-        def api_message(self, message):
-            pass
-
-        def api_warning(self, message):
-            pass
-
-        def api_error(self, message):
-            pass
-
-        def api_question(self, message, default=True):
-            pass
 
     app_instance = MyApp()
     app = app_instance.provider()
