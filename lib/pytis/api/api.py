@@ -171,6 +171,9 @@ class Form(API):
     condition = property()
     """Current filtering condition as a pytis.data.Operator instance or None."""
 
+    arguments = property()
+    """Current arguemnts as a dictionary of 'pytis.data.Value' instances or None."""
+
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
@@ -292,6 +295,10 @@ def test_api_definition():
             return None
 
         @property
+        def api_arguments(self):
+            return {'a': 'A'}
+
+        @property
         def api_query_fields(self):
             return 'the query fields'
 
@@ -323,6 +330,7 @@ def test_api_definition():
     assert app.param == 'the param attribute'
     assert isinstance(app.form, APIProvider)
     assert app.form.name == 'form name'
+    assert app.form.arguments['a'] == 'A'
     assert app.form.query_fields == 'the query fields'
     assert app.message('foo') == 'Message: -foo-'
 
