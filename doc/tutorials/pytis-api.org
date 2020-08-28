@@ -39,8 +39,13 @@ API reprezentace běžící aplikace
            kde <name> odpovídá názvu v definici 'SharedParams' ve specifikaci
            aplikace a <param> odpovídá názvu sloupečku v příslušné DB tabulce.
 - form :: aktuální formulář (instance 'pytis.api.Form').
-- message(message, kind='info') :: zobraz danou zprávu daného typu ('info',
-     'warning', 'error').
+- echo(message, kind='info') :: zobraz neinteraktivní zprávu ve stavovém řádku
+     (kind může být 'info', 'warning', 'error').
+- message(message) :: zobraz zprávu v dialogu (vyžaduje potvrzení uživatelem).
+- warning(message) :: zobraz varování v dialogu.
+- error(message) :: zobraz chybovou zprávu v dialogu.
+- question(message, default=True) :: zobraz otázku v dialogu a vrať True pokud uživatel
+     odpoví kladně.  Argument default nastavuje výchozí vybranou odpověď.
 
 *** pytis.api.Form
 
@@ -50,6 +55,7 @@ API reprezentace obecného formuláře
 - field :: přístup k políčkům formuláře jako 'form.field.field_id' (instance
       'pytis.api.Field')
 - condition :: aktuální filtrační podmínka (instance 'pytis.data.Operator')
+- arguments :: aktuální argumenty selectu (slovník instancí 'pytis.data.Value')
 - query_fields :: lišta políček dotazu (instance 'pytis.api.QueryFields')
 - clear_selection() :: zruš výběr řádků, pokud nějaký existuje.
 
