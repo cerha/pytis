@@ -27,6 +27,7 @@ import pytis.extensions
 import pytis.util
 
 import pytis.dbdefs.demo as dbdefs
+from pytis.api import app
 
 MB = 1024 * 1024
 
@@ -133,9 +134,9 @@ class BinaryData(Specification):
         try:
             buf = type_.Data(data, filename=filename)
         except pytis.data.ValidationError as e:
-            pytis.form.message(e.pytis.form.message(), beep_=True)
+            app.echo(e.message(), 'error')
         except IOError as e:
-            pytis.form.message(_("Error reading file:") + ' ' + str(e), beep_=True)
+            app.echo(_("Error reading file:") + ' ' + str(e), 'error')
         else:
             row.data().update(row['id'],
                               pytis.data.Row((('filename', pytis.data.sval(filename)),

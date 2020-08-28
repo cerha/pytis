@@ -475,13 +475,13 @@ class Products(Specification):
             product_id = row["product_id"].value()
             mark = not row["marked"].value()
         count = pytis.form.run_procedure('misc', 'mark_products', product_id=product_id, mark=mark)
-        pytis.form.message(_("Marked %d rows") % count)
+        app.echo(_("Marked %d rows") % count)
 
     def _mark_selected(self, rows):
         count = pytis.form.run_procedure('misc', 'mark_products',
                                          product_id=[r['product_id'].value() for r in rows],
                                          mark=True)
-        pytis.form.message(_("Marked %d rows") % count)
+        app.echo(_("Marked %d rows") % count)
 
     def _update_prices(self, row):
         # This serves for testing user transactions.
