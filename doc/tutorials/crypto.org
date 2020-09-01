@@ -1,0 +1,53 @@
+#title Šifrování dat
+
+* Základní popis fungování
+
+Pytis umí transparentně dešifrovat/šifrovat data tabulek během jejich
+čtení/zápisu z/do datových objektů.  Šifrovat lze jednotlivé sloupce.  Pro
+každý šifrovaný sloupec je určena tzv. „šifrovací oblast” (viz specifikační
+volba 'crypto_name' ve specifikaci 'Field' a ev. 'crypto_names' ve 'ViewSpec').
+Ke každé šifrovací oblasti musí uživatel znát heslo, které slouží k „odemknutí”
+příslušného šifrovacího klíče.  Odemčené klíče jsou uloženy v databázi a
+automaticky použity při čtení/zápisu dat, takže pro uživatele je již další
+fungování zcela transparentní.
+
+Ve wx aplikaci se po přihlášení ověří k jakým šifrovaným oblastem má daný uživatel
+přístup a to si aplikace "zapamatuje".
+
+Při navázání každého db spojení se potom dešifrují v databázi šifrovací klíče
+aktuálního uživatele pro jednotlivé šifrovací oblasti a uloží se do temp
+tabulky (DB funkce pytis_crypto_unlock_current_user_passwords() volaná z
+PostgreSQLAccessor._postgresql_initialize_crypto).  Díky použití temp tabulky
+jsou tyto klíče dostupné pouze pro dané DB spojení a tudíž (ve wx aplikaci)
+jednomu uživateli.
+
+* Úvahy k možnostem využití šifrování ve webových aplikacích
+
+Pro webovou aplikaci nelze mechanizmus navržený pro wx aplikaci vůbec
+použít. Tam je jedno spojení používáno pro různé klienty.  Spojení náleží
+procesu webového serveru a ten vyřizuje postupně požadavky od různých
+uživatelů.  Uvažovalo se o přepínání DB uživatele během vyřizování požadavků
+prostřednictvím "set session role <uzivatel>", což by řešilo Row Level
+Security, ale inicializaci šifrovacích klíčů by to neřešilo, protože bychom při
+přepnutí uživatele museli také provést reinicializaci šifrovacích klíčů, což už
+není tak instantní operace jako přepnutí uživatele.
+
+Dále zde byl návrh udržovat ve webové aplikaci pool DB spojení, kde by každé
+spojení patřilo konkrétnímu uživateli.  Takže spojení by se inicializovalo jen
+jednou pro konkrétního uživatele a potom by fungovalo vše - RLS, session
+proměnné, šifrování - stejně jako ve wx aplikaci.  Samotný wsgi proces by tak
+mohl nadále obsluhovat requesty pro více uživatelů, ale používal by pro různé
+uživatele různá spojení do databáze.  Nevýhodou je neefektivita využití
+serverových prostředků, protože jedno spojení je vyhrazeno pro jednoho
+uživatele a zabírá paměť i když uživatel zrovna nic nedělá (což je skoro pořád,
+vyjma typicky krátkých momentů obsluhy požadavků).  To znamená, že by toto
+řešení bylo použitelné jen pro aplikace, kde víme, že ten počet uživatelů bude
+nějaký dostatečně malý, což je otázka, jestli stojí za to se tím vůbec zabývat,
+když to stejně není dostatečně škálovatelné.  Max. počet spojení lze ovlivnit
+velikostí poolu, ale tím začně docházet při větším počtu současných uživatelů k
+většímu overheadu díky nutnosti reinicializací spojení pro uživatele, jehož
+spojení z poolu vypadla.  Stále jsou ale celkové nároky menší než u wx
+aplikace, protože tam má každý uživatel svůj pool, takže celkové nároky jsou
+"velikost poolu x počet instancí wx aplikace" zatímco o takto řešené webové
+aplikave by to bylo jen "Počet wsgi procesů x velikost poolu".
+
