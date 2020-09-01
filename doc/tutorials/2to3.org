@@ -1,4 +1,4 @@
-* Přechod na Python 3
+#title Přechod na Python 3
 
 Stručný souhrn nových pravidel, které je potřeba ve veškerém našem kódu
 zohlednit pro umožnění přechodu na Python 3.  Mnohé z těchto změn již byly
@@ -11,7 +11,7 @@ stále i na Pythonu 2, je u každé změny uvedeno i jak zařídit, aby byl záp
 funkční i na Pythonu 2.
 
 
-** Print
+* Print
 
 Print v Pythonu 3 není klíčové slovo, ale funkce.  Zapisuje se tedy např.:
 
@@ -25,7 +25,7 @@ Je tedy nutné vždy používat tuto novou syntaxi a v případě potřeby přid
 uvedený import, pokud daném souboru doposud nebyl uveden.
 
 
-** Importy
+* Importy
 
 V Pythonu 3 jsou všechny importy implicitně absolutní.  To znamená, že ~import
 foo~ se nikdy nepokouší importovat soubor foo.py ve stejném adresáři (jako v
@@ -50,7 +50,7 @@ vyskytovaly lokální importy (které byly zároveň převedeny na relativní). 
 být vhodné jej přidat i do dalších souborů, kde hrozí nejednoznačnost.
 
 
-** Dělení
+* Dělení
 
 V Pythonu 3 je lomítko používáno vždy pro skutečné dělení.  Neplatí zde
 pravidlo, že jsou-li oba operandy celočíselné, jde o celočíselné dělení, jako v
@@ -68,7 +68,7 @@ kam se dělení přidává a používat vždy již nová pravidla, tj. pro celo�
 dělení použít zdvojené lomítko.
 
 
-** Metody dict.keys(), dict.values() a dict.items()
+* Metody dict.keys(), dict.values() a dict.items()
 
 Slovníkové metody ~keys()~, ~values()~ a ~items()~ v Pythonu 3 nevrací list,
 ale iterátor.  To často ničemu nevadí, typicky se používají ve for cyklu nebo
@@ -79,13 +79,13 @@ takových případech může být potřeba obalit výsledek voláním ~list()~, 
 logiku kontroly typu přepracovat.
 
 
-** Metoda dict.iteritems()
-
+* Metoda dict.iteritems()
+   
 Slovníková metoda iteritems() byla v Pythonu 3 zrušena.  Metoda ~items()~ vrací
 iterátor, takže stačí používat tu.
 
 
-** Funkce map() a filter()
+* Funkce map() a filter()
 
 Funkce ~map()~ a ~filter()~ v Pythonu 3 nevrací list, ale iterátor.  To v mnoha
 případech nevyžaduje žádnou změnu, ale pokud se výsledek předá někam, kde je
@@ -105,20 +105,20 @@ orphans = [x for x in items if x.parent() is None]
 Tento zápis je většinou i stručnější a přehlednější.
 
 
-** Funkce reduce()
+* Funkce reduce()
 
 Pythonu 3 není ~reduce()~ built-in funkce, ale je třeba ji importovat z
 ~functools~.  Tento import funguje i v Pythonu 2.7, takže jej stačí přidat
 všude, kde reduce potřebujeme.
 
 
-** Funkce apply()
+* Funkce apply()
 
 Funkce ~apply()~ v Pythonu 3 již není.  Namísto ~apply(foo, [arg1, arg2])~ píšeme
 rovnou ~foo(arg1, arg2)~.
 
 
-** Funkce open() vs. file()
+* Funkce open() vs. file()
 
 Funkce ~file()~ již v Pythonu 3 není, takže pro otevření souboru používáme vždy
 open().  Je vhodné navíc používat otevřený soubor jako kontext manager:
@@ -127,7 +127,7 @@ open().  Je vhodné navíc používat otevřený soubor jako kontext manager:
     data = f.read()~
 
 
-** New/old style třídy
+* New/old style třídy
 
 V Pythonu 3 jsou všechny třídy new-style.  Není nutno dědit ~object~ a třída se
 bude chovat jako new-style třída v Pythonu 2.  Aby byl kód kompatibilní, je
@@ -142,7 +142,7 @@ metod pro aritmetické operace jako ~__add__/__radd__~ apod.  V našich aplikac�
 se však tyto odlišnosti většinou neprojeví.
 
 
-** Řetězce / bajty
+* Řetězce / bajty
 
 Největší změna v Pythonu 3 se týká řetězců.  Ta bude mít i pro naše aplikace
 patrně nejdalekosáhlejší důsledky.  Řetězec v Pythonu 3 odpovídá zhruba typu
@@ -158,7 +158,7 @@ kód fungovat bez úprav, ale je třeba ostražitosti.
 Tato změna má několik aspektů, které dále probereme samostatně.
 
 
-*** Unicode literals
+** Unicode literals
 
 Řetězce, které se vyskytují ve zdrojovém kódu (řětězcové literály), jsou téměř
 vždy skutečné řetězce.  Jen ve velmi speciálních případech budeme mít ve
@@ -179,7 +179,7 @@ Pokud se někde vyskytují bajtové literály, je třeba je explicitně označit
 prefixem ~b""~, který funguje obdobně v Pythonu 2 i 3.
 
 
-*** Funkce unicode()
+** Funkce unicode()
 
 Funkce (resp. typ) ~unicode()~ v Pythonu 3 neexistuje.  Nahrazuje ji ~str()~,
 ale ta má v Pythonu 2 jiný význam.  Nejlepší způsob zajištění kompatibility
@@ -218,7 +218,7 @@ argumentem typu ~str~ dává v Pythonu 3 jiné výsledky než v Pythonu 2 (viz
 výše).
 
 
-*** Typ basestring
+** Typ basestring
 
 Typ ~basestring~ se v Pythonu 2 používá pro rozlišení řetězcových typů (~str~ a
 ~unicode~).  V naprosté většině se používá v souvislosti s typovou kontrolou
@@ -247,7 +247,7 @@ except NameError:
 #+END_SRC
 
 
-*** Textové / binární soubory
+** Textové / binární soubory
 
 Funkce ~open()~ v Pythonu 3 otevírá soubor implicitně v textovém režimu a
 dekóduje obsah výchozím systémovým kódováním (možno změnit argumentem
@@ -271,7 +271,7 @@ metodami ~read()~ nebo ~readlines()~ jsou unicode řetězce, takže je jež
 nemusíme (ani nemůžeme) kódovat/dekódovat.  Tomu je potřeba přizpůsobit kód.
 
 
-*** StringIO
+** StringIO
 
 V Pythonu 3 již nejsou moduly ~StringIO~ ani ~cStringIO~.  Třída ~StringIO~ má
 jen jedinou implementaci (~cStringIO~ již není potřeba) a nachází se nově v

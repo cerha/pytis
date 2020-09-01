@@ -1,4 +1,4 @@
-* Testování
+#title Testování
 
 Pro testování nyní používáme pytest a všechny nové testy píšeme v pytest stylu,
 tj. přímo jednoduché asserty.  Mnoho stávajících testů je napsáno ještě ve
@@ -7,7 +7,7 @@ přepsat na přehlednějšíí pytest zápis, ale daleko užitečnější je nap
 testy zvyšující pokrytí.
 
 
-** Zprovoznění testovacího prostředí
+* Zprovoznění testovacího prostředí
 
 pip3 install pytest
 pip3 install pytest-benchmark
@@ -23,7 +23,7 @@ echo "ALTER DATABASE test SET default_text_search_config to 'simple'" | psql tes
 make test
 
 
-** Pokrytí
+* Pokrytí
 
 Pokrytí kódu testy lze sledovat pomocí coverage.  Vegenerování (aktualizaci) coverage
 statistik lze jednoduše spustit pomocí:
