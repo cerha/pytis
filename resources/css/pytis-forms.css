@@ -202,6 +202,7 @@
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading,
 .pytis-form.browse-form table.data-table tr.group-heading th {
     background-color: #eee;
+    padding: 0.5em;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th.column-heading.sortable-column {
     cursor: pointer;
@@ -504,7 +505,7 @@
     }
     .pytis-form.browse-form .summary {
 	background-color: #eee;
-	padding: .1em .5em;
+	padding: .3em .5em;
 	text-align: right;
     }
 }
