@@ -458,7 +458,7 @@ class PostgreSQLAccessor(object_2_5):
         pass
 
     def _postgresql_initialize_coding(self, connection):
-        # This query isg intentionally run without _pg_query_lock to avoid
+        # This query is intentionally run without _pg_query_lock to avoid
         # deadlock on connection reopening in dbapi.py.
         self._postgresql_query(connection, _Query('set client_encoding to "utf-8"'), False)
 
