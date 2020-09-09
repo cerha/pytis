@@ -1201,7 +1201,7 @@ pytis.DateTimeField = Class.create(pytis.Field, {
     }
 });
 
-pytis.FileUploadField = Class.create(pytis.Field, {
+pytis.FileField = Class.create(pytis.Field, {
 
     initialize: function ($super, form_id, field_id, id, state, active, required) {
         $super(form_id, field_id, id, state, active, required);

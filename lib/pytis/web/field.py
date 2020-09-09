@@ -204,8 +204,8 @@ class Field:
             cls = PasswordField
         elif isinstance(data_type, pd.Color):
             cls = ColorField
-        elif isinstance(data_type, pd.Binary):
-            cls = FileUploadField
+        elif isinstance(data_type, pd.Binary) or spec.filename():
+            cls = FileField
         elif isinstance(data_type, pd.DateRange):
             cls = DateRangeField
         elif isinstance(data_type, pd.Date):
@@ -230,8 +230,6 @@ class Field:
                 cls = ChoiceField
             else:
                 cls = CodebookField
-        elif spec.filename():
-            cls = FileField
         elif spec.text_format() == TextFormat.LCG:
             cls = StructuredTextField
         elif spec.text_format() == TextFormat.HTML:
@@ -849,8 +847,56 @@ class CheckboxField(Field):
         return False
 
 
-class FileUploadField(Field):
-    _HANDLER = 'pytis.FileUploadField'
+class FileField(Field):
+    """Field with uploadable/downloadable content.
+
+    File fields are either binary fields or string fields with 'filename'
+    specification.  When displayed, the user interface doesn't show the value
+    itself, but provides a link to download it as a file.  When edited, the
+    contents is uploaded as a file.
+
+    """
+    _HANDLER = 'pytis.FileField'
+
+    def _validate(self, value, locale_data, **kwargs):
+        if value is not None:
+            kwargs = dict(kwargs, filename=value.filename(), mime_type=value.mime_type())
+            value = value.file()
+        elif not self._row.new():
+            # The original file is kept if no file is uploaded to replace it,
+            # so empty field is ok.
+            return None
+        return super()._validate(value, locale_data, **kwargs)
+
+    def _format(self, context):
+        value = self._value().value()
+        if value:
+            if hasattr(value, 'filename') and value.filename():
+                return value.filename()
+            filename = self._row.filename(self.id)
+            if filename:
+                return filename
+            elif isinstance(self.type, pd.Image):
+                # Translators: The label "image"/"file" is used in textual representation of binary
+                # data values, usually as a link to download the actual binary file.
+                return _(u"image")
+            else:
+                return _(u"file")
+        else:
+            return ""
+
+    def _display(self, context):
+        value = self._value().value()
+        if value:
+            return pytis.util.format_byte_size(len(value))
+        else:
+            return None
+
+    def _editor(self, context, **kwargs):
+        return context.generator().upload(size=50, **kwargs)
+
+    def indicate_not_null(self):
+        return self.type.not_null() and self._row.new()
 
     def validate(self, req, locale_data):
         if req.param(self.name()) is None:
@@ -871,45 +917,9 @@ class FileUploadField(Field):
                 return None
         return super().validate(req, locale_data)
 
-    def _validate(self, value, locale_data, **kwargs):
-        if value is not None:
-            kwargs = dict(kwargs, filename=value.filename(), mime_type=value.mime_type())
-            value = value.file()
-        elif not self._row.new():
-            # The original file is kept if no file is uploaded to replace it,
-            # so empty field is ok.
-            return None
-        return super()._validate(value, locale_data, **kwargs)
+    def hidden(self, context):
+        raise NotImplementedError()
 
-    def _format(self, context):
-        buf = self._value().value()
-        if buf:
-            if buf.filename():
-                return buf.filename()
-            filename = self._row.filename(self.id)
-            if filename:
-                return filename
-            elif isinstance(type, pd.Image):
-                # Translators: The label "image"/"file" is used in textual representation of binary
-                # data values, usually as a link to download the actual binary file.
-                return _(u"image")
-            else:
-                return _(u"file")
-        else:
-            return ""
-
-    def _display(self, context):
-        buf = self._value().value()
-        if buf:
-            return pytis.util.format_byte_size(len(buf))
-        else:
-            return None
-
-    def _editor(self, context, **kwargs):
-        return context.generator().upload(size=50, **kwargs)
-
-    def indicate_not_null(self):
-        return self.type.not_null() and self._row.new()
 
 
 class EnumerationField(Field):
@@ -1080,29 +1090,3 @@ class ChecklistField(ArrayField):
 
 class CodebookField(EnumerationField, TextField):
     pass
-
-
-class FileField(TextField):
-    """Special case of string fields with 'filename' specification.
-
-    The contents of such string fields is considered to be a file and the user
-    interface doesn't show the value itself, but provides a link to save it.
-
-    """
-
-    def _format(self, context):
-        if self._value().value() is not None:
-            value = self._row.filename(self.id)
-        else:
-            value = ''
-        return value
-
-    def _display(self, context):
-        value = self._value().value()
-        if value:
-            return pytis.util.format_byte_size(len(value))
-        else:
-            return None
-
-    def hidden(self, context):
-        raise NotImplementedError()
