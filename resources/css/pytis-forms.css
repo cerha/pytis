@@ -344,11 +344,11 @@
     font-weight: bold;
 }
 
-.pytis-form.list-view div.list-item {
+.pytis-form.list-view .list-item {
     margin-bottom: 1.1em;
     overflow: auto; /* force floating image containment by Block Formatting Context */
 }
-.pytis-form.list-view div.tree-indent {
+.pytis-form.list-view .tree-indent {
     padding-left: 0.7em;
     border-left: 2px solid #ddd;
     overflow: auto; /* collapse inner margins to get continuous left border */
@@ -361,11 +361,11 @@
     background-color: #fff4f0;
 }
 
-.pytis-form.list-view div.list-item h3 {
+.pytis-form.list-view .list-item h3 {
     margin-bottom: 0.2em;
     font-size: 1.2em;
 }
-.pytis-form.list-view div.list-item div.meta {
+.pytis-form.list-view .list-item .meta {
     font-style: italic;
     margin: 0.2em 0;
     color: #840;
@@ -458,7 +458,7 @@
     margin: 0;
     padding: 0;
 }
-.pytis-form.edit-form div.help {
+.pytis-form.edit-form .help {
     color: #444;
     margin-bottom: 0.4em;
 }
@@ -479,7 +479,7 @@
     width: 100%;
     box-sizing: border-box;
 }
-.pytis-form .field div.multiline.scrolled {
+.pytis-form .field .multiline.scrolled {
     overflow-y: scroll;
     resize: vertical;
     border: 1px solid #ddd;
@@ -487,7 +487,7 @@
 }
 
 @media print {
-    .pytis-form .field div.multiline.scrolled {
+    .pytis-form .field .multiline.scrolled {
 	height: auto !important;
 	border: none;
     }
