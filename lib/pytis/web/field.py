@@ -473,12 +473,14 @@ class TextField(Field):
     def _editor_kwargs(self, context):
         kwargs = super()._editor_kwargs(context)
         maxlen = self._maxlen()
+        width = self.spec.width(maxlen)
         return dict(
             kwargs,
             value=self._exported_value(),
-            size=self.spec.width(maxlen),
+            size=width,
             maxlength=maxlen,
-            cls=((kwargs.get('cls') or '') + ' text-field').strip(),
+            cls=((kwargs.get('cls') or '') + ' text-field' +
+                 ' fullsize' if width >= 80 else '').strip(),
         )
 
     def _editor(self, context, **kwargs):

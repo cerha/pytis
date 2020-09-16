@@ -474,6 +474,7 @@
 .pytis-form.edit-form select:disabled {
     background-color: #e8e8e8;
 }
+.pytis-form input.fullsize,
 .pytis-form textarea.fullsize {
     width: 100%;
     box-sizing: border-box;
