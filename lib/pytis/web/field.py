@@ -135,7 +135,7 @@ def localizable_export(value, **kwargs):
         if issubclass(type_cls, pd.Range):
             return tuple(localizable_export(pd.Value(value.type().base_type(), v))
                          for v in (value.value().lower(), value.value().upper()))
-        elif type_cls is pd.DateTime:
+        elif type_cls in (pd.DateTime, pd.LocalDateTime):
             return lcg.LocalizableDateTime(value.value(), utc=value.type().utc())
         elif type_cls is pd.Date:
             return lcg.LocalizableDateTime(value.value())
