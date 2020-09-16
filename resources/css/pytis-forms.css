@@ -345,7 +345,7 @@
 }
 
 .pytis-form.list-view .list-item {
-    margin-bottom: 1.1em;
+    margin: 1em 0;
     overflow: auto; /* force floating image containment by Block Formatting Context */
 }
 .pytis-form.list-view .tree-indent {
@@ -353,24 +353,17 @@
     border-left: 2px solid #ddd;
     overflow: auto; /* collapse inner margins to get continuous left border */
 }
-.pytis-form.list-view #found-record h3 {
-    background-color: #fc8;
-    border-color: #fa6;
-}
 .pytis-form.list-view #found-record {
     background-color: #fff4f0;
 }
 
 .pytis-form.list-view .list-item h3 {
-    margin-bottom: 0.2em;
+    margin: 0.0;
     font-size: 1.2em;
 }
 .pytis-form.list-view .list-item .meta {
-    font-style: italic;
-    margin: 0.2em 0;
-    color: #840;
-    padding: 0.1em 0;
-    background-color: #fff;
+    color: #206573;
+    margin: 0.4em 0;
 }
 .pytis-form.list-view table.grid {
     border-collapse: separate;
