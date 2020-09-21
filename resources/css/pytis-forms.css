@@ -236,7 +236,7 @@
 }
 .pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl a.expand-row {
     width: 15px;
-    height: 18px;
+    height: 1.7em;
     position: absolute;
     left: 0;
     top: 0;
@@ -258,7 +258,8 @@
 }
 .pytis-form.browse-form table.data-table tr.data-row,
 .pytis-form.browse-form table.data-table tr.row-expansion { background-color: #f8fafb; }
-.pytis-form.browse-form table.data-table tr.data-row.even { background-color: #f1f3f2; }
+.pytis-form.browse-form table.data-table tr.data-row.even,
+.pytis-form.browse-form table.data-table tr.row-expansion.even { background-color: #f1f3f2; }
 .pytis-form.browse-form table.data-table tr.group-heading th { text-align: left; }
 
 .pytis-form.browse-form table.data-table tr.data-row td.with-popup-menu {

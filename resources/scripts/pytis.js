@@ -271,8 +271,9 @@ pytis.BrowseForm = Class.create(pytis.Form, {
             collapse_ctrl.on('click', this._on_toggle_row_expansion.bind(this));
             content.insert(collapse_ctrl);
             content.hide();
-            tr.insert({after: new Element('tr', {'class': 'row-expansion'}).insert(
-                new Element('td', {'colspan': tr.childElements().length}).insert(content))});
+            tr.insert({after: new Element(
+                'tr', {'class': 'row-expansion ' + (tr.hasClassName('odd') ? 'odd' : 'even')}
+            ).insert(new Element('td', {'colspan': tr.childElements().length}).insert(content))});
             content.slideDown({duration: 0.25});
         }.bind(this));
     },
