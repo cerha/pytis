@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -531,7 +531,12 @@ class PresentedRow(object):
                     # and the semicolons are fine in most cases.
 
                     def row_function(row):
-                        return '; '.join(row[display_column].export().splitlines())
+                        exported = row[display_column].export()
+                        if isinstance(exported, tuple):
+                            # Handle range fields.
+                            return '-'.join(exported)
+                        else:
+                            return '; '.join(exported.splitlines())
                 elif argument_names(display) == ('row',):
                     row_function = display
                 else:
