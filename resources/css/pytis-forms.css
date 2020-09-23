@@ -338,7 +338,8 @@
 }
 
 .pytis-form.browse-form #found-record {
-    background-color: #fc8;
+    outline: #f80 solid 1px;
+    outline-offset: -1px;
 }
 .pytis-form.browse-form .results,
 .pytis-form.browse-form .no-records {
