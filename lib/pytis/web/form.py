@@ -1953,20 +1953,6 @@ class BrowseForm(LayoutForm):
                         total=g.strong(str(row_count)))
         return g.div(summary, cls='summary')
 
-    def _link_ctrl_uri(self, generator, **kwargs):
-        if not kwargs.get('sort') and self._user_sorting:
-            sorting_column, direction = self._user_sorting
-            kwargs = dict(kwargs, sort=sorting_column, dir=self._SORTING_DIRECTIONS[direction])
-        args = [('form_name', self._name)]
-        if self._query_fields_form:
-            row = self._query_fields_form.row()
-            args += [(key, row[key].export()) for key in row.keys()]
-        # TODO: Excluding the 'submit' argument is actually a hack, since it is
-        # defined in Wiking and should be transparent for the form.
-        args += [(k, v) for k, v in self._hidden if k != 'submit']
-        uri = self._uri_provider(None, UriType.LINK, None)
-        return generator.uri(uri, *args, **kwargs)
-
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string + "*")
         return pytis.data.WM(self._data_sorting[0][0], value, ignore_case=False)
@@ -1976,6 +1962,18 @@ class BrowseForm(LayoutForm):
         field = self._field(self._sorting[0][0])
         if not isinstance(field.type, pd.String) or field.type.enumerator():
             return ()
+        params = [('form_name', self._name)]
+        if self._query_fields_form:
+            row = self._query_fields_form.row()
+            params += [(key, row[key].export()) for key in row.keys()]
+        # TODO: Excluding the 'submit' argument is actually a hack, since it is
+        # defined in Wiking and should be transparent for the form.
+        params += [(k, v) for k, v in self._hidden if k != 'submit']
+        if self._user_sorting:
+            sorting_column, direction = self._user_sorting
+            params += [('sort', sorting_column), ('dir', self._SORTING_DIRECTIONS[direction])]
+        # TODO: Unquote the uri returned by _uri_provider here!
+        uri = self._uri_provider(None, UriType.LINK, None)
         result = []
         data = self._row.data()
         for level in range(len(self._index_search_string) + 1):
@@ -2025,7 +2023,7 @@ class BrowseForm(LayoutForm):
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
-            links = [g.a(v, href=self._link_ctrl_uri(g, index_search=v) + '#found-record',
+            links = [g.a(v, href=g.uri(uri, 'found-record', *params, index_search=v),
                          # Translators: Index search controls link tooltip.
                          title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
