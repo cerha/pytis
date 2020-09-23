@@ -480,7 +480,7 @@ class TextField(Field):
             size=width,
             maxlength=maxlen,
             cls=((kwargs.get('cls') or '') + ' text-field' +
-                 ' fullsize' if width >= 80 else '').strip(),
+                 ' fullsize' if width and width >= 80 else '').strip(),
         )
 
     def _editor(self, context, **kwargs):
