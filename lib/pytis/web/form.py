@@ -165,8 +165,9 @@ class Form(lcg.Content):
     def _export_form(self, context):
         return self._export_body(context)
 
-    def _export_actions(self, context, record, uri):
+    def _export_actions(self, context, record):
         g = context.generator()
+        uri = self._uri_provider(record, UriType.LINK, None)
         buttons = [
             g.form([g.hidden(name, value is True and 'true' or value) for name, value in
                     [('action', action.id()),
@@ -716,8 +717,7 @@ class ShowForm(_SingleRecordForm):
     _ALIGN_NUMERIC_FIELDS = True
 
     def _export_form(self, context):
-        uri = self._req.make_uri(self._req.uri())
-        return (super()._export_form(context) + self._export_actions(context, self._row, uri))
+        return (super()._export_form(context) + self._export_actions(context, self._row))
 
 
 class DeletionForm(_SingleRecordForm, _SubmittableForm):
@@ -1796,8 +1796,7 @@ class BrowseForm(LayoutForm):
                              cls='ajax-container')]
         else:
             content = self._export_table(context)
-        actions = self._export_actions(context, None,
-                                       self._uri_provider(None, UriType.LINK, None))
+        actions = self._export_actions(context, None)
         if actions:
             if self._top_actions:
                 content[0:0] = actions
@@ -2410,8 +2409,7 @@ class ListView(BrowseForm):
             lcg.Container(lcg.Section('', lcg.Section('', content, id=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
         if self._row_actions and not layout.popup_actions():
-            parts.extend(self._export_actions(context, row,
-                                              self._uri_provider(row, UriType.LINK, None)))
+            parts.extend(self._export_actions(context, row))
         # We use only css class name from row_style, because we consider the
         # other attributes to be BrowseForm specific.
         cls = 'list-item ' + self._row_attr(row, n)['cls']
