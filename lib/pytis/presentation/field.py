@@ -511,7 +511,7 @@ class PresentedRow(object):
             self._completer_cache[column.id] = completer
         return completer
 
-    def _display(self, column):
+    def _display(self, column, export=None):
         # Returns a display function to apply to an enumeration value."
         if self._secret_column(column):
             hidden_value = column.type.secret_export()
@@ -531,10 +531,13 @@ class PresentedRow(object):
                     # and the semicolons are fine in most cases.
 
                     def row_function(row):
-                        exported = row[display_column].export()
+                        if export:
+                            exported = export(row[display_column])
+                        else:
+                            exported = row[display_column].export()
                         if isinstance(exported, tuple):
-                            # Handle range fields.
-                            return '-'.join(exported)
+                            # Handle range fields (avoid join to protect localizable strings).
+                            return exported[0] + ' – ' + exported[1]
                         else:
                             return '; '.join(exported.splitlines())
                 elif argument_names(display) == ('row',):
@@ -1007,7 +1010,7 @@ class PresentedRow(object):
                     return export(value)
                 else:
                     return value.export()
-        display = self._display(column)
+        display = self._display(column, export=export)
         value = self[column.id].value()
         if value is None:
             return column.null_display or ''
