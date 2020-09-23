@@ -118,18 +118,16 @@ class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
 
-    def __init__(self, view, req, row, handler='#', hidden=(), name=None,
-                 uri_provider=None, actions=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, hidden=(), name=None,
+                 actions=None, **kwargs):
         """Arguments:
 
           view -- presentation specification as a 'ViewSpec' instance.
           req -- instance of a class implementing the 'Request' API.
-          row -- 'PresentedRow' instance.
-          handler -- form handler URI as a string.  This URI is used in the
-            form's 'action' attribute.
           uri_provider -- callable object (function) returning URIs for form
             fields.  The function must have the interface
             described in the class docstring.
+          row -- 'PresentedRow' instance.
           hidden -- hardcoded hidden form fields as a sequence of pairs (name,
             value).
           name -- form name as a string or None.  This name will be sent as a
@@ -145,16 +143,15 @@ class Form(lcg.Content):
         """
         super().__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
+        assert callable(uri_provider), uri_provider
         assert isinstance(row, PresentedRow), row
-        assert isinstance(handler, str), handler
         assert isinstance(hidden, (tuple, list)), hidden
         assert actions is None or isinstance(actions, (tuple, list)) or callable(actions), actions
         self._view = view
         self._req = req
+        self._uri_provider = uri_provider
         self._row = row
         self._key = row.data().key()[0].id()
-        self._handler = handler
-        self._uri_provider = uri_provider
         self._hidden = list(hidden)
         self._name = name
         self._actions = actions
@@ -397,14 +394,14 @@ class LayoutForm(FieldForm):
         def content(self):
             return self._content
 
-    def __init__(self, view, req, row, layout=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, layout=None, **kwargs):
         if layout is None:
             layout = view.layout().group()
         if isinstance(layout, (tuple, list)):
             layout = GroupSpec(layout, orientation=VERTICAL)
         assert isinstance(layout, GroupSpec)
         self._layout = layout
-        super().__init__(view, req, row, **kwargs)
+        super().__init__(view, req, uri_provider, row, **kwargs)
 
     def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
@@ -547,9 +544,9 @@ class LayoutForm(FieldForm):
 
 class _SingleRecordForm(LayoutForm):
 
-    def __init__(self, view, req, row, layout=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, layout=None, **kwargs):
         layout = layout or view.layout().group()
-        super().__init__(view, req, row, layout=layout, **kwargs)
+        super().__init__(view, req, uri_provider, row, layout=layout, **kwargs)
 
     def _export_body(self, context):
         return [self._export_group(context, self._layout)]
@@ -587,7 +584,7 @@ class _SingleRecordForm(LayoutForm):
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
-    def __init__(self, view, req, row, submit_buttons=None,
+    def __init__(self, view, req, uri_provider, row, submit_buttons=None,
                  show_cancel_button=False, show_reset_button=True, **kwargs):
         """Arguments:
 
@@ -618,13 +615,13 @@ class _SubmittableForm(Form):
         self._show_reset_button = show_reset_button
         self._enctype = None
         self._last_validation_errors = []
-        super().__init__(view, req, row, **kwargs)
+        super().__init__(view, req, uri_provider, row, **kwargs)
 
     def _export_form(self, context):
         g = context.generator()
         return [g.form((super()._export_form(context) + self._export_submit(context)),
-                       action=g.uri(self._handler), method=self._HTTP_METHOD,
-                       enctype=self._enctype)]
+                       action=self._uri_provider(None, UriType.LINK, None),
+                       method=self._HTTP_METHOD, enctype=self._enctype)]
 
     def _export_submit(self, context):
         g = context.generator()
@@ -728,10 +725,10 @@ class DeletionForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'deletion-form'
     _ALIGN_NUMERIC_FIELDS = True
 
-    def __init__(self, view, req, row, prompt=_("Confirm record deletion:"),
+    def __init__(self, view, req, uri_provider, row, prompt=_("Confirm record deletion:"),
                  show_reset_button=False, submit_buttons=None, **kwargs):
         submit_buttons = submit_buttons or ((None, _("Confirm Deletion")),)
-        super().__init__(view, req, row, submit_buttons=submit_buttons,
+        super().__init__(view, req, uri_provider, row, submit_buttons=submit_buttons,
                          show_reset_button=show_reset_button, **kwargs)
         self._prompt = prompt
 
@@ -750,7 +747,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
 
-    def __init__(self, view, req, row, multipart=None, show_footer=True, **kwargs):
+    def __init__(self, view, req, uri_provider, row, multipart=None, show_footer=True, **kwargs):
         """Arguments:
 
           multipart -- force form encoding type to 'multipart/form-data'.  If
@@ -767,7 +764,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super().__init__(view, req, row, **kwargs)
+        super().__init__(view, req, uri_provider, row, **kwargs)
         key = self._key
         order = tuple(self._layout.order())
         if not self._row.new() and key not in order + tuple([k for k, v in self._hidden]):
@@ -1021,7 +1018,7 @@ class VirtualForm(EditForm):
         def req(self):
             return self._req
 
-    def __init__(self, req, resolver, spec_kwargs, show_reset_button=False, **kwargs):
+    def __init__(self, req, uri_provider, resolver, spec_kwargs, show_reset_button=False, **kwargs):
         specification = Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
@@ -1030,7 +1027,8 @@ class VirtualForm(EditForm):
         view = specification.view_spec()
         data = specification.data_spec().create()
         row = self.FormRecord(req, view.fields(), data, None, resolver=resolver, new=True)
-        super().__init__(view, req, row, show_reset_button=show_reset_button, **kwargs)
+        super().__init__(view, req, uri_provider, row,
+                         show_reset_button=show_reset_button, **kwargs)
 
 
 class QueryFieldsForm(VirtualForm):
@@ -1039,8 +1037,8 @@ class QueryFieldsForm(VirtualForm):
     _ALLOW_NOT_NULL_INDICATORS = False
     _SAVED_EMPTY_VALUE = '-'
 
-    def __init__(self, req, resolver, name, query_fields, profiles, immediate_filters=True,
-                 async_load=False):
+    def __init__(self, req, uri_provider, resolver, name, query_fields, profiles,
+                 immediate_filters=True, async_load=False):
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
             fields = list(spec_kwargs.pop('fields'))
@@ -1065,7 +1063,8 @@ class QueryFieldsForm(VirtualForm):
                                     flexible=layout.flexible())
                 else:
                     layout = HGroup('profile', layout, flexible=layout.flexible())
-        super().__init__(req, resolver, dict(fields=fields, layout=layout, **spec_kwargs),
+        super().__init__(req, uri_provider, resolver,
+                         dict(fields=fields, layout=layout, **spec_kwargs),
                          name=name)
         row = self._row
         self._immediate_filters = (immediate_filters and
@@ -1129,8 +1128,8 @@ class QueryFieldsForm(VirtualForm):
 class InlineEditForm(EditForm):
     """Special form for representation of browse form inline edit fields (for internal use only)."""
 
-    def __init__(self, view_spec, req, row, uri, field_id):
-        super().__init__(view_spec, req, row, layout=GroupSpec((field_id,)), handler=uri)
+    def __init__(self, view_spec, req, uri_provider, row, field_id):
+        super().__init__(view_spec, req, uri_provider, row, layout=GroupSpec((field_id,)))
 
     def _export_body(self, context):
         field = self._fields[self._layout.order()[0]]
@@ -1152,11 +1151,11 @@ class FilterForm(EditForm):
     # The whole thing needs some further work to be generally usable ...
     _CSS_CLS = 'edit-form filter-form'
 
-    def __init__(self, fields, req, row, **kwargs):
+    def __init__(self, fields, req, uri_provider, row, **kwargs):
         view = ViewSpec(_("Filter"), fields)
         kwargs['reset'] = kwargs.get('reset')  # Default to None in this class.
         kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
-        super().__init__(view, req, row, **kwargs)
+        super().__init__(view, req, uri_provider, row, **kwargs)
 
     def _export_footer(self, context):
         return []
@@ -1171,7 +1170,7 @@ class BrowseForm(LayoutForm):
     _SEARCH_STRING_SPLITTER = re.compile(r'([^\s"]+)|"([^"]*)"|„([^„”]*)”')
     """Determines whether the table is present on output even if it contains no rows."""
 
-    def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
+    def __init__(self, view, req, uri_provider, row, condition=None, arguments=None,
                  columns=None, sorting=None, transform_sorting=None, grouping=None, message=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None,
                  allow_text_search=None, text_search_condition=None, permanent_text_search=False,
@@ -1183,7 +1182,7 @@ class BrowseForm(LayoutForm):
                  **kwargs):
         """Arguments:
 
-          uri_provider -- as in the parent class.
+          view, req, uri_provider, row -- as in the parent class.
           condition -- current condition for filtering the records as
             'pytis.data.Operator' instance or None.
           arguments -- dictionary of table function call arguments, with
@@ -1362,16 +1361,13 @@ class BrowseForm(LayoutForm):
         See the parent classes for definition of the remaining arguments.
 
         """
-        if uri_provider:
-            def uri_provider_(row, kind, target):
-                if kind == UriType.LINK and target == self._columns[0]:
-                    uri = uri_provider(row, kind, None)
-                    if uri is not None:
-                        return uri
-                return uri_provider(row, kind, target)
-        else:
-            uri_provider_ = None
-        super().__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
+        def uri_provider_(row, kind, target):
+            if kind == UriType.LINK and target == self._columns[0]:
+                uri = uri_provider(row, kind, None)
+                if uri is not None:
+                    return uri
+            return uri_provider(row, kind, target)
+        super().__init__(view, req, uri_provider_, row, **kwargs)
         assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
         assert isinstance(permanent_text_search, bool), permanent_text_search
         assert transform_sorting is None or callable(transform_sorting), \
@@ -1402,7 +1398,8 @@ class BrowseForm(LayoutForm):
         self._filter = filter
         self._filters = []
         if query_fields or profiles:
-            self._query_fields_form = form = QueryFieldsForm(req, self._row.resolver(), self._name,
+            self._query_fields_form = form = QueryFieldsForm(req, self._uri_provider,
+                                                             self._row.resolver(), self._name,
                                                              query_fields, profiles,
                                                              immediate_filters=immediate_filters,
                                                              async_load=async_load)
@@ -1968,7 +1965,8 @@ class BrowseForm(LayoutForm):
         # TODO: Excluding the 'submit' argument is actually a hack, since it is
         # defined in Wiking and should be transparent for the form.
         args += [(k, v) for k, v in self._hidden if k != 'submit']
-        return generator.uri(self._handler, *args, **kwargs)
+        uri = self._uri_provider(None, UriType.LINK, None)
+        return generator.uri(uri, *args, **kwargs)
 
     def _index_search_condition(self, search_string):
         value = pd.Value(pd.String(), search_string + "*")
@@ -2150,7 +2148,7 @@ class BrowseForm(LayoutForm):
         # to submit asynchronous requests, such as row expansion etc.
         return g.form(
             content,
-            action=g.uri(self._handler), method='GET',
+            action=self._uri_provider(None, UriType.LINK, None), method='GET',
             cls=('list-form-controls' +
                  (' bottom' if bottom else ' top') +
                  (' empty' if empty else '')),
@@ -2169,7 +2167,7 @@ class BrowseForm(LayoutForm):
         self._set_async_request_row(req)
         if not self._cell_editable(self._row, column_id):
             raise BadRequest()
-        form = InlineEditForm(self._view, req, self._row, self._handler, column_id)
+        form = InlineEditForm(self._view, req, self._uri_provider, self._row, column_id)
         if req.param('save-edited-cell'):
             # The cell edit form was submitted.
             if form.validate(req):
@@ -2327,11 +2325,11 @@ class ListView(BrowseForm):
         def __getitem__(self, key):
             return self._func(key)
 
-    def __init__(self, view, req, row, list_layout=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, list_layout=None, **kwargs):
         if list_layout is None:
             list_layout = view.list_layout()
         layout = list_layout and list_layout.layout() or None
-        super().__init__(view, req, row, layout=layout, **kwargs)
+        super().__init__(view, req, uri_provider, row, layout=layout, **kwargs)
         self._list_layout = list_layout
         if list_layout is None:
             super_ = super()
@@ -2455,7 +2453,8 @@ class ItemizedView(BrowseForm):
 
     _CSS_CLS = 'itemized-view'
 
-    def __init__(self, view, req, row, columns=None, separator=', ', template=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, columns=None, separator=', ',
+                 template=None, **kwargs):
         """Arguments:
 
           columns -- an explicit list of fields shown for each record.  Only
@@ -2477,7 +2476,7 @@ class ItemizedView(BrowseForm):
         """
         if not columns:
             columns = (view.columns()[0],)  # Include just the first column by default.
-        super().__init__(view, req, row, columns=columns, **kwargs)
+        super().__init__(view, req, uri_provider, row, columns=columns, **kwargs)
         assert isinstance(separator, str)
         assert (template is None or isinstance(template, lcg.TranslatableText) or
                 callable(template)), template
@@ -2524,7 +2523,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     """
     _HTTP_METHOD = 'POST'
 
-    def __init__(self, view, req, row, check_columns=None, limits=(), limit=None, **kwargs):
+    def __init__(self, view, req, uri_provider, row, check_columns=None,
+                 limits=(), limit=None, **kwargs):
         """Arguments:
 
           check_columns -- a sequence of column identifiers for which the
@@ -2534,7 +2534,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super().__init__(view, req, row, limits=limits, limit=limit, **kwargs)
+        super().__init__(view, req, uri_provider, row, limits=limits, limit=limit, **kwargs)
         assert check_columns is None or isinstance(check_columns, (list, tuple)), check_columns
         if check_columns is None:
             check_columns = tuple([field.id for field in self._column_fields
@@ -2571,8 +2571,8 @@ class EditableBrowseForm(BrowseForm):
     """
     _EXPORT_EMPTY_TABLE = True
 
-    def __init__(self, view, req, row, editable_columns=None, set_row_callback=None,
-                 allow_insertion=False, extra_rows=0, **kwargs):
+    def __init__(self, view, req, uri_provider, row, editable_columns=None, set_row_callback=None,
+                 allow_insertion=False, extra_rows=0, limits=(), limit=None, **kwargs):
         """Arguments:
 
             editable_columns -- a sequence of column identifiers whoose fields
@@ -2597,7 +2597,7 @@ class EditableBrowseForm(BrowseForm):
         self._removed_rows = []
         self._allow_insertion = allow_insertion
         self._extra_rows = extra_rows
-        super().__init__(view, req, row, **dict(kwargs, limits=(), limit=None))
+        super().__init__(view, req, uri_provider, row, limits=(), limit=None, **kwargs)
         if __debug__:
             for cid in editable_columns:
                 assert cid in self._row, cid
