@@ -463,12 +463,13 @@ class PostgreSQLAccessor(object_2_5):
         self._postgresql_query(connection, _Query('set client_encoding to "utf-8"'), False)
 
     def _postgresql_initialize_crypto(self, connection):
-        crypto_password = pytis.config.dbconnection.crypto_password()
+        connection_data = self._pg_connection_data()
+        crypto_password = connection_data.crypto_password()
         if not crypto_password:
-            password = pytis.config.dbconnection.password()
+            password = connection_data.password()
             if not password:
                 return
-            db_key = pytis.config.dbconnection.db_key()
+            db_key = connection_data.db_key()
             if not db_key:
                 t, a = _Query.next_arg(sval('pytis'))
                 query = _Query("select pytis_crypto_db_key(%s)" % (t,), a)
@@ -477,9 +478,9 @@ class PostgreSQLAccessor(object_2_5):
                     db_key = result[0].result().fetchone()[0]
                 except DBUserException:
                     return
-                pytis.config.dbconnection.set_db_key(db_key)
+                connection_data.set_db_key(db_key)
                 crypto_password = pytis.util.rsa_encrypt(db_key, password).decode('ascii')
-                pytis.config.dbconnection.set_crypto_password(crypto_password)
+                connection_data.set_crypto_password(crypto_password)
             else:
                 return
         self._postgresql_query(connection, _Query("savepoint __pytis_init_crypto"), False)
@@ -491,7 +492,7 @@ class PostgreSQLAccessor(object_2_5):
             self._postgresql_query(connection, _Query("rollback to __pytis_init_crypto"), False)
             # Prevent logging pytis_crypto_unlock_current_user_passwords
             # failures all the time:
-            pytis.config.dbconnection.set_crypto_password(None)
+            connection_data.set_crypto_password(None)
 
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:
