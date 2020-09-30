@@ -1712,8 +1712,12 @@ class BrowseForm(LayoutForm):
         result = g.tr(cells, id=row_id, **self._row_attr(row, n))
         if self._expand_row and not self._async_row_expansion:
             content = self._expand_row(row, self)
-            result += g.tr(g.td(content.export(context), colspan=self._columns_count()),
-                           cls='row-expansion', style="display: none;")
+            # Beware: The elements created here must follow the same structure as in async
+            # expansion as the JS code doesn't make any difference.
+            result += g.tr(g.td(g.div(content.export(context), cls='row-expansion-content'),
+                                colspan=self._columns_count()),
+                           cls='row-expansion ' + (n % 2 and 'even' or 'odd'),
+                           style="display: none;")
         return result
 
     def _export_aggregation(self, context, op):

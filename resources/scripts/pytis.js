@@ -264,6 +264,9 @@ pytis.BrowseForm = Class.create(pytis.Form, {
                           _pytis_expand_row: 1,
                           _pytis_row_key: this._pytis_row_key(tr)};
         this._send_ajax_request(form, parameters, function (transport) {
+            // Beware: The elements created here must follow the same structure as in
+            // the Python code (the non-async version). The JS code doesn't make any
+            // difference.
             var content = new Element('div', {'class': 'row-expansion-content'});
             content.insert(transport.responseText);
             var collapse_ctrl = new Element('a', {'class': 'collapse-row'});
