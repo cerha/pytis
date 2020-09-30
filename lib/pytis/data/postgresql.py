@@ -463,7 +463,7 @@ class PostgreSQLAccessor(object_2_5):
         self._postgresql_query(connection, _Query('set client_encoding to "utf-8"'), False)
 
     def _postgresql_initialize_crypto(self, connection):
-        connection_data = self._pg_connection_data()
+        connection_data = connection.connection_data()
         crypto_password = connection_data.crypto_password()
         if not crypto_password:
             password = connection_data.password()
