@@ -1365,6 +1365,8 @@ class BrowseForm(LayoutForm):
             if kind == UriType.LINK and target == self._columns[0]:
                 uri = uri_provider(row, kind, None)
                 if uri is not None:
+                    if isinstance(uri, str):
+                        uri = Link(uri, title=_("Open record detail"))
                     return uri
             return uri_provider(row, kind, target)
         super().__init__(view, req, uri_provider_, row, **kwargs)
