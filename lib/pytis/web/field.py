@@ -180,7 +180,7 @@ class Field:
     must be used for given field according to specification.
 
     """
-    _HANDLER = 'pytis.Field'
+    _JS_CLASS = 'pytis.Field'
 
     @staticmethod
     def create(row, spec, form, uri_provider, multirow=False):
@@ -453,7 +453,7 @@ class Field:
         """Return JavaScript code for creation of field handler instance."""
         g = context.generator()
         active = self._row.depends(self.id, layout_fields)
-        return g.js_call("new %s" % self._HANDLER, form_id, self.html_id(),
+        return g.js_call("new %s" % self._JS_CLASS, form_id, self.html_id(),
                          self.id, self.state(), active, self.indicate_not_null())
 
 
@@ -512,7 +512,7 @@ class StringField(TextField):
 
 
 class PasswordField(StringField):
-    _HANDLER = 'pytis.PasswordField'
+    _JS_CLASS = 'pytis.PasswordField'
 
     def _validate(self, value, locale_data, **kwargs):
         if self.type.verify():
@@ -589,7 +589,7 @@ class ContentField(MultilineField):
 
 
 class HtmlField(MultilineField):
-    _HANDLER = 'pytis.HtmlField'
+    _JS_CLASS = 'pytis.HtmlField'
 
     class AcfRule:
         """A single ACF rule for CKEditor"""
@@ -736,7 +736,7 @@ class HtmlField(MultilineField):
 
 
 class DateTimeField(TextField):
-    _HANDLER = 'pytis.DateTimeField'
+    _JS_CLASS = 'pytis.DateTimeField'
 
     def datetime_format(self, locale_data):
         if hasattr(self.type, 'exact') and not self.type.exact():  # for wiking.DateTime
@@ -828,7 +828,7 @@ class ColorField(StringField):
 
 
 class CheckboxField(Field):
-    _HANDLER = 'pytis.CheckboxField'
+    _JS_CLASS = 'pytis.CheckboxField'
 
     def _format(self, context):
         # Translators: Boolean value display.  Should be Yes/No in the meaning True/False.
@@ -858,7 +858,7 @@ class FileField(Field):
     contents is uploaded as a file.
 
     """
-    _HANDLER = 'pytis.FileField'
+    _JS_CLASS = 'pytis.FileField'
 
     def _validate(self, value, locale_data, **kwargs):
         if value is not None:
@@ -963,7 +963,7 @@ class EnumerationField(Field):
 
 
 class RadioField(EnumerationField):
-    _HANDLER = 'pytis.RadioField'
+    _JS_CLASS = 'pytis.RadioField'
 
     def _editor(self, context, id, **kwargs):
         g = context.generator()
@@ -989,7 +989,7 @@ class RadioField(EnumerationField):
 
 
 class ChoiceField(EnumerationField):
-    _HANDLER = 'pytis.ChoiceField'
+    _JS_CLASS = 'pytis.ChoiceField'
 
     def _editor(self, context, **kwargs):
         g = context.generator()
@@ -1043,7 +1043,7 @@ class ArrayField(EnumerationField):
 
 
 class ChecklistField(ArrayField):
-    _HANDLER = 'pytis.ChecklistField'
+    _JS_CLASS = 'pytis.ChecklistField'
 
     def _format(self, context):
         if self._showform:

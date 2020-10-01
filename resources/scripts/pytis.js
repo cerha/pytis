@@ -944,7 +944,7 @@ pytis.Field = Class.create({
             // TODO: handle aria-required also for compound fields (radio group, checklist).
             this._ctrl.setAttribute('aria-required', 'true');
         }
-        // To allow accessing the field handler instance in pytis-ckeditor.js.
+        // To allow accessing the field instance in pytis-ckeditor.js.
         this._element._pytis_field_instance = this;
     },
 
@@ -1012,7 +1012,6 @@ pytis.Field = Class.create({
 });
 
 pytis.CheckboxField = Class.create(pytis.Field, {
-    // Specific handler for a checkbox field.
 
     set_value: function (value, localized_value) {
         // Set the field value.
@@ -1022,7 +1021,6 @@ pytis.CheckboxField = Class.create(pytis.Field, {
 });
 
 pytis.RadioField = Class.create(pytis.Field, {
-    // Specific handler for a radio button group.
 
     set_value: function (value, localized_value) {
         var i, radio;
@@ -1042,7 +1040,6 @@ pytis.RadioField = Class.create(pytis.Field, {
 });
 
 pytis.PasswordField = Class.create(pytis.Field, {
-    // Specific handler a password field.
 
     set_value: function (value, localized_value) {
         var i;
@@ -1065,7 +1062,7 @@ pytis.PasswordField = Class.create(pytis.Field, {
 });
 
 pytis.ChoiceField = Class.create(pytis.Field, {
-    // Specific handler for codebook field represented by HTML select control.
+    // Enumeration field represented by HTML select control.
 
     set_enumeration: function (value, links) {
         var options = this._ctrl.options;
@@ -1092,7 +1089,7 @@ pytis.ChoiceField = Class.create(pytis.Field, {
 });
 
 pytis.ChecklistField = Class.create(pytis.Field, {
-    // Specific handler for a multi select control represented by a group of checkboxes.
+    // Multi select control represented by a group of checkboxes.
 
     _checkboxes: function () {
         return this._element.immediateDescendants().collect(function (item) {
@@ -1211,7 +1208,7 @@ pytis.FileField = Class.create(pytis.Field, {
         $super(form_id, field_id, id, state, active, required);
         // Observe file field changes separately as they are 1) ignored by
         // form.observe (by Prototype.js, not sure why) and 2) only "active"
-        // fields are currently observed by pytis form updated (field is active
+        // fields are currently observed by pytis form updates (field is active
         // when computers depend on it).  When we ever decide to send ajax
         // updates for all fields (to support continuous validation) we can
         // solve file size validation within the main form updates.
