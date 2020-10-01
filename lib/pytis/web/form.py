@@ -621,7 +621,7 @@ class _SubmittableForm(Form):
     def _export_form(self, context):
         g = context.generator()
         return [g.form((super()._export_form(context) + self._export_submit(context)),
-                       action=self._uri_provider(None, UriType.LINK, None),
+                       action=self._uri_provider(self._row, UriType.LINK, None),
                        method=self._HTTP_METHOD, enctype=self._enctype)]
 
     def _export_submit(self, context):
