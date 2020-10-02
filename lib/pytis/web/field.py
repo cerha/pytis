@@ -969,7 +969,7 @@ class RadioField(EnumerationField):
         g = context.generator()
         value = self._value()
         radios = []
-        choices = self._row.enumerate(self.id)
+        choices = self._row.enumerate(self.id, export=localizable_export)
         if not value.type().not_null():
             null_display = self.spec.null_display()
             if null_display:
@@ -993,7 +993,7 @@ class ChoiceField(EnumerationField):
 
     def _editor(self, context, **kwargs):
         g = context.generator()
-        enumeration = self._row.enumerate(self.id)
+        enumeration = self._row.enumerate(self.id, export=localizable_export)
         value = self._value().value()
         selected = []
 
@@ -1086,7 +1086,8 @@ class ChecklistField(ArrayField):
                     result += (g.noescape('&nbsp;[') + link + g.noescape(']'))
             return result
         checkboxes = [g.div(checkbox(i, val, display))
-                      for i, (val, display) in enumerate(self._row.enumerate(self.id))]
+                      for i, (val, display) in
+                      enumerate(self._row.enumerate(self.id, export=localizable_export))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
 
 

@@ -565,7 +565,7 @@ class PresentedRow(object):
                                 return ''
         return display
 
-    def _display_as_row_function(self, column):
+    def _display_as_row_function(self, column, export=None):
         # Same as '_display()', but returns a function of a data row.  It would be possible to use
         # '_display()' everywhere, but that causes major inefficiency in 'enumerate()' (separate
         # select for each row of the select).
@@ -585,9 +585,12 @@ class PresentedRow(object):
                 display = column.type.enumerator().value_column()
 
             if isinstance(display, basestring):
+                if not export:
+                    def export(value):
+                        return value.export()
 
                 def display_function(row):
-                    result = row[display].export()
+                    result = export(row[display])
                     if isinstance(result, tuple):
                         # Handle range fields (avoid join to protect localizable strings).
                         result = result[0] + ' – ' + result[1]
@@ -1039,7 +1042,7 @@ class PresentedRow(object):
         else:
             return ''
 
-    def enumerate(self, key):
+    def enumerate(self, key, export=None):
         """Return the list of valid values of an enumeration field.
 
         Returns a list of pairs (VALUE, DISPLAY), where VALUE is the internal
@@ -1067,7 +1070,7 @@ class PresentedRow(object):
             if sorting is None and column.codebook is not None:
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
             value_column = enumerator.value_column()
-            display = self._display_as_row_function(column)
+            display = self._display_as_row_function(column, export=export)
 
             return [(row[value_column].value(), display(row))
                     for row in enumerator.rows(transaction=self._transaction,
