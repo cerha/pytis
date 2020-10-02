@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-05-13 14:37+0200\n"
+"POT-Creation-Date: 2020-10-02 17:43+0200\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -65,12 +65,12 @@ msgstr ""
 msgid "Invalid user name or password"
 msgstr "Formato de fecha y/o hora no válido"
 
-#: ../lib/pytis/data/postgresql.py:463 ../lib/pytis/data/postgresql.py:573
-#: ../lib/pytis/data/postgresql.py:585
+#: ../lib/pytis/data/postgresql.py:426 ../lib/pytis/data/postgresql.py:530
+#: ../lib/pytis/data/postgresql.py:542
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3568
+#: ../lib/pytis/data/postgresql.py:3524
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Fecha y/o hora no válida"
@@ -236,7 +236,7 @@ msgstr ""
 msgid "Such value already exists."
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:725
+#: ../lib/pytis/presentation/field.py:745
 msgid "unlimited"
 msgstr ""
 

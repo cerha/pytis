@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-05-13 14:37+0200\n"
+"POT-Creation-Date: 2020-10-02 17:43+0200\n"
 "PO-Revision-Date: 2017-09-12 21:37+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -65,12 +65,12 @@ msgstr "Databázová chyba"
 msgid "Invalid user name or password"
 msgstr "Chybné uživatelské jméno nebo heslo"
 
-#: ../lib/pytis/data/postgresql.py:463 ../lib/pytis/data/postgresql.py:573
-#: ../lib/pytis/data/postgresql.py:585
+#: ../lib/pytis/data/postgresql.py:426 ../lib/pytis/data/postgresql.py:530
+#: ../lib/pytis/data/postgresql.py:542
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:3568
+#: ../lib/pytis/data/postgresql.py:3524
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -229,7 +229,7 @@ msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 msgid "Such value already exists."
 msgstr "Taková hodnota již existuje"
 
-#: ../lib/pytis/presentation/field.py:725
+#: ../lib/pytis/presentation/field.py:745
 msgid "unlimited"
 msgstr "neomezeno"
 

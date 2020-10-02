@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-01-29 22:41+0100\n"
-"PO-Revision-Date: 2019-08-23 14:31+0200\n"
+"POT-Creation-Date: 2020-10-02 17:43+0200\n"
+"PO-Revision-Date: 2020-10-02 18:10+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -17,133 +17,137 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/web/dialog.py:55 ../lib/pytis/web/form.py:622
+#: ../lib/pytis/web/dialog.py:54 ../lib/pytis/web/form.py:614
 msgid "Submit"
 msgstr "Odeslat"
 
 #. Accessible label of password confirmation field (for entering
 #. the password again to reveal possible typos.  Use imperative.
 #. %s is replaced by the field label.
-#: ../lib/pytis/web/field.py:543
+#: ../lib/pytis/web/field.py:542
 #, python-format
 msgid "Repeat %s"
 msgstr "Zopakujte %s"
 
-#: ../lib/pytis/web/field.py:775
+#: ../lib/pytis/web/field.py:772
 msgid "today"
 msgstr "dnes"
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:820 ../lib/pytis/web/field.py:909
+#: ../lib/pytis/web/field.py:836 ../lib/pytis/web/field.py:937
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/field.py:820 ../lib/pytis/web/field.py:909
+#: ../lib/pytis/web/field.py:836 ../lib/pytis/web/field.py:937
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/web/field.py:850
+#. The label "image"/"file" is used in textual representation of binary
+#. data values, usually as a link to download the actual binary file.
+#: ../lib/pytis/web/field.py:885
+msgid "image"
+msgstr "obrázek"
+
+#: ../lib/pytis/web/field.py:887
+msgid "file"
+msgstr "soubor"
+
+#: ../lib/pytis/web/field.py:914
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Nedodržena minimální velikost %(minlen)s"
 
-#: ../lib/pytis/web/field.py:854
+#: ../lib/pytis/web/field.py:918
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Překročena maximální velikost %(maxlen)s"
 
-#. The label "image"/"file" is used in textual representation of binary
-#. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:880
-msgid "image"
-msgstr "obrázek"
-
-#: ../lib/pytis/web/field.py:882
-msgid "file"
-msgstr "soubor"
-
-#: ../lib/pytis/web/form.py:300 ../lib/pytis/web/form.py:302
+#: ../lib/pytis/web/form.py:292 ../lib/pytis/web/form.py:294
 msgid "Print"
 msgstr "Tisknout"
 
-#: ../lib/pytis/web/form.py:304
+#: ../lib/pytis/web/form.py:296
 msgid "Export the contents of this field into PDF"
 msgstr "Exportovat obsah tohoto políčka do PDF"
 
-#: ../lib/pytis/web/form.py:652
+#: ../lib/pytis/web/form.py:643
 msgid "Submit the form"
 msgstr "Odeslat formulář"
 
-#: ../lib/pytis/web/form.py:654 ../lib/pytis/web/form.py:2156
+#: ../lib/pytis/web/form.py:645 ../lib/pytis/web/form.py:2152
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/web/form.py:657
+#: ../lib/pytis/web/form.py:648
 msgid "Reset"
 msgstr "Vrátit původní hodnoty"
 
-#: ../lib/pytis/web/form.py:658
+#: ../lib/pytis/web/form.py:649
 msgid "Undo all changes"
 msgstr "Zrušit všechny provedené změny"
 
-#: ../lib/pytis/web/form.py:671
+#: ../lib/pytis/web/form.py:662
 msgid "Integrity check failed."
 msgstr "Kontrola integrity selhala."
 
-#: ../lib/pytis/web/form.py:718
+#: ../lib/pytis/web/form.py:708
 msgid "Invalid subform values."
 msgstr "Neplatné hodnoty vnořeného formuláře."
 
-#: ../lib/pytis/web/form.py:740
+#: ../lib/pytis/web/form.py:728
 msgid "Confirm record deletion:"
 msgstr "Potvrďte smazání záznamu:"
 
-#: ../lib/pytis/web/form.py:742
+#: ../lib/pytis/web/form.py:730
 msgid "Confirm Deletion"
 msgstr "Potvrdit smazání"
 
-#: ../lib/pytis/web/form.py:852
+#: ../lib/pytis/web/form.py:840
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
-#: ../lib/pytis/web/form.py:1070
+#: ../lib/pytis/web/form.py:1062
 msgid "Profile"
 msgstr "Profil"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1118
+#: ../lib/pytis/web/form.py:1113
 msgid "Change filters"
 msgstr "Změnit filtry"
 
-#: ../lib/pytis/web/form.py:1152
+#: ../lib/pytis/web/form.py:1146
 msgid "Save"
 msgstr "Uložit"
 
-#: ../lib/pytis/web/form.py:1167
+#: ../lib/pytis/web/form.py:1161
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:1169
+#: ../lib/pytis/web/form.py:1163
 msgid "Apply Filter"
 msgstr "Aplikovat filtr"
 
-#: ../lib/pytis/web/form.py:1631
+#: ../lib/pytis/web/form.py:1375
+msgid "Open record detail"
+msgstr "Otevřít detail záznamu"
+
+#: ../lib/pytis/web/form.py:1625
 msgid "Popup the menu of actions for this record"
 msgstr "Zobrazit menu akcí pro tento záznam"
 
-#: ../lib/pytis/web/form.py:1739
+#: ../lib/pytis/web/form.py:1737
 msgid "Sum"
 msgstr "Součet"
 
-#: ../lib/pytis/web/form.py:1740
+#: ../lib/pytis/web/form.py:1738
 msgid "Average"
 msgstr "Průměr"
 
-#: ../lib/pytis/web/form.py:1741
+#: ../lib/pytis/web/form.py:1739
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1742
+#: ../lib/pytis/web/form.py:1740
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -151,14 +155,20 @@ msgstr "Maximum"
 msgid "Loading form data..."
 msgstr "Načítám data formuláře..."
 
-#: ../lib/pytis/web/form.py:1956
+#. Used in empty list forms.  "Records" refers to
+#. database records in the most generic senese possible.
+#: ../lib/pytis/web/form.py:1921
+msgid "No records."
+msgstr "Žádné záznamy."
+
+#: ../lib/pytis/web/form.py:1957
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1964
+#: ../lib/pytis/web/form.py:1965
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
@@ -201,54 +211,48 @@ msgstr[0] "Nalezen %d záznam odpovídající hledanému výrazu."
 msgstr[1] "Nalezeny %d záznamy odpovídající hledanému výrazu."
 msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
-#. Used in empty list forms.  "Records" refers to
-#. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:2059
-msgid "No records."
-msgstr "Žádné záznamy."
-
-#: ../lib/pytis/web/form.py:2106 ../lib/pytis/web/form.py:2108
+#: ../lib/pytis/web/form.py:2102 ../lib/pytis/web/form.py:2104
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:2108 ../lib/pytis/web/form.py:2136
+#: ../lib/pytis/web/form.py:2104 ../lib/pytis/web/form.py:2132
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
-#: ../lib/pytis/web/form.py:2118
+#: ../lib/pytis/web/form.py:2114
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/web/form.py:2119
+#: ../lib/pytis/web/form.py:2115
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:2122
+#: ../lib/pytis/web/form.py:2118
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/web/form.py:2123
+#: ../lib/pytis/web/form.py:2119
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:2126 ../lib/pytis/web/form.py:2154
+#: ../lib/pytis/web/form.py:2122 ../lib/pytis/web/form.py:2150
 msgid "Search"
 msgstr "Hledat"
 
-#: ../lib/pytis/web/form.py:2133 ../lib/pytis/web/form.py:2135
+#: ../lib/pytis/web/form.py:2129 ../lib/pytis/web/form.py:2131
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:2141
+#: ../lib/pytis/web/form.py:2137
 msgid "Go"
 msgstr "Jdi"
 
-#: ../lib/pytis/web/form.py:2149
+#: ../lib/pytis/web/form.py:2145
 msgid "Search expression"
 msgstr "Hledaný výraz"
 
-#: ../lib/pytis/web/form.py:2626 ../lib/pytis/web/form.py:2628
+#: ../lib/pytis/web/form.py:2620 ../lib/pytis/web/form.py:2622
 msgid "Remove this row"
 msgstr "Odstranit tento řádek"
 
@@ -522,36 +526,36 @@ msgstr "Položka"
 msgid "Index item cannot be empty."
 msgstr "Rejstříková položka nemůže být prázdná."
 
-#: ../resources/scripts/pytis.js:240 ../resources/scripts/pytis.js:423
-#: ../resources/scripts/pytis.js:425
+#: ../resources/scripts/pytis.js:240 ../resources/scripts/pytis.js:427
+#: ../resources/scripts/pytis.js:429
 msgid "Expand Row"
 msgstr "Rozbalit řádek"
 
-#: ../resources/scripts/pytis.js:255 ../resources/scripts/pytis.js:270
+#: ../resources/scripts/pytis.js:255 ../resources/scripts/pytis.js:273
 msgid "Collapse Row"
 msgstr "Sbalit řádek"
 
-#: ../resources/scripts/pytis.js:349
+#: ../resources/scripts/pytis.js:353
 msgid "Failed loading form:"
 msgstr "Načtení formuláře se nezdařilo:"
 
-#: ../resources/scripts/pytis.js:360
+#: ../resources/scripts/pytis.js:364
 msgid "show details"
 msgstr "zobrazit podrobnosti"
 
-#: ../resources/scripts/pytis.js:415
+#: ../resources/scripts/pytis.js:419
 msgid "Double click the cell to edit the value."
 msgstr "Dvojím kliknutím na této buňce tabulky můžete její hodnotu upravit."
 
-#: ../resources/scripts/pytis.js:726
+#: ../resources/scripts/pytis.js:739
 msgid "New row"
 msgstr "Nový řádek"
 
-#: ../resources/scripts/pytis.js:895
+#: ../resources/scripts/pytis.js:908
 msgid "The form data have changed!"
 msgstr "Údaje ve formuláři byly změněny!"
 
-#: ../resources/scripts/pytis.js:896
+#: ../resources/scripts/pytis.js:909
 msgid "Do you really want to close the form?"
 msgstr "Opravdu chcete formulář uzavřít?"
 
