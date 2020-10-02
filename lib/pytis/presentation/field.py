@@ -569,30 +569,39 @@ class PresentedRow(object):
         # Same as '_display()', but returns a function of a data row.  It would be possible to use
         # '_display()' everywhere, but that causes major inefficiency in 'enumerate()' (separate
         # select for each row of the select).
+        def check_result(result):
+            assert isinstance(result, basestring), \
+                "Invalid result of display function for column '%s': %r" % (column.id, result)
+            return result
+
         if self._secret_column(column):
             hidden_value = column.type.secret_export()
 
-            def display(row):
+            def display_function(row):
                 return hidden_value
         else:
             display = column.display
             if display is None:
-                value_column = column.type.enumerator().value_column()
+                display = column.type.enumerator().value_column()
 
-                def display(row):
-                    return row[value_column].export()
-            elif isinstance(display, basestring):
-                display_column = display
+            if isinstance(display, basestring):
 
-                def display(row):
-                    return row[display_column].export()
+                def display_function(row):
+                    result = row[display].export()
+                    if isinstance(result, tuple):
+                        # Handle range fields (avoid join to protect localizable strings).
+                        result = result[0] + ' – ' + result[1]
+                    return result
             elif argument_names(display) != ('row',):
                 value_column = column.type.enumerator().value_column()
-                display_function = display
 
-                def display(row):
-                    return display_function(row[value_column].value())
-        return display
+                def display_function(row):
+                    return check_result(display(row[value_column].value()))
+            else:
+                def display_function(row):
+                    return check_result(display(row))
+
+        return display_function
 
     def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
@@ -1060,12 +1069,7 @@ class PresentedRow(object):
             value_column = enumerator.value_column()
             display = self._display_as_row_function(column)
 
-            def check_display(row):
-                result = display(row)
-                assert isinstance(result, basestring), \
-                    "Invalid result of display function for column '%s': %r" % (column.id, result)
-                return result
-            return [(row[value_column].value(), check_display(row))
+            return [(row[value_column].value(), display(row))
                     for row in enumerator.rows(transaction=self._transaction,
                                                condition=self.runtime_filter(key),
                                                arguments=self.runtime_arguments(key),
