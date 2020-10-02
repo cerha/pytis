@@ -1517,7 +1517,7 @@ class BrowseForm(LayoutForm):
                             if req.localizer().localize(label) == string:
                                 return pd.EQ(field.id, pd.Value(t, value))
                     if isinstance(t, pd.String):
-                        return pd.WM(field.id, pd.WMValue(f.type, '*' + string + '*'))
+                        return pd.WM(field.id, pd.WMValue(field.type, '*' + string + '*'))
                     if isinstance(field, DateTimeField):
                         kwargs = dict(format=field.datetime_format(locale_data))
                     else:
