@@ -1,7 +1,0 @@
-Pytis toolkit
-
-Pytis is a Python toolkit for information systems.  It provides a layer for
-data abstraction and an engine to run a graphical user interface on top of your
-data definitions.  The data are typically stored in a relational database.
-
-See the file INSTALL for installation instructions.
