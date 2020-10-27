@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import datetime
 import pytis.data as pd
 import pytis.util
 from pytis.presentation import Specification, Field, Editable, \
-    QueryFields, HGroup, VGroup
+    QueryFields, HGroup, VGroup, procedure
 from pytis.form import BrowseForm, run_form
 
 _ = pytis.util.translations('pytis-defs')
@@ -137,16 +137,13 @@ class ChangesLogUser(ChangesLog):
             'search_path_': search_path_}
 
 
-def proc_spec():
-
-    def show_changes_in_row(key_value, tablename=None):
-        CHANGE_LOG_SPEC = 'logging.ChangesLog'
-        arguments = {"date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
-                     "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
-                     "key_value_": pd.sval(key_value.export()),
-                     "search_path_": pd.sval(pytis.config.dbschemas)}
-        if tablename is not None:
-            arguments["tablename_"] = pd.sval(tablename)
-        return run_form(BrowseForm, CHANGE_LOG_SPEC, arguments=arguments)
-
-    return {"show_changes_in_row": show_changes_in_row}
+@procedure
+def show_changes_in_row(key_value, tablename=None):
+    CHANGE_LOG_SPEC = 'logging.ChangesLog'
+    arguments = {"date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
+                 "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
+                 "key_value_": pd.sval(key_value.export()),
+                 "search_path_": pd.sval(pytis.config.dbschemas)}
+    if tablename is not None:
+        arguments["tablename_"] = pd.sval(tablename)
+    return run_form(BrowseForm, CHANGE_LOG_SPEC, arguments=arguments)

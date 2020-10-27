@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import pytis.util
 from pytis.util import nextval
 import pytis.data
 import pytis.extensions
-from pytis.presentation import Field, Editable
+from pytis.presentation import Field, Editable, procedure
 import pytis.form
 import pytis.presentation
 
@@ -114,26 +114,25 @@ class DirectUserOutputTemplates(UserOutputTemplates):
                      )
         return self._inherited_fields(DirectUserOutputTemplates, override=overridde)
 
-    def proc_spec(self):
-        def delete_template(module, specification):
-            def s(value):
-                return pytis.data.Value(pytis.data.String(), value)
-            data_spec = self.data_spec()
-            view_spec = self.view_spec()
-            data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
-            condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
-                                       pytis.data.EQ('specification', s(specification)))
-            if not data.select(condition):
-                message = _("Tisková sestava neexistuje: ") + specification
-                pytis.form.run_dialog(pytis.form.Error, message)
-                return
-            row = data.fetchone()
-            if data.fetchone() is not None:
-                message = _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
-                pytis.form.run_dialog(pytis.form.Error, message)
-                return
-            record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
-            if pytis.form.delete_record(view_spec, data, None, record):
-                # To update the printing button of the current form
-                pytis.form.refresh()
-        return {'delete_template': delete_template}
+    @procedure
+    def delete_template(self, module, specification):
+        def s(value):
+            return pytis.data.Value(pytis.data.String(), value)
+        data_spec = self.data_spec()
+        view_spec = self.view_spec()
+        data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
+        condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
+                                   pytis.data.EQ('specification', s(specification)))
+        if not data.select(condition):
+            message = _("Tisková sestava neexistuje: ") + specification
+            pytis.form.run_dialog(pytis.form.Error, message)
+            return
+        row = data.fetchone()
+        if data.fetchone() is not None:
+            message = _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
+            pytis.form.run_dialog(pytis.form.Error, message)
+            return
+        record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
+        if pytis.form.delete_record(view_spec, data, None, record):
+            # To update the printing button of the current form
+            pytis.form.refresh()

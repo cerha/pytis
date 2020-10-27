@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ import pytis.form
 import pytis.presentation
 import pytis.util
 from pytis.util import nextval
-from pytis.presentation import Editable, Field
+from pytis.presentation import Editable, Field, procedure
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -763,14 +763,13 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
             result = "Řádek se nepodařilo vymazat"
         return result
 
-    def proc_spec(self):
-        def commit_changes():
-            if pytis.extensions.dbfunction("pytis_update_summary_rights"):
-                message = _(u"Změny aplikovány")
-            else:
-                message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")
-            pytis.form.run_dialog(pytis.form.Message, message)
-        return {'commit_changes': commit_changes}
+    @procedure
+    def commit_changes(self):
+        if pytis.extensions.dbfunction("pytis_update_summary_rights"):
+            message = _(u"Změny aplikovány")
+        else:
+            message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")
+        pytis.form.run_dialog(pytis.form.Message, message)
 
 
 class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
