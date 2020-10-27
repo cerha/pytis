@@ -396,7 +396,7 @@ def interrupt_watcher():
         lock.release()
         last_event = None
         import time
-        while pytis.form.app is not None:
+        while pytis.form and pytis.form.app is not None:
             time.sleep(0.1)
             if _current_event is not None and _current_event is last_event:
                 pytis.form.wx_yield_(full=True)
