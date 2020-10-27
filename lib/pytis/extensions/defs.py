@@ -547,8 +547,7 @@ def cache_spec(*args, **kwargs):
 
     def do(update, specs):
         def cache(name):
-            for spec in ('data_spec', 'view_spec',
-                         'cb_spec', 'proc_spec', 'binding_spec'):
+            for spec in ('data_spec', 'view_spec', 'cb_spec', 'binding_spec'):
                 try:
                     resolver.get(name, spec)
                 except ResolverError:
