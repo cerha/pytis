@@ -1103,14 +1103,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # si ho uložíme a pak zase obnovíme.
             focused = wx_focused_window()
             wx_yield_()
-            try:
-                proc = pytis.config.resolver.get_object(spec_name, proc_name)
-            except ResolverError:
-                # Legacy procedure definitions
-                spec = pytis.config.resolver.get(spec_name, 'proc_spec')
-                assert isinstance(spec, dict), spec
-                assert proc_name in spec, (proc_name, spec)
-                proc = spec[proc_name]
+            proc = pytis.config.resolver.get_object(spec_name, proc_name)
             if block_refresh_:
                 result = block_refresh(proc, *args, **kwargs)
             else:
@@ -1444,8 +1437,7 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
 
       spec_name -- jméno specifikace pro resolver.
 
-      proc_name -- jméno procedury, která má být spuštěna.  Jde o klíč do
-        slovníku, který je vracen specifikační funkcí 'proc_spec'.
+      proc_name -- jméno procedury, která má být spuštěna.
 
     Všechny další argumenty (včetně klíčových) budou předány spouštěné
     proceduře.  Výjimkou je klíčový argument 'block_refresh_', který předán
