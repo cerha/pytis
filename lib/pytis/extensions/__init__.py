@@ -42,7 +42,7 @@ from .spec import (  # noqa: F401
     FieldStyle, run_form_mitem, new_record_mitem, run_procedure_mitem,
     nr, rp, bf, df, mf, sf, ddf, ef, get_value, format_value, rp_handler,
     cb2colvalue, run_cb, make_presented_row, run_any_form,
-    cmd_run_any_form, print2mail, ReusableSpec,
+    cmd_run_any_form, print2mail,
     mime_type_constraint,
 )
 

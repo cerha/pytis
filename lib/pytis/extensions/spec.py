@@ -358,59 +358,6 @@ def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, f
         return "No print data available."
 
 
-class ReusableSpec(object):
-
-    def __init__(self, resolver):
-        self._resolver = resolver
-        self._bindings = self._bindings()
-        self._fields = self._fields()
-
-    def __getitem__(self, id):
-        return find(id, self._fields, key=lambda f: f.id())
-
-    def _bindings(self):
-        pass
-
-    def _fields(self):
-        pass
-
-    def fields(self, *args):
-        """Vrať seznam specifikací sloupců vyjmenovaných sloupců.
-
-        Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'Field'.
-
-        """
-        if len(args) == 0:
-            return self._fields
-        else:
-            return [f for f in self._fields if f.id() in args]
-
-    def bindings(self, *args):
-        """Vrať seznam specifikací sloupců vyjmenovaných sloupců.
-
-        Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'pd.DBColumnBinding'.
-
-        """
-        if len(args) == 0:
-            return self._bindings
-        else:
-            return [b for b in self._bindings if b.id() in args]
-
-    def fields_complement(self, *args):
-        """Vrať seznam specifikací sloupců, které nejsou vyjmenovány.
-
-        Pokud nejsou vyjmenovány žádné identifikátory sloupců, vrátí seznam
-        všech sloupců.  Vrací sekvenci instancí 'Field'.
-
-        """
-        if len(args) == 0:
-            return self._fields
-        else:
-            return [f for f in self._fields if f.id() not in args]
-
-
 def mime_type_constraint(*allowed_mime_types):
     """Return a validation function checking the binary vaslue's MIME type.
 
