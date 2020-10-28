@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1313,12 +1313,9 @@ class DMPActions(DMPObject):
             if components[0] == 'RUN_FORM':
                 form_string = components[1]
                 try:
-                    try:
-                        app = resolver.specification('Application')
-                        method = getattr(app, 'cmd_' + form_string)
-                        command, args = method()
-                    except (ResolverError, AttributeError):
-                        command, args = resolver.get('app_commands', form_string)
+                    application = resolver.specification('Application')
+                    method = getattr(application, 'cmd_' + form_string)
+                    command, args = method()
                     form_class = args['form_class']
                     if not issubclass(form_class, pytis.form.Form):
                         raise Exception()

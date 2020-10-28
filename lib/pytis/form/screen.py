@@ -1071,7 +1071,8 @@ class MItem(_TitledMenuObject):
         """
         if isinstance(command, basestring):
             application = pytis.config.resolver.specification('Application')
-            command, args = application.custom_command(command)
+            method = getattr(application, 'cmd_' + command)
+            command, args = method()
         elif isinstance(command, (tuple, list)):
             assert len(command) == 2, command
             assert args is None, args

@@ -5063,34 +5063,6 @@ class Application(SpecificationBase):
         import pytis.form
         return pytis.form.built_in_status_fields()
 
-    def custom_command(self, name):
-        """Return the custom application command referred by 'name' as a pair (CMD, ARGS).
-
-        Arguments:
-          name -- command name as a string
-
-        The application specification must define a method named 'cmd_' +
-        name, which returns the command and its arguments as a tuple of two items
-        (CMD, ARGS), where CMD is a 'pytis.form.Command' instance and ARGS is a
-        dictionaty of its arguments.  This pair is then returned as the result of
-        this method.  None is returned if no such command is defined by the current
-        application.
-
-        """
-        try:
-            method = getattr(self, 'cmd_' + name)
-        except AttributeError:
-            # Take care of backwards compatibility (app_commands.py are deprecated).
-            try:
-                return pytis.config.resolver.get('app_commands', name)
-            except ResolverError:
-                return None
-        command, args = method()
-        assert isinstance(command, pytis.form.Command), command
-        assert isinstance(args, dict), args
-        return command, args
-
-
 
 class SharedParams(object):
     """Specification of a set of shared parameters accessed through a data object.
