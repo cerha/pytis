@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -116,9 +116,8 @@ class Resolver(object):
         return module
 
     def _get_object_by_name(self, name):
-        # The returned object is normally a Specification class, but may be also a python
-        # module (for modules defined by applications with proc_spec) or even
-        # a Wiking module class in Wiking resolver (derived from pytis resolver).
+        # The returned object is normally a Specification class, but may also
+        # be a Wiking module class in Wiking resolver (derived from this class).
         if '.' in name:
             module_name, spec_name = name.rsplit('.', 1)
             allow_search = True not in [(module_name + '.').startswith(prefix + '.')
@@ -188,16 +187,7 @@ class Resolver(object):
         except AttributeError as e:
             raise ResolverError("Resolver error loading specification '%s.%s': %s" %
                                 (name, method_name, e))
-        if pytis.util.argument_names(method):
-            # TODO: Remove this temporary hack for backwards compatibility.
-            # Now it is necessary for example because some specification
-            # methods are defined by applications (basic methods, such as
-            # 'view_spec' or 'data_spec' are defined by the base class
-            # 'pytis.presentation.Specification', but 'proc_spec' is typically
-            # defined by application.
-            return method(self)
-        else:
-            return method()
+        return method()
 
     def specification(self, name, **kwargs):
         """Return the specification instance of given 'name'.
