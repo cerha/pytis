@@ -1,33 +1,26 @@
 Pytis Installation Instructions
 
-Requirements:
+Prerequisities:
 
-  * Python 2.6 or 2.7 (Python3.x is not supported)
+  * Python 2.7 or Python 3.5 or later
   * PostgreSQL 9.4 or later
-  * Python modules:
-    - psycopg2
-    - sqlalchemy
-    - imaging (only when using Image data types)
-    - rpyc (only when using x2goclient.py)
-    - reportlab (for printing)
-  * For running GUI applications, you need also these Python modules:
-    - wxgtk2.8 (only for GUI apps)
-    - wxversion
-    - webkit
-    - magic
-  Typical Pytis application (such as Pytis Demo) also need:
-    - PostgreSQL extensions, such as ltree (postgresql-contrib)
-    - PL/Python procedural language (postgresql-plpython)
 
-Install all these on a Debian-based system:
+Pytis is a pure Python library so it can be used directly from the checked out
+tree.  You just need to:
 
-apt-get install python postgresql python-psycopg2 python-sqlalchemy \
- python-imaging python-wxgtk2.8 python-wxversion python-magic \
- postgresql-contrib postgresql-plpython python-reportlab
+  * Add the 'lib' subdirectory to PYTHONPATH.
+  * Run 'make' after each checkout to update generated files.
+  * Create a Python virtual environment as described below.
 
-The currently supported model of using Pytis is running it directly out of the
-checked out tree, being able to check out a newer version at any time and using
-this new version right away.  You need to run 'make' after each checkout to
-update the generated files from the source files, but no actual installation is
-needed.  Pytis is a pure Python library so you just need to setup your
-PYTHONPATH and you are all done.
+The needed Python packages for desktop applications (using wxPython) are
+defined in file requirements.txt.  For web applications use the Wiking
+framework which defines its own requirements.txt.  Because wxPython binary
+packages are not available through PyPI, you need to run pip install as
+follows:
+
+pip install -r requirements.txt -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-9
+
+Change the URL above to match your system.  See https://wxpython.org/ for more
+details.
+
+
