@@ -79,10 +79,6 @@
 # velmi výrazně zpomaluje běh aplikace.
 #profile = False
 
-# Adresář obsahující definiční soubory. Adresář může být zadán absolutně
-# i relativně vzhledem k aktuálnímu adresáři.
-#def_dir = './defs'
-
 # Adresář pro dočasné pomocné soubory.
 #tmp_dir = '/tmp'
 
