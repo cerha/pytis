@@ -3,10 +3,9 @@ Pytis framework
 
 Pytis is a tool for software developers which makes it possible to build
 information systems declaratively by defining abstract specifications of
-database views in Python and let the system do the rest.  Based on these
-specifications Pytis automatically manages data models in a relational database
-and creates user interfaces (forms to work with the data) according to these
-abstract specifications.
+database views in Python and let the system do the rest.  Pytis automatically
+manages data models in a relational database and creates user interfaces (forms
+to work with the data) according to these abstract specifications.
 
 Pytis currently implements:
 * comprehensive PostgreSQL database support
