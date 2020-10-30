@@ -46,7 +46,7 @@ from .form import (
 from .list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
 from .screen import (
     CheckItem, Menu, MItem, busy_cursor, is_busy_cursor, microsleep,
-    popup_menu, wx_focused_window,
+    popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
     current_form, has_access, message, run_dialog, run_form, top_window
@@ -696,7 +696,7 @@ class MultiForm(Form, Refreshable):
         return None
 
     def _create_subforms(self, parent):
-        # Return a sequence of pairs (title, form) to display as notebook tabs.
+        # Return a sequence of tuples (form, title, icon, tooltip) to display as notebook tabs.
         raise NotImplemented()  # Override in derived class.
 
     def _subform(self, i):
@@ -713,8 +713,12 @@ class MultiForm(Form, Refreshable):
                                                               wx.aui.AUI_NB_TAB_MOVE |
                                                               wx.aui.AUI_NB_SCROLL_BUTTONS |
                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON))
-        for title, form in self._create_subforms(nb):
+        for i, (form, title, icon, tooltip) in enumerate(self._create_subforms(nb)):
             nb.AddPage(form, title)
+            if icon:
+                nb.SetPageBitmap(i, get_icon(icon))
+            if tooltip:
+                nb.SetPageToolTip(i, tooltip)
         self._last_selection = None
         self._select_subform(0)
         for child in nb.Children:
@@ -1080,21 +1084,37 @@ class MultiSideForm(MultiForm):
         return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
     def _create_subforms(self, parent):
-        bindings = all_bindings = self._subform_bindings()
         saved_order = self._get_saved_setting('binding_order')
-        hidden_bindings = self._get_saved_setting('hidden_bindings')
-        if saved_order:
-            bdict = {b.id(): b for b in bindings}
-            bindings = [bdict[binding_id] for binding_id in saved_order if binding_id in bdict]
-            # Saving hidden bindings was previously not implemented, so if the
-            # user has saved binding_order and hidden_bindings is None (instead
-            # of ()), we don't attempt to add new forms because we can not
-            # determine which of them are new...
-            if hidden_bindings is not None:
-                # Add bindings, which were newly added to the specification.
-                bindings += [b for b in all_bindings
-                             if b.id() not in (saved_order + hidden_bindings)]
-        return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
+        hidden = self._get_saved_setting('hidden_bindings', ())
+        spec_bindings = self._subform_bindings()
+        spec_order_without_new = tuple(b.id() for b in spec_bindings if b.id() in saved_order)
+        if not saved_order or saved_order == spec_order_without_new and not hidden:
+            # If saved order matches the specification order (excluding new items),
+            # we show new items in the order of the specification.
+            bindings = [(b, b.id() not in saved_order) for b in spec_bindings]
+        else:
+            # If the user's order doesn't match the specification order, we prefer to
+            # move the new items to the beginning because it is hard to determine any
+            # better meaningful order.
+            bdict = {b.id(): b for b in spec_bindings}
+            bindings = (
+                # Bindings which were newly added to the specification go first.
+                [(b, True) for b in spec_bindings if b.id() not in saved_order + hidden] +
+                # Add saved bindings excluding bindings which no longer exist.
+                [(bdict[bid], False) for bid in saved_order if bid in bdict]
+            )
+        # Make sure new forms don't show as new on next startup.
+        self._set_saved_setting('binding_order', tuple(b.id() for b, new in bindings))
+        self._set_saved_setting('hidden_bindings', tuple(b.id() for b in spec_bindings
+                                                         if b in hidden))
+        return [(self._create_subform(parent, binding), binding.title(),
+                 'new-tab' if new else None,
+                 _("This form was newly added to the application. "
+                   "You can move this form to a position of your "
+                   "choice simply by dragging the tab or hide it "
+                   "from the context menu (right click) if you don't "
+                   "need it.") if new else None)
+                for binding, new in bindings]
 
     def _displayed_forms_menu(self):
         bindings = [f.binding().id() for f in self._subforms()]
@@ -1149,6 +1169,9 @@ class MultiSideForm(MultiForm):
     def _on_tab_move(self, old_position, new_position):
         super(MultiSideForm, self)._on_tab_move(old_position, new_position)
         self._save_tab_order()
+        # Unmark new tabs (TODO: do it only for the tabs which are really new?).
+        self._notebook.SetPageBitmap(new_position, wx.NullBitmap)
+        self._notebook.SetPageToolTip(new_position, '')
 
     def _cmd_toggle_sideform(self, binding):
         nb = self._notebook
