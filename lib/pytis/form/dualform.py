@@ -1084,7 +1084,7 @@ class MultiSideForm(MultiForm):
         return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
     def _create_subforms(self, parent):
-        saved_order = self._get_saved_setting('binding_order')
+        saved_order = self._get_saved_setting('binding_order', ())
         hidden = self._get_saved_setting('hidden_bindings', ())
         spec_bindings = self._subform_bindings()
         spec_order_without_new = tuple(b.id() for b in spec_bindings if b.id() in saved_order)
