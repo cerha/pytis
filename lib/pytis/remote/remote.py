@@ -457,7 +457,7 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
                     decrypt=decrypt)
 
 
-def select_directory(directory=None, title=_("Výběr adresáře")):
+def select_directory(directory=None, title=_("Directory selection")):
     assert directory is None or isinstance(directory, basestring), directory
     # Older clients don't support this argument...
     kwargs = dict(title=title) if RPCInfo.client_api_pushed else dict()
@@ -485,11 +485,11 @@ def select_file(filename=None, directory=None, title=None,
         pattern = template
     if title is None:
         if save:
-            title = _("Uložit soubor")
+            title = _("Save file")
         elif multi:
-            title = _("Výběr souborů")
+            title = _("Files selection")
         else:
-            title = _("Výběr souboru")
+            title = _("File selection")
     # Older clients don't support these arguments...
     kwargs = dict(title=title, save=save) if RPCInfo.client_api_pushed else dict()
     try:
