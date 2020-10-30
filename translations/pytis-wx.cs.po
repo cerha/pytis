@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-02 17:43+0200\n"
-"PO-Revision-Date: 2020-06-30 22:36+0200\n"
+"POT-Creation-Date: 2020-10-30 18:22+0100\n"
+"PO-Revision-Date: 2020-10-30 18:23+0100\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -98,7 +98,7 @@ msgstr "Vyhledávání řetězce"
 msgid "Specification name"
 msgstr "Název specifikace"
 
-#: ../lib/pytis/extensions/spec.py:436
+#: ../lib/pytis/extensions/spec.py:383
 #, python-format
 msgid "Detected data type %(detected)s. Expected %(expected)s."
 msgstr "Detekována data typu %(detected)s. Očekávám %(expected)s."
@@ -137,7 +137,7 @@ msgid "Commands"
 msgstr "Příkazy"
 
 #: ../lib/pytis/form/application.py:415 ../lib/pytis/form/application.py:422
-#: ../lib/pytis/form/application.py:1143
+#: ../lib/pytis/form/application.py:1136
 msgid "Help"
 msgstr "Nápověda"
 
@@ -173,7 +173,7 @@ msgstr "Zavřít aktivní okno"
 msgid "Closes the window of the active form."
 msgstr "Zavře okno aktivního formuláře."
 
-#: ../lib/pytis/form/application.py:550 ../lib/pytis/form/application.py:1618
+#: ../lib/pytis/form/application.py:550 ../lib/pytis/form/application.py:1610
 msgid "Password"
 msgstr "Heslo"
 
@@ -246,96 +246,96 @@ msgstr "Do tohoto formuláře nelze vkládat."
 msgid "Running procedure..."
 msgstr "Spouštím proceduru..."
 
-#: ../lib/pytis/form/application.py:1297 ../lib/pytis/form/application.py:1870
+#: ../lib/pytis/form/application.py:1290 ../lib/pytis/form/application.py:1862
 msgid "Recently opened forms"
 msgstr "Posledně otevřené formuláře"
 
-#: ../lib/pytis/form/application.py:1435
+#: ../lib/pytis/form/application.py:1428
 msgid "Opening form refused."
 msgstr "Spuštění formuláře zamítnuto."
 
-#: ../lib/pytis/form/application.py:1497 ../lib/pytis/form/application.py:1654
+#: ../lib/pytis/form/application.py:1489 ../lib/pytis/form/application.py:1646
 msgid "Are you sure to delete the record permanently?"
 msgstr "Opravdu chcete záznam zcela vymazat?"
 
-#: ../lib/pytis/form/application.py:1522
+#: ../lib/pytis/form/application.py:1514
 msgid "This form doesn't allow deletion."
 msgstr "V tomto formuláři nelze mazat."
 
-#: ../lib/pytis/form/application.py:1589
+#: ../lib/pytis/form/application.py:1581
 msgid "Access denied"
 msgstr "Přístup odepřen"
 
-#: ../lib/pytis/form/application.py:1615
+#: ../lib/pytis/form/application.py:1607
 msgid "Log in for database access"
 msgstr "Přihlášení pro přístup do databáze"
 
-#: ../lib/pytis/form/application.py:1616
+#: ../lib/pytis/form/application.py:1608
 msgid "Login"
 msgstr "Uživatelské jméno"
 
-#: ../lib/pytis/form/application.py:1637 ../lib/pytis/form/application.py:1641
+#: ../lib/pytis/form/application.py:1629 ../lib/pytis/form/application.py:1633
 msgid "Database error"
 msgstr "Databázová chyba"
 
-#: ../lib/pytis/form/application.py:1640
+#: ../lib/pytis/form/application.py:1632
 msgid "Try again?"
 msgstr "Zkusit znovu?"
 
-#: ../lib/pytis/form/application.py:2212
+#: ../lib/pytis/form/application.py:2204
 msgid "Not available"
 msgstr "Není k dispozici"
 
-#: ../lib/pytis/form/application.py:2213 ../lib/pytis/form/dialog.py:108
+#: ../lib/pytis/form/application.py:2205 ../lib/pytis/form/dialog.py:108
 msgid "Ok"
 msgstr "Ok"
 
-#: ../lib/pytis/form/application.py:2215
+#: ../lib/pytis/form/application.py:2207
 msgid "Connected."
 msgstr "Spojeno."
 
-#: ../lib/pytis/form/application.py:2215
+#: ../lib/pytis/form/application.py:2207
 #, python-format
 msgid "Client version: %s"
 msgstr "Verze klienta: %s"
 
-#: ../lib/pytis/form/application.py:2221
+#: ../lib/pytis/form/application.py:2213
 msgid "Not available."
 msgstr "Není k dispozici"
 
-#: ../lib/pytis/form/application.py:2222
+#: ../lib/pytis/form/application.py:2214
 msgid "N/A"
 msgstr "N/A"
 
-#: ../lib/pytis/form/application.py:2225
+#: ../lib/pytis/form/application.py:2217
 #, python-format
 msgid "Status changed: %s"
 msgstr "Změna stavu: %s"
 
-#: ../lib/pytis/form/application.py:2229
+#: ../lib/pytis/form/application.py:2221
 #, python-format
 msgid "Username: %s"
 msgstr "Uživatelské jméno: %s"
 
-#: ../lib/pytis/form/application.py:2230
+#: ../lib/pytis/form/application.py:2222
 #, python-format
 msgid "Database name: %s"
 msgstr "Název databáze: %s"
 
-#: ../lib/pytis/form/application.py:2231
+#: ../lib/pytis/form/application.py:2223
 #, python-format
 msgid "Database host: %s"
 msgstr "Databázový server: %s"
 
-#: ../lib/pytis/form/application.py:2236
+#: ../lib/pytis/form/application.py:2228
 msgid "List position"
 msgstr "Pozice v seznamu"
 
-#: ../lib/pytis/form/application.py:2238
+#: ../lib/pytis/form/application.py:2230
 msgid "User and database parameters"
 msgstr "Uživatel a databázové parametry"
 
-#: ../lib/pytis/form/application.py:2241
+#: ../lib/pytis/form/application.py:2233
 msgid "Remote communication status"
 msgstr "Stav vzdálené komunikace"
 
@@ -641,7 +641,7 @@ msgstr "konfigurační formulář"
 msgid "Apply changes without closing the form"
 msgstr "Uplatnit změny bez uzavření formuláře"
 
-#: ../lib/pytis/form/dialog.py:110 ../lib/pytis/form/dualform.py:1193
+#: ../lib/pytis/form/dialog.py:110 ../lib/pytis/form/dualform.py:1216
 #: ../lib/pytis/form/list.py:2850 ../lib/pytis/form/screen.py:3316
 msgid "Cancel"
 msgstr "Zrušit"
@@ -790,7 +790,7 @@ msgstr "Otevřít soubor"
 msgid "Open files"
 msgstr "Otevřít soubory"
 
-#: ../lib/pytis/form/dialog.py:1295
+#: ../lib/pytis/form/dialog.py:1295 ../lib/pytis/remote/remote.py:488
 msgid "Save file"
 msgstr "Uložit soubor"
 
@@ -798,7 +798,7 @@ msgstr "Uložit soubor"
 msgid "Save files"
 msgstr "Uložit soubory"
 
-#: ../lib/pytis/form/dialog.py:1350
+#: ../lib/pytis/form/dialog.py:1350 ../lib/pytis/remote/remote.py:460
 msgid "Directory selection"
 msgstr "Výběr adresáře"
 
@@ -810,19 +810,31 @@ msgstr "duální formulář"
 msgid "dual view"
 msgstr "duální náhled"
 
-#: ../lib/pytis/form/dualform.py:1101
+#: ../lib/pytis/form/dualform.py:1112
+msgid ""
+"This form was newly added to the application. You can move this form to a "
+"position of your choice simply by dragging the tab or hide it from the "
+"context menu (right click) if you don't need it."
+msgstr ""
+"Tento formulář byl nově přidán do aplikace. Můžete jej přesunout na "
+"požadovanou\n"
+"pozici jednoduše přetažením ouška záložky myší, nebo jej skrýt z "
+"kontextového\n"
+"menu na pravé tlačítko, pokud jej nepotřebujete."
+
+#: ../lib/pytis/form/dualform.py:1121
 msgid "Available forms"
 msgstr "Zobrazené formuláře"
 
-#: ../lib/pytis/form/dualform.py:1111
+#: ../lib/pytis/form/dualform.py:1131
 msgid "Close this form"
 msgstr "Zavřít tento formulář"
 
-#: ../lib/pytis/form/dualform.py:1115
+#: ../lib/pytis/form/dualform.py:1135
 msgid "Filter the main form for non-empty side form"
 msgstr "Filtrovat hlavní formulář na neprázdný vedlejší formulář"
 
-#: ../lib/pytis/form/dualform.py:1116
+#: ../lib/pytis/form/dualform.py:1136
 msgid ""
 "Show only those rows of the main form, which have at least one row in this "
 "side form in its current profile."
@@ -830,11 +842,11 @@ msgstr ""
 "Zobrazit pouze ty řádky hlavního formuláře, pro které tento vedlejší "
 "formulář obsahuje v aktuálním profilu nenulový počet řádků."
 
-#: ../lib/pytis/form/dualform.py:1120
+#: ../lib/pytis/form/dualform.py:1140
 msgid "Filter the main form for empty side form"
 msgstr "Filtrovat hlavní formulář na prázdný vedlejší formulář"
 
-#: ../lib/pytis/form/dualform.py:1121
+#: ../lib/pytis/form/dualform.py:1141
 msgid ""
 "Show only those rows of the main form, which have no rows in this side form "
 "in its current profile."
@@ -842,24 +854,24 @@ msgstr ""
 "Zobrazit pouze ty řádky hlavního formuláře, pro které tento vedlejší "
 "formulář neobsahuje v aktuálním profilu žádné řádky."
 
-#: ../lib/pytis/form/dualform.py:1172
+#: ../lib/pytis/form/dualform.py:1195
 msgid "Unable to close the last form."
 msgstr "Nepodařilo se uzavřít poslední formulář."
 
-#: ../lib/pytis/form/dualform.py:1192
+#: ../lib/pytis/form/dualform.py:1215
 msgid "Can't filter when the current profile is not saved!"
 msgstr "Filtrování nemůže být provedeno, pokud aktuální profil není uložen!"
 
-#: ../lib/pytis/form/dualform.py:1193 ../lib/pytis/form/inputfield.py:2349
+#: ../lib/pytis/form/dualform.py:1216 ../lib/pytis/form/inputfield.py:2349
 #: ../lib/pytis/form/list.py:2850 ../lib/pytis/form/screen.py:1835
 msgid "Save"
 msgstr "Uložit"
 
-#: ../lib/pytis/form/dualform.py:1217
+#: ../lib/pytis/form/dualform.py:1240
 msgid "The requested side form is not available."
 msgstr "Požadovaný vedlejší formulář není dostupný."
 
-#: ../lib/pytis/form/dualform.py:1230
+#: ../lib/pytis/form/dualform.py:1253
 msgid "tabbed dual form"
 msgstr "vícenásobný duální formulář"
 
@@ -2994,26 +3006,18 @@ msgstr "Nepodařilo se vybrat soubor ke stažení: %s"
 msgid "Unable to select a file to save: %s"
 msgstr "Nepodařilo se vybrat soubor k uložení: %s"
 
-#: ../lib/pytis/remote/remote.py:460
-msgid "Výběr adresáře"
-msgstr ""
-
 #: ../lib/pytis/remote/remote.py:468
 #, python-format
 msgid "Failed selecting directory: %s"
 msgstr "Nepodařilo se vybrat adresář: %s"
 
-#: ../lib/pytis/remote/remote.py:488
-msgid "Uložit soubor"
-msgstr ""
-
 #: ../lib/pytis/remote/remote.py:490
-msgid "Výběr souborů"
-msgstr ""
+msgid "Files selection"
+msgstr "Výběr souborů"
 
 #: ../lib/pytis/remote/remote.py:492
-msgid "Výběr souboru"
-msgstr ""
+msgid "File selection"
+msgstr "Výběr souburu"
 
 #: ../lib/pytis/remote/remote.py:500
 #, python-format
@@ -3156,6 +3160,15 @@ msgstr "Změněno"
 #: ../lib/pytis/util/util.py:1607
 msgid "Deleted"
 msgstr "Smazáno"
+
+#~ msgid "Uložit soubor"
+#~ msgstr "Save file"
+
+#~ msgid "Výběr souborů"
+#~ msgstr "File selection"
+
+#~ msgid "Výběr souboru"
+#~ msgstr "File selection"
 
 #~ msgid "Data may be exported into one of the following file formats."
 #~ msgstr ""
