@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1091,7 +1091,7 @@ class MultiSideForm(MultiForm):
         if not saved_order or saved_order == spec_order_without_new and not hidden:
             # If saved order matches the specification order (excluding new items),
             # we show new items in the order of the specification.
-            bindings = [(b, b.id() not in saved_order) for b in spec_bindings]
+            bindings = [(b, saved_order and b.id() not in saved_order) for b in spec_bindings]
         else:
             # If the user's order doesn't match the specification order, we prefer to
             # move the new items to the beginning because it is hard to determine any
