@@ -477,16 +477,16 @@ class TableRowIterator(object):
 
     next = __next__  # for Python 2
 
+    @property
     def form(self):
-        """Return the current form instance.
+        """Returns pytis.api.Form representation of the form from which the rows come.
 
-        This method is designed to be used in application code to get to the
-        current form methods from the action handler function (which receives
-        this iterator as an argument when action context is
+        Allows access to form API from the action handler function (which
+        receives this iterator as an argument when action context is
         ActionContext.SELECTION).
 
         """
-        return self._table.form()
+        return pytis.form.RecordForm.Record.APIProvider(self._table.form())
 
 
 class CustomCellRenderer(wx.grid.GridCellRenderer):
