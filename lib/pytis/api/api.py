@@ -174,6 +174,9 @@ class Form(API):
     arguments = property()
     """Current arguemnts as a dictionary of 'pytis.data.Value' instances or None."""
 
+    sorting = property()
+    """Current sorting as in pytis.data.Data.select() or None."""
+
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.
 
@@ -349,6 +352,10 @@ def test_api_definition():
         @property
         def api_arguments(self):
             return {'a': 'A'}
+
+        @property
+        def api_sorting(self):
+            return None
 
         @property
         def api_query_fields(self):
