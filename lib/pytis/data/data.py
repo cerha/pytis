@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -628,7 +628,7 @@ class Data(object_2_5):
         while self.fetch(BACKWARD) is not None:
             pass
 
-    def search(self, condition, direction=FORWARD, transaction=None):
+    def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
         """Vyhledej nejbližší výskyt řádku splňujícího 'condition'.
 
         Argumenty:
