@@ -3049,11 +3049,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     @property
     def api_field(self):
-        fields = self._fields
+        class FieldAccess(object):
+            def __init__(self, fields):
+                self._fields = fields
 
-        class Field:
             def __getattr__(self, name):
-                f = find(name, fields, key=lambda f: f.id())
+                f = find(name, self._fields, key=lambda f: f.id())
                 if f:
                     return f.provider()
                 else:
@@ -3062,7 +3063,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             def __call__(self, name):
                 return self.__getattr__(name)
 
-        return Field()
+        return FieldAccess(self._fields)
 
 
 class PopupEditForm(PopupForm, EditForm):
