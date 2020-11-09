@@ -1028,15 +1028,6 @@ class LookupForm(InnerForm):
         self._lf_select_count_ = None
         self._init_select(async_count=True)
 
-    def __getattr__(self, name):
-        # Compatibility with contingent external code using the old attribute
-        if name == '_lf_select_count':
-            return self._lf_count()
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            raise AttributeError(name)
-
     def _lf_count(self, min_value=None, timeout=None):
         if self._lf_select_count_ is None or isinstance(self._lf_select_count_, int):
             result = self._lf_select_count_
