@@ -25,6 +25,10 @@ K API je aktuálně možné přistupovat skrze dva hlavní přístupové body:
    atribut 'row.form'.  Ten reprezentuje aktuální formulář (instance
    'pytis.api.Form'), ze kterého pochází řádek 'row'.
 
+3. Obdobně jako argument 'row' i argument 'rows' (iterátor vybraných řádků v
+   handlerech akcí s contextem SELECTION) nabízí atribut 'rows.form'.
+
+
 * Přehled tříd
 
 Následuje zjednodušený přehled tříd Pytis API a jejich metod a atributů.  Pro
@@ -56,6 +60,7 @@ API reprezentace obecného formuláře
       'pytis.api.Field')
 - condition :: aktuální filtrační podmínka (instance 'pytis.data.Operator')
 - arguments :: aktuální argumenty selectu (slovník instancí 'pytis.data.Value')
+- sorting :: aktuální řazení (ve formátu jako pro 'pytis.data.Data.select()')
 - query_fields :: lišta políček dotazu (instance 'pytis.api.QueryFields')
 - clear_selection() :: zruš výběr řádků, pokud nějaký existuje.
 
