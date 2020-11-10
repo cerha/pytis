@@ -486,7 +486,7 @@ class TableRowIterator(object):
         ActionContext.SELECTION).
 
         """
-        return pytis.form.RecordForm.Record.APIProvider(self._table.form())
+        return self._table.form().provider()
 
 
 class CustomCellRenderer(wx.grid.GridCellRenderer):

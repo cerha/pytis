@@ -1720,20 +1720,6 @@ class RecordForm(LookupForm):
     class Record(PresentedRow):
         """PresentedRow extension allowing access to public form API from application code."""
 
-        class APIProvider(pytis.api.APIProvider):
-            """Like pytis.api.APIProvider, but returns the wrapped form instance when called.
-
-            Backwards compatibility hack to make old access to 'Record.form()' work
-            with the new public API definition.
-
-            BEWARE: Also referred from 'TableRowIterator' and
-            'CurrentRowIterator'.
-
-            """
-            def __call__(self):
-                """Deprecated: Don't use Pytis APIs directly!"""
-                return self._instance
-
         def __init__(self, form, *args, **kwargs):
             self._form = form
             super(RecordForm.Record, self).__init__(*args, **kwargs)
@@ -1741,8 +1727,7 @@ class RecordForm(LookupForm):
         @property
         def form(self):
             """Returns pytis.api.Form representation of the form from which the row comes."""
-            # return self._form.provider()
-            return self.APIProvider(self._form)
+            return self._form.provider()
 
         def data(self, init_select=True):
             # Return a new instance rather than giving the internally used data object.
@@ -2032,7 +2017,7 @@ class RecordForm(LookupForm):
 
                     @property
                     def form(self):
-                        return RecordForm.Record.APIProvider(self._form)
+                        return self._form.provider()
 
                 result = CurrentRowIterator(form)
             return result
