@@ -785,6 +785,9 @@ class InputField(KeyHandler, CommandHandler):
     def api_write(self, text):
         self._controls[0][0].WriteText(text)
 
+    def api_on_list_change(self, callback):
+        raise TypeError("List change callback not supported by %s." % self.__class__.__name__)
+
 
 
 class Unlabeled(object):
@@ -2002,6 +2005,9 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
+
+    def api_on_list_change(self, callback):
+        self.set_callback(self.CALL_LIST_CHANGE, callback)
 
 
 class FileField(Invocable, InputField):

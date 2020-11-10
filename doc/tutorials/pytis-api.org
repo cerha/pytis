@@ -70,6 +70,8 @@ API reprezentace vstupního políčka
 
 - refresh() :: obnov zobrazení políčka (přenačti číselníky)
 - write(text) :: zapiš daný text na aktuální pozici kurzoru.
+- on_list_change(callback) :: registruj callback při změně seznamu v políčku
+     typu LIST.
 
 ** pytis.api.QueryFields
 

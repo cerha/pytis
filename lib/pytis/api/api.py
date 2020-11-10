@@ -200,6 +200,15 @@ class Field(API):
         """Insert given text into the field in the current cursor position."""
         pass
 
+    def on_list_change(self, callback):
+        """Add callback on change of the list of available values in a LIST field.
+
+        Raises Exception when called on a field which is not
+        selection_type=LIST.
+
+        """
+        pass
+
 
 class QueryFields(API):
     """Public API representation of the form's query fields panel."""
