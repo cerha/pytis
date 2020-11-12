@@ -295,12 +295,52 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 if trigger.table is not None and trigger.events:
                     events = ' OR '.join(trigger.events)
                     table = object_by_path(trigger.table.name, trigger.search_path())
-                    row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
+                    if trigger.each_row:
+                        row_or_statement = 'ROW'
+                        if trigger.referencing:
+                            raise SQLException("Only statement triggers are allowed to use "
+                                            "REFERENCING option.")
+                        else:
+                            referencing = ''
+                    else:
+                        row_or_statement = 'STATEMENT'
+                        if trigger.referencing:
+                            old_count = 0
+                            new_count = 0
+                            # Check
+                            for t, name in trigger.referencing:
+                                if t == 'OLD':
+                                    old_count = old_count + 1
+                                elif t == 'NEW':
+                                    new_count = new_count + 1
+                                else:
+                                    raise SQLException("First element of REFERENCING option "
+                                                       "has to be OLD or NEW.")
+                            if old_count > 1:
+                                raise SQLException("REFERENCING option can specify OLD only once")
+                            elif new_count > 1:
+                                raise SQLException("REFERENCING option can specify NEW only once")
+                            elif old_count == 1 and 'insert' in [
+                                    e.lower() for e in trigger.events]:
+                                raise SQLException("REFERENCING option can specify OLD "
+                                                   "only for UPDATE or DELETE events ")
+                            elif new_count == 1 and 'delete' in [
+                                    e.lower() for e in trigger.events]:
+                                raise SQLException("REFERENCING option can specify OLD "
+                                                   "only for UPDATE or DELETE events ")
+                            referencing = ' REFERENCING %s' % (
+                                ' '.join(["%s TABLE AS %s" % (r[0], r[1])
+                                           for r in trigger.referencing])
+                            )
+                        else:
+                            referencing = ''
                     trigger_call = trigger(*trigger.arguments)
-                    command = (('CREATE TRIGGER "%s" %s %s ON "%s"\n'
+                    command = (('CREATE TRIGGER "%s" %s %s\n'
+                                'ON "%s"%s\n'
                                 'FOR EACH %s EXECUTE PROCEDURE %s') %
                                (trigger.pytis_name(real=True), trigger.position, events,
-                                table.pytis_name(real=True), row_or_statement, trigger_call,))
+                                table.pytis_name(real=True), referencing,
+                                row_or_statement, trigger_call,))
                     self.connection.execute(command)
                 trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst,
                                               _ddl_runner=self)
@@ -3770,6 +3810,8 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
         modification; one of the strings 'before' and 'after'
       each_row -- if true then the trigger should be invoked for each modified
         table row otherwise it should be invoked once per statement
+      referencing -- tuple of (OLD|NEW, transitional_name) pairs for
+        statement triggers
       call_arguments -- if the trigger function has any arguments then this
         property must define their values and in the right order; tuple of
         values of types accepted by SQLAlchemy for given argument types.
@@ -3780,6 +3822,7 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
     events = ('insert', 'update', 'delete',)
     position = 'after'
     each_row = True
+    referencing = ()
     call_arguments = ()
 
     __visit_name__ = 'trigger'
