@@ -654,7 +654,7 @@ class ZenityUIBackend(ClipboardUIBackend):
         import subprocess
         try:
             output = subprocess.check_output(('zenity',) + args)
-        except (subprocess.CalledProcessError, WindowsError):
+        except (subprocess.CalledProcessError, OSError):
             return None
         return output.rstrip('\r\n')
 
