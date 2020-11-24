@@ -314,12 +314,14 @@ class WxUIBackend(ClientUIBackend):
 
     def __init__(self):
         super(WxUIBackend, self).__init__()
-        if os.path.basename(sys.argv[0]) == 'pytest':
-            # TODO: This is now only run in tests because x2goclient.py creates a 'wx.App'
-            # already at startup and this application stays running during the whole
-            # Pytis run.  Starting another here would cause conflicts and might crash
-            # the whole Python process.  Thus we avoid starting a new wx.App here until
-            # pytis2go.py is ready to replace x2goclient.py.
+        if os.path.basename(sys.argv[0]) == 'pytest' or os.getenv('P2GO_RPYC_PROCESS') == 'true':
+            # TODO: This is only run in tests and when Pytis2go RPyC service is run
+            # in a separate process.  This is because older Pytis2go versions run the
+            # service within its main process, where 'wx.App' already exists.
+            # Starting another instance would cause conflicts and might crash
+            # the whole Python process.
+            # The condition may be removed (together with setting P2GO_RPYC_PROCESS
+            # in Pytis2go) as soon as there are no older Pytis2go versions in use.
             import wx
             self._app = wx.App(False)
 
