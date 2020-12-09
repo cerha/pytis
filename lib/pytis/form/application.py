@@ -352,15 +352,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self.run_dialog(dialog.ProgressDialog, run_startup_forms, args=(startup_forms,),
                             title=_("Opening saved forms"),
                             message=_("Opening form") + ' ' * 40)  # , can_abort=True)
-            # In wx2.8, keyboard navigation doesn't work now.  The following
-            # lines raise the previous form and then back the top form, which
-            # fixes the problem.  Running a Message dialog instead also helps,
-            # but it's probably more obtrusive to the users.  Maybe you can
-            # find a better solution!
-            mru_windows = self._windows.mru()
-            if len(mru_windows) > 1:
-                self._raise_form(mru_windows[1])
-                self._raise_form(mru_windows[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         self._frame.SetTitle(self._frame_title(pytis.config.application_name))
