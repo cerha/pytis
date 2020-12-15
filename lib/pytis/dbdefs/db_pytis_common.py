@@ -696,16 +696,16 @@ begin
     execute concat('create table public.', dtablename, '
                     as select * from public.t_changes_detail where id<=', n_id);
     delete from public.t_changes where id<=n_id;
-    execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
-    execute concat('create unique index ', tablename, '__timestamp__index on public.', tablename, '
+    execute concat('create index ', tablename, '__id__index on public.', tablename, ' (id)');
+    execute concat('create index ', tablename, '__timestamp__index on public.', tablename, '
                     (timestamp)');
-    execute concat('create unique index ', tablename, '__username__index on public.', tablename, '
+    execute concat('create index ', tablename, '__username__index on public.', tablename, '
                     (username)');
-    execute concat('create unique index ', tablename, '__tablename__index on public.', tablename, '
+    execute concat('create index ', tablename, '__tablename__index on public.', tablename, '
                     (tablename)');
-    execute concat('create unique index ', tablename, '__key_value__index on public.', tablename, '
+    execute concat('create index ', tablename, '__key_value__index on public.', tablename, '
                     (key_value)');
-    execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, '
+    execute concat('create index ', dtablename, '__id__index on public.', dtablename, '
                     (id)');
   end loop;
 end;
