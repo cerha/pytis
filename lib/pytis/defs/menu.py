@@ -108,6 +108,19 @@ class ApplicationRoles(_ApplicationRolesSpecification):
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
 
+    def profiles(self):
+        return pytis.presentation.Profiles(
+            pytis.presentation.Profile(
+                'nezrusene-role', _("Nezrušené role"),
+                filter=pytis.data.EQ('deleted', pytis.data.dval(None))),
+            default="nezrusene-role"
+        )
+
+    def row_style(self, row):
+        if row["deleted"].value() is not None:
+            return pytis.presentation.Style(background=pytis.presentation.Color.GRAY10,
+                                            foreground=pytis.presentation.Color.BLACK)
+
     def actions(self):
         return (
             pytis.presentation.Action('copy_roles', _(u"Zkopírovat role od..."), self._copy_roles,
