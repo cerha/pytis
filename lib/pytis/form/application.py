@@ -258,7 +258,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if display:
             title += ' (:%s)' % display
         if __debug__:
-            title += ' - wx %s' % wx.version()
+            title += ' - wx ' + wx.version() + ', Python %d.%d.%d' % sys.version_info[:3]
         return title
 
     def _cache_menu_enabled(self, menu):
