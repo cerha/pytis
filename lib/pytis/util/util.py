@@ -37,17 +37,21 @@ from past.builtins import basestring
 from builtins import range
 from future.utils import python_2_unicode_compatible
 
-import functools
+import base64
 import cgitb
 import copy
+import functools
 import gc
 import getopt
 import inspect
+import mimetypes
 import operator
 import os
 import io
 import re
 import sys
+import time
+import tempfile
 import _thread
 import platform
 
@@ -1177,7 +1181,6 @@ def rsa_encrypt(key, text):
         if isinstance(text, unistr):
             text = text.encode('ascii')
         import Crypto.PublicKey.RSA
-        import base64
         rsa = Crypto.PublicKey.RSA.importKey(key)
         encrypted = rsa.encrypt(text, None)[0]
         return base64.encodestring(encrypted)
@@ -1272,6 +1275,194 @@ def form_view_data(resolver, name, dbconnection_spec=None):
     data = data_spec.create(dbconnection_spec=dbconnection_spec)
     return view, data
 
+
+class Attachment:
+    """Representation of  e-mail attachment for 'send_mail()' 'attachments' argument.
+
+    Constructor arguments:
+
+      filename -- file name of the attachment as a string (mandatory)
+      data -- attachment data as 'bytes' instance or an open file to read the
+        attachment data from it; may be also None in which case the data is
+        read from the file given by 'filename' (which must be a full path which
+        exists and is readable).
+      mime_type -- MIME type of the attachment as a string; if None, the MIME
+        type is automatically guessed from the 'filename' extension.
+
+    """
+
+    def __init__(self, filename, data=None, mime_type=None):
+        assert filename is None or isinstance(filename, basestring), filename
+        assert data is None or isinstance(data, bytes) or hasattr(data, 'read'), data
+        assert mime_type is None or isinstance(mime_type, str), mime_type
+        self._filename = filename
+        self._data = data
+        self._mime_type = mime_type
+
+    @property
+    def filename(self):
+        return os.path.basename(self._filename)
+
+    @property
+    def data(self):
+        if self._data is None:
+            with open(self._filename) as f:
+                data = f.read()
+        elif isinstance(self._data, bytes):
+            data = self._data
+        else:
+            try:
+                data = self._data.read()
+            finally:
+                self._data.close()
+        return data
+
+    @property
+    def mime_type(self):
+        mime_type = self._mime_type
+        if mime_type is None:
+            mime_type, encoding = mimetypes.guess_type(self._filename)
+            if mime_type is None or encoding is not None:
+                # No guess could be made, or the file is encoded (compressed).
+                mime_type = 'application/octet-stream'
+        return mime_type
+
+
+def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
+              html=False, attachments=(), encryption_key=None, headers=()):
+    """Send a MIME e-mail message.
+
+    Arguments:
+
+      subject -- message subject as a string
+      text -- message text as a string
+      to -- recipient address(es) as a string or a sequence of strings
+      sender -- sender address as a string
+      sender_name -- optional human readable sender name as a string; if not
+        None, the name is added to the 'From' header in the standard form:
+        "sender name" <sender@email>.
+      cc -- "carbon copy" recipient address(es) (string or their sequence)
+      bcc -- "blind carbon copy" recipient address(es) (string or their sequence)
+      html -- iff True, the message 'text' is considered HTML
+      attachments -- sequence of 'Attachment' instances defining the files to
+        attach to the message.  Items may also be strings which will be
+        automatically converted to 'Attachment' instances passing the string as
+        its 'filename'.
+      encryption_key -- public PGP key used to encrypt the message in OpenPGP
+        message format (don't encrypt when None)
+      headers -- additional headers to insert into the mail; it must be a tuple
+        of pairs (HEADER, VALUE) where HEADER is an ASCII string containing the
+        header name (without the final colon) and value is a string containing
+        the header value
+
+    The final message is sent via 'smtplib.SMTP.sendmail()' so any SMTP
+    exceptions of this method may be raised.
+
+    """
+    import smtplib
+    import pytis
+    msg = _compose_mail(subject, text, to, sender, sender_name=sender_name,
+                        cc=cc, bcc=bcc, html=html, attachments=attachments,
+                        encryption_key=encryption_key, headers=headers)
+    # Send the message.
+    server = smtplib.SMTP(pytis.config.smtp_server, 25)
+    try:
+        server.sendmail(sender, (to,) + xtuple(cc) + xtuple(bcc), msg.as_string())
+    finally:
+        server.quit()
+
+
+def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
+                  html=False, attachments=(), encryption_key=None, headers=()):
+    import email.message
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.audio import MIMEAudio
+    from email.mime.base import MIMEBase
+    from email.mime.image import MIMEImage
+    from email.mime.text import MIMEText
+    from email import encoders
+
+    assert isinstance(subject, basestring), subject
+    assert isinstance(text, basestring), text
+    assert isinstance(to, (basestring, tuple, list)), to
+    assert isinstance(sender, basestring), sender
+    assert sender_name is None or isinstance(sender_name, basestring), sender_name
+    assert isinstance(cc, (basestring, tuple, list)), cc
+    assert isinstance(bcc, (basestring, tuple, list)), bcc
+    assert isinstance(html, bool), html
+    assert isinstance(attachments, (tuple, list)), attachments
+    assert encryption_key is None or isinstance(encryption_key, basestring), encryption_key
+
+    # Set up message headers.
+    if encryption_key:
+        multipart_type = 'encrypted'
+    elif attachments:
+        multipart_type = 'mixed'
+    else:
+        multipart_type = 'alternative'
+    msg = MIMEMultipart(multipart_type)
+    msg['Subject'] = subject
+    msg['From'] = '"%s" <%s>' % (sender_name, sender) if sender_name else sender
+    msg['To'] = ', '.join(xtuple(to))
+    msg['Date'] = time.strftime('%a, %d %b %Y %H:%M:%S %z')
+    if cc:
+        msg['Cc'] = ', '.join(xtuple(cc))
+    if bcc:
+        msg['Bcc'] = ', '.join(xtuple(bcc))
+    for header, value in headers:
+        msg[header] = value
+
+    if encryption_key:
+        # Compose OpenPGP encrypted message.
+        import gnupg
+        try:
+            # Work around gnupg > 2.1.19/Python gnupg module version incompatibility.
+            gnupg._parsers.Verify.TRUST_LEVELS["ENCRYPTION_COMPLIANCE_MODE"] = 23
+        except:
+            pass
+        plain_message = _compose_mail(subject, text, to, sender, sender_name=sender_name,
+                                      cc=cc, bcc=bcc, html=html, attachments=attachments)
+        msg['Content-transfer-encoding'] = '8bit'
+        msg.preamble = 'This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)'
+        submsg = email.message.Message()
+        submsg['Content-Type'] = 'application/pgp-encrypted'
+        submsg['Content-Description'] = 'PGP/MIME version identification'
+        submsg.set_payload('Version: 1\n')
+        msg.attach(submsg)
+        content = email.message.Message()
+        content.add_header('Content-Type', 'application/octet-stream', name='encrypted.asc')
+        content.add_header('Content-Description', 'OpenPGP encrypted message')
+        content.add_header('Content-Disposition', 'attachment', filename='encrypted.asc')
+        with tempfile.NamedTemporaryFile() as tmp:
+            gpg = gnupg.GPG(keyring=tmp.name, options=('--no-secmem-warning', '--always-trust',
+                                                       '--no-default-keyring'))
+            fingerprint = gpg.import_keys(encryption_key).fingerprints[0]
+            result = gpg.encrypt(plain_message.as_string(), fingerprint)
+            if not result.ok:
+                raise ProgramError(result.status)
+        content.set_payload(str(result))
+        msg.attach(content)
+    else:
+        # Compose message body.
+        msg.attach(MIMEText(text, 'html' if html else 'plain', 'utf-8'))
+        # Process the attachments.
+        for attachment in attachments:
+            if isinstance(attachment, basestring):
+                attachment = Attachment(attachment)
+            maintype, subtype = attachment.mime_type.split('/', 1)
+            if maintype == 'text':
+                submsg = MIMEText(attachment.data, subtype, 'utf-8')
+            elif maintype == 'image':
+                submsg = MIMEImage(attachment.data, subtype)
+            elif maintype == 'audio':
+                submsg = MIMEAudio(attachment.data, subtype)
+            else:
+                submsg = MIMEBase(maintype, subtype)
+                submsg.set_payload(attachment.data)
+                encoders.encode_base64(submsg)
+            submsg.add_header('Content-Disposition', 'attachment', filename=attachment.filename)
+            msg.attach(submsg)
+    return msg
 
 # Miscellaneous
 
