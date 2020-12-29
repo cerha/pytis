@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -78,28 +78,6 @@ def smssend(tel, message, server='192.168.1.55'):
         msg = "SMS se nepodařilo odeslat!\n\n" + msg
         return msg
     return None
-
-
-# TODO: this procedure is obsolete and superceeded with send_mail and should be removed
-#       after checking its use in applications
-def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
-    """Odešle email"""
-
-    try:
-        s = os.popen('%s %s' % (sendmail_command, to), 'w')
-        s.write('From: %s\n' % address)
-        s.write('To: %s\n' % to)
-        s.write('Bcc: %s\n' % address)
-        s.write('Subject: %s\n' % subject)
-        if content_type:
-            s.write('Content-Type: %s\n' % content_type)
-        s.write('\n')
-        s.write(msg)
-        s.close()
-        return 0
-    except Exception:
-        print('ERROR: e-mail se nepodařilo odeslat')
-        return 1
 
 
 # TODO: argument sendmail_command should be removed when all applications reflect this change
