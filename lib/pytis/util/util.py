@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1329,7 +1329,8 @@ class Attachment:
 
 
 def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
-              html=False, attachments=(), encryption_key=None, headers=()):
+              html=False, attachments=(), encryption_key=None, headers=(),
+              smtp_server=None, smtp_port=25):
     """Send a MIME e-mail message.
 
     Arguments:
@@ -1353,7 +1354,10 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
       headers -- additional headers to insert into the mail; it must be a tuple
         of pairs (HEADER, VALUE) where HEADER is an ASCII string containing the
         header name (without the final colon) and value is a string containing
-        the header value
+        the header value.
+      smtp_server -- Specific SMTP server to use instead of the default given by
+        configuration option 'smtp_server'.
+      smtp_port -- Specific SMTP server to use instead of default 25.
 
     The final message is sent via 'smtplib.SMTP.sendmail()' so any SMTP
     exceptions of this method may be raised.
@@ -1365,8 +1369,9 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
                         cc=cc, bcc=bcc, html=html, attachments=attachments,
                         encryption_key=encryption_key, headers=headers)
     # Send the message.
-    server = smtplib.SMTP(pytis.config.smtp_server, 25)
+    server = smtplib.SMTP(smtp_server or pytis.config.smtp_server, smtp_port)
     try:
+        # TODO: May be just server.send_message(msg) on Python 2 support end.
         server.sendmail(sender, (to,) + xtuple(cc) + xtuple(bcc), msg.as_string())
     finally:
         server.quit()
