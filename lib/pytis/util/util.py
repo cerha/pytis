@@ -1359,8 +1359,25 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         configuration option 'smtp_server'.
       smtp_port -- Specific SMTP server to use instead of default 25.
 
-    The final message is sent via 'smtplib.SMTP.sendmail()' so any SMTP
-    exceptions of this method may be raised.
+    The message is sent via 'smtplib.SMTP.sendmail()' which may raise one of
+    'smtplib.SMTPException' subclasses.  Some exceptions worth noting here are:
+
+    SMTPSenderRefused
+      The server didn’t accept the sender address.
+
+    SMTPResponseException
+      Base class for all exceptions that include an SMTP error code. These
+      exceptions are generated in some instances when the SMTP server returns
+      an error code. The error code is stored in the smtp_code attribute of the
+      error, and the smtp_error attribute is set to the error message.
+
+    SMTPRecipientsRefused
+      All recipients were refused. Nobody got the mail. The recipients
+      attribute of the exception object is a dictionary with information about
+      the refused recipients (like the one returned when at least one recipient
+      was accepted).
+
+    See smtplib documentation for other possible exceptions and more details.
 
     """
     import smtplib
