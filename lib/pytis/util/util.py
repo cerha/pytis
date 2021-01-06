@@ -1389,7 +1389,7 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
     server = smtplib.SMTP(smtp_server or pytis.config.smtp_server, smtp_port)
     try:
         # TODO: May be just server.send_message(msg) on Python 2 support end.
-        server.sendmail(sender, (to,) + xtuple(cc) + xtuple(bcc), msg.as_string())
+        server.sendmail(sender, xtuple(to) + xtuple(cc) + xtuple(bcc), msg.as_string())
     finally:
         server.quit()
 
