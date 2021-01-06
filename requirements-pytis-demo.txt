@@ -1,6 +1,6 @@
 backports.functools-lru-cache==1.5
 cachetools==3.1.0
-CairoSVG==0.5
+CairoSVG==2.5.1
 certifi==2018.11.29
 chardet==3.0.4
 cycler==0.10.0
