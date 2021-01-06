@@ -1294,7 +1294,7 @@ class Attachment:
     def __init__(self, filename, data=None, mime_type=None):
         assert filename is None or isinstance(filename, basestring), filename
         assert data is None or isinstance(data, bytes) or hasattr(data, 'read'), data
-        assert mime_type is None or isinstance(mime_type, str), mime_type
+        assert mime_type is None or isinstance(mime_type, basestring), mime_type
         self._filename = filename
         self._data = data
         self._mime_type = mime_type
