@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -35,19 +35,19 @@ from past.builtins import basestring
 from builtins import range
 from future import standard_library
 
-import wx.adv
-
-import datetime
 import cgitb
+import datetime
+import email.utils
 import os
 import sys
+import wx.adv
 
 import pytis.data
 import pytis.form
 import pytis.util
 
 from pytis.presentation import TextFormat
-from pytis.util import ProgramError, super_
+from pytis.util import ProgramError, super_, send_mail
 
 from .command import CommandHandler
 from .event import wx_callback
@@ -886,65 +886,34 @@ class BugReport(GenericDialog):
         self._want_focus = button
 
     def _on_send_bug_report(self, event):
-        from email.header import Header
-        from email.message import Message
-        import email.utils
-        import smtplib
-
         to = pytis.config.bug_report_address
         if not to:
             pytis.form.run_dialog(pytis.form.Message,
                                   _("Destination address not known. The configuration option "
                                     "`bug_report_address' must be set."))
             return
-        addr = pytis.config.sender_address
-        if not addr:
-            addr = self._dialog.FindWindowByName('from').GetValue()
-        message = self._dialog.FindWindowByName('message').GetValue()
+        sender = pytis.config.sender_address
+        if not sender:
+            sender = self._dialog.FindWindowByName('from').GetValue()
 
         tb = self._einfo[2]
         while tb.tb_next is not None:
             tb = tb.tb_next
-        filename = os.path.split(tb.tb_frame.f_code.co_filename)[-1]
-        buginfo = "%s at %s line %d" % (self._einfo[0].__name__, filename, tb.tb_lineno)
+        subject = "%s: %s at %s line %d" % (
+            pytis.config.bug_report_subject or _("Error"),
+            self._einfo[0].__name__,
+            os.path.split(tb.tb_frame.f_code.co_filename)[-1],  # file name
+            tb.tb_lineno,
+        )
+
+        message = self._dialog.FindWindowByName('message').GetValue().strip()
         if message:
-            message = message.strip() + "\n\n"
+            message += "\n\n"
         message += pytis.util.exception_info(self._einfo)
-        msg = Message()
 
-        def header(value):
-            # TODO: This duplicates similar code in pytis.extensions.email_.  We should
-            # use the same class here (probably moving it to util or so...).
-            if sys.version_info[0] == 2:
-                if isinstance(value, str):
-                    try:
-                        value.decode('us-ascii')
-                    except UnicodeDecodeError:
-                        pass
-                    else:
-                        return value
-                elif isinstance(value, unistr):
-                    if value.encode('us-ascii', 'replace') == value.encode('utf-8'):
-                        return value
-            elif value.encode('us-ascii', 'replace') == value.encode('utf-8'):
-                return value
-            return Header(value, 'utf-8')
-
-        msg['From'] = header(addr)
-        msg['To'] = header(to)
-        msg['Subject'] = header('%s: %s' % (pytis.config.bug_report_subject or _("Error"), buginfo))
-        msg['Date'] = email.utils.formatdate()
-        msg['Message-ID'] = email.utils.make_msgid('pytis_bugs')
-        msg.set_payload(message, 'utf-8')
         try:
-            try:
-                server = smtplib.SMTP(pytis.config.smtp_server)
-                server.sendmail(addr, to, msg.as_string())
-            finally:
-                try:
-                    server.quit()
-                except Exception:
-                    pass
+            send_mail(subject, message, to, sender,
+                      message_id=email.utils.make_msgid('pytis_bugs'))
         except Exception as e:
             pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unistr(e))
         else:
