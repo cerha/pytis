@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -42,42 +42,6 @@ standard_library.install_aliases()
 _ = translations('pytis-wx')
 
 unistr = type(u'')  # Python 2/3 transition hack.
-
-
-def smssend(tel, message, server='192.168.1.55'):
-    import subprocess
-
-    SERVER = server
-    UID = 'sms'
-    PWD = 'sms'
-    DB = 'SMS'
-    MAX_LENGTH = 480  # 3 SMS po 160 znacích
-    SQSH = '/usr/bin/sqsh'
-    TEMPLATE = """
-    insert into sms_request
-    (tel_num_to, message_typ, request_typ, id_module, user_data)
-    values
-    ('%s', 0, 0, 0, '%s')
-    """
-
-    if not os.path.exists(SQSH):
-        return "Není nainstalován balík 'sqsh'. SMS nebude odeslána."
-    if len(message) > MAX_LENGTH:
-        return "Zpráva je delší než %s. SMS nebude odeslána." % (MAX_LENGTH)
-    if len(tel) not in (14, 9):
-        return ("Špatný formát telefoního čísla %s.\n\n"
-                "Číslo musí mít tvar:\nPPPPPxxxxxxxxx - (pět znaků předvolba "
-                "- devět znaků číslo)\nxxxxxxxxx - (devět znaků číslo)") % (tel,)
-    message.replace('"', '')
-    message.replace("'", "")
-    sms_insert = TEMPLATE % (tel, message)
-    cmd = ('%s -U %s -D %s -S %s -P %s -C "%s"' %
-           (SQSH, UID, DB, SERVER, PWD, sms_insert,))
-    test, msg = subprocess.getstatusoutput(cmd)
-    if test:
-        msg = "SMS se nepodařilo odeslat!\n\n" + msg
-        return msg
-    return None
 
 
 # TODO: argument sendmail_command should be removed when all applications reflect this change
