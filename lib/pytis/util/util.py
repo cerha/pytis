@@ -1329,8 +1329,8 @@ class Attachment:
 
 
 def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
-              html=False, attachments=(), encryption_key=None, headers=(),
-              smtp_server=None, smtp_port=25):
+              html=False, attachments=(), encryption_key=None,
+              message_id=None, headers=(), smtp_server=None, smtp_port=25):
     """Send a MIME e-mail message.
 
     Arguments:
@@ -1351,6 +1351,8 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         its 'filename'.
       encryption_key -- public PGP key used to encrypt the message in OpenPGP
         message format (don't encrypt when None)
+      message_id -- message id (string) to be used for the Message-Id header.
+        The format must follow the RFC 2822 specification.
       headers -- additional headers to insert into the mail; it must be a tuple
         of pairs (HEADER, VALUE) where HEADER is an ASCII string containing the
         header name (without the final colon) and value is a string containing
@@ -1384,7 +1386,8 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
     import pytis
     msg = _compose_mail(subject, text, to, sender, sender_name=sender_name,
                         cc=cc, bcc=bcc, html=html, attachments=attachments,
-                        encryption_key=encryption_key, headers=headers)
+                        encryption_key=encryption_key, message_id=message_id,
+                        headers=headers)
     # Send the message.
     server = smtplib.SMTP(smtp_server or pytis.config.smtp_server, smtp_port)
     try:
@@ -1395,7 +1398,8 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
 
 
 def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
-                  html=False, attachments=(), encryption_key=None, headers=()):
+                  html=False, attachments=(), encryption_key=None,
+                  message_id=None, headers=()):
     import email.message
     from email.mime.multipart import MIMEMultipart
     from email.mime.audio import MIMEAudio
@@ -1413,6 +1417,7 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
     assert isinstance(bcc, (basestring, tuple, list)), bcc
     assert isinstance(html, bool), html
     assert isinstance(attachments, (tuple, list)), attachments
+    assert message_id is None or isinstance(message_id, basestring), message_id
     assert encryption_key is None or isinstance(encryption_key, basestring), encryption_key
 
     # Set up message headers.
@@ -1431,6 +1436,9 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         msg['Cc'] = ', '.join(xtuple(cc))
     if bcc:
         msg['Bcc'] = ', '.join(xtuple(bcc))
+    if message_id:
+        msg['Message-ID'] = message_id
+
     for header, value in headers:
         msg[header] = value
 
