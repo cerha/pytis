@@ -1361,25 +1361,24 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         configuration option 'smtp_server'.
       smtp_port -- Specific SMTP server to use instead of default 25.
 
-    The message is sent via 'smtplib.SMTP.sendmail()' which may raise one of
-    'smtplib.SMTPException' subclasses.  Some exceptions worth noting here are:
+    May raise the following exceptions:
 
-    SMTPSenderRefused
-      The server didn’t accept the sender address.
+    'EncryptionKeyError' ... Invalid encryption key.  The key can not be
+      imported. The data may be corrupted or in an unsupported format.
 
-    SMTPResponseException
-      Base class for all exceptions that include an SMTP error code. These
-      exceptions are generated in some instances when the SMTP server returns
-      an error code. The error code is stored in the smtp_code attribute of the
-      error, and the smtp_error attribute is set to the error message.
+    'EncryptionError' ... Encryption failed by given key.  Typically trying
+      to use an expired key.
 
-    SMTPRecipientsRefused
-      All recipients were refused. Nobody got the mail. The recipients
-      attribute of the exception object is a dictionary with information about
-      the refused recipients (like the one returned when at least one recipient
-      was accepted).
+    'socket.gaierror', 'socket.herror' ... Invalid SMTP server host name or
+      address.
 
-    See smtplib documentation for other possible exceptions and more details.
+    'socket.timeout', 'socket.error' ... SMTP server refused connection.
+      Possibly invalid port or the server requires authentication or TLS.
+
+    'smtplib.SMTPException' ... Error during SMTP communication.  The server
+      may refuse the sender address of have some other problem.  The exception
+      will actually be one of SMTPException subclasses (see smtplib
+      documentation more details).
 
     """
     import smtplib
@@ -1395,6 +1394,32 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         server.sendmail(sender, xtuple(to) + xtuple(cc) + xtuple(bcc), msg.as_string())
     finally:
         server.quit()
+
+
+class SendMailError(Exception):
+    """Base class for exceptions raised by 'send_mail()'."""
+    def __init__(self, message, **kwargs):
+        super(SendMailError, self).__init__(message)
+        self.__dict__.update(kwargs)
+
+
+class EncryptionKeyError(SendMailError):
+    """Invalid encryption key.
+
+    The key can not be imported.  The data may be corrupted or in an
+    unsupported format.
+
+    """
+    pass
+
+
+class EncryptionError(SendMailError):
+    """Encryption failed by given key.
+
+    Typically trying to use an expired key.
+
+    """
+    pass
 
 
 def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
@@ -1460,8 +1485,8 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
             gnupg._parsers.Verify.TRUST_LEVELS["ENCRYPTION_COMPLIANCE_MODE"] = 23
         except:
             pass
-        plain_message = _compose_mail(subject, text, to, sender, sender_name=sender_name,
-                                      cc=cc, bcc=bcc, html=html, attachments=attachments)
+        message_to_encrypt = _compose_mail(subject, text, to, sender, sender_name=sender_name,
+                                           cc=cc, bcc=bcc, html=html, attachments=attachments)
         msg['Content-transfer-encoding'] = '8bit'
         msg.preamble = 'This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)'
         submsg = email.message.Message()
@@ -1476,10 +1501,13 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         with tempfile.NamedTemporaryFile() as tmp:
             gpg = gnupg.GPG(keyring=tmp.name, options=('--no-secmem-warning', '--always-trust',
                                                        '--no-default-keyring'))
-            fingerprint = gpg.import_keys(encryption_key).fingerprints[0]
-            result = gpg.encrypt(plain_message.as_string(), fingerprint)
+            imported = gpg.import_keys(encryption_key)
+            if not imported or not imported.fingerprints:
+                raise EncryptionKeyError('No valid PGP key found in given encryption key')
+            result = gpg.encrypt(message_to_encrypt.as_string(), imported.fingerprints[0])
             if not result.ok:
-                raise ProgramError(result.status)
+                raise EncryptionError('Encryption failed',
+                                      status=result.status, detail=result.stderr)
         content.set_payload(str(result))
         msg.attach(content)
     else:
