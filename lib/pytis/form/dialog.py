@@ -899,7 +899,7 @@ class BugReport(GenericDialog):
         tb = self._einfo[2]
         while tb.tb_next is not None:
             tb = tb.tb_next
-        subject = "%s: %s at %s line %d" % (
+        subject = '{}: {} at {} line {}'.format(
             pytis.config.bug_report_subject or _("Error"),
             self._einfo[0].__name__,
             os.path.split(tb.tb_frame.f_code.co_filename)[-1],  # file name
