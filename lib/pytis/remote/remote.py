@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from past.builtins import basestring
 from builtins import range
@@ -28,6 +29,7 @@ import re
 import rpyc
 import socket
 import subprocess
+import sys
 import time
 
 import pytis
@@ -112,7 +114,9 @@ def client_ip():
         if _x2go_ip is None:
             x2go_agent_pid = os.getenv('X2GO_AGENT_PID')
             if x2go_agent_pid is not None:
-                p = subprocess.Popen('x2golistsessions', stdout=subprocess.PIPE, shell=True)
+                kwargs = dict(encoding='ascii') if sys.version_info[0] > 2 else {}
+                p = subprocess.Popen('x2golistsessions', stdout=subprocess.PIPE,
+                                     shell=True, **kwargs)
                 output, __ = p.communicate()
                 for line in output.splitlines():
                     items = line.split('|')
