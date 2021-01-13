@@ -1401,6 +1401,7 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
                   html=False, attachments=(), encryption_key=None,
                   message_id=None, headers=()):
     import email.message
+    from email.header import Header
     from email.mime.multipart import MIMEMultipart
     from email.mime.audio import MIMEAudio
     from email.mime.base import MIMEBase
@@ -1429,7 +1430,17 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         multipart_type = 'alternative'
     msg = MIMEMultipart(multipart_type)
     msg['Subject'] = subject
-    msg['From'] = '"%s" <%s>' % (sender_name, sender) if sender_name else sender
+    if sender_name:
+        # Encode the sender name (potentially containing non-ascii characters)
+        # separately bacause if we let the message encode the whole string,
+        # it will not match the desired "name" <email> format anymore and some
+        # clients will not display it correctly and it will also often be
+        # classified as spam.
+        msg['From'] = '"{}" <{}>'.format(Header(sender_name, 'utf-8').encode(), sender)
+    else:
+        # Angle brackets seem to help some mail readers to display sender name from
+        # their address book.
+        msg['From'] = '<{}>'.format(sender)
     msg['To'] = ', '.join(xtuple(to))
     msg['Date'] = time.strftime('%a, %d %b %Y %H:%M:%S %z')
     if cc:
@@ -1438,7 +1449,6 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         msg['Bcc'] = ', '.join(xtuple(bcc))
     if message_id:
         msg['Message-ID'] = message_id
-
     for header, value in headers:
         msg[header] = value
 
