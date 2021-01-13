@@ -4,7 +4,7 @@ cachetools
 file-magic
 future
 gnupg
-psycopg2
+psycopg2-binary
 pillow
 pycrypto
 pymupdf
