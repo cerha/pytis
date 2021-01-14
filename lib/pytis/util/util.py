@@ -1536,10 +1536,10 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
 
 
 UNDEFINED = object()
-"""Objekt reprezentující nedefinovanou hodnotu.
+"""Object representing an undefined value.
 
-Typicky se používá jako implicitní hodnota volitelných argumentů, aby nebylo
-nutno provádět jejich definici a zkoumání prostřednictvím **kwargs.
+Typically used as a default value of optional arguments to avoid the need to
+define and check using **kwargs.
 
 """
 
