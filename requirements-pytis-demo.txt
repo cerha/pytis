@@ -6,6 +6,7 @@ chardet
 cycler
 file-magic
 future
+gnupg
 idna
 kiwisolver
 matplotlib
