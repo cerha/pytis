@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 from __future__ import unicode_literals
 
 import operator
+import re
 import unittest
 
 from . import util
@@ -353,6 +354,65 @@ class Resolver(unittest.TestCase):
         specifications = [spec_ for name, spec_ in r.walk()]
         from pytis.defs.help import Help
         assert Help in specifications
+
+
+def test_compose_mail():
+    from .util import _compose_mail, Attachment
+
+    def msg(*args, **kwargs):
+        print(_compose_mail(*args, **kwargs).as_string())
+        return _compose_mail(*args, **kwargs).as_string()
+
+    assert re.match(
+        # The newline in the first header (after ;) is produced by Python2 (why?).
+        r'Content-Type: multipart/alternative;\n? boundary="===+\d+=="\n'
+        r'MIME-Version: 1.0\n'
+        r'Subject: Plain message\n'
+        r'From: <bob@gnu.org>\n'
+        r'To: hugo@gnu.org\n'
+        r'Date: [A-Z][a-z][a-z], \d\d [A-Z][a-z][a-z] \d\d\d\d \d\d:\d\d:\d\d \+\d\d\d\d\n\n'
+        r'--===+\d+==\n'
+        r'Content-Type: text/plain; charset="utf-8"\n'
+        r'MIME-Version: 1.0\n'
+        r'Content-Transfer-Encoding: base64\n\n'
+        r'TWVzc2FnZSB0ZXh0\n\n'
+        r'--====+\d+==--\n',
+        msg('Plain message', 'Message text', 'hugo@gnu.org', 'bob@gnu.org'),
+    )
+
+    assert re.match(
+        r'Content-Type: multipart/alternative;\n? boundary="===+\d+=="\n'
+        r'MIME-Version: 1.0\n'
+        r'Subject: =\?utf-8\?b\?xb1sdcWlb3XEjWvDvSBrxa/FiA==\?=\n'
+        r'From: <bob@gnu.org>\n'
+        r'To: hugo@gnu.org\n'
+        r'Date: .+\n\n'
+        r'--===+\d+==\n'
+        r'Content-Type: text/plain; charset="utf-8"\n'
+        r'MIME-Version: 1.0\n'
+        r'Content-Transfer-Encoding: base64\n\n'
+        r'w5pwxJtsIMSPw6FiZWxza8OpIMOzZHk=\n\n'
+        r'--===+\d+==--\n',
+        msg(u'Žluťoučký kůň', u'Úpěl ďábelské ódy', 'hugo@gnu.org', 'bob@gnu.org'),
+    )
+
+    assert re.match(
+        r'Content-Type: multipart/alternative;\n? boundary="===+\d+=="\n'
+        r'MIME-Version: 1.0\n'
+        r'Subject: HTML message\n'
+        r'From: <bob@gnu.org>\n'
+        r'To: hugo@gnu.org\n'
+        r'Date: .+\n\n'
+        r'--===+\d+==\n'
+        r'Content-Type: text/html; charset="utf-8"\n'
+        r'MIME-Version: 1.0\n'
+        r'Content-Transfer-Encoding: base64\n\n'
+        r'PGh0bWw\+PGJvZHk\+PGgxPkhlYWRpbmc8L2gxPHA\+TG9yZW0gaXBzdW0gZG9sb3IuLi48L3A\+PC9i\n'
+        r'b2R5PjxodG1sPg==\n\n'
+        r'--===+\d+==--\n',
+        msg('HTML message', '<html><body><h1>Heading</h1<p>Lorem ipsum dolor...</p></body><html>',
+            'hugo@gnu.org', 'bob@gnu.org', html=True),
+    )
 
 
 if __name__ == '__main__':  # pragma: no cover
