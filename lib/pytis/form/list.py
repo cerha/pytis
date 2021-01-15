@@ -1384,7 +1384,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._list_position = "%d/%s" % (row + 1, total)
 
     def list_position(self):
-        return self._list_position
+        # list_position() may be called on idle from application.py
+        # _refresh_list_position() before the form is fully initialized.
+        # Note that BrowsableShowForm defines the same method, but
+        # The _list_position attribute is managed differently and
+        # there is no common base class that recognizes _list_position.
+        return getattr(self, '_list_position', None)
 
     def _update_data_status(self):
         if self._reshuffle_request > self._last_reshuffle_request:

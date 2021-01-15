@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3703,6 +3703,11 @@ class BrowsableShowForm(ShowForm):
         return result
 
     def list_position(self):
+        # list_position() may be called on idle from application.py
+        # _refresh_list_position() before the form is fully initialized.
+        # Note that ListForm defines the same method, but
+        # The _list_position attribute is managed differently and
+        # there is no common base class that recognizes _list_position.
         return getattr(self, '_list_position', None)
 
 
