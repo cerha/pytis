@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -723,18 +724,22 @@ class Table(_Mark):
           vmargin (jako klíčovaný argument) -- je-li 'None', je mezi řádky
             tabulky ponechána implicitní mezera; je-li 0, není mezi řádky
             tabulky žádná mezera; jiné hodnoty argumentu nejsou povoleny
+          compact (jako klíčovaný argument) -- If True, suppress default
+            padding in all table cells (including headings).  Use containers to
+            add custom padding.
 
         """
-        super(Table, self).__init__()
-        assert not any(c not in ('vmargin',) for c in kwargs)
+        vmargin, compact = kwargs.pop('vmargin', None), kwargs.pop('compact', False)
+        super(Table, self).__init__(**kwargs)
         assert isinstance(columns, (tuple, list))
-        vmargin = kwargs.get('vmargin')
-        assert vmargin in (None, 0)
+        assert vmargin in (None, 0), vmargin
+        assert isinstance(compact, bool), compact
         if len(columns) > 26:
             raise pytis.output.TemplateException(_("More than 26 columns in a table"))
         self._columns = columns
         self._data = data
         self._vmargin = vmargin
+        self._compact = compact
 
     def columns(self):
         """Vrať specifikaci sloupců tabulky zadanou v konstruktoru."""
@@ -747,6 +752,10 @@ class Table(_Mark):
     def vmargin(self):
         """Vrať hodnotu argumentu 'vmargin' zadaného v '__init__()'."""
         return self._vmargin
+
+    def compact(self):
+        """Vrať hodnotu argumentu 'compact' zadanou v '__init__()'."""
+        return self._compact
 
     def _lcg_presentation(self):
         presentation = lcg.Presentation()
@@ -761,7 +770,8 @@ class Table(_Mark):
 
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths,
-                         presentation=self._lcg_presentation(), halign=LEFT)
+                         presentation=self._lcg_presentation(),
+                         halign=LEFT, compact=self._compact)
 
     def _lcg(self):
         table_rows = []
@@ -836,7 +846,8 @@ class LongTable(Table):
 
     def __init__(self, columns, row_generator, row_generator_init=None,
                  separator_height=0, line_separator_height=0,
-                 separator_margin=0, line_separator_margin=0):
+                 separator_margin=0, line_separator_margin=0,
+                 compact=False):
         """Inicializuj instanci.
 
         Argumenty:
@@ -860,7 +871,7 @@ class LongTable(Table):
             tabulky v bodech, jako float nebo 'Unit'
 
         """
-        super(LongTable, self).__init__(columns)
+        super(LongTable, self).__init__(columns, compact=compact)
         assert callable(row_generator), row_generator
         assert row_generator_init is None or callable(row_generator_init), row_generator_init
         assert isinstance(separator_height, (float, int, long, Unit)), separator_height
@@ -924,7 +935,8 @@ class LongTable(Table):
 
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths, long=True,
-                         presentation=self._lcg_presentation(), halign=LEFT)
+                         presentation=self._lcg_presentation(), halign=LEFT,
+                         compact=self._compact)
 
 
 class Image(_Mark):
