@@ -724,6 +724,13 @@ begin
   if date_to > '2099-12-31'::date then
     date_to := '2099-12-31'::date;
   end if;
+  if date_from < '2000-01-01'::date then
+    date_from := '2000-01-01'::date;
+  end if;
+  if date_to < '2000-01-01'::date then
+    date_to := '2000-01-01'::date;
+  end if;
+
   date_to_1 := date_to + '1 day'::interval;
   return query select * from v_changes v
                       where date_from <= v.timestamp and v.timestamp < date_to_1 and
@@ -751,10 +758,8 @@ begin
                              't.tablename = coalesce($4, t.tablename) and ',
                              't.key_value::text = coalesce($5, t.key_value) and ',
                              'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
-                             '($7 is null or
-                               schemaname in (select * from regexp_
-                                                split_to_table(coalesce($7,
-                                                                         ''''), '' *, *'')))')
+                             '($7 is null or schemaname in (select * from '
+                             'regexp_split_to_table(coalesce($7, ''''), '' *, *'')))')
               using date_from, date_to_1, username_, tablename_, key_value_, detail_, search_path_;
   end loop;
 end;
