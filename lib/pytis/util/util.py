@@ -1467,7 +1467,7 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         # their address book.
         msg['From'] = '<{}>'.format(sender)
     msg['To'] = ', '.join(xtuple(to))
-    msg['Date'] = time.strftime('%a, %d %b %Y %H:%M:%S %z')
+    msg['Date'] = email.utils.formatdate(localtime=1)
     if cc:
         msg['Cc'] = ', '.join(xtuple(cc))
     if bcc:
