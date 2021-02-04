@@ -367,27 +367,21 @@ class Bold(_Container):
     """Tučně sázený text."""
 
     def _lcg(self):
-        presentation = lcg.Presentation()
-        presentation.bold = True
-        return lcg.Container(self._lcg_contents(), presentation=presentation)
+        return lcg.Container(self._lcg_contents(), presentation=lcg.Presentation(bold=True))
 
 
 class Italic(_Container):
     """Text sázený kurzívou."""
 
     def _lcg(self):
-        presentation = lcg.Presentation()
-        presentation.italic = True
-        return lcg.Container(self._lcg_contents(), presentation=presentation)
+        return lcg.Container(self._lcg_contents(), presentation=lcg.Presentation(italic=True))
 
 
 class Roman(_Container):
     """Standardně sázený text."""
 
     def _lcg(self):
-        presentation = lcg.Presentation()
-        presentation.bold = presentation.italic = False
-        return lcg.Container(self._lcg_contents(), presentation=presentation)
+        return lcg.Container(self._lcg_contents(), presentation=lcg.Presentation(italic=False))
 
 
 class FontSize(_Container):
@@ -412,9 +406,8 @@ class FontSize(_Container):
         return self._size
 
     def _lcg(self):
-        presentation = lcg.Presentation()
-        presentation.font_size = self._size
-        return lcg.Container(self._lcg_contents(), presentation=presentation)
+        return lcg.Container(self._lcg_contents(),
+                             presentation=lcg.Presentation(font_size=self._size))
 
 
 class FontFamily(_Container):
@@ -448,15 +441,14 @@ class FontFamily(_Container):
         return self._family
 
     def _lcg(self):
-        presentation = lcg.Presentation()
         if self._family == self.PROPORTIONAL:
             family = lcg.FontFamily.PROPORTIONAL
         elif self._family == self.SANS_SERIF:
             family = lcg.FontFamily.SANS_SERIF
         elif self._family == self.FIXED_WIDTH:
             family = lcg.FontFamily.FIXED_WIDTH
-        presentation.font_family = family
-        return lcg.Container(self._lcg_contents(), presentation=presentation)
+        return lcg.Container(self._lcg_contents(),
+                             presentation=lcg.Presentation(font_family=family))
 
 
 class _Group(_Container):
@@ -758,12 +750,11 @@ class Table(_Mark):
         return self._compact
 
     def _lcg_presentation(self):
-        presentation = lcg.Presentation()
         if self._vmargin == 0:
-            presentation.separator_margin = lcg.UMm(0)
+            margin = lcg.UMm(0)
         else:
-            presentation.separator_margin = lcg.UFont(0.2)
-        return presentation
+            margin = lcg.UFont(0.2)
+        return lcg.Presentation(separator_margin=margin)
 
     def _lcg_table_data(self):
         return self._data
