@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -39,10 +39,6 @@ Co se druhů informací týče, modul definuje konstantu pro každý typ informa
 z výše uvedeného seznamu.
 
 Konfigurace modulu je dána proměnnou 'config'.
-
-Tento modul je doporučeno importovat následujícím způsobem:
-
-  from pytis.util import *
 
 """
 from past.builtins import basestring
@@ -290,6 +286,13 @@ class SyslogLogger(Logger):
                 msg = msg.encode('utf-8')
             syslog.syslog(priority, msg)
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
+
+
+class NullLogger(Logger):
+    """Logger discarding all messages."""
+
+    def log(self, *args, **kwargs):
+        pass
 
 
 ###

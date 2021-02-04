@@ -42,7 +42,7 @@ from .caching import (  # noqa: F401
 )
 
 from .log import (  # noqa: F401
-    OPERATIONAL, ACTION, EVENT, DEBUG, Logger, StreamLogger, SyslogLogger,
+    OPERATIONAL, ACTION, EVENT, DEBUG, Logger, StreamLogger, SyslogLogger, NullLogger,
     LoggingInterface, log,
 )
 
