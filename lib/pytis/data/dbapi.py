@@ -221,7 +221,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.InterfaceError as e:
             if e.args and e.args[0].find('connection already closed') != -1:
                 # We believe this shouldn't happen as a program error and it
-                # may occur as a result of database engine connection crash.
+                # may occur as a result of database engine connection crash
+                # or after PostgreSQL idle_in_transaction_session_timeout.
                 log(OPERATIONAL, "Access to closed database connection")
                 result, connection = retry(_(u"Database interface error"), e)
             else:
@@ -263,7 +264,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if e.args and e.args[0].find('terminating connection due to '
                                          'idle-in-transaction timeout') != -1:
                 # We believe this shouldn't happen as a program error and it
-                # may occur as a result of database engine connection crash.
+                # may occur as a result of database engine connection crash
+                # or after PostgreSQL idle_in_transaction_session_timeout.
                 log(OPERATIONAL, "Access to closed database connection")
                 result, connection = retry(_(u"Database internal error"), e)
             else:
