@@ -479,9 +479,7 @@ class PostgreSQLAccessor(object_2_5):
                 except DBUserException:
                     return
                 connection_data.set_db_key(db_key)
-                crypto_password = pytis.util.rsa_encrypt(db_key, password)
-                if sys.version_info[0] == 2:
-                    crypto_password = crypto_password.decode('ascii')
+                crypto_password = pytis.util.rsa_encrypt(db_key, password).decode('ascii')
                 connection_data.set_crypto_password(crypto_password)
             else:
                 return
