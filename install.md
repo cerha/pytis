@@ -15,10 +15,16 @@ tree.  You need to:
     described below.
 
 The needed Python packages for desktop applications (using wxPython) are
-defined in file requirements.txt.  For web applications use the Wiking
-framework which defines its own requirements.txt.  Because wxPython binary
-packages are not available through PyPI, you need to run pip install as
-follows:
+defined in file requirements.txt.
+
+In order to install `pymupdf` package, you need to install libmupdf-dev
+package.
+
+For web applications use the Wiking framework which defines its own
+requirements.txt.
+
+Because wxPython binary packages are not available through PyPI, you need to run
+pip install as follows:
 
 ```
 pip install -r requirements.txt -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-9
@@ -26,5 +32,3 @@ pip install -r requirements.txt -f https://extras.wxpython.org/wxPython4/extras/
 
 Change the URL above to match your system.  See https://wxpython.org/ for more
 details.
-
-
