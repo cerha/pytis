@@ -318,46 +318,11 @@ def version():
     return version or ''
 
 
-def library_version():
-    version_string = version()
-    if not version_string or version_string == '-old-':
-        return None
-    else:
-        try:
-            versions = dict([x.strip() for x in v.split(':', 1)]
-                            for v in version_string.split(';'))
-            return versions['library']
-        except Exception:
-            return None
-
-
 def session_password():
-    version = library_version()
-    if version and version >= '2018-06-27 16:00':
-        # We try to be safer by not even trying to call the method for older
-        # P2Go versions.  The try/except block would handle it here
-        # anyway, but in some more complicated cases testing the version
-        # might be necessary.
-        try:
-            return _request('session_password')
-        except Exception:
-            return None
-    else:
-        return None
-
-
-def x2goclient_version():
     try:
-        version = _request('x2goclient_version')
+        return _request('session_password')
     except Exception:
-        try:
-            if _request('echo', 'hello') == 'hello':
-                version = '-old-'
-            else:
-                version = ''
-        except Exception:
-            version = ''
-    return version or ''
+        return None
 
 
 def get_clipboard_text():

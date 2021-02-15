@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,7 @@ except ImportError as e:
 
 from .remote import (  # noqa!
     client_ip, client_available,
-    version, library_version, x2goclient_version,
-    session_password, get_clipboard_text, set_clipboard_text,
+    version, session_password, get_clipboard_text, set_clipboard_text,
     launch_file, launch_url, make_selected_file, make_temporary_file,
     open_file, open_selected_file, select_directory, select_file,
     run_python, x2go_session_id, x2go_display,

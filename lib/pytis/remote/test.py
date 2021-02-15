@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -224,12 +224,6 @@ class TestRemote:
 
     def test_version(self):
         assert pytis.remote.version() == 'library: 2015-06-10 11:00'
-
-    def test_x2goclient_version(self):
-        assert pytis.remote.x2goclient_version() == '2020-04-22 22:00'
-
-    def test_library_version(self):
-        assert pytis.remote.library_version() == '2015-06-10 11:00'
 
     def test_basic_file_operations(self):
         with pytis.remote.open_file('test.txt', mode='wb') as f:
