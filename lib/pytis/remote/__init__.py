@@ -23,9 +23,10 @@ except ImportError as e:
         raise e
 
 from .remote import (  # noqa!
-    client_ip, client_available,
-    version, session_password, get_clipboard_text, set_clipboard_text,
-    launch_file, launch_url, make_selected_file, make_temporary_file,
+    client_ip, client_available, session_password,
+    get_clipboard_text, set_clipboard_text,
+    launch_file, launch_url,
+    make_selected_file, make_temporary_file,
     open_file, open_selected_file, select_directory, select_file,
     run_python, x2go_session_id, x2go_display,
     pytis_x2go_info_file, keep_x2go_info_file, parse_x2go_info_file,

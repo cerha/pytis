@@ -304,20 +304,6 @@ def _request(request, *args, **kwargs):
     return method(*retype(args), **retype(kwargs))
 
 
-def version():
-    try:
-        version = _request('version')
-    except Exception:
-        try:
-            if _request('echo', 'hello') == 'hello':
-                version = '-old-'
-            else:
-                version = ''
-        except Exception:
-            version = ''
-    return version or ''
-
-
 def session_password():
     try:
         return _request('session_password')

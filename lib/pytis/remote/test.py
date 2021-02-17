@@ -222,9 +222,6 @@ class TestRemote:
         pytis.remote.set_clipboard_text('foo')
         assert pytis.remote.get_clipboard_text() == 'foo'
 
-    def test_version(self):
-        assert pytis.remote.version() == 'library: 2015-06-10 11:00'
-
     def test_basic_file_operations(self):
         with pytis.remote.open_file('test.txt', mode='wb') as f:
             f.write(b'abc')
