@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -404,7 +404,7 @@ class LCGFormatter(object):
         self._translations = translations
         self._spec_kwargs = spec_kwargs or {}
         if not self._resolve(template_id, 'init')[0]:
-            raise AbortOutput()
+            raise AbortOutput('{}.init() returned False: Aborting...'.format(template_id))
         self._doc_header, __ = self._resolve(template_id, 'doc_header')
         self._doc_footer, __ = self._resolve(template_id, 'doc_footer')
         self._page_header, __ = self._resolve(template_id, 'page_header', default=None)

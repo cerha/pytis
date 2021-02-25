@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3812,7 +3812,8 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
                                            spec_kwargs=spec_kwargs,
                                            language=language or pytis.util.current_language(),
                                            translations=pytis.util.translation_path())
-    except pytis.output.AbortOutput:
+    except pytis.output.AbortOutput as e:
+        log(OPERATIONAL, str(e))
         return
 
     def run_viewer(filename):
