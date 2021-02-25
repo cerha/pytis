@@ -3823,14 +3823,14 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
             try:
                 os.remove(filename)
             except OSError as e:
-                pytis.util.log(pytis.util.OPERATIONAL, 'Error removing temporary file:', e)
+                log(OPERATIONAL, 'Error removing temporary file:', e)
 
     def do_printout(outfile):
         try:
             formatter.printout(outfile)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
-            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+            log(OPERATIONAL, 'Print exception caught', tbstring)
             pytis.form.run_dialog(pytis.form.Error,
                                   _("Invalid use of identifier `data' in print specification.\n"
                                     "Maybe use `current_row' instead?"))
