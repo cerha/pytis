@@ -403,25 +403,25 @@ class LCGFormatter(object):
         self._language = language
         self._translations = translations
         self._spec_kwargs = spec_kwargs or {}
-        if not self._resolve(template_id, 'init')[0]:
+        if not self._resolve(template_id, 'init'):
             raise AbortOutput('{}.init() returned False: Aborting...'.format(template_id))
-        self._doc_header, __ = self._resolve(template_id, 'doc_header')
-        self._doc_footer, __ = self._resolve(template_id, 'doc_footer')
-        self._page_header, __ = self._resolve(template_id, 'page_header', default=None)
-        self._first_page_header, __ = self._resolve(template_id, 'first_page_header',
-                                                    default=self._page_header)
+        self._doc_header = self._resolve(template_id, 'doc_header')
+        self._doc_footer = self._resolve(template_id, 'doc_footer')
+        self._page_header = self._resolve(template_id, 'page_header', default=None)
+        self._first_page_header = self._resolve(template_id, 'first_page_header',
+                                                default=self._page_header)
         page_number = pytis.output.Center('Strana ', pytis.output.PageNumber())
-        self._page_footer, __ = self._resolve(template_id, 'page_footer', default=page_number)
-        self._page_background, __ = self._resolve(template_id, 'background', default=None)
-        self._page_layout, __ = self._resolve(template_id, 'page_layout', default={})
-        style, __ = self._resolve(template_id, 'style', default=None)
+        self._page_footer = self._resolve(template_id, 'page_footer', default=page_number)
+        self._page_background = self._resolve(template_id, 'background', default=None)
+        self._page_layout = self._resolve(template_id, 'page_layout', default={})
+        style = self._resolve(template_id, 'style', default=None)
         if style:
             style_parser = lcg.StyleFile()
             style_parser.read(io.StringIO(style))  # doesn't work with cStringIO
             self._style = style_parser.presentations()
         else:
             self._style = None
-        body, __ = self._resolve(template_id, 'body')
+        body = self._resolve(template_id, 'body')
         if body is None:
             # In order to apply style parameters correctly
             temp_body = pytis.output.StructuredText('')
@@ -470,25 +470,22 @@ class LCGFormatter(object):
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
-        self._row_template, __ = self._resolve(template_id, 'row', default=None)
-        self._application_variables, __ = self._resolve(template_id, 'variables', default={})
+        self._row_template = self._resolve(template_id, 'row', default=None)
+        self._application_variables = self._resolve(template_id, 'variables', default={})
         if form is None:
             self._codebooks = None
         else:
             self._codebooks = self._retrieve_codebooks(form.view_spec(), resolver=self._resolver)
 
     def _resolve(self, template_id, element, default=''):
-        result = default
         for resolver in xtuple(self._output_resolvers):
             try:
-                result = resolver.get(template_id, element, parameters=self._parameters,
-                                      **self._spec_kwargs)
+                return resolver.get(template_id, element, parameters=self._parameters,
+                                    **self._spec_kwargs)
             except ResolverError:
                 continue
             break
-        else:
-            resolver = None
-        return result, resolver
+        return default
 
     @classmethod
     def _retrieve_codebooks(class_, view_spec, resolver=None):
