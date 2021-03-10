@@ -268,7 +268,7 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
         import base64
         rsa = Crypto.PublicKey.RSA.importKey(public)
         encrypted = rsa.encrypt(text, None)[0]
-        return base64.encodestring(encrypted)
+        return base64.b64encode(encrypted)
 
 
 class PytisCryptoDbKey(sql.SQLRaw):

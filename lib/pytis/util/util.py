@@ -1167,13 +1167,13 @@ def nextval(seq, connection_name=None):
 
 
 def rsa_encrypt(key, text):
-    """Return text encrypted using RSA 'key' and base64 encoded.
+    """Return text encrypted using RSA 'key' and base64 encoded as 'bytes'.
 
     If key is 'None', return 'text'.
 
     Arguments:
 
-      key -- public key to use for encryption; string or 'None'
+      key -- public key to use for encryption as 'str' or 'None'
       text -- text to encrypt
 
     """
@@ -1183,7 +1183,7 @@ def rsa_encrypt(key, text):
         import Crypto.PublicKey.RSA
         rsa = Crypto.PublicKey.RSA.importKey(key)
         encrypted = rsa.encrypt(text, None)[0]
-        return base64.encodestring(encrypted)
+        return base64.b64encode(encrypted)
     else:
         return text
 
