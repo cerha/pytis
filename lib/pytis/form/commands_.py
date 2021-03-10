@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,16 +19,17 @@
 
 """Definition of available user commands.
 
-All commands are defined centrally in this module for consistency.  This gives us a good overview
-of available commands which is especially helpful for application developers.
+All commands are defined centrally in this module for consistency.  This gives
+us a good overview of available commands which is especially helpful for
+application developers.
 
-Class constants named after the command with a 'COMMAND_' prefix are automatically created for all
-defined commands.  For example the definition:
+Class constants named after the command with a 'COMMAND_' prefix are
+automatically created for all defined commands.  For example the definition:
 
   Command(Application, 'EXIT', 'Exit the application.')
 
-will automatically create a constant 'Application.COMMAND_EXIT' and this constant may be further
-used to invoke the command, etc.
+will automatically create a constant 'Application.COMMAND_EXIT' and this
+constant may be further used to invoke the command, etc.
 
 Přiřazení kláves příkazům:
 

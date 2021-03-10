@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -464,9 +464,10 @@ class DBConnection(object):
     def select(self, name):
         """Return the specification instance activated for given connection name.
 
-        Available connection names are defined by the 'alternatives' constructor argument.  'None'
-        is reserved for the default connection.  The list of alternative connections is kept, so it
-        is possible to switch back to a previous connection using 'select()' again.
+        Available connection names are defined by the 'alternatives'
+        constructor argument.  'None' is reserved for the default connection.
+        The list of alternative connections is kept, so it is possible to
+        switch back to a previous connection using 'select()' again.
 
         """
         if name == self._name:
