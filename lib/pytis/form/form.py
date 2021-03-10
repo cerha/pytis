@@ -3367,6 +3367,9 @@ class _VirtualEditForm(EditForm):
     def _print_menu(self):
         return []
 
+    def _exit_check(self):
+        return True
+
 
 class InputForm(_VirtualEditForm, PopupEditForm):
     """Dynamically created virtual form.
