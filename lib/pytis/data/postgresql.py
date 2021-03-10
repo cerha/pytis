@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -478,9 +478,15 @@ class PostgreSQLAccessor(object_2_5):
                     db_key = result[0].result().fetchone()[0]
                 except DBUserException:
                     return
-                connection_data.set_db_key(db_key)
-                crypto_password = pytis.util.rsa_encrypt(db_key, password).decode('ascii')
-                connection_data.set_crypto_password(crypto_password)
+                if not db_key:
+                    # Remember there is no db key to avoid querying
+                    # the database again for each connection.
+                    connection_data.set_db_key(UNDEFINED)
+                    return
+                elif db_key != UNDEFINED:
+                    connection_data.set_db_key(db_key)
+                    crypto_password = pytis.util.rsa_encrypt(db_key, password).decode('ascii')
+                    connection_data.set_crypto_password(crypto_password)
             else:
                 return
         self._postgresql_query(connection, _Query("savepoint __pytis_init_crypto"), False)
