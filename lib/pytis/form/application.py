@@ -154,12 +154,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         pytis.form.app = self
 
         # Initialize login and password.
-        def test():
-            bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id)
-                        for id in ('tablename',)]
-            factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-            factory.create(connection_data=pytis.config.dbconnection)
-        db_operation(test)
+        db_operation(pytis.data.dbtable, 'pg_catalog.pg_tables', ('tablename',),
+                     pytis.config.dbconnection)
 
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
