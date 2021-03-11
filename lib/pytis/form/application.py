@@ -35,7 +35,6 @@ import string
 import sys
 import _thread
 import time
-import datetime
 import wx
 import wx.html
 
@@ -1568,10 +1567,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                     pytis.form.app._log_login = False
                 pytis.form.app.login_hook(success=True)
             return True, result
-        except pytis.data.DataAccessException as e:
+        except pytis.data.DataAccessException:
             run_dialog(dialog.Error, _("Access denied"))
             return FAILURE
-        except pytis.data.DBLoginException as e:
+        except pytis.data.DBLoginException:
             if pytis.config.dbconnection.password() is not None and pytis.form.app:
                 log(ACTION, "Login action:", (pytis.config.dbschemas, 'False'))
                 pytis.form.app.login_hook(success=False)
@@ -1912,6 +1911,7 @@ def message(message, beep_=False):
     """Deprecated.  Use 'pytis.api.app.echo()'."""
     if pytis.form.app:
         pytis.form.app.message(message, kind='error' if beep_ else 'info')
+
 
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
