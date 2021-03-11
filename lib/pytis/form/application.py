@@ -156,6 +156,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Initialize login and password.
         db_operation(pytis.data.dbtable, 'pg_catalog.pg_tables', ('tablename',),
                      pytis.config.dbconnection)
+        # Unlock crypto keys
+        self._unlock_crypto_keys()
 
         # Define statusbar
         # TODO: This is temporary backwards compatible conversion of status_fields()
@@ -195,8 +197,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._saved_state[option] = value
         # Read in access rights.
         init_access_rights(pytis.config.dbconnection)
-        # Unlock crypto keys
-        self._unlock_crypto_keys()
         # Init the recent forms list.
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
