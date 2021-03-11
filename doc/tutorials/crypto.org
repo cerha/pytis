@@ -21,6 +21,16 @@ PostgreSQLAccessor._postgresql_initialize_crypto).  Díky použití temp tabulky
 jsou tyto klíče dostupné pouze pro dané DB spojení a tudíž (ve wx aplikaci)
 jednomu uživateli.
 
+Šifrovací klíče jsou uloženy v tabulce e_pytis_crypto_keys.  Samotný šifrovací
+klíč je vygenerován správcem a uloží se do této tabulky zašifrovaný admin
+heslem.  Díky tomu pak může admin vytvářet řádky pro jednotlivé uživatele, kde
+je ten klíč vždycky zašfirovaný heslem toho nového uživatele.  Protože to heslo
+ale admin nezná, tak se vygeneruje náhodné heslo, kterým se to zašifruje, toto
+heslo se zašifruje pgp klíčem uživatele a pošle se mu mailem, aby ho uživatel
+při spuštění aplikace mohl použít.  Ten řádek s klíčem pro uživatele se označí
+jako "fresh", díky čemuž aplikace pozná, že je zapotřebí ho zašifrovat znovu,
+tentokrát již s heslem zadaným po úspěšném přihlášení do databáze.
+
 * Úvahy k možnostem využití šifrování ve webových aplikacích
 
 Pro webovou aplikaci nelze mechanizmus navržený pro wx aplikaci vůbec
