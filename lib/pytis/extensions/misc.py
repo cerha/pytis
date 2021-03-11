@@ -221,42 +221,6 @@ def constraints_email_many(emails):
     return '\n'.join(not_match)
 
 
-# Některé často používané konfigurační parametry.
-
-
-def session_date(transaction=None):
-    """Vrať vnitřní hodnotu nastaveného pracovního datumu."""
-    return session_date_value().value()
-
-
-def session_date_value(transaction=None):
-    """Vrať nastavené pracovní datum přihlášeného uživatele."""
-    from pytis.extensions import cfg_param
-    return cfg_param('datum', 'Nastaveni.BvUsersCfg')
-
-
-def start_date(transaction=None):
-    """Vrať vnitřní hodnotu nastaveného 'datumu od'."""
-    return start_date_value().value()
-
-
-def start_date_value(transaction=None):
-    """Vrať nastavené 'datum od' přihlášeného uživatele."""
-    from pytis.extensions import cfg_param
-    return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
-
-
-def end_date(transaction=None):
-    """Vrať vnitřní hodnotu nastaveného 'datumu do'."""
-    return end_date_value().value()
-
-
-def end_date_value(transaction=None):
-    """Vrať nastavené 'datum do' přihlášeného uživatele."""
-    from pytis.extensions import cfg_param
-    return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
-
-
 # Database encryption utilities
 
 
