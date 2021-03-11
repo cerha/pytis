@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -779,7 +779,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 log(ACTION, msg, *args)
             except Exception:
                 print(msg, args)
-        safelog('Application exit called', (pytis.config.dbschemas,))
+        safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
             if not self._modals.empty():
                 log(EVENT, "Couldn't close application with modal windows:",
