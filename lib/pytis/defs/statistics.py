@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -123,13 +123,3 @@ class FormUserStatisticsNoinfo(Specification):
         Field('last_used', _(u"Poslední spuštění")),
     )
     columns = ('login', 'class', 'n_open', 'last_used',)
-
-    def on_new_record(self, prefill=None, transaction=None):
-        try:
-            pytis.form.run_form(
-                pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
-                select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'),
-            )
-        except pytis.util.ResolverError:
-            pytis.form.run_dialog(pytis.form.Warning, _(
-                u"Tato databáze neobsahuje uživatelskou konfiguraci"))
