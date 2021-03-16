@@ -2551,11 +2551,15 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         # broke the rendering method of the page in wx.lib.pdfviewer.
         # So we have to override also this method and specify the keyword
         # argument "alpha" explicitly.
+        #
+        # The change in PyMuPDF>=1.15.0 made also previous fix
+        # unusable. Now it is necessary to make another fix:
+        # (see https://github.com/wxWidgets/Phoenix/issues/1350)
         """Render the set of pagedrawings into gc for specified page """
         page = self.pdfdoc.loadPage(pageno)
         matrix = fitz.Matrix(scale, scale)
         try:
-            pix = page.getPixmap(matrix=matrix, alpha=True)   # MUST be keyword arg(s)
+            pix = page.getPixmap(matrix=matrix)   # MUST be keyword arg(s)
             if [int(v) for v in fitz.version[1].split('.')] >= [1,15,0]:
                 # See https://github.com/wxWidgets/Phoenix/issues/1350
                 bmp = wx.Bitmap.FromBuffer(pix.width, pix.height, pix.samples)
