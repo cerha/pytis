@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -100,7 +100,7 @@ class SFSDialog(GenericDialog):
         return find(cid, self._columns, key=lambda c: c.id())
 
     def _create_ctrl(self, constructor, *args, **kwargs):
-        parent = kwargs.pop('parent', self._dialog)
+        parent = kwargs.pop('parent', self._panel)
         kwargs['height'] = kwargs.get('height', field_size(parent, 1, 1)[1])
         ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
@@ -119,7 +119,7 @@ class SFSDialog(GenericDialog):
         return self._create_ctrl(wx_spin_ctrl, value, **kwargs)
 
     def _create_label(self, label, **kwargs):
-        panel = wx.Panel(self._dialog, -1)
+        panel = wx.Panel(self._panel, -1)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         height = kwargs.get('height', field_size(panel, 1, 1)[1])
         label_ctrl = wx.StaticText(panel, -1, label)
@@ -129,6 +129,17 @@ class SFSDialog(GenericDialog):
         return panel
 
     def _create_content(self, sizer):
+        self._panel = panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
+        panel_sizer = wx.BoxSizer(wx.VERTICAL)
+        self._create_scrolled_panel_content(panel_sizer)
+        sizer.Add(panel, 1, wx.EXPAND)
+        panel.SetSizer(panel_sizer)
+        panel_sizer.Fit(panel)
+        size = panel_sizer.GetMinSize()
+        panel.SetMinSize((size.width, min(size.height, max(200, wx.DisplaySize()[1] - 400))))
+        panel.SetScrollRate(0, 20)
+
+    def _create_scrolled_panel_content(self, sizer):
         self._controls = []
         self._create_controls()
         for ctrls in self._controls:
@@ -192,8 +203,8 @@ class SortingDialog(SFSDialog):
                 choice([(self._LABELS[d], d) for d in self._DIRECTIONS], selected=dir,
                        tooltip=_("Choose the sorting direction."))))
 
-    def _create_content(self, sizer):
-        super(SortingDialog, self)._create_content(sizer)
+    def _create_scrolled_panel_content(self, sizer):
+        super(SortingDialog, self)._create_scrolled_panel_content(sizer)
         button = self._create_button(_("Add"), self._on_add,
                                      tooltip=_("Add secondary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
@@ -418,8 +429,8 @@ class SFDialog(SFSDialog):
             if wval.IsEnabled():
                 self._want_focus = wval
 
-    def _create_content(self, sizer):
-        super(SFDialog, self)._create_content(sizer)
+    def _create_scrolled_panel_content(self, sizer):
+        super(SFDialog, self)._create_scrolled_panel_content(sizer)
         button = self._create_button
         buttons = (
             button(_("Add AND"), lambda e: self._on_add(),

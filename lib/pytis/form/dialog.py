@@ -179,6 +179,7 @@ class GenericDialog(Dialog):
     def _rebuild(self):
         self._dialog.DestroyChildren()
         self._create_dialog_elements()
+        self._dialog.Layout()
         self.focus()
 
     def _create_dialog_elements(self):
