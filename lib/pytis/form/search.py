@@ -101,7 +101,7 @@ class SFSDialog(GenericDialog):
 
     def _create_ctrl(self, constructor, *args, **kwargs):
         parent = kwargs.pop('parent', self._dialog)
-        kwargs['height'] = field_size(parent, 1, 1)[1]
+        kwargs['height'] = kwargs.get('height', field_size(parent, 1, 1)[1])
         ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
         return ctrl
@@ -121,10 +121,11 @@ class SFSDialog(GenericDialog):
     def _create_label(self, label, **kwargs):
         panel = wx.Panel(self._dialog, -1)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        height = kwargs.get('height', field_size(panel, 1, 1)[1])
         label_ctrl = wx.StaticText(panel, -1, label)
         sizer.Add(label_ctrl, border=12, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT)
         panel.SetSizer(sizer)
-        panel.SetMinSize((label_ctrl.GetSize().width + 12, field_size(panel, 1, 1)[1]))
+        panel.SetMinSize((label_ctrl.GetSize().width + 12, height))
         return panel
 
     def _create_content(self, sizer):
@@ -344,12 +345,15 @@ class SFDialog(SFSDialog):
         # Construct the ui controls based on the current condition.
 
         def create_logical_operator(i, n, operator, level):
+            # Make all controls in this row slightly higher to avoid GTK warnings
+            # on GtkSpinButton creation.
+            height = 34
             return (
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
-                       selected=operator,
+                       selected=operator, height=height,
                        tooltip=_("Choose the logical operator to join with previous conditions.")),
-                label(_("Operator weight:")),
-                spin(level, length=4,
+                label(_("Operator weight:"), height=height),
+                spin(level, length=4, height=height,
                      tooltip=_("Choose the level of precedence of the logical operator.")))
 
         def create_relational_operator(i, n, operator, col1, col2, value):
