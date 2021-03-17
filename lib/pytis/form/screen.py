@@ -3069,6 +3069,10 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
     else:
         button = wx.Button(parent, id, label=label or '', size=size, style=style)
+        if label and not fullsize and size == wx.DefaultSize:
+            # Add small left and right padding to the label, otherwise
+            # the label is edge to edge with BU_EXACTFIT.
+            button.SetMinSize((button.Size.width + 18, button.Size.height))
     button._pytis_in_button_handler = False
     if command:
         assert callback is None
