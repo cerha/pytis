@@ -359,17 +359,18 @@ class GridTable(wx.grid.GridTableBase, DataTable):
         try:
             font = self._font_cache[key]
         except KeyError:
-            size = self._form.GetFont().GetPointSize()
-            flags = wx.FONTFLAG_DEFAULT
-            if style.slanted():
-                flags |= wx.FONTFLAG_ITALIC
-            if style.bold():
-                flags |= wx.FONTFLAG_BOLD
-            if style.overstrike():
-                flags |= wx.FONTFLAG_STRIKETHROUGH
-            if style.underline():
-                flags |= wx.FONTFLAG_UNDERLINED
-            font = self._font_cache[key] = font = wx.FFont(size, wx.FONTFAMILY_DEFAULT, flags)
+            font_info = wx.FontInfo(
+                self._form.GetFont().GetPointSize()
+            ).Slant(
+                style.slanted()
+            ).Bold(
+                style.bold()
+            ).Strikethrough(
+                style.overstrike()
+            ).Underlined(
+                style.underline()
+            )
+            font = self._font_cache[key] = font = wx.Font(font_info)
         return (wx.Colour(fg), wx.Colour(bg), font)
 
     def form(self):

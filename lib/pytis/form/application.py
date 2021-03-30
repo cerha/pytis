@@ -222,7 +222,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         #
         # frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, (1000, 800), tuple, int))
         frame.SetSize((1000, 800))
-        wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
         if not self._headless:
