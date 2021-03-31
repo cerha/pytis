@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -77,7 +77,7 @@ def get_menu_forms():
             result = found
         return result
     try:
-        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname',), pytis.config.dbconnection)
+        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname'))
     except Exception:
         data = None
     if data is None:
@@ -219,9 +219,7 @@ class MenuChecker(object):
         import pytis.output
         self._output_resolver = pytis.output.OutputResolver(pytis.config.print_spec_dir,
                                                             pytis.config.resolver)
-        self._dbconn = pytis.config.dbconnection
-        connection_data = pytis.config.dbconnection
-        data = pd.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
+        data = pd.dbtable('e_pytis_roles', ('name', 'purposeid'))
         condition = pd.NE('purposeid', pd.Value(pd.String(), 'user'))
         self._application_roles = [row[0].value()
                                    for row in data.select_map(identity, condition=condition)]
@@ -366,7 +364,7 @@ class MenuChecker(object):
             view_spec = resolver.get(spec_name, 'view_spec')
             fields = view_spec.fields()
             success, data = pytis.form.db_operation(data_spec.create,
-                                                    dbconnection_spec=self._dbconn)
+                                                    dbconnection_spec=pytis.config.dbconnection)
             if not success:
                 return errors + ["Nepodařilo se vytvořit datový objekt."]
             try:

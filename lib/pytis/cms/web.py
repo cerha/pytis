@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -775,8 +775,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(HttpAttachmentStorageBackend, self).__init__(*args, **kwargs)
         self._data = pd.dbtable('e_pytis_http_attachment_storage_keys',
-                                ('key_id', 'username', 'uri', 'readonly', 'key'),
-                                pytis.config.dbconnection.select(None))
+                                ('key_id', 'username', 'uri', 'readonly', 'key'))
 
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')

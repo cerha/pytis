@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -66,21 +66,13 @@ class HelpUpdater(object):
     """
 
     def __init__(self):
-        self._menu_help_data = pd.dbtable(
-            'e_pytis_help_menu',
-            ('fullname', 'content', 'changed', 'removed'),
-            pytis.config.dbconnection,
-        )
-        self._spec_help_data = pd.dbtable(
-            'e_pytis_help_spec',
-            ('spec_name', 'description', 'help', 'changed', 'removed'),
-            pytis.config.dbconnection,
-        )
-        self._spec_help_items_data = pd.dbtable(
-            'e_pytis_help_spec_items',
-            ('item_id', 'spec_name', 'kind', 'identifier', 'content', 'changed', 'removed'),
-            pytis.config.dbconnection,
-        )
+        self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content',
+                                                                'changed', 'removed'))
+        self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description',
+                                                                'help', 'changed', 'removed'))
+        self._spec_help_items_data = pd.dbtable('e_pytis_help_spec_items',
+                                                ('item_id', 'spec_name', 'kind',
+                                                 'identifier', 'content', 'changed', 'removed'))
         self._done = {}
 
     def _row(self, data, **kwargs):
@@ -267,8 +259,7 @@ class HelpUpdater(object):
 
     def update(self):
         """(Re)generate help for all menu items."""
-        data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'),
-                          pytis.config.dbconnection)
+        data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'))
         data.select(sort=(('position', pd.ASCENDENT),))
         while True:
             row = data.fetchone()
@@ -589,12 +580,9 @@ class DmpHelpGenerator(HelpGenerator):
 
     def __init__(self):
         try:
-            data = pytis.data.dbtable(
-                'ev_pytis_user_help',
-                ('help_id', 'fullname', 'spec_name', 'page_id', 'position',
-                 'title', 'description', 'menu_help', 'content',),
-                pytis.config.dbconnection,
-            )
+            data = pytis.data.dbtable('ev_pytis_user_help',
+                                      ('help_id', 'fullname', 'spec_name', 'page_id', 'position',
+                                       'title', 'description', 'menu_help', 'content',))
         except pd.DBException:
             log(OPERATIONAL, "Not using DMP help: DMP help tables not found in database.")
             raise self.NotAvailable()
@@ -609,8 +597,7 @@ class DmpHelpGenerator(HelpGenerator):
 
     def _load_descriptions(self, spec_name):
         data = pytis.data.dbtable('e_pytis_help_spec_items',
-                                  ('spec_name', 'kind', 'identifier', 'content'),
-                                  pytis.config.dbconnection)
+                                  ('spec_name', 'kind', 'identifier', 'content'))
         data.select(condition=pytis.data.EQ('spec_name', pytis.data.sval(spec_name)))
         descriptions = dict([(x, {}) for x in
                              ('help', 'description', 'field', 'action', 'binding', 'profile')])
@@ -622,8 +609,7 @@ class DmpHelpGenerator(HelpGenerator):
             if content:
                 descriptions[row['kind'].value()][row['identifier'].value()] = content
         data.close()
-        data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
-                                  pytis.config.dbconnection)
+        data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'))
         row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
         if row:
             for kind in ('help', 'description'):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -308,8 +308,7 @@ class DatabaseResolver(Resolver):
         assert isinstance(columns, (tuple, list)), columns
         assert isinstance(specs, (tuple, list)), specs
         self._columns = columns
-        self._data = pytis.data.dbtable(table, ('module', 'specification') + columns,
-                                        pytis.config.dbconnection)
+        self._data = pytis.data.dbtable(table, ('module', 'specification') + columns)
         self._specs = specs
 
     def _get_module(self, name):

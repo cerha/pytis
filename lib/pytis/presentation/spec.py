@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -4494,16 +4494,14 @@ class HttpAttachmentStorage(AttachmentStorage):
         self._uri = uri.rstrip('/')
         self._username = username = pytis.config.dbconnection.user()
         self._key = key = ''.join(random.sample(string.digits + string.ascii_letters, 40))
-        dbconnection = pytis.config.dbconnection.select(None)
         data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
-                                  ('key_id', 'username', 'uri', 'readonly', 'key'),
-                                  dbconnection)
+                                  ('key_id', 'username', 'uri', 'readonly', 'key'))
         row = pytis.data.Row((('username', pytis.data.sval(username)),
                               ('uri', pytis.data.sval(uri)),
                               ('readonly', pytis.data.bval(readonly)),
                               ('key', pytis.data.sval(key)),
                               ))
-        transaction = pytis.data.DBTransactionDefault(dbconnection)
+        transaction = pytis.data.transaction()
         try:
             # Try to delete the old row -- the table is unique on (username, uri).
             data.delete_many(pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(username)),
@@ -4697,8 +4695,7 @@ class DbAttachmentStorage(AttachmentStorage):
                                         ('file_id', ref_column, 'file_name', 'byte_size',
                                          'width', 'height', 'resized_width', 'resized_height',
                                          'thumbnail_width', 'thumbnail_height',
-                                         'file', 'resized', 'thumbnail'),
-                                        pytis.config.dbconnection)
+                                         'file', 'resized', 'thumbnail'))
         self._ref_column = ref_column
         self._ref_value = ref_value
         self._ref_type = self._data.find_column(ref_column).type()

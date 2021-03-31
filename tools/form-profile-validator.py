@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -64,8 +64,7 @@ def run():
                                 pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
-            data = pytis.data.dbtable('e_pytis_form_profile_base', ('id', 'username'),
-                                      pytis.config.dbconnection)
+            data = pytis.data.dbtable('e_pytis_form_profile_base', ('id', 'username'))
         except pytis.data.DBLoginException as e:
             if pytis.config.dbconnection.password() is None:
                 import getpass

@@ -154,8 +154,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         pytis.form.app = self
 
         # Initialize login and password.
-        db_operation(pytis.data.dbtable, 'pg_catalog.pg_tables', ('tablename',),
-                     pytis.config.dbconnection)
+        db_operation(pytis.data.dbtable, 'pg_catalog.pg_tables', ('tablename',))
         # Unlock crypto keys
         self._unlock_crypto_keys()
 
@@ -406,7 +405,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                       mitem(pytis.form.UICommands.DESCRIBE)))
         menus.append(Menu(_("Help"), items))
 
-    def _dynamic_menu(self, connection_data):
+    def _dynamic_menu(self):
         # Check for menu presence, if not available, return None
         I_ = pytis.data.Integer()
         S = pytis.data.String()
@@ -419,7 +418,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                             ('fullname', S,),
                                             ('position', pytis.data.LTree(),),
                                             ('help', S,), ('hotkey', S,), ('language', S,),),
-                                           connection_data, arguments=())
+                                           arguments=())
             menu_rows = menu_data.select_map(identity,
                                              condition=pytis.data.EQ('language',
                                                                      pytis.data.sval(language)),
@@ -459,8 +458,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Done, return the menu structure
         return menu_template
 
-    def _build_menu(self, menu_prototype, connection_data):
-        menu_template = self._dynamic_menu(connection_data)
+    def _build_menu(self, menu_prototype):
+        menu_template = self._dynamic_menu()
         if not menu_template:
             return list(menu_prototype)
 
@@ -501,7 +500,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _create_menubar(self):
         self._recent_forms_menu = None
-        menu = self._menu = self._build_menu(self._specification.menu(), pytis.config.dbconnection)
+        menu = self._menu = self._build_menu(self._specification.menu())
         menu.append(Menu(self._WINDOW_MENU_TITLE,
                          (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
                                 help=_("Switch to the previous window in the window list order.")),
@@ -546,9 +545,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._decrypted_names = decrypted_names = set()
 
         try:
-            data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
-                                      ('key_id', 'name', 'fresh',),
-                                      pytis.config.dbconnection)
+            data = pytis.data.dbtable('ev_pytis_user_crypto_keys', ('key_id', 'name', 'fresh'))
         except pytis.data.DBException:
             return
         else:

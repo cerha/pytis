@@ -691,9 +691,7 @@ class InnerForm(Form):
             description = self._cached_spec_description
         except AttributeError:
             try:
-                data = pytis.data.dbtable('e_pytis_help_spec',
-                                          ('spec_name', 'description', 'help'),
-                                          pytis.config.dbconnection)
+                data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'))
             except pytis.data.DBException:
                 description = self._view.description()
             else:
