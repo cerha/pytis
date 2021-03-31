@@ -2183,7 +2183,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                     mime_type, encoding = mimetypes.guess_type(uri)
                     path = resource.src_file()
                     if path:
-                        return self._send_data(mime_type, open(path))
+                        return self._send_data(mime_type, open(path, 'rb'))
                     content = resource.get()
                     if content:
                         return self._send_data(mime_type, io.BytesIO(content))
