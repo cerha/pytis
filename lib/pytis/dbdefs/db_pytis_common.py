@@ -134,7 +134,7 @@ class Log(sql.SQLTable):
 class OnlyDigits(sql.SQLFunction):
     """Pomocná funkce pro CHECK constraint."""
     name = 'only_digits'
-    arguments = (sql.Column('', pytis.data.String()),)
+    arguments = (sql.Column('string', pytis.data.String()),)
     result_type = pytis.data.Boolean()
     multirow = False
     stability = 'VOLATILE'
