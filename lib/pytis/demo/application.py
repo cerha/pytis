@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -220,6 +220,12 @@ class TestApplication(object):
         finally:
             app.param.country.name = name
 
+    def test_dbfunction(self):
+        assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
+        with pytest.raises(AttributeError):
+            pd.dbfunction.reverse('Hello World')
+        assert pd.dbfunction.only_digits('123') is True
+        assert len(pd.dbfunction.random_numbers(3, maximum=100, minimum=1)) == 3
 
 def test_shared_params():
     # Shared params must work with the pytis.form.Application instance

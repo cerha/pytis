@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@ from .data import (  # noqa: F401
     DataFactory, EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
     LTreeMatch, LTreeAncestor, LTreeDescendant, RangeContains, RangeContained,
     RangeOverlap, FunctionCondition, OpFunction,
-    reversed_sorting, opposite_direction, dbtable, transaction
+    reversed_sorting, opposite_direction, dbtable, dbfunction, transaction
 )
 from .access import (  # noqa: F401
     Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
