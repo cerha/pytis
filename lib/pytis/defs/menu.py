@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020, 2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -164,8 +164,7 @@ class ApplicationRoles(_ApplicationRolesSpecification):
         template_row = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
         if template_row is None:
             return
-        pytis.extensions.dbfunction('pytis_copy_role',
-                                    ('copy_from', template_row['name'],), ('copy_to', row['name'],))
+        pytis.data.dbfunction.pytis_copy_role(template_row['name'].value(), row['name'].value())
 
 
 class UserApplicationRolesCodebook(ApplicationRoles):
@@ -480,19 +479,18 @@ class ApplicationMenuM(pytis.presentation.Specification):
         template_row = pytis.extensions.run_cb('menu.ApplicationMenuCodebook')
         if template_row is None:
             return
-        from_shortname = template_row['shortname']
-        to_shortname = row['shortname']
+        from_shortname = template_row['shortname'].value()
+        to_shortname = row['shortname'].value()
         # Check compatibility of column names (this doesn't do the right thing
         # if there are columns with the same names but different purposes, but
         # it is generally responsibility of the DMP admin to copy rights only
         # between compatible objects).
-        rows = pytis.extensions.dbfunction('pytis_columns_in_rights',
-                                           ('shortname', from_shortname,))
+        rows = pytis.data.dbfunction.pytis_columns_in_rights(from_shortname)
         if not isinstance(rows, (list, tuple)):
             rows = [[rows]]
         if rows:
             from_columns = set([r[0] for r in rows])
-            components = to_shortname.value().split('/')
+            components = to_shortname.split('/')
             spec_name = components[1]
             view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
             to_columns = set([f.id() for f in view_spec.fields()])
@@ -503,8 +501,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                            (', '.join(list(missing_columns)),))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
                     return
-        pytis.extensions.dbfunction('pytis_copy_rights',
-                                    ('copy_from', from_shortname,), ('copy_to', to_shortname,))
+        pytis.data.dbfunction.pytis_copy_rights(from_shortname, to_shortname)
 
     def _remove_redundant(self, row):
         if not pytis.form.run_dialog(pytis.form.Question,
@@ -512,7 +509,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                         "\"%s\"?") %
                                       (row['title'].value() or '',))):
             return
-        pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
+        pytis.data.dbfunction.pytis_remove_redundant(row['shortname'].value())
 
 
 class ApplicationMenuCodebook(pytis.presentation.Specification):
@@ -778,7 +775,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
 
     @procedure
     def commit_changes(self):
-        if pytis.extensions.dbfunction("pytis_update_summary_rights"):
+        if pytis.data.dbfunction.pytis_update_summary_rights():
             message = _(u"Změny aplikovány")
         else:
             message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")

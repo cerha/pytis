@@ -72,11 +72,11 @@ class EPytisFormLog(sql.SQLTable):
 class PytisLogForm(sql.SQLFunction):
     schemas = pytis_schemas.value(globals())
     name = 'pytis_log_form'
-    arguments = (sql.Column('', pytis.data.String()),
-                 sql.Column('', pytis.data.String()),
-                 sql.Column('', pytis.data.String()),
-                 sql.Column('', pytis.data.DateTime(without_timezone=True)),
-                 sql.Column('', pytis.data.DateTime(without_timezone=True)),)
+    arguments = (sql.Column('form', pytis.data.String()),
+                 sql.Column('class_', pytis.data.String()),
+                 sql.Column('info', pytis.data.String()),
+                 sql.Column('t_start', pytis.data.DateTime(without_timezone=True)),
+                 sql.Column('t_show', pytis.data.DateTime(without_timezone=True)),)
     result_type = pytis.data.Integer()
     multirow = False
     stability = 'VOLATILE'

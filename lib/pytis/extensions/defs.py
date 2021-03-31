@@ -30,9 +30,6 @@ from pytis.presentation import PresentedRow
 from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
 
-from .dbutils import dbfunction
-
-
 def get_form_defs(resolver=None, messages=None):
     """Return sequence of names of all public form specifications in the application.
 
@@ -303,29 +300,19 @@ class MenuChecker(object):
             for f in fields:
                 codebook = f.codebook()
                 if codebook is not None:
-                    def arg(name, value):
-                        return name, pd.Value(pd.String(), value)
-                    arguments = (arg('form', spec_name),
-                                 arg('field', f.id()),
-                                 arg('codebook', codebook),
-                                 ('new', (pd.Value(pd.Boolean(), new)),),
-                                 )
-                    users = dbfunction('pytis_check_codebook_rights', *arguments)
-                    if users:
-                        if isinstance(users, (tuple, list)):
-                            users = [str(row[0].value()) for row in users]
-                            users.sort()
-                        else:
-                            users = [users]
-                        for u in users:
-                            if u not in self._application_roles:
-                                errors.append(("Právo update nebo insert pro políčko %(field)s "
-                                               "náhledu %(view)s "
-                                               "je v rozporu s právem view číselníku %(codebook)s. "
-                                               "Týká se to těchto rolí: %(roles)s.") %
-                                              dict(codebook=codebook, view=spec_name, field=f.id(),
-                                                   roles=users))
-                                break
+                    users = [str(row[0].value()) for row in
+                             pd.dbfunction.pytis_check_codebook_rights(spec_name, f.id(),
+                                                                       codebook, new)]
+                    users.sort()
+                    for u in users:
+                        if u not in self._application_roles:
+                            errors.append(("Právo update nebo insert pro políčko %(field)s "
+                                           "náhledu %(view)s "
+                                           "je v rozporu s právem view číselníku %(codebook)s. "
+                                           "Týká se to těchto rolí: %(roles)s.") %
+                                          dict(codebook=codebook, view=spec_name, field=f.id(),
+                                               roles=users))
+                            break
         except Exception as e:
             errors.append(str(e))
         return errors

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2014-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -70,8 +70,7 @@ class CryptoAreas(Specification):
         area = row['name'].value()
         if not area:
             return
-        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                             ('key_name_', pytis.data.sval('pytis'),))
+        db_key = pytis.data.dbfunction('pytis_crypto_db_key', 'pytis')
         connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
         if not key_id or not key:

@@ -497,8 +497,7 @@ class DBConnection(object):
         # In such a case we must not set the wrong password here.
         self._crypto_password = None
         if self._db_key is None:
-            self._db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                                       ('key_name_', pytis.data.sval('pytis'),))
+            self._db_key = pytis.data.dbfunction('pytis_crypto_db_key', 'pytis')
         if self._crypto_password is None and self._db_key:
             self._crypto_password = rsa_encrypt(self._db_key, password)
 

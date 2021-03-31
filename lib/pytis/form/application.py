@@ -554,8 +554,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not rows:
             return
 
-        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                             ('key_name_', pytis.data.sval('pytis'),))
+        db_key = pytis.data.dbfunction('pytis_crypto_db_key', 'pytis')
         crypto_password = pytis.config.dbconnection.crypto_password()
         if not crypto_password:
             established_names = [r for r in rows if not r['fresh'].value()]
@@ -565,10 +564,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 verify=not established_names,
                 check=(
                     lambda r: ('password', _("Invalid password"))
-                    if established_names and not pytis.extensions.dbfunction(
-                        'pytis_crypto_unlock_current_user_passwords',
-                        ('password_', pytis.data.sval(
-                            rsa_encrypt(db_key, r['password'].value()).decode('ascii')),))
+                    if established_names and not pytis.data.dbfunction(
+                            'pytis_crypto_unlock_current_user_passwords',
+                            rsa_encrypt(db_key, r['password'].value()).decode('ascii'))
                     else None,),
             )
             if not crypto_password:
@@ -579,7 +577,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 lambda: pytis.config.dbconnection
             ).reset_crypto_password(crypto_password)
 
-        crypto_password_value = pytis.data.sval(crypto_password)
         while True:
             established_names = set()
             fresh_names = set()
@@ -589,8 +586,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     fresh_names.add(name)
                 else:
                     established_names.add(name)
-            ok_names = pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                                   ('password_', crypto_password_value,))
+            ok_names = pytis.data.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                             crypto_password)
             if isinstance(ok_names, list):
                 ok_names = set([row[0].value() for row in ok_names])
             else:
@@ -615,15 +612,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 r_name = r['name'].value()
                 if r_name == name or (bad and r_name in bad_names):
                     try:
-                        pytis.extensions.dbfunction('pytis_crypto_change_password',
-                                                    ('id_', r['key_id']),
-                                                    ('old_psw', pytis.data.sval(password)),
-                                                    ('new_psw', crypto_password_value))
+                        pytis.data.dbfunction('pytis_crypto_change_password',
+                                              r['key_id'].value(), password, crypto_password)
                     except pytis.data.DBException:
                         pass
         data.close()
-        pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                    ('password_', crypto_password_value,))
+        pytis.data.dbfunction('pytis_crypto_unlock_current_user_passwords', crypto_password)
 
 # Ostatní metody
 
