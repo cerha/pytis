@@ -2269,6 +2269,11 @@ class DBFunction(object):
     def __call__(self, fspec, *args, **kwargs):
         def arg_value(value, argspec=None):
             if isinstance(value, pytis.data.Value):
+                if argspec and not issubclass(value.type().__class__, argspec.type().__class__):
+                    raise TypeError("DB function {}() argument {} type should be {} ({} given)"
+                                    .format(fspec.name,
+                                            argspec.id() or fspec.arguments.index(argspec) + 1,
+                                            value.type(), argspec.type()))
                 return value
             elif argspec:
                 return pytis.data.Value(argspec.type(), value)
