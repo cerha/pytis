@@ -226,8 +226,13 @@ class GPGEmail(SimpleEmail):
         self.msg = Message()
 
     def _gpg_encrypt_content(self):
-        import gnupg
         import tempfile
+        import gnupg
+        try:
+            # Work around gnupg > 2.1.19/Python gnupg module version incompatibility.
+            gnupg._parsers.Verify.TRUST_LEVELS["ENCRYPTION_COMPLIANCE_MODE"] = 23
+        except:
+            pass
         keyring = tempfile.mkstemp()[1]
         options = ('--no-secmem-warning', '--always-trust', '--no-default-keyring',
                    '--keyring=%s' % keyring)
