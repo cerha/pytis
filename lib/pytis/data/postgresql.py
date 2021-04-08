@@ -671,38 +671,55 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         assert isinstance(query, _Query), query
         assert transaction is None or not outside_transaction, \
             'Connection given to a query to be performed outside transaction'
-        borrowed_connection = None
-        if transaction is None:
-            connection, new = self._pg_get_connection(outside_transaction)
-            if new:
-                borrowed_connection = connection
-        elif not transaction.open():
-            raise DBUserException("Can't use closed transaction")
-        else:
-            connection = transaction._trans_connection()
-        self._pg_query_counter += 1
-        # Proveď dotaz
-        if __debug__:
-            log(DEBUG, 'SQL query', query.format())
-        with Locked(self._pg_query_lock):
-            try:
-                self._postgresql_initialize_search_path(connection,
-                                                        self._pg_connection_data().schemas())
-                result, connection = self._postgresql_query(connection, query, outside_transaction)
-            finally:
-                if connection is not None and connection is borrowed_connection:
-                    self._postgresql_query(connection, "commit", outside_transaction)
-                    self._pg_return_connection(connection)
-            if backup and self._pdbb_logging_command is not None:
-                assert not outside_transaction, \
-                    ('Backed up SQL command outside transaction', query.format())
-                # Zde nemůže dojít k významné záměně pořadí zalogovaných
-                # příkazů, protože všechny DML příkazy jsou uzavřeny
-                # v transakcích a ty konfliktní jsou díky serializaci
-                # automaticky správně řazeny.
-                logging_query = self._pdbb_logging_command.values((query.format(),))
-                self._postgresql_query(connection, logging_query, False)
-            data = self._postgresql_transform_query_result(result)
+        attempt = 1
+        while True:  # Loop just for repetition on DBRetryException (see below).
+            borrowed_connection = None
+            if transaction is None:
+                connection, new = self._pg_get_connection(outside_transaction)
+                if new:
+                    borrowed_connection = connection
+            elif not transaction.open():
+                raise DBUserException("Can't use closed transaction")
+            else:
+                connection = transaction._trans_connection()
+            self._pg_query_counter += 1
+            # Proveď dotaz
+            if __debug__:
+                log(DEBUG, 'SQL query', query.format())
+            with Locked(self._pg_query_lock):
+                try:
+                    try:
+                        self._postgresql_initialize_search_path(
+                            connection,
+                            self._pg_connection_data().schemas(),
+                        )
+                    except DBRetryException:
+                        # Maybe database connection lost (server closed idle connection).
+                        # Note we only retry the harmless "set search_path" query.  This
+                        # should handle most lost connection situations.
+                        connection = None
+                        if transaction is None and attempt < 10:
+                            attempt += 1
+                            continue
+                        else:
+                            raise
+                    result, connection = self._postgresql_query(connection, query,
+                                                                outside_transaction)
+                finally:
+                    if connection is not None and connection is borrowed_connection:
+                        self._postgresql_query(connection, "commit", outside_transaction)
+                        self._pg_return_connection(connection)
+                if backup and self._pdbb_logging_command is not None:
+                    assert not outside_transaction, \
+                        ('Backed up SQL command outside transaction', query.format())
+                    # Zde nemůže dojít k významné záměně pořadí zalogovaných
+                    # příkazů, protože všechny DML příkazy jsou uzavřeny
+                    # v transakcích a ty konfliktní jsou díky serializaci
+                    # automaticky správně řazeny.
+                    logging_query = self._pdbb_logging_command.values((query.format(),))
+                    self._postgresql_query(connection, logging_query, False)
+                data = self._postgresql_transform_query_result(result)
+                break
         if __debug__:
             log(DEBUG, 'SQL query result', data)
         return data
