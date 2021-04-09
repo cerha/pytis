@@ -373,7 +373,7 @@ class Slowlongtable(sql.SQLView):
     @classmethod
     def query(cls):
         longtable = sql.t.Longtable.alias('long')
-        return sqlalchemy.select(longtable.c +
+        return sqlalchemy.select(list(longtable.c) +
                                  [(sval('x') + longtable.c.value).label('xvalue'),
                                   (ival(64) * longtable.c.id).label('id64')],
                                  from_obj=[longtable])
