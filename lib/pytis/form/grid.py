@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -88,10 +88,20 @@ class DataTable(object):
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
     def _retrieve_row(self, row):
+        def fetch(row):
+            attempt = 1
+            while True:
+                try:
+                    return self._data.fetch(row)
+                except pytis.data.DBRetryException:
+                    if attempt <= 10:
+                        attempt += 1
+                        continue
+                    else:
+                        raise
         current = self._current_row
         if not current or current.row != row:
-            data = self._data
-            success, data_row = db_operation(data.fetch, row)
+            success, data_row = db_operation(fetch, row)
             if not success:
                 self._panic()
             if data_row:
