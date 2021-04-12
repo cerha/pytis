@@ -442,11 +442,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 if __debug__:
                     log(DEBUG, 'Listening for notifications:', connection)
                 with Locked(self._pg_query_lock):
-                    cursor = connection.cursor()
-                    try:
-                        fileno = connection.fileno()
-                    except AttributeError:  # older psycopg2 versions
-                        fileno = cursor.fileno()
+                    fileno = connection.fileno()
                 try:
                     select.select([fileno], [], [], None)
                 except Exception as e:
@@ -460,12 +456,9 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     try:
                         connection.poll()
                         ready = True
-                    except AttributeError:  # older psycopg2 versions
-                        try:
-                            ready = cursor.isready()
-                        except dbapi.OperationalError:
-                            self._pg_notif_connection = None
-                            ready = False
+                    except dbapi.OperationalError:
+                        self._pg_notif_connection = None
+                        ready = False
                     if ready:
                         notifies = connection.notifies
                         if notifies:
