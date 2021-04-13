@@ -300,9 +300,10 @@ class MenuChecker(object):
             for f in fields:
                 codebook = f.codebook()
                 if codebook is not None:
+                    from pytis.dbdefs.db_pytis_menu import PytisCheckCodebookRights
                     users = [str(row[0].value()) for row in
-                             pd.dbfunction.pytis_check_codebook_rights(spec_name, f.id(),
-                                                                       codebook, new)]
+                             pd.dbfunction(PytisCheckCodebookRights,
+                                           spec_name, f.id(), codebook, new)]
                     users.sort()
                     for u in users:
                         if u not in self._application_roles:

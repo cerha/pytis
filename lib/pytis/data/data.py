@@ -2207,25 +2207,29 @@ def dbtable(table, columns, connection_data=None, arguments=None, connection_nam
     return data
 
 
-class DBFunction(object):
+def dbfunction(fspec, *args, **kwargs):
     """Call database function and return the result as a Python value.
 
     If the database call fails, return None.
 
     Arguments:
 
-      function -- name of the function (string) or database specification instance
-        corresponding to the function
+      function -- name of the function (string) or database specification
+        ('pytis.data.gensqlalchemy.SQLFunctional' subclass) corresponding to
+        the function.  Passing string name allows calling any DB function
+        directly without specification, but lacks argument and result type
+        safety so it should only be used for legacy purposes.  Passing function
+        by specification should be preferred where possible.
 
       args, kwargs -- function call arguments.  Positional arguments are passed
         in given order.  Keyword arguments must match the argument names
         defined in function specification.  Note, that arguments are not
         optional.  You must always pass all arguments defined by function
         specification.  You may only choose to pass them as positional or as
-        keywords.  Argument values are preferably Python "internal" values
-        corresponding to the argument's pytis data type.  'pytis.data.Value'
-        instances are also supported.  See the use cases below for more
-        details.
+        keywords.  Argument values are Python "internal" values corresponding
+        to the argument's Pytis data type given by specification (TypeError is
+        raised if not).  The rules are somewhat different when the function is
+        passed by name and the specification is not available - see below.
 
       transaction -- database transaction as a 'DBTransactionDefault' instance.
         Transaction is popped out of kwargs, so this makes it impossible to pass
@@ -2234,100 +2238,62 @@ class DBFunction(object):
 
     Returns the Python value of the function call result or a sequence of
     'pytis.data.Row' instances for functions with multirow = True in
-    specification.
+    specification (calling multirow functions by name is not supported).
 
-    Usage:
-
-    'DBFunction' instance is created automatically as 'pytis.data.dbfunction'.
-    There are three quite distinct ways to use it.
-
-    1) pytis.data.dbfunction('function_name', arg1, arg2)
-
-       Allows calling any DB function directly without specification.  Argument
-       types are simply inferred from the python values: str, int, float, bool,
-       datetime.date, datetime.datetime map to the corresponding pytis data
-       types.  Use Value instances to define types explicitly.  Keyword
-       arguments are not supported in this case as well as multirow results.
-       You may get database errors if you pass arguments incorrectly (but extra
-       arguments are ignored silently!).
-
-    2) pytis.data.dbfunction(dbdefs.FunctionSpecification, arg1, arg2)
-
-       Calls DB function for given specification (a
-       'pytis.data.gensqlalchemy.SQLFunctional' subclass).  Raises TypeError if
-       the passed arguments don't match the function specification.
-
-    3) pytis.data.dbfunction.function_name(arg1, arg2)
-
-       Locates the function specification by function name (using
-       'pytis.data.gensqlalchemy.specifications_by_name()' and then uses the
-       second option to call the function with the obtained function
-       specification and given arguments.  Raises AttributeError if there is
-       not exactly one function matching "function_name".
+    If the function is passed by name, the specification is not available.
+    Argument types are thus not checked, but inferred from values.  The types
+    str, int, float, bool, datetime.date, datetime.datetime simply map to the
+    corresponding Pytis data types.  Value instances can also be used directly
+    to define the argument type explicitly.  Keyword arguments are not
+    supported in this case.  You may get database errors if you pass arguments
+    incorrectly (but extra arguments are ignored silently!).
 
     """
-    def __call__(self, fspec, *args, **kwargs):
-        def arg_value(value, argspec=None):
-            if isinstance(value, pytis.data.Value):
-                if argspec and not issubclass(value.type().__class__, argspec.type().__class__):
-                    raise TypeError("DB function {}() argument {} type should be {} ({} given)"
-                                    .format(fspec.name,
-                                            argspec.id() or fspec.arguments.index(argspec) + 1,
-                                            value.type(), argspec.type()))
-                return value
-            elif argspec:
-                return pytis.data.Value(argspec.type(), value)
-            elif isinstance(value, int):
-                return pytis.data.ival(value)
-            elif isinstance(value, float):
-                return pytis.data.fval(value)
-            elif isinstance(value, basestring):
-                return pytis.data.sval(value)
-            elif isinstance(value, bool):
-                return pytis.data.bval(value)
-            elif isinstance(value, datetime.datetime):
-                return pytis.data.dtval(value)
-            elif isinstance(value, datetime.date):
-                return pytis.data.dval(value)
-            else:
-                raise TypeError("Unsupported value type", type(value))
-        # TODO PY3: define keyword arguments in function definition.
-        transaction = kwargs.pop('transaction', None)
-        function = pytis.data.DBFunctionDefault(fspec, pytis.config.dbconnection)
-        if isinstance(fspec, basestring):
-            assert not kwargs
-            arguments = [('arg{}'.format(i + 1), arg_value(value)) for i, value in enumerate(args)]
-            multirow = False
+    def argument(value):
+        if isinstance(value, pytis.data.Value):
+            return value
+        elif isinstance(value, int):
+            return pytis.data.ival(value)
+        elif isinstance(value, float):
+            return pytis.data.fval(value)
+        elif isinstance(value, basestring):
+            return pytis.data.sval(value)
+        elif isinstance(value, bool):
+            return pytis.data.bval(value)
+        elif isinstance(value, datetime.datetime):
+            return pytis.data.dtval(value)
+        elif isinstance(value, datetime.date):
+            return pytis.data.dval(value)
         else:
-            fargs = [a for a in fspec.arguments if not a.out()]
-            if len(args) + len(kwargs) != len(fargs):
-                raise TypeError("DB function {}() takes {} argument(s) ({} given)"
-                                .format(fspec.name, len(fargs), len(args) + len(kwargs)))
-            for key in kwargs:
-                if key not in (a.id() for a in fargs):
-                    raise TypeError("DB function {}() got unexpected keyword argument {}"
-                                    .format(fspec.name, key))
-            arguments = (
-                [(arg.id(), arg_value(val, arg)) for arg, val in zip(fargs[:len(args)], args)] +
-                [(arg.id(), arg_value(kwargs[arg.id()], arg)) for arg in fargs[len(args):]]
-            )
-            multirow = fspec.multirow
-        result = function.call(Row(arguments), transaction=transaction)
-        if multirow:
-            return result
-        else:
-            return result[0][0].value()
-
-    def __getattr__(self, name):
-        import pytis.data.gensqlalchemy as sql
-        candidates = list(sql.specifications_by_name(name))
-        if len(candidates) == 1 and issubclass(candidates[0], sql.SQLFunctional):
-            return lambda *args, **kwargs: self.__call__(candidates[0], *args, **kwargs)
-        else:
-            raise AttributeError("No function named '{}'".format(name))
-
-
-dbfunction = DBFunction()
+            raise TypeError("Unsupported value type", type(value))
+    # TODO PY3: define keyword arguments in function definition.
+    transaction = kwargs.pop('transaction', None)
+    function = pytis.data.DBFunctionDefault(fspec, pytis.config.dbconnection)
+    if isinstance(fspec, basestring):
+        assert not kwargs
+        arguments = [('arg{}'.format(i + 1), argument(value)) for i, value in enumerate(args)]
+        multirow = False
+    else:
+        fargs = [a for a in fspec.arguments if not a.out()]
+        if len(args) + len(kwargs) != len(fargs):
+            raise TypeError("DB function {}() takes {} argument(s) ({} given)"
+                            .format(fspec.name, len(fargs), len(args) + len(kwargs)))
+        for key in kwargs:
+            if key not in (a.id() for a in fargs):
+                raise TypeError("DB function {}() got unexpected keyword argument {}"
+                                .format(fspec.name, key))
+        arguments = (
+            [(arg.id(), pytis.data.Value(arg.type(), val))
+             for arg, val in zip(fargs[:len(args)], args)] +
+            [(arg.id(), pytis.data.Value(arg.type(), kwargs[arg.id()]))
+             for arg in fargs[len(args):]]
+        )
+        multirow = fspec.multirow
+    result = function.call(Row(arguments), transaction=transaction)
+    if multirow:
+        return result
+    else:
+        return result[0][0].value()
 
 
 def transaction():

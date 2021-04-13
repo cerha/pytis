@@ -19,12 +19,14 @@
 import copy
 
 import pytis.data
+import pytis.dbdefs.db_pytis_menu as dbdefs
 import pytis.extensions
 import pytis.form
 import pytis.presentation
 import pytis.util
 from pytis.util import nextval
 from pytis.presentation import Editable, Field, procedure
+
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -161,10 +163,10 @@ class ApplicationRoles(_ApplicationRolesSpecification):
         return None
 
     def _copy_roles(self, row):
-        template_row = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
-        if template_row is None:
+        template = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
+        if template is None:
             return
-        pytis.data.dbfunction.pytis_copy_role(template_row['name'].value(), row['name'].value())
+        pytis.data.dbfunction(dbdefs.PytisCopyRole, template['name'].value(), row['name'].value())
 
 
 class UserApplicationRolesCodebook(ApplicationRoles):
@@ -485,7 +487,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
         # if there are columns with the same names but different purposes, but
         # it is generally responsibility of the DMP admin to copy rights only
         # between compatible objects).
-        rows = pytis.data.dbfunction.pytis_columns_in_rights(from_shortname)
+        rows = pytis.data.dbfunction(dbdefs.PytisColumnsInRights, from_shortname)
         if not isinstance(rows, (list, tuple)):
             rows = [[rows]]
         if rows:
@@ -501,7 +503,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                            (', '.join(list(missing_columns)),))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
                     return
-        pytis.data.dbfunction.pytis_copy_rights(from_shortname, to_shortname)
+        pytis.data.dbfunction(dbdefs.PytisCopyRights, from_shortname, to_shortname)
 
     def _remove_redundant(self, row):
         if not pytis.form.run_dialog(pytis.form.Question,
@@ -509,7 +511,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                         "\"%s\"?") %
                                       (row['title'].value() or '',))):
             return
-        pytis.data.dbfunction.pytis_remove_redundant(row['shortname'].value())
+        pytis.data.dbfunction(dbdefs.PytisRemoveRedundant, row['shortname'].value())
 
 
 class ApplicationMenuCodebook(pytis.presentation.Specification):
@@ -775,7 +777,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
 
     @procedure
     def commit_changes(self):
-        if pytis.data.dbfunction.pytis_update_summary_rights():
+        if pytis.data.dbfunction(dbdefs.PytisUpdateSummaryRights):
             message = _(u"Změny aplikovány")
         else:
             message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")
