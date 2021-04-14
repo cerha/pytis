@@ -1455,24 +1455,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         available_width = size.width - g.GetRowLabelSize()
         flexible_columns = []
         flexible_width = 0
-        for i, column in enumerate(self._columns):
-            column_width = self._ideal_column_width(column)
-            if not column.fixed() and pytis.config.stretch_tables:
-                flexible_columns.append((i, column_width))
-                flexible_width += column_width
-            else:
-                available_width -= column_width
-            g.SetColSize(i, column_width)
-        if flexible_columns and available_width > flexible_width > 0:
-            coef = float(available_width) / float(flexible_width)
-            for i, column_width in flexible_columns:
-                if i == flexible_columns[-1][0]:
-                    # Avoid rounding inaccuracy shift for the last column.
-                    column_width = max(0, available_width)
+        try:
+            # The batch here is important to prevent major slowdown in large
+            # tables, where SetColumn outside batch results in calling GetAttr
+            # for *all* table cells since wxPython 4.1.0.
+            g.BeginBatch()
+            for i, column in enumerate(self._columns):
+                column_width = self._ideal_column_width(column)
+                if not column.fixed() and pytis.config.stretch_tables:
+                    flexible_columns.append((i, column_width))
+                    flexible_width += column_width
                 else:
-                    column_width = int(column_width * coef)
+                    available_width -= column_width
                 g.SetColSize(i, column_width)
-                available_width -= column_width
+            if flexible_columns and available_width > flexible_width > 0:
+                coef = float(available_width) / float(flexible_width)
+                for i, column_width in flexible_columns:
+                    if i == flexible_columns[-1][0]:
+                        # Avoid rounding inaccuracy shift for the last column.
+                        column_width = max(0, available_width)
+                    else:
+                        column_width = int(column_width * coef)
+                    g.SetColSize(i, column_width)
+                    available_width -= column_width
+        finally:
+            g.EndBatch()
 
     def _on_size(self, event):
         size = event.GetSize()
