@@ -3409,7 +3409,7 @@ class QueryFieldsForm(_VirtualEditForm):
         self._query_fields_apply_callback = callback
         self._autoapply = autoapply = query_fields.autoapply()
         self._autoinit = autoinit = query_fields.autoinit()
-        self._unapplied_query_field_changes = True
+        self._unapplied_query_field_changes = not autoinit
         self._unapplied_query_field_changes_after_restore = False
         self._initialized = autoinit
         self._save = query_fields.save()
@@ -3469,8 +3469,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._query_fields_apply_button.Enable(enabled)
         if self._unapplied_query_field_changes_after_restore:
             self._unapplied_query_field_changes_after_restore = False
-            if run_dialog(Question,
-                          _("Query fields contain unapplied changes. Apply now?"), True):
+            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
                 self._apply_query_fields(self._row)
 
     def _on_query_fields_changed(self):
