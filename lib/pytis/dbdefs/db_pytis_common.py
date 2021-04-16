@@ -5,8 +5,10 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, \
+from pytis.dbdefs.db_pytis_base import (
+    Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction,
     XDeletes, XInserts, XUpdates, default_access_rights, pytis_schemas
+)
 
 
 class PartitioningTrigger(Base_PyTriggerFunction):
@@ -428,146 +430,53 @@ class VChanges(sql.SQLView):
     access_rights = default_access_rights.value(globals())
 
 
-class LogTriggerSupport(sql.SQLRaw):
-    name = 'log_trigger_support'
+class FRotateLog(sql.SQLPlFunction):
+    name = 'f_rotate_log'
+    arguments = ()
+    depends_on = (TChanges, TChangesDetail)
 
-    @classmethod
-    def sql(class_):
-        return """
-create or replace function f_rotate_log() returns void as $$
-declare
-  n_records int := 1000000;
-  table_lock bigint := 201302131505;
-  n_id int;
-  time_from timestamp;
-  time_to timestamp;
-  date_from text;
-  date_to text;
-  tablename text;
-  dtablename text;
-  n int;
-begin
-  perform pg_advisory_xact_lock(table_lock);
-  loop
-    if (select count(*) < n_records from t_changes) then
-      exit;
-    end if;
-    select id into strict n_id from public.t_changes order by id offset n_records-1 limit 1;
-    select min(timestamp) into strict time_from from public.t_changes;
-    select max(timestamp) into strict time_to from public.t_changes where id<=n_id;
-    date_from := to_char(time_from, 'YYMMDD');
-    date_to := to_char(time_to, 'YYMMDD');
-    tablename := concat('t_changes_', date_from, '_', date_to);
-    dtablename := concat('t_changes_detail_', date_from, '_', date_to);
-    loop
-      if (select count(*)=0 from pg_class join pg_namespace on relnamespace = pg_namespace.oid
-                             where relname = tablename and nspname = 'public') then
-        exit;
-      end if;
-      tablename := concat(tablename, 'x');
-      dtablename := concat(dtablename, 'x');
-    end loop;
-    execute concat('create table public.', tablename, '
-                    as select * from public.t_changes where id<=', n_id);
-    execute concat('create table public.', dtablename, '
-                    as select * from public.t_changes_detail where id<=', n_id);
-    delete from public.t_changes where id<=n_id;
-    execute concat('create index ', tablename, '__id__index on public.', tablename, ' (id)');
-    execute concat('create index ', tablename, '__timestamp__index on public.', tablename, '
-                    (timestamp)');
-    execute concat('create index ', tablename, '__username__index on public.', tablename, '
-                    (username)');
-    execute concat('create index ', tablename, '__tablename__index on public.', tablename, '
-                    (tablename)');
-    execute concat('create index ', tablename, '__key_value__index on public.', tablename, '
-                    (key_value)');
-    execute concat('create index ', dtablename, '__id__index on public.', dtablename, '
-                    (id)');
-  end loop;
-end;
-$$ language plpgsql;
 
-create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text,
-                                       key_value_ text, detail_ text, search_path_ text)
-        returns setof v_changes as $$
-declare
-  date_to_1 date;
-  tablename text;
-begin
-  if date_from > '2099-12-31'::date then
-    date_from := '2099-12-31'::date;
-  end if;
-  if date_to > '2099-12-31'::date then
-    date_to := '2099-12-31'::date;
-  end if;
-  if date_from < '2000-01-01'::date then
-    date_from := '2000-01-01'::date;
-  end if;
-  if date_to < '2000-01-01'::date then
-    date_to := '2000-01-01'::date;
-  end if;
-
-  date_to_1 := date_to + '1 day'::interval;
-  return query select * from v_changes v
-                      where date_from <= v.timestamp and v.timestamp < date_to_1 and
-                            v.username = coalesce(username_, v.username) and
-                            v.tablename = coalesce(tablename_, v.tablename) and
-                            v.key_value::text = coalesce(key_value_, v.key_value) and
-                            v.detail like '%'||coalesce(detail_, '%')||'%' and
-                            (search_path_ is null or schemaname in
-                              (select * from
-                                 regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
-  for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
-                          where nspname = 'public' and
-                                relname ~ '^t_changes_......_......x*$' and
-                                substring(relname from 11 for 6) <= to_char(date_to, 'YYMMDD') and
-                                substring(relname from 18 for 6) >= to_char(date_from, 'YYMMDD')
-  loop
-    return query
-      execute concat(
-               'select t.*, detail ',
-                       'from public.', tablename, ' t join ',
-                       'public.t_changes_detail_', substring(tablename from 11),
-                       ' d using(id) ',
-                       'where $1 <= t.timestamp and t.timestamp < $2 and ',
-                             't.username = coalesce($3, t.username) and ',
-                             't.tablename = coalesce($4, t.tablename) and ',
-                             't.key_value::text = coalesce($5, t.key_value) and ',
-                             'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
-                             '($7 is null or schemaname in (select * from '
-                             'regexp_split_to_table(coalesce($7, ''''), '' *, *'')))')
-              using date_from, date_to_1, username_, tablename_, key_value_, detail_, search_path_;
-  end loop;
-end;
-$$ language plpgsql stable;
-"""
+class FViewLog(sql.SQLPlFunction):
+    name = 'f_view_log'
+    arguments = (
+        sql.Argument('date_from', pytis.data.Date()),
+        sql.Argument('date_to', pytis.data.Date()),
+        sql.Argument('username_', pytis.data.String()),
+        sql.Argument('tablename_', pytis.data.String()),
+        sql.Argument('key_value_', pytis.data.String()),
+        sql.Argument('detail_', pytis.data.String()),
+        sql.Argument('search_path_', pytis.data.String())
+    )
+    result_type = VChanges
+    multirow = True
+    stability = 'stable'
     depends_on = (TChanges, TChangesDetail, VChanges,)
 
 
-class XUpdateColumnZmeneno(sql.SQLRaw):
+class XUpdateColumnZmeneno(sql.SQLPlFunction, sql.SQLTrigger):
     name = '_update_column_zmeneno'
 
     @classmethod
-    def sql(class_):
+    def body(cls):
         return """
-CREATE OR REPLACE FUNCTION _update_column_zmeneno()
-        RETURNS TRIGGER AS $$
         BEGIN
            NEW.zmeneno = current_timestamp;
            NEW.zmenil = current_user;
            RETURN NEW;
         END;
-        $$ language 'plpgsql';"""
-    depends_on = ()
+        """
 
 
-class Disabletriggers(sql.SQLRaw):
+class DisableTriggers(sql.SQLPlFunction):
     name = 'DisableTriggers'
+    arguments = (
+        sql.Argument('Name', pytis.data.String()),
+    )
+    result_type = pytis.data.Boolean()
 
     @classmethod
-    def sql(class_):
+    def body(class_):
         return """
-CREATE FUNCTION DisableTriggers(Name) RETURNS BOOLEAN AS '
 DECLARE rel ALIAS FOR $1; rows INTEGER;
 BEGIN
   UPDATE pg_class SET reltriggers = 0
@@ -576,21 +485,24 @@ BEGIN
   IF rows > 0 THEN
     RETURN TRUE;
   ELSE
-    RAISE NOTICE ''Relation does not exist'';
+    RAISE NOTICE 'Relation does not exist';
     RETURN False;
   END IF;
 END;
-' LANGUAGE plpgsql;"""
+"""
     depends_on = ()
 
 
-class Enabletriggers(sql.SQLRaw):
+class EnableTriggers(sql.SQLPlFunction):
     name = 'EnableTriggers'
+    arguments = (
+        sql.Argument('Name', pytis.data.String()),
+    )
+    result_type = pytis.data.Boolean()
 
     @classmethod
-    def sql(class_):
+    def body(class_):
         return """
-CREATE FUNCTION EnableTriggers(Name) RETURNS BOOLEAN AS '
 DECLARE rel ALIAS FOR $1; rows INTEGER;
 BEGIN
   UPDATE pg_class SET reltriggers =
@@ -601,11 +513,11 @@ BEGIN
   IF rows > 0 THEN
     RETURN TRUE;
   ELSE
-    RAISE NOTICE ''Relation does not exist'';
+    RAISE NOTICE 'Relation does not exist';
     RETURN False;
   END IF;
 END;
-' LANGUAGE plpgsql;"""
+"""
     depends_on = ()
 
 
