@@ -3323,7 +3323,7 @@ class DBCrypto(_DBBaseTest):
             except Exception:
                 self.tearDown()
                 raise
-        pytis.config.dbconnection.set_crypto_password('somepassword')
+        self._dconnection.set_crypto_password('somepassword')
         B = pd.DBColumnBinding
         key = B('id', 'cfoo', 'id')
         spec = pd.DataFactory(
