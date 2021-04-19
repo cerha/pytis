@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2141,10 +2141,11 @@ class DBDataDefault(_DBTest):
 
     def test_full_text_select(self):
         ts_config = self._sql_command("select get_current_ts_config()")[0][0]
-        self.assertEqual(ts_config, 'simple',
-                         "Wrong ts_config for full text search tests.\n"
-                         "Use the following SQL command as a database owner to fix it:\n"
-                         "ALTER DATABASE ... SET default_text_search_config to 'simple';")
+        assert ts_config == 'simple', (
+            "Wrong ts_config for full text search tests.\n"
+            "Use the following SQL command as a database owner to fix it:\n"
+            "ALTER DATABASE ... SET default_text_search_config to 'simple';"
+        )
 
         def check(query, result_set):
             condition = pd.FT('index', query)
@@ -2156,7 +2157,7 @@ class DBDataDefault(_DBTest):
                     break
                 result_ids.append(row[0].value())
             self.fulltext.close()
-            self.assertEqual(result_set, result_ids)
+            assert result_set == result_ids
 
         def check1(query, result_set):
             condition = pd.FT('index', query)
@@ -2168,7 +2169,7 @@ class DBDataDefault(_DBTest):
                     break
                 result_samples.append(row[3].value())
             self.fulltext1.close()
-            self.assertEqual(result_samples, result_set)
+            assert result_samples == result_set
         check('nobody&likes&me', [])
         check('lazy&fox', [3, 2])
         check1('lazy&fox', ["The quick brown <b>fox</b> jumps over the <b>lazy</b> dog. * cat",
