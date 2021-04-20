@@ -226,20 +226,6 @@ class TestApplication(object):
         assert len(pd.dbfunction(dbdefs.RandomNumbers, 3, 1, 100)) == 3
         assert len(pd.dbfunction(dbdefs.RandomNumbers, 3, 1, maximum=100)) == 3
         assert len(pd.dbfunction(dbdefs.RandomNumbers, count=3, minimum=1, maximum=100)) == 3
-        import pytis.dbdefs.db_pytis_common as common
-        import functools
-        only_digits = functools.partial(pd.dbfunction, common.OnlyDigits)
-        assert only_digits('123') is True
-        assert only_digits(string='456') is True
-        assert only_digits('123abc') is False
-        with pytest.raises(TypeError):
-            only_digits(value='123')
-        with pytest.raises(TypeError):
-            only_digits(1)
-        with pytest.raises(TypeError):
-            only_digits(pd.ival(1))
-        with pytest.raises(TypeError):
-            only_digits('123', 'abc')
 
 
 def test_shared_params():

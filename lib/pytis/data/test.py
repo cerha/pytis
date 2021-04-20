@@ -3247,6 +3247,31 @@ class DBFunction(_DBBaseTest):
         assert len(result) == 1
         assert result[0][0].value() == 255
 
+    def test_dbfunction_direct(self):
+        pytis.config.dbconnection = self._dconnection
+        assert pd.dbfunction('foo1', 5) == 6
+        assert pd.dbfunction('foo2', 'abc', 'def') == 'abcdef'
+        assert pd.dbfunction('foo10', pd.Value(pd.Binary(), b'abc')) == 3
+        assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
+
+    def test_dbfunction_dbdefs(self):
+        import pytis.dbdefs.db_pytis_common as common
+        import functools
+        pytis.config.dbconnection = self._dconnection
+        only_digits = functools.partial(pd.dbfunction, common.OnlyDigits)
+        assert only_digits('123') is True
+        assert only_digits(string='456') is True
+        assert only_digits('123abc') is False
+        with pytest.raises(TypeError):
+            only_digits(value='123')
+        with pytest.raises(TypeError):
+            only_digits(1)
+        with pytest.raises(TypeError):
+            only_digits(pd.ival(1))
+        with pytest.raises(TypeError):
+            only_digits('123', 'abc')
+
+
 
 class DBSearchPath(_DBTest):
 
