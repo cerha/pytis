@@ -567,10 +567,19 @@ class Configuration(object):
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
 
         def default(self):
-            import lcg
             from os.path import dirname
+            modules = (pytis,)
+            try:
+                import lcg
+            except ImportError:
+                # We don't want to establish a hard LCG dependency just for this
+                # config option.  When LCG is actually used, the import will fail
+                # later anyway.
+                pass
+            else:
+                modules += (lcg,)
             path = [os.path.join(dirname(dirname(dirname(m.__file__))), 'resources')
-                    for m in (pytis, lcg)]
+                    for m in modules]
             if self._configuration.help_dir:
                 path.append(os.path.join(self._configuration.help_dir, 'img'))
             return path
