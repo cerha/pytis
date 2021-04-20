@@ -9,16 +9,19 @@ testy zvyšující pokrytí.
 
 * Zprovoznění testovacího prostředí
 
-pip3 install pytest
-pip3 install pytest-benchmark
+pip install pytest
+pip install pytest-benchmark
 
-createdb test
-echo "create extension tsearch;" | psql test
-echo "create extension pgcrypto;" | psql test
-PYTHONPATH=lib ./tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql test
+PYTHONPATH=lib ./tools/gsql.py pytis.dbdefs.db_pytis_crypto > /tmp/pytis-crypto.sql
 
-Možná je potřeba také:
-echo "ALTER DATABASE test SET default_text_search_config to 'simple'" | psql test
+sudo -u postgres createdb test
+sudo -u postgres psql test -f /tmp/pytis-crypto.sql
+sudo -u postgres psql test -c 'create extension tsearch;'
+sudo -u postgres psql test -c 'create extension pgcrypto;'
+
+Může být potřeba také:
+sudo -u postgres psql test -c "alter database test set default_text_search_config to 'simple'"
+sudo -u postgres psql test -c "grant create on database test to $USER;"
 
 make test
 
