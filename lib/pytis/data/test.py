@@ -3255,6 +3255,8 @@ class DBFunction(_DBBaseTest):
         assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
 
     def test_dbfunction_dbdefs(self):
+        # There is also a multirow dbfunction test in Pytis Demo tests
+        # (see doc/tutorials/testing.org for more info).
         import pytis.dbdefs.db_pytis_common as common
         import functools
         pytis.config.dbconnection = self._dconnection
@@ -3270,7 +3272,6 @@ class DBFunction(_DBBaseTest):
             only_digits(pd.ival(1))
         with pytest.raises(TypeError):
             only_digits('123', 'abc')
-
 
 
 class DBSearchPath(_DBTest):

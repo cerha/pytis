@@ -26,6 +26,16 @@ sudo -u postgres psql test -c "grant create on database test to $USER;"
 make test
 
 
+** Pytis Demo unit test
+
+Některé testy jsou také součástí aplikace Pytis Demo.  Vyžadují funkční
+konfigurační soubor pytis-demo-config-local.py nebo pytis-demo-config.py
+(použije se první nalezený).  Potom lze spustit v příslušném virtuálním
+prostředí zhruba takto:
+
+PYTHONPATH=../lcg/lib:lib:../wiking/lib venv ~/.venv/pytis-demo-wx4-py3 pytest lib/pytis/demo/
+
+
 * Pokrytí
 
 Pokrytí kódu testy lze sledovat pomocí coverage.  Vegenerování (aktualizaci) coverage
