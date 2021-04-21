@@ -211,65 +211,6 @@ def is_in_groups(groups):
         return True
 
 
-def load_field(field, spec_name, column, condition):
-    """Return a function loading row field value from given DB table column.
-
-    Arguments:
-      field -- field identifier of the field to be loaded
-      spec_name -- name of the Pytis specification of the table to load the
-        value from
-      column -- name of the table column containing the value to load
-      condition -- condition identifying the table row containing the value to
-        load as a 'pd.Operator' instance.
-
-    The returned value is a function of one argument -- the PresentedRow
-    instance to be updated.  When called, the function loads the value from the
-    table into the 'field' of the passed 'PresentedRow' instance.
-
-    This function is designed to simplify the definition of a specific case of
-    'QueryFields' 'load' function.
-
-    """
-    def load(query_fields_row):
-        rows = dbselect(spec_name, condition=condition)
-        assert len(rows) in (0, 1)
-        if len(rows) == 1:
-            row = rows[0]
-            t = query_fields_row.type(field)
-            query_fields_row[field] = pd.Value(t, row[column].value())
-    return load
-
-
-def save_field(field, spec_name, column, condition):
-    """Return a function saving row field value into given DB table column.
-
-    Arguments:
-      field -- field identifier of the field to be saved
-      spec_name -- name of the Pytis specification of the table to save the
-        value to
-      column -- name of the table column containing the value to save
-      condition -- condition identifying the table row for saving the vaule as
-        a 'pd.Operator' instance.
-
-    The returned value is a function of one argument -- the PresentedRow
-    instance to be saved.  When called, the function saves the current value of
-    its 'field' into the given table.
-
-    This function is designed to simplify the definition of a specific case of
-    'QueryFields' 'save' function.
-
-    """
-    def save(query_fields_row):
-        rows = dbselect(spec_name, condition=condition)
-        assert len(rows) in (0, 1)
-        if len(rows) == 1:
-            row = rows[0]
-            row[column] = pd.Value(row[column].type(), query_fields_row[field].value())
-            data = pytis.util.data_object(spec_name)
-            data.update_many(condition, row)
-    return save
-
-
 def safe_commit(transaction, msg=None):
     """Commit transaction and handle possible timeout errors.
 
