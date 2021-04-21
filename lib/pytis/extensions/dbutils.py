@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -142,24 +142,27 @@ def dbupdate_many(spec, condition=None, update_row=None,
 
 
 def dbfunction(name, *args, **kwargs):
-    """Zavolej databázovou funkci a vrať výsledek jako Pythonovou hodnotu.
+    """Deprecated.  Use pytis.data.dbfunction instead.
 
-    If the database call fails, return None.
+    Nová funkce pytis.data.dbfunction má oproti této původní funkci několik
+    odlišností, které je potřeba zohlednit při přepisu starého kódu na použití
+    nové funkce.
 
-    Arguments:
+    1. Tato (původní) funkce vrací None pokud je hodnota některého z argumentů
+    None aniž by došlo ke skutečnému vyvolání DB funkce (čemuž lze zabránit
+    argumentem proceed_with_empty_values=False).  Nová funkce toto nedělá a
+    argument proceed_with_empty_values nemá.
 
-      name -- name of the function (string) or database specification instance
-        corresponding to the function
-      args -- argumenty volání funkce; sekvence dvouprvkových tuplů, kde první
-        prvek je název argumentu a druhý jeho hodnota jako instance 'Value'.
-      proceed_with_empty_values -- pokud je pravdivé, volá databázovou funkci
-        vždy.  V opačném případě (vývchozí chování) testuje, zda všechny
-        argumenty obsahují neprázdnou hodnotu (jejich vnitří hodnota není None
-        ani prázdný řetězec) a pokud test neprojde, vrátí None bez volání
-        databázové funkce.  To znamená úsporu pokud je tato funkce použita v
-        computeru políčka, které je závislé na jiných políčkách, která ještě
-        nejsou vyplněna.
-      transaction -- instance pd.DBTransactionDefault
+    2. Argumenty nové funkce se předávají vnitřní hodnotou a nikoliv jako
+    sekvence dvouprvkových tuplů, ale přímo jako argumenty funkce.
+
+    3. Funkci je možné předat jako DB specifikaci.  V tom případě je prováděna
+    typová kontrola argumentů a výsledek může být jak množina řádků (tabulkové
+    funkce), tak jednoduchá hodnota dle atributu multirow ve specifikaci.
+
+    4. pd.dbfunction nepoužívá obalení pomocí pf.db_operation(), takže to je
+    potřeba případně přidat explicitně, kde je to potřeba (většinou by to
+    potřeba být nemělo.).
 
     """
     # TODO PY3: define keyword arguments in function definition.
