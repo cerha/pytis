@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -145,6 +145,17 @@ def _is_user_event(event):
         return False
 
 
+def _is_child_event(event, window):
+    parent = event.GetEventObject()
+    if parent is window:
+        return True
+    while parent and parent.Parent:
+        parent = parent.Parent
+        if parent is window:
+            return True
+    return False
+
+
 _system_callback_lock = None
 _system_callback_thread_ident = None
 _system_callback_access_lock = _thread.allocate_lock()
@@ -239,6 +250,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             if __debug__:
                 log(DEBUG, 'Processing event:', (event, event.__class__))
         try:
+            top = pytis.form.top_window()
             if _thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost během události
                 if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'):  # TODO: ne natvr.
@@ -248,7 +260,16 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                     result = True
                 else:
                     result = system_callback()
-            elif is_user and pytis.form.modal(pytis.form.top_window()):
+            elif ((isinstance(top, pytis.form.PopupForm) and
+                   not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent, wx.PaintEvent)) and
+                   not _is_child_event(event, top.Parent))):
+                # Prevents grid interaction outside the current modal form.
+                # This should normally not happen thanks to the modality, but it actually
+                # does happen after closing a (modal) codebook on top of a (modal) edit
+                # form.  After that grid rows can be selected by mouse in the main frame
+                # despite the fact that there stil is the edit form, which should be modal.
+                result = True
+            elif is_user and pytis.form.modal(top):
                 # Událost vyvolaná uživatelským příkazem v modálním okně
                 result = callback(event)
             elif is_user:
