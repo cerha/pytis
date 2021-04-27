@@ -1181,21 +1181,21 @@ class AggregationSetupDialog(GenericDialog):
         panel.SetSizer(grid)
         sizer.Add(panel, 1, wx.EXPAND | wx.ALL, 5)
 
+    def _create_dialog(self):
+        super(AggregationSetupDialog, self)._create_dialog()
+        self._resize()
+
     def _on_collapsiblepane_changed(self, event):
         self._grid.Layout()
         self._resize()
 
     def _resize(self):
-        sizer_size = self._dialog.GetSizer().CalcMin()
+        sizer_size = self._dialog.Sizer.CalcMin()
         grid_size = self._grid.CalcMin()
-        size = wx.Size(max(sizer_size.width, grid_size.width + 20),
+        size = wx.Size(max(sizer_size.width, grid_size.width + 30),
                        sizer_size.height + grid_size.height)
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
-        self._dialog.SetClientSize(size)
-
-    def _run_dialog(self):
-        self._resize()
-        return super(AggregationSetupDialog, self)._run_dialog()
+        self._dialog.SetMinClientSize(size)
 
     def _on_button(self, event):
         if self._button_label(event.GetId()) == self.BUTTON_OK:
