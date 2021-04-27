@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,7 @@ from .screen import (  # noqa: F401
 from .dialog import (  # noqa: F401
     Dialog, Message, Warning, Error, MultiQuestion, Question, OperationDialog,
     ProgressDialog, RepeatedOperationDialog, Calendar, ColorSelector,
-    BugReport, CheckListDialog, CheckMatrixDialog, AggregationSetupDialog,
+    BugReport, CheckListDialog, AggregationSetupDialog,
     FileDialog, DirDialog,
 )
 
