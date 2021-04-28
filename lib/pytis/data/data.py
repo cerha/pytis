@@ -46,7 +46,6 @@ import functools
 import operator
 
 import pytis.util
-import pytis.data
 from pytis.util import (
     EVENT, DEBUG, InvalidAccessError, LimitedCache, NotImplementedException, ProgramError,
     find, log, object_2_5, sameclass, translations, xtuple,
@@ -985,8 +984,7 @@ class MemData(Data):
         self._mem_cursor = -1
         for row in data:
             if isinstance(row, (tuple, list)):
-                row = pytis.data.Row([(c.id(), pytis.data.Value(c.type(), v))
-                                      for c, v in zip(self._columns, row)])
+                row = Row([(c.id(), Value(c.type(), v)) for c, v in zip(self._columns, row)])
             self.insert(row)
 
     def _mem_find_index(self, key):
