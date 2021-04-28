@@ -5,10 +5,12 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs.db_pytis_base import Base_LogSQLTable, Base_PyFunction, \
+from pytis.dbdefs.db_pytis_base import (
+    Base_LogSQLTable, Base_PyFunction,
     default_access_rights, pytis_schemas
+)
 from pytis.dbdefs.db_pytis_common import XChanges
-from pytis.dbdefs.db_pytis_crypto_basic import PytisBasicCryptoFunctions
+from pytis.dbdefs.db_pytis_crypto_basic import PytisCryptPassword
 import pytis.util
 
 _ = pytis.util.translations('pytis-wx')
@@ -68,14 +70,21 @@ class EvPytisUserCryptoKeys(sql.SQLView):
     access_rights = default_access_rights.value(globals())
 
 
-class PytisCryptoKeyFunctions(sql.SQLRaw):
-    name = 'pytis_crypto_key_functions'
+class PytisCryptoExtractKey(sql.SQLPlFunction):
+    name = 'pytis_crypto_extract_key'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('encrypted', pytis.data.Binary()),
+        sql.Column('psw', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = False
+    stability = 'IMMUTABLE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys,)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_extract_key (encrypted bytea, psw text) returns text as $$
 declare
   key text;
 begin
@@ -90,17 +99,45 @@ begin
   end if;
   return substring(key from 7);
 end;
-$$ language plpgsql immutable;
+        """
 
-create or replace function pytis_crypto_store_key (key text, psw text) returns bytea as $$
--- This a PL/pgSQL, and not SQL, function in order to prevent direct dependency on pg_crypto.
+class PytisCryptoStoreKey(sql.SQLPlFunction):
+    name = 'pytis_crypto_store_key'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('key', pytis.data.String()),
+        sql.Column('psw', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    stability = 'IMMUTABLE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys,)
+
+    def body(self):
+        return """
 begin
   return pgp_sym_encrypt('pytis:'||$1, $2);
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_crypto_insert_key (name_ text, user_ text, key_ text, psw text)
-        returns bool as $$
+class PytisCryptoInsertKey(sql.SQLPlFunction):
+    name = 'pytis_crypto_insert_key'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('name_', pytis.data.String()),
+        sql.Column('user_', pytis.data.String()),
+        sql.Column('key_', pytis.data.String()),
+        sql.Column('psw', pytis.data.String()),
+    )
+    result_type = pytis.data.Boolean()
+    multirow = False
+    stability = 'VOLATILE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoStoreKey)
+
+    def body(self):
+        return """
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   if (select count(*) from e_pytis_crypto_keys where name=name_ and username=user_) > 0 then
@@ -110,10 +147,25 @@ begin
         values (name_, user_, pytis_crypto_store_key(key_, psw));
   return True;
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_crypto_change_password (id_ int, old_psw text, new_psw text)
-        returns bool as $$
+class PytisCryptoChangePassword(sql.SQLPlFunction):
+    name = 'pytis_crypto_change_password'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('id_', pytis.data.Integer()),
+        sql.Column('old_psw', pytis.data.String()),
+        sql.Column('new_psw', pytis.data.String()),
+    )
+    result_type = pytis.data.Boolean()
+    multirow = False
+    stability = 'VOLATILE'
+    access_rights = ()
+    security_definer = True
+    depends_on = (EPytisCryptoKeys, PytisCryptoExtractKey)
+
+    def body(self):
+        return """
 declare
   key_ text;
   plain_old_psw text := pytis_crypto_decrypt_db_password(old_psw, 'pytis');
@@ -134,10 +186,26 @@ begin
         where key_id=id_;
   return True;
 end;
-$$ language plpgsql security definer;
+        """
 
-create or replace function pytis_crypto_copy_key (name_ text, from_user text, to_user text,
-        from_psw text, to_psw text) returns bool as $$
+class PytisCryptoCopyKey(sql.SQLPlFunction):
+    name = 'pytis_crypto_copy_key'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('name_', pytis.data.String()),
+        sql.Column('from_user', pytis.data.String()),
+        sql.Column('to_user', pytis.data.String()),
+        sql.Column('from_psw', pytis.data.String()),
+        sql.Column('to_psw', pytis.data.String()),
+    )
+    result_type = pytis.data.Boolean()
+    multirow = False
+    stability = 'VOLATILE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoExtractKey, PytisCryptoStoreKey)
+
+    def body(self):
+        return """
 declare
   key_ text;
 begin
@@ -157,10 +225,25 @@ begin
          values (name_, to_user, pytis_crypto_store_key(key_, to_psw), True);
   return True;
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_crypto_delete_key (name_ text, user_ text, force bool)
-        returns bool as $$
+
+class PytisCryptoDeleteKey(sql.SQLPlFunction):
+    name = 'pytis_crypto_delete_key'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('name_', pytis.data.String()),
+        sql.Column('user_', pytis.data.String()),
+        sql.Column('force', pytis.data.Boolean()),
+    )
+    result_type = pytis.data.Boolean()
+    multirow = False
+    stability = 'VOLATILE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys,)
+
+    def body(self):
+        return """
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   if not force and (select count(*) from e_pytis_crypto_keys where name=name_) <= 1 then
@@ -169,9 +252,7 @@ begin
   delete from e_pytis_crypto_keys where name=name_ and username=user_;
   return True;
 end;
-$$ language plpgsql;
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions,)
+        """
 
 
 class PytisCryptoTUserContact(sql.SQLType):
@@ -271,14 +352,21 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
         return base64.b64encode(encrypted)
 
 
-class PytisCryptoDbKey(sql.SQLRaw):
+class PytisCryptoDbKey(sql.SQLPlFunction):
     name = 'pytis_crypto_db_key'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('key_name_', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = False
+    stability = 'STABLE'
+    security_definer = True
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys,)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_db_key (key_name_ text) returns text as $$
 declare
   key text;
 begin
@@ -287,20 +375,24 @@ begin
 exception
   when NO_DATA_FOUND then return null;
 end;
-$$ language plpgsql stable security definer;
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
+        """
 
 
-class PytisCryptoDecryptDbPassword(sql.SQLRaw):
+class PytisCryptoDecryptDbPassword(sql.SQLPlFunction):
     name = 'pytis_crypto_decrypt_db_password'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('password_', pytis.data.String()),
+        sql.Column('key_name_', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = False
+    stability = 'STABLE'
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys, PytisCryptoDecryptUsingKey)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_decrypt_db_password (password_ text, key_name_ text)
-        returns text as $$
 declare
   key text;
 begin
@@ -309,36 +401,42 @@ begin
 exception
   when NO_DATA_FOUND then return password_;
 end;
-$$ language plpgsql stable;
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
+        """
 
 
-class PytisCryptoCreateDbKey(sql.SQLRaw):
+class PytisCryptoCreateDbKey(sql.SQLFunction):
     name = 'pytis_crypto_create_db_key'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('key_name_', pytis.data.String()),
+        sql.Column('bits', pytis.data.Integer()),
+    )
+    result_type = None
+    multirow = False
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys, PytisCryptoGenerateKey,)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_create_db_key (key_name_ text, bits int) returns void as $$
   delete from pytis_crypto_db_keys where key_name=$1;
   insert into pytis_crypto_db_keys (select $1, * from pytis_crypto_generate_key($2));
-$$ language sql;
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
-                  PytisCryptoGenerateKey,)
+        """
 
 
-class PytisCryptoUnlockPasswords(sql.SQLRaw):
+class PytisCryptoUnlockPasswords(sql.SQLPlFunction):
     name = 'pytis_crypto_unlock_passwords'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('user_', pytis.data.String()),
+        sql.Column('password_', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = True
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys, PytisCryptoDecryptDbPassword,)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_unlock_passwords (user_ text, password_ text)
-        returns setof text as $$
 declare
   plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
 begin
@@ -356,26 +454,37 @@ begin
                        pytis_crypto_extract_key(key, plain_password) is not null);
   return query select name from t_pytis_passwords;
 end;
-$$ language plpgsql;
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
-                  PytisCryptoDecryptDbPassword,)
+        """
 
 
-class PytisCryptoUnlockCurrentUserPasswords(sql.SQLRaw):
+class PytisCryptoUnlockCurrentUserPasswords(sql.SQLPlFunction):
     name = 'pytis_crypto_unlock_current_user_passwords'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('password_', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = True
+    access_rights = ()
+    depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys, PytisCryptoUnlockPasswords,)
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypto_unlock_current_user_passwords (password_ text)
-        returns setof text as $$
-select * from pytis_crypto_unlock_passwords(current_user, $1);
-$$ language sql;
-
--- create function pytis_crypto_user_contact (username text)
--- returns pytis_crypto_t_user_contact as ...
-"""
-    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
-                  PytisCryptoUnlockPasswords,)
+declare
+  plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
+begin
+  lock e_pytis_crypto_keys in exclusive mode;
+  begin
+    delete from t_pytis_passwords;
+  exception
+    when undefined_table then
+      create temp table t_pytis_passwords (name text, password text);
+  end;
+  insert into t_pytis_passwords
+         (select name, pytis_crypto_extract_key(key, plain_password)
+                 from e_pytis_crypto_keys
+                 where username=user_ and
+                       pytis_crypto_extract_key(key, plain_password) is not null);
+  return query select name from t_pytis_passwords;
+end;
+        """

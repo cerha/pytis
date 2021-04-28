@@ -2,33 +2,64 @@
 
 from __future__ import unicode_literals
 
+import pytis.data
 import pytis.data.gensqlalchemy as sql
 from pytis.dbdefs.db_pytis_base import pytis_schemas
 
-
-class PytisBasicCryptoFunctions(sql.SQLRaw):
-    name = 'pytis_basic_crypto_functions'
+class PytisCryptPassword(sql.SQLPlFunction):
+    name = 'pytis_crypt_password'
     schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('name_', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = False
+    stability = 'STABLE'
+    access_rights = ()
 
-    @classmethod
-    def sql(class_):
+    def body(self):
         return """
-create or replace function pytis_crypt_password(name_ text) returns text as $$
 declare
   psw text;
 begin
   select password into strict psw from t_pytis_passwords where name=name_;
   return psw;
 end;
-$$ language plpgsql stable;
+        """
 
-create or replace function pytis_encrypt_text(data text, name text) returns bytea as $$
+class PytisEncryptText(sql.SQLPlFunction):
+    name = 'pytis_encrypt_text'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.String()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 begin
   return pgp_sym_encrypt(coalesce(data, ''), pytis_crypt_password(name));
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_decrypt_text(data bytea, name text) returns text as $$
+class PytisDecryptText(sql.SQLPlFunction):
+    name = 'pytis_decrypt_text'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Binary()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.String()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 declare
   result text;
 begin
@@ -44,15 +75,42 @@ begin
   end;
   return result;
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_encrypt_int(data int, name text) returns bytea as $$
+class PytisEncryptInt(sql.SQLPlFunction):
+    name = 'pytis_encrypt_int'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Integer()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 begin
   return pgp_sym_encrypt(coalesce(data::text, ''), pytis_crypt_password(name));
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_decrypt_int(data bytea, name text) returns int as $$
+
+class PytisDecryptInt(sql.SQLPlFunction):
+    name = 'pytis_decrypt_int'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Binary()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Integer()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 declare
   decrypted text;
   result int;
@@ -73,20 +131,59 @@ begin
   end;
   return result;
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_encrypt_float(data float, name text) returns bytea as $$
+
+class PytisEncryptFloat(sql.SQLPlFunction):
+    name = 'pytis_encrypt_float'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Float()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 begin
   return pgp_sym_encrypt(coalesce(data::text, ''), pytis_crypt_password(name));
 end;
-$$ language plpgsql;
+        """
+
+# TODO: it is necessary to allow same names in order to define
+# overloaded functions
+class PytisEncryptNumeric(sql.SQLRaw):
+    name = 'pytis_encrypt_float_overloaded'
+    schemas = pytis_schemas.value(globals())
+
+    @classmethod
+    def sql(class_):
+        return """
 create or replace function pytis_encrypt_float(data numeric, name text) returns bytea as $$
 begin
   return pgp_sym_encrypt(coalesce(data::text, ''), pytis_crypt_password(name));
 end;
 $$ language plpgsql;
+"""
 
-create or replace function pytis_decrypt_float(data bytea, name text) returns float as $$
+
+class PytisDecryptFloat(sql.SQLPlFunction):
+    name = 'pytis_decrypt_float'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Binary()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Float()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 declare
   decrypted text;
   result float;
@@ -107,15 +204,43 @@ begin
   end;
   return result;
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_encrypt_binary(data bytea, name text) returns bytea as $$
+
+class PytisEncryptBinary(sql.SQLPlFunction):
+    name = 'pytis_encrypt_binary'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Binary()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 begin
   return pgp_sym_encrypt(encode(coalesce(data, ''::bytea), 'base64'), pytis_crypt_password(name));
 end;
-$$ language plpgsql;
+        """
 
-create or replace function pytis_decrypt_binary(data bytea, name text) returns bytea as $$
+
+class PytisDecryptBinary(sql.SQLPlFunction):
+    name = 'pytis_decrypt_binary'
+    schemas = pytis_schemas.value(globals())
+    arguments = (
+        sql.Column('data', pytis.data.Binary()),
+        sql.Column('name', pytis.data.String()),
+    )
+    result_type = pytis.data.Binary()
+    multirow = False
+    access_rights = ()
+    depends = (PytisCryptPassword,)
+
+    def body(self):
+        return """
 declare
   result bytea;
 begin
@@ -131,6 +256,4 @@ begin
   end;
   return result;
 end;
-$$ language plpgsql;
-"""
-    depends_on = ()
+        """
