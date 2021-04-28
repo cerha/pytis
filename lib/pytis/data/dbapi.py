@@ -523,8 +523,7 @@ DBTransactionDefault = DBAPITransaction
 def _postgresql_access_groups(connection_data):
     import pytis.data.dbapi
 
-    class PgUserGroups(pytis.data.dbapi._DBAPIAccessor,
-                       PostgreSQLUserGroups):
+    class PgUserGroups(pytis.data.dbapi._DBAPIAccessor, PostgreSQLUserGroups):
         pass
     return PgUserGroups(connection_data).access_groups()
 

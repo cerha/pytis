@@ -69,8 +69,3 @@ from .defaults import (  # noqa: F401
 from .deprecated import Oid  # noqa: F401
 
 from . import dbdefs  # noqa: F401
-
-# TODO: The following import serves for backward compatibility of applications
-# and should be removed once applications switch to using the
-# default_access_groups function.
-from .postgresql import PostgreSQLUserGroups  # noqa: F401
