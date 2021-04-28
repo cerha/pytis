@@ -62,7 +62,7 @@ import weakref
 import pytis
 from pytis.data import ColumnSpec, Data, Type
 from pytis.util import (
-    flatten, hash_attr, is_sequence, log, rsa_encrypt, sameclass,
+    flatten, hash_attr, log, rsa_encrypt, sameclass,
     super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL,
 )
 
@@ -534,6 +534,7 @@ class DBConnection(object):
 
         """
         self._db_key = db_key
+
 
 class DBBinding(object):
     """Definice napojení dat do databáze.
