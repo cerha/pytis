@@ -39,7 +39,7 @@ import wx
 import wx.html
 
 import pytis.api
-import pytis.data
+import pytis.data as pd
 import pytis.form
 from pytis.presentation import Field, Specification, StatusField, computer, Text
 import pytis.util
@@ -154,7 +154,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         pytis.form.app = self
 
         # Initialize login and password.
-        db_operation(pytis.data.dbtable, 'pg_catalog.pg_tables', ('tablename',))
+        db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
         # Unlock crypto keys
         self._unlock_crypto_keys()
 
@@ -182,7 +182,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Initialize user action logger.
         try:
             self._logger = DbActionLogger(pytis.config.dbconnection, pytis.config.dbuser)
-        except pytis.data.DBException as e:
+        except pd.DBException as e:
             # Logging is optional.  The application may choose not to include
             # the logging table in the database schema and this will simply
             # lead to logging being ignored.
@@ -407,23 +407,22 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _dynamic_menu(self):
         # Check for menu presence, if not available, return None
-        I_ = pytis.data.Integer()
-        S = pytis.data.String()
         language = pytis.util.current_language()
         try:
-            menu_data = pytis.data.dbtable('pytis_view_user_menu',
-                                           (('menuid', I_,),
-                                            ('name', S,),
-                                            ('title', S,),
-                                            ('fullname', S,),
-                                            ('position', pytis.data.LTree(),),
-                                            ('help', S,), ('hotkey', S,), ('language', S,),),
-                                           arguments=())
+            menu_data = pd.dbtable('pytis_view_user_menu',
+                                   (('menuid', pd.Integer()),
+                                    ('name', pd.String()),
+                                    ('title', pd.String()),
+                                    ('fullname', pd.String()),
+                                    ('position', pd.LTree(),),
+                                    ('help', pd.String()),
+                                    ('hotkey', pd.String()),
+                                    ('language', pd.String()),),
+                                   arguments=())
             menu_rows = menu_data.select_map(identity,
-                                             condition=pytis.data.EQ('language',
-                                                                     pytis.data.sval(language)),
-                                             sort=(('position', pytis.data.ASCENDENT,),))
-        except pytis.data.DBException:
+                                             condition=pd.EQ('language', pd.sval(language)),
+                                             sort=(('position', pd.ASCENDENT,),))
+        except pd.DBException:
             return None
         if not menu_rows:
             return None
@@ -532,8 +531,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             result = run_form(
                 pytis.form.InputForm, title=title,
                 fields=(Field('password', _("Password"),
-                              type=pytis.data.Password, verify=verify,
-                              width=40, not_null=True),),
+                              type=pd.Password(verify=verify, not_null=True), width=40),),
                 layout=(Text(message), 'password'),
                 check=check,
             )
@@ -545,8 +543,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._decrypted_names = decrypted_names = set()
 
         try:
-            data = pytis.data.dbtable('ev_pytis_user_crypto_keys', ('key_id', 'name', 'fresh'))
-        except pytis.data.DBException:
+            data = pd.dbtable('ev_pytis_user_crypto_keys', ('key_id', 'name', 'fresh'))
+        except pd.DBException:
             return
         else:
             rows = data.select_map(identity)
@@ -554,7 +552,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not rows:
             return
 
-        db_key = pytis.data.dbfunction('pytis_crypto_db_key', 'pytis')
+        db_key = pd.dbfunction('pytis_crypto_db_key', 'pytis')
         crypto_password = pytis.config.dbconnection.crypto_password()
         if not crypto_password:
             established_names = [r for r in rows if not r['fresh'].value()]
@@ -564,7 +562,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 verify=not established_names,
                 check=(
                     lambda r: ('password', _("Invalid password"))
-                    if established_names and not pytis.data.dbfunction(
+                    if established_names and not pd.dbfunction(
                             PytisCryptoUnlockCurrentUserPasswords,
                             rsa_encrypt(db_key, r['password'].value()).decode('ascii')
                     )
@@ -587,10 +585,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     fresh_names.add(name)
                 else:
                     established_names.add(name)
-            ok_names = pytis.data.dbfunction(
-                PytisCryptoUnlockCurrentUserPasswords,
-                crypto_password
-            )
+            ok_names = pd.dbfunction(PytisCryptoUnlockCurrentUserPasswords, crypto_password)
             if isinstance(ok_names, list):
                 ok_names = set([row[0].value() for row in ok_names])
             else:
@@ -615,15 +610,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 r_name = r['name'].value()
                 if r_name == name or (bad and r_name in bad_names):
                     try:
-                        pytis.data.dbfunction('pytis_crypto_change_password',
-                                              r['key_id'].value(), password, crypto_password)
-                    except pytis.data.DBException:
+                        pd.dbfunction('pytis_crypto_change_password',
+                                      r['key_id'].value(), password, crypto_password)
+                    except pd.DBException:
                         pass
         data.close()
-        pytis.data.dbfunction(
-            PytisCryptoUnlockCurrentUserPasswords,
-            crypto_password
-        )
+        pd.dbfunction(PytisCryptoUnlockCurrentUserPasswords, crypto_password)
 
 # Ostatní metody
 
@@ -1030,7 +1022,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _can_new_record(self, name, **kwargs):
         try:
-            return has_access(name, perm=pytis.data.Permission.INSERT)
+            return has_access(name, perm=pd.Permission.INSERT)
         except ResolverError:
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
@@ -1363,20 +1355,20 @@ class DbActionLogger(object):
         self._username = username
 
     def _values(self, **kwargs):
-        return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
+        return [(key, pd.Value(self._data.find_column(key).type(), value))
                 for key, value in [('username', self._username)] + list(kwargs.items())]
 
     def log(self, spec_name, form_name, action, info=None):
-        rdata = (('timestamp', pytis.data.dtval(pytis.data.DateTime.datetime())),
-                 ('username', pytis.data.sval(self._username)),
-                 ('spec_name', pytis.data.sval(spec_name)),
-                 ('form_name', pytis.data.sval(form_name)),
-                 ('action', pytis.data.sval(action)),
-                 ('info', pytis.data.sval(info)))
-        row = pytis.data.Row(rdata)
+        rdata = (('timestamp', pd.dtval(pd.DateTime.datetime())),
+                 ('username', pd.sval(self._username)),
+                 ('spec_name', pd.sval(spec_name)),
+                 ('form_name', pd.sval(form_name)),
+                 ('action', pd.sval(action)),
+                 ('info', pd.sval(info)))
+        row = pd.Row(rdata)
         result, success = self._data.insert(row)
         if not success:
-            raise pytis.data.DBException(result)
+            raise pd.DBException(result)
 
 
 # Funkce odpovídající příkazům aplikace.
@@ -1445,10 +1437,10 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
       name -- specification name for resolver.
 
       prefill -- A dictionary of values to be prefilled in the form.  Keys are field identifiers
-        and values are either 'pytis.data.Value' instances or the corresponding Python internal
+        and values are either 'pd.Value' instances or the corresponding Python internal
         values directly.
 
-      inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.  The
+      inserted_data -- allows to pass a sequence of 'pd.Row' instances to be inserted.  The
         form is then gradually prefilled by values of these rows and the user can individually
         accept or skip each row.
 
@@ -1486,7 +1478,7 @@ def delete_record(view, data, transaction, record,
         elif isinstance(result, basestring):
             run_dialog(dialog.Error, result)
             return False
-        elif isinstance(result, pytis.data.Operator):
+        elif isinstance(result, pd.Operator):
             ask = False
             op, arg = data.delete_many, result
         else:
@@ -1525,7 +1517,7 @@ def db_operation(operation, *args, **kwargs):
 def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
     """Invoke database operation with handling possible exceptions.
 
-    'operation' is called with given arguments.  If 'pytis.data.dbdata.DBException'
+    'operation' is called with given arguments.  If 'pd.dbdata.DBException'
     is raised during the operation, an error dialog is displayed with exception description and
     a question asking whether the user wishes to re-invoke the operation.  The operation is repeated
     as long as the user answers the question positively.
@@ -1559,10 +1551,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                     pytis.form.app._log_login = False
                 pytis.form.app.login_hook(success=True)
             return True, result
-        except pytis.data.DataAccessException:
+        except pd.DataAccessException:
             run_dialog(dialog.Error, _("Access denied"))
             return FAILURE
-        except pytis.data.DBLoginException:
+        except pd.DBLoginException:
             if pytis.config.dbconnection.password() is not None and pytis.form.app:
                 log(ACTION, "Login action:", (pytis.config.dbschemas, 'False'))
                 pytis.form.app.login_hook(success=False)
@@ -1571,7 +1563,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                           for x in pytis.config.login_selection]
                 passwords = dict([x for x in pytis.config.login_selection
                                   if isinstance(x, tuple)])
-                login_enumerator = pytis.data.FixedEnumerator(logins)
+                login_enumerator = pd.FixedEnumerator(logins)
                 password_computer = computer(lambda r, login: passwords.get(login))
                 password_editable = computer(lambda r, login: login not in passwords)
                 default_login = pytis.config.dbuser if pytis.config.dbuser in logins else None
@@ -1589,7 +1581,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 pytis.form.InputForm, title=_("Log in for database access"),
                 fields=(Field('login', _("Login"), width=24, not_null=True,
                               enumerator=login_enumerator, default=default_login),
-                        Field('password', _("Password"), type=pytis.data.Password(verify=False),
+                        Field('password', _("Password"), type=pd.Password(verify=False),
                               editable=password_editable, computer=password_computer,
                               default=default_password, width=24, not_null=True),),
                 focus_field='password',
@@ -1600,7 +1592,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                                                         password=login_result['password'].value())
             pytis.config.dbconnection = pytis.config.dbconnection  # mark as changed
             pytis.config.dbuser = pytis.config.dbconnection.user()
-        except pytis.data.DBException as e:
+        except pd.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
             if e.exception():
@@ -1651,10 +1643,10 @@ def run_dialog(arg1, *args, **kwargs):
         minimum = kwargs.get('min_value')
         maximum = kwargs.get('max_value')
         if precision:
-            t = pytis.data.Float(precision=precision)
+            t = pd.Float(precision=precision)
             cast = float
         else:
-            t = pytis.data.Integer()
+            t = pd.Integer()
             cast = int
         value = input_number(title=kwargs.get('message'),
                              label=kwargs.get('prompt', '').rstrip(':'),
@@ -1664,19 +1656,19 @@ def run_dialog(arg1, *args, **kwargs):
                              maximum=cast(maximum) if maximum else None,
                              avoid_initial_selection=kwargs.get('select_on_entry', False),
                              default=kwargs.get('value'))
-        return pytis.data.Value(t, value)
+        return pd.Value(t, value)
 
     elif arg1 == InputDate:
         # Backwards compatibility hack.
         value = kwargs.get('value')
         if value:
-            value, error = pytis.data.Date().validate(value)
+            value, error = pd.Date().validate(value)
             if value:
                 value = value.value()
         value = input_date(title=kwargs.get('message'),
                            label=kwargs.get('prompt', '').rstrip(':'),
                            default=value)
-        return pytis.data.Value(pytis.data.Date(), value)
+        return pd.Value(pd.Date(), value)
     else:
         return pytis.form.app.run_dialog(arg1, *args, **kwargs)
 
@@ -1721,7 +1713,7 @@ def input_text(title, label, default=None, not_null=False, width=20, height=1, d
     """
     row = run_form(
         pytis.form.InputForm, title=title, fields=(
-            Field('text', label, default=default, type=pytis.data.String(not_null=not_null),
+            Field('text', label, default=default, type=pd.String(not_null=not_null),
                   width=width, height=height, descr=descr),
         ),
         avoid_initial_selection=avoid_initial_selection,
@@ -1767,10 +1759,10 @@ def input_number(title, label, default=None, not_null=True, width=14, precision=
             else:
                 return None
 
-        t = pytis.data.Float(precision=precision, not_null=not_null,
-                             minimum=quantize(minimum), maximum=quantize(maximum))
+        t = pd.Float(precision=precision, not_null=not_null,
+                     minimum=quantize(minimum), maximum=quantize(maximum))
     else:
-        t = pytis.data.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
+        t = pd.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
     row = run_form(
         pytis.form.InputForm, title=title, fields=(
             Field('number', label, default=default, type=t, width=width, descr=descr),
@@ -1806,8 +1798,7 @@ def input_date(title, label, default=None, not_null=True, descr=None,
     """
     row = run_form(
         pytis.form.InputForm, title=title, fields=(
-            Field('date', label, default=default, type=pytis.data.Date(not_null=not_null),
-                  descr=descr),
+            Field('date', label, default=default, type=pd.Date(not_null=not_null), descr=descr),
         ),
         avoid_initial_selection=avoid_initial_selection,
     )
@@ -1949,7 +1940,7 @@ def _dump_rights():
         else:
             columns = [f.id() for f in specification.view_spec().fields()]
         return columns
-    all_permissions = pytis.data.Permission.all_permissions()
+    all_permissions = pd.Permission.all_permissions()
     for shortname in registered_shortnames:
         if shortname.startswith('form/'):
             columns = find_columns(shortname[5:])
@@ -1981,7 +1972,7 @@ def init_access_rights(connection_data):
 
     Arguments:
 
-      connection_data -- 'pytis.data.DBConnection' instance
+      connection_data -- 'pd.DBConnection' instance
 
     """
     global _access_rights, _user_roles, _access_dbconnection
@@ -1989,9 +1980,9 @@ def init_access_rights(connection_data):
     if not pytis.config.use_dmp_roles:
         return
     try:
-        roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
+        roles_data = pd.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
-    except pytis.data.DBException:
+    except pd.DBException:
         return
     if not roles:
         _access_rights = 'nonuser'
@@ -1999,19 +1990,18 @@ def init_access_rights(connection_data):
     _user_roles = roles
     if not pytis.config.use_dmp_rights:
         return
-    S = pytis.data.String()
     _access_rights = {}
     # Prefill _access_rights so that default access by specification rights in
     # has_action_access is possible only for shortnames without any rights
     # defined in DMP.
-    actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'status',),
-                                      connection_data)
-    condition = pytis.data.LE('status', pytis.data.Value(pytis.data.Integer(), 0))
+    actions_data = pd.dbtable('e_pytis_action_rights', ('shortname', 'status',), connection_data)
+    condition = pd.LE('status', pd.ival(0))
     for value in actions_data.distinct('shortname', condition=condition):
         _access_rights[value.value()] = {}
-    rights_data = pytis.data.dbtable('pytis_view_user_rights',
-                                     (('shortname', S,), ('rights', S,), ('columns', S,),),
-                                     connection_data, arguments=())
+    rights_data = pd.dbtable('pytis_view_user_rights', (('shortname', pd.String()),
+                                                        ('rights', pd.String()),
+                                                        ('columns', pd.String())),
+                             connection_data, arguments=())
 
     def process(row):
         shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
@@ -2039,7 +2029,7 @@ def init_access_rights(connection_data):
         _dump_rights()
 
 
-def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
+def has_access(name, perm=pd.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given form specification.
 
     Arguments:
@@ -2048,7 +2038,7 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         (containing `::').  In such a case, the permission is checked for both
         names and 'column=None' is assumed regardless of the actual 'column'
         value.
-      perm -- access permission as one of `pytis.data.Permission' constants.
+      perm -- access permission as one of `pd.Permission' constants.
       column -- string identifier of the column to check or 'None' (no specific
         column checked)
 
@@ -2073,20 +2063,20 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         if rights:
             if _access_dbconnection is None:
                 init_access_rights(pytis.config.dbconnection)
-            groups = pytis.data.default_access_groups(_access_dbconnection)
+            groups = pd.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
     result = action_has_access('form/' + name, perm=perm, column=column)
     return result
 
 
-def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
+def action_has_access(action, perm=pd.Permission.CALL, column=None):
     """Return true iff 'action' has 'perm' permission.
 
     Arguments:
 
       action -- action identifier, string
-      perm -- access permission as one of `pytis.data.Permission' constants
+      perm -- access permission as one of `pd.Permission' constants
       column -- string identifier of the column to check or 'None' (no specific
         column checked)
 
