@@ -253,7 +253,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         if self._LOG_STATISTICS and pytis.config.form_statistics:
             pytis.data.dbfunction(PytisLogForm, name, self.__class__.__name__,
                                   info=self._form_log_info(),
-                                  t_start=start_time,
+                                  t_start=start_time.value(),
                                   t_show=show_time)
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
         log(EVENT, 'Form created in %.3fs:' %
