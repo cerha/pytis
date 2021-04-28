@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2006 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,5 +27,5 @@ the corresponding source file.
 
 from .dbapi import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,
-    default_access_groups, reload_session_variables,
+    default_access_groups, reload_session_variables, reset_crypto_password,
 )

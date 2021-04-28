@@ -63,8 +63,8 @@ from .dbdata import (  # noqa: F401
     dbtable, dbfunction, transaction,
 )
 from .defaults import (  # noqa: F401
-    DBDataDefault, DBCounterDefault, DBFunctionDefault,
-    DBTransactionDefault, default_access_groups, reload_session_variables,
+    DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,
+    default_access_groups, reload_session_variables, reset_crypto_password,
 )
 from .deprecated import Oid  # noqa: F401
 

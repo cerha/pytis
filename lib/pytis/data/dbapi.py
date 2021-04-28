@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -543,3 +543,17 @@ reload_session_variables = _reload_session_variables
 This can be done only by closing all existing connections
 in the connection pool. So use with caution.
 """
+
+
+def reset_crypto_password(connection_data, password):
+    """Set crypto password to 'password' in all database connections.
+
+    This method closes all connections as a side effect so use it
+    with caution.
+
+    Arguments:
+
+      password -- new crypto password; basestring
+
+    """
+    PostgreSQLConnector(connection_data).reset_crypto_password(password)
