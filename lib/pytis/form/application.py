@@ -58,7 +58,7 @@ from .screen import (
     acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
 )
 from . import dialog
-
+from pytis.dbdefs.db_pytis_crypto import PytisCryptoUnlockCurrentUserPasswords
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -565,15 +565,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 check=(
                     lambda r: ('password', _("Invalid password"))
                     if established_names and not pytis.data.dbfunction(
-                            'pytis_crypto_unlock_current_user_passwords',
-                            rsa_encrypt(db_key, r['password'].value()).decode('ascii'))
+                            PytisCryptoUnlockCurrentUserPasswords,
+                            rsa_encrypt(db_key, r['password'].value()).decode('ascii')
+                    )
                     else None,),
             )
             if not crypto_password:
                 return
             # Set this password for all DB connections (closes all current connections!).
             pytis.data.DBFunctionDefault(
-                'pytis_crypto_unlock_current_user_passwords',
+                PytisCryptoUnlockCurrentUserPasswords,
                 lambda: pytis.config.dbconnection
             ).reset_crypto_password(crypto_password)
 
@@ -586,8 +587,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     fresh_names.add(name)
                 else:
                     established_names.add(name)
-            ok_names = pytis.data.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                             crypto_password)
+            ok_names = pytis.data.dbfunction(
+                PytisCryptoUnlockCurrentUserPasswords,
+                crypto_password
+            )
             if isinstance(ok_names, list):
                 ok_names = set([row[0].value() for row in ok_names])
             else:
@@ -617,7 +620,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     except pytis.data.DBException:
                         pass
         data.close()
-        pytis.data.dbfunction('pytis_crypto_unlock_current_user_passwords', crypto_password)
+        pytis.data.dbfunction(
+            PytisCryptoUnlockCurrentUserPasswords,
+            crypto_password
+        )
 
 # Ostatní metody
 
