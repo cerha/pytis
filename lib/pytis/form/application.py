@@ -58,7 +58,9 @@ from .screen import (
     acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
 )
 from . import dialog
-from pytis.dbdefs.db_pytis_crypto import PytisCryptoUnlockCurrentUserPasswords
+from pytis.dbdefs.db_pytis_crypto import (
+    PytisCryptoDbKey, PytisCryptoUnlockCurrentUserPasswords, PytisCryptoChangePassword,
+)
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -552,7 +554,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not rows:
             return
 
-        db_key = pd.dbfunction('pytis_crypto_db_key', 'pytis')
+        db_key = pd.dbfunction(PytisCryptoDbKey, 'pytis')
         crypto_password = pytis.config.dbconnection.crypto_password()
         if not crypto_password:
             established_names = [r for r in rows if not r['fresh'].value()]
@@ -607,7 +609,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 r_name = r['name'].value()
                 if r_name == name or (bad and r_name in bad_names):
                     try:
-                        pd.dbfunction('pytis_crypto_change_password',
+                        pd.dbfunction(PytisCryptoChangePassword,
                                       r['key_id'].value(), password, crypto_password)
                     except pd.DBException:
                         pass
