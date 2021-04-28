@@ -23,6 +23,7 @@ import pytis.extensions
 from pytis.presentation import Specification, Field, Binding
 from pytis.util import rsa_encrypt, translations
 from pytis.dbdefs import db_pytis_crypto
+from pytis.dbdefs.db_pytis_crypto import PytisCryptoDbKey
 
 _ = translations('pytis')
 
@@ -70,7 +71,7 @@ class CryptoAreas(Specification):
         area = row['name'].value()
         if not area:
             return
-        db_key = pytis.data.dbfunction('pytis_crypto_db_key', 'pytis')
+        db_key = pytis.data.dbfunction(PytisCryptoDbKey, 'pytis')
         connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
         if not key_id or not key:
