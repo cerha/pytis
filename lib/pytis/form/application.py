@@ -571,10 +571,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if not crypto_password:
                 return
             # Set this password for all DB connections (closes all current connections!).
-            pytis.data.DBFunctionDefault(
-                PytisCryptoUnlockCurrentUserPasswords,
-                lambda: pytis.config.dbconnection
-            ).reset_crypto_password(crypto_password)
+            pd.PostgreSQLConnector(pytis.config.dbconnection).reset_crypto_password(crypto_password)
 
         while True:
             established_names = set()
