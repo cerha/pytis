@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -299,7 +299,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                         row_or_statement = 'ROW'
                         if trigger.referencing:
                             raise SQLException("Only statement triggers are allowed to use "
-                                            "REFERENCING option.")
+                                               "REFERENCING option.")
                         else:
                             referencing = ''
                     else:
@@ -330,7 +330,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                                                    "only for UPDATE or DELETE events ")
                             referencing = ' REFERENCING %s' % (
                                 ' '.join(["%s TABLE AS %s" % (r[0], r[1])
-                                           for r in trigger.referencing])
+                                          for r in trigger.referencing])
                             )
                         else:
                             referencing = ''
@@ -548,6 +548,7 @@ def visit_insert_from_select(element, compiler, **kwargs):
         ', '.join(column_list),
         compiler.process(element.select)
     )
+
 
 class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
@@ -3752,8 +3753,8 @@ class SQLPyFunction(SQLFunctional):
             def reindent(line):
                 return line[-indentation:]
         if sys.version_info[0] == 2:
-            lines = [unistr(l.rstrip(), 'utf-8') for l in lines]
-        return [reindent(l) for l in lines if l.strip()]
+            lines = [unistr(line.rstrip(), 'utf-8') for line in lines]
+        return [reindent(line) for line in lines if line.strip()]
 
 
 class SQLAggregate(SQLFunctional):
@@ -3948,7 +3949,7 @@ class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLEleme
         self._search_path = search_path
         self._add_dependencies()
         self.schema = search_path[0]  # required by metadata in certain situations
-        self.key = key =  self.pytis_name()
+        self.key = key = self.pytis_name()
         metadata._add_table(key, search_path[0], self)
 
     def search_path(self):
@@ -4125,6 +4126,7 @@ def _gsql_output(output):
 
 _debug = False
 _pretty = 0
+
 
 def _encoded_output(output):
     if not hasattr(output, 'encoding') or output.encoding is None:
