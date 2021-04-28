@@ -55,12 +55,13 @@ tabulky.
 from past.builtins import basestring
 from future.utils import python_2_unicode_compatible
 
+import datetime
 import gc
 import _thread
 import weakref
 
 import pytis
-from pytis.data import ColumnSpec, Data, Type
+from pytis.data import ColumnSpec, Data, Type, Row
 from pytis.util import (
     flatten, hash_attr, log, rsa_encrypt, sameclass,
     super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL,
@@ -811,3 +812,135 @@ class NotWithinSelect(ProgramError):
 
     def __init__(self):
         ProgramError.__init__(self, 'Not within select')
+
+
+def dbtable(table, columns, connection_data=None, arguments=None, connection_name=None,
+            sql_logger=None):
+    """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
+
+    Arguments:
+
+      table -- table name, string
+      columns -- sequence of column ids (strings); instead of column ids pairs
+        of the form (ID, TYPE,) may be used where ID is the column id and TYPE
+        is 'Type' instance corresponding to the type of the column,
+        specifying types is necessary in case of table functions
+      arguments -- optional sequence of table function arguments in case the
+        table is actually a database function returning rows; sequence items
+        must be 'DBBinding' instances
+      sql_logger -- if not 'None' all SQL commands are written to this object
+        using its 'write' method (which the object must provide)
+
+    """
+    def binding(spec):
+        if isinstance(spec, (list, tuple)):
+            id, type_ = spec
+        else:
+            id, type_ = spec, None
+        return pytis.data.DBColumnBinding(id, table, id, type_=type_)
+    bindings = [binding(spec) for spec in columns]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0],
+                                     arguments=arguments, sql_logger=sql_logger)
+    data = factory.create(connection_data=connection_data or pytis.config.dbconnection,
+                          connection_name=connection_name)
+    return data
+
+
+def dbfunction(fspec, *args, **kwargs):
+    """Call database function and return the result as a Python value.
+
+    If the database call fails, return None.
+
+    Arguments:
+
+      function -- name of the function (string) or database specification
+        ('pytis.data.gensqlalchemy.SQLFunctional' subclass) corresponding to
+        the function.  Passing string name allows calling any DB function
+        directly without specification, but lacks argument and result type
+        safety so it should only be used for legacy purposes.  Passing function
+        by specification should be preferred where possible.
+
+      args, kwargs -- function call arguments.  Positional arguments are passed
+        in given order.  Keyword arguments must match the argument names
+        defined in function specification.  Note, that arguments are not
+        optional.  You must always pass all arguments defined by function
+        specification.  You may only choose to pass them as positional or as
+        keywords.  Argument values are Python "internal" values corresponding
+        to the argument's Pytis data type given by specification (TypeError is
+        raised if not).  The rules are somewhat different when the function is
+        passed by name and the specification is not available - see below.
+
+      transaction -- database transaction as a 'DBTransactionDefault' instance.
+        Transaction is popped out of kwargs, so this makes it impossible to pass
+        the argument of the same name as a keyword argument (pass as positional if
+        needed).
+
+    Returns the Python value of the function call result or a sequence of
+    'pytis.data.Row' instances for functions with multirow = True in
+    specification (calling multirow functions by name is not supported).
+
+    If the function is passed by name, the specification is not available.
+    Argument types are thus not checked, but inferred from values.  The types
+    str, int, float, bool, datetime.date, datetime.datetime simply map to the
+    corresponding Pytis data types.  Value instances can also be used directly
+    to define the argument type explicitly.  Keyword arguments are not
+    supported in this case.  You may get database errors if you pass arguments
+    incorrectly (but extra arguments are ignored silently!).
+
+    """
+    def argument(value):
+        if isinstance(value, pytis.data.Value):
+            return value
+        elif isinstance(value, int):
+            return pytis.data.ival(value)
+        elif isinstance(value, float):
+            return pytis.data.fval(value)
+        elif isinstance(value, basestring):
+            return pytis.data.sval(value)
+        elif isinstance(value, bool):
+            return pytis.data.bval(value)
+        elif isinstance(value, datetime.datetime):
+            return pytis.data.dtval(value)
+        elif isinstance(value, datetime.date):
+            return pytis.data.dval(value)
+        else:
+            raise TypeError("Unsupported value type", type(value))
+    # TODO PY3: define keyword arguments in function definition.
+    transaction = kwargs.pop('transaction', None)
+    function = pytis.data.DBFunctionDefault(fspec, pytis.config.dbconnection)
+    if isinstance(fspec, basestring):
+        assert not kwargs
+        arguments = [('arg{}'.format(i + 1), argument(value)) for i, value in enumerate(args)]
+        multirow = False
+    else:
+        fargs = [a for a in fspec.arguments if not a.out()]
+        if len(args) + len(kwargs) != len(fargs):
+            raise TypeError("DB function {}() takes {} argument(s) ({} given)"
+                            .format(fspec.name, len(fargs), len(args) + len(kwargs)))
+        for key in kwargs:
+            if key not in (a.id() for a in fargs):
+                raise TypeError("DB function {}() got unexpected keyword argument {}"
+                                .format(fspec.name, key))
+        arguments = (
+            [(arg.id(), pytis.data.Value(arg.type(), val))
+             for arg, val in zip(fargs[:len(args)], args)] +
+            [(arg.id(), pytis.data.Value(arg.type(), kwargs[arg.id()]))
+             for arg in fargs[len(args):]]
+        )
+        multirow = fspec.multirow
+    result = function.call(Row(arguments), transaction=transaction)
+    if multirow:
+        return result
+    else:
+        return result[0][0].value()
+
+
+def transaction():
+    """Create a new database transaction for current connection and return it.
+
+    Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
+    transaction creation in applications and avoid the need to access
+    pytis.config (requiring importing it).
+
+    """
+    return pytis.data.DBTransactionDefault(pytis.config.dbconnection)

@@ -50,7 +50,7 @@ from .data import (  # noqa: F401
     DataFactory, EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
     LTreeMatch, LTreeAncestor, LTreeDescendant, RangeContains, RangeContained,
     RangeOverlap, FunctionCondition, OpFunction,
-    reversed_sorting, opposite_direction, dbtable, dbfunction, transaction
+    reversed_sorting, opposite_direction,
 )
 from .access import (  # noqa: F401
     Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
@@ -60,6 +60,7 @@ from .dbdata import (  # noqa: F401
     DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
     DBSystemException, DBUserException, DBLoginException, DBInsertException,
     DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
+    dbtable, dbfunction, transaction,
 )
 from .defaults import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault,
