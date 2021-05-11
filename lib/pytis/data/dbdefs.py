@@ -83,7 +83,7 @@ def itval(interval):
     return sqlalchemy.literal_column("'%s'" % (interval,), type_=sqlalchemy.Interval())
 
 
-def sval(text):
+def sval(text, length=None):
     """Return literal string value.
 
     Arguments:
@@ -91,7 +91,10 @@ def sval(text):
       text -- unicode value
 
     """
-    return sqlalchemy.literal_column("'%s'" % (text.replace("'", "''"),), type_=sqlalchemy.String())
+    return sqlalchemy.literal_column(
+        "'%s'" % (text.replace("'", "''"),), type_=sqlalchemy.String(length=length)
+    )
+
 
 
 def dtype(expr):
@@ -103,6 +106,28 @@ def dtype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Date())
+
+
+def ttype(expr, timezone=False):
+    """Return SQLAlchemy expression casted to time.
+
+    Arguments:
+
+      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+
+    """
+    return sqlalchemy.cast(expr, sqlalchemy.Time(timezone=False))
+
+
+def dttype(expr, timezone=False):
+    """Return SQLAlchemy expression casted to datetime.
+
+    Arguments:
+
+      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+
+    """
+    return sqlalchemy.cast(expr, sqlalchemy.DateTime(timezone=False))
 
 
 def itype(expr):
