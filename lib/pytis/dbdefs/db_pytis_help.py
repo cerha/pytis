@@ -253,17 +253,24 @@ class EvPytisUserHelp(sql.SQLView):
     @classmethod
     def query(cls):
         def select_1():
+            stmt = sqlalchemy.text("select * from pytis_view_user_menu()")
+            u = stmt.columns(
+                sqlalchemy.Column('menuid', sqlalchemy.Integer()),
+            ).alias('u')
             h = sql.t.EvPytisHelp.alias('h')
-            u = sqlalchemy.select(["*"], from_obj=[
-                sqlalchemy.text("pytis_view_user_menu()")
-            ]).alias('u')
             return sqlalchemy.select(
-                sql.reorder_columns(cls._exclude(h),
-                                    ['help_id', 'menuid', 'fullname', 'title', 'description',
-                                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
-                                     'page_id', 'parent', 'ord', 'content', 'position',
-                                     'position_nsub', 'changed', 'removed']),
-                from_obj=[h.join(u, sql.gR('h.menuid = u.menuid'))]
+                sql.reorder_columns(
+                    cls._exclude(h),
+                    ['help_id', 'menuid', 'fullname', 'title', 'description',
+                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
+                     'page_id', 'parent', 'ord', 'content', 'position',
+                     'position_nsub', 'changed', 'removed']
+                ),
+                from_obj=[
+                    h.join(
+                        u, h.c.menuid == u.c.menuid
+                    )
+                ]
             )
 
         def select_2():

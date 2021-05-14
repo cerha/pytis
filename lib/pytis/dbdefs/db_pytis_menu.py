@@ -734,9 +734,16 @@ class EvPytisTranslatedMenu(sql.SQLView):
             [sql.gL("coalesce(t_title, xtitle)").label('t_xtitle'),
              sql.gL("coalesce(dirty, title is not null)").label('dirty'),
              sql.gL("languages.language||'/'||menu.menuid").label('id')],
-            from_obj=[menu.join(languages, sqlalchemy.sql.true()).
-                      outerjoin(translations, sql.gR('menu.menuid=translations.menuid and '
-                                                     'languages.language=translations.language'))]
+            from_obj=[
+                menu.join(
+                    languages, sqlalchemy.sql.true()
+                ).outerjoin(
+                    translations, and_(
+                        menu.c.menuid == translations.c.menuid,
+                        languages.c.language == translations.c.language
+                    )
+                )
+            ]
         )
 
     insert_order = (EvPytisMenu,)
@@ -2140,8 +2147,14 @@ class EvPytisUserRoles(sql.SQLView):
         roles = sql.t.EPytisRoles.alias('roles')
         return sqlalchemy.select(
             cls._exclude(members, 'member'),
-            from_obj=[members.join(roles, sql.gR('members.member = roles.name and '
-                                                 'roles.purposeid = \'user\''))],
+            from_obj=[
+                members.join(
+                    roles, and_(
+                        members.c.member == roles.c.name,
+                        roles.c.purposeid == sqlalchemy.text("'user'")
+                    )
+                )
+            ],
             whereclause=members.c.member == func.pytis_user(),
         )
 

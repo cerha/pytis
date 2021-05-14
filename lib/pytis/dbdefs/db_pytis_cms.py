@@ -6,6 +6,7 @@ import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
+from pytis.data.dbdefs import and_
 
 
 class CmsLanguages(sql.SQLTable):
@@ -115,10 +116,18 @@ class CmsMenu(sql.SQLView):
              sql.gL("coalesce(t.title, s.identifier)").label('title_or_identifier'),
              sql.gL("(select count(*)-1 from cms_menu_structure "
                     "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
-            from_obj=[struc.join(lang, sqlalchemy.sql.true()).
-                      outerjoin(texts, sql.gR('t.menu_item_id = s.menu_item_id '
-                                              'AND t.lang = l.lang')).
-                      outerjoin(mod, sql.gR('m.mod_id = s.mod_id'))]
+            from_obj=[
+                struc.join(
+                    lang, sqlalchemy.sql.true()).
+                outerjoin(
+                    texts, and_(
+                        texts.c.menu_item_id == struc.c.menu_item_id,
+                        texts.c.lang == lang.c.lang
+                    )
+                ).outerjoin(
+                    mod, mod.c.mod_id == struc.c.mod_id
+                )
+            ]
         )
 
     def on_insert(self):
@@ -245,9 +254,15 @@ class CmsRights(sql.SQLView):
              r_.c.system_role.label('system_role'),
              a_.c.name.label('action_name'),
              a_.c.description.label('action_description')],
-            from_obj=[x.join(s, sql.gR('s.menu_item_id=x.menu_item_id')).
-                      join(r_, sql.gR('r.role_id = x.role_id')).
-                      join(a_, sql.gR('a.action_id = x.action_id'))]
+            from_obj=[
+                x.join(
+                    s, s.c.menu_item_id == x.c.menu_item_id
+                ).join(
+                    r_, r_.c.role_id == x.c.role_id
+                ).join(
+                    a_, a_.c.action_id == x.c.action_id
+                )
+            ]
         )
 
     insert_order = (CmsRightsAssignment,)
@@ -413,9 +428,11 @@ class CmsUserRoles(sql.SQLView):
             [u.c.login.label('login'),
              u.c.fullname.label('fullname')],
             from_obj=[
-                a_
-                .join(u, sql.gR('a.uid = u.uid'))
-                .join(r_, sql.gR('a.role_id = r.role_id')),
+                a_.join(
+                    u, a_.c.uid == u.c.uid
+                ).join(
+                    r_, a_.c.role_id == r_.c.role_id
+                ),
             ]
         )
 
@@ -450,8 +467,13 @@ class CmsSessionLog(sql.SQLView):
             [users.c.fullname.label('fullname'),
              sql.gL("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
              sql.gL("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
-            from_obj=[log.outerjoin(session, sql.gR('l.session_id = s.session_id')).
-                      join(users, sql.gR('l.uid = u.uid'))]
+            from_obj=[
+                log.outerjoin(
+                    session, log.c.session_id == session.c.session_id
+                ).join(
+                    users, log.c.uid == users.c.uid
+                )
+            ]
         )
 
     def on_insert(self):

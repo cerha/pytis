@@ -7,7 +7,7 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
-
+from pytis.data.dbdefs import and_
 
 class EPytisConfig(sql.SQLTable):
     """Pytis application configuration storage."""
@@ -103,9 +103,15 @@ class EvPytisFormProfiles(sql.SQLView):
                     "else coalesce(profile.dump, params.dump) end").label('dump'),
              profile.c.pickle.label('pickled_filter'),
              params.c.pickle.label('pickled_params')],
-            from_obj=[profile.join(params, sql.gR('profile.username = params.username and '
-                                                  'profile.spec_name = params.spec_name and '
-                                                  'profile.profile_id = params.profile_id'))]
+            from_obj=[
+                profile.join(
+                    params, and_(
+                        profile.c.username == params.c.username,
+                        profile.c.spec_name == params.c.spec_name,
+                        profile.c.profile_id == params.c.profile_id
+                    )
+                )
+            ]
         )
 
     def on_delete(self):
