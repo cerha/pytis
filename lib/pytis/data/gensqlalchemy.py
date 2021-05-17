@@ -3419,12 +3419,18 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         return [c.sqlalchemy_column(None, None, None, None)
                 for c in class_.specification_fields()]
 
-    def from_clause(self, *args):
+    def from_clause_select(self, *args):
         "Calls function with args and returns select for use in from clause"
         return sqlalchemy.select(
             self.selectable_fields(),
             from_obj=[self.__call__(*args)]
         )
+
+    def from_clause(self, *args):
+        "Calls function with args for use in from clause"
+        if not self.db_name:
+            self.db_name = self.name
+        return getattr(sqlalchemy.sql.expression.func, self.db_name)(*args)
 
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
