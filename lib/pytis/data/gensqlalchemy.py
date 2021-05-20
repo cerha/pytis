@@ -1180,34 +1180,28 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
 
     _name_mapping = {}
     _class_mapping = {}
+    _new_specification_callback = None
 
     def __init__(cls, clsname, bases, clsdict):
-        gsql = os.path.basename(sys.argv[0]) == 'gsql.py'
-        if gsql:
-            # Work around: inspect.stack() causes a serious delay on application
-            # startup.  It is less serious on Python 2 but one call may take even
-            # a second on Python 3.
-            cls._gsql_file, cls._gsql_line = inspect.stack(0)[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             name_specs = _PytisBaseMetaclass._name_mapping.get(name)
             if name_specs is None:
                 name_specs = _PytisBaseMetaclass._name_mapping[name] = set([cls])
             elif cls not in name_specs:
-                cls_schemas = set(cls.object_schemas())
-                if gsql:
-                    # This also seems useless on application startup.
-                    for spec in name_specs:
-                        if set(spec.object_schemas()).intersection(cls_schemas):
-                            raise SQLException("Duplicate object name",
-                                               (cls, _PytisBaseMetaclass._name_mapping[name],))
                 name_specs.add(cls)
             _PytisBaseMetaclass._class_mapping[cls.__name__] = cls
             cls.name = name
+            if _PytisBaseMetaclass._new_specification_callback:
+                _PytisBaseMetaclass._new_specification_callback(cls)
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
     def _is_specification(cls, clsname):
         return _is_specification_name(clsname)
+
+    @classmethod
+    def set_new_specification_callback(cls, callback):
+        _PytisBaseMetaclass._new_specification_callback = callback
 
     @classmethod
     def specification_by_class_name(cls, name):
@@ -4177,6 +4171,23 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
 
 def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
                     upgrade_metadata, module_name):
+    def callback(cls):
+        # Callback called when a new DB specification class is created (during its
+        # module is loaded by Python).
+        # The code below is called through the callback (and not directly in
+        # _PytisBaseMetaclass.__init__) in order to be only executed when gsql
+        # is running to generate SQL and avoid its execution on application
+        # startup where DB specifications are also imported.
+        cls_schemas = set(cls.object_schemas())
+        for spec in _PytisBaseMetaclass._name_mapping.get(cls.name):
+            if spec is not cls and set(spec.object_schemas()).intersection(cls_schemas):
+                raise SQLException("Duplicate object name",
+                                   (cls, _PytisBaseMetaclass._name_mapping[cls.name] - set((cls,))))
+        # inspect.stack() causes a significant delay (more significant on some
+        # Python 3 versions). Thus we only run it here when --source was actually given.
+        if source:
+            cls._gsql_file, cls._gsql_line = inspect.stack(0)[3][1:3]
+    _PytisBaseMetaclass.set_new_specification_callback(callback)
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
