@@ -247,7 +247,7 @@ def rule_condition(*specifiers):
         can be on of the following:
 
           basestring -- it names the column to assign and the same column name
-            is used from NEW to get the value
+            is used from OLD to get the value
           tuple of two elements -- the first element (basestring) names the
             column to assign, the second element defines the value; the value
             may be either a 'sqlalchemy.sql.expression.ClauseElement' instance
@@ -262,7 +262,7 @@ def rule_condition(*specifiers):
     conditions = []
     for s in specifiers:
         if isinstance(s, basestring):
-            c = sqlalchemy.literal_column(s) == sqlalchemy.literal_column('new.%s' % (s,))
+            c = sqlalchemy.literal_column(s) == sqlalchemy.literal_column('old.%s' % (s,))
         elif isinstance(s, tuple):
             assert len(s) == 2, s
             sv = s[1]
@@ -276,7 +276,7 @@ def rule_condition(*specifiers):
     return and_(*conditions)
 
 
-def rule_insert(table, values):
+def rule_insert(table, values, inline=False):
     """Return typical insert rule statement.
 
     Arguments:
@@ -293,7 +293,7 @@ def rule_insert(table, values):
             or a basestring to be wrapped by 'sqlalchemy.literal_column'
 
     """
-    insert = table.insert()
+    insert = table.insert(inline=inline)
     return insert.values(**_rule_assignments(values))
 
 
