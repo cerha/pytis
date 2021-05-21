@@ -1576,19 +1576,30 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                     default_password = pytis.remote.session_password()
                 else:
                     default_password = None
-            login_result = run_form(
-                pytis.form.InputForm, title=_("Log in for database access"),
-                fields=(Field('login', _("Login"), width=24, not_null=True,
-                              enumerator=login_enumerator, default=default_login),
-                        Field('password', _("Password"), type=pd.Password(verify=False),
-                              editable=password_editable, computer=password_computer,
-                              default=default_password, width=24, not_null=True),),
-                focus_field='password',
-            )
-            if not login_result:
+
+            def check_login(row):
+                try:
+                    pytis.config.dbconnection.update_login_data(
+                        user=row['login'].value(),
+                        password=row['password'].value()
+                    )
+                except pd.DBLoginException as e:
+                    pytis.api.app.echo(e.message())
+                    return 'password'
+                else:
+                    return None
+
+            if not run_form(
+                    pytis.form.InputForm, title=_("Log in for database access"),
+                    fields=(Field('login', _("Login"), width=24, not_null=True,
+                                  enumerator=login_enumerator, default=default_login),
+                            Field('password', _("Password"), type=pd.Password(verify=False),
+                                  editable=password_editable, computer=password_computer,
+                                  default=default_password, width=24, not_null=True),),
+                    focus_field='password',
+                    check=check_login,
+            ):
                 return FAILURE
-            pytis.config.dbconnection.update_login_data(user=login_result['login'].value(),
-                                                        password=login_result['password'].value())
             pytis.config.dbconnection = pytis.config.dbconnection  # mark as changed
             pytis.config.dbuser = pytis.config.dbconnection.user()
         except pd.DBException as e:
