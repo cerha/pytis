@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -358,9 +358,9 @@ class InputField(KeyHandler, CommandHandler):
         label = self._create_label(parent)
         widget = self._create_widget(parent, ctrl)
         if label and spec.compact():
-            label = self._add_icons(parent, label)
+            label = self._hbox(*([label] + self._icons(parent)))
         else:
-            widget = self._add_icons(parent, widget)
+            widget = self._hbox(*([widget] + self._icons(parent)))
         self._label = label
         self._widget = widget
         if not self._enabled:
@@ -433,14 +433,14 @@ class InputField(KeyHandler, CommandHandler):
         # etc. to create more sophisticated user interface.
         return ctrl
 
-    def _add_icons(self, parent, widget):
-        content = (widget, (self._status_icon, 0, wx.LEFT, 4))
+    def _icons(self, parent):
+        icons = [(self._status_icon, 0, wx.LEFT, 4)]
         descr = self._spec.descr()
         if descr:
             help_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('info'))
             help_icon.SetToolTip(textwrap.fill(descr, 60))
-            content += ((help_icon, 0, wx.LEFT, 1),)
-        return self._hbox(*content)
+            icons.append((help_icon, 0, wx.LEFT, 1))
+        return icons
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -1078,6 +1078,25 @@ class PasswordField(StringField):
         else:
             self._ctrl2 = None
         return widget
+
+    def _icons(self, parent):
+        icons = super(PasswordField, self)._icons(parent)
+        if not self._readonly:
+            self._toggle = toggle = wx.StaticBitmap(parent, bitmap=InputField.icon('eye'))
+            toggle.SetToolTip(_("Show/hide password"))
+            wx_callback(wx.EVT_LEFT_DOWN, toggle, self._on_toggle)
+            icons.insert(0, (toggle, 0, wx.LEFT, 4))
+        return icons
+
+    def _on_toggle(self, event):
+        if self._ctrl.IsEditable():
+            style = self._ctrl.GetWindowStyleFlag() ^ wx.TE_PASSWORD
+            self._toggle.SetBitmap(InputField.icon('eye' if style & wx.TE_PASSWORD
+                                                   else 'eye-stroke'))
+            for ctrl in (self._ctrl, self._ctrl2):
+                if ctrl:
+                    ctrl.SetWindowStyle(style)
+        event.Skip()
 
     def _set_value(self, value):
         if value:
