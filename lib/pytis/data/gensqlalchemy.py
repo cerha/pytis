@@ -3399,7 +3399,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         elif isinstance(result_type, Column):
             columns = (result_type,)
         elif isinstance(result_type, pytis.data.Type):
-            columns = (Column('result', result_type.sqlalchemy_type()),)
+            columns = (Column('result', result_type),)
         elif result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
             columns = ()
         elif issubclass(result_type, _SQLTabular):
@@ -3417,7 +3417,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         "Calls function with args and returns select for use in from clause"
         return sqlalchemy.select(
             self.selectable_fields(),
-            from_obj=[self.__call__(*args)]
+        ).select_from(
+            self.from_clause(*args)
         )
 
     def from_clause(self, *args):
