@@ -4179,11 +4179,13 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         # _PytisBaseMetaclass.__init__) in order to be only executed when gsql
         # is running to generate SQL and avoid its execution on application
         # startup where DB specifications are also imported.
-        cls_schemas = set(cls.object_schemas())
-        for spec in _PytisBaseMetaclass._name_mapping.get(cls.name):
-            if spec is not cls and set(spec.object_schemas()).intersection(cls_schemas):
-                raise SQLException("Duplicate object name",
-                                   (cls, _PytisBaseMetaclass._name_mapping[cls.name] - set((cls,))))
+        if hasattr(cls, 'object_schemas'):
+            cls_schemas = set(cls.object_schemas())
+            for spec in _PytisBaseMetaclass._name_mapping.get(cls.name):
+                if spec is not cls and set(spec.object_schemas()).intersection(cls_schemas):
+                    raise SQLException(
+                        "Duplicate object name",
+                        (cls, _PytisBaseMetaclass._name_mapping[cls.name] - set((cls,))))
         # inspect.stack() causes a significant delay (more significant on some
         # Python 3 versions). Thus we only run it here when --source was actually given.
         if source:
