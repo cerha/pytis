@@ -1073,6 +1073,11 @@ def _expand_schemas(cls):
     return expanded_schemas
 
 
+def _run_visitor(connectable, visitorcallable, element, **kwargs):
+    conn = connectable.connect()
+    visitorcallable(conn.dialect, conn, **kwargs).traverse_single(element)
+
+
 class SQLFlexibleValue(object):
     """Flexible definition of a value.
 
@@ -2210,7 +2215,7 @@ class _TableIndex(SQLObject):
         self.object_name = object_name
 
     def drop(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaDropper, self, checkfirst=checkfirst)
 
 
 class _SQLIndexable(SQLObject):
@@ -2844,10 +2849,11 @@ class SQLForeignTable(_SQLTabular):
             return metadata.pytis_engine.dialect.has_table(connection, name, schema=self.schema)
 
     def create(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaGenerator, self, checkfirst=checkfirst)
+
 
     def drop(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaDropper, self, checkfirst=checkfirst)
 
 
 @compiles(SQLForeignTable)
@@ -2912,7 +2918,9 @@ class _SQLReplaceable(SQLObject):
                 return True
             transaction = connection.begin()
             try:
-                connection._run_visitor(_PytisSchemaGenerator, self, checkfirst=False)
+                _PytisSchemaGenerator(
+                    connection.dialect, connection, checkfirst=False
+                ).traverse_single(self)
                 new_definition = self._pytis_definition(connection)
             except Exception:
                 new_definition = None
@@ -3097,10 +3105,10 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
         return self.query().inner_columns
 
     def create(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaGenerator, self, checkfirst=checkfirst)
 
     def drop(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaDropper, self, checkfirst=checkfirst)
 
     @classmethod
     def specification_fields(class_):
@@ -3272,10 +3280,10 @@ class SQLType(_SQLTabular):
             return metadata.pytis_engine.dialect.has_type(connection, name, schema=self.schema)
 
     def create(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaGenerator, self, checkfirst=checkfirst)
 
     def drop(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaDropper, self, checkfirst=checkfirst)
 
 
 class SQLFunctional(_SQLReplaceable, _SQLTabular):
@@ -3416,7 +3424,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     def from_clause_select(self, *args):
         "Calls function with args and returns select for use in from clause"
         return sqlalchemy.select(
-            self.selectable_fields(),
+            self.selectable_fields()
         ).select_from(
             self.from_clause(*args)
         )
@@ -3500,10 +3508,11 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         return False
 
     def create(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaGenerator, self, checkfirst=checkfirst)
 
     def drop(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaDropper, self, checkfirst=checkfirst)
+
 
     @classmethod
     def pytis_name(class_, real=False):
@@ -3960,7 +3969,7 @@ class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLEleme
         self._extra_dependencies.add(table)
 
     def create(self, bind=None, checkfirst=False):
-        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+        _run_visitor(bind, _PytisSchemaGenerator, self, checkfirst=checkfirst)
 
     def pytis_drop(self):
         _warn("Can't drop raw object: %s" % (self.name,))
