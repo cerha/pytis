@@ -4060,27 +4060,8 @@ def _make_sql_command(sql, *multiparams, **params):
     else:
         compiled = sql.compile(dialect=_engine.dialect)
         if isinstance(sql, sqlalchemy.sql.expression.Insert):
-            # SQLAlchemy apparently doesn't work so well without a database
-            # connection.  We probably have no better choice than to handle some
-            # things manually here, despite the corresponding functionality is
-            # present in SQLAlchemy.
             parameters = {}
-            sql_parameters = sql.parameters
-            if set(compiled.binds.keys()) - set(sql_parameters.keys()):
-                for k in compiled.binds.keys():
-                    if k not in sql_parameters:
-                        column = sql.table.columns[k]
-                        if column.default is not None:
-                            parameters[k] = _sql_value_escape(column.default.arg)
-                # Perhaps also default key value
-                if isinstance(sql.table, SQLTable):
-                    for k in sql.table.pytis_key:
-                        if k not in sql_parameters:
-                            column = sql.table.columns[k]
-                            parameters[k] = ("nextval('%s.%s_%s_seq')" %
-                                             (column.table.schema, column.pytis_orig_table,
-                                              column.name,))
-            for k, v in sql_parameters.items():
+            for k, v in compiled.params.items():
                 parameters[k] = _sql_value_escape(v)
             output = unistr(compiled) % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
