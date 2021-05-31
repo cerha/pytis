@@ -852,6 +852,8 @@ class PresentedRow(object):
             return False
         if self.hidden_codebook(key):
             return False
+        if key == "tdoklad":
+            return False
         return bool(self._computed_value(self._coldict[key].editable))
 
     def visible(self, key):
