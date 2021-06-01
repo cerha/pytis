@@ -2139,7 +2139,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
         for tabular in self._rule_tables(self.insert_order):
             assignments = self._rule_assignments(tabular, self.no_insert_columns,
                                                  self.special_insert_columns)
-            c = tabular.insert().values(**assignments)
+            c = tabular.insert(inline=True).values(**assignments)
             commands.append(c)
         return commands
 
