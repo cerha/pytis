@@ -305,10 +305,15 @@ class List(_Container):
     zvláštní uvození.
 
     """
-    NUMBER_MARK = 'NUMBER_MARK'
-    """Položky seznamu uvozené vzestupnými arabskými číslicemi od 1."""
     BULLET_MARK = 'BULLET_MARK'
     """Položky seznamu uvozené puntíkem."""
+    NUMBER_MARK = 'NUMBER_MARK'
+    """Položky seznamu uvozené vzestupnými arabskými číslicemi od 1."""
+    ALPHA_MARK = 'ALPHA_MARK'
+    """Položky seznamu uvozené písmeny a), b), c), ..."""
+    UPPER_ALPHA_MARK = 'UPPER_ALPHA_MARK'
+    """Položky seznamu uvozené písmeny A), B), C), ..."""
+
 
     KWARGS = {'mark': None}
 
@@ -317,6 +322,10 @@ class List(_Container):
             order = None
         elif self.arg_mark == self.NUMBER_MARK:
             order = lcg.ItemizedList.NUMERIC
+        elif self.arg_mark == self.ALPHA_MARK:
+            order = lcg.ItemizedList.LOWER_ALPHA
+        elif self.arg_mark == self.UPPER_ALPHA_MARK:
+            order = lcg.ItemizedList.UPPER_ALPHA
         else:
             raise Exception('Unexpected list type', self.arg_mark)
         return lcg.ItemizedList(self._lcg_contents(), order=order)
