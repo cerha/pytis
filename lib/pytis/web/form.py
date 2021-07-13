@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2171,7 +2171,7 @@ class BrowseForm(LayoutForm):
         self._set_async_request_row(req)
         if not self._cell_editable(self._row, column_id):
             raise BadRequest()
-        form = InlineEditForm(self._view, req, self._uri_provider, self._row, column_id)
+        form = InlineEditForm(self._view, req, lambda row, type, target: req.uri(), self._row, column_id)
         if req.param('save-edited-cell'):
             # The cell edit form was submitted.
             if form.validate(req):
@@ -2195,10 +2195,8 @@ class BrowseForm(LayoutForm):
                 if error:
                     form.set_error(*error)
                 else:
-                    def export_cell(context):
-                        return self._export_field(context, self._fields[column_id],
-                                                  editable=False)
-                    return Exporter(export_cell)
+                    return Exporter(lambda context: self._export_field(context, self._fields[column_id],
+                                                                       editable=False))
         # Show the form inside the cell.
         return form
 
