@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -545,7 +545,8 @@ class ClipboardUIBackend(ClientUIBackend):
 class TkUIBackend(ClipboardUIBackend):
     """Implements UI backend operations using Tkinter."""
 
-    _DEPENDS = ClipboardUIBackend._DEPENDS + ('Tkinter', 'ttk', 'tkSimpleDialog', 'tkFileDialog')
+    _DEPENDS = ClipboardUIBackend._DEPENDS + ('tkinter', 'tkinter.ttk',
+                                              'tkinter.simpledialog', 'tkinter.filedialog')
 
     def _in_tk_app(method):
         def run(self, *args, **kwargs):
