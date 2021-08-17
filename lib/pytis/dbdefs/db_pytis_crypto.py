@@ -457,7 +457,7 @@ end;
         """
 
 
-class PytisCryptoUnlockCurrentUserPasswords(sql.SQLPlFunction):
+class PytisCryptoUnlockCurrentUserPasswords(sql.SQLFunction):
     name = 'pytis_crypto_unlock_current_user_passwords'
     schemas = pytis_schemas.value(globals())
     arguments = (
@@ -469,22 +469,4 @@ class PytisCryptoUnlockCurrentUserPasswords(sql.SQLPlFunction):
     depends_on = (EPytisCryptoKeys, PytisCryptoDbKeys, PytisCryptoUnlockPasswords,)
 
     def body(self):
-        return """
-declare
-  plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
-begin
-  lock e_pytis_crypto_keys in exclusive mode;
-  begin
-    delete from t_pytis_passwords;
-  exception
-    when undefined_table then
-      create temp table t_pytis_passwords (name text, password text);
-  end;
-  insert into t_pytis_passwords
-         (select name, pytis_crypto_extract_key(key, plain_password)
-                 from e_pytis_crypto_keys
-                 where username=user_ and
-                       pytis_crypto_extract_key(key, plain_password) is not null);
-  return query select name from t_pytis_passwords;
-end;
-        """
+        return "select * from pytis_crypto_unlock_passwords(current_user, $1)"
