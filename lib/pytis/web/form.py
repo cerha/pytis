@@ -785,8 +785,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             help_id = field_id + '-help'
             # Set through a script to avoid invalid HTML ('aria-describedby' in not valid HTML).
             return (g.div(descr, id=help_id, cls="help") +
-                    g.script("$('%s').setAttribute('aria-describedby', '%s');" %
-                             (field_id, help_id)))
+                    g.script("$('#%s').attr('aria-describedby', '%s');" % (field_id, help_id)))
         else:
             return None
 
